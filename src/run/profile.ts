@@ -52,6 +52,12 @@ export interface Profile {
    */
   companionStars: string[];
   /**
+   * Star id (a path id, `companion:<type>`, `curse:<id>`) -> the highest Cycle it was earned on
+   * (docs/cycles.md §5): what colours the star. Absent for a held star = Cycle I, so every star
+   * earned before the Cycles reads as one. Max-only, never walked back.
+   */
+  starCycles: Record<string, number>;
+  /**
    * The curses (data/curses.ts, by id) a run has been cleared with a Turned hero still on the
    * roster — the Werewolf's star (docs/wild-innates-and-events.md §3.3). Turned is the condition:
    * a hero only bitten has not become the thing the star is for.
@@ -161,6 +167,7 @@ export function createProfile(): Profile {
     wardens: [],
     evolutionStars: {},
     companionStars: [],
+    starCycles: {},
     curseStars: [],
     ascendedSpawnTypes: [],
     runHistory: [],
@@ -211,14 +218,22 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
   const companionStars = [...profile.companionStars];
   const curseStars = [...profile.curseStars];
   const starsEarned: string[] = [];
+  const starCycles = { ...profile.starCycles };
+  const raise = (starId: string, held: boolean) => {
+    starCycles[starId] = Math.max(held ? starCycles[starId] ?? 1 : 0, end.cycle);
+  };
   if (end.outcome === 'win') {
     for (const { heroId, evolutionPathId, curseId } of end.roster) {
-      if (curseId && !curseStars.includes(curseId)) {
-        curseStars.push(curseId);
-        starsEarned.push(curseStarId(curseId));
+      if (curseId) {
+        raise(curseStarId(curseId), curseStars.includes(curseId));
+        if (!curseStars.includes(curseId)) {
+          curseStars.push(curseId);
+          starsEarned.push(curseStarId(curseId));
+        }
       }
       if (!evolutionPathId) continue;
       const held = evolutionStars[heroId] ?? [];
+      raise(evolutionPathId, held.includes(evolutionPathId));
       if (held.includes(evolutionPathId)) continue;
       evolutionStars[heroId] = [...held, evolutionPathId];
       starsEarned.push(evolutionPathId);
@@ -226,6 +241,7 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
   }
   // A clear with the companion's line along: it cannot be lost, so a clear is the whole condition.
   const companionType = end.outcome === 'win' ? end.companionType : null;
+  if (companionType) raise(companionStarId(companionType), companionStars.includes(companionType));
   if (companionType && !companionStars.includes(companionType)) {
     companionStars.push(companionType);
     starsEarned.push(companionStarId(companionType));
@@ -246,6 +262,7 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
     evolutionStars,
     companionStars,
     curseStars,
+    starCycles,
     bonusStars: profile.bonusStars + record.clearBonus,
     runHistory: [record, ...profile.runHistory].slice(0, RUN_HISTORY_CAP),
     // The run is over; a dev test run started without a pact must not inherit this one's clock.
@@ -302,6 +319,11 @@ export function hasCurseStar(profile: Profile, curseId: string): boolean {
 
 export function hasCompanionStar(profile: Profile, type: string): boolean {
   return profile.companionStars.includes(type);
+}
+
+/** The Cycle a star was earned on at its highest (docs/cycles.md §5), or 0 for a star not held. */
+export function starCycleOf(profile: Profile, starId: string, held: boolean): number {
+  return held ? profile.starCycles[starId] ?? 1 : 0;
 }
 
 export function isSpawnAscended(profile: Profile, type: string): boolean {
@@ -394,6 +416,15 @@ function decodeWardens(value: unknown, knownHeroIds?: ReadonlySet<string>, known
     });
   }
   return wardens;
+}
+
+function decodeStarCycles(value: unknown): Record<string, number> {
+  if (!isRecord(value)) return {};
+  const out: Record<string, number> = {};
+  for (const [id, cycle] of Object.entries(value)) {
+    if (typeof cycle === 'number' && Number.isInteger(cycle) && cycle >= 1) out[id] = cycle;
+  }
+  return out;
 }
 
 function stringList(value: unknown): string[] {
@@ -493,6 +524,8 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     evolutionStars,
     // Absent on every file written before the bestiary; such a player starts both empty.
     companionStars: [...new Set(stringList(value.companionStars))],
+    // Absent on every file written before the Cycles: every star reads as Cycle I.
+    starCycles: decodeStarCycles(value.starCycles),
     // Absent on every file written before curses.
     curseStars: [...new Set(stringList(value.curseStars))],
     ascendedSpawnTypes: [...new Set(stringList(value.ascendedSpawnTypes))],

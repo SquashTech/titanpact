@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { createProfile, hasEvolutionStar, type Profile } from '../../run/profile';
+import { createProfile, hasEvolutionStar, starCycleOf, type Profile } from '../../run/profile';
 
 // The player profile for the view layer. A context rather than a prop because the one thing a
 // RUN reads off it — which Evolution paths already carry a star — is wanted three screens deep
@@ -19,4 +19,15 @@ export function useProfile(): Profile {
 /** Whether the player has cleared a run with this hero in this form (profile.ts `evolutionStars`). */
 export function useHasEvolutionStar(heroId: string, pathId: string): boolean {
   return hasEvolutionStar(useProfile(), heroId, pathId);
+}
+
+/** The Cycle a path's star was earned on at its highest, or 0 while it is unearned (profile.ts `starCycles`). */
+export function useEvolutionStarCycle(heroId: string, pathId: string): number {
+  const profile = useProfile();
+  return starCycleOf(profile, pathId, hasEvolutionStar(profile, heroId, pathId));
+}
+
+/** The class a lit star wears for its Cycle (docs/cycles.md §5); empty for an unearned one. */
+export function starCycleClass(cycle: number): string {
+  return cycle > 0 ? ` star-cycle-${cycle}` : '';
 }

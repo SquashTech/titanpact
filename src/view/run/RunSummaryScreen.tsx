@@ -5,7 +5,8 @@ import { classes } from '../../data/classes';
 import { locations } from '../../data/locations';
 import { chosenClass } from '../../run/classes';
 import { locationForAct } from '../../run/locations';
-import { companionTypeOf, hasCompanionStar, hasEvolutionStar, type Profile } from '../../run/profile';
+import { companionStarId, companionTypeOf, hasCompanionStar, hasEvolutionStar, starCycleOf, type Profile } from '../../run/profile';
+import { starCycleClass } from '../shared/ProfileContext';
 import { currentEvolutionPathId } from '../../run/progression';
 import type { HeroDefinition } from '../../engine/content';
 import { SEAL_ACTS, type RosterEntry, type RunState } from '../../run/state';
@@ -47,13 +48,15 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
   const place = run.locationIds.length > 0 ? locationForAct(run.locationIds, run.actNumber) : null;
 
   // Diffed rather than passed in, so the screen cannot disagree with what was actually recorded:
-  // a hero's star is NEW when the form it finished in is in the profile after and not before.
-  const starsAwarded = run.roster.filter((entry) => {
+  // a hero's star is NEW when the form it finished in is in the profile after and not before, and
+  // RAISED when it was held and this Cycle coloured it higher (docs/cycles.md §5).
+  const starCycle = (profile: Profile, entry: RosterEntry): number => {
     const type = companionTypeOf(entry.heroId);
-    if (type) return hasCompanionStar(profileAfter, type) && !hasCompanionStar(profileBefore, type);
+    if (type) return starCycleOf(profile, companionStarId(type), hasCompanionStar(profile, type));
     const pathId = currentEvolutionPathId(entry);
-    return pathId !== null && hasEvolutionStar(profileAfter, entry.heroId, pathId) && !hasEvolutionStar(profileBefore, entry.heroId, pathId);
-  });
+    return pathId === null ? 0 : starCycleOf(profile, pathId, hasEvolutionStar(profile, entry.heroId, pathId));
+  };
+  const starsAwarded = run.roster.filter((entry) => starCycle(profileAfter, entry) > starCycle(profileBefore, entry));
   const newFurthestAct = profileAfter.furthestAct > profileBefore.furthestAct;
   // The Cycle's clear bonus, read off the ledger rather than the table, for the same reason.
   const clearBonus = profileAfter.bonusStars - profileBefore.bonusStars;
@@ -115,7 +118,7 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
             <div className="run-summary-records">
               {starsAwarded.map((entry) => (
                 <span key={entry.rosterId} className="run-summary-record-chip is-star">
-                  ★ {rosterHeroes[entry.heroId].name} · {companionTypeOf(entry.heroId) ? 'Companion' : evolutionName(entry)}
+                  <span className={`evo-star is-earned${starCycleClass(starCycle(profileAfter, entry))}`}>★</span> {rosterHeroes[entry.heroId].name} · {companionTypeOf(entry.heroId) ? 'Companion' : evolutionName(entry)}
                 </span>
               ))}
               {clearBonus > 0 && (

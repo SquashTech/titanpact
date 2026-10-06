@@ -18,7 +18,7 @@ import { CYCLES, MAX_BUILT_CYCLE, cycleOf, fallenAfterFight, isPermadeath, openC
 import { joinCompanion } from '../src/run/companion';
 import { equipItem } from '../src/run/equipment';
 import { generateMap } from '../src/run/map';
-import { createProfile, decodeProfile, recordRunEnded } from '../src/run/profile';
+import { companionStarId, createProfile, decodeProfile, recordRunEnded, starCycleOf } from '../src/run/profile';
 import { buildContentIndex, decodeSave, encodeSave } from '../src/run/save';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { reviveHero } from '../src/run/wounds';
@@ -118,4 +118,32 @@ test('cycles: the Cycle survives a save, and a file from before the Cycles reads
   assert.ok(ladderless.ok && ladderless.save.run.cycle === 1, 'a file from before the ladder is Cycle I');
   assert.ok(!before(-1).ok, 'a rung below Base is not a Cycle');
   assert.ok(!decodeSave({ ...raw, run: { ...raw.run, cycle: 0 } }, index).ok, 'Cycle 0 is not a Cycle');
+});
+
+test('cycles: a star is coloured by the highest Cycle it was earned on, never walked back', () => {
+  const pathId = progressionTable.evolutions.valor[0].paths[0].id;
+  const end = (cycle: number, outcome: 'win' | 'loss' = 'win') => ({
+    outcome,
+    actReached: 5,
+    locationId: null,
+    encountersWon: 12,
+    cycle,
+    roster: [{ heroId: 'valor', level: 24, evolutionPathId: pathId }],
+    companionType: 'Fire',
+  });
+  const first = recordRunEnded(createProfile(), end(1), 1);
+  assert.strictEqual(starCycleOf(first, pathId, true), 1);
+  assert.strictEqual(starCycleOf(first, companionStarId('Fire'), true), 1, 'the companion star takes a Cycle the same way');
+  const raised = recordRunEnded(first, end(2), 2);
+  assert.strictEqual(starCycleOf(raised, pathId, true), 2, 'a clear on a higher Cycle raises it');
+  assert.deepStrictEqual(raised.runHistory[0].starsEarned, [], 'a raised star is not a new star');
+  assert.strictEqual(raised.bonusStars - first.bonusStars, cycleOf(2).clearBonus, 'raising pays nothing beyond the clear');
+  const back = recordRunEnded(raised, end(1), 3);
+  assert.strictEqual(starCycleOf(back, pathId, true), 2, 'a lower Cycle never walks it back');
+  assert.strictEqual(starCycleOf(recordRunEnded(raised, end(5, 'loss'), 4), pathId, true), 2, 'a loss colours nothing');
+  // A star earned before the Cycles has no entry, and reads as Cycle I.
+  const legacy = decodeProfile(JSON.parse(JSON.stringify({ ...first, starCycles: undefined })));
+  assert.strictEqual(starCycleOf(legacy, pathId, true), 1);
+  assert.strictEqual(starCycleOf(legacy, 'nobody-path', false), 0, 'an unearned star has no colour');
+  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(raised))).starCycles, raised.starCycles);
 });

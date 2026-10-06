@@ -10930,6 +10930,45 @@ button.star-shop-bundle-face {
   opacity: 0.55;
 }
 
+/* A lit star in the colour of the highest Cycle it was earned on (docs/cycles.md §5): white,
+   bronze, silver, gold, then a slow rainbow for Cycle V — the whole climb read off one glyph. */
+.evo-star.is-earned.star-cycle-1 {
+  color: #f4f1ea;
+  text-shadow: 0 0 6px rgba(244, 241, 234, 0.5);
+}
+
+.evo-star.is-earned.star-cycle-2 {
+  color: #d08a4a;
+  text-shadow: 0 0 6px rgba(208, 138, 74, 0.55);
+}
+
+.evo-star.is-earned.star-cycle-3 {
+  color: #9fb6d2;
+  text-shadow: 0 0 6px rgba(140, 175, 220, 0.65);
+}
+
+.evo-star.is-earned.star-cycle-4 {
+  color: var(--accent);
+  text-shadow: 0 0 7px rgba(224, 166, 60, 0.7);
+}
+
+.evo-star.is-earned.star-cycle-5 {
+  color: transparent;
+  background: linear-gradient(90deg, #ff5c5c, #ffb84d, #fff06a, #6be38a, #5cc8ff, #b48cff, #ff5c5c);
+  background-size: 120% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.35));
+  animation: star-rainbow 4s linear infinite;
+}
+
+@keyframes star-rainbow {
+  to {
+    background-position: 120% 0;
+  }
+}
+
 /* Beside the path's name on its dossier card and on the Evolution choice. */
 .evo-path-star {
   margin-left: auto;

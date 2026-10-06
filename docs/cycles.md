@@ -134,7 +134,7 @@ bundles and the Starfall.
 |---|---|---|
 | 1 | Ascension → Cycles: `src/run/cycles.ts`, `RunState.cycle` (1-based) and `Profile.cyclesCleared`, saves and profiles migrated one up; no entry fee; the title's **Which Cycle?** picker once Cycle I is cleared (I–V listed, the unbuilt greyed by name); the map's Cycle badge; one-year lore; the sim's `--cycle N` | **Done** 2026-10-06 |
 | 2 | The Wardens: snapshot the first Cycle I win (`Profile.wardens`), seat each by type on a base seal, field it as an EXTRA body beside its beast from Cycle II; back-fill from Run History; measured (below) | **Built** 2026-10-06 — the arrival line and a Wardens page wait on copy |
-| 3 | Star colours by Cycle: `heroId → { pathId → cycle }`, migrated as Cycle I | — |
+| 3 | Star colours by Cycle: `Profile.starCycles` (star id → highest Cycle, absent = I) beside the star lists, raised on a win, never walked back; white / bronze / silver / gold / rainbow on every star; the run summary lists a raised star with the new ones | **Built** 2026-10-06 |
 | 4 | Bought Locations granted by a Cycle; the Constellation stops selling them | — |
 | 5 | Cycles III and IV, one rule each, each measured | — |
 | — | Cycle V | When I–IV are built |

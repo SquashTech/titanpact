@@ -3,7 +3,8 @@ import { heroes } from '../../data/heroes';
 import { TYPES } from '../../data/typechart';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, TypeId } from '../../engine/content';
-import { hasCompanionStar, hasCurseStar, isSpawnAscended, type Profile } from '../../run/profile';
+import { companionStarId, curseStarId, hasCompanionStar, hasCurseStar, isSpawnAscended, starCycleOf, type Profile } from '../../run/profile';
+import { starCycleClass } from '../shared/ProfileContext';
 import { curses, type CurseDefinition } from '../../data/curses';
 import { passives } from '../../data/passives';
 import { heroPool } from '../../run/recruitment';
@@ -128,7 +129,7 @@ function CurseStarRow({ curse, profile }: { curse: CurseDefinition; profile: Pro
           </span>
         </span>
         <span
-          className={`evo-star compendium-spawn-star ${known ? 'is-earned' : 'is-empty'}`}
+          className={`evo-star compendium-spawn-star ${known ? 'is-earned' : 'is-empty'}${starCycleClass(starCycleOf(profile, curseStarId(curse.id), known))}`}
           title={known ? 'Star earned' : 'Clear a run with a hero this curse has Turned to earn'}
           aria-hidden="true"
         >
@@ -198,7 +199,7 @@ function SpawnStarRow({ line, profile }: { line: TitanspawnLine; profile: Profil
           </span>
         </span>
         <span
-          className={`evo-star compendium-spawn-star ${known ? 'is-earned' : 'is-empty'}`}
+          className={`evo-star compendium-spawn-star ${known ? 'is-earned' : 'is-empty'}${starCycleClass(starCycleOf(profile, companionStarId(line.type), known))}`}
           title={known ? 'Star earned' : 'Clear a run with this Titanspawn at your side to earn'}
           aria-hidden="true"
         >
