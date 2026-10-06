@@ -1158,8 +1158,8 @@ export function App() {
   function enterAct() {
     setActBreak(false);
     if (locationChoiceDue(playerRun)) {
-      // The pool is the profile's: a Location bought at the Constellation is drawn beside the base five.
-      const pool = locationPool(profile.purchases);
+      // The pool is the Cycle's: a Location a Cycle granted is drawn beside the base five (docs/cycles.md §6).
+      const pool = locationPool(playerRun.cycle);
       const candidateIds = drawLocationCandidates(playerRun.locationIds, randomSeed(), pool);
       // Whichever is taken, its arrival screen is next: fetch both places' paintings now.
       void preloadImages(locationArtUrls(candidateIds));
@@ -1173,7 +1173,7 @@ export function App() {
   }
 
   function handleLocationChosen(locationId: string) {
-    setPlayerRun(chooseLocation(playerRun, locationId, locationPool(profile.purchases)));
+    setPlayerRun(chooseLocation(playerRun, locationId, locationPool(playerRun.cycle)));
     setScreen({ kind: 'actIntro' });
   }
 

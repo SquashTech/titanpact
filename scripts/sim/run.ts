@@ -30,7 +30,7 @@ import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry
 import { blessOpeningPair, canBless, grantBlessing } from '../../src/run/blessings';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
-import { chooseLocation, drawLocationCandidates, locationChoiceDue, locationForAct } from '../../src/run/locations';
+import { chooseLocation, drawLocationCandidates, locationChoiceDue, locationForAct, locationPool } from '../../src/run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../../src/data/locations';
 import { encounterScaling, enemyLoadoutFor } from '../../src/run/difficulty';
 import { encounterXpKind, grantEncounterLevels, grantXp, levelOf, MAX_LEVEL } from '../../src/run/growth';
@@ -478,10 +478,10 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
           // The act's 1-of-2, taken at random (docs/locations.md §1): the offer is what is left,
           // so the pick is the matched experiment the lift table reads — which PLACE is the wall.
           if (locationChoiceDue(run)) {
-            const offered = drawLocationCandidates(run.locationIds, randomSeed(rng));
+            const offered = drawLocationCandidates(run.locationIds, randomSeed(rng), locationPool(run.cycle));
             const pickedId = pick(rng, offered);
             record.choices.push({ bucket: 'location', offered, picked: [pickedId], encountersWonAtChoice: run.encountersWon });
-            run = chooseLocation(run, pickedId);
+            run = chooseLocation(run, pickedId, locationPool(run.cycle));
             if (offered.length > 1) tally(record, run.actNumber, 'locationChoice');
           }
           tally(record, run.actNumber, 'actIntro');

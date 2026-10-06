@@ -1,18 +1,14 @@
 import { useState, type CSSProperties } from 'react';
 import { STAR_SHOP_OFFERS, starShopCatalog } from '../../data/starShop';
-import { locationDomains, locations } from '../../data/locations';
 import { heroes } from '../../data/heroes';
 import type { Profile } from '../../run/profile';
 import { ownsHero } from '../../run/recruitment';
 import { STARFALL_PRICE, bundleOwnedHeroIds, canBuy, canCallStarfall, offerHeld, offerPrice, starBalance, starfallPool, starsEarned, starsSpent, type StarShopOffer } from '../../run/starShop';
 import { HubGlyph } from '../shared/nodeIcons';
 import { ElementGlyph } from '../shared/elementIcons';
-import { LocationHorizon } from '../shared/locationArt';
-import { locationBackdrop } from '../shared/locationBackdrops';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
-import { LocationPeekOverlay } from './LocationPeekOverlay';
 import { BundlePeekOverlay } from './BundlePeekOverlay';
 import { CurseStarsSection, HeroStarsPage, SpawnStarsPage } from './StarPages';
 import { STARFALL_NAME, StarfallScreen } from './Starfall';
@@ -67,7 +63,6 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
   const lit = Object.values(heroes).filter((hero) => ownsHero(hero.id, hero, profile.purchases)).length;
   const canCall = canCallStarfall(profile, starShopCatalog);
   const bundles = STAR_SHOP_OFFERS.filter((o) => o.grant.kind === 'heroBundle');
-  const places = STAR_SHOP_OFFERS.filter((o) => o.grant.kind === 'location');
   const dossierHero = dossierHeroId ? heroes[dossierHeroId] : null;
   const openOffer = openOfferId ? starShopCatalog[openOfferId] : null;
   const purchaseOf = (offer: StarShopOffer): OfferPurchase => ({
@@ -203,14 +198,6 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
               <span className="star-shop-empty-title">No stars are aligned</span>
               <span className="star-shop-empty-note">Now and then the sky lines up over a chosen few, and a Starfall under it draws only from them.</span>
             </div>
-            <div className="hub-section-head">Locations</div>
-            <div className="star-shop-offers">
-              {places.map((offer) =>
-                offer.grant.kind === 'location' ? (
-                  <LocationRow key={offer.id} offer={offer} locationId={offer.grant.locationId} held={offerHeld(profile, offer)} onOpen={() => setOpenOfferId(offer.id)} />
-                ) : null
-              )}
-            </div>
           </>
         )}
 
@@ -232,9 +219,6 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
         {section === 'spawn' && <SpawnStarsPage profile={profile} />}
       </div>
 
-      {openOffer?.grant.kind === 'location' && (
-        <LocationPeekOverlay locationId={openOffer.grant.locationId} purchase={purchaseOf(openOffer)} onClose={() => setOpenOfferId(null)} />
-      )}
       {openOffer?.grant.kind === 'heroBundle' && (
         <BundlePeekOverlay
           heroIds={openOffer.grant.heroIds}
@@ -306,33 +290,6 @@ function OpenRow({ className, style, label, onOpen, children }: { className: str
     >
       {children}
     </div>
-  );
-}
-
-/** A Location's row is the place — tint, horizon, domains — and opens the place. */
-function LocationRow({ offer, locationId, held, onOpen }: { offer: StarShopOffer; locationId: string; held: boolean; onOpen: () => void }) {
-  const location = locations[locationId];
-  const domains = location ? locationDomains(location) : null;
-  const backdrop = locationBackdrop(locationId);
-  return (
-    <OpenRow className={`star-shop-place${held ? ' is-held' : ''}`} style={{ '--node-rgb': location?.tintRgb } as CSSProperties} label={`${offer.name} — look around`} onOpen={onOpen}>
-      <span className={`star-shop-place-scene${backdrop ? ' has-backdrop' : ''}`} aria-hidden="true">
-        {backdrop ? <img className="location-backdrop" src={backdrop} alt="" draggable={false} /> : <LocationHorizon locationId={locationId} />}
-      </span>
-      <div className="star-shop-offer-body">
-        <span className="star-shop-offer-name">{offer.name}</span>
-        {domains && (
-          <span className="star-shop-place-domains">
-            {domains.map((type) => (
-              <span key={type} className="star-shop-place-domain" style={{ color: getTypeColor(type) }} title={type}>
-                <ElementGlyph type={type} />
-              </span>
-            ))}
-          </span>
-        )}
-      </div>
-      <CostBadge offer={offer} held={held} />
-    </OpenRow>
   );
 }
 

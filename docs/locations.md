@@ -230,6 +230,10 @@ says where. It only happens on a dev run that opened somewhere other than Wild's
 
 ### Bought Locations — the Holy Sanctum, Dreaming Spires, Thunder Aerie, Frozen Reach (2026-09-19)
 
+> **Granted by the Cycles since 2026-10-06** (`docs/cycles.md` §6): `fromCycle` replaces `unlock`,
+> Sanctum II / Spires III / Aerie IV / Reach V, each in its Cycle's pool and every later one. They
+> are no longer sold; what follows is the history.
+
 Four places the Constellation sells (`docs/constellation.md` §11 phase 5 has each one's kit and
 look), each with a warden of a type no base Guardian covers — the Seraph (Light), Sphinx (Mind),
 Roc (Storm) and Wendigo (Frost). `LocationDefinition.unlock` names its offer, and it is in a

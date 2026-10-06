@@ -35,11 +35,11 @@ export interface LocationDefinition {
   tintRgb: string;
   ambience: AmbienceKind;
   /**
-   * The Constellation offer that puts this place in a run's pool (data/starShop.ts); absent on
-   * the base six. A bought Location is drawn beside the base five (run/locations.ts
-   * `locationPool`) — it never replaces one, so its spawn types may overlap theirs.
+   * The Cycle that granted this place (docs/cycles.md §6): it is in a run's pool in that Cycle and
+   * every later one, drawn beside the base five (run/locations.ts `locationPool`) — it never
+   * replaces one, so its spawn types may overlap theirs. Absent on the base six.
    */
-  unlock?: string;
+  fromCycle?: number;
 }
 
 /** Act 1 is always this one (docs/locations.md §1). */
@@ -155,7 +155,7 @@ export const locations: Record<string, LocationDefinition> = {
     guardianFinalEnemyId: SERAPH_ID,
     tintRgb: '246, 226, 160',
     ambience: 'radiance',
-    unlock: 'location.holySanctum',
+    fromCycle: 2,
   },
 
   // Three more bought Locations (2026-09-19, per user direction), each whose warden covers a type
@@ -171,7 +171,7 @@ export const locations: Record<string, LocationDefinition> = {
     guardianFinalEnemyId: SPHINX_ID,
     tintRgb: '224, 110, 170',
     ambience: 'drift',
-    unlock: 'location.dreamingSpires',
+    fromCycle: 3,
   },
 
   thunderAerie: {
@@ -184,7 +184,7 @@ export const locations: Record<string, LocationDefinition> = {
     guardianFinalEnemyId: ROC_ID,
     tintRgb: '180, 140, 245',
     ambience: 'lightning',
-    unlock: 'location.thunderAerie',
+    fromCycle: 4,
   },
 
   frozenReach: {
@@ -197,16 +197,16 @@ export const locations: Record<string, LocationDefinition> = {
     guardianFinalEnemyId: WENDIGO_ID,
     tintRgb: '150, 214, 224',
     ambience: 'blizzard',
-    unlock: 'location.frozenReach',
+    fromCycle: 5,
   },
 };
 
 /**
  * The BASE pool acts 2-5 draw from, without replacement: neither fixed act, and nothing that has
- * to be bought (`unlock`). A run's actual pool is `locationPool` (run/locations.ts).
+ * a Cycle grants (`fromCycle`). A run's actual pool is `locationPool` (run/locations.ts).
  */
 export const ITINERARY_POOL_IDS: readonly string[] = Object.keys(locations).filter(
-  (id) => id !== ACT_ONE_LOCATION_ID && id !== FINALE_LOCATION_ID && !locations[id].unlock
+  (id) => id !== ACT_ONE_LOCATION_ID && id !== FINALE_LOCATION_ID && !locations[id].fromCycle
 );
 
 /**

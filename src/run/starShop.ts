@@ -13,11 +13,10 @@ import { ownsHero, starfallLedgerId } from './recruitment';
 
 /**
  * What a purchase unlocks (docs/constellation.md §4, §8): a discriminant a pool edge reads once.
- * A Location joins the itinerary draw (run/locations.ts `locationPool`); a bundle's heroes join
- * the Collection (run/recruitment.ts `ownsHero`, off the hero's own `unlock`, which a test holds
+ * A bundle's heroes join the Collection (run/recruitment.ts `ownsHero`, off the hero's own `unlock`, which a test holds
  * to the bundle's list). A hero outside every bundle is reached by the Starfall alone.
  */
-export type StarShopGrant = { kind: 'location'; locationId: string } | { kind: 'heroBundle'; heroIds: readonly string[] };
+export type StarShopGrant = { kind: 'heroBundle'; heroIds: readonly string[] };
 
 export interface StarShopOffer {
   id: string;

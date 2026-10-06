@@ -11,7 +11,7 @@ import { heroPool, isRecruitable, starfallLedgerId } from '../src/run/recruitmen
 import { deckHeroIds, profileDeck } from '../src/run/deck';
 import { STARFALL_PRICE, buyOffer, bundleOwnedHeroIds, canBuy, canCallStarfall, isPurchased, offerHeld, offerPrice, starfall, starfallPool, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
 
-const pack: StarShopGrant = { kind: 'location', locationId: 'holySanctum' };
+const pack: StarShopGrant = { kind: 'heroBundle', heroIds: ['nobody'] };
 
 /** A three-offer catalog for the rules, apart from the shipped one. */
 const catalog: StarShopCatalog = {
@@ -86,8 +86,6 @@ test('star shop: the shipped catalog is consistent with itself', () => {
     ids.add(offer.id);
     assert.ok(Number.isInteger(offer.cost) && offer.cost > 0, `${offer.id} must cost a whole number of stars`);
     assert.strictEqual(starShopCatalog[offer.id], offer);
-    // A Location offer names a real place, and that place names the offer back: the pool gate reads the pair.
-    if (offer.grant.kind === 'location') assert.strictEqual(locations[offer.grant.locationId]?.unlock, offer.id, `${offer.id} and its Location disagree`);
     // A bundle names real heroes, each of which names the bundle back.
     if (offer.grant.kind === 'heroBundle') {
       assert.ok(offer.grant.heroIds.length > 0, `${offer.id} is an empty bundle`);
@@ -95,10 +93,6 @@ test('star shop: the shipped catalog is consistent with itself', () => {
         assert.strictEqual(heroes[heroId]?.unlock, offer.id, `${offer.id} and ${heroId} disagree`);
       }
     }
-  }
-  // Every Location that has to be bought is on the shelf.
-  for (const location of Object.values(locations)) {
-    if (location.unlock) assert.ok(starShopCatalog[location.unlock], `${location.id} is locked behind an offer that is not for sale`);
   }
   // Every hero outside the base is in the bundle it names, or is the Starfall's alone. No hero is sold singly.
   for (const hero of Object.values(heroes)) {
@@ -113,18 +107,23 @@ test('star shop: the shipped catalog is consistent with itself', () => {
   );
 });
 
-test('star shop: a bought Location joins the pool the road draws from, and only then', () => {
+test('star shop: a Cycle grants its Location from that Cycle on, and nothing is sold for one', () => {
   const base = locationPool();
-  assert.ok(!base.includes('holySanctum'), 'the Sanctum is in the base pool');
+  assert.ok(!base.includes('holySanctum'), 'the Sanctum is not in Cycle I');
   assert.ok(!unvisitedLocationIds(['wildsEdge']).includes('holySanctum'));
-  const held = locationPool(['location.holySanctum']);
-  assert.ok(held.includes('holySanctum'));
-  assert.strictEqual(held.length, base.length + 1, 'a purchase adds a place, never replaces one');
-  // Every bought place at once: the road still offers two, and the base five are still in it.
-  const all = locationPool(Object.values(locations).flatMap((l) => (l.unlock ? [l.unlock] : [])));
-  assert.strictEqual(all.length, Object.keys(locations).length - 1, 'a held offer opens its place and nothing else');
-  for (const id of base) assert.ok(all.includes(id));
-  assert.ok(unvisitedLocationIds(['wildsEdge', 'holySanctum'], held).every((id) => id !== 'holySanctum'), 'a bought place is still visited once');
+  const second = locationPool(2);
+  assert.ok(second.includes('holySanctum'), 'Cycle II grants the Sanctum');
+  assert.strictEqual(second.length, base.length + 1, 'a Cycle adds a place, never replaces one');
+  assert.deepStrictEqual(
+    Object.values(locations).filter((l) => l.fromCycle).map((l) => [l.id, l.fromCycle]),
+    [['holySanctum', 2], ['dreamingSpires', 3], ['thunderAerie', 4], ['frozenReach', 5]]
+  );
+  const last = locationPool(5);
+  assert.strictEqual(last.length, Object.keys(locations).length - 1, 'by Cycle V every place but the Threshold');
+  for (const id of base) assert.ok(last.includes(id));
+  assert.ok(locationPool(3).includes('holySanctum'), 'a granted place stays in every later Cycle');
+  assert.ok(unvisitedLocationIds(['wildsEdge', 'holySanctum'], second).every((id) => id !== 'holySanctum'), 'a granted place is still visited once');
+  assert.ok(STAR_SHOP_OFFERS.every((o) => o.grant.kind === 'heroBundle'), 'the shelf sells no places');
 });
 
 test('star shop: a bought bundle puts its heroes in the recruit pool, and only then', () => {

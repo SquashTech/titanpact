@@ -118,6 +118,13 @@ The bought Locations (Holy Sanctum, Dreaming Spires, Thunder Aerie, Frozen Reach
 Cycle **grants** (§3's world line), and the Constellation stops selling them. It keeps heroes,
 bundles and the Starfall.
 
+**As built (phase 4, 2026-10-06, per user direction):** `LocationDefinition.fromCycle` replaces
+`unlock` — the Holy Sanctum from Cycle II, Dreaming Spires III, Thunder Aerie IV, Frozen Reach V —
+and a granted place is in the pool of **that Cycle and every later one** (`locationPool(cycle)`),
+never a Cycle I run. The three past II wait on their Cycles being built. The shelf's Locations
+section and `LocationPeekOverlay` are deleted; a purchase recorded against an old Location offer
+costs nothing against the balance.
+
 ## 7. Lore and copy to rewrite
 
 - **Done (phase 1):** the lore card (*Sealed, it sleeps for one year. / The year is up.*), the
@@ -135,7 +142,7 @@ bundles and the Starfall.
 | 1 | Ascension → Cycles: `src/run/cycles.ts`, `RunState.cycle` (1-based) and `Profile.cyclesCleared`, saves and profiles migrated one up; no entry fee; the title's **Which Cycle?** picker once Cycle I is cleared (I–V listed, the unbuilt greyed by name); the map's Cycle badge; one-year lore; the sim's `--cycle N` | **Done** 2026-10-06 |
 | 2 | The Wardens: snapshot the first Cycle I win (`Profile.wardens`), seat each by type on a base seal, field it as an EXTRA body beside its beast from Cycle II; back-fill from Run History; measured (below) | **Built** 2026-10-06 — the arrival line and a Wardens page wait on copy |
 | 3 | Star colours by Cycle: `Profile.starCycles` (star id → highest Cycle, absent = I) beside the star lists, raised on a win, never walked back; white / bronze / silver / gold / rainbow on every star; the run summary lists a raised star with the new ones | **Built** 2026-10-06 |
-| 4 | Bought Locations granted by a Cycle; the Constellation stops selling them | — |
+| 4 | Bought Locations granted by a Cycle (§6); the Constellation stops selling them | **Built** 2026-10-06 |
 | 5 | Cycles III and IV, one rule each, each measured | — |
 | — | Cycle V | When I–IV are built |
 

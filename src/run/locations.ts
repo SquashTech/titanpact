@@ -21,14 +21,14 @@ export function locationChoiceDue(run: RunState): boolean {
 }
 
 /**
- * The seal locations a run may stand in: every base one, plus each bought one whose Constellation
- * offer is held (`LocationDefinition.unlock`, data/starShop.ts). Read once, where the pool is
- * read — the sim and the tests pass nothing and get the base game.
+ * The seal locations a run may stand in: every base one, plus each a Cycle up to this run's has
+ * granted (`LocationDefinition.fromCycle`, docs/cycles.md §6). Read once, where the pool is read —
+ * omitted, it is Cycle I's, the base game.
  */
-export function locationPool(purchases: readonly string[] = []): string[] {
+export function locationPool(cycle = 1): string[] {
   return Object.keys(locations).filter((id) => {
-    const { unlock } = locations[id];
-    return id !== FINALE_LOCATION_ID && (!unlock || purchases.includes(unlock));
+    const { fromCycle } = locations[id];
+    return id !== FINALE_LOCATION_ID && (!fromCycle || fromCycle <= cycle);
   });
 }
 

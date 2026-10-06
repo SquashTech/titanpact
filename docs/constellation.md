@@ -1,5 +1,8 @@
 # constellation.md — The Constellation: what a star buys
 
+> **The four Locations left the shelf 2026-10-06** — the Cycles grant them (`docs/cycles.md` §6).
+> Where this doc says they are sold, read the Cycles.
+
 > **STATUS (2026-10-03).** Decided in shape 2026-09-17 (per user direction). **Built:** the shop
 > (`src/run/starShop.ts`, `src/data/starShop.ts`, `StarShopScreen.tsx`, tabs Starfall / Market /
 > Stars / Spawn) selling four bought Locations (§11 phase 5), one hero bundle, From the Tall Grass
