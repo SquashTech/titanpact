@@ -209,6 +209,13 @@ don't silently override it.
 > Ancient takes its secondary slot, and every later companion of that line joins Ancient
 > (`Profile.ascendedSpawnTypes`). Ancient resists every type, so that is the thing to watch.
 
+> **The Ascension ladder is to be REPLACED: `docs/cycles.md`** (2026-10-06, per user direction,
+> DECIDED in shape, NOT BUILT). Five **Cycles**: a sealed Titan sleeps one year, each Cycle is the
+> next rising in a changed world against an adapted Titan, and Cycle V — no seal holds — kills it
+> for good. **The account's first Cycle I winners are its Wardens forever**, each standing beside
+> its seal's beast from Cycle II (the beasts always stay). A1 Permadeath becomes Cycle II's rule;
+> every unlocked Cycle stays selectable; stars are coloured by Cycle; no star entry fee.
+
 > **A ninth is DECIDED, PHASES 1–3, 5 AND 6 IN: `docs/collection.md`** (2026-09-26, per user direction).
 > **The player builds the run's pools, not the designer**: a **Deck** of three heroes a type, 42
 > in all, **three equal slots — no starter and no recruit-only** (phase 5: `HeroDefinition.starter`,

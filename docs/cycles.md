@@ -1,0 +1,143 @@
+# cycles.md — The Cycles: difficulty as the story
+
+> **STATUS: DECIDED in shape, NOT BUILT** (2026-10-06, per user direction). Replaces the
+> Ascension *ladder* (`docs/ascension.md` §5) with five **Cycles**: each is the Titan's next
+> rising, a year after the last, in a world that has changed and against a Titan that has
+> adapted — and the fifth ends the cycle for good. A1 Permadeath is built and is not thrown away;
+> it becomes Cycle II's rule. §8 lists what is decided, §9 what is open. Nothing here is built.
+
+---
+
+## 0. Why
+
+A Slay the Spire ladder is the same run with worse numbers, and it never ends. `ascension.md` §1
+already ruled out the first half — *a rung is a rule, never a bare number*. The Cycles rule out the
+second: the ladder is a story with five chapters, and the last one is the ending. Replayability
+comes from the journey changing, not from the arithmetic growing.
+
+## 1. The premise, revised
+
+- **A sealed Titan sleeps for one year**, not a thousand. Then it rises, and a band sets out again.
+  (A thousand years made every run the only run in its world; a year makes the runs a sequence.)
+- **Each Cycle is that next year.** The world has changed since the last sealing, and the Titan has
+  learned from it.
+- **A Titan cannot be killed — until the last Cycle.** Today two seals hold every run, which is why
+  only the Herald comes through and the Titan never takes the field (`lore.md` §5). Every Cycle
+  costs the world wardens; in **Cycle V no seal holds, and the Titan comes through whole**. It can
+  be killed only because, for the first time, it is standing where it can be struck. The thing that
+  makes the last Cycle the most dangerous is the thing that makes it winnable.
+
+## 2. The Wardens — the account's first band
+
+**The first-ever Cycle I victory on an account is saved, and those heroes are the account's
+Wardens forever.** From Cycle II on, the seals the player breaks are held by the heroes they first
+won with. Binding is mutual (`lore.md` §1): the band that sealed the Titan stayed to hold the seals.
+
+- **The snapshot:** each hero's identity, Evolution path, Class, innate (mastered or not), moves and
+  gear at the Eyes' close. Never updated by a later win.
+- **Six heroes, six base seals** (Wild's Edge, Blighted Shrine, Forbidden Forest, Molten Foundry,
+  Storm Coast, Necropolis): each Warden is assigned the seal whose spawn types best fit its typing,
+  once, at the snapshot.
+- **The Wardens are ADDITIVE.** The beasts (Kraken, Dragon, Manticore, …) stay every Cycle's
+  Guardians; they are iconic and nothing displaces them. From Cycle II a seal's Warden **stands
+  beside its beast** in the Guardian fight, levelled to the node like any escort.
+- **The Warden is EXTRA** (2026-10-06): it takes no escort's slot, so from Cycle II every
+  Guardian fight is one body larger — the Titan has adapted, and the seal is held twice.
+- **A seal with no Warden keeps the beast alone** — a first win with fewer than six heroes, or an
+  account whose first win predates this and is gone from Run History (capped at 50).
+
+Nothing like this exists in another roguelike that we know of. That is the point of protecting it.
+
+## 3. The five Cycles — first pass
+
+Each Cycle carries one change to **the world** (the journey: Locations, economy, who can be
+recruited) and one to **the Titan** (the puzzle: a rule). The world line does not always hurt — the
+survivors prepare between Cycles — so a Cycle is never a pure stack of penalties.
+
+| Cycle | The world | The Titan | Lever |
+|---|---|---|---|
+| **I. The Sealing** | Today's game. | Today's game. | — |
+| **II. The Remembered** | The Wardens hold the seals (§2). Survivors raised the **Holy Sanctum**. | **It learned to eat what it kills** — Permadeath, and the woken Guardians. | `ascension.ts` A1, built |
+| **III. The Long Winter** | Towns are poorer: Banners at half, the Smithy dearer. Wild's Edge is overrun and Act 1 is somewhere else. | **It sends its hands ahead** — every Guardian warded while its escorts stand. | `ascension.md` A2 + A4 |
+| **IV. The Gathering** | The Guild is bigger (more heroes in the pool); companions arrive already Ancient. | **It knows your shape** — authored warbands, two-phase Guardians. | A3 + A5 |
+| **V. The Last Cycle** | No seal holds. | **The Titan takes the field.** A new final fight, then the epilogue. | New content |
+
+The rows are a sketch. What is decided is the shape: one world line, one Titan line, five Cycles.
+
+**The new piece in Cycle V — candidate:** the companions awakened to Ancient across the Cycles
+(`ascension.md` §7a). Ancient is the seal's type; the last band fights the Titan with the seal
+itself. Also a candidate: the Wardens stand with the player at the end.
+
+## 4. Running the Cycles
+
+- **A Cycle opens by clearing the one before.** Losing a run returns to the title; a loss is never
+  canon and the world does not move.
+- **Every unlocked Cycle stays selectable**, before the story ends and after. A player who has
+  reached Cycle II's Permadeath can still take a breezy Cycle I run.
+- **After Cycle V is cleared**, the story is over and every Cycle stays playable — for the stars
+  (§5) and for its own sake.
+
+## 5. Stars
+
+- **A star is coloured by the highest Cycle it was earned on**: I white, II bronze, III silver,
+  IV gold, V rainbow — max-only, never regressed, cosmetic. Five colours for five Cycles closes the
+  "five colours for six states" gap (`constellation.md` §6). Storage: `heroId → { pathId → cycle }`.
+- **The complete profile** is every star rainbow, earned on Cycle V: hundreds of hours, for the
+  player who wants it.
+- **No entry fee.** Ascension's 1-star fee at the seal is deleted — punishing and fiddly. A clear
+  still pays stars by Cycle (figures open). Stars are not meant to be scarce; the late-game sink is
+  **cosmetics and hero skins**, later.
+- **Achievements** become a separate source of stars (their own doc, not this one).
+- **Far later, if needed:** weight the draft toward heroes not yet starred at the player's Cycle.
+
+## 6. Locations
+
+The bought Locations (Holy Sanctum, Dreaming Spires, Thunder Aerie, Frozen Reach) become things a
+Cycle **grants** (§3's world line), and the Constellation stops selling them. It keeps heroes,
+bundles and the Starfall.
+
+## 7. Lore and copy to rewrite
+
+- `src/data/tips.ts` `LORE_LINES`: *put to sleep for 1,000 years* → one year.
+- `src/view/run/TitanBoundScreen.tsx`: *A thousand years, if the seals are kept* → a beat that says
+  the next Cycle is coming (Cycles I–IV) and a different one in Cycle V.
+- `lore.md` §1 (the premise), §5 (why the seals hold, and what happens when they stop), §7
+  (*asleep again for a thousand years*; and *the word outlived everyone who knew what it referred
+  to*, which a one-year cycle does not support — the name needs another origin).
+- The champion's hall: a Cycle I–IV clear is a sealing, not an ending.
+
+## 8. Decided (2026-10-06, per user direction)
+
+- Five Cycles replace the Ascension ladder; each is a chapter, and Cycle V ends the Titan for good.
+- A sealed Titan sleeps **one year**.
+- **The first-ever Cycle I victory's heroes are the account's Wardens forever** — additive: each
+  stands beside its seal's beast from Cycle II as an EXTRA body, no escort displaced; the beasts
+  are never displaced.
+- A seal with no Warden keeps its beast alone.
+- A loss returns to the title. **Every unlocked Cycle stays selectable**, before the end and after.
+- Stars are coloured by the Cycle they were earned on. **No star entry fee**; clears pay stars;
+  cosmetics and skins are the eventual sink.
+- Achievements grant stars, separately.
+
+## 9. Open — DO NOT silently resolve
+
+- **Whether the Warden leads** its beast's fight or comes in from reserve.
+- **Everything in Cycle V** — the Wardens' fate, the fight, the epilogue — is decided when the
+  Cycles before it are built. The one candidate on record: the Titan fought in body parts, **the
+  Feet, then the Hands, then the Eyes**, for scale on a small screen.
+- **A Warden from a hero the player later stops owning or decking** — it should not matter, since
+  the snapshot is a record; confirm.
+- **Clear payouts by Cycle** — Ascension's A1 paid 6.
+- **Cycle V's fight and epilogue** — its own document.
+- **Rows III–IV** (§3) are a first pass; each is a measurement before it is a decision.
+
+## 10. Invariants this reverses
+
+| Where | The rule | What changes |
+|---|---|---|
+| `ascension.md` §5 | A1–A5, a numbered ladder | Five Cycles; A1–A5's rules are re-seated as Cycle rows (§3). |
+| `lore.md` §1, §7 | A Titan cannot be killed; a thousand years | One year; killable in Cycle V. |
+| `lore.md` §5 | Two seals always hold | They hold in I–IV; none in V. |
+| `locations.md` §4 "Bought Locations" | Sold by the Constellation | Granted by a Cycle. |
+| `ascension.md` §8 | Star colours by rung, A2–A3 sharing silver | One colour a Cycle. |
+| `ascension.md` §8, `collection.md` | A1 costs 1 star at the seal | No entry fee. |
