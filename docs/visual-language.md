@@ -3255,7 +3255,11 @@ seat, the Guild Hall and the Guardian door keep their art. **The icon is the nod
 drawn**: the fork's lead-on marks, the long-press dossier, the road scenes (the purse, the contract,
 an event, at 4x) and the node's own screen (Boon, Mana Well, Ley Line, Rest, the Forge's anvil in
 place of the smith, at 3x). The props, their woken states and the Rest's campfire lights are deleted;
-the named keepers — the Scribe, the Pactwarden, the Mentor, the Tutor — keep their figures.
+the named keepers — the Scribe, the Pactwarden, the Mentor, the Tutor — keep their figures. **An event is
+its own thing once it is named** (2026-10-06): the map tile's question mark gives way, on the road and
+at the head of the event's screen, to one 32px icon per event (`art/events/<eventId>.png`, `eventIcon`)
+— 23 from the pack, four drawn by `scripts/art/map-icons.mjs` (Wildcard, Shipwreck, Siren Song, the
+Roc's Nest). `test/events` pins one per event.
 
 **Short screens** (2026-09-28, per user direction). The console holds four moves at a 780px
 canvas with nothing to spare, and a phone's canvas is its browser's visible height — an

@@ -11083,13 +11083,6 @@ button.star-shop-bundle-face {
   color: color-mix(in srgb, var(--plate-hue) 75%, var(--text));
 }
 
-.evo-path-desc {
-  margin-bottom: 6px;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--text-dim);
-}
-
 .evo-path-types {
   display: flex;
   gap: 4px;
@@ -22478,8 +22471,7 @@ button.star-shop-bundle-face {
   grid-template-columns: 30px 132px minmax(0, 1fr) 30px;
   grid-template-areas:
     'prev stage info next'
-    'dots dots dots dots'
-    'desc desc desc desc';
+    'dots dots dots dots';
   align-items: center;
   column-gap: 6px;
   row-gap: 4px;
@@ -22613,18 +22605,6 @@ button.star-shop-bundle-face {
 .evo-show-dot.is-on {
   background: #e8c170;
   box-shadow: 0 0 6px #e8c170;
-}
-
-.evo-show-desc {
-  grid-area: desc;
-  justify-self: center;
-  max-width: 340px;
-  margin: 0;
-  font-size: 12px;
-  font-style: italic;
-  line-height: 1.35;
-  text-align: center;
-  color: #e6d6b6;
 }
 
 /* One stone panel, the grants as rows inside it; the frame is paid once, not
@@ -25816,6 +25796,14 @@ button.star-shop-bundle-face {
    same weight would read as one paragraph with a non-sequitur in the middle,
    since one is fiction and the other is an instruction. Italic and dimmed says
    which is which without a label. */
+/* The event's own icon (mapNodeArt eventIcon), the one it was met as on the road, at 3x. */
+.event-art {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 12px rgba(var(--node-rgb), 0.45)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+}
+
 .event-flavor {
   margin: 6px auto 0;
   max-width: 32ch;

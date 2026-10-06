@@ -376,7 +376,6 @@ function PathShowcase({
             <span key={p.id} className={`evo-show-dot${i === index ? ' is-on' : ''}`} />
           ))}
         </div>
-        {path.description && <p className="evo-show-desc">{path.description}</p>}
       </div>
 
       <div className="evo-show-body">

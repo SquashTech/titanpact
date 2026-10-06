@@ -2,6 +2,8 @@
 // needed: PassiveHook 'SwitchedIn' and the 'activeEnemies' group target (passiveEngine.ts).
 
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as path from 'path';
 import { test } from './harness';
 import { createFightState } from './fixtures';
 import { heroes } from '../src/data/heroes';
@@ -425,4 +427,10 @@ test('unstoppableGrowth: a passive-applied HoT is FLAT — it is not run through
 
   assert.strictEqual(renewOf(lead.state, 'a1'), GROWTH);
   assert.deepStrictEqual(renewGrants(arrival.events, 'a3'), [GROWTH]);
+});
+
+test('events: every event has its own road icon in art/events', () => {
+  const dir = path.resolve(__dirname, '../../art/events');
+  const missing = Object.keys(runEvents).filter((id) => !fs.existsSync(path.join(dir, `${id}.png`)));
+  assert.deepStrictEqual(missing, [], `events with no icon in art/events: ${missing.join(', ')}`);
 });

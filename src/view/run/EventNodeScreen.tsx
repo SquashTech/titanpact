@@ -48,6 +48,7 @@ import {
   NODE_TINT_VITAL,
 } from '../shared/NodeStage';
 import { passiveColor, PassiveGlyph } from '../shared/passiveIcons';
+import { eventIcon } from './mapNodeArt';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -366,6 +367,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
           compact={outcome?.kind !== 'statShift'}
           eyebrow={event.eyebrow}
           title={event.name}
+          art={<img src={eventIcon(event.id)} className="event-art" alt="" draggable={false} />}
           readoutKey={arrived ? `${picked ?? 'choose'}:${resolvedTo ?? (arriving ? 'leaving' : 'idle')}` : 'arriving'}
           readoutLive={!!resolvedTo}
           /* Empty, not undefined, during the beat: NodeHeader reserves the readout's height. */

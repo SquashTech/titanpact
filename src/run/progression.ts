@@ -148,8 +148,6 @@ export interface EvolutionPath {
   id: string;
   heroId: string;
   name: string;
-  /** Shown on the Evolution choice screen. */
-  description?: string;
   /** Granted outright the moment the path is chosen, up to MOVE_CAP — see applyEvolutionMoves for the overflow. */
   unlocksMoveIds: string[];
   /** Join the hero's level-up pool (still tier-gated) rather than being granted. Derived, never authored: data/progression.ts evolutionLine. */

@@ -61,6 +61,14 @@ const PALETTE = {
   h: '#9babb2',
   i: '#694f62',
   j: '#7f708a',
+  p: '#fdcbb0', // shell, pale
+  P: '#f68181',
+  q: '#cf657f',
+  R: '#e83b3b', // card red
+  B: '#4d9be6', // card back
+  N: '#4d65b4',
+  v: '#ab947a', // straw
+  n: '#966c6c',
 };
 
 const ICONS = {
@@ -121,6 +129,83 @@ const ICONS = {
     'aijjjjjjjjjjjjia',
     'aiiiiiiiiiiiiiia',
     '.aaaaaaaaaaaaaa.',
+  ],
+  // The events the pack has no picture for (the rest are copied from it into art/events).
+  // Wildcard: a fan of three cards, the front one a red heart.
+  'events/wildcard': [
+    '................',
+    '.aaaaa..........',
+    'aBNBNBa.........',
+    'aNBNBaaaaa......',
+    'aBNBaWWWWga.....',
+    'aNBNaWRWWaaaaa..',
+    'aBNBaWWWaWWWWga.',
+    'aNBNaWWWaWWWWga.',
+    'aBNBaWWWaRRWRRa.',
+    'aNBNaWWWaRRRRRa.',
+    '.aaaaWWWaWRRRga.',
+    '....agggaWWRWga.',
+    '.....aaaaWWWWga.',
+    '........aggggga.',
+    '.........aaaaa..',
+    '................',
+  ],
+  // Shipwreck: the anchor that did not hold.
+  'events/shipwreck': [
+    '......aaaa......',
+    '.....aLMMDa.....',
+    '.....aMaaDa.....',
+    '.....aMDDDa.....',
+    '...aaaaLDaaaa...',
+    '...aLLLLMMMMDa..',
+    '...aaaaLDaaaa...',
+    '......aLDa......',
+    '......aLDa......',
+    '......aLDa......',
+    '.aa...aLDa...aa.',
+    'aLMa..aLDa..aMDa',
+    '.aMDaaLLDDaaMDa.',
+    '..aMMMLLDDDDDa..',
+    '...aaMMMDDDaa...',
+    '.....aaaaaa.....',
+  ],
+  // Siren Song: a scallop off the sea floor.
+  'events/sirenSong': [
+    '................',
+    '................',
+    '.....aaaaaa.....',
+    '...aaPpPpPqaa...',
+    '..aPpPpPpPpPqa..',
+    '.apPpPpPpPpPpqa.',
+    '.apPpPpPpPpPpqa.',
+    'aPpPpPpPpPpPpPqa',
+    'aPpPpPpPpPpPpPqa',
+    '.apPpPpPpPpPpqa.',
+    '..aqpPpPpPpPqa..',
+    '...aaqpPpPqaa...',
+    '.....aqqqqa.....',
+    '....aqaaaaqa....',
+    '....aaa..aaa....',
+    '................',
+  ],
+  // The Roc's Nest: the egg in its straw, the mother out.
+  'events/rocsNest': [
+    '................',
+    '................',
+    '......aaaa..k...',
+    '.....aWWgga.....',
+    '....aWWgggha....',
+    '....aWgggghak...',
+    '....aWggghha....',
+    '.aaaagggghhaaaa.',
+    'avnvvnvvnvvnvvna',
+    'anvnnvnnvnnvnnva',
+    '.avnvvnvvnvvnva.',
+    '.aniinniinniina.',
+    '..aiininniinia..',
+    '...aaaaaaaaaa...',
+    '................',
+    '................',
   ],
 };
 

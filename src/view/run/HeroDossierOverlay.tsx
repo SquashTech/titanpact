@@ -109,7 +109,6 @@ function EvolutionPathCard({
         <span className="evo-path-name">{path.name}</span>
         <EvolutionStar path={path} className="evo-path-star" />
       </div>
-      {path.description && <div className="evo-path-desc">{path.description}</div>}
 
       {path.swapsOffense && (
         <div className="detail-modifier-list">
