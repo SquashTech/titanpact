@@ -16,6 +16,7 @@ import moltenFoundryUrl from '../../music/molten foundry.flac?url';
 import stormCoastUrl from '../../music/stormcoast.flac?url';
 import necropolisUrl from '../../music/necropolis.flac?url';
 import holySanctumUrl from '../../music/holysanctum.flac?url';
+import frozenReachUrl from '../../music/frozenreach.flac?url';
 import titleScreenUrl from '../../music/titlescreen.flac?url';
 
 export interface TrackDefinition {
@@ -59,6 +60,10 @@ const trackTable = {
   },
   holySanctum: {
     url: holySanctumUrl,
+    gain: 0.85,
+  },
+  frozenReach: {
+    url: frozenReachUrl,
     gain: 0.85,
   },
   titleScreen: {
