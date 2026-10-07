@@ -10,7 +10,7 @@ import { STAT_LABELS } from './StatBars';
 import { StatGlyph } from './statIcons';
 import { ElementGlyph } from './elementIcons';
 import { EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS, enchantTypeOf, fmtGrant } from './EquipmentBox';
-import { PassiveGlyph, PassiveStatChips, passiveColor, passiveEffectSummary, passiveKindLabel } from './passiveIcons';
+import { PassiveGlyph, PassiveStatChips, passiveColor, passiveEffectSummary } from './passiveIcons';
 import { ResourceGlyph } from './RunGlyph';
 import { getTypeColor } from '../combat/typeColors';
 import { overlayHost } from './overlayHost';
@@ -94,7 +94,6 @@ export function ItemDetailCard({ item }: { item: EquipmentDefinition }) {
                 </span>
                 <span className="move-detail-effect-text">
                   {def.name}
-                  <span className="item-detail-passive-kind">{passiveKindLabel(def)}</span>
                   <span className="move-detail-effect-note">{def.description}</span>
                   <PassiveStatChips def={def} />
                   {summary && <span className="move-detail-effect-note item-detail-passive-meta">{summary}</span>}

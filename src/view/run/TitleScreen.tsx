@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { CollectionScreen } from './CollectionScreen';
 import type { Deck } from '../../run/deck';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
@@ -18,6 +18,7 @@ import type { Profile } from '../../run/profile';
 import { isConstructedOpen } from '../../run/constructed';
 import { isGauntletOpen } from '../../run/gauntlet';
 import recordsArt from '../../../art/ui/records.png';
+import { ModeArrows, ModeLight, ModeRail, ModeStage, PactButton, TITLE_MODES, type TitleMode } from './TitleModes';
 
 interface Props {
   /** Lifetime figures and hero stars. Re-read by App whenever this screen is entered. */
@@ -84,51 +85,12 @@ const MOTES = Array.from({ length: MOTE_COUNT }, (_, i) => {
   };
 });
 
-/**
- * The one press this screen is built around. The bezel and the specular sweep are separate
- * elements rather than shadows on the button because the plate is chamfered by a
- * `clip-path`, and a clip-path takes the box-shadow with it — so the glow lives on the
- * socket outside the clip and the sweep lives inside it.
- *
- * It carries no colour of its own: the metal is a set of custom properties declared on
- * `.title-screen` and inherited down (see `tone` in TitleScreen below).
- */
-function PactButton({
-  label,
-  disabled,
-  onClick,
-}: {
-  label: string;
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <div className="title-cta-socket">
-      <span className="title-cta-wing-tip is-left" aria-hidden="true" />
-      <span className="title-cta-wing-tip is-right" aria-hidden="true" />
-      <span className="title-cta-frame" aria-hidden="true" />
-      <button className="resolve-button title-cta" onClick={onClick} disabled={disabled}>
-        <span className="title-cta-sheen" aria-hidden="true" />
-        <span className="title-cta-label">{label}</span>
-      </button>
-    </div>
-  );
-}
+/** How far a drag must run sideways, and how much straighter than it is tall, to turn the page. */
+const SWIPE_MIN_PX = 48;
+const SWIPE_SLOPE = 1.4;
 
-/** A mode beside Seal the Pact. Shut, it still stands, padlocked, and a tap says what opens it. */
-function ModeDoor({ label, open, disabled, onOpen, onLocked }: { label: string; open: boolean; disabled: boolean; onOpen: () => void; onLocked: () => void }) {
-  return (
-    <button className={`title-newrun-button title-mode${open ? '' : ' is-locked'}`} onClick={open ? onOpen : onLocked} disabled={disabled} aria-label={open ? label : `${label}, locked`}>
-      {!open && (
-        <svg className="title-mode-lock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <rect x="5" y="11" width="14" height="10" rx="2" />
-          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-        </svg>
-      )}
-      {label}
-    </button>
-  );
-}
+/** How long a locked door's note floats before it goes. */
+const LOCKED_NOTE_MS = 2200;
 
 export function TitleScreen({
   profile,
@@ -170,7 +132,68 @@ export function TitleScreen({
   const [confirmingNewRun, setConfirmingNewRun] = useState(false);
   const [pickingCycle, setPickingCycle] = useState(false);
   const [staleNoteDismissed, setStaleNoteDismissed] = useState(false);
-  const [lockedNote, setLockedNote] = useState<string | null>(null);
+  const [mode, setMode] = useState<TitleMode>('pact');
+  /** Which way the mode page slid in: +1 from the right, -1 from the left. */
+  const [modeSlide, setModeSlide] = useState(0);
+  /** A locked door's note, keyed so a second tap restarts its float. */
+  const [lockedNote, setLockedNote] = useState<{ text: string; key: number } | null>(null);
+  const swipe = useRef<{ x: number; y: number; id: number } | null>(null);
+  /** Set when a drag turned the page, so the click that ends it does not also press what it ended on. */
+  const swiped = useRef(false);
+
+  useEffect(() => {
+    if (!lockedNote) return;
+    const id = window.setTimeout(() => setLockedNote(null), LOCKED_NOTE_MS);
+    return () => window.clearTimeout(id);
+  }, [lockedNote]);
+
+  function selectMode(next: TitleMode) {
+    if (next === mode || launching) return;
+    setModeSlide(Math.sign(TITLE_MODES.indexOf(next) - TITLE_MODES.indexOf(mode)));
+    setMode(next);
+    setLockedNote(null);
+  }
+
+  function stepMode(delta: number) {
+    const next = TITLE_MODES[TITLE_MODES.indexOf(mode) + delta];
+    if (next) selectMode(next);
+  }
+
+  function showLocked(text: string) {
+    setLockedNote({ text, key: Date.now() });
+  }
+
+  /** Pages turn only on the bare title — never under a sheet or a menu standing over it. */
+  const pagesTurn = tab === 'play' && !confirmingNewRun && !pickingCycle && !showRecords && !showReference && !showOptions && !showLocations && !showDev;
+
+  function handlePointerDown(e: ReactPointerEvent) {
+    swiped.current = false;
+    swipe.current = pagesTurn && e.isPrimary ? { x: e.clientX, y: e.clientY, id: e.pointerId } : null;
+  }
+
+  function handlePointerUp(e: ReactPointerEvent) {
+    const start = swipe.current;
+    swipe.current = null;
+    if (!start || start.id !== e.pointerId) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) < Math.abs(dy) * SWIPE_SLOPE) return;
+    swiped.current = true;
+    // The click, if one follows, is dispatched in this same input task; a drag that ended off its
+    // start element has none, and must not leave the flag to swallow the next real tap.
+    window.setTimeout(() => (swiped.current = false), 0);
+    stepMode(dx < 0 ? 1 : -1);
+  }
+
+  useEffect(() => {
+    if (!pagesTurn) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft') stepMode(-1);
+      if (e.key === 'ArrowRight') stepMode(1);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
   // The sound already plays from the delegated pointerdown listener (audio/uiSfx.ts).
   function launch(action: () => void) {
@@ -219,7 +242,18 @@ export function TitleScreen({
   const balance = starBalance(profile, starShopCatalog);
 
   return (
-    <div className={`title-screen is-${tone}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}`}>
+    <div
+      className={`title-screen is-${tone} is-mode-${mode}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}`}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => (swipe.current = null)}
+      onClickCapture={(e) => {
+        if (!swiped.current) return;
+        swiped.current = false;
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+    >
       {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
           back is instant, and display: contents keeps them in the screen's own flex and stacking. */}
       <div className="title-play">
@@ -300,16 +334,6 @@ export function TitleScreen({
         ) : (
           <PactButton label="Seal the Pact" disabled={launching} onClick={handleStart} />
         )}
-        {/* The three modes (docs/gauntlet.md §7): Seal the Pact is the press above; these two open on the first win. */}
-        <div className="title-modes">
-          <ModeDoor label="The Trials" open={isConstructedOpen(profile)} disabled={launching} onOpen={() => onOpenConstructed()} onLocked={() => setLockedNote('Win a run to open the Trials.')} />
-          <ModeDoor label="The Gauntlet" open={isGauntletOpen(profile)} disabled={launching} onOpen={onOpenGauntlet} onLocked={() => setLockedNote('Win a run to open the Gauntlet.')} />
-        </div>
-        {lockedNote && (
-          <button className="title-stale-note" onClick={() => setLockedNote(null)}>
-            {lockedNote}
-          </button>
-        )}
         {/* The reason itself is developer-shaped ("roster[0].unlockedMoveIds references..."), so it
             goes to the console (App.tsx) and the player gets the one fact they can act on. */}
         {staleSaveReason && !staleNoteDismissed && (
@@ -322,7 +346,30 @@ export function TitleScreen({
             {saveNotice} Tap to dismiss.
           </button>
         )}
+        {/* The mode rail floats at the foot of the stack; this holds its place, so the seal does not move. */}
+        <span className="title-mode-rail-seat" aria-hidden="true" />
       </div>
+
+      {/* The other two doors (docs/gauntlet.md §7) are pages either side of this one. */}
+      {mode !== 'pact' && <ModeLight mode={mode} />}
+      {mode !== 'pact' && (
+        <ModeStage
+          mode={mode}
+          profile={profile}
+          open={mode === 'trials' ? isConstructedOpen(profile) : isGauntletOpen(profile)}
+          disabled={launching}
+          direction={modeSlide}
+          onOpen={mode === 'trials' ? () => onOpenConstructed() : onOpenGauntlet}
+          onLocked={() => showLocked(mode === 'trials' ? 'Win a run to open the Trials.' : 'Win a run to open the Gauntlet.')}
+        />
+      )}
+      <ModeArrows mode={mode} onSelect={selectMode} />
+      <ModeRail mode={mode} onSelect={selectMode} />
+      {lockedNote && (
+        <div key={lockedNote.key} className="title-locked-toast" role="status">
+          {lockedNote.text}
+        </div>
+      )}
 
       {/* Records, Reference and Options are corner glyphs: a ledger, a lookup and a dial, not places. */}
       <button

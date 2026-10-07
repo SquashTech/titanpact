@@ -46,9 +46,10 @@ interface Props {
   onClose: () => void;
 }
 
+/** Seated in the footer beside the primary press, where the thumb already is. */
 function Back({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button type="button" className="cx-back" aria-label={label} onClick={onClick}>
+    <button type="button" className="secondary-button gx-footer-back" aria-label={label} onClick={onClick}>
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M15 5l-7 7 7 7" />
       </svg>
@@ -56,10 +57,10 @@ function Back({ label, onClick }: { label: string; onClick: () => void }) {
   );
 }
 
-function Header({ title, onBack, backLabel, side }: { title: string; onBack: () => void; backLabel: string; side?: React.ReactNode }) {
+function Header({ title, side }: { title: string; side?: React.ReactNode }) {
   return (
     <div className="cx-header">
-      <Back label={backLabel} onClick={onBack} />
+      <span aria-hidden="true" />
       <h2 className="cx-title">{title}</h2>
       <div className="cx-header-side">{side}</div>
     </div>
@@ -108,7 +109,7 @@ function HeroSheet({ slot, stars, action, onBack }: { slot: TeamSlot; stars: Pro
 
   return (
     <>
-      <Header title={hero.name} onBack={onBack} backLabel="Back" />
+      <Header title={hero.name} />
       <div className="screen-scroll gx-sheet">
         <div className="cx-showcase">
           <HeroPortrait heroId={hero.id} pathId={slot.pathId ?? undefined} className="cx-showcase-portrait" />
@@ -147,7 +148,10 @@ function HeroSheet({ slot, stars, action, onBack }: { slot: TeamSlot; stars: Pro
             ))}
         </div>
       </div>
-      {action && <div className="gx-sheet-footer">{action}</div>}
+      <div className="gx-footer">
+        <Back label="Back" onClick={onBack} />
+        {action}
+      </div>
       {inspect && <StageMovePopup move={inspect} caster={caster} onClose={() => setInspect(null)} />}
     </>
   );
@@ -214,13 +218,14 @@ function BoardView({ run, stars, onDraft, onClose }: { run: GauntletRun; stars: 
 
   return (
     <>
-      <Header title="Draft six" onBack={onClose} backLabel="Back to the title" side={<span className="cx-team-state">{`${picks.length} / ${TEAM_SIZE}`}</span>} />
+      <Header title="Draft six" side={<span className="cx-team-state">{`${picks.length} / ${TEAM_SIZE}`}</span>} />
       <div className="screen-scroll gx-board">
         {run.board.map((slot, i) => (
           <BoardCard key={slot.heroId} slot={slot} stars={stars} order={picks.includes(i) ? picks.indexOf(i) : null} onOpen={() => setReading(i)} />
         ))}
       </div>
-      <div className="gx-board-footer">
+      <div className="gx-footer">
+        <Back label="Back to the title" onClick={onClose} />
         <button type="button" className="resolve-button" disabled={picks.length !== TEAM_SIZE} onClick={() => onDraft(picks)}>
           Lock in the six
         </button>
@@ -252,7 +257,7 @@ function BetweenView({ run, stars, opponent, notice, onFight, onRetire, onClose 
 
   return (
     <>
-      <Header title="The Gauntlet" onBack={onClose} backLabel="Back to the title" />
+      <Header title="The Gauntlet" />
       <div className="screen-scroll gx-between">
         {shownNotice && (
           <button type="button" className="cx-notice" onClick={() => setShownNotice(null)}>
@@ -269,7 +274,8 @@ function BetweenView({ run, stars, opponent, notice, onFight, onRetire, onClose 
           <Strip slots={opponent} onOpen={(i) => setReading(opponent[i])} />
         </div>
       </div>
-      <div className="cx-footer">
+      <div className="gx-footer is-three">
+        <Back label="Back to the title" onClick={onClose} />
         <button type="button" className={`secondary-button cx-delete${confirmRetire ? ' is-armed' : ''}`} onClick={() => (confirmRetire ? onRetire() : setConfirmRetire(true))}>
           {confirmRetire ? (run.wins >= WINS_TO_CLEAR ? 'Retire' : 'Retire for nothing') : 'Retire'}
         </button>
@@ -289,7 +295,7 @@ function ResultView({ result, onDone }: { result: GauntletResult; onDone: () => 
     .filter((p): p is NonNullable<typeof p> => !!p);
   return (
     <>
-      <Header title={result.cleared ? 'Gauntlet cleared' : 'Gauntlet over'} onBack={onDone} backLabel="Back" />
+      <Header title={result.cleared ? 'Gauntlet cleared' : 'Gauntlet over'} />
       <div className="screen-scroll gx-result">
         <Record wins={result.wins} losses={result.losses} />
         <div className="gx-result-score">{`${result.wins}–${result.losses}`}</div>
@@ -332,7 +338,7 @@ function EntryView({ freeEntry, balance, entered, clears, onEnter, onClose }: Pi
   const affordable = freeEntry || balance >= GAUNTLET_ENTRY_PRICE;
   return (
     <>
-      <Header title="The Gauntlet" onBack={onClose} backLabel="Back to the title" />
+      <Header title="The Gauntlet" />
       <div className="screen-scroll gx-entry">
         <p className="gx-entry-copy">
           {`Fifteen of your heroes, each rolled into a random form. Draft six. Win ${WINS_TO_CLEAR} fights before you lose ${LOSSES_TO_END}, and every path on your team is starred, plus ${GAUNTLET_CLEAR_BONUS} ★.`}
@@ -344,7 +350,8 @@ function EntryView({ freeEntry, balance, entered, clears, onEnter, onClose }: Pi
           </div>
         )}
       </div>
-      <div className="gx-board-footer">
+      <div className="gx-footer">
+        <Back label="Back to the title" onClick={onClose} />
         <button type="button" className="resolve-button" disabled={!affordable} onClick={onEnter}>
           {freeEntry ? 'Enter — free today' : `Enter — ${GAUNTLET_ENTRY_PRICE} ★`}
         </button>

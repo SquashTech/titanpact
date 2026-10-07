@@ -11,7 +11,7 @@ import { fieldEffectIconArt } from './iconArt';
 import { TypeBadge } from './TypeBadge';
 import { StatusGlyph, statusColor, statusTint, statusClearText, pipelineLabel } from './statusIcons';
 import { EquipmentCatalog, TypeDial } from './referencePages';
-import { PassiveGlyph, passiveColor, passiveTint, passiveEffectSummary, passiveKindLabel, PassiveStatChips } from './passiveIcons';
+import { PassiveGlyph, passiveColor, passiveTint, passiveEffectSummary, PassiveStatChips } from './passiveIcons';
 
 interface Props {
   onClose: () => void;
@@ -136,7 +136,6 @@ function PassiveReferenceRow({ def }: { def: PassiveDefinition }) {
           <span className="status-ref-name" style={{ color }}>
             {def.name}
           </span>
-          <span className="status-ref-pipeline">{passiveKindLabel(def)}</span>
         </div>
         <div className="status-ref-desc">{def.description}</div>
         <PassiveStatChips def={def} />

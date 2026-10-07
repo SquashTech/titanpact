@@ -16,7 +16,7 @@ import { CLASS_PATHS } from '../shared/classIcons';
 import { ElementGlyph } from '../shared/elementIcons';
 import { healCasterForEntry } from '../shared/healCaster';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { moveEffectSummary, useLongPress } from '../shared/MoveTile';
+import { MoveButtonReplica, moveEffectSummary, useLongPress } from '../shared/MoveTile';
 import { NodeMotes, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { PassiveGlyph, PassiveReadout, passiveColor } from '../shared/passiveIcons';
 import { PassiveDetailOverlay } from '../shared/PassiveDossier';
@@ -304,7 +304,11 @@ interface CardProps {
   onRead: () => void;
 }
 
-/** One Class: its mark, its name, and the verb in a line — the move at the type it will have on THIS hero. Tap picks; hold reads. */
+/**
+ * One Class: its mark and name over the verb drawn as the player already knows it — a move as the
+ * fight's own move button (at the type it will have on THIS hero), a passive as the innate readout.
+ * Tap picks; hold reads.
+ */
 function ClassCard({ cls, picked, dimmed, caster, onPick, onRead }: CardProps) {
   const authored = cls.grantsMoveId ? moves[cls.grantsMoveId] : null;
   const move = authored && caster ? moveForPrimaryType(authored, caster.types[0]) : authored;
@@ -313,7 +317,7 @@ function ClassCard({ cls, picked, dimmed, caster, onPick, onRead }: CardProps) {
   const summary = move ? moveEffectSummary(move, caster) : passive?.description ?? '';
   return (
     <div
-      className={`verb-card${picked ? ' is-picked' : ''}${dimmed ? ' is-dimmed' : ''}`}
+      className={`verb-card class-card${picked ? ' is-picked' : ''}${dimmed ? ' is-dimmed' : ''}`}
       style={{ '--rite-color': classColor(cls) } as CSSProperties}
       role="button"
       tabIndex={0}
@@ -328,34 +332,16 @@ function ClassCard({ cls, picked, dimmed, caster, onPick, onRead }: CardProps) {
       }}
       {...longPress}
     >
-      <span className="verb-card-socket" aria-hidden="true">
-        <ClassGlyph cls={cls} className="verb-card-glyph" />
-      </span>
-      <span className="verb-card-body">
-        <span className="verb-card-head">
-          <span className="verb-card-name">{cls.name}</span>
-          <span className="verb-card-kind">{move ? 'Move' : 'Passive'}</span>
+      <span className="verb-card-head class-card-head">
+        <span className="class-card-mark" aria-hidden="true">
+          <ClassGlyph cls={cls} />
         </span>
-        {move && (
-          <span className="verb-card-verb">
-            <span className="verb-card-verb-name" style={{ color: getTypeColor(move.type) }}>
-              <ElementGlyph type={move.type} />
-              {move.name}
-            </span>
-            {move.kind === 'damage' && move.basePower ? <span className="verb-card-fact">{move.basePower} BP</span> : null}
-            {/* The twins (Volley / Cascade) differ only here, so it is printed. */}
-            {move.kind === 'damage' ? <span className="verb-card-fact">{move.category === 'physical' ? 'Physical' : 'Magical'}</span> : null}
-            <span className="verb-card-fact is-mana">{move.manaCost} MP</span>
-          </span>
-        )}
-        {passive && (
-          <span className="verb-card-verb">
-            <span className="verb-card-verb-name" style={{ color: passiveColor(passive.id) }}>
-              {passive.name}
-            </span>
-          </span>
-        )}
-        {summary && <span className="verb-card-desc">{summary}</span>}
+        <span className="verb-card-name">{cls.name}</span>
+      </span>
+      {/* Read-only: the card takes the press, so the replica is drawn and never pressed. */}
+      <span className="class-card-verb">
+        {authored && <MoveButtonReplica move={authored} caster={caster} />}
+        {passive && <PassiveReadout passive={passive} />}
       </span>
     </div>
   );

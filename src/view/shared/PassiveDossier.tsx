@@ -5,7 +5,7 @@ import { STAT_LABELS } from './StatBars';
 import { MoveKindGlyph, StatGlyph } from './statIcons';
 import { ElementGlyph } from './elementIcons';
 import { StatusGlyph, statusColor } from './statusIcons';
-import { PassiveGlyph, passiveColor, passiveKindLabel, passiveStatGrants, passiveTint } from './passiveIcons';
+import { PassiveGlyph, passiveColor, passiveStatGrants, passiveTint } from './passiveIcons';
 import { passiveFacts, type PassiveFact } from './passiveFacts';
 import { getTypeColor } from '../combat/typeColors';
 import { overlayHost } from './overlayHost';
@@ -70,10 +70,6 @@ export function PassiveDetailCard({ passive }: { passive: PassiveDefinition }) {
         <div className="move-detail-titles">
           <div className="move-detail-name" style={{ color }}>
             {passive.name}
-          </div>
-          <div className="move-detail-line">
-            {/* The cap is its own row below, so the line does not say it twice. */}
-            <span>{passive.reactive?.oncePerFight ? 'Triggered' : passiveKindLabel(passive)}</span>
           </div>
         </div>
       </div>

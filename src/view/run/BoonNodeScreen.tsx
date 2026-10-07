@@ -15,7 +15,7 @@ import { currentEvolutionPathId } from '../../run/progression';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { useLongPress } from '../shared/MoveTile';
 import { NodeMotes, NODE_TINT_ARCANE } from '../shared/NodeStage';
-import { PassiveGlyph, PassiveReadout, passiveColor, passiveKindLabel } from '../shared/passiveIcons';
+import { PassiveGlyph, PassiveReadout, passiveColor } from '../shared/passiveIcons';
 import { PassiveDetailOverlay } from '../shared/PassiveDossier';
 import shrineArt from '../../../art/map-nodes/icons/passiveReward.png';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -69,7 +69,6 @@ function BoonCard({
       <span className="verb-card-body">
         <span className="verb-card-head">
           <span className="verb-card-name">{passive.name}</span>
-          <span className="verb-card-kind">{passiveKindLabel(passive)}</span>
         </span>
         <span className="verb-card-desc is-full">{passive.description}</span>
       </span>

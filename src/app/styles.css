@@ -12205,6 +12205,7 @@ button.star-shop-bundle-face {
 }
 
 .passive-readout-name {
+  flex: 1;
   color: var(--passive-color);
 }
 
@@ -12215,8 +12216,7 @@ button.star-shop-bundle-face {
   color: var(--accent);
 }
 
-.item-readout-rarity,
-.passive-readout-kind {
+.item-readout-rarity {
   margin-left: auto;
   flex-shrink: 0;
   font-size: 9px;
@@ -25345,6 +25345,23 @@ button.star-shop-bundle-face {
    the wash inside it take the place's tint from the one property the whole
    location system keys off, and the screen's --node-rgb (the pick's, or
    gold) stays with the sky, the header and the button. */
+/* Set out, once a seal is picked: the plank breathes in the picked place's colour (--node-rgb, set on the screen). */
+.location-choice-screen.has-pick .resolve-button:not(:disabled) {
+  color: color-mix(in srgb, rgb(var(--node-rgb)) 45%, #fff6e0);
+  text-shadow: 0 2px 0 #1a0f07, 0 0 12px rgba(var(--node-rgb), 0.9);
+  animation: location-cta-glow 2.2s ease-in-out infinite;
+}
+
+@keyframes location-cta-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 6px rgba(var(--node-rgb), 0.55));
+  }
+  50% {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 16px rgba(var(--node-rgb), 0.95)) brightness(1.12);
+  }
+}
+
 .location-choice-options {
   position: relative;
   z-index: 1;
@@ -31604,6 +31621,47 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
+/* A Class card (CrucibleScreen ClassCard): the mark and name over the verb drawn as the fight draws it —
+   the move button, or the innate readout — so a move reads as a move and a passive as a passive. */
+.verb-card.class-card {
+  height: auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px 10px 10px;
+}
+
+.crucible-class-list {
+  overflow-y: auto;
+  justify-content: safe center;
+}
+
+.class-card-head {
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.class-card-mark {
+  display: inline-flex;
+  color: var(--rite-color);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--rite-color) 60%, transparent));
+}
+
+.class-card-mark .status-glyph {
+  width: 18px;
+  height: 18px;
+}
+
+.class-card-verb {
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.class-card-verb .passive-readout {
+  background: rgba(10, 12, 18, 0.55);
+}
+
 .rite-screen .resolve-button {
   position: relative;
   z-index: 1;
@@ -31954,18 +32012,6 @@ button.star-shop-bundle-face {
 .move-detail-stat.is-loss strong,
 .move-detail-stat.is-loss .move-detail-unit {
   color: var(--hp-low);
-}
-
-/* A passive row: name in the passive's colour, its kind under it in the
-   register the passive dossier uses, then the whole description, then its chips. */
-.item-detail-passive-kind {
-  display: block;
-  margin-top: 1px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-dim);
 }
 
 .item-detail-effects .move-detail-effect-note {
@@ -44483,31 +44529,592 @@ img.smithy-service-art {
   color: var(--text-dim);
 }
 
-/* --- The title's three doors (docs/gauntlet.md §7): Seal the Pact is the CTA; the Trials and the Gauntlet sit under it. --- */
-.title-modes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+/* --- The title's three doors as pages (TitleModes.tsx; docs/gauntlet.md §7) ---------------------
+   Seal the Pact is the title itself, in the middle; the Trials (left) and the Gauntlet (right) are
+   stages of their own a swipe or an edge arrow away. Off the Pact page, its seal, Titan, wordmark,
+   bearers and press step back; the fog, ash, grain, vignette and the ridge's ground stay as the
+   one world all three stand in. */
+.title-play > .title-heading,
+.title-play > .title-buttons,
+.title-titan,
+.title-backlight,
+.title-ridge-figures {
+  transition: opacity 0.35s var(--ease-out);
 }
 
-.title-mode {
+.title-screen:not(.is-mode-pact) .title-play > .title-heading,
+.title-screen:not(.is-mode-pact) .title-play > .title-buttons,
+.title-screen:not(.is-mode-pact) .title-titan,
+.title-screen:not(.is-mode-pact) .title-backlight,
+.title-screen:not(.is-mode-pact) .title-ridge-figures {
+  animation: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Holds the rail's place at the foot of every page's stack, so a page turn moves nothing. */
+.title-mode-rail-seat {
+  display: block;
+  flex: none;
+  height: 30px;
+}
+
+.title-mode-rail {
+  position: absolute;
+  left: 44px;
+  right: 44px;
+  bottom: calc(var(--hub-nav-h) + 24px);
+  z-index: 4;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding-inline: 6px;
+  gap: 2px;
+  animation: title-icon-row-fade 0.7s ease 0.6s both;
+}
+
+.title-mode-rail-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 0;
+  background: none;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   white-space: nowrap;
-  letter-spacing: 0.02em;
-  color: #e4d3a8;
+  color: rgba(232, 212, 166, 0.45);
+  text-shadow: 0 1px 3px #000;
+  transition: color var(--dur-mid) var(--ease-out);
 }
 
-.title-mode.is-locked {
-  color: var(--text-dim);
-  opacity: 0.55;
+.title-mode-rail-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  transition: transform var(--dur-mid) var(--ease-spring), box-shadow var(--dur-mid) var(--ease-out);
 }
 
-.title-mode-lock {
+.title-mode-rail-item.is-active {
+  color: #f3dfae;
+}
+
+.title-mode-rail-item.is-active .title-mode-rail-dot {
+  opacity: 1;
+  transform: scale(1.35);
+  box-shadow: 0 0 8px rgba(240, 188, 95, 0.9);
+}
+
+.title-screen.is-mode-trials .title-mode-rail-item.is-active {
+  color: #d6e4f4;
+}
+
+.title-screen.is-mode-trials .title-mode-rail-item.is-active .title-mode-rail-dot {
+  box-shadow: 0 0 8px rgba(150, 196, 240, 0.9);
+}
+
+.title-screen.is-mode-gauntlet .title-mode-rail-item.is-active {
+  color: #ffc9a8;
+}
+
+.title-screen.is-mode-gauntlet .title-mode-rail-item.is-active .title-mode-rail-dot {
+  box-shadow: 0 0 8px rgba(240, 96, 60, 0.9);
+}
+
+/* Either side of the rail, where the thumb already is. */
+.title-mode-arrow {
+  position: absolute;
+  bottom: calc(var(--hub-nav-h) + 24px - 7px);
+  z-index: 4;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgba(243, 223, 174, 0.7);
+  filter: drop-shadow(0 0 6px rgba(240, 188, 95, 0.45)) drop-shadow(0 2px 2px #000);
+  animation: title-icon-row-fade 0.7s ease 0.8s both;
+}
+
+.title-mode-arrow.is-left {
+  left: 4px;
+}
+
+.title-mode-arrow.is-right {
+  right: 4px;
+}
+
+.title-mode-arrow svg {
+  animation: title-mode-arrow-nudge 2.6s ease-in-out infinite;
+}
+
+.title-mode-arrow.is-left svg {
+  --nudge: -4px;
+}
+
+.title-mode-arrow.is-right svg {
+  --nudge: 4px;
+}
+
+@keyframes title-mode-arrow-nudge {
+  0%,
+  70%,
+  100% {
+    transform: translateX(0);
+  }
+  80% {
+    transform: translateX(var(--nudge));
+  }
+}
+
+/* A locked door says what opens it, floating over the page rather than pushing it. */
+.title-locked-toast {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  z-index: 6;
+  padding: 10px 16px;
+  border: 1px solid rgba(224, 166, 60, 0.45);
+  border-radius: var(--radius-sm);
+  background: rgba(10, 13, 18, 0.94);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: #f3dfae;
+  pointer-events: none;
+  animation: title-locked-toast 2.2s var(--ease-out) both;
+}
+
+@keyframes title-locked-toast {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px) scale(0.96);
+  }
+  10%,
+  80% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -6px) scale(1);
+  }
+}
+
+/* --- A mode page ----------------------------------------------------------- */
+.title-mode-light {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  animation: title-mode-light-in 0.6s var(--ease-out) both;
+}
+
+@keyframes title-mode-light-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.title-mode-light.is-trials {
+  background:
+    radial-gradient(ellipse 70% 34% at 50% 14%, rgba(150, 190, 240, 0.28), transparent 74%),
+    radial-gradient(ellipse 50% 20% at 50% 60%, rgba(120, 160, 220, 0.16), transparent 72%),
+    radial-gradient(ellipse 100% 26% at 50% 94%, rgba(110, 140, 200, 0.3), transparent 74%);
+}
+
+.title-mode-light.is-gauntlet {
+  background:
+    radial-gradient(ellipse 70% 34% at 50% 18%, rgba(220, 70, 40, 0.3), transparent 74%),
+    radial-gradient(ellipse 46% 18% at 50% 42%, rgba(255, 150, 60, 0.18), transparent 72%),
+    radial-gradient(ellipse 100% 28% at 50% 96%, rgba(200, 70, 30, 0.34), transparent 74%);
+  animation: title-mode-light-in 0.6s var(--ease-out) both, gauntlet-light-flicker 5.3s ease-in-out infinite;
+}
+
+@keyframes gauntlet-light-flicker {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  40% {
+    filter: brightness(1.12);
+  }
+  55% {
+    filter: brightness(0.94);
+  }
+}
+
+.title-mode-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 56px 16px calc(var(--hub-nav-h) + 24px);
+  pointer-events: none;
+  animation: title-mode-stage-in 0.42s var(--ease-spring) both;
+}
+
+.title-mode-stage > .title-buttons {
+  pointer-events: auto;
+}
+
+@keyframes title-mode-stage-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--slide, 0) * 44px));
+  }
+}
+
+.title-mode-scene {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-self: stretch;
+}
+
+.title-mode-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 18px;
+}
+
+.title-mode-the {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5em;
+  padding-left: 0.5em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.title-mode-word {
+  position: relative;
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  padding-left: 0.14em;
+  background: var(--mode-word);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 14px rgba(var(--mode-glow), 0.45)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.85));
+}
+
+.title-mode-line {
+  margin-top: 8px;
+  max-width: 300px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: rgba(226, 222, 210, 0.78);
+  text-shadow: 0 1px 3px #000;
+}
+
+/* Locked: the plate cools to unlit metal and carries a padlock; it still takes the tap. */
+.title-cta-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.title-cta-lock {
   flex: none;
+}
+
+/* The modes' presses run longer than "Seal the Pact"; a step down keeps them on one line. */
+.title-mode-stage .title-cta {
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.title-cta-socket.is-locked {
+  animation: none;
+  filter: grayscale(0.85) brightness(0.62) drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55));
+}
+
+/* Steel: the Trials, cold and polished, a hall of proving. */
+.title-mode-stage.is-steel {
+  --mode-word: linear-gradient(180deg, #ffffff 0%, #d4e2f2 34%, #8fa6c2 66%, #43536c 100%);
+  --mode-glow: 150, 196, 240;
+  --plate-rgb: 150, 190, 236;
+  --plate-face: linear-gradient(178deg, #f4f9ff 0%, #c6d8ee 12%, #8fa9c9 46%, #5c7393 78%, #2c3a52 100%);
+  --plate-bezel: linear-gradient(160deg, rgba(230, 240, 255, 0.7), rgba(150, 190, 236, 0.45) 40%, rgba(30, 44, 70, 0.6));
+  --plate-ink: #07101e;
+  --plate-lip: rgba(240, 248, 255, 0.45);
+  --plate-etch: rgba(30, 50, 80, 0.38);
+  --plate-focus: rgba(4, 10, 22, 0.85);
+  --plate-sheen: rgba(250, 253, 255, 0.72);
+  --plate-flare: #f4f9ff;
+  --plate-bloom-rgb: 170, 206, 245;
+  --plate-dusk: 12, 15, 20;
+  color: #d6e4f4;
+}
+
+/* Ember: the Gauntlet, a forge-red arena fought until it is won or lost. */
+.title-mode-stage.is-ember {
+  --mode-word: linear-gradient(180deg, #fff1dc 0%, #ffb37a 30%, #e0542e 64%, #6e1a10 100%);
+  --mode-glow: 240, 96, 60;
+  --plate-rgb: 226, 92, 52;
+  --plate-face: linear-gradient(178deg, #ffe6d2 0%, #ff9f6e 12%, #e0592f 46%, #a5321a 78%, #561409 100%);
+  --plate-bezel: linear-gradient(160deg, rgba(255, 210, 180, 0.7), rgba(226, 92, 52, 0.45) 40%, rgba(80, 18, 8, 0.62));
+  --plate-ink: #1a0400;
+  --plate-lip: rgba(255, 224, 200, 0.45);
+  --plate-etch: rgba(110, 30, 14, 0.38);
+  --plate-focus: rgba(26, 4, 0, 0.85);
+  --plate-sheen: rgba(255, 244, 232, 0.7);
+  --plate-flare: #fff0e4;
+  --plate-bloom-rgb: 245, 120, 70;
+  --plate-dusk: 20, 12, 10;
+  color: #ffc9a8;
+}
+
+/* --- The Trials' hall: an arch over six on plinths, two ranks lit from below in their types. --- */
+.trials-hall {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: min(100%, 360px);
+  height: 100%;
+  transform: translateX(-50%);
+  opacity: 0.85;
+}
+
+.trials-sigil {
+  color: #b9d2ee;
+  filter: drop-shadow(0 0 6px rgba(150, 196, 240, 0.9));
+  animation: trials-sigil-pulse 4.2s ease-in-out infinite;
+}
+
+@keyframes trials-sigil-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.trials-ranks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.trials-rank {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.trials-rank.is-back {
+  margin-bottom: -40px;
+  filter: brightness(0.62) saturate(0.85);
+}
+
+.trials-rank.is-back .trials-figure {
+  margin: 0 18px;
+}
+
+.trials-figure {
+  position: relative;
+  width: 84px;
+  height: 96px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  animation: trials-figure-rise 0.6s var(--ease-spring) var(--rise-delay, 0s) both;
+}
+
+@keyframes trials-figure-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.trials-plinth {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 64px;
+  height: 14px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 40%, rgba(var(--type-rgb), 0.75), rgba(var(--type-rgb), 0.18) 55%, transparent 72%);
+  box-shadow: 0 0 18px rgba(var(--type-rgb), 0.45);
+}
+
+.trials-portrait {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 4px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 6px rgba(var(--type-rgb), 0.35));
+}
+
+/* --- The Gauntlet's arena: crossed blades, three reels of rolled heroes, the record as braziers. --- */
+.gauntlet-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  padding-bottom: 6px;
+}
+
+/* The arena wall the reels stand in front of: a row of arches, lit from the sand. */
+.gauntlet-arena {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: min(100%, 360px);
+  height: 100%;
+  transform: translateX(-50%);
+  opacity: 0.9;
+}
+
+.gauntlet-scene > :not(.gauntlet-arena) {
+  position: relative;
+}
+
+.gauntlet-emblem {
+  width: 120px;
+  height: 80px;
+  flex: none;
+  filter: drop-shadow(0 0 10px rgba(240, 96, 60, 0.55));
+}
+
+.gauntlet-blade path:first-child {
+  fill: #e9dccb;
+}
+
+.gauntlet-guard {
+  stroke: #c9762a;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.gauntlet-shield {
+  fill: #6e1a10;
+  stroke: #ffb37a;
+  stroke-width: 2.5;
+}
+
+.gauntlet-shield-mark {
+  fill: #ffb37a;
+}
+
+.gauntlet-reels {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.gauntlet-reel {
+  position: relative;
+  width: 84px;
+  height: 104px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 179, 122, 0.35);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(40, 12, 8, 0.85), rgba(14, 6, 6, 0.92));
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.8);
+  filter: brightness(0.6);
+}
+
+.gauntlet-reel.is-center {
+  width: 100px;
+  height: 120px;
+  border-color: rgba(255, 179, 122, 0.85);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.8), 0 0 18px rgba(240, 96, 60, 0.45);
+  filter: none;
+}
+
+.gauntlet-reel-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: radial-gradient(ellipse 60% 26% at 50% 92%, rgba(var(--type-rgb), 0.55), transparent 72%);
+  animation: gauntlet-reel-spin 0.32s var(--ease-out) both;
+}
+
+@keyframes gauntlet-reel-spin {
+  from {
+    transform: translateY(-70%);
+    filter: blur(2px);
+    opacity: 0.2;
+  }
+}
+
+.gauntlet-portrait {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 2px;
+  image-rendering: pixelated;
+}
+
+.gauntlet-record {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gauntlet-record-gap {
+  width: 8px;
+}
+
+.gauntlet-brazier {
+  width: 12px;
+  height: 16px;
+  border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+  background: radial-gradient(ellipse at 50% 70%, #fff1c0 0%, #ffb34a 34%, #e0542e 64%, transparent 72%);
+  filter: drop-shadow(0 0 6px rgba(255, 140, 60, 0.9));
+  animation: gauntlet-brazier-flicker 1.4s ease-in-out var(--flicker-delay, 0s) infinite;
+}
+
+@keyframes gauntlet-brazier-flicker {
+  0%,
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scaleY(0.82);
+    opacity: 0.8;
+  }
+}
+
+.gauntlet-skull {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 120, 90, 0.55);
+  background: rgba(30, 6, 6, 0.9);
 }
 
 /* --- The Gauntlet (docs/gauntlet.md): the cx teambuilder's frames, a board of fifteen, the record. --- */
@@ -44594,9 +45201,26 @@ img.smithy-service-art {
   filter: drop-shadow(0 0 4px rgba(240, 199, 94, 0.6));
 }
 
-.gx-board-footer,
-.gx-sheet-footer {
+.gx-board-footer {
   display: grid;
+}
+
+/* Back sits in the footer, left of the primary press, so the thumb never reaches for the top. */
+.gx-footer {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.gx-footer.is-three {
+  grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1.6fr);
+}
+
+.gx-footer-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 .gx-sheet {

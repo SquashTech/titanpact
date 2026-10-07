@@ -139,20 +139,6 @@ export function passiveTint(passiveId: string, alpha: number): string {
   return hexTint(passiveColor(passiveId), alpha);
 }
 
-/** How the passive reaches the board — the Passive counterpart of statusIcons' pipelineLabel. */
-export function passiveKindLabel(def: PassiveDefinition): string {
-  if (def.burden) return 'Burden';
-  if (def.enduresOnce) return 'Once per fight';
-  if (def.reactive) {
-    if (def.reactive.oncePerFight) return 'Triggered · once per fight';
-    if (def.reactive.maxFiresPerFight !== undefined) return `Triggered · ${def.reactive.maxFiresPerFight} times per fight`;
-    return 'Triggered';
-  }
-  if (def.damageModifier) return 'Damage bonus';
-  if (def.conditionalStatGrants) return 'Conditional';
-  return 'Always on';
-}
-
 /** Flat and conditional stat grants as `[stat, amount]` pairs; the conditional ones are the tail. */
 export function passiveStatGrants(def: PassiveDefinition): [StatKey, number][] {
   const flat = Object.entries(def.statGrants ?? {}) as [StatKey, number][];
@@ -223,7 +209,6 @@ export function PassiveReadout({
         </span>
         <span className="passive-readout-name">{passive.name}</span>
         {count > 1 && <span className="passive-readout-stack">×{count}</span>}
-        <span className="passive-readout-kind">{passiveKindLabel(passive)}</span>
         {action}
       </div>
       {source && <div className="passive-readout-source">{source}</div>}
