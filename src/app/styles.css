@@ -25814,7 +25814,7 @@ button.star-shop-bundle-face {
   align-self: center;
   width: 272px;
   height: 272px;
-  --seal-radius: 104px;
+  --seal-radius: 112px;
 }
 
 /* Inset off the radius, not a magic number: the sockets sit ON the guide ring
@@ -46638,4 +46638,380 @@ img.smithy-service-art {
   border-right: 6px solid transparent;
   border-top: 7px solid #e8c46a;
   animation: road-encounter-bob 1.1s ease-in-out infinite;
+}
+
+/* --- The Pact Seal's scene (PactSealScreen.tsx, 2026-10-07) ----------------
+   What the seals hold, drawn: the title's Titan over the seal, its eyes opening
+   wider with every seal broken (`--lid`, set by the screen from the count, and
+   eased so the strike visibly widens them), a chain off every socket running
+   into the dark toward it, the fallen warden drawn into its socket before the
+   cut, and a tablet a seal under the ring keeping the run's record. */
+.pact-seal-scene {
+  background: radial-gradient(ellipse 90% 60% at 50% 30%, #0d0a12, #05060a 75%);
+}
+
+.pact-seal-titan {
+  position: absolute;
+  inset: 0;
+}
+
+/* The lids held at the count's width rather than the title's idle widen, and
+   eased to the new width on the cut. */
+.pact-seal-titan .titan-eye-open {
+  animation: none;
+  transform: scaleY(var(--lid));
+  transition: transform 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+}
+
+.pact-seal-titan .title-titan .titan-eye-halo {
+  animation: none;
+  opacity: var(--glare);
+  transition: opacity 0.9s ease-out;
+}
+
+.pact-seal-screen.is-strike .pact-seal-titan .title-titan .titan-eyes {
+  animation: pact-seal-eye-flare 0.9s ease-out both;
+}
+
+@keyframes pact-seal-eye-flare {
+  0% {
+    filter: drop-shadow(0 0 5px rgba(255, 200, 140, 0.75)) drop-shadow(0 0 16px rgba(var(--tier-mythic-rgb), 0.6));
+  }
+  30% {
+    filter: brightness(1.8) drop-shadow(0 0 10px rgba(255, 220, 170, 1)) drop-shadow(0 0 40px rgba(var(--tier-mythic-rgb), 0.95));
+  }
+  100% {
+    filter: drop-shadow(0 0 5px rgba(255, 200, 140, 0.75)) drop-shadow(0 0 16px rgba(var(--tier-mythic-rgb), 0.6));
+  }
+}
+
+/* The whole place shakes with the cut. */
+.pact-seal-screen.is-strike .pact-seal-scene,
+.pact-seal-screen.is-strike .pact-seal-ring {
+  animation: pact-forge-quake 0.45s linear;
+}
+
+/* Under the Titan's eyes, so the header never sits on them. */
+.pact-seal-sky-gap {
+  flex: 0 0 118px;
+}
+
+/* The seal is the title's own rings, its warden marks and its chart left off: the sockets are
+   the wardens here, and the chart's glyphs crowded them. */
+.pact-seal-ring .title-seal {
+  z-index: 0;
+}
+
+.pact-seal-ring .title-seal-sigils,
+.pact-seal-ring .title-seal .type-wheel {
+  display: none;
+}
+
+.pact-seal-core {
+  z-index: 0;
+}
+
+.pact-seal-socket {
+  z-index: 2;
+  background: rgba(8, 9, 14, 0.85);
+}
+
+.pact-seal-socket.filled {
+  background:
+    radial-gradient(circle, rgba(var(--type-rgb), 0.32), rgba(var(--type-rgb), 0.06) 72%),
+    rgba(8, 9, 14, 0.85);
+}
+
+/* --- The chains: one off every socket, out along its own angle into the dark.
+   Oval links seen face-on, joined by links seen edge-on, as a two-layer tile. */
+.pact-seal-arm {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--seal-angle));
+  --chain: #9a8558;
+  --chain-edge: #66583a;
+}
+
+.pact-seal-chain {
+  position: absolute;
+  top: -4px;
+  height: 8px;
+  background:
+    radial-gradient(ellipse 6px 3.6px at 6px 50%, transparent 50%, var(--chain) 58%, var(--chain) 86%, transparent 96%) 0 0 / 22px 100% repeat-x,
+    linear-gradient(90deg, transparent 0 12px, var(--chain-edge) 12px 22px) 0 50% / 22px 2px repeat-x;
+  filter: drop-shadow(0 0 3px rgba(224, 166, 60, 0.35));
+}
+
+.pact-seal-chain.is-near {
+  left: calc(var(--seal-radius) + 22px);
+  width: 44px;
+  transform-origin: 0 50%;
+}
+
+.pact-seal-chain.is-far {
+  left: calc(var(--seal-radius) + 66px);
+  width: 360px;
+  transform-origin: 0 50%;
+  -webkit-mask-image: linear-gradient(90deg, #000, #000 35%, transparent 85%);
+  mask-image: linear-gradient(90deg, #000, #000 35%, transparent 85%);
+}
+
+/* A broken seal's chain: the stub hanging off the socket, the rest fallen away. */
+.pact-seal-arm.is-snapped .pact-seal-chain.is-near {
+  transform: rotate(55deg);
+  opacity: 0.55;
+}
+
+.pact-seal-arm.is-snapped .pact-seal-chain.is-far {
+  transform: translateX(52px) rotate(-14deg);
+  opacity: 0.16;
+}
+
+/* The chain about to go: red-hot and straining through the wind-up. */
+.pact-seal-screen.is-charge .pact-seal-arm.is-new {
+  --chain: #e8704e;
+  --chain-edge: #a83a30;
+}
+
+.pact-seal-screen.is-charge .pact-seal-arm.is-new .pact-seal-chain {
+  filter: drop-shadow(0 0 5px rgba(var(--tier-mythic-rgb), 0.9));
+  animation: pact-seal-chain-strain 0.08s linear infinite;
+}
+
+@keyframes pact-seal-chain-strain {
+  0%,
+  100% {
+    translate: 0 -0.8px;
+  }
+  50% {
+    translate: 0 0.8px;
+  }
+}
+
+/* The snap: the far run whips outward before it falls, the stub swings down. */
+.pact-seal-arm.is-new.is-snapped .pact-seal-chain.is-near {
+  animation: pact-seal-chain-stub 0.7s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+}
+
+.pact-seal-arm.is-new.is-snapped .pact-seal-chain.is-far {
+  animation: pact-seal-chain-whip 0.8s cubic-bezier(0.15, 0.8, 0.3, 1) both;
+}
+
+@keyframes pact-seal-chain-stub {
+  from {
+    transform: none;
+    opacity: 1;
+  }
+  to {
+    transform: rotate(55deg);
+    opacity: 0.55;
+  }
+}
+
+@keyframes pact-seal-chain-whip {
+  0% {
+    transform: none;
+    opacity: 1;
+    filter: brightness(2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.9));
+  }
+  30% {
+    transform: translateX(90px) rotate(-18deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(52px) rotate(-14deg);
+    opacity: 0.16;
+  }
+}
+
+/* Once nothing holds, every chain falls. */
+.pact-seal-screen.is-broken:not(.is-charge) .pact-seal-arm .pact-seal-chain.is-far {
+  animation: pact-seal-chain-whip 0.8s cubic-bezier(0.15, 0.8, 0.3, 1) both;
+  opacity: 0.12;
+}
+
+/* --- The fallen warden: rises over the seal in its Location's light, then is
+   drawn down into its own socket as the chain strains. */
+.pact-seal-champion {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  width: 112px;
+  height: 112px;
+  margin: -56px 0 0 -56px;
+  animation: pact-seal-champion 1.4s cubic-bezier(0.55, 0, 0.6, 1) both;
+}
+
+.pact-seal-champion-figure {
+  display: block;
+  width: 112px;
+  height: 112px;
+  image-rendering: pixelated;
+}
+
+@keyframes pact-seal-champion {
+  0% {
+    opacity: 0;
+    transform: translateY(26px) scale(0.92);
+    filter: brightness(0) drop-shadow(0 0 0 transparent);
+  }
+  28% {
+    opacity: 1;
+    transform: none;
+    filter: brightness(1) drop-shadow(0 0 18px rgba(var(--type-rgb), 0.9));
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.04);
+    filter: brightness(1.2) drop-shadow(0 0 22px rgba(var(--type-rgb), 1));
+  }
+  100% {
+    opacity: 0.85;
+    transform: rotate(var(--seal-angle)) translate(var(--seal-radius)) rotate(calc(-1 * var(--seal-angle))) scale(0.36);
+    filter: brightness(2.6) drop-shadow(0 0 10px rgba(var(--type-rgb), 1));
+  }
+}
+
+/* --- The record: four tablets, one a seal. A broken one wears its Location's
+   colour struck through; one still holding is gold; one not reached is dim. */
+.pact-seal-ledger {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pact-seal-tablet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 4px 7px;
+  border: 1px solid rgba(224, 166, 60, 0.32);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(20, 18, 26, 0.92), rgba(10, 10, 15, 0.92));
+  text-align: center;
+  animation: evolve-plate-in 0.45s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+.pact-seal-tablet:nth-child(2) {
+  animation-delay: 0.06s;
+}
+
+.pact-seal-tablet:nth-child(3) {
+  animation-delay: 0.12s;
+}
+
+.pact-seal-tablet:nth-child(4) {
+  animation-delay: 0.18s;
+}
+
+.pact-seal-tablet-act {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  color: #e8c46a;
+}
+
+.pact-seal-tablet-place {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 9.5px;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-dim);
+}
+
+.pact-seal-tablet-state {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(224, 166, 60, 0.85);
+}
+
+.pact-seal-tablet.is-ahead {
+  opacity: 0.5;
+}
+
+.pact-seal-tablet.is-broken {
+  border-color: rgba(var(--type-rgb), 0.6);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(var(--type-rgb), 0.22), transparent 70%),
+    linear-gradient(180deg, rgba(20, 18, 26, 0.92), rgba(10, 10, 15, 0.92));
+  box-shadow: 0 0 12px rgba(var(--type-rgb), 0.18);
+}
+
+.pact-seal-tablet.is-broken .pact-seal-tablet-act {
+  color: rgb(var(--type-rgb));
+}
+
+.pact-seal-tablet.is-broken .pact-seal-tablet-state {
+  color: rgba(var(--tier-mythic-rgb), 0.95);
+}
+
+/* The cut, carried down to the record: a crack across the tablet. */
+.pact-seal-tablet.is-broken::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 52%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--tier-mythic-rgb), 0.8), transparent);
+  transform: rotate(-14deg);
+}
+
+.pact-seal-tablet.is-new.is-broken {
+  animation: pact-seal-tablet-break 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.pact-seal-tablet.is-new.is-broken::after {
+  animation: pact-seal-tablet-crack 0.4s ease-out both;
+}
+
+@keyframes pact-seal-tablet-break {
+  0% {
+    transform: scale(1.12);
+    filter: brightness(2);
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes pact-seal-tablet-crack {
+  from {
+    transform: rotate(-14deg) scaleX(0);
+  }
+  to {
+    transform: rotate(-14deg) scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pact-seal-champion,
+  .pact-seal-arm .pact-seal-chain,
+  .pact-seal-tablet,
+  .pact-seal-tablet::after,
+  .pact-seal-screen.is-strike .pact-seal-scene,
+  .pact-seal-screen.is-strike .pact-seal-ring {
+    animation: none !important;
+  }
+
+  .pact-seal-titan .titan-eye-open,
+  .pact-seal-titan .title-titan .titan-eye-halo {
+    transition: none;
+  }
 }

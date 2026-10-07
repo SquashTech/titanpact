@@ -592,6 +592,13 @@ that Location's tint. It grants nothing, so it goes **last** in the act-boundary
 post-fight beats and immediately before the next act: the opposite of the Banner's placement, for
 the same reason. The last socket fills and **the seal breaks** — the finale's opening beat.
 
+**What it looks like** (2026-10-07, per user direction — the screen was barren): the sockets sit
+on the title's own seal, each holding a chain that runs off into the dark, under the title's Titan
+whose **eyes open wider with every seal broken** (`LID_BY_SEALS`). The fallen warden rises over the
+seal and is drawn into its socket while its chain strains; the strike snaps the chain, the place
+quakes and the eyes flare wider. A tablet a seal under the ring keeps the record — act, Location,
+Broken or Holds.
+
 ### The finale's shape
 
 The finale act is not another act of the §1 shape; it is a corridor of two nodes at a **fixed
