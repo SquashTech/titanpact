@@ -11,7 +11,7 @@ import { levelOf } from '../../run/growth';
 import { MOVE_CAP, rosterEntryTypes, formIdFor } from '../../run/progression';
 import { equipmentStatusGrants } from '../../run/statusGrants';
 import { rosterTypes } from '../../run/boons';
-import { mentorMovePool, tutorMovePool } from '../../run/tutor';
+import { tutorMovePool } from '../../run/tutor';
 import { mendPrice } from '../../run/wounds';
 import { enemyLevelFor, type EncounterNodeKind } from '../../run/difficulty';
 import type { RosterEntry, RunState } from '../../run/state';
@@ -46,7 +46,7 @@ const LENS: Record<MapNodeType, Lens> = {
   leyLineReward: 'force',
   passiveReward: 'types',
   blessingReward: 'hp',
-  mentorReward: 'moves',
+  mentorReward: 'level',
   tutorReward: 'moves',
   currencyReward: null,
   contractReward: null,
@@ -207,7 +207,7 @@ export function NodeRosterReadout({ type, run }: { type: MapNodeType; run: RunSt
             );
           }
           case 'moves': {
-            const pool = (type === 'tutorReward' ? tutorMovePool : mentorMovePool)(progressionTable, moves, entry);
+            const pool = tutorMovePool(progressionTable, moves, entry);
             const held = entry.unlockedMoveIds.length;
             return (
               <Row key={entry.rosterId} hero={hero} entry={entry} dim={pool.length === 0}>

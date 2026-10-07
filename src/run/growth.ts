@@ -379,6 +379,20 @@ export function fightXpFor(xp: number, rosterId: string, mvpRosterId?: string | 
   return rosterId === mvpRosterId ? xp + Math.round(xp * MVP_XP_SHARE) : xp;
 }
 
+/** XP onto ONE hero (the Mentor), rolled on its own stream off `seed`, with its line of the report. */
+export function applySeededXp(
+  run: RunState,
+  heroLookup: Record<string, HeroDefinition>,
+  rosterId: string,
+  xp: number,
+  seed: number
+): { run: RunState; line: HeroLevelUp } {
+  const entry = run.roster.find((r) => r.rosterId === rosterId);
+  if (!entry) throw new Error(`${rosterId} is not on the roster`);
+  const { entry: levelled, line } = levelEntry(entry, heroLookup[entry.heroId], xp, levelRandomFor(seed, rosterId));
+  return { run: { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? levelled : r)) }, line };
+}
+
 /** One hero's line of the report, rolled on the stream `applySeededEncounterLevels` will use. */
 export function previewLevelUp(entry: RosterEntry, hero: HeroDefinition | undefined, xp: number, seed: number): HeroLevelUp {
   return levelEntry(entry, hero, xp, levelRandomFor(seed, entry.rosterId)).line;

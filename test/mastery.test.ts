@@ -33,7 +33,7 @@ import { entryPassiveCounts } from '../src/run/entryStats';
 import type { PassiveDefinition } from '../src/engine/content';
 import { signatureMoves } from '../src/data/signatures';
 import { generateEncounter } from '../src/run/enemyGen';
-import { mentorMovePool, tutorMovePool } from '../src/run/tutor';
+import { tutorMovePool } from '../src/run/tutor';
 import { FINALE_ACT, addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { generateMap, MAP_NODE_TYPES, REWARD_WEIGHTS } from '../src/run/map';
 import { xpForLevel } from '../src/run/growth';
@@ -186,7 +186,6 @@ test('signature: every authored signature exists, wears its hero\'s primary type
     assert.ok(!pathMoves.has(id), `${hero.id}: ${id} is granted or made learnable by an Evolution path`);
     assert.ok(!kits.has(id), `${hero.id}: ${id} is in a starting kit`);
     for (const entry of [createRosterEntry('x', hero.id, hero.moveIds)]) {
-      assert.deepStrictEqual(mentorMovePool(progressionTable, moves, entry).includes(id), false, `${hero.id}: the Mentor could roll it`);
       assert.deepStrictEqual(tutorMovePool(progressionTable, moves, entry).includes(id), false, `${hero.id}: the Tutor could roll it`);
     }
   }

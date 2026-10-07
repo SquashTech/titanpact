@@ -17145,6 +17145,21 @@ button.star-shop-bundle-face {
   }
 }
 
+/* The Mentor's lesson: the trained hero's line of the level-up report, stat rolls and all. */
+.mentor-result {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px 16px 16px;
+  animation: gem-arrive 0.45s var(--ease-out) both;
+}
+
+.mentor-levels strong {
+  color: rgb(var(--node-rgb));
+}
+
 /* The Guild Hall shelf's pack: two stones leaning together, drawn rather than pixel art. */
 .hall-good-art.is-drawn {
   display: grid;

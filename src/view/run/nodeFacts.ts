@@ -12,6 +12,7 @@ import { GEM_CACHE_COUNT, SCRIBE_GEMS, gemPointsForAct } from '../../run/gems';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { LEY_LINE_FORCE, MANA_WELL_AMOUNT, MANA_WELL_REGEN } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
+import { mentorXpFor } from '../../run/mentor';
 import { championLevel, enemyLevelFor, guildHallLevel, openerEscortTiersFor, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
 import type { SpawnTier } from '../../data/titanspawn';
 import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
@@ -368,10 +369,10 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
     case 'mentorReward':
       return {
         kind: 'Reward · Growth',
-        facts: [{ glyph: 'move', label: 'Move', value: '1', note: 'Mid tier, rolled — to 1 hero' }],
+        facts: [{ glyph: 'xp', label: 'XP', value: `+${mentorXpFor(actNumber).toLocaleString()}`, note: 'to 1 hero' }],
         odds: null,
-        about: 'Pick a hero, and one Mid-tier move is rolled from its own pool — a move ahead of its schedule. A hero with nothing left to roll is greyed out.',
-        terms: [TERMS.moveCap],
+        about: 'Pick a hero, and it takes a lump of XP: levels, their stat rolls, and any move those levels reach. A hero further behind climbs more levels from the same XP.',
+        terms: [],
       };
     case 'tutorReward':
       return {

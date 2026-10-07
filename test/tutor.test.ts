@@ -6,7 +6,7 @@ import { progressionTable } from '../src/data/progression';
 import { createRosterEntry } from '../src/run/state';
 import { MAP_NODE_TYPES, generateMap } from '../src/run/map';
 import { MOVE_TIER_RANK } from '../src/run/progression';
-import { mentorMovePool, tutorMovePool } from '../src/run/tutor';
+import { tutorMovePool } from '../src/run/tutor';
 import { xpForLevel } from '../src/run/growth';
 
 const entry = (heroId: string) => createRosterEntry(heroId, heroId, heroes[heroId].moveIds);
@@ -42,16 +42,11 @@ test("tutor: the pool is the hero's Late tier alone, whatever its level, minus w
   assert.ok(!tutorMovePool(progressionTable, moves, held).includes('juggernaut'));
 });
 
-test('tutor: a chosen Evolution path adds its learnable Late moves to the roll, and the two rolls never overlap', () => {
+test('tutor: a chosen Evolution path adds its learnable Late moves to the roll', () => {
   const { heroId, pathId, learnable } = heroWithPathMoves();
   const evolved = { ...entry(heroId), xp: xpForLevel(5), chosenPathIds: [pathId] };
   const after = tutorMovePool(progressionTable, moves, evolved);
   for (const id of learnable.filter((m) => moves[m].tier === 'late')) assert.ok(after.includes(id), `${heroId}: ${id} (learnable Late) missing from the roll`);
-  for (const hero of Object.values(heroes)) {
-    const e = entry(hero.id);
-    const mid = new Set(mentorMovePool(progressionTable, moves, e));
-    for (const id of tutorMovePool(progressionTable, moves, e)) assert.ok(!mid.has(id), `${id} is on both rolls`);
-  }
 });
 
 test('tutor: every hero has a Late move for the Tutor to roll from a fresh kit, and the roll survives both schedule offers', () => {
@@ -95,26 +90,3 @@ test('tutor: act 4 holds exactly one Tutor, in the forced spliced seat', () => {
   }
 });
 
-// --- The Mentor (docs/growth-overhaul.md §11): one Mid move, rolled, un-rank-gated ---
-
-test('mentor: the pool is the hero\'s Mid tier alone, whatever its rank, minus what it holds or was offered', () => {
-  const entry = createRosterEntry('ironWarden', 'ironWarden', heroes.ironWarden.moveIds);
-  const pool = mentorMovePool(progressionTable, moves, entry);
-  assert.ok(pool.length > 0, 'a rank-1 hero still gets a Mid move — the Mentor is un-rank-gated');
-  for (const id of pool) assert.strictEqual(moves[id].tier, 'mid', `${id} is not Mid`);
-  assert.ok(pool.includes('rendArmor'));
-  assert.ok(!pool.includes('ironFist') && !pool.includes('juggernaut'), 'no Early, no Late');
-
-  // A rolled offer is spent by being made, so a Mid move a Scroll already burned stays burned.
-  const burned = { ...entry, offeredMoveIds: ['rendArmor'] };
-  assert.ok(!mentorMovePool(progressionTable, moves, burned).includes('rendArmor'));
-  const held = { ...entry, unlockedMoveIds: [...entry.unlockedMoveIds, 'rendArmor'] };
-  assert.ok(!mentorMovePool(progressionTable, moves, held).includes('rendArmor'));
-});
-
-test('mentor: every hero has a Mid move for the Mentor to roll from a fresh kit', () => {
-  for (const hero of Object.values(heroes)) {
-    const entry = createRosterEntry(hero.id, hero.id, hero.moveIds);
-    assert.ok(mentorMovePool(progressionTable, moves, entry).length > 0, `${hero.id} has nothing for the Mentor`);
-  }
-});

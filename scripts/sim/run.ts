@@ -77,7 +77,8 @@ const heroes = heroPool(allHeroes, SIM_PURCHASES);
 const guildHallOffers = guildHallOffersFor(heroes);
 import { guildHallEntry } from '../../src/run/guildRecruit';
 import { rollGuildHallOffers, sellValueFor } from '../../src/run/shop';
-import { mentorMovePool, tutorMovePool } from '../../src/run/tutor';
+import { tutorMovePool } from '../../src/run/tutor';
+import { canTrain, mentorXpFor } from '../../src/run/mentor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
 import { applyEventCost, applyHeroOutcome, applyStatShift, costAffordable, eventRecruitEntry, grantEventPassive, heroOutcomeAllowed, joinEventRecruit, eligibleEvents, outcomeForAct, recruitPool, resolveGamble, rollRecruits, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
@@ -884,7 +885,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       record.choices.push({ bucket: 'boon', offered, picked: [picked], encountersWonAtChoice: run.encountersWon });
       return grantEventPassive(run, target.rosterId, picked, passives);
     }
-    // The Mentor (acts 1-3): one Mid move ROLLED for the hero whose Mid pool is worth most.
+    // The Mentor (acts 1-3): the act's XP onto one hero.
     case 'mentorReward':
       return resolveMentor(run, rng, record);
     case 'tutorReward':
@@ -906,16 +907,20 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
 }
 
 /**
- * The Mentor: a Mid move rolled for one hero (docs/growth-overhaul.md §11). The hero is the one
- * whose Mid pool is worth most on average — WHO is the player's only decision — and the roll is
- * the roll. Taken when it beats the worst move held (or there is room), declined otherwise; the
- * offer burns either way, as a Scroll's does.
+ * The Mentor (docs/mentor.md): the act's XP onto the lowest-levelled hero that can take it — the
+ * cube lifts it furthest — and what the levels owe paid on the spot.
  */
 function resolveMentor(run: RunState, rng: Rng, record: RunRecord): RunState {
-  return resolveTierRoll(run, rng, mentorMovePool, record);
+  const target = [...run.roster].filter(canTrain).sort((a, b) => a.xp - b.xp || policy.powerScore(b) - policy.powerScore(a))[0];
+  if (!target) return run;
+  const trained = { ...run, roster: run.roster.map((e) => (e.rosterId === target.rosterId ? grantXp(e, rosterHeroes[e.heroId], mentorXpFor(run.actNumber), rng).entry : e)) };
+  const payout = policy.emptyPayout();
+  const next = policy.takeSchedule(trained, rng, payout);
+  recordPayout(record, payout, next.encountersWon);
+  return next;
 }
 
-function resolveTierRoll(run: RunState, rng: Rng, poolOf: typeof mentorMovePool, record: RunRecord): RunState {
+function resolveTierRoll(run: RunState, rng: Rng, poolOf: typeof tutorMovePool, record: RunRecord): RunState {
   let best: { entry: RosterEntry; value: number } | null = null;
   for (const entry of run.roster) {
     const pool = poolOf(progressionTable, moves, entry);

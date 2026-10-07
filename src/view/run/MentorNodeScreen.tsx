@@ -1,78 +1,53 @@
 import { useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { seededRandom } from '../shared/seededRandom';
 import mentorArt from '../../../art/npc/mentor.png';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
-import { moves } from '../../data/moves';
-import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
-import { grantOfferedMove, MOVE_CAP, recordMoveOffer } from '../../run/progression';
-import { mentorMovePool } from '../../run/tutor';
+import { MAX_XP, applySeededXp, levelForXp, levelOf, type HeroLevelUp } from '../../run/growth';
+import { canTrain, mentorXpFor } from '../../run/mentor';
+import { formIdFor } from '../../run/progression';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeMotes } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { MoveLearnedOverlay, MoveOfferOverlay } from './MoveOfferOverlay';
+import { LevelUpList } from './LevelUpList';
 import { RosterPeek } from './RosterPeek';
 import { KeeperVoice, useKeeperLine } from './RoadEncounter';
 import { MENTOR_LINES } from '../../data/roadLines';
-import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
 
 interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
-  onContinue: () => void;
-  /** Fixes the screen's roll, so a resumed run is offered the same (docs/save-system.md D2). */
+  /** The hero trained and its line of the report, or null when nobody could be. The caller routes what the levels owe. */
+  onContinue: (line: HeroLevelUp | null) => void;
+  /** Fixes the growth roll, so a resumed run lands the same stats (docs/save-system.md D2). */
   seed: number;
 }
 
 /** The Mentor's teal (the map tile's --buff). */
 const MENTOR_RGB = '63, 184, 175';
 
-/** The roll, once made. Below the cap the move has already landed; at the cap it is the replace question. */
-interface Lesson {
-  rosterId: string;
-  moveId: string;
-  learned: boolean;
-}
-
 /**
- * `mentorReward` node (acts 1-3, docs/growth-overhaul.md §11): "the Mentor can teach any hero a
- * powerful move." Pick a hero, and one Mid-tier move is ROLLED from that hero's pool — the same
- * beat as a Scroll pour with the band fixed at Mid, un-rank-gated and ticking nothing. The only
- * decision on the screen is who, which is what one of a new player's first nodes can carry.
- *
- * The offer is spent by being made, as a Scroll's is (`recordMoveOffer` before the answer): a
- * roll declined is a roll burned.
+ * `mentorReward` node (acts 1–3, docs/mentor.md): pick a hero, and it takes the act's lump of XP.
+ * Each card says where the grant would leave it — the cube lifts a hero behind par further — and
+ * the result is that hero's line of the level-up report, stat rolls and all. A move or Evolution
+ * the levels open is paid on the level-up screen after (App routes it).
  */
 export function MentorNodeScreen({ run, onRunChange, onContinue, seed }: Props) {
-  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [trained, setTrained] = useState<HeroLevelUp | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const voice = useKeeperLine(MENTOR_LINES);
+  const xp = mentorXpFor(run.actNumber);
+  const anyTrainable = run.roster.some(canTrain);
 
-  const poolOf = (entry: RosterEntry) => mentorMovePool(progressionTable, moves, entry);
-  const anyTeachable = run.roster.some((entry) => poolOf(entry).length > 0);
-  const lessonEntry = lesson ? (run.roster.find((r) => r.rosterId === lesson.rosterId) ?? null) : null;
-
-  function teach(entry: RosterEntry) {
-    const pool = poolOf(entry);
-    if (pool.length === 0) return;
-    const moveId = pool[Math.floor(seededRandom(seed, entry.rosterId)() * pool.length)];
-    playSfx('class.learn');
-    let next = recordMoveOffer(run, entry.rosterId, [moveId]);
-    // Room in the kit: it simply lands, and the box only says so. At the cap the question is real.
-    const learned = entry.unlockedMoveIds.length < MOVE_CAP;
-    if (learned) next = grantOfferedMove(next, entry.rosterId, moveId);
+  function train(entry: RosterEntry) {
+    if (trained || !canTrain(entry)) return;
+    const { run: next, line } = applySeededXp(run, rosterHeroes, entry.rosterId, xp, seed);
+    playSfx('levelUp');
     onRunChange(next);
-    setLesson({ rosterId: entry.rosterId, moveId, learned });
-  }
-
-  function resolve(replaceMoveId: string | null, learn: boolean) {
-    if (!lesson) return;
-    if (learn) onRunChange(grantOfferedMove(run, lesson.rosterId, lesson.moveId, replaceMoveId ?? undefined));
-    onContinue();
+    setTrained(line);
   }
 
   return (
@@ -81,8 +56,6 @@ export function MentorNodeScreen({ run, onRunChange, onContinue, seed }: Props) 
       <NodeMotes count={14} />
       <RosterPeek run={run} />
 
-      {/* The Mentor by the road. Its one line is the node's whole explanation — one of a new
-          player's first nodes, with no tip — so it is said plainly rather than as tags. */}
       <header className="keeper-head">
         <span className="keeper-figure">
           <span className="rite-pool" aria-hidden="true" />
@@ -92,42 +65,52 @@ export function MentorNodeScreen({ run, onRunChange, onContinue, seed }: Props) 
           <span className="rite-eyebrow">By the Roadside</span>
           <h2 className="rite-name">The Mentor</h2>
           <KeeperVoice line={voice} />
-          {anyTeachable ? (
+          {anyTrainable ? (
             <span className="keeper-offer">
-              <span className="keeper-line">Teaches any hero a powerful move.</span>
-              <span className="keeper-terms">One hero · from its own moves</span>
+              <span className="keeper-line">Trains one hero: +{xp.toLocaleString()} XP.</span>
+              <span className="keeper-terms">A hero further behind climbs more levels</span>
             </span>
           ) : (
-            <span className="keeper-offer">There is nothing left here the Mentor can teach.</span>
+            <span className="keeper-offer">Every hero is at the level cap. There is nothing left to teach.</span>
           )}
         </span>
       </header>
 
-      {anyTeachable ? (
+      {trained ? (
+        <section className="mentor-result">
+          <LevelUpList report={[trained]} gains formFor={(id) => {
+            const entry = run.roster.find((r) => r.rosterId === id);
+            return entry ? formIdFor(entry) : null;
+          }} />
+          <button className="resolve-button" onClick={() => onContinue(trained)}>
+            Continue
+          </button>
+        </section>
+      ) : anyTrainable ? (
         <HeroPickGrid count={run.roster.length} fill>
           {run.roster.map((entry) => {
             const hero = rosterHeroes[entry.heroId];
-            const pool = poolOf(entry).length;
-            const teachable = pool > 0;
-            const full = entry.unlockedMoveIds.length >= MOVE_CAP;
+            const open = canTrain(entry);
+            const from = levelOf(entry);
+            const to = levelForXp(Math.min(MAX_XP, entry.xp + xp));
             return (
               <HeroPickCard
                 key={entry.rosterId}
                 hero={hero}
                 entry={entry}
-                disabled={!teachable || !!lesson}
-                onActivate={() => teach(entry)}
+                disabled={!open}
+                onActivate={() => train(entry)}
                 onPreview={() => setPreviewEntry({ hero, entry })}
-                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${teachable ? `${pool} moves to draw from, ${full ? 'kit full' : 'has room'}` : 'nothing left to teach'}`}
+                ariaLabel={`${hero.name}, level ${from} — ${open ? `would reach level ${to}` : 'at the level cap'}`}
                 detail={
-                  teachable ? (
-                    <span className="tutor-fit">
-                      {pool} {pool === 1 ? 'move' : 'moves'} · {full ? 'kit full' : 'has room'}
+                  open ? (
+                    <span className="tutor-fit mentor-levels">
+                      Lv {from} → <strong>{to}</strong>
                     </span>
                   ) : undefined
                 }
                 ctaClassName="is-accent"
-                cta={teachable ? 'Learn' : 'Nothing left'}
+                cta={open ? `+${to - from} ${to - from === 1 ? 'level' : 'levels'}` : 'At the cap'}
               />
             );
           })}
@@ -136,17 +119,11 @@ export function MentorNodeScreen({ run, onRunChange, onContinue, seed }: Props) 
         <div className="node-spacer" />
       )}
 
-      {!anyTeachable && (
-        <button className="resolve-button" onClick={onContinue}>
+      {!anyTrainable && (
+        <button className="resolve-button" onClick={() => onContinue(null)}>
           Continue
         </button>
       )}
-
-      {lesson && lessonEntry && (lesson.learned ? (
-        <MoveLearnedOverlay run={run} entry={lessonEntry} moveId={lesson.moveId} eyebrow="The Mentor teaches" onClose={onContinue} />
-      ) : (
-        <MoveOfferOverlay run={run} entry={lessonEntry} moveId={lesson.moveId} eyebrow="The Mentor teaches — your kit is full" onResolve={resolve} />
-      ))}
 
       {previewEntry && (
         <HeroPreviewOverlay

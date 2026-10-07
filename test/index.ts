@@ -30,6 +30,7 @@ import './growth.test';
 import './statScale.test';
 import './mastery.test';
 import './gems.test';
+import './mentor.test';
 import './moveTiers.test';
 import './roster.test';
 import './titanspawn.test';

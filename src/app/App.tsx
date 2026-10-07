@@ -1588,7 +1588,16 @@ export function App() {
       )}
 
       {screen.kind === 'mentorNode' && (
-        <MentorNodeScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} seed={screen.seed} />
+        <MentorNodeScreen
+          run={playerRun}
+          onRunChange={settlingRunChange(screen)}
+          onContinue={(line) => {
+            handleNodeContinue(screen.nodeId);
+            // The levels the Mentor paid may owe a move or the signature: the level-up screen pays it.
+            if (line && levelPayoffOwed(playerRun, line.rosterId)) setScreen({ kind: 'levelUp', report: [line], next: { kind: 'map' }, seed: randomSeed() });
+          }}
+          seed={screen.seed}
+        />
       )}
 
       {screen.kind === 'event' &&
