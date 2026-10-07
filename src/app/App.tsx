@@ -76,7 +76,7 @@ import { PactSealScreen } from '../view/run/PactSealScreen';
 import { HeraldScreen } from '../view/run/HeraldScreen';
 import { CompanionAwakensScreen } from '../view/run/CompanionAwakensScreen';
 import { TitanBoundScreen } from '../view/run/TitanBoundScreen';
-import { BlessingScreen } from '../view/run/BlessingScreen';
+import { PactForging } from '../view/run/PactForging';
 import { equipment, EQUIPMENT_DROP_POOL, rollEquipmentDrops } from '../data/equipment';
 import {
   equipItem,
@@ -1157,9 +1157,10 @@ export function App() {
 
   function handleDraftConfirm(chosenIds: string[]) {
     // The deck is snapshotted onto the run, so an edit between sessions never moves a run's pools.
-    setPlayerRun((run) => ({ ...createStartingRun(chosenIds, run.cycle), deck: deckHeroIds(profileDeck(profile, heroes)) }));
-    // The Titan's eyes open on the lore cards now (LoreScreen), not before every run.
-    setScreen({ kind: 'blessing' });
+    const run = { ...createStartingRun(chosenIds, playerRun.cycle), deck: deckHeroIds(profileDeck(profile, heroes)) };
+    setPlayerRun(run);
+    // The Blessing played on the draft's own sky (PactForging), so the act opens next.
+    enterAct(run);
     fallback.current = null;
     persistStorage();
     // Sealing the pact is the start, not pressing the title button: a draft backed out of
@@ -1212,19 +1213,20 @@ export function App() {
    * The offer is drawn here, once — a run never knows its next place before this beat. One
    * candidate is no choice, so it is taken silently and the arrival screen says where.
    */
-  function enterAct() {
+  /** `run` is passed where the run was built in the same handler, before `playerRun` has caught up. */
+  function enterAct(run: RunState = playerRun) {
     setActBreak(false);
-    if (locationChoiceDue(playerRun)) {
+    if (locationChoiceDue(run)) {
       // The pool is the Cycle's: a Location a Cycle granted is drawn beside the base five (docs/cycles.md §6).
-      const pool = locationPool(playerRun.cycle);
-      const candidateIds = drawLocationCandidates(playerRun.locationIds, randomSeed(), pool);
+      const pool = locationPool(run.cycle);
+      const candidateIds = drawLocationCandidates(run.locationIds, randomSeed(), pool);
       // Whichever is taken, its arrival screen is next: fetch both places' paintings now.
       void preloadImages(locationArtUrls(candidateIds));
       if (candidateIds.length > 1) {
         setScreen({ kind: 'locationChoice', candidateIds });
         return;
       }
-      if (candidateIds.length === 1) setPlayerRun(chooseLocation(playerRun, candidateIds[0], pool));
+      if (candidateIds.length === 1) setPlayerRun(chooseLocation(run, candidateIds[0], pool));
     }
     setScreen({ kind: 'actIntro' });
   }
@@ -1475,11 +1477,12 @@ export function App() {
       {screen.kind === 'draft' && <DraftScreen optionIds={screen.optionIds} onConfirm={handleDraftConfirm} />}
 
       {screen.kind === 'pactSeal' && (
-        <PactSealScreen run={playerRun} onContinue={enterAct} />
+        <PactSealScreen run={playerRun} onContinue={() => enterAct()} />
       )}
 
 
-      {screen.kind === 'blessing' && <BlessingScreen run={playerRun} onDone={enterAct} />}
+      {/* A run saved on the old Blessing screen picks up on the forging that replaced it. */}
+      {screen.kind === 'blessing' && <PactForging heroIds={playerRun.roster.map((entry) => entry.heroId)} onDone={() => enterAct()} />}
 
       {screen.kind === 'locationChoice' && (
         <LocationChoiceScreen run={playerRun} candidateIds={screen.candidateIds} onChoose={handleLocationChosen} />

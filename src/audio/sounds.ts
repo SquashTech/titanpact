@@ -31,6 +31,10 @@ export type SfxId =
   | 'pact.bind'
   | 'equip'
   | 'contract.sign'
+  | 'quill.scratch'
+  | 'wax.stamp'
+  | 'evolve.charge'
+  | 'evolve.fanfare'
   | 'shrine'
   | 'scroll.spend'
   | 'gem.set'
@@ -390,6 +394,66 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 146, freqEnd: 73, gain: 0.44, attack: 0.003, hold: 0.02, decay: 0.3, delay: 0.07 },
       { wave: 'triangle', freq: 392, detune: 9, gain: 0.24, attack: 0.008, hold: 0.04, decay: 0.55, delay: 0.16 },
       { wave: 'sine', freq: 1176, gain: 0.08, attack: 0.01, decay: 0.5, delay: 0.18 },
+    ],
+  },
+
+  /** The hero's name written across a Recruit Contract: five strokes of nib on parchment and the lift off the flourish. Paper never rings — no tone in it. */
+  'quill.scratch': {
+    gain: 0.34,
+    jitter: 0.04,
+    voices: [
+      { wave: 'noise', gain: 0.3, attack: 0.01, hold: 0.06, decay: 0.05, filter: { type: 'bandpass', freq: 3800, freqEnd: 5200, q: 3 } },
+      { wave: 'noise', gain: 0.26, attack: 0.01, hold: 0.05, decay: 0.05, delay: 0.15, filter: { type: 'bandpass', freq: 4600, freqEnd: 3200, q: 3 } },
+      { wave: 'noise', gain: 0.3, attack: 0.01, hold: 0.08, decay: 0.06, delay: 0.3, filter: { type: 'bandpass', freq: 3400, freqEnd: 5600, q: 3 } },
+      { wave: 'noise', gain: 0.22, attack: 0.008, hold: 0.04, decay: 0.05, delay: 0.48, filter: { type: 'bandpass', freq: 5000, freqEnd: 3600, q: 3 } },
+      { wave: 'noise', gain: 0.28, attack: 0.01, hold: 0.12, decay: 0.08, delay: 0.6, filter: { type: 'bandpass', freq: 3600, freqEnd: 6000, q: 2.5 } },
+      { wave: 'noise', gain: 0.12, attack: 0.004, decay: 0.03, delay: 0.82, filter: { type: 'highpass', freq: 4000 } },
+    ],
+  },
+
+  /** The wax seal pressed onto the contract: weight first, lowpassed so it is pressed not struck, then the wax giving under it. */
+  'wax.stamp': {
+    gain: 0.52,
+    jitter: 0.02,
+    voices: [
+      { wave: 'noise', gain: 0.5, attack: 0.002, decay: 0.22, filter: { type: 'lowpass', freq: 900, freqEnd: 160, q: 1.2 } },
+      { wave: 'sine', freq: 110, freqEnd: 46, gain: 0.5, attack: 0.002, hold: 0.02, decay: 0.32 },
+      { wave: 'noise', gain: 0.14, attack: 0.01, decay: 0.09, delay: 0.03, filter: { type: 'bandpass', freq: 700, freqEnd: 380, q: 4 } },
+      { wave: 'triangle', freq: 262, detune: 8, gain: 0.12, attack: 0.006, decay: 0.4, delay: 0.04 },
+    ],
+  },
+
+  /** An Evolution charging through its morph: three seconds of air and a beating pair climbing three octaves, timed to break on the white-out. */
+  'evolve.charge': {
+    gain: 0.4,
+    jitter: 0,
+    voices: [
+      { wave: 'noise', gain: 0.24, attack: 2.9, decay: 0.4, filter: { type: 'bandpass', freq: 300, freqEnd: 6000, q: 1.6 } },
+      { wave: 'sine', freq: 131, freqEnd: 1047, detune: 14, gain: 0.2, attack: 2.7, hold: 0.2, decay: 0.4 },
+      { wave: 'triangle', freq: 196, freqEnd: 1568, detune: 20, gain: 0.08, attack: 2.8, decay: 0.4 },
+      { wave: 'sine', freq: 65, gain: 0.22, attack: 1.4, hold: 1.4, decay: 0.5 },
+    ],
+  },
+
+  /** The new form revealed: a four-note run up to a held major chord — the one chiptune voice in the table, square under triangle, because this moment is a homage. */
+  'evolve.fanfare': {
+    gain: 0.42,
+    jitter: 0,
+    voices: [
+      { wave: 'triangle', freq: 392, gain: 0.2, attack: 0.004, hold: 0.06, decay: 0.12 },
+      { wave: 'square', freq: 523, gain: 0.06, attack: 0.004, hold: 0.06, decay: 0.1, delay: 0.11, filter: { type: 'lowpass', freq: 2400 } },
+      { wave: 'triangle', freq: 523, gain: 0.2, attack: 0.004, hold: 0.06, decay: 0.12, delay: 0.11 },
+      { wave: 'triangle', freq: 659, gain: 0.2, attack: 0.004, hold: 0.06, decay: 0.12, delay: 0.22 },
+      { wave: 'square', freq: 784, gain: 0.06, attack: 0.004, hold: 0.06, decay: 0.1, delay: 0.33, filter: { type: 'lowpass', freq: 2400 } },
+      { wave: 'triangle', freq: 784, gain: 0.2, attack: 0.004, hold: 0.06, decay: 0.12, delay: 0.33 },
+      // The landing chord, held.
+      { wave: 'triangle', freq: 1047, detune: 8, gain: 0.26, attack: 0.006, hold: 0.25, decay: 1.3, delay: 0.48 },
+      { wave: 'square', freq: 1047, gain: 0.05, attack: 0.006, hold: 0.25, decay: 0.9, delay: 0.48, filter: { type: 'lowpass', freq: 3000 } },
+      { wave: 'triangle', freq: 659, gain: 0.15, attack: 0.01, hold: 0.25, decay: 1.2, delay: 0.48 },
+      { wave: 'triangle', freq: 784, gain: 0.13, attack: 0.01, hold: 0.25, decay: 1.2, delay: 0.48 },
+      { wave: 'sine', freq: 131, gain: 0.32, attack: 0.01, hold: 0.2, decay: 1.2, delay: 0.48 },
+      { wave: 'sine', freq: 2093, detune: 12, gain: 0.07, attack: 0.01, decay: 1.4, delay: 0.5 },
+      { wave: 'noise', gain: 0.08, attack: 0.2, decay: 1.0, delay: 0.48, filter: { type: 'highpass', freq: 5200 } },
     ],
   },
 

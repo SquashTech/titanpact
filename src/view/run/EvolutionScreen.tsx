@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import type { HeroDefinition, StatKey, TypeId } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
@@ -453,23 +453,43 @@ function PathShowcase({
   );
 }
 
-/** Beat boundaries for the evolution cinematic, in ms from the press. */
-const EVOLVE_BEATS = { burst: 1150, reveal: 1520, done: 4100 } as const;
+/** Beat boundaries for the evolution cinematic, in ms from the press; the morph's own swaps follow. */
+const EVOLVE_BEATS = { charge: 1400, morph: 2400, revealHold: 380, done: 5200 } as const;
 
 /**
- * What the choice looks like when it lands (2026-09-08, per user direction). An Evolution is the
- * most permanent thing a run does to a hero and it used to resolve as a screen swap — the dossier
- * closed and the level-up list came back one line different.
- *
- * Three beats, and they are the shape of the moment rather than decoration: the hero CHARGES
- * (rings closing in, the figure lit from inside and shaking), the charge BURSTS (a white-out that
- * hides the swap, which is the whole trick), and the new form is REVEALED under the path's name
- * and the typing it lands on. A tap skips to the end; nothing here is load-bearing, so a player
- * who has seen it twenty times never has to sit through it.
+ * The gaps between the morph's swaps (ms), old form ⇄ new, closing in until they blur. Odd in
+ * count, so the last swap leaves the NEW silhouette up for the burst to break open.
+ */
+const MORPH_GAPS = [440, 360, 300, 250, 210, 175, 145, 120, 100, 84, 70, 60, 52, 46, 42, 40, 40, 40, 40] as const;
+const MORPH_MS = MORPH_GAPS.reduce((sum, gap) => sum + gap, 0);
+
+type EvolveBeat = 'intro' | 'charge' | 'morph' | 'burst' | 'reveal';
+
+// Golden-angle scatter, stable with no seed: light drawn IN to the hero, and sparks thrown OUT.
+const EVOLVE_MOTES = Array.from({ length: 18 }, (_, i) => {
+  const seed = i * 137.51;
+  return { angle: seed % 360, distance: 120 + ((seed * 0.37) % 70), delay: (seed * 0.011) % 1.1 };
+});
+const EVOLVE_SPARKS = Array.from({ length: 22 }, (_, i) => {
+  const seed = i * 137.51;
+  return { angle: seed % 360, distance: 90 + ((seed * 0.53) % 110), size: 6 + ((seed * 0.19) % 8), trail: i % 3 === 0 };
+});
+
+/**
+ * What the choice looks like when it lands (2026-10-07, per user direction — "big and epic, like
+ * Pokémon"). The hero is announced EVOLVING in its own colours with light drawn in to it; it
+ * CHARGES to a white silhouette as the chart spins up; then the MORPH — old form and new
+ * swapping in silhouette, faster and faster, a tick under each swap — until it BURSTS in a
+ * white-out and the new form is REVEALED in colour, throwing sparks, under the path's name and
+ * the typing it lands on. The first tap jumps to the reveal, the second (or the timer) moves on.
  */
 function EvolutionCinematic({ hero, path, onDone }: { hero: HeroDefinition; path: EvolutionPath; onDone: () => void }) {
-  const [beat, setBeat] = useState<'charge' | 'burst' | 'reveal'>('charge');
+  const [beat, setBeat] = useState<EvolveBeat>('intro');
+  /** How many swaps the morph has made: odd shows the new form. */
+  const [swaps, setSwaps] = useState(0);
   const types = pathTypes(hero, path);
+  const revealed = beat === 'reveal';
+  const timers = useRef<number[]>([]);
 
   useEffect(() => {
     if (prefersReducedMotion()) {
@@ -477,49 +497,112 @@ function EvolutionCinematic({ hero, path, onDone }: { hero: HeroDefinition; path
       return;
     }
     playSfx('titan.stir');
-    const timers = [
-      window.setTimeout(() => {
+    const at = (ms: number, fn: () => void) => window.setTimeout(fn, ms);
+    const pending = (timers.current = [
+      at(EVOLVE_BEATS.charge, () => {
+        setBeat('charge');
+        playSfx('evolve.charge');
+      }),
+      at(EVOLVE_BEATS.morph, () => setBeat('morph')),
+    ]);
+    let t = EVOLVE_BEATS.morph;
+    MORPH_GAPS.forEach((gap, i) => {
+      t += gap;
+      // The tick climbs with the swaps, so the ear hears the same acceleration the eye does.
+      pending.push(
+        at(t, () => {
+          setSwaps(i + 1);
+          playSfx('star.tick', { pitch: 0.8 + i * 0.05, gain: 0.8 });
+        })
+      );
+    });
+    const burstAt = EVOLVE_BEATS.morph + MORPH_MS + 60;
+    pending.push(
+      at(burstAt, () => {
         setBeat('burst');
         playSfx('seal.shatter');
-      }, EVOLVE_BEATS.burst),
-      window.setTimeout(() => {
+      }),
+      at(burstAt + EVOLVE_BEATS.revealHold, () => {
         setBeat('reveal');
-        playSfx('levelUp');
-      }, EVOLVE_BEATS.reveal),
-      window.setTimeout(onDone, EVOLVE_BEATS.done),
-    ];
-    return () => timers.forEach(window.clearTimeout);
+        playSfx('evolve.fanfare');
+      }),
+      at(burstAt + EVOLVE_BEATS.revealHold + EVOLVE_BEATS.done, onDone)
+    );
+    return () => timers.current.forEach(window.clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function skip() {
+    if (revealed) {
+      onDone();
+      return;
+    }
+    // Skipping still lands on the new form: the player chose it, and should see what it is.
+    timers.current.forEach(window.clearTimeout);
+    timers.current = [window.setTimeout(onDone, EVOLVE_BEATS.done)];
+    setBeat('reveal');
+    playSfx('evolve.fanfare');
+  }
+
+  const showNew = revealed || beat === 'burst' || swaps % 2 === 1;
+  const line = revealed ? (
+    <>
+      {hero.name} evolved into <strong>{path.name}</strong>!
+    </>
+  ) : (
+    <>{hero.name} is evolving!</>
+  );
 
   // Portalled into overlayHost(), never body (overlayHost.ts): the stage rules pin a screen's
   // children to `position: relative`, which would flatten this into the bottom of the column.
   return createPortal(
-    <div className={`evolve-cinematic is-${beat}`} style={pathTintStyle(hero, path)} onClick={onDone}>
-      <span className="evolve-cinematic-veil" aria-hidden="true" />
-      <span className="evolve-cinematic-rays" aria-hidden="true" />
+    <div className={`evo-rite is-${beat}`} style={pathTintStyle(hero, path)} onClick={skip}>
+      <span className="evo-rite-veil" aria-hidden="true" />
+      <span className="evo-rite-rush" aria-hidden="true" />
+      <span className="evo-rite-rays" aria-hidden="true" />
 
-      <div className="evolve-cinematic-stage">
-        {/* The whole chart spins up through the charge and bleeds into the path's colour — the
-            hero becoming one thing — and comes back slow after the burst with its new typing lit.
-            Unfocused until the reveal so the charge starts from the full chart. */}
-        <TypeWheel className="evolve-wheel" size={EVOLVE_WHEEL} focus={beat === 'reveal' ? types : undefined} />
-        <span className="evolve-ring is-outer" aria-hidden="true" />
-        <span className="evolve-ring is-inner" aria-hidden="true" />
-        <span className="evolve-column" aria-hidden="true" />
-        {/* The new form arrives under the white-out, which is what the burst is for. */}
-        <HeroPortrait heroId={hero.id} pathId={beat === 'reveal' ? path.id : undefined} className="evolve-figure" />
-        <span className="evolve-flash" aria-hidden="true" />
+      <div className="evo-rite-stage">
+        {/* The chart spins up through the charge, the hero becoming one thing, and comes back slow
+            after the burst with its new typing lit. Unfocused until the reveal. */}
+        <TypeWheel className="evo-rite-wheel" size={EVOLVE_WHEEL} focus={revealed ? types : undefined} />
+        <span className="evo-rite-ring is-outer" aria-hidden="true" />
+        <span className="evo-rite-ring is-inner" aria-hidden="true" />
+        <span className="evo-rite-column" aria-hidden="true" />
+        {EVOLVE_MOTES.map((m, i) => (
+          <span
+            key={i}
+            className="evo-rite-mote"
+            style={{ '--a': `${m.angle}deg`, '--d': `${m.distance}px`, animationDelay: `${m.delay}s` } as CSSProperties}
+            aria-hidden="true"
+          />
+        ))}
+        {/* Both forms stand in one place; the morph shows one silhouette at a time. */}
+        <HeroPortrait heroId={hero.id} className={`evo-rite-figure is-old${showNew ? '' : ' is-shown'}`} />
+        <HeroPortrait heroId={hero.id} pathId={path.id} className={`evo-rite-figure is-new${showNew ? ' is-shown' : ''}`} />
+        <span className="evo-rite-flash" aria-hidden="true" />
+        {revealed &&
+          EVOLVE_SPARKS.map((s, i) => (
+            <span
+              key={i}
+              className={`evo-rite-spark${s.trail ? ' is-trail' : ''}`}
+              style={{ '--a': `${s.angle}deg`, '--d': `${s.distance}px`, '--s': `${s.size}px` } as CSSProperties}
+              aria-hidden="true"
+            />
+          ))}
       </div>
 
-      <div className="evolve-cinematic-plate">
-        <div className="evolve-cinematic-eyebrow">{hero.name} evolved</div>
-        <h2 className="evolve-cinematic-name">{path.name}</h2>
-        <div className="evolve-cinematic-types">
-          {types.map((t) => (
-            <TypeBadge key={t} type={t} />
-          ))}
-        </div>
+      <div className="evo-rite-box">
+        <span className="evo-rite-line" key={revealed ? 'evolved' : 'evolving'}>
+          {line}
+        </span>
+        {revealed && (
+          <span className="evo-rite-types">
+            {types.map((t) => (
+              <TypeBadge key={t} type={t} />
+            ))}
+          </span>
+        )}
+        {revealed && <span className="evo-rite-more" aria-hidden="true" />}
       </div>
     </div>,
     overlayHost()

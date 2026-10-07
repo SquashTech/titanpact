@@ -79,16 +79,18 @@ a question for whoever next gives a hero the verb.
 
 ### 1.5 The scene
 
-- **Where it sits:** draft → the Titan wakes (the cold open) → **the Blessing** → the act intro.
-  Placeless, like the cold open; the first-run lore card stays ahead of the draft.
+- **Where it sits:** INSIDE the draft since 2026-10-07 (per user direction, "bake the Blessing into
+  the starter sequence"): Seal the Pact → **the pact forged and blessed** under the draft's own
+  night sky → the act intro. No scene change; placeless, like the draft. A run saved on the old
+  `blessing` screen resumes into the same sequence.
 - **Who blesses: the Pactwarden** (per user direction): a blind elder who keeps the old binding
   rite, with a golden cord and a lantern — the witness to the pact the player has just sealed
-  (`lore.md` §4). Not Ancient-coloured, for the reason no Guardian is. Art `art/npc/pactwarden.png`,
-  backdrop `art/backdrops/blessing.png` (a ring of standing stones where the road into the wilds
-  begins).
-- **The beat** (`BlessingScreen.tsx`): she fades in with the opening pair either side. Her one line:
-  *"I bless you for this journey. You may need it."* A tap sends gold down onto each hero and
-  leaves the gold rim at their feet; a second tap moves on.
+  (`lore.md` §4). Not Ancient-coloured, for the reason no Guardian is. She is a VOICE here, not a
+  figure — the pair hold the stage; her art `art/npc/pactwarden.png` stands at her Shrine.
+- **The beat** (`PactForging.tsx`): the opening pair gather either side, each sends a beam of its
+  own colour into the type chart between them, the chart locks — the pact forged — and rises into
+  the sky as a star. Her one line: *"I bless you for this journey. You may need it."* A tap sends
+  that star's light down onto each hero and leaves the gold rim at their feet; a second tap moves on.
 - **What it does is said by a first-time tip, not by her.** The `blessing` tip fires on the first
   map where any roster hero is Blessed. In code and copy these are **the opening pair**.
 

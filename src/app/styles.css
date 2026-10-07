@@ -12829,19 +12829,6 @@ button.star-shop-bundle-face {
   overflow: hidden;
 }
 
-/* The draft's own painting (art/backdrops/draft.png): the camp on the hill sits at the foot of the
-   screen, the sky above it is what the cards stand on. */
-.draft-sky-backdrop {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 100%;
-  image-rendering: pixelated;
-}
-
 /* Same @keyframes title-ember-rise as the title screen's ember field, tinted
    to --pact-rgb so the air around the summoning carries the featured hero's
    domain. At 2-4px the recolor on a rail tap is imperceptible, which is why
@@ -14474,234 +14461,6 @@ button.star-shop-bundle-face {
 
 .lead-pick-grid .squad-slot {
   transition: filter var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
-}
-
-/* --- A hero joining the pact (RecruitFanfare.tsx) -------------------------
-   Both ways in used to resolve silently — the contract stamped a mark in the
-   corner and a Guild Hall hire simply closed its sheet — which is a strange
-   amount of nothing for the run's second-scarcest resource (2026-09-08, per
-   user direction).
-
-   One beat, in the hero's own primary type colour: the seal closes on them
-   (rings drawing in, the figure rising out of the dark), the oath lands, and
-   the name and typing print under it. Tap skips — four hires in one Guild
-   Hall visit must not be four times this. */
-.recruit-fanfare {
-  position: fixed;
-  inset: 0;
-  z-index: 42;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.recruit-fanfare-veil {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 44%, color-mix(in srgb, rgb(var(--pact-rgb)) 14%, #0d0f16), #05060a 64%);
-  animation: evolve-veil-in 0.28s ease-out backwards;
-}
-
-.recruit-fanfare-rays {
-  position: absolute;
-  top: 44%;
-  left: 50%;
-  width: 720px;
-  height: 720px;
-  margin: -360px 0 0 -360px;
-  opacity: 0;
-  background: repeating-conic-gradient(from 0deg, transparent 0deg 11deg, rgba(var(--pact-rgb), 0.45) 11deg 14deg);
-  -webkit-mask-image: radial-gradient(circle, #000 8%, transparent 44%);
-  mask-image: radial-gradient(circle, #000 8%, transparent 44%);
-  pointer-events: none;
-}
-
-.recruit-fanfare.is-sworn .recruit-fanfare-rays {
-  animation: evolve-rays-in 0.8s ease-out forwards, evolve-rays-spin 34s linear infinite;
-}
-
-.recruit-fanfare-stage {
-  position: relative;
-  width: 230px;
-  height: 230px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* The chart behind the oath (.type-wheel): it spins up hard and LOCKS on the
-   title's launch curve with the hero's innate type at twelve o'clock, timed
-   to stop as the oath lands (RecruitFanfare BEATS.swear), the hero's typing
-   lit on it. The oath then brightens it; nothing here turns after the lock —
-   a seal that is still moving has not closed. A little high, so its lowest
-   glyph clears the plate. */
-.recruit-fanfare-wheel {
-  position: absolute;
-  top: calc(50% - 16px);
-  left: 50%;
-  margin: calc(var(--wheel-size) / -2) 0 0 calc(var(--wheel-size) / -2);
-  --wheel-tint: rgb(var(--pact-rgb));
-  animation: recruit-fanfare-wheel-in 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
-}
-
-@keyframes recruit-fanfare-wheel-in {
-  from {
-    opacity: 0;
-    transform: scale(1.5);
-  }
-  to {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-}
-
-.recruit-fanfare-wheel .type-wheel-dial {
-  animation: type-wheel-lock 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
-}
-
-.recruit-fanfare-wheel .type-wheel-node {
-  animation: type-wheel-lock-back 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
-}
-
-.recruit-fanfare.is-sworn .recruit-fanfare-wheel {
-  animation: recruit-fanfare-wheel-sworn 0.7s ease-out both;
-}
-
-@keyframes recruit-fanfare-wheel-sworn {
-  from {
-    opacity: 0.6;
-    filter: none;
-  }
-  to {
-    opacity: 0.85;
-    filter: drop-shadow(0 0 8px rgba(var(--pact-rgb), 0.7));
-  }
-}
-
-/* Rings CLOSING rather than expanding: an oath is something binding onto the
-   hero, and a ring travelling outward is the vocabulary this UI already uses
-   for a burst (.relic-reveal-flash, .recruit-stamp-wax). */
-.recruit-fanfare-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 50%;
-  opacity: 0;
-  animation: recruit-fanfare-seal 0.72s cubic-bezier(0.3, 0.85, 0.25, 1) both;
-  pointer-events: none;
-}
-
-.recruit-fanfare-ring.is-outer {
-  width: 240px;
-  height: 240px;
-  margin: -120px 0 0 -120px;
-  border: 2px solid rgba(var(--pact-rgb), 0.75);
-}
-
-.recruit-fanfare-ring.is-inner {
-  width: 180px;
-  height: 180px;
-  margin: -90px 0 0 -90px;
-  border: 2px dashed rgba(var(--pact-rgb), 0.6);
-  animation-delay: 0.14s;
-}
-
-@keyframes recruit-fanfare-seal {
-  0% {
-    opacity: 0;
-    transform: scale(1.9) rotate(-40deg);
-  }
-  35% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.72) rotate(0deg);
-  }
-}
-
-.recruit-fanfare-figure {
-  position: relative;
-  width: 138px;
-  height: 138px;
-  image-rendering: pixelated;
-  animation: recruit-fanfare-rise 0.7s cubic-bezier(0.2, 1, 0.3, 1) both;
-}
-
-@keyframes recruit-fanfare-rise {
-  0% {
-    opacity: 0;
-    transform: translateY(26px) scale(0.86);
-    filter: brightness(0.2);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: drop-shadow(0 0 20px rgba(var(--pact-rgb), 0.7));
-  }
-}
-
-.recruit-fanfare-flash {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 60px;
-  height: 60px;
-  margin: -30px 0 0 -30px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(var(--pact-rgb), 0.6) 50%, transparent 72%);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.recruit-fanfare.is-sworn .recruit-fanfare-flash {
-  animation: class-learn-flash-burst 0.7s ease-out forwards;
-}
-
-.recruit-fanfare-plate {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  text-align: center;
-  opacity: 0;
-}
-
-.recruit-fanfare.is-sworn .recruit-fanfare-plate {
-  animation: evolve-plate-in 0.55s cubic-bezier(0.2, 0.9, 0.25, 1) both;
-}
-
-.recruit-fanfare-kicker {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: rgba(var(--pact-rgb), 1);
-}
-
-.recruit-fanfare-name {
-  margin: 0;
-  font-size: 30px;
-  font-weight: 800;
-  line-height: 1.05;
-  text-shadow: 0 0 26px rgba(var(--pact-rgb), 0.7);
-}
-
-.recruit-fanfare-oath {
-  font-size: 12px;
-  font-style: italic;
-  color: var(--text-dim);
-}
-
-.recruit-fanfare-types {
-  display: flex;
-  gap: 6px;
-  margin-top: 4px;
 }
 
 /* --- Guild Hall panel -----------------------------------------------------
@@ -23427,16 +23186,9 @@ button.star-shop-bundle-face {
   }
 }
 
-/* --- The evolution cinematic (EvolutionScreen.tsx EvolutionCinematic) -----
-   The choice used to resolve as a screen swap: the dossier closed and the
-   level-up list came back one line different. Three beats now, and they are
-   the shape of the moment rather than decoration — the hero CHARGES, the
-   charge BURSTS into a white-out (which is what hides the swap), and the new
-   form is REVEALED under the path's name and the typing it lands on.
-
-   Tinted from the path's own colours, same as the button that started it, so
-   the press and what it produces are visibly the same event. A tap anywhere
-   skips to the end. */
+/* --- The awakening's stage (EvolutionScreen.tsx EvolutionAwakening) --------
+   The beats before the choice, washed in the hero's own types. The cinematic
+   after the choice is `.evo-rite`, further down. A tap anywhere skips. */
 .evolve-cinematic {
   position: fixed;
   inset: 0;
@@ -23484,10 +23236,6 @@ button.star-shop-bundle-face {
   pointer-events: none;
 }
 
-.evolve-cinematic.is-reveal .evolve-cinematic-rays {
-  animation: evolve-rays-in 0.8s ease-out forwards, evolve-rays-spin 30s linear infinite;
-}
-
 @keyframes evolve-rays-in {
   from {
     opacity: 0;
@@ -23512,19 +23260,11 @@ button.star-shop-bundle-face {
   justify-content: center;
 }
 
-/* The chart behind the hero (.type-wheel above). Through the charge the whole
-   dial spins up on an accelerating curve and bleeds into the path's lead
-   colour — every chord and every glyph — until it is one colour turning too
-   fast to read, which is the hero becoming one thing; the burst takes it, and
-   it comes back slow after, the new typing lit. The awakening runs the same
-   beat shorter (--charge) and stops short of the burst, as the rest of it
-   does. It stays under the figure, which is a flex child, on the stage's own
-   stacking, and sits a little high so its lowest glyph clears the pips and
-   the plate under the stage. */
-.evolve-cinematic {
-  --charge: 1.15s;
-}
-
+/* The chart behind the hero (.type-wheel above). Through the crack the whole
+   dial spins up on an accelerating curve and bleeds into the lead colour —
+   every chord and every glyph — and comes back slow on the call. It stays
+   under the figure, which is a flex child, on the stage's own stacking, and
+   sits a little high so its lowest glyph clears the pips and the plate. */
 .evolve-awakening {
   --charge: 0.85s;
 }
@@ -23566,8 +23306,7 @@ button.star-shop-bundle-face {
   animation: type-wheel-unspin 90s linear infinite;
 }
 
-/* Charge (and crack): the spin-up, and the tint over it. */
-.evolve-cinematic.is-charge .evolve-wheel,
+/* Crack: the spin-up, and the tint over it. */
 .evolve-cinematic.is-crack .evolve-wheel {
   animation: evolve-wheel-charge var(--charge) ease-in both;
 }
@@ -23588,12 +23327,10 @@ button.star-shop-bundle-face {
   }
 }
 
-.evolve-cinematic.is-charge .evolve-wheel .type-wheel-dial,
 .evolve-cinematic.is-crack .evolve-wheel .type-wheel-dial {
   animation: evolve-wheel-spinup var(--charge) cubic-bezier(0.55, 0, 1, 0.45) both;
 }
 
-.evolve-cinematic.is-charge .evolve-wheel .type-wheel-node,
 .evolve-cinematic.is-crack .evolve-wheel .type-wheel-node {
   animation:
     evolve-wheel-spinup-back var(--charge) cubic-bezier(0.55, 0, 1, 0.45) both,
@@ -23614,43 +23351,15 @@ button.star-shop-bundle-face {
   }
 }
 
-.evolve-cinematic.is-charge .evolve-wheel .type-wheel-chords.is-native,
 .evolve-cinematic.is-crack .evolve-wheel .type-wheel-chords.is-native {
   animation: type-wheel-native-out var(--charge) ease-in both;
 }
 
-.evolve-cinematic.is-charge .evolve-wheel .type-wheel-chords.is-tint,
 .evolve-cinematic.is-crack .evolve-wheel .type-wheel-chords.is-tint {
   animation: type-wheel-tint-in var(--charge) ease-in both;
 }
 
-/* Burst: held where the charge left it, still turning, under the white. */
-.evolve-cinematic.is-burst .evolve-wheel {
-  opacity: 1;
-  transform: scale(0.9);
-  filter: drop-shadow(0 0 9px var(--path-lead));
-}
-
-.evolve-cinematic.is-burst .evolve-wheel .type-wheel-dial {
-  animation: type-wheel-spin 0.5s linear infinite;
-}
-
-.evolve-cinematic.is-burst .evolve-wheel .type-wheel-node {
-  animation: type-wheel-unspin 0.5s linear infinite;
-  color: var(--wheel-tint);
-}
-
-.evolve-cinematic.is-burst .evolve-wheel .type-wheel-chords.is-native {
-  opacity: 0;
-}
-
-.evolve-cinematic.is-burst .evolve-wheel .type-wheel-chords.is-tint {
-  opacity: 1;
-}
-
-/* Reveal (and call): the chart back in its own colours, slow, with what the
-   hero now is lit on it. */
-.evolve-cinematic.is-reveal .evolve-wheel,
+/* Call: the chart back in its own colours, slow, the hero's types lit on it. */
 .evolve-cinematic.is-call .evolve-wheel {
   animation: evolve-wheel-return 1.4s ease-out both;
 }
@@ -23666,12 +23375,10 @@ button.star-shop-bundle-face {
   }
 }
 
-.evolve-cinematic.is-reveal .evolve-wheel .type-wheel-dial,
 .evolve-cinematic.is-call .evolve-wheel .type-wheel-dial {
   animation: type-wheel-spin 90s linear infinite;
 }
 
-.evolve-cinematic.is-reveal .evolve-wheel .type-wheel-node,
 .evolve-cinematic.is-call .evolve-wheel .type-wheel-node {
   animation: type-wheel-unspin 90s linear infinite;
 }
@@ -23683,10 +23390,6 @@ button.star-shop-bundle-face {
   image-rendering: pixelated;
 }
 
-.evolve-cinematic.is-charge .evolve-figure {
-  animation: evolve-shake 0.09s linear infinite, evolve-whiten 1.15s ease-in forwards;
-}
-
 @keyframes evolve-shake {
   0%,
   100% {
@@ -23694,40 +23397,6 @@ button.star-shop-bundle-face {
   }
   50% {
     transform: translateX(2.5px);
-  }
-}
-
-/* `brightness(0) invert(1)` keeps the alpha and drives every pixel to white —
-   the silhouette is what lets the sprite swap happen unseen. */
-@keyframes evolve-whiten {
-  0% {
-    filter: none;
-  }
-  55% {
-    filter: brightness(2.2) saturate(0.6) drop-shadow(0 0 12px var(--path-lead));
-  }
-  100% {
-    filter: brightness(0) invert(1) drop-shadow(0 0 26px #ffffff);
-  }
-}
-
-.evolve-cinematic.is-burst .evolve-figure {
-  filter: brightness(0) invert(1) drop-shadow(0 0 32px #ffffff);
-  transform: scale(1.14);
-}
-
-.evolve-cinematic.is-reveal .evolve-figure {
-  animation: evolve-emerge 0.7s cubic-bezier(0.2, 1.2, 0.3, 1) both;
-}
-
-@keyframes evolve-emerge {
-  0% {
-    filter: brightness(0) invert(1);
-    transform: scale(1.4);
-  }
-  100% {
-    filter: drop-shadow(0 0 20px color-mix(in srgb, var(--path-lead) 75%, transparent));
-    transform: scale(1);
   }
 }
 
@@ -23752,15 +23421,6 @@ button.star-shop-bundle-face {
   height: 190px;
   margin: -95px 0 0 -95px;
   border: 2px dashed color-mix(in srgb, var(--path-trail) 70%, transparent);
-}
-
-.evolve-cinematic.is-charge .evolve-ring {
-  animation: evolve-ring-close 1.15s ease-in both;
-}
-
-.evolve-cinematic.is-charge .evolve-ring.is-inner {
-  animation-delay: 0.3s;
-  animation-duration: 0.85s;
 }
 
 @keyframes evolve-ring-close {
@@ -23796,10 +23456,6 @@ button.star-shop-bundle-face {
   pointer-events: none;
 }
 
-.evolve-cinematic.is-charge .evolve-column {
-  animation: evolve-column-rise 1.15s ease-in both;
-}
-
 @keyframes evolve-column-rise {
   0% {
     opacity: 0;
@@ -23824,40 +23480,6 @@ button.star-shop-bundle-face {
   pointer-events: none;
 }
 
-.evolve-cinematic.is-burst .evolve-flash {
-  animation: evolve-flash-out 0.37s ease-out forwards;
-}
-
-@keyframes evolve-flash-out {
-  0% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  60% {
-    opacity: 1;
-    transform: scale(30);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(40);
-  }
-}
-
-.evolve-cinematic.is-reveal .evolve-flash {
-  animation: evolve-flash-fade 0.6s ease-out forwards;
-}
-
-@keyframes evolve-flash-fade {
-  0% {
-    opacity: 1;
-    transform: scale(40);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(48);
-  }
-}
-
 .evolve-cinematic-plate {
   position: relative;
   display: flex;
@@ -23866,10 +23488,6 @@ button.star-shop-bundle-face {
   gap: 6px;
   text-align: center;
   opacity: 0;
-}
-
-.evolve-cinematic.is-reveal .evolve-cinematic-plate {
-  animation: evolve-plate-in 0.6s cubic-bezier(0.2, 0.9, 0.25, 1) 0.14s both;
 }
 
 @keyframes evolve-plate-in {
@@ -23899,14 +23517,9 @@ button.star-shop-bundle-face {
   text-shadow: 0 0 26px color-mix(in srgb, var(--path-lead) 75%, transparent);
 }
 
-.evolve-cinematic-types {
-  display: flex;
-  gap: 6px;
-}
-
 /* --- The awakening (EvolutionAwakening) — the beats BEFORE the choice ------
-   Same stage as the seal cinematic above, three beats of its own: stir, crack, call. It stops
-   short of the white-out on purpose — nothing is being swapped, the hero is being asked. */
+   Three beats of its own: stir, crack, call. It stops short of a white-out on purpose —
+   nothing is being swapped, the hero is being asked. */
 
 .evolve-awakening {
   gap: 14px;
@@ -36482,114 +36095,6 @@ button.star-shop-bundle-face {
   color: rgba(236, 228, 210, 0.92);
 }
 
-/* ── The Blessing (BlessingScreen.tsx, docs/blessings-and-statuses.md §1.5) ─────────────────
-   The road encounter's frame: the Pactwarden where a speaker stands, the opening pair either side
-   of her at 2x and turned in toward her. On the blessing, a shaft of gold falls onto each and
-   leaves the rim a Blessed hero wears in a fight. */
-.blessing-hero {
-  position: absolute;
-  bottom: 176px;
-  width: 96px;
-  height: 96px;
-  pointer-events: none;
-  animation: road-encounter-arrive 0.9s var(--ease-out) both;
-}
-
-.blessing-hero.is-left {
-  left: 10px;
-}
-
-.blessing-hero.is-right {
-  right: 10px;
-}
-
-.blessing-hero-figure {
-  position: absolute;
-  inset: 0;
-  width: 96px;
-  height: 96px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7));
-}
-
-/* The roster art faces left; the left hero turns in toward the Pactwarden. */
-.blessing-hero.is-left .blessing-hero-figure {
-  transform: scaleX(-1);
-}
-
-.blessing-hero.is-lit .blessing-hero-figure {
-  animation: blessing-flare 1.1s ease-out 0.45s both;
-}
-
-.blessing-shaft {
-  position: absolute;
-  left: 50%;
-  bottom: 6px;
-  width: 56px;
-  height: 520px;
-  margin-left: -28px;
-  background: linear-gradient(180deg, rgba(246, 220, 140, 0), rgba(246, 220, 140, 0.55) 70%, rgba(255, 244, 210, 0.85));
-  filter: blur(3px);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
-  transform-origin: 50% 0;
-  opacity: 0;
-}
-
-.blessing-hero.is-lit .blessing-shaft {
-  animation: blessing-shaft 1.3s ease-out both;
-}
-
-@keyframes blessing-shaft {
-  0% {
-    opacity: 0;
-    transform: scaleY(0);
-  }
-  35% {
-    opacity: 1;
-    transform: scaleY(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scaleY(1);
-  }
-}
-
-/* The fight's rim, drawn on the road: `blessing-rim-breathe` is the same breath. */
-.blessing-rim {
-  position: absolute;
-  left: 50%;
-  bottom: -4px;
-  width: 84px;
-  height: 20px;
-  margin-left: -42px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.55), transparent 70%);
-  box-shadow: 0 0 0 1px rgba(246, 220, 140, 0.5), 0 0 9px rgba(246, 220, 140, 0.35);
-  opacity: 0;
-}
-
-.blessing-hero.is-lit .blessing-rim {
-  animation: blessing-rim-in 0.5s ease-out 0.45s both, blessing-rim-breathe 3.2s ease-in-out 1s infinite;
-}
-
-@keyframes blessing-rim-in {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.blessing-rite.is-still .blessing-hero,
-.blessing-rite.is-still .blessing-hero * {
-  animation-duration: 0s !important;
-  animation-delay: 0s !important;
-}
-
 @keyframes road-encounter-rise {
   from {
     transform: translateY(18px);
@@ -45238,4 +44743,1876 @@ img.smithy-service-art {
   font-size: 12px;
   font-weight: 800;
   color: var(--text-dim);
+}
+
+/* --- The night sky (StarField.tsx) ------------------------------------------
+   The draft stands under it and the pact is forged under it, one sky from a
+   fixed seed so the two read as one night. Stars are square pixels, the
+   brightest with a one-pixel cross; a band of the galaxy runs across, and a
+   shooting star crosses now and then. */
+.star-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.star-field-band {
+  position: absolute;
+  left: -30%;
+  top: 6%;
+  width: 160%;
+  height: 36%;
+  background:
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(164, 99, 217, 0.17), rgba(110, 110, 200, 0.07) 46%, transparent 70%),
+    radial-gradient(ellipse 26% 38% at 40% 56%, rgba(232, 196, 140, 0.09), transparent 70%);
+  transform: rotate(-24deg);
+  filter: blur(6px);
+}
+
+.star-field-star {
+  position: absolute;
+  background: #e9edff;
+  opacity: 0.35;
+  animation-name: star-field-twinkle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.star-field-star.is-warm {
+  background: #ffe4ad;
+}
+
+/* A one-pixel cross, three out: the glint every pixel-art night sky draws its brightest stars with. */
+.star-field-star.is-bright {
+  background: #ffffff;
+  box-shadow:
+    0 -3px 0 -1px rgba(255, 255, 255, 0.6),
+    0 3px 0 -1px rgba(255, 255, 255, 0.6),
+    -3px 0 0 -1px rgba(255, 255, 255, 0.6),
+    3px 0 0 -1px rgba(255, 255, 255, 0.6),
+    0 0 6px 1px rgba(200, 210, 255, 0.45);
+}
+
+@keyframes star-field-twinkle {
+  0% {
+    opacity: 0.2;
+  }
+  55% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0.45;
+  }
+}
+
+.star-field-shooting {
+  position: absolute;
+  width: 90px;
+  height: 1px;
+  background: linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0.5) 30%, rgba(255, 255, 255, 0));
+  opacity: 0;
+  transform-origin: 0 50%;
+  animation-name: star-field-shoot;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Visible for the last tenth of its cycle only: a streak, then nothing for a long while. */
+@keyframes star-field-shoot {
+  0%,
+  90% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(-29deg);
+  }
+  91% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-170px, 94px) rotate(-29deg);
+  }
+}
+
+.star-field-horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34%;
+  background: linear-gradient(180deg, transparent, rgba(82, 52, 124, 0.2) 60%, rgba(30, 20, 50, 0.55));
+}
+
+/* The night itself, under the stars: deep blue overhead, the pact's violet low. */
+.draft-sky.is-starry .draft-sky-wash,
+.pact-forge-wash {
+  background:
+    radial-gradient(ellipse 120% 55% at 50% -6%, rgba(224, 166, 60, 0.07), transparent 62%),
+    radial-gradient(ellipse 120% 60% at 50% 108%, rgba(164, 99, 217, 0.2), transparent 66%),
+    linear-gradient(180deg, #04050d, #0a0c1c 55%, #15102a);
+}
+
+/* The pact sealed: the draft steps back and leaves its sky to the forging. */
+.draft-screen.is-forging > :not(.draft-sky) {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+/* --- The pact forged (PactForging.tsx) ---------------------------------------
+   Under the draft's sky, one sequence: the pair GATHERS, each sends a beam of
+   its own colour into the OATH, the chart spins up between them and the pact
+   is FORGED as it locks, the seal ASCENDS into the sky as a star, and the
+   Pactwarden SPEAKS — then the star's light falls on both and leaves them
+   BLESSED. Every element animates from its beat onward (`:is()` groups), so a
+   tap that jumps ahead plays what is left of each at once. */
+.pact-forge {
+  position: fixed;
+  inset: 0;
+  z-index: 41;
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.pact-forge-sky {
+  position: absolute;
+  inset: 0;
+  animation: evolve-veil-in 0.6s ease-out both;
+}
+
+.pact-forge-wash {
+  position: absolute;
+  inset: 0;
+}
+
+.pact-forge-stage {
+  position: absolute;
+  left: 50%;
+  bottom: 150px;
+  pointer-events: none;
+}
+
+.pact-forge.is-forge .pact-forge-stage {
+  animation: pact-forge-quake 0.45s linear;
+}
+
+@keyframes pact-forge-quake {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translate(-3px, 2px);
+  }
+  40% {
+    transform: translate(3px, -2px);
+  }
+  60% {
+    transform: translate(-2px, -1px);
+  }
+  80% {
+    transform: translate(2px, 1px);
+  }
+}
+
+.pact-forge-light {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+/* The beams: a bloom under a core under a flow of light running toward the seal. */
+.pact-forge-beam {
+  opacity: 0;
+}
+
+.pact-forge-beam line {
+  stroke-linecap: round;
+  fill: none;
+}
+
+.pact-forge-beam-glow {
+  stroke-width: 10;
+  opacity: 0.7;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.pact-forge-beam-core {
+  stroke-width: 3;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.pact-forge-beam-flow {
+  stroke: #fffbe8;
+  stroke-width: 2;
+  stroke-dasharray: 0.03 0.07;
+  opacity: 0;
+}
+
+.pact-forge:is(.is-oath, .is-forge) .pact-forge-beam {
+  opacity: 1;
+}
+
+.pact-forge:is(.is-oath, .is-forge) :is(.pact-forge-beam-glow, .pact-forge-beam-core) {
+  animation: pact-forge-beam-draw 0.8s ease-out forwards;
+}
+
+.pact-forge:is(.is-oath, .is-forge) .pact-forge-beam-flow {
+  animation:
+    pact-forge-beam-flow 0.45s linear infinite,
+    evolve-veil-in 0.3s ease-out 0.55s both;
+  opacity: 0.9;
+}
+
+.pact-forge.is-forge .pact-forge-beam {
+  animation: pact-forge-beam-out 0.8s ease-in forwards;
+}
+
+@keyframes pact-forge-beam-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pact-forge-beam-flow {
+  from {
+    stroke-dashoffset: 0.1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pact-forge-beam-out {
+  0% {
+    opacity: 1;
+    filter: brightness(1.8);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The seal: a point the chart, the rings and the burst are centred on. */
+.pact-forge-seal {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.pact-forge-wheel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: calc(var(--wheel-size) / -2) 0 0 calc(var(--wheel-size) / -2);
+  --wheel-tint: #f6dc8c;
+  opacity: 0;
+}
+
+.pact-forge:is(.is-oath, .is-forge) .pact-forge-wheel {
+  animation: pact-forge-wheel-in 0.7s ease-out both;
+}
+
+.pact-forge.is-oath .pact-forge-wheel .type-wheel-dial {
+  animation: type-wheel-spin 0.45s linear infinite;
+}
+
+.pact-forge.is-oath .pact-forge-wheel .type-wheel-node {
+  animation: type-wheel-unspin 0.45s linear infinite;
+}
+
+/* Forged: the dial LOCKS with the first hero's type dead-top — the title's launch lock. */
+.pact-forge.is-forge .pact-forge-wheel .type-wheel-dial {
+  animation: type-wheel-lock 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
+}
+
+.pact-forge.is-forge .pact-forge-wheel .type-wheel-node {
+  animation: type-wheel-lock-back 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
+}
+
+.pact-forge.is-forge .pact-forge-wheel {
+  filter: drop-shadow(0 0 10px rgba(246, 220, 140, 0.85));
+}
+
+.pact-forge:is(.is-ascend, .is-speak, .is-bless, .is-blessed) .pact-forge-wheel {
+  animation: pact-forge-wheel-rise 0.8s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+
+.pact-forge:is(.is-ascend, .is-speak, .is-bless, .is-blessed) .pact-forge-wheel .type-wheel-dial {
+  transform: rotate(calc(720deg + var(--wheel-rest)));
+}
+
+.pact-forge:is(.is-ascend, .is-speak, .is-bless, .is-blessed) .pact-forge-wheel .type-wheel-node {
+  transform: rotate(calc(-720deg - var(--wheel-rest)));
+}
+
+@keyframes pact-forge-wheel-in {
+  from {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+  to {
+    opacity: 0.92;
+    transform: scale(1);
+  }
+}
+
+/* Up into the sky, shrinking into the point where the star then opens (STAR − SEAL in PactForging). */
+@keyframes pact-forge-wheel-rise {
+  0% {
+    opacity: 0.92;
+    transform: none;
+    filter: drop-shadow(0 0 10px rgba(246, 220, 140, 0.85));
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-110px) scale(0.12);
+    filter: drop-shadow(0 0 10px rgba(246, 220, 140, 0.85)) brightness(3);
+  }
+}
+
+.pact-forge-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.pact-forge-ring.is-outer {
+  width: 230px;
+  height: 230px;
+  margin: -115px 0 0 -115px;
+  border: 2px solid rgba(246, 220, 140, 0.75);
+}
+
+.pact-forge-ring.is-inner {
+  width: 170px;
+  height: 170px;
+  margin: -85px 0 0 -85px;
+  border: 2px dashed rgba(246, 220, 140, 0.6);
+}
+
+.pact-forge.is-oath .pact-forge-ring {
+  animation: pact-forge-ring-close 1s cubic-bezier(0.3, 0.85, 0.25, 1) both;
+}
+
+.pact-forge.is-oath .pact-forge-ring.is-inner {
+  animation-delay: 0.25s;
+}
+
+@keyframes pact-forge-ring-close {
+  0% {
+    opacity: 0;
+    transform: scale(1.9) rotate(-40deg);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.6) rotate(0deg);
+  }
+}
+
+.pact-forge-flash {
+  position: absolute;
+  left: -30px;
+  top: -30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff, rgba(246, 220, 140, 0.7) 50%, transparent 72%);
+  opacity: 0;
+}
+
+.pact-forge.is-forge .pact-forge-flash {
+  animation: pact-forge-flash 0.75s ease-out both;
+}
+
+@keyframes pact-forge-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(6);
+  }
+}
+
+.pact-forge-shock {
+  position: absolute;
+  left: -20px;
+  top: -20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 246, 220, 0.9);
+  box-shadow: 0 0 12px rgba(246, 220, 140, 0.8);
+  opacity: 0;
+}
+
+.pact-forge.is-forge .pact-forge-shock {
+  animation: pact-forge-shock 0.8s cubic-bezier(0.1, 0.7, 0.3, 1) both;
+}
+
+@keyframes pact-forge-shock {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(9);
+    border-width: 1px;
+  }
+}
+
+/* The pact's star: where the seal went, and what the blessing falls from. */
+.pact-forge-star {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.pact-forge:is(.is-ascend, .is-speak, .is-bless, .is-blessed) .pact-forge-star {
+  animation: pact-forge-star-in 0.7s cubic-bezier(0.2, 1.3, 0.3, 1) 0.6s both;
+}
+
+@keyframes pact-forge-star-in {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.pact-forge-star-glow {
+  position: absolute;
+  left: -44px;
+  top: -44px;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 246, 220, 0.85), rgba(246, 220, 140, 0.3) 32%, transparent 68%);
+  animation: pact-forge-star-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes pact-forge-star-pulse {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+.blessing-mark.pact-forge-star-mark {
+  position: absolute;
+  left: -14px;
+  top: -14px;
+  width: 28px;
+  height: 28px;
+  color: #fff8e4;
+  filter: drop-shadow(0 0 6px rgba(246, 220, 140, 0.95));
+  animation: pact-forge-star-turn 14s linear infinite;
+}
+
+.blessing-mark.pact-forge-star-mark svg {
+  width: 28px;
+  height: 28px;
+}
+
+@keyframes pact-forge-star-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The star brightens as its light leaves it. */
+.pact-forge.is-bless .pact-forge-star-glow {
+  animation: pact-forge-star-give 1.2s ease-out both;
+}
+
+@keyframes pact-forge-star-give {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.9);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+}
+
+.pact-forge-plate {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  opacity: 0;
+}
+
+.pact-forge:is(.is-ascend, .is-speak, .is-bless, .is-blessed) .pact-forge-plate {
+  animation: evolve-plate-in 0.7s cubic-bezier(0.2, 0.9, 0.25, 1) 0.35s both;
+}
+
+.pact-forge-eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.pact-forge-title {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-shadow: 0 0 16px rgba(224, 166, 60, 0.55), 0 0 34px rgba(164, 99, 217, 0.35);
+}
+
+.pact-forge-names {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+/* The pair, at 2x, the left one turned in to face the other. */
+.pact-forge-hero {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+}
+
+.pact-forge.is-gather .pact-forge-hero {
+  animation: pact-forge-hero-in 0.9s var(--ease-out) both;
+}
+
+.pact-forge.is-gather .pact-forge-hero.is-right {
+  animation-delay: 0.15s;
+}
+
+@keyframes pact-forge-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+    filter: brightness(2.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.pact-forge-figure {
+  position: absolute;
+  inset: 0;
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7));
+}
+
+.pact-forge-hero.is-left .pact-forge-figure {
+  transform: scaleX(-1);
+}
+
+.pact-forge-aura {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 160px;
+  height: 160px;
+  margin: -80px 0 0 -80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--hero-rgb), 0.5), transparent 64%);
+  opacity: 0;
+}
+
+.pact-forge:is(.is-gather, .is-oath, .is-forge) .pact-forge-aura {
+  animation: pact-forge-aura 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes pact-forge-aura {
+  from {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.pact-forge:is(.is-oath, .is-forge) .pact-forge-figure {
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px rgba(var(--hero-rgb), 0.9));
+}
+
+/* The starlight falling: one cone a hero, opening down from the star. */
+.pact-forge-cone {
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 170px 40px;
+}
+
+.pact-forge.is-bless .pact-forge-cone {
+  animation: pact-forge-cone 1.4s ease-out both;
+}
+
+.pact-forge.is-blessed .pact-forge-cone {
+  opacity: 0.22;
+}
+
+@keyframes pact-forge-cone {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  35% {
+    opacity: 0.9;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0.22;
+    transform: scaleY(1);
+  }
+}
+
+.pact-forge.is-bless .pact-forge-figure {
+  animation: pact-forge-flare 1.1s ease-out 0.45s both;
+}
+
+@keyframes pact-forge-flare {
+  0%,
+  100% {
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7));
+  }
+  30% {
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 14px rgba(246, 220, 140, 0.95)) brightness(1.4);
+  }
+}
+
+/* The rim a Blessed hero wears in a fight, and the star it is read by. */
+.pact-forge-rim {
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 84px;
+  height: 20px;
+  margin-left: -42px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.55), transparent 70%);
+  box-shadow: 0 0 0 1px rgba(246, 220, 140, 0.5), 0 0 9px rgba(246, 220, 140, 0.35);
+  opacity: 0;
+}
+
+.pact-forge:is(.is-bless, .is-blessed) .pact-forge-rim {
+  animation: pact-forge-pop 0.5s ease-out 0.45s both, blessing-rim-breathe 3.2s ease-in-out 1s infinite;
+}
+
+.blessing-mark.pact-forge-mark {
+  position: absolute;
+  left: 50%;
+  top: -10px;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  opacity: 0;
+}
+
+.blessing-mark.pact-forge-mark svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pact-forge:is(.is-bless, .is-blessed) .pact-forge-mark {
+  animation: pact-forge-pop 0.5s cubic-bezier(0.2, 1.4, 0.3, 1) 0.7s both;
+}
+
+@keyframes pact-forge-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pact-forge-speech {
+  z-index: 1;
+}
+
+.pact-forge.is-still,
+.pact-forge.is-still * {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+}
+
+/* --- A hero joining the pact (RecruitFanfare.tsx) -------------------------
+   Every recruit spends a Recruit Contract, so the moment is that document
+   (2026-10-07, per user direction). The page UNFURLS from its rods with the
+   hero's cameo on it, the name is SIGNED with a quill, the wax STAMPS down in
+   the hero's colour, and the page BURNS into embers as the chart locks behind
+   it — and the hero steps out of the light, SWORN. Each element animates from
+   its beat onward (`:is()` groups), so nothing snaps back as the beat moves on.
+   Tap skips: four hires in one Guild Hall visit must not be four times this. */
+.recruit-rite {
+  position: fixed;
+  inset: 0;
+  z-index: 42;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.recruit-rite-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 44%, color-mix(in srgb, rgb(var(--pact-rgb)) 14%, #0d0f16), #05060a 64%);
+  animation: evolve-veil-in 0.28s ease-out backwards;
+}
+
+.recruit-rite-rays {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  width: 720px;
+  height: 720px;
+  margin: -360px 0 0 -360px;
+  opacity: 0;
+  background: repeating-conic-gradient(from 0deg, transparent 0deg 11deg, rgba(var(--pact-rgb), 0.45) 11deg 14deg);
+  -webkit-mask-image: radial-gradient(circle, #000 8%, transparent 44%);
+  mask-image: radial-gradient(circle, #000 8%, transparent 44%);
+  pointer-events: none;
+}
+
+.recruit-rite.is-sworn .recruit-rite-rays {
+  animation: evolve-rays-in 0.8s ease-out forwards, evolve-rays-spin 34s linear infinite;
+}
+
+.recruit-rite-stage {
+  position: relative;
+  width: 280px;
+  height: 344px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recruit-rite.is-stamp .recruit-rite-stage {
+  animation: recruit-rite-thud 0.32s ease-out 0.22s;
+}
+
+@keyframes recruit-rite-thud {
+  0%,
+  100% {
+    transform: none;
+  }
+  25% {
+    transform: translateY(3px) scale(0.995);
+  }
+  55% {
+    transform: translate(-2px, -1px);
+  }
+  80% {
+    transform: translate(1px, 1px);
+  }
+}
+
+/* The chart behind the oath: it spins up as the page burns and LOCKS with
+   the hero's innate type dead-top, its typing lit. */
+.recruit-rite-wheel {
+  position: absolute;
+  top: calc(50% - 16px);
+  left: 50%;
+  margin: calc(var(--wheel-size) / -2) 0 0 calc(var(--wheel-size) / -2);
+  --wheel-tint: rgb(var(--pact-rgb));
+  opacity: 0;
+}
+
+.recruit-rite:is(.is-bind, .is-sworn) .recruit-rite-wheel {
+  animation: recruit-rite-wheel-in 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
+}
+
+.recruit-rite:is(.is-bind, .is-sworn) .recruit-rite-wheel .type-wheel-dial {
+  animation: type-wheel-lock 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
+}
+
+.recruit-rite:is(.is-bind, .is-sworn) .recruit-rite-wheel .type-wheel-node {
+  animation: type-wheel-lock-back 620ms cubic-bezier(0.05, 0.9, 0.15, 1) both;
+}
+
+.recruit-rite.is-sworn .recruit-rite-wheel {
+  filter: drop-shadow(0 0 8px rgba(var(--pact-rgb), 0.7));
+}
+
+@keyframes recruit-rite-wheel-in {
+  from {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+  to {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+}
+
+/* Rings CLOSING rather than expanding: an oath is something binding onto the hero. */
+.recruit-rite-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.recruit-rite-ring.is-outer {
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  border: 2px solid rgba(var(--pact-rgb), 0.75);
+}
+
+.recruit-rite-ring.is-inner {
+  width: 180px;
+  height: 180px;
+  margin: -90px 0 0 -90px;
+  border: 2px dashed rgba(var(--pact-rgb), 0.6);
+}
+
+.recruit-rite:is(.is-bind, .is-sworn) .recruit-rite-ring {
+  animation: pact-forge-ring-close 0.72s cubic-bezier(0.3, 0.85, 0.25, 1) both;
+}
+
+.recruit-rite:is(.is-bind, .is-sworn) .recruit-rite-ring.is-inner {
+  animation-delay: 0.14s;
+}
+
+.recruit-rite-figure {
+  position: relative;
+  width: 144px;
+  height: 144px;
+  image-rendering: pixelated;
+  opacity: 0;
+}
+
+.recruit-rite.is-sworn .recruit-rite-figure {
+  animation: recruit-rite-rise 0.8s cubic-bezier(0.2, 1, 0.3, 1) both;
+}
+
+@keyframes recruit-rite-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(26px) scale(0.86);
+    filter: brightness(0) invert(1) drop-shadow(0 0 24px rgb(var(--pact-rgb)));
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: drop-shadow(0 0 20px rgba(var(--pact-rgb), 0.7));
+  }
+}
+
+.recruit-rite-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff, rgba(var(--pact-rgb), 0.7) 50%, transparent 72%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.recruit-rite.is-sworn .recruit-rite-flash {
+  animation: pact-forge-flash 0.75s ease-out both;
+}
+
+/* The contract: two rods and the page between them, unrolled from the middle out. */
+.recruit-scroll {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 252px;
+  margin: -168px 0 0 -126px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: recruit-scroll-in 0.25s ease-out both;
+}
+
+@keyframes recruit-scroll-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.recruit-rite:is(.is-bind, .is-sworn) .recruit-scroll {
+  animation: recruit-scroll-burn 0.6s ease-in forwards;
+}
+
+@keyframes recruit-scroll-burn {
+  0% {
+    filter: none;
+  }
+  40% {
+    opacity: 1;
+    filter: brightness(1.5) drop-shadow(0 0 18px rgb(var(--pact-rgb)));
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.06) translateY(-10px);
+    filter: brightness(3) blur(2px) drop-shadow(0 0 24px rgb(var(--pact-rgb)));
+  }
+}
+
+.recruit-scroll-rod {
+  position: relative;
+  z-index: 1;
+  width: 252px;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #9a6634, #5f3a17 60%, #3d230c);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Gilt finials on the rod ends. */
+.recruit-scroll-rod::before,
+.recruit-scroll-rod::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  width: 9px;
+  height: 18px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #f3d488, #b8892f 55%, #7d5a1a);
+}
+
+.recruit-scroll-rod::before {
+  left: -6px;
+}
+
+.recruit-scroll-rod::after {
+  right: -6px;
+}
+
+.recruit-scroll-rod.is-top {
+  animation: recruit-scroll-rod-top 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) 0.1s both;
+}
+
+.recruit-scroll-rod.is-bottom {
+  animation: recruit-scroll-rod-bottom 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) 0.1s both;
+}
+
+@keyframes recruit-scroll-rod-top {
+  from {
+    transform: translateY(150px);
+  }
+}
+
+@keyframes recruit-scroll-rod-bottom {
+  from {
+    transform: translateY(-150px);
+  }
+}
+
+/* Flat parchment — no grain under the words (2026-09-27, readability). */
+.recruit-scroll-sheet {
+  position: relative;
+  width: 228px;
+  height: 300px;
+  margin: -4px 0;
+  padding: 14px 16px 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(180deg, #efe1bb, #e4cf9b 70%, #d7be86);
+  color: #3a2814;
+  box-shadow:
+    inset 0 0 0 2px #b8955a,
+    inset 0 0 0 4px #efe1bb,
+    inset 0 0 0 5px rgba(140, 100, 50, 0.45),
+    0 8px 24px rgba(0, 0, 0, 0.6);
+  animation: recruit-scroll-unroll 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) 0.1s both;
+}
+
+@keyframes recruit-scroll-unroll {
+  from {
+    clip-path: inset(50% 0 50% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.recruit-scroll-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: #6b4a1f;
+}
+
+.recruit-scroll-cameo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--pact-rgb), 0.38), rgba(var(--pact-rgb), 0.1) 70%);
+  box-shadow: inset 0 0 0 2px #b8955a, 0 0 0 3px rgba(var(--pact-rgb), 0.22);
+}
+
+.recruit-scroll-portrait {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+}
+
+.recruit-scroll-terms {
+  font-size: 11px;
+  line-height: 1.4;
+  font-style: italic;
+  text-align: center;
+  color: #5a4220;
+}
+
+/* The line the name is signed on, room left at its end for the wax. */
+.recruit-scroll-sign {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  min-height: 34px;
+  margin-top: auto;
+  padding: 0 58px 3px 6px;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(90, 60, 30, 0.6);
+}
+
+.recruit-scroll-signature {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.recruit-scroll-ink {
+  display: block;
+  font-family: 'Segoe Script', 'Snell Roundhand', 'Brush Script MT', cursive;
+  font-size: 21px;
+  line-height: 1.1;
+  white-space: nowrap;
+  color: #20193f;
+  clip-path: inset(0 100% 0 0);
+}
+
+.recruit-rite:is(.is-sign, .is-stamp, .is-bind, .is-sworn) .recruit-scroll-ink {
+  animation: recruit-scroll-write 0.9s cubic-bezier(0.45, 0.1, 0.55, 0.9) both;
+}
+
+@keyframes recruit-scroll-write {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* A feather, nib down at the clip's edge. */
+.recruit-scroll-quill {
+  position: absolute;
+  left: 0;
+  bottom: 4px;
+  width: 15px;
+  height: 36px;
+  margin-left: -2px;
+  background: linear-gradient(90deg, #fbf7ee, #cfc5b1);
+  clip-path: polygon(0 100%, 30% 74%, 18% 44%, 52% 0, 100% 8%, 74% 48%, 46% 80%);
+  transform-origin: 0 100%;
+  transform: rotate(24deg);
+  opacity: 0;
+}
+
+.recruit-rite.is-sign .recruit-scroll-quill {
+  animation: recruit-scroll-quill 0.9s cubic-bezier(0.45, 0.1, 0.55, 0.9) both;
+}
+
+.recruit-rite.is-stamp .recruit-scroll-quill {
+  left: 100%;
+  animation: recruit-scroll-quill-lift 0.35s ease-in both;
+}
+
+@keyframes recruit-scroll-quill {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  /* The nib bobbing with the strokes. */
+  30% {
+    transform: rotate(18deg) translateY(-3px);
+  }
+  55% {
+    transform: rotate(28deg);
+  }
+  80% {
+    transform: rotate(20deg) translateY(-2px);
+  }
+  100% {
+    left: 100%;
+    opacity: 1;
+    transform: rotate(24deg);
+  }
+}
+
+@keyframes recruit-scroll-quill-lift {
+  from {
+    opacity: 1;
+    transform: rotate(24deg);
+  }
+  to {
+    opacity: 0;
+    transform: rotate(40deg) translate(14px, -26px);
+  }
+}
+
+/* The seal: wax in the hero's colour, its element pressed into it. */
+.recruit-scroll-wax {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 38% 34%,
+    color-mix(in srgb, rgb(var(--pact-rgb)) 65%, #ffffff) 0%,
+    rgb(var(--pact-rgb)) 32%,
+    color-mix(in srgb, rgb(var(--pact-rgb)) 55%, #000000) 100%
+  );
+  /* The wax pressed out past the die: four lobes under the disc. */
+  box-shadow:
+    4px 3px 0 -1px color-mix(in srgb, rgb(var(--pact-rgb)) 60%, #000000),
+    -4px 3px 0 -2px color-mix(in srgb, rgb(var(--pact-rgb)) 60%, #000000),
+    3px -4px 0 -2px color-mix(in srgb, rgb(var(--pact-rgb)) 60%, #000000),
+    -3px -3px 0 -1px color-mix(in srgb, rgb(var(--pact-rgb)) 60%, #000000),
+    0 4px 8px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+}
+
+.recruit-scroll-wax::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, rgb(var(--pact-rgb)) 50%, #000000), inset 0 1px 0 3px rgba(255, 255, 255, 0.12);
+}
+
+.recruit-scroll-wax::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(var(--pact-rgb), 0.8);
+  opacity: 0;
+}
+
+.recruit-scroll-wax-glyph {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  color: color-mix(in srgb, rgb(var(--pact-rgb)) 40%, #000000);
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.3));
+}
+
+.recruit-rite:is(.is-stamp, .is-bind, .is-sworn) .recruit-scroll-wax {
+  animation: recruit-rite-wax-drop 0.33s cubic-bezier(0.55, 0, 0.8, 0.3) both;
+}
+
+.recruit-rite.is-stamp .recruit-scroll-wax::after {
+  animation: recruit-rite-wax-splash 0.5s ease-out 0.23s both;
+}
+
+/* Lands at 70% — STAMP_LAND_MS in RecruitFanfare, where the sound and the thud are timed. */
+@keyframes recruit-rite-wax-drop {
+  0% {
+    opacity: 0;
+    transform: scale(3) rotate(-25deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(0.9) rotate(0deg);
+  }
+  85% {
+    transform: scale(1.07);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes recruit-rite-wax-splash {
+  from {
+    opacity: 1;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+
+.recruit-rite-ember {
+  position: absolute;
+  top: 46%;
+  width: 3px;
+  height: 3px;
+  background: #fff4d8;
+  box-shadow: 0 0 6px 2px rgba(var(--pact-rgb), 0.85);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.recruit-rite:is(.is-bind, .is-sworn) .recruit-rite-ember {
+  animation-name: recruit-rite-ember;
+  animation-duration: 1.1s;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+  animation-fill-mode: both;
+}
+
+@keyframes recruit-rite-ember {
+  0% {
+    opacity: 0;
+    transform: translate(0, 40px);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--drift), var(--rise));
+  }
+}
+
+.recruit-rite-plate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  opacity: 0;
+}
+
+.recruit-rite.is-sworn .recruit-rite-plate {
+  animation: evolve-plate-in 0.55s cubic-bezier(0.2, 0.9, 0.25, 1) 0.15s both;
+}
+
+.recruit-rite-kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgb(var(--pact-rgb));
+}
+
+.recruit-rite-name {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.05;
+  text-shadow: 0 0 26px rgba(var(--pact-rgb), 0.7);
+}
+
+.recruit-rite-oath {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+.recruit-rite-types {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* --- The evolution (EvolutionScreen.tsx EvolutionCinematic) ----------------
+   Big, and Pokémon's shape on purpose (2026-10-07, per user direction). The
+   hero is announced EVOLVING with light drawn in to it; it CHARGES to a white
+   silhouette as the chart spins up and speed lines rush in; the MORPH swaps
+   the old silhouette and the new, faster and faster (the swaps are timed in
+   the component, with a tick under each); it BURSTS in a white-out and the
+   new form is REVEALED in colour, throwing sparks. Tinted from the path's own
+   colours, as the button that started it is. */
+.evo-rite {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* The fade-in is the root's, whose animation never changes: on the veil, every beat that touched
+   its animation list restarted the fade, and the screen behind showed through the white-out. */
+.evo-rite {
+  animation: evolve-veil-in 0.3s ease-out backwards;
+}
+
+.evo-rite-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--path-lead) 10%, #0d0f16), #04050a 68%);
+}
+
+.evo-rite-veil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--path-lead) 28%, transparent), transparent 62%);
+  opacity: 0;
+}
+
+.evo-rite.is-morph .evo-rite-veil::after {
+  animation: evo-rite-veil-pulse 0.36s ease-in-out infinite alternate;
+}
+
+@keyframes evo-rite-veil-pulse {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Speed lines rushing IN toward the hero through the charge and the morph. */
+.evo-rite-rush {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 900px;
+  height: 900px;
+  margin: -450px 0 0 -450px;
+  opacity: 0;
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg 5deg,
+    rgba(255, 255, 255, 0.24) 5deg 5.6deg,
+    transparent 5.6deg 9deg,
+    color-mix(in srgb, var(--path-lead) 45%, transparent) 9deg 9.6deg
+  );
+  -webkit-mask-image: radial-gradient(circle, transparent 15%, #000 30%, #000 48%, transparent 62%);
+  mask-image: radial-gradient(circle, transparent 15%, #000 30%, #000 48%, transparent 62%);
+  pointer-events: none;
+}
+
+.evo-rite.is-charge .evo-rite-rush {
+  animation: evo-rite-rush 0.5s linear infinite, evolve-veil-in 1s ease-in both;
+}
+
+.evo-rite:is(.is-morph, .is-burst) .evo-rite-rush {
+  opacity: 1;
+  animation: evo-rite-rush 0.28s linear infinite;
+}
+
+@keyframes evo-rite-rush {
+  from {
+    transform: scale(1.3) rotate(0deg);
+  }
+  to {
+    transform: scale(0.85) rotate(4deg);
+  }
+}
+
+.evo-rite-rays {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 780px;
+  height: 780px;
+  margin: -390px 0 0 -390px;
+  opacity: 0;
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg 11deg,
+    color-mix(in srgb, var(--path-lead) 55%, transparent) 11deg 14deg
+  );
+  -webkit-mask-image: radial-gradient(circle, #000 8%, transparent 44%);
+  mask-image: radial-gradient(circle, #000 8%, transparent 44%);
+  pointer-events: none;
+}
+
+.evo-rite.is-reveal .evo-rite-rays {
+  animation: evolve-rays-in 0.8s ease-out forwards, evolve-rays-spin 30s linear infinite;
+}
+
+.evo-rite-stage {
+  position: relative;
+  width: 260px;
+  height: 260px;
+}
+
+.evo-rite.is-burst .evo-rite-stage {
+  animation: pact-forge-quake 0.38s linear;
+}
+
+/* The chart: faint and turning, spun up into one colour, held there through
+   the morph, and back slow in its own colours with the new typing lit. */
+.evo-rite-wheel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: calc(var(--wheel-size) / -2) 0 0 calc(var(--wheel-size) / -2);
+  --wheel-tint: var(--path-lead);
+  opacity: 0;
+}
+
+.evo-rite.is-intro .evo-rite-wheel {
+  animation: evolve-wheel-wake 1.1s ease-out both;
+}
+
+.evo-rite.is-intro .evo-rite-wheel .type-wheel-dial,
+.evo-rite.is-reveal .evo-rite-wheel .type-wheel-dial {
+  animation: type-wheel-spin 90s linear infinite;
+}
+
+.evo-rite.is-intro .evo-rite-wheel .type-wheel-node,
+.evo-rite.is-reveal .evo-rite-wheel .type-wheel-node {
+  animation: type-wheel-unspin 90s linear infinite;
+}
+
+.evo-rite.is-charge .evo-rite-wheel {
+  animation: evolve-wheel-charge 1s ease-in both;
+}
+
+.evo-rite.is-charge .evo-rite-wheel .type-wheel-dial {
+  animation: evolve-wheel-spinup 1s cubic-bezier(0.55, 0, 1, 0.45) both;
+}
+
+.evo-rite.is-charge .evo-rite-wheel .type-wheel-node {
+  animation:
+    evolve-wheel-spinup-back 1s cubic-bezier(0.55, 0, 1, 0.45) both,
+    type-wheel-node-tint 1s ease-in both;
+  opacity: 1;
+}
+
+.evo-rite.is-charge .evo-rite-wheel .type-wheel-chords.is-native {
+  animation: type-wheel-native-out 1s ease-in both;
+}
+
+.evo-rite.is-charge .evo-rite-wheel .type-wheel-chords.is-tint {
+  animation: type-wheel-tint-in 1s ease-in both;
+}
+
+.evo-rite:is(.is-morph, .is-burst) .evo-rite-wheel {
+  opacity: 1;
+  transform: scale(0.9);
+  filter: drop-shadow(0 0 9px var(--path-lead));
+}
+
+.evo-rite:is(.is-morph, .is-burst) .evo-rite-wheel .type-wheel-dial {
+  animation: type-wheel-spin 0.4s linear infinite;
+}
+
+.evo-rite:is(.is-morph, .is-burst) .evo-rite-wheel .type-wheel-node {
+  animation: type-wheel-unspin 0.4s linear infinite;
+  color: var(--wheel-tint);
+  opacity: 1;
+}
+
+.evo-rite:is(.is-morph, .is-burst) .evo-rite-wheel .type-wheel-chords.is-native {
+  opacity: 0;
+}
+
+.evo-rite:is(.is-morph, .is-burst) .evo-rite-wheel .type-wheel-chords.is-tint {
+  opacity: 1;
+}
+
+.evo-rite.is-reveal .evo-rite-wheel {
+  animation: evolve-wheel-return 1.4s ease-out both;
+}
+
+.evo-rite-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.evo-rite-ring.is-outer {
+  width: 260px;
+  height: 260px;
+  margin: -130px 0 0 -130px;
+  border: 2px solid color-mix(in srgb, var(--path-lead) 70%, transparent);
+}
+
+.evo-rite-ring.is-inner {
+  width: 190px;
+  height: 190px;
+  margin: -95px 0 0 -95px;
+  border: 2px dashed color-mix(in srgb, var(--path-trail) 70%, transparent);
+}
+
+.evo-rite.is-charge .evo-rite-ring {
+  animation: evolve-ring-close 1s ease-in both;
+}
+
+/* Through the morph the rings keep closing, one after another, faster. */
+.evo-rite.is-morph .evo-rite-ring {
+  animation: evolve-ring-close 0.6s ease-in infinite;
+}
+
+.evo-rite.is-morph .evo-rite-ring.is-inner {
+  animation-delay: 0.3s;
+}
+
+.evo-rite-column {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 104px;
+  height: 520px;
+  margin: -260px 0 0 -52px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--path-lead) 34%, transparent) 30%,
+    color-mix(in srgb, var(--path-lead) 60%, transparent) 52%,
+    transparent
+  );
+  filter: blur(7px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.evo-rite.is-charge .evo-rite-column {
+  animation: evolve-column-rise 1s ease-in both;
+}
+
+.evo-rite:is(.is-morph, .is-burst) .evo-rite-column {
+  opacity: 1;
+  transform: scaleX(1.15);
+  animation: evo-rite-column-flicker 0.18s steps(2) infinite;
+}
+
+.evo-rite.is-reveal .evo-rite-column {
+  animation: evolve-awaken-column-fade 1.4s ease-out forwards;
+}
+
+@keyframes evo-rite-column-flicker {
+  50% {
+    opacity: 0.75;
+    transform: scaleX(1.3);
+  }
+}
+
+/* Light drawn IN to the hero, a mote at a time; quicker through the morph. */
+.evo-rite-mote {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  background: #ffffff;
+  box-shadow: 0 0 6px 2px var(--path-lead);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.evo-rite:is(.is-intro, .is-charge, .is-morph) .evo-rite-mote {
+  animation: evo-rite-mote-in 1.1s ease-in infinite;
+}
+
+.evo-rite.is-morph .evo-rite-mote {
+  animation-duration: 0.5s;
+}
+
+@keyframes evo-rite-mote-in {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateX(var(--d)) scale(1.4);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateX(0) scale(0.4);
+  }
+}
+
+/* Both forms in one place; `.is-shown` is the one up. Old at its size, new a
+   step larger — the silhouettes trading sizes is what reads as growing. */
+.evo-rite-figure {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 144px;
+  height: 144px;
+  margin: -72px 0 0 -72px;
+  image-rendering: pixelated;
+  opacity: 0;
+}
+
+.evo-rite-figure.is-shown {
+  opacity: 1;
+}
+
+.evo-rite.is-intro .evo-rite-figure {
+  animation: evolve-awaken-breathe 1.3s ease-in-out infinite;
+}
+
+.evo-rite.is-charge .evo-rite-figure {
+  animation: evolve-shake 0.09s linear infinite, evo-rite-whiten 1s ease-in forwards;
+}
+
+/* `brightness(0) invert(1)` keeps the alpha and drives every pixel to white:
+   the silhouette is what lets two different sprites trade places unseen. */
+@keyframes evo-rite-whiten {
+  0% {
+    filter: none;
+  }
+  55% {
+    filter: brightness(2.2) saturate(0.6) drop-shadow(0 0 12px var(--path-lead));
+  }
+  100% {
+    filter: brightness(0) invert(1) drop-shadow(0 0 22px var(--path-lead));
+  }
+}
+
+.evo-rite:is(.is-morph, .is-burst) .evo-rite-figure {
+  filter: brightness(0) invert(1) drop-shadow(0 0 16px #ffffff) drop-shadow(0 0 28px var(--path-lead));
+}
+
+.evo-rite:is(.is-morph, .is-burst) .evo-rite-figure.is-new {
+  transform: scale(1.12);
+}
+
+.evo-rite.is-burst .evo-rite-figure.is-new {
+  transform: scale(1.22);
+}
+
+.evo-rite.is-reveal .evo-rite-figure.is-new {
+  animation:
+    evo-rite-emerge 0.8s cubic-bezier(0.2, 1.2, 0.3, 1) both,
+    evo-rite-glow 2.4s ease-in-out 0.8s infinite;
+}
+
+@keyframes evo-rite-emerge {
+  0% {
+    filter: brightness(0) invert(1);
+    transform: scale(1.45);
+  }
+  100% {
+    filter: drop-shadow(0 0 20px color-mix(in srgb, var(--path-lead) 75%, transparent));
+    transform: none;
+  }
+}
+
+@keyframes evo-rite-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 20px color-mix(in srgb, var(--path-lead) 75%, transparent));
+  }
+  50% {
+    filter: drop-shadow(0 0 30px color-mix(in srgb, var(--path-lead) 95%, transparent));
+  }
+}
+
+.evo-rite-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff, rgba(255, 255, 255, 0.92) 55%, transparent 72%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.evo-rite.is-burst .evo-rite-flash {
+  animation: evo-rite-flash-out 0.36s ease-out forwards;
+}
+
+.evo-rite.is-reveal .evo-rite-flash {
+  animation: evo-rite-flash-fade 0.7s ease-out forwards;
+}
+
+@keyframes evo-rite-flash-out {
+  0% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(32);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(48);
+  }
+}
+
+@keyframes evo-rite-flash-fade {
+  0% {
+    opacity: 1;
+    transform: scale(48);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(56);
+  }
+}
+
+/* Sparks thrown out of the reveal: four-point stars in both path colours. */
+.evo-rite-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  background: #ffffff;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  pointer-events: none;
+  animation: evo-rite-spark 1.2s cubic-bezier(0.15, 0.8, 0.3, 1) 0.1s both;
+}
+
+.evo-rite-spark:nth-child(even) {
+  background: color-mix(in srgb, var(--path-lead) 60%, #ffffff);
+}
+
+.evo-rite-spark.is-trail {
+  background: color-mix(in srgb, var(--path-trail) 60%, #ffffff);
+}
+
+@keyframes evo-rite-spark {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateX(0) scale(0.3);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateX(var(--d)) scale(1) rotate(180deg);
+  }
+}
+
+/* The dialogue box under it all: what is happening, then what it became. */
+.evo-rite-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(340px, calc(100% - 32px));
+  min-height: 82px;
+  padding: 14px 18px 18px;
+  box-sizing: border-box;
+  border: 2px solid color-mix(in srgb, var(--path-lead) 45%, #e8c46a);
+  border-radius: 10px;
+  background: rgba(10, 11, 16, 0.92);
+  box-shadow: inset 0 0 0 2px rgba(10, 11, 16, 0.92), inset 0 0 0 3px rgba(232, 196, 106, 0.3), 0 6px 18px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  animation: evolve-plate-in 0.5s cubic-bezier(0.2, 0.9, 0.25, 1) 0.2s both;
+}
+
+.evo-rite-line {
+  font-size: 17px;
+  line-height: 1.35;
+  animation: evo-rite-line-in 0.4s ease-out both;
+}
+
+.evo-rite-line strong {
+  color: color-mix(in srgb, var(--path-lead) 55%, #ffffff);
+  text-shadow: 0 0 14px var(--path-lead);
+}
+
+@keyframes evo-rite-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.evo-rite-types {
+  display: flex;
+  gap: 6px;
+  animation: evolve-plate-in 0.5s cubic-bezier(0.2, 0.9, 0.25, 1) 0.25s both;
+}
+
+.evo-rite-more {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid #e8c46a;
+  animation: road-encounter-bob 1.1s ease-in-out infinite;
 }

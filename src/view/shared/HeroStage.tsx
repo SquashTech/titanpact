@@ -17,6 +17,7 @@ import type { StatScale } from '../../run/statScale';
 import { useAmbientLocation } from './LocationContext';
 import { LocationAmbience } from './LocationSky';
 import { locationBackdrop } from './locationBackdrops';
+import { StarField } from './StarField';
 
 // The hero stage shared by the draft and the Recruit Contract claim: one hero at 144px in a sigil
 // with its stat sheet beside it (the dais), the kit as the fight's own move console under them, and
@@ -43,7 +44,7 @@ function useMotes(count: number) {
 }
 
 /** Full-bleed wash and mote field at z-index 0; every sibling after it must be lifted above it. */
-export function StageSky({ motes = DEFAULT_MOTES, backdrop }: { motes?: number; backdrop?: string }) {
+export function StageSky({ motes = DEFAULT_MOTES, starry = false }: { motes?: number; starry?: boolean }) {
   const field = useMotes(motes);
   // Inside an act (the contract claim) the stage stands in the act's place, as every node screen does.
   const location = useAmbientLocation();
@@ -57,9 +58,9 @@ export function StageSky({ motes = DEFAULT_MOTES, backdrop }: { motes?: number; 
   }
 
   return (
-    <div className={`draft-sky${backdrop ? ' is-painted' : ''}`} aria-hidden="true">
-      {backdrop && <img src={backdrop} className="draft-sky-backdrop" alt="" draggable={false} />}
+    <div className={`draft-sky${starry ? ' is-starry' : ''}`} aria-hidden="true">
       <span className="draft-sky-wash" />
+      {starry && <StarField />}
       <div className="draft-motes">
         {field.map((m, i) => (
           <span

@@ -7,7 +7,7 @@ import { STARTER_PICK_COUNT } from '../../run/draft';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import draftBackdrop from '../../../art/backdrops/draft.png';
+import { PactForging } from './PactForging';
 import { PassiveDetailOverlay } from '../shared/PassiveDossier';
 import {
   StageCandidate,
@@ -40,6 +40,8 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
   const [popupPassive, setPopupPassive] = useState<PassiveDefinition | null>(null);
   /** Keyed by a rising counter so remounting replays the mount-once flare; `final` marks the pact-completing bind. */
   const [bindFlare, setBindFlare] = useState<{ tick: number; final: boolean } | null>(null);
+  /** Sealed: the pair forges the pact under this same sky, and the run begins when that is done. */
+  const [forging, setForging] = useState(false);
 
   const featured = rosterHeroes[featuredId];
   const featuredRgb = getTypeColorRgb(featured.types[0]);
@@ -72,8 +74,8 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
   }
 
   return (
-    <div className="draft-screen" style={{ '--pact-rgb': featuredRgb } as CSSProperties}>
-      <StageSky backdrop={draftBackdrop} />
+    <div className={`draft-screen${forging ? ' is-forging' : ''}`} style={{ '--pact-rgb': featuredRgb } as CSSProperties}>
+      <StageSky starry />
 
       <header className="draft-header">
         <div className="draft-eyebrow">A Titan Stirs</div>
@@ -160,9 +162,11 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
         })}
       </StageRail>
 
-      <button className="resolve-button draft-cta" disabled={!complete} onClick={() => onConfirm(pickedIds)}>
+      <button className="resolve-button draft-cta" disabled={!complete || forging} onClick={() => setForging(true)}>
         {complete ? 'Seal the Pact' : `Choose ${STARTER_PICK_COUNT - pickedIds.length} more`}
       </button>
+
+      {forging && <PactForging heroIds={pickedIds} onDone={() => onConfirm(pickedIds)} />}
 
       {popupMove && (
         <StageMovePopup move={popupMove} caster={caster} onClose={() => setPopupMove(null)} />
