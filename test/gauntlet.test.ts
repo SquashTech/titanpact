@@ -3,7 +3,9 @@ import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
-import { constructedContent } from '../src/data/trials';
+import { constructedContent, TRIAL_LIST } from '../src/data/trials';
+import { FINALE_LOCATION_ID, locations } from '../src/data/locations';
+import { arenaLocationIds, locationForType } from '../src/run/locations';
 import { createProfile, decodeProfile, type Profile } from '../src/run/profile';
 import { constructedHeroIds, constructedSide, slotProblems, TEAM_SIZE } from '../src/run/constructed';
 import { signatureIdFor } from '../src/run/progression';
@@ -18,6 +20,7 @@ import {
   draftTeam,
   endGauntlet,
   enterGauntlet,
+  gauntletLocationId,
   gauntletOpponent,
   recordGauntletFight,
   rollBoard,
@@ -210,4 +213,19 @@ test('gauntlet: the open run and the ledger survive a save, and an unreadable ru
   assert.strictEqual(broken.gauntlet, null);
   assert.strictEqual(broken.cyclesCleared, 1);
   assert.strictEqual(decodeProfile({}).gauntlet, null);
+});
+
+test('arena locations: every Trial stands in a Location holding its type; a Gauntlet fight in one of the rest, fixed by its seed', () => {
+  for (const trial of TRIAL_LIST) {
+    const id = locationForType(trial.type);
+    assert.ok(id && locations[id].spawnTypes?.includes(trial.type), `${trial.id} has no place`);
+  }
+  const ids = arenaLocationIds();
+  assert.ok(!ids.includes(FINALE_LOCATION_ID));
+  const run = enterGauntlet(opened(), content, owned, 12, TODAY, 0).gauntlet!;
+  const at = gauntletLocationId(run, ids);
+  assert.ok(at && ids.includes(at));
+  assert.strictEqual(gauntletLocationId(run, ids), at);
+  const seen = new Set(Array.from({ length: 6 }, (_, wins) => gauntletLocationId({ ...run, wins }, ids)));
+  assert.ok(seen.size > 1, 'every fight stands in the same place');
 });

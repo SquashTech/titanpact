@@ -1,11 +1,30 @@
 // Location selection and encounter biasing (docs/locations.md). A Location
 // changes WHO you fight, never how the fight resolves.
 
+import type { TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import { ACT_ONE_LOCATION_ID, FINALE_LOCATION_ID, ITINERARY_POOL_IDS, locations, type LocationDefinition } from '../data/locations';
 import type { PoolBias } from './enemyGen';
 import { SEAL_ACTS, type RunState } from './state';
+
+/**
+ * Where a fight outside a run stands — the Trials and the Gauntlet borrow a run's places for their
+ * backdrop and music only. Every Location but the Threshold, which is the finale's.
+ */
+export function arenaLocationIds(): string[] {
+  return Object.keys(locations).filter((id) => id !== FINALE_LOCATION_ID);
+}
+
+/**
+ * Where a Trial of `type` stands: a Location that LEADS with the type (its first spawn type — the
+ * Frozen Reach for Frost, the Holy Sanctum for Light), else the base Location holding it, since the
+ * base five partition the fourteen (docs/titanspawn-overhaul.md §3). Null for Ancient.
+ */
+export function locationForType(type: TypeId): string | null {
+  const all = Object.values(locations);
+  return (all.find((l) => l.spawnTypes?.[0] === type) ?? all.find((l) => !l.fromCycle && l.spawnTypes?.includes(type)))?.id ?? null;
+}
 
 /** How many places an act offers (docs/locations.md §1): the player picks one. */
 export const LOCATION_CHOICE_COUNT = 2;

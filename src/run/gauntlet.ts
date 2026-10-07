@@ -227,6 +227,14 @@ export function gauntletOpponent(content: GauntletContent, run: GauntletRun): { 
   return { team, leads: [team[0].heroId, team[1].heroId] };
 }
 
+/** Where the next fight stands, off the same seed as its opponent: backdrop and music only. */
+export function gauntletLocationId(run: GauntletRun, candidates: readonly string[]): string | null {
+  if (candidates.length === 0) return null;
+  const fight = run.wins + run.losses;
+  const { value } = nextFloat(createRng((run.seed ^ Math.imul(fight + 1, 0x85ebca6b)) >>> 0));
+  return candidates[Math.floor(value * candidates.length)];
+}
+
 // --- The record ---
 
 export function startGauntletFight(profile: Profile): Profile {

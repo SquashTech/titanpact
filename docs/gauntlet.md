@@ -83,6 +83,9 @@ so the engine and the fight builder never learn a third mode exists. Rolled (`ro
 - **The AI** is the Trials' pilot (`aiPilot`). Its leads are its two best-scoring heroes. The
   player picks leads in the fight, as everywhere.
 - **Whole every fight.** No Wounds, no carried KOs, no potions.
+- **A place to stand** (2026-10-07, per user direction): each fight borrows a run Location for its
+  backdrop and music, rolled off the same seed as the opponent (`gauntletLocationId`) from every place
+  but the Threshold. Presentation only.
 - **A fight left unfinished is a loss.** Leaving a Gauntlet fight, or the app closing during one,
   forfeits it — otherwise a bad opening is a free reroll. `GauntletRun.fighting` is set at the fight's
   start and read on return.

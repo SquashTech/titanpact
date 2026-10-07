@@ -80,10 +80,11 @@ export type RunScreen =
   | { kind: 'trialsFight'; player: Encounter; ai: Encounter }
   /** The teambuilder (docs/constructed.md §9). `unlockAll` is the dev route's every-hero gate. */
   | { kind: 'constructed'; startTeam?: number | null; unlockAll?: boolean; notice?: string | null }
-  | { kind: 'constructedFight'; player: Encounter; ai: Encounter; teamIndex: number; trialId: string; unlockAll?: boolean }
+  /** `locationId`: where the fight stands, for backdrop and music (run/locations.ts arenaLocationIds); the two modes borrow a run's places. */
+  | { kind: 'constructedFight'; player: Encounter; ai: Encounter; teamIndex: number; trialId: string; unlockAll?: boolean; locationId?: string | null }
   /** The Gauntlet (docs/gauntlet.md). Its run lives on the profile; `result` is a run that just ended, said once. */
   | { kind: 'gauntlet'; result?: GauntletResult | null; notice?: string | null }
-  | { kind: 'gauntletFight'; player: Encounter; ai: Encounter }
+  | { kind: 'gauntletFight'; player: Encounter; ai: Encounter; locationId?: string | null }
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */

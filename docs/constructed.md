@@ -134,7 +134,8 @@ builds travel.
 
 Fourteen teams, one a draftable type, **each the six heroes of that type**. Any order. A team is
 data in the same `TeamSlot` shape the player builds with, so it is legal by construction and
-`test/` pins it.
+`test/` pins it. A Trial stands in a Location of its type (2026-10-07, `locationForType`): one that
+leads with it — the Frozen Reach for Frost — else the base place holding it. Backdrop and music only.
 
 **Authoring rules for a Trial team:**
 

@@ -132,7 +132,7 @@ import {
 } from '../run/enemyGen';
 import { CHAMPION_LEVEL_BONUS, encounterScaling, enemyLevelFor, enemyLoadoutFor } from '../run/difficulty';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, MAX_XP, applySeededEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
-import { actOneLocationFor, chooseLocation, drawLocationCandidates, generateItinerary, locationChoiceDue, locationForAct, locationPool } from '../run/locations';
+import { actOneLocationFor, arenaLocationIds, chooseLocation, drawLocationCandidates, generateItinerary, locationChoiceDue, locationForAct, locationForType, locationPool } from '../run/locations';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
@@ -161,7 +161,7 @@ import {
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { constructedHeroIds, constructedSide, type Team } from '../run/constructed';
 import { constructedContent, gauntletContent, trials } from '../data/trials';
-import { draftTeam, endGauntlet, enterGauntlet, freeEntryAvailable, gauntletOpponent, localDay, recordGauntletFight, settleLeftFight, startGauntletFight, type GauntletResult } from '../run/gauntlet';
+import { draftTeam, endGauntlet, enterGauntlet, freeEntryAvailable, gauntletLocationId, gauntletOpponent, localDay, recordGauntletFight, settleLeftFight, startGauntletFight, type GauntletResult } from '../run/gauntlet';
 import { createStatusTestSides } from '../run/statusTestFight';
 import { atEvolution, currentEvolutionPathId, fullMovepool } from '../run/progression';
 import { progressionTable } from '../data/progression';
@@ -684,6 +684,7 @@ export function App() {
       kind: 'gauntletFight',
       player: constructedSide(constructedContent, { name: 'Gauntlet', slots: run.team }),
       ai: constructedSide(constructedContent, { name: 'Opponent', slots: opponent.team }, opponent.leads),
+      locationId: gauntletLocationId(run, arenaLocationIds()),
     });
   }
 
@@ -1251,8 +1252,11 @@ export function App() {
   // Across an act break the place stays with the act just cleared: the Banner, the contract, the
   // Crucible and the spoils belong to the fight that paid them, and the next act's sky and music
   // are the arrival screen's to start (`enterAct`).
-  const ambientLocation =
-    PLACELESS_SCREENS.has(screen.kind) || playerRun.locationIds.length === 0
+  // The Trials and the Gauntlet are placeless screens that borrow a place for their fights.
+  const borrowedLocationId = screen.kind === 'constructedFight' || screen.kind === 'gauntletFight' ? screen.locationId ?? null : null;
+  const ambientLocation = borrowedLocationId
+    ? locations[borrowedLocationId] ?? null
+    : PLACELESS_SCREENS.has(screen.kind) || playerRun.locationIds.length === 0
       ? null
       : locationForAct(playerRun.locationIds, actBreak ? playerRun.actNumber - 1 : playerRun.actNumber);
 
@@ -1366,6 +1370,7 @@ export function App() {
               kind: 'constructedFight',
               player: constructedSide(constructedContent, team),
               ai: constructedSide(constructedContent, trial.team, trial.leads),
+              locationId: locationForType(trial.type),
               teamIndex,
               trialId,
               unlockAll: screen.unlockAll,
