@@ -132,8 +132,32 @@ string; `constructed` stays the code name.
 1. **BUILT 2026-10-07** — `src/run/gauntlet.ts` (board, kit, opponent, record, rewards, entry),
    the profile fields, the star ledger, `GauntletScreen` (hub → board → between fights → result), the
    fight wiring, the three doors, tests.
-2. Measure in the sim: clear rate at the chart and skilled pilots, and whether the escalation step
-   (3 candidates a win) holds a 5-0 near a fifth of attempts.
+2. **MEASURED 2026-10-07** (`scripts/sim/gauntlet.ts`, 500 runs a row, the base 42 owned, the AI on
+   run/pilot.ts as shipped, the player opening on the two that best answer the enemy's leads):
+
+   | Player pilot | Draft | Escalation | Fight 1 won | Clear |
+   |---|---|---|---|---|
+   | skilled (sim pilot) | chart | as shipped | 49% | **8%** |
+   | skilled | chart | none | 49% | 10% |
+   | skilled | random | as shipped | 43% | 6% |
+   | skilled | random | none | 43% | 13% |
+   | chart (Classic's AI) | either | either | 12% | 0% |
+
+   - **The format is the number.** Five wins before two losses clears 11% of attempts for a player
+     who wins half its fights, 16% at 55%, 23% at 60%. The skilled pilot wins ~46% against the
+     shipped AI, so it clears ~8% — one free entry in twelve. A fifth needs ~58% a fight.
+   - **The escalation works as meant**: without it a team that wins keeps winning more (52–62% by the
+     fourth fight); with it the rate holds flat near 45% whatever the record. It costs 2–7 points of
+     clear.
+   - **The draft barely moves it** in the sim — chart against random is +4–6 points a fight — because
+     the sim drafts on typing alone.
+   - **The Trials' AI outplays Classic's** by a wide margin: a player at Classic-AI skill wins one fight
+     in nine and never clears.
+   - 3.5 fights a run, 18 rounds a fight (the Trials: 14.6), no stalemates.
+
+   The clear rate is the designer's to set. The dials, strongest first: a third loss (five before
+   three is 17% at 46%, 23% at 50%); the AI tier as the escalation (Classic's AI for the early
+   fights, the pilot later); the escalation step; the opponent's kit fit.
 3. A record in Records: Gauntlets entered, cleared, best streak.
 4. Purchased entries for money, if ever — after the star price has been played.
 
