@@ -1,8 +1,7 @@
 // Mastery — the pips a hero's Evolution and mastered innate sit behind (docs/mastery.md). Ten a
-// hero, uniform: five is the Evolution, ten the innate MASTERED. A pip is one Mastery Scroll, assigned the
-// instant it is paid; nothing is held, nothing is priced, and a pip between the two milestones
-// does nothing but count. Scrolls come from the map — the Scribe, the Scroll Cache, the Guild
-// Hall shelf — and never from a fight: fights pay XP, the map pays Scrolls.
+// hero, uniform: five is the Evolution, ten the innate MASTERED. A pip is one Gem (run/gems.ts),
+// placed the instant it is paid. Gems come from the map — the Scribe, the Gem Cache, the Guild
+// Hall shelf — and never from a fight: fights pay XP, the map pays Gems.
 
 import { FINALE_ACT, type RosterEntry, type RunState } from './state';
 
@@ -18,20 +17,13 @@ export const MASTERY_EVOLUTION = 5;
  */
 export const MASTERY_INNATE = MASTERY_CAP;
 
-/** The Scribe: pick this many heroes, and each takes this many pips. Cannot be concentrated — that is what the Cache and the shelf are for. */
-export const SCRIBE_PICKS = 2;
-export const SCRIBE_PIPS_EACH = 2;
-
-/** The Scroll Cache, a reward-row seat: this many pips, divided as the player likes. */
-export const SCROLL_CACHE_COUNT = 3;
-
 /**
- * The Guild Hall shelf's Scroll: one pip for flat gold, a pure sink like a potion, capped a
- * visit so a rich run cannot buy a mastered innate in one stop. First-pass figures (docs/mastery.md §3).
+ * The Guild Hall shelf's Gem pack: flat gold, capped a visit so a rich run cannot buy a mastered
+ * innate in one stop. First-pass figures (docs/gems.md).
  */
 export const SCROLL_PURCHASE_COST = 25;
 export const SCROLL_PURCHASE_LIMIT = 2;
-/** Pips one shelf purchase lands, on one hero. */
+/** Gems in one shelf pack. */
 export const SCROLL_PACK_PIPS = 2;
 
 export class MasteryError extends Error {}
@@ -100,8 +92,4 @@ export function buyScroll(run: RunState, bought: number): RunState {
   return { ...run, gold: run.gold - SCROLL_PURCHASE_COST };
 }
 
-/**
- * What a Scroll screen hands out. The Scribe picks two heroes and pays each the same; a Scroll count
- * is tapped out one pip at a time, in any split (docs/mastery.md §3).
- */
-export type ScrollPlan = { kind: 'scribe' } | { kind: 'scrolls'; count: number };
+

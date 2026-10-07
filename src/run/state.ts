@@ -8,6 +8,7 @@ import { createEmptyLoadout } from './equipment';
 import type { RunMap } from './map';
 import { STARTING_CONSUMABLES, type ConsumablePurse } from './consumables';
 import { xpForLevel } from './growth';
+import type { Gem } from './gems';
 
 export const ROSTER_CAP = 6;
 
@@ -68,6 +69,8 @@ export interface RosterEntry {
    * hero and a hire read theirs off the act (masteryForAct).
    */
   mastery: number;
+  /** The Gems placed on this hero, in order (run/gems.ts) — each one also lit a pip. */
+  gems: readonly Gem[];
   /** A rewire path has traded Attack and Intelligence — base, growth and grades (EvolutionPath.swapsOffense). */
   offenseSwapped: boolean;
   /** Current secondary-type grant from the latest type-graft path; a later graft overwrites. Innate primary never changes. */
@@ -212,6 +215,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     growthStatGrants: {},
     scheduleTaken: 0,
     mastery: 0,
+    gems: [],
     offenseSwapped: false,
     evolutionTypeGraft: null,
     curseId: null,

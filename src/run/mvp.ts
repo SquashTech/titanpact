@@ -1,4 +1,4 @@
-// The fight's MVP: one free Mastery pip to the hero that dominated a column, not the one that hit
+// The fight's MVP: bonus XP (growth.ts MVP_XP_SHARE) to the hero that dominated a column, not the one that hit
 // hardest (docs/mastery.md "The MVP pip"). Pure: the ledger is built off the fight's event stream.
 
 import type { StatusDefinition } from '../engine/content';
@@ -199,7 +199,7 @@ export function rankMvp(ledgers: readonly MvpLedger[]): MvpPick[] {
 }
 
 export interface MvpRules {
-  /** Roster ids that cannot take the pip — at the Mastery cap, or no longer on the roster. */
+  /** Roster ids that cannot take the bonus — at the XP cap, or no longer on the roster. */
   ineligible: ReadonlySet<string>;
   /** Last fight's MVP: never twice running while anyone else qualifies. */
   lastMvpRosterId?: string;

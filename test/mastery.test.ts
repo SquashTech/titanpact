@@ -13,9 +13,6 @@ import {
   MASTERY_EVOLUTION,
   MASTERY_INNATE,
   MasteryError,
-  SCRIBE_PICKS,
-  SCRIBE_PIPS_EACH,
-  SCROLL_CACHE_COUNT,
   SCROLL_PURCHASE_COST,
   SCROLL_PURCHASE_LIMIT,
   anyMasteryEligible,
@@ -61,7 +58,6 @@ test('mastery: the two milestones are uniform — five the Evolution, ten the in
   assert.strictEqual(MASTERY_EVOLUTION, 5);
   assert.strictEqual(MASTERY_INNATE, 10);
   assert.strictEqual(MASTERY_CAP, 10);
-  assert.deepStrictEqual([SCRIBE_PICKS, SCRIBE_PIPS_EACH], [2, 2], 'the Scribe: two heroes, two pips each');
 });
 
 test('mastery: a pip lands the moment it is granted, caps at ten, and a hero at the cap is refused', () => {
@@ -70,11 +66,11 @@ test('mastery: a pip lands the moment it is granted, caps at ten, and a hero at 
   assert.ok(canTakeMastery(run.roster[0]));
   run = grantMastery(run, 'cinderKnight', 3);
   assert.strictEqual(run.roster[0].mastery, 3);
-  assert.strictEqual(masteryRoom(run.roster[0], SCRIBE_PIPS_EACH), 2);
+  assert.strictEqual(masteryRoom(run.roster[0], 2), 2);
   run = grantMastery(run, 'cinderKnight', 6);
   assert.strictEqual(run.roster[0].mastery, 9);
-  assert.strictEqual(masteryRoom(run.roster[0], SCRIBE_PIPS_EACH), 1, 'a hero at nine takes one of the Scribe\'s two; the other is lost');
-  run = grantMastery(run, 'cinderKnight', SCRIBE_PIPS_EACH);
+  assert.strictEqual(masteryRoom(run.roster[0], 2), 1, 'a hero at nine has room for one');
+  run = grantMastery(run, 'cinderKnight', 2);
   assert.strictEqual(run.roster[0].mastery, MASTERY_CAP, 'never past the cap');
   assert.ok(!canTakeMastery(run.roster[0]));
   assert.throws(() => grantMastery(run, 'cinderKnight', 1), MasteryError);
@@ -127,8 +123,7 @@ test('mastery: the shelf sells a Scroll for flat gold, capped a visit, only whil
   assert.throws(() => buyScroll(capped, 0), MasteryError);
 });
 
-test('mastery: the Scroll Cache sits in the reward pool at the seat Ichor held, and Ichor is gone', () => {
-  assert.strictEqual(SCROLL_CACHE_COUNT, 3);
+test('mastery: the Gem Cache sits in the reward pool at the seat Ichor held, and Ichor is gone', () => {
   assert.ok(MAP_NODE_TYPES.includes('scrollReward'));
   const types = MAP_NODE_TYPES as readonly string[];
   assert.ok(!types.includes('ichorReward') && !types.includes('ichorDropReward'), 'Ichor retired (docs/mastery.md §4)');
@@ -140,7 +135,7 @@ test('mastery: the Scroll Cache sits in the reward pool at the seat Ichor held, 
   // Three pips, any split: three on one hero from two lands the fifth.
   let run = seed(['cinderKnight', 'crimson']);
   run = grantMastery(run, 'cinderKnight', 2);
-  for (let i = 0; i < SCROLL_CACHE_COUNT; i++) run = grantMastery(run, 'cinderKnight', 1);
+  for (let i = 0; i < 3; i++) run = grantMastery(run, 'cinderKnight', 1);
   assert.strictEqual(run.roster[0].mastery, MASTERY_EVOLUTION);
   assert.ok(availableEvolution(progressionTable, run.roster[0]));
 });

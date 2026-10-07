@@ -281,6 +281,17 @@ don't silently override it.
 > attacks are never resisted) and **Bedrock** (Stone — physical attacks hit with the higher of Attack
 > and Defense). Its §7 lists what to watch, its §8 what it reverses.
 
+> **A fourteenth is BUILT: `docs/gems.md`** (2026-10-07, per user direction; measured full-clear 73 → 82% skilled, 26 → 34% chart, pips flat). **Mastery Scrolls are
+> Gems**: a Gem is a stat grant AND a Mastery pip, placed on a hero for good — 5 points through Act 2,
+> 10 from Act 3, HP at 3 a point, never MP Regen (`RosterEntry.gems`, `src/run/gems.ts`). The screen
+> hands them out one at a time in a **fixed order** (HP → Mana → Atk → Def → Int → Wis → Spd), each
+> hero showing that stat and its pips. The Scribe is **the Lapidary** (6 Gems), the Cache pays 4, the
+> shelf sells 2-Gem packs; **the MVP pays +50% of the fight's XP, not a pip**. A pip with no Gem behind
+> it (enemy, contract, hire, old save) is filled by fit off the hero's best grades. Gems are the THIRD
+> per-hero stat currency beside the Mana Well and the Ley Line, allowed because each is also a pip.
+> Next, decided: the Mentor as +XP by act, then the Act 4 Tutor as a pick-any-move screen. Its §7
+> lists what it reverses.
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision

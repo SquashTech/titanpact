@@ -72,7 +72,7 @@ test('werewolf: a hero already at the pip Turns on the bite — pure Beast, Lace
 test("werewolf: the Turned body replaces the hero's base line with the 650, levels still on top — any hero, rewired or not", () => {
   for (const heroId of ['cinderKnight', 'motley', 'runescribe']) {
     let run = applyCurse(seed(heroId, heroes[heroId].moveIds, WOLF.turnAt), heroId, 'werewolf');
-    run = { ...run, roster: [{ ...run.roster[0], growthStatGrants: { attack: 7 } }] };
+    run = { ...run, roster: [{ ...run.roster[0], growthStatGrants: { attack: 7 }, gems: Array.from({ length: WOLF.turnAt }, () => ({ stat: 'hp' as const, points: 5 })) }] };
     const state = buildCombatState(1, heroes, equipment, [{ side: 'A', squad: { activeIds: [heroId, null], benchIds: [] }, roster: run.roster }], passives);
     const combatant = Object.values(state.combatants)[0];
     assert.deepStrictEqual(effectiveTypes(heroes[heroId], combatant), ['Beast']);

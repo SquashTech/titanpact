@@ -11,7 +11,7 @@
 // player has no way to see that it happened. A refused save says so once and costs
 // one run; a silently broken one poisons every fight after it.
 
-import type { PassiveId, StatKey, StatusId, TypeId } from '../engine/content';
+import type { GrowthStatKey, PassiveId, StatKey, StatusId, TypeId } from '../engine/content';
 import { STAT_ORDER } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
 import { MAX_ITEM_SLOTS } from './equipment';
@@ -23,6 +23,7 @@ import { ROSTER_CAP, TOTAL_ACTS } from './state';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, type ConsumablePurse } from './consumables';
 import { MAX_XP, xpForLevel } from './growth';
 import { MASTERY_CAP } from './mastery';
+import { GEM_ORDER, type Gem } from './gems';
 import { curses } from '../data/curses';
 import { spawnLineOf, spawnPosition } from '../data/titanspawn';
 import type { CompanionState } from './companion';
@@ -251,6 +252,15 @@ export function requireIds(value: unknown, known: ReadonlySet<string>, label: st
 const STAT_KEYS: ReadonlySet<string> = new Set<string>(STAT_ORDER);
 const NODE_TYPES: ReadonlySet<string> = new Set<string>(MAP_NODE_TYPES);
 
+function decodeGems(value: unknown, label: string): Gem[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) reject(`${label} is not a list`);
+  return value.map((gem, i) => {
+    if (!isObject(gem) || !GEM_ORDER.includes(gem.stat as GrowthStatKey) || typeof gem.points !== 'number') reject(`${label}[${i}] is not a Gem`);
+    return { stat: gem.stat as GrowthStatKey, points: gem.points as number };
+  });
+}
+
 function decodeStatGrants(value: unknown, label: string): Partial<Record<StatKey, number>> {
   if (value === undefined || value === null) return {};
   if (!isObject(value)) reject(`${label} is not a stat map`);
@@ -345,6 +355,8 @@ export function decodeRosterEntry(value: unknown, index: SaveContentIndex, label
     growthStatGrants: decodeStatGrants(value.growthStatGrants, `${label}.growthStatGrants`),
     scheduleTaken: value.scheduleTaken,
     mastery: value.mastery,
+    // Absent on a file written before Gems: its pips are filled by fit (gems.ts gemStatModifiers).
+    gems: decodeGems(value.gems, `${label}.gems`),
     // Absent on a file written before rewire paths; nothing was traded.
     offenseSwapped: value.offenseSwapped === true,
     evolutionTypeGraft: graft as TypeId | null,

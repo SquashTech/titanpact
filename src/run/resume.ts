@@ -12,7 +12,8 @@ import type { Encounter, EncounterNodeType } from './enemyGen';
 import type { HeroLevelUp } from './growth';
 import type { CompanionBeat } from './companion';
 import type { RewardNodeType } from './map';
-import type { ScrollPlan } from './mastery';
+import { GEM_ORDER, rollGems, type Gem, type GemPlan } from './gems';
+import type { GrowthStatKey } from '../engine/content';
 import type { MvpLedger, MvpTally } from './mvp';
 import type { GuildHallOffer, RosterReplaceCandidate } from './recruitment';
 import type { GuildHallOffers } from './shop';
@@ -93,12 +94,12 @@ export type RunScreen =
   | { kind: 'leyLine'; nodeId: string; settled?: boolean }
   | { kind: 'rest'; nodeId: string; settled?: boolean }
   /**
-   * Mastery Scrolls to whoever the player taps (run/mastery.ts, docs/mastery.md): the Scribe's
-   * forced row, the Scroll Cache's reward seat, and the Guild Hall shelf (`bought`, `nodeId` null,
+   * Gems to whoever the player taps (run/gems.ts, docs/gems.md): the Scribe's
+   * forced row, the Gem Cache's reward seat, and the Guild Hall shelf (`bought`, `nodeId` null,
    * the gold already charged). `progress` is the pips still to land and the heroes already paid,
    * kept here so a reload neither repays nor forgets them.
    */
-  | { kind: 'scrolls'; plan: ScrollPlan; nodeId: string | null; bought: boolean; next: RunScreen; progress?: ScrollProgress }
+  | { kind: 'scrolls'; plan: GemPlan; nodeId: string | null; bought: boolean; next: RunScreen; progress?: ScrollProgress }
   | { kind: 'boonNode'; nodeId: string; seed: number; settled?: boolean }
   /** The Mentor (acts 1-3): pick a hero, and one Mid move is rolled for it. */
   | { kind: 'mentorNode'; nodeId: string; seed: number; settled?: boolean }
@@ -342,9 +343,18 @@ function decodeBeat(value: unknown, ctx: Ctx): CompanionBeat {
   reject('companion.beat has an unknown kind');
 }
 
-function decodePlan(value: unknown): ScrollPlan {
-  if (isObject(value) && value.kind === 'scribe') return { kind: 'scribe' };
-  if (isObject(value) && value.kind === 'scrolls') return { kind: 'scrolls', count: int(value.count, 'scrolls.plan.count', 1) };
+function decodePlan(value: unknown, ctx: Ctx): GemPlan {
+  if (isObject(value) && (value.source === 'scribe' || value.source === 'cache' || value.source === 'shelf') && Array.isArray(value.gems)) {
+    const gems: Gem[] = value.gems.map((gem, i) =>
+      isObject(gem) && GEM_ORDER.includes(gem.stat as GrowthStatKey) && typeof gem.points === 'number'
+        ? { stat: gem.stat as GrowthStatKey, points: gem.points }
+        : reject(`scrolls.plan.gems[${i}] is not a Gem`)
+    );
+    return { source: value.source, gems };
+  }
+  // A screen saved before Gems: its Scrolls arrive as Gems, rolled now.
+  if (isObject(value) && value.kind === 'scribe') return { source: 'scribe', gems: rollGems(4, ctx.run.actNumber) };
+  if (isObject(value) && value.kind === 'scrolls') return { source: 'cache', gems: rollGems(int(value.count, 'scrolls.plan.count', 1), ctx.run.actNumber) };
   reject('scrolls.plan is unknown');
 }
 
@@ -441,7 +451,7 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
           : reject('scrolls.progress is not an object');
       return {
         kind,
-        plan: decodePlan(raw.plan),
+        plan: decodePlan(raw.plan, ctx),
         nodeId: raw.nodeId === null ? null : nodeId(raw.nodeId, ctx, 'scrolls.nodeId'),
         bought: bool(raw.bought),
         next: next(),

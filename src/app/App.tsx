@@ -34,7 +34,7 @@ import { MentorNodeScreen } from '../view/run/MentorNodeScreen';
 import { NodeRewardScreen } from '../view/run/NodeRewardScreen';
 import { ItemWhoScreen } from '../view/run/ItemWhoScreen';
 import { clearGuildHallTab } from '../view/run/guildHallTabMemory';
-import { ScrollNodeScreen } from '../view/run/ScrollNodeScreen';
+import { GemNodeScreen } from '../view/run/GemNodeScreen';
 import { ManaWellScreen } from '../view/run/ManaWellScreen';
 import { BlessingShrineScreen } from '../view/run/BlessingShrineScreen';
 import { ForgeNodeScreen } from '../view/run/ForgeNodeScreen';
@@ -104,7 +104,8 @@ import {
   type RosterReplaceCandidate,
 } from '../run/recruitment';
 import { guildHallOffersFor } from '../data/recruitment';
-import { MASTERY_CAP, SCROLL_CACHE_COUNT, SCROLL_PACK_PIPS, buyScroll, canBuyScroll, canTakeMastery, grantMastery } from '../run/mastery';
+import { MASTERY_CAP, SCROLL_PACK_PIPS, buyScroll, canBuyScroll } from '../run/mastery';
+import { GEM_CACHE_COUNT, SCRIBE_GEMS, rollGems } from '../run/gems';
 import type { MvpPick } from '../run/mvp';
 import { ShopItemError, TavernRerollError, buyShopItem, rerollGuildHallOffers, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
@@ -129,7 +130,7 @@ import {
   type Encounter,
 } from '../run/enemyGen';
 import { CHAMPION_LEVEL_BONUS, encounterScaling, enemyLevelFor, enemyLoadoutFor } from '../run/difficulty';
-import { ENCOUNTERS_PER_ACT, MAX_LEVEL, applySeededEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
+import { ENCOUNTERS_PER_ACT, MAX_LEVEL, MAX_XP, applySeededEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
 import { actOneLocationFor, chooseLocation, drawLocationCandidates, generateItinerary, locationChoiceDue, locationForAct, locationPool } from '../run/locations';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
@@ -785,9 +786,9 @@ export function App() {
     } else if (node.type === 'restReward') {
       setScreen({ kind: 'rest', nodeId });
     } else if (node.type === 'scribeReward') {
-      setScreen({ kind: 'scrolls', plan: { kind: 'scribe' }, nodeId, bought: false, next: { kind: 'map' } });
+      setScreen({ kind: 'scrolls', plan: { source: 'scribe', gems: rollGems(SCRIBE_GEMS, playerRun.actNumber) }, nodeId, bought: false, next: { kind: 'map' } });
     } else if (node.type === 'scrollReward') {
-      setScreen({ kind: 'scrolls', plan: { kind: 'scrolls', count: SCROLL_CACHE_COUNT }, nodeId, bought: false, next: { kind: 'map' } });
+      setScreen({ kind: 'scrolls', plan: { source: 'cache', gems: rollGems(GEM_CACHE_COUNT, playerRun.actNumber) }, nodeId, bought: false, next: { kind: 'map' } });
     } else if (node.type === 'mentorReward') {
       setScreen({ kind: 'mentorNode', nodeId, seed: randomSeed() });
     } else if (node.type === 'passiveReward') {
@@ -879,13 +880,12 @@ export function App() {
     // Every node kind, unlike `fightsStarted` — this one is the run summary's tally, and since
     // 2026-09-10 it is also what the level curve reads (run/growth.ts).
     next = { ...next, encountersWon: next.encountersWon + 1 };
-    // The MVP's pip, before the levels: an Evolution it opens is raised by the level flow below.
     const mvpEntry = mvp ? next.roster.find((entry) => entry.rosterId === mvp.rosterId) : undefined;
-    if (mvpEntry && canTakeMastery(mvpEntry)) next = { ...grantMastery(next, mvpEntry.rosterId, 1), lastMvpRosterId: mvpEntry.rosterId };
+    if (mvpEntry) next = { ...next, lastMvpRosterId: mvpEntry.rosterId };
     // Automatic and roster-wide, benched heroes included: no pool and no allocation. The report
     // is what the screen after the fight reads — the roll is destructive, so it cannot be
     // recovered from the roster afterwards.
-    const levelled = applySeededEncounterLevels(next, rosterHeroes, levelSeed, encounterXpKind(mapNodeType));
+    const levelled = applySeededEncounterLevels(next, rosterHeroes, levelSeed, encounterXpKind(mapNodeType), mvpEntry?.rosterId);
     next = levelled.run;
     // The run's first fight is won: one of the Earlies it beat asks to come along, and it does.
     // Joined after the levels roll so the report is the fight's and the newcomer arrives at par.
@@ -1027,7 +1027,7 @@ export function App() {
     if (screen.kind !== 'shop' || !canBuyScroll(playerRun, screen.scrollsBought)) return;
     setPlayerRun(buyScroll(playerRun, screen.scrollsBought));
     playSfx('gold.coin');
-    setScreen({ kind: 'scrolls', plan: { kind: 'scrolls', count: SCROLL_PACK_PIPS }, nodeId: null, bought: true, next: { ...screen, scrollsBought: screen.scrollsBought + 1 } });
+    setScreen({ kind: 'scrolls', plan: { source: 'shelf', gems: rollGems(SCROLL_PACK_PIPS, playerRun.actNumber) }, nodeId: null, bought: true, next: { ...screen, scrollsBought: screen.scrollsBought + 1 } });
   }
 
   /** The Shop's gear shelf: the gold is charged on the confirm, and the who screen absorbs the piece. */
@@ -1441,7 +1441,7 @@ export function App() {
             playerRun.map!.nodes[screen.nodeId].type === 'finale'
               ? undefined
               : {
-                  ineligible: new Set(playerRun.roster.filter((entry) => entry.mastery >= MASTERY_CAP).map((entry) => entry.rosterId)),
+                  ineligible: new Set(playerRun.roster.filter((entry) => entry.xp >= MAX_XP).map((entry) => entry.rosterId)),
                   lastMvpRosterId: playerRun.lastMvpRosterId ?? undefined,
                 }
           }
@@ -1544,11 +1544,10 @@ export function App() {
       )}
 
       {screen.kind === 'scrolls' && (
-        <ScrollNodeScreen
+        <GemNodeScreen
           run={playerRun}
           onRunChange={setPlayerRun}
           plan={screen.plan}
-          bought={screen.bought}
           onDone={() => (screen.nodeId ? handleNodeContinue(screen.nodeId) : setScreen(screen.next))}
           progress={screen.progress}
           onProgress={(progress: ScrollProgress) => setScreen((at) => (at.kind === 'scrolls' ? { ...at, progress } : at))}

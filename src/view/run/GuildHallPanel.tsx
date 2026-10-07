@@ -39,6 +39,7 @@ import type { TabSpec } from '../shared/TabStrip';
 import { RecruitFanfare } from './RecruitFanfare';
 import { GOOD_ART, HALL_ART, HallGood } from './guildHallArt';
 import { CONFIRM_PURCHASE_FROM } from '../shared/useArmedTap';
+import { GemIcon } from '../shared/GemIcon';
 
 export type GuildHallTab = 'shop' | 'tavern' | 'smithy';
 
@@ -275,15 +276,15 @@ export function GuildHallPanel({
 
       {tab === 'shop' && (
         <div className="guild-hall-section is-shop">
-          {/* The shelf: a pack of Mastery Scrolls (SCROLL_PACK_PIPS pips in any split, SCROLL_PURCHASE_LIMIT a visit, the tap opens the
+          {/* The shelf: a pack of Gems (SCROLL_PACK_PIPS of random stats, SCROLL_PURCHASE_LIMIT a visit, the tap opens the
               who screen), the flasks (the flask's own cap is the shelf's; the Revive is one a visit),
               and two pieces of gear on the bottom plank. */}
           <div className="hall-shelf">
             <img src={HALL_ART.shelf} className="hall-shelf-art" alt="" draggable={false} />
             <HallGood
               className="is-slot-1"
-              art={GOOD_ART.scroll}
-              name={`${SCROLL_PACK_PIPS} Mastery Scrolls`}
+              art={<GemPair />}
+              name={`${SCROLL_PACK_PIPS} Random Gems`}
               price={scrollsSoldOut ? 'Sold out' : SCROLL_PURCHASE_COST}
               soldOut={scrollsSoldOut}
               held={scrollsSoldOut ? undefined : `${SCROLL_PURCHASE_LIMIT - scrollsBought} left`}
@@ -462,6 +463,16 @@ export function GuildHallPanel({
 }
 
 /** The roster at a glance under the bar, so the Party Heal is priced against who is actually hurt. */
+/** The shelf's pack, drawn: two stones leaning together. Which stats are in it is rolled on the buy. */
+function GemPair() {
+  return (
+    <span className="gem-pair">
+      <GemIcon stat="attack" size={30} />
+      <GemIcon stat="wisdom" size={26} />
+    </span>
+  );
+}
+
 function TavernRoster({ run }: { run: RunState }) {
   return (
     <div className="tavern-roster">

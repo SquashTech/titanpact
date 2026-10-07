@@ -24,7 +24,8 @@ import { chooseMvp, mvpLedgersFromEvents } from '../../src/run/mvp';
 import { statuses } from '../../src/data/statuses';
 import type { CombatEvent } from '../../src/engine/events';
 import type { CombatState } from '../../src/engine/state';
-import { MASTERY_CAP, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PACK_PIPS, buyScroll, canBuyScroll, grantMastery } from '../../src/run/mastery';
+import { SCROLL_PACK_PIPS, buyScroll, canBuyScroll } from '../../src/run/mastery';
+import { GEM_CACHE_COUNT, SCRIBE_GEMS, placeGem, rollGems } from '../../src/run/gems';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { blessOpeningPair, canBless, grantBlessing } from '../../src/run/blessings';
@@ -33,7 +34,7 @@ import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft'
 import { actOneLocationFor, chooseLocation, drawLocationCandidates, locationChoiceDue, locationForAct, locationPool } from '../../src/run/locations';
 import { locations } from '../../src/data/locations';
 import { encounterScaling, enemyLoadoutFor } from '../../src/run/difficulty';
-import { encounterXpKind, grantEncounterLevels, grantXp, levelOf, MAX_LEVEL } from '../../src/run/growth';
+import { MAX_XP, MVP_XP_SHARE, encounterXpKind, grantEncounterLevels, grantXp, levelOf, MAX_LEVEL, xpForEncounter } from '../../src/run/growth';
 import { deckRows, normalizeDeck } from '../../src/run/deck';
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
@@ -732,7 +733,7 @@ function resolveEncounterNode(
   record.knockouts.koInWinsByKind[kindKey] = (record.knockouts.koInWinsByKind[kindKey] ?? 0) + koRosterIds.length;
   // The consumable drop (src/run/consumables.ts). Potions are never drunk here — the pilot has no
   // Bag — but a Revive IS spent (spendRevives), since a persisting knockout is what it prices.
-  if (MVP_ON && mapNodeType !== 'finale') workingRun = awardMvp(workingRun, fight.events, fight.final, rng, record);
+  if (MVP_ON && mapNodeType !== 'finale') workingRun = awardMvp(workingRun, fight.events, fight.final, mapNodeType, record);
   const consumableDrop = rollConsumableDrop(kindKey, rng);
   if (consumableDrop) workingRun = grantConsumable(workingRun, consumableDrop);
   if (consumableDrop === 'revive') record.knockouts.revivesFound += 1;
@@ -742,11 +743,11 @@ function resolveEncounterNode(
 
 const MVP_ON = process.env.SIM_MVP === '1';
 
-/** One pip to the fight's MVP (run/mvp.ts): never a capped hero, never the same hero twice running. */
-function awardMvp(run: RunState, events: readonly CombatEvent[], final: CombatState, rng: Rng, record: RunRecord): RunState {
+/** The fight's MVP (run/mvp.ts) takes bonus XP: never a capped hero, never the same hero twice running. */
+function awardMvp(run: RunState, events: readonly CombatEvent[], final: CombatState, mapNodeType: MapNodeType, record: RunRecord): RunState {
   const onRoster = new Set(run.roster.map((e) => e.rosterId));
   const ledgers = mvpLedgersFromEvents(events, final, PLAYER_SIDE, statuses).filter((l) => onRoster.has(l.rosterId));
-  const ineligible = new Set(run.roster.filter((e) => e.mastery >= MASTERY_CAP).map((e) => e.rosterId));
+  const ineligible = new Set(run.roster.filter((e) => e.xp >= MAX_XP).map((e) => e.rosterId));
   const unruled = chooseMvp(ledgers, { ineligible });
   const pick = chooseMvp(ledgers, { ineligible, lastMvpRosterId: record.mvpLast });
   record.mvp.fights = (record.mvp.fights ?? 0) + 1;
@@ -758,7 +759,8 @@ function awardMvp(run: RunState, events: readonly CombatEvent[], final: CombatSt
   record.mvp.shareSum = (record.mvp.shareSum ?? 0) + pick.share;
   record.mvpByRoster[pick.rosterId] = (record.mvpByRoster[pick.rosterId] ?? 0) + 1;
   record.mvpLast = pick.rosterId;
-  return landPips(run, pick.rosterId, 1, 'mvp', rng, record);
+  const bonus = Math.round(xpForEncounter(run.encountersWon + 1, encounterXpKind(mapNodeType)) * MVP_XP_SHARE);
+  return { ...run, roster: run.roster.map((e) => (e.rosterId === pick.rosterId ? grantXp(e, rosterHeroes[e.heroId], bonus).entry : e)) };
 }
 
 /** The Guardian's Banner: a fixed 1-of-5, taken at random. */
@@ -798,34 +800,29 @@ function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry
 }
 
 /**
- * Pips onto one hero (policy.scrollTarget), and what they open paid on the spot — the Scribe's
- * two picks, a shelf Scroll. The Evolution is logged as the choice it is, as the report's is.
+ * `count` Gems rolled for the act, each placed on the hero the policy names as it stands after the
+ * last, and what its pip opens paid on the spot. The Evolution is logged as the choice it is.
  */
-function landPips(run: RunState, rosterId: string, pips: number, source: string, rng: Rng, record: RunRecord): RunState {
-  record.pipsBySource[source] = (record.pipsBySource[source] ?? 0) + pips;
-  const payout = policy.emptyPayout();
-  const next = policy.payMastery(grantMastery(run, rosterId, pips), rng, payout);
-  recordPayout(record, payout, next.encountersWon);
-  tally(record, run.actNumber, 'evolution', payout.evolutions.length);
-  return next;
-}
-
-/** The Scribe: two heroes, SCRIBE_PIPS_EACH each, the policy's two. */
-function resolveScribe(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
+function landGems(run: RunState, count: number, source: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   let next = run;
-  for (const target of policy.scribeTargets(run.roster, options.levelPolicy)) next = landPips(next, target.rosterId, SCRIBE_PIPS_EACH, 'scribe', rng, record);
-  return next;
-}
-
-/** The Scroll Cache: SCROLL_CACHE_COUNT pips one at a time, each to the hero the policy names as it stands after the last. */
-function resolveScrollCache(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
-  let next = run;
-  for (let i = 0; i < SCROLL_CACHE_COUNT; i++) {
+  for (const gem of rollGems(count, run.actNumber, rng)) {
     const target = policy.scrollTarget(next.roster, options.levelPolicy);
     if (!target) break;
-    next = landPips(next, target.rosterId, 1, 'cache', rng, record);
+    record.pipsBySource[source] = (record.pipsBySource[source] ?? 0) + 1;
+    const payout = policy.emptyPayout();
+    next = policy.payMastery(placeGem(next, target.rosterId, gem), rng, payout);
+    recordPayout(record, payout, next.encountersWon);
+    tally(record, run.actNumber, 'evolution', payout.evolutions.length);
   }
   return next;
+}
+
+function resolveScribe(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
+  return landGems(run, SCRIBE_GEMS, 'scribe', rng, record, options);
+}
+
+function resolveScrollCache(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
+  return landGems(run, GEM_CACHE_COUNT, 'cache', rng, record, options);
 }
 
 function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
@@ -1174,9 +1171,7 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
   // The shelf's Mastery Scrolls (SCROLL_PURCHASE_LIMIT a visit), bought while somebody can still
   // take one and the gold is there, to the hero the policy names.
   for (let bought = 0; canBuyScroll(next, bought); bought++) {
-    const target = policy.scrollTarget(next.roster, options.levelPolicy);
-    if (!target) break;
-    spend('scroll', () => landPips(buyScroll(next, bought), target.rosterId, SCROLL_PACK_PIPS, 'shelf', rng, record));
+    spend('scroll', () => landGems(buyScroll(next, bought), SCROLL_PACK_PIPS, 'shelf', rng, record, options));
   }
 
   spend('anvil', () => resolveAnvil(next));

@@ -47,7 +47,7 @@ const RESOURCE_PATHS = {
   contract: NODE_PATHS.contractReward,
   // What leaks from the Titan, drunk on a won fight: the phial that was the Ichor node's mark.
   xp: XP_PHIAL,
-  // The Mastery Scroll: the Scribe's node glyph, since a Scroll is what the Scribe hands over.
+  // A Gem: the Lapidary's node glyph.
   scroll: NODE_PATHS.scribeReward,
   // The two potions share one flask and differ by colour alone, since they are the same verb at
   // two gauges. A round-bottomed flask with a stoppered neck: the bulb is what survives 12px.
@@ -72,8 +72,8 @@ export const RESOURCE_COLORS: Record<ResourceKind, string> = {
   contract: '#9bc9ff',
   // The level-up report's green.
   xp: '#4caf6a',
-  // The Scribe's parchment (mapNodes NODE_COLORS scribeReward).
-  scroll: '#e0c27a',
+  // The Gems' rose (mapNodes NODE_COLORS scribeReward).
+  scroll: '#ff7ab6',
   // The gauges' own colours, so a potion reads as the bar it refills.
   hpPotion: '#ff8a8a',
   mpPotion: '#8fb4ff',

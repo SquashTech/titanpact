@@ -99,7 +99,7 @@ export function RosterPeek({ run, className }: Props) {
                       onActivate={() => setInspecting({ hero, entry })}
                       onPreview={() => setInspecting({ hero, entry })}
                       ariaLabel={`${hero.name}, level ${levelOf(entry)} — view sheet`}
-                      /* HP and Mastery: what a mend and a Scroll are bought against. */
+                      /* HP and Mastery: what a mend and a Gem are bought against. */
                       detail={
                         <>
                           <WoundBar {...entryHp(hero, entry, run.relics)} />

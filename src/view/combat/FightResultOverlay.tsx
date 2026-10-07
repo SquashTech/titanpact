@@ -4,7 +4,7 @@ import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { CONSUMABLE_BLURBS, CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
-import { MAX_LEVEL, MAX_XP, levelForXp, levelOf, previewLevelUp, xpForLevel, xpProgress } from '../../run/growth';
+import { MAX_LEVEL, MAX_XP, fightXpFor, levelForXp, levelOf, previewLevelUp, xpForLevel, xpProgress } from '../../run/growth';
 import { formIdFor } from '../../run/progression';
 import { LevelUpList } from '../run/LevelUpList';
 import { overlayHost } from '../shared/overlayHost';
@@ -66,7 +66,7 @@ export interface FightResultProps {
    * outside a run) and no bar is drawn.
    */
   hpAfter?: ReadonlyMap<string, { hp: number; maxHp: number }>;
-  /** The fight's MVP (run/mvp.ts) and the free Mastery pip it takes. Null when nobody qualified. */
+  /** The fight's MVP (run/mvp.ts) and the bonus XP it takes. Null when nobody qualified. */
   mvp?: MvpPick | null;
   onContinue: () => void;
 }
@@ -102,14 +102,15 @@ export function FightResultOverlay({
   // The same XP lands a different number of levels on each hero — a hero behind par climbs
   // further, one part-way to a level tops out sooner — so the bar count is per hero and the
   // caption reads the spread. The longest bar sets the clock.
-  const fillsByHero = roster.map((entry) => levelsCrossed(entry, xpGained));
+  const xpFor = (entry: RosterEntry) => fightXpFor(xpGained, entry.rosterId, mvp?.rosterId);
+  const fillsByHero = roster.map((entry) => levelsCrossed(entry, xpFor(entry)));
   const mostFills = Math.max(0, ...fillsByHero);
   const fewestFills = Math.min(mostFills, ...fillsByHero.filter((n) => n > 0));
-  const barsByHero = roster.map((entry) => xpBarSegments(entry.xp, entry.xp + xpGained));
+  const barsByHero = roster.map((entry) => xpBarSegments(entry.xp, entry.xp + xpFor(entry)));
   const levelReport = useMemo(
-    () => (levelSeed === undefined || mostFills === 0 ? null : roster.map((entry) => previewLevelUp(entry, rosterHeroes[entry.heroId], xpGained, levelSeed))),
+    () => (levelSeed === undefined || mostFills === 0 ? null : roster.map((entry) => previewLevelUp(entry, rosterHeroes[entry.heroId], xpFor(entry), levelSeed))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [levelSeed, xpGained]
+    [levelSeed, xpGained, mvp]
   );
   const [showingGains, setShowingGains] = useState(false);
   const longestBar = barsByHero.reduce((best, bar) => (xpBarTotalMs(bar) > xpBarTotalMs(best) ? bar : best), barsByHero[0] ?? []);
@@ -118,13 +119,13 @@ export function FightResultOverlay({
     const rows: { key: string; render: (shown: boolean) => ReactNode }[] = [];
     if (!won) return rows;
     const mvpEntry = mvp ? roster.find((entry) => entry.rosterId === mvp.rosterId) : undefined;
-    if (mvp && mvpEntry) rows.push({ key: 'mvp', render: () => <MvpRow heroId={mvpEntry.heroId} pathId={formIdFor(mvpEntry)} pick={mvp} /> });
+    if (mvp && mvpEntry) rows.push({ key: 'mvp', render: () => <MvpRow heroId={mvpEntry.heroId} pathId={formIdFor(mvpEntry)} pick={mvp} bonusXp={fightXpFor(xpGained, mvp.rosterId, mvp.rosterId) - xpGained} /> });
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
     if (equipmentReward) rows.push({ key: 'item', render: () => <ItemRow item={equipmentReward} onInspect={() => setInspecting(true)} /> });
     if (consumableReward) rows.push({ key: 'potion', render: () => <PotionRow kind={consumableReward} /> });
     if (contractReward) rows.push({ key: 'contract', render: () => <ContractRow /> });
     return rows;
-  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, contractReward, mvp]);
+  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, contractReward, mvp, xpGained]);
 
   const stageDone = STAGE_LEDGER + ledger.length;
   const [stage, setStage] = useState(() => (prefersReducedMotion() ? stageDone : STAGE_TITLE));
@@ -196,7 +197,7 @@ export function FightResultOverlay({
                   key={entry.rosterId}
                   entry={entry}
                   index={i}
-                  xp={xpGained}
+                  xp={xpFor(entry)}
                   fielded={fieldedIds.has(entry.rosterId)}
                   filling={stage >= STAGE_FILL && !landed && stage < STAGE_CAPTION}
                   landed={landed || stage >= STAGE_CAPTION}
@@ -401,8 +402,8 @@ const MVP_TITLES: Record<MvpColumn, string> = {
   control: 'Tactician',
 };
 
-/** The fight's MVP: who, the column it dominated, and the pip it is paid. */
-function MvpRow({ heroId, pathId, pick }: { heroId: string; pathId: string | null; pick: MvpPick }) {
+/** The fight's MVP: who, the column it dominated, and the XP it is paid on top. */
+function MvpRow({ heroId, pathId, pick, bonusXp }: { heroId: string; pathId: string | null; pick: MvpPick; bonusXp: number }) {
   const name = rosterHeroes[heroId]?.name ?? heroId;
   return (
     <div className="fight-result-row is-mvp">
@@ -413,7 +414,7 @@ function MvpRow({ heroId, pathId, pick }: { heroId: string; pathId: string | nul
         <span className="fight-result-row-label">MVP · {name}</span>
         <span className="fight-result-row-sub">{MVP_TITLES[pick.column]}</span>
       </span>
-      <span className="fight-result-row-value">+1 Mastery</span>
+      <span className="fight-result-row-value">+{bonusXp} XP</span>
     </div>
   );
 }

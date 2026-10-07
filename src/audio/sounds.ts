@@ -33,6 +33,7 @@ export type SfxId =
   | 'contract.sign'
   | 'shrine'
   | 'scroll.spend'
+  | 'gem.set'
   | 'blessing'
   | 'class.learn'
   | 'cache.open'
@@ -425,6 +426,22 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'triangle', freq: 523, gain: 0.2, attack: 0.008, hold: 0.03, decay: 0.3 },
       { wave: 'sine', freq: 784, gain: 0.16, attack: 0.01, decay: 0.36, delay: 0.1 },
       { wave: 'sine', freq: 1568, detune: 10, gain: 0.05, attack: 0.012, decay: 0.3, delay: 0.12 },
+    ],
+  },
+
+  /**
+   * A Gem set into a hero: the stone's click into the socket, then a glassy bell — high partials a
+   * twelfth apart, slightly detuned so they shimmer. The caller pitches it by stat and up on a milestone.
+   */
+  'gem.set': {
+    gain: 0.36,
+    jitter: 0.008,
+    voices: [
+      { wave: 'noise', gain: 0.22, attack: 0.001, decay: 0.04, filter: { type: 'bandpass', freq: 3200, q: 4 } },
+      { wave: 'triangle', freq: 1047, gain: 0.18, attack: 0.002, decay: 0.45 },
+      { wave: 'sine', freq: 1568, detune: 7, gain: 0.14, attack: 0.004, decay: 0.6, delay: 0.04 },
+      { wave: 'sine', freq: 3136, detune: -9, gain: 0.07, attack: 0.004, decay: 0.7, delay: 0.06 },
+      { wave: 'sine', freq: 4699, detune: 12, gain: 0.03, attack: 0.006, decay: 0.8, delay: 0.09 },
     ],
   },
 

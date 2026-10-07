@@ -97,14 +97,13 @@ export const SECTION_PATHS = {
       <rect x="10.4" y="9.6" width="3.2" height="6.2" rx="0.9" />
     </>
   ),
-  /**
-   * The Mastery Scroll: a sheet hanging off its top roll, its foot curling into a second — the
-   * coil on each roll is the tell. Deliberately not the Reference scroll in nodeIcons, which is a
-   * page between two bars. The map node, the Cache and the run resource wear it too — one picture
-   * per concept.
-   */
+  // A cut gem, crown over pavilion, the girdle the gap between: Mastery is earned in Gems. The map
+  // node, the Cache and the run resource wear it too — one picture per concept.
   mastery: (
-    <path d="M2 5.8a3.4 3.4 0 0 1 3.4-3.4h12.4a3.6 3.6 0 0 1 3.6 3.6v1.2h-4v9.6h2.2a2.4 2.4 0 0 1 0 4.8H2Zm3.4-1.8a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6Zm14.2 13.9a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6ZM11.2 8.2v2.2h4.6V8.2Zm0 4v2.2h3.2v-2.2Z" />
+    <>
+      <path d="M6.4 2.8h11.2l4.6 6.2H1.8Z" />
+      <path d="M1.9 10.6h20.2L12 22.2Z" />
+    </>
   ),
   // A coin purse, drawn shut — the Guild Hall's Shop counter.
   shop: (

@@ -10,6 +10,7 @@ import { equipmentStatModifiers } from './equipment';
 import { equipmentPassiveGrants, mergePassiveGrants, passiveStatModifiers } from './passives';
 import { mergeStatMods } from './statMods';
 import { curseStatDelta } from './curse';
+import { gemStatModifiers } from './gems';
 import { rosterHeroes } from '../data/content';
 
 /** id -> stack count across equipment, Evolution, events, Class, team relics and the definition's own (HeroDefinition.passiveIds). */
@@ -52,6 +53,7 @@ export function entryStatModifiers(
     entry.evolutionStatGrants,
     entry.bonusStatGrants,
     entry.growthStatGrants,
+    gemStatModifiers(entry, rosterHeroes[entry.heroId]),
     teamStatModifiers,
     passiveStatModifiers(passiveCounts, passiveDefs, gold)
   );

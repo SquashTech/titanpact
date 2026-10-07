@@ -14,7 +14,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   boss: 'Guardian',
   shop: 'Guild Hall',
   equipmentReward: 'Equipment Cache',
-  scrollReward: 'Scroll Cache',
+  scrollReward: 'Gem Cache',
   passiveReward: 'Boon',
   blessingReward: "Pactwarden's Shrine",
   currencyReward: 'Gold',
@@ -25,7 +25,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   restReward: 'Rest',
   mentorReward: 'Mentor',
   tutorReward: 'Tutor',
-  scribeReward: 'Scribe',
+  scribeReward: 'The Lapidary',
   event: 'Event',
   muster: 'The Vigil',
   finale: 'The Titan',
@@ -41,7 +41,7 @@ export const NODE_LABELS: Record<MapNodeType, string> = {
   boss: 'Guardian',
   shop: 'Guild Hall',
   equipmentReward: 'Items',
-  scrollReward: 'Mastery',
+  scrollReward: 'Gems',
   passiveReward: 'Boon',
   blessingReward: 'Blessing',
   currencyReward: 'Gold',
@@ -52,7 +52,7 @@ export const NODE_LABELS: Record<MapNodeType, string> = {
   restReward: 'Rest',
   mentorReward: 'Mentor',
   tutorReward: 'Tutor',
-  scribeReward: 'Scribe',
+  scribeReward: 'Gems',
   event: 'Event',
   muster: 'Vigil',
   finale: 'The Titan',
@@ -70,8 +70,8 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   // A burnt copper beside the Forge's orange: same family (both are about what a hero can
   // carry), different silhouette tier, so they read as related rather than as each other.
   equipmentReward: 'var(--physical)',
-  // The Scribe's parchment: the two Scroll nodes are one currency, and the count on the glyph tells them apart.
-  scrollReward: '#e0c27a',
+  // Jewel rose: the two Gem nodes are one currency, and the count on the glyph tells them apart.
+  scrollReward: '#ff7ab6',
   // Arcane violet, the hue the whole passive vocabulary already sits on (passiveIcons' fallback).
   passiveReward: 'var(--magical)',
   // The Blessing's own gold, the star every Blessed hero wears.
@@ -92,9 +92,8 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   // The only cyan on the map — the Tutor is rare enough that it should never be mistaken at a
   // glance for the Mana Well beside it.
   tutorReward: '#48c9e8',
-  // Parchment: the only warm neutral on the map, so the Scroll's row reads as its own thing
-  // beside the Mentor's green book and the Forge's orange.
-  scribeReward: '#e0c27a',
+  // Jewel rose, the only pink on the map, so the Gems' row reads as its own thing.
+  scribeReward: '#ff7ab6',
   event: 'var(--tier-common)',
   muster: 'var(--accent)',
   // The one node in a run that wears the mythic red: the Herald, and what looks down once it falls.

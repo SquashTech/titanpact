@@ -18,7 +18,8 @@ import { statuses } from '../../src/data/statuses';
 import type { EquipmentDefinition } from '../../src/run/equipment';
 import { itemReceiptFor, type ItemReceipt } from '../../src/run/runProgress';
 import type { RosterEntry, RunState } from '../../src/run/state';
-import { MASTERY_EVOLUTION, SCRIBE_PICKS, canTakeMastery } from '../../src/run/mastery';
+import { MASTERY_EVOLUTION, canTakeMastery } from '../../src/run/mastery';
+import { gemStatModifiers } from '../../src/run/gems';
 import {
   MOVE_CAP,
   applyEvolutionMoves,
@@ -76,6 +77,7 @@ export function effectiveStats(entry: RosterEntry): Record<StatKey, number> {
   const base = { ...heroes[entry.heroId].baseStats } as Record<StatKey, number>;
   let grants = mergeStatMods(entry.evolutionStatGrants, entry.bonusStatGrants);
   grants = mergeStatMods(grants, entry.growthStatGrants);
+  grants = mergeStatMods(grants, gemStatModifiers(entry, heroes[entry.heroId]));
   for (const itemId of entry.equipment) {
     if (equipment[itemId]) grants = mergeStatMods(grants, equipment[itemId].statGrants);
   }
@@ -425,17 +427,6 @@ export function scrollTarget(roster: readonly RosterEntry[], policy: LevelPolicy
     if (unevolved !== 0) return unevolved;
     return b.mastery - a.mastery || rank(a) - rank(b);
   })[0];
-}
-
-/** The Scribe's two picks: the first two scrollTarget names, distinct. */
-export function scribeTargets(roster: readonly RosterEntry[], policy: LevelPolicy): RosterEntry[] {
-  const picked: RosterEntry[] = [];
-  while (picked.length < SCRIBE_PICKS) {
-    const next = scrollTarget(roster, policy, picked.map((r) => r.rosterId));
-    if (!next) break;
-    picked.push(next);
-  }
-  return picked;
 }
 
 /**

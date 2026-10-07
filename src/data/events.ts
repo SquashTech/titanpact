@@ -31,7 +31,7 @@ export type HeroOutcome =
   | { kind: 'grantPassive'; passiveId: PassiveId };
 
 /**
- * The closed outcome vocabulary. Gold, Mastery Scrolls and Recruit Contracts are never GRANTED —
+ * The closed outcome vocabulary. Gold, Gems and Recruit Contracts are never GRANTED —
  * those are map-node types; an event should be a thing the map cannot otherwise do. A hero is
  * (`recruit`): not a contract's finished build but a raw one at par, drawn from a filter, which is
  * how an event recruits by theme (docs/wild-innates-and-events.md §3).

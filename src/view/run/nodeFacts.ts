@@ -7,7 +7,8 @@ import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { ENCHANT_FORCE_BY_RARITY, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { goldRangeFor, purseRangeFor } from '../../run/runProgress';
-import { MASTERY_EVOLUTION, SCRIBE_PICKS, SCRIBE_PIPS_EACH, SCROLL_CACHE_COUNT, SCROLL_PACK_PIPS, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
+import { MASTERY_EVOLUTION, SCROLL_PACK_PIPS, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
+import { GEM_CACHE_COUNT, SCRIBE_GEMS, gemPointsForAct } from '../../run/gems';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { LEY_LINE_FORCE, MANA_WELL_AMOUNT, MANA_WELL_REGEN } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
@@ -129,7 +130,7 @@ const TERMS = {
   },
   mastery: {
     term: 'Mastery',
-    text: `Ten pips a hero. The ${MASTERY_EVOLUTION}th opens its Evolution, a one-time choice of path; the 10th masters its innate passive into a stronger form. Pips past 10 are lost.`,
+    text: `Ten pips a hero, one for every Gem it holds. The ${MASTERY_EVOLUTION}th opens its Evolution, a one-time choice of path; the 10th masters its innate passive into a stronger form. A hero at 10 takes no more Gems.`,
   },
   force: {
     term: 'Elemental Force',
@@ -246,21 +247,21 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
         facts: [
           { glyph: 'hero', label: 'Hire', value: '1 Contract', note: `Lv ${guildHallLevel(actNumber)}, raw` },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_BASE_PRICE}g`, note: `+${CONTRACT_PRICE_STEP}g each one bought this run` },
-          { glyph: 'scroll', label: `${SCROLL_PACK_PIPS} Mastery Scrolls`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
+          { glyph: 'scroll', label: `${SCROLL_PACK_PIPS} Gems`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
           { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },
           { glyph: 'hp', label: 'Potion · Revive', value: `${CONSUMABLE_PRICE}g · ${REVIVE_PRICE}g` },
         ],
         odds: null,
-        about: 'Where gold is spent. The Tavern sells Recruit Contracts and hires heroes for one — raw: an act behind, unevolved, bare-socketed. The shelf sells Scrolls, potions and one Revive; the Smithy works worn gear; the mend heals everyone, knocked-out heroes included.',
+        about: 'Where gold is spent. The Tavern sells Recruit Contracts and hires heroes for one — raw: an act behind, unevolved, bare-socketed. The shelf sells Gems, potions and one Revive; the Smithy works worn gear; the mend heals everyone, knocked-out heroes included.',
         terms: [TERMS.contract],
       };
     case 'muster':
       return {
         kind: 'Landmark · The last stop',
         facts: [
-          { glyph: 'scroll', label: `${SCROLL_PACK_PIPS} Mastery Scrolls`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
+          { glyph: 'scroll', label: `${SCROLL_PACK_PIPS} Gems`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
           { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },
@@ -281,9 +282,9 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
     case 'scrollReward':
       return {
         kind: 'Reward · Growth',
-        facts: [{ glyph: 'scroll', label: 'Mastery', value: `+${SCROLL_CACHE_COUNT}`, note: `divided as you like · evolves at ${MASTERY_EVOLUTION}` }],
+        facts: [{ glyph: 'scroll', label: 'Gems', value: `${GEM_CACHE_COUNT}`, note: `+${gemPointsForAct(actNumber)} points each · evolves at ${MASTERY_EVOLUTION}` }],
         odds: null,
-        about: `${SCROLL_CACHE_COUNT} Mastery pips, one tap at a time — all on one hero or spread across the roster.`,
+        about: `${GEM_CACHE_COUNT} Gems of random stats. Each one you place raises that stat on a hero for the run and gives it a Mastery pip.`,
         terms: [TERMS.mastery],
       };
     case 'manaWellReward':
@@ -359,9 +360,9 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
     case 'scribeReward':
       return {
         kind: 'Reward · Growth',
-        facts: [{ glyph: 'scroll', label: 'Mastery', value: `+${SCRIBE_PIPS_EACH}`, note: `to ${SCRIBE_PICKS} heroes · evolves at ${MASTERY_EVOLUTION}` }],
+        facts: [{ glyph: 'scroll', label: 'Gems', value: `${SCRIBE_GEMS}`, note: `+${gemPointsForAct(actNumber)} points each · evolves at ${MASTERY_EVOLUTION}` }],
         odds: null,
-        about: `${SCRIBE_PICKS} different heroes take ${SCRIBE_PIPS_EACH} Mastery pips each.`,
+        about: `${SCRIBE_GEMS} Gems of random stats. Each one you place raises that stat on a hero for the run and gives it a Mastery pip.`,
         terms: [TERMS.mastery],
       };
     case 'mentorReward':

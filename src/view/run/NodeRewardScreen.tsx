@@ -52,8 +52,8 @@ interface Props {
 /**
  * The instant reward nodes and the Equipment Cache (docs/run-loop.md), all met on the road: gold
  * is a pile by the roadside that pays out as it is found, a Contract a sealed sheet picked up, and the Cache is a chest that flashes
- * and swings open before offering its 3. The Scroll nodes are not here: which hero takes a pip IS
- * a decision (ScrollNodeScreen).
+ * and swings open before offering its 3. The Gem nodes are not here: which hero takes a Gem IS
+ * a decision (GemNodeScreen).
  */
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment, seed }: Props) {
   if (nodeType === 'currencyReward') return <GoldOnTheRoad run={run} onRunChange={onRunChange} onContinue={onContinue} seed={seed} />;

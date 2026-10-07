@@ -364,9 +364,19 @@ export function applySeededEncounterLevels(
   run: RunState,
   heroLookup: Record<string, HeroDefinition>,
   seed: number,
-  kind: EncounterXpKind = encounterXpKindAtPar(run.encountersWon)
+  kind: EncounterXpKind = encounterXpKindAtPar(run.encountersWon),
+  /** The fight's MVP, paid its bonus on top of the roster's grant (run/mvp.ts). */
+  mvpRosterId?: string
 ): { run: RunState; report: HeroLevelUp[] } {
-  return levelRoster(run, heroLookup, xpForEncounter(run.encountersWon, kind), (rosterId) => levelRandomFor(seed, rosterId));
+  return levelRoster(run, heroLookup, xpForEncounter(run.encountersWon, kind), (rosterId) => levelRandomFor(seed, rosterId), mvpRosterId);
+}
+
+/** The MVP's bonus, as a share of the fight's grant. */
+export const MVP_XP_SHARE = 0.5;
+
+/** What one hero takes from a fight that paid the roster `xp`: the grant, and the MVP's bonus on top. */
+export function fightXpFor(xp: number, rosterId: string, mvpRosterId?: string | null): number {
+  return rosterId === mvpRosterId ? xp + Math.round(xp * MVP_XP_SHARE) : xp;
 }
 
 /** One hero's line of the report, rolled on the stream `applySeededEncounterLevels` will use. */
@@ -417,12 +427,13 @@ function levelRoster(
   run: RunState,
   heroLookup: Record<string, HeroDefinition>,
   xp: number,
-  randomFor: (rosterId: string) => () => number
+  randomFor: (rosterId: string) => () => number,
+  mvpRosterId?: string
 ): { run: RunState; report: HeroLevelUp[] } {
   if (xp <= 0) return { run, report: [] };
   const report: HeroLevelUp[] = [];
   const roster = run.roster.map((entry) => {
-    const { entry: levelled, line } = levelEntry(entry, heroLookup[entry.heroId], xp, randomFor(entry.rosterId));
+    const { entry: levelled, line } = levelEntry(entry, heroLookup[entry.heroId], fightXpFor(xp, entry.rosterId, mvpRosterId), randomFor(entry.rosterId));
     report.push(line);
     return levelled;
   });

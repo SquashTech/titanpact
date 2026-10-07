@@ -17,11 +17,11 @@ export const TUTOR_LINES: readonly string[] = [
 ];
 
 export const SCRIBE_LINES: readonly string[] = [
-  'Oh! Travellers. Hold still, I am writing you down. There. Now, two of you, let us see what you have learned.',
-  'Every deed on this road ends up in my ledger sooner or later. Yours are overdue. Who first?',
-  'The Mastery is in the telling as much as the doing. Give me two names and I will write them into it.',
-  'I copy what the old heroes knew, a line at a time. Two of you, sit. This will not take long.',
-  'Careful, the ink is still wet. I have pages here that were meant for someone. Perhaps for you.',
+  'Oh! Travellers. Hold still, the light is good. These stones were cut for hands like yours.',
+  'Every Titan seal leaves a little of itself in the rock. I dig it out and cut it clean. Who wants one?',
+  'A stone set in the right hero remembers what it was for. Choose well. It does not come out again.',
+  'Ruby for the fist, sapphire for the well, diamond for the wall. Mind which goes where.',
+  'Careful, the edges are still sharp. I have a few here that were meant for someone. Perhaps for you.',
 ];
 
 export const PACTWARDEN_LINES: readonly string[] = [

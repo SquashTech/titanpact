@@ -3,7 +3,7 @@ import { createProfile, hasEvolutionStar, starCycleOf, type Profile } from '../.
 
 // The player profile for the view layer. A context rather than a prop because the one thing a
 // RUN reads off it — which Evolution paths already carry a star — is wanted three screens deep
-// (LevelUpScreen / ScrollNodeScreen → EvolutionScreen → a path card) under screens that otherwise
+// (LevelUpScreen / GemNodeScreen → EvolutionScreen → a path card) under screens that otherwise
 // never touch the profile. The default is a fresh profile so a screen renders without a provider
 // (the sandbox, a test) as it would for a brand-new player.
 const ProfileContext = createContext<Profile>(createProfile());

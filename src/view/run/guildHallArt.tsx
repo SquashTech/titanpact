@@ -6,7 +6,6 @@ import shelfArt from '../../../art/guild/shelf.png';
 import boardArt from '../../../art/guild/board.png';
 import counterArt from '../../../art/guild/counter.png';
 import signArt from '../../../art/guild/sign-board.png';
-import scrollArt from '../../../art/guild/good-scroll.png';
 import hpArt from '../../../art/guild/good-hp.png';
 import mpArt from '../../../art/guild/good-mp.png';
 import reviveArt from '../../../art/guild/good-revive.png';
@@ -24,7 +23,6 @@ import anvilArt from '../../../art/smithy/anvil.png';
 export const HALL_ART = { shelf: shelfArt, board: boardArt, counter: counterArt, sign: signArt };
 
 export const GOOD_ART = {
-  scroll: scrollArt,
   hp: hpArt,
   mp: mpArt,
   revive: reviveArt,
@@ -52,7 +50,8 @@ export function HallGood({
   confirm,
   onClick,
 }: {
-  art: string;
+  /** An image, or a drawn piece (a Gem). */
+  art: string | ReactNode;
   name: string;
   /** A number is gold; a string is the reason there is nothing to buy ("Flask full"). */
   price: number | string;
@@ -74,7 +73,7 @@ export function HallGood({
       disabled={disabled}
       onClick={tap.onClick}
     >
-      <img src={art} className="hall-good-art" alt="" draggable={false} />
+      {typeof art === 'string' ? <img src={art} className="hall-good-art" alt="" draggable={false} /> : <span className="hall-good-art is-drawn">{art}</span>}
       <span className="hall-tag">
         <span className="hall-tag-name">{name}</span>
         {tap.armed ? (

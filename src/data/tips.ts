@@ -79,14 +79,14 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   ),
   scribe: tip(
     'scribe',
-    'Mastery Scrolls',
-    'Tap a hero to give it Mastery Scrolls.',
-    'At 5 Scrolls, a hero Evolves into a new form. At 10, their innate powers will grow.'
+    'Gems',
+    'Tap a hero to set the Gem in it. The stat it raises is theirs for the run.',
+    'Every Gem is also a Mastery pip. At 5, a hero Evolves into a new form. At 10, their innate powers will grow.'
   ),
   shop: tip(
     'shop',
     'Guild Hall',
-    'The Shop sells Recruit Contracts, Mastery Scrolls, potions and Revives for gold. Mend heals your whole roster.',
+    'The Shop sells Recruit Contracts, Gems, potions and Revives for gold. Mend heals your whole roster.',
     'The Tavern hires new heroes.',
     'The Smithy upgrades and enchants the items your heroes hold.'
   ),

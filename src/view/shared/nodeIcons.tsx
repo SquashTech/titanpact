@@ -56,8 +56,18 @@ const CROWN = <path d="M4.6 2.2 8 5.6l4-3.4 4 3.4 3.4-3.4-1 5.4H5.6Z" />;
 // Great-helm, drawn once in sectionIcons: the recruitable tile.
 const HELM = SECTION_PATHS.recruit;
 
-// The Mastery Scroll (the Scribe, the Cache, the shelf) — drawn once, in sectionIcons.
-const SCROLL = SECTION_PATHS.mastery;
+// The Gem (the Lapidary, the Cache, the shelf) — drawn once, in sectionIcons.
+const GEM = SECTION_PATHS.mastery;
+
+/** A small cut gem about (cx, cy), `s` its half-width — the Cache's three. */
+function smallGem(cx: number, cy: number, s: number) {
+  return (
+    <>
+      <path d={`M${cx - s} ${cy - 0.15 * s}l${0.45 * s} ${-0.6 * s}h${1.1 * s}l${0.45 * s} ${0.6 * s}Z`} />
+      <path d={`M${cx - s} ${cy + 0.15 * s}h${2 * s}L${cx} ${cy + 1.15 * s}Z`} />
+    </>
+  );
+}
 
 const OPEN_BOOK = (
   <>
@@ -107,10 +117,13 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
     </>
   ),
   equipmentReward: SECTION_PATHS.equipment,
-  // The Scroll Cache: a bundle of three, seen end-on — three coils stacked, since the count is
-  // the mark once map labels are gone (three pips against the Scribe's two each).
+  // The Gem Cache: three small gems in a heap, against the Lapidary's one large.
   scrollReward: (
-    <path d="M12 1.9a5.9 5.9 0 1 1 0 11.8 5.9 5.9 0 0 1 0-11.8Zm-4.9 8.6a5.9 5.9 0 1 1 0 11.8 5.9 5.9 0 0 1 0-11.8Zm9.8 0a5.9 5.9 0 1 1 0 11.8 5.9 5.9 0 0 1 0-11.8ZM12 5.7a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2Zm-4.9 8.6a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2Zm9.8 0a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2Z" />
+    <>
+      {smallGem(12, 6, 5.4)}
+      {smallGem(6.4, 15.4, 5.4)}
+      {smallGem(17.6, 15.4, 5.4)}
+    </>
   ),
   // The Passives section mark, for the node that hands one over — same rule.
   passiveReward: SECTION_PATHS.passives,
@@ -151,9 +164,8 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   ),
   // Open tome: the Mentor teaches.
   mentorReward: OPEN_BOOK,
-  // A rolled scroll, its two curls the thing that survives 20px: the Scribe hands out Mastery
-  // Scrolls, and the Guild Hall shelf sells the same glyph (RunGlyph RESOURCE_PATHS scroll).
-  scribeReward: SCROLL,
+  // One large cut gem: the Lapidary sets Gems, and the Guild Hall shelf sells the same glyph (RunGlyph RESOURCE_PATHS scroll).
+  scribeReward: GEM,
   // A branching skill tree, not a second book: the Mentor hands over something new, the Tutor
   // opens a door the hero was already standing in front of.
   tutorReward: (
