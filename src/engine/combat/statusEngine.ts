@@ -161,21 +161,24 @@ function healFromStatus(
 
 /** Applies (or stacks onto) a status per StatusDefinition.stacking. No-ops on a fainted combatant. */
 /** An active combatant whose side has an active holder refusing this status (Combatant.sideStatusImmunities). The bench is never covered. */
-export function sideRefuses(state: CombatState, combatantId: string, statusId: StatusId): boolean {
+export function sideRefuses(state: CombatState, round: number, combatantId: string, statusId: StatusId): CombatEvent | null {
   const combatant = state.combatants[combatantId];
-  if (!combatant) return false;
+  if (!combatant) return null;
   const field = state.active[combatant.side];
-  if (!field.includes(combatantId)) return false;
-  return field.some((id) => {
+  if (!field.includes(combatantId)) return null;
+  for (const id of field) {
     const holder = id ? state.combatants[id] : undefined;
-    return !!holder && !holder.fainted && !!holder.sideStatusImmunities?.includes(statusId);
-  });
+    const passiveId = holder && !holder.fainted ? holder.sideStatusImmunities?.[statusId] : undefined;
+    if (holder && passiveId) return { type: 'StatusRefused', round, combatantId, statusId, holderCombatantId: holder.combatantId, passiveId };
+  }
+  return null;
 }
 
 export function applyStatus(state: CombatState, round: number, combatantId: string, def: StatusDefinition, params: StatusApplyParams): StatusResult {
   const combatant = state.combatants[combatantId];
   if (!combatant || combatant.fainted) return { state, events: [] };
-  if (sideRefuses(state, combatantId, def.id)) return { state, events: [] };
+  const refused = sideRefuses(state, round, combatantId, def.id);
+  if (refused) return { state, events: [refused] };
 
   const existing = combatant.statuses[def.id];
   let magnitude = params.magnitude;
@@ -323,7 +326,11 @@ export function tickEndOfRound(
       if (!def || !instance || !def.ticksAtEndOfRound) continue;
       if (def.activeOnly && !working.active[combatant.side].includes(combatantId)) continue;
       // Held but harmless while an active ally refuses it (Flameproof); it resumes once that ally leaves.
-      if (def.pipeline === 'dot' && sideRefuses(working, combatantId, statusId)) continue;
+      const refusedTick = def.pipeline === 'dot' ? sideRefuses(working, round, combatantId, statusId) : null;
+      if (refusedTick) {
+        events.push(refusedTick);
+        continue;
+      }
 
       if (def.pipeline === 'timer') {
         const newDuration = (instance.duration ?? 0) - 1;

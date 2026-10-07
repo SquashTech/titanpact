@@ -193,6 +193,7 @@ const ACTION_EVENTS: ReadonlySet<CombatEvent['type']> = new Set([
   'PassiveTriggered',
   'ActionBlocked',
   'MoveGuarded',
+  'StatusRefused',
 ]);
 
 /** The card vocabulary (ATK, WIS), not the engine's field name — StatChangedEvent.stat is a bare string. */
@@ -1116,6 +1117,20 @@ export function buildBeats(
       // failure beat on the caster — the guard is the thing that happened.
       case 'MoveGuarded': {
         push([e], `${name(e.combatantId)} turns it away!`, [], { bannerFocusKind: 'buff' });
+        i++;
+        break;
+      }
+
+      // A side immunity is a passive answering on someone's behalf: a buff beat on the protected one.
+      case 'StatusRefused': {
+        const label = passives[e.passiveId]?.name ?? e.passiveId;
+        const status = statuses[e.statusId]?.name ?? e.statusId;
+        push(
+          [e],
+          `${label} shields ${name(e.combatantId)} from ${status}!`,
+          [{ combatantId: e.combatantId, text: 'Immune', className: 'popup-status' }],
+          { bannerLead: `${label} · ${name(e.holderCombatantId)}`, bannerFocus: `${status} refused`, bannerFocusKind: 'buff' }
+        );
         i++;
         break;
       }

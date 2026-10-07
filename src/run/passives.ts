@@ -59,10 +59,10 @@ export function switchLockOf(counts: Record<PassiveId, number>, passiveDefs: Rec
 }
 
 /** Every status the held passives make the holder's active side refuse (PassiveDefinition.sideRefusesStatuses); undefined when none. */
-export function sideImmunitiesOf(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>): StatusId[] | undefined {
-  const ids = new Set<StatusId>();
-  for (const [passiveId, stacks] of Object.entries(counts)) if (stacks > 0) for (const id of passiveDefs[passiveId]?.sideRefusesStatuses ?? []) ids.add(id);
-  return ids.size > 0 ? [...ids] : undefined;
+export function sideImmunitiesOf(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>): Partial<Record<StatusId, PassiveId>> | undefined {
+  const refused: Partial<Record<StatusId, PassiveId>> = {};
+  for (const [passiveId, stacks] of Object.entries(counts)) if (stacks > 0) for (const id of passiveDefs[passiveId]?.sideRefusesStatuses ?? []) refused[id] ??= passiveId;
+  return Object.keys(refused).length > 0 ? refused : undefined;
 }
 
 /** Sums every held passive's statGrants, N stacks N times. */

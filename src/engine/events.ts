@@ -202,6 +202,17 @@ export interface MoveGuardedEvent extends BaseEvent {
   passiveId?: PassiveId;
 }
 
+/** A status a side immunity turned away (PassiveDefinition.sideRefusesStatuses — Flameproof): refused on landing, or a held one kept from ticking. */
+export interface StatusRefusedEvent extends BaseEvent {
+  type: 'StatusRefused';
+  /** The protected combatant. */
+  combatantId: string;
+  statusId: StatusId;
+  /** The active ally whose passive refused it (may be the protected combatant itself). */
+  holderCombatantId: string;
+  passiveId: PassiveId;
+}
+
 export interface ActionBlockedEvent extends BaseEvent {
   type: 'ActionBlocked';
   combatantId: string;
@@ -384,6 +395,7 @@ export type CombatEvent =
   | ActionBlockedEvent
   | CalledEvent
   | MoveGuardedEvent
+  | StatusRefusedEvent
   | FaintedEvent
   | EnduredEvent
   | BlessingSpentEvent

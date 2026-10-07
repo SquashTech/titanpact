@@ -229,6 +229,13 @@ export function formatEvents(
           className: 'log-heal',
         });
         break;
+      case 'StatusRefused':
+        lines.push({
+          key,
+          text: `${passives[e.passiveId]?.name ?? e.passiveId} keeps ${statuses[e.statusId]?.name ?? e.statusId} off ${name(e.combatantId)}`,
+          className: 'log-heal',
+        });
+        break;
       case 'Called':
         lines.push({ key, text: `${name(e.combatantId)} calls ${name(e.calledCombatantId)}`, className: 'log-field-effect' });
         break;

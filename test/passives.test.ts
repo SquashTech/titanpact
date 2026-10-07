@@ -1067,12 +1067,14 @@ test('passives: Flameproof — an active holder\'s side refuses Burn, and a Burn
     ...base,
     combatants: {
       ...base.combatants,
-      a1: { ...base.combatants.a1, sideStatusImmunities: ['Burn'] },
+      a1: { ...base.combatants.a1, sideStatusImmunities: { Burn: 'flameproof' } },
       a2: { ...base.combatants.a2, statuses: { ...base.combatants.a2.statuses, Burn: { statusId: 'Burn', magnitude: 2 } } },
     },
   };
   const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'b1', moveId: 'setAlight', declaredTarget: 'a1' } as Action], config);
   assert.ok(!hasStatus(next.combatants.a1, 'Burn'), 'the holder refuses it');
+  assert.ok(events.some((e) => e.type === 'StatusRefused' && e.combatantId === 'a1' && e.passiveId === 'flameproof'), 'and says so');
+  assert.ok(events.some((e) => e.type === 'StatusRefused' && e.combatantId === 'a2' && e.holderCombatantId === 'a1'), 'a held Burn kept from ticking is a refusal too');
   assert.ok(!events.some((e) => e.type === 'StatusTicked' && e.combatantId === 'a2' && e.statusId === 'Burn'), 'the partner\'s Burn does no harm');
   assert.strictEqual(statusMagnitude(next.combatants.a2, 'Burn'), 2, 'held, not cleansed');
 });

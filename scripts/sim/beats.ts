@@ -174,6 +174,7 @@ export function countBeats(events: readonly CombatEvent[]): number {
       case 'SwitchedIn':
       case 'ActionBlocked':
       case 'MoveGuarded':
+      case 'StatusRefused':
       case 'FieldEffectSet':
       case 'ManaGranted':
         beats += 1;
