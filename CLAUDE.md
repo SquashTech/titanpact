@@ -592,6 +592,10 @@ don't silently override it.
   line; a hero's three paths are the three pairs** (2026-09-29, all 84 heroes,
   `docs/evolution-simplification.md`, replacing the five-clause framework). A graft's line is
   derived (`evolutionLine`); the one stat verb is the pinned **rewire**, Attack ⇄ Intelligence.
+  **Loosened by the hero audit** (2026-10-07, per user direction, `docs/hero-audit.md`): a
+  **dual** hero's paths EACH pay a move and a passive (a retype that costs a type gains nothing
+  otherwise), and a named path may pay more than a pair — both pinned by list in
+  `test/evolutionSimplification`, converted type by type as the audit reaches them.
   Options take the hero in different directions, are **permanent within a run**, and gate the
   movepool. **The offensive / defensive / utility label is GONE** (2026-09-16, per user
   direction): `EvolutionPath.kind` and its badges are deleted, and a path is known by its name

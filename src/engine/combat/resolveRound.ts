@@ -92,6 +92,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const maxHpOf = (id: string) => getMaxHp(heroes[working.combatants[id].heroId], working.combatants[id]);
   const maxManaOf = (id: string) => getMaxMana(heroes[working.combatants[id].heroId], working.combatants[id]);
 
+  // The round's start is a hook too, read before the first action.
+  const roundStartReactions = resolvePassiveReactions(working, round, [events[0]], heroes, statuses, passives, fieldEffects);
+  working = roundStartReactions.state;
+  events.push(...roundStartReactions.events);
+
   // Haunt passing on a knockout (passesOnFaint), swept between actions and after each round-end
   // step that can knock someone out; the pass is a StatusApplied, so it feeds the reaction pass.
   const sweepPassing = () => {
@@ -821,6 +826,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       const result = setFieldEffect(working, round, move.fieldEffectApplication);
       working = result.state;
       events.push(...result.events);
+      const fieldReactions = resolvePassiveReactions(working, round, result.events, heroes, statuses, passives, fieldEffects);
+      working = fieldReactions.state;
+      events.push(...fieldReactions.events);
     }
 
     // Status riders: each resolves its own targets, rolls its own chance and feeds its own

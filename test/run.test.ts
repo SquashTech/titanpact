@@ -346,9 +346,9 @@ test('progression: a path that grants a Passive records it on the entry (Crimson
   run = atEvolutionRung(run, 'crimson');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-pyroclasm');
-  assert.deepStrictEqual(next.roster[0].evolutionPassiveGrants, ['firestarter']);
+  assert.deepStrictEqual(next.roster[0].evolutionPassiveGrants, ['firestarter', 'flameproof']);
   assert.ok(!next.roster[0].evolutionTypeGraft); // the mono path stays mono
-  assert.ok(next.roster[0].unlockedMoveIds.includes('landslide'));
+  assert.deepStrictEqual(next.roster[0].unlockedMoveIds, [...heroes.crimson.moveIds]); // two passives, no move
 });
 
 test('progression: Warhowl rewires Fang — a NEGATIVE Evolution grant is legal and lands, and the Spirit line is magical', () => {

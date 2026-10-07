@@ -160,9 +160,22 @@ function healFromStatus(
 }
 
 /** Applies (or stacks onto) a status per StatusDefinition.stacking. No-ops on a fainted combatant. */
+/** An active combatant whose side has an active holder refusing this status (Combatant.sideStatusImmunities). The bench is never covered. */
+export function sideRefuses(state: CombatState, combatantId: string, statusId: StatusId): boolean {
+  const combatant = state.combatants[combatantId];
+  if (!combatant) return false;
+  const field = state.active[combatant.side];
+  if (!field.includes(combatantId)) return false;
+  return field.some((id) => {
+    const holder = id ? state.combatants[id] : undefined;
+    return !!holder && !holder.fainted && !!holder.sideStatusImmunities?.includes(statusId);
+  });
+}
+
 export function applyStatus(state: CombatState, round: number, combatantId: string, def: StatusDefinition, params: StatusApplyParams): StatusResult {
   const combatant = state.combatants[combatantId];
   if (!combatant || combatant.fainted) return { state, events: [] };
+  if (sideRefuses(state, combatantId, def.id)) return { state, events: [] };
 
   const existing = combatant.statuses[def.id];
   let magnitude = params.magnitude;
@@ -309,6 +322,8 @@ export function tickEndOfRound(
       const def = statusDefs[statusId];
       if (!def || !instance || !def.ticksAtEndOfRound) continue;
       if (def.activeOnly && !working.active[combatant.side].includes(combatantId)) continue;
+      // Held but harmless while an active ally refuses it (Flameproof); it resumes once that ally leaves.
+      if (def.pipeline === 'dot' && sideRefuses(working, combatantId, statusId)) continue;
 
       if (def.pipeline === 'timer') {
         const newDuration = (instance.duration ?? 0) - 1;

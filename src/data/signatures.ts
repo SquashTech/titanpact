@@ -946,6 +946,7 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
+    switchesUserOut: true,
   },
   // Selkie: the pelt, thrown over someone else.
   sealskinCloak: {

@@ -52,13 +52,50 @@ test('evolution simplification: every hero has one Evolution node of three paths
   for (const heroId of heroIds) assert.strictEqual(pathsOf(heroId).length, 3, heroId);
 });
 
+/**
+ * The type audit (2026-10-07, per user direction) loosened "exactly two": a dual hero gains nothing
+ * by a retype that also costs a type, so EVERY path of a converted dual pays a move and a passive,
+ * and a few named paths carry more than a pair. Both lists are pinned so each addition is a decision.
+ */
+const DUALS_MOVE_AND_PASSIVE = ['brimstone'];
+const BEYOND_THE_PAIR: Record<string, string> = {
+  'crimson-pyroclasm': 'passive+passive',
+  'ashwing-sunbird': 'type+move+passive',
+  'brimstone-ashguard': 'type+move+passive',
+  'brimstone-hexfume': 'type+move+passive',
+};
+
+function grantCount(path: EvolutionPath): number {
+  return (path.typeGraft ? 1 : 0) + path.unlocksMoveIds.length + (path.grantsPassiveIds ?? []).length;
+}
+
+test('evolution simplification: past the pair only by name — every pinned path pays exactly what it is pinned to', () => {
+  for (const heroId of heroIds) {
+    for (const path of pathsOf(heroId)) {
+      const pinned = BEYOND_THE_PAIR[path.id];
+      if (!pinned) continue;
+      const passives = (path.grantsPassiveIds ?? []).length;
+      const shape = [path.typeGraft ? 'type' : null, path.unlocksMoveIds.length ? 'move' : null, ...Array(passives).fill('passive')].filter(Boolean).join('+');
+      assert.strictEqual(shape, pinned, path.id);
+    }
+  }
+  for (const heroId of DUALS_MOVE_AND_PASSIVE) {
+    assert.strictEqual(heroes[heroId].types.length, 2, `${heroId} is not dual`);
+    for (const path of pathsOf(heroId)) {
+      assert.ok(path.unlocksMoveIds.length === 1 && (path.grantsPassiveIds ?? []).length === 1, `${path.id}: a dual pays a move and a passive on every path`);
+    }
+  }
+});
+
 test('evolution simplification: every hero offers the three pairs, one of each — one move, one passive, never a stat line', () => {
   for (const heroId of heroIds) {
     const paths = pathsOf(heroId);
-    assert.deepStrictEqual(paths.map(pairOf).sort(), ['move+passive', 'type+move', 'type+passive'], heroId);
+    const pairsOnly = paths.every((path) => !BEYOND_THE_PAIR[path.id]);
+    if (pairsOnly) assert.deepStrictEqual(paths.map(pairOf).sort(), ['move+passive', 'type+move', 'type+passive'], heroId);
     for (const path of paths) {
+      assert.ok(grantCount(path) >= 2, `${path.id} grants fewer than two things`);
+      if (!BEYOND_THE_PAIR[path.id]) assert.strictEqual(grantCount(path), 2, `${path.id} grants more than a pair and is not pinned`);
       assert.ok(path.unlocksMoveIds.length <= 1, `${path.id} grants more than one move`);
-      assert.ok((path.grantsPassiveIds ?? []).length <= 1, `${path.id} grants more than one passive`);
       for (const id of path.grantsPassiveIds ?? []) {
         const passive = passives[id];
         assert.ok(passive, `${path.id} grants unknown passive ${id}`);

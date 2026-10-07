@@ -118,6 +118,9 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
 
 const MANA_GAINED_EVENTS = new Set<CombatEvent['type']>(['ManaGranted', 'ManaRegenTicked', 'Rested']);
 
+/** Events about nobody: each active owner reads itself as the subject. */
+const OWNERLESS_EVENTS = new Set<CombatEvent['type']>(['RoundEnded', 'RoundStarted', 'FieldEffectSet']);
+
 function hookMatches(hook: string, event: CombatEvent): boolean {
   return hook === 'ManaGained' ? MANA_GAINED_EVENTS.has(event.type) : hook === event.type;
 }
@@ -467,7 +470,7 @@ export function resolvePassiveReactions(
         if (reactive.whileBenched || switchedOut ? onField : !onField) continue;
         // A round's end is about nobody, so each active owner is its own subject: 'self' fires, nothing else does.
         const subjectId =
-          event.type === 'RoundEnded'
+          OWNERLESS_EVENTS.has(event.type)
             ? ownerId
             : switchedOut && event.type === 'SwitchedIn'
               ? event.outCombatantId ?? undefined
@@ -497,11 +500,16 @@ export function resolvePassiveReactions(
           }
           const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.effect, context);
           working = resolved.state;
+          if (reactive.alsoEffect) {
+            const also = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.alsoEffect, context);
+            working = also.state;
+            resolved.events.push(...also.events);
+          }
           // A no-op (a heal at full HP, a target already fainted) is not a trigger: nothing to log.
           if (resolved.events.length === 0) continue;
           if (limit !== undefined) working = updateInstance(working, ownerId, instance.passiveId, (held) => ({ firesThisFight: (held.firesThisFight ?? 0) + 1 }));
           produced.push({ type: 'PassiveTriggered', round, combatantId: ownerId, passiveId: instance.passiveId }, ...resolved.events);
-          if (queue.length < 64) queue.push(...resolved.events.filter((e) => e.type === 'ManaGranted'));
+          if (queue.length < 64) queue.push(...resolved.events.filter((e) => e.type === 'ManaGranted' || e.type === 'FieldEffectSet'));
         }
       }
     }
@@ -551,8 +559,10 @@ export function collectPassiveDamageModifiers(
     if (!def || !matchesFields(def.eventFieldEquals, context)) continue;
     if (def.alternatesCategory && (attacker.lastHitCategory === undefined || attacker.lastHitCategory === move.category)) continue;
     if (def.requiresTargetStatuses && !(target && def.requiresTargetStatuses.every((id) => hasStatus(target, id)))) continue;
+    const levels = def.perTargetStatusLevel ? (target?.statuses[def.perTargetStatusLevel]?.magnitude ?? 0) : 1;
+    if (levels <= 0) continue;
     for (let i = 0; i < instance.stacks; i++) {
-      modifiers.push({ source: instance.passiveId, amount: def.amount });
+      modifiers.push({ source: instance.passiveId, amount: def.amount * levels });
     }
   }
 

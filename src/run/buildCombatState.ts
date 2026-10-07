@@ -17,7 +17,7 @@ import { entryPassiveCounts, entryStatModifiers } from './entryStats';
 import { innatePassiveIdsFor } from './innate';
 import { formIdFor } from './progression';
 import { turnedCurse } from './curse';
-import { enduranceOf, switchLockOf, toPassiveInstances } from './passives';
+import { enduranceOf, sideImmunitiesOf, switchLockOf, toPassiveInstances } from './passives';
 import { equipmentStatusGrants, mergeStatusGrants, toStatusInstances } from './statusGrants';
 
 export interface SquadPlacement {
@@ -77,6 +77,7 @@ function placeEntry(
     statuses,
     enduresLeft: enduranceOf(passiveCounts, passiveDefs),
     switchLocked: switchLockOf(passiveCounts, passiveDefs),
+    ...(sideImmunitiesOf(passiveCounts, passiveDefs) ? { sideStatusImmunities: sideImmunitiesOf(passiveCounts, passiveDefs) } : {}),
     ...(entry.blessed ? { blessed: true } : {}),
     ...(turnedCurse(entry) ? { typeOverride: turnedCurse(entry)!.types } : {}),
     ...(formPathId ? { formPathId } : {}),

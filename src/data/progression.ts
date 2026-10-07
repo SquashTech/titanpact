@@ -70,7 +70,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'heatHaze',
     ],
     brimstone: [
-      'umbraBolt',
+      'ember',
       'sparkFlash',
       'spreadingBlaze',
       'backdraft',
@@ -1204,9 +1204,9 @@ export const progressionTable: ProgressionTable = {
             id: 'crimson-pyroclasm',
             heroId: 'crimson',
             name: 'Pyroclasm',
-            // Every magical Fire move is already in Crimson's pool, so the eruption brings Stone's.
-            unlocksMoveIds: ['landslide'],
-            grantsPassiveIds: ['firestarter'],
+            // Two passives, no move (2026-10-07, per user direction): the field it lights, and the side it spares.
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['firestarter', 'flameproof'],
           },
           {
             id: 'crimson-cinderveil',
@@ -1243,9 +1243,9 @@ export const progressionTable: ProgressionTable = {
             id: 'brimstone-ashguard',
             heroId: 'brimstone',
             name: 'Ashguard',
-            unlocksMoveIds: [],
+            unlocksMoveIds: ['rockfall'],
             typeGraft: 'Stone',
-            learnableMoveIds: evolutionLine('brimstone', 'Stone'),
+            learnableMoveIds: evolutionLine('brimstone', 'Stone', { granted: ['rockfall'] }),
             grantsPassiveIds: ['ashfeast'],
           },
           {
@@ -1255,6 +1255,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['blight'],
             typeGraft: 'Nature',
             learnableMoveIds: evolutionLine('brimstone', 'Nature', { granted: ['blight'] }),
+            grantsPassiveIds: ['hexfume'],
           },
         ],
       },
@@ -2782,6 +2783,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['consecrate'],
             typeGraft: 'Light',
             learnableMoveIds: evolutionLine('ashwing', 'Light', { granted: ['consecrate'] }),
+            grantsPassiveIds: ['dawnfire'],
           },
           {
             id: 'ashwing-ashen',

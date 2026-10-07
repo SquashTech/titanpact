@@ -161,6 +161,17 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
         glyph: statusId ? { kind: 'status', statusId } : { kind: 'move', move: 'debuff' },
         color: statusId ? 'status' : undefined,
       };
+    case 'RoundStarted':
+      return { label: 'When', text: 'A round begins', glyph: { kind: 'move', move: 'buff' } };
+    case 'FieldEffectSet': {
+      const field = fields.fieldEffectId ? fieldEffects[fields.fieldEffectId] : undefined;
+      return {
+        label: 'When',
+        text: `${field?.name ?? 'A field'} is set`,
+        glyph: field?.flavorType ? { kind: 'element', type: field.flavorType } : { kind: 'move', move: 'buff' },
+        color: field?.flavorType ? 'element' : undefined,
+      };
+    }
     case 'Rested':
       return { label: 'When', text: `${who} Rests`, glyph: { kind: 'stat', stat: 'manaPool' } };
     case 'Endured':
@@ -265,6 +276,7 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
     if (def.reactive.whileBenched) rows.push({ label: 'Only', text: 'While this hero is on the bench', glyph: { kind: 'move', move: 'buff' } });
     if (def.reactive.chance !== undefined) rows.push({ label: 'Odds', text: `${Math.round(def.reactive.chance * 100)}% of the time`, glyph: { kind: 'move', move: 'debuff' } });
     rows.push(effectFact(def.reactive.effect, def.reactive.condition, def.reactive.hook));
+    if (def.reactive.alsoEffect) rows.push({ ...effectFact(def.reactive.alsoEffect, def.reactive.condition, def.reactive.hook), label: 'And' });
     if (def.reactive.condition.finishingBlow) rows.push({ label: 'Only', text: 'A hit that knocks its target out', glyph: { kind: 'stat', stat: 'attack' } });
     if (def.reactive.condition.eventTargetHasStatus) rows.push({ label: 'While', text: `The one struck is ${statusName(def.reactive.condition.eventTargetHasStatus)}`, glyph: { kind: 'status', statusId: def.reactive.condition.eventTargetHasStatus }, color: 'status' });
     if (def.reactive.condition.sideOutspeeds) rows.push({ label: 'While', text: 'Both active allies move before both active enemies', glyph: { kind: 'stat', stat: 'speed' } });
@@ -279,6 +291,9 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
       glyph: type ? { kind: 'element', type } : { kind: 'move', move: 'physical' },
       color: type ? 'element' : undefined,
     });
+    if (def.damageModifier.perTargetStatusLevel) {
+      rows[rows.length - 1].text = `${fmt(Math.round(def.damageModifier.amount * 100))}% on every hit, per level of ${statusName(def.damageModifier.perTargetStatusLevel)} on the target`;
+    }
     const needs = def.damageModifier.requiresTargetStatuses;
     if (needs && needs.length > 0) {
       rows.push({ label: 'While', text: `The target has ${needs.map(statusName).join(' and ')}`, glyph: { kind: 'status', statusId: needs[0] }, color: 'status' });
@@ -305,6 +320,11 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
     rows.push({ label: 'When', text: 'It would be knocked out — by anything, the Pact Clock included', glyph: { kind: 'stat', stat: 'hp' } });
     rows.push({ label: 'Then', text: 'It stands at 1 HP instead', glyph: { kind: 'move', move: 'heal' } });
     rows.push({ label: 'Limit', text: 'Once per fight', glyph: { kind: 'move', move: 'debuff' } });
+  }
+  if (def.sideRefusesStatuses?.length) {
+    const names = def.sideRefusesStatuses.map(statusName).join(' and ');
+    rows.push({ label: 'While', text: 'This hero is on the field', glyph: { kind: 'move', move: 'buff' } });
+    rows.push({ label: 'Then', text: `Its side's active heroes can't gain ${names}, and any already held does no harm`, glyph: { kind: 'status', statusId: def.sideRefusesStatuses[0] }, color: 'status' });
   }
   if (def.cannotSwitchOut) {
     rows.push({ label: 'Rule', text: 'It never switches out on its own; a pivot move keeps its buff and stays', glyph: { kind: 'move', move: 'debuff' } });

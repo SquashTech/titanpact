@@ -1048,18 +1048,64 @@ function deepFixture(seed: number, sideA: readonly string[], sideB: readonly str
   } as CombatState;
 }
 
-test('passives: Cinderguard answers a hit on BOTH active enemies — a status effect aimed at a group', () => {
-  // There is no 'triggerSource' target, so a retaliation passive cannot reach its attacker alone.
+test('passives: Cinderguard is a RoundStarted reaction — the Defense lands before the round\'s first hit', () => {
   const state = withPassive(deepFixture(800, ['cinderKnight', 'aegis'], ['crag', 'sentinel']), 'a1', 'cinderguard');
-  const { state: next } = resolveRound(
+  const { state: next, events } = resolveRound(
     state,
     [{ kind: 'move', combatantId: 'b1', moveId: 'rockToss', declaredTarget: 'a1' } as Action],
     config
   );
+  assert.strictEqual(next.combatants.a1.statModifiers.defense, 10);
+  const plated = events.findIndex((e) => e.type === 'StatChanged' && e.combatantId === 'a1' && e.stat === 'defense');
+  const struck = events.findIndex((e) => e.type === 'DamageDealt');
+  assert.ok(plated >= 0 && plated < struck, 'the plate is on before the hit');
+});
 
-  assert.ok(hasStatus(next.combatants.b1, 'Burn'), 'the attacker catches it');
-  assert.ok(hasStatus(next.combatants.b2, 'Burn'), 'and so does its partner — the group is the target');
-  assert.ok(!hasStatus(next.combatants.a2, 'Burn'), 'never the owner\'s own side');
+test('passives: Flameproof — an active holder\'s side refuses Burn, and a Burn already held does not tick', () => {
+  const base = deepFixture(801, ['crimson', 'aegis'], ['crag', 'sentinel']);
+  const state: CombatState = {
+    ...base,
+    combatants: {
+      ...base.combatants,
+      a1: { ...base.combatants.a1, sideStatusImmunities: ['Burn'] },
+      a2: { ...base.combatants.a2, statuses: { ...base.combatants.a2.statuses, Burn: { statusId: 'Burn', magnitude: 2 } } },
+    },
+  };
+  const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'b1', moveId: 'setAlight', declaredTarget: 'a1' } as Action], config);
+  assert.ok(!hasStatus(next.combatants.a1, 'Burn'), 'the holder refuses it');
+  assert.ok(!events.some((e) => e.type === 'StatusTicked' && e.combatantId === 'a2' && e.statusId === 'Burn'), 'the partner\'s Burn does no harm');
+  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Burn'), 2, 'held, not cleansed');
+});
+
+test('passives: Top Billing is PER Burn level on the defender, and nothing on a foe not Burning', () => {
+  const state = withPassive(deepFixture(802, ['tinder', 'aegis'], ['crag', 'sentinel']), 'a1', 'topBilling');
+  const burned = { ...state.combatants.b1, statuses: { ...state.combatants.b1.statuses, Burn: { statusId: 'Burn', magnitude: 2 } } };
+  const mods = collectPassiveDamageModifiers(state.combatants.a1, moves.ember, passives, burned);
+  assert.strictEqual(mods.reduce((sum, m) => sum + m.amount, 0).toFixed(2), '0.30');
+  assert.strictEqual(collectPassiveDamageModifiers(state.combatants.a1, moves.ember, passives, state.combatants.b1).length, 0);
+});
+
+test('passives: Fire-Breather leaves one random enemy Badly Burned when Tinder switches out', () => {
+  const state = withPassive(deepFixture(803, ['tinder', 'aegis', 'crimson'], ['crag', 'sentinel']), 'a1', 'fireBreather');
+  const { state: next } = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
+  const levels = [statusMagnitude(next.combatants.b1, 'Burn') ?? 0, statusMagnitude(next.combatants.b2, 'Burn') ?? 0].sort();
+  assert.deepStrictEqual(levels, [0, 2]);
+});
+
+test('passives: Dawnfire answers Sanctuary being set — a FieldEffectSet reaction', () => {
+  const state = withPassive(deepFixture(804, ['ashwing', 'aegis'], ['crag', 'sentinel']), 'a1', 'dawnfire');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'consecrate', declaredTarget: 'a2' } as Action], config);
+  assert.strictEqual(statusMagnitude(next.combatants.a1, 'FireForce'), 15);
+});
+
+test('passives: Funeral Pyre carries two verbs on one firing — full HP and a full pool (alsoEffect)', () => {
+  const base = withPassive(deepFixture(805, ['ashwing', 'aegis'], ['crag', 'sentinel']), 'a1', 'funeralPyre');
+  const state: CombatState = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 1, currentMana: 0, enduresLeft: 1 } } };
+  const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'b1', moveId: 'rockToss', declaredTarget: 'a1' } as Action], config);
+  assert.ok(events.some((e) => e.type === 'Endured' && e.combatantId === 'a1'));
+  assert.ok(!next.combatants.a1.fainted);
+  assert.ok(next.combatants.a1.currentHp > 1000, 'healed back up');
+  assert.ok(next.combatants.a1.currentMana >= 900, 'and the pool refilled');
 });
 
 test("passives: Widow's Kiss reads a Bleed IT applied and Poisons the same target", () => {

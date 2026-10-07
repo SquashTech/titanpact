@@ -237,8 +237,10 @@ test('signature: a generated hero at its signatureLevel holds it — in the last
 function flatFigure(passive: PassiveDefinition): number | null {
   const effect = passive.reactive?.effect;
   if (!effect) return null;
+  // Reach counts: one random enemy widened to both is a doubling.
+  const reach = 'target' in effect && effect.target === 'activeEnemies' ? 2 : 1;
   // A ladder status (Burn) is sized by how high it may climb: its cap, or the ladder's top.
-  if (effect.kind === 'applyStatus' && statuses[effect.statusId]?.levels) return effect.maxMagnitude ?? statuses[effect.statusId].levels!.tickPercents.length;
+  if (effect.kind === 'applyStatus' && statuses[effect.statusId]?.levels) return reach * (effect.maxMagnitude ?? statuses[effect.statusId].levels!.tickPercents.length);
   if (effect.kind === 'statDelta' || effect.kind === 'applyStatus') {
     const value = effect.kind === 'statDelta' ? effect.amount : effect.magnitude;
     return typeof value === 'number' ? Math.abs(value) : null;

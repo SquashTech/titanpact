@@ -169,8 +169,9 @@ export type PassiveId = string;
 /** 'SwitchedOut' reads a SwitchedIn whose OUTGOING combatant is the subject, and fires from the bench the owner has just reached (Ink) — never on a knockout's replacement, since a fainted owner reacts to nothing. */
 /** 'MoveUsed' is a cast paid for, read after its payload and before any pivot; its subject is the caster, and `damaging` ('true' / 'false') is what eventFieldEquals reads (Poised). */
 /** 'Endured' is a knockout refused (enduresOnce); its subject is the holder, read off a hit or a status tick — never the Pact Clock, which is no trigger source. */
+/** 'RoundStarted' is RoundEnded's mirror, read before the round's first action (Cinder's Ironclad plate). 'FieldEffectSet' a field taking the board, by any setter; both are about nobody, so each active owner is its own subject, and `fieldEffectId` is what eventFieldEquals reads. */
 /** 'ManaGained' reads every way mana arrives — a grant (move or passive), the round's regen, a Rest — never a potion; its subject is the receiver and `manaGained` what landed (Zenith). */
-export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured' | 'ManaGained';
+export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured' | 'ManaGained' | 'RoundStarted' | 'FieldEffectSet';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';
@@ -268,6 +269,8 @@ export interface PassiveDamageModifier {
   alternatesCategory?: true;
   /** Fires only when the defender holds EVERY one of these (Lethal Bite: Bleed and Poison). Read per hit against the live target; a forecast with no target reports it unfired. */
   requiresTargetStatuses?: readonly StatusId[];
+  /** The amount is PER LEVEL of this status on the defender (Top Billing: +15% a Burn level); nothing held, nothing added. */
+  perTargetStatusLevel?: StatusId;
   /** damagePipeline.ts DamageModifier units — 0.2 == +20%. */
   amount: number;
 }
@@ -286,7 +289,8 @@ export interface PassiveDefinition {
   /** Player-facing, required. */
   description: string;
   /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). `maxFiresPerFight` caps it at N firings per combat, stacks included (PassiveInstance.firesThisFight) — the brake on a reaction that banks a permanent stack each time it matches. `chance` (0–1) rolls the seeded rng per matched event, per stack; absent = always. `whileBenched` inverts the field rule: this reaction fires only while its owner is standing on the BENCH (Broadside loading a cannonball a round), where every other passive is silent. */
-  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; oncePerFight?: boolean; maxFiresPerFight?: number; chance?: number; whileBenched?: true };
+  /** `alsoEffect` is a second effect resolved after `effect` on the same firing — one trigger, two verbs (Funeral Pyre's HP and Mana). */
+  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; alsoEffect?: PassiveEffect; oncePerFight?: boolean; maxFiresPerFight?: number; chance?: number; whileBenched?: true };
   damageModifier?: PassiveDamageModifier;
   /** Always-on flat grants, applied at fight build like Equipment/Relic statGrants (src/run/passives.ts); not read by passiveEngine. Classes are this alone. */
   statGrants?: Partial<Record<StatKey, number>>;
@@ -314,6 +318,12 @@ export interface PassiveDefinition {
    * downed hero still happens. Read onto Combatant.switchLocked at fight build.
    */
   cannotSwitchOut?: true;
+  /**
+   * While the holder stands ACTIVE, every active hero on its side — itself included — refuses these
+   * statuses, and one already held does not tick (Crimson's Flameproof). Read onto
+   * Combatant.sideStatusImmunities at fight build; checked live against the field in statusEngine.
+   */
+  sideRefusesStatuses?: readonly StatusId[];
   /**
    * How many faces each `metamorphic` move in the holder's kit shows a round (Motley's Trick 1, its
    * mastered form 2), the player picking either. The largest held wins; absent, a metamorphic move shows one.
@@ -344,6 +354,7 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.wardedWhileCompanyStands !== undefined ||
     passive.enduresOnce !== undefined ||
     passive.cannotSwitchOut !== undefined ||
+    passive.sideRefusesStatuses !== undefined ||
     passive.metamorphicFaces !== undefined ||
     passive.goldStatGrants !== undefined;
   if (!hasEffect) return false;

@@ -70,6 +70,8 @@ export interface Combatant {
   typeOverride?: readonly TypeId[];
   /** Never switches out voluntarily (PassiveDefinition.cannotSwitchOut), set at fight build. Read through canSwitchOut. */
   switchLocked?: boolean;
+  /** Statuses this combatant's active side refuses while it stands active (PassiveDefinition.sideRefusesStatuses), set at fight build. Read by sideRefuses. */
+  sideStatusImmunities?: readonly StatusId[];
   /** Stat gains a `permanent` passive statDelta banked this fight, for the roster to keep (run/runProgress.ts recordPermanentStatGains). */
   permanentStatGains?: Partial<Record<StatKey, number>>;
   fainted: boolean;

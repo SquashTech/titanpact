@@ -2,7 +2,7 @@
 // from equipment, relics, Evolution paths and Class. passiveStatModifiers reads
 // back OUT of the counts to fold passive-held statGrants into the stat pipeline.
 
-import type { PassiveDefinition, PassiveId } from '../engine/content';
+import type { PassiveDefinition, PassiveId, StatusId } from '../engine/content';
 import type { PassiveInstance, StatModifiers } from '../engine/state';
 import type { EquipmentDefinition, EquipmentLoadout } from './equipment';
 import type { RelicDefinition } from './relics';
@@ -56,6 +56,13 @@ export function enduranceOf(counts: Record<PassiveId, number>, passiveDefs: Reco
 export function switchLockOf(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>): true | undefined {
   for (const [passiveId, stacks] of Object.entries(counts)) if (stacks > 0 && passiveDefs[passiveId]?.cannotSwitchOut) return true;
   return undefined;
+}
+
+/** Every status the held passives make the holder's active side refuse (PassiveDefinition.sideRefusesStatuses); undefined when none. */
+export function sideImmunitiesOf(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>): StatusId[] | undefined {
+  const ids = new Set<StatusId>();
+  for (const [passiveId, stacks] of Object.entries(counts)) if (stacks > 0) for (const id of passiveDefs[passiveId]?.sideRefusesStatuses ?? []) ids.add(id);
+  return ids.size > 0 ? [...ids] : undefined;
 }
 
 /** Sums every held passive's statGrants, N stacks N times. */

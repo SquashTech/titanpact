@@ -507,14 +507,11 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   cinderguard: {
     id: 'cinderguard',
     name: 'Cinderguard',
-    description: 'When this hero takes damage, both active enemies are set Burning.',
-    // Target-role DamageDealt: "I was hit". There is no 'triggerSource' target — a passive cannot
-    // reach the attacker — so the answer goes to activeEnemies, which in doubles is the attacker
-    // plus its partner. Small per firing, stacking additively, and Immolate is what cashes it.
+    description: 'At the start of each round, this hero gains 10 Defense.',
     reactive: {
-      hook: 'DamageDealt',
+      hook: 'RoundStarted',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', amount: 10 },
     },
   },
   ashfeast: {
@@ -861,11 +858,11 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   magmaHide: {
     id: 'magmaHide',
     name: 'Magma Hide',
-    description: 'When this hero Rests, it gains Shield 40.',
+    description: 'When this hero Rests, it gains Shield 60.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 40 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 60 },
     },
   },
 };
@@ -1007,12 +1004,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   kindling: {
     id: 'kindling',
     name: 'Kindling',
-    description: 'When this hero afflicts Burn, it gains 5 Attack and 5 Intelligence.',
-    // Fires on Fire's self-Burn too. Both columns, so the knight's Explosive turn keeps it live.
+    description: 'When this hero lands an attack on a Burning foe, it gains 10 Attack and 10 Intelligence.',
+    // Light it once, then every hit builds. Both columns, so the knight's Explosive turn keeps it live.
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Burn' } },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], amount: 5 },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Burn' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], amount: 10 },
     },
   },
   stoke: {
@@ -1049,11 +1046,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   sulphur: {
     id: 'sulphur',
     name: 'Sulphur',
-    description: 'When this hero enters the battlefield, both active enemies are set Burning.',
+    description: 'When this hero enters the battlefield, a random enemy is set Burning.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
     },
   },
   drag: {
@@ -1543,11 +1540,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   fireBreather: {
     id: 'fireBreather',
     name: 'Fire-Breather',
-    description: 'When this hero lands a Fire attack, both active enemies are set Burning.',
+    description: 'When this hero switches out, a random enemy becomes Badly Burned.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
+      hook: 'SwitchedOut',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Burn', magnitude: 2, maxMagnitude: 2 },
     },
   },
   saltTears: {
@@ -1861,12 +1858,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   forgeheart: {
     id: 'forgeheart',
     name: 'Kindling+',
-    description: 'When this hero afflicts Burn, it gains 10 Attack, 10 Intelligence and 10 Defense.',
-    // Kindling doubled on both columns, and the plate coming off the anvil with it.
+    description: 'When this hero lands an attack on a Burning foe, it gains 20 Attack and 20 Intelligence.',
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Burn' } },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence', 'defense'], amount: 10 },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Burn' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], amount: 20 },
     },
   },
   wildfire: {
@@ -1877,26 +1873,17 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
       effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 20 },
-    },
-  },
-  wildfireMana: {
-    id: 'wildfireMana',
-    name: 'Stoke+',
-    description: 'When an enemy takes Burn damage, this hero gains 10 Mana, past its pool.',
-    reactive: {
-      hook: 'StatusTicked',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
-      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
+      alsoEffect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
     },
   },
   hellmouth: {
     id: 'hellmouth',
     name: 'Sulphur+',
-    description: 'When this hero enters the battlefield, both active enemies climb a level of Burn, up to Badly Burned.',
+    description: 'When this hero enters the battlefield, both active enemies are set Burning.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 1, maxMagnitude: 2 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
     },
   },
 
@@ -2540,11 +2527,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   showstopper: {
     id: 'showstopper',
     name: 'Fire-Breather+',
-    description: 'When this hero lands a Fire attack, both active enemies climb a level of Burn, up to Badly Burned.',
+    description: 'When this hero switches out, both active enemies become Badly Burned.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 1, maxMagnitude: 2 },
+      hook: 'SwitchedOut',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 2, maxMagnitude: 2 },
     },
   },
   // One affliction has no figure to double, so the reach widens to all of them.
