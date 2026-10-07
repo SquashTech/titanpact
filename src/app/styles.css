@@ -44977,3 +44977,265 @@ img.smithy-service-art {
 .cx-trial-reward {
   color: var(--text-dim);
 }
+
+/* --- The title's three doors (docs/gauntlet.md §7): Seal the Pact is the CTA; the Trials and the Gauntlet sit under it. --- */
+.title-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.title-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-inline: 6px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  color: #e4d3a8;
+}
+
+.title-mode.is-locked {
+  color: var(--text-dim);
+  opacity: 0.55;
+}
+
+.title-mode-lock {
+  flex: none;
+}
+
+/* --- The Gauntlet (docs/gauntlet.md): the cx teambuilder's frames, a board of fifteen, the record. --- */
+.gx-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  align-content: start;
+}
+
+.gx-card {
+  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 2px;
+  border: 8px solid transparent;
+  border-image: url('../../art/ui/slot.png') 4 / 8px round;
+  background: #111319 padding-box;
+  image-rendering: pixelated;
+  color: var(--text);
+}
+
+.gx-card.is-picked {
+  border-image-source: url('../../art/ui/slot-lit.png');
+  background: #1d2130 padding-box;
+}
+
+.gx-card-portrait {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+.gx-card-name {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.gx-card-path {
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.gx-card-types {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+  transform: scale(0.85);
+}
+
+/* The pick's place in the six: the order the leads are offered in. */
+.gx-order {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #1a1206;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+/* A path a clear would star: the one wordless mark the board carries. */
+.gx-unstarred {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  display: flex;
+  color: #f0c75e;
+  filter: drop-shadow(0 0 4px rgba(240, 199, 94, 0.6));
+}
+
+.gx-board-footer,
+.gx-sheet-footer {
+  display: grid;
+}
+
+.gx-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gx-sheet-path {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.gx-star-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #f0c75e;
+}
+
+.gx-star-line.is-held {
+  color: var(--text-dim);
+}
+
+.gx-moves {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* The record: five win pips, a gap, two loss pips. */
+.gx-record {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+}
+
+.gx-pips {
+  display: flex;
+  gap: 6px;
+}
+
+.gx-pip {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #3a3f4d;
+  background: #14161d;
+}
+
+.gx-pip.is-win.is-lit {
+  border-color: #f0c75e;
+  background: radial-gradient(circle, #ffe9a8, #d9a43c);
+  box-shadow: 0 0 8px rgba(240, 199, 94, 0.6);
+}
+
+.gx-pip.is-loss.is-lit {
+  border-color: #c0533a;
+  background: radial-gradient(circle, #f08a6a, #9a3420);
+}
+
+.gx-between,
+.gx-result,
+.gx-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gx-side {
+  gap: 6px;
+}
+
+.gx-strip-cell {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.gx-result-score {
+  text-align: center;
+  font-size: 40px;
+  font-weight: 900;
+  color: #f3dfae;
+  text-shadow: 0 0 14px rgba(224, 166, 60, 0.35), 0 2px 2px #000;
+}
+
+.gx-result-bonus {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 900;
+  color: #f0c75e;
+}
+
+.gx-result-copy,
+.gx-entry-copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  text-align: center;
+}
+
+.gx-earned {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gx-earned-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.gx-earned-portrait {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.gx-earned-name {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.gx-earned-path {
+  font-size: 11px;
+}
+
+.gx-earned-star {
+  color: #f0c75e;
+}
+
+.gx-entry-record {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-dim);
+}

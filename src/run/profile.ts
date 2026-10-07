@@ -13,6 +13,7 @@ import { cycleOf } from './cycles';
 import { grantLedgerId } from './recruitment';
 import { unenchanted, type Team, type TeamSlot } from './constructed';
 import type { Warden } from './wardens';
+import type { GauntletRun } from './gauntlet';
 
 export const PROFILE_VERSION = 2;
 
@@ -80,7 +81,7 @@ export interface Profile {
    * A dev test run never records a start, so its record carries no duration.
    */
   runStartedAtPlaytimeMs: number | null;
-  /** Lifetime stars paid by clear bonuses (run/cycles.ts `clearBonus`), beside the hero and companion stars. */
+  /** Lifetime stars paid by clear bonuses (run/cycles.ts `clearBonus`, run/gauntlet.ts `GAUNTLET_CLEAR_BONUS`), beside the hero and companion stars. */
   bonusStars: number;
   /** Lifetime stars paid as Ascension entry fees before the Cycles deleted them — spent, never refunded. */
   feesPaid: number;
@@ -111,6 +112,14 @@ export interface Profile {
    * TRIAL_CLEAR_STARS, derived from this set (starShop.ts starsEarned) so there is no count to inflate.
    */
   trialsCleared: string[];
+  /** The open Gauntlet (run/gauntlet.ts, docs/gauntlet.md), or null. One at a time. */
+  gauntlet: GauntletRun | null;
+  /** The local day (`localDay`) the free entry was last taken, or null. */
+  gauntletFreeDay: string | null;
+  /** Entries paid in stars — a count `starsSpent` charges, as the Starfall's ledger entries are charged. */
+  gauntletEntriesBought: number;
+  gauntletEntered: number;
+  gauntletClears: number;
 }
 
 /** Stars a Trial pays on its first clear (docs/constructed.md §7). First pass. */
@@ -181,6 +190,11 @@ export function createProfile(): Profile {
     seenTipIds: [],
     constructedTeams: [],
     trialsCleared: [],
+    gauntlet: null,
+    gauntletFreeDay: null,
+    gauntletEntriesBought: 0,
+    gauntletEntered: 0,
+    gauntletClears: 0,
   };
 }
 
@@ -386,6 +400,15 @@ function decodeTeamSlot(raw: unknown): TeamSlot | null {
   return { heroId: raw.heroId, pathId: typeof raw.pathId === 'string' ? raw.pathId : null, moveIds: stringList(raw.moveIds), itemIds: stringList(raw.itemIds).map(unenchanted) };
 }
 
+/** An open Gauntlet whose board cannot be read is dropped: the entry is lost, never the profile. */
+function decodeGauntlet(value: unknown): GauntletRun | null {
+  if (!isRecord(value) || !Array.isArray(value.board)) return null;
+  const board = value.board.map(decodeTeamSlot).filter((s): s is TeamSlot => s !== null);
+  const team = Array.isArray(value.team) ? value.team.map(decodeTeamSlot).filter((s): s is TeamSlot => s !== null) : [];
+  if (board.length === 0) return null;
+  return { seed: count(value.seed), board, team, wins: count(value.wins), losses: count(value.losses), fighting: value.fighting === true };
+}
+
 function decodeTeams(value: unknown): Team[] {
   if (!Array.isArray(value)) return [];
   const teams: Team[] = [];
@@ -546,5 +569,11 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Absent on every profile written before Constructed.
     constructedTeams: decodeTeams(value.constructedTeams),
     trialsCleared: [...new Set(stringList(value.trialsCleared))],
+    // Absent on every profile written before the Gauntlet.
+    gauntlet: decodeGauntlet(value.gauntlet),
+    gauntletFreeDay: typeof value.gauntletFreeDay === 'string' ? value.gauntletFreeDay : null,
+    gauntletEntriesBought: count(value.gauntletEntriesBought),
+    gauntletEntered: count(value.gauntletEntered),
+    gauntletClears: count(value.gauntletClears),
   };
 }

@@ -105,7 +105,7 @@ function slotLegal(slot: TeamSlot, unlocked: ReadonlySet<string>): boolean {
 function TeamsView({ teams, unlocked, onOpen, onNew, onClose }: { teams: readonly Team[]; unlocked: ReadonlySet<string>; onOpen: (i: number) => void; onNew: () => void; onClose: () => void }) {
   return (
     <>
-      <Header title="Constructed" onBack={onClose} backLabel="Back to the title" />
+      <Header title="The Trials" onBack={onClose} backLabel="Back to the title" />
       <div className="screen-scroll cx-list">
         {teams.map((team, i) => {
           const ready = isTeamReady(constructedContent, team, unlocked);

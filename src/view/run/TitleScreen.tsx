@@ -16,6 +16,7 @@ import { AudioSettings } from '../shared/AudioSettings';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
 import { isConstructedOpen } from '../../run/constructed';
+import { isGauntletOpen } from '../../run/gauntlet';
 import recordsArt from '../../../art/ui/records.png';
 
 interface Props {
@@ -50,6 +51,8 @@ interface Props {
   onOpenTrials: () => void;
   /** The teambuilder; `unlockAll` from the dev corner only. Offered once a Classic run has been won. */
   onOpenConstructed: (unlockAll?: boolean) => void;
+  /** The Gauntlet (docs/gauntlet.md), offered from the same win as the Trials. */
+  onOpenGauntlet: () => void;
   /** Opens the chosen Location directly with a random party — App.tsx createLocationVisitRun. */
   onVisitLocation: (locationId: string) => void;
   /** TEMPORARY DEV/TEST — App.tsx createLevel4TestRun. Remove with its Dev-menu row. */
@@ -112,6 +115,21 @@ function PactButton({
   );
 }
 
+/** A mode beside Seal the Pact. Shut, it still stands, padlocked, and a tap says what opens it. */
+function ModeDoor({ label, open, disabled, onOpen, onLocked }: { label: string; open: boolean; disabled: boolean; onOpen: () => void; onLocked: () => void }) {
+  return (
+    <button className={`title-newrun-button title-mode${open ? '' : ' is-locked'}`} onClick={open ? onOpen : onLocked} disabled={disabled} aria-label={open ? label : `${label}, locked`}>
+      {!open && (
+        <svg className="title-mode-lock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="5" y="11" width="14" height="10" rx="2" />
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </svg>
+      )}
+      {label}
+    </button>
+  );
+}
+
 export function TitleScreen({
   profile,
   onRefreshProfile,
@@ -131,6 +149,7 @@ export function TitleScreen({
   onOpenSandbox,
   onOpenTrials,
   onOpenConstructed,
+  onOpenGauntlet,
   onVisitLocation,
   onStartLevel4TestRun,
   onStartCrucibleTestRun,
@@ -151,6 +170,7 @@ export function TitleScreen({
   const [confirmingNewRun, setConfirmingNewRun] = useState(false);
   const [pickingCycle, setPickingCycle] = useState(false);
   const [staleNoteDismissed, setStaleNoteDismissed] = useState(false);
+  const [lockedNote, setLockedNote] = useState<string | null>(null);
 
   // The sound already plays from the delegated pointerdown listener (audio/uiSfx.ts).
   function launch(action: () => void) {
@@ -278,11 +298,16 @@ export function TitleScreen({
             </button>
           </>
         ) : (
-          <PactButton label="Start a Run" disabled={launching} onClick={handleStart} />
+          <PactButton label="Seal the Pact" disabled={launching} onClick={handleStart} />
         )}
-        {isConstructedOpen(profile) && (
-          <button className="title-newrun-button" onClick={() => onOpenConstructed()} disabled={launching}>
-            Constructed
+        {/* The three modes (docs/gauntlet.md §7): Seal the Pact is the press above; these two open on the first win. */}
+        <div className="title-modes">
+          <ModeDoor label="The Trials" open={isConstructedOpen(profile)} disabled={launching} onOpen={() => onOpenConstructed()} onLocked={() => setLockedNote('Win a run to open the Trials.')} />
+          <ModeDoor label="The Gauntlet" open={isGauntletOpen(profile)} disabled={launching} onOpen={onOpenGauntlet} onLocked={() => setLockedNote('Win a run to open the Gauntlet.')} />
+        </div>
+        {lockedNote && (
+          <button className="title-stale-note" onClick={() => setLockedNote(null)}>
+            {lockedNote}
           </button>
         )}
         {/* The reason itself is developer-shaped ("roster[0].unlockedMoveIds references..."), so it

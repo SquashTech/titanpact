@@ -54,6 +54,7 @@ import { turnedCurse } from '../run/curse';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { TrialsDevScreen } from '../view/run/TrialsDevScreen';
 import { ConstructedScreen } from '../view/run/ConstructedScreen';
+import { GauntletScreen } from '../view/run/GauntletScreen';
 import { ChampionScreen } from '../view/run/ChampionScreen';
 import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
@@ -138,7 +139,7 @@ import { LocationProvider } from '../view/shared/LocationContext';
 import { LocationChoiceScreen } from '../view/run/LocationChoiceScreen';
 import { ProfileProvider } from '../view/shared/ProfileContext';
 import { starShopCatalog } from '../data/starShop';
-import { buyOffer, starfall, type StarShopOffer } from '../run/starShop';
+import { buyOffer, starBalance, starfall, type StarShopOffer } from '../run/starShop';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { playSfx } from '../audio/sfx';
@@ -159,7 +160,8 @@ import {
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { constructedHeroIds, constructedSide, type Team } from '../run/constructed';
-import { constructedContent, trials } from '../data/trials';
+import { constructedContent, gauntletContent, trials } from '../data/trials';
+import { draftTeam, endGauntlet, enterGauntlet, freeEntryAvailable, gauntletOpponent, localDay, recordGauntletFight, settleLeftFight, startGauntletFight, type GauntletResult } from '../run/gauntlet';
 import { createStatusTestSides } from '../run/statusTestFight';
 import { atEvolution, currentEvolutionPathId, fullMovepool } from '../run/progression';
 import { progressionTable } from '../data/progression';
@@ -195,6 +197,8 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'trialsFight',
   'constructed',
   'constructedFight',
+  'gauntlet',
+  'gauntletFight',
   'statusTestFight',
   'champions',
   'runComplete',
@@ -460,6 +464,7 @@ export function App() {
   // hero (run/recruitment.ts heroPool) and fields no strangers.
   const ownedPool = useMemo(() => heroPool(heroes, profile.purchases), [profile.purchases]);
   const runPools = useMemo(() => encounterPools(playerRun, heroes, ownedPool), [playerRun.deck, ownedPool]);
+  const gauntletOpponentTeam = useMemo(() => (profile.gauntlet && profile.gauntlet.team.length > 0 ? gauntletOpponent(gauntletContent, profile.gauntlet).team : null), [profile.gauntlet]);
   const recruitPool = runPools.heroes;
   // The cold launch's loading screen (LaunchScreen): `launched` mounts the title under it for its
   // fade, `launchDone` takes it down. Neither goes back to false this session.
@@ -650,6 +655,60 @@ export function App() {
       notice = first && !unlockAll ? `${name} beaten — +${TRIAL_CLEAR_STARS} ★` : `${name} beaten again`;
     }
     setScreen({ kind: 'constructed', startTeam: teamIndex, unlockAll, notice });
+  }
+
+  /** The Gauntlet's door. A fight found unfinished is settled first — a loss (docs/gauntlet.md §4). */
+  function handleOpenGauntlet() {
+    let settled: ReturnType<typeof settleLeftFight> = { profile, result: null, forfeited: false };
+    setProfile(
+      updateProfile((current) => {
+        settled = settleLeftFight(current);
+        return settled.profile;
+      }),
+    );
+    setScreen({ kind: 'gauntlet', result: settled.result, notice: settled.forfeited && !settled.result ? 'The fight you left counted as a loss.' : null });
+  }
+
+  function handleEnterGauntlet() {
+    const seed = Math.floor(Math.random() * 0x100000000);
+    setProfile(updateProfile((current) => enterGauntlet(current, gauntletContent, Object.keys(heroPool(heroes, current.purchases)), seed, localDay(Date.now()), starBalance(current, starShopCatalog))));
+    setScreen({ kind: 'gauntlet' });
+  }
+
+  function handleGauntletFight() {
+    const run = profile.gauntlet;
+    if (!run) return;
+    const opponent = gauntletOpponent(gauntletContent, run);
+    setProfile(updateProfile(startGauntletFight));
+    setScreen({
+      kind: 'gauntletFight',
+      player: constructedSide(constructedContent, { name: 'Gauntlet', slots: run.team }),
+      ai: constructedSide(constructedContent, { name: 'Opponent', slots: opponent.team }, opponent.leads),
+    });
+  }
+
+  function handleGauntletResolved(outcome: 'win' | 'loss', notice: string | null = null) {
+    let result: GauntletResult | null = null;
+    setProfile(
+      updateProfile((current) => {
+        const recorded = recordGauntletFight(current, outcome);
+        result = recorded.result;
+        return recorded.profile;
+      }),
+    );
+    setScreen({ kind: 'gauntlet', result, notice });
+  }
+
+  function handleRetireGauntlet() {
+    let result: GauntletResult | null = null;
+    setProfile(
+      updateProfile((current) => {
+        const ended = endGauntlet(current);
+        result = ended.result;
+        return ended.profile;
+      }),
+    );
+    setScreen({ kind: 'gauntlet', result });
   }
 
   function handleChangeTeams(teams: Team[]) {
@@ -1245,6 +1304,7 @@ export function App() {
           onOpenSandbox={handleOpenSandbox}
           onOpenTrials={() => setScreen({ kind: 'trialsDev' })}
           onOpenConstructed={(unlockAll) => setScreen({ kind: 'constructed', unlockAll })}
+          onOpenGauntlet={handleOpenGauntlet}
           onVisitLocation={handleVisitLocation}
           onStartLevel4TestRun={handleStartLevel4TestRun}
           onStartCrucibleTestRun={handleStartCrucibleTestRun}
@@ -1327,6 +1387,42 @@ export function App() {
           aiPilot
           onResolved={(outcome) => handleTrialResolved(outcome, screen.trialId, screen.teamIndex, !!screen.unlockAll)}
           onExitToTitle={() => setScreen({ kind: 'constructed', startTeam: screen.teamIndex, unlockAll: screen.unlockAll })}
+        />
+      )}
+
+      {screen.kind === 'gauntlet' && (
+        <GauntletScreen
+          run={profile.gauntlet}
+          stars={profile.evolutionStars}
+          freeEntry={freeEntryAvailable(profile, localDay(Date.now()))}
+          balance={starBalance(profile, starShopCatalog)}
+          entered={profile.gauntletEntered}
+          clears={profile.gauntletClears}
+          result={screen.result ?? null}
+          notice={screen.notice ?? null}
+          opponent={gauntletOpponentTeam}
+          onEnter={handleEnterGauntlet}
+          onDraft={(indices) => setProfile(updateProfile((current) => (current.gauntlet ? { ...current, gauntlet: draftTeam(current.gauntlet, indices) } : current)))}
+          onFight={handleGauntletFight}
+          onRetire={handleRetireGauntlet}
+          onDismissResult={() => setScreen({ kind: 'gauntlet' })}
+          onClose={() => setScreen({ kind: 'title' })}
+        />
+      )}
+
+      {screen.kind === 'gauntletFight' && (
+        <FightScreen
+          playerRun={screen.player.run}
+          playerSquad={screen.player.squad}
+          aiRun={screen.ai.run}
+          aiSquad={screen.ai.squad}
+          goldReward={0}
+          xpGained={0}
+          equipmentReward={null}
+          aiPilot
+          onResolved={(outcome) => handleGauntletResolved(outcome)}
+          onExitToTitle={() => handleGauntletResolved('loss', 'You conceded — it counts as a loss.')}
+          exitLabel="Concede the fight"
         />
       )}
 

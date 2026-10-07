@@ -3,11 +3,17 @@
 // one legal, its type's six, and an answer to every type that hits it super-effectively.
 
 import type { ConstructedContent, TeamSlot, TrialDefinition } from '../run/constructed';
+import type { GauntletContent } from '../run/gauntlet';
 import { equipment } from './equipment';
 import { heroes } from './heroes';
 import { progressionTable } from './progression';
+import { moves } from './moves';
+import { typeChart } from './typechart';
 
 export const constructedContent: ConstructedContent = { heroes, table: progressionTable, equipment };
+
+/** The Gauntlet's rolls read the move table and the chart besides (run/gauntlet.ts). */
+export const gauntletContent: GauntletContent = { ...constructedContent, moves, typeChart };
 
 export const trials: Record<string, TrialDefinition> = {
   fire: {

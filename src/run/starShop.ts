@@ -10,6 +10,7 @@
 import { totalStars, trialStars, type Profile } from './profile';
 import { heroes } from '../data/heroes';
 import { ownsHero, starfallLedgerId } from './recruitment';
+import { GAUNTLET_ENTRY_PRICE } from './gauntlet';
 
 /**
  * What a purchase unlocks (docs/constellation.md §4, §8): a discriminant a pool edge reads once.
@@ -55,12 +56,12 @@ export function offerPrice(profile: Profile, offer: StarShopOffer): number {
 }
 
 /**
- * Purchases, Starfalls and entry fees. The ledger is replayed in order, so a bundle is charged
+ * Purchases, Starfalls, entry fees and bought Gauntlet entries. The ledger is replayed in order, so a bundle is charged
  * what it cost the day it was bought. A purchase whose offer this build no longer ships costs
  * nothing — a single hero from before singles were withdrawn, the Free Company — and is refunded.
  */
 export function starsSpent(profile: Profile, catalog: StarShopCatalog): number {
-  let spent = profile.feesPaid;
+  let spent = profile.feesPaid + profile.gauntletEntriesBought * GAUNTLET_ENTRY_PRICE;
   profile.purchases.forEach((id, at) => {
     if (id.startsWith(starfallLedgerId(''))) spent += STARFALL_PRICE;
     else if (catalog[id]) spent += bundlePriceAgainst(catalog[id], profile.purchases.slice(0, at));

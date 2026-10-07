@@ -9,6 +9,7 @@ import type { CombatState, Side } from '../engine/state';
 import type { ConsumableKind, ConsumablePurse } from './consumables';
 import { CONSUMABLE_KINDS } from './consumables';
 import type { Encounter, EncounterNodeType } from './enemyGen';
+import type { GauntletResult } from './gauntlet';
 import type { HeroLevelUp } from './growth';
 import type { CompanionBeat } from './companion';
 import type { RewardNodeType } from './map';
@@ -80,6 +81,9 @@ export type RunScreen =
   /** The teambuilder (docs/constructed.md §9). `unlockAll` is the dev route's every-hero gate. */
   | { kind: 'constructed'; startTeam?: number | null; unlockAll?: boolean; notice?: string | null }
   | { kind: 'constructedFight'; player: Encounter; ai: Encounter; teamIndex: number; trialId: string; unlockAll?: boolean }
+  /** The Gauntlet (docs/gauntlet.md). Its run lives on the profile; `result` is a run that just ended, said once. */
+  | { kind: 'gauntlet'; result?: GauntletResult | null; notice?: string | null }
+  | { kind: 'gauntletFight'; player: Encounter; ai: Encounter }
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */

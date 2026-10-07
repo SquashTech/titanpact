@@ -610,6 +610,8 @@ interface Props {
   onAbandonRun?: () => void;
   /** Plain one-tap exit for fights outside a run (Quick Battle). A caller passes this or the run pair, never both. */
   onExitToTitle?: () => void;
+  /** What the exit row says, where leaving costs something (the Gauntlet's concede). */
+  exitLabel?: string;
   /**
    * First-time tips (docs/tutorial.md): the run's fights pass the node they stand on and the
    * profile's seen list. Omitted outside a run (Quick Battle, the sandbox), which shows none.
@@ -641,6 +643,7 @@ export function FightScreen({
   onSaveAndQuit,
   onAbandonRun,
   onExitToTitle,
+  exitLabel = 'Back to Title Screen',
   tips,
   cinematicWin = false,
   aiPilot = false,
@@ -2181,7 +2184,7 @@ export function FightScreen({
                   <span className="options-item-glyph" aria-hidden="true">
                     ⏏
                   </span>
-                  Back to Title Screen
+                  {exitLabel}
                 </button>
               )}
               {onSaveAndQuit && (

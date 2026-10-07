@@ -295,6 +295,14 @@ don't silently override it.
 > same day): any move the hero can learn and does not hold, Late first, Constructed's tiles; "one
 > Late move ROLLED" is reversed. `docs/gems.md` §7 lists what the Gems reverse.
 
+> **A third MODE is BUILT, phase 1: `docs/gauntlet.md`** (2026-10-07, per user direction). The title
+> is three doors — **Seal the Pact** (Classic), **the Trials** (Constructed), **the Gauntlet** — the
+> last two opening on the first Cycle I clear. The Gauntlet rolls fifteen OWNED heroes, each in a
+> random path and kit (signature and path move held, level 30, Mastery 10, no items); the player drafts
+> six and fights random six-hero teams to **five wins before two losses**. **Nothing below five**; a
+> clear stars every unstarred path on the team (Cycle I colour, and so opens the hero in the Trials)
+> and pays 3. One free entry a day, then 3 stars. A fight left unfinished is a loss.
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision

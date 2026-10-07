@@ -27,7 +27,8 @@
 
 ## 1. The rule this reduces to
 
-**Classic earns heroes; Constructed perfects them.** Nothing crosses back: no stat, item or move
+**Classic earns heroes; Constructed perfects them.** (Since 2026-10-07 the Gauntlet earns them too —
+a Gauntlet clear stars its team's paths, and a star opens the hero here; `docs/gauntlet.md` §5.) Nothing crosses back: no stat, item or move
 built here enters a run. The two modes share content, the engine and the star balance — nothing
 else.
 
