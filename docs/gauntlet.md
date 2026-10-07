@@ -95,8 +95,9 @@ so the engine and the fight builder never learn a third mode exists. Rolled (`ro
 - **A path star for every hero–path on the team not already starred**, recorded in
   `Profile.evolutionStars` exactly as a Classic clear records one. The star is coloured **Cycle I**:
   the higher Cycles' colours stay Seal the Pact's to give.
-- **`GAUNTLET_CLEAR_BONUS` = 3 stars**, into `bonusStars`, so a clear with an already-starred team
-  still pays — and pays back a bought entry.
+- **`GAUNTLET_CLEAR_BONUS` = 5 stars**, into `bonusStars` (2026-10-07, per user direction: slightly
+  above the entry), so a clear with an already-starred team still pays, and a bought entry cleared is
+  a profit.
 
 A Gauntlet star opens its hero in the Trials (decided). That makes the Gauntlet the second road into
 the Trials, beside Classic, and amends `docs/constructed.md` §1's *"Classic earns heroes"* to
@@ -104,13 +105,14 @@ the Trials, beside Classic, and amends `docs/constructed.md` §1's *"Classic ear
 
 ## 6. Entry
 
-- **One free entry a day** (local calendar day, `gauntletFreeDay`). It does not bank: a day missed is
-  not two tomorrow.
+- **One free entry a day, never stacked** (per user direction): a blanket free run for the local
+  calendar day, either claimed or not (`gauntletFreeDay` holds the day it was claimed). A day missed
+  is not two tomorrow, and it is never a ticket that can be held.
 - **A further entry costs `GAUNTLET_ENTRY_PRICE` = 3 stars**, recorded as a count
   (`gauntletEntriesBought`) that `starsSpent` charges, the way the Starfall's ledger entries are.
 - **One run at a time.** Entering is refused while one is open.
 
-So a clear always returns a bought entry (3 = 3) plus its path stars; a 4–2 is the 3 stars lost.
+So a cleared bought entry nets 2 stars plus its path stars; a 4–2 is the 3 stars lost.
 If 4–2 proves to feel bad in play, the reserve fix is **four wins refunds the entry** — not a reward,
 the stake back.
 
@@ -135,7 +137,7 @@ string; `constructed` stays the code name.
 ## 9. Open — first-pass numbers and calls
 
 - `BOARD_SIZE` 15, `BOARD_TYPE_LIMIT` 2, `UNSTARRED_WEIGHT` 3.
-- `GAUNTLET_CLEAR_BONUS` 3 and `GAUNTLET_ENTRY_PRICE` 3 — they are set equal on purpose.
+- `GAUNTLET_CLEAR_BONUS` 5 against `GAUNTLET_ENTRY_PRICE` 3 — the bonus sits just above the entry on purpose.
 - The escalation step, 3 candidates a win.
 - **Opponents from the whole catalog** rather than the owned Collection — a recommendation, since
   the "owned only" rule was decided for the board. Owned-only is a one-line switch (`gauntletOpponent`).

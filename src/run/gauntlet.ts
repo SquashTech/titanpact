@@ -18,7 +18,7 @@ export const WINS_TO_CLEAR = 5;
 export const LOSSES_TO_END = 2;
 /** Each win, the next opponent's six are picked from this many more rolled heroes. */
 export const ESCALATION_STEP = 3;
-export const GAUNTLET_CLEAR_BONUS = 3;
+export const GAUNTLET_CLEAR_BONUS = 5;
 export const GAUNTLET_ENTRY_PRICE = 3;
 
 const TIER_WEIGHT = { early: 1, mid: 2, late: 3 } as const;

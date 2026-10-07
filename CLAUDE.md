@@ -301,7 +301,7 @@ don't silently override it.
 > random path and kit (signature and path move held, level 30, Mastery 10, no items); the player drafts
 > six and fights random six-hero teams to **five wins before two losses**. **Nothing below five**; a
 > clear stars every unstarred path on the team (Cycle I colour, and so opens the hero in the Trials)
-> and pays 3. One free entry a day, then 3 stars. A fight left unfinished is a loss.
+> and pays 5. One free entry a day (claimed or not, never banked), then 3 stars. A fight left unfinished is a loss.
 
 ---
 
