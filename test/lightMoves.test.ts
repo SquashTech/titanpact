@@ -320,7 +320,7 @@ test('light: every hero that can be offered Smite can also reach the field effec
 
 // --- Vigil: a Shield and a Renew on one card, each half off its own stat (docs/shield.md §3.5) ---
 
-test('light: Vigil shields one ally off the caster\'s Defense and Renews it off the caster\'s Wisdom', () => {
+test('light: Vigil shields one ally off the caster\'s Defense and Renews it as authored', () => {
   const state = withDeepPools(lightFixture(1260));
   const [shieldApp, renewApp] = statusApplicationsOf(moves.vigil);
   assert.strictEqual(shieldApp.statusId, 'Shield');
@@ -330,13 +330,13 @@ test('light: Vigil shields one ally off the caster\'s Defense and Renews it off 
 
   const caster = state.combatants.a1;
   const expectedShield = scaleStatusMagnitude(shieldApp.magnitude, statuses.Shield, shieldApp, moves.vigil, heroes.dawnwarden, caster);
-  const expectedRenew = scaleStatusMagnitude(renewApp.magnitude, statuses.Renew, renewApp, moves.vigil, heroes.dawnwarden, caster);
-  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'vigil', declaredTarget: 'a2' }], config);
+  const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'vigil', declaredTarget: 'a2' }], config);
 
   assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expectedShield);
-  assert.ok(hasStatus(next.combatants.a2, 'Renew'), 'the Renew landed, healed, and ticked once at end of round');
-  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Renew'), expectedRenew, 'a Renew no longer decays');
-  assert.notStrictEqual(expectedShield, expectedRenew, 'two stats, two figures');
+  assert.ok(
+    events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Renew' && e.combatantId === 'a2' && e.magnitude === renewApp.magnitude),
+    'the Renew landed at the authored count — no Wisdom scaling'
+  );
   assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), 0, 'single ally');
 });
 

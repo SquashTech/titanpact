@@ -93,11 +93,11 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   brushfire: {
     id: 'brushfire',
     name: 'Brushfire',
-    description: 'When this hero switches out, both active enemies gain Burn 8%.',
+    description: 'When this hero switches out, both active enemies are set Burning.',
     reactive: {
       hook: 'SwitchedOut',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 8 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
     },
   },
 };

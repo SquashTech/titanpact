@@ -348,18 +348,19 @@ test('stone: the target picker narrows to the taunt, so the player never aims wh
 
 // --- Slate-wide ---
 
-test('stone: the slate authors no new field effect and no type-keyed status hook', () => {
+test('stone: the slate sets one field — Bedrock, off Dig In — and authors no type-keyed status hook', () => {
   // If a status ever adds 'Stone' to triggerTypes, every number in this slate silently changes.
   const stone = Object.values(moves).filter((m) => m.type === 'Stone' && !signatureMoves[m.id]);
   // The designed fifteen, the two Evolution moves — Fang's Spire Claw and Crag's Titanic Crush —
-  // Rampart, the Late Shield (docs/shield.md §3.5), and the two 2026-09-15 additions.
-  assert.strictEqual(stone.length, 20);
+  // Rampart, the Late Shield (docs/shield.md §3.5), the two 2026-09-15 additions, and Bedrock's rider
+  // and reader (docs/status-ladders-and-fields.md §5).
+  assert.strictEqual(stone.length, 22);
 
   for (const def of Object.values(statuses)) {
     assert.ok(!def.triggerTypes?.includes('Stone'), `${def.id} would detonate off every Stone damage move`);
     assert.ok(!def.spreadTriggerTypes?.includes('Stone'), `${def.id} would spread every Stone single-target move`);
   }
-  assert.ok(!stone.some((m) => m.fieldEffectApplication), 'no Stone move sets a Field Effect');
+  assert.deepStrictEqual(stone.filter((m) => m.fieldEffectApplication).map((m) => [m.id, m.fieldEffectApplication]), [['digIn', 'bedrock']]);
 });
 
 test('stone: every retribution move authors no basePower, and every other damage move authors one', () => {

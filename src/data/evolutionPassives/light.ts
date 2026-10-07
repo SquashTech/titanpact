@@ -82,11 +82,11 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   kindledMane: {
     id: 'kindledMane',
     name: 'Kindled Mane',
-    description: 'Every Light attack this hero lands inflicts Burn 6%.',
+    description: 'Every Light attack this hero lands sets its target Burning.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 6 },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
     },
   },
   // Aurum's Sunlord: a Daze is a flinch only when it lands first, so the sun climbing is what

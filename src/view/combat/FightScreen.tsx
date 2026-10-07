@@ -51,7 +51,7 @@ import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent, RoundOrderEntry } from '../../engine/events';
 import type { MoveDefinition, StatKey, TargetMode } from '../../engine/content';
 import { resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
-import { resolveElementalForceBonus } from '../../engine/damage/damagePipeline';
+import { fieldTypeMultFloor, resolveElementalForceBonus } from '../../engine/damage/damagePipeline';
 import type { RunState, RosterEntry } from '../../run/state';
 import type { MapNodeType } from '../../run/map';
 import { matchFightTip, type FightTipContext } from '../../run/tips';
@@ -910,12 +910,13 @@ export function FightScreen({
    * Rest is a recovery, not a pass: the key stays dark while the hero has nothing to recover, so
    * the row never offers a turn that would only be spent. Any missing mana at all opens it —
    * partial recovery is a real play. Overflow (docs/mana.md) reads as full: `<`, not `!==`.
+   * A status a Rest puts out (Burn) is something to recover too, so it opens the key at full mana.
    * The out-of-mana Rest row in the grid is unaffected, so the softlock escape is never gated.
    */
   const actingCanRest =
     actingId !== null &&
-    combat.combatants[actingId].currentMana <
-      getMaxMana(allCombatants[combat.combatants[actingId].heroId], combat.combatants[actingId]);
+    (combat.combatants[actingId].currentMana < getMaxMana(allCombatants[combat.combatants[actingId].heroId], combat.combatants[actingId]) ||
+      Object.keys(combat.combatants[actingId].statuses).some((statusId) => statuses[statusId]?.clearsOnRest));
 
   // What is left in the Bag this fight, usable while commanding: the potions on an active hero,
   // the Revive on a fallen one (engine/combat/consumables.ts).
@@ -1269,7 +1270,9 @@ export function FightScreen({
   function effectivenessAgainst(move: MoveDefinition, defenderId: string): number {
     const defender = combat.combatants[defenderId];
     const defenderHero = allCombatants[defender.heroId];
-    return resolveTypeMult(typeChart, move.type, effectiveTypes(defenderHero, defender));
+    // Downpour lifts a resistance to ×1 (fieldTypeMultFloor); the tile says what the hit will land at.
+    const floor = fieldTypeMultFloor(move.type, { active: combat.activeFieldEffect, defs: fieldEffects });
+    return Math.max(floor, resolveTypeMult(typeChart, move.type, effectiveTypes(defenderHero, defender)));
   }
 
   function enemyEntries() {

@@ -156,9 +156,8 @@ test('heal: no variance — the same heal on two different seeds lands on the sa
 
 // --- Renew: the snapshot ---
 
-test('heal: a HoT snapshots the caster Wisdom and STAB at application time, and heals that percent of the holder', () => {
-  // Second Wind grants Renew (Spirit): the landed percent is the formula's, snapshotted at cast, and
-  // the first heal — on landing — is that percent of the holder's max HP.
+test('heal: a Renew heals a tenth of the HOLDER whoever casts it — no Wisdom, no STAB', () => {
+  // docs/status-ladders-and-fields.md §2: the number is the heals, each one a tenth of max HP.
   const read = (heroId: string) => {
     const state = hurt(fixture(204, heroId, 'ironWarden'), ['a1'], 10);
     const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'secondWind' }] as Action[], config);
@@ -173,8 +172,8 @@ test('heal: a HoT snapshots the caster Wisdom and STAB at application time, and 
   const app = statusApplicationsOf(moves.secondWind).find((a) => a.statusId === 'Renew')!;
   for (const heroId of ['revenant', 'wildOracle']) {
     const { landed, healed, maxHp } = read(heroId);
-    assert.strictEqual(landed, resolveStatusMagnitudeFor(app.magnitude, statuses.Renew, app, moves.secondWind, { stats: heroes[heroId].baseStats, types: heroes[heroId].types }));
-    assert.strictEqual(healed, Math.ceil((maxHp * landed) / 100), `${heroId}: the first heal is the landed percent`);
+    assert.strictEqual(landed, app.magnitude, `${heroId}: lands as authored`);
+    assert.strictEqual(healed, Math.ceil(maxHp * 0.1), `${heroId}: the first heal is a tenth of max HP`);
   }
 });
 

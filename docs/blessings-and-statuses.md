@@ -183,6 +183,8 @@ the Haunt passes to its partner. Cleared by switching."*
 
 ## 3. Burn
 
+> **Superseded 2026-10-06** by `status-ladders-and-fields.md` §1: Burn is three levels now, and Rest puts it out.
+
 ### 3.1 The change
 
 Everything that makes it Burn is kept — front-loaded, halving, **cleansed by switching** — and the
@@ -231,6 +233,8 @@ stacks and bursts. **Set Alight** (Early, 20 mana, 15%) is still the best cheap 
 left for playtest; 12% is the candidate if it reads as too strong.
 
 ## 4. Renew
+
+> **Superseded 2026-10-06** by `status-ladders-and-fields.md` §2: Renew is a count of 10% heals, unscaled.
 
 ### 4.1 The problem
 

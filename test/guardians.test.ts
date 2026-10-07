@@ -66,7 +66,7 @@ test('guardians: the Elder Bough is one turn paying out three times, and Speed 3
   // Overgrowth is the three-payout turn: Renew on itself, healing doubled under Verdant Earth (and past
   // max HP turned to Shield, docs/blessings-and-statuses.md §5), and the switch that doubles Branch Slam's 80.
   const selfPlant = statusApplicationsOf(moves.overgrowth).find((app) => app.statusId === 'Renew')!.magnitude!;
-  assert.ok(selfPlant >= 25, `Overgrowth is the big self-plant — ${selfPlant}% a tick`);
+  assert.ok(selfPlant >= 6, `Overgrowth is the big self-plant — ${selfPlant} heals`);
   assert.strictEqual(moves.branchSlam.conditionalPower!.requiresUserStatus, 'Renew');
   assert.strictEqual(moves.forceOfNature.fieldEffectApplication, 'verdantEarth');
   assert.ok(guardian.baseStats.manaPool >= moves.overgrowth.manaCost + moves.branchSlam.manaCost);

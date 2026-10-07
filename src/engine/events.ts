@@ -129,6 +129,8 @@ export interface HealedEvent extends BaseEvent {
   fieldMult?: number;
   /** Present iff this heal came from a drainPercent rider. `targetCombatantId` is the drainer; this says whose HP it came from. */
   drain?: { fromCombatantId: string; damageDealt: number; percent: number };
+  /** The field refused this heal (Blood Moon on a Bleeding hero): `amount` is 0. */
+  blocked?: true;
 }
 
 export interface StatusAppliedEvent extends BaseEvent {
@@ -155,6 +157,8 @@ export interface StatusTickedEvent extends BaseEvent {
   newMagnitude?: number;
   /** Duration-shape only: the value AFTER the countdown. */
   newDuration?: number;
+  /** A heal the field refused (Blood Moon): `amount` is 0, the charge still spent. */
+  blocked?: true;
 }
 
 export interface StatusRemovedEvent extends BaseEvent {

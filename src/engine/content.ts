@@ -58,7 +58,7 @@ export type StatusStacking =
   | 'additiveRefreshDuration';
 
 /** Why a status left a combatant — carried on StatusRemovedEvent. */
-export type StatusRemovalReason = 'decay' | 'expired' | 'switch' | 'cleanse' | 'consumed' | 'broken' | 'passed';
+export type StatusRemovalReason = 'decay' | 'expired' | 'switch' | 'rest' | 'cleanse' | 'consumed' | 'broken' | 'passed';
 
 /** One record per status (docs/conditions.md); statusEngine.ts reads these flags generically. */
 export interface StatusDefinition {
@@ -87,14 +87,20 @@ export interface StatusDefinition {
   blocksIncomingMoves?: boolean;
   /** Boolean-shape DoT (Bleed): a fixed fraction of max HP per tick instead of a magnitude. */
   flatPercentOfMaxHp?: number;
-  /** Magnitude-shape DoT or HoT whose magnitude is a PERCENT of the holder's max HP (Burn, Renew): a tick deals or heals ceil(maxHp × magnitude / 100). docs/blessings-and-statuses.md §3–4. */
-  percentOfMaxHp?: boolean;
-  /** The authored magnitude is what lands — never caster-scaled (Burn; statusMagnitude.ts magnitudeScales). */
+  /**
+   * The magnitude is a LEVEL, 1 to `tickPercents.length` (Burn, docs/status-ladders-and-fields.md §1):
+   * each application adds its magnitude in levels, held at the top; a tick deals
+   * `tickPercents[level − 1]`% of the holder's max HP, and nothing decays it. `names` are the levels' names.
+   */
+  levels?: { tickPercents: readonly number[]; names: readonly string[] };
+  /** The magnitude is HEALS LEFT (Renew, docs/status-ladders-and-fields.md §2): each heal is `tickPercent`% of the holder's max HP and spends one; applications add. */
+  charges?: { tickPercent: number };
+  /** The authored magnitude is what lands — never caster-scaled (Burn, Renew; statusMagnitude.ts magnitudeScales). */
   fixedMagnitude?: boolean;
-  /** A HoT that heals once the moment it lands, for the magnitude just applied, before its round-end ticks (Renew; statusEngine.ts applyStatus). */
+  /** A HoT whose first heal lands the moment it is applied, spending one charge (Renew; statusEngine.ts applyStatus). */
   ticksOnApply?: boolean;
-  /** Rounds an application lasts when the rider authors none; its round-end ticks count it down (Renew). */
-  defaultDuration?: number;
+  /** Removed when the holder Rests (Burn) — StatusRemoved 'rest'. */
+  clearsOnRest?: boolean;
   /** Conduct: a damage move of one of these types detonates this status on the target for detonateBonusPercentMaxHp of its max HP, then consumes it. Detonate-only — planting it is an ordinary rider (statusEngine.ts detonateTriggeredStatuses). */
   triggerTypes?: readonly TypeId[];
   /** Paired with triggerTypes — fraction of the target's max HP. */
@@ -364,8 +370,16 @@ export interface FieldEffectDefinition {
   flavorType?: TypeId;
   /** Multiplies every combatant's MP Regen (2 = doubled). Applied in manaRegen.ts, never folded into the mpRegen stat. */
   mpRegenMultiplier?: number;
-  /** Statuses whose post-tick decay is slowed while active (Scorched Land holding Burn). `retain` is the share kept per tick — 0.5 is the ordinary halving, 1 is no decay at all. The tick itself is untouched. */
-  slowsStatusDecay?: { statusIds: readonly StatusId[]; retain: number };
+  /** Every application of these level statuses lands `by` levels higher (Scorched Land on Burn). statusEngine.ts applyStatus. */
+  raisesStatusLevel?: { statusIds: readonly StatusId[]; by: number };
+  /** A combatant holding this status restores no HP — no heal move, Renew, drain or passive heal; a potion still works (Blood Moon on Bleed). statusEngine.ts healBlocked. */
+  blocksHealingWhile?: StatusId;
+  /** A hit on a target holding `statusId` heals the attacker `percent` of the HP it removed, as a drain (Blood Moon on Bleed). resolveRound.ts. */
+  lifestealAgainst?: { statusId: StatusId; percent: number };
+  /** Moves of these types never land below ×1 on the chart — a resistance reads as neutral (Downpour: Water, Frost). damagePipeline.ts fieldTypeMultFloor. */
+  unresistedTypes?: readonly TypeId[];
+  /** A physical hit swings with the higher of the user's Attack and Defense (Bedrock). Stat pipeline — damagePipeline.ts resolveOffStatKey. */
+  physicalSwingsWithDefense?: true;
   /** A HoT's healing multiplied while active, and what passes max HP laid on as Shield (Verdant Earth on Renew). statusEngine.ts healFromStatus. */
   amplifiesStatusHealing?: { statusIds: readonly StatusId[]; multiplier: number; overflowToShield?: boolean };
   /** Within a priority bracket, resolve slowest-first (Stasis Bubble). Bracket separation untouched. priority.ts orderActions. */

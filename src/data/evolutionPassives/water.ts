@@ -94,11 +94,11 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   drownedGift: {
     id: 'drownedGift',
     name: 'Drowned Gift',
-    description: "When a hit knocks out a foe, this hero's partner gains Renew 10%.",
+    description: "When a hit knocks out a foe, this hero's partner gains Renew 3.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'enemy', finishingBlow: true },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 3 },
     },
   },
 };

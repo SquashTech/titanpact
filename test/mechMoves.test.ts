@@ -252,8 +252,8 @@ test("mech: Poison from a reel carries the catalog's duration, like every other 
 
 // --- The two-status rows ---
 
-test('mech: Backfire and Overheat Burn the target AND the caster — both at exactly the authored percent', () => {
-  // A Burn is a percent of max HP and is never caster-scaled (docs/blessings-and-statuses.md §3); the
+test('mech: Backfire and Overheat Burn the target AND the caster — both at exactly the authored level', () => {
+  // A Burn is a level and is never caster-scaled (docs/status-ladders-and-fields.md §1); the
   // self-Burn is a cost and was never scaled anyway.
   const burnOf = (id: string, target: 'moveTarget' | 'self') =>
     statusApplicationsOf(moves[id]).find((a) => a.statusId === 'Burn' && a.target === target)!.magnitude!;
@@ -264,9 +264,9 @@ test('mech: Backfire and Overheat Burn the target AND the caster — both at exa
       [{ kind: 'move', combatantId: 'a1', moveId: id, declaredTarget: 'b1' }],
       config
     );
-    // Burn ticks and halves at end of the round it was applied, so a fresh Burn N reads floor(N/2).
-    assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, Math.floor(burnOf(id, 'moveTarget') / 2), `${id}: target not Burned`);
-    assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, Math.floor(burnOf(id, 'self') / 2), `${id}: caster not Burned`);
+    // A Burn holds its level through the round tick (docs/status-ladders-and-fields.md §1).
+    assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, burnOf(id, 'moveTarget'), `${id}: target not Burned`);
+    assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, burnOf(id, 'self'), `${id}: caster not Burned`);
   }
 });
 
@@ -276,7 +276,7 @@ test('mech: Meltdown burns only the CASTER, and hits both enemies', () => {
   const cost = statusApplicationsOf(moves.meltdown).find((a) => a.statusId === 'Burn')!.magnitude!;
   assert.ok(after.combatants.b1.currentHp < state.combatants.b1.currentHp);
   assert.ok(after.combatants.b2.currentHp < state.combatants.b2.currentHp);
-  assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, Math.floor(cost / 2), 'caster not Burned the percent it costs');
+  assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, cost, 'caster not Burned the levels it costs');
   assert.strictEqual(after.combatants.b1.statuses.Burn, undefined, 'Meltdown burned its targets');
 });
 
@@ -290,7 +290,7 @@ test('mech: Perfect Creation applies all six of its riders in one cast', () => {
   const burn = statusApplicationsOf(moves.perfectCreation).find((a) => a.statusId === 'Burn')!.magnitude!;
   // Daze clears at end of round, so five of six survive; that is the sixth working.
   assert.deepStrictEqual(statusesOn(after, 'b1'), ['Bleed', 'Burn', 'Conduct', 'Haunt', 'Poison']);
-  assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, Math.floor(burn / 2), 'the authored percent, halved post-tick');
+  assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, burn, 'the authored level, held through the tick');
   assert.strictEqual(after.combatants.b1.statuses.Poison?.duration, 2, 'Poison should have ticked once');
 });
 

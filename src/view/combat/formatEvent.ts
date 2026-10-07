@@ -7,6 +7,7 @@ import type { CombatState } from '../../engine/state';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
+import { statusHeldText } from '../shared/statusFacts';
 
 export interface LogLine {
   key: string;
@@ -163,7 +164,9 @@ export function formatEvents(
       case 'Healed':
         lines.push({
           key,
-          text: e.drain
+          text: e.blocked
+            ? `${name(e.targetCombatantId)} can't be healed`
+            : e.drain
             ? `${name(e.targetCombatantId)} drains ${e.amount} HP from ${name(e.drain.fromCombatantId)}`
             : `${name(e.targetCombatantId)} heals ${e.amount} HP`,
           className: 'log-heal',
@@ -177,7 +180,7 @@ export function formatEvents(
         break;
       }
       case 'StatusApplied': {
-        const detail = e.magnitude !== undefined ? ` (${e.magnitude})` : e.duration !== undefined ? ` (${e.duration})` : '';
+        const detail = e.magnitude !== undefined ? ` (${statusHeldText(e.statusId, e.magnitude)})` : e.duration !== undefined ? ` (${e.duration})` : '';
         const gained = statuses[e.statusId]?.positive ? 'gains' : 'afflicted with';
         lines.push({ key, text: `${name(e.combatantId)} ${gained} ${e.statusId}${detail}`, className: 'log-status' });
         break;
@@ -186,7 +189,7 @@ export function formatEvents(
         if (e.kind === 'duration') break; // the eventual StatusRemoved covers expiry
         const verb = e.kind === 'damage' ? 'takes' : 'heals';
         const className = STATUS_TICK_LOG_CLASS[e.statusId] ?? (e.kind === 'damage' ? 'log-damage' : 'log-heal');
-        lines.push({ key, text: `${name(e.combatantId)} ${verb} ${e.amount} from ${e.statusId}`, className });
+        lines.push({ key, text: e.blocked ? `${name(e.combatantId)} can't be healed by ${e.statusId}` : `${name(e.combatantId)} ${verb} ${e.amount} from ${e.statusId}`, className });
         break;
       }
       case 'StatusRemoved':

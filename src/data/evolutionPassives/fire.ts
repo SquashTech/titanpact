@@ -6,11 +6,11 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   rekindle: {
     id: 'rekindle',
     name: 'Rekindle',
-    description: 'When this hero lands a Fire attack on a Burning foe, that foe gains Burn 10%.',
+    description: 'When this hero lands a Fire attack on a Burning foe, that foe climbs a level of Burn.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' }, eventTargetHasStatus: 'Burn' },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 1 },
     },
   },
   // Crimson's Cinderveil.
@@ -51,11 +51,11 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   funeralPyre: {
     id: 'funeralPyre',
     name: 'Funeral Pyre',
-    description: 'When this hero stands at 1 HP instead of being knocked out, both active enemies gain Burn 20%.',
+    description: 'When this hero stands at 1 HP instead of being knocked out, both active enemies climb two levels of Burn.',
     reactive: {
       hook: 'Endured',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 20 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 2 },
     },
   },
   // Tinder's Headliner: Fire-Breather lights the whole far side, and this is what that is for.

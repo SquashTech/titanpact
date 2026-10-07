@@ -63,14 +63,14 @@ function afflict(state: CombatState, combatantId: string, statusId: string, magn
 
 // --- The pool itself ---
 
-test('water: the authored slate is the fifteen designed moves, Riptide\'s Evolution move, its signature, the two Shield cards, the two 2026-09-15 additions and Nautilus\'s Ink Cloud, all Water-typed', () => {
+test('water: the authored slate is the fifteen designed moves, Riptide\'s Evolution move, its signature, the two Shield cards, the two 2026-09-15 additions, Nautilus\'s Ink Cloud and Downpour\'s rider and reader, all Water-typed', () => {
   const water = Object.values(moves).filter((m) => m.type === 'Water' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     water.map((m) => m.id).sort(),
     [
-      'aquaSlice', 'cleansingRain', 'crest', 'deluge', 'engulf', 'highTide', 'inkCloud', 'maelstrom', 'oasis', 'refresh',
-      'seawall', 'shockBubble', 'siphon', 'splash', 'tideGuard', 'torrent', 'tsunami', 'undercurrent', 'undertow', 'washAway',
-      'waveShred',
+      'aquaSlice', 'cleansingRain', 'crest', 'deluge', 'drench', 'engulf', 'highTide', 'inkCloud', 'maelstrom', 'oasis',
+      'rainfall', 'refresh', 'seawall', 'shockBubble', 'siphon', 'splash', 'tideGuard', 'torrent', 'tsunami', 'undercurrent',
+      'undertow', 'washAway', 'waveShred',
     ]
   );
 });
@@ -310,16 +310,18 @@ test('water: neither Water hero starts with a move it cannot pay for, or has a s
 test('water: Lizard Rush damages one enemy and mends BOTH allies — the rider resolves against the caster, not the move target', () => {
   const state = withDeepPools(waterFixture(730));
   const before = state.combatants.b1.currentHp;
-  const { state: next } = resolveRound(
+  const { state: next, events } = resolveRound(
     state,
     [{ kind: 'move', combatantId: 'a1', moveId: 'lizardRush', declaredTarget: 'b1' }],
     config
   );
+  // Read off the landings: a short Renew can be spent by the round's end.
+  const renewed = new Set(events.filter((e) => e.type === 'StatusApplied' && e.statusId === 'Renew').map((e) => (e.type === 'StatusApplied' ? e.combatantId : '')));
 
   assert.ok(next.combatants.b1.currentHp < before, 'the damage body still lands on the declared enemy');
-  assert.ok(next.combatants.a1.statuses.Renew, 'the caster is an ally of itself');
-  assert.ok(next.combatants.a2.statuses.Renew, 'and so is its partner');
-  assert.strictEqual(next.combatants.b1.statuses.Renew, undefined, 'the enemy it hit gets nothing');
+  assert.ok(renewed.has('a1'), 'the caster is an ally of itself');
+  assert.ok(renewed.has('a2'), 'and so is its partner');
+  assert.ok(!renewed.has('b1'), 'the enemy it hit gets nothing');
 });
 
 test('water: an unchanced bothAllies rider draws no RNG — same rngState as the same hit without one', () => {

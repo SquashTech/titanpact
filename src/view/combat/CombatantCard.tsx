@@ -17,7 +17,7 @@ import { StatusDetailOverlay } from './StatusDetailOverlay';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeFx } from './TypeFx';
 import { BlessingMark } from '../shared/BlessingMark';
-import { statusAmountText } from '../shared/statusFacts';
+import { statusHeldText } from '../shared/statusFacts';
 
 export interface Popup {
   key: number;
@@ -172,11 +172,11 @@ function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspe
     <span
       className={`status-badge${n !== undefined ? ' status-badge-has-count' : ''}${instance.statusId === 'Conduct' ? ' status-badge-conduct' : ''}`}
       style={{ color, background: statusTint(instance.statusId, 0.16), borderColor: statusTint(instance.statusId, 0.55) }}
-      title={`${instance.statusId}${n !== undefined ? ` ${statusAmountText(instance.statusId, n)}` : ''} — hold for details`}
+      title={`${instance.statusId}${n !== undefined ? ` ${statusHeldText(instance.statusId, n)}` : ''} — hold for details`}
       {...longPress}
     >
       <StatusGlyph statusId={instance.statusId} />
-      {n !== undefined && <span className="status-badge-count">{instance.magnitude !== undefined ? statusAmountText(instance.statusId, n) : n}</span>}
+      {n !== undefined && <span className="status-badge-count">{n}</span>}
       {instance.statusId === 'Poison' && <PoisonPips duration={instance.duration} />}
     </span>
   );

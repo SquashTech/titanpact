@@ -21,7 +21,7 @@ import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import { getTypeColor } from './typeColors';
-import { statusAmountText } from '../shared/statusFacts';
+import { statusHeldText } from '../shared/statusFacts';
 import { cinematicEntranceFor, dramaticEntranceFor, type CinematicEntrance } from '../shared/entrances';
 import { WARDEN_ARRIVAL_LINE, isWardenCombatant } from '../../run/wardens';
 import { moveKindGlyph } from '../shared/MoveTile';
@@ -395,7 +395,9 @@ export function buildBeats(
           hp.set(next.combatantId, cur);
           source(next.statusId);
           clauses.push(
-            STATUS_TICK_BANNER[next.statusId]?.(name(next.combatantId), next.amount) ??
+            next.blocked
+              ? `${name(next.combatantId)} can't be healed`
+              : STATUS_TICK_BANNER[next.statusId]?.(name(next.combatantId), next.amount) ??
               `${name(next.combatantId)} ${next.kind === 'damage' ? 'takes' : 'recovers'} ${next.amount} from ${next.statusId}`
           );
           // The tick's own HP change is counted by its amount above, not again below.
@@ -884,12 +886,23 @@ export function buildBeats(
       }
 
       case 'Healed': {
+        // A heal the field refused (Blood Moon): the beat is the refusal, not a +0.
+        if (e.blocked) {
+          const who = name(e.targetCombatantId);
+          push([e], `${who} can't be healed!`, [{ combatantId: e.targetCombatantId, text: 'No heal', className: 'popup-debuff' }], {
+            bannerLead: who,
+            bannerFocus: "can't be healed",
+            bannerFocusKind: 'debuff',
+          });
+          i++;
+          break;
+        }
         const applied: CombatEvent[] = [e];
         i++;
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
         // A heal on both allies is one payload: every consecutive plain heal folds into this beat.
         const heals: HealedEvent[] = [e];
-        while (!e.drain && events[i]?.type === 'Healed' && !(events[i] as HealedEvent).drain) {
+        while (!e.drain && events[i]?.type === 'Healed' && !(events[i] as HealedEvent).drain && !(events[i] as HealedEvent).blocked) {
           const more = events[i++] as HealedEvent;
           heals.push(more);
           applied.push(more);
@@ -962,7 +975,7 @@ export function buildBeats(
 
       case 'StatusApplied': {
         const targetName = name(e.combatantId);
-        const detail = e.magnitude !== undefined ? ` (${statusAmountText(e.statusId, e.magnitude)})` : e.duration !== undefined ? ` (${e.duration})` : '';
+        const detail = e.magnitude !== undefined ? ` (${statusHeldText(e.statusId, e.magnitude)})` : e.duration !== undefined ? ` (${e.duration})` : '';
         // Renew and Ambush are things a hero GAINS, and so is anything it puts on itself (Provoke);
         // only the rest are afflictions.
         const gained = statuses[e.statusId]?.positive || e.sourceCombatantId === e.combatantId;
@@ -1062,6 +1075,16 @@ export function buildBeats(
             fx: landing(next.combatantId),
           });
           i += 2;
+          break;
+        }
+        // A Rest putting out a Burn is the Rest's payload, so it reads.
+        if (e.reason === 'rest') {
+          push([e], `${name(e.combatantId)}'s ${e.statusId} goes out`, [{ combatantId: e.combatantId, text: `${e.statusId} out`, className: 'popup-status', glyph: e.statusId }], {
+            bannerLead: `${name(e.combatantId)}'s ${e.statusId}`,
+            bannerFocus: 'goes out',
+            bannerFocusKind: 'buff',
+          });
+          i++;
           break;
         }
         if (e.reason !== 'cleanse') {

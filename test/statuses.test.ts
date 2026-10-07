@@ -149,21 +149,20 @@ test('status: a frozen combatant with higher base Speed is outsped by a faster-a
 
 // --- Renew: the positive mirror of Burn ---
 
-test('status: Renew heals its percent of max HP the moment it lands, then at the end of each of the next 2 rounds, then it is gone', () => {
+test('status: Renew 3 is three heals of a tenth of max HP — one as it lands, one at each of the next two round ends, then gone', () => {
   const state = twoVTwoFixture(106);
   const maxHp = fixtureMaxHp('cinderKnight');
   const hurt = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentHp: 10 } } };
   const per = Math.ceil(maxHp * 0.1);
 
-  const landed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 10, holderMaxHp: maxHp });
+  const landed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 3, holderMaxHp: maxHp });
   assert.strictEqual(landed.state.combatants.a1.currentHp, 10 + per, 'healed on landing');
-  assert.strictEqual(landed.state.combatants.a1.statuses.Renew.duration, 2);
+  assert.strictEqual(landed.state.combatants.a1.statuses.Renew.magnitude, 2, 'the landing heal spent one');
   assert.ok(landed.events.some((e) => e.type === 'StatusTicked' && e.statusId === 'Renew' && e.kind === 'heal' && e.amount === per));
 
   const r1 = resolveRound(landed.state, [], config);
   assert.strictEqual(r1.state.combatants.a1.currentHp, 10 + 2 * per);
-  assert.strictEqual(r1.state.combatants.a1.statuses.Renew.magnitude, 10, 'no decay');
-  assert.strictEqual(r1.state.combatants.a1.statuses.Renew.duration, 1);
+  assert.strictEqual(r1.state.combatants.a1.statuses.Renew.magnitude, 1);
 
   const r2 = resolveRound(r1.state, [], config);
   assert.strictEqual(r2.state.combatants.a1.currentHp, 10 + 3 * per);
@@ -171,27 +170,26 @@ test('status: Renew heals its percent of max HP the moment it lands, then at the
   assert.ok(r2.events.some((e) => e.type === 'StatusRemoved' && e.statusId === 'Renew' && e.reason === 'expired'));
 });
 
-test('status: a second Renew adds to the pool and tops the clock back up; its landing heal is only what it added', () => {
+test('status: a second Renew adds its heals to the count, and its landing heal is one tenth whatever it adds', () => {
   const state = twoVTwoFixture(108);
   const maxHp = fixtureMaxHp('cinderKnight');
   const hurt = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentHp: 10 } } };
-  const first = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 10, holderMaxHp: maxHp });
-  const ticked = resolveRound(first.state, [], config).state; // duration 2 -> 1
+  const first = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 3, holderMaxHp: maxHp }); // 3 -> 2
+  const ticked = resolveRound(first.state, [], config).state; // 2 -> 1
   const before = ticked.combatants.a1.currentHp;
-  const second = applyStatus(ticked, 2, 'a1', statuses.Renew, { magnitude: 6, holderMaxHp: maxHp });
-  assert.strictEqual(second.state.combatants.a1.statuses.Renew.magnitude, 16);
-  assert.strictEqual(second.state.combatants.a1.statuses.Renew.duration, 2, 'refreshed to the longer');
-  assert.strictEqual(second.state.combatants.a1.currentHp, before + Math.ceil(maxHp * 0.06));
+  const second = applyStatus(ticked, 2, 'a1', statuses.Renew, { magnitude: 4, holderMaxHp: maxHp });
+  assert.strictEqual(second.state.combatants.a1.statuses.Renew.magnitude, 4, '1 + 4, less the heal that landed with it');
+  assert.strictEqual(second.state.combatants.a1.currentHp, before + Math.ceil(maxHp * 0.1));
 });
 
-
-test('status: Burn/Renew decay to 0 removes the status entirely', () => {
-  const state = twoVTwoFixture(107);
-  const burning = withStatus(state, 'b1', 'Burn', { magnitude: 1 }); // floor(1/2) = 0
-  const { state: next, events } = resolveRound(burning, [], config);
-
-  assert.strictEqual(hasStatus(next.combatants.b1, 'Burn'), false);
-  assert.ok(events.some((e) => e.type === 'StatusRemoved' && e.statusId === 'Burn' && e.reason === 'decay'));
+test('status: Renew 1 heals once as it lands and is never held', () => {
+  const state = twoVTwoFixture(109);
+  const maxHp = fixtureMaxHp('cinderKnight');
+  const hurt = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentHp: 10 } } };
+  const landed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 1, holderMaxHp: maxHp });
+  assert.strictEqual(landed.state.combatants.a1.currentHp, 10 + Math.ceil(maxHp * 0.1));
+  assert.strictEqual(hasStatus(landed.state.combatants.a1, 'Renew'), false);
+  assert.ok(landed.events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Renew'), 'it still lands, for what reads a Renew landing');
 });
 
 // --- Cleanse: always spares positive statuses ---
@@ -468,29 +466,40 @@ test('status: a Burn is a percent of max HP and lands at exactly the authored fi
   assert.strictEqual(cast('cinderKnight', 'moltenLash'), authored('moltenLash'));
 });
 
-test('status: a new Burn keeps the higher of the two — recasting refreshes, it never compounds', () => {
+test('status: each Burn climbs a level, and the ladder stops at Engulfed', () => {
   const state = twoVTwoFixture(705);
-  const once = applyStatus(state, 1, 'b1', statuses.Burn, { magnitude: 8 }).state;
-  const ticked = resolveRound(once, [], config).state; // 8 -> 4
-  assert.strictEqual(ticked.combatants.b1.statuses.Burn?.magnitude, 4);
-  const recast = applyStatus(ticked, 2, 'b1', statuses.Burn, { magnitude: 8 });
-  assert.strictEqual(recast.state.combatants.b1.statuses.Burn?.magnitude, 8, 'topped back up to 8, not 12');
-  const weaker = applyStatus(recast.state, 2, 'b1', statuses.Burn, { magnitude: 3 });
-  assert.strictEqual(weaker.state.combatants.b1.statuses.Burn?.magnitude, 8, 'a smaller Burn changes nothing');
+  const once = applyStatus(state, 1, 'b1', statuses.Burn, { magnitude: 1 }).state;
+  assert.strictEqual(once.combatants.b1.statuses.Burn?.magnitude, 1, 'Burning');
+  const twice = applyStatus(once, 1, 'b1', statuses.Burn, { magnitude: 1 }).state;
+  assert.strictEqual(twice.combatants.b1.statuses.Burn?.magnitude, 2, 'Badly Burned');
+  const over = applyStatus(twice, 1, 'b1', statuses.Burn, { magnitude: 2 });
+  assert.strictEqual(over.state.combatants.b1.statuses.Burn?.magnitude, 3, 'Engulfed, and no further');
+  assert.ok(over.events.some((e) => e.type === 'StatusApplied' && e.capped), 'the top rung says so');
+  assert.strictEqual(applyStatus(state, 1, 'b1', statuses.Burn, {}).state.combatants.b1.statuses.Burn?.magnitude, 1, 'a Burn authored bare is one level');
 });
 
-test('status: a Burn tick deals its percent of the HOLDER\'s max HP, then halves', () => {
-  let state = withStatus(twoVTwoFixture(704), 'b1', 'Burn', { magnitude: 10 });
+test("status: a Burn tick deals its level's share of the HOLDER's max HP — 5, 10, 25% — and never decays", () => {
   const maxHp = fixtureMaxHp('ironWarden');
-  const r = resolveRound(state, [], config);
-  const tick = r.events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Burn');
-  assert.ok(tick && tick.type === 'StatusTicked');
-  assert.strictEqual(tick.type === 'StatusTicked' ? tick.amount : 0, Math.ceil(maxHp * 0.1));
-  assert.strictEqual(r.state.combatants.b1.statuses.Burn?.magnitude, 5, 'halved as a percent');
-  state = r.state;
-  const r2 = resolveRound(state, [], config);
-  const tick2 = r2.events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Burn');
-  assert.strictEqual(tick2 && tick2.type === 'StatusTicked' ? tick2.amount : 0, Math.ceil(maxHp * 0.05));
+  for (const [level, share] of [[1, 0.05], [2, 0.1], [3, 0.25]] as const) {
+    const r = resolveRound(withStatus(twoVTwoFixture(704), 'b1', 'Burn', { magnitude: level }), [], config);
+    const tick = r.events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Burn');
+    assert.strictEqual(tick && tick.type === 'StatusTicked' ? tick.amount : 0, Math.ceil(maxHp * share), `level ${level}`);
+    assert.strictEqual(r.state.combatants.b1.statuses.Burn?.magnitude, level, 'it holds its level');
+  }
+});
+
+test('status: a Rest puts out a Burn — the turn is the price', () => {
+  const state = withStatus(twoVTwoFixture(706), 'a1', 'Burn', { magnitude: 3 });
+  const { state: next, events } = resolveRound(state, [{ kind: 'rest', combatantId: 'a1' }] as Action[], config);
+  assert.strictEqual(hasStatus(next.combatants.a1, 'Burn'), false);
+  assert.ok(events.some((e) => e.type === 'StatusRemoved' && e.statusId === 'Burn' && e.reason === 'rest'));
+  assert.ok(!events.some((e) => e.type === 'StatusTicked' && e.statusId === 'Burn' && e.combatantId === 'a1'), 'out before the round end could tick it');
+});
+
+test('status: a Rest leaves a status it does not put out', () => {
+  const state = withStatus(twoVTwoFixture(707), 'a1', 'Bleed', {});
+  const { state: next } = resolveRound(state, [{ kind: 'rest', combatantId: 'a1' }] as Action[], config);
+  assert.strictEqual(hasStatus(next.combatants.a1, 'Bleed'), true);
 });
 
 test('status: a DoT aimed at SELF is a cost — it lands at exactly the authored number', () => {
@@ -516,9 +525,8 @@ test('status: a DoT aimed at SELF is a cost — it lands at exactly the authored
   assert.strictEqual(applied.type === 'StatusApplied' ? applied.magnitude : null, authored.magnitude);
 });
 
-test('status: a HoT aimed at SELF is a benefit, so it still scales', () => {
-  // The self exemption is about SIGN, not about the target: Second Wind is the mirror of Volcanic
-  // Surge and must go through the formula (its percent × Revenant's Wisdom StatMult × Spirit STAB).
+test('status: a Renew lands as authored — the number is the heals, whoever casts it', () => {
+  // docs/status-ladders-and-fields.md §2: no Wisdom StatMult, no STAB on Renew any more.
   const state = deepMana(
     createFightState(
       703,
@@ -530,9 +538,7 @@ test('status: a HoT aimed at SELF is a benefit, so it still scales', () => {
   const applied = events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Renew');
   assert.ok(applied && applied.type === 'StatusApplied');
   const app = statusApplicationsOf(moves.secondWind).find((a) => a.statusId === 'Renew')!;
-  const expected = resolveStatusMagnitudeFor(app.magnitude, statuses.Renew, app, moves.secondWind, { stats: heroes.revenant.baseStats, types: heroes.revenant.types });
-  assert.notStrictEqual(expected, app.magnitude, 'the fixture must actually scale');
-  assert.strictEqual(applied.type === 'StatusApplied' ? applied.magnitude : null, expected);
+  assert.strictEqual(applied.type === 'StatusApplied' ? applied.magnitude : null, app.magnitude);
 });
 
 test('status: the formula is gated on the pipeline — a timer status is scaled by nothing', () => {
@@ -580,27 +586,27 @@ test('status: the sheet formula and the fight formula are the same formula', () 
 });
 
 test('status: a scaled rider is a BASE, so a low-stat caster lands LESS than the card authored', () => {
-  // Renew, a scaled HoT (Burn left the formula: a percent of max HP lands as authored).
-  const renew = statuses.Renew;
-  const refresh = moves.refresh;
-  const app = statusApplicationsOf(refresh).find((a) => a.statusId === 'Renew');
-  assert.ok(app?.magnitude != null, 'Refresh no longer carries a Renew magnitude');
+  // Shield, the one scaled pool left (Burn and Renew both land as authored).
+  const shield = statuses.Shield;
+  const tideGuard = moves.tideGuard;
+  const app = statusApplicationsOf(tideGuard).find((a) => a.statusId === 'Shield');
+  assert.ok(app?.magnitude != null, 'Tide Guard no longer carries a Shield magnitude');
 
-  const hot = { stats: { wisdom: 90 }, types: ['Water'] as const };
-  const cold = { stats: { wisdom: 20 }, types: ['Stone'] as const };
-  assert.ok(resolveStatusMagnitudeFor(app!.magnitude, renew, app!, refresh, hot)! > app!.magnitude!, 'a high-Wisdom caster does not exceed the base');
-  assert.ok(resolveStatusMagnitudeFor(app!.magnitude, renew, app!, refresh, cold)! < app!.magnitude!, 'a low-Wisdom caster does not fall under the base');
+  const hot = { stats: { defense: 90 }, types: ['Water'] as const };
+  const cold = { stats: { defense: 20 }, types: ['Stone'] as const };
+  assert.ok(resolveStatusMagnitudeFor(app!.magnitude, shield, app!, tideGuard, hot)! > app!.magnitude!, 'a high-Defense caster does not exceed the base');
+  assert.ok(resolveStatusMagnitudeFor(app!.magnitude, shield, app!, tideGuard, cold)! < app!.magnitude!, 'a low-Defense caster does not fall under the base');
 });
 
 test('status: a caster carrying no stats reads the authored base, never a scaled guess', () => {
-  const refresh = moves.refresh;
-  const app = statusApplicationsOf(refresh).find((a) => a.statusId === 'Renew');
+  const tideGuard = moves.tideGuard;
+  const app = statusApplicationsOf(tideGuard).find((a) => a.statusId === 'Shield');
   assert.ok(app?.magnitude != null);
   // Types still count — STAB is knowable without a stat line — so this probes a non-Water caster.
-  assert.strictEqual(resolveStatusMagnitudeFor(app!.magnitude, statuses.Renew, app!, refresh, { stats: {}, types: ['Stone'] }), app!.magnitude);
+  assert.strictEqual(resolveStatusMagnitudeFor(app!.magnitude, statuses.Shield, app!, tideGuard, { stats: {}, types: ['Stone'] }), app!.magnitude);
 });
 
-test('status: a percent-of-max-HP status is never caster-scaled, even by a stat line far off par', () => {
+test('status: a level status is never caster-scaled, even by a stat line far off par', () => {
   const setAlight = moves.setAlight;
   const app = statusApplicationsOf(setAlight).find((a) => a.statusId === 'Burn')!;
   assert.strictEqual(resolveStatusMagnitudeFor(app.magnitude, statuses.Burn, app, setAlight, { stats: { intelligence: 150 }, types: ['Fire'] }), app.magnitude);

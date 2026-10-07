@@ -17,7 +17,7 @@ import { applyManaRegen } from '../src/engine/combat/manaRegen';
 import { tickEndOfRound, applyStatus } from '../src/engine/combat/statusEngine';
 import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import { orderActions, previewOrder, bracketEffect } from '../src/engine/combat/priority';
-import { resolveStatRatio } from '../src/engine/damage/damagePipeline';
+import { fieldTypeMultFloor, resolveStatRatio } from '../src/engine/damage/damagePipeline';
 import { getEffectiveStat, getMaxHp } from '../src/engine/state';
 import type { CombatState } from '../src/engine/state';
 
@@ -179,40 +179,26 @@ test('fieldEffects: casting magicCloak again while it is already active does not
 
 // --- Scorched Land: Burn decays a quarter as fast ---
 
-test('fieldEffects: Scorched Land slows Burn\'s end-of-round decay to a quarter; normally it halves', () => {
+test('fieldEffects: under Scorched Land every Burn lands one level higher; with none up it climbs one', () => {
   const built = twoVTwoFixture(410);
-  const burned = applyStatus(built, 1, 'a1', statuses.Burn, { magnitude: 20 }).state;
-  const maxHpOf = (id: string) => getMaxHp(heroes[burned.combatants[id].heroId], burned.combatants[id]);
-
-  const normalTick = tickEndOfRound(burned, 1, statuses, fieldEffects, maxHpOf);
-  assert.strictEqual(normalTick.state.combatants.a1.statuses.Burn?.magnitude, 10); // halved as usual
-  assert.ok(normalTick.events.some((e) => e.type === 'StatusTicked' && e.statusId === 'Burn' && e.newMagnitude === 10));
-
-  const scorched = { ...burned, activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
-  const scorchedTick = tickEndOfRound(scorched, 1, statuses, fieldEffects, maxHpOf);
-  assert.strictEqual(scorchedTick.state.combatants.a1.statuses.Burn?.magnitude, 15); // three quarters kept, not half
-  const tickEvent = scorchedTick.events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Burn');
-  // The tick itself is untouched — the field moves the decay, never the damage (20% of the holder's max HP).
-  const amount = Math.ceil(maxHpOf('a1') * 0.2);
-  assert.ok(tickEvent && tickEvent.type === 'StatusTicked' && tickEvent.kind === 'damage' && tickEvent.amount === amount && tickEvent.newMagnitude === 15);
+  const plain = applyStatus(built, 1, 'a1', statuses.Burn, { magnitude: 1 }).state;
+  assert.strictEqual(plain.combatants.a1.statuses.Burn?.magnitude, 1, 'Burning');
+  const scorched = applyStatus(built, 1, 'a1', statuses.Burn, { magnitude: 1, fieldEffect: fieldEffects.scorchedLand }).state;
+  assert.strictEqual(scorched.combatants.a1.statuses.Burn?.magnitude, 2, 'Badly Burned off one Burn');
+  const again = applyStatus(scorched, 1, 'a1', statuses.Burn, { magnitude: 1, fieldEffect: fieldEffects.scorchedLand }).state;
+  assert.strictEqual(again.combatants.a1.statuses.Burn?.magnitude, 3, 'Engulfed off the second');
 });
 
-test('fieldEffects: Scorched Land holds Burn near its magnitude for five rounds, then halving resumes', () => {
+test('fieldEffects: a move cast under Scorched Land lands its Burn a level higher, end to end', () => {
   const built = twoVTwoFixture(411);
-  // A Burn 20% that barely fades: 20 -> 15 -> 11 -> 8 -> 6 -> 4 across the field's whole window.
-  const scorchedCurve = [15, 11, 8, 6, 4];
-  let state = applyStatus(built, 1, 'b1', statuses.Burn, { magnitude: 20 }).state;
-  state = { ...state, activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
-
-  assert.strictEqual(scorchedCurve.length, FIELD_EFFECT_DURATION_ROUNDS);
-  for (let i = 0; i < FIELD_EFFECT_DURATION_ROUNDS; i++) {
-    state = resolveRound(state, [], config).state;
-    assert.strictEqual(state.combatants.b1.statuses.Burn?.magnitude, scorchedCurve[i], `quartered decay after round ${i + 1}`);
-  }
-  assert.strictEqual(state.activeFieldEffect, null); // expired exactly on schedule
-
-  state = resolveRound(state, [], config).state;
-  assert.strictEqual(state.combatants.b1.statuses.Burn?.magnitude, 2); // halving again
+  const state = {
+    ...built,
+    activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS },
+    combatants: { ...built.combatants, a1: { ...built.combatants.a1, currentMana: 999 } },
+  };
+  const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'moltenLash', declaredTarget: 'b1' }] as Action[], config);
+  const applied = events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Burn' && e.combatantId === 'b1');
+  assert.ok(applied && applied.type === 'StatusApplied' && applied.magnitude === 2, 'Molten Lash authors one level; the field adds one');
 });
 
 // --- Stasis Bubble: reverse Speed order within a shared priority bracket ---
@@ -278,15 +264,16 @@ test('fieldEffects: Sanctuary — a heal actually lands before a same-bracket da
 
 const verdant = (state: CombatState): CombatState => ({ ...state, activeFieldEffect: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } });
 
-test('fieldEffects: under Verdant Earth a Renew tick heals twice its percent', () => {
+test('fieldEffects: under Verdant Earth a Renew tick heals twice its tenth', () => {
   const base = twoVTwoFixture(430);
   const maxHp = getMaxHp(heroes.cinderKnight, base.combatants.a1);
   const hurt = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 10 } } };
-  const renewed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 5, duration: 2 }).state;
+  // Applied with no holder max HP, so no landing heal: the round-end tick is all that is read.
+  const renewed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 2 }).state;
   const plain = resolveRound(renewed, [], config).state.combatants.a1.currentHp;
   const doubled = resolveRound(verdant(renewed), [], config).state.combatants.a1.currentHp;
-  assert.strictEqual(plain, 10 + Math.ceil(maxHp * 0.05));
-  assert.strictEqual(doubled, 10 + 2 * Math.ceil(maxHp * 0.05));
+  assert.strictEqual(plain, 10 + Math.ceil(maxHp * 0.1));
+  assert.strictEqual(doubled, 10 + 2 * Math.ceil(maxHp * 0.1));
 });
 
 test('fieldEffects: under Verdant Earth a Renew heal past max HP lands as Shield, and without it the excess is lost', () => {
@@ -310,8 +297,8 @@ test('fieldEffects: Verdant Earth also doubles the heal a Renew makes the moment
   const base = verdant(twoVTwoFixture(432));
   const maxHp = getMaxHp(heroes.cinderKnight, base.combatants.a1);
   const hurt = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 10 } } };
-  const landed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 5, holderMaxHp: maxHp, fieldEffect: fieldEffects.verdantEarth, statusDefs: statuses });
-  assert.strictEqual(landed.state.combatants.a1.currentHp, 10 + 2 * Math.ceil(maxHp * 0.05));
+  const landed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 2, holderMaxHp: maxHp, fieldEffect: fieldEffects.verdantEarth, statusDefs: statuses });
+  assert.strictEqual(landed.state.combatants.a1.currentHp, 10 + 2 * Math.ceil(maxHp * 0.1));
 });
 
 test('fieldEffects: Verdant Earth grants no stats any more — Attack and Intelligence read the same with Renew held', () => {
@@ -488,4 +475,116 @@ test('previewOrder + bracketEffect: under Stasis Bubble the slower is the favour
   const rested = previewOrder(stasis, heroes, ids, [{ kind: 'rest', combatantId: 'b1' }], moves, fieldEffects);
   assert.strictEqual(rested.entries[3].combatantId, 'b1');
   assert.strictEqual(bracketEffect(rested.entries, 3, rested.reversedSpeed), 'held');
+});
+
+// --- Blood Moon, Downpour, Bedrock (docs/status-ladders-and-fields.md §3–5) ---
+
+function underField<T extends CombatState>(state: T, fieldEffectId: string): T {
+  return { ...state, activeFieldEffect: { fieldEffectId, roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+}
+
+function withBleed(state: CombatState, id: string): CombatState {
+  const c = state.combatants[id];
+  return { ...state, combatants: { ...state.combatants, [id]: { ...c, statuses: { ...c.statuses, Bleed: { statusId: 'Bleed' } } } } };
+}
+
+test('fieldEffects: under Blood Moon a Bleeding hero is healed by nothing — a heal move, a Renew tick, a passive', () => {
+  const base = underField(twoVTwoFixture(470), 'bloodMoon');
+  const hurt = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 50, currentMana: 999 }, a2: { ...base.combatants.a2, currentMana: 999 } } };
+  const bleeding = withBleed(hurt, 'a1');
+  const renewed = applyStatus(bleeding, 1, 'a1', statuses.Renew, { magnitude: 3 }).state;
+  const { state: next, events } = resolveRound(renewed, [{ kind: 'move', combatantId: 'a2', moveId: 'refresh', declaredTarget: 'a1' }] as Action[], config);
+  const ticks = events.filter((e) => e.type === 'StatusTicked' && e.statusId === 'Renew' && e.combatantId === 'a1');
+  assert.ok(ticks.length > 0 && ticks.every((e) => e.type === 'StatusTicked' && e.blocked && e.amount === 0), 'every Renew heal refused');
+  const maxHp = getMaxHp(heroes.cinderKnight, next.combatants.a1);
+  const bled = Math.ceil(maxHp * 0.05);
+  assert.strictEqual(next.combatants.a1.currentHp, 50 - bled, 'only the Bleed tick moved the bar');
+});
+
+test('fieldEffects: under Blood Moon a hit on a Bleeding hero heals the attacker a quarter of the HP it removed', () => {
+  const base = underField(twoVTwoFixture(471), 'bloodMoon');
+  const state = withBleed({ ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 20, currentMana: 999 } } }, 'b1');
+  const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'moltenLash', declaredTarget: 'b1' }] as Action[], config);
+  const hit = events.find((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'a1' && e.targetCombatantId === 'b1');
+  const fed = events.find((e) => e.type === 'Healed' && e.targetCombatantId === 'a1' && e.drain);
+  assert.ok(hit && hit.type === 'DamageDealt' && fed && fed.type === 'Healed');
+  assert.strictEqual(fed.type === 'Healed' ? fed.amount : 0, Math.round((hit.type === 'DamageDealt' ? hit.amount : 0) * 0.25));
+
+  const clean = resolveRound(underField(twoVTwoFixture(471), 'bloodMoon'), [{ kind: 'move', combatantId: 'a1', moveId: 'moltenLash', declaredTarget: 'b1' }] as Action[], config);
+  assert.ok(!clean.events.some((e) => e.type === 'Healed'), 'no Bleed, no feed');
+});
+
+test('fieldEffects: under Blood Moon a Bleeding attacker feeds on nothing', () => {
+  const base = underField(twoVTwoFixture(472), 'bloodMoon');
+  const state = withBleed(withBleed({ ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 20, currentMana: 999 } } }, 'b1'), 'a1');
+  const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'moltenLash', declaredTarget: 'b1' }] as Action[], config);
+  assert.ok(!events.some((e) => e.type === 'Healed' && e.targetCombatantId === 'a1'));
+});
+
+test('fieldEffects: under Downpour a Water attack on a Nature hero lands at ×1, not resisted', () => {
+  const state = createFightState(
+    473,
+    [{ combatantId: 'a1', heroId: 'tidecaller', side: 'A' }],
+    [{ combatantId: 'b1', heroId: 'wildOracle', side: 'B' }]
+  );
+  const deep = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentMana: 999 } } };
+  const read = (s: CombatState) => {
+    const { events } = resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'splash', declaredTarget: 'b1' }] as Action[], config);
+    const hit = events.find((e) => e.type === 'DamageDealt');
+    return hit && hit.type === 'DamageDealt' ? hit.typeMult : NaN;
+  };
+  assert.ok(read(deep) < 1, 'the fixture must be a resisted matchup');
+  assert.strictEqual(read(underField(deep, 'downpour')), 1);
+});
+
+test('fieldEffects: Downpour lifts only Water and Frost, and never lowers a super-effective hit', () => {
+  const ctx = (id: string | null) => ({ active: id ? { fieldEffectId: id, roundsRemaining: 5 } : null, defs: fieldEffects });
+  assert.strictEqual(fieldTypeMultFloor('Water', ctx('downpour')), 1);
+  assert.strictEqual(fieldTypeMultFloor('Frost', ctx('downpour')), 1);
+  assert.strictEqual(fieldTypeMultFloor('Fire', ctx('downpour')), 0);
+  assert.strictEqual(fieldTypeMultFloor('Water', ctx(null)), 0);
+});
+
+test('fieldEffects: under Bedrock a physical hit swings with Defense when Defense is the higher', () => {
+  const built = twoVTwoFixture(474);
+  const attacker = built.combatants.b1; // Iron Warden: Defense well above Attack
+  const defender = built.combatants.a1;
+  const hero = heroes[attacker.heroId];
+  assert.ok(getEffectiveStat(hero, attacker, 'defense') > getEffectiveStat(hero, attacker, 'attack'), 'the fixture must be a wall');
+  const plain = resolveStatRatio('physical', hero, attacker, heroes[defender.heroId], defender, { active: null, defs: fieldEffects });
+  const bedrock = resolveStatRatio('physical', hero, attacker, heroes[defender.heroId], defender, {
+    active: { fieldEffectId: 'bedrock', roundsRemaining: 5 },
+    defs: fieldEffects,
+  });
+  const defStat = getEffectiveStat(heroes[defender.heroId], defender, 'defense');
+  assert.strictEqual(plain, getEffectiveStat(hero, attacker, 'attack') / defStat);
+  assert.strictEqual(bedrock, getEffectiveStat(hero, attacker, 'defense') / defStat);
+  const magical = resolveStatRatio('magical', hero, attacker, heroes[defender.heroId], defender, { active: { fieldEffectId: 'bedrock', roundsRemaining: 5 }, defs: fieldEffects });
+  assert.strictEqual(magical, getEffectiveStat(hero, attacker, 'intelligence') / getEffectiveStat(heroes[defender.heroId], defender, 'wisdom'), 'a magical hit is untouched');
+});
+
+test('fieldEffects: every new field has its three routes — a Herald, an Early rider and a Mid reader, pooled together', () => {
+  for (const [fieldEffectId, rider, reader] of [
+    ['bloodMoon', 'gash', 'bloodFrenzy'],
+    ['downpour', 'rainfall', 'drench'],
+    ['bedrock', 'digIn', 'tectonicSlam'],
+  ] as const) {
+    assert.strictEqual(moves[rider].fieldEffectApplication, fieldEffectId);
+    assert.strictEqual(moves[rider].tier, 'early');
+    assert.strictEqual(moves[reader].conditionalPower?.requiresFieldEffect, fieldEffectId);
+    assert.ok(fieldHeraldPassiveFor[fieldEffects[fieldEffectId].flavorType as keyof typeof fieldHeraldPassiveFor], `${fieldEffectId} has no Herald`);
+  }
+});
+
+test('fieldEffects: each new rider sets its field when cast, end to end', () => {
+  for (const [moveId, fieldEffectId, target] of [
+    ['rainfall', 'downpour', 'a2'],
+    ['digIn', 'bedrock', undefined],
+    ['gash', 'bloodMoon', 'b1'],
+  ] as const) {
+    const built = twoVTwoFixture(480);
+    const state = { ...built, combatants: { ...built.combatants, a1: { ...built.combatants.a1, currentMana: 999 } } };
+    const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId, ...(target ? { declaredTarget: target } : {}) }] as Action[], config);
+    assert.strictEqual(next.activeFieldEffect?.fieldEffectId, fieldEffectId, moveId);
+  }
 });

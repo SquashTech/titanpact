@@ -15,6 +15,7 @@ import { fieldHealMultiplier, resolveHealFor, type HealCaster } from '../../engi
 import { resolveStatusMagnitudeFor, scaleStatusMagnitude } from '../../engine/status/statusMagnitude';
 import {
   calcDamage,
+  fieldTypeMultFloor,
   hasStatReduction,
   resolveConditionalPowerMultiplier,
   resolveElementalForceBonus,
@@ -112,6 +113,7 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
   );
   const attackerTypes = effectiveTypes(attackerHero, attacker);
   const defenderTypes = effectiveTypes(defenderHero, defender);
+  const typeFloor = fieldTypeMultFloor(move.type, fieldEffectCtx);
 
   const roll = (variance: number) =>
     Math.round(
@@ -128,7 +130,8 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
         undefined,
         forceBonus,
         conditionalMult,
-        rolledBasePower
+        rolledBasePower,
+        typeFloor
       )
         .damage
     );
@@ -141,7 +144,7 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
     maxFraction: Math.min(1, max / maxHp),
     minFraction: Math.min(1, min / maxHp),
     hpFraction: Math.min(1, defender.currentHp / maxHp),
-    typeMult: resolveTypeMult(typeChart, move.type, defenderTypes),
+    typeMult: Math.max(typeFloor, resolveTypeMult(typeChart, move.type, defenderTypes)),
     ko: min >= defender.currentHp ? 'sure' : max >= defender.currentHp ? 'maybe' : null,
   };
 }

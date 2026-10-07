@@ -82,11 +82,11 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   warmSpring: {
     id: 'warmSpring',
     name: 'Warm Spring',
-    description: "At the end of each round, this hero's partner gains Renew 5%, up to 10%.",
+    description: "At the end of each round, this hero's partner gains Renew 1, up to Renew 2.",
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 5, maxMagnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 1, maxMagnitude: 2 },
     },
   },
 };

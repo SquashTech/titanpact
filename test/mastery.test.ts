@@ -46,6 +46,7 @@ import { classes } from '../src/data/classes';
 import { relics } from '../src/data/relics';
 import { passives } from '../src/data/passives';
 import { moves } from '../src/data/moves';
+import { statuses } from '../src/data/statuses';
 import { CHAMPION_IDS } from '../src/data/enemies';
 import { TYPES } from '../src/data/typechart';
 import { locations } from '../src/data/locations';
@@ -261,6 +262,8 @@ test('signature: a generated hero at its signatureLevel holds it — in the last
 function flatFigure(passive: PassiveDefinition): number | null {
   const effect = passive.reactive?.effect;
   if (!effect) return null;
+  // A ladder status (Burn) is sized by how high it may climb: its cap, or the ladder's top.
+  if (effect.kind === 'applyStatus' && statuses[effect.statusId]?.levels) return effect.maxMagnitude ?? statuses[effect.statusId].levels!.tickPercents.length;
   if (effect.kind === 'statDelta' || effect.kind === 'applyStatus') {
     const value = effect.kind === 'statDelta' ? effect.amount : effect.magnitude;
     return typeof value === 'number' ? Math.abs(value) : null;

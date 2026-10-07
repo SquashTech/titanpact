@@ -12,7 +12,7 @@ import { nextInt } from '../rng/seededRng';
 
 type StatusResult = { state: CombatState; events: CombatEvent[] };
 
-/** `decay: 'halve'` spelled as a retained share, so a field effect can move it without a second code path. */
+/** `decay: 'halve'` as a retained share. */
 const DEFAULT_DECAY_RETAIN = 0.5;
 
 function setStatus(state: CombatState, combatantId: string, statusId: StatusId, instance: StatusInstance): CombatState {
@@ -90,9 +90,40 @@ export interface StatusApplyParams {
 }
 
 /**
- * A HoT's heal, the one path for its on-landing tick and its round-end ticks: `percent` of the
- * holder's max HP (or a flat amount), times the field's `amplifiesStatusHealing`, and — under a
- * field that says so — whatever passes max HP laid on as Shield (Verdant Earth, docs/blessings-and-statuses.md §5).
+ * True when the active field refuses this combatant any HP back (Blood Moon on a Bleeding hero,
+ * FieldEffectDefinition.blocksHealingWhile). Every heal site reads it: a heal move, a drain, a
+ * passive heal and a HoT tick. A potion is not a heal and does not.
+ */
+export function healBlocked(state: CombatState, combatantId: string, fieldEffect: FieldEffectDefinition | undefined): boolean {
+  const statusId = fieldEffect?.blocksHealingWhile;
+  const combatant = state.combatants[combatantId];
+  return !!statusId && !!combatant && hasStatus(combatant, statusId);
+}
+
+/** A level status's level as held — the magnitude, kept inside 1..top. */
+export function statusLevel(def: StatusDefinition, magnitude: number | undefined): number {
+  const top = def.levels?.tickPercents.length ?? 0;
+  return Math.max(1, Math.min(top, magnitude ?? 1));
+}
+
+/** What one tick of a dot deals: a level's percent (Burn), a flat fraction (Bleed), or the magnitude itself. */
+export function dotTickAmount(def: StatusDefinition, magnitude: number | undefined, maxHp: number): number {
+  if (def.levels) return Math.ceil((maxHp * def.levels.tickPercents[statusLevel(def, magnitude) - 1]) / 100);
+  if (magnitude === undefined && def.flatPercentOfMaxHp) return Math.ceil(maxHp * def.flatPercentOfMaxHp);
+  return magnitude ?? 0;
+}
+
+/** What one heal of a hot restores before any field: a charge's percent of max HP (Renew), or the magnitude itself. */
+export function hotTickAmount(def: StatusDefinition, magnitude: number | undefined, maxHp: number): number {
+  if (def.charges) return Math.ceil((maxHp * def.charges.tickPercent) / 100);
+  return magnitude ?? 0;
+}
+
+/**
+ * A HoT's heal, the one path for its on-landing tick and its round-end ticks: one charge's share of
+ * the holder's max HP (or a flat amount), times the field's `amplifiesStatusHealing`, and — under a
+ * field that says so — whatever passes max HP laid on as Shield (Verdant Earth). A holder the field
+ * refuses healing (Blood Moon) ticks for nothing, and the tick says so (`blocked`).
  */
 function healFromStatus(
   state: CombatState,
@@ -105,7 +136,10 @@ function healFromStatus(
   statusDefs: Record<string, StatusDefinition> | undefined,
   tick: { newMagnitude?: number; newDuration?: number }
 ): StatusResult {
-  const base = def.percentOfMaxHp ? Math.ceil((maxHp * magnitude) / 100) : magnitude;
+  if (healBlocked(state, combatantId, fieldEffect)) {
+    return { state, events: [{ type: 'StatusTicked', round, combatantId, statusId: def.id, kind: 'heal', amount: 0, blocked: true, ...tick }] };
+  }
+  const base = hotTickAmount(def, magnitude, maxHp);
   const amplified = fieldEffect?.amplifiesStatusHealing;
   const boosted = amplified?.statusIds.includes(def.id) ? Math.round(base * amplified.multiplier) : base;
   const events: CombatEvent[] = [{ type: 'StatusTicked', round, combatantId, statusId: def.id, kind: 'heal', amount: boosted, ...tick }];
@@ -132,13 +166,18 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
 
   const existing = combatant.statuses[def.id];
   let magnitude = params.magnitude;
-  let duration = params.duration ?? def.defaultDuration;
+  // A level status lands higher under a field that raises it (Scorched Land); a Burn authored without a level is one.
+  if (def.levels) {
+    const raised = params.fieldEffect?.raisesStatusLevel;
+    magnitude = (magnitude ?? 1) + (raised?.statusIds.includes(def.id) ? raised.by : 0);
+  }
+  let duration = params.duration;
   let capped = false;
 
   if (existing) {
     if (def.stacking === 'none') return { state, events: [] };
     if (def.stacking === 'additive') {
-      magnitude = (existing.magnitude ?? 0) + (params.magnitude ?? 0);
+      magnitude = (existing.magnitude ?? 0) + (magnitude ?? 0);
     } else if (def.stacking === 'takeHigher') {
       magnitude = params.magnitude !== undefined ? Math.max(existing.magnitude ?? 0, params.magnitude) : existing.magnitude;
       duration = params.duration !== undefined ? Math.max(existing.duration ?? 0, params.duration) : existing.duration;
@@ -159,6 +198,11 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
     magnitude = params.holderMaxHp;
     capped = true;
   }
+  // A ladder stops at its top rung, and says so as a Shield at its ceiling does.
+  if (def.levels && magnitude !== undefined && magnitude > def.levels.tickPercents.length) {
+    magnitude = def.levels.tickPercents.length;
+    capped = true;
+  }
 
   const nextState = setStatus(state, combatantId, def.id, { statusId: def.id, magnitude, duration });
   const applied: StatusResult = {
@@ -176,13 +220,22 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
       },
     ],
   };
-  // Renew heals the moment it lands, for what this application added — not the whole pool again.
+  // Renew's first heal lands with it and spends one charge; the last charge spent takes the status with it.
   if (def.ticksOnApply && def.pipeline === 'hot' && params.holderMaxHp !== undefined && (params.magnitude ?? 0) > 0) {
-    const healed = healFromStatus(applied.state, round, combatantId, def, params.magnitude!, params.holderMaxHp, params.fieldEffect, params.statusDefs, {
-      newMagnitude: magnitude,
-      newDuration: duration,
+    const left = (magnitude ?? 1) - 1;
+    const healed = healFromStatus(applied.state, round, combatantId, def, magnitude ?? 1, params.holderMaxHp, params.fieldEffect, params.statusDefs, {
+      newMagnitude: left,
     });
-    return { state: healed.state, events: [...applied.events, ...healed.events] };
+    let working = healed.state;
+    const events = [...applied.events, ...healed.events];
+    if (left <= 0) {
+      const rm = removeStatus(working, round, combatantId, def.id, 'expired');
+      working = rm.state;
+      events.push(...rm.events);
+    } else {
+      working = setStatus(working, combatantId, def.id, { ...working.combatants[combatantId].statuses[def.id], magnitude: left });
+    }
+    return { state: working, events };
   }
   return applied;
 }
@@ -273,34 +326,27 @@ export function tickEndOfRound(
           events.push({ type: 'StatusTicked', round, combatantId, statusId, kind: 'duration', amount: 0, newDuration });
           working = setStatus(working, combatantId, statusId, { ...instance, duration: newDuration });
         }
-      } else if (def.pipeline === 'hot' && instance.duration !== undefined) {
-        // A HoT on a clock (Renew): the whole pool every round, no decay, until the clock runs out.
-        const newDuration = instance.duration - 1;
+      } else if (def.pipeline === 'hot' && def.charges) {
+        // A charged HoT (Renew): one heal a round, one charge spent, gone with the last.
+        const left = (instance.magnitude ?? 0) - 1;
         const healed = healFromStatus(working, round, combatantId, def, instance.magnitude ?? 0, maxHpOf(combatantId), activeFieldEffectDef, statusDefs, {
-          newMagnitude: instance.magnitude,
-          newDuration,
+          newMagnitude: left,
         });
         working = healed.state;
         events.push(...healed.events);
-        if (newDuration <= 0) {
+        if (left <= 0) {
           const rm = removeStatus(working, round, combatantId, statusId, 'expired');
           working = rm.state;
           events.push(...rm.events);
         } else {
-          working = setStatus(working, combatantId, statusId, { ...working.combatants[combatantId].statuses[statusId], duration: newDuration });
+          working = setStatus(working, combatantId, statusId, { ...working.combatants[combatantId].statuses[statusId], magnitude: left });
         }
       } else if (def.pipeline === 'dot' || def.pipeline === 'hot') {
         const maxHp = maxHpOf(combatantId);
-        // A percent-of-max-HP magnitude (Burn) is read against the holder's max; Bleed's boolean carries its own fraction.
-        const magnitude = def.percentOfMaxHp
-          ? Math.ceil((maxHp * (instance.magnitude ?? 0)) / 100)
-          : (instance.magnitude ?? (def.flatPercentOfMaxHp ? Math.ceil(maxHp * def.flatPercentOfMaxHp) : 0));
+        const magnitude = def.pipeline === 'dot' ? dotTickAmount(def, instance.magnitude, maxHp) : hotTickAmount(def, instance.magnitude, maxHp);
         const delta = def.pipeline === 'dot' ? -magnitude : magnitude;
-        // Scorched Land slows decay only; the tick itself is untouched.
-        const slowed = activeFieldEffectDef?.slowsStatusDecay;
-        const retain = slowed?.statusIds.includes(statusId) ? slowed.retain : DEFAULT_DECAY_RETAIN;
         // undefined (not 0) for a non-decaying status, so the view never renders "Bleed 0".
-        const decayedMagnitude = def.decay === 'halve' ? Math.floor((instance.magnitude ?? 0) * retain) : undefined;
+        const decayedMagnitude = def.decay === 'halve' ? Math.floor((instance.magnitude ?? 0) * DEFAULT_DECAY_RETAIN) : undefined;
 
         events.push({
           type: 'StatusTicked',
@@ -315,7 +361,7 @@ export function tickEndOfRound(
         working = hpResult.state;
         events.push(...hpResult.events);
 
-        if (def.decay === 'halve' && retain < 1) {
+        if (def.decay === 'halve') {
           if ((decayedMagnitude ?? 0) <= 0) {
             const rm = removeStatus(working, round, combatantId, statusId, 'decay');
             working = rm.state;
@@ -348,6 +394,11 @@ export function tickEndOfRound(
   }
 
   return { state: working, events };
+}
+
+/** A Rest puts out every status with clearsOnRest (Burn, docs/status-ladders-and-fields.md §1). */
+export function clearOnRest(state: CombatState, round: number, combatantId: string, statusDefs: Record<string, StatusDefinition>): StatusResult {
+  return removeStatusesWhere(state, round, combatantId, statusDefs, (def) => def.clearsOnRest, 'rest');
 }
 
 /** docs/conditions.md §4: switching to bench clears every status with clearsOnSwitch. */

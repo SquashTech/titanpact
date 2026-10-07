@@ -16,11 +16,11 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   ashenPyre: {
     id: 'ashenPyre',
     name: 'Pyre',
-    description: 'When an enemy takes Poison damage, it gains Burn 10%.',
+    description: 'When an enemy takes Poison damage, it climbs a level of Burn.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Poison', kind: 'damage' } },
-      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Burn', magnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Burn', magnitude: 1 },
     },
   },
   // Nightshade's Penumbra: beside Shadowmeld's arrival Ambush, the loaded blow also goes first.
@@ -94,11 +94,11 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   bitterBrew: {
     id: 'bitterBrew',
     name: 'Bitter Brew',
-    description: 'When this hero afflicts Poison, its partner gains Renew 5%.',
+    description: 'When this hero afflicts Poison, its partner gains Renew 1.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 5 },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 1 },
     },
   },
 };

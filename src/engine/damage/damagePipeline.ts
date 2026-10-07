@@ -120,6 +120,15 @@ export function statKeysForMove(move: MoveDefinition): readonly [StatKey, StatKe
   return [move.offStatOverride ?? offKey, defKey] as const;
 }
 
+function activeFieldDefOf(ctx: FieldEffectContext | undefined) {
+  return ctx?.active ? ctx.defs[ctx.active.fieldEffectId] : undefined;
+}
+
+/** Downpour's floor: a move of an unresisted type never lands below ×1 on the chart; 0 (no floor) otherwise. */
+export function fieldTypeMultFloor(moveType: string, ctx: FieldEffectContext | undefined): number {
+  return activeFieldDefOf(ctx)?.unresistedTypes?.includes(moveType) ? 1 : 0;
+}
+
 /** Pipeline 1: the off/def ratio only. Nothing damage-shaped may enter here. */
 export function resolveStatRatio(
   category: DamageCategory,
@@ -133,7 +142,11 @@ export function resolveStatRatio(
 ): number {
   const [defaultOffKey, defKey] = statKeysForCategory(category);
   const offKey = offStatOverride ?? defaultOffKey;
-  const offStat = getEffectiveStat(attackerHero, attacker, offKey, fieldEffectCtx);
+  let offStat = getEffectiveStat(attackerHero, attacker, offKey, fieldEffectCtx);
+  // Bedrock: a physical hit swings with the higher of Attack and Defense — which stat is read, never a multiplier.
+  if (category === 'physical' && offStatOverride === undefined && activeFieldDefOf(fieldEffectCtx)?.physicalSwingsWithDefense) {
+    offStat = Math.max(offStat, getEffectiveStat(attackerHero, attacker, 'defense', fieldEffectCtx));
+  }
   const defStat = getEffectiveStat(defenderHero, defender, defKey, fieldEffectCtx);
   return offStat / defStat;
 }
@@ -169,10 +182,12 @@ export function calcDamage(
   basePowerBonus: number = 0,
   basePowerMultiplier: number = 1,
   /** This round's rolled BasePower (randomBasePower), substituted for the authored one before the multiplier and Force bonus. */
-  basePowerOverride?: number
+  basePowerOverride?: number,
+  /** The chart never lands below this (Downpour, fieldTypeMultFloor); 0 = no floor. */
+  typeMultFloor: number = 0
 ): DamageCalcResult {
   const stab = resolveStab(move.type, attackerTypes);
-  const typeMult = resolveTypeMult(typeChart, move.type, defenderTypes);
+  const typeMult = Math.max(typeMultFloor, resolveTypeMult(typeChart, move.type, defenderTypes));
   const crit = isCrit ? critMultiplier : 1;
   const multiplierTerm = resolveMultiplierTerm(modifiers, stackingPolicy);
 
@@ -201,7 +216,8 @@ export function rollDamage(
   basePowerBonus: number = 0,
   basePowerMultiplier: number = 1,
   /** Drawn OUTSIDE this function (state.ts resolveRandomBasePower), so it costs no RNG here. */
-  basePowerOverride?: number
+  basePowerOverride?: number,
+  typeMultFloor: number = 0
 ): RolledDamage {
   const varianceRoll = nextRange(rngState, VARIANCE_MIN, VARIANCE_MAX);
   const critRoll = nextFloat(varianceRoll.nextState);
@@ -220,7 +236,8 @@ export function rollDamage(
     PROVISIONAL_CRIT_MULTIPLIER,
     basePowerBonus,
     basePowerMultiplier,
-    basePowerOverride
+    basePowerOverride,
+    typeMultFloor
   );
 
   return { ...result, nextRngState: critRoll.nextState };

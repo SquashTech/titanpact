@@ -115,10 +115,13 @@ Magic Growth and Force of Nature, Light's Consecrate, Arcane's Mana Font and Mag
 | Field Effect | flavorType | Effect | Setter moves |
 | --- | --- | --- | --- |
 | Magical Surge | Arcane | Doubles MP Regen | `manaFont`, `magicCloak` (Glyph) |
-| Scorched Land | Fire | Burn keeps 3/4 of its value a round instead of half | `spreadingBlaze` (Brimstone) |
+| Scorched Land | Fire | Every Burn lands one level higher (2026-10-06; it was "keeps ¾ a round", `status-ladders-and-fields.md` §1) | `spreadingBlaze` (Brimstone) |
 | Stasis Field | Mind | Reverses same-bracket Speed order | `stasis` (Reverie), `distort` |
 | Sanctuary | Light | Heal-kind moves get +1 priority and heal ×1.5 (2026-09-15) | `consecrate` (Solace), `hallow` |
 | Verdant Earth | Nature | Renew heals ×2, and healing past max HP becomes Shield (2026-09-28; it was +Atk/+Int equal to Renew, `blessings-and-statuses.md` §5) | `magicGrowth`, `forceOfNature` (Sylva), `sow` |
+| Blood Moon | Beast | Bleeding heroes can't be healed; a hit on one heals the attacker 25% of the damage (2026-10-06, `status-ladders-and-fields.md` §3) | `gash` |
+| Downpour | Water | Water and Frost attacks never land below ×1 (§4) | `rainfall` |
+| Bedrock | Stone | Physical attacks hit with the higher of Attack and Defense (§5) | `digIn` |
 
 ### A field effect set by a PASSIVE (2026-09-01, Fire)
 

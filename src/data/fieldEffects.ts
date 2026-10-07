@@ -18,9 +18,9 @@ export const fieldEffects: Record<string, FieldEffectDefinition> = {
   scorchedLand: {
     id: 'scorchedLand',
     name: 'Scorched Land',
-    description: 'Burn keeps three quarters of its value each round instead of half.',
+    description: 'Every Burn lands one level higher.',
     flavorType: 'Fire',
-    slowsStatusDecay: { statusIds: ['Burn'], retain: 0.75 },
+    raisesStatusLevel: { statusIds: ['Burn'], by: 1 },
   },
   stasisBubble: {
     id: 'stasisBubble',
@@ -43,6 +43,29 @@ export const fieldEffects: Record<string, FieldEffectDefinition> = {
     description: 'Renew heals twice as much, and healing past max HP becomes Shield.',
     flavorType: 'Nature',
     amplifiesStatusHealing: { statusIds: ['Renew'], multiplier: 2, overflowToShield: true },
+  },
+  // docs/status-ladders-and-fields.md §3–5: a field that bends a status, a chart, or a stat read.
+  bloodMoon: {
+    id: 'bloodMoon',
+    name: 'Blood Moon',
+    description: 'Bleeding heroes can’t be healed, and a hit on a Bleeding hero heals the attacker a quarter of the damage dealt.',
+    flavorType: 'Beast',
+    blocksHealingWhile: 'Bleed',
+    lifestealAgainst: { statusId: 'Bleed', percent: 0.25 },
+  },
+  downpour: {
+    id: 'downpour',
+    name: 'Downpour',
+    description: 'Water and Frost attacks are never resisted — they always hit for at least ×1.',
+    flavorType: 'Water',
+    unresistedTypes: ['Water', 'Frost'],
+  },
+  bedrock: {
+    id: 'bedrock',
+    name: 'Bedrock',
+    description: 'Physical attacks hit with the higher of the attacker’s Attack and Defense.',
+    flavorType: 'Stone',
+    physicalSwingsWithDefense: true,
   },
   // The Titan's (docs/titan-eyes.md §10): set by the Eyes, never by a hero — no Herald, no rider,
   // no reader, so it is the one field with a single route. The fraction is the phase's clock and the

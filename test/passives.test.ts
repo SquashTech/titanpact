@@ -561,27 +561,27 @@ function natureFixture(seed: number) {
   );
 }
 
-test('passives: Restorative Toxin reads the Poison it just applied — Toxic Spores 10 pays Renew 5%', () => {
+test('passives: Restorative Toxin pays one Renew heal for the Poison it just applied', () => {
   const state = withPassive(natureFixture(360), 'a1', 'restorativeToxin');
-  const { state: next } = resolveRound(
+  const { state: next, events } = resolveRound(
     state,
     [{ kind: 'move', combatantId: 'a1', moveId: 'toxicSpores', declaredTarget: 'b1' } as Action],
     config
   );
+  assert.ok(events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Renew' && e.combatantId === 'a1' && e.magnitude === 1));
 
   assert.strictEqual(next.combatants.b1.statuses.Poison?.magnitude, 10);
-  // Half the TRIGGERING magnitude, not an authored flat (both are percents since Renew's pass), and a
-  // Renew no longer decays, so the pool still reads what it landed at after the round's tick.
-  assert.strictEqual(next.combatants.a1.statuses.Renew?.magnitude, 5);
+  // Renew 1 is one heal, spent as it lands (docs/status-ladders-and-fields.md §2): nothing is left held.
+  assert.ok(!hasStatus(next.combatants.a1, 'Renew'));
 });
 
-test('passives: Restorative Toxin scales with the Poison, so Blight 20 on both foes pays twice, stacking', () => {
+test('passives: Restorative Toxin pays once per Poison application, so Blight on both foes pays twice', () => {
   const state = withPassive(natureFixture(361), 'a1', 'restorativeToxin');
   const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'blight' } as Action], config);
 
   const renews = events.filter((e) => e.type === 'StatusApplied' && (e as any).statusId === 'Renew') as any[];
   assert.strictEqual(renews.length, 2, 'one firing per Poison application');
-  assert.deepStrictEqual(renews.map((r) => r.magnitude), [10, 20], 'Renew 10% twice, stacking additively');
+  assert.deepStrictEqual(renews.map((r) => r.magnitude), [1, 1], 'Renew 1 twice — each heals as it lands and is spent');
 });
 
 test('passives: Restorative Toxin is source-role — a Poison the holder RECEIVES pays nothing', () => {
@@ -648,10 +648,13 @@ test('passives: Nanites start the partner on Renew the round Patch arrives — t
       { combatantId: 'b2', heroId: 'tidecaller', side: 'B' },
     ]
   );
-  const { state: next } = resolveRound(withPassive(base, 'a3', 'nanites'), [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
-  // Renew no longer decays: the pool reads what Nanites authored after the round's tick.
-  assert.strictEqual(next.combatants.a2.statuses.Renew?.magnitude, (passives.nanites.reactive!.effect as { magnitude: number }).magnitude, 'the partner is on Renew');
-  assert.ok(!hasStatus(next.combatants.a3, 'Renew'), "the owner is not — 'ally' aims sideways");
+  const { events } = resolveRound(withPassive(base, 'a3', 'nanites'), [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
+  const renewed = events.filter((e) => e.type === 'StatusApplied' && e.statusId === 'Renew');
+  assert.deepStrictEqual(
+    renewed.map((e) => (e.type === 'StatusApplied' ? [e.combatantId, e.magnitude] : null)),
+    [['a2', (passives.nanites.reactive!.effect as { magnitude: number }).magnitude]],
+    "the partner is put on Renew, and the owner is not — 'ally' aims sideways"
+  );
 });
 
 test('passives: Bloodmeal pays Renew on the Bleed Vex applies, and nothing on a hit that misses the rider', () => {
@@ -670,10 +673,13 @@ test('passives: Bloodmeal pays Renew on the Bleed Vex applies, and nothing on a 
     'a1',
     'bloodmeal'
   );
-  // Dusk Blade's Bleed is guaranteed, so the feed is too; read after the round's tick, as Restorative Toxin is.
+  // Dusk Blade's Bleed is guaranteed, so the feed is too.
   const fed = resolveRound({ ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentMana: 999, currentHp: 50 } } } as CombatState, [{ kind: 'move', combatantId: 'a1', moveId: 'duskBlade', declaredTarget: 'b1' } as Action], config);
   assert.ok(hasStatus(fed.state.combatants.b1, 'Bleed'));
-  assert.strictEqual(fed.state.combatants.a1.statuses.Renew?.magnitude, (passives.bloodmeal.reactive!.effect as { magnitude: number }).magnitude, 'Renew landed and does not decay');
+  assert.ok(
+    fed.events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Renew' && e.combatantId === 'a1' && e.magnitude === (passives.bloodmeal.reactive!.effect as { magnitude: number }).magnitude),
+    'Renew landed on the feeder'
+  );
 });
 
 

@@ -381,7 +381,7 @@ function renewGrants(events: readonly CombatEvent[], id: string): number[] {
     .map((e) => e.magnitude ?? 0);
 }
 
-/** What Unstoppable Growth authors: a percent Renew since docs/blessings-and-statuses.md §4. */
+/** What Unstoppable Growth authors: a count of heals (docs/status-ladders-and-fields.md §2). */
 const GROWTH = (passives.unstoppableGrowth.reactive!.effect as { magnitude: number }).magnitude;
 
 test('unstoppableGrowth: arriving grants the hero itself its Renew, and nobody else', () => {
@@ -389,8 +389,7 @@ test('unstoppableGrowth: arriving grants the hero itself its Renew, and nobody e
   const result = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
 
   assert.deepStrictEqual(renewGrants(result.events, 'a3'), [GROWTH]);
-  assert.strictEqual(renewOf(result.state, 'a3'), GROWTH, 'a Renew no longer decays as it pays');
-  assert.strictEqual(result.state.combatants.a3.statuses.Renew?.duration, 1, 'one round-end tick spent');
+  assert.strictEqual(renewOf(result.state, 'a3'), GROWTH - 2, 'one heal spent landing, one at the round end');
   assert.strictEqual(renewOf(result.state, 'a2'), 0, 'the partner is not part of this');
   assert.strictEqual(renewOf(result.state, 'b1'), 0);
 });
@@ -398,7 +397,7 @@ test('unstoppableGrowth: arriving grants the hero itself its Renew, and nobody e
 test('unstoppableGrowth: the opening lead counts as arriving', () => {
   const state = withPassive(fixture(21), 'a1', 'unstoppableGrowth');
   const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects);
-  assert.strictEqual(renewOf(opened.state, 'a1'), GROWTH);
+  assert.strictEqual(renewOf(opened.state, 'a1'), GROWTH - 1, 'it heals as it lands');
 });
 
 test('unstoppableGrowth: a pivot out and back re-seeds it once the last one has run out', () => {
@@ -412,7 +411,7 @@ test('unstoppableGrowth: a pivot out and back re-seeds it once the last one has 
 });
 
 test('unstoppableGrowth: a passive-applied HoT is FLAT — it is not run through the healing formula', () => {
-  // cinderKnight and sentinel hold different Wisdom and must both read the authored percent.
+  // cinderKnight and sentinel hold different Wisdom and must both read the authored count.
   assert.notStrictEqual(
     heroes.cinderKnight.baseStats.wisdom,
     heroes.sentinel.baseStats.wisdom,
@@ -425,7 +424,7 @@ test('unstoppableGrowth: a passive-applied HoT is FLAT — it is not run through
     config
   );
 
-  assert.strictEqual(renewOf(lead.state, 'a1'), GROWTH);
+  assert.strictEqual(renewOf(lead.state, 'a1'), GROWTH - 1);
   assert.deepStrictEqual(renewGrants(arrival.events, 'a3'), [GROWTH]);
 });
 

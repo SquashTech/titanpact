@@ -6,9 +6,21 @@
 import type { StatusDefinition } from '../../engine/content';
 import { statuses } from '../../data/statuses';
 
-/** A status's number as the player reads it: a percent of max HP (Burn) wears its %. */
+/** What a rider ADDS, as the player reads it: a level status climbs (Burn +1), anything else is its number (Renew 3). */
 export function statusAmountText(statusId: string, amount: number): string {
-  return statuses[statusId]?.percentOfMaxHp ? `${amount}%` : `${amount}`;
+  return statuses[statusId]?.levels ? `+${amount}` : `${amount}`;
+}
+
+/** What a hero HOLDS, as the player reads it: a level status by its level's name (Badly Burned), anything else its number. */
+export function statusHeldText(statusId: string, amount: number): string {
+  const levels = statuses[statusId]?.levels;
+  if (!levels) return `${amount}`;
+  return levels.names[Math.max(1, Math.min(levels.names.length, amount)) - 1];
+}
+
+/** A ladder's rungs as one line: `Burning 5% · Badly Burned 10% · Engulfed 25%`. */
+function levelsText(levels: NonNullable<StatusDefinition['levels']>): string {
+  return levels.names.map((name, i) => `${name} ${levels.tickPercents[i]}%`).join(' · ');
 }
 
 export interface StatusFact {
@@ -26,8 +38,8 @@ function tickText(def: StatusDefinition): string | null {
   if (def.flatPercentOfMaxHp != null) return `Deals ${Math.round(def.flatPercentOfMaxHp * 100)}% of max HP`;
   if (def.shape === 'timer') return 'Counts down — at 0, deals its magnitude in % of max HP';
   if (!def.ticksAtEndOfRound) return null;
-  if (def.pipeline === 'dot') return def.percentOfMaxHp ? 'Deals its magnitude in % of max HP' : 'Deals its magnitude';
-  if (def.pipeline === 'hot') return def.percentOfMaxHp ? 'Heals its magnitude in % of max HP' : 'Heals its magnitude';
+  if (def.pipeline === 'dot') return def.levels ? `Deals by level: ${levelsText(def.levels)} of max HP` : 'Deals its magnitude';
+  if (def.pipeline === 'hot') return def.charges ? `Heals ${def.charges.tickPercent}% of max HP and spends one` : 'Heals its magnitude';
   if (def.shape === 'duration') return 'Counts down one round';
   return null;
 }
@@ -35,6 +47,8 @@ function tickText(def: StatusDefinition): string | null {
 function stackingText(def: StatusDefinition): string {
   switch (def.stacking) {
     case 'additive':
+      if (def.levels) return `Climbs a level, up to ${def.levels.names[def.levels.names.length - 1]}`;
+      if (def.charges) return 'Adds its heals to what is there';
       return def.pipeline === 'shield' ? "Adds to what is there, up to this hero's max HP" : 'Adds to what is there';
     case 'takeHigher':
       return 'Keeps the higher';
@@ -50,9 +64,9 @@ function stackingText(def: StatusDefinition): string {
 export function statusFacts(def: StatusDefinition): StatusFact[] {
   const rows: StatusFact[] = [];
   const tick = tickText(def);
-  if (def.ticksOnApply) rows.push({ label: 'Lands', text: 'Heals its magnitude in % of max HP at once' });
+  if (def.ticksOnApply && def.charges) rows.push({ label: 'Lands', text: `Heals ${def.charges.tickPercent}% of max HP at once, spending one` });
   if (tick) rows.push({ label: 'Each round', text: tick });
-  if (def.defaultDuration) rows.push({ label: 'Lasts', text: `${def.defaultDuration} rounds` });
+  if (def.charges) rows.push({ label: 'Lasts', text: 'One heal for each point' });
   if (def.shape === 'magnitude' && def.decay === 'halve') rows.push({ label: 'Then', text: 'Halves' });
   if (def.blocksIncomingMoves) rows.push({ label: 'Guard', text: 'Every enemy move aimed here turns away — an ally’s still lands' });
   // The one thing a player has to learn once about a Shield: what goes through it (docs/shield.md §3.2).
@@ -76,6 +90,7 @@ export function statusFacts(def: StatusDefinition): StatusFact[] {
   rows.push({ label: 'Reapplied', text: stackingText(def) });
   if (def.clearsAtEndOfRound) rows.push({ label: 'Ends', text: 'When this round ends' });
   if (def.activeOnly) rows.push({ label: 'Benched', text: 'The clock pauses' });
+  if (def.clearsOnRest) rows.push({ label: 'Rest', text: 'Puts it out' });
   rows.push({ label: 'Switch', text: def.clearsOnSwitch ? 'Clears it' : 'Keeps it' });
   rows.push({ label: 'Cleanse', text: def.positive ? 'Cannot touch it' : 'Removes it' });
   return rows;
@@ -101,6 +116,7 @@ export function statusFactsLine(def: StatusDefinition): string {
   // A control status carries its rule in prose alone (Freeze, Daze), so the sentence stands in.
   if (parts.length === 0 && def.description) return def.description;
   if (def.clearsAtEndOfRound) parts.push('ends with the round');
+  if (def.clearsOnRest) parts.push('Rest clears');
   parts.push(def.clearsOnSwitch ? 'switch clears' : 'survives switching');
   if (def.positive) parts.push('cleanse-proof');
   return parts.join(' · ');

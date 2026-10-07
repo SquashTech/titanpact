@@ -110,7 +110,7 @@ export const titanspawnLines: readonly TitanspawnLine[] = [
 
   line('Water', 'speed', ['Puddling', 'Rillfin', 'Breakwater'],
     [st(64, 30, 32, 32, 36, 38, 40, 10), st(120, 50, 55, 65, 80, 90, 60, 12), st(200, 75, 95, 105, 100, 125, 90, 15)],
-    [['splash', 'tideGuard', 'refresh'], ['torrent', 'crest', 'deluge', 'oasis'], ['tsunami', 'maelstrom', 'seawall', 'waveShred']],
+    [['splash', 'tideGuard', 'rainfall'], ['torrent', 'crest', 'deluge', 'oasis'], ['tsunami', 'maelstrom', 'seawall', 'waveShred']],
     { hp: 'B', attack: 'E', defense: 'C', intelligence: 'B', wisdom: 'A', speed: 'S', manaPool: 'A' }),
 
   line('Frost', 'hp', ['Sleetling', 'Hoarfang', 'Frostheave'],
@@ -125,7 +125,7 @@ export const titanspawnLines: readonly TitanspawnLine[] = [
 
   line('Stone', 'defense', ['Pebbling', 'Slabback', 'Monolith'],
     [st(72, 32, 38, 30, 32, 32, 40, 10), st(180, 60, 100, 30, 65, 55, 55, 12), st(300, 90, 160, 40, 90, 70, 80, 15)],
-    [['rockToss', 'tremor', 'provoke'], ['faultLine', 'bodyBlow', 'bastion', 'bodyguard'], ['boulderSlam', 'bodyCrush', 'rampart', 'stoneheart']],
+    [['rockToss', 'provoke', 'digIn'], ['faultLine', 'bodyBlow', 'bastion', 'bodyguard'], ['boulderSlam', 'bodyCrush', 'rampart', 'stoneheart']],
     { hp: 'S', attack: 'B', defense: 'S', intelligence: 'F', wisdom: 'A', speed: 'C', manaPool: 'B' }),
 
   line('Nature', 'wisdom', ['Sproutling', 'Bramblehide', 'Wildwood'],
@@ -171,7 +171,7 @@ export const titanspawnLines: readonly TitanspawnLine[] = [
 
   line('Beast', 'hp', ['Cubling', 'Ravager', 'Behemoth'],
     [st(76, 36, 32, 30, 30, 34, 40, 10), st(170, 95, 55, 30, 55, 80, 55, 12), st(380, 140, 100, 30, 60, 80, 80, 15)],
-    [['claw', 'venomBite', 'prowl'], ['lacerate', 'maul', 'thrash', 'bloodTrail'], ['eviscerate', 'apexPredator', 'animalSpirit', 'rendingLeap']],
+    [['claw', 'venomBite', 'gash'], ['lacerate', 'maul', 'thrash', 'bloodTrail'], ['eviscerate', 'apexPredator', 'animalSpirit', 'rendingLeap']],
     { hp: 'S', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'C', speed: 'A', manaPool: 'B' }),
 ];
 

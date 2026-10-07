@@ -29,6 +29,8 @@ import { replacementCandidates } from '../engine/combat/switching';
 import { resolveTypeMult, TYPE_MULT_FLOOR, type TypeChart } from '../engine/damage/typeMult';
 import { kitForRound } from './metamorphic';
 import { passives as passiveCatalog } from '../data/passives';
+import { fieldEffects } from '../data/fieldEffects';
+import { fieldTypeMultFloor } from '../engine/damage/damagePipeline';
 
 export interface AiContext {
   /** Every combatant on the board, both sides. */
@@ -242,7 +244,8 @@ function isInertOnBoard(state: CombatState, casterId: string, move: MoveDefiniti
 function effectivenessAgainst(state: CombatState, ctx: AiContext, move: MoveDefinition, defenderId: string): number {
   const defender = state.combatants[defenderId];
   if (!defender) return 1;
-  return resolveTypeMult(ctx.typeChart, move.type, effectiveTypes(ctx.heroes[defender.heroId], defender));
+  const floor = fieldTypeMultFloor(move.type, { active: state.activeFieldEffect, defs: fieldEffects });
+  return Math.max(floor, resolveTypeMult(ctx.typeChart, move.type, effectiveTypes(ctx.heroes[defender.heroId], defender)));
 }
 
 function bestEffectiveness(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext): number {
@@ -366,6 +369,14 @@ function pickTarget(state: CombatState, casterId: string, move: MoveDefinition, 
   return pickOne(tied, random);
 }
 
+/** The combatant holds a Rest-cleared ladder status (Burn) at its top level. */
+export function atTopOfRestableLadder(combatant: CombatState['combatants'][string], statusDefs: Record<string, StatusDefinition>): boolean {
+  return Object.values(combatant.statuses).some((instance) => {
+    const def = statusDefs[instance.statusId];
+    return !!def?.clearsOnRest && !!def.levels && (instance.magnitude ?? 0) >= def.levels.tickPercents.length;
+  });
+}
+
 /**
  * Declared against the pre-round snapshot like the player's. A cascade of
  * narrowings — affordable -> has a legal target -> not inert — each falling
@@ -383,6 +394,8 @@ export function pickAiAction(state: CombatState, combatantId: string, ctx: AiCon
   if (!hasAffordableMoveInFight(state, combatantId, moveIds, ctx.moves, ctx.heroes)) {
     return { kind: 'rest', combatantId };
   }
+  // Engulfed is a quarter of max HP a round: Rest puts it out, and that is worth the turn.
+  if (atTopOfRestableLadder(combatant, ctx.statuses)) return { kind: 'rest', combatantId };
 
   const affordable = moveIds.filter((id) => isMoveUsable(state, combatantId, moveOf(id)) && combatant.currentMana >= resolveManaCost(state, combatantId, moveOf(id), ctx.heroes));
   // The one HARD filter in the cascade — every narrowing below it falls back, this one cannot.

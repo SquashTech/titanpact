@@ -288,9 +288,9 @@ test('beast: Rampage bills a quarter of the damage it actually dealt back to its
 
 // --- The slate's own shape ---
 
-test('beast: the slate is fifteen moves plus the four 2026-09-15 additions and Primal Roar (2026-09-29), and every status it names exists', () => {
+test('beast: the slate is fifteen moves plus the four 2026-09-15 additions, Primal Roar (2026-09-29) and Blood Moon\'s rider and reader, and every status it names exists', () => {
   const beast = Object.values(moves).filter((m) => m.type === 'Beast' && !signatureMoves[m.id]);
-  assert.strictEqual(beast.length, 20);
+  assert.strictEqual(beast.length, 22);
   for (const move of beast) {
     for (const app of statusApplicationsOf(move)) {
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
@@ -298,10 +298,10 @@ test('beast: the slate is fifteen moves plus the four 2026-09-15 additions and P
   }
 });
 
-test('beast: six rows plant Bleed, two cash it, and one move applies two statuses at once', () => {
+test('beast: seven rows plant Bleed, two cash it, and one move applies two statuses at once', () => {
   const beast = Object.values(moves).filter((m) => m.type === 'Beast' && !signatureMoves[m.id]);
   const planters = beast.filter((m) => statusApplicationsOf(m).some((a) => a.statusId === 'Bleed'));
-  assert.deepStrictEqual(planters.map((m) => m.id).sort(), ['bloodTrail', 'claw', 'lacerate', 'primalRoar', 'rendingLeap', 'toxicFangs']);
+  assert.deepStrictEqual(planters.map((m) => m.id).sort(), ['bloodTrail', 'claw', 'gash', 'lacerate', 'primalRoar', 'rendingLeap', 'toxicFangs']);
 
   const cashers = beast.filter((m) => m.conditionalPower?.requiresTargetStatus === 'Bleed');
   assert.deepStrictEqual(cashers.map((m) => m.id).sort(), ['eviscerate', 'maul']);
@@ -336,7 +336,7 @@ test('beast: no damage row carries a free type-keyed rider — Beast triggers no
   }
 });
 
-test('beast: only positive bracket rows, two magical rows, and no heal, cleanse, field effect or debuff', () => {
+test('beast: only positive bracket rows, two magical rows, one field (Blood Moon), and no heal, cleanse or debuff', () => {
   const beast = Object.values(moves).filter((m) => m.type === 'Beast' && !signatureMoves[m.id]);
   assert.deepStrictEqual(beast.filter((m) => m.priority !== 0).map((m) => m.id).sort(), ['pounce', 'rendingLeap']);
   for (const move of beast) assert.ok(move.priority >= 0, `${move.id} swings slow — the type buys speed, never trades it`);
@@ -347,7 +347,7 @@ test('beast: only positive bracket rows, two magical rows, and no heal, cleanse,
 
   assert.strictEqual(beast.filter((m) => m.kind === 'heal').length, 0);
   assert.strictEqual(beast.filter((m) => m.cleanses).length, 0);
-  assert.strictEqual(beast.filter((m) => m.fieldEffectApplication).length, 0);
+  assert.deepStrictEqual(beast.filter((m) => m.fieldEffectApplication).map((m) => [m.id, m.fieldEffectApplication]), [['gash', 'bloodMoon']]);
   assert.strictEqual(beast.filter((m) => m.drainPercent != null).length, 0);
   for (const move of beast) {
     for (const { stat, amount } of move.statDeltas ?? []) {

@@ -121,9 +121,9 @@ test('fire: an unchanced rider draws no RNG — only a chanced one advances the 
 
   assert.strictEqual(after('scorch'), after('inferno'), 'an unchanced Burn rider must cost the same RNG as no rider at all');
   assert.notStrictEqual(after('ember'), after('inferno'), 'a chanced rider must draw its own roll');
-  // Scorch lands its authored Burn percent whoever casts it, then the round tick halves it.
+  // Scorch climbs its authored levels whoever casts it, and the round tick leaves the level where it is.
   const scorched = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'scorch', declaredTarget: 'b1' }] as Action[], config);
-  assert.strictEqual(scorched.state.combatants.b1.statuses.Burn?.magnitude, Math.floor(statusApplicationsOf(moves.scorch).find((a) => a.statusId === 'Burn')!.magnitude! / 2));
+  assert.strictEqual(scorched.state.combatants.b1.statuses.Burn?.magnitude, statusApplicationsOf(moves.scorch).find((a) => a.statusId === 'Burn')!.magnitude!);
 });
 
 test("fire: Ember's 10% Burn lands sometimes and not others across seeds, and the hit itself always resolves", () => {
@@ -219,8 +219,8 @@ test("fire: Molten Lash deals damage, applies Burn, and drops the target's Defen
   const { state: next, events } = resolveRound(state, actions, config);
 
   assert.ok(events.some((e) => e.type === 'DamageDealt'));
-  // Molten Lash lands its authored Burn percent (no caster scaling), halved by the round tick.
-  assert.strictEqual(next.combatants.b1.statuses.Burn?.magnitude, Math.floor(statusApplicationsOf(moves.moltenLash).find((a) => a.statusId === 'Burn')!.magnitude! / 2));
+  // Molten Lash climbs its authored levels (no caster scaling), and nothing decays them.
+  assert.strictEqual(next.combatants.b1.statuses.Burn?.magnitude, statusApplicationsOf(moves.moltenLash).find((a) => a.statusId === 'Burn')!.magnitude!);
   // The −20 is a base a PHYSICAL move scales off Attack: −20 × 1.35 × 1.25 STAB = −34 (docs/stat-scaling.md §2).
   const drop = landedDelta(state, 'a2', moves.moltenLash, 'defense', -20, 'b1');
   assert.strictEqual(drop, -34);
@@ -249,9 +249,8 @@ test('fire: Spreading Blaze Burns both foes and sets Scorched Land in one cast',
   const { state: next } = resolveRound(state, actions, config);
 
   assert.strictEqual(next.activeFieldEffect?.fieldEffectId, 'scorchedLand');
-  // Both foes take the authored Burn percent, and Scorched Land (set by the same cast) takes the
-  // round tick's decay down to a quarter rather than a half.
-  const kept = Math.floor(statusApplicationsOf(moves.spreadingBlaze).find((a) => a.statusId === 'Burn')!.magnitude! * 0.75);
+  // The field is set before the cast's riders land, so both foes take the authored Burn a level higher.
+  const kept = statusApplicationsOf(moves.spreadingBlaze).find((a) => a.statusId === 'Burn')!.magnitude! + 1;
   assert.strictEqual(next.combatants.b1.statuses.Burn?.magnitude, kept);
   assert.strictEqual(next.combatants.b2.statuses.Burn?.magnitude, kept);
 });

@@ -12,7 +12,7 @@ import { nextFloat, nextInt } from '../rng/seededRng';
 import { magnitudeMultFromStat } from '../heal/healPipeline';
 import { hasStatus } from '../state';
 import { applyHpDelta } from './faintHandling';
-import { applyStatus, cleanseStatuses, removeStatus } from './statusEngine';
+import { applyStatus, cleanseStatuses, healBlocked, removeStatus } from './statusEngine';
 import { setFieldEffect } from './fieldEffectEngine';
 import { wardRefusesStatus } from './ward';
 
@@ -287,8 +287,8 @@ function resolveEffectOn(
         if (owner) amount = Math.round(amount * magnitudeMultFromStat(getEffectiveStat(heroes[owner.heroId], owner, effect.scaledBy)));
       }
       if (amount <= 0) return { state, events: [] };
-      // Nothing to restore is a no-op, not a "+0 HP" beat.
-      if (target.currentHp >= maxHp) return { state, events: [] };
+      // Nothing to restore is a no-op, not a "+0 HP" beat; a heal the field refuses (Blood Moon) is the same.
+      if (target.currentHp >= maxHp || healBlocked(state, targetId, fieldEffect)) return { state, events: [] };
       return applyHpDelta(state, round, targetId, amount, maxHp);
     }
     case 'applyStatus': {

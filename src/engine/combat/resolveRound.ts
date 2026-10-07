@@ -19,6 +19,7 @@ import {
   resolveElementalForceBonus,
   resolveConditionalPowerMultiplier,
   statKeysForMove,
+  fieldTypeMultFloor,
   type DamageModifier,
 } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
@@ -39,11 +40,18 @@ import {
   passFaintedStatuses,
   tickEndOfRound,
   resolveShieldBrokenRiders,
+  healBlocked,
+  clearOnRest,
 } from './statusEngine';
 import { collectPassiveDamageModifiers, resolvePassiveReactions } from './passiveEngine';
 import { wardOn } from './ward';
 import { nextFloat, nextInt } from '../rng/seededRng';
 import { DEFAULT_PACT_CLOCK, tickPactClock, type PactClockConfig } from './pactClock';
+
+/** The active Field Effect's definition, or undefined with none up. */
+function activeFieldDef(state: CombatState, fieldEffects: Record<string, FieldEffectDefinition>): FieldEffectDefinition | undefined {
+  return state.activeFieldEffect ? fieldEffects[state.activeFieldEffect.fieldEffectId] : undefined;
+}
 
 export interface RoundConfig {
   typeChart: TypeChart;
@@ -182,6 +190,10 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       const rested: CombatEvent = { type: 'Rested', round, combatantId: action.combatantId, manaRestored: restedMana - previousMana };
       events.push(rested);
       events.push({ type: 'ManaChanged', round, combatantId: action.combatantId, previousMana, newMana: restedMana, maxMana });
+      // A Rest puts out a Burn (docs/status-ladders-and-fields.md §1) — the turn spent is the price.
+      const doused = clearOnRest(working, round, action.combatantId, statuses);
+      working = doused.state;
+      events.push(...doused.events);
       // A Rest is a hook of its own (Mana Ward's Shield off what it restored); the reaction reads only the Rested slice.
       const restReactions = resolvePassiveReactions(working, round, [rested], heroes, statuses, passives, fieldEffects);
       working = restReactions.state;
@@ -411,7 +423,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
                   move.critChance,
                   elementalForceBonus,
                   basePowerMultiplier,
-                  rolledBasePower
+                  rolledBasePower,
+                  fieldTypeMultFloor(move.type, fieldEffectCtx)
                 );
             working = { ...working, rngState: rolled.nextRngState };
 
@@ -428,7 +441,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             const amount = rolledAmount - hpResult.absorbed - hpResult.prevented;
             const finishing = hpResult.events.some((e) => e.type === 'Fainted' && e.combatantId === targetId);
 
-            const [offKey, defKey] = statKeysForMove(move);
+            const [, defKey] = statKeysForMove(move);
             const damageDealtEvent: CombatEvent = {
               type: 'DamageDealt',
               round,
@@ -447,7 +460,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
               basePower: rolledBasePower ?? move.basePower ?? 0,
               elementalForceBonus: rolled.basePowerBonus,
               basePowerMultiplier: rolled.basePowerMultiplier,
-              offStat: getEffectiveStat(attackerHero, attackerNow, offKey, fieldEffectCtx),
+              // The numerator the ratio actually read — Bedrock may have swung a physical hit with Defense.
+              offStat: Math.round(ratio * getEffectiveStat(defenderHero, target, defKey, fieldEffectCtx)),
               defStat: getEffectiveStat(defenderHero, target, defKey, fieldEffectCtx),
               ratio: rolled.ratio,
               stab: rolled.stab,
@@ -484,8 +498,12 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             const removed = hpBefore - working.combatants[targetId].currentHp;
             recoilBase += removed;
 
-            if (move.drainPercent && !called) {
-              const drained = Math.round(removed * move.drainPercent);
+            // Blood Moon's lifesteal rides the drain: a hit on a holder of its status feeds the striker as a drain does.
+            const fieldDef = activeFieldDef(working, fieldEffects);
+            const lifesteal = fieldDef?.lifestealAgainst && hasStatus(target, fieldDef.lifestealAgainst.statusId) ? fieldDef.lifestealAgainst.percent : 0;
+            const drainPercent = (move.drainPercent ?? 0) + lifesteal;
+            if (drainPercent > 0 && !called && !healBlocked(working, action.combatantId, fieldDef)) {
+              const drained = Math.round(removed * drainPercent);
               const drainer = working.combatants[action.combatantId];
               if (drained > 0 && drainer && !drainer.fainted) {
                 const drainerMaxHp = getMaxHp(attackerHero, drainer);
@@ -496,7 +514,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
                   targetCombatantId: action.combatantId,
                   moveId: move.id,
                   amount: drained,
-                  drain: { fromCombatantId: targetId, damageDealt: removed, percent: move.drainPercent },
+                  drain: { fromCombatantId: targetId, damageDealt: removed, percent: drainPercent },
                 };
                 events.push(drainHealed);
                 const drainResult = applyHpDelta(working, round, action.combatantId, drained, drainerMaxHp);
@@ -621,6 +639,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           const target = working.combatants[targetId];
           if (!target || target.fainted) continue;
           const maxHp = getMaxHp(heroes[target.heroId], target);
+          const blocked = healBlocked(working, targetId, activeFieldDef(working, fieldEffects));
 
           const healedEvent: CombatEvent = {
             type: 'Healed',
@@ -628,13 +647,15 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             sourceCombatantId: action.combatantId,
             targetCombatantId: targetId,
             moveId: move.id,
-            amount: healed.heal,
+            amount: blocked ? 0 : healed.heal,
             healPower: healed.healPower,
             wisdomMult: healed.wisdomMult,
             stab: healed.stab,
             fieldMult: healed.fieldMult,
+            ...(blocked ? { blocked: true as const } : {}),
           };
           events.push(healedEvent);
+          if (blocked) continue;
 
           const hpResult = applyHpDelta(working, round, targetId, healed.heal, maxHp);
           working = hpResult.state;

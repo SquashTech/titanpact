@@ -21,12 +21,17 @@ function statusNames(ids: readonly string[]): string {
 function effectFacts(def: FieldEffectDefinition): FieldEffectFact[] {
   const rows: FieldEffectFact[] = [];
   if (def.mpRegenMultiplier != null) rows.push({ label: 'MP Regen', text: `×${def.mpRegenMultiplier}, every hero on both sides` });
-  if (def.slowsStatusDecay) {
-    rows.push({
-      label: 'Decay',
-      text: `${statusNames(def.slowsStatusDecay.statusIds)} keeps ${Math.round(def.slowsStatusDecay.retain * 100)}% each round, not 50%`,
-    });
+  if (def.raisesStatusLevel) {
+    const { statusIds, by } = def.raisesStatusLevel;
+    rows.push({ label: 'Climb', text: `Every ${statusNames(statusIds)} lands ${by === 1 ? 'one level' : `${by} levels`} higher` });
   }
+  if (def.blocksHealingWhile) rows.push({ label: 'Healing', text: `None for a hero with ${statusNames([def.blocksHealingWhile])} — a potion still works` });
+  if (def.lifestealAgainst) {
+    const { statusId, percent } = def.lifestealAgainst;
+    rows.push({ label: 'Lifesteal', text: `A hit on a hero with ${statusNames([statusId])} heals the attacker ${Math.round(percent * 100)}% of the damage` });
+  }
+  if (def.unresistedTypes) rows.push({ label: 'Chart', text: `${def.unresistedTypes.join(' and ')} attacks never land below ×1` });
+  if (def.physicalSwingsWithDefense) rows.push({ label: 'Physical', text: 'Hits with the higher of Attack and Defense, both sides' });
   if (def.amplifiesStatusHealing) {
     const amp = def.amplifiesStatusHealing;
     rows.push({ label: 'Healing', text: `${statusNames(amp.statusIds)} heals ×${amp.multiplier}${amp.overflowToShield ? '; past max HP it becomes Shield' : ''}` });

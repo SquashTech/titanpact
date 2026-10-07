@@ -27,15 +27,16 @@ export const statuses: Record<string, StatusDefinition> = {
     name: 'Burn',
     shape: 'magnitude',
     ticksAtEndOfRound: true,
-    decay: 'halve',
-    // Keeps the higher (docs/blessings-and-statuses.md §3.4): recasting refreshes a Burn, it never compounds.
-    stacking: 'takeHigher',
+    decay: 'none',
+    // A ladder (docs/status-ladders-and-fields.md §1): each Burn climbs it, nothing but a player's answer comes down it.
+    stacking: 'additive',
     clearsOnSwitch: true,
+    clearsOnRest: true,
     pipeline: 'dot',
-    // A percent of the holder's max HP, never caster-scaled (docs/blessings-and-statuses.md §3).
-    percentOfMaxHp: true,
     fixedMagnitude: true,
-    description: 'End of round: deal X% of max HP, then halve X. A new Burn keeps the higher of the two. Cleansed by switching.',
+    levels: { tickPercents: [5, 10, 25], names: ['Burning', 'Badly Burned', 'Engulfed'] },
+    description:
+      'Each Burn climbs a level: Burning loses 5% of max HP at the end of each round, Badly Burned 10%, Engulfed 25%. Rest, Cleanse or switching puts it out.',
   },
   Bleed: {
     id: 'Bleed',
@@ -121,22 +122,22 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'trigger',
     description: "Whoever's hit breaks this hero's Shield is Frozen. Spent when it fires.",
   },
-  // docs/blessings-and-statuses.md §4: a percent of the holder's max HP (scaled off the caster's
-  // Wisdom at cast), healed the moment it lands and then at the end of each round while it lasts.
+  // docs/status-ladders-and-fields.md §2: the number is the heals left, each one a tenth of max HP.
   Renew: {
     id: 'Renew',
     name: 'Renew',
     shape: 'magnitude',
     ticksAtEndOfRound: true,
     decay: 'none',
-    stacking: 'additiveRefreshDuration',
+    stacking: 'additive',
     clearsOnSwitch: false,
     positive: true,
     pipeline: 'hot',
-    percentOfMaxHp: true,
+    fixedMagnitude: true,
     ticksOnApply: true,
-    defaultDuration: 2,
-    description: 'Heals X% of max HP when it lands, then at the end of each round for 2 rounds. Persists through switch and cleanse.',
+    charges: { tickPercent: 10 },
+    description:
+      'Heals 10% of max HP when it lands and again at the end of each round, one heal for each point of Renew. Another Renew adds to it. Persists through switching and Cleanse.',
   },
   Conduct: {
     id: 'Conduct',

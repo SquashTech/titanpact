@@ -115,7 +115,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // --- Water ---
     tidecaller: [
-    'refresh','siphon', 'torrent', 'engulf', 'crest', 'deluge', 'oasis', 'tsunami', 'highTide', 'seawall', 'undertow', 'iceShard', 'psiBolt', 'glimmer', 'jolt', 'aquaSlice', 'shockBubble', 'waveShred', 'undercurrent', 'cleansingRain'],
+    'refresh','siphon', 'torrent', 'engulf', 'crest', 'deluge', 'oasis', 'tsunami', 'highTide', 'seawall', 'undertow', 'iceShard', 'psiBolt', 'glimmer', 'jolt', 'aquaSlice', 'shockBubble', 'waveShred', 'undercurrent', 'cleansingRain', 'rainfall', 'drench'],
     // Shock Bubble plants Conduct and the Iron column detonates it — the mark and the payoff are
     // both already in the pool, which is what Tideclaw's Static Tide then makes free.
     pincer: [
@@ -138,7 +138,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'seawall',
       'titanicCrush',
       'undercurrent',
-      'cleansingRain',
+      'cleansingRain', 'rainfall', 'drench',
     ],
     // Water's whole magical column, minus Tsunami (Tidebreaker's grant). Deep Chill and Jolt
     // telegraph the two grafts; Tsunami is what the mono path pays with.
@@ -146,7 +146,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'tideGuard',
       'splash', 'refresh', 'deepChill', 'jolt', 'magicBolt', 'psiBolt',
       'torrent', 'engulf', 'deluge', 'crest', 'shockBubble', 'oasis', 'cleansingRain',
-      'maelstrom', 'highTide', 'seawall', 'thunderbolt',
+      'maelstrom', 'highTide', 'seawall', 'thunderbolt', 'rainfall', 'drench',
     ],
     // Nautilus: Water's support and control half, with one Mind and one Shadow Early move to
     // telegraph Inkmind and Mimic.
@@ -167,7 +167,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'tsunami',
       'maelstrom',
       'highTide',
-      'seawall',
+      'seawall', 'rainfall', 'drench',
     ],
     // --- Frost ---
     glacialWarden: [
@@ -299,7 +299,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'stoneheart',
       'rampart',
       'eviscerate',
-      'gravelSpray',
+      'gravelSpray', 'digIn', 'tectonicSlam',
     ],
     sentinel: [
       'fortify',
@@ -323,7 +323,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'gravelSpray',
       'bodyguard',
       'hallow',
-      'sunlance',
+      'sunlance', 'digIn', 'tectonicSlam',
     ],
     // Both of Stone's columns, since the line swings both. Ember, Singe and Magic Bolt telegraph
     // the grafts; Titanic Crush is Quakebringer's grant, so it is not here.
@@ -331,7 +331,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'rockToss',
       'focus', 'mudBall', 'gravelSpray', 'ember', 'singe', 'magicBolt',
       'faultLine', 'rockfall', 'rubbleRush', 'spireClaw', 'bodyBlow', 'retribution',
-      'landslide', 'boulderSlam', 'stoneheart', 'bodyCrush',
+      'landslide', 'boulderSlam', 'stoneheart', 'bodyCrush', 'digIn', 'tectonicSlam',
     ],
     // --- Nature ---
     wildOracle: [
@@ -789,7 +789,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'venomBite',
       'gore',
       'bloodTrail',
-      'rendingLeap',
+      'rendingLeap', 'gash', 'bloodFrenzy',
     ],
     // Ursa: the heavy half of the slate — Gore, Rampage, Thrash, Eviscerate — with Stone's guard
     // column as the off-type (Provoke in the kit telegraphs it; Stoneheart is the payoff).
@@ -812,7 +812,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'apexPredator',
       'rendingLeap',
       'packLeader',
-      'stoneheart',
+      'stoneheart', 'gash', 'bloodFrenzy',
     ],
     coil: [
       'primalRoar',
@@ -835,7 +835,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'distort',
       'rootbind',
       'mindLeech',
-      'leech',
+      'leech', 'gash', 'bloodFrenzy',
     ],
     // Vex: Beast's Bleed column, with the Shadow it will turn into as the off-type — Fade Strike,
     // Backstab and Cutthroat, none of them on Vampyr's line.
@@ -857,7 +857,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'rendingLeap',
       'eviscerate',
       'apexPredator',
-      'packLeader',
+      'packLeader', 'gash', 'bloodFrenzy',
     ],
     // --- Starfall ---
     // Drift: Mind's magical column, with Water's clouding as the off-type. Mind Leech is Stinger's grant.
@@ -901,7 +901,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'claw',
       'siphon', 'refresh', 'heavyBlow', 'ironFist', 'rockToss', 'sharpen',
       'aquaSlice', 'engulf', 'lacerate', 'maul', 'momentumSwing', 'rendArmor',
-      'waveShred', 'onslaught', 'eviscerate', 'rendingLeap', 'juggernaut',
+      'waveShred', 'onslaught', 'eviscerate', 'rendingLeap', 'juggernaut', 'rainfall', 'drench',
     ],
     // Tusk: Frost's physical column with Iron's weight behind it. Snowball is Ice Age's grant.
     tusk: [
@@ -937,7 +937,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'ivySpike',
       'pounce', 'venomBite', 'prowl', 'rally', 'mudBall', 'toughenUp', 'heavyBlow',
       'gore', 'rampage', 'thrash', 'packHunt', 'lacerate', 'maul', 'bloodTrail',
-      'apexPredator', 'eviscerate', 'rendingLeap', 'titanicCrush', 'boulderSlam',
+      'apexPredator', 'eviscerate', 'rendingLeap', 'titanicCrush', 'boulderSlam', 'gash', 'bloodFrenzy',
     ],
     // Morel: Nature's Poison column and Mind's dulling as the off-type. Wild Bloom is Toadstool's grant.
     morel: [
@@ -951,7 +951,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'fortify',
       'rockToss', 'toughenUp', 'mudBall', 'gravelSpray', 'openingStrike', 'pinDown',
       'spireClaw', 'bastion', 'retribution', 'bodyguard', 'faultLine', 'reinforce',
-      'bodyCrush', 'stoneheart', 'boulderSlam', 'landslide',
+      'bodyCrush', 'stoneheart', 'boulderSlam', 'landslide', 'digIn', 'tectonicSlam',
     ],
     // Aurum: Light's physical column and Iron's weight behind it. Deity Blade is Sunlord's grant.
     aurum: [
@@ -989,7 +989,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'regrowth',
       'tideGuard', 'inkCloud', 'siphon', 'mend', 'purify', 'vigil',
       'oasis', 'washAway', 'cleansingRain', 'crest', 'engulf', 'benediction', 'wildBloom',
-      'seawall', 'tsunami', 'divineGrace', 'overgrowth',
+      'seawall', 'tsunami', 'divineGrace', 'overgrowth', 'rainfall', 'drench',
     ],
     // Hush: Frost's magical Freeze column, with Arcane's bolts and Light's glare as the off-types. Absolute Zero is Tundra Hunter's grant.
     hush: [
@@ -1034,14 +1034,14 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'toughenUp',
       'mudBall', 'gravelSpray', 'openingStrike', 'pinDown', 'fortify', 'heavyBlow', 'thunderclap',
       'faultLine', 'rubbleRush', 'spireClaw', 'rendArmor', 'momentumSwing', 'retribution',
-      'boulderSlam', 'titanicCrush', 'stoneheart', 'swingingChain',
+      'boulderSlam', 'titanicCrush', 'stoneheart', 'swingingChain', 'digIn', 'tectonicSlam',
     ],
     // Cairn: Stone's guard column, Light's mending beside it, and Stone's magical spread. Body Blow is Menhir's grant.
     cairn: [
       'tideGuard',
       'mudBall', 'provoke', 'vigil', 'mend', 'purify',
       'bastion', 'bodyguard', 'rockfall', 'benediction', 'consecrate',
-      'rampart', 'landslide', 'divineGrace',
+      'rampart', 'landslide', 'divineGrace', 'digIn', 'tectonicSlam',
     ],
     // Murk: Shadow's physical column with Stone's mud and Nature's moss as the off-types. Shadowstrike is Lurker's grant.
     murk: [
@@ -1121,7 +1121,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'refresh',
       'rally', 'claw', 'tideGuard', 'regrowth', 'toughenUp', 'provoke',
       'bodyguard', 'washAway', 'oasis', 'cleansingRain', 'bastion', 'wildBloom', 'packHunt',
-      'highTide', 'rampart', 'overgrowth', 'seawall',
+      'highTide', 'rampart', 'overgrowth', 'seawall', 'gash', 'bloodFrenzy',
     ],
     // The companion's bodies (run/companion.ts): a spawn's pool is its type's whole slate, so
     // the schedule gates it by band like anyone's. No Evolution node — its Mastery pips are its

@@ -183,11 +183,12 @@ test('shield: a drain heals for what got through to HP, not for what the Shield 
 // --- What goes through ---
 
 test('shield: a Burn tick goes straight to HP under a full Shield', () => {
-  const state = withStatus(withStatus(fixture(6), 'b1', 'Shield', { magnitude: 1000 }), 'b1', 'Burn', { magnitude: 20 });
+  const state = withStatus(withStatus(fixture(6), 'b1', 'Shield', { magnitude: 1000 }), 'b1', 'Burn', { magnitude: 2 });
   const hpBefore = state.combatants.b1.currentHp;
-  const { state: next } = resolveRound(state, [rest('a1'), rest('a2'), rest('b1'), rest('b2')], config);
-  // A percent of the holder's max HP (Burn, docs/blessings-and-statuses.md §3), past the Shield.
-  assert.strictEqual(next.combatants.b1.currentHp, hpBefore - Math.ceil(fixtureMaxHp(state.combatants.b1.heroId) * 0.2));
+  // b1 takes no turn: a Rest would put the Burn out.
+  const { state: next } = resolveRound(state, [rest('a1'), rest('a2'), rest('b2')], config);
+  // Badly Burned is a tenth of the holder's max HP (docs/status-ladders-and-fields.md §1), past the Shield.
+  assert.strictEqual(next.combatants.b1.currentHp, hpBefore - Math.ceil(fixtureMaxHp(state.combatants.b1.heroId) * 0.1));
   assert.strictEqual(shieldHeld(next.combatants.b1, statuses), 1000);
 });
 
