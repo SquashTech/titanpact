@@ -80,8 +80,11 @@ so the engine and the fight builder never learn a third mode exists. Rolled (`ro
   candidates, scored by how well their typing answers **your six** (the same doubling arithmetic as
   the lead-pick arrows). At 0 wins it is any six; at 4 wins it is the six of eighteen that hit you
   hardest. *The Gauntlet learns you.* Levels, stats and AI are identical every fight.
-- **The AI** is the Trials' pilot (`aiPilot`). Its leads are its two best-scoring heroes. The
-  player picks leads in the fight, as everywhere.
+- **The AI is the escalation's second half** (2026-10-07, per user direction — a third loss was
+  weighed and rejected): below `PILOT_FROM_WINS` = 3 wins the opponent plays on Classic's AI
+  (run/ai.ts); from three wins on, the Trials' pilot (run/pilot.ts) flies it
+  (`gauntletAiPilot`). Losses never move it, so a run that stumbles early stays on the easier AI.
+  Its leads are its two best-scoring heroes. The player picks leads in the fight, as everywhere.
 - **Whole every fight.** No Wounds, no carried KOs, no potions.
 - **A place to stand** (2026-10-07, per user direction): each fight borrows a run Location for its
   backdrop and music, rolled off the same seed as the opponent (`gauntletLocationId`) from every place
@@ -155,9 +158,16 @@ string; `constructed` stays the code name.
      in nine and never clears.
    - 3.5 fights a run, 18 rounds a fight (the Trials: 14.6), no stalemates.
 
-   The clear rate is the designer's to set. The dials, strongest first: a third loss (five before
-   three is 17% at 46%, 23% at 50%); the AI tier as the escalation (Classic's AI for the early
-   fights, the pilot later); the escalation step; the opponent's kit fit.
+   **Decided the same day: the AI escalates** (a third loss rejected). Swept on the skilled pilot,
+   chart draft — the wins from which the Trials' pilot flies the opponent against the clear:
+
+   | Pilot from | 0 (as measured above) | 2 | **3 (shipped)** | 4 | 5 |
+   |---|---|---|---|---|---|
+   | Clear | 8% | 16% | **22%** | 35% | 53% |
+
+   At 3: the first three fights are won ~77% of the time and the last two ~45%, so the run reads
+   as a climb into a wall — most runs end at three wins (35%), a fifth go 5-0. A random draft
+   clears 14%; the Classic-AI-level pilot 1%, winning ~45% early and ~13% once the pilot flies.
 3. A record in Records: Gauntlets entered, cleared, best streak.
 4. Purchased entries for money, if ever — after the star price has been played.
 

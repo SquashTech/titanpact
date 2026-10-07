@@ -302,6 +302,8 @@ don't silently override it.
 > six and fights random six-hero teams to **five wins before two losses**. **Nothing below five**; a
 > clear stars every unstarred path on the team (Cycle I colour, and so opens the hero in the Trials)
 > and pays 5. One free entry a day (claimed or not, never banked), then 3 stars. A fight left unfinished is a loss.
+> **The AI is the escalation**: Classic's AI until three wins, the Trials' pilot after — measured 22% clear
+> at the skilled sim pilot.
 
 ---
 

@@ -15,11 +15,14 @@ import {
   BOARD_TYPE_LIMIT,
   GAUNTLET_CLEAR_BONUS,
   GAUNTLET_ENTRY_PRICE,
+  PILOT_FROM_WINS,
+  WINS_TO_CLEAR,
   GauntletError,
   canEnterGauntlet,
   draftTeam,
   endGauntlet,
   enterGauntlet,
+  gauntletAiPilot,
   gauntletLocationId,
   gauntletOpponent,
   recordGauntletFight,
@@ -228,4 +231,12 @@ test('arena locations: every Trial stands in a Location holding its type; a Gaun
   assert.strictEqual(gauntletLocationId(run, ids), at);
   const seen = new Set(Array.from({ length: 6 }, (_, wins) => gauntletLocationId({ ...run, wins }, ids)));
   assert.ok(seen.size > 1, 'every fight stands in the same place');
+});
+
+test('gauntlet: the AI is the escalation — Classic\'s for the early fights, the Trials\' pilot from PILOT_FROM_WINS', () => {
+  const run = drafted(enterGauntlet(opened(), content, owned, 2, TODAY, 0)).gauntlet!;
+  for (let wins = 0; wins < WINS_TO_CLEAR; wins++) assert.strictEqual(gauntletAiPilot({ ...run, wins }), wins >= PILOT_FROM_WINS);
+  // Losses never move it: a run that stumbles early stays on the easier AI.
+  const stumbled: GauntletRun = { ...run, wins: 0, losses: 1 };
+  assert.strictEqual(gauntletAiPilot(stumbled), false);
 });

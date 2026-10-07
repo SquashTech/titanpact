@@ -84,7 +84,8 @@ export type RunScreen =
   | { kind: 'constructedFight'; player: Encounter; ai: Encounter; teamIndex: number; trialId: string; unlockAll?: boolean; locationId?: string | null }
   /** The Gauntlet (docs/gauntlet.md). Its run lives on the profile; `result` is a run that just ended, said once. */
   | { kind: 'gauntlet'; result?: GauntletResult | null; notice?: string | null }
-  | { kind: 'gauntletFight'; player: Encounter; ai: Encounter; locationId?: string | null }
+  /** `aiPilot`: run/pilot.ts flies the opponent (run/gauntlet.ts gauntletAiPilot), else Classic's AI. */
+  | { kind: 'gauntletFight'; player: Encounter; ai: Encounter; locationId?: string | null; aiPilot: boolean }
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */

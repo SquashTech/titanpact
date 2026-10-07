@@ -18,6 +18,8 @@ export const WINS_TO_CLEAR = 5;
 export const LOSSES_TO_END = 2;
 /** Each win, the next opponent's six are picked from this many more rolled heroes. */
 export const ESCALATION_STEP = 3;
+/** From this many wins the opponent is flown by the Trials' pilot (run/pilot.ts); below it, by Classic's AI (run/ai.ts). */
+export const PILOT_FROM_WINS = 3;
 export const GAUNTLET_CLEAR_BONUS = 5;
 export const GAUNTLET_ENTRY_PRICE = 3;
 
@@ -233,6 +235,11 @@ export function gauntletLocationId(run: GauntletRun, candidates: readonly string
   const fight = run.wins + run.losses;
   const { value } = nextFloat(createRng((run.seed ^ Math.imul(fight + 1, 0x85ebca6b)) >>> 0));
   return candidates[Math.floor(value * candidates.length)];
+}
+
+/** The AI is the escalation's second half: Classic's for the early fights, the Trials' pilot from PILOT_FROM_WINS. */
+export function gauntletAiPilot(run: Pick<GauntletRun, 'wins'>, pilotFromWins = PILOT_FROM_WINS): boolean {
+  return run.wins >= pilotFromWins;
 }
 
 // --- The record ---

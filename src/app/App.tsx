@@ -161,7 +161,7 @@ import {
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { constructedHeroIds, constructedSide, type Team } from '../run/constructed';
 import { constructedContent, gauntletContent, trials } from '../data/trials';
-import { draftTeam, endGauntlet, enterGauntlet, freeEntryAvailable, gauntletLocationId, gauntletOpponent, localDay, recordGauntletFight, settleLeftFight, startGauntletFight, type GauntletResult } from '../run/gauntlet';
+import { draftTeam, endGauntlet, enterGauntlet, freeEntryAvailable, gauntletAiPilot, gauntletLocationId, gauntletOpponent, localDay, recordGauntletFight, settleLeftFight, startGauntletFight, type GauntletResult } from '../run/gauntlet';
 import { createStatusTestSides } from '../run/statusTestFight';
 import { atEvolution, currentEvolutionPathId, fullMovepool } from '../run/progression';
 import { progressionTable } from '../data/progression';
@@ -685,6 +685,7 @@ export function App() {
       player: constructedSide(constructedContent, { name: 'Gauntlet', slots: run.team }),
       ai: constructedSide(constructedContent, { name: 'Opponent', slots: opponent.team }, opponent.leads),
       locationId: gauntletLocationId(run, arenaLocationIds()),
+      aiPilot: gauntletAiPilot(run),
     });
   }
 
@@ -1426,7 +1427,7 @@ export function App() {
           goldReward={0}
           xpGained={0}
           equipmentReward={null}
-          aiPilot
+          aiPilot={screen.aiPilot}
           onResolved={(outcome) => handleGauntletResolved(outcome)}
           onExitToTitle={() => handleGauntletResolved('loss', 'You conceded — it counts as a loss.')}
           exitLabel="Concede the fight"
