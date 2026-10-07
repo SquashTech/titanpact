@@ -43,9 +43,9 @@ export const GEM_CACHE_COUNT = 4;
  * small fights sometimes do; the finale pays nothing, the run being over (docs/gems.md §4).
  */
 export const GEM_DROP: Record<EncounterNodeKind, { chance: number; count: number }> = {
-  fight: { chance: 0.3, count: 1 },
-  battle: { chance: 0.3, count: 1 },
-  skirmish: { chance: 0.3, count: 1 },
+  fight: { chance: 0.2, count: 1 },
+  battle: { chance: 0.2, count: 1 },
+  skirmish: { chance: 0.2, count: 1 },
   elite: { chance: 1, count: 2 },
   boss: { chance: 1, count: 2 },
   finale: { chance: 0, count: 0 },

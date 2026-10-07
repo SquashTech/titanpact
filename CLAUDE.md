@@ -286,7 +286,7 @@ don't silently override it.
 > 10 from Act 3, HP at 3 a point, never MP Regen (`RosterEntry.gems`, `src/run/gems.ts`). The screen
 > hands them out one at a time in a **fixed order** (HP → Mana → Atk → Def → Int → Wis → Spd), each
 > hero showing that stat and its pips. The Scribe is **the Lapidary** (3 Gems, re-spread the same day), the Cache
-> pays 4 at weight 45, **a won fight drops Gems** (Elite and Guardian 2, a small fight 1 at 30%), and the
+> pays 4 at weight 45, **a won fight drops Gems** (Elite and Guardian 2, a small fight 1 at 20%), and the
 > shelf sells six single Gems of six stats at 3g a point; **the MVP pays +50% of the fight's XP, not a pip**. A pip with no Gem behind
 > it (enemy, contract, hire, old save) is filled by fit off the hero's best grades. Gems are the THIRD
 > per-hero stat currency beside the Mana Well and the Ley Line, allowed because each is also a pip.

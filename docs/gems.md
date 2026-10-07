@@ -52,7 +52,7 @@ rest are lost and the screen says so.
 |---|---|---|
 | **The Lapidary** (the forced row, `scribeReward`, every act 1–4) | **3 Gems** (`SCRIBE_GEMS`) | 2 heroes × 2 pips |
 | **Gem Cache** (`scrollReward`, weight **45**) | **4 Gems** (`GEM_CACHE_COUNT`) | 3 pips |
-| **A won fight** (`GEM_DROP`, `rollGemDrop`) | **Elite and Guardian 2, always; opener / Skirmish 1 at 30%; the finale none** | never |
+| **A won fight** (`GEM_DROP`, `rollGemDrop`) | **Elite and Guardian 2, always; opener / Skirmish 1 at 20%; the finale none** | never |
 | **The shelf** (Guild Hall and Vigil) | **6 single Gems, six different stats**, shown before the buy, each sold once a visit, **3g a point** (15g through Act 2, 30g after) | 2 pips |
 | **MVP** | **+50% of the fight's XP** (`MVP_XP_SHARE`), on top of the roster's grant | 1 pip |
 
@@ -117,7 +117,8 @@ Lapidary's six go wherever the pilot likes. Every number in §2 and §4 is a fir
 
 Drops paid more than the ~12 estimated, so the total rose about five Gems a run rather than holding.
 Spread across fights, they reach more of the roster than the Lapidary's lump did: every-hero-evolved
-is the big mover. The small-fight chance (30%) is the dial if the total should come back to ~43.
+is the big mover. The small-fight chance then came down 30 → 20% (same day, per user direction) to
+bring the total back toward ~43; the higher every-hero-evolved rate is welcome, not a finding.
 
 ## 9. Open — DO NOT silently resolve
 
