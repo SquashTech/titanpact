@@ -46448,19 +46448,42 @@ img.smithy-service-art {
   transform: scale(1.22);
 }
 
+/* The revealed form is coloured by a STATIC filter, never by animating one out of the white:
+   mobile WebKit does not interpolate `brightness(0) invert(1)` into a drop-shadow, and held the
+   sprite white. The white is the afterglow layer over it, which only fades. The glow animates a
+   drop-shadow into a drop-shadow, which every engine interpolates. */
 .evo-rite.is-reveal .evo-rite-figure.is-new {
+  filter: drop-shadow(0 0 18px var(--path-lead));
   animation:
     evo-rite-emerge 0.8s cubic-bezier(0.2, 1.2, 0.3, 1) both,
     evo-rite-glow 2.4s ease-in-out 0.8s infinite;
 }
 
+.evo-rite-figure.is-afterglow {
+  filter: brightness(0) invert(1) drop-shadow(0 0 16px #ffffff);
+  pointer-events: none;
+}
+
+.evo-rite.is-reveal .evo-rite-figure.is-afterglow {
+  animation: evo-rite-afterglow 0.8s cubic-bezier(0.2, 1.2, 0.3, 1) both;
+}
+
 @keyframes evo-rite-emerge {
-  0% {
-    filter: brightness(0) invert(1);
+  from {
     transform: scale(1.45);
   }
-  100% {
-    filter: drop-shadow(0 0 20px color-mix(in srgb, var(--path-lead) 75%, transparent));
+  to {
+    transform: none;
+  }
+}
+
+@keyframes evo-rite-afterglow {
+  from {
+    opacity: 1;
+    transform: scale(1.45);
+  }
+  to {
+    opacity: 0;
     transform: none;
   }
 }
@@ -46468,10 +46491,10 @@ img.smithy-service-art {
 @keyframes evo-rite-glow {
   0%,
   100% {
-    filter: drop-shadow(0 0 20px color-mix(in srgb, var(--path-lead) 75%, transparent));
+    filter: drop-shadow(0 0 14px var(--path-lead));
   }
   50% {
-    filter: drop-shadow(0 0 30px color-mix(in srgb, var(--path-lead) 95%, transparent));
+    filter: drop-shadow(0 0 26px var(--path-lead));
   }
 }
 

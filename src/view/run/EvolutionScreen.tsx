@@ -579,6 +579,8 @@ function EvolutionCinematic({ hero, path, onDone }: { hero: HeroDefinition; path
         {/* Both forms stand in one place; the morph shows one silhouette at a time. */}
         <HeroPortrait heroId={hero.id} className={`evo-rite-figure is-old${showNew ? '' : ' is-shown'}`} />
         <HeroPortrait heroId={hero.id} pathId={path.id} className={`evo-rite-figure is-new${showNew ? ' is-shown' : ''}`} />
+        {/* The reveal's white, as its own layer that only fades: the form under it is never filtered white. */}
+        {revealed && <HeroPortrait heroId={hero.id} pathId={path.id} className="evo-rite-figure is-afterglow" />}
         <span className="evo-rite-flash" aria-hidden="true" />
         {revealed &&
           EVOLVE_SPARKS.map((s, i) => (
