@@ -7,7 +7,7 @@ import { SEAL_ACTS } from '../../run/state';
 import { SceneLights, type SceneLight } from '../shared/SceneLights';
 import mentorArt from '../../../art/map-nodes/landmarks/mentor.png';
 import tutorArt from '../../../art/map-nodes/landmarks/tutor.png';
-import scribeArt from '../../../art/map-nodes/landmarks/scribe.png';
+import lapidaryArt from '../../../art/map-nodes/landmarks/lapidary.png';
 import guildHallArt from '../../../art/map-nodes/landmarks/guildHall.png';
 import gateArt from '../../../art/map-nodes/landmarks/guardianGate.png';
 import gateFrameArt from '../../../art/map-nodes/landmarks/guardianGateFrame.png';
@@ -44,7 +44,7 @@ const KIND: Partial<Record<MapNodeType, LandmarkKind>> = {
 const NPC_ART: Partial<Record<MapNodeType, string>> = {
   mentorReward: mentorArt,
   tutorReward: tutorArt,
-  scribeReward: scribeArt,
+  scribeReward: lapidaryArt,
 };
 
 // The stone's eye (rows 12-26 of 64) burning, and embers lifting off the cracks at its foot.

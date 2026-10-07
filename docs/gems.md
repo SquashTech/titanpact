@@ -102,7 +102,7 @@ Lapidary's six go wherever the pilot likes. Every number in §2 and §4 is a fir
 - **Total stat size.** About 40 Gems a completed run is roughly 300 points, three or more levels of
   growth a hero. Watch Acts 3–4, where Gems double.
 - **Should the shelf show its pack's stats before the buy?** Today it is rolled on the tap.
-- **The Lapidary's art** is still the Scribe's sprite.
+- ~~The Lapidary's art~~ drawn 2026-10-07 (`art/npc/lapidary.png`, `art/map-nodes/landmarks/lapidary.png`).
 - **Speed Gems** cross Speed thresholds, the one place +5 can flip a turn order. Watch them.
 - **The Mentor as Rare Candy** (+XP scaling by act) and **the Act 4 Tutor as a pick-any-move screen**
   were decided in the same conversation and are next, in that order.

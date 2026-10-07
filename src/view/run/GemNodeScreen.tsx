@@ -14,7 +14,7 @@ import { MasteryPips } from '../shared/MasteryPips';
 import { NodeMotes, NODE_TINT_PARCHMENT } from '../shared/NodeStage';
 import { STAT_FULL_LABELS } from '../shared/relicStacks';
 import { entryStatTotals } from '../shared/entryStatTotals';
-import scribeArt from '../../../art/npc/scribe.png';
+import lapidaryArt from '../../../art/npc/lapidary.png';
 import { EvolutionScreen } from './EvolutionScreen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
@@ -123,7 +123,7 @@ export function GemNodeScreen({ run, onRunChange, plan, onDone, progress, onProg
         <header className="keeper-head">
           <span className="keeper-figure">
             <span className="rite-pool" aria-hidden="true" />
-            <img src={scribeArt} className="keeper-art" alt="" draggable={false} />
+            <img src={lapidaryArt} className="keeper-art" alt="" draggable={false} />
           </span>
           <span className="keeper-words">
             <span className="rite-eyebrow">{EYEBROW.scribe}</span>
