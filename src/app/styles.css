@@ -17160,6 +17160,81 @@ button.star-shop-bundle-face {
   color: rgb(var(--node-rgb));
 }
 
+/* The Tutor's pick: one hero's learnable moves, banded Late → Mid → Early, Teach at the foot. */
+.tutor-moves {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 16px 12px;
+}
+
+.tutor-moves-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tutor-moves-back {
+  padding: 6px 10px;
+  border: 1px solid rgba(var(--node-rgb), 0.5);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tutor-moves-who {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.tutor-moves-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tutor-band {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tutor-band-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--node-rgb));
+}
+
+.tutor-band-label.is-mid,
+.tutor-band-label.is-early {
+  color: var(--text-dim);
+}
+
+.tutor-move-list.move-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: none;
+}
+
+.tutor-teach:disabled {
+  opacity: 0.5;
+}
+
 /* The Guild Hall shelf's pack: two stones leaning together, drawn rather than pixel art. */
 .hall-good-art.is-drawn {
   display: grid;

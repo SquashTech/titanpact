@@ -920,33 +920,27 @@ function resolveMentor(run: RunState, rng: Rng, record: RunRecord): RunState {
   return next;
 }
 
-function resolveTierRoll(run: RunState, rng: Rng, poolOf: typeof tutorMovePool, record: RunRecord): RunState {
-  let best: { entry: RosterEntry; value: number } | null = null;
+/**
+ * The Tutor (docs/tutor.md): a pick, not a roll — the most valuable move any hero can learn, on
+ * the stronger hero when two tie, taken when there is room or it beats the worst one held.
+ */
+function resolveTutor(run: RunState, _rng: Rng, record: RunRecord): RunState {
+  let best: { entry: RosterEntry; moveId: string; value: number } | null = null;
   for (const entry of run.roster) {
-    const pool = poolOf(progressionTable, moves, entry);
-    if (pool.length === 0) continue;
-    const value = pool.reduce((sum, id) => sum + policy.moveValue(id), 0) / pool.length + policy.powerScore(entry) * 0.01;
-    if (!best || value > best.value) best = { entry, value };
+    for (const moveId of tutorMovePool(progressionTable, moves, entry)) {
+      const value = policy.moveValue(moveId) + policy.powerScore(entry) * 0.01;
+      if (!best || value > best.value) best = { entry, moveId, value };
+    }
   }
   if (!best) return run;
-  const pool = poolOf(progressionTable, moves, best.entry);
-  const moveId = pick(rng, pool);
-  const next = recordMoveOffer(run, best.entry.rosterId, [moveId]);
-  if (best.entry.unlockedMoveIds.length < MOVE_CAP) {
+  const { entry, moveId } = best;
+  if (entry.unlockedMoveIds.length < MOVE_CAP) {
     recordMoveOfferMade(record, moveId, true);
-    return grantOfferedMove(next, best.entry.rosterId, moveId);
+    return grantOfferedMove(run, entry.rosterId, moveId);
   }
-  const replaceId = policy.replacementTarget(best.entry, moveId, run.roster);
+  const replaceId = policy.replacementTarget(entry, moveId, run.roster);
   recordMoveOfferMade(record, moveId, replaceId !== null);
-  return replaceId ? grantOfferedMove(next, best.entry.rosterId, moveId, replaceId) : next;
-}
-
-/**
- * The Tutor: the Mentor's beat at Late (src/run/tutor.ts) — the hero whose Late pool is worth
- * most on average takes the roll, and the move is taken when it beats the worst one held.
- */
-function resolveTutor(run: RunState, rng: Rng, record: RunRecord): RunState {
-  return resolveTierRoll(run, rng, tutorMovePool, record);
+  return replaceId ? grantOfferedMove(run, entry.rosterId, moveId, replaceId) : run;
 }
 
 /**

@@ -291,8 +291,9 @@ don't silently override it.
 > per-hero stat currency beside the Mana Well and the Ley Line, allowed because each is also a pip.
 > **The Mentor pays XP now** (`docs/mentor.md`, same day): 800 / 3,000 / 6,000 by act to one hero —
 > "teaches any hero a powerful move" is reversed, the Mid roll deleted — sized so a hero taking every
-> Mentor, every Elite and an MVP an act reaches level 30. Next, decided: the Act 4 Tutor as a
-> pick-any-move screen. Its §7 lists what it reverses.
+> Mentor, every Elite and an MVP an act reaches level 30. **The Act 4 Tutor is a PICK** (`docs/tutor.md`,
+> same day): any move the hero can learn and does not hold, Late first, Constructed's tiles; "one
+> Late move ROLLED" is reversed. `docs/gems.md` §7 lists what the Gems reverse.
 
 ---
 

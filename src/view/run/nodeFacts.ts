@@ -377,9 +377,9 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
     case 'tutorReward':
       return {
         kind: 'Reward · Growth',
-        facts: [{ glyph: 'move', label: 'Move', value: '1', note: 'Late tier, rolled — to 1 hero' }],
+        facts: [{ glyph: 'move', label: 'Move', value: '1', note: 'your pick — to 1 hero' }],
         odds: null,
-        about: 'Pick a hero, and one Late-tier move — its strongest band — is rolled from its own pool, whatever its level.',
+        about: 'Pick a hero, then pick any move it can learn and does not already know, whatever its level. Late moves are listed first.',
         terms: [TERMS.moveCap],
       };
     case 'event':
