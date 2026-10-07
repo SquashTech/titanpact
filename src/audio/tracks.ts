@@ -1,7 +1,7 @@
 // The music table, keyed by LOCATION id (data/locations.ts): music belongs to a place, not a
 // screen. App.tsx hands the current location to `setTrack`.
 //
-// One key breaks that rule on purpose — `titleScreen`. The title stands outside every place
+// One key breaks that rule on purpose — `titleScreen`. The title (and the Trials and Gauntlet menus off it) stands outside every place
 // (it is in App.tsx's PLACELESS_SCREENS), so there is no location id to key it from.
 //
 // FLAC, not MP3: tracks are decoded whole and looped with `loop = true`, and MP3 encoders pad

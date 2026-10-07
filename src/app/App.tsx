@@ -1262,8 +1262,10 @@ export function App() {
 
   // The act's location IS the track; computed above the screen switch so music survives map <-> fight.
   // A location with no authored track fades to silence rather than carrying the previous act's music.
-  // The title is the exception — it is placeless, so it names its own track (audio/tracks.ts).
-  const trackId = screen.kind === 'title' ? 'titleScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
+  // The title is the exception — it is placeless, so it names its own track (audio/tracks.ts) — and
+  // the Trials' and the Gauntlet's menus carry it on, since they are reached from it.
+  const titleTrack = screen.kind === 'title' || screen.kind === 'constructed' || screen.kind === 'gauntlet';
+  const trackId = titleTrack ? 'titleScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
   useEffect(() => {
     setTrack(trackId);
   }, [trackId]);
