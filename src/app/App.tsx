@@ -178,10 +178,10 @@ type Screen = RunScreen;
 const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'title',
   'lore',
+  // The lore cards drop the title's track and leave the cold open in silence; the draft and the
+  // pact forged at its end name their own (`starterScreen`), and Act I's music then starts where
+  // it always does, on the arrival screen.
   'draft',
-  // Placeless is the point: it drops the title's track and leaves the cold open in silence,
-  // and Act I's music then starts where it always does, on the arrival screen.
-  // Before the act: the stones where the road begins belong to no Location.
   'blessing',
   // Between two acts, and the property of neither.
   'pactSeal',
@@ -1268,7 +1268,9 @@ export function App() {
   // The title is the exception — it is placeless, so it names its own track (audio/tracks.ts) — and
   // the Trials' and the Gauntlet's menus carry it on, since they are reached from it.
   const titleTrack = screen.kind === 'title' || screen.kind === 'constructed' || screen.kind === 'gauntlet';
-  const trackId = titleTrack ? 'titleScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
+  // The draft and the pact forged at its end (the resumed `blessing` screen) carry the starter track.
+  const starterTrack = screen.kind === 'draft' || screen.kind === 'blessing';
+  const trackId = titleTrack ? 'titleScreen' : starterTrack ? 'starterScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
   useEffect(() => {
     setTrack(trackId);
   }, [trackId]);
@@ -1282,6 +1284,11 @@ export function App() {
   useEffect(() => {
     for (const id of nextLocationKey.split(',')) if (hasTrack(id)) prefetchTrack(id);
   }, [nextLocationKey]);
+  // The draft follows the title (behind at most the lore cards), so its track is warmed there.
+  const warmStarter = screen.kind === 'title' || screen.kind === 'lore';
+  useEffect(() => {
+    if (warmStarter) prefetchTrack('starterScreen');
+  }, [warmStarter]);
 
   return (
     <LocationProvider location={ambientLocation}>
