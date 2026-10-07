@@ -15,7 +15,8 @@ import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel } from '../../run/difficulty';
-import { SCROLL_PACK_PIPS, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT, canBuyScroll } from '../../run/mastery';
+import { canBuyShelfGem, gemAmount, shelfGemPrice, type Gem } from '../../run/gems';
+import { anyMasteryEligible } from '../../run/mastery';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, REVIVE_PURCHASE_LIMIT, canBuyConsumable, consumablePrice, type ConsumableKind } from '../../run/consumables';
 import { anyWounded, canBuyMend, mendPrice } from '../../run/wounds';
 import { WoundBar, entryHp } from '../shared/WoundBar';
@@ -69,8 +70,8 @@ interface Props {
   offers: GuildHallOffers;
   /** Which counter is showing; the host owns the strip so it stays put above the scroll. */
   tab: GuildHallTab;
-  /** Mastery Scrolls bought this visit, carried the same way (run/mastery.ts SCROLL_PURCHASE_LIMIT). */
-  scrollsBought: number;
+  /** Shelf Gems sold this visit (offers.gems indices). */
+  gemsBought: readonly number[];
   /** Revives bought this visit (run/consumables.ts REVIVE_PURCHASE_LIMIT). */
   revivesBought: number;
   /** Tavern rerolls this visit; the next one costs tavernRerollCost(rerolls). */
@@ -78,8 +79,8 @@ interface Props {
   /** Gear-shelf slots sold this visit (offers.itemIds indices). */
   itemsBought: readonly number[];
   onRunChange: (next: RunState) => void;
-  /** Hands off to App.tsx, which charges the gold and opens the who screen for the pip. */
-  onBuyScroll: () => void;
+  /** Hands off to App.tsx, which charges the gold and opens the who screen for the Gem. */
+  onBuyGem: (slot: number) => void;
   /** Hands off to App.tsx, which charges the gold and opens the who screen for the piece. */
   onBuyItem: (slot: number) => void;
   /** Hands off to App.tsx, which charges the gold and swaps the shelf on the screen (run/shop.ts rerollGuildHallOffers). */
@@ -136,12 +137,12 @@ function GuildHallHeroCard({ hero, offer, level, affordable, onInspect }: HeroCa
 export function GuildHallPanel({
   run,
   offers,
-  scrollsBought,
+  gemsBought,
   revivesBought,
   rerolls,
   itemsBought,
   onRunChange,
-  onBuyScroll,
+  onBuyGem,
   onBuyItem,
   onReroll,
   onBuyConsumable,
@@ -169,8 +170,7 @@ export function GuildHallPanel({
   const contractCost = contractPrice(run);
   const canBuyContract = run.gold >= contractCost;
   const canHire = run.recruitContracts > 0;
-  const scrollsSoldOut = scrollsBought >= SCROLL_PURCHASE_LIMIT;
-  const canBuyScrollNow = canBuyScroll(run, scrollsBought);
+  const anyoneTakesGem = anyMasteryEligible(run.roster);
   const rerollCost = tavernRerollCost(rerolls);
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
@@ -276,22 +276,28 @@ export function GuildHallPanel({
 
       {tab === 'shop' && (
         <div className="guild-hall-section is-shop">
-          {/* The shelf: a pack of Gems (SCROLL_PACK_PIPS of random stats, SCROLL_PURCHASE_LIMIT a visit, the tap opens the
-              who screen), the flasks (the flask's own cap is the shelf's; the Revive is one a visit),
-              and two pieces of gear on the bottom plank. */}
+          {/* The shelf: single Gems on the top two planks, their stats shown and each sold once (the tap
+              opens the who screen), the flasks on the third (the flask's own cap is the shelf's; the Revive
+              is one a visit), and two pieces of gear on the bottom plank. */}
           <div className="hall-shelf">
             <img src={HALL_ART.shelf} className="hall-shelf-art" alt="" draggable={false} />
-            <HallGood
-              className="is-slot-1"
-              art={<GemPair />}
-              name={`${SCROLL_PACK_PIPS} Random Gems`}
-              price={scrollsSoldOut ? 'Sold out' : SCROLL_PURCHASE_COST}
-              soldOut={scrollsSoldOut}
-              held={scrollsSoldOut ? undefined : `${SCROLL_PURCHASE_LIMIT - scrollsBought} left`}
-              disabled={!canBuyScrollNow}
-              confirm={SCROLL_PURCHASE_COST >= CONFIRM_PURCHASE_FROM}
-              onClick={onBuyScroll}
-            />
+            {offers.gems.map((gem, i) => {
+              const sold = gemsBought.includes(i);
+              const price = shelfGemPrice(gem);
+              return (
+                <HallGood
+                  key={`gem-${i}`}
+                  className={`is-trio is-row-${Math.floor(i / 3) + 1} is-col-${(i % 3) + 1}`}
+                  art={<GemIcon stat={gem.stat} size={46} large={gem.points >= 10} />}
+                  name={gemTagName(gem)}
+                  price={sold ? 'Sold' : anyoneTakesGem ? price : 'All mastered'}
+                  soldOut={sold || !anyoneTakesGem}
+                  disabled={!canBuyShelfGem(run, gem, sold)}
+                  confirm={price >= CONFIRM_PURCHASE_FROM}
+                  onClick={() => onBuyGem(i)}
+                />
+              );
+            })}
             {CONSUMABLE_KINDS.map((kind, i) => {
               const held = run.consumables[kind];
               const atCap = held >= CONSUMABLE_HOLD_CAP;
@@ -299,7 +305,7 @@ export function GuildHallPanel({
               return (
                 <HallGood
                   key={kind}
-                  className={`is-slot-${i + 2}`}
+                  className={`is-trio is-row-3 is-col-${i + 1}`}
                   art={GOOD_ART[kind === 'hpPotion' ? 'hp' : kind === 'mpPotion' ? 'mp' : 'revive']}
                   name={CONSUMABLE_NAMES[kind]}
                   price={atCap ? (kind === 'revive' ? 'Holding three' : 'Flask full') : visitDone ? 'One a visit' : consumablePrice(kind)}
@@ -319,7 +325,7 @@ export function GuildHallPanel({
               return (
                 <HallGood
                   key={i}
-                  className={`is-slot-${i + 5} is-gear`}
+                  className={`is-duo is-row-4 is-col-${i + 1} is-gear`}
                   style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
                   art={equipmentArt(item) ?? GOOD_ART.sack}
                   name={item.name}
@@ -464,13 +470,11 @@ export function GuildHallPanel({
 
 /** The roster at a glance under the bar, so the Party Heal is priced against who is actually hurt. */
 /** The shelf's pack, drawn: two stones leaning together. Which stats are in it is rolled on the buy. */
-function GemPair() {
-  return (
-    <span className="gem-pair">
-      <GemIcon stat="attack" size={30} />
-      <GemIcon stat="wisdom" size={26} />
-    </span>
-  );
+const GEM_TAG_STAT: Record<Gem['stat'], string> = { hp: 'HP', manaPool: 'Mana', attack: 'Atk', defense: 'Def', intelligence: 'Int', wisdom: 'Wis', speed: 'Spd' };
+
+/** A shelf Gem's tag: what it adds, short enough for a three-wide plank. */
+function gemTagName(gem: Gem): string {
+  return `+${gemAmount(gem)} ${GEM_TAG_STAT[gem.stat]}`;
 }
 
 function TavernRoster({ run }: { run: RunState }) {

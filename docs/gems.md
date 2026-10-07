@@ -50,13 +50,21 @@ rest are lost and the screen says so.
 
 | Faucet | Pays | Was |
 |---|---|---|
-| **The Lapidary** (the forced row, `scribeReward`, every act 1–4) | **6 Gems** (`SCRIBE_GEMS`) | 2 heroes × 2 pips |
-| **Gem Cache** (`scrollReward`, weight 20) | **4 Gems** (`GEM_CACHE_COUNT`) | 3 pips |
-| **The shelf** (Guild Hall and Vigil) | **2 random Gems a pack**, 25g, 2 a visit | 2 pips |
+| **The Lapidary** (the forced row, `scribeReward`, every act 1–4) | **3 Gems** (`SCRIBE_GEMS`) | 2 heroes × 2 pips |
+| **Gem Cache** (`scrollReward`, weight **45**) | **4 Gems** (`GEM_CACHE_COUNT`) | 3 pips |
+| **A won fight** (`GEM_DROP`, `rollGemDrop`) | **Elite and Guardian 2, always; opener / Skirmish 1 at 30%; the finale none** | never |
+| **The shelf** (Guild Hall and Vigil) | **6 single Gems, six different stats**, shown before the buy, each sold once a visit, **3g a point** (15g through Act 2, 30g after) | 2 pips |
 | **MVP** | **+50% of the fight's XP** (`MVP_XP_SHARE`), on top of the roster's grant | 1 pip |
 
 The Lapidary and the Cache grew to pay back the ~12 pips a run the MVP no longer gives. Node type ids
 are unchanged (`scribeReward`, `scrollReward`); only the names are new.
+
+**Re-spread the same day** (2026-10-07, per user direction): the Lapidary's six at once was too many,
+so it came down to 3 and the Gems went to the Cache (20 → 45: the reward pool had grown around it
+until an act showed one about half the time) and to **fight drops**. A drop is rolled at fight start
+with the fight's other drops (so a resumed fight keeps it), shown on the victory screen, and placed
+on the Gem screen behind the item's who-screen, ahead of the Banner. The shelf stopped selling
+random packs: its Gems are single, their stats shown, and its art grew a fourth plank to hold them.
 
 ## 5. Heroes that hold pips without Gems
 
@@ -78,7 +86,8 @@ deterministic). Never a hero at the XP cap, and never the same hero twice runnin
 | "A bare number never gets a screen, and a screen never buys a bare number" (`growth-overhaul.md`) | A Gem's screen buys a **pip** (a verb at 5 and 10), and the stat rides on it. The rule stands for a stat with no pip attached. |
 | "There is no per-hero stat-investment currency", Mana Well and Ley Line the named exceptions, "neither extends to a third" | **Gems are the third**, allowed because each is also Mastery |
 | The MVP pays a pip (`mastery.md` §3) | The MVP pays bonus XP |
-| The Scribe: pick two heroes, two pips each | Six Gems, placed freely |
+| The Scribe: pick two heroes, two pips each | Three Gems, placed freely |
+| "Fights pay XP, the map pays Scrolls; never a post-fight drop" (`mastery.md`) | A won fight drops Gems (§4) |
 
 ## 8. Measured
 
@@ -97,11 +106,26 @@ hardening of 2026-10-05 (`ACT_LEVEL_ADJUST` is the dial to give it back, if play
 "Every hero evolved" fell because the Scribe used to force two pips on two heroes and the
 Lapidary's six go wherever the pilot likes. Every number in §2 and §4 is a first pass.
 
+**The re-spread** (§4), 2026-10-07, 600 runs a side, seed 7, MVP on, against the commit before:
+
+| | Skilled (greedy) | Chart |
+|---|---|---|
+| Full-clear | 81.5 → **82.8%** | 34.7 → **30.8%** (the finale 53.6 → 48.8; about two standard errors) |
+| Gems per completed run | 43.1 → **48.4** | 42.8 → **47.1** |
+| — Lapidary · Cache · drops · shelf | 24.0 · 3.8 · 0 · 15.4 → 12.0 · 6.6 · **13.9** · 15.9 | 24.0 · 3.5 · 0 · 15.4 → 12.0 · 6.7 · **14.1** · 14.3 |
+| Every hero evolved | 46 → **70%** of runs | 31 → **45%** |
+
+Drops paid more than the ~12 estimated, so the total rose about five Gems a run rather than holding.
+Spread across fights, they reach more of the roster than the Lapidary's lump did: every-hero-evolved
+is the big mover. The small-fight chance (30%) is the dial if the total should come back to ~43.
+
 ## 9. Open — DO NOT silently resolve
 
 - **Total stat size.** About 40 Gems a completed run is roughly 300 points, three or more levels of
   growth a hero. Watch Acts 3–4, where Gems double.
-- **Should the shelf show its pack's stats before the buy?** Today it is rolled on the tap.
+- ~~Should the shelf show its pack's stats before the buy?~~ It sells single Gems, stats shown (§4).
+- **Shelf price walks with the act, the drop count does not.** 30g a Gem from Act 3 against the
+  act's gold scale; whether a rich late run buys out the shelf every visit is the thing to watch.
 - ~~The Lapidary's art~~ drawn 2026-10-07 (`art/npc/lapidary.png`, `art/map-nodes/landmarks/lapidary.png`).
 - **Speed Gems** cross Speed thresholds, the one place +5 can flip a turn order. Watch them.
 - **The Mentor as Rare Candy** (+XP scaling by act) and **the Act 4 Tutor as a pick-any-move screen**

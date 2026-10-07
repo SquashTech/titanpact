@@ -7,8 +7,8 @@ import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { ENCHANT_FORCE_BY_RARITY, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { goldRangeFor, purseRangeFor } from '../../run/runProgress';
-import { MASTERY_EVOLUTION, SCROLL_PACK_PIPS, SCROLL_PURCHASE_COST, SCROLL_PURCHASE_LIMIT } from '../../run/mastery';
-import { GEM_CACHE_COUNT, SCRIBE_GEMS, gemPointsForAct } from '../../run/gems';
+import { MASTERY_EVOLUTION } from '../../run/mastery';
+import { GEM_CACHE_COUNT, GEM_DROP, SCRIBE_GEMS, SHELF_GEM_COUNT, SHELF_GEM_PRICE_PER_POINT, gemPointsForAct } from '../../run/gems';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { LEY_LINE_FORCE, MANA_WELL_AMOUNT, MANA_WELL_REGEN } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
@@ -106,8 +106,16 @@ function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] 
       value: drop > 0 ? percent(drop) : null,
       note: drop > 0 && LOOT_SOURCE[type] === 'elite' ? 'one tier up' : undefined,
     },
+    gemFact(type),
     { glyph: 'recruit', label: 'Recruit', value: RECRUITABLE.includes(type) ? 'Contract' : null },
   ];
+}
+
+/** A won fight's Gem drop (run/gems.ts GEM_DROP): a sure count, or the chance of one. */
+function gemFact(type: EncounterNodeKind): NodeFact {
+  const { chance, count } = GEM_DROP[type];
+  if (chance <= 0 || count <= 0) return { glyph: 'scroll', label: 'Gems', value: null };
+  return { glyph: 'scroll', label: 'Gems', value: chance >= 1 ? `${count}` : percent(chance), note: chance >= 1 ? undefined : `${count} Gem` };
 }
 
 const SPAWN_TIER_NAMES: Record<SpawnTier, string> = { early: 'Early', mid: 'Mid', late: 'Late' };
@@ -248,7 +256,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
         facts: [
           { glyph: 'hero', label: 'Hire', value: '1 Contract', note: `Lv ${guildHallLevel(actNumber)}, raw` },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_BASE_PRICE}g`, note: `+${CONTRACT_PRICE_STEP}g each one bought this run` },
-          { glyph: 'scroll', label: `${SCROLL_PACK_PIPS} Gems`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
+          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g`, note: `${SHELF_GEM_COUNT} stats on the shelf, one of each` },
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
           { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },
@@ -262,7 +270,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
       return {
         kind: 'Landmark · The last stop',
         facts: [
-          { glyph: 'scroll', label: `${SCROLL_PACK_PIPS} Gems`, value: `${SCROLL_PURCHASE_COST}g`, note: `up to ${SCROLL_PURCHASE_LIMIT}` },
+          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g`, note: `${SHELF_GEM_COUNT} on the shelf, stats shown` },
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
           { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },

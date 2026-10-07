@@ -16994,34 +16994,11 @@ button.star-shop-bundle-face {
   opacity: 0.5;
 }
 
-/* The Guild Hall shelf's pack: two stones leaning together, drawn rather than pixel art. */
+/* A drawn good on the Guild Hall shelf (a Gem), rather than pixel art. */
 .hall-good-art.is-drawn {
   display: grid;
   place-items: center;
   image-rendering: auto;
-}
-
-.gem-pair {
-  position: relative;
-  display: block;
-  width: 56px;
-  height: 52px;
-}
-
-.gem-pair .gem-icon {
-  position: absolute;
-}
-
-.gem-pair .gem-icon:first-child {
-  left: 4px;
-  top: 6px;
-  transform: rotate(-10deg);
-}
-
-.gem-pair .gem-icon:last-child {
-  right: 2px;
-  bottom: 2px;
-  transform: rotate(14deg);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -37208,12 +37185,13 @@ img.smithy-service-art {
   text-align: center;
 }
 
-/* -- The Shop's shelf: 154x171 at 2x, a crown and three planks. The planks' outlines sit 112, 212 and
-   312px down, and each row of goods stands 54px above its plank. -- */
+/* -- The Shop's shelf: 154x221 at 2x, a crown and four planks. The planks' outlines sit 112, 212, 312 and
+   412px down, and each row of goods stands 54px above its plank. The Gems and the flasks stand three to a
+   plank, the gear two. -- */
 .hall-shelf {
   position: relative;
   width: 308px;
-  height: 364px;
+  height: 464px;
   flex: none;
 }
 
@@ -37222,7 +37200,7 @@ img.smithy-service-art {
   left: 0;
   top: 0;
   width: 308px;
-  height: 342px;
+  height: 442px;
   image-rendering: pixelated;
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.6));
 }
@@ -37231,30 +37209,43 @@ img.smithy-service-art {
   position: absolute;
 }
 
-.hall-shelf .hall-good.is-slot-1,
-.hall-shelf .hall-good.is-slot-2 {
+.hall-shelf .hall-good.is-row-1 {
   top: 58px;
 }
 
-.hall-shelf .hall-good.is-slot-3,
-.hall-shelf .hall-good.is-slot-4 {
+.hall-shelf .hall-good.is-row-2 {
   top: 158px;
 }
 
-.hall-shelf .hall-good.is-slot-5,
-.hall-shelf .hall-good.is-slot-6 {
+.hall-shelf .hall-good.is-row-3 {
   top: 258px;
 }
 
-.hall-shelf .hall-good.is-slot-1,
-.hall-shelf .hall-good.is-slot-3,
-.hall-shelf .hall-good.is-slot-5 {
+.hall-shelf .hall-good.is-row-4 {
+  top: 358px;
+}
+
+.hall-shelf .hall-good.is-trio {
+  width: 88px;
+}
+
+.hall-shelf .hall-good.is-trio.is-col-1 {
+  left: 22px;
+}
+
+.hall-shelf .hall-good.is-trio.is-col-2 {
+  left: 110px;
+}
+
+.hall-shelf .hall-good.is-trio.is-col-3 {
+  left: 198px;
+}
+
+.hall-shelf .hall-good.is-duo.is-col-1 {
   left: 48px;
 }
 
-.hall-shelf .hall-good.is-slot-2,
-.hall-shelf .hall-good.is-slot-4,
-.hall-shelf .hall-good.is-slot-6 {
+.hall-shelf .hall-good.is-duo.is-col-2 {
   left: 156px;
 }
 
@@ -47638,4 +47629,9 @@ img.smithy-service-art {
   .pact-seal-titan .title-titan .titan-eye-halo {
     transition: none;
   }
+}
+
+/* The victory ledger's Gem row: the dropped stones side by side in the disc. */
+.fight-result-row-glyph.is-gems {
+  gap: 1px;
 }

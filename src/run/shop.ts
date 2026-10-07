@@ -9,6 +9,7 @@ import type { RunState } from './state';
 import { rarityWeightsFor, type EquipmentDefinition, type EquipmentRarity } from './equipment';
 import { rollEquipmentDrops } from '../data/equipment';
 import type { GuildHallOffer } from './recruitment';
+import { rollShelfGems, type Gem } from './gems';
 
 /** What a tier is worth in gold: the Shop's shelf price (`shopItemPrice`) and the base `sellValueFor` reads. Untuned. */
 export const EQUIPMENT_PRICE_BY_RARITY: Record<EquipmentRarity, number> = {
@@ -64,6 +65,8 @@ export interface GuildHallOffers {
   heroOfferIds: string[];
   /** The Shop's gear shelf: SHOP_ITEM_COUNT equipment ids, one of each for sale, never restocked. */
   itemIds: string[];
+  /** The shelf's single Gems (run/gems.ts SHELF_GEM_COUNT), each sold once. */
+  gems: Gem[];
 }
 
 /** Two pieces a visit, on the act's standard drop curve. */
@@ -92,7 +95,7 @@ function sample<T>(pool: readonly T[], count: number): T[] {
   return picked;
 }
 
-/** 2-3 heroes not already on the roster, and the gear shelf's pieces. */
+/** 2-3 heroes not already on the roster, the shelf's Gems and the gear shelf's pieces. */
 export function rollGuildHallOffers(
   run: RunState,
   heroPool: readonly GuildHallOffer[],
@@ -100,11 +103,12 @@ export function rollGuildHallOffers(
   muster = false
 ): GuildHallOffers {
   const itemIds = rollEquipmentDrops(SHOP_ITEM_COUNT, rarityWeightsFor(run.actNumber, 'standard')).map((item) => item.id);
-  if (muster) return { heroOfferIds: [], itemIds };
+  const gems = rollShelfGems(run.actNumber);
+  if (muster) return { heroOfferIds: [], itemIds, gems };
   const rosterHeroIds = new Set(run.roster.map((r) => r.heroId));
   const availableHeroes = heroPool.filter((o) => !rosterHeroIds.has(o.heroId));
   const hires = (Math.random() < 0.5 ? 2 : 3) + (isGathering(run) ? GATHERING_EXTRA_HIRES : 0);
-  return { heroOfferIds: sample(availableHeroes, hires).map((o) => o.id), itemIds };
+  return { heroOfferIds: sample(availableHeroes, hires).map((o) => o.id), itemIds, gems };
 }
 
 /** The Tavern's first reroll a visit; each one after costs `TAVERN_REROLL_STEP` more. Untuned. */

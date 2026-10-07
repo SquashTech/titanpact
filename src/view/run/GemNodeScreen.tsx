@@ -40,7 +40,7 @@ const LEAVE_MS = 800;
 /** How long a hero's card flares in the Gem's colour after taking it. */
 const BURST_MS = 700;
 
-const EYEBROW: Record<GemPlan['source'], string> = { scribe: 'By the Roadside', cache: 'Gem Cache', shelf: 'Off the Shelf' };
+const EYEBROW: Record<GemPlan['source'], string> = { scribe: 'By the Roadside', cache: 'Gem Cache', shelf: 'Off the Shelf', drop: 'Spoils' };
 
 /**
  * The who-screen for Gems (docs/gems.md): the Gems come up one at a time in a fixed order, the one

@@ -24,8 +24,7 @@ import { chooseMvp, mvpLedgersFromEvents } from '../../src/run/mvp';
 import { statuses } from '../../src/data/statuses';
 import type { CombatEvent } from '../../src/engine/events';
 import type { CombatState } from '../../src/engine/state';
-import { SCROLL_PACK_PIPS, buyScroll, canBuyScroll } from '../../src/run/mastery';
-import { GEM_CACHE_COUNT, SCRIBE_GEMS, placeGem, rollGems } from '../../src/run/gems';
+import { GEM_CACHE_COUNT, SCRIBE_GEMS, buyShelfGem, canBuyShelfGem, placeGem, rollGemDrop, rollGems, type Gem } from '../../src/run/gems';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { blessOpeningPair, canBless, grantBlessing } from '../../src/run/blessings';
@@ -739,6 +738,7 @@ function resolveEncounterNode(
   if (consumableDrop) workingRun = grantConsumable(workingRun, consumableDrop);
   if (consumableDrop === 'revive') record.knockouts.revivesFound += 1;
   if (rollContractDrop(kindKey, rng)) workingRun = grantContract(workingRun);
+  workingRun = landGems(workingRun, rollGemDrop(kindKey, workingRun.actNumber, rng), 'drop', rng, record, options);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop, encounter, koRosterIds };
 }
 
@@ -801,12 +801,12 @@ function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry
 }
 
 /**
- * `count` Gems rolled for the act, each placed on the hero the policy names as it stands after the
- * last, and what its pip opens paid on the spot. The Evolution is logged as the choice it is.
+ * Each Gem placed on the hero the policy names as it stands after the last, and what its pip opens
+ * paid on the spot. The Evolution is logged as the choice it is.
  */
-function landGems(run: RunState, count: number, source: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
+function landGems(run: RunState, gems: readonly Gem[], source: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   let next = run;
-  for (const gem of rollGems(count, run.actNumber, rng)) {
+  for (const gem of gems) {
     const target = policy.scrollTarget(next.roster, options.levelPolicy);
     if (!target) break;
     record.pipsBySource[source] = (record.pipsBySource[source] ?? 0) + 1;
@@ -819,11 +819,11 @@ function landGems(run: RunState, count: number, source: string, rng: Rng, record
 }
 
 function resolveScribe(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
-  return landGems(run, SCRIBE_GEMS, 'scribe', rng, record, options);
+  return landGems(run, rollGems(SCRIBE_GEMS, run.actNumber, rng), 'scribe', rng, record, options);
 }
 
 function resolveScrollCache(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
-  return landGems(run, GEM_CACHE_COUNT, 'cache', rng, record, options);
+  return landGems(run, rollGems(GEM_CACHE_COUNT, run.actNumber, rng), 'cache', rng, record, options);
 }
 
 function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
@@ -1167,10 +1167,11 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     spend('revive', () => buyConsumable(next, 'revive', revivesBought));
   }
 
-  // The shelf's Mastery Scrolls (SCROLL_PURCHASE_LIMIT a visit), bought while somebody can still
-  // take one and the gold is there, to the hero the policy names.
-  for (let bought = 0; canBuyScroll(next, bought); bought++) {
-    spend('scroll', () => landGems(buyScroll(next, bought), SCROLL_PACK_PIPS, 'shelf', rng, record, options));
+  // The shelf's single Gems, bought in shelf order while somebody can still take one and the gold
+  // is there, to the hero the policy names.
+  for (const gem of offers.gems) {
+    if (!canBuyShelfGem(next, gem, false)) continue;
+    spend('scroll', () => landGems(buyShelfGem(next, gem), [gem], 'shelf', rng, record, options));
   }
 
   spend('anvil', () => resolveAnvil(next));

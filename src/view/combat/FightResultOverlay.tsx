@@ -20,6 +20,8 @@ import { useCoinCount } from '../shared/useCoinCount';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { playXpBar, xpBarSegments, xpBarTickTimes, xpBarTotalMs } from '../shared/xpBar';
 import { getTypeColor } from './typeColors';
+import type { Gem } from '../../run/gems';
+import { GemIcon, GEM_STONES } from '../shared/GemIcon';
 
 /** A loss wears the enemy's red; a win, the run's gold — the Location's own tint stays on the field behind. */
 const TINT_LOSS = '217, 83, 79';
@@ -37,6 +39,8 @@ const STAGE_TITLE = 0;
 const STAGE_FILL = 1;
 const STAGE_CAPTION = 2;
 const STAGE_LEDGER = 3;
+
+const NO_GEMS: readonly Gem[] = [];
 
 export interface FightResultProps {
   outcome: 'win' | 'loss';
@@ -60,6 +64,8 @@ export interface FightResultProps {
   consumableReward?: ConsumableKind | null;
   /** The Elite's Recruit Contract drop, landed before the claim screen that follows. */
   contractReward?: boolean;
+  /** The fight's Gem drop (run/gems.ts rollGemDrop), placed on the who-screen that follows. */
+  gemReward?: readonly Gem[];
   /**
    * Where each roster hero's HP stands going into the next node (run/wounds.ts) — the fielded
    * read off the fight's end, the reserve off what they were already carrying. Omit (a fight
@@ -93,6 +99,7 @@ export function FightResultOverlay({
   equipmentReward,
   consumableReward = null,
   contractReward = false,
+  gemReward = NO_GEMS,
   hpAfter,
   mvp = null,
   onContinue,
@@ -123,9 +130,10 @@ export function FightResultOverlay({
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
     if (equipmentReward) rows.push({ key: 'item', render: () => <ItemRow item={equipmentReward} onInspect={() => setInspecting(true)} /> });
     if (consumableReward) rows.push({ key: 'potion', render: () => <PotionRow kind={consumableReward} /> });
+    if (gemReward.length > 0) rows.push({ key: 'gems', render: () => <GemRow gems={gemReward} /> });
     if (contractReward) rows.push({ key: 'contract', render: () => <ContractRow /> });
     return rows;
-  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, contractReward, mvp, xpGained]);
+  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, gemReward, contractReward, mvp, xpGained]);
 
   const stageDone = STAGE_LEDGER + ledger.length;
   const [stage, setStage] = useState(() => (prefersReducedMotion() ? stageDone : STAGE_TITLE));
@@ -430,6 +438,24 @@ function PotionRow({ kind }: { kind: ConsumableKind }) {
         <span className="fight-result-row-sub">{CONSUMABLE_BLURBS[kind]}</span>
       </span>
       <span className="fight-result-row-value">+1</span>
+    </div>
+  );
+}
+
+function GemRow({ gems }: { gems: readonly Gem[] }) {
+  const one = gems.length === 1;
+  return (
+    <div className="fight-result-row">
+      <span className="fight-result-row-glyph is-gems">
+        {gems.map((gem, i) => (
+          <GemIcon key={i} stat={gem.stat} size={one ? 26 : 20} large={gem.points >= 10} />
+        ))}
+      </span>
+      <span className="fight-result-row-text">
+        <span className="fight-result-row-label">{one ? GEM_STONES[gems[0].stat].name : 'Gems'}</span>
+        <span className="fight-result-row-sub">{one ? 'A stat and a Mastery pip, for one hero' : 'Each a stat and a Mastery pip, for one hero'}</span>
+      </span>
+      <span className="fight-result-row-value">+{gems.length}</span>
     </div>
   );
 }

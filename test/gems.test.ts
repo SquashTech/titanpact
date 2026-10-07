@@ -7,7 +7,22 @@ import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { passives } from '../src/data/passives';
 import { entryPassiveCounts, entryStatModifiers } from '../src/run/entryStats';
-import { GEM_ORDER, gemAmount, gemPointsForAct, gemStatModifiers, placeGem, rollGems } from '../src/run/gems';
+import {
+  GEM_DROP,
+  GEM_ORDER,
+  SCRIBE_GEMS,
+  SHELF_GEM_COUNT,
+  buyShelfGem,
+  canBuyShelfGem,
+  gemAmount,
+  gemPointsForAct,
+  gemStatModifiers,
+  placeGem,
+  rollGemDrop,
+  rollGems,
+  rollShelfGems,
+  shelfGemPrice,
+} from '../src/run/gems';
 import { MASTERY_CAP, MasteryError } from '../src/run/mastery';
 import { addRosterEntry, createRosterEntry, createRunState } from '../src/run/state';
 import { fightXpFor, MVP_XP_SHARE } from '../src/run/growth';
@@ -56,4 +71,36 @@ test('gems: the MVP takes half the fight again in XP', () => {
   assert.strictEqual(fightXpFor(560, 'a', 'a'), 840);
   assert.strictEqual(fightXpFor(560, 'b', 'a'), 560);
   assert.strictEqual(fightXpFor(560, 'b', null), 560);
+});
+
+test('gems: the Elite and the Guardian always drop two, the small fights sometimes one, the finale none', () => {
+  assert.strictEqual(SCRIBE_GEMS, 3, 'the Lapidary hands out three');
+  assert.strictEqual(rollGemDrop('elite', 1, () => 0.99).length, 2);
+  assert.strictEqual(rollGemDrop('boss', 3, () => 0.99).length, 2);
+  assert.ok(rollGemDrop('boss', 3, () => 0.99).every((g) => g.points === 10), 'sized by the act like any other Gem');
+  assert.strictEqual(rollGemDrop('skirmish', 1, () => 0.99).length, 0, 'a miss');
+  assert.strictEqual(rollGemDrop('skirmish', 1, () => 0).length, 1, 'a hit');
+  assert.ok(GEM_DROP.skirmish.chance > 0 && GEM_DROP.skirmish.chance < 1);
+  assert.strictEqual(rollGemDrop('finale', 4, () => 0).length, 0);
+});
+
+test('gems: the shelf sells single Gems, priced by their points, while somebody can take one', () => {
+  assert.ok(SHELF_GEM_COUNT > 4, 'more on the shelf than the two packs it replaced');
+  const stock = rollShelfGems(3);
+  assert.strictEqual(stock.length, SHELF_GEM_COUNT);
+  assert.strictEqual(new Set(stock.map((g) => g.stat)).size, SHELF_GEM_COUNT, 'every one a different stat');
+  assert.ok(stock.every((g) => g.points === 10), 'sized by the act');
+  const small = { stat: 'attack' as const, points: 5 };
+  const large = { stat: 'attack' as const, points: 10 };
+  assert.strictEqual(shelfGemPrice(large), shelfGemPrice(small) * 2, 'the price walks with the act');
+  let run = { ...seed('cinderKnight'), gold: shelfGemPrice(small) };
+  assert.ok(canBuyShelfGem(run, small, false));
+  assert.ok(!canBuyShelfGem(run, small, true), 'each sold once a visit');
+  assert.ok(!canBuyShelfGem(run, large, false), 'gold');
+  run = buyShelfGem(run, small);
+  assert.strictEqual(run.gold, 0, 'the gold is the whole price');
+  assert.strictEqual(run.roster[0].mastery, 0, 'the Gem lands through placeGem, once the player has said who');
+  const capped = { ...run, gold: 99, roster: [{ ...run.roster[0], mastery: MASTERY_CAP }] };
+  assert.ok(!canBuyShelfGem(capped, small, false), 'nobody to take it');
+  assert.throws(() => buyShelfGem(capped, small), MasteryError);
 });

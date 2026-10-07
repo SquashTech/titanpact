@@ -1,6 +1,6 @@
 // Mastery (src/run/mastery.ts, docs/mastery.md): ten pips a hero, five the Evolution, ten the
-// innate MASTERED; a pip is one Scroll, landed the moment it is paid; the map pays them, never a
-// fight. The signature move is a level's guaranteed learn (docs/mastery.md §5) and is pinned here
+// innate MASTERED; a pip is one Gem, landed the moment it is paid (test/gems.test.ts has where
+// they come from). The signature move is a level's guaranteed learn (docs/mastery.md §5) and is pinned here
 // beside it, since the two traded places.
 
 import * as assert from 'assert';
@@ -13,11 +13,7 @@ import {
   MASTERY_EVOLUTION,
   MASTERY_INNATE,
   MasteryError,
-  SCROLL_PURCHASE_COST,
-  SCROLL_PURCHASE_LIMIT,
   anyMasteryEligible,
-  buyScroll,
-  canBuyScroll,
   canTakeMastery,
   crossesMastery,
   grantMastery,
@@ -108,29 +104,14 @@ test('mastery: enemies, contracts and hires read their pips off the act — one 
   assert.strictEqual(guildHallMastery(1), 0, 'and both are raw in Act 1');
 });
 
-test('mastery: the shelf sells a Scroll for flat gold, capped a visit, only while somebody can take one', () => {
-  let run = seed(['cinderKnight'], SCROLL_PURCHASE_COST * 3);
-  assert.ok(canBuyScroll(run, 0));
-  run = buyScroll(run, 0);
-  assert.strictEqual(run.gold, SCROLL_PURCHASE_COST * 2, 'the gold is the whole price');
-  assert.strictEqual(run.roster[0].mastery, 0, 'the pip lands through grantMastery, once the player has said who');
-  assert.ok(canBuyScroll(run, 1));
-  assert.ok(!canBuyScroll(run, SCROLL_PURCHASE_LIMIT), 'the visit\'s limit');
-  assert.throws(() => buyScroll(run, SCROLL_PURCHASE_LIMIT), MasteryError);
-  assert.ok(!canBuyScroll({ ...run, gold: SCROLL_PURCHASE_COST - 1 }, 0), 'gold');
-  const capped = { ...run, roster: [{ ...run.roster[0], mastery: MASTERY_CAP }] };
-  assert.ok(!canBuyScroll(capped, 0), 'nobody to take it');
-  assert.throws(() => buyScroll(capped, 0), MasteryError);
-});
-
 test('mastery: the Gem Cache sits in the reward pool at the seat Ichor held, and Ichor is gone', () => {
   assert.ok(MAP_NODE_TYPES.includes('scrollReward'));
   const types = MAP_NODE_TYPES as readonly string[];
   assert.ok(!types.includes('ichorReward') && !types.includes('ichorDropReward'), 'Ichor retired (docs/mastery.md §4)');
   const cache = REWARD_WEIGHTS.find(([type]) => type === 'scrollReward');
-  // 46 (Ichor's seat, taken back) until 2026-09-17, then 20 per user direction: two Caches an act
-  // was 47% of acts, and with the Scribe's 2 one Cache is an Evolution (docs/run-loop.md).
-  assert.ok(cache && cache[1] === 20, 'the Scroll Cache sits at 20');
+  // 20 until 2026-10-07, then 45 per user direction: the Lapidary came down to 3 and its Gems
+  // moved onto the Cache and fight drops (docs/gems.md §4).
+  assert.ok(cache && cache[1] === 45, 'the Gem Cache sits at 45');
   assert.ok(!REWARD_WEIGHTS.some(([type]) => (type as string).startsWith('ichor')), 'and the Drop seat is not re-pointed');
   // Three pips, any split: three on one hero from two lands the fifth.
   let run = seed(['cinderKnight', 'crimson']);

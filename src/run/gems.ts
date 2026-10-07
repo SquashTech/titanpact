@@ -4,8 +4,9 @@
 // Mastery cap cannot take one.
 
 import type { GrowthStatKey, HeroDefinition, StatKey } from '../engine/content';
+import type { EncounterNodeKind } from './difficulty';
 import { entryGradesFor, GRADE_COST } from './growth';
-import { canTakeMastery, grantMastery, MasteryError } from './mastery';
+import { anyMasteryEligible, canTakeMastery, grantMastery, MasteryError } from './mastery';
 import type { RosterEntry, RunState } from './state';
 
 export interface Gem {
@@ -32,14 +33,66 @@ export function gemAmount(gem: Gem): number {
   return gem.points * gemUnitFor(gem.stat);
 }
 
-/** The Scribe's forced row: this many Gems, every act. */
-export const SCRIBE_GEMS = 6;
+/** The Lapidary's forced row: this many Gems, every act. */
+export const SCRIBE_GEMS = 3;
 /** The Gem Cache, a reward-row seat. */
 export const GEM_CACHE_COUNT = 4;
 
+/**
+ * A won fight's Gem drop: `count` Gems at `chance`. The Elite and the Guardian always pay; the
+ * small fights sometimes do; the finale pays nothing, the run being over (docs/gems.md §4).
+ */
+export const GEM_DROP: Record<EncounterNodeKind, { chance: number; count: number }> = {
+  fight: { chance: 0.3, count: 1 },
+  battle: { chance: 0.3, count: 1 },
+  skirmish: { chance: 0.3, count: 1 },
+  elite: { chance: 1, count: 2 },
+  boss: { chance: 1, count: 2 },
+  finale: { chance: 0, count: 0 },
+};
+
+/** Rolled at fight start with the fight's other drops, so a resumed fight keeps it. */
+export function rollGemDrop(nodeKind: EncounterNodeKind, actNumber: number, random: () => number = Math.random): Gem[] {
+  const drop = GEM_DROP[nodeKind];
+  return random() < drop.chance ? rollGems(drop.count, actNumber, random) : [];
+}
+
+/** The Guild Hall shelf: single Gems, their stats shown, each sold once a visit. */
+export const SHELF_GEM_COUNT = 6;
+
+/** The shelf's stock: `SHELF_GEM_COUNT` different stats, so what is on it is a choice of stat. */
+export function rollShelfGems(actNumber: number, random: () => number = Math.random): Gem[] {
+  const stats = [...GEM_ORDER];
+  const points = gemPointsForAct(actNumber);
+  const picked: Gem[] = [];
+  while (picked.length < Math.min(SHELF_GEM_COUNT, GEM_ORDER.length)) {
+    picked.push({ stat: stats.splice(Math.floor(random() * stats.length), 1)[0], points });
+  }
+  return sortGems(picked);
+}
+/** Gold a point, so a shelf Gem's price walks with the act's gold (5 points 15g, 10 points 30g). */
+export const SHELF_GEM_PRICE_PER_POINT = 3;
+
+export function shelfGemPrice(gem: Gem): number {
+  return gem.points * SHELF_GEM_PRICE_PER_POINT;
+}
+
+/** Whether the shelf will sell this Gem right now: not sold this visit, the gold, and somebody to take it. */
+export function canBuyShelfGem(run: RunState, gem: Gem, sold: boolean): boolean {
+  return !sold && run.gold >= shelfGemPrice(gem) && anyMasteryEligible(run.roster);
+}
+
+/** The shelf's charge — the Gem itself lands through placeGem once the player has said who. */
+export function buyShelfGem(run: RunState, gem: Gem): RunState {
+  const price = shelfGemPrice(gem);
+  if (run.gold < price) throw new MasteryError(`need ${price} gold, have ${run.gold}`);
+  if (!anyMasteryEligible(run.roster)) throw new MasteryError('every hero is already mastered');
+  return { ...run, gold: run.gold - price };
+}
+
 /** What a Gem screen hands out, already rolled and in `GEM_ORDER`. */
 export interface GemPlan {
-  source: 'scribe' | 'cache' | 'shelf';
+  source: 'scribe' | 'cache' | 'shelf' | 'drop';
   gems: Gem[];
 }
 

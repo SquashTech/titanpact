@@ -110,6 +110,7 @@ import { TitanBody } from './TitanBody';
 import { EntranceFlood } from '../shared/EntranceFlood';
 import { ENDBRINGER_ID, EYE_IDS, isTitanEye } from '../../data/enemies';
 import type { LocationDefinition } from '../../data/locations';
+import type { Gem } from '../../run/gems';
 
 /** One enemy's live matchup for a move row, precomputed by FightScreen so MoveRow needs no combat state of its own. */
 interface MoveMatchup {
@@ -591,6 +592,8 @@ interface Props {
   consumableReward?: ConsumableKind | null;
   /** The Elite's Recruit Contract drop (run/recruitment.ts rollContractDrop). Displayed only. */
   contractReward?: boolean;
+  /** The fight's Gem drop (run/gems.ts rollGemDrop). Displayed only. */
+  gemReward?: readonly Gem[];
   /**
    * Fired when the player dismisses the result overlay — the caller owns what a win/loss means for
    * the run. `consumablesUsed` is what this fight drank, for the caller to take off the purse.
@@ -639,6 +642,7 @@ export function FightScreen({
   equipmentReward,
   consumableReward = null,
   contractReward = false,
+  gemReward,
   onResolved,
   onSaveAndQuit,
   onAbandonRun,
@@ -2380,6 +2384,7 @@ export function FightScreen({
           equipmentReward={equipmentReward}
           consumableReward={consumableReward}
           contractReward={contractReward}
+          gemReward={gemReward}
           hpAfter={hpAfter}
           mvp={mvp}
           onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables, mvp)}

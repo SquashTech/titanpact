@@ -13,7 +13,7 @@ import type { GauntletResult } from './gauntlet';
 import type { HeroLevelUp } from './growth';
 import type { CompanionBeat } from './companion';
 import type { RewardNodeType } from './map';
-import { GEM_ORDER, rollGems, type Gem, type GemPlan } from './gems';
+import { GEM_ORDER, rollGems, rollShelfGems, type Gem, type GemPlan } from './gems';
 import type { GrowthStatKey } from '../engine/content';
 import type { MvpLedger, MvpTally } from './mvp';
 import type { GuildHallOffer, RosterReplaceCandidate } from './recruitment';
@@ -69,6 +69,8 @@ export type RunScreen =
       consumableReward: ConsumableKind | null;
       /** The Elite's Recruit Contract drop (run/recruitment.ts rollContractDrop). */
       contractReward: boolean;
+      /** The fight's Gem drop (run/gems.ts rollGemDrop), placed after the item's who-screen. */
+      gemReward: Gem[];
       /** Seeds the level roll, so the victory screen shows the growth handleFightResolved will land (run/growth.ts previewLevelUp). */
       levelSeed: number;
     }
@@ -89,7 +91,7 @@ export type RunScreen =
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; scrollsBought: number; revivesBought: number; rerolls: number; itemsBought: number[] }
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; gemsBought: number[]; revivesBought: number; rerolls: number; itemsBought: number[] }
   /** `seed` fixes what the chest holds, so a reload opens the same one. */
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType; seed: number; settled?: boolean }
   /** An item has arrived and asks who carries it (docs/gear-absorption.md §2). `next` is where the run goes once it is absorbed or sold. */
@@ -349,14 +351,18 @@ function decodeBeat(value: unknown, ctx: Ctx): CompanionBeat {
   reject('companion.beat has an unknown kind');
 }
 
+function decodeGems(value: unknown, label: string): Gem[] {
+  if (!Array.isArray(value)) reject(`${label} is not a list of Gems`);
+  return value.map((gem, i) =>
+    isObject(gem) && GEM_ORDER.includes(gem.stat as GrowthStatKey) && typeof gem.points === 'number'
+      ? { stat: gem.stat as GrowthStatKey, points: gem.points }
+      : reject(`${label}[${i}] is not a Gem`)
+  );
+}
+
 function decodePlan(value: unknown, ctx: Ctx): GemPlan {
-  if (isObject(value) && (value.source === 'scribe' || value.source === 'cache' || value.source === 'shelf') && Array.isArray(value.gems)) {
-    const gems: Gem[] = value.gems.map((gem, i) =>
-      isObject(gem) && GEM_ORDER.includes(gem.stat as GrowthStatKey) && typeof gem.points === 'number'
-        ? { stat: gem.stat as GrowthStatKey, points: gem.points }
-        : reject(`scrolls.plan.gems[${i}] is not a Gem`)
-    );
-    return { source: value.source, gems };
+  if (isObject(value) && (value.source === 'scribe' || value.source === 'cache' || value.source === 'shelf' || value.source === 'drop') && Array.isArray(value.gems)) {
+    return { source: value.source, gems: decodeGems(value.gems, 'scrolls.plan.gems') };
   }
   // A screen saved before Gems: its Scrolls arrive as Gems, rolled now.
   if (isObject(value) && value.kind === 'scribe') return { source: 'scribe', gems: rollGems(4, ctx.run.actNumber) };
@@ -425,6 +431,8 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
         consumableReward: drop as ConsumableKind | null,
         // Absent on a fight saved before the Elite dropped contracts.
         contractReward: raw.contractReward === true,
+        // Absent on a fight saved before fights dropped Gems.
+        gemReward: raw.gemReward === undefined ? [] : decodeGems(raw.gemReward, 'fight.gemReward'),
         levelSeed: int(raw.levelSeed, 'fight.levelSeed'),
       };
     }
@@ -437,8 +445,10 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
         offers: {
           heroOfferIds: [...raw.offers.heroOfferIds],
           itemIds: (Array.isArray(raw.offers.itemIds) ? raw.offers.itemIds : []).map((id, at) => itemId(id, ctx, `shop.offers.itemIds[${at}]`)),
+          // A shelf saved while it sold packs stocks single Gems now.
+          gems: raw.offers.gems === undefined ? rollShelfGems(ctx.run.actNumber) : decodeGems(raw.offers.gems, 'shop.offers.gems'),
         },
-        scrollsBought: int(raw.scrollsBought, 'shop.scrollsBought'),
+        gemsBought: Array.isArray(raw.gemsBought) && raw.gemsBought.every((slot) => isInt(slot, 0)) ? [...(raw.gemsBought as number[])] : [],
         revivesBought: int(raw.revivesBought, 'shop.revivesBought'),
         rerolls: int(raw.rerolls, 'shop.rerolls'),
         itemsBought: [...(raw.itemsBought as number[])],

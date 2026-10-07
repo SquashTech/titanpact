@@ -90,7 +90,7 @@ test('shop: a Tavern reroll keeps the shelf size and shows new faces, never a ro
 test('shop: a Tavern reroll over a thin pool tops up from the faces just shown', () => {
   const pool = guildHallOffers.slice(0, 3);
   const run = seedRoster([], 1000);
-  const offers = { heroOfferIds: pool.slice(0, 2).map((o) => o.id), itemIds: [] };
+  const offers = { heroOfferIds: pool.slice(0, 2).map((o) => o.id), itemIds: [], gems: [] };
   const next = rerollGuildHallOffers(run, pool, offers, 0).offers;
   assert.strictEqual(next.heroOfferIds.length, 2);
   assert.ok(next.heroOfferIds.includes(pool[2].id));

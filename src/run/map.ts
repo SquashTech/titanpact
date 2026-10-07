@@ -103,16 +103,10 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // gear-absorption.md §5). 40 + the Forge's 38 since 2026-09-15 — the Forge's seat came to the
   // Cache rather than vanishing, so every other reward keeps the frequency it had.
   ['equipmentReward', 78],
-  // The Scroll Cache: SCROLL_CACHE_COUNT Mastery pips, divided as the player likes (run/mastery.ts,
-  // docs/mastery.md §3) — the seat and weight it held before Ichor took them (2026-09-14, Mastery
-  // phase 2). Weighted level with equipment: they are the run's two growth axes, one per hero's
-  // form and one per hero's kit, and neither should be the one you plan around. The supply is the
-  // only balance number and phase 5 sets it; the Drop's seat (14) retired with Ichor and was not
-  // re-pointed. 46 → 20 on 2026-09-17 (per user direction): at 46 an act held two or more Caches
-  // 47% of the time, and with the Scribe's 2 a single Cache is an Evolution, so early Evolutions
-  // were the default; at 20 it is one act in six, all three rows one in fifty, and an act still
-  // holds one more often than not (60%).
-  ['scrollReward', 20],
+  // The Gem Cache: GEM_CACHE_COUNT Gems (run/gems.ts). 20 → 45 on 2026-10-07 (per user direction):
+  // the pool had grown around it to where an act showed one about half the time, and the Lapidary
+  // came down 6 → 3 with its Gems moved here and onto fight drops (docs/gems.md §4).
+  ['scrollReward', 45],
   // The Boon: the part of the deleted relic pool that was actually worth having, handed to ONE
   // hero instead of all four. It is the only reward row node that changes how a hero plays
   // rather than how big its numbers are.

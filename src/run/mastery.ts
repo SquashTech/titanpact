@@ -1,7 +1,7 @@
 // Mastery — the pips a hero's Evolution and mastered innate sit behind (docs/mastery.md). Ten a
 // hero, uniform: five is the Evolution, ten the innate MASTERED. A pip is one Gem (run/gems.ts),
-// placed the instant it is paid. Gems come from the map — the Scribe, the Gem Cache, the Guild
-// Hall shelf — and never from a fight: fights pay XP, the map pays Gems.
+// placed the instant it is paid. Gems come from the Lapidary, the Gem Cache, the Guild Hall shelf
+// and a won fight's drop (docs/gems.md §4).
 
 import { FINALE_ACT, type RosterEntry, type RunState } from './state';
 
@@ -16,15 +16,6 @@ export const MASTERY_EVOLUTION = 5;
  * move's pip until 2026-09-24, per user direction; the signature is a level's now (progression.ts).
  */
 export const MASTERY_INNATE = MASTERY_CAP;
-
-/**
- * The Guild Hall shelf's Gem pack: flat gold, capped a visit so a rich run cannot buy a mastered
- * innate in one stop. First-pass figures (docs/gems.md).
- */
-export const SCROLL_PURCHASE_COST = 25;
-export const SCROLL_PURCHASE_LIMIT = 2;
-/** Gems in one shelf pack. */
-export const SCROLL_PACK_PIPS = 2;
 
 export class MasteryError extends Error {}
 
@@ -78,18 +69,3 @@ export function grantMastery(run: RunState, rosterId: string, pips: number): Run
   const mastery = entry.mastery + masteryRoom(entry, pips);
   return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? { ...r, mastery } : r)) };
 }
-
-/** Whether the shelf will sell another Scroll right now: gold, the visit's limit, and somebody to take it. */
-export function canBuyScroll(run: RunState, bought: number): boolean {
-  return bought < SCROLL_PURCHASE_LIMIT && run.gold >= SCROLL_PURCHASE_COST && anyMasteryEligible(run.roster);
-}
-
-/** The shelf's charge — the pip itself lands through grantMastery once the player has said who. */
-export function buyScroll(run: RunState, bought: number): RunState {
-  if (bought >= SCROLL_PURCHASE_LIMIT) throw new MasteryError(`the shelf sells ${SCROLL_PURCHASE_LIMIT} a visit`);
-  if (run.gold < SCROLL_PURCHASE_COST) throw new MasteryError(`need ${SCROLL_PURCHASE_COST} gold, have ${run.gold}`);
-  if (!anyMasteryEligible(run.roster)) throw new MasteryError(`every hero is already at ${MASTERY_CAP} Mastery`);
-  return { ...run, gold: run.gold - SCROLL_PURCHASE_COST };
-}
-
-

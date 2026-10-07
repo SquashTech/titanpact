@@ -14,15 +14,15 @@ import { readGuildHallTab, writeGuildHallTab } from './guildHallTabMemory';
 interface Props {
   run: RunState;
   offers: GuildHallOffers;
-  /** Mastery Scrolls bought this visit, carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the who screen. */
-  scrollsBought: number;
+  /** Shelf Gems sold this visit (offers.gems indices), carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the who screen. */
+  gemsBought: readonly number[];
   revivesBought: number;
   /** Tavern rerolls this visit (run/shop.ts tavernRerollCost). */
   rerolls: number;
   /** Gear-shelf slots sold this visit. */
   itemsBought: readonly number[];
   onRunChange: (next: RunState) => void;
-  onBuyScroll: () => void;
+  onBuyGem: (slot: number) => void;
   onBuyItem: (slot: number) => void;
   onReroll: () => void;
   onBuyConsumable: (kind: ConsumableKind) => void;
@@ -43,12 +43,12 @@ interface Props {
 export function ShopNodeScreen({
   run,
   offers,
-  scrollsBought,
+  gemsBought,
   revivesBought,
   rerolls,
   itemsBought,
   onRunChange,
-  onBuyScroll,
+  onBuyGem,
   onBuyItem,
   onReroll,
   onBuyConsumable,
@@ -92,12 +92,12 @@ export function ShopNodeScreen({
         <GuildHallPanel
           run={run}
           offers={offers}
-          scrollsBought={scrollsBought}
+          gemsBought={gemsBought}
           revivesBought={revivesBought}
           rerolls={rerolls}
           itemsBought={itemsBought}
           onRunChange={onRunChange}
-          onBuyScroll={onBuyScroll}
+          onBuyGem={onBuyGem}
           onBuyItem={onBuyItem}
           onReroll={onReroll}
           onBuyConsumable={onBuyConsumable}

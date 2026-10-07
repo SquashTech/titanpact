@@ -105,8 +105,8 @@ import {
   type RosterReplaceCandidate,
 } from '../run/recruitment';
 import { guildHallOffersFor } from '../data/recruitment';
-import { MASTERY_CAP, SCROLL_PACK_PIPS, buyScroll, canBuyScroll } from '../run/mastery';
-import { GEM_CACHE_COUNT, SCRIBE_GEMS, rollGems } from '../run/gems';
+import { MASTERY_CAP, anyMasteryEligible } from '../run/mastery';
+import { GEM_CACHE_COUNT, SCRIBE_GEMS, buyShelfGem, canBuyShelfGem, rollGemDrop, rollGems, type Gem } from '../run/gems';
 import type { MvpPick } from '../run/mvp';
 import { ShopItemError, TavernRerollError, buyShopItem, rerollGuildHallOffers, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
@@ -831,7 +831,7 @@ export function App() {
         kind: 'shop',
         nodeId,
         offers: rollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool), node.type === 'muster'),
-        scrollsBought: 0,
+        gemsBought: [],
         revivesBought: 0,
         rerolls: 0,
         itemsBought: [],
@@ -883,6 +883,7 @@ export function App() {
       equipmentRewardId: equipmentReward?.id ?? null,
       consumableReward: rollConsumableDrop(mapNodeType),
       contractReward: rollContractDrop(mapNodeType),
+      gemReward: rollGemDrop(mapNodeType, playerRun.actNumber),
       levelSeed: randomSeed(),
     };
     // The Herald is announced before the fight — and a
@@ -905,6 +906,8 @@ export function App() {
     consumableReward: ConsumableKind | null,
     /** The Elite's contract drop, paid before the claim so it can sign one of the beaten. */
     contractReward: boolean,
+    /** The fight's Gem drop, placed after the item's who-screen. */
+    gemReward: readonly Gem[],
     /** This fight's enemy side — the beaten builds a Recruit Contract can claim, and the Early that asks to join. */
     encounter: Encounter,
     outcome: 'win' | 'loss',
@@ -1009,7 +1012,12 @@ export function App() {
 
     // The drop asks who carries it right behind the levels — the fight's own consequence, ahead of
     // the Banner and everything under it (docs/gear-absorption.md §2).
-    const afterDrop: Screen = dropId ? { kind: 'itemWho', itemId: dropId, next: afterBanner } : afterBanner;
+    // The Gems the fight dropped are placed behind the item, ahead of the Banner — still the fight's own pay.
+    const afterGems: Screen =
+      gemReward.length > 0 && anyMasteryEligible(next.roster)
+        ? { kind: 'scrolls', plan: { source: 'drop', gems: [...gemReward] }, nodeId: null, bought: false, next: afterBanner }
+        : afterBanner;
+    const afterDrop: Screen = dropId ? { kind: 'itemWho', itemId: dropId, next: afterGems } : afterGems;
     // The join beat sits between the level report and the drop: the run state already holds the
     // newcomer, so it must be met before the who-screen can offer it the item.
     const afterLevels: Screen = companionId ? { kind: 'companion', beat: { kind: 'join', heroId: companionId }, next: afterDrop } : afterDrop;
@@ -1083,12 +1091,14 @@ export function App() {
     setScreen({ ...screen, offers: rolled.offers, rerolls: screen.rerolls + 1 });
   }
 
-  /** The shelf's Mastery Scroll: the gold is charged on the tap, and the who screen lands the pip. */
-  function handleBuyGuildScroll() {
-    if (screen.kind !== 'shop' || !canBuyScroll(playerRun, screen.scrollsBought)) return;
-    setPlayerRun(buyScroll(playerRun, screen.scrollsBought));
+  /** A shelf Gem: the gold is charged on the tap, and the who screen places it. */
+  function handleBuyShelfGem(slot: number) {
+    if (screen.kind !== 'shop') return;
+    const gem = screen.offers.gems[slot];
+    if (!gem || !canBuyShelfGem(playerRun, gem, screen.gemsBought.includes(slot))) return;
+    setPlayerRun(buyShelfGem(playerRun, gem));
     playSfx('gold.coin');
-    setScreen({ kind: 'scrolls', plan: { source: 'shelf', gems: rollGems(SCROLL_PACK_PIPS, playerRun.actNumber) }, nodeId: null, bought: true, next: { ...screen, scrollsBought: screen.scrollsBought + 1 } });
+    setScreen({ kind: 'scrolls', plan: { source: 'shelf', gems: [gem] }, nodeId: null, bought: true, next: { ...screen, gemsBought: [...screen.gemsBought, slot] } });
   }
 
   /** The Shop's gear shelf: the gold is charged on the confirm, and the who screen absorbs the piece. */
@@ -1533,6 +1543,7 @@ export function App() {
           equipmentReward={screen.equipmentRewardId ? equipment[screen.equipmentRewardId] ?? null : null}
           consumableReward={screen.consumableReward}
           contractReward={screen.contractReward}
+          gemReward={screen.gemReward}
           initialSnapshot={resumedCombat?.screen === screen ? resumedCombat.snapshot : undefined}
           onCommandPhase={handleCommandPhase}
           onResolved={(outcome, finalState, consumablesUsed, mvp) =>
@@ -1542,6 +1553,7 @@ export function App() {
               screen.equipmentRewardId ? equipment[screen.equipmentRewardId] ?? null : null,
               screen.consumableReward,
               screen.contractReward,
+              screen.gemReward,
               screen.encounter,
               outcome,
               consumablesUsed,
@@ -1586,12 +1598,12 @@ export function App() {
         <ShopNodeScreen
           run={playerRun}
           offers={screen.offers}
-          scrollsBought={screen.scrollsBought}
+          gemsBought={screen.gemsBought}
           revivesBought={screen.revivesBought}
           rerolls={screen.rerolls}
           itemsBought={screen.itemsBought}
           onRunChange={setPlayerRun}
-          onBuyScroll={handleBuyGuildScroll}
+          onBuyGem={handleBuyShelfGem}
           onBuyItem={handleBuyGuildItem}
           onReroll={handleRerollTavern}
           onBuyConsumable={handleBuyGuildConsumable}
