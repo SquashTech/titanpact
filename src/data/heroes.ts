@@ -798,7 +798,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Kappa',
     types: ['Water'],
     baseStats: { hp: 210, attack: 100, defense: 70, intelligence: 20, wisdom: 55, speed: 50, manaPool: 45, mpRegen: 10 },
-    moveIds: ['undertow', 'tideGuard'],
+    moveIds: ['undertow', 'refresh'],
     unlock: 'starfall',
     growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'B', speed: 'B', manaPool: 'B' },
     schedule: { offerLevels: [5, 9, 11, 17, 21], midLevel: 10, lateLevel: 20, signatureLevel: 15 },

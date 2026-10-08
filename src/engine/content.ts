@@ -291,6 +291,8 @@ export interface PassiveDefinition {
   /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). `maxFiresPerFight` caps it at N firings per combat, stacks included (PassiveInstance.firesThisFight) — the brake on a reaction that banks a permanent stack each time it matches. `chance` (0–1) rolls the seeded rng per matched event, per stack; absent = always. `whileBenched` inverts the field rule: this reaction fires only while its owner is standing on the BENCH (Broadside loading a cannonball a round), where every other passive is silent. */
   /** `alsoEffect` is a second effect resolved after `effect` on the same firing — one trigger, two verbs (Funeral Pyre's HP and Mana). */
   reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; alsoEffect?: PassiveEffect; oncePerFight?: boolean; maxFiresPerFight?: number; chance?: number; whileBenched?: true };
+  /** A second reaction on its own hook and condition, sharing the card's caps (Swell: a physical hit and a magical one pay different stats). */
+  alsoReactive?: PassiveDefinition['reactive'];
   damageModifier?: PassiveDamageModifier;
   /** Always-on flat grants, applied at fight build like Equipment/Relic statGrants (src/run/passives.ts); not read by passiveEngine. Classes are this alone. */
   statGrants?: Partial<Record<StatKey, number>>;

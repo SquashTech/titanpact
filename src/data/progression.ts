@@ -899,7 +899,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Kappa: Water's physical column and the Iron and Beast brawling around it. Oasis is Deep Pool's grant.
     kappa: [
       'claw',
-      'siphon', 'refresh', 'heavyBlow', 'ironFist', 'rockToss', 'sharpen',
+      'siphon', 'tideGuard', 'heavyBlow', 'ironFist', 'rockToss', 'sharpen',
       'aquaSlice', 'engulf', 'lacerate', 'maul', 'momentumSwing', 'rendArmor',
       'waveShred', 'onslaught', 'eviscerate', 'rendingLeap', 'juggernaut', 'rainfall', 'drench',
     ],
@@ -1370,6 +1370,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['glaciate'],
             typeGraft: 'Frost',
             learnableMoveIds: evolutionLine('leviathan', 'Frost', { granted: ['glaciate'] }),
+            grantsPassiveIds: ['deepfrostRain'],
           },
           {
             id: 'leviathan-stormwyrm',
@@ -2823,6 +2824,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['spookySlice'],
             typeGraft: 'Spirit',
             learnableMoveIds: evolutionLine('kappa', 'Spirit', { granted: ['spookySlice'] }),
+            grantsPassiveIds: ['yokaiDish'],
           },
         ],
       },

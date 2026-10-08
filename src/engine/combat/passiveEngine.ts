@@ -462,54 +462,57 @@ export function resolvePassiveReactions(
       const onField = working.active[owner.side].includes(ownerId);
 
       for (const instance of Object.values(owner.passives)) {
-        const reactive = passiveDefs[instance.passiveId]?.reactive;
-        if (!reactive) continue;
-        // SwitchedOut is the SwitchedIn that sent the owner out, read from the bench it has just reached.
-        const switchedOut = reactive.hook === 'SwitchedOut';
-        if (!hookMatches(switchedOut ? 'SwitchedIn' : reactive.hook, event)) continue;
-        if (reactive.whileBenched || switchedOut ? onField : !onField) continue;
-        // A round's end is about nobody, so each active owner is its own subject: 'self' fires, nothing else does.
-        const subjectId =
-          OWNERLESS_EVENTS.has(event.type)
-            ? ownerId
-            : switchedOut && event.type === 'SwitchedIn'
-              ? event.outCombatantId ?? undefined
-              : subjectOf(event, reactive.condition.subjectRole ?? 'target');
-        // Kept apart from `subjectId`: a source-role condition ("I dealt this") still needs the defender.
-        const eventTargetId = subjectOf(event, 'target');
-        const subjectSide = subjectId ? working.combatants[subjectId]?.side : undefined;
-        if (!matchesTrigger(reactive.condition, context, ownerId, owner.side, subjectId, subjectSide)) continue;
-        if (reactive.condition.eventTargetHasStatus !== undefined) {
-          const struck = eventTargetId ? working.combatants[eventTargetId] : undefined;
-          if (!struck || !hasStatus(struck, reactive.condition.eventTargetHasStatus)) continue;
-        }
-        if (reactive.condition.sideOutspeeds && !sideOutspeeds(working, owner.side, heroes, passiveDefs, fieldEffectDefs)) continue;
-        // Checked AFTER the match and marked BEFORE the effect resolves, so a re-entrant reaction cannot fire itself twice.
-        if (reactive.oncePerFight) {
-          if (working.combatants[ownerId]?.passives[instance.passiveId]?.firedThisFight) continue;
-          working = markFired(working, ownerId, instance.passiveId);
-        }
+        const def = passiveDefs[instance.passiveId];
+        // A card may carry a second reaction on its own trigger (Swell: one per hit category).
+        for (const reactive of [def?.reactive, def?.alsoReactive]) {
+          if (!reactive) continue;
+          // SwitchedOut is the SwitchedIn that sent the owner out, read from the bench it has just reached.
+          const switchedOut = reactive.hook === 'SwitchedOut';
+          if (!hookMatches(switchedOut ? 'SwitchedIn' : reactive.hook, event)) continue;
+          if (reactive.whileBenched || switchedOut ? onField : !onField) continue;
+          // A round's end is about nobody, so each active owner is its own subject: 'self' fires, nothing else does.
+          const subjectId =
+            OWNERLESS_EVENTS.has(event.type)
+              ? ownerId
+              : switchedOut && event.type === 'SwitchedIn'
+                ? event.outCombatantId ?? undefined
+                : subjectOf(event, reactive.condition.subjectRole ?? 'target');
+          // Kept apart from `subjectId`: a source-role condition ("I dealt this") still needs the defender.
+          const eventTargetId = subjectOf(event, 'target');
+          const subjectSide = subjectId ? working.combatants[subjectId]?.side : undefined;
+          if (!matchesTrigger(reactive.condition, context, ownerId, owner.side, subjectId, subjectSide)) continue;
+          if (reactive.condition.eventTargetHasStatus !== undefined) {
+            const struck = eventTargetId ? working.combatants[eventTargetId] : undefined;
+            if (!struck || !hasStatus(struck, reactive.condition.eventTargetHasStatus)) continue;
+          }
+          if (reactive.condition.sideOutspeeds && !sideOutspeeds(working, owner.side, heroes, passiveDefs, fieldEffectDefs)) continue;
+          // Checked AFTER the match and marked BEFORE the effect resolves, so a re-entrant reaction cannot fire itself twice.
+          if (reactive.oncePerFight) {
+            if (working.combatants[ownerId]?.passives[instance.passiveId]?.firedThisFight) continue;
+            working = markFired(working, ownerId, instance.passiveId);
+          }
 
-        const limit = reactive.maxFiresPerFight;
-        for (let i = 0; i < (reactive.oncePerFight ? 1 : instance.stacks); i++) {
-          if (limit !== undefined && firesSoFar(working, ownerId, instance.passiveId) >= limit) break;
-          if (reactive.chance !== undefined) {
-            const roll = nextFloat(working.rngState);
-            working = { ...working, rngState: roll.nextState };
-            if (roll.value >= reactive.chance) continue;
+          const limit = reactive.maxFiresPerFight;
+          for (let i = 0; i < (reactive.oncePerFight ? 1 : instance.stacks); i++) {
+            if (limit !== undefined && firesSoFar(working, ownerId, instance.passiveId) >= limit) break;
+            if (reactive.chance !== undefined) {
+              const roll = nextFloat(working.rngState);
+              working = { ...working, rngState: roll.nextState };
+              if (roll.value >= reactive.chance) continue;
+            }
+            const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.effect, context);
+            working = resolved.state;
+            if (reactive.alsoEffect) {
+              const also = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.alsoEffect, context);
+              working = also.state;
+              resolved.events.push(...also.events);
+            }
+            // A no-op (a heal at full HP, a target already fainted) is not a trigger: nothing to log.
+            if (resolved.events.length === 0) continue;
+            if (limit !== undefined) working = updateInstance(working, ownerId, instance.passiveId, (held) => ({ firesThisFight: (held.firesThisFight ?? 0) + 1 }));
+            produced.push({ type: 'PassiveTriggered', round, combatantId: ownerId, passiveId: instance.passiveId }, ...resolved.events);
+            if (queue.length < 64) queue.push(...resolved.events.filter((e) => e.type === 'ManaGranted' || e.type === 'FieldEffectSet'));
           }
-          const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.effect, context);
-          working = resolved.state;
-          if (reactive.alsoEffect) {
-            const also = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.alsoEffect, context);
-            working = also.state;
-            resolved.events.push(...also.events);
-          }
-          // A no-op (a heal at full HP, a target already fainted) is not a trigger: nothing to log.
-          if (resolved.events.length === 0) continue;
-          if (limit !== undefined) working = updateInstance(working, ownerId, instance.passiveId, (held) => ({ firesThisFight: (held.firesThisFight ?? 0) + 1 }));
-          produced.push({ type: 'PassiveTriggered', round, combatantId: ownerId, passiveId: instance.passiveId }, ...resolved.events);
-          if (queue.length < 64) queue.push(...resolved.events.filter((e) => e.type === 'ManaGranted' || e.type === 'FieldEffectSet'));
         }
       }
     }

@@ -360,15 +360,12 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   enthrall: {
     id: 'enthrall',
     name: 'Enthrall',
-    description: 'Every Water attack this hero lands leaves its target Haunted.',
-    // Static Tide's exact shape, transposed off Conduct/Storm onto Haunt/Mind: the Water hit
-    // plants the mark and the GRAFTED line is what cashes it. Haunt expands a singleEnemy Spirit
-    // or Mind move onto the marked hero's partner, so Siren's Mind moves spread and its Water
-    // ones never do — planting and cashing stay two different columns, which is the point.
+    description: 'At the end of each round, both active enemies lose 10 Wisdom.',
+    // Riptide's Siren: the song wears the mind down, which the grafted Mind line then strikes.
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Haunt' },
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'wisdom', amount: -10 },
     },
   },
   staticTide: {
@@ -1056,11 +1053,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   drag: {
     id: 'drag',
     name: 'Drag',
-    description: 'When this hero lands a Water attack, its target loses 5 Speed.',
+    description: 'When this hero lands a Water attack, its target loses 10 Speed and this hero gains 10 Speed.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', amount: -5 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', amount: -10 },
+      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: 10 },
     },
   },
   ink: {
@@ -1423,10 +1421,15 @@ const innatePassives: Record<string, PassiveDefinition> = {
   brimming: {
     id: 'brimming',
     name: 'Brimming',
-    description: 'When this hero is healed, it gains 10 Attack.',
+    description: 'When this hero is healed, Renew included, it gains 10 Attack.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+    },
+    alsoReactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' }, eventFieldPositive: 'amount' },
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
     },
   },
@@ -1891,11 +1894,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   ripCurrent: {
     id: 'ripCurrent',
     name: 'Drag+',
-    description: 'When this hero lands a Water attack, its target loses 15 Speed.',
+    description: 'When this hero lands a Water attack, its target loses 20 Speed and this hero gains 20 Speed.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', amount: -15 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', amount: -20 },
+      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: 20 },
     },
   },
   exoskeleton: {
@@ -2422,10 +2426,15 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   bottomlessDish: {
     id: 'bottomlessDish',
     name: 'Brimming+',
-    description: 'When this hero is healed, it gains 20 Attack.',
+    description: 'When this hero is healed, Renew included, it gains 20 Attack.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 20 },
+    },
+    alsoReactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' }, eventFieldPositive: 'amount' },
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 20 },
     },
   },

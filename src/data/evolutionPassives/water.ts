@@ -1,49 +1,66 @@
 import type { PassiveDefinition } from '../../engine/content';
 
 export const waterPathPassives: Record<string, PassiveDefinition> = {
-  // Riptide's Tidecaller. Both columns, since the line it swings is hedged 55 / 59.
+  // Riptide's Tidecaller. The line is hedged 55 / 59, so each hand feeds the other: alternate, and both grow.
   swell: {
     id: 'swell',
     name: 'Swell',
-    description: 'When this hero lands a Water attack, it gains 5 Attack, 5 Intelligence and 5 Speed.',
+    description: 'When this hero lands a physical move, it gains 10 Intelligence. When it lands a magical move, it gains 10 Attack.',
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence', 'speed'], amount: 5 },
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'physical' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+    },
+    alsoReactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
     },
   },
   // Pincer's Ironshell. Shield is scaled off Defense, so each plate thickens the next one.
   plating: {
     id: 'plating',
     name: 'Plating',
-    description: 'When this hero gains Shield, it gains 10 Defense.',
+    description: 'When this hero gains Shield, it gains Iron Force 10. Up to 3 times a fight.',
     reactive: {
+      maxFiresPerFight: 3,
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Shield' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'defense', amount: 10 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'IronForce', magnitude: 10 },
     },
   },
-  // Leviathan's Tidebreaker: Overchannel's overflow is what buys the big casts that feed it.
+  // Leviathan's Tidebreaker: the rain is the tide coming in.
   tidalMass: {
     id: 'tidalMass',
     name: 'Tidal Mass',
-    description: 'When this hero uses a move, it gains Water Force equal to a fifth of the Mana it spent. Up to 3 times a fight.',
+    description: 'When Downpour is set, this hero gains Water Force 20. Up to 3 times a fight.',
     reactive: {
       maxFiresPerFight: 3,
-      hook: 'MoveUsed',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'WaterForce', magnitude: { kind: 'matchTriggerAmount', field: 'manaSpent', multiplier: 0.2 } },
+      hook: 'FieldEffectSet',
+      condition: { relativeTo: 'self', eventFieldEquals: { fieldEffectId: 'downpour' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'WaterForce', magnitude: 20 },
     },
   },
-  // Leviathan's Stormwyrm.
+  // Leviathan's Deepfrost: the rain freezes as it falls, and Glaciate is what breaks it.
+  deepfrostRain: {
+    id: 'deepfrostRain',
+    name: 'Freezing Rain',
+    description: 'When Downpour is set, both active enemies are Frozen.',
+    reactive: {
+      hook: 'FieldEffectSet',
+      condition: { relativeTo: 'self', eventFieldEquals: { fieldEffectId: 'downpour' } },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Freeze' },
+    },
+  },
+  // Leviathan's Stormwyrm: the Water hit plants the mark the Storm line cashes.
   stormDrinker: {
     id: 'stormDrinker',
     name: 'Storm Drinker',
-    description: 'When this hero sets off Conduct, it gains 30 Mana, past its pool.',
+    description: 'Every Water attack this hero lands leaves its target Conducting.',
     reactive: {
-      hook: 'StatusDetonated',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
-      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 30 } },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
     },
   },
   // Nautilus's Inkmind: every arrival clouds the water.
@@ -61,11 +78,32 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   sharedDish: {
     id: 'sharedDish',
     name: 'Shared Dish',
-    description: 'When this hero is healed, its partner gains 10 Attack and 10 Intelligence.',
+    description: 'When this hero is healed, Renew included, its partner gains 10 Attack and 10 Intelligence.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
       effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], amount: 10 },
+    },
+    alsoReactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' }, eventFieldPositive: 'amount' },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], amount: 10 },
+    },
+  },
+  // Kappa's Yokai: the dish spills over into a haunting.
+  yokaiDish: {
+    id: 'yokaiDish',
+    name: 'Spilled Dish',
+    description: 'When this hero is healed, Renew included, a random enemy is Haunted.',
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Haunt' },
+    },
+    alsoReactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' }, eventFieldPositive: 'amount' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Haunt' },
     },
   },
   // Kappa's Snapper: the Water hit opens the wound the Beast line's Maul and Eviscerate double on.
@@ -90,14 +128,14 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Shield', magnitude: 20 },
     },
   },
-  // Selkie's Roane.
+  // Selkie's Roane: the seal-wife slipping her skin on and off, leaving a blessing each time she comes ashore.
   drownedGift: {
     id: 'drownedGift',
     name: 'Drowned Gift',
-    description: "When a hit knocks out a foe, this hero's partner gains Renew 3.",
+    description: "When this hero enters the battlefield, its partner gains Renew 3.",
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'enemy', finishingBlow: true },
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 3 },
     },
   },

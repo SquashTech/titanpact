@@ -268,21 +268,25 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
   }
 }
 
+/** The rows one reaction carries: its trigger, its effect(s), and every qualifier on either. */
+function reactiveFacts(reactive: NonNullable<PassiveDefinition['reactive']>): PassiveFact[] {
+  const rows: PassiveFact[] = [triggerFact(reactive)];
+  if (reactive.whileBenched) rows.push({ label: 'Only', text: 'While this hero is on the bench', glyph: { kind: 'move', move: 'buff' } });
+  if (reactive.chance !== undefined) rows.push({ label: 'Odds', text: `${Math.round(reactive.chance * 100)}% of the time`, glyph: { kind: 'move', move: 'debuff' } });
+  rows.push(effectFact(reactive.effect, reactive.condition, reactive.hook));
+  if (reactive.alsoEffect) rows.push({ ...effectFact(reactive.alsoEffect, reactive.condition, reactive.hook), label: 'And' });
+  if (reactive.condition.finishingBlow) rows.push({ label: 'Only', text: 'A hit that knocks its target out', glyph: { kind: 'stat', stat: 'attack' } });
+  if (reactive.condition.eventTargetHasStatus) rows.push({ label: 'While', text: `The one struck is ${statusName(reactive.condition.eventTargetHasStatus)}`, glyph: { kind: 'status', statusId: reactive.condition.eventTargetHasStatus }, color: 'status' });
+  if (reactive.condition.sideOutspeeds) rows.push({ label: 'While', text: 'Both active allies move before both active enemies', glyph: { kind: 'stat', stat: 'speed' } });
+  if (reactive.oncePerFight) rows.push({ label: 'Limit', text: 'Once per fight', glyph: { kind: 'move', move: 'debuff' } });
+  if (reactive.maxFiresPerFight !== undefined) rows.push({ label: 'Limit', text: `${reactive.maxFiresPerFight} times per fight`, glyph: { kind: 'move', move: 'debuff' } });
+  return rows;
+}
+
 /** Every rule row a passive carries, in reading order. Flat grants are numbers, not rows — see `passiveStatGrants`. */
 export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
   const rows: PassiveFact[] = [];
-  if (def.reactive) {
-    rows.push(triggerFact(def.reactive));
-    if (def.reactive.whileBenched) rows.push({ label: 'Only', text: 'While this hero is on the bench', glyph: { kind: 'move', move: 'buff' } });
-    if (def.reactive.chance !== undefined) rows.push({ label: 'Odds', text: `${Math.round(def.reactive.chance * 100)}% of the time`, glyph: { kind: 'move', move: 'debuff' } });
-    rows.push(effectFact(def.reactive.effect, def.reactive.condition, def.reactive.hook));
-    if (def.reactive.alsoEffect) rows.push({ ...effectFact(def.reactive.alsoEffect, def.reactive.condition, def.reactive.hook), label: 'And' });
-    if (def.reactive.condition.finishingBlow) rows.push({ label: 'Only', text: 'A hit that knocks its target out', glyph: { kind: 'stat', stat: 'attack' } });
-    if (def.reactive.condition.eventTargetHasStatus) rows.push({ label: 'While', text: `The one struck is ${statusName(def.reactive.condition.eventTargetHasStatus)}`, glyph: { kind: 'status', statusId: def.reactive.condition.eventTargetHasStatus }, color: 'status' });
-    if (def.reactive.condition.sideOutspeeds) rows.push({ label: 'While', text: 'Both active allies move before both active enemies', glyph: { kind: 'stat', stat: 'speed' } });
-    if (def.reactive.oncePerFight) rows.push({ label: 'Limit', text: 'Once per fight', glyph: { kind: 'move', move: 'debuff' } });
-    if (def.reactive.maxFiresPerFight !== undefined) rows.push({ label: 'Limit', text: `${def.reactive.maxFiresPerFight} times per fight`, glyph: { kind: 'move', move: 'debuff' } });
-  }
+  for (const reactive of [def.reactive, def.alsoReactive]) if (reactive) rows.push(...reactiveFacts(reactive));
   if (def.damageModifier) {
     const type = def.damageModifier.eventFieldEquals?.moveType;
     rows.push({

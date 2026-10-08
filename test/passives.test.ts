@@ -989,17 +989,30 @@ function riptideFixture(seed: number) {
 
 const waterHit: Action = { kind: 'move', combatantId: 'a1', moveId: 'torrent', declaredTarget: 'b1' };
 
-test('passives: Enthrall Haunts what its Water hits, and only that', () => {
-  const state = withPassive(riptideFixture(700), 'a1', 'enthrall');
-  const { state: next } = resolveRound(state, [waterHit], config);
+const fireHit: Action = { kind: 'move', combatantId: 'a1', moveId: 'ember', declaredTarget: 'b1' };
 
-  assert.ok(hasStatus(next.combatants.b1, 'Haunt'));
-  assert.ok(!hasStatus(next.combatants.b2, 'Haunt'));
+test('passives: Enthrall wears both active enemies\' Wisdom down at every round\'s end', () => {
+  const state = withPassive(riptideFixture(700), 'a1', 'enthrall');
+  const once = resolveRound(state, [], config).state;
+  const twice = resolveRound(once, [], config).state;
+  assert.strictEqual(once.combatants.b1.statModifiers.wisdom, -10);
+  assert.strictEqual(once.combatants.b2.statModifiers.wisdom, -10);
+  assert.ok((twice.combatants.b1.statModifiers.wisdom ?? 0) < -10, 'and again, down to what it can halve');
+  assert.ok(!twice.combatants.a2.statModifiers.wisdom, 'never its own side');
 });
 
-test('passives: Enthrall plants with Water and cashes with the GRAFT — a Mind move then hits both', () => {
-  const state = withPassive(riptideFixture(701), 'a1', 'enthrall');
-  const marked = resolveRound(state, [waterHit], config).state;
+test('passives: Ember Veil Haunts what its Fire hits, and only that', () => {
+  const state = withPassive(riptideFixture(701), 'a1', 'emberVeil');
+  const { state: next } = resolveRound(state, [fireHit], config);
+  assert.ok(hasStatus(next.combatants.b1, 'Haunt'));
+  assert.ok(!hasStatus(next.combatants.b2, 'Haunt'));
+  const watered = resolveRound(withPassive(riptideFixture(704), 'a1', 'emberVeil'), [waterHit], config).state;
+  assert.ok(!hasStatus(watered.combatants.b1, 'Haunt'), 'it reads the move TYPE');
+});
+
+test('passives: a planted Haunt is cashed by the GRAFT — a Mind move then hits both', () => {
+  const state = withPassive(riptideFixture(701), 'a1', 'emberVeil');
+  const marked = resolveRound(state, [fireHit], config).state;
   const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'psyshock', declaredTarget: 'b1' } as Action], config);
 
   const hits = (events.filter((e) => e.type === 'DamageDealt') as any[]).filter((h) => h.sourceCombatantId === 'a1');
@@ -1007,22 +1020,50 @@ test('passives: Enthrall plants with Water and cashes with the GRAFT — a Mind 
   assert.strictEqual(hits.find((h) => h.targetCombatantId === 'b2').viaStatusId, 'Haunt');
 });
 
-test('passives: Enthrall keeps planting and cashing in SEPARATE columns — Water never spreads off its own mark', () => {
-  const state = withPassive(riptideFixture(702), 'a1', 'enthrall');
-  const marked = resolveRound(state, [waterHit], config).state;
-  // b1 is Haunted; a Water move aimed at it would spread if Water triggered Haunt. It does not:
+test('passives: planting and cashing stay SEPARATE columns — a Fire hit never spreads off its own mark', () => {
+  const state = withPassive(riptideFixture(702), 'a1', 'emberVeil');
+  const marked = resolveRound(state, [fireHit], config).state;
+  // b1 is Haunted; a Fire move aimed at it would spread if Fire triggered Haunt. It does not:
   // Haunt.spreadTriggerTypes is Spirit and Mind, which is what makes the graft load-bearing.
-  const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'torrent', declaredTarget: 'b1' } as Action], config);
+  const { events } = resolveRound(marked, [fireHit], config);
 
   const hits = (events.filter((e) => e.type === 'DamageDealt') as any[]).filter((h) => h.sourceCombatantId === 'a1');
   assert.deepStrictEqual(hits.map((h) => h.targetCombatantId), ['b1']);
 });
 
-test('passives: Enthrall reads the move TYPE — a non-Water hit from the same hero plants nothing', () => {
-  const state = withPassive(riptideFixture(703), 'a1', 'enthrall');
-  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'psyshock', declaredTarget: 'b1' } as Action], config);
+test('passives: Swell pays the OTHER hand — a physical hit grants Intelligence, a magical one Attack (alsoReactive)', () => {
+  const state = withPassive(riptideFixture(705), 'a1', 'swell');
+  const physical = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'undertow', declaredTarget: 'b1' } as Action], config).state;
+  assert.strictEqual(physical.combatants.a1.statModifiers.intelligence, 10);
+  assert.ok(!physical.combatants.a1.statModifiers.attack);
+  const magical = resolveRound(physical, [waterHit], config).state;
+  assert.strictEqual(magical.combatants.a1.statModifiers.attack, 10);
+});
 
-  assert.ok(!hasStatus(next.combatants.b1, 'Haunt'));
+test('passives: Freezing Rain and Tidal Mass answer Downpour being set', () => {
+  const base = withPassive(withPassive(riptideFixture(706), 'a1', 'deepfrostRain'), 'a1', 'tidalMass');
+  const { state: next } = resolveRound(base, [{ kind: 'move', combatantId: 'a1', moveId: 'rainfall', declaredTarget: 'a2' } as Action], config);
+  assert.ok(hasStatus(next.combatants.b1, 'Freeze') && hasStatus(next.combatants.b2, 'Freeze'));
+  assert.strictEqual(statusMagnitude(next.combatants.a1, 'WaterForce'), 20);
+});
+
+test('passives: Refresh can land on Kappa itself, so Brimming fires off its own kit', () => {
+  const base = createFightState(
+    707,
+    [
+      { combatantId: 'a1', heroId: 'kappa', side: 'A' },
+      { combatantId: 'a2', heroId: 'crag', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'crag', side: 'B' },
+    ]
+  );
+  const hurt: CombatState = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 50, currentMana: 999 } } };
+  const state = withPassive(hurt, 'a1', 'brimming');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'refresh', declaredTarget: 'a1' } as Action], config);
+  // Renew heals as it lands and again at the round's end: two ticks, two stacks.
+  assert.strictEqual(next.combatants.a1.statModifiers.attack, 20);
 });
 
 // --- The recruit-only slate's four NEW shapes (2026-09-05) ---

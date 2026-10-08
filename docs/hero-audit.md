@@ -38,3 +38,21 @@ now prints the innate, the mastered innate, the signature level and each granted
 
 To watch: the enemy AI never switches voluntarily, so an enemy Tinder's innate fires only off
 Grand Finale. Flameproof makes Fire's self-Burn costs free for the whole active side.
+
+## Water (2026-10-07)
+
+| Hero | Change |
+|---|---|
+| Riptide | **Drag**: a Water hit takes 10 Speed off the target and gives Riptide 10 (was −5 to the target); **Drag+** 20 and 20. **Tidecaller**'s Swell: a physical hit gains 10 Intelligence, a magical hit 10 Attack (was +5 Atk/Int/Spd per Water hit). **Siren**'s Enthrall: both active enemies lose 10 Wisdom at every round's end (was: Water hits Haunt — now Crimson's Cinderveil's). |
+| Pincer | **Ironshell**'s Plating: gaining Shield grants Iron Force 10, three times a fight (was +10 Defense). |
+| Leviathan | **Tidebreaker**'s Tidal Mass: Water Force 20 when Downpour is set, three times a fight (was a fifth of the Mana spent). **Deepfrost** keeps Glaciate and adds **Freezing Rain** (Downpour set → both enemies Frozen). **Stormwyrm**'s Storm Drinker: its Water hits leave the target Conducting (was: Mana for setting off Conduct). |
+| Nautilus | Unchanged. |
+| Kappa | Kit Undertow/Tide Guard → Undertow/**Refresh** (Tide Guard to its pool), so Brimming fires off its own kit. **Brimming**, Brimming+, Shared Dish and Spilled Dish now hear Renew's heals too (a tick that restores HP). **Yokai** adds **Spilled Dish** (healed → a random enemy Haunted). |
+| Selkie | **Roane**'s Drowned Gift: on entering the field, its partner gains Renew 3 (was: a KO'd foe gives the partner Renew 3). |
+
+Engine: `PassiveDefinition.alsoReactive` — a second reaction on its own hook (Swell).
+
+To watch: Leviathan reaches Downpour only through Rainfall, an Early offer it may never see, or
+the Water Herald Boon — Tidal Mass and Freezing Rain are dead without one. Renew heals are
+`StatusTicked`, not `Healed`, game-wide; only Kappa's cards were taught to hear both. Pincer's
+Tideclaw (Static Tide) and Leviathan's Stormwyrm (Storm Drinker) are now the same verb.

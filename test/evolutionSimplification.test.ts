@@ -63,6 +63,8 @@ const BEYOND_THE_PAIR: Record<string, string> = {
   'ashwing-sunbird': 'type+move+passive',
   'brimstone-ashguard': 'type+move+passive',
   'brimstone-hexfume': 'type+move+passive',
+  'leviathan-deepfrost': 'type+move+passive',
+  'kappa-yokai': 'type+move+passive',
 };
 
 function grantCount(path: EvolutionPath): number {
