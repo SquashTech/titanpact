@@ -55,7 +55,7 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   fallen: { pages: [[PICK_CARDS]] },
   scribe: { pages: [['.gem-hand', PICK_CARDS], ['.scroll-screen .mastery-pips']] },
   shop: {
-    pages: [['.tab-button[data-tab="shop"]', '.guild-hall-good'], ['.tab-button[data-tab="tavern"]'], ['.tab-button[data-tab="smithy"]']],
+    pages: [['.hall-sign[data-tab="tavern"]', '.hall-good'], ['.hall-sign[data-tab="gems"]'], ['.hall-sign[data-tab="gear"]']],
   },
   recruit: { pages: [['.recruit-sign', '.recruit-contracts'], null] },
   banner: { pages: [['.relic-pick-row']] },

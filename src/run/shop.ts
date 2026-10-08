@@ -1,8 +1,8 @@
 // Guild Hall commerce beyond recruitment: the one-time offer set a `shop` node presents, and
 // the prices gear is valued and worked at. Offers are rolled ONCE at node-select time and carried
-// on the Screen — a component-local roll would reroll on re-render of the shop. The Shop's third
-// shelf sells two pieces of gear a visit, one of each (2026-09-28, per user direction), absorbed
-// through the same who-screen a drop is (docs/gear-absorption.md §6).
+// on the Screen — a component-local roll would reroll on re-render of the shop. The Gear counter
+// sells SHOP_ITEM_COUNT pieces a visit, one of each, each bought straight onto the hero picked
+// (docs/run-loop.md "The Guild Hall").
 
 import { GATHERING_EXTRA_HIRES, isGathering } from './cycles';
 import type { RunState } from './state';
@@ -69,8 +69,8 @@ export interface GuildHallOffers {
   gems: Gem[];
 }
 
-/** Two pieces a visit, on the act's standard drop curve. */
-export const SHOP_ITEM_COUNT = 2;
+/** The Gear counter's stock a visit, on the act's standard drop curve. */
+export const SHOP_ITEM_COUNT = 6;
 
 /** First pass: the tier's value, so a shelf piece costs twice what it would sell for. */
 export function shopItemPrice(item: EquipmentDefinition): number {

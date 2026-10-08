@@ -2,7 +2,6 @@ import type { CSSProperties, ReactNode } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { useArmedTap } from '../shared/useArmedTap';
-import shelfArt from '../../../art/guild/shelf.png';
 import boardArt from '../../../art/guild/board.png';
 import counterArt from '../../../art/guild/counter.png';
 import signArt from '../../../art/guild/sign-board.png';
@@ -13,14 +12,15 @@ import contractArt from '../../../art/guild/good-contract.png';
 import bellArt from '../../../art/guild/good-bell.png';
 import stewArt from '../../../art/guild/good-stew.png';
 import tankardArt from '../../../art/guild/good-tankard.png';
-import sackArt from '../../../art/guild/good-sack.png';
+import swordArt from '../../../art/equipment/sword.png';
 import anvilArt from '../../../art/smithy/anvil.png';
+import { GemIcon } from '../shared/GemIcon';
 
-// The Guild Hall as a room rather than a form (art/guild): the Shop's goods stand on a shelf, the
-// Tavern's recruits are posters on the notice board and its services sit on the bar, and the
+// The Guild Hall as a room rather than a form (art/guild): the Tavern's recruits are posters on the
+// notice board and its services and flasks sit on the bar, and the
 // counters are signs hung from a beam. Every piece is 1x pixel art drawn at a clean multiple.
 
-export const HALL_ART = { shelf: shelfArt, board: boardArt, counter: counterArt, sign: signArt };
+export const HALL_ART = { board: boardArt, counter: counterArt, sign: signArt };
 
 export const GOOD_ART = {
   hp: hpArt,
@@ -29,10 +29,14 @@ export const GOOD_ART = {
   contract: contractArt,
   reroll: bellArt,
   mend: stewArt,
-  sack: sackArt,
 } as const;
 
-export const COUNTER_SIGN_ART = { shop: sackArt, tavern: tankardArt, smithy: anvilArt } as const;
+export const COUNTER_SIGN_ART: Record<'tavern' | 'gems' | 'gear' | 'smithy', string | ReactNode> = {
+  tavern: tankardArt,
+  gems: <GemIcon stat="attack" size={26} />,
+  gear: swordArt,
+  smithy: anvilArt,
+};
 
 /**
  * A good on display: the thing itself, a parchment tag under it naming it and its price (or why it
@@ -112,6 +116,7 @@ export function HallSigns<Id extends keyof typeof COUNTER_SIGN_ART>({
             type="button"
             role="tab"
             aria-selected={isActive}
+            data-tab={tab.id}
             className={`hall-sign${isActive ? ' is-active' : ''}`}
             style={{ '--sign-art': `url(${HALL_ART.sign})` } as CSSProperties}
             onClick={() => {
@@ -120,7 +125,11 @@ export function HallSigns<Id extends keyof typeof COUNTER_SIGN_ART>({
               onSelect(tab.id);
             }}
           >
-            <img src={COUNTER_SIGN_ART[tab.id]} className="hall-sign-icon" alt="" draggable={false} />
+            {typeof COUNTER_SIGN_ART[tab.id] === 'string' ? (
+              <img src={COUNTER_SIGN_ART[tab.id] as string} className="hall-sign-icon" alt="" draggable={false} />
+            ) : (
+              <span className="hall-sign-icon is-drawn">{COUNTER_SIGN_ART[tab.id]}</span>
+            )}
             <span className="hall-sign-label">{tab.label}</span>
             {tab.count != null && tab.count > 0 && <span className="hall-sign-count">{tab.count}</span>}
           </button>

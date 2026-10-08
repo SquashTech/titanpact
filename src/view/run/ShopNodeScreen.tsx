@@ -10,6 +10,11 @@ import { RosterPeek } from './RosterPeek';
 import { NodeHeader, NodePurse, NodeSky, NODE_TINT_HEARTH } from '../shared/NodeStage';
 import { HallSigns } from './guildHallArt';
 import { readGuildHallTab, writeGuildHallTab } from './guildHallTabMemory';
+import { rosterHeroes } from '../../data/content';
+import { useMasteryFlow } from './masteryFlow';
+import { EvolutionScreen } from './EvolutionScreen';
+import { MoveOfferOverlay } from './MoveOfferOverlay';
+import { MasteredInnateOverlay } from './MasteredInnateOverlay';
 
 interface Props {
   run: RunState;
@@ -19,17 +24,17 @@ interface Props {
   revivesBought: number;
   /** Tavern rerolls this visit (run/shop.ts tavernRerollCost). */
   rerolls: number;
-  /** Gear-shelf slots sold this visit. */
+  /** Gear-counter slots sold this visit. */
   itemsBought: readonly number[];
   onRunChange: (next: RunState) => void;
-  onBuyGem: (slot: number) => void;
-  onBuyItem: (slot: number) => void;
+  onBuyGem: (slot: number, rosterId: string) => RunState | null;
+  onBuyItem: (slot: number, rosterId: string) => RunState | null;
   onReroll: () => void;
   onBuyConsumable: (kind: ConsumableKind) => void;
   onBuyMend: () => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
-  /** Act 6's Vigil: the last node of the run, where nobody is hired — only goods, the mend and the Smithy. */
+  /** The Vigil: the last node of the run — the Gems, the Gear and the Smithy, and nobody hired. */
   muster?: boolean;
 }
 
@@ -61,11 +66,32 @@ export function ShopNodeScreen({
   // The counter the player was last at this visit, across a who-screen's unmount; a visit opens on the Tavern.
   const location = useAmbientLocation();
   const hall = location ? locationBackdrop(location.id, 'hall') : undefined;
-  const [tab, setTab] = useState<GuildHallTab>(() => readGuildHallTab(muster ? 'shop' : 'tavern'));
+  const tabs = guildHallTabs(run, offers, muster);
+  const [tab, setTab] = useState<GuildHallTab>(() => {
+    const held = readGuildHallTab(tabs[0].id);
+    return tabs.some((t) => t.id === held) ? held : tabs[0].id;
+  });
   const selectTab = (next: GuildHallTab) => {
     setTab(next);
     writeGuildHallTab(next);
   };
+  // What a bought Gem's pip opens — the Evolution at five, the mastered innate at ten — raised here, over the hall.
+  const flow = useMasteryFlow(run, onRunChange);
+
+  const evolvingEntry = flow.evolving ? (run.roster.find((r) => r.rosterId === flow.evolving!.rosterId) ?? null) : null;
+  if (flow.evolving && evolvingEntry) {
+    return (
+      <EvolutionScreen
+        hero={rosterHeroes[evolvingEntry.heroId]}
+        entry={evolvingEntry}
+        node={flow.evolving.node}
+        run={run}
+        onChoose={flow.chooseEvolution}
+      />
+    );
+  }
+  const overflowEntry = flow.overflow ? (run.roster.find((r) => r.rosterId === flow.overflow!.rosterId) ?? null) : null;
+  const masteredEntry = flow.mastered ? (run.roster.find((r) => r.rosterId === flow.mastered!.rosterId) ?? null) : null;
   return (
     <div className={`node-screen shop-node-screen is-${tab}`} style={{ '--node-rgb': NODE_TINT_HEARTH } as CSSProperties}>
       {/* Inside, where a hall is painted for this Location; the act's sky and a lamp-lit hearth where not. */}
@@ -82,10 +108,9 @@ export function ShopNodeScreen({
       <RosterPeek run={run} />
       <NodePurse gold={run.gold} />
 
-      {/* The Smithy's own forge is its sign (2026-09-25, per user direction): six benches fit
-          under the anvil without a scroll only once the hall's sign is off the top. */}
+      {/* The Smithy's own forge is its sign: six benches fit under the anvil only once the hall's is off the top. */}
       {tab !== 'smithy' && (
-        <NodeHeader compact eyebrow={muster ? 'The Last Muster' : 'Welcome to'} title={muster ? 'The Vigil' : 'The Guild Hall'} />
+        <NodeHeader compact eyebrow="Welcome to" title="The Guild Hall" />
       )}
 
       <div className="screen-scroll">
@@ -98,6 +123,7 @@ export function ShopNodeScreen({
           itemsBought={itemsBought}
           onRunChange={onRunChange}
           onBuyGem={onBuyGem}
+          onGemPlaced={(rosterId, landed, fromMastery) => flow.raise(rosterId, landed, fromMastery)}
           onBuyItem={onBuyItem}
           onReroll={onReroll}
           onBuyConsumable={onBuyConsumable}
@@ -105,17 +131,27 @@ export function ShopNodeScreen({
           onRequestRosterReplace={onRequestRosterReplace}
           onOverlayChange={setOverlayOpen}
           tab={tab}
-          vigil={muster}
         />
       </div>
 
       {/* At the foot, over Continue (2026-09-11, per user direction): the counters are the
           control the thumb comes back to, and the foot is where the thumb already is. */}
-      <HallSigns tabs={guildHallTabs(run, offers, muster)} active={tab} onSelect={selectTab} />
-      {!overlayOpen && (
+      <HallSigns tabs={tabs} active={tab} onSelect={selectTab} />
+      {!overlayOpen && !flow.busy && (
         <button className="resolve-button" onClick={onContinue}>
           {muster ? 'Walk on' : 'Continue'}
         </button>
+      )}
+
+      {flow.mastered && masteredEntry && <MasteredInnateOverlay entry={masteredEntry} turn={flow.mastered.turn} onClose={flow.closeMastered} />}
+      {flow.overflow && overflowEntry && (
+        <MoveOfferOverlay
+          run={run}
+          entry={overflowEntry}
+          moveId={flow.overflow.queue[0]}
+          eyebrow={flow.overflow.eyebrow ?? 'The Evolution grants a move, and the kit is full'}
+          onResolve={flow.resolveOverflow}
+        />
       )}
     </div>
   );

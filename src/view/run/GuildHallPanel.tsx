@@ -2,12 +2,6 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { heroes } from '../../data/heroes';
 import { rosterHeroes } from '../../data/content';
-import { equipment } from '../../data/equipment';
-import { anyoneCanReceive } from '../../run/runProgress';
-import { equipmentArt } from '../shared/equipmentArt';
-import { ItemDetailCard } from '../shared/ItemDossier';
-import { RARITY_COLOR_VARS } from '../shared/EquipmentBox';
-import { ItemServicesSection } from './ItemServicesSection';
 import { guildHallOffersFor } from '../../data/recruitment';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import type { HeroDefinition } from '../../engine/content';
@@ -15,8 +9,6 @@ import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel } from '../../run/difficulty';
-import { canBuyShelfGem, gemAmount, shelfGemPrice, type Gem } from '../../run/gems';
-import { anyMasteryEligible } from '../../run/mastery';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, REVIVE_PURCHASE_LIMIT, canBuyConsumable, consumablePrice, type ConsumableKind } from '../../run/consumables';
 import { anyWounded, canBuyMend, mendPrice } from '../../run/wounds';
 import { WoundBar, entryHp } from '../shared/WoundBar';
@@ -28,7 +20,7 @@ import {
   RecruitmentError,
   type GuildHallOffer,
 } from '../../run/recruitment';
-import { shopItemPrice, tavernRerollCost, type GuildHallOffers } from '../../run/shop';
+import { tavernRerollCost, type GuildHallOffers } from '../../run/shop';
 import { statScaleFor } from '../../run/statScale';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -40,9 +32,10 @@ import type { TabSpec } from '../shared/TabStrip';
 import { RecruitFanfare } from './RecruitFanfare';
 import { GOOD_ART, HALL_ART, HallGood } from './guildHallArt';
 import { CONFIRM_PURCHASE_FROM } from '../shared/useArmedTap';
-import { GemIcon } from '../shared/GemIcon';
+import { GearCounter, GemCounter } from './HallCounters';
+import { ItemServicesSection } from './ItemServicesSection';
 
-export type GuildHallTab = 'shop' | 'tavern' | 'smithy';
+export type GuildHallTab = 'tavern' | 'gems' | 'gear' | 'smithy';
 
 /** Every hire the game holds, bundles included: the roll already read the run's pool, so the lookup must not read it again. */
 const allGuildHallOffers = guildHallOffersFor(heroes);
@@ -54,14 +47,19 @@ export function guildHeroOffers(run: RunState, offers: GuildHallOffers): GuildHa
     .filter((o): o is GuildHallOffer => !!o && !run.roster.some((r) => r.heroId === o.heroId));
 }
 
-/** The three counters (2026-09-24, per user direction): goods at the Shop, people at the Tavern, worn gear at the Smithy. */
+/**
+ * The three counters (2026-10-08, per user direction): people and provisions at the Tavern, Gems and
+ * Gear each a counter of their own. The Vigil trades the Tavern for the Smithy — nobody joins for
+ * the finale, and the last gold goes into the gear the roster already wears.
+ */
 export function guildHallTabs(run: RunState, offers: GuildHallOffers, vigil: boolean): readonly TabSpec<GuildHallTab>[] {
-  return [
-    { id: 'shop', label: 'Shop', glyph: 'shop' },
-    // The Vigil's Tavern holds the mend alone, and a count of nobody would grey the tab it is on.
-    { id: 'tavern', label: 'Tavern', glyph: 'heroes', count: vigil ? undefined : guildHeroOffers(run, offers).length },
-    { id: 'smithy', label: 'Smithy', glyph: 'equipment', count: run.roster.reduce((n, entry) => n + entry.equipment.length, 0) },
+  const goods: TabSpec<GuildHallTab>[] = [
+    { id: 'gems', label: 'Gems', glyph: 'shop' },
+    { id: 'gear', label: 'Gear', glyph: 'equipment' },
   ];
+  return vigil
+    ? [...goods, { id: 'smithy', label: 'Smithy', glyph: 'equipment' }]
+    : [{ id: 'tavern', label: 'Tavern', glyph: 'heroes', count: guildHeroOffers(run, offers).length }, ...goods];
 }
 
 interface Props {
@@ -76,13 +74,15 @@ interface Props {
   revivesBought: number;
   /** Tavern rerolls this visit; the next one costs tavernRerollCost(rerolls). */
   rerolls: number;
-  /** Gear-shelf slots sold this visit (offers.itemIds indices). */
+  /** Gear-counter slots sold this visit (offers.itemIds indices). */
   itemsBought: readonly number[];
   onRunChange: (next: RunState) => void;
-  /** Hands off to App.tsx, which charges the gold and opens the who screen for the Gem. */
-  onBuyGem: (slot: number) => void;
-  /** Hands off to App.tsx, which charges the gold and opens the who screen for the piece. */
-  onBuyItem: (slot: number) => void;
+  /** Hands off to App.tsx, which charges the gold and sets the Gem on the hero; the landed run, or null. */
+  onBuyGem: (slot: number, rosterId: string) => RunState | null;
+  /** What a bought Gem's pip opened, raised by the host (masteryFlow.ts). */
+  onGemPlaced: (rosterId: string, landed: RunState, fromMastery: number) => void;
+  /** Hands off to App.tsx, which charges the gold and seats the piece on the hero; the landed run, or null. */
+  onBuyItem: (slot: number, rosterId: string) => RunState | null;
   /** Hands off to App.tsx, which charges the gold and swaps the shelf on the screen (run/shop.ts rerollGuildHallOffers). */
   onReroll: () => void;
   /** Hands off to App.tsx, which charges the gold and fills the flask (run/consumables.ts). */
@@ -93,8 +93,6 @@ interface Props {
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   /** Fires when this panel opens/closes a modal, so the host can pull its own bottom CTA. */
   onOverlayChange?: (open: boolean) => void;
-  /** Act 6's Vigil (2026-09-24, per user direction): no hires, no Contract, no reroll — the finale is fought by the roster the run kept. */
-  vigil?: boolean;
 }
 
 interface HeroCardProps {
@@ -143,6 +141,7 @@ export function GuildHallPanel({
   itemsBought,
   onRunChange,
   onBuyGem,
+  onGemPlaced,
   onBuyItem,
   onReroll,
   onBuyConsumable,
@@ -150,12 +149,9 @@ export function GuildHallPanel({
   onRequestRosterReplace,
   onOverlayChange,
   tab,
-  vigil = false,
 }: Props) {
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
   const [confirmingContract, setConfirmingContract] = useState(false);
-  /** The gear-shelf slot being looked at before it is paid for. */
-  const [inspectingSlot, setInspectingSlot] = useState<number | null>(null);
   /** The hero the joining cinematic is running for. The roster-full path fires it from App instead. */
   const [fanfareHeroId, setFanfareHeroId] = useState<string | null>(null);
 
@@ -170,14 +166,10 @@ export function GuildHallPanel({
   const contractCost = contractPrice(run);
   const canBuyContract = run.gold >= contractCost;
   const canHire = run.recruitContracts > 0;
-  const anyoneTakesGem = anyMasteryEligible(run.roster);
   const rerollCost = tavernRerollCost(rerolls);
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
-  const overlayOpen = !!previewOffer || confirmingContract || inspectingSlot !== null || !!fanfareHeroId;
-  const shelfItems = offers.itemIds.map((id) => equipment[id]);
-  const inspectingItem = inspectingSlot !== null ? shelfItems[inspectingSlot] : undefined;
-  const inspectingRoom = !!inspectingItem && anyoneCanReceive(run, inspectingItem, equipment, rosterHeroes);
+  const overlayOpen = !!previewOffer || confirmingContract || !!fanfareHeroId;
   useEffect(() => {
     onOverlayChange?.(overlayOpen);
   }, [overlayOpen, onOverlayChange]);
@@ -210,53 +202,69 @@ export function GuildHallPanel({
         <div className="guild-hall-section is-tavern">
           {/* The notice board: every hire on offer is a poster pinned to it. What a hire is — raw,
               unevolved — and what a full roster asks are both said on the hero's own stage. */}
-          {!vigil && (
-            <div className="hall-board">
-              <img src={HALL_ART.board} className="hall-board-art" alt="" draggable={false} />
-              <div className="hall-board-posters">
-                {heroOffers.length > 0 ? (
-                  heroOffers.map((offer) => (
-                    <GuildHallHeroCard
-                      key={offer.id}
-                      hero={heroes[offer.heroId]}
-                      offer={offer}
-                      level={guildHallLevel(run.actNumber)}
-                      affordable={canHire}
-                      onInspect={() => setPreviewOfferId(offer.id)}
-                    />
-                  ))
-                ) : (
-                  <span className="hall-poster is-note">No one is looking for work this visit.</span>
-                )}
-              </div>
+          <div className="hall-board">
+            <img src={HALL_ART.board} className="hall-board-art" alt="" draggable={false} />
+            <div className="hall-board-posters">
+              {heroOffers.length > 0 ? (
+                heroOffers.map((offer) => (
+                  <GuildHallHeroCard
+                    key={offer.id}
+                    hero={heroes[offer.heroId]}
+                    offer={offer}
+                    level={guildHallLevel(run.actNumber)}
+                    affordable={canHire}
+                    onInspect={() => setPreviewOfferId(offer.id)}
+                  />
+                ))
+              ) : (
+                <span className="hall-poster is-note">No one is looking for work this visit.</span>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* The flasks on the back shelf, behind the bar (the flask's own cap is the counter's; the Revive is one a visit). */}
+          <div className="hall-flasks">
+            {CONSUMABLE_KINDS.map((kind) => {
+              const held = run.consumables[kind];
+              const atCap = held >= CONSUMABLE_HOLD_CAP;
+              const visitDone = kind === 'revive' && revivesBought >= REVIVE_PURCHASE_LIMIT;
+              return (
+                <HallGood
+                  key={kind}
+                  art={GOOD_ART[kind === 'hpPotion' ? 'hp' : kind === 'mpPotion' ? 'mp' : 'revive']}
+                  name={CONSUMABLE_NAMES[kind]}
+                  price={atCap ? (kind === 'revive' ? 'Holding three' : 'Flask full') : visitDone ? 'One a visit' : consumablePrice(kind)}
+                  soldOut={atCap || visitDone}
+                  held={held > 0 ? `${held}/${CONSUMABLE_HOLD_CAP}` : undefined}
+                  disabled={!canBuyConsumable(run, kind, revivesBought)}
+                  confirm={consumablePrice(kind) >= CONFIRM_PURCHASE_FROM}
+                  onClick={() => onBuyConsumable(kind)}
+                />
+              );
+            })}
+          </div>
 
           {/* The bar: the Contract, the bell that calls a fresh shelf of faces (dearer each ring this
               visit, dark with nobody left to call), and a hot meal for everyone — the mend, which
               since 2026-09-17 stands the downed up too, and is not for sale while nobody is hurt. */}
           <div className="hall-counter">
             <div className="hall-counter-goods">
-              {!vigil && (
-                <>
-                  <HallGood
-                    art={GOOD_ART.contract}
-                    name="Contract"
-                    price={contractCost}
-                    held={run.recruitContracts > 0 ? run.recruitContracts : undefined}
-                    disabled={!canBuyContract}
-                    onClick={() => setConfirmingContract(true)}
-                  />
-                  <HallGood
-                    art={GOOD_ART.reroll}
-                    name="New Faces"
-                    price={rerollCost}
-                    disabled={run.gold < rerollCost || offers.heroOfferIds.length === 0}
-                    confirm={rerollCost >= CONFIRM_PURCHASE_FROM}
-                    onClick={onReroll}
-                  />
-                </>
-              )}
+              <HallGood
+                art={GOOD_ART.contract}
+                name="Contract"
+                price={contractCost}
+                held={run.recruitContracts > 0 ? run.recruitContracts : undefined}
+                disabled={!canBuyContract}
+                onClick={() => setConfirmingContract(true)}
+              />
+              <HallGood
+                art={GOOD_ART.reroll}
+                name="New Faces"
+                price={rerollCost}
+                disabled={run.gold < rerollCost || offers.heroOfferIds.length === 0}
+                confirm={rerollCost >= CONFIRM_PURCHASE_FROM}
+                onClick={onReroll}
+              />
               <HallGood
                 art={GOOD_ART.mend}
                 name="Party Heal"
@@ -274,71 +282,9 @@ export function GuildHallPanel({
         </div>
       )}
 
-      {tab === 'shop' && (
-        <div className="guild-hall-section is-shop">
-          {/* The shelf: single Gems on the top two planks, their stats shown and each sold once (the tap
-              opens the who screen), the flasks on the third (the flask's own cap is the shelf's; the Revive
-              is one a visit), and two pieces of gear on the bottom plank. */}
-          <div className="hall-shelf">
-            <img src={HALL_ART.shelf} className="hall-shelf-art" alt="" draggable={false} />
-            {offers.gems.map((gem, i) => {
-              const sold = gemsBought.includes(i);
-              const price = shelfGemPrice(gem);
-              return (
-                <HallGood
-                  key={`gem-${i}`}
-                  className={`is-trio is-row-${Math.floor(i / 3) + 1} is-col-${(i % 3) + 1}`}
-                  art={<GemIcon stat={gem.stat} size={46} large={gem.points >= 10} />}
-                  name={gemTagName(gem)}
-                  price={sold ? 'Sold' : anyoneTakesGem ? price : 'All mastered'}
-                  soldOut={sold || !anyoneTakesGem}
-                  disabled={!canBuyShelfGem(run, gem, sold)}
-                  confirm={price >= CONFIRM_PURCHASE_FROM}
-                  onClick={() => onBuyGem(i)}
-                />
-              );
-            })}
-            {CONSUMABLE_KINDS.map((kind, i) => {
-              const held = run.consumables[kind];
-              const atCap = held >= CONSUMABLE_HOLD_CAP;
-              const visitDone = kind === 'revive' && revivesBought >= REVIVE_PURCHASE_LIMIT;
-              return (
-                <HallGood
-                  key={kind}
-                  className={`is-trio is-row-3 is-col-${i + 1}`}
-                  art={GOOD_ART[kind === 'hpPotion' ? 'hp' : kind === 'mpPotion' ? 'mp' : 'revive']}
-                  name={CONSUMABLE_NAMES[kind]}
-                  price={atCap ? (kind === 'revive' ? 'Holding three' : 'Flask full') : visitDone ? 'One a visit' : consumablePrice(kind)}
-                  soldOut={atCap || visitDone}
-                  held={held > 0 ? `${held}/${CONSUMABLE_HOLD_CAP}` : undefined}
-                  disabled={!canBuyConsumable(run, kind, revivesBought)}
-                  confirm={consumablePrice(kind) >= CONFIRM_PURCHASE_FROM}
-                  onClick={() => onBuyConsumable(kind)}
-                />
-              );
-            })}
-            {/* The bottom plank: gear, one of each. The tap reads the piece whole before any gold moves. */}
-            {shelfItems.map((item, i) => {
-              if (!item) return null;
-              const sold = itemsBought.includes(i);
-              const noRoom = !sold && !anyoneCanReceive(run, item, equipment, rosterHeroes);
-              return (
-                <HallGood
-                  key={i}
-                  className={`is-duo is-row-4 is-col-${i + 1} is-gear`}
-                  style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
-                  art={equipmentArt(item) ?? GOOD_ART.sack}
-                  name={item.name}
-                  price={sold ? 'Sold' : noRoom ? 'No room' : shopItemPrice(item)}
-                  soldOut={sold || noRoom}
-                  disabled={sold}
-                  onClick={() => setInspectingSlot(i)}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {tab === 'gems' && <GemCounter run={run} gems={offers.gems} sold={gemsBought} onBuy={onBuyGem} onPlaced={onGemPlaced} />}
+
+      {tab === 'gear' && <GearCounter run={run} itemIds={offers.itemIds} sold={itemsBought} onBuy={onBuyItem} />}
 
       {tab === 'smithy' && (
         <div className="guild-hall-section is-smithy">
@@ -390,43 +336,6 @@ export function GuildHallPanel({
               );
             })()}
 
-          {/* A shelf piece read whole before any gold moves; the who screen seats it after. */}
-          {inspectingItem && inspectingSlot !== null && (
-            <div className="log-overlay" onClick={() => setInspectingSlot(null)}>
-              <div
-                className="log-panel move-popup-panel equip-inspect-panel"
-                style={{ borderTopColor: RARITY_COLOR_VARS[inspectingItem.rarity] }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <ItemDetailCard item={inspectingItem} />
-                {!inspectingRoom ? (
-                  <div className="guild-hall-confirm-body">Nobody has a free socket, or a piece of this family to merge it into.</div>
-                ) : (
-                  run.gold < shopItemPrice(inspectingItem) && (
-                    <div className="guild-hall-confirm-body">
-                      Not enough gold — {shopItemPrice(inspectingItem)}g needed, you have {run.gold}g.
-                    </div>
-                  )
-                )}
-                <div className="detail-action">
-                  <button
-                    className="resolve-button"
-                    disabled={!inspectingRoom || run.gold < shopItemPrice(inspectingItem)}
-                    onClick={() => {
-                      setInspectingSlot(null);
-                      onBuyItem(inspectingSlot);
-                    }}
-                  >
-                    Buy for {shopItemPrice(inspectingItem)}g
-                  </button>
-                  <button className="detail-action-cancel" onClick={() => setInspectingSlot(null)}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* The one purchase with nothing to open first, so it gets its own confirm. */}
           {confirmingContract && (
             <div className="log-overlay" onClick={() => setConfirmingContract(false)}>
@@ -469,14 +378,6 @@ export function GuildHallPanel({
 }
 
 /** The roster at a glance under the bar, so the Party Heal is priced against who is actually hurt. */
-/** The shelf's pack, drawn: two stones leaning together. Which stats are in it is rolled on the buy. */
-const GEM_TAG_STAT: Record<Gem['stat'], string> = { hp: 'HP', manaPool: 'Mana', attack: 'Atk', defense: 'Def', intelligence: 'Int', wisdom: 'Wis', speed: 'Spd' };
-
-/** A shelf Gem's tag: what it adds, short enough for a three-wide plank. */
-function gemTagName(gem: Gem): string {
-  return `+${gemAmount(gem)} ${GEM_TAG_STAT[gem.stat]}`;
-}
-
 function TavernRoster({ run }: { run: RunState }) {
   return (
     <div className="tavern-roster">

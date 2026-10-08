@@ -848,10 +848,13 @@ what's still unimplemented:
   reward row was added and the funnel became a **pick 1 of 2 from act 3** — Guild Hall or
   **Blacksmith** (item slots, the Anvil, the Enchanter). **Reversed 2026-09-15**
   (`docs/gear-absorption.md` §6): the Blacksmith is deleted, the funnel is **one forced Guild
-  Hall every act**, and the Anvil and Enchanter sit on its Smithy tab over worn gear; nothing is
-  sold. **The Shop's bottom plank sells two pieces of gear a visit** (2026-09-28, per user
-  direction — one more gold sink): one of each, on the act's standard drop curve, at the tier's
-  value (`shopItemPrice`), read whole before paying and absorbed through the who-screen. Map tiles
+  Hall every act**; nothing is sold. **The hall is three counters since 2026-10-08** (per user
+  direction, `docs/run-loop.md` §1): **Tavern** (hires, and a bar with the Contract, the reroll,
+  the mend, the potions and the Revive), **Gems** (9: every stat once and two seconds) and
+  **Gear** (6 pieces on the act's standard curve, at `shopItemPrice`). The Gem and Gear counters
+  show the whole roster — pips, sockets — and a pick lands straight on the hero tapped, no
+  who-screen. **The Smithy (Anvil, Enchanter) is the VIGIL's alone**, which has no Tavern: no
+  hire, mend, potion or Revive is sold before the finale. Map tiles
   **dropped their labels** to pay for the extra row — glyph, silhouette and colour carry
   what the words did, a long press still reads any node out, and this supersedes the
   two-word Monsters/Skirmish vocabulary below. **Labels came back 2026-10-02** (per user

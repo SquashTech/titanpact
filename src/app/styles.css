@@ -37593,7 +37593,6 @@ img.smithy-service-art {
    bar with its services on the counter, the counters signs hung from a beam. Every piece is 1x
    pixel art at a clean 2x (the signs 3x); text sits on parchment or wood, never on a CSS card. */
 
-.shop-node-screen .guild-hall-section.is-shop,
 .shop-node-screen .guild-hall-section.is-tavern {
   align-items: center;
   gap: 4px;
@@ -37720,77 +37719,163 @@ img.smithy-service-art {
   text-align: center;
 }
 
-/* -- The Shop's shelf: 154x221 at 2x, a crown and four planks. The planks' outlines sit 112, 212, 312 and
-   412px down, and each row of goods stands 54px above its plank. The Gems and the flasks stand three to a
-   plank, the gear two. -- */
-.hall-shelf {
-  position: relative;
-  width: 308px;
-  height: 464px;
+/* -- The Tavern's back shelf: the flasks stand behind the bar, their tags hanging just over it. -- */
+.hall-flasks {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex: none;
+  margin-bottom: 4px;
+}
+
+/* -- The Gem and Gear counters (HallCounters.tsx): the stock on parchment above, the roster below. -- */
+.shop-node-screen.is-gems .guild-hall,
+.shop-node-screen.is-gear .guild-hall {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.hall-counter-room {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+  padding: 2px 0 4px;
+}
+
+.counter-stock {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
   flex: none;
 }
 
-.hall-shelf-art {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 308px;
-  height: 442px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.6));
+.counter-good {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 2px;
+  border-style: solid;
+  border-width: 6px;
+  border-image: url('../../art/guild/panel-parch.png') 12 fill / 6px stretch;
+  background: none;
+  color: #3a2412;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
+  transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
 }
 
-.hall-shelf .hall-good {
-  position: absolute;
+.counter-good.is-picked {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 0 3px #ffd88a) drop-shadow(0 0 7px rgba(255, 196, 92, 0.85));
 }
 
-.hall-shelf .hall-good.is-row-1 {
-  top: 58px;
+.counter-good.is-sold {
+  filter: grayscale(0.85) brightness(0.65);
+  cursor: default;
 }
 
-.hall-shelf .hall-good.is-row-2 {
-  top: 158px;
+.counter-good-art {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
 }
 
-.hall-shelf .hall-good.is-row-3 {
-  top: 258px;
+.counter-good-art.is-piece .item-piece {
+  width: 32px;
+  height: 32px;
 }
 
-.hall-shelf .hall-good.is-row-4 {
-  top: 358px;
+.counter-good-words {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.1;
 }
 
-.hall-shelf .hall-good.is-trio {
-  width: 88px;
+.counter-good-name {
+  font-size: 10.5px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
-.hall-shelf .hall-good.is-trio.is-col-1 {
-  left: 22px;
+.counter-good.is-gear .counter-good-name {
+  color: color-mix(in srgb, var(--rarity-color) 55%, #3a2412);
+  font-size: 9.5px;
 }
 
-.hall-shelf .hall-good.is-trio.is-col-2 {
-  left: 110px;
+.counter-good-price {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 800;
 }
 
-.hall-shelf .hall-good.is-trio.is-col-3 {
-  left: 198px;
+.counter-good-price .run-glyph {
+  --iconset-glyph-size: 11px;
 }
 
-.hall-shelf .hall-good.is-duo.is-col-1 {
-  left: 48px;
+.counter-good-price.is-note {
+  font-size: 9.5px;
+  font-style: italic;
+  color: #6a4a2a;
 }
 
-.hall-shelf .hall-good.is-duo.is-col-2 {
-  left: 156px;
+/* The piece in hand, read whole. Holds its height empty, so the roster never jumps under a pick. */
+.counter-focus {
+  display: flex;
+  justify-content: center;
+  flex: none;
+  min-height: 78px;
 }
 
-/* A piece of gear: its 32px sprite at 2x, lit in its tier's colour. */
-.hall-good.is-gear .hall-good-art {
-  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 5px var(--rarity-color));
+.counter-focus .equip-cache-card {
+  width: 100%;
 }
 
-.hall-good.is-gear.is-sold-out .hall-good-art {
-  filter: grayscale(0.9) brightness(0.6);
+.hall-counter-room .counter-roster {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Three columns under the stock: the figure at its 48px source, so the name, the pips or all three
+   sockets in a row, and the CTA all fit two rows of heroes. */
+.counter-roster.pick-cols-3 {
+  --pick-portrait: 48px;
+  --pick-name-size: 12px;
+  --pick-card-min: 0px;
+}
+
+.counter-roster .pick-cta {
+  font-size: 9px;
+  letter-spacing: 0.02em;
+}
+
+.counter-roster .item-box {
+  --item-box-size: 30px;
+}
+
+.counter-roster .item-who-sockets {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+
+/* Armed: the next tap on this hero pays. */
+.counter-roster .pick-card.is-armed {
+  box-shadow: 0 0 0 2px #ffd88a, 0 0 12px rgba(255, 196, 92, 0.7);
+}
+
+.counter-roster .pick-cta.is-buy {
+  animation: armed-pulse 0.9s ease-in-out infinite;
 }
 
 /* -- The Tavern's notice board: 140x124 at 2x; posters pinned across it under its roof. -- */

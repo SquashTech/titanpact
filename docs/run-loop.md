@@ -69,10 +69,21 @@ nodes (it was briefly a curated pick, and before that a stat-pair Class). It sit
 fork**, so the move is in hand for the act's first recruitable fight. With the Tutor it is the
 only way to a move AHEAD of its schedule. `SPLICED_ROW`, `LAST_MENTOR_ACT`.
 
-**The Guild Hall's three counters (2026-09-24):** **Shop** (Mastery Scrolls, two to a pack; the
-two potions and the Revive; two pieces of gear a visit on the act's standard curve at
-`EQUIPMENT_PRICE_BY_RARITY`), **Tavern** (the hire shelf — each hire one Recruit Contract — the Contract for gold, the reroll and
-the party mend) and **Smithy** (the Anvil and the Enchanter over worn gear). It opens on the Tavern.
+**The Guild Hall's three counters (2026-10-08, per user direction; replacing the Shop / Tavern /
+Smithy split of 2026-09-24):** **Tavern** (the hire board — each hire one Recruit Contract — and the
+bar: the Contract for gold, the reroll, the party mend, and on the back shelf the two potions and
+the Revive), **Gems** and **Gear**. It opens on the Tavern. The Smithy came off the every-act hall:
+an Anvil and an Enchanter over every worn piece every act was a freedom that made a visit homework.
+The Gem and Gear counters each show the whole roster under the stock — **every hero's Mastery pips
+at the Gems, every hero's three sockets at the Gear** — so the decision is made on the counter and
+not on the Roster screen. **Pick a piece, then the hero: it is bought straight onto that hero**
+(armed first at `CONFIRM_PURCHASE_FROM` and over), with no who-screen after; a Gem whose pip opens
+an Evolution or masters the innate raises it over the hall (`HallCounters.tsx`). The stock grew
+with the room: **`SHELF_GEM_COUNT` = 9 — every stat once and two seconds**, and
+**`SHOP_ITEM_COUNT` = 6** pieces on the act's standard curve at `EQUIPMENT_PRICE_BY_RARITY`.
+**The Vigil trades the Tavern for the Smithy**: Gems, Gear, and the Anvil and Enchanter over worn
+gear — nobody joins for the finale, and with no bar no mend, potion or Revive is sold there.
+Cycle III's "the Smithy ×1.5" (`smithyPrice`) now prices only the Vigil's Smithy.
 **The reroll** is the Tavern's one lever on WHO shows up: a fresh shelf for
 `TAVERN_REROLL_BASE_COST` = 10g, +`TAVERN_REROLL_STEP` = 10 each time a visit
 (`rerollGuildHallOffers`), never a roster hero and never a face just turned away while the pool can
@@ -80,7 +91,7 @@ spare one. Untuned, and the sim never rerolls.
 
 **The Blacksmith — deleted 2026-09-15** (`docs/gear-absorption.md` §6). From act 3 the funnel was
 a pick of Guild Hall or Blacksmith (item slots, the Anvil, the Enchanter). With gear absorbed the
-funnel is one forced Guild Hall every act, its Smithy holding both services; nothing is sold back.
+funnel is one forced Guild Hall every act; nothing is sold back. Its Smithy went to the Vigil alone on 2026-10-08.
 
 **The map is a scene, not a graph (2026-09-08).** It shows where the player is standing and the
 two or three places they may go (`MapRoute`); the whole-act grid is gone. Across 40 seeds only
@@ -119,7 +130,7 @@ two reds a shade apart on the act's one real difficulty choice, and was reverted
 | `skirmish` | Four heroes from the **recruitable pool**, at par. The fork's plain option; a Recruit Contract shot. |
 | `elite` | As `skirmish`, one level over it (`ENEMY_LEVEL_OFFSET`), loot one tier ahead, XP ×1.5. |
 | `boss` | The Location's champion over Titanspawn escorts, all at the node's level (`docs/enemy-levels.md` §4). Pays the Guardian's Banner and the Crucible, and ends the act (§3). It paid a Recruit Contract until 2026-10-05 ("Contracts" below). |
-| `shop` | The **Guild Hall** — Shop, Tavern and Smithy (§1). Rolled once a visit (`rollGuildHallOffers`). |
+| `shop` | The **Guild Hall** — Tavern, Gems and Gear (§1); the Vigil's is Gems, Gear and Smithy. Rolled once a visit (`rollGuildHallOffers`). |
 | `equipmentReward` ("Items") | `NodeRewardScreen` — pick 1 of 3 items on the act's curve; the pick goes straight to the who-screen (`docs/gear-absorption.md`). Weight 78. |
 | `currencyReward` | An instant gold grant (15–30 at Act 1, × `ACT_GOLD_SCALE`), paid on arrival and counted up into the purse. |
 | `contractReward` ("Contract") | One Recruit Contract, paid on arrival (`grantContract`). Weight 24. See "Contracts" below. |

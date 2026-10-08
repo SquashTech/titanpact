@@ -263,21 +263,19 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
           { glyph: 'hp', label: 'Potion · Revive', value: `${CONSUMABLE_PRICE}g · ${REVIVE_PRICE}g` },
         ],
         odds: null,
-        about: 'Where gold is spent. The Tavern sells Recruit Contracts and hires heroes for one — raw: an act behind, unevolved, bare-socketed. The shelf sells Gems, potions and one Revive; the Smithy works worn gear; the mend heals everyone, knocked-out heroes included.',
+        about: 'Where gold is spent. The Tavern hires heroes for a Recruit Contract — raw: an act behind, unevolved, bare-socketed — and its bar sells Contracts, potions, one Revive and the mend, which heals everyone, knocked-out heroes included. The Gem and Gear counters sell straight onto the hero you pick.',
         terms: [TERMS.contract],
       };
     case 'muster':
       return {
         kind: 'Landmark · The last stop',
         facts: [
-          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g`, note: `${SHELF_GEM_COUNT} on the shelf, stats shown` },
+          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g`, note: `${SHELF_GEM_COUNT} on the counter, every stat` },
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
-          { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },
-          { glyph: 'hp', label: 'Potion · Revive', value: `${CONSUMABLE_PRICE}g · ${REVIVE_PRICE}g` },
         ],
         odds: null,
-        about: 'The last stop before the final battle: the Guild Hall without its Tavern. Heal up, stock the Bag, finish the gear.',
+        about: 'The last stop before the final battle: the Guild Hall with its Smithy and without its Tavern. Nobody joins now — spend the last gold on Gems, Gear and the gear already worn.',
         terms: [],
       };
     case 'equipmentReward':

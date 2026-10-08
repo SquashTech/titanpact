@@ -10,7 +10,7 @@ const STORAGE_KEY = 'titanpact.guildHallTab';
 export function readGuildHallTab(fallback: GuildHallTab): GuildHallTab {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw === 'shop' || raw === 'tavern' || raw === 'smithy' ? raw : fallback;
+    return raw === 'tavern' || raw === 'gems' || raw === 'gear' || raw === 'smithy' ? raw : fallback;
   } catch {
     // Private-mode Safari throws on localStorage access.
     return fallback;

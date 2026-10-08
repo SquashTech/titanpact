@@ -105,8 +105,8 @@ import {
   type RosterReplaceCandidate,
 } from '../run/recruitment';
 import { guildHallOffersFor } from '../data/recruitment';
-import { MASTERY_CAP, anyMasteryEligible } from '../run/mastery';
-import { GEM_CACHE_COUNT, SCRIBE_GEMS, buyShelfGem, canBuyShelfGem, rollGemDrop, rollGems, type Gem } from '../run/gems';
+import { MASTERY_CAP, MasteryError, anyMasteryEligible } from '../run/mastery';
+import { GEM_CACHE_COUNT, SCRIBE_GEMS, buyShelfGem, canBuyShelfGem, placeGem, rollGemDrop, rollGems, type Gem } from '../run/gems';
 import type { MvpPick } from '../run/mvp';
 import { ShopItemError, TavernRerollError, buyShopItem, rerollGuildHallOffers, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
@@ -151,6 +151,8 @@ import {
   advanceToNextAct,
   grantCurrencyReward,
   anyoneCanReceive,
+  absorbItem,
+  RunProgressError,
   sellItem,
   recordBrokenSeal,
   grantRelicReward,
@@ -1091,31 +1093,38 @@ export function App() {
     setScreen({ ...screen, offers: rolled.offers, rerolls: screen.rerolls + 1 });
   }
 
-  /** A shelf Gem: the gold is charged on the tap, and the who screen places it. */
-  function handleBuyShelfGem(slot: number) {
-    if (screen.kind !== 'shop') return;
+  /** The Gem counter: the Gem is paid for and set on the hero picked, in one tap. The caller raises what the pip opened. */
+  function handleBuyShelfGem(slot: number, rosterId: string): RunState | null {
+    if (screen.kind !== 'shop') return null;
     const gem = screen.offers.gems[slot];
-    if (!gem || !canBuyShelfGem(playerRun, gem, screen.gemsBought.includes(slot))) return;
-    setPlayerRun(buyShelfGem(playerRun, gem));
-    playSfx('gold.coin');
-    setScreen({ kind: 'scrolls', plan: { source: 'shelf', gems: [gem] }, nodeId: null, bought: true, next: { ...screen, gemsBought: [...screen.gemsBought, slot] } });
-  }
-
-  /** The Shop's gear shelf: the gold is charged on the confirm, and the who screen absorbs the piece. */
-  function handleBuyGuildItem(slot: number) {
-    if (screen.kind !== 'shop' || screen.itemsBought.includes(slot)) return;
-    const item = equipment[screen.offers.itemIds[slot]];
-    if (!item || !anyoneCanReceive(playerRun, item, equipment, rosterHeroes)) return;
+    if (!gem || !canBuyShelfGem(playerRun, gem, screen.gemsBought.includes(slot))) return null;
     let next: RunState;
     try {
-      next = buyShopItem(playerRun, item);
+      next = placeGem(buyShelfGem(playerRun, gem), rosterId, gem);
     } catch (err) {
-      if (!(err instanceof ShopItemError)) throw err;
-      return;
+      if (!(err instanceof MasteryError)) throw err;
+      return null;
     }
-    playSfx('gold.coin');
     setPlayerRun(next);
-    setScreen({ kind: 'itemWho', itemId: item.id, next: { ...screen, itemsBought: [...screen.itemsBought, slot] } });
+    setScreen({ ...screen, gemsBought: [...screen.gemsBought, slot] });
+    return next;
+  }
+
+  /** The Gear counter: the piece is paid for and absorbed by the hero picked, in one tap. */
+  function handleBuyGuildItem(slot: number, rosterId: string): RunState | null {
+    if (screen.kind !== 'shop' || screen.itemsBought.includes(slot)) return null;
+    const item = equipment[screen.offers.itemIds[slot]];
+    if (!item) return null;
+    let next: RunState;
+    try {
+      next = absorbItem(buyShopItem(playerRun, item), rosterId, item.id, equipment, rosterHeroes);
+    } catch (err) {
+      if (!(err instanceof ShopItemError) && !(err instanceof RunProgressError)) throw err;
+      return null;
+    }
+    setPlayerRun(next);
+    setScreen({ ...screen, itemsBought: [...screen.itemsBought, slot] });
+    return next;
   }
 
   /**

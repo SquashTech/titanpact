@@ -88,7 +88,8 @@ test('gems: the shelf sells single Gems, priced by their points, while somebody 
   assert.ok(SHELF_GEM_COUNT > 4, 'more on the shelf than the two packs it replaced');
   const stock = rollShelfGems(3);
   assert.strictEqual(stock.length, SHELF_GEM_COUNT);
-  assert.strictEqual(new Set(stock.map((g) => g.stat)).size, SHELF_GEM_COUNT, 'every one a different stat');
+  assert.strictEqual(new Set(stock.map((g) => g.stat)).size, GEM_ORDER.length, 'every stat on the counter');
+  assert.ok(GEM_ORDER.every((stat) => stock.filter((g) => g.stat === stat).length <= 2), 'none more than twice');
   assert.ok(stock.every((g) => g.points === 10), 'sized by the act');
   const small = { stat: 'attack' as const, points: 5 };
   const large = { stat: 'attack' as const, points: 10 };
