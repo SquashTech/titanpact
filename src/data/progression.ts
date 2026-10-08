@@ -143,10 +143,11 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Water's whole magical column, minus Tsunami (Tidebreaker's grant). Deep Chill and Jolt
     // telegraph the two grafts; Tsunami is what the mono path pays with.
     leviathan: [
-      'tideGuard',
-      'splash', 'refresh', 'deepChill', 'jolt', 'magicBolt', 'psiBolt',
-      'torrent', 'engulf', 'deluge', 'crest', 'shockBubble', 'oasis', 'cleansingRain',
-      'maelstrom', 'highTide', 'seawall', 'thunderbolt', 'rainfall', 'drench',
+      // Trimmed so a Downpour setter is likely (2026-10-08): Early 3 and Mid 4, one setter in each —
+      // 1 − (1/3 × 1/2) ≈ 83% to be offered at least one. Deep Chill and Shock Bubble telegraph the grafts.
+      'deepChill', 'jolt', 'rainfall',
+      'rainmaker', 'drench', 'torrent', 'shockBubble',
+      'maelstrom', 'highTide', 'seawall', 'thunderbolt',
     ],
     // Nautilus: Water's support and control half, with one Mind and one Shadow Early move to
     // telegraph Inkmind and Mimic.

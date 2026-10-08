@@ -4268,6 +4268,21 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleAlly',
   },
+  // Downpour's Mid setter (2026-10-08, per user direction): a hit that brings the rain, so a Water
+  // caster past the Early band still has a way to the field its readers want.
+  rainmaker: {
+    id: 'rainmaker',
+    name: 'Rainmaker',
+    tier: 'mid',
+    type: 'Water',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 45,
+    fieldEffectApplication: 'downpour',
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+  },
   drench: {
     id: 'drench',
     name: 'Drench',

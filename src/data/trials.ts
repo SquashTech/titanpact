@@ -93,7 +93,7 @@ export const trials: Record<string, TrialDefinition> = {
         {
           heroId: 'leviathan',
           pathId: 'leviathan-deepfrost',
-          moveIds: ['deepsurge', 'maelstrom', 'avalanche', 'magicBolt'],
+          moveIds: ['deepsurge', 'maelstrom', 'avalanche', 'rainmaker'],
           itemIds: ['staff.mythic', 'orb.mythic', 'wand.mythic'],
         },
         {

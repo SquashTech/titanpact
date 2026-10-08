@@ -63,13 +63,13 @@ function afflict(state: CombatState, combatantId: string, statusId: string, magn
 
 // --- The pool itself ---
 
-test('water: the authored slate is the fifteen designed moves, Riptide\'s Evolution move, its signature, the two Shield cards, the two 2026-09-15 additions, Nautilus\'s Ink Cloud and Downpour\'s rider and reader, all Water-typed', () => {
+test('water: the authored slate is the fifteen designed moves, Riptide\'s Evolution move, its signature, the two Shield cards, the two 2026-09-15 additions, Nautilus\'s Ink Cloud, Downpour\'s rider and reader and its Mid setter, all Water-typed', () => {
   const water = Object.values(moves).filter((m) => m.type === 'Water' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     water.map((m) => m.id).sort(),
     [
       'aquaSlice', 'cleansingRain', 'crest', 'deluge', 'drench', 'engulf', 'highTide', 'inkCloud', 'maelstrom', 'oasis',
-      'rainfall', 'refresh', 'seawall', 'shockBubble', 'siphon', 'splash', 'tideGuard', 'torrent', 'tsunami', 'undercurrent',
+      'rainfall', 'rainmaker', 'refresh', 'seawall', 'shockBubble', 'siphon', 'splash', 'tideGuard', 'torrent', 'tsunami', 'undercurrent',
       'undertow', 'washAway', 'waveShred',
     ]
   );

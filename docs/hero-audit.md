@@ -52,7 +52,11 @@ Grand Finale. Flameproof makes Fire's self-Burn costs free for the whole active 
 
 Engine: `PassiveDefinition.alsoReactive` — a second reaction on its own hook (Swell).
 
-To watch: Leviathan reaches Downpour only through Rainfall, an Early offer it may never see, or
-the Water Herald Boon — Tidal Mass and Freezing Rain are dead without one. Renew heals are
+**Leviathan's Downpour access** (2026-10-08): a new Mid Water move, **Rainmaker** (magical, Pow 45, 40
+mana, one enemy, sets Downpour), and Leviathan's pool trimmed to Early 3 (Deep Chill, Jolt, Rainfall)
+and Mid 4 (Rainmaker, Drench, Torrent, Shock Bubble) — about 83% to be offered a setter, nearer 78% once a
+graft's Mid line joins the pool. Its Deepfrost Trial build carries Rainmaker in Magic Bolt's place.
+
+To watch: Renew heals are
 `StatusTicked`, not `Healed`, game-wide; only Kappa's cards were taught to hear both. Pincer's
 Tideclaw (Static Tide) and Leviathan's Stormwyrm (Storm Drinker) are now the same verb.
