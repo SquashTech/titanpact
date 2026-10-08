@@ -60,3 +60,27 @@ graft's Mid line joins the pool. Its Deepfrost Trial build carries Rainmaker in 
 To watch: Renew heals are
 `StatusTicked`, not `Healed`, game-wide; only Kappa's cards were taught to hear both. Pincer's
 Tideclaw (Static Tide) and Leviathan's Stormwyrm (Storm Drinker) are now the same verb.
+
+## Frost — renames and grafts (2026-10-08)
+
+Five of Frost's twelve grafts were Stone and three Water, and three paths shared the name Glacier.
+Spread so each type appears once across the type (Nature unused); Tusk's Erratic keeps the one
+Stone, a glacial erratic being a boulder the ice carried.
+
+| Hero | Path (was) | Graft (was) | Granted move (was) |
+|---|---|---|---|
+| Flurry | Blizzard (Glacier) | Storm (Stone) | — |
+| Flurry | Snow Spirit (Permafrost) | Spirit (Water) | Soul Rend (Oasis) |
+| Rime | Snowbound (Avalanche) | — | Snowball |
+| Rime | Hoarsteel (Glacier) | Iron (Stone) | — |
+| Floe | Icebreaker (Permafrost Core) | Mech (Iron) | — |
+| Floe | Cryolattice | Arcane (Stone) | Wardblade (Body Blow) |
+| Igloo | Snowfort (Glacier) | — | Frost Wall |
+| Igloo | Hearthglow (Keep) | Fire (Stone) | — |
+| Igloo | Aurora (Meltwater) | Light (Water) | Benediction (Oasis) |
+
+Innates renamed off move names: Rime's Cold Snap → **Bitter Cold**, Floe's Absolute Zero →
+**Pack Ice** (ids unchanged). Art renamed with the ids; Hearthglow's and Icebreaker's drawings were
+made for Stone and Iron and want a redraw. Stars on the old ids are dropped (no players yet).
+Still owed in the details pass: Bedrock Ice, Frozen Stone and Portcullis carry their old types'
+names on new grafts.

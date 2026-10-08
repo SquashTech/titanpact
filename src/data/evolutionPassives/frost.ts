@@ -1,7 +1,7 @@
 import type { PassiveDefinition } from '../../engine/content';
 
 export const frostPathPassives: Record<string, PassiveDefinition> = {
-  // Flurry's Glacier: a live grant, so it holds exactly as long as her Deep Chill does.
+  // Flurry's Blizzard: a live grant, so it holds exactly as long as her Deep Chill does.
   bedrockIce: {
     id: 'bedrockIce',
     name: 'Bedrock Ice',
@@ -11,7 +11,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       statGrants: { defense: 20, wisdom: 20 },
     },
   },
-  // Rime's Avalanche.
+  // Rime's Snowbound.
   rollingSnow: {
     id: 'rollingSnow',
     name: 'Rolling Snow',
@@ -22,7 +22,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], amount: 20 },
     },
   },
-  // Floe's Permafrost Core.
+  // Floe's Icebreaker.
   coldHousing: {
     id: 'coldHousing',
     name: 'Cold Housing',
@@ -33,7 +33,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
     },
   },
-  // Igloo's Glacier: every arrival, the opening lead included.
+  // Igloo's Snowfort: every arrival, the opening lead included.
   coldFront: {
     id: 'coldFront',
     name: 'Cold Front',
@@ -44,7 +44,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
     },
   },
-  // Igloo's Keep: target-role StatusApplied, so its own Provoke (or the Stone line's Bodyguard) arms it.
+  // Igloo's Hearthglow: target-role StatusApplied, so its own Provoke arms it.
   portcullis: {
     id: 'portcullis',
     name: 'Portcullis',

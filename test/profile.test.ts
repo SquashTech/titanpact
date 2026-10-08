@@ -86,12 +86,12 @@ test('profile: a clear stars every EVOLVED hero on the final roster, by the form
 });
 
 test('profile: stars collect across runs, one a path, and a repeat of the same form is the same star', () => {
-  let profile = recordRunEnded(createProfile(), cleared([finished('cinderKnight', 'explosive'), finished('rime', 'glacier')]), 1_000);
+  let profile = recordRunEnded(createProfile(), cleared([finished('cinderKnight', 'explosive'), finished('rime', 'hoarsteel')]), 1_000);
   profile = recordRunEnded(profile, cleared([finished('cinderKnight', 'ironclad'), finished('valor', 'paladin')]), 2_000);
   profile = recordRunEnded(profile, cleared([finished('cinderKnight', 'ironclad')]), 3_000);
   assert.deepStrictEqual(profile.evolutionStars, {
     cinderKnight: ['cinderKnight-explosive', 'cinderKnight-ironclad'],
-    rime: ['rime-glacier'],
+    rime: ['rime-hoarsteel'],
     valor: ['valor-paladin'],
   });
   assert.strictEqual(totalStars(profile), 4);
@@ -99,7 +99,7 @@ test('profile: stars collect across runs, one a path, and a repeat of the same f
 });
 
 test('profile: a loss counts as a loss and stars nobody', () => {
-  const profile = recordRunEnded(createProfile(), wiped(3, [finished('rime', 'avalanche')]), 1_000);
+  const profile = recordRunEnded(createProfile(), wiped(3, [finished('rime', 'snowbound')]), 1_000);
   assert.strictEqual(profile.runsFailed, 1);
   assert.strictEqual(profile.runsCompleted, 0);
   assert.deepStrictEqual(profile.evolutionStars, {});
@@ -108,7 +108,7 @@ test('profile: a loss counts as a loss and stars nobody', () => {
 // --- Run history ---
 
 test('profile: every run that ends goes into the history, newest first, win or loss', () => {
-  let profile = recordRunEnded(createProfile(), wiped(2, [finished('rime', 'avalanche', 9)]), 1_000);
+  let profile = recordRunEnded(createProfile(), wiped(2, [finished('rime', 'snowbound', 9)]), 1_000);
   profile = recordRunEnded(profile, cleared([finished('cinderKnight', 'explosive')]), 2_000);
   assert.strictEqual(profile.runHistory.length, 2);
   assert.strictEqual(profile.runHistory[0].outcome, 'win');
@@ -116,12 +116,12 @@ test('profile: every run that ends goes into the history, newest first, win or l
   assert.strictEqual(profile.runHistory[1].outcome, 'loss');
   assert.strictEqual(profile.runHistory[1].actReached, 2);
   assert.strictEqual(profile.runHistory[1].locationId, 'wildsEdge');
-  assert.deepStrictEqual(profile.runHistory[1].roster, [{ heroId: 'rime', level: 9, evolutionPathId: 'rime-avalanche' }]);
+  assert.deepStrictEqual(profile.runHistory[1].roster, [{ heroId: 'rime', level: 9, evolutionPathId: 'rime-snowbound' }]);
 });
 
 test('profile: a record remembers only the stars that were NEW that run', () => {
-  let profile = recordRunEnded(createProfile(), cleared([finished('cinderKnight', 'explosive'), finished('rime', 'glacier')]), 1_000);
-  assert.deepStrictEqual(profile.runHistory[0].starsEarned, ['cinderKnight-explosive', 'rime-glacier']);
+  let profile = recordRunEnded(createProfile(), cleared([finished('cinderKnight', 'explosive'), finished('rime', 'hoarsteel')]), 1_000);
+  assert.deepStrictEqual(profile.runHistory[0].starsEarned, ['cinderKnight-explosive', 'rime-hoarsteel']);
   profile = recordRunEnded(profile, cleared([finished('cinderKnight', 'explosive'), finished('rime', 'hydrofreeze')]), 2_000);
   assert.deepStrictEqual(profile.runHistory[0].starsEarned, ['rime-hydrofreeze'], 'a form already starred adds nothing');
   profile = recordRunEnded(profile, wiped(5, [finished('valor', 'galvanize')]), 3_000);
@@ -150,7 +150,7 @@ test('profile: the history is capped, and it is the oldest that falls off', () =
 });
 
 test('profile: a record is written from a copy, so the run state it came from cannot change it', () => {
-  const roster = [finished('rime', 'avalanche')];
+  const roster = [finished('rime', 'snowbound')];
   const profile = recordRunEnded(createProfile(), cleared(roster), 1_000);
   roster[0].level = 1;
   assert.strictEqual(profile.runHistory[0].roster[0].level, 30);
@@ -168,7 +168,7 @@ test('profile: furthest act only ever climbs', () => {
 test('profile: every verb returns a new profile and leaves the old one alone', () => {
   const before = createProfile();
   recordRunStarted(before, 1);
-  recordRunEnded(before, cleared([finished('rime', 'avalanche')]), 1);
+  recordRunEnded(before, cleared([finished('rime', 'snowbound')]), 1);
   addPlaytime(before, 1_000);
   assert.deepStrictEqual(before, createProfile());
 });
@@ -216,12 +216,12 @@ test('profile: stars for a hero or a path this build no longer ships are dropped
   const decoded = decodeProfile(
     {
       runsCompleted: 2,
-      evolutionStars: { rime: ['rime-glacier', 'rime-aPathThatWasCut'], aHeroThatWasCut: ['aHeroThatWasCut-somePath'] },
+      evolutionStars: { rime: ['rime-hoarsteel', 'rime-aPathThatWasCut'], aHeroThatWasCut: ['aHeroThatWasCut-somePath'] },
     },
     knownHeroIds,
     knownPathIds
   );
-  assert.deepStrictEqual(decoded.evolutionStars, { rime: ['rime-glacier'] });
+  assert.deepStrictEqual(decoded.evolutionStars, { rime: ['rime-hoarsteel'] });
   assert.strictEqual(decoded.runsCompleted, 2, 'the rest of the profile survives the dropped entry');
 });
 
@@ -251,7 +251,7 @@ test('profile: a history line with no outcome is dropped; a readable one keeps w
           endedAt: 'yesterday',
           durationMs: -4,
           roster: [{ heroId: 'rime', level: 'high', evolutionPathId: 'rime-aPathThatWasCut' }, { level: 4 }, { heroId: 'goblin', level: 2 }],
-          starsEarned: ['rime-avalanche', 'rime-aPathThatWasCut'],
+          starsEarned: ['rime-snowbound', 'rime-aPathThatWasCut'],
         },
       ],
     },
@@ -267,7 +267,7 @@ test('profile: a history line with no outcome is dropped; a readable one keeps w
     // A companion's body is not a recruitable hero, and it still finished the run.
     { heroId: 'goblin', level: 2, evolutionPathId: null },
   ]);
-  assert.deepStrictEqual(record.starsEarned, ['rime-avalanche']);
+  assert.deepStrictEqual(record.starsEarned, ['rime-snowbound']);
 });
 
 test('profile: a history longer than the cap is cut on read, newest kept', () => {
@@ -290,16 +290,16 @@ test('profile: a clear with a companion stars its line, once, and a loss or a ru
   assert.deepStrictEqual(profile.companionStars, [], 'a loss');
   profile = recordRunEnded(profile, cleared([finished('cinderKnight', 'explosive')]), 2_000);
   assert.deepStrictEqual(profile.companionStars, [], 'no companion this run');
-  profile = recordRunEnded(profile, { ...cleared([finished('rime', 'avalanche')]), companionType: 'Beast' }, 3_000);
+  profile = recordRunEnded(profile, { ...cleared([finished('rime', 'snowbound')]), companionType: 'Beast' }, 3_000);
   assert.ok(hasCompanionStar(profile, 'Beast'), 'it cannot be lost, so the clear is the whole condition');
-  assert.deepStrictEqual(profile.runHistory[0].starsEarned, ['rime-avalanche', companionStarId('Beast')]);
+  assert.deepStrictEqual(profile.runHistory[0].starsEarned, ['rime-snowbound', companionStarId('Beast')]);
   assert.strictEqual(totalStars(profile), 3);
-  profile = recordRunEnded(profile, { ...cleared([finished('rime', 'avalanche')]), companionType: 'Beast' }, 4_000);
+  profile = recordRunEnded(profile, { ...cleared([finished('rime', 'snowbound')]), companionType: 'Beast' }, 4_000);
   assert.deepStrictEqual(profile.companionStars, ['Beast'], 'the same line twice is the same star');
   assert.deepStrictEqual(profile.runHistory[0].starsEarned, []);
   const decoded = decodeProfile(JSON.parse(JSON.stringify(profile)), knownHeroIds, knownPathIds);
   assert.deepStrictEqual(decoded.companionStars, ['Beast']);
-  assert.deepStrictEqual(decoded.runHistory[1].starsEarned, ['rime-avalanche', companionStarId('Beast')], 'a companion star survives the path filter');
+  assert.deepStrictEqual(decoded.runHistory[1].starsEarned, ['rime-snowbound', companionStarId('Beast')], 'a companion star survives the path filter');
   assert.strictEqual(decoded.runHistory[1].companionType, 'Beast');
 });
 

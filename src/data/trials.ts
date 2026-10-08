@@ -143,13 +143,13 @@ export const trials: Record<string, TrialDefinition> = {
         },
         {
           heroId: 'rime',
-          pathId: 'rime-glacier',
+          pathId: 'rime-hoarsteel',
           moveIds: ['spireClaw', 'coldSnap', 'iceShatter', 'thunderclap'],
           itemIds: ['sword.mythic', 'shield.mythic', 'plate.mythic'],
         },
         {
           heroId: 'rimehold',
-          pathId: 'rimehold-glacier',
+          pathId: 'rimehold-snowfort',
           moveIds: ['provoke', 'whiteout', 'frostWall', 'rimeCoat'],
           itemIds: ['shield.mythic', 'plate.mythic', 'crest.mythic'],
         },

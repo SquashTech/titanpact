@@ -1083,7 +1083,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   },
   coldSnap: {
     id: 'coldSnap',
-    name: 'Cold Snap',
+    name: 'Bitter Cold',
     description: 'When this hero Freezes an enemy, it gains 10 Attack.',
     reactive: {
       hook: 'StatusApplied',
@@ -1093,7 +1093,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   },
   absoluteZero: {
     id: 'absoluteZero',
-    name: 'Absolute Zero',
+    name: 'Pack Ice',
     description: "When this hero's Defense rises, both active enemies lose 5 Speed.",
     reactive: {
       hook: 'StatChanged',
@@ -1925,7 +1925,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
 
   shatterpoint: {
     id: 'shatterpoint',
-    name: 'Cold Snap+',
+    name: 'Bitter Cold+',
     description: 'When this hero Freezes an enemy, it gains 25 Attack.',
     reactive: {
       hook: 'StatusApplied',
@@ -1935,7 +1935,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   },
   zeroKelvin: {
     id: 'zeroKelvin',
-    name: 'Absolute Zero+',
+    name: 'Pack Ice+',
     description: "When this hero's Defense rises, both active enemies lose 15 Speed.",
     reactive: {
       hook: 'StatChanged',
