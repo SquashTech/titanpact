@@ -12,7 +12,6 @@ import {
   resolveConditionalPowerMultiplier,
   resolveElementalForceBonus,
   resolveStatRatio,
-  PROVISIONAL_CRIT_CHANCE,
   VARIANCE_MAX,
   VARIANCE_MIN,
   type DamageModifier,
@@ -34,7 +33,7 @@ export interface DamageForecast {
   /** Fraction of max HP the defender currently stands on, so the bite is drawn against what is left. */
   hpFraction: number;
   typeMult: number;
-  /** The chance this move knocks it out, 0–1, over every hit's variance AND crit roll; 0 while a Blessing would refuse the KO. */
+  /** The chance the band knocks it out, 0–1, over every hit's variance roll — crits left out, as from the band, so a KO only a crit could land is not shown; 0 while a Blessing would refuse it. */
   koChance: number;
 }
 
@@ -93,20 +92,20 @@ export function forecastDamage(authored: MoveDefinition, combat: CombatState, at
   const typeFloor = fieldTypeMultFloor(move.type, fieldEffectCtx);
   const hits = move.hitCount ?? 1;
 
-  // One hit as resolveRound lands it: the formula, then rounded.
-  const hit = (variance: number, crit: boolean) =>
+  // One hit as resolveRound lands it, short of a crit: the formula, then rounded.
+  const hit = (variance: number) =>
     Math.round(
-      calcDamage(move, ratio, attackerTypes, defenderTypes, typeChart, variance, crit, modifiers, undefined, undefined, forceBonus, conditionalMult, rolledBasePower, typeFloor)
+      calcDamage(move, ratio, attackerTypes, defenderTypes, typeChart, variance, false, modifiers, undefined, undefined, forceBonus, conditionalMult, rolledBasePower, typeFloor)
         .damage
     );
 
-  const min = hits * hit(VARIANCE_MIN, false);
-  const max = hits * hit(VARIANCE_MAX, false);
+  const min = hits * hit(VARIANCE_MIN);
+  const max = hits * hit(VARIANCE_MAX);
   // A hit empties the Shield before it touches HP (docs/shield.md).
   const shield = shieldHeld(defender, statuses);
   const hpLossMin = Math.max(0, min - shield);
   const hpLossMax = Math.max(0, max - shield);
-  const koChance = defender.blessed ? 0 : chanceTotalReaches(hit, move.critChance ?? PROVISIONAL_CRIT_CHANCE, hits, defender.currentHp + shield);
+  const koChance = defender.blessed ? 0 : chanceTotalReaches(hit, hits, defender.currentHp + shield);
   return {
     kind: 'damage',
     min,
@@ -124,18 +123,15 @@ const VARIANCE_STEPS = 400;
 
 /**
  * P(the hits' summed damage ≥ needed): each hit's distribution over whole damage values is read
- * off the formula at evenly spaced variance points, with and without a crit, then the hits are
- * convolved, since each rolls its own variance and crit.
+ * off the formula at evenly spaced variance points, then the hits are convolved, since each rolls
+ * its own variance.
  */
-function chanceTotalReaches(hit: (variance: number, crit: boolean) => number, critChance: number, hits: number, needed: number): number {
+function chanceTotalReaches(hit: (variance: number) => number, hits: number, needed: number): number {
   const one = new Map<number, number>();
   for (let i = 0; i < VARIANCE_STEPS; i++) {
     const variance = VARIANCE_MIN + ((i + 0.5) / VARIANCE_STEPS) * (VARIANCE_MAX - VARIANCE_MIN);
-    for (const [crit, weight] of [[false, 1 - critChance], [true, critChance]] as const) {
-      if (weight <= 0) continue;
-      const amount = hit(variance, crit);
-      one.set(amount, (one.get(amount) ?? 0) + weight / VARIANCE_STEPS);
-    }
+    const amount = hit(variance);
+    one.set(amount, (one.get(amount) ?? 0) + 1 / VARIANCE_STEPS);
   }
   let total = new Map<number, number>([[0, 1]]);
   for (let h = 0; h < hits; h++) {
