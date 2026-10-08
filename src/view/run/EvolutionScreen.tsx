@@ -60,7 +60,8 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
   const [sealingPathId, setSealingPathId] = useState<string | null>(null);
   const sealingPath = node.paths.find((p) => p.id === sealingPathId) ?? null;
   const slots = grantSlots(node.paths);
-  const dense = slots.length > 2;
+  const rowCount = slots?.length ?? Math.max(...node.paths.map((path) => grantsOf(path).length));
+  const dense = rowCount > 2;
 
   return (
     <div
@@ -85,7 +86,7 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
       />
 
       <div className="evo-forms">
-        <div className={`evo-form-row${dense ? ' is-dense' : ''}${slots.length > 3 ? ' is-packed' : ''}`}>
+        <div className={`evo-form-row${dense ? ' is-dense' : ''}${rowCount > 3 ? ' is-packed' : ''}`}>
           {node.paths.map((path, i) => (
             <FormCard key={path.id} hero={hero} path={path} slots={slots} onInspect={() => setInspectedIndex(i)} />
           ))}
@@ -207,8 +208,11 @@ function grantsOf(path: EvolutionPath): Grant[] {
 /**
  * The rows every card in the node draws, by kind — a type, then each move, then each passive, as
  * many of each as the richest path pays — so a medal sits level with its kind on the other cards.
+ * Null when every path pays the same count (the regular three pairs): the cards then draw their
+ * grants as they come, row for row, with no empty socket on every card.
  */
-function grantSlots(paths: readonly EvolutionPath[]): Grant['kind'][] {
+function grantSlots(paths: readonly EvolutionPath[]): Grant['kind'][] | null {
+  if (new Set(paths.map((path) => grantsOf(path).length)).size <= 1) return null;
   const most = (kind: Grant['kind']) => Math.max(0, ...paths.map((path) => grantsOf(path).filter((g) => g.kind === kind).length));
   return (['type', 'move', 'passive'] as const).flatMap((kind) => Array<Grant['kind']>(most(kind)).fill(kind));
 }
@@ -237,8 +241,9 @@ function GrantGlyph({ grant }: { grant: Grant }) {
  * as medallions. A headline to compare at a glance; the tap opens the showcase, where the
  * choice is read in full and spent.
  */
-function FormCard({ hero, path, slots, onInspect }: { hero: HeroDefinition; path: EvolutionPath; slots: Grant['kind'][]; onInspect: () => void }) {
+function FormCard({ hero, path, slots, onInspect }: { hero: HeroDefinition; path: EvolutionPath; slots: Grant['kind'][] | null; onInspect: () => void }) {
   const grants = grantsOf(path);
+  const rows = slots ?? grants.map((g) => g.kind);
   const traded = tradedType(hero, path);
   const starred = useHasEvolutionStar(hero.id, path.id);
   return (
@@ -259,9 +264,9 @@ function FormCard({ hero, path, slots, onInspect }: { hero: HeroDefinition; path
       {traded && <span className="evo-form-traded">loses {traded}</span>}
       {path.swapsOffense && <span className="evo-form-rewire">Atk ⇄ Int</span>}
       <span className="evo-form-grants">
-        {slots.map((kind, i) => {
+        {rows.map((kind, i) => {
           // The nth slot of a kind takes this path's nth grant of it; a path that pays none leaves the row empty.
-          const nth = slots.slice(0, i).filter((k) => k === kind).length;
+          const nth = rows.slice(0, i).filter((k) => k === kind).length;
           const grant = grants.filter((g) => g.kind === kind)[nth];
           if (!grant) {
             return (
