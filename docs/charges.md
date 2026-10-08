@@ -212,7 +212,12 @@ Every move in the game that guarantees a Daze or lays a guard or a redirect, rea
   others guarantee one and stay off Charges: **Perfect Creation** (Mech Late, 100 Mana, six statuses
   at once — its price already makes it a once-a-fight cast) and **Transfix** (Ancient, the Herald's,
   enemy-only, inside the finale's tuning).
-- **The Provoke family stays uncharged — a RECOMMENDATION, the designer's to overrule.** Provoke,
+- **The Provoke family holds 5 Charges** (2026-10-08, per user direction, REVERSING the recommendation
+  below, which the user first agreed to): a large count, set to break the checkmate a tank, a Renew
+  engine and a Provoke every round can build, not to ration the tank's job. Provoke, Bodyguard,
+  Intercept and the three signatures (their rewired twins follow). Wall Strike is a 75 BP hit as well,
+  so the count caps its damage too. Not simulated. The recommendation it reversed:
+  **The Provoke family stays uncharged.** Provoke,
   Bodyguard, Intercept (the Class) and three signatures (Wall Strike, Roost Guard, Nevermore) are six
   moves and the whole tank archetype. A redirect is not a lockout: the enemy still acts, onto the
   tank, which pays for it in HP, and the redirect lasts the round it is cast. Charging it would cap
@@ -310,7 +315,7 @@ charged kit can use. Tempest, Kite and Raiju are not in the default deck and wer
   consecutive rounds is the real issue, a "not two rounds running" cooldown is a second gate.
   `isMoveUsable` can hold it beside Charges. Decide after phase 3 shows how Barrier is actually cast.
 - **Do charged moves get cheaper?** Measured in phase 3: no.
-- **The Provoke family** (above): uncharged on recommendation.
+- **The Provoke family** (above): 5 Charges, per user direction.
 - **A Charge consumable** (an "Ether", a fourth purse kind) is held back. It is a free action, and
   one a fight is effectively a count raised by one on every charged move.
 

@@ -404,7 +404,8 @@ don't silently override it.
   `MoveDefinition.chargesPerFight`, one spent a cast, the move unusable at none, a fight opening
   full. **Charges belong to the hero** — kept through a switch, never refilled by Rest or the bench
   (`Combatant.chargesSpent`, read through `isMoveUsable`) — both sides capped, drawn as pips.
-  Feint, Blind and Barrier hold 2; a move's `oncePerFight` is 1 Charge (Ink Blast).
+  Feint, Blind and Barrier hold 2; a move's `oncePerFight` is 1 Charge (Ink Blast). **The Provoke
+  family holds 5** (per user direction): a large count that breaks the tank + Renew + Provoke checkmate.
 - **Priority uses integer brackets; Speed is the tiebreaker within a bracket.**
 - **No spread damage reduction** — this is a doubles-only game.
 

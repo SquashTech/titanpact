@@ -86,6 +86,7 @@ export const classMoves: Record<string, MoveDefinition> = {
     statDeltas: [{ stat: 'defense', amount: 10 }],
     statDeltaTarget: 'self',
     manaCost: 30,
+    chargesPerFight: 5,
     priority: 1,
     target: 'self',
   },
