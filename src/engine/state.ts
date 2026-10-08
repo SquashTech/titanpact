@@ -546,10 +546,14 @@ export function applyStatModifierDelta(
   hero: HeroDefinition,
   combatant: Combatant,
   stat: StatKey,
-  delta: number
+  delta: number,
+  /** Past the ×4 ceiling — Stampede's Speed alone (CLAUDE.md "Stat modifiers"). */
+  uncapped = false
 ): { newValue: number; landed: number; capped: boolean } {
   const current = combatant.statModifiers[stat] ?? 0;
-  const newValue = Math.min(statModifierCeiling(hero, combatant, stat), Math.max(statModifierFloor(hero, combatant, stat), current + delta));
+  // A modifier already past the ceiling (an uncapped rise) is never clawed back by a later change; it just cannot climb further.
+  const ceiling = uncapped ? Infinity : Math.max(statModifierCeiling(hero, combatant, stat), current);
+  const newValue = Math.min(ceiling, Math.max(statModifierFloor(hero, combatant, stat), current + delta));
   return { newValue, landed: newValue - current, capped: newValue !== current + delta };
 }
 

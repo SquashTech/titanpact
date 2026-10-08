@@ -603,7 +603,7 @@ test('frostbite: an enemy loses a tenth of its max HP as it is Frozen — once a
   assert.strictEqual(second.state.combatants.b1.currentHp, first.state.combatants.b1.currentHp, 'a Frozen foe cannot be Frozen again');
 });
 
-test('stampede: Tusk\'s Speed doubles at every round end, up to the fight\'s ×4 ceiling', () => {
+test('stampede: Tusk\'s Speed doubles at every round end, past the fight\'s ×4 ceiling', () => {
   const state = withPassive(twoVTwo(50, 'tusk', 'valor', 'ironWarden', 'crag'), 'a1', 'stampede');
   const base = heroes.tusk.baseStats.speed;
   const one = resolveRound(state, restAll(state), config).state;
@@ -611,7 +611,9 @@ test('stampede: Tusk\'s Speed doubles at every round end, up to the fight\'s ×4
   const two = resolveRound(one, restAll(one), config).state;
   assert.strictEqual(two.combatants.a1.statModifiers.speed, 3 * base);
   const three = resolveRound(two, restAll(two), config).state;
-  assert.strictEqual(three.combatants.a1.statModifiers.speed, 3 * base, 'held at four times where it started');
+  assert.strictEqual(three.combatants.a1.statModifiers.speed, 7 * base, 'eight times where it started, and climbing');
+  const slowed = resolveRound(three, [{ kind: 'move', combatantId: 'b1', moveId: 'pinDown', declaredTarget: 'a1' }, ...restAll(three).filter((a) => a.combatantId !== 'b1')], config).state;
+  assert.ok((slowed.combatants.a1.statModifiers.speed ?? 0) > 3 * base, 'a later debuff is not clawed back to the ceiling');
 });
 
 test('snowfall: a Rest Freezes one random enemy', () => {

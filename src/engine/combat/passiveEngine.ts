@@ -390,7 +390,7 @@ function resolveEffectOn(
       const changes: CombatEvent[] = [];
       for (const stat of stats) {
         // Flat (no move to scale off), but held at the same floor as a move's drop.
-        const { newValue, landed, capped } = applyStatModifierDelta(heroes[target.heroId], { ...target, statModifiers: modifiers }, stat, amount);
+        const { newValue, landed, capped } = applyStatModifierDelta(heroes[target.heroId], { ...target, statModifiers: modifiers }, stat, amount, effect.uncapped);
         modifiers = { ...modifiers, [stat]: newValue };
         changes.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, ...(capped ? { capped: true } : {}), newValue });
       }

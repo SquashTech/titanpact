@@ -219,7 +219,7 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
         const times = 1 + (effect.amount.multiplier ?? 1);
         return {
           label: 'Then',
-          text: `${times === 2 ? 'Doubles' : times === 3 ? 'Triples' : `×${times}`} the ${STAT_FULL_LABELS[effect.amount.stat]} of ${targetWord(effect.target, condition, hook)}`,
+          text: `${times === 2 ? 'Doubles' : times === 3 ? 'Triples' : `×${times}`} the ${STAT_FULL_LABELS[effect.amount.stat]} of ${targetWord(effect.target, condition, hook)}${effect.uncapped ? ', with no limit' : ''}`,
           glyph: { kind: 'stat', stat: effect.amount.stat },
         };
       }

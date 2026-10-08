@@ -98,6 +98,9 @@ names on new grafts.
 
 Engine: `PassiveAmount` `targetStat` — the effect target's live stat (Stampede).
 
-To watch: the ×4 fight ceiling stops Stampede two rounds in — Tusk tops out at 4× the Speed it
-started at (15 → 60 at base). Pack Ice and Rime's Frozen Stone are now the same verb. Frostbite
+**Stampede ignores the ×4 ceiling** (same day, per user direction): Speed only orders turns, so it is
+the one stat uncapped (`uncapped` on a passive statDelta); a later debuff never claws an overshoot
+back to the ceiling.
+
+To watch: Pack Ice and Rime's Frozen Stone are now the same verb. Frostbite
 fires once a fresh freeze, not every round.

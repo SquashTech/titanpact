@@ -1437,12 +1437,13 @@ const innatePassives: Record<string, PassiveDefinition> = {
   stampede: {
     id: 'stampede',
     name: 'Stampede',
-    description: "At the end of each round, this hero's Speed doubles.",
-    // Starts the slowest thing on the field and ends the fastest: the fight's ×4 ceiling is the brake.
+    description: "At the end of each round, this hero's Speed doubles, with no limit.",
+    // Starts the slowest thing on the field and ends the fastest. Speed only orders turns, so it is
+    // the one stat uncapped (2026-10-08, per user direction).
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: { kind: 'targetStat', stat: 'speed' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: { kind: 'targetStat', stat: 'speed' }, uncapped: true },
     },
   },
   // docs/wild-innates-and-events.md §1: Metronome, shown before you commit. The verb is the move
@@ -2443,11 +2444,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   glacialAdvance: {
     id: 'glacialAdvance',
     name: 'Stampede+',
-    description: "At the end of each round, this hero's Speed triples.",
+    description: "At the end of each round, this hero's Speed triples, with no limit.",
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: { kind: 'targetStat', stat: 'speed', multiplier: 2 } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: { kind: 'targetStat', stat: 'speed', multiplier: 2 }, uncapped: true },
     },
   },
   // The figure doubled is the hand: two faces a round, Motley's pick.

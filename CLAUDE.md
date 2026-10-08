@@ -380,7 +380,9 @@ don't silently override it.
   ceiling per user direction after a full playtest run, ×4 over the proposed ×2) — a debuff can
   at most halve a stat, a buff can at most take it to four times what it started the fight at,
   and `StatChanged.capped` says when an end took some; measured 61.6% → 67.1% full-clear over
-  the pre-scaling baseline with every phase in, Act 1 89.2 → 89.7%. The player-facing voice is
+  the pre-scaling baseline with every phase in, Act 1 89.2 → 89.7%. **One named exception**
+  (2026-10-08, per user direction): Tusk's Stampede raises Speed past the ceiling (`uncapped` on a
+  passive statDelta) — Speed only orders turns — and a later change never claws an overshoot back. The player-facing voice is
   **"can't go any lower" / "can't go any higher"**, never "the floor" or "the cap".
   **Automatic stat growth from levelling is the one systemic exemption** (2026-09-10, Growth
   Overhaul phase 3): a growth roll grants **+1 to +4**, or **+3 to +12 HP**, none of which is a
