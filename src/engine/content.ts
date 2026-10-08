@@ -195,6 +195,8 @@ export interface PassiveTriggerCondition {
   eventTargetHasStatus?: StatusId;
   /** Every living active ally of the owner moves before every living active enemy on effective Speed, strictly — the slower side under Stasis Bubble (Kite's Outpace). */
   sideOutspeeds?: true;
+  /** The event's move carries this tag (DamageDealt, MoveUsed — any event with a moveId). Squall's Retrieve. */
+  moveTag?: MoveTag;
 }
 
 /** matchTriggerAmount reads the triggering event's `field` (default 'amount'): Sanguine takes a tick's amount, Restorative Toxin a StatusApplied's magnitude. */
@@ -261,6 +263,11 @@ export type PassiveEffect =
   | { kind: 'restoreMana'; target: PassiveEffectTarget }
   /** Mana lost outright, overflow first, never below 0 (Bellows' Boiler Pressure). */
   | { kind: 'loseMana'; target: PassiveEffectTarget; amount: number }
+  /**
+   * Gives spent Charges back (docs/charges.md): never past a move's count. `triggeringMove` narrows it to
+   * the event's own move, `moveTag` to the target's moves carrying the tag; `amount` is per move.
+   */
+  | { kind: 'restoreCharge'; target: PassiveEffectTarget; amount: number | 'all'; triggeringMove?: true; moveTag?: MoveTag }
   /** Global — no `target`. */
   | { kind: 'setFieldEffect'; fieldEffectId: FieldEffectId };
 
@@ -421,6 +428,9 @@ export type SelfHpCost =
   /** End at `amount` HP. Never heals. */
   | { mode: 'reduceToHp'; amount: number };
 
+/** A family label a passive can read across types (docs/charges.md): Squall's Arrows. Never a type. */
+export type MoveTag = 'arrow';
+
 export interface MoveDefinition {
   id: string;
   name: string;
@@ -542,6 +552,8 @@ export interface MoveDefinition {
    * opens full. Absent = unlimited. state.ts isMoveUsable / chargesLeft.
    */
   chargesPerFight?: number;
+  /** Family labels a passive reads (`moveTag` condition, `restoreCharge`). */
+  tags?: readonly MoveTag[];
   /** Castable only on the combatant's first round on the field — round 1 for a lead, the round after it arrived otherwise (Combatant.firstActionRound). state.ts isMoveUsable. */
   firstTurnOnly?: true;
   /**

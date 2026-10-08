@@ -68,7 +68,7 @@ function outspeeds(state: CombatState, combatantId: string): CombatState {
 // --- The pool itself ---
 
 test('storm: the authored pool is exactly the fifteen designed moves plus the four 2026-09-15 additions, Forked’s Skyfall and the Call’s Arc Flash, all Storm-typed', () => {
-  const storm = Object.values(moves).filter((m) => m.type === 'Storm' && !signatureMoves[m.id]);
+  const storm = Object.values(moves).filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && !m.tags?.length);
   assert.deepStrictEqual(
     storm.map((m) => m.id).sort(),
     [
@@ -81,7 +81,7 @@ test('storm: the authored pool is exactly the fifteen designed moves plus the fo
 test('storm: every "Spread" move in the design table targets both enemies, and no Storm move catches its own partner', () => {
   const byTarget = (target: string) =>
     Object.values(moves)
-      .filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && m.target === target)
+      .filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && !m.tags?.length && m.target === target)
       .map((m) => m.id)
       .sort();
   assert.deepStrictEqual(byTarget('bothEnemies'), ['arcFlash', 'chainLightning', 'ionCascade', 'ionize']);
@@ -90,7 +90,7 @@ test('storm: every "Spread" move in the design table targets both enemies, and n
 
 test('storm: the four priority-bracket moves are the ones the table marks, and nothing else moved out of bracket 0', () => {
   const fast = Object.values(moves)
-    .filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && m.priority > 0)
+    .filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && !m.tags?.length && m.priority > 0)
     .map((m) => m.id)
     .sort();
   assert.deepStrictEqual(fast, ['ionicZap', 'ionize', 'zap']);
@@ -102,7 +102,7 @@ test('storm: the four priority-bracket moves are the ones the table marks, and n
 test('storm: every damage move in the slate carries Conduct detonation for free — the type-keyed hook, not an authored field', () => {
   const detonators = statuses.Conduct.triggerTypes ?? [];
   assert.ok(detonators.includes('Storm'));
-  const damage = Object.values(moves).filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && m.kind === 'damage');
+  const damage = Object.values(moves).filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && !m.tags?.length && m.kind === 'damage');
   assert.strictEqual(damage.length, 16); // Ionize deals damage since 2026-09-29; Arc Flash is the Call's (docs/companion-call.md)
   assert.strictEqual(damage.some((m) => firstStatusApplication(m)?.statusId === 'Conduct' && m.id === 'thunderbolt'), true);
 });

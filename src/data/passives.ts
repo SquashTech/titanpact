@@ -1102,14 +1102,14 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
     },
   },
-  tailwind: {
-    id: 'tailwind',
-    name: 'Slipstream',
-    description: 'When this hero enters the battlefield, its partner gains 10 Speed.',
+  retrieve: {
+    id: 'retrieve',
+    name: 'Retrieve',
+    description: "When one of this hero's Arrows knocks out a foe, that Arrow gets its Charge back.",
     reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'ally', stat: 'speed', amount: 10 },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true, moveTag: 'arrow' },
+      effect: { kind: 'restoreCharge', target: 'self', amount: 1, triggeringMove: true },
     },
   },
   liveWire: {
@@ -1948,14 +1948,20 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   },
 
   // --- Storm ---
-  jetstream: {
-    id: 'jetstream',
-    name: 'Slipstream+',
-    description: 'When this hero enters the battlefield, its partner gains 25 Speed.',
+  // Restock rides on the same card: a Rest refills the whole quiver.
+  retrievePlus: {
+    id: 'retrievePlus',
+    name: 'Retrieve+',
+    description: "When one of this hero's Arrows knocks out a foe, that Arrow gets 2 Charges back. Restock: when this hero Rests, every Arrow refills.",
     reactive: {
-      hook: 'SwitchedIn',
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true, moveTag: 'arrow' },
+      effect: { kind: 'restoreCharge', target: 'self', amount: 2, triggeringMove: true },
+    },
+    alsoReactive: {
+      hook: 'Rested',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'ally', stat: 'speed', amount: 25 },
+      effect: { kind: 'restoreCharge', target: 'self', amount: 'all', moveTag: 'arrow' },
     },
   },
   thunderhead: {

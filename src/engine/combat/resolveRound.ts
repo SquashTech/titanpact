@@ -93,7 +93,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const maxManaOf = (id: string) => getMaxMana(heroes[working.combatants[id].heroId], working.combatants[id]);
 
   // The round's start is a hook too, read before the first action.
-  const roundStartReactions = resolvePassiveReactions(working, round, [events[0]], heroes, statuses, passives, fieldEffects);
+  const roundStartReactions = resolvePassiveReactions(working, round, [events[0]], heroes, statuses, passives, fieldEffects, moves);
   working = roundStartReactions.state;
   events.push(...roundStartReactions.events);
 
@@ -104,7 +104,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     if (passed.events.length === 0) return;
     working = passed.state;
     events.push(...passed.events);
-    const reactions = resolvePassiveReactions(working, round, passed.events, heroes, statuses, passives, fieldEffects);
+    const reactions = resolvePassiveReactions(working, round, passed.events, heroes, statuses, passives, fieldEffects, moves);
     working = reactions.state;
     events.push(...reactions.events);
   };
@@ -169,7 +169,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         working = result.state;
         events.push(...result.events);
         // Every resolvePassiveReactions call site feeds its own new slice, never the round's log.
-        const entry = resolvePassiveReactions(working, round, result.events, heroes, statuses, passives, fieldEffects);
+        const entry = resolvePassiveReactions(working, round, result.events, heroes, statuses, passives, fieldEffects, moves);
         working = entry.state;
         events.push(...entry.events);
         working = resetDamageTaken(working, action.combatantId);
@@ -200,7 +200,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       working = doused.state;
       events.push(...doused.events);
       // A Rest is a hook of its own (Mana Ward's Shield off what it restored); the reaction reads only the Rested slice.
-      const restReactions = resolvePassiveReactions(working, round, [rested], heroes, statuses, passives, fieldEffects);
+      const restReactions = resolvePassiveReactions(working, round, [rested], heroes, statuses, passives, fieldEffects, moves);
       working = restReactions.state;
       events.push(...restReactions.events);
       continue;
@@ -527,7 +527,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
                 // A drain IS a heal, so it feeds the Healed hook like any other — without this the
                 // hook would silently cover only heal-kind moves.
-                const drainReactions = resolvePassiveReactions(working, round, [drainHealed], heroes, statuses, passives, fieldEffects);
+                const drainReactions = resolvePassiveReactions(working, round, [drainHealed], heroes, statuses, passives, fieldEffects, moves);
                 working = drainReactions.state;
                 events.push(...drainReactions.events);
               }
@@ -535,7 +535,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
             // A knockout this hit refused is read after the hit itself (the Endured hook).
             const endured = hpResult.events.filter((e) => e.type === 'Endured');
-            const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent, ...endured], heroes, statuses, passives, fieldEffects);
+            const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent, ...endured], heroes, statuses, passives, fieldEffects, moves);
             working = damageReactions.state;
             events.push(...damageReactions.events);
 
@@ -567,7 +567,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             }
             // A mark cashed in is a hook of its own (Live Wire): the reaction reads the detonation beats alone.
             if (triggered.events.length > 0) {
-              const detonationReactions = resolvePassiveReactions(working, round, triggered.events, heroes, statuses, passives, fieldEffects);
+              const detonationReactions = resolvePassiveReactions(working, round, triggered.events, heroes, statuses, passives, fieldEffects, moves);
               working = detonationReactions.state;
               events.push(...detonationReactions.events);
             }
@@ -667,7 +667,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
           // Per target, after the HP lands, mirroring the DamageDealt checkpoint. Renew's own tick
           // emits StatusTicked and never Healed, so a heal-reactive passive cannot feed itself.
-          const healReactions = resolvePassiveReactions(working, round, [healedEvent], heroes, statuses, passives, fieldEffects);
+          const healReactions = resolvePassiveReactions(working, round, [healedEvent], heroes, statuses, passives, fieldEffects, moves);
           working = healReactions.state;
           events.push(...healReactions.events);
         }
@@ -707,7 +707,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         granted.push(events[events.length - 1]);
       }
       // Mana gained is a trigger (Zenith's Surging Intellect).
-      const grantReactions = resolvePassiveReactions(working, round, granted, heroes, statuses, passives, fieldEffects);
+      const grantReactions = resolvePassiveReactions(working, round, granted, heroes, statuses, passives, fieldEffects, moves);
       working = grantReactions.state;
       events.push(...grantReactions.events);
     }
@@ -816,7 +816,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     // One checkpoint for the whole move's stat changes, after the block that produces them and
     // before the riders — the buff lands, the passive answers it, then the move's own riders resolve.
     if (statChangedEvents.length > 0) {
-      const statReactions = resolvePassiveReactions(working, round, statChangedEvents, heroes, statuses, passives, fieldEffects);
+      const statReactions = resolvePassiveReactions(working, round, statChangedEvents, heroes, statuses, passives, fieldEffects, moves);
       working = statReactions.state;
       events.push(...statReactions.events);
     }
@@ -825,7 +825,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       const result = setFieldEffect(working, round, move.fieldEffectApplication);
       working = result.state;
       events.push(...result.events);
-      const fieldReactions = resolvePassiveReactions(working, round, result.events, heroes, statuses, passives, fieldEffects);
+      const fieldReactions = resolvePassiveReactions(working, round, result.events, heroes, statuses, passives, fieldEffects, moves);
       working = fieldReactions.state;
       events.push(...fieldReactions.events);
     }
@@ -882,7 +882,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           events.push(...result.events);
           statusAppliedEvents.push(...result.events);
         }
-        const statusReactions = resolvePassiveReactions(working, round, statusAppliedEvents, heroes, statuses, passives, fieldEffects);
+        const statusReactions = resolvePassiveReactions(working, round, statusAppliedEvents, heroes, statuses, passives, fieldEffects, moves);
         working = statusReactions.state;
         events.push(...statusReactions.events);
       }
@@ -904,7 +904,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         );
         working = blast.state;
         events.push(...blast.events);
-        const blastReactions = resolvePassiveReactions(working, round, blast.events, heroes, statuses, passives, fieldEffects);
+        const blastReactions = resolvePassiveReactions(working, round, blast.events, heroes, statuses, passives, fieldEffects, moves);
         working = blastReactions.state;
         events.push(...blastReactions.events);
       }
@@ -963,7 +963,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     // The cast, read as a whole once its payload has landed and before any pivot (Poised).
     if (working.combatants[action.combatantId] && !working.combatants[action.combatantId].fainted) {
-      const castReactions = resolvePassiveReactions(working, round, [moveUsed], heroes, statuses, passives, fieldEffects);
+      const castReactions = resolvePassiveReactions(working, round, [moveUsed], heroes, statuses, passives, fieldEffects, moves);
       working = castReactions.state;
       events.push(...castReactions.events);
     }
@@ -982,7 +982,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           const pivot = applyVoluntarySwitch(working, round, action.combatantId, incoming as string, statuses);
           working = pivot.state;
           events.push(...pivot.events);
-          const pivotEntry = resolvePassiveReactions(working, round, pivot.events, heroes, statuses, passives, fieldEffects);
+          const pivotEntry = resolvePassiveReactions(working, round, pivot.events, heroes, statuses, passives, fieldEffects, moves);
           working = pivotEntry.state;
           events.push(...pivotEntry.events);
         } catch (err) {
@@ -1005,7 +1005,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const manaRegen = applyManaRegen(working, round, heroes, fieldEffects, passives);
   working = manaRegen.state;
   events.push(...manaRegen.events);
-  const regenReactions = resolvePassiveReactions(working, round, manaRegen.events, heroes, statuses, passives, fieldEffects);
+  const regenReactions = resolvePassiveReactions(working, round, manaRegen.events, heroes, statuses, passives, fieldEffects, moves);
   working = regenReactions.state;
   events.push(...regenReactions.events);
 
@@ -1013,7 +1013,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   working = statusTicks.state;
   events.push(...statusTicks.events);
 
-  const tickReactions = resolvePassiveReactions(working, round, statusTicks.events, heroes, statuses, passives, fieldEffects);
+  const tickReactions = resolvePassiveReactions(working, round, statusTicks.events, heroes, statuses, passives, fieldEffects, moves);
   working = tickReactions.state;
   events.push(...tickReactions.events);
   sweepPassing();
@@ -1035,7 +1035,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   // The round's end is itself a hook (the Eyes' Withering Gaze returning): the one pass after the Clock.
   const ended: CombatEvent = { type: 'RoundEnded', round };
   events.push(ended);
-  const roundEndReactions = resolvePassiveReactions(working, round, [ended], heroes, statuses, passives, fieldEffects);
+  const roundEndReactions = resolvePassiveReactions(working, round, [ended], heroes, statuses, passives, fieldEffects, moves);
   working = roundEndReactions.state;
   events.push(...roundEndReactions.events);
 

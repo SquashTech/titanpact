@@ -237,7 +237,8 @@ export function spawnPool(types: readonly TypeId[] | null, tier: SpawnTier): Rec
  */
 export function spawnSlate(type: TypeId): string[] {
   return Object.values(moves)
-    .filter((move) => move.type === type && move.tier !== undefined && !move.typeFollowsUser)
+    // A tagged family (Squall's Arrows) belongs to its hero, never to the type's slate.
+    .filter((move) => move.type === type && move.tier !== undefined && !move.typeFollowsUser && !move.tags?.length)
     .map((move) => move.id);
 }
 

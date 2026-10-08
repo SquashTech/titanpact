@@ -183,7 +183,8 @@ function resolveEffect(
   subjectId: string | undefined,
   eventTargetId: string | undefined,
   effect: PassiveEffect,
-  context: TriggerContext
+  context: TriggerContext,
+  moves?: Record<string, MoveDefinition>
 ): { state: CombatState; events: CombatEvent[] } {
   if (effect.kind === 'setFieldEffect') {
     if (!fieldEffectDefs[effect.fieldEffectId]) return { state, events: [] };
@@ -199,7 +200,7 @@ function resolveEffect(
     const target = working.combatants[targetId];
     if (!target || target.fainted) continue;
     if (effect.kind === 'damage' && effect.onlyWithStatus !== undefined && !hasStatus(target, effect.onlyWithStatus)) continue;
-    const resolved = resolveEffectOn(working, round, heroes, statusDefs, passiveDefs, ownerId, targetId, target, effect, context, working.activeFieldEffect ? fieldEffectDefs[working.activeFieldEffect.fieldEffectId] : undefined);
+    const resolved = resolveEffectOn(working, round, heroes, statusDefs, passiveDefs, ownerId, targetId, target, effect, context, working.activeFieldEffect ? fieldEffectDefs[working.activeFieldEffect.fieldEffectId] : undefined, moves);
     working = resolved.state;
     produced.push(...resolved.events);
   }
@@ -272,7 +273,8 @@ function resolveEffectOn(
   effect: Exclude<PassiveEffect, { kind: 'setFieldEffect' }>,
   context: TriggerContext,
   /** The active field, for a Renew a passive grants (its on-landing heal reads Verdant Earth). */
-  fieldEffect?: FieldEffectDefinition
+  fieldEffect?: FieldEffectDefinition,
+  moves?: Record<string, MoveDefinition>
 ): { state: CombatState; events: CombatEvent[] } {
   switch (effect.kind) {
     case 'damage': {
@@ -335,6 +337,24 @@ function resolveEffectOn(
         state: nextState,
         events: [{ type: 'ManaChanged', round, combatantId: targetId, previousMana, newMana, maxMana: getMaxMana(heroes[target.heroId], target) }],
       };
+    }
+    case 'restoreCharge': {
+      const triggerMoveId = typeof context.moveId === 'string' ? context.moveId : undefined;
+      const events: CombatEvent[] = [];
+      const spent = { ...target.chargesSpent };
+      for (const [moveId, count] of Object.entries(target.chargesSpent ?? {})) {
+        if (!count) continue;
+        if (effect.triggeringMove && moveId !== triggerMoveId) continue;
+        const move = moves?.[moveId];
+        if (!move || move.chargesPerFight == null) continue;
+        if (effect.moveTag !== undefined && !move.tags?.includes(effect.moveTag)) continue;
+        const restored = effect.amount === 'all' ? count : Math.min(count, effect.amount);
+        if (restored <= 0) continue;
+        spent[moveId] = count - restored;
+        events.push({ type: 'ChargeRestored', round, combatantId: targetId, moveId, restored, chargesLeft: move.chargesPerFight - spent[moveId]! });
+      }
+      if (events.length === 0) return { state, events };
+      return { state: { ...state, combatants: { ...state.combatants, [targetId]: { ...target, chargesSpent: spent } } }, events };
     }
     case 'restoreMana': {
       const maxMana = getMaxMana(heroes[target.heroId], target);
@@ -450,7 +470,9 @@ export function resolvePassiveReactions(
   heroes: HeroLookup,
   statusDefs: Record<string, StatusDefinition>,
   passiveDefs: Record<PassiveId, PassiveDefinition>,
-  fieldEffectDefs: Record<string, FieldEffectDefinition>
+  fieldEffectDefs: Record<string, FieldEffectDefinition>,
+  /** Read by a `moveTag` condition and a `restoreCharge` effect; omitted, neither can match. */
+  moves?: Record<string, MoveDefinition>
 ): { state: CombatState; events: CombatEvent[] } {
   let working = state;
   const produced: CombatEvent[] = [];
@@ -492,6 +514,10 @@ export function resolvePassiveReactions(
             const struck = eventTargetId ? working.combatants[eventTargetId] : undefined;
             if (!struck || !hasStatus(struck, reactive.condition.eventTargetHasStatus)) continue;
           }
+          if (reactive.condition.moveTag !== undefined) {
+            const moveId = typeof context.moveId === 'string' ? context.moveId : undefined;
+            if (!moveId || !moves?.[moveId]?.tags?.includes(reactive.condition.moveTag)) continue;
+          }
           if (reactive.condition.sideOutspeeds && !sideOutspeeds(working, owner.side, heroes, passiveDefs, fieldEffectDefs)) continue;
           // Checked AFTER the match and marked BEFORE the effect resolves, so a re-entrant reaction cannot fire itself twice.
           if (reactive.oncePerFight) {
@@ -507,10 +533,10 @@ export function resolvePassiveReactions(
               working = { ...working, rngState: roll.nextState };
               if (roll.value >= reactive.chance) continue;
             }
-            const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.effect, context);
+            const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.effect, context, moves);
             working = resolved.state;
             if (reactive.alsoEffect) {
-              const also = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.alsoEffect, context);
+              const also = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.alsoEffect, context, moves);
               working = also.state;
               resolved.events.push(...also.events);
             }

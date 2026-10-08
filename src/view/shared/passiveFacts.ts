@@ -240,6 +240,11 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
       return { label: 'Then', text: `${targetWord(effect.target, condition, hook)} loses ${effect.amount} Mana`, glyph: { kind: 'stat', stat: 'manaPool' } };
     case 'restoreMana':
       return { label: 'Then', text: `Refills ${targetWord(effect.target, condition, hook)}'s Mana to its pool`, glyph: { kind: 'stat', stat: 'manaPool' } };
+    case 'restoreCharge': {
+      const which = effect.triggeringMove ? 'that move' : effect.moveTag === 'arrow' ? 'every Arrow' : 'every move with Charges';
+      const amount = effect.amount === 'all' ? 'refills' : `gets ${effect.amount === 1 ? 'a Charge' : `${effect.amount} Charges`} back`;
+      return { label: 'Then', text: `${which[0].toUpperCase()}${which.slice(1)} ${amount}`, glyph: { kind: 'move', move: 'buff' } };
+    }
     case 'manaGrant':
       return {
         label: 'Then',
@@ -284,6 +289,7 @@ function reactiveFacts(reactive: NonNullable<PassiveDefinition['reactive']>): Pa
   if (reactive.chance !== undefined) rows.push({ label: 'Odds', text: `${Math.round(reactive.chance * 100)}% of the time`, glyph: { kind: 'move', move: 'debuff' } });
   rows.push(effectFact(reactive.effect, reactive.condition, reactive.hook));
   if (reactive.alsoEffect) rows.push({ ...effectFact(reactive.alsoEffect, reactive.condition, reactive.hook), label: 'And' });
+  if (reactive.condition.moveTag === 'arrow') rows.push({ label: 'Only', text: 'An Arrow', glyph: { kind: 'move', move: 'physical' } });
   if (reactive.condition.finishingBlow) rows.push({ label: 'Only', text: 'A hit that knocks its target out', glyph: { kind: 'stat', stat: 'attack' } });
   if (reactive.condition.eventTargetHasStatus) rows.push({ label: 'While', text: `The one struck is ${statusName(reactive.condition.eventTargetHasStatus)}`, glyph: { kind: 'status', statusId: reactive.condition.eventTargetHasStatus }, color: 'status' });
   if (reactive.condition.sideOutspeeds) rows.push({ label: 'While', text: 'Both active allies move before both active enemies', glyph: { kind: 'stat', stat: 'speed' } });

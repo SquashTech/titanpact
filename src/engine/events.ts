@@ -302,6 +302,15 @@ export interface ConsumableUsedEvent extends BaseEvent {
   amount: number;
 }
 
+/** Spent Charges given back to one move (a restoreCharge passive). Never past the move's count. */
+export interface ChargeRestoredEvent extends BaseEvent {
+  type: 'ChargeRestored';
+  combatantId: string;
+  moveId: string;
+  restored: number;
+  chargesLeft: number;
+}
+
 export interface ManaChangedEvent extends BaseEvent {
   type: 'ManaChanged';
   combatantId: string;
@@ -404,6 +413,7 @@ export type CombatEvent =
   | BenchRegenTickedEvent
   | RestedEvent
   | ConsumableUsedEvent
+  | ChargeRestoredEvent
   | ManaChangedEvent
   | ManaGrantedEvent
   | ManaRegenTickedEvent

@@ -1,6 +1,7 @@
 # Charges
 
-**DECIDED in shape 2026-10-08, per user direction. Phase 1 (the engine) is IN.** A few moves carry a number of
+**DECIDED in shape 2026-10-08, per user direction. Phase 1 (the engine) is IN, and Squall's Arrows
+(the first refills, below) are IN.** A few moves carry a number of
 **Charges** a fight. Each cast spends one. With none left, the move can't be used for the rest of the
 fight. This replaces the rising mana cost (`manaCostGainOnUse`) as the way a lockout is kept from
 being spammed, and it generalizes the existing `oncePerFight` gate, which becomes one Charge.
@@ -106,6 +107,28 @@ Refills worth trying (names are placeholders, none is authored):
 
 Each needs a `maxFiresPerFight` cap if a sim run shows it looping. This is the same instrument as
 Force: limit the procs, never cap the resource.
+
+## Squall's Arrows (BUILT 2026-10-08, per user direction)
+
+The first holder of the refill verbs. **Arrow is a move TAG, never a type** (`MoveDefinition.tags`,
+`MoveTag = 'arrow'`): a family a passive can read, kept out of the Storm slate (`spawnSlate` skips a
+tagged move), so no graft line, spawn or other hero draws one. Squall's alone.
+
+| Arrow | Band | Power | Mana | Charges |
+|---|---|---|---|---|
+| Storm Arrow | Early, **starting kit** (replaces Thunderclap, now in his Early pool) | 50 | 15 | 4 |
+| Pinning Shot | Mid, a guaranteed Daze | 55 | 30 | 2 |
+| Stormpiercer | Late | 105 | 55 | 2 |
+
+Strong for their price, held by the quiver. **Slipstream is dropped** (the Storm audit's decision
+of the same day reversed): his innate is **Retrieve**, *an Arrow that knocks a foe out gets its
+Charge back*, and his mastered innate is **Retrieve+**, that Arrow gets 2 back and **Restock**, *a
+Rest refills every Arrow* (`alsoReactive` on `Rested`; the card keeps the innate's name with a +,
+as every mastered innate does). Engine: a `moveTag` trigger condition, a `restoreCharge` passive
+effect (`triggeringMove` or `moveTag`, an amount or `'all'`, never past the count), a
+`ChargeRestored` event; `resolvePassiveReactions` now takes the move catalog. Every figure is a first
+pass. What to watch: Squall out of Arrows in a long fight with only Rising Static, before his first
+offers land.
 
 ## Raised counts (rarer than refills)
 

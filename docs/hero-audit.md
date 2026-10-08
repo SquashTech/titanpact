@@ -153,6 +153,6 @@ signature's). Art moved with the ids; all five drawings were made for the old ty
 
 Per user direction; build these first when the audit resumes, then update the sheet.
 
-- **Squall, Slipstream** (innate): "When a friendly hero's Speed is increased, its Attack and Intelligence increase by the same amount." Open when building: whether Squall itself counts (assume yes), the mastered version (it must at least double — e.g. twice the amount), and that a passive-caused Speed rise does not chain into it today (only a move's does).
+- **Squall, Slipstream** — REVERSED the same day (per user direction): Squall's innate is **Retrieve** (an Arrow that KOs gets its Charge back), mastered **Retrieve+** with Restock, and he opens with Storm Arrow. BUILT; see `docs/charges.md` "Squall's Arrows".
 - **Squall, Windshear's Squall Line**: "This hero's Storm attacks have +30% crit chance" (replaces +5 Atk / +5 Spd per hit). Check whether a passive can grant crit chance yet — crit lives on moves and loadout today.
 - Still proposed, no answer yet: Skyshear's Stormveil → Storm Force on setting off Conduct; Kite's Outpace → both allies +10 Atk/Int; Tempest's Forked → Thunderbolt instead of Skyfall; Squall's Dust Devil passive (Thornshot) review.

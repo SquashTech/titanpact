@@ -442,6 +442,7 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   if (move.switchesUserOut) parts.push('Then switch out');
   if (move.manaCostAll) parts.push('Spends all Mana');
   if (move.firstTurnOnly) parts.push('First turn out only');
+  if (move.tags?.includes('arrow')) parts.push('Arrow');
   if (move.chargesPerFight != null) parts.push(move.chargesPerFight === 1 ? 'Once a fight' : `${chargesLabel(move.chargesPerFight)} a fight`);
 
   if (move.fieldEffectApplication) {
