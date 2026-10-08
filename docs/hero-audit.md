@@ -5,6 +5,12 @@ hero's innate, mastered innate and three Evolution paths, one type at a time. **
 balance second.** The working sheet is `docs/balance/heroes.md` (`scripts/exportBalance.ts`, which
 now prints the innate, the mastered innate, the signature level and each granted move in full).
 
+**The live tracker is a Google Sheet** (2026-10-08): [Titanpact — Hero Audit](https://docs.google.com/spreadsheets/d/17NZ7OlZBINW-01sexIBrN-86Xo2sUe9g8y54VcLx_Xs/edit), one row
+per innate, mastered innate and Evolution path, with Status / Claude's proposal / Your notes / Needs redraw
+columns. It was built from the data by importing `moveBrief` and `effect` from `scripts/exportBalance.ts`.
+Read it back as a CSV export (the Drive read tool samples only the first 50 rows); a write replaces the
+whole sheet, so always read and merge first.
+
 ## Evolution art to redraw
 
 Paths whose graft changed after their sprite was drawn. The files were renamed to the new id

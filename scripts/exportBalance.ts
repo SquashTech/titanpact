@@ -103,7 +103,7 @@ function conditionOf(c: NonNullable<MoveDefinition['conditionalPower']>): string
 }
 
 /** Every rider on the move, in one readable clause list. */
-function effect(m: MoveDefinition): string {
+export function effect(m: MoveDefinition): string {
   const out: string[] = [];
   if (m.randomBasePower) out.push(`Pow rolled ${m.randomBasePower.min}–${m.randomBasePower.max}`);
   if (m.hitCount && m.hitCount > 1) out.push(`×${m.hitCount} hits`);
@@ -296,7 +296,7 @@ function poolByBand(hero: HeroDefinition): string[] {
   return [`Early: ${band('early')}`, `Mid: ${band('mid')}`, `Late: ${band('late')}`];
 }
 
-function moveBrief(id: string, hero: HeroDefinition): string {
+export function moveBrief(id: string, hero: HeroDefinition): string {
   const m = moves[id];
   if (!m) return `${id}?`;
   return `${moveTag(id, hero)} (${m.tier ? TIER_LABEL[m.tier] : '—'} ${m.category === 'physical' ? 'Phy' : 'Mag'} ${m.kind}, Pow ${m.basePower ?? '—'}, ${m.manaCost} mana, ${TARGET_LABEL[m.target]}; ${effect(m)})`;
@@ -380,8 +380,11 @@ function heroesDoc(): string {
 
 // --- write -------------------------------------------------------------------------------
 
-const outDir = join(__dirname, '..', '..', 'docs', 'balance');
-mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, 'moves.md'), movesDoc() + '\n');
-writeFileSync(join(outDir, 'heroes.md'), heroesDoc() + '\n');
-console.log(`wrote ${join(outDir, 'moves.md')} and heroes.md`);
+// Run directly it writes the two docs; imported (the audit sheet), it only lends its readers.
+if (require.main === module) {
+  const outDir = join(__dirname, '..', '..', 'docs', 'balance');
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(join(outDir, 'moves.md'), movesDoc() + '\n');
+  writeFileSync(join(outDir, 'heroes.md'), heroesDoc() + '\n');
+  console.log(`wrote ${join(outDir, 'moves.md')} and heroes.md`);
+}
