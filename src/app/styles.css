@@ -4594,8 +4594,11 @@ textarea,
 }
 
 /* Switch-row/bench-panel picker cards are too small for these to read —
-   matches .bench-row .status-badge-row:empty hiding statuses there too. */
-.bench-row .stat-mod-corner {
+   matches .bench-row .status-badge-row:empty hiding statuses there too. The
+   target picker drops them as well: they ran into the typing badges, and the
+   arena above already shows them. */
+.bench-row .stat-mod-corner,
+.target-row .stat-mod-corner {
   display: none;
 }
 
