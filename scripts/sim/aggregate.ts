@@ -210,6 +210,7 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
         hero.damageTaken += t.taken;
         hero.healingDone += t.healed;
         hero.kos += t.kos;
+        hero.rests += t.rests;
         if (t.died) hero.deaths += 1;
       }
     }

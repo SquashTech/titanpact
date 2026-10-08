@@ -47,6 +47,8 @@ export interface HeroAgg {
   finalLevelSum: number;
   /** Runs where the hero was on the roster and the run was completed. */
   runsWon: number;
+  /** Rests declared on the field. */
+  rests: number;
 }
 
 /** One move over the batch: its fight ledger summed, plus how many fights it was cast in at all. */
@@ -356,6 +358,7 @@ export function emptyChoice(): ChoiceAgg {
 
 export function emptyHero(): HeroAgg {
   return {
+    rests: 0,
     runs: 0,
     fielded: 0,
     fieldedWins: 0,

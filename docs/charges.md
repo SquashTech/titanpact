@@ -1,7 +1,7 @@
 # Charges
 
 **DECIDED in shape 2026-10-08, per user direction. Phase 1 (the engine) is IN, and Squall's Arrows
-(the first refills, below) are IN. Phase 2 (the pips) is IN.** A few moves carry a number of
+(the first refills, below) are IN. Phase 2 (the pips) is IN. Phase 3 is MEASURED.** A few moves carry a number of
 **Charges** a fight. Each cast spends one. With none left, the move can't be used for the rest of the
 fight. This replaces the rising mana cost (`manaCostGainOnUse`) as the way a lockout is kept from
 being spammed, and it generalizes the existing `oncePerFight` gate, which becomes one Charge.
@@ -197,11 +197,42 @@ round enemy Charges are spent will tell.
    both sides are capped.
 2. **View.** IN. Pips on the move tile, the enemy's pips wherever its moves are read, the overlay
    sentence, and the greyed state's distinct reading.
-3. **Measure.** Barrier, Blind and Feint cast counts before and after, full-clear skilled and chart,
+3. **Measure.** DONE (above). Barrier, Blind and Feint cast counts before and after, full-clear skilled and chart,
    and the AI's spend round. If a charged move is now cast less than it was, lower its mana cost.
 4. **Refills.** A `restoreCharge` passive effect and an event (`ChargeRestored`) for the view to flash.
    Author two or three of the refills above, on Barrier's and Blind's holders first.
 5. **The audit.** Candidates move onto Charges one by one, and the Charge-reading moves are authored.
+
+## Measured (phase 3, 2026-10-08)
+
+3000 runs a side, seed 7, against `a862ffc0` (the commit before Charges), both sides flying the same
+pilots. Two pilot fixes went in first and into the baseline too: the skilled pilot (`src/run/pilot.ts`)
+never asked `isMoveUsable`, so it chose a spent move and lost the turn (a live bug for the Trials and
+the late Gauntlet, whose enemy it flies); and it priced a Charge refill at nothing, so it never cast
+Rising Static (now half a round of the receiver's output a Charge, `CHARGE_VALUE_ROUNDS`). The sim
+report gained a per-hero `rest%`.
+
+| | skilled base → Charges | chart base → Charges |
+|---|---|---|
+| Full-clear | 77.3 → 77.4% | 27.7 → 28.7% |
+| Barrier casts | 485 → 532 | 1368 → 1438 |
+| Blind casts | 512 → 519 | 510 → 549 |
+| Feint casts | 2937 → 2310 | 1675 → 1537 |
+| Squall DPR | 125.7 → 136.0 | 98.5 → 106.5 |
+| Squall win% / die% | 98.2 / 12.4 → 98.4 / 12.9 | 92.4 / 23.3 → 92.9 / 24.4 |
+| Squall rest% | 1.1 → 1.0% | 1.9 → 1.4% |
+| Rising Static casts | 94 → 30 | 826 → 780 |
+
+Read: **the cap is neutral on the run** — every act inside a point. Barrier and Blind are cast as
+often as before: the old third cast at 65 was rarely paid, so two Charges is the same ceiling, now
+legible. **Feint is the one the cap bites** (−21% skilled), a Class move cast every fight that the
+skilled pilot used to fire three times and more. **Squall does not run dry**: his Rest rate went down
+and his damage up 8%; Storm Arrow is his most-cast move (5375) and third in the catalogue on damage per
+mana (12.1, behind Zap and Snow Blast), held there by its four Charges. **Rising Static is a weak
+card** for the skilled pilot (a third of its old casts): Conduct on a random foe plus a refill only a
+charged kit can use. Tempest, Kite and Raiju are not in the default deck and were not measured; a
+`SIM_ALL_HEROES` pass would. The mana costs of Barrier, Blind and Feint stay where they are (phase
+3's rule was "lower it if it is now cast less", and only Feint is, by design).
 
 ## Open
 

@@ -100,6 +100,8 @@ export interface CombatantTelemetry {
   damageTaken: number;
   healingDone: number;
   kos: number;
+  /** Rests declared while on the field. */
+  rests: number;
   died: boolean;
 }
 
@@ -530,6 +532,7 @@ export function simulateFight(input: FightInput): FightOutcome {
       damageTaken: 0,
       healingDone: 0,
       kos: 0,
+      rests: 0,
       died: false,
     };
   }
@@ -603,7 +606,10 @@ export function simulateFight(input: FightInput): FightOutcome {
     for (const action of actions) {
       if (state.combatants[action.combatantId].side !== PLAYER_SIDE) continue;
       playerTurns += 1;
-      if (action.kind === 'rest') playerRests += 1;
+      if (action.kind === 'rest') {
+        playerRests += 1;
+        telemetry[action.combatantId].rests += 1;
+      }
       else if (action.kind === 'switch') playerSwitches += 1;
     }
 

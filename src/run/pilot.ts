@@ -32,6 +32,7 @@ import {
   getMaxHp,
   hasAffordableMoveInFight,
   isLockedIn,
+  isMoveUsable,
   canSwitchOut,
   resolveCastBasePower,
   resolveManaCost,
@@ -251,6 +252,9 @@ function expectedHit(state: CombatState, casterId: string, move: MoveDefinition,
  * common denominator for every non-HP term below — a KO, a control status and a
  * stat buff are all priced as some number of rounds of somebody's output.
  */
+/** A restored Charge, in rounds of the receiver's output (restoresCharges). A first-pass figure. */
+const CHARGE_VALUE_ROUNDS = 0.5;
+
 function threatOf(state: CombatState, ctx: AiContext, combatantId: string, cache: Map<string, number>): number {
   const cached = cache.get(combatantId);
   if (cached !== undefined) return cached;
@@ -661,6 +665,23 @@ function scoreCast(
     priced = true;
   }
 
+  if (move.restoresCharges) {
+    // A Charge back is a later cast of that move: priced at half a round of the receiver's output.
+    for (const { id, share } of targets) {
+      const receiver = state.combatants[id];
+      if (!receiver || receiver.side !== casterSide || !receiver.chargesSpent) continue;
+      let restored = 0;
+      for (const [moveId, spent] of Object.entries(receiver.chargesSpent)) {
+        const held = moves[moveId];
+        if (!spent || held?.chargesPerFight == null) continue;
+        if (move.restoresCharges.moveTag !== undefined && !held.tags?.includes(move.restoresCharges.moveTag)) continue;
+        restored += move.restoresCharges.amount === 'all' ? spent : Math.min(spent, move.restoresCharges.amount);
+      }
+      score += threatOf(state, ctx, id, cache) * CHARGE_VALUE_ROUNDS * restored * share;
+    }
+    priced = true;
+  }
+
   if (move.manaGrant != null) {
     // Mana is worth what it buys: one round of output costs one cast.
     for (const { id, share } of targets) {
@@ -817,7 +838,7 @@ function statDeltaReceivers(
 function scoreOptions(state: CombatState, casterId: string, ctx: AiContext, cache: Map<string, number>): Scored[] {
   const caster = state.combatants[casterId];
   const moveIds = ctx.moveIdsFor(casterId);
-  const affordable = moveIds.filter((id) => moves[id] && caster.currentMana >= resolveManaCost(state, casterId, moves[id], allCombatants));
+  const affordable = moveIds.filter((id) => moves[id] && isMoveUsable(state, casterId, moves[id]) && caster.currentMana >= resolveManaCost(state, casterId, moves[id], allCombatants));
 
   // The reference an unpriceable payload is credited against: the best plain hit available this turn.
   let bestAttack = 0;

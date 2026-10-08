@@ -338,8 +338,8 @@ export function formatReport(
 
   // --- Heroes ---
   out.push(heading('4. HEROES'));
-  out.push('  DPR = damage dealt per round on the field. dmg/taken > 1 means the hero out-trades.');
-  out.push(`  ${pad('hero', 20)}${padStart('runs', 6)}${padStart('fights', 8)}${padStart('win%', 7)}${padStart('DPR', 7)}${padStart('TPR', 7)}${padStart('ratio', 7)}${padStart('KO/f', 7)}${padStart('die%', 7)}${padStart('heal', 7)}${padStart('lvl', 6)}`);
+  out.push('  DPR = damage dealt per round on the field. dmg/taken > 1 means the hero out-trades. rest% = Rests per round on the field.');
+  out.push(`  ${pad('hero', 20)}${padStart('runs', 6)}${padStart('fights', 8)}${padStart('win%', 7)}${padStart('DPR', 7)}${padStart('TPR', 7)}${padStart('ratio', 7)}${padStart('KO/f', 7)}${padStart('die%', 7)}${padStart('heal', 7)}${padStart('lvl', 6)}${padStart('rest%', 7)}`);
   const heroRows = Object.keys(agg.heroes)
     .filter((id) => agg.heroes[id].fielded >= 20)
     .sort((a, b) => {
@@ -352,7 +352,7 @@ export function formatReport(
     const dpr = h.roundsActive > 0 ? h.damageDealt / h.roundsActive : 0;
     const tpr = h.roundsActive > 0 ? h.damageTaken / h.roundsActive : 0;
     out.push(
-      `  ${pad(allCombatants[id]?.name ?? id, 20)}${padStart(String(h.runs), 6)}${padStart(String(h.fielded), 8)}${padStart(pct(h.fieldedWins, h.fielded), 7)}${padStart(num(dpr, 1), 7)}${padStart(num(tpr, 1), 7)}${padStart(num(tpr > 0 ? dpr / tpr : 0, 2), 7)}${padStart(num(h.kos / h.fielded, 2), 7)}${padStart(pct(h.deaths, h.fielded), 7)}${padStart(num(h.roundsActive > 0 ? h.healingDone / h.roundsActive : 0, 1), 7)}${padStart(num(h.runs > 0 ? h.finalLevelSum / h.runs : 0, 1), 6)}`
+      `  ${pad(allCombatants[id]?.name ?? id, 20)}${padStart(String(h.runs), 6)}${padStart(String(h.fielded), 8)}${padStart(pct(h.fieldedWins, h.fielded), 7)}${padStart(num(dpr, 1), 7)}${padStart(num(tpr, 1), 7)}${padStart(num(tpr > 0 ? dpr / tpr : 0, 2), 7)}${padStart(num(h.kos / h.fielded, 2), 7)}${padStart(pct(h.deaths, h.fielded), 7)}${padStart(num(h.roundsActive > 0 ? h.healingDone / h.roundsActive : 0, 1), 7)}${padStart(num(h.runs > 0 ? h.finalLevelSum / h.runs : 0, 1), 6)}${padStart(pct(h.rests, h.roundsActive), 7)}`
     );
   }
 

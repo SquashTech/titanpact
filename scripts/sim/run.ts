@@ -177,7 +177,7 @@ export interface FightRecord {
   wouldHaveCappedDown: boolean;
   floored: boolean;
   /** heroId -> per-fight telemetry, player side. */
-  playerHeroes: Record<string, { rounds: number; dealt: number; taken: number; healed: number; kos: number; died: boolean }>;
+  playerHeroes: Record<string, { rounds: number; dealt: number; taken: number; healed: number; kos: number; rests: number; died: boolean }>;
   enemyHeroes: Record<string, { rounds: number; dealt: number; taken: number; kos: number; died: boolean }>;
 }
 
@@ -647,7 +647,8 @@ function resolveEncounterNode(
   const enemyHeroes: FightRecord['enemyHeroes'] = {};
   for (const t of Object.values(fight.telemetry)) {
     if (t.side === PLAYER_SIDE) {
-      const slot = (playerHeroes[t.heroId] ??= { rounds: 0, dealt: 0, taken: 0, healed: 0, kos: 0, died: false });
+      const slot = (playerHeroes[t.heroId] ??= { rounds: 0, dealt: 0, taken: 0, healed: 0, kos: 0, rests: 0, died: false });
+      slot.rests += t.rests;
       slot.rounds += t.roundsActive;
       slot.dealt += t.damageDealt;
       slot.taken += t.damageTaken;
