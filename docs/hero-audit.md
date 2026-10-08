@@ -5,6 +5,28 @@ hero's innate, mastered innate and three Evolution paths, one type at a time. **
 balance second.** The working sheet is `docs/balance/heroes.md` (`scripts/exportBalance.ts`, which
 now prints the innate, the mastered innate, the signature level and each granted move in full).
 
+## Evolution art to redraw
+
+Paths whose graft changed after their sprite was drawn. The files were renamed to the new id
+(`art/evolutions/<pathId>.png`, `…attack.png`, `…damaged.png`), so each still shows — in the old
+type's look. Strike a row when its three frames are redrawn.
+
+| Path id | Hero | Path | Drawn as | Now |
+|---|---|---|---|---|
+| `rimehold-hearthglow` | Igloo | Hearthglow | Stone (a stone-gated igloo) | Fire |
+| `cube-icebreaker` | Floe | Icebreaker | Iron | Mech |
+| `stormRanger-dustDevil` | Squall | Dust Devil | Nature | Stone |
+| `stormRanger-turbine` | Squall | Turbine | Frost | Mech |
+| `skyshear-farsight` | Skyshear | Farsight | Light | Mind |
+| `nimbus-raincloud` | Nimbus | Raincloud | Frost | Water |
+| `kite-lanternKite` | Kite | Lantern Kite | Light | Spirit |
+| `glacialWarden-blizzard` | Flurry | Blizzard | Stone | Storm — check: the snowman wizard may read fine |
+| `glacialWarden-snowSpirit` | Flurry | Snow Spirit | Water | Spirit — check |
+| `rimehold-aurora` | Igloo | Aurora | Water | Light — check |
+
+Rime's Hoarsteel (an armoured knight, now Iron) and Floe's Cryolattice (a crystal, now Arcane)
+already read as their new types.
+
 ## Rules the audit changed
 
 - **A dual hero's paths each pay a move AND a passive.** A retype on a dual hero swaps a type
