@@ -1,7 +1,7 @@
 # Charges
 
 **DECIDED in shape 2026-10-08, per user direction. Phase 1 (the engine) is IN, and Squall's Arrows
-(the first refills, below) are IN.** A few moves carry a number of
+(the first refills, below) are IN. Phase 2 (the pips) is IN.** A few moves carry a number of
 **Charges** a fight. Each cast spends one. With none left, the move can't be used for the rest of the
 fight. This replaces the rising mana cost (`manaCostGainOnUse`) as the way a lockout is kept from
 being spammed, and it generalizes the existing `oncePerFight` gate, which becomes one Charge.
@@ -66,10 +66,16 @@ Charges are drawn as **pips on the move tile**, never as "2/2".
 - **The enemy's pips are visible.** Wherever an enemy's moves are read (the scouted chip, the dossier,
   the target picker's detail), its charged moves show their pips. "Their Barrier is spent" is
   counterplay the player must be able to see.
-- Charges are a fight-only state, so no out-of-fight screen draws them except as the overlay's
-  sentence.
+- Out of a fight, a move row draws its pips full (`MoveButtonReplica`): the draft, the offer and the
+  Tutor read a quiver's size the same way the fight does. The row's summary text no longer says it.
 
-The pip art (shape and colour) is open. It should not read as a Mastery pip or a stat-modifier pip.
+**Built (2026-10-08):** `ChargePips` (`src/view/shared/ChargePips.tsx`) draws slim upright cells in
+pale gold, lit or hollow — not the field's dots, Mastery's squares or a stat change's triangles. A
+spent row is `.is-spent`: dimmed with every unusable row, but its mana gem stays lit, since a spent
+move is gated (`isMoveUsable`) rather than unaffordable. A refill flashes the relit cells once when
+the command phase returns, read off that round's `ChargeRestored` events. The enemy dossier's move
+list draws the live count, and the move detail page carries the pips beside its sentence. The
+battle log names every refill.
 
 ## First holders
 
@@ -189,7 +195,7 @@ round enemy Charges are spent will tell.
    mana payment, `oncePerFight` migrated, `manaCostGainOnUse` deleted with its three holders moved to
    Charges. Tests: a switch keeps the count, Rest doesn't refill it, a fizzle spends nothing, and
    both sides are capped.
-2. **View.** Pips on the move tile, the enemy's pips wherever its moves are read, the overlay
+2. **View.** IN. Pips on the move tile, the enemy's pips wherever its moves are read, the overlay
    sentence, and the greyed state's distinct reading.
 3. **Measure.** Barrier, Blind and Feint cast counts before and after, full-clear skilled and chart,
    and the AI's spend round. If a charged move is now cast less than it was, lower its mana cost.
@@ -205,7 +211,6 @@ round enemy Charges are spent will tell.
 - **Do charged moves get cheaper?** Measured in phase 3, not assumed.
 - **A Charge consumable** (an "Ether", a fourth purse kind) is held back. It is a free action, and
   one a fight is effectively a count raised by one on every charged move.
-- **The pip art.**
 
 ## Reverses
 

@@ -156,6 +156,13 @@ export function formatEvents(
           className: 'log-mana',
         });
         break;
+      case 'ChargeRestored':
+        lines.push({
+          key,
+          text: `${name(e.combatantId)}'s ${moves[e.moveId]?.name ?? e.moveId} gets ${e.restored === 1 ? 'a Charge' : `${e.restored} Charges`} back`,
+          className: 'log-mana',
+        });
+        break;
       case 'SwitchedIn': {
         const outText = e.outCombatantId ? ` for ${name(e.outCombatantId)}` : '';
         lines.push({ key, text: `${name(e.inCombatantId)} switches in${outText}`, className: 'log-mana' });

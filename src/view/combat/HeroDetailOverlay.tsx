@@ -4,6 +4,7 @@ import { classes } from '../../data/classes';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant, StatContext } from '../../engine/state';
 import {
+  chargesLeft,
   combatantManaCost,
   effectiveTypes,
   getEffectiveStat,
@@ -296,8 +297,9 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
                   <MoveButtonReplica
                     key={id}
                     move={cost === move.manaCost ? move : { ...move, manaCost: cost }}
-                    unusable={combatant.currentMana < cost}
+                    unusable={combatant.currentMana < cost || chargesLeft(combatant, move) === 0}
                     caster={healCaster}
+                    chargeHolder={combatant}
                     onClick={() => openPopup({ kind: 'move', id })}
                   />
                 );

@@ -10,7 +10,7 @@ import { passives } from '../../data/passives';
 import { kitForRound } from '../../run/metamorphic';
 import { fieldEffects } from '../../data/fieldEffects';
 import { relics } from '../../data/relics';
-import type { CombatState, Side } from '../../engine/state';
+import type { Combatant, CombatState, Side } from '../../engine/state';
 import {
   activePartnerTypes,
   isLockedIn,
@@ -19,6 +19,7 @@ import {
   hasStatus,
   hasAffordableMoveInFight,
   isMoveUsable,
+  chargesLeft,
   resolveManaCost,
   resolveCastBasePower,
   declarationTargetMode,
@@ -98,6 +99,7 @@ import { MoveKindBadge, MoveTraitChips, TARGET_MODE_LABELS, healReadout, moveEff
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
+import { ChargePips } from '../shared/ChargePips';
 import { MoveKindGlyph } from '../shared/statIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_LABELS } from '../shared/StatBars';
@@ -148,14 +150,19 @@ interface MoveRowProps {
   matchups: readonly MoveMatchup[];
   /** The metamorphic move this row is this round's face of (Motley's Trick), for the tag over its name. */
   faceOf?: MoveDefinition;
+  /** The holder, for the move's Charge pips. */
+  chargeHolder: Pick<Combatant, 'chargesSpent'>;
+  /** Charges given back to this move in the round just played, flashed as they relight. */
+  restoredCharges: number;
   onSelect: () => void;
   onInspect: () => void;
 }
 
 // Lifted out of the `.map()` because useLongPress is a hook. Unaffordable rows are
 // `.is-unaffordable` + aria-disabled rather than `disabled` so a hold still opens the dossier.
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, matchups, faceOf, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, matchups, faceOf, chargeHolder, restoredCharges, onSelect, onInspect }: MoveRowProps) {
   const usable = affordable && !gateUnmet;
+  const spent = chargesLeft(chargeHolder, move) === 0;
   const longPress = useLongPress(onInspect, () => {
     if (usable) onSelect();
   });
@@ -170,7 +177,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
 
   return (
     <button
-      className={`move-button${selected ? ' selected' : ''}${usable ? '' : ' is-unusable'}${affordable ? '' : ' is-unaffordable'}${faceOf ? ' is-trick-face' : ''}`}
+      className={`move-button${selected ? ' selected' : ''}${usable ? '' : ' is-unusable'}${affordable ? '' : ' is-unaffordable'}${spent ? ' is-spent' : ''}${faceOf ? ' is-trick-face' : ''}`}
       style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
       aria-disabled={!usable}
       {...longPress}
@@ -184,6 +191,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
           {faceOf && <span className="move-trick-tag">{faceOf.name}</span>}
           {move.name}
         </span>
+        <ChargePips move={move} combatant={chargeHolder} restored={restoredCharges} />
         {move.kind === 'damage' && (move.basePower ?? rolledBasePower) != null && (
           <span
             className={`move-power${boosted ? ' move-boosted' : ''}`}
@@ -758,6 +766,8 @@ export function FightScreen({
   const beatQueue = useRef<Beat[]>([]);
   const displayState = useRef<CombatState | null>(null);
   const finalState = useRef<CombatState | null>(null);
+  /** "combatantId:moveId" → Charges given back in the round being played, for the pips' flash. */
+  const restoredCharges = useRef<Record<string, number>>({});
   // Every event the fight has resolved, tallied as it lands — what the MVP is read off (run/mvp.ts).
   const mvpTally = useRef<MvpTally>(initialSnapshot?.mvpTally ?? emptyMvpTally());
   // What a snapshot reads, current even from a playback closure older than the render that changed it.
@@ -1351,6 +1361,13 @@ export function FightScreen({
     const beats = [...prelude, ...buildBeats(events, allCombatants, moves, startState.combatants, PLAYER_SIDE)];
     displayState.current = startState;
     finalState.current = nextFinalState;
+    restoredCharges.current = {};
+    for (const e of events) {
+      if (e.type === 'ChargeRestored') {
+        const key = `${e.combatantId}:${e.moveId}`;
+        restoredCharges.current[key] = (restoredCharges.current[key] ?? 0) + e.restored;
+      }
+    }
     beatQueue.current = beats;
     setPlaybackOrder(null);
     setResolving(true);
@@ -1996,8 +2013,10 @@ export function FightScreen({
                       <MoveRow
                         key={moveId}
                         move={move}
-                        affordable={combatant.currentMana >= cost && isMoveUsable(combat, id, move)}
-                        gateUnmet={!hasLegalTarget(move, id)}
+                        affordable={combatant.currentMana >= cost}
+                        gateUnmet={!hasLegalTarget(move, id) || !isMoveUsable(combat, id, move)}
+                        chargeHolder={combatant}
+                        restoredCharges={restoredCharges.current[`${id}:${moveId}`] ?? 0}
                         cost={cost}
                         selected={isSelected}
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}

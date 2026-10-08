@@ -5,6 +5,7 @@ import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline'
 import { resolveStatusMagnitudeFor } from '../../engine/status/statusMagnitude';
 import { resolveStatDeltaFor, statDeltaLandsOnCasterSide } from '../../engine/combat/statDeltaScaling';
 import { moveForPrimaryType } from '../../engine/state';
+import type { Combatant } from '../../engine/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
@@ -12,6 +13,7 @@ import { STAT_LABELS } from './StatBars';
 import { ElementGlyph } from './elementIcons';
 import { MoveKindGlyph, StatGlyph, type MoveKindGlyphKind } from './statIcons';
 import { ManaCost } from './ManaCost';
+import { ChargePips } from './ChargePips';
 import { playSfx } from '../../audio/sfx';
 import { statusAmountText } from './statusFacts';
 
@@ -142,7 +144,6 @@ export function moveKindLabel(move: MoveDefinition): string {
 
 const CATEGORY_LABELS: Record<MoveDefinition['category'], string> = { physical: 'PHY', magical: 'MAG' };
 
-/** Canonical player-facing name per TargetMode; FightScreen's targeting copy reads this too. */
 /** "A Charge back on every spent move", "Every Arrow refills". */
 export function restoresChargesText(restore: NonNullable<MoveDefinition['restoresCharges']>): string {
   const which = restore.moveTag === 'arrow' ? 'Arrow' : 'spent move';
@@ -155,6 +156,7 @@ export function chargesLabel(n: number): string {
   return `${n} Charge${n === 1 ? '' : 's'}`;
 }
 
+/** Canonical player-facing name per TargetMode; FightScreen's targeting copy reads this too. */
 export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
   singleEnemy: 'Single Enemy',
   bothEnemies: 'Both Enemies',
@@ -451,7 +453,6 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   if (move.firstTurnOnly) parts.push('First turn out only');
   if (move.tags?.includes('arrow')) parts.push('Arrow');
   if (move.restoresCharges) parts.push(restoresChargesText(move.restoresCharges));
-  if (move.chargesPerFight != null) parts.push(move.chargesPerFight === 1 ? 'Once a fight' : `${chargesLabel(move.chargesPerFight)} a fight`);
 
   if (move.fieldEffectApplication) {
     parts.push(`Field: ${fieldEffects[move.fieldEffectApplication]?.name ?? move.fieldEffectApplication}`);
@@ -524,6 +525,7 @@ export function MoveButtonReplica({
   unusable,
   tag,
   caster,
+  chargeHolder,
   onClick,
   onLongPress,
 }: {
@@ -535,6 +537,8 @@ export function MoveButtonReplica({
   tag?: ReactNode;
   /** So a heal shows what THIS hero restores — see healReadout. */
   caster?: HealCaster;
+  /** The live holder, for spent Charge pips; omitted, a charged move's pips are drawn full. */
+  chargeHolder?: Pick<Combatant, 'chargesSpent'>;
   onClick?: () => void;
   onLongPress?: () => void;
 }) {
@@ -557,6 +561,7 @@ export function MoveButtonReplica({
           <ElementGlyph type={move.type} />
         </span>
         <span className="move-name">{move.name}</span>
+        <ChargePips move={move} combatant={chargeHolder} />
         {move.kind === 'damage' && move.basePower != null && (
           <span className="move-power">
             <strong>{move.basePower}</strong>BP

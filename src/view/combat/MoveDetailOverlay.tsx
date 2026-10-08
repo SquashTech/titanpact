@@ -24,6 +24,7 @@ import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TARGET_MODE_LABELS, chargesLabel, restoresChargesText, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
+import { ChargePips } from '../shared/ChargePips';
 import { forecastDamage, koLabel } from './forecast';
 import { ForecastBite } from './ForecastBite';
 
@@ -652,11 +653,11 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
           )}
           {move.chargesPerFight != null && (
             <EffectRow
-              glyph={<MoveKindGlyph kind="debuff" />}
+              glyph={<ChargePips move={move} combatant={attacker} />}
               text={`${chargesLabel(move.chargesPerFight)} a fight`}
               note={
                 attacker
-                  ? `${chargesLabel(chargesLeft(attacker, move) ?? 0)} left · spent Charges stay spent through a switch`
+                  ? `${chargesLeft(attacker, move) ? chargesLabel(chargesLeft(attacker, move)!) : 'None'} left · spent Charges stay spent through a switch`
                   : 'spent Charges stay spent through a switch'
               }
             />

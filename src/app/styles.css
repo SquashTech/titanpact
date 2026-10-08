@@ -47706,3 +47706,59 @@ img.smithy-service-art {
 .fight-result-row-glyph.is-gems {
   gap: 1px;
 }
+
+/* --- Charges (docs/charges.md) ------------------------------------------------------------------ */
+
+/* Upright cells, a quiver's worth: lit for a Charge left, hollow for one spent. Cells rather than
+   dots, squares or triangles so they never read as the field's rounds, Mastery or a stat change. */
+.charge-pips {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #f4d98a;
+}
+
+.charge-pip {
+  width: 3px;
+  height: 10px;
+  border-radius: 1px;
+  background: currentColor;
+  box-shadow: 0 0 4px -1px currentColor;
+}
+
+.charge-pip.is-spent {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgba(244, 217, 138, 0.6);
+}
+
+.charge-pip.is-restored {
+  animation: charge-pip-restored 900ms ease-out 1;
+}
+
+@keyframes charge-pip-restored {
+  0% {
+    background: #fffbe8;
+    box-shadow: 0 0 10px 2px #f4d98a;
+    transform: scaleY(1.35);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .charge-pip.is-restored {
+    animation: none;
+  }
+}
+
+/* A move out of Charges dims with every unusable row, but its mana gem stays lit: the player can
+   afford it, Rest will not bring it back, and the hollow cells say why. */
+.move-button.is-spent .charge-pips {
+  opacity: 1;
+}
+
+.move-row-top .charge-pips {
+  margin-left: -2px;
+}
