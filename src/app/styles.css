@@ -24541,6 +24541,21 @@ button.star-shop-bundle-face {
   color: var(--hp-mid);
 }
 
+/* On the arena the chip row takes no height, so a forecast appearing never
+   moves a nameplate; the chip hangs over the figure beside its plate. */
+.battlefield .eff-badge-row {
+  height: 0;
+  overflow: visible;
+  position: relative;
+  z-index: 3;
+  align-items: flex-start;
+}
+
+/* An ally's plate sits under the row, so its chip hangs up over the figure's feet instead. */
+.team-row.ally .eff-badge-row {
+  align-items: flex-end;
+}
+
 /* Stated, not hidden. A player shown "38-45" who then watches 41 land should
    know exactly which term of the locked formula the game rolled — and that the
    one term missing from the band is the 1/16 crit. */

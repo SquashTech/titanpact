@@ -1508,6 +1508,7 @@ export function FightScreen({
           combatant={combat.combatants[id]}
           level={levelFor(id)}
           targetable={targetableIds.includes(id)}
+          forecast={selecting && targetableIds.includes(id) ? forecastMove(selecting.move, combat, selecting.combatantId, id) : null}
           acting={id === actingId}
           onSelectTarget={() => handleTargetClick(id)}
           onInspect={() => setInspecting(id)}
@@ -1603,6 +1604,7 @@ export function FightScreen({
               ? { '--field-effect-rgb': getTypeColorRgb(fieldEffects[combat.activeFieldEffect.fieldEffectId]?.flavorType ?? 'Arcane') }
               : null),
             ...(location ? { '--node-rgb': location.tintRgb } : null),
+            ...(selecting ? { '--move-type-rgb': getTypeColorRgb(selecting.move.type) } : null),
           } as CSSProperties
         }
       >
