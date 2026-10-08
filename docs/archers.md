@@ -18,7 +18,7 @@ carries power into one.
 
 ## The trio: three relationships to the quiver
 
-| | **Squall** (exists) | **Quarry** (new) | **Sleet** (new) |
+| | **Squall** (exists) | **Sliver** (new) | **Sleet** (new) |
 |---|---|---|---|
 | Concept | The storm ranger: hooded, fast, first to loose | The centaur huntress: wound it, then finish it | The frost-elf sniper: slow it, then make the last shot count |
 | Type | Storm | **Beast** | **Frost** |
@@ -27,12 +27,13 @@ carries power into one.
 | Status | Conduct (Storm's mark) | Bleed (Beast's column) | Freeze (halves Speed, so she moves first) |
 | Element Arrow | Storm Arrow (Early) | Barbed Arrow (Early) | Rime Arrow (Early) |
 
-Squall refills by volume, Quarry by luck she can tilt, and Sleet does not refill at all — she spends
+Squall refills by volume, Sliver by luck she can tilt, and Sleet does not refill at all — she spends
 the quiver down to its climax. All three hold **Iron Arrow** in their pools, the shared Arrow.
 
-Two weather words, Squall and Sleet, are deliberate; Quarry is the hunt. Names are placeholders.
+**Squall, Sliver, Sleet** (2026-10-08, per user direction): three S-names, two weather words and the
+splinter an Arrow leaves in a wound, which is Sliver's Bleed.
 
-**Beast over Shadow for Quarry** (recommended): Beast is the guaranteed-Bleed column (Lacerate, Gash,
+**Beast over Shadow for Sliver** (recommended): Beast is the guaranteed-Bleed column (Lacerate, Gash,
 Blood Trail, Rending Leap); Shadow holds crit (Fade Strike) and chanced Bleed. A Beast archer with a
 **Shadow graft path** covers both, where a Shadow archer would have to borrow the Bleeds.
 
@@ -44,7 +45,7 @@ bundle (`unlock: 'bundle.archers'`).
 
 **Open:** make Gale Volley an Arrow (tag, 2 Charges), so his signature reads Retrieve too.
 
-## Quarry — Beast, the centaur huntress
+## Sliver — Beast, the centaur huntress
 
 - **Stats (550):** HP 200 · Atk 95 · Def 45 · Int 20 · Wis 40 · Spd 95 · Mana 55.
 - **Grades (28):** HP C · Atk A · Def C · Int F · Wis C · Spd B · Mana C. A physical hitter whose dump
@@ -129,17 +130,17 @@ meets Arrows through Iron Arrow but buys the family.
    `PROFILE_VERSION` bump. Such a profile then sees the bundle discounted to 6 (`offerPrice`).
 7. **Deck:** the default Storm row swaps Squall for Stormhorn; `test/roster` pins three a type over
    the base.
-8. **Art:** Quarry, Sleet and Stormhorn via PixelLab (`reference_pixellab_hero_recipe`), plus path
+8. **Art:** Sliver, Sleet and Stormhorn via PixelLab (`reference_pixellab_hero_recipe`), plus path
    looks later. This is the long pole if the generation budget is still paused.
 9. **Measure:** a `SIM_ALL_HEROES` batch, archers against the roster.
 
 ## Open
 
-- **Names:** Quarry, Sleet, Stormhorn, and the bundle's own (*The Quiver*? *Three Bows*?).
+- **Names:** Stormhorn, and the bundle's own (*The Quiver*? *Three Bows*?). The trio is decided.
 - **Gale Volley as an Arrow.**
 - **Steady Aim:** a new Frost buff, or borrow Rime Coat.
 - **Sleet's Freeze loop:** the enemy AI never switches, so a Frozen foe stays Frozen all fight, and
   ×2 Arrows against it are every Arrow. Deadeye may want the Frozen half only on the last Charge.
-- **Quarry's crit refund:** the base 1/16 crit plus 25% against a Bleeding foe is about 31%, so she
+- **Sliver's crit refund:** the base 1/16 crit plus 25% against a Bleeding foe is about 31%, so she
   refunds about one Arrow in three there. Measure before the mastered figure.
 - **Price:** 8 stars, as Tall Grass.
