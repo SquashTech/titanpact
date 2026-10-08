@@ -393,7 +393,9 @@ don't silently override it.
   own current Attack (`MoveDefinition.derivedStatDeltas`, `docs/combat.md`). **The third
   was that conversation** (2026-09-29, per user direction): Zenith's Surging Intellect grants
   Intelligence equal to every Mana it gains — regen, a grant, a Rest — bounded by the ×4 fight
-  ceiling (`docs/innate-passives.md` §7c). A fourth is a conversation again.
+  ceiling (`docs/innate-passives.md` §7c). **The fourth** (2026-10-08, per user direction,
+  `docs/hero-audit.md`): Tusk's Stampede doubles its own Speed at every round end
+  (`PassiveAmount` `targetStat`), held by the same ceiling. A fifth is a conversation again.
 - **No accuracy stat.** Moves always land. **Mana cost is the primary balance lever** on
   reliable moves. **A guaranteed lockout is priced by the fight, not the cast** (2026-09-11):
   Feint, Blind and Barrier carry `manaCostGainOnUse` = 20, so each cast is dearer for the rest

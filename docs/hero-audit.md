@@ -84,3 +84,20 @@ Innates renamed off move names: Rime's Cold Snap → **Bitter Cold**, Floe's Abs
 made for Stone and Iron and want a redraw. Stars on the old ids are dropped (no players yet).
 Still owed in the details pass: Bedrock Ice, Frozen Stone and Portcullis carry their old types'
 names on new grafts.
+
+## Frost — details (2026-10-08)
+
+| Hero | Change |
+|---|---|
+| Flurry | **Frostbite**: an enemy loses 10% of max HP as it is Frozen, by anyone's hand (was 10% every round end while Frozen); Frostbite+ 20%. **Avalanche**: Landslide removed; Killing Frost (now +20 Int) + **Snowfall** (a Rest Freezes a random enemy). |
+| Rime | **Bitter Cold**: +10 Attack when it lands an attack on a Frozen foe (was: on Freezing); Bitter Cold+ +20. **Hoarsteel** grants **Reinforce** (+20 Atk/+20 Def, both allies), which arms Frozen Stone. |
+| Floe | **Pack Ice**: when its Defense rises, a random enemy is Frozen (was −5 Speed to both); Pack Ice+ both enemies. |
+| Igloo | **Shelter**: Shield 25 (Shelter+ 50). **Hearthglow**'s Portcullis is **Warm Hearth**: Provoking sets both enemies Burning. |
+| Tusk | **Stampede**: its Speed doubles at every round end (was +5 Attack); Stampede+ triples. **Matriarch's Fury**: both active allies gain the 10 Attack. |
+| Hush | **Athene** grants **Psionic Wave** (Mind spread, Pow 70, 80 mana, 50% −30 Wis). |
+
+Engine: `PassiveAmount` `targetStat` — the effect target's live stat (Stampede).
+
+To watch: the ×4 fight ceiling stops Stampede two rounds in — Tusk tops out at 4× the Speed it
+started at (15 → 60 at base). Pack Ice and Rime's Frozen Stone are now the same verb. Frostbite
+fires once a fresh freeze, not every round.

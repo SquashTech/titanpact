@@ -65,6 +65,9 @@ const BEYOND_THE_PAIR: Record<string, string> = {
   'brimstone-hexfume': 'type+move+passive',
   'leviathan-deepfrost': 'type+move+passive',
   'kappa-yokai': 'type+move+passive',
+  'glacialWarden-avalanche': 'passive+passive',
+  'rime-hoarsteel': 'type+move+passive',
+  'hush-athene': 'type+move+passive',
 };
 
 function grantCount(path: EvolutionPath): number {

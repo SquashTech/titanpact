@@ -526,14 +526,14 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   killingFrost: {
     id: 'killingFrost',
     name: 'Killing Frost',
-    description: 'When this hero Freezes an enemy, it gains 10 Intelligence.',
+    description: 'When this hero Freezes an enemy, it gains 20 Intelligence.',
     // Feedback Loop's shape on Freeze. Freeze is stacking 'none', so re-freezing an already
     // frozen foe emits nothing and pays nothing; the ramp costs fresh targets, and Permafrost
     // and Avalanche reaching both foes at once is the two-for-one that makes it worth a path.
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 20 },
     },
   },
   coldForge: {
@@ -946,12 +946,13 @@ const innatePassives: Record<string, PassiveDefinition> = {
   frostbite: {
     id: 'frostbite',
     name: 'Frostbite',
-    description: 'At the end of each round, every Frozen enemy loses 10% of its max HP.',
-    // Nightmare's shape on Freeze: direct loss, only while Flurry stands on the field.
+    description: 'When an enemy is Frozen, it loses 10% of its max HP.',
+    // On the freeze, by anyone's hand, while Flurry stands on the field. Freeze cannot be laid on a
+    // Frozen foe, so each bite costs a fresh freeze.
     reactive: {
-      hook: 'RoundEnded',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.1, onlyWithStatus: 'Freeze' },
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Freeze' } },
+      effect: { kind: 'damage', target: 'triggerSubject', percentMaxHp: 0.1 },
     },
   },
   outpace: {
@@ -1084,21 +1085,21 @@ const innatePassives: Record<string, PassiveDefinition> = {
   coldSnap: {
     id: 'coldSnap',
     name: 'Bitter Cold',
-    description: 'When this hero Freezes an enemy, it gains 10 Attack.',
+    description: 'When this hero lands an attack on a Frozen foe, it gains 10 Attack.',
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Freeze' },
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
     },
   },
   absoluteZero: {
     id: 'absoluteZero',
     name: 'Pack Ice',
-    description: "When this hero's Defense rises, both active enemies lose 5 Speed.",
+    description: "When this hero's Defense rises, a random enemy is Frozen.",
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -5 },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
     },
   },
   tailwind: {
@@ -1395,11 +1396,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   shelter: {
     id: 'shelter',
     name: 'Shelter',
-    description: "When this hero's partner is hit, the partner gains Shield 10.",
+    description: "When this hero's partner is hit, the partner gains Shield 25.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
-      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Shield', magnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Shield', magnitude: 25 },
     },
   },
   hallowedStep: {
@@ -1436,11 +1437,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   stampede: {
     id: 'stampede',
     name: 'Stampede',
-    description: 'At the end of each round, this hero gains 5 Attack.',
+    description: "At the end of each round, this hero's Speed doubles.",
+    // Starts the slowest thing on the field and ends the fastest: the fight's ×4 ceiling is the brake.
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: { kind: 'targetStat', stat: 'speed' } },
     },
   },
   // docs/wild-innates-and-events.md §1: Metronome, shown before you commit. The verb is the move
@@ -1798,11 +1800,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   frostbitePlus: {
     id: 'frostbitePlus',
     name: 'Frostbite+',
-    description: 'At the end of each round, every Frozen enemy loses 20% of its max HP.',
+    description: 'When an enemy is Frozen, it loses 20% of its max HP.',
     reactive: {
-      hook: 'RoundEnded',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.2, onlyWithStatus: 'Freeze' },
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Freeze' } },
+      effect: { kind: 'damage', target: 'triggerSubject', percentMaxHp: 0.2 },
     },
   },
   outpacePlus: {
@@ -1926,21 +1928,21 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   shatterpoint: {
     id: 'shatterpoint',
     name: 'Bitter Cold+',
-    description: 'When this hero Freezes an enemy, it gains 25 Attack.',
+    description: 'When this hero lands an attack on a Frozen foe, it gains 20 Attack.',
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 25 },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Freeze' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 20 },
     },
   },
   zeroKelvin: {
     id: 'zeroKelvin',
     name: 'Pack Ice+',
-    description: "When this hero's Defense rises, both active enemies lose 15 Speed.",
+    description: "When this hero's Defense rises, both active enemies are Frozen.",
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -15 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Freeze' },
     },
   },
 
@@ -2395,11 +2397,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   hearthwall: {
     id: 'hearthwall',
     name: 'Shelter+',
-    description: "When this hero's partner is hit, the partner gains Shield 20.",
+    description: "When this hero's partner is hit, the partner gains Shield 50.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
-      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Shield', magnitude: 20 },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Shield', magnitude: 50 },
     },
   },
   springtide: {
@@ -2441,11 +2443,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   glacialAdvance: {
     id: 'glacialAdvance',
     name: 'Stampede+',
-    description: 'At the end of each round, this hero gains 10 Attack.',
+    description: "At the end of each round, this hero's Speed triples.",
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: { kind: 'targetStat', stat: 'speed', multiplier: 2 } },
     },
   },
   // The figure doubled is the hand: two faces a round, Motley's pick.

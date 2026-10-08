@@ -44,15 +44,26 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
     },
   },
-  // Igloo's Hearthglow: target-role StatusApplied, so its own Provoke arms it.
+  // Igloo's Hearthglow: target-role StatusApplied, so its own Provoke arms it — the hearth bites whoever comes knocking.
   portcullis: {
     id: 'portcullis',
-    name: 'Portcullis',
-    description: 'When this hero becomes Provoking, it gains Shield 30.',
+    name: 'Warm Hearth',
+    description: 'When this hero becomes Provoking, both active enemies are set Burning.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Provoke' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 30 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
+    },
+  },
+  // Flurry's Avalanche, beside Killing Frost: the Rest is the snow settling.
+  snowfall: {
+    id: 'snowfall',
+    name: 'Snowfall',
+    description: 'When this hero Rests, a random enemy is Frozen.',
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
     },
   },
   // Tusk's Ice Age: rolled per Frost hit, so a slow body buys the turn order back.
@@ -71,11 +82,12 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   matriarchsFury: {
     id: 'matriarchsFury',
     name: "Matriarch's Fury",
-    description: "When this hero's partner takes damage, this hero gains 10 Attack.",
+    description: "When this hero's partner takes damage, both active allies gain 10 Attack.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: 'attack', amount: 10 },
     },
   },
   // Hush's Tundra Hunter.

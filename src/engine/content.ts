@@ -202,7 +202,9 @@ export type PassiveAmount =
   | { kind: 'flat'; value: number }
   | { kind: 'matchTriggerAmount'; field?: string; multiplier?: number }
   /** A share of the EFFECT TARGET's max HP (Feast: heal half of Ursa's own). Resolved where the target is known. */
-  | { kind: 'percentMaxHp'; value: number };
+  | { kind: 'percentMaxHp'; value: number }
+  /** The EFFECT TARGET's own effective stat right now, times `multiplier` (default 1) — a derived grant, landing unrounded and held by the fight ceiling like any other (Stampede doubling Tusk's Speed). statDelta only. */
+  | { kind: 'targetStat'; stat: StatKey; multiplier?: number };
 
 /**
  * 'triggerSubject' follows the condition's `subjectRole`; 'triggerTarget' is the event's

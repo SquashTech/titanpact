@@ -158,6 +158,8 @@ function sideOutspeeds(state: CombatState, side: Side, heroes: HeroLookup, passi
 /** `targetMaxHp` is the effect target's, for a percentMaxHp amount; a caller without a target reads it as 0. */
 function resolveAmount(amount: PassiveAmount, context: TriggerContext, targetMaxHp = 0): number {
   if (amount.kind === 'flat') return amount.value;
+  // Read where the target is known (the statDelta arm); anywhere else it has nothing to read.
+  if (amount.kind === 'targetStat') return 0;
   if (amount.kind === 'percentMaxHp') return Math.round(targetMaxHp * amount.value);
   const raw = context[amount.field ?? 'amount'];
   const base = typeof raw === 'number' ? raw : 0;
@@ -377,7 +379,12 @@ function resolveEffectOn(
       // One stat or several; each lands separately and reports its own StatChanged, so a
       // stat-reactive passive (Entanglement) sees them one at a time exactly as a move's would.
       const stats: readonly StatKey[] = Array.isArray(effect.stat) ? (effect.stat as readonly StatKey[]) : [effect.stat as StatKey];
-      const amount = typeof effect.amount === 'number' ? effect.amount : resolveAmount(effect.amount, context);
+      const amount =
+        typeof effect.amount === 'number'
+          ? effect.amount
+          : effect.amount.kind === 'targetStat'
+            ? Math.round(getEffectiveStat(heroes[target.heroId], target, effect.amount.stat) * (effect.amount.multiplier ?? 1))
+            : resolveAmount(effect.amount, context);
       if (amount === 0) return { state, events: [] };
       let modifiers = target.statModifiers;
       const changes: CombatEvent[] = [];

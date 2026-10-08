@@ -1423,10 +1423,9 @@ export const progressionTable: ProgressionTable = {
             id: 'glacialWarden-avalanche',
             heroId: 'glacialWarden',
             name: 'Avalanche',
-            // Every magical Frost move is already in Flurry's pool, so the slide is Stone's; the
-            // path keeps its typing, and Glacier's derived Stone line holds Landslide too.
-            unlocksMoveIds: ['landslide'],
-            grantsPassiveIds: ['killingFrost'],
+            // Two passives, no move (2026-10-08, per user direction): freeze on the Rest, grow on the freeze.
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['killingFrost', 'snowfall'],
           },
           {
             id: 'glacialWarden-blizzard',
@@ -1462,9 +1461,9 @@ export const progressionTable: ProgressionTable = {
             id: 'rime-hoarsteel',
             heroId: 'rime',
             name: 'Hoarsteel',
-            unlocksMoveIds: [],
+            unlocksMoveIds: ['reinforce'],
             typeGraft: 'Iron',
-            learnableMoveIds: evolutionLine('rime', 'Iron'),
+            learnableMoveIds: evolutionLine('rime', 'Iron', { granted: ['reinforce'] }),
             grantsPassiveIds: ['frozenStone'],
           },
           {
@@ -3212,9 +3211,9 @@ export const progressionTable: ProgressionTable = {
             id: 'hush-athene',
             heroId: 'hush',
             name: 'Athene',
-            unlocksMoveIds: [],
+            unlocksMoveIds: ['psionicWave'],
             typeGraft: 'Mind',
-            learnableMoveIds: evolutionLine('hush', 'Mind'),
+            learnableMoveIds: evolutionLine('hush', 'Mind', { granted: ['psionicWave'] }),
             grantsPassiveIds: ['owlsGaze'],
           },
         ],

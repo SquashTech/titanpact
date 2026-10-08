@@ -591,13 +591,34 @@ test('sporefall: both active enemies are Poisoned 5 each round end, the timer ho
   assert.strictEqual(statusMagnitude(state.combatants.b1, 'Poison'), 10);
 });
 
-test('frostbite: a Frozen active enemy loses a tenth of its max HP each round end; an unfrozen one does not', () => {
-  let state = withPassive(twoVTwo(47, 'glacialWarden', 'valor', 'ironWarden', 'crag'), 'a1', 'frostbite');
-  state = withStatus(state, 'b1', 'Freeze');
-  const r = resolveRound(state, restAll(state), config);
+test('frostbite: an enemy loses a tenth of its max HP as it is Frozen — once a freeze, never on an enemy already Frozen', () => {
+  const state = withPassive(twoVTwo(47, 'glacialWarden', 'valor', 'ironWarden', 'crag'), 'a1', 'frostbite');
+  const chill = (s: CombatState) =>
+    resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'deepChill', declaredTarget: 'b1' }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], config);
+  const first = chill(state);
   const b1Max = fixtureMaxHp('ironWarden');
-  assert.strictEqual(r.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.1));
-  assert.strictEqual(r.state.combatants.b2.currentHp, fixtureMaxHp('crag'));
+  assert.strictEqual(first.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.1));
+  assert.strictEqual(first.state.combatants.b2.currentHp, fixtureMaxHp('crag'));
+  const second = chill(first.state);
+  assert.strictEqual(second.state.combatants.b1.currentHp, first.state.combatants.b1.currentHp, 'a Frozen foe cannot be Frozen again');
+});
+
+test('stampede: Tusk\'s Speed doubles at every round end, up to the fight\'s ×4 ceiling', () => {
+  const state = withPassive(twoVTwo(50, 'tusk', 'valor', 'ironWarden', 'crag'), 'a1', 'stampede');
+  const base = heroes.tusk.baseStats.speed;
+  const one = resolveRound(state, restAll(state), config).state;
+  assert.strictEqual(one.combatants.a1.statModifiers.speed, base);
+  const two = resolveRound(one, restAll(one), config).state;
+  assert.strictEqual(two.combatants.a1.statModifiers.speed, 3 * base);
+  const three = resolveRound(two, restAll(two), config).state;
+  assert.strictEqual(three.combatants.a1.statModifiers.speed, 3 * base, 'held at four times where it started');
+});
+
+test('snowfall: a Rest Freezes one random enemy', () => {
+  const state = withPassive(twoVTwo(51, 'glacialWarden', 'valor', 'ironWarden', 'crag'), 'a1', 'snowfall');
+  const r = resolveRound(state, restAll(state), config);
+  const frozen = ['b1', 'b2'].filter((id) => r.state.combatants[id].statuses.Freeze);
+  assert.strictEqual(frozen.length, 1);
 });
 
 test('stormveil: the first Conduct burst of the fight Barriers Skyshear, and the second does not', () => {

@@ -83,6 +83,7 @@ function targetWord(target: PassiveEffectTarget, condition: PassiveTriggerCondit
 function amountWord(amount: PassiveAmount, unit: string): string {
   if (amount.kind === 'flat') return `${amount.value} ${unit}`.trim();
   if (amount.kind === 'percentMaxHp') return `${Math.round(amount.value * 100)}% of max ${unit || 'HP'}`.trim();
+  if (amount.kind === 'targetStat') return `${amount.multiplier && amount.multiplier !== 1 ? `${amount.multiplier}× ` : ''}its current ${STAT_FULL_LABELS[amount.stat]}`;
   const share = amount.multiplier ?? 1;
   if (share === 1) return 'the same amount';
   return share > 1 ? `${share}× that amount` : `${Math.round(share * 100)}% of it`;
@@ -214,6 +215,14 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
     }
     case 'statDelta': {
       const stats: readonly StatKey[] = Array.isArray(effect.stat) ? (effect.stat as readonly StatKey[]) : [effect.stat as StatKey];
+      if (typeof effect.amount !== 'number' && effect.amount.kind === 'targetStat') {
+        const times = 1 + (effect.amount.multiplier ?? 1);
+        return {
+          label: 'Then',
+          text: `${times === 2 ? 'Doubles' : times === 3 ? 'Triples' : `×${times}`} the ${STAT_FULL_LABELS[effect.amount.stat]} of ${targetWord(effect.target, condition, hook)}`,
+          glyph: { kind: 'stat', stat: effect.amount.stat },
+        };
+      }
       const amount = typeof effect.amount === 'number' ? fmt(effect.amount) : `${amountWord(effect.amount, '').replace('the same amount', 'as much')}`;
       return {
         label: 'Then',
