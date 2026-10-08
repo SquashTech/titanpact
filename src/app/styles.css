@@ -7252,10 +7252,10 @@ textarea,
 
 /* The power readout is a right-aligned column in the list, not a chip that
    floats wherever the text ends — see .move-power-empty below for the row that
-   has no number. Width is set by the widest real value ("45HEAL"), so nothing
-   in the column can push the type code out of line. */
+   has no number. Width is set by the widest real value (a three-digit power),
+   so nothing in the column can push the type code out of line. */
 .move-list .move-power {
-  min-width: 42px;
+  min-width: 30px;
   text-align: right;
 }
 
@@ -7899,7 +7899,7 @@ textarea,
   font-size: 10px;
   color: var(--text-dim);
   min-width: 0;
-  /* Matches the line box of .move-power's 15px BP numeral, the tallest thing
+  /* Matches the line box of .move-power's power numeral, the tallest thing
      that can sit in this row. Explicit because the two chips that used to
      enforce it are gone: with them flattened to text, a buff/heal move (no BP
      readout) came out 6.6px shorter than a damage move, which stepped the
@@ -7989,15 +7989,31 @@ textarea,
    surrounding dim 10px meta row instead of reading as just more meta text.
    Bumped up now that removing the per-target effectiveness row (moved to
    the targeting panel, CombatantCard's effBadge) freed vertical room. */
+/* Power sits flush against the Physical/Magical glyph, the pair pushed to the
+   row's end: the glyph is the unit, so the number needs no "BP" beside it. */
+.move-row-top .move-power-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.move-row-top .move-power-pair .move-kind-badge {
+  margin-left: 0;
+}
+
 .move-power {
   white-space: nowrap;
   color: var(--accent);
 }
 
 .move-power strong {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 800;
-  margin-right: 1px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7), 0 0 6px rgba(0, 0, 0, 0.45);
 }
 
 .move-power.move-heal {
@@ -24129,6 +24145,25 @@ button.star-shop-bundle-face {
   font-variant-numeric: tabular-nums;
 }
 
+/* Base Power, the move's headline figure: the glyph is its unit, so the number
+   goes large and gold beside it with nothing between them. */
+.move-detail-stat-power {
+  gap: 4px;
+  color: var(--accent);
+}
+
+.move-detail-stat-power svg {
+  width: 20px;
+  height: 20px;
+}
+
+.move-detail-stat-power strong {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7), 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
 .move-detail-unit {
   font-size: 10px;
   font-weight: 700;
@@ -28887,6 +28922,13 @@ button.star-shop-bundle-face {
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-stat strong {
   font-size: 19px;
 }
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-stat-power strong {
+  font-size: 27px;
+}
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-stat-power svg {
+  width: 22px;
+  height: 22px;
+}
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-unit {
   font-size: 11px;
 }
@@ -28901,7 +28943,7 @@ button.star-shop-bundle-face {
   font-size: 15px;
 }
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-power strong {
-  font-size: 17px;
+  font-size: 20px;
 }
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-type-code .element-glyph {
   width: 18px;
@@ -28964,6 +29006,13 @@ button.star-shop-bundle-face {
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat strong {
   font-size: 21px;
 }
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat-power strong {
+  font-size: 30px;
+}
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat-power svg {
+  width: 24px;
+  height: 24px;
+}
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-unit {
   font-size: 12px;
 }
@@ -28990,7 +29039,7 @@ button.star-shop-bundle-face {
   font-size: 16px;
 }
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-power strong {
-  font-size: 18px;
+  font-size: 21px;
 }
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-type-code .element-glyph {
   width: 19px;
