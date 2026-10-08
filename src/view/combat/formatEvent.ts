@@ -117,8 +117,8 @@ export function formatEvents(
         if (conditionalMult !== 1) bpParts.push(`${e.basePower} × ${fmt(conditionalMult)}`);
         if (e.elementalForceBonus > 0) bpParts.push(`${bpParts.length ? '' : `${e.basePower} `}+ ${e.elementalForceBonus} bonus`);
         const bpText = bpParts.length
-          ? `${scaledBp + e.elementalForceBonus} BP (${bpParts.join(' ')})`
-          : `${e.basePower} BP`;
+          ? `${scaledBp + e.elementalForceBonus} Power (${bpParts.join(' ')})`
+          : `${e.basePower} Power`;
         lines.push({
           key: `${key}-math`,
           text:

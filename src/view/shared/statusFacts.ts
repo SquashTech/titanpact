@@ -111,8 +111,8 @@ export function statusFactsLine(def: StatusDefinition): string {
   }
   if (def.spreadTriggerTypes) parts.push(`${typeList(def.spreadTriggerTypes)} hits here spread to the partner`);
   if (def.passesOnFaint) parts.push('passes to the partner on a knockout');
-  if (def.forceType) parts.push(`+BP on ${def.forceType} moves`);
-  if (def.forceAllTypes) parts.push('+BP on the next hit');
+  if (def.forceType) parts.push(`+Power on ${def.forceType} moves`);
+  if (def.forceAllTypes) parts.push('+Power on the next hit');
   // A control status carries its rule in prose alone (Freeze, Daze), so the sentence stands in.
   if (parts.length === 0 && def.description) return def.description;
   if (def.clearsAtEndOfRound) parts.push('ends with the round');

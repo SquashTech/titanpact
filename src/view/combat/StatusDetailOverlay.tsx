@@ -20,7 +20,7 @@ function magnitudeUnit(pipeline: string, shape: string): string {
     case 'hot':
       return 'heal / round';
     case 'basePower':
-      return 'BP';
+      return 'Power';
     default:
       return 'magnitude';
   }
