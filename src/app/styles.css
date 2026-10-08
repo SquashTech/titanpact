@@ -24396,33 +24396,38 @@ button.star-shop-bundle-face {
   background: var(--hp-low);
 }
 
-/* What this move takes off it at the best roll — hatched in the move's own
-   domain colour, so the bite reads as belonging to the move rather than to the
-   defender's bar. Hatched rather than filled because this segment is a
-   *prediction* sitting on top of a real value, and it must never be mistaken
-   for HP the target has already lost. */
-.move-forecast-bite {
+/* A damage forecast in an HP track (ForecastBite) — the dossier's meter and the
+   target cards' bars alike. Solid for what even the worst roll takes, striped
+   and breathing for the part the roll decides. One red for every move — the
+   move's own colour vanished into the track for the dark types — deep enough
+   that the bar's white label still reads over a whole bar of it. */
+.forecast-bite-sure,
+.forecast-bite-range {
   position: absolute;
   top: 0;
   bottom: 0;
+}
+
+.forecast-bite-sure {
+  background: rgb(150, 34, 40);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.forecast-bite-range {
   background:
     repeating-linear-gradient(
       -45deg,
-      rgba(var(--move-type-rgb, 53, 59, 74), 0.95) 0 3px,
-      rgba(var(--move-type-rgb, 53, 59, 74), 0.5) 3px 6px
+      rgba(255, 120, 90, 0.95) 0 2px,
+      rgba(150, 34, 40, 0.6) 2px 5px
     ),
-    rgba(9, 11, 15, 0.92);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    rgb(60, 16, 20);
+  box-shadow: inset 0 0 0 1px rgba(255, 140, 110, 0.6);
+  animation: forecast-range-breathe 1.1s ease-in-out infinite alternate;
 }
 
-/* Where the worst roll would leave them: a notch inside the bite, which is
-   what turns a solid block into a range without drawing a second bar. */
-.move-forecast-floor {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: rgba(255, 255, 255, 0.85);
+@keyframes forecast-range-breathe {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
 }
 
 .move-forecast-numbers {
@@ -24459,32 +24464,7 @@ button.star-shop-bundle-face {
   color: var(--hp-mid);
 }
 
-/* The same forecast drawn on the target picker's own cards (CombatantCard
-   `forecast`): the bite and notch in the move's colour on the real HP bar,
-   hatched so a prediction never reads as HP already lost, and a heal's gain
-   laid past the fill. The target-row sets --move-type-rgb. */
-.bar-forecast-bite {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  background:
-    repeating-linear-gradient(
-      -45deg,
-      rgba(var(--move-type-rgb, 53, 59, 74), 0.95) 0 3px,
-      rgba(var(--move-type-rgb, 53, 59, 74), 0.5) 3px 6px
-    ),
-    rgba(9, 11, 15, 0.92);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-}
-
-.bar-forecast-floor {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: rgba(255, 255, 255, 0.85);
-}
-
+/* A heal's forecast on a target card's HP bar, laid past the fill. */
 .bar-forecast-heal {
   position: absolute;
   top: 0;

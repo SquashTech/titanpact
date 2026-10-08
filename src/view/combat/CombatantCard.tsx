@@ -19,6 +19,7 @@ import { TypeFx } from './TypeFx';
 import { BlessingMark } from '../shared/BlessingMark';
 import { statusHeldText } from '../shared/statusFacts';
 import type { MoveForecast } from './forecast';
+import { ForecastBite } from './ForecastBite';
 
 export interface Popup {
   key: number;
@@ -166,23 +167,13 @@ function BlessingBreak() {
   );
 }
 
-/** The forecast drawn into the HP track: a damage bite eaten leftwards from what is left, with a notch at the worst roll, or a heal's gain laid past the fill. */
+/** The forecast drawn into the HP track: a damage bite (ForecastBite), or a heal's gain laid past the fill. */
 function ForecastFill({ forecast }: { forecast: MoveForecast }) {
   if (forecast.kind === 'heal') {
     if (forecast.restoredFraction <= 0) return null;
     return <div className="bar-forecast-heal" style={{ left: `${forecast.hpFraction * 100}%`, width: `${forecast.restoredFraction * 100}%` }} />;
   }
-  const { hpFraction, maxFraction, minFraction } = forecast;
-  const biteWidth = Math.min(maxFraction, hpFraction);
-  if (biteWidth <= 0) return null;
-  const biteLeft = Math.max(0, hpFraction - maxFraction);
-  const floorMark = Math.max(0, hpFraction - Math.min(minFraction, hpFraction));
-  return (
-    <>
-      <div className="bar-forecast-bite" style={{ left: `${biteLeft * 100}%`, width: `${biteWidth * 100}%` }} />
-      {floorMark > biteLeft && <div className="bar-forecast-floor" style={{ left: `${floorMark * 100}%` }} />}
-    </>
-  );
+  return <ForecastBite hpFraction={forecast.hpFraction} minFraction={forecast.minFraction} maxFraction={forecast.maxFraction} />;
 }
 
 function ForecastChip({ forecast }: { forecast: MoveForecast }) {

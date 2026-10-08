@@ -25,6 +25,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { TARGET_MODE_LABELS, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
 import { forecastDamage } from './forecast';
+import { ForecastBite } from './ForecastBite';
 
 /** The live fight a move is inspected inside. Optional: the hero sheet, level-up and recruit preview have no combat to forecast against. */
 export interface MoveDossierContext {
@@ -63,11 +64,6 @@ function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mov
   if (!forecast) return null;
 
   const { min, max, maxFraction, minFraction, hpFraction, typeMult, ko } = forecast;
-  // The bite eats leftwards from the right-hand end of what is left, so a lethal hit reaches the origin instead of overflowing.
-  const biteWidth = Math.min(maxFraction, hpFraction);
-  const biteLeft = Math.max(0, hpFraction - maxFraction);
-  // Where the worst roll would leave them — a notch inside the bite that turns a block into a range.
-  const floorMark = Math.max(0, hpFraction - Math.min(minFraction, hpFraction));
 
   return (
     <div className="move-forecast-row">
@@ -85,8 +81,7 @@ function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mov
       <div className="move-forecast-meter">
         <div className={`move-forecast-track ${hpTier(hpFraction)}`}>
           <div className="move-forecast-hp" style={{ width: `${hpFraction * 100}%` }} />
-          <div className="move-forecast-bite" style={{ left: `${biteLeft * 100}%`, width: `${biteWidth * 100}%` }} />
-          {biteWidth > 0 && <div className="move-forecast-floor" style={{ left: `${floorMark * 100}%` }} />}
+          <ForecastBite hpFraction={hpFraction} minFraction={minFraction} maxFraction={maxFraction} />
         </div>
         <span className="move-forecast-numbers">
           {min === max ? min : `${min}–${max}`}
