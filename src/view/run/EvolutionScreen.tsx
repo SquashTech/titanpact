@@ -59,7 +59,8 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
   /** Set once the choice is spent: the cinematic runs over the screen and calls `onChoose` at the end. */
   const [sealingPathId, setSealingPathId] = useState<string | null>(null);
   const sealingPath = node.paths.find((p) => p.id === sealingPathId) ?? null;
-  const dense = node.paths.some((path) => grantsOf(path).length > 2);
+  const slots = grantSlots(node.paths);
+  const dense = slots.length > 2;
 
   return (
     <div
@@ -84,9 +85,9 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
       />
 
       <div className="evo-forms">
-        <div className={`evo-form-row${dense ? ' is-dense' : ''}`}>
+        <div className={`evo-form-row${dense ? ' is-dense' : ''}${slots.length > 3 ? ' is-packed' : ''}`}>
           {node.paths.map((path, i) => (
-            <FormCard key={path.id} hero={hero} path={path} onInspect={() => setInspectedIndex(i)} />
+            <FormCard key={path.id} hero={hero} path={path} slots={slots} onInspect={() => setInspectedIndex(i)} />
           ))}
         </div>
         <p className="evolution-inspect-hint">Tap a form to see it in full.</p>
@@ -203,6 +204,15 @@ function grantsOf(path: EvolutionPath): Grant[] {
   return out;
 }
 
+/**
+ * The rows every card in the node draws, by kind — a type, then each move, then each passive, as
+ * many of each as the richest path pays — so a medal sits level with its kind on the other cards.
+ */
+function grantSlots(paths: readonly EvolutionPath[]): Grant['kind'][] {
+  const most = (kind: Grant['kind']) => Math.max(0, ...paths.map((path) => grantsOf(path).filter((g) => g.kind === kind).length));
+  return (['type', 'move', 'passive'] as const).flatMap((kind) => Array<Grant['kind']>(most(kind)).fill(kind));
+}
+
 function grantColor(grant: Grant): string {
   if (grant.kind === 'type') return getTypeColor(grant.type);
   if (grant.kind === 'move') return getTypeColor(moves[grant.id].type);
@@ -227,7 +237,8 @@ function GrantGlyph({ grant }: { grant: Grant }) {
  * as medallions. A headline to compare at a glance; the tap opens the showcase, where the
  * choice is read in full and spent.
  */
-function FormCard({ hero, path, onInspect }: { hero: HeroDefinition; path: EvolutionPath; onInspect: () => void }) {
+function FormCard({ hero, path, slots, onInspect }: { hero: HeroDefinition; path: EvolutionPath; slots: Grant['kind'][]; onInspect: () => void }) {
+  const grants = grantsOf(path);
   const traded = tradedType(hero, path);
   const starred = useHasEvolutionStar(hero.id, path.id);
   return (
@@ -248,15 +259,29 @@ function FormCard({ hero, path, onInspect }: { hero: HeroDefinition; path: Evolu
       {traded && <span className="evo-form-traded">loses {traded}</span>}
       {path.swapsOffense && <span className="evo-form-rewire">Atk ⇄ Int</span>}
       <span className="evo-form-grants">
-        {grantsOf(path).map((grant, i) => (
-          <span key={i} className="evo-form-grant" style={{ '--grant': grantColor(grant) } as CSSProperties}>
-            <span className="evo-form-medal">
-              <GrantGlyph grant={grant} />
+        {slots.map((kind, i) => {
+          // The nth slot of a kind takes this path's nth grant of it; a path that pays none leaves the row empty.
+          const nth = slots.slice(0, i).filter((k) => k === kind).length;
+          const grant = grants.filter((g) => g.kind === kind)[nth];
+          if (!grant) {
+            return (
+              <span key={i} className="evo-form-grant is-empty">
+                <span className="evo-form-medal" />
+                <span className="evo-form-kind">{GRANT_KIND_LABEL[kind]}</span>
+                <span className="evo-form-grant-name">None</span>
+              </span>
+            );
+          }
+          return (
+            <span key={i} className="evo-form-grant" style={{ '--grant': grantColor(grant) } as CSSProperties}>
+              <span className="evo-form-medal">
+                <GrantGlyph grant={grant} />
+              </span>
+              <span className="evo-form-kind">{GRANT_KIND_LABEL[kind]}</span>
+              <span className="evo-form-grant-name">{grantName(grant)}</span>
             </span>
-            <span className="evo-form-kind">{GRANT_KIND_LABEL[grant.kind]}</span>
-            <span className="evo-form-grant-name">{grantName(grant)}</span>
-          </span>
-        ))}
+          );
+        })}
       </span>
     </button>
   );

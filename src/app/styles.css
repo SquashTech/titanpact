@@ -22371,18 +22371,20 @@ button.star-shop-bundle-face {
   letter-spacing: 0.04em;
 }
 
-/* Centred in whatever the card has left: a path paying two beside one paying
-   three sits in the middle of its card rather than under a hole. */
+/* One row a kind, the same rows on every card (grantSlots), anchored to the
+   foot: equal rows at equal heights put each medal level with its kind on the
+   other two cards, whatever the "loses" and rewire lines above them do. */
 .evo-form-grants {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 10px;
+  margin-top: auto;
   padding-top: 4px;
 }
 
 .evo-form-grant {
+  width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -22420,10 +22422,31 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
+/* One line, so every row is the same height and the rows stay level. */
 .evo-form-grant-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 11px;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.2;
+}
+
+/* A kind this path does not pay: the row is held, drawn as an empty socket. */
+.evo-form-grant.is-empty .evo-form-medal {
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 0 2px rgba(232, 193, 112, 0.28);
+}
+
+.evo-form-grant.is-empty .evo-form-kind,
+.evo-form-grant.is-empty .evo-form-grant-name {
+  opacity: 0.45;
+}
+
+.evo-form-grant.is-empty .evo-form-grant-name {
+  font-weight: 700;
+  color: var(--text-dim);
 }
 
 /* A named path paying three: every card in the row gives a little height so
@@ -22450,6 +22473,31 @@ button.star-shop-bundle-face {
 .evo-form-row.is-dense .evo-form-medal .status-glyph {
   width: 22px;
   height: 22px;
+}
+
+/* Four rows (a path paying two passives beside paths with a type and a move). */
+.evo-form-row.is-packed .evo-form-stage {
+  height: 84px;
+}
+
+.evo-form-row.is-packed .evo-form-portrait {
+  width: 82px;
+  height: 82px;
+}
+
+.evo-form-row.is-packed .evo-form-grants {
+  gap: 4px;
+}
+
+.evo-form-row.is-packed .evo-form-medal {
+  width: 30px;
+  height: 30px;
+}
+
+.evo-form-row.is-packed .evo-form-medal svg,
+.evo-form-row.is-packed .evo-form-medal .status-glyph {
+  width: 18px;
+  height: 18px;
 }
 
 /* --- The showcase (2026-09-29, per user direction) ------------------------
