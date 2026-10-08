@@ -90,6 +90,8 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
         return event.sourceCombatantId;
       case 'StatusDetonated':
         return event.sourceCombatantId;
+      case 'MoveGuarded':
+        return event.sourceCombatantId;
       default:
         return undefined;
     }
@@ -103,6 +105,7 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
     case 'MoveUsed':
     case 'Endured':
     case 'ManaRegenTicked':
+    case 'MoveGuarded':
       return event.combatantId;
     case 'ManaGranted':
       return event.targetCombatantId;

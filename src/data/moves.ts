@@ -2257,6 +2257,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 25,
     // A wall every round was a lock, not a guard.
     chargesPerFight: 2,
+    tags: ['guard'],
     priority: 2,
     target: 'self',
   },

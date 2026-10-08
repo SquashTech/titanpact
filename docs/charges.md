@@ -1,7 +1,7 @@
 # Charges
 
 **DECIDED in shape 2026-10-08, per user direction. Phase 1 (the engine) is IN, and Squall's Arrows
-(the first refills, below) are IN. Phase 2 (the pips) is IN. Phase 3 is MEASURED.** A few moves carry a number of
+(the first refills, below) are IN. Phase 2 (the pips) is IN. Phase 3 is MEASURED. Phase 4 (the refill Boons) is IN.** A few moves carry a number of
 **Charges** a fight. Each cast spends one. With none left, the move can't be used for the rest of the
 fight. This replaces the rising mana cost (`manaCostGainOnUse`) as the way a lockout is kept from
 being spammed, and it generalizes the existing `oncePerFight` gate, which becomes one Charge.
@@ -146,6 +146,26 @@ Tempest, Kite, Raiju) and the Storm slate, so the Storm spawn carry it too. For 
 top-up that costs a turn. For a kit with no Charges it is Conduct alone, so watch Tempest, Kite and
 Raiju: Kite's Outpace read the Speed it gave.
 
+## The refill Boons (phase 4, BUILT 2026-10-08)
+
+Three of the refills above, shipped as **Boons** rather than on a hero, because neither the Barrier
+holder (Thane) nor the Blind holder (Aurum) has been through the hero audit, and an innate is the
+audit's call. A refill Boon joins the pool only while a roster hero holds a move it can refill
+(`chargeBoonFits`, read off the card's own `restoreCharge`, so a new refill needs no table), the
+type Boons' gate; the who-screen says how many of each hero's moves it would refill, or *nothing to
+refill*.
+
+| Boon | When | Gives back |
+|---|---|---|
+| **Riposte** | this hero's Barrier turns a move away (`MoveGuarded`, a new passive hook) | 1 Charge to its guard (`tags: ['guard']` on Barrier), twice a fight |
+| **Grim Resolve** | this hero's partner is knocked out by a hit | 1 Charge to every move of this hero's with Charges |
+| **Deep Breath** | this hero Rests | 1 Charge to every move of this hero's with Charges |
+
+Reload is left out: it is Squall's Retrieve without the Arrow, and on Squall it would double his
+innate. Hold the Line waits for a Shield move with Charges. Riposte's cap is there because one guard
+can turn two moves away. Not simulated: the sim's Boon pick takes the card it values most, and a
+refill Boon is rare enough per run that a batch would not see it.
+
 ## Raised counts (rarer than refills)
 
 `+1 Charge to this hero's charged moves`, a raised maximum, drawn as one more pip. It is a bare
@@ -199,7 +219,7 @@ round enemy Charges are spent will tell.
    sentence, and the greyed state's distinct reading.
 3. **Measure.** DONE (above). Barrier, Blind and Feint cast counts before and after, full-clear skilled and chart,
    and the AI's spend round. If a charged move is now cast less than it was, lower its mana cost.
-4. **Refills.** A `restoreCharge` passive effect and an event (`ChargeRestored`) for the view to flash.
+4. **Refills.** IN (below). A `restoreCharge` passive effect and an event (`ChargeRestored`) for the view to flash.
    Author two or three of the refills above, on Barrier's and Blind's holders first.
 5. **The audit.** Candidates move onto Charges one by one, and the Charge-reading moves are authored.
 

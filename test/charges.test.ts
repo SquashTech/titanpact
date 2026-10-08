@@ -13,6 +13,9 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { chargesLeft, isMoveUsable } from '../src/engine/state';
+import { chargeBoonPassives } from '../src/data/passives';
+import { boonPool } from '../src/run/boons';
+import { createRosterEntry } from '../src/run/state';
 import type { CombatState } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -162,4 +165,57 @@ test('charges: no restoreCharge refills on a timer, a switch or the bench (docs/
       assert.ok(!reactive.whileBenched, `${passive.id} refills Charges from the bench`);
     }
   }
+});
+
+// --- Phase 4: the refill Boons (Riposte, Grim Resolve, Deep Breath) ---
+
+function holding(state: CombatState, id: string, passiveId: string, chargesSpent: Record<string, number>): CombatState {
+  const c = state.combatants[id];
+  return { ...state, combatants: { ...state.combatants, [id]: { ...c, chargesSpent, passives: { ...c.passives, [passiveId]: { passiveId, stacks: 1 } } } } };
+}
+
+const fist = (id: string, target: string): Action => ({ kind: 'move', combatantId: id, moveId: 'ironFist', declaredTarget: target }) as Action;
+
+test('charges: Riposte — a move turned away by this hero\'s Barrier gives the guard its Charge back, at most twice a fight', () => {
+  let state = holding(fixture(21), 'a1', 'riposte', {});
+  const guarded = resolveRound(state, [barrier('a1'), fist('b1', 'a1')], config);
+  assert.ok(guarded.events.some((e) => e.type === 'MoveGuarded' && e.combatantId === 'a1'));
+  assert.ok(guarded.events.some((e) => e.type === 'ChargeRestored' && e.combatantId === 'a1' && e.moveId === 'barrier'));
+  assert.strictEqual(chargesLeft(guarded.state.combatants.a1, moves.barrier), 2, 'the read paid for itself');
+
+  state = guarded.state;
+  for (let i = 0; i < 2; i++) state = resolveRound(state, [barrier('a1'), fist('b1', 'a1')], config).state;
+  assert.strictEqual(chargesLeft(state.combatants.a1, moves.barrier), 1, 'the third block is not repaid');
+});
+
+test('charges: Riposte does not fire on a Barrier nobody tested', () => {
+  const state = holding(fixture(22), 'a1', 'riposte', {});
+  const quiet = resolveRound(state, [barrier('a1'), fist('b1', 'a2')], config);
+  assert.ok(!quiet.events.some((e) => e.type === 'ChargeRestored'));
+  assert.strictEqual(chargesLeft(quiet.state.combatants.a1, moves.barrier), 1);
+});
+
+test('charges: Grim Resolve — the partner knocked out gives every charged move of this hero one back', () => {
+  let state = holding(fixture(23), 'a1', 'grimResolve', { barrier: 2, feint: 1 });
+  state = setHp(state, 'a2', 1);
+  const r = resolveRound(state, [fist('b1', 'a2')], config);
+  assert.ok(r.state.combatants.a2.fainted);
+  assert.strictEqual(r.state.combatants.a1.chargesSpent?.barrier, 1);
+  assert.strictEqual(r.state.combatants.a1.chargesSpent?.feint, 0);
+});
+
+test('charges: Deep Breath — a Rest gives every charged move one back', () => {
+  const state = holding(fixture(24), 'a1', 'deepBreath', { barrier: 2, feint: 1 });
+  const r = resolveRound(state, [{ kind: 'rest', combatantId: 'a1' } as Action], config);
+  assert.deepStrictEqual(r.state.combatants.a1.chargesSpent, { barrier: 1, feint: 0 });
+});
+
+test('charges: a refill Boon is offered only to a roster that holds something it refills', () => {
+  const plain = createRosterEntry('r1', 'cinderKnight', heroes.cinderKnight.moveIds);
+  const guard = createRosterEntry('r2', 'thane', ['runeslash', 'barrier']);
+  const archer = createRosterEntry('r3', 'stormRanger', heroes.stormRanger.moveIds);
+  const charge = Object.keys(chargeBoonPassives);
+  assert.deepStrictEqual(boonPool([plain], heroes).filter((id) => charge.includes(id)), []);
+  assert.deepStrictEqual(boonPool([plain, guard], heroes).filter((id) => charge.includes(id)).sort(), ['deepBreath', 'grimResolve', 'riposte']);
+  assert.deepStrictEqual(boonPool([archer], heroes).filter((id) => charge.includes(id)).sort(), ['deepBreath', 'grimResolve'], 'Riposte needs a guard');
 });

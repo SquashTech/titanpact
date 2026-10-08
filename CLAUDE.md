@@ -686,7 +686,8 @@ don't silently override it.
   passive relics — same effects, hero-scoped, so the scope that broke them is gone. 1-of-3 then
   pick a hero, via `grantEventPassive`; it stacks. The pool is every equipment/event passive plus
   **one type-locked +20% damage passive per type** (Ancient excluded), and a type one is offered
-  **only when a roster hero fields that type** — the filter is what keeps it from ever being a
+  **only when a roster hero fields that type** — likewise the three Charge refills (Riposte, Grim
+  Resolve, Deep Breath, `docs/charges.md`), only when a roster hero holds a move they refill — the filter is what keeps it from ever being a
   dead card. Evolution passives, Classes and the new innate cards are excluded: all three are
   somebody's identity already (an innate that IS an equipment card stays, as that card).
   `src/run/boons.ts`, `docs/run-loop.md` "Boons".

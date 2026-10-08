@@ -4,7 +4,8 @@
 // which passives this particular roster may be offered.
 
 import type { HeroDefinition, MoveDefinition, PassiveDefinition } from '../engine/content';
-import { boonPassives, fieldHeraldPassiveFor, typeDamagePassiveFor } from '../data/passives';
+import { boonPassives, chargeBoonPassives, fieldHeraldPassiveFor, typeDamagePassiveFor } from '../data/passives';
+import { moves } from '../data/moves';
 import type { RosterEntry } from './state';
 import { rosterEntryTypes } from './progression';
 
@@ -43,7 +44,26 @@ export function boonPool(roster: readonly RosterEntry[], heroLookup: Record<stri
   const typeLocked = [...Object.entries(typeDamagePassiveFor), ...Object.entries(fieldHeraldPassiveFor)]
     .filter(([type]) => owned.has(type))
     .map(([, id]) => id);
-  return [...Object.keys(boonPassives), ...typeLocked];
+  const chargeLocked = Object.keys(chargeBoonPassives).filter((id) => roster.some((entry) => chargeBoonFits(chargeBoonPassives[id], entry)));
+  return [...Object.keys(boonPassives), ...typeLocked, ...chargeLocked];
+}
+
+/**
+ * Whether a Charge-refill Boon has anything to refill on this hero: a held move with Charges, carrying
+ * the tag the refill names, if it names one. Read off the definition, so a new refill needs no table.
+ */
+export function chargeBoonFits(passive: PassiveDefinition | undefined, entry: RosterEntry, moveLookup: Record<string, MoveDefinition> = moves): boolean {
+  return (chargeBoonMoveCount(passive, entry, moveLookup) ?? 0) > 0;
+}
+
+/** How many of this hero's moves a Charge-refill Boon would refill; `null` for any other Boon. The Boon screen's fit note. */
+export function chargeBoonMoveCount(passive: PassiveDefinition | undefined, entry: RosterEntry, moveLookup: Record<string, MoveDefinition> = moves): number | null {
+  const refill = [passive?.reactive?.effect, passive?.reactive?.alsoEffect].find((e) => e?.kind === 'restoreCharge');
+  if (!refill || refill.kind !== 'restoreCharge') return null;
+  return entry.unlockedMoveIds.filter((id) => {
+    const move = moveLookup[id];
+    return move?.chargesPerFight != null && (refill.moveTag === undefined || !!move.tags?.includes(refill.moveTag));
+  }).length;
 }
 
 /** The type a Boon is locked to, or null for the roster-agnostic ones. Read off the definition rather than a table, so a new type Boon needs no registration. */

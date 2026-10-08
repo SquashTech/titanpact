@@ -7,7 +7,7 @@ import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import type { HeroDefinition, PassiveDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
-import { boonMoveCount, boonMoveType, pickBoonOffers } from '../../run/boons';
+import { boonMoveCount, boonMoveType, chargeBoonMoveCount, pickBoonOffers } from '../../run/boons';
 import { grantEventPassive } from '../../run/events';
 import { entryPassiveCounts } from '../../run/entryStats';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -120,6 +120,15 @@ export function BoonNodeScreen({ run, onRunChange, onContinue, seed }: Props) {
     const held = heldCount(entry);
     const type = boonMoveType(confirmed ?? undefined);
     const count = boonMoveCount(confirmed ?? undefined, entry, moves);
+    const refills = chargeBoonMoveCount(confirmed ?? undefined, entry, moves);
+    if (refills !== null) {
+      return (
+        <span className={`boon-fit-note${refills === 0 ? ' is-dead' : ''}`}>
+          {refills === 0 ? 'nothing to refill' : `${refills} move${refills === 1 ? '' : 's'} with Charges`}
+          {held > 0 ? ` · holds ×${held}` : ''}
+        </span>
+      );
+    }
     if (count === null) return held > 0 ? <span className="boon-held-note">already holds ×{held}</span> : undefined;
     return (
       <span className={`boon-fit-note${count === 0 ? ' is-dead' : ''}`}>

@@ -171,7 +171,7 @@ export type PassiveId = string;
 /** 'Endured' is a knockout refused (enduresOnce); its subject is the holder, read off a hit or a status tick — never the Pact Clock, which is no trigger source. */
 /** 'RoundStarted' is RoundEnded's mirror, read before the round's first action (Cinder's Ironclad plate). 'FieldEffectSet' a field taking the board, by any setter; both are about nobody, so each active owner is its own subject, and `fieldEffectId` is what eventFieldEquals reads. */
 /** 'ManaGained' reads every way mana arrives — a grant (move or passive), the round's regen, a Rest — never a potion; its subject is the receiver and `manaGained` what landed (Zenith). */
-export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured' | 'ManaGained' | 'RoundStarted' | 'FieldEffectSet';
+export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured' | 'ManaGained' | 'RoundStarted' | 'FieldEffectSet' | 'MoveGuarded';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';
@@ -428,8 +428,8 @@ export type SelfHpCost =
   /** End at `amount` HP. Never heals. */
   | { mode: 'reduceToHp'; amount: number };
 
-/** A family label a passive can read across types (docs/charges.md): Squall's Arrows. Never a type. */
-export type MoveTag = 'arrow';
+/** A family label a passive can read across types (docs/charges.md): Squall's Arrows, Barrier's guard. Never a type. */
+export type MoveTag = 'arrow' | 'guard';
 
 export interface MoveDefinition {
   id: string;

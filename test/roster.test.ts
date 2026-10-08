@@ -163,13 +163,15 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   const { runEvents } = require('../src/data/events') as typeof import('../src/data/events');
   const { curses } = require('../src/data/curses') as typeof import('../src/data/curses');
   const { classes } = require('../src/data/classes') as typeof import('../src/data/classes');
-  const { boonPassives, fieldHeraldPassiveFor, typeDamagePassiveFor } = require('../src/data/passives') as typeof import('../src/data/passives');
+  const { boonPassives, chargeBoonPassives, fieldHeraldPassiveFor, typeDamagePassiveFor } = require('../src/data/passives') as typeof import('../src/data/passives');
 
   const granted = new Set<string>(Object.keys(classes));
   // The Boon node (src/run/boons.ts) hands out both halves of its pool.
   for (const id of Object.keys(boonPassives)) granted.add(id);
   for (const id of Object.values(typeDamagePassiveFor)) granted.add(id);
   for (const id of Object.values(fieldHeraldPassiveFor)) granted.add(id);
+  // The Charge refills join the Boon pool per roster (run/boons.ts chargeBoonFits).
+  for (const id of Object.keys(chargeBoonPassives)) granted.add(id);
   for (const nodes of Object.values(progressionTable.evolutions)) {
     for (const node of nodes) for (const path of node.paths) for (const id of path.grantsPassiveIds ?? []) granted.add(id);
   }

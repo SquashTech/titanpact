@@ -2857,8 +2857,47 @@ const titanPassives: Record<string, PassiveDefinition> = {
   },
 };
 
+/**
+ * Charge refills (docs/charges.md phase 4): Boons offered only while a roster hero holds a move
+ * they can refill (src/run/boons.ts chargeBoonFits). First-pass figures.
+ */
+export const chargeBoonPassives: Record<string, PassiveDefinition> = {
+  riposte: {
+    id: 'riposte',
+    name: 'Riposte',
+    description: "When this hero's Barrier turns a move away, its guard gets a Charge back. Twice a fight.",
+    reactive: {
+      hook: 'MoveGuarded',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Barrier' } },
+      effect: { kind: 'restoreCharge', target: 'self', amount: 1, moveTag: 'guard' },
+      maxFiresPerFight: 2,
+    },
+  },
+  grimResolve: {
+    id: 'grimResolve',
+    name: 'Grim Resolve',
+    description: "When this hero's partner is knocked out, every move of this hero's with Charges gets one back.",
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'ally', finishingBlow: true },
+      effect: { kind: 'restoreCharge', target: 'self', amount: 1 },
+    },
+  },
+  deepBreath: {
+    id: 'deepBreath',
+    name: 'Deep Breath',
+    description: "When this hero Rests, every move of this hero's with Charges gets one back.",
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'restoreCharge', target: 'self', amount: 1 },
+    },
+  },
+};
+
 export const passives: Record<string, PassiveDefinition> = {
   ...fixturePassives,
+  ...chargeBoonPassives,
   ...equipmentPassives,
   ...eventPassives,
   ...typeDamagePassives,

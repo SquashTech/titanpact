@@ -175,6 +175,13 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
     }
     case 'Rested':
       return { label: 'When', text: `${who} Rests`, glyph: { kind: 'stat', stat: 'manaPool' } };
+    case 'MoveGuarded':
+      return {
+        label: 'When',
+        text: `${whose} ${statusId ? statusName(statusId) : 'guard'} turns a move away`,
+        glyph: statusId ? { kind: 'status', statusId } : { kind: 'move', move: 'buff' },
+        color: statusId ? 'status' : undefined,
+      };
     case 'Endured':
       return { label: 'When', text: `${who} refuses a knockout`, glyph: { kind: 'stat', stat: 'hp' } };
     case 'ManaGained':
@@ -241,7 +248,7 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
     case 'restoreMana':
       return { label: 'Then', text: `Refills ${targetWord(effect.target, condition, hook)}'s Mana to its pool`, glyph: { kind: 'stat', stat: 'manaPool' } };
     case 'restoreCharge': {
-      const which = effect.triggeringMove ? 'that move' : effect.moveTag === 'arrow' ? 'every Arrow' : 'every move with Charges';
+      const which = effect.triggeringMove ? 'that move' : effect.moveTag === 'arrow' ? 'every Arrow' : effect.moveTag === 'guard' ? 'its guard' : 'every move with Charges';
       const amount = effect.amount === 'all' ? 'refills' : `gets ${effect.amount === 1 ? 'a Charge' : `${effect.amount} Charges`} back`;
       return { label: 'Then', text: `${which[0].toUpperCase()}${which.slice(1)} ${amount}`, glyph: { kind: 'move', move: 'buff' } };
     }

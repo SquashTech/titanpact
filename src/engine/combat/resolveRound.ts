@@ -281,11 +281,19 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       const passiveId = wardOn(working, targetId, passives);
       return passiveId ? { passiveId } : null;
     };
+    const guarded: CombatEvent[] = [];
     for (const targetId of targetIds) {
       const guard = guardOn(targetId);
-      if (guard) events.push({ type: 'MoveGuarded', round, combatantId: targetId, sourceCombatantId: action.combatantId, moveId: move.id, ...guard });
+      if (guard) guarded.push({ type: 'MoveGuarded', round, combatantId: targetId, sourceCombatantId: action.combatantId, moveId: move.id, ...guard });
     }
     targetIds = targetIds.filter((id) => guardOn(id) === null);
+    if (guarded.length > 0) {
+      events.push(...guarded);
+      // A turned-away move is a trigger (Riposte).
+      const guardReactions = resolvePassiveReactions(working, round, guarded, heroes, statuses, passives, fieldEffects, moves);
+      working = guardReactions.state;
+      events.push(...guardReactions.events);
+    }
 
     // A move whose gate yields to a taunt keeps the taunter it was pulled onto (content.ts).
     if (!(move.gateYieldsToRedirect && pulledByTaunt)) targetIds = statusGatedTargets(working, move, targetIds);
