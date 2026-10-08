@@ -330,14 +330,14 @@ test('mech: the slate cashes the Conduct it plants and plants a Haunt it cannot 
   assert.strictEqual(allRiders.filter((a) => a.statusId === 'Haunt').length, 1, 'Haunt planters');
 });
 
-test('mech: the slate is fifteen rows with the authored shape, plus the four 2026-09-15 additions and Spark Plug', () => {
+test('mech: the slate is fifteen rows with the authored shape, plus the four 2026-09-15 additions, Spark Plug and the three Charge kits', () => {
   const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech' && !signatureMoves[m.id]);
-  assert.strictEqual(mechMoves.length, 20, 'the authored slate is fifteen rows, plus four, plus the Early planter');
+  assert.strictEqual(mechMoves.length, 23, 'the authored slate is fifteen rows, plus four, plus the Early planter, plus Rocket Pod, Repair Kit and Battery Pack (docs/charges.md)');
 
   // Four magical rows against a roster whose best Intelligence is 45 — pinned so it cannot silently grow.
   assert.strictEqual(mechMoves.filter((m) => m.category === 'magical' && m.kind === 'damage').length, 4);
   const heals = mechMoves.filter((m) => m.kind === 'heal');
-  assert.strictEqual(heals.length, 3);
+  assert.strictEqual(heals.length, 4);
   assert.strictEqual(moves.salvage.target, 'self');
   // Salvage, and the Ancient slate's Abide (2026-09-17) — the seal's own self-mend.
   assert.strictEqual(Object.values(moves).filter((m) => m.kind === 'heal' && m.target === 'self').length, 2);

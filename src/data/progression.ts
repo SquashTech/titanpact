@@ -49,6 +49,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'swingingChain',
     ],
     crimson: [
+      'flashpoint',
       'infuse',
       'setAlight',
       'scorch',
@@ -212,6 +213,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     'pinDown','icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rimeCoat', 'rockToss', 'openingStrike', 'ironFist', 'frostWall', 'cogBop', 'snowball', 'heavyBlow', 'iceShatter', 'rubbleRush', 'momentumSwing', 'serratedSlice', 'titanicCrush', 'hoarfrostEdge'],
     // --- Storm ---
     stormRanger: [
+      'ironArrow',
       'thunderclap',
       'pinningShot',
       'stormpiercer',
@@ -339,6 +341,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // --- Nature ---
     wildOracle: [
+      'fullBloom',
       'toxicSpores',
       'vineLash',
       'blight',
@@ -670,6 +673,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'parry',
     ],
     gallant: [
+      'ironArrow',
       'rally',
       'swiftBlow',
       'ironFist',
@@ -695,6 +699,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Shadow it always carried and Stone for the cannonballs. No Storm here — Stormrunner's line
     // is the whole of it.
     scallywag: [
+      'ironArrow',
       'sharpen',
       'ironFist',
       'openingStrike',
@@ -717,8 +722,12 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // --- Mech ---
     forgewright: [
+      'batteryPack',
+      'repairKit',
+      'rocketPod',
     'sparkPlug','backfire', 'overheat', 'malfunction', 'meltdown', 'salvage', 'juryRig', 'cogBop', 'overclock', 'reinforce', 'undertow', 'singe', 'ironFist', 'rockToss', 'cogSlam', 'whirlingBlades', 'jackpot', 'overdrive', 'perfectCreation', 'steamVent', 'patchUp', 'shockCoil', 'salvo'],
     steamColossus: [
+      'rocketPod',
       'sharpen',
       'swiftBlow',
       'pistonPunch',
@@ -745,6 +754,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Mech's physical column and the Iron heavies a 110-Attack body wants. Pounce telegraphs the
     // Beast graft, Rock Toss the Stone one; Gore is Primal's grant, so it is not here.
     rex: [
+      'rocketPod',
       'sparkPlug',
       'pistonPunch', 'cogBop', 'pounce', 'rockToss', 'heavyBlow', 'ironFist',
       'whirlingBlades', 'cogSlam', 'shockCoil', 'juryRig', 'patchUp', 'momentumSwing', 'kickstart',
@@ -753,6 +763,8 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Patch: the repair column, with Light, Water and Arcane support as the off-type — a medic's
     // colours. Beacon's and Coolant's lines are the heal columns proper, so they are not here.
     patch: [
+      'batteryPack',
+      'repairKit',
       'backfire',
       'overclock',
       'purify',
@@ -895,6 +907,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Ashwing: Fire's magical column with Light's and Water's mending beside it. Immolate is Firebird's grant.
     ashwing: [
+      'flashpoint',
       'setAlight',
       'sparkFlash', 'flareUp', 'stokeTheFlames', 'vigil', 'purify', 'refresh',
       'scorch', 'spreadingBlaze', 'heatHaze', 'backdraft', 'benediction', 'cleansingRain',
@@ -930,6 +943,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Ronin: Iron's physical column, with Shadow's first strike and Spirit's flight as the off-types. Onslaught is Kensei's grant.
     ronin: [
+      'ironArrow',
       'swiftBlow',
       'ironFist', 'openingStrike', 'pinDown', 'fortify', 'ironSkin',
       'shrapnel',
@@ -945,6 +959,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Morel: Nature's Poison column and Mind's dulling as the off-type. Wild Bloom is Toadstool's grant.
     morel: [
+      'fullBloom',
       'umbraBolt',
       'weaken', 'regrowth', 'sow', 'lull', 'inkCloud', 'enervate',
       'blight', 'corrode', 'rootbind', 'magicGrowth', 'disorient', 'mindLeech',
@@ -983,6 +998,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Tinder: Fire's magical Burn column, with Spirit's and Storm's quick casts as the off-types. Firestorm is Headliner's grant.
     tinder: [
+      'flashpoint',
       'sparkFlash',
       'setAlight', 'flareUp', 'zap', 'unbound', 'wisp', 'spite',
       'scorch', 'spreadingBlaze', 'heatHaze', 'backdraft', 'immolate', 'flicker', 'stunningBolt',
@@ -1004,6 +1020,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Lotus: Nature's magical column, with Arcane's and Light's nukes as the off-types. Force of Nature is Thousand Petals' grant.
     lotus: [
+      'fullBloom',
       'psiBolt',
       'sow', 'toxicSpores', 'focus', 'magicBolt', 'glimmer', 'bless',
       'corrode', 'blight', 'magicGrowth', 'wildBloom', 'rootbind', 'radiantBeam', 'arcaneBlast',
@@ -1108,6 +1125,8 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Abacus: Mech's magical column with Mind's reading of the far side; Distort sets the Stasis Field Hindsight reads. Perfect Creation is Difference Engine's grant.
     abacus: [
+      'batteryPack',
+      'repairKit',
       'psiBolt',
       'kickstart', 'lull', 'focus', 'enervate', 'magicBolt', 'overclock',
       'overheat', 'malfunction', 'salvage', 'hindsight', 'cerebralShock', 'stasis', 'psyshock',
@@ -1115,6 +1134,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Whirr: Mech's physical column with Storm's darting and Iron's quick blows; Spark Plug plants what Overcharge and Whirling Blades run on. Overdrive is Gyre's grant.
     whirr: [
+      'rocketPod',
       'swiftBlow',
       'cogBop', 'steamVent', 'sparkPlug', 'thunderclap', 'openingStrike', 'pinDown',
       'whirlingBlades', 'shockCoil', 'cogSlam', 'shockSlice', 'rideTheLightning', 'momentumSwing',

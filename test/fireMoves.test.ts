@@ -57,12 +57,12 @@ function burn(state: CombatState, combatantId: string, magnitude: number): Comba
 
 // --- The pool itself ---
 
-test('fire: the authored pool is exactly the sixteen designed moves plus the three 2026-09-15 additions, all Fire-typed', () => {
+test('fire: the authored pool is exactly the sixteen designed moves plus the three 2026-09-15 additions and Flashpoint (docs/charges.md), all Fire-typed', () => {
   const fire = Object.values(moves).filter((m) => m.type === 'Fire' && !signatureMoves[m.id]);
   assert.deepStrictEqual(
     fire.map((m) => m.id).sort(),
     [
-      'backdraft', 'blazingRetreat', 'ember', 'firebrand', 'firestorm', 'flareUp', 'heatHaze', 'immolate', 'inferno', 'kindle', 'moltenLash',
+      'backdraft', 'blazingRetreat', 'ember', 'firebrand', 'firestorm', 'flareUp', 'flashpoint', 'heatHaze', 'immolate', 'inferno', 'kindle', 'moltenLash',
       'scorch', 'setAlight', 'singe', 'sparkBurst', 'sparkFlash', 'spreadingBlaze', 'stokeTheFlames',
       'volcanicSurge',
     ]

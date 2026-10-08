@@ -233,8 +233,8 @@ test('iron: every damage row detonates Conduct for free, and the slate plants it
   const damage = ironMoves.filter((m) => m.kind === 'damage');
   const planters = ironMoves.filter((m) => firstStatusApplication(m)?.statusId === 'Conduct');
 
-  assert.strictEqual(ironMoves.length, 21, 'the authored slate is sixteen rows, the two Shield cards (docs/shield.md §3.5), the two 2026-09-15 additions and the Call’s Shrapnel');
-  assert.strictEqual(damage.length, 13, 'thirteen of them detonate Conduct for free');
+  assert.strictEqual(ironMoves.length, 22, 'the authored slate is sixteen rows, the two Shield cards (docs/shield.md §3.5), the two 2026-09-15 additions, the Call’s Shrapnel and Iron Arrow (docs/charges.md)');
+  assert.strictEqual(damage.length, 14, 'fourteen of them detonate Conduct for free');
   assert.strictEqual(planters.length, 0, 'and none of them plants it');
   assert.ok(statuses.Conduct.triggerTypes?.includes('Iron'));
 });

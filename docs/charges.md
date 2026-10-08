@@ -227,6 +227,31 @@ Every move in the game that guarantees a Daze or lays a guard or a redirect, rea
   most fights; it waits for Charges to spread. Empty-handed wants a hero with several charged moves,
   and only Squall has that.
 
+## Spreading Charges (BUILT 2026-10-08, per user direction)
+
+Charges belong on an effect too strong to repeat, and **damage is an effect** (Storm Arrow is the
+template): a Late-sized payload at an Early or Mid price, a few times a fight. Six moves carried it to
+four more types, kept at the end of the catalog so no type's derived Evolution line moved, each in at
+least two heroes' offers (pinned in `test/charges.test.ts`). Untagged ones join their type's slate,
+so the Titanspawn field them too; the Arrow does not.
+
+| Move | Type, tier | Payload | Mana | Charges | Offered to |
+|---|---|---|---|---|---|
+| Iron Arrow | Iron, Early | 50 BP, an Arrow (Squall's Retrieve reads it) | 15 | 3 | Scallywag, Ronin, Gallant, Squall |
+| Flashpoint | Fire, Mid | 50 BP and Engulfed (Burn 3) | 25 | 1 | Crimson, Tinder, Ashwing |
+| Full Bloom | Nature, Mid | Renew 8 on one ally | 25 | 2 | Sylva, Lotus, Morel |
+| Rocket Pod | Mech, Mid | 55 BP on both foes | 25 | 3 | Rex, Whirr, Bellows, Clockwork |
+| Repair Kit | Mech, Early | Heal 60 on one ally | 15 | 3 | Patch, Clockwork, Abacus |
+| Battery Pack | Mech, Mid | +40 Mana to one ally, past the pool | 10 | 2 | Patch, Abacus, Clockwork |
+
+**Measured** (3000 runs a side, seed 7, against `2c5df1aa`): full-clear 77.5 → 78.5% skilled, 28.3 →
+28.3% chart, every act inside a point. Skilled-pilot casts: Rocket Pod 1834 (12.6 damage a Mana, Mech's
+best), Flashpoint 860 (29% of its damage from the Burn), Repair Kit 767, Iron Arrow 648 (13.5 damage a
+Mana, the Arrow family's top), Battery Pack 159, **Full Bloom 4** — the skilled pilot reaches for
+Regrowth (Renew 3 on both, 20 Mana) instead; the chart pilot cast it 105 times. None of the six is in
+the enemy side's top 40 by knockouts. Full Bloom is the one to watch: a Renew 8 on one body may simply
+lose to a Renew 3 on two.
+
 ## The AI
 
 `isMoveUsable` already keeps a spent move out of the enemy's options, so the AI is correct on day

@@ -242,3 +242,14 @@ test('charges: Last Shot — Stormpiercer hits ×1.5 on its last Charge, read of
   assert.ok(first > 0);
   assert.ok(Math.abs(last / first - 1.5) < 0.05, `last ${last} vs first ${first}`);
 });
+
+// --- Spreading Charges: the six moves of 2026-10-08 ---
+
+test('charges: each spread Charge move holds Charges and sits in at least two heroes\' offers', () => {
+  const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
+  for (const id of ['ironArrow', 'flashpoint', 'fullBloom', 'rocketPod', 'repairKit', 'batteryPack']) {
+    assert.ok(moves[id]?.chargesPerFight, `${id} holds no Charges`);
+    const holders = Object.keys(heroes).filter((h) => progressionTable.moveTiers[h]?.includes(id));
+    assert.ok(holders.length >= 2, `${id} is offered to ${holders.length} hero(es)`);
+  }
+});
