@@ -4595,10 +4595,11 @@ textarea,
 
 /* Switch-row/bench-panel picker cards are too small for these to read —
    matches .bench-row .status-badge-row:empty hiding statuses there too. The
-   target picker drops them as well: they ran into the typing badges, and the
-   arena above already shows them. */
+   target picker drops them, and its status badges, as well: the arena above
+   already shows both, and the buffs ran into the typing badges. */
 .bench-row .stat-mod-corner,
-.target-row .stat-mod-corner {
+.target-row .stat-mod-corner,
+.target-row .status-badge-row {
   display: none;
 }
 
