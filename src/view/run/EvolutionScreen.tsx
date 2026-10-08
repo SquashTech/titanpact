@@ -338,8 +338,8 @@ const SHOWCASE_SWIPE_PX = 44;
  * One form at full size, and where the choice is spent (2026-09-29, per user direction, replacing
  * the dossier sheet). The hero stands on rays in the path's colours with its typing beside it.
  * Under it, the path's gifts strung down one thread, unboxed (2026-10-08, per user direction — a
- * stone panel of bordered rows was boxes inside boxes): the new type, the move, each passive, a
- * rewire, each a medal and a line, every tap opening the full card; a pair or a named path's
+ * stone panel of bordered rows was boxes inside boxes): in the card's order — a rewire, the new type,
+ * the move, each passive — each a medal and a line, every tap opening the full card; a pair or a named path's
  * three draw the same way. Everything the choice is made with sits together at the foot: the
  * dots, the arrows either side of the commit, and the way back. Nothing scrolls (2026-10-02, per
  * user direction): on a short screen the stage and the medals give up height first.
@@ -410,18 +410,8 @@ function PathShowcase({
       {/* Keyed on the path so paging replays the gifts' entrance. */}
       <div className="evo-show-body" key={path.id}>
         <ol className="evo-gifts">
-          {grantsOf(path).map((grant, i) => (
-            <GiftLine
-              key={i}
-              grant={grant}
-              order={i}
-              traded={traded}
-              caster={caster}
-              onRead={grant.kind === 'move' ? () => setReadingMoveId(grant.id) : grant.kind === 'passive' ? () => setReadingPassiveId(grant.id) : undefined}
-            />
-          ))}
           {swapEntries.length > 0 && (
-            <li className="evo-gift is-rewire" style={{ '--i': grantsOf(path).length } as CSSProperties}>
+            <li className="evo-gift is-rewire" style={{ '--i': 0 } as CSSProperties}>
               <span className="evo-gift-medal">⇄</span>
               <span className="evo-gift-body">
                 <span className="evo-gift-kind">Rewired</span>
@@ -436,6 +426,16 @@ function PathShowcase({
               </span>
             </li>
           )}
+          {grantsOf(path).map((grant, i) => (
+            <GiftLine
+              key={i}
+              grant={grant}
+              order={swapEntries.length > 0 ? i + 1 : i}
+              traded={traded}
+              caster={caster}
+              onRead={grant.kind === 'move' ? () => setReadingMoveId(grant.id) : grant.kind === 'passive' ? () => setReadingPassiveId(grant.id) : undefined}
+            />
+          ))}
         </ol>
 
         {poolMoves.length > 0 && (
