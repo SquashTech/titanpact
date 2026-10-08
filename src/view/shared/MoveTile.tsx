@@ -143,6 +143,13 @@ export function moveKindLabel(move: MoveDefinition): string {
 const CATEGORY_LABELS: Record<MoveDefinition['category'], string> = { physical: 'PHY', magical: 'MAG' };
 
 /** Canonical player-facing name per TargetMode; FightScreen's targeting copy reads this too. */
+/** "A Charge back on every spent move", "Every Arrow refills". */
+export function restoresChargesText(restore: NonNullable<MoveDefinition['restoresCharges']>): string {
+  const which = restore.moveTag === 'arrow' ? 'Arrow' : 'spent move';
+  if (restore.amount === 'all') return restore.moveTag === 'arrow' ? 'Every Arrow refills' : 'Every move refills its Charges';
+  return `${restore.amount === 1 ? 'A Charge' : `${restore.amount} Charges`} back on every ${which}`;
+}
+
 /** '1 Charge', '2 Charges'. */
 export function chargesLabel(n: number): string {
   return `${n} Charge${n === 1 ? '' : 's'}`;
@@ -443,6 +450,7 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   if (move.manaCostAll) parts.push('Spends all Mana');
   if (move.firstTurnOnly) parts.push('First turn out only');
   if (move.tags?.includes('arrow')) parts.push('Arrow');
+  if (move.restoresCharges) parts.push(restoresChargesText(move.restoresCharges));
   if (move.chargesPerFight != null) parts.push(move.chargesPerFight === 1 ? 'Once a fight' : `${chargesLabel(move.chargesPerFight)} a fight`);
 
   if (move.fieldEffectApplication) {

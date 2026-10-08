@@ -109,32 +109,36 @@ test('storm: every damage move in the slate carries Conduct detonation for free 
 
 // --- Random targeting ---
 
-test('storm: Rising Static lands its Speed on ONE ally and its Conduct on ONE enemy — a payload on both sides of the field', () => {
-  const state = withDeepPools(stormFixture(400));
+test('storm: Rising Static gives both allies a Charge back on every spent move and marks ONE enemy — no Speed', () => {
+  let state = withDeepPools(stormFixture(400));
+  state = {
+    ...state,
+    combatants: {
+      ...state.combatants,
+      a1: { ...state.combatants.a1, chargesSpent: { feint: 2 } },
+      a2: { ...state.combatants.a2, chargesSpent: { stormArrow: 3, pinningShot: 1 } },
+    },
+  };
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'risingStatic', declaredTarget: null }];
-  const { state: next } = resolveRound(state, actions, config);
+  const { state: next, events } = resolveRound(state, actions, config);
 
-  const buffed = ['a1', 'a2'].filter((id) => (next.combatants[id].statModifiers.speed ?? 0) > 0);
+  assert.deepStrictEqual(next.combatants.a1.chargesSpent, { feint: 1 });
+  assert.deepStrictEqual(next.combatants.a2.chargesSpent, { stormArrow: 2, pinningShot: 0 });
+  assert.strictEqual(events.filter((e) => e.type === 'ChargeRestored').length, 3, 'one event a move');
+  assert.ok(['a1', 'a2'].every((id) => !next.combatants[id].statModifiers.speed), 'no Speed any more');
   const marked = ['b1', 'b2'].filter((id) => hasStatus(next.combatants[id], 'Conduct'));
-  assert.strictEqual(buffed.length, 1, 'exactly one ally is quickened');
   assert.strictEqual(marked.length, 1, 'exactly one enemy is marked');
 });
 
-test('storm: random targeting is SEEDED — the same seed picks the same pair, and different seeds do not all agree', () => {
+test('storm: random targeting is SEEDED — the same seed marks the same enemy, and different seeds do not all agree', () => {
   const run = (seed: number) => {
     const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'risingStatic', declaredTarget: null }];
     const { state } = resolveRound(withDeepPools(stormFixture(seed)), actions, config);
-    return {
-      buffed: ['a1', 'a2'].find((id) => (state.combatants[id].statModifiers.speed ?? 0) > 0),
-      marked: ['b1', 'b2'].find((id) => hasStatus(state.combatants[id], 'Conduct')),
-    };
+    return ['b1', 'b2'].find((id) => hasStatus(state.combatants[id], 'Conduct'));
   };
-  assert.deepStrictEqual(run(401), run(401));
+  assert.strictEqual(run(401), run(401));
   const spread = [401, 402, 403, 404, 405, 406, 407, 408].map(run);
-  assert.ok(
-    spread.some((r) => r.buffed !== spread[0].buffed) || spread.some((r) => r.marked !== spread[0].marked),
-    'eight seeds all rolled identically — the draw is not actually random'
-  );
+  assert.ok(spread.some((r) => r !== spread[0]), 'eight seeds all rolled identically — the draw is not actually random');
 });
 
 test('storm: a NON-random move draws no targeting RNG at all — every fight authored before random targeting replays identically', () => {

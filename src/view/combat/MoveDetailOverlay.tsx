@@ -22,7 +22,7 @@ import { fieldEffectFactsLine } from '../shared/fieldEffectFacts';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS, chargesLabel, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, chargesLabel, restoresChargesText, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
 import { forecastDamage, koLabel } from './forecast';
 import { ForecastBite } from './ForecastBite';
@@ -233,6 +233,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
       move.drainPercent ||
       move.manaDiscountOnUse ||
       move.chargesPerFight != null ||
+      move.restoresCharges ||
       move.typeFollowsUser ||
       move.basePowerGainOnUse ||
       move.randomBasePower ||
@@ -645,6 +646,9 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
                   : `up to ${move.basePowerGainOnUse.max}, this hero, this fight`
               }
             />
+          )}
+          {move.restoresCharges && (
+            <EffectRow glyph={<MoveKindGlyph kind="buff" />} text={restoresChargesText(move.restoresCharges)} note="never past a move's own count" />
           )}
           {move.chargesPerFight != null && (
             <EffectRow

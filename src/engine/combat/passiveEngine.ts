@@ -15,6 +15,7 @@ import { applyHpDelta } from './faintHandling';
 import { applyStatus, cleanseStatuses, healBlocked, removeStatus } from './statusEngine';
 import { setFieldEffect } from './fieldEffectEngine';
 import { wardRefusesStatus } from './ward';
+import { restoreCharges } from './charges';
 
 /** A CombatEvent (or a synthetic pre-roll context) read generically by field name. */
 type TriggerContext = Record<string, unknown>;
@@ -338,24 +339,12 @@ function resolveEffectOn(
         events: [{ type: 'ManaChanged', round, combatantId: targetId, previousMana, newMana, maxMana: getMaxMana(heroes[target.heroId], target) }],
       };
     }
-    case 'restoreCharge': {
-      const triggerMoveId = typeof context.moveId === 'string' ? context.moveId : undefined;
-      const events: CombatEvent[] = [];
-      const spent = { ...target.chargesSpent };
-      for (const [moveId, count] of Object.entries(target.chargesSpent ?? {})) {
-        if (!count) continue;
-        if (effect.triggeringMove && moveId !== triggerMoveId) continue;
-        const move = moves?.[moveId];
-        if (!move || move.chargesPerFight == null) continue;
-        if (effect.moveTag !== undefined && !move.tags?.includes(effect.moveTag)) continue;
-        const restored = effect.amount === 'all' ? count : Math.min(count, effect.amount);
-        if (restored <= 0) continue;
-        spent[moveId] = count - restored;
-        events.push({ type: 'ChargeRestored', round, combatantId: targetId, moveId, restored, chargesLeft: move.chargesPerFight - spent[moveId]! });
-      }
-      if (events.length === 0) return { state, events };
-      return { state: { ...state, combatants: { ...state.combatants, [targetId]: { ...target, chargesSpent: spent } } }, events };
-    }
+    case 'restoreCharge':
+      return restoreCharges(state, round, targetId, moves, {
+        amount: effect.amount,
+        moveTag: effect.moveTag,
+        onlyMoveId: effect.triggeringMove ? (typeof context.moveId === 'string' ? context.moveId : '') : undefined,
+      });
     case 'restoreMana': {
       const maxMana = getMaxMana(heroes[target.heroId], target);
       const previousMana = target.currentMana;

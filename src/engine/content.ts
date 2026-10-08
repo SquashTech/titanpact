@@ -552,6 +552,8 @@ export interface MoveDefinition {
    * opens full. Absent = unlimited. state.ts isMoveUsable / chargesLeft.
    */
   chargesPerFight?: number;
+  /** Gives each target spent Charges back, per move, never past its count (Rising Static). engine/combat/charges.ts. */
+  restoresCharges?: { amount: number | 'all'; moveTag?: MoveTag };
   /** Family labels a passive reads (`moveTag` condition, `restoreCharge`). */
   tags?: readonly MoveTag[];
   /** Castable only on the combatant's first round on the field — round 1 for a lead, the round after it arrived otherwise (Combatant.firstActionRound). state.ts isMoveUsable. */

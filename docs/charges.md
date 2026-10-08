@@ -130,6 +130,16 @@ effect (`triggeringMove` or `moveTag`, an amount or `'all'`, never past the coun
 pass. What to watch: Squall out of Arrows in a long fight with only Rising Static, before his first
 offers land.
 
+## Rising Static: a refill on a move (BUILT 2026-10-08, per user direction)
+
+Storm's Early buff lost its +20 Speed, which never mattered, and became the first MOVE that refills:
+**both allies get one Charge back on every spent move** (`MoveDefinition.restoresCharges`, the same
+`engine/combat/charges.ts` reader the passive uses), and it still marks one random enemy Conducting.
+30 Mana, now aimed at `bothAllies` rather than a random ally. It sits in four starting kits (Squall,
+Tempest, Kite, Raiju) and the Storm slate, so the Storm spawn carry it too. For Squall it is a quiver
+top-up that costs a turn. For a kit with no Charges it is Conduct alone, so watch Tempest, Kite and
+Raiju: Kite's Outpace read the Speed it gave.
+
 ## Raised counts (rarer than refills)
 
 `+1 Charge to this hero's charged moves`, a raised maximum, drawn as one more pip. It is a bare

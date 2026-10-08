@@ -836,11 +836,13 @@ export const moves: Record<string, MoveDefinition> = {
     type: 'Storm',
     category: 'magical',
     kind: 'buff',
-    statDeltas: [{ stat: 'speed', amount: 20 }],
+    // The static recharges both allies: a Charge back on every spent move (docs/charges.md).
+    statDeltas: [],
+    restoresCharges: { amount: 1 },
     statusApplication: { statusId: 'Conduct', target: 'randomEnemy' },
     manaCost: 30,
     priority: 0,
-    target: 'randomAlly',
+    target: 'bothAllies',
   },
   jolt: {
     id: 'jolt',

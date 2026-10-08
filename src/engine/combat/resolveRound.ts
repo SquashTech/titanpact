@@ -44,6 +44,7 @@ import {
   clearOnRest,
 } from './statusEngine';
 import { collectPassiveDamageModifiers, resolvePassiveReactions } from './passiveEngine';
+import { restoreCharges } from './charges';
 import { wardOn } from './ward';
 import { nextFloat, nextInt } from '../rng/seededRng';
 import { DEFAULT_PACT_CLOCK, tickPactClock, type PactClockConfig } from './pactClock';
@@ -907,6 +908,14 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         const blastReactions = resolvePassiveReactions(working, round, blast.events, heroes, statuses, passives, fieldEffects, moves);
         working = blastReactions.state;
         events.push(...blastReactions.events);
+      }
+    }
+
+    if (move.restoresCharges) {
+      for (const targetId of targetIds) {
+        const result = restoreCharges(working, round, targetId, moves, move.restoresCharges);
+        working = result.state;
+        events.push(...result.events);
       }
     }
 
