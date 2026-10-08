@@ -71,6 +71,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'heatHaze',
     ],
     brimstone: [
+      'flashpoint',
       'ember',
       'sparkFlash',
       'spreadingBlaze',
@@ -521,6 +522,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'twinCast',
     ],
     zenith: [
+      'batteryPack',
       'barrier',
       'infuse','conduit', 'fontOfPower', 'arcaneOverflow', 'empower', 'cataclysm', 'focus', 'arcPulse', 'magicCloak', 'glimmer', 'psiBolt', 'manaTap', 'splash', 'arcaneBlast', 'overload', 'study', 'wickedFear',
       'resonantBolt',
@@ -648,6 +650,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // --- Iron ---
     ironWarden: [
+      'repairKit',
     'openingStrike','swiftBlow', 'pinDown', 'ironSkin', 'rendArmor', 'livingWall', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion', 'holyStrike', 'claw', 'metallicBlade', 'heavyBlow', 'momentumSwing', 'onslaught', 'swingingChain', 'stoneheart', 'shieldBash', 'bodyguard'],
     valor: [
       'provoke',
@@ -727,6 +730,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'rocketPod',
     'sparkPlug','backfire', 'overheat', 'malfunction', 'meltdown', 'salvage', 'juryRig', 'cogBop', 'overclock', 'reinforce', 'undertow', 'singe', 'ironFist', 'rockToss', 'cogSlam', 'whirlingBlades', 'jackpot', 'overdrive', 'perfectCreation', 'steamVent', 'patchUp', 'shockCoil', 'salvo'],
     steamColossus: [
+      'repairKit',
       'rocketPod',
       'sharpen',
       'swiftBlow',
@@ -899,6 +903,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Hart: Light's heal column, with Nature's growth as the off-type. Blinding Flash is White Hart's grant.
     hart: [
+      'fullBloom',
       'hallow',
       'purify', 'bless', 'blind', 'vigil', 'refresh', 'regrowth',
       'dawnlight',
@@ -989,6 +994,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Kitsu: Spirit's magical column, with Arcane's bolts as the off-type. Banish is Ninetails' grant.
     kitsu: [
+      'flashpoint',
       'unbound',
       'ember', 'drain', 'soulfire', 'secondWind', 'spite', 'magicBolt', 'focus',
       'soulRend', 'poltergeist', 'flicker', 'vengeance', 'soulOffering', 'arcPulse', 'arcaneBlast',
@@ -1006,6 +1012,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Selkie: Water's mending column, with Light's and Nature's healing beside it. High Tide is Tidewife's grant.
     selkie: [
+      'fullBloom',
       'regrowth',
       'tideGuard', 'inkCloud', 'siphon', 'mend', 'purify', 'vigil',
       'oasis', 'washAway', 'cleansingRain', 'crest', 'engulf', 'benediction', 'wildBloom',
@@ -1037,6 +1044,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Kite: Storm's marks and tailwinds, with the Beast howl, Water's ink and the Frost and Mind guards beside them. Chain Lightning is Highflyer's grant.
     kite: [
+      'batteryPack',
       'zap',
       'toxicSpores', 'charge', 'howl', 'refresh', 'inkCloud', 'brainWard',
       'tailwind', 'ionize', 'stunningBolt', 'blindingSnow', 'electricBurst', 'mentalFortress',
@@ -1134,6 +1142,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Whirr: Mech's physical column with Storm's darting and Iron's quick blows; Spark Plug plants what Overcharge and Whirling Blades run on. Overdrive is Gyre's grant.
     whirr: [
+      'ironArrow',
       'rocketPod',
       'swiftBlow',
       'cogBop', 'steamVent', 'sparkPlug', 'thunderclap', 'openingStrike', 'pinDown',

@@ -242,12 +242,17 @@ so the Titanspawn field them too; the Arrow does not.
 
 | Move | Type, tier | Payload | Mana | Charges | Offered to |
 |---|---|---|---|---|---|
-| Iron Arrow | Iron, Early | 50 BP, an Arrow (Squall's Retrieve reads it) | 15 | 3 | Scallywag, Ronin, Gallant, Squall |
-| Flashpoint | Fire, Mid | 50 BP and Engulfed (Burn 3) | 25 | 1 | Crimson, Tinder, Ashwing |
-| Full Bloom | Nature, Mid | Renew 8 on one ally | 25 | 2 | Sylva, Lotus, Morel |
+| Iron Arrow | Iron, Early | 50 BP, an Arrow (Squall's Retrieve reads it) | 15 | 3 | Scallywag, Ronin, Gallant, Squall, Whirr |
+| Flashpoint | Fire, Mid | 50 BP and Engulfed (Burn 3) | 25 | 1 | Crimson, Tinder, Ashwing, Brimstone, Kitsu |
+| Full Bloom | Nature, Mid | Renew 8 on one ally | 25 | 2 | Sylva, Lotus, Morel, Selkie, Hart |
 | Rocket Pod | Mech, Mid | 55 BP on both foes | 25 | 3 | Rex, Whirr, Bellows, Clockwork |
-| Repair Kit | Mech, Early | Heal 60 on one ally | 15 | 3 | Patch, Clockwork, Abacus |
-| Battery Pack | Mech, Mid | +40 Mana to one ally, past the pool | 10 | 2 | Patch, Abacus, Clockwork |
+| Repair Kit | Mech, Early | Heal 60 on one ally | 15 | 3 | Patch, Clockwork, Abacus, Warden, Bellows |
+| Battery Pack | Mech, Mid | +40 Mana to one ally, past the pool | 10 | 2 | Patch, Abacus, Clockwork, Kite, Zenith |
+
+**Widened the same day** (per user direction) by concept: Whirr's darts, Brimstone and Kitsu's
+fire, Selkie and Hart's healing, Warden and Bellows's plate, Kite's support. **Zenith holds Battery
+Pack on purpose**: a single-ally move can target its caster, and Surging Intellect turns the +40 Mana
+into +40 Intelligence, twice a fight — a named combo, not an accident. The widening was not simulated.
 
 **Measured** (3000 runs a side, seed 7, against `2c5df1aa`): full-clear 77.5 → 78.5% skilled, 28.3 →
 28.3% chart, every act inside a point. Skilled-pilot casts: Rocket Pod 1834 (12.6 damage a Mana, Mech's
