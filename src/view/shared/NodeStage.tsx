@@ -47,6 +47,8 @@ function useMotes(count: number) {
 
 interface NodeSkyProps {
   motes?: number;
+  /** Off the act's painting: a moment about one hero rather than the place (the Evolution). */
+  placeless?: boolean;
 }
 
 /** How much of a location's authored weather a node screen carries. */
@@ -58,8 +60,9 @@ const NODE_MOTE_DENSITY = 0.5;
  * wash. Inside an act the Location replaces the generic motes (two fields is noise, not atmosphere):
  * the node's `--node-rgb` keeps the wash and header, the location owns ground, horizon and weather.
  */
-export function NodeSky({ motes = MOTE_COUNT }: NodeSkyProps) {
-  const location = useAmbientLocation();
+export function NodeSky({ motes = MOTE_COUNT, placeless }: NodeSkyProps) {
+  const ambient = useAmbientLocation();
+  const location = placeless ? null : ambient;
   // Inside an act every node screen stands on the act's own map painting; the node's wash goes
   // over it translucent, so its tint (gold cache, violet boon) still reads.
   const painted = !!location && !!locationBackdrop(location.id, 'map');

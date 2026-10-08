@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import type { HeroDefinition, StatKey, TypeId } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition, StatKey, TypeId } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { offenseSwapDelta, pathTypes, type EvolutionNode, type EvolutionPath } from '../../run/progression';
 import { pathTint, pathTintStyle } from '../shared/pathTint';
@@ -16,7 +16,11 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeWheel } from '../shared/TypeWheel';
-import { MoveButtonReplica, useLongPress } from '../shared/MoveTile';
+import { MoveKindBadge, MoveTraitChips, healReadout, moveEffectSummary, useLongPress } from '../shared/MoveTile';
+import { ManaCost } from '../shared/ManaCost';
+import { ChargePips } from '../shared/ChargePips';
+import { moveForPrimaryType } from '../../engine/state';
+import type { HealCaster } from '../../engine/heal/healPipeline';
 import { healCasterForEntry } from '../shared/healCaster';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
@@ -55,10 +59,16 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
   /** Set once the choice is spent: the cinematic runs over the screen and calls `onChoose` at the end. */
   const [sealingPathId, setSealingPathId] = useState<string | null>(null);
   const sealingPath = node.paths.find((p) => p.id === sealingPathId) ?? null;
+  const dense = node.paths.some((path) => grantsOf(path).length > 2);
 
   return (
-    <div className="node-screen evolution-screen">
-      <NodeSky />
+    <div
+      className="node-screen evolution-screen"
+      style={{ '--path-lead': getTypeColor(hero.types[0]), '--path-trail': getTypeColor(hero.types[1] ?? hero.types[0]) } as CSSProperties}
+    >
+      {/* Placeless: a painted moon sat behind the readout, and this moment is the hero's, not the act's. */}
+      <NodeSky placeless />
+      <span className="evolution-sky-rays is-floating" aria-hidden="true" />
       <RosterPeek run={run} />
       <NodeHeader
         compact
@@ -74,7 +84,7 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
       />
 
       <div className="evo-forms">
-        <div className="evo-form-row">
+        <div className={`evo-form-row${dense ? ' is-dense' : ''}`}>
           {node.paths.map((path, i) => (
             <FormCard key={path.id} hero={hero} path={path} onInspect={() => setInspectedIndex(i)} />
           ))}
@@ -180,7 +190,7 @@ function EvolutionAwakening({ hero, onDone }: { hero: HeroDefinition; onDone: ()
   );
 }
 
-/** One of the two things a path hands over, as the card and the showcase both draw it. */
+/** One thing a path hands over — two on most paths, three on a few named ones — as the card and the showcase both draw it. */
 type Grant = { kind: 'type'; type: TypeId } | { kind: 'move'; id: string } | { kind: 'passive'; id: string };
 
 const GRANT_KIND_LABEL = { type: 'New type', move: 'New move', passive: 'New passive' } as const;
@@ -213,8 +223,8 @@ function GrantGlyph({ grant }: { grant: Grant }) {
 
 /**
  * One of the three forms, side by side with the other two (2026-09-29, per user direction): the
- * hero lit in the colours the path lands it on, the typing it ends with, and the path's two
- * grants as medallions. A headline to compare at a glance; the tap opens the showcase, where the
+ * hero lit in the colours the path lands it on, the typing it ends with, and the path's grants
+ * as medallions. A headline to compare at a glance; the tap opens the showcase, where the
  * choice is read in full and spent.
  */
 function FormCard({ hero, path, onInspect }: { hero: HeroDefinition; path: EvolutionPath; onInspect: () => void }) {
@@ -296,11 +306,13 @@ const SHOWCASE_SWIPE_PX = 44;
 
 /**
  * One form at full size, and where the choice is spent (2026-09-29, per user direction, replacing
- * the dossier sheet). The hero stands on rays in the path's colours; the arrows, the dots and a
- * swipe page between the three without going back. Under it, ONE panel of rows — the new type and
- * what it changes on the chart, the move as the fight draws it, the passive, a rewire, the line —
- * each tap opening the full card. Nothing scrolls (2026-10-02, per user direction): the stage
- * gives up height on a short screen so the rows and the commit never fall below a fold.
+ * the dossier sheet). The hero stands on rays in the path's colours with its typing beside it.
+ * Under it, the path's gifts strung down one thread, unboxed (2026-10-08, per user direction — a
+ * stone panel of bordered rows was boxes inside boxes): the new type, the move, each passive, a
+ * rewire, each a medal and a line, every tap opening the full card; a pair or a named path's
+ * three draw the same way. Everything the choice is made with sits together at the foot: the
+ * dots, the arrows either side of the commit, and the way back. Nothing scrolls (2026-10-02, per
+ * user direction): on a short screen the stage and the medals give up height first.
  */
 function PathShowcase({
   hero,
@@ -332,8 +344,6 @@ function PathShowcase({
   const current = entryStatTotals(hero, entry, run.relics);
   // A rewire's rows are read off this hero's own Attack and Intelligence — what it would trade now.
   const swapEntries = path.swapsOffense ? (Object.entries(offenseSwapDelta(hero, entry)) as [StatKey, number][]) : [];
-  const grantedPassives = (path.grantsPassiveIds ?? []).filter((id) => passives[id]);
-  const grantedMoves = path.unlocksMoveIds.filter((id) => moves[id]);
   const poolMoves = (path.learnableMoveIds ?? []).filter((id) => moves[id]);
   const traded = tradedType(hero, path);
   const step = (delta: number) => onIndex((index + delta + paths.length) % paths.length);
@@ -349,9 +359,6 @@ function PathShowcase({
         }}
         onPointerCancel={() => setDragFrom(null)}
       >
-        <button className="evo-show-arrow is-prev" aria-label="Previous form" data-sfx="ui.select" onClick={() => step(-1)}>
-          ‹
-        </button>
         <span className="evo-show-stage">
           <span className="evo-show-rays" aria-hidden="true" />
           <span className="evo-show-aura" aria-hidden="true" />
@@ -368,78 +375,77 @@ function PathShowcase({
           </div>
           <TypeMatchups types={types} />
         </div>
-        <button className="evo-show-arrow is-next" aria-label="Next form" data-sfx="ui.select" onClick={() => step(1)}>
-          ›
-        </button>
-        <div className="evo-show-dots" aria-hidden="true">
-          {paths.map((p, i) => (
-            <span key={p.id} className={`evo-show-dot${i === index ? ' is-on' : ''}`} />
-          ))}
-        </div>
       </div>
 
-      <div className="evo-show-body">
-        <div className="evo-show-rows">
-        {path.typeGraft && (
-          <section className="evo-show-row is-inline">
-            <div className="evo-show-kind">New type</div>
-            <TypeBadge type={path.typeGraft} />
-            {traded && <span className="evo-show-kind-note">trades {traded} for {path.typeGraft}</span>}
-          </section>
-        )}
-
-        {grantedMoves.map((id) => (
-          <section key={id} className="evo-show-row">
-            <div className="evo-show-kind">New move</div>
-            <MoveButtonReplica move={moves[id]} caster={caster} onClick={() => setReadingMoveId(id)} onLongPress={() => setReadingMoveId(id)} />
-          </section>
-        ))}
-
-        {grantedPassives.map((id) => (
-          <section key={id} className="evo-show-row">
-            <div className="evo-show-kind">New passive</div>
-            <PassiveGrantRow passiveId={id} onRead={() => setReadingPassiveId(id)} />
-          </section>
-        ))}
-
-        {swapEntries.length > 0 && (
-          <section className="evo-show-row is-inline">
-            <div className="evo-show-kind">Atk ⇄ Int</div>
-            <div className="evo-show-swap">
-              {swapEntries.map(([stat, amount]) => (
-                <span key={stat} className={`evo-show-swap-stat${amount < 0 ? ' is-loss' : ''}`}>
-                  <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {current[stat]} → <strong>{current[stat] + amount}</strong>
+      {/* Keyed on the path so paging replays the gifts' entrance. */}
+      <div className="evo-show-body" key={path.id}>
+        <ol className="evo-gifts">
+          {grantsOf(path).map((grant, i) => (
+            <GiftLine
+              key={i}
+              grant={grant}
+              order={i}
+              traded={traded}
+              caster={caster}
+              onRead={grant.kind === 'move' ? () => setReadingMoveId(grant.id) : grant.kind === 'passive' ? () => setReadingPassiveId(grant.id) : undefined}
+            />
+          ))}
+          {swapEntries.length > 0 && (
+            <li className="evo-gift is-rewire" style={{ '--i': grantsOf(path).length } as CSSProperties}>
+              <span className="evo-gift-medal">⇄</span>
+              <span className="evo-gift-body">
+                <span className="evo-gift-kind">Rewired</span>
+                <span className="evo-gift-name">Attack ⇄ Intelligence</span>
+                <span className="evo-show-swap">
+                  {swapEntries.map(([stat, amount]) => (
+                    <span key={stat} className={`evo-show-swap-stat${amount < 0 ? ' is-loss' : ''}`}>
+                      <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {current[stat]} → <strong>{current[stat] + amount}</strong>
+                    </span>
+                  ))}
                 </span>
-              ))}
-            </div>
-          </section>
-        )}
+              </span>
+            </li>
+          )}
+        </ol>
 
         {poolMoves.length > 0 && (
-          <section className="evo-show-row">
-            <div className="evo-show-kind">Level-ups can teach</div>
+          <div className="evo-show-pool">
+            <div className="evo-show-pool-kind">Level-ups can teach</div>
             <div className="evolution-pool-chips">
               {poolMoves.map((id) => (
                 <PoolMoveChip key={id} moveId={id} onRead={() => setReadingMoveId(id)} />
               ))}
             </div>
-          </section>
+          </div>
         )}
-        </div>
       </div>
 
-      {/* Not `.resolve-button`: this is the one press in the run that spends something
-          permanent, and it should not look like Continue. The way back sits under it rather
-          than only in a corner: backing out of a decision should not be the hardest press here. */}
+      {/* The choice in one place: which form (dots, arrows), take it, or back out. Not
+          `.resolve-button`: this is the one press in the run that spends something permanent, and
+          it should not look like Continue. The way back sits under it rather than only in a
+          corner: backing out of a decision should not be the hardest press here. */}
       <div className="evolution-dossier-actions">
-        <button className="evolve-button" data-sfx="none" onClick={onChoose}>
-          <span className="evolve-button-sheen" aria-hidden="true" />
-          <span className="evolve-button-rays" aria-hidden="true" />
-          <span className="evolve-button-label">
-            <span className="evolve-button-kicker">Evolve into</span>
-            <span className="evolve-button-name">{path.name}</span>
-          </span>
-        </button>
+        <div className="evo-show-dots" aria-hidden="true">
+          {paths.map((p, i) => (
+            <span key={p.id} className={`evo-show-dot${i === index ? ' is-on' : ''}`} />
+          ))}
+        </div>
+        <div className="evo-show-commit">
+          <button className="evo-show-arrow" aria-label="Previous form" data-sfx="ui.select" onClick={() => step(-1)}>
+            <ShowcaseChevron flip />
+          </button>
+          <button className="evolve-button" data-sfx="none" onClick={onChoose}>
+            <span className="evolve-button-sheen" aria-hidden="true" />
+            <span className="evolve-button-rays" aria-hidden="true" />
+            <span className="evolve-button-label">
+              <span className="evolve-button-kicker">Evolve into</span>
+              <span className="evolve-button-name">{path.name}</span>
+            </span>
+          </button>
+          <button className="evo-show-arrow" aria-label="Next form" data-sfx="ui.select" onClick={() => step(1)}>
+            <ShowcaseChevron />
+          </button>
+        </div>
         <button className="evolution-dossier-back" data-sfx="ui.back" onClick={onClose}>
           Back to paths
         </button>
@@ -450,6 +456,101 @@ function PathShowcase({
       )}
       <PassiveDetailOverlay passive={readingPassiveId ? passives[readingPassiveId] : null} onClose={() => setReadingPassiveId(null)} />
     </div>
+  );
+}
+
+/** The arrows beside the commit, drawn so they sit dead centre in the ring (a text chevron rides its baseline). */
+function ShowcaseChevron({ flip }: { flip?: boolean }) {
+  return (
+    <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" style={flip ? { transform: 'scaleX(-1)' } : undefined}>
+      <path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * One gift on the showcase's thread: its medal (the form card's, so the two screens read as one
+ * thing at two sizes), what kind of gift, its name, and one line of what it does. A move's line
+ * is the fight's own readout — mana, power, kind, traits, effect — without the button around it.
+ */
+function GiftLine({
+  grant,
+  order,
+  traded,
+  caster,
+  onRead,
+}: {
+  grant: Grant;
+  order: number;
+  traded: TypeId | null;
+  caster: HealCaster;
+  onRead?: () => void;
+}) {
+  const style = { '--grant': grantColor(grant), '--i': order } as CSSProperties;
+  const body = (
+    <>
+      <span className="evo-gift-medal">
+        <GrantGlyph grant={grant} />
+      </span>
+      <span className="evo-gift-body">
+        <span className="evo-gift-kind">{GRANT_KIND_LABEL[grant.kind]}</span>
+        {grant.kind === 'type' && (
+          <>
+            <span className="evo-gift-name">{grant.type}</span>
+            <span className="evo-gift-text">{traded ? `Trades ${traded} for ${grant.type}` : `Joins its typing as a second type`}</span>
+          </>
+        )}
+        {grant.kind === 'move' && <MoveGiftText move={moveForPrimaryType(moves[grant.id], caster.types[0])} caster={caster} />}
+        {grant.kind === 'passive' && (
+          <>
+            <span className="evo-gift-name">{passives[grant.id].name}</span>
+            <span className="evo-gift-text">{passives[grant.id].description}</span>
+          </>
+        )}
+      </span>
+    </>
+  );
+  return (
+    <li className={`evo-gift is-${grant.kind}`} style={style}>
+      {onRead ? (
+        <button type="button" className="evo-gift-press" data-sfx="ui.select" onClick={onRead}>
+          {body}
+        </button>
+      ) : (
+        <span className="evo-gift-press">{body}</span>
+      )}
+    </li>
+  );
+}
+
+function MoveGiftText({ move, caster }: { move: MoveDefinition; caster: HealCaster }) {
+  const heal = healReadout(move, caster);
+  const power =
+    move.kind === 'damage'
+      ? move.basePower != null
+        ? `${move.basePower}`
+        : move.randomBasePower
+          ? `${move.randomBasePower.min}–${move.randomBasePower.max}`
+          : null
+      : heal
+        ? `${heal.value}`
+        : null;
+  return (
+    <>
+      <span className="evo-gift-head">
+        <span className="evo-gift-name">{move.name}</span>
+        <span className="evo-gift-facts">
+          <ManaCost cost={move.manaCost} size="sm" />
+          {power && <strong className={`evo-gift-power${heal ? ' is-heal' : ''}`}>{power}</strong>}
+          <ChargePips move={move} />
+          <MoveKindBadge move={move} />
+        </span>
+      </span>
+      <span className="evo-gift-text">
+        <MoveTraitChips move={move} />
+        {moveEffectSummary(move, caster)}
+      </span>
+    </>
   );
 }
 

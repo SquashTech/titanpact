@@ -22252,8 +22252,8 @@ button.star-shop-bundle-face {
 /* --- The three forms (2026-09-29, per user direction) ---------------------
    Side by side, so the choice is compared at a glance: each card is the hero
    lit in the colours the path lands it on, the typing it ends with, and the
-   path's two grants as medallions (docs/evolution-simplification.md: a path
-   is exactly two things, which is what makes three columns fit). Sized to
+   path's grants as medallions (docs/evolution-simplification.md: a path is
+   two things, a few named ones three — `.is-dense` makes room). Sized to
    their content and centred in the room under the header rather than stretched
    to fill it. `--path-lead` / `--path-trail` come from pathTintStyle. */
 .evo-forms {
@@ -22423,6 +22423,32 @@ button.star-shop-bundle-face {
   line-height: 1.1;
 }
 
+/* A named path paying three: every card in the row gives a little height so
+   the tallest still fits, and the three rows stay the same size. */
+.evo-form-row.is-dense .evo-form-stage {
+  height: 104px;
+}
+
+.evo-form-row.is-dense .evo-form-portrait {
+  width: 100px;
+  height: 100px;
+}
+
+.evo-form-row.is-dense .evo-form-grants {
+  gap: 7px;
+}
+
+.evo-form-row.is-dense .evo-form-medal {
+  width: 36px;
+  height: 36px;
+}
+
+.evo-form-row.is-dense .evo-form-medal svg,
+.evo-form-row.is-dense .evo-form-medal .status-glyph {
+  width: 22px;
+  height: 22px;
+}
+
 /* --- The showcase (2026-09-29, per user direction) ------------------------
    One form at full size, and where the choice is spent: the hero on rays in the
    path's colours, arrows and a swipe to page between the three, and under it
@@ -22439,6 +22465,7 @@ button.star-shop-bundle-face {
   background:
     radial-gradient(90% 40% at 50% 18%, color-mix(in srgb, var(--path-lead) 30%, transparent), transparent 75%),
     #0b0907;
+  container-type: size;
   animation: evo-show-in var(--dur-mid) var(--ease-out);
 }
 
@@ -22449,42 +22476,24 @@ button.star-shop-bundle-face {
 }
 
 /* The hero and its typing side by side: the sprite on the left, the name, the
-   badges and what the chart does to them on the right, the arrows on the outer
-   edges. The matchups live up here so the body below only lists the grants. */
+   badges and what the chart does to them on the right. The matchups live up
+   here so the body below only lists the gifts; the arrows live at the foot,
+   beside the commit. */
 .evo-show-hero {
   flex: none;
   margin-top: 40px;
   display: grid;
-  grid-template-columns: 30px 132px minmax(0, 1fr) 30px;
-  grid-template-areas:
-    'prev stage info next'
-    'dots dots dots dots';
+  grid-template-columns: var(--evo-stage, 140px) minmax(0, 1fr);
   align-items: center;
-  column-gap: 6px;
-  row-gap: 4px;
+  column-gap: 10px;
   touch-action: pan-y;
 }
 
-/* Pinned to the stage's centre (132px), not the row's: the info column's height changes from path to
-   path, and a centred arrow walked under the thumb between taps. */
-.evo-show-arrow.is-prev {
-  grid-area: prev;
-  align-self: start;
-  margin-top: 51px;
-}
-
-.evo-show-arrow.is-next {
-  grid-area: next;
-  align-self: start;
-  margin-top: 51px;
-}
-
 .evo-show-stage {
-  grid-area: stage;
   align-self: start;
   position: relative;
-  width: 132px;
-  height: 132px;
+  width: var(--evo-stage, 140px);
+  height: var(--evo-stage, 140px);
   display: grid;
   place-items: center;
 }
@@ -22510,8 +22519,8 @@ button.star-shop-bundle-face {
 
 .evo-show-aura {
   position: absolute;
-  width: 116px;
-  height: 116px;
+  width: calc(var(--evo-stage, 140px) - 20px);
+  height: calc(var(--evo-stage, 140px) - 20px);
   border-radius: 50%;
   background: radial-gradient(
     circle,
@@ -22523,8 +22532,8 @@ button.star-shop-bundle-face {
 
 .evo-show-portrait {
   position: relative;
-  width: 124px;
-  height: 124px;
+  width: calc(var(--evo-stage, 140px) - 8px);
+  height: calc(var(--evo-stage, 140px) - 8px);
   object-fit: contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 10px var(--path-lead));
@@ -22532,24 +22541,25 @@ button.star-shop-bundle-face {
 }
 
 .evo-show-info {
-  grid-area: info;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
+/* Flanking the commit: paging and taking are the same thumb's reach. */
 .evo-show-arrow {
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
   flex: none;
+  align-self: center;
   border: 2px solid #e8c170;
   border-radius: 50%;
   background: rgba(20, 14, 10, 0.85);
+  display: grid;
+  place-items: center;
+  padding: 0;
   color: #fff3d6;
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1;
   cursor: pointer;
 }
 
@@ -22576,7 +22586,6 @@ button.star-shop-bundle-face {
 }
 
 .evo-show-dots {
-  grid-area: dots;
   display: flex;
   justify-content: center;
   gap: 6px;
@@ -22594,49 +22603,139 @@ button.star-shop-bundle-face {
   box-shadow: 0 0 6px #e8c170;
 }
 
-/* One stone panel, the grants as rows inside it; the frame is paid once, not
-   once a grant. Sits at the foot of the free space so the commit stays pinned
-   and nothing scrolls. */
+/* The gifts, unboxed (2026-10-08, per user direction): no panel and no row
+   borders, each gift a medal on one thread that runs down from the hero, its
+   words beside it on a light that bleeds out of the medal in the gift's own
+   colour. Two or three of them draw the same way. Centred in the free space so
+   the commit stays pinned and nothing scrolls. `--grant` is the gift's colour,
+   `--i` its place on the thread (the entrance staggers on it). */
 .evo-show-body {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: safe center;
+  gap: var(--evo-gap, 14px);
 }
 
-.evo-show-rows {
+.evo-gifts {
+  position: relative;
   display: flex;
   flex-direction: column;
-  border: 14px solid transparent;
-  border-image: url('../../art/ui/frame-stone.png') 10 fill / 14px round;
-  image-rendering: pixelated;
+  gap: var(--evo-gap, 14px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.evo-show-row {
+/* The thread, through every medal's centre, fading at both ends. */
+.evo-gifts::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--evo-medal, 48px) / 2);
+  bottom: calc(var(--evo-medal, 48px) / 2);
+  left: calc(var(--evo-medal, 48px) / 2 + 6px - 1px);
+  width: 2px;
+  background: linear-gradient(180deg, transparent, var(--path-lead) 15%, var(--path-trail) 85%, transparent);
+  opacity: 0.55;
+}
+
+.evo-gift {
+  position: relative;
+  animation: evo-gift-in 0.42s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 90ms + 60ms);
+}
+
+@keyframes evo-gift-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+.evo-gift-press,
+.evo-gift.is-rewire {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 5px 0;
-  border-top: 1px solid rgba(232, 193, 112, 0.18);
-}
-
-.evo-show-row:first-child {
-  border-top: 0;
-  padding-top: 0;
-}
-
-.evo-show-row:last-child {
-  padding-bottom: 0;
-}
-
-.evo-show-row.is-inline {
-  flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  width: 100%;
+  padding: 0 4px 0 6px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
 }
 
-.evo-show-kind {
+/* The light the words sit on: out of the medal, gone by the far edge. */
+.evo-gift-press::before,
+.evo-gift.is-rewire::before {
+  content: '';
+  position: absolute;
+  inset: 2px 0 2px calc(var(--evo-medal, 48px) / 2 + 6px);
+  border-radius: 0 999px 999px 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--grant) 30%, transparent), transparent 85%);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent);
+  pointer-events: none;
+}
+
+button.evo-gift-press {
+  cursor: pointer;
+}
+
+button.evo-gift-press:active .evo-gift-medal {
+  transform: scale(0.94);
+}
+
+.evo-gift-medal {
+  position: relative;
+  flex: none;
+  width: var(--evo-medal, 48px);
+  height: var(--evo-medal, 48px);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, var(--grant) 55%, #fff) 0%,
+    var(--grant) 45%,
+    color-mix(in srgb, var(--grant) 45%, #000) 100%
+  );
+  box-shadow: 0 0 0 2px #e8c170, 0 0 14px color-mix(in srgb, var(--grant) 70%, transparent);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  transition: transform var(--dur-fast, 120ms) var(--ease-out);
+  animation: evo-gift-glow 3.2s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -0.8s);
+}
+
+@keyframes evo-gift-glow {
+  50% {
+    box-shadow: 0 0 0 2px #f4d48c, 0 0 24px color-mix(in srgb, var(--grant) 95%, transparent);
+  }
+}
+
+.evo-gift-medal svg,
+.evo-gift-medal .status-glyph {
+  width: calc(var(--evo-medal, 48px) * 0.6);
+  height: calc(var(--evo-medal, 48px) * 0.6);
+  color: #fff;
+}
+
+.evo-gift-body {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 3px 0;
+}
+
+.evo-gift-kind {
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.2em;
@@ -22644,10 +22743,115 @@ button.star-shop-bundle-face {
   color: #e8c170;
 }
 
-.evo-show-kind-note {
-  font-size: 11px;
-  font-style: italic;
+.evo-gift-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.evo-gift-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.15;
+  color: color-mix(in srgb, var(--grant) 45%, #fff3d6);
+  text-shadow: 0 2px 0 #000, 0 0 12px color-mix(in srgb, var(--grant) 60%, transparent);
+}
+
+.evo-gift-facts {
+  flex: none;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.evo-gift-power {
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff3d6;
+}
+
+.evo-gift-power.is-heal {
+  color: var(--hp-high);
+}
+
+.evo-gift-facts .move-kind-badge {
+  margin: 0;
+}
+
+.evo-gift-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #e6d6b6;
+}
+
+.evo-gift-text .move-eff-trait {
+  margin-right: 5px;
+}
+
+.evo-gift.is-rewire {
+  --grant: #8a46a8;
+}
+
+.evo-gift.is-rewire .evo-gift-medal {
+  background: linear-gradient(135deg, var(--stat-attack, #b8412c), var(--stat-intelligence, #6a4bd8));
+}
+
+/* The line a level-up can open, under the gifts: read as a footnote to them,
+   not as a fourth. */
+.evo-show-pool {
+  padding: 8px 6px 0;
+  border-top: 1px solid rgba(232, 193, 112, 0.16);
+  animation: evo-gift-in 0.42s var(--ease-out) both;
+  animation-delay: 0.36s;
+}
+
+.evo-show-pool-kind {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   color: var(--text-dim);
+}
+
+/* A short screen gives up the stage and the medals before anything falls
+   below the commit (`.evo-show` is the size container; the dials are set on
+   its children, since a container cannot answer its own query). */
+@container (max-height: 660px) {
+  .evo-show > * {
+    --evo-stage: 118px;
+    --evo-medal: 40px;
+    --evo-gap: 9px;
+  }
+
+  .evo-show-hero {
+    margin-top: 34px;
+  }
+
+  .evo-gift-name {
+    font-size: 15px;
+  }
+}
+
+@container (max-height: 540px) {
+  .evo-show > * {
+    --evo-stage: 96px;
+    --evo-medal: 34px;
+    --evo-gap: 6px;
+  }
+
+  .evo-gift-text {
+    -webkit-line-clamp: 1;
+  }
 }
 
 .evo-show-swap {
@@ -22746,6 +22950,37 @@ button.star-shop-bundle-face {
 .evolution-art {
   position: relative;
   display: block;
+}
+
+/* The screen's own ground in place of the act's painting (NodeSky placeless):
+   slow rays in the hero's own two colours, turning behind the portrait and
+   gone well above the cards. Over the sky, under everything else. */
+.evolution-sky-rays {
+  position: absolute;
+  top: -150px;
+  left: 50%;
+  width: 520px;
+  height: 520px;
+  margin-left: -260px;
+  z-index: 0;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--path-lead) 22%, transparent) 0deg 5deg,
+    transparent 5deg 15deg,
+    color-mix(in srgb, var(--path-trail) 18%, transparent) 15deg 20deg,
+    transparent 20deg 30deg
+  );
+  -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 58%);
+  mask-image: radial-gradient(circle, #000 12%, transparent 58%);
+  animation: evo-show-spin 60s linear infinite;
+  pointer-events: none;
+}
+
+/* Read before a permanent choice, so it is said at reading size. */
+.evolution-screen .node-readout {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e6d6b6;
 }
 
 .evolution-banner-glow {
@@ -22881,7 +23116,26 @@ button.star-shop-bundle-face {
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+
+.evo-show-commit {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.evo-show-commit .evolve-button {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.evo-show-commit .evolve-button-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Deliberately quiet and deliberately wide. It has to be findable without
