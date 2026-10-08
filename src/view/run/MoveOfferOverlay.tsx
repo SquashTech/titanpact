@@ -105,7 +105,7 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve, signa
         <p className="offer-hero-eyebrow">{eyebrow}</p>
 
         <SignatureFrame on={signature}>
-          <MoveDetailCard move={moves[moveId]} label="New move offered" caster={caster} terse />
+          <MoveDetailCard move={moves[moveId]} label="New move offered" caster={caster} terse rowHead />
         </SignatureFrame>
 
         {atCap && (
@@ -196,7 +196,7 @@ export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose, signa
         <p className="offer-hero-eyebrow">{eyebrow}</p>
 
         <SignatureFrame on={signature}>
-          <MoveDetailCard move={moves[moveId]} label="Move learned" caster={caster} terse />
+          <MoveDetailCard move={moves[moveId]} label="Move learned" caster={caster} terse rowHead />
         </SignatureFrame>
 
         <div className="reward-panel-actions moveoffer-actions">

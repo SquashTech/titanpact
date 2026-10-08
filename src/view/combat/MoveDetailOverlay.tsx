@@ -22,7 +22,7 @@ import { fieldEffectFactsLine } from '../shared/fieldEffectFacts';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS, chargesLabel, restoresChargesText, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, chargesLabel, restoresChargesText, grantsRatherThanInflicts, healReadout, MoveKindBadge, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
 import { ChargePips } from '../shared/ChargePips';
 import { forecastDamage, koLabel } from './forecast';
@@ -120,10 +120,12 @@ interface CardProps {
   terse?: boolean;
   /** Cast by the companion's Call (docs/companion-call.md §3.1): it costs no mana, so no price and no mana left is shown. */
   free?: boolean;
+  /** Head laid out as the combat move row — mana, type, name, power at the right — with the power off the stats strip. For the learn-move offer. */
+  rowHead?: boolean;
 }
 
 /** The move dossier: a live damage band, the priority bracket, and the mana left after casting. */
-export function MoveDetailCard({ move: authored, label, context, caster, terse, free }: CardProps) {
+export function MoveDetailCard({ move: authored, label, context, caster, terse, free, rowHead }: CardProps) {
   const attacker = context ? context.combat.combatants[context.attackerId] : undefined;
   const attackerHero = attacker ? allCombatants[attacker.heroId] : undefined;
   // A Class move wears its holder's type (state.ts): the live attacker's, else the caster's.
@@ -249,30 +251,53 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
   );
 
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
+  const detailLine = (
+    <div className="move-detail-line">
+      <span style={{ color: typeColor }}>{move.type}</span>
+      <span className="move-detail-sep">·</span>
+      <span>{move.kind === 'damage' ? PIPELINE_WORDS[move.category] : moveKindLabel(move)}</span>
+      <span className="move-detail-sep">·</span>
+      <span>{TARGET_MODE_LABELS[move.target]}</span>
+    </div>
+  );
 
   return (
     <div className={`move-detail-card${terse ? ' is-terse' : ''}`} style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}>
       {label && <div className="move-detail-label">{label}</div>}
 
-      <div className="move-detail-head">
+      <div className={`move-detail-head${rowHead ? ' is-row' : ''}`}>
+        {rowHead && !free && <ManaCost cost={liveCost} />}
         <span className="move-detail-disc" style={{ color: typeColor }}>
           <ElementGlyph type={move.type} />
         </span>
         <div className="move-detail-titles">
           <div className="move-detail-name">{move.name}</div>
-          <div className="move-detail-line">
-            <span style={{ color: typeColor }}>{move.type}</span>
-            <span className="move-detail-sep">·</span>
-            <span>{move.kind === 'damage' ? PIPELINE_WORDS[move.category] : moveKindLabel(move)}</span>
-            <span className="move-detail-sep">·</span>
-            <span>{TARGET_MODE_LABELS[move.target]}</span>
-          </div>
+          {!rowHead && detailLine}
         </div>
-        {!free && <ManaCost cost={liveCost} />}
+        {!rowHead && !free && <ManaCost cost={liveCost} />}
+        {rowHead && (
+          <span
+            className={`move-detail-row-power${heal ? ' is-heal' : ''}`}
+            title={move.kind !== 'damage' ? undefined : move.hitCount ? `Base Power on each of ${move.hitCount} hits` : 'Base Power'}
+          >
+            {(move.kind === 'damage' || heal) && (
+              <strong>
+                {heal
+                  ? heal.value
+                  : move.randomBasePower
+                    ? `${move.randomBasePower.min + forceBonus}–${move.randomBasePower.max + forceBonus}`
+                    : (move.basePower ?? 0) + forceBonus}
+              </strong>
+            )}
+            {move.hitCount ? <span className="move-detail-unit">×{move.hitCount}</span> : null}
+            <MoveKindBadge move={move} />
+          </span>
+        )}
       </div>
+      {rowHead && detailLine}
 
       <div className="move-detail-stats">
-        {move.kind === 'damage' && move.basePower != null && (
+        {!rowHead && move.kind === 'damage' && move.basePower != null && (
           <span
             className="move-detail-stat move-detail-stat-power"
             // The Base Power shown is PER HIT, so a multi-hit move has to say so here — the
@@ -285,7 +310,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
             {forceBonus > 0 && <span className="move-detail-boost">▲{forceBonus}</span>}
           </span>
         )}
-        {move.kind === 'damage' && move.randomBasePower && (
+        {!rowHead && move.kind === 'damage' && move.randomBasePower && (
           <span className="move-detail-stat move-detail-stat-power" title="Base Power is rolled each round and shown on the button before you commit">
             <MoveKindGlyph kind={kindGlyph} />
             <strong>
@@ -294,7 +319,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
             {forceBonus > 0 && <span className="move-detail-boost">▲{forceBonus}</span>}
           </span>
         )}
-        {heal && (
+        {!rowHead && heal && (
           <span
             className="move-detail-stat move-detail-stat-heal"
             title={
