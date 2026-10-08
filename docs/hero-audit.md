@@ -148,3 +148,11 @@ Frost three times and Light three times across twelve grafts; spread so each typ
 
 Squall's innate Tailwind → **Slipstream** (it shared the move's name; Whiteout shared Igloo's
 signature's). Art moved with the ids; all five drawings were made for the old types.
+
+## Storm — details, DECIDED, NOT BUILT (2026-10-08)
+
+Per user direction; build these first when the audit resumes, then update the sheet.
+
+- **Squall, Slipstream** (innate): "When a friendly hero's Speed is increased, its Attack and Intelligence increase by the same amount." Open when building: whether Squall itself counts (assume yes), the mastered version (it must at least double — e.g. twice the amount), and that a passive-caused Speed rise does not chain into it today (only a move's does).
+- **Squall, Windshear's Squall Line**: "This hero's Storm attacks have +30% crit chance" (replaces +5 Atk / +5 Spd per hit). Check whether a passive can grant crit chance yet — crit lives on moves and loadout today.
+- Still proposed, no answer yet: Skyshear's Stormveil → Storm Force on setting off Conduct; Kite's Outpace → both allies +10 Atk/Int; Tempest's Forked → Thunderbolt instead of Skyfall; Squall's Dust Devil passive (Thornshot) review.
