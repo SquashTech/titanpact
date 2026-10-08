@@ -84,6 +84,7 @@ import { SwitchInPanel, type SwitchOption } from './SwitchInPanel';
 import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
 import { FightResultOverlay } from './FightResultOverlay';
 import { MoveDetailOverlay, formatMult, multClass } from './MoveDetailOverlay';
+import { forecastMove } from './forecast';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
@@ -1898,6 +1899,7 @@ export function FightScreen({
                     role={spread ? 'button' : undefined}
                     data-sfx={spread ? 'ui.target' : undefined}
                     aria-label={spread ? `Confirm — hits ${spreadTargetLabel(selectingMode!)}` : undefined}
+                    style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
                   >
                     {spread && (
                       <span className="target-row-spread-label" aria-hidden="true">
@@ -1917,6 +1919,7 @@ export function FightScreen({
                           onSelectTarget={spread ? undefined : () => handleTargetClick(tid)}
                           popup={popups[tid]}
                           effBadge={mult === 1 ? null : { text: effLabel(mult), className: multClass(mult) }}
+                          forecast={forecastMove(move, combat, id, tid)}
                         />
                       );
                     })}

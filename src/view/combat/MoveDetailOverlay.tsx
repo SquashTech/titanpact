@@ -3,28 +3,16 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition, StatKey } from '../../engine/content';
 import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { activePartnerTypes, applyStatModifierDelta, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveCastBasePower, resolveManaCost, moveForHero, moveForPrimaryType, statusMagnitude } from '../../engine/state';
+import { activePartnerTypes, applyStatModifierDelta, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveManaCost, moveForHero, moveForPrimaryType, statusMagnitude } from '../../engine/state';
 import { statDeltaLandsOnCasterSide } from '../../engine/combat/statDeltaScaling';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
-import { typeChart } from '../../data/typechart';
-import { resolveStab, resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
+import { resolveStab, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { fieldHealMultiplier, resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveStatusMagnitudeFor, scaleStatusMagnitude } from '../../engine/status/statusMagnitude';
-import {
-  calcDamage,
-  fieldTypeMultFloor,
-  hasStatReduction,
-  resolveConditionalPowerMultiplier,
-  resolveElementalForceBonus,
-  resolveStatRatio,
-  VARIANCE_MAX,
-  VARIANCE_MIN,
-  type DamageModifier,
-} from '../../engine/damage/damagePipeline';
-import { collectPassiveDamageModifiers } from '../../engine/combat/passiveEngine';
+import { hasStatReduction, resolveElementalForceBonus, VARIANCE_MAX, VARIANCE_MIN } from '../../engine/damage/damagePipeline';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { StatGlyph, MoveKindGlyph } from '../shared/statIcons';
@@ -36,6 +24,7 @@ import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TARGET_MODE_LABELS, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
+import { forecastDamage } from './forecast';
 
 /** The live fight a move is inspected inside. Optional: the hero sheet, level-up and recruit preview have no combat to forecast against. */
 export interface MoveDossierContext {
@@ -65,96 +54,12 @@ export function formatMult(mult: number): string {
   return `${Math.round(mult * 100) / 100}×`;
 }
 
-interface Forecast {
-  min: number;
-  max: number;
-  /** Fractions of the defender's MAX HP the two ends of the roll take off. */
-  maxFraction: number;
-  minFraction: number;
-  /** Fraction of max HP the defender currently stands on, so the bite is drawn against what is left. */
-  hpFraction: number;
-  typeMult: number;
-  /** 'sure' when even the worst roll finishes it, 'maybe' when only the best one does. */
-  ko: 'sure' | 'maybe' | null;
-}
-
-/**
- * Runs the locked damage formula forward for both ends of the variance roll, through the engine's
- * own pipeline functions (calcDamage takes pre-rolled variance/crit, so no RNG). Every live term is
- * threaded in exactly as resolveRound reads it — docs/authoring-moves.md §5, "pass your new term in
- * or the forecast lies". Crit is excluded from the band and stated as a footnote instead.
- */
-function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defenderId: string): Forecast | null {
-  // A randomBasePower move authors no basePower, and a ramping one has outgrown its authored
-  // figure; both forecast off the number the button is showing (state.ts resolveCastBasePower).
-  const rolledBasePower = resolveCastBasePower(ctx.combat, ctx.attackerId, move, ctx.combat.combatants[ctx.attackerId]?.moveBasePowerBonuses);
-  if (move.kind !== 'damage' || (move.basePower == null && rolledBasePower == null)) return null;
-  const attacker = ctx.combat.combatants[ctx.attackerId];
-  const defender = ctx.combat.combatants[defenderId];
-  if (!attacker || !defender) return null;
-  const attackerHero = allCombatants[attacker.heroId];
-  const defenderHero = allCombatants[defender.heroId];
-  if (!attackerHero || !defenderHero) return null;
-
-  const fieldEffectCtx = { active: ctx.combat.activeFieldEffect, defs: fieldEffects, board: { state: ctx.combat, passives } };
-  const ratio = resolveStatRatio(move.category, attackerHero, attacker, defenderHero, defender, fieldEffectCtx, move.offStatOverride);
-  const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attacker, move, passives, defender);
-  const forceBonus = resolveElementalForceBonus(attacker, move.type, statuses);
-  const maxHp = getMaxHp(defenderHero, defender);
-  // Read against THIS defender, so a conditional move forecasts per enemy.
-  const conditionalMult = resolveConditionalPowerMultiplier(
-    move,
-    defender,
-    attacker,
-    fieldEffectCtx,
-    maxHp,
-    { currentHp: attacker.currentHp, maxHp: getMaxHp(attackerHero, attacker) },
-    activePartnerTypes(ctx.combat, ctx.attackerId, allCombatants)
-  );
-  const attackerTypes = effectiveTypes(attackerHero, attacker);
-  const defenderTypes = effectiveTypes(defenderHero, defender);
-  const typeFloor = fieldTypeMultFloor(move.type, fieldEffectCtx);
-
-  const roll = (variance: number) =>
-    Math.round(
-      calcDamage(
-        move,
-        ratio,
-        attackerTypes,
-        defenderTypes,
-        typeChart,
-        variance,
-        false,
-        modifiers,
-        undefined,
-        undefined,
-        forceBonus,
-        conditionalMult,
-        rolledBasePower,
-        typeFloor
-      )
-        .damage
-    );
-
-  const min = roll(VARIANCE_MIN);
-  const max = roll(VARIANCE_MAX);
-  return {
-    min,
-    max,
-    maxFraction: Math.min(1, max / maxHp),
-    minFraction: Math.min(1, min / maxHp),
-    hpFraction: Math.min(1, defender.currentHp / maxHp),
-    typeMult: Math.max(typeFloor, resolveTypeMult(typeChart, move.type, defenderTypes)),
-    ko: min >= defender.currentHp ? 'sure' : max >= defender.currentHp ? 'maybe' : null,
-  };
-}
-
 // One enemy's line: the bite is drawn out of the defender's own remaining track (docs/visual-language.md fixed-denominator idiom).
 function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: MoveDossierContext; defenderId: string }) {
   const defender = ctx.combat.combatants[defenderId];
   const hero = allCombatants[defender.heroId];
   if (!hero) return null;
-  const forecast = forecastAgainst(move, ctx, defenderId);
+  const forecast = forecastDamage(move, ctx.combat, ctx.attackerId, defenderId);
   if (!forecast) return null;
 
   const { min, max, maxFraction, minFraction, hpFraction, typeMult, ko } = forecast;

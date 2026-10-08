@@ -18,6 +18,7 @@ import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeFx } from './TypeFx';
 import { BlessingMark } from '../shared/BlessingMark';
 import { statusHeldText } from '../shared/statusFacts';
+import type { MoveForecast } from './forecast';
 
 export interface Popup {
   key: number;
@@ -144,6 +145,8 @@ interface Props {
   summoning?: boolean;
   /** The passive warding this combatant right now (engine/combat/ward.ts wardOn) — worn as a badge beside its statuses, since it is not one. */
   warded?: PassiveId | null;
+  /** What the move being targeted would do to THIS hero (forecast.ts) — drawn on its HP bar and beside the effectiveness chip. */
+  forecast?: MoveForecast | null;
 }
 
 const BLESSING_STAR = 'M6 0 L7.3 4.7 L12 6 L7.3 7.3 L6 12 L4.7 7.3 L0 6 L4.7 4.7 Z';
@@ -159,6 +162,40 @@ function BlessingBreak() {
       {Array.from({ length: 8 }, (_, index) => (
         <span key={index} className="blessing-break-shard" style={{ '--shard-angle': `${index * 45 + 22}deg` } as CSSProperties} />
       ))}
+    </span>
+  );
+}
+
+/** The forecast drawn into the HP track: a damage bite eaten leftwards from what is left, with a notch at the worst roll, or a heal's gain laid past the fill. */
+function ForecastFill({ forecast }: { forecast: MoveForecast }) {
+  if (forecast.kind === 'heal') {
+    if (forecast.restoredFraction <= 0) return null;
+    return <div className="bar-forecast-heal" style={{ left: `${forecast.hpFraction * 100}%`, width: `${forecast.restoredFraction * 100}%` }} />;
+  }
+  const { hpFraction, maxFraction, minFraction } = forecast;
+  const biteWidth = Math.min(maxFraction, hpFraction);
+  if (biteWidth <= 0) return null;
+  const biteLeft = Math.max(0, hpFraction - maxFraction);
+  const floorMark = Math.max(0, hpFraction - Math.min(minFraction, hpFraction));
+  return (
+    <>
+      <div className="bar-forecast-bite" style={{ left: `${biteLeft * 100}%`, width: `${biteWidth * 100}%` }} />
+      {floorMark > biteLeft && <div className="bar-forecast-floor" style={{ left: `${floorMark * 100}%` }} />}
+    </>
+  );
+}
+
+function ForecastChip({ forecast }: { forecast: MoveForecast }) {
+  if (forecast.kind === 'heal') {
+    if (forecast.blocked) return <span className="forecast-chip is-blocked">Can't heal</span>;
+    if (forecast.restored <= 0) return <span className="forecast-chip is-blocked">Full</span>;
+    return <span className="forecast-chip is-heal">+{forecast.restored}</span>;
+  }
+  const { min, max, ko } = forecast;
+  return (
+    <span className="forecast-chip is-damage">
+      {min === max ? min : `${min}–${max}`}
+      {ko && <span className={`forecast-ko ${ko === 'sure' ? 'is-sure' : 'is-maybe'}`}>{ko === 'sure' ? 'KO' : 'KO?'}</span>}
     </span>
   );
 }
@@ -293,6 +330,7 @@ export function CombatantCard({
   recalling,
   summoning,
   warded,
+  forecast,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const hitClass = popup ? POPUP_HIT_CLASS[popup.className] : undefined;
@@ -434,6 +472,7 @@ export function CombatantCard({
       {/* Always rendered so the row reserves its height whether or not this card has a badge. */}
       <div className="eff-badge-row">
         {effBadge && <span className={`eff-chip ${effBadge.className}`}>{effBadge.text}</span>}
+        {forecast && !combatant.fainted && <ForecastChip forecast={forecast} />}
       </div>
       {/* Name and the two bars are one object — the nameplate. Grouped in the markup
           rather than by CSS `order` so the DOM sequence stays the reading sequence on
@@ -459,6 +498,7 @@ export function CombatantCard({
               <div className="bar-track">
                 <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
                 <ShieldFill currentHp={combatant.currentHp} maxHp={maxHp} shield={shield} />
+                {forecast && !combatant.fainted && <ForecastFill forecast={forecast} />}
               </div>
               <div className="bar-label">
                 HP {Math.max(0, combatant.currentHp)}/{maxHp}

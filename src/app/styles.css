@@ -24459,6 +24459,88 @@ button.star-shop-bundle-face {
   color: var(--hp-mid);
 }
 
+/* The same forecast drawn on the target picker's own cards (CombatantCard
+   `forecast`): the bite and notch in the move's colour on the real HP bar,
+   hatched so a prediction never reads as HP already lost, and a heal's gain
+   laid past the fill. The target-row sets --move-type-rgb. */
+.bar-forecast-bite {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(var(--move-type-rgb, 53, 59, 74), 0.95) 0 3px,
+      rgba(var(--move-type-rgb, 53, 59, 74), 0.5) 3px 6px
+    ),
+    rgba(9, 11, 15, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.bar-forecast-floor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.bar-forecast-heal {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(-45deg, rgba(110, 220, 140, 0.9) 0 3px, rgba(110, 220, 140, 0.45) 3px 6px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  animation: forecast-heal-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes forecast-heal-pulse {
+  from { opacity: 0.65; }
+  to { opacity: 1; }
+}
+
+.eff-badge-row {
+  gap: 4px;
+}
+
+.forecast-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: var(--well);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.forecast-chip.is-heal {
+  color: var(--hp-high);
+}
+
+.forecast-chip.is-blocked {
+  color: var(--text-dim);
+}
+
+.forecast-ko {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.forecast-ko.is-sure {
+  color: var(--hp-high);
+  text-shadow: 0 0 6px rgba(76, 175, 106, 0.8);
+}
+
+.forecast-ko.is-maybe {
+  color: var(--hp-mid);
+}
+
 /* Stated, not hidden. A player shown "38-45" who then watches 41 land should
    know exactly which term of the locked formula the game rolled — and that the
    one term missing from the band is the 1/16 crit. */
