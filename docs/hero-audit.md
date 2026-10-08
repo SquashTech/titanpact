@@ -104,3 +104,19 @@ back to the ceiling.
 
 To watch: Pack Ice and Rime's Frozen Stone are now the same verb. Frostbite
 fires once a fresh freeze, not every round.
+
+## Storm — renames and grafts (2026-10-08)
+
+Frost three times and Light three times across twelve grafts; spread so each type appears once
+(Shadow unused).
+
+| Hero | Path (was) | Graft (was) | Granted move (was) |
+|---|---|---|---|
+| Squall | Dust Devil (Greenwood) | Stone (Nature) | — |
+| Squall | Turbine (Whiteout) | Mech (Frost) | Cog Slam (Icicle Thrust) |
+| Skyshear | Farsight (Sunward) | Mind (Light) | Psyshock (Radiant Beam) |
+| Nimbus | Raincloud (Hailcloud) | Water (Frost) | Rainmaker (Avalanche) |
+| Kite | Lantern Kite (Sunkite) | Spirit (Light) | — |
+
+Squall's innate Tailwind → **Slipstream** (it shared the move's name; Whiteout shared Igloo's
+signature's). Art moved with the ids; all five drawings were made for the old types.

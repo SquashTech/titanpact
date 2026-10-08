@@ -1104,7 +1104,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   },
   tailwind: {
     id: 'tailwind',
-    name: 'Tailwind',
+    name: 'Slipstream',
     description: 'When this hero enters the battlefield, its partner gains 10 Speed.',
     reactive: {
       hook: 'SwitchedIn',
@@ -1950,7 +1950,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   // --- Storm ---
   jetstream: {
     id: 'jetstream',
-    name: 'Tailwind+',
+    name: 'Slipstream+',
     description: 'When this hero enters the battlefield, its partner gains 25 Speed.',
     reactive: {
       hook: 'SwitchedIn',

@@ -188,7 +188,7 @@ export const trials: Record<string, TrialDefinition> = {
         },
         {
           heroId: 'kite',
-          pathId: 'kite-sunkite',
+          pathId: 'kite-lanternKite',
           moveIds: ['stormkite', 'stormSurge', 'thunderbolt', 'ionicZap'],
           itemIds: ['wand.mythic', 'ring.mythic', 'staff.mythic'],
         },

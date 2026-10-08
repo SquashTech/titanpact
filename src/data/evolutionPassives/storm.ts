@@ -1,7 +1,7 @@
 import type { PassiveDefinition } from '../../engine/content';
 
 export const stormPathPassives: Record<string, PassiveDefinition> = {
-  // Squall's Greenwood: per hit, so a spread pays on both foes.
+  // Squall's Dust Devil: per hit, so a spread pays on both foes.
   thornshot: {
     id: 'thornshot',
     name: 'Thornshot',
@@ -67,7 +67,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Poised' },
     },
   },
-  // Kite's Sunkite: Headwind's trigger, pointed at its own side.
+  // Kite's Lantern Kite: Headwind's trigger, pointed at its own side.
   gildedString: {
     id: 'gildedString',
     name: 'Gilded String',
