@@ -1,6 +1,6 @@
 import type { MoveDefinition } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { activePartnerTypes, effectiveTypes, getMaxHp, moveForHero, resolveCastBasePower } from '../../engine/state';
+import { activePartnerTypes, chargesLeft, effectiveTypes, getMaxHp, moveForHero, resolveCastBasePower } from '../../engine/state';
 import { healBlocked } from '../../engine/combat/statusEngine';
 import { collectPassiveDamageModifiers } from '../../engine/combat/passiveEngine';
 import { shieldHeld } from '../../engine/status/shield';
@@ -85,7 +85,8 @@ export function forecastDamage(authored: MoveDefinition, combat: CombatState, at
     fieldEffectCtx,
     maxHp,
     { currentHp: attacker.currentHp, maxHp: getMaxHp(attackerHero, attacker) },
-    activePartnerTypes(combat, attackerId, allCombatants)
+    activePartnerTypes(combat, attackerId, allCombatants),
+    chargesLeft(attacker, move)
   );
   const attackerTypes = effectiveTypes(attackerHero, attacker);
   const defenderTypes = effectiveTypes(defenderHero, defender);

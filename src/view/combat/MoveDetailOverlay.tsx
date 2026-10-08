@@ -274,25 +274,23 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
       <div className="move-detail-stats">
         {move.kind === 'damage' && move.basePower != null && (
           <span
-            className="move-detail-stat"
+            className="move-detail-stat move-detail-stat-power"
             // The Base Power shown is PER HIT, so a multi-hit move has to say so here — the
             // number alone reads as the whole swing and would understate it threefold.
-            title={move.hitCount ? `${move.basePower + forceBonus} Base Power on each of ${move.hitCount} hits` : undefined}
+            title={move.hitCount ? `${move.basePower + forceBonus} Base Power on each of ${move.hitCount} hits` : 'Base Power'}
           >
             <MoveKindGlyph kind={kindGlyph} />
             <strong>{move.basePower + forceBonus}</strong>
-            <span className="move-detail-unit">BP</span>
             {move.hitCount ? <span className="move-detail-unit">×{move.hitCount}</span> : null}
             {forceBonus > 0 && <span className="move-detail-boost">▲{forceBonus}</span>}
           </span>
         )}
         {move.kind === 'damage' && move.randomBasePower && (
-          <span className="move-detail-stat" title="Base Power is rolled each round and shown on the button before you commit">
+          <span className="move-detail-stat move-detail-stat-power" title="Base Power is rolled each round and shown on the button before you commit">
             <MoveKindGlyph kind={kindGlyph} />
             <strong>
               {move.randomBasePower.min + forceBonus}–{move.randomBasePower.max + forceBonus}
             </strong>
-            <span className="move-detail-unit">BP</span>
             {forceBonus > 0 && <span className="move-detail-boost">▲{forceBonus}</span>}
           </span>
         )}
@@ -519,7 +517,15 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
               note={conditionalPartnerLive ? 'your partner qualifies right now' : 'read off the active partner'}
             />
           )}
+          {move.conditionalPower?.requiresLastCharge && (
+            <EffectRow
+              glyph={<ChargePips move={move} combatant={attacker} />}
+              text={`×${move.conditionalPower.multiplier} power on its last Charge`}
+              note={attacker ? (chargesLeft(attacker, move) === 1 ? 'the next cast is the last' : undefined) : undefined}
+            />
+          )}
           {move.conditionalPower &&
+            !move.conditionalPower.requiresLastCharge &&
             !conditionalFieldId &&
             conditionalPartnerType == null &&
             conditionalHpBelow == null &&

@@ -192,6 +192,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
           {move.name}
         </span>
         <ChargePips move={move} combatant={chargeHolder} restored={restoredCharges} />
+        <span className="move-power-pair">
         {move.kind === 'damage' && (move.basePower ?? rolledBasePower) != null && (
           <span
             className={`move-power${boosted ? ' move-boosted' : ''}`}
@@ -205,7 +206,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                   : undefined
             }
           >
-            <strong>{(rolledBasePower ?? move.basePower ?? 0) + forceBonus}</strong>BP
+            <strong>{(rolledBasePower ?? move.basePower ?? 0) + forceBonus}</strong>
             {boosted && <span className="move-boosted-arrow">▲</span>}
           </span>
         )}
@@ -214,9 +215,10 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
             <strong>{heal.value}</strong>
           </span>
         )}
-        {/* Holds the power slot open so buff rows align with BP/HEAL rows. */}
+        {/* Holds the power slot open so buff rows align with damage and heal rows. */}
         {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
         <MoveKindBadge move={move} />
+        </span>
       </div>
       {/* Always rendered, so a row's height never depends on its contents. */}
       <div className="move-row-effect">
@@ -259,6 +261,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                   (move.conditionalPower.requiresUserStatus ||
                     move.conditionalPower.requiresFieldEffect ||
                     move.conditionalPower.requiresPartnerType ||
+                    move.conditionalPower.requiresLastCharge ||
                     move.conditionalPower.requiresUserHpBelow != null) &&
                   !userConditionMet
                     ? ' move-eff-unmet'
@@ -266,7 +269,9 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 }`}
               >
                 ×{move.conditionalPower.multiplier}{' '}
-                {move.conditionalPower.requiresPartnerType
+                {move.conditionalPower.requiresLastCharge
+                  ? 'on its last Charge'
+                  : move.conditionalPower.requiresPartnerType
                   ? `with a ${move.conditionalPower.requiresPartnerType} partner`
                   : move.conditionalPower.requiresFieldEffect
                   ? `under ${fieldEffects[move.conditionalPower.requiresFieldEffect]?.name ?? move.conditionalPower.requiresFieldEffect}`
@@ -331,7 +336,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                   move.basePowerGainOnUse.max,
                   (rolledBasePower ?? move.basePower ?? 0) + move.basePowerGainOnUse.amount
                 )}{' '}
-                BP
+                power
               </span>
             )}
             {move.conditionalPriority && (
@@ -2030,7 +2035,9 @@ export function FightScreen({
                               : Math.max(0, combatant.currentHp - move.selfHpCost.amount)
                         }
                         userConditionMet={
-                          move.conditionalPower?.requiresPartnerType
+                          move.conditionalPower?.requiresLastCharge
+                            ? chargesLeft(combatant, move) === 1
+                            : move.conditionalPower?.requiresPartnerType
                             ? partnerTypes.includes(move.conditionalPower.requiresPartnerType)
                             : move.conditionalPower?.requiresFieldEffect
                             ? combat.activeFieldEffect?.fieldEffectId === move.conditionalPower.requiresFieldEffect

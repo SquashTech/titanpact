@@ -33,6 +33,7 @@ import {
   hasAffordableMoveInFight,
   isLockedIn,
   isMoveUsable,
+  chargesLeft,
   canSwitchOut,
   resolveCastBasePower,
   resolveManaCost,
@@ -220,7 +221,8 @@ function expectedHit(state: CombatState, casterId: string, move: MoveDefinition,
     ctxField,
     getMaxHp(defenderHero, target),
     attackerHp,
-    activePartnerTypes(state, casterId, allCombatants)
+    activePartnerTypes(state, casterId, allCombatants),
+    chargesLeft(attacker, move)
   );
   const rolledBasePower = resolveCastBasePower(state, casterId, move, attacker.moveBasePowerBonuses);
   const critChance = move.critChance ?? PROVISIONAL_CRIT_CHANCE;

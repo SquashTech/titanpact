@@ -465,6 +465,8 @@ export interface MoveDefinition {
     requiresUserHpBelow?: number;
     /** The user's ACTIVE partner (live, effective types; never the user itself) is this type. All-or-nothing across a spread. */
     requiresPartnerType?: TypeId;
+    /** This cast spends the move's LAST Charge (docs/charges.md, Last Shot): read off the count as the cast began. */
+    requiresLastCharge?: true;
     multiplier: number;
     /** Strip the status the condition read (target or user) — only on a hit that got the multiplier, after the damage, as its own StatusRemoved 'consumed' beat. Inert on the field / HP / partner forms. */
     consumesStatus?: boolean;

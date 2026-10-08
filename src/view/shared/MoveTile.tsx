@@ -337,7 +337,9 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     const gateName = statuses[gate]?.name ?? gate;
     // Never printed on the field form, which cannot consume anything.
     const spent = move.conditionalPower.consumesStatus && !fieldSide ? ', consumed' : '';
-    const clause = partnerSide
+    const clause = move.conditionalPower.requiresLastCharge
+      ? 'on its last Charge'
+      : partnerSide
       ? `while your partner is a ${partnerSide}`
       : fieldSide
       ? `while ${fieldEffects[fieldSide]?.name ?? fieldSide} is up`
@@ -562,28 +564,29 @@ export function MoveButtonReplica({
         </span>
         <span className="move-name">{move.name}</span>
         <ChargePips move={move} combatant={chargeHolder} />
-        {move.kind === 'damage' && move.basePower != null && (
-          <span className="move-power">
-            <strong>{move.basePower}</strong>BP
-          </span>
-        )}
-        {move.kind === 'damage' && move.randomBasePower && (
-          <span className="move-power">
-            <strong>
-              {move.randomBasePower.min}–{move.randomBasePower.max}
-            </strong>
-            BP
-          </span>
-        )}
-        {heal && (
-          <span className="move-power move-heal">
-            <strong>{heal.value}</strong>
-          </span>
-        )}
-        {/* Holds the power column open so the badges don't rag between rows. */}
-        {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
         {tag}
-        <MoveKindBadge move={move} />
+        <span className="move-power-pair">
+          {move.kind === 'damage' && move.basePower != null && (
+            <span className="move-power">
+              <strong>{move.basePower}</strong>
+            </span>
+          )}
+          {move.kind === 'damage' && move.randomBasePower && (
+            <span className="move-power">
+              <strong>
+                {move.randomBasePower.min}–{move.randomBasePower.max}
+              </strong>
+            </span>
+          )}
+          {heal && (
+            <span className="move-power move-heal">
+              <strong>{heal.value}</strong>
+            </span>
+          )}
+          {/* Holds the power column open so the badges don't rag between rows. */}
+          {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
+          <MoveKindBadge move={move} />
+        </span>
       </div>
       <div className="move-row-effect">
         <span className="move-eff-row">

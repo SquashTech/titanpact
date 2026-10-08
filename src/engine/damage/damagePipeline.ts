@@ -74,10 +74,13 @@ export function resolveConditionalPowerMultiplier(
   /** The user's HP as the cast BEGAN — a snapshot, so requiresUserHpBelow is all-or-nothing across a spread that drains. */
   attackerHp?: { currentHp: number; maxHp: number },
   /** The active partner's effective types (state.ts activePartnerTypes); required only by requiresPartnerType. */
-  partnerTypes?: readonly string[] | null
+  partnerTypes?: readonly string[] | null,
+  /** The move's Charges left as the cast BEGAN (state.ts chargesLeft); required only by requiresLastCharge. */
+  chargesAtCast?: number | null
 ): number {
   const conditional = move.conditionalPower;
   if (!conditional) return 1;
+  if (conditional.requiresLastCharge) return chargesAtCast === 1 ? conditional.multiplier : 1;
   if (conditional.requiresPartnerType != null) {
     return partnerTypes?.includes(conditional.requiresPartnerType) ? conditional.multiplier : 1;
   }

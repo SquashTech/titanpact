@@ -305,6 +305,7 @@ test('shadow: no move in the GAME authors two sides of conditionalPower', () => 
       requiresUserHpBelow,
       requiresPartnerType,
       requiresTargetStatReduction,
+      requiresLastCharge,
     } = move.conditionalPower;
     const authored = [
       requiresTargetStatus,
@@ -314,6 +315,7 @@ test('shadow: no move in the GAME authors two sides of conditionalPower', () => 
       requiresPartnerType,
       requiresUserHpBelow,
       requiresTargetStatReduction,
+      requiresLastCharge,
     ].filter((v) => v != null);
     assert.strictEqual(authored.length, 1, `${move.id} authors ${authored.length} sides of conditionalPower`);
   }

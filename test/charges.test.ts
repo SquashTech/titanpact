@@ -16,6 +16,7 @@ import { chargesLeft, isMoveUsable } from '../src/engine/state';
 import { chargeBoonPassives } from '../src/data/passives';
 import { boonPool } from '../src/run/boons';
 import { createRosterEntry } from '../src/run/state';
+import { resolveConditionalPowerMultiplier } from '../src/engine/damage/damagePipeline';
 import type { CombatState } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -218,4 +219,26 @@ test('charges: a refill Boon is offered only to a roster that holds something it
   assert.deepStrictEqual(boonPool([plain], heroes).filter((id) => charge.includes(id)), []);
   assert.deepStrictEqual(boonPool([plain, guard], heroes).filter((id) => charge.includes(id)).sort(), ['deepBreath', 'grimResolve', 'riposte']);
   assert.deepStrictEqual(boonPool([archer], heroes).filter((id) => charge.includes(id)).sort(), ['deepBreath', 'grimResolve'], 'Riposte needs a guard');
+});
+
+// --- Phase 5: Last Shot (a move that reads its own Charges) ---
+
+test('charges: Last Shot — Stormpiercer hits ×1.5 on its last Charge, read off the count as the cast began', () => {
+  const m = moves.stormpiercer;
+  assert.strictEqual(m.conditionalPower?.requiresLastCharge, true);
+  const c = squall(31, 'retrieve').combatants.a1;
+  assert.strictEqual(resolveConditionalPowerMultiplier(m, c, c, undefined, undefined, undefined, null, 2), 1);
+  assert.strictEqual(resolveConditionalPowerMultiplier(m, c, c, undefined, undefined, undefined, null, 1), m.conditionalPower!.multiplier);
+
+  const hitWith = (spent: number) => {
+    const base = squall(32, 'retrieve');
+    const state = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, chargesSpent: { stormpiercer: spent } } } };
+    const r = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'stormpiercer', declaredTarget: 'b1' } as Action], config);
+    const hit = r.events.find((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'a1');
+    return hit && hit.type === 'DamageDealt' ? hit.amount + (hit.absorbed ?? 0) : 0;
+  };
+  const first = hitWith(0);
+  const last = hitWith(1);
+  assert.ok(first > 0);
+  assert.ok(Math.abs(last / first - 1.5) < 0.05, `last ${last} vs first ${first}`);
 });

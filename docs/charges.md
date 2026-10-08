@@ -1,7 +1,7 @@
 # Charges
 
 **DECIDED in shape 2026-10-08, per user direction. Phase 1 (the engine) is IN, and Squall's Arrows
-(the first refills, below) are IN. Phase 2 (the pips) is IN. Phase 3 is MEASURED. Phase 4 (the refill Boons) is IN.** A few moves carry a number of
+(the first refills, below) are IN. Phase 2 (the pips) is IN. Phase 3 is MEASURED. Phase 4 (the refill Boons) is IN. Phase 5's audit is DONE and Last Shot is IN.** A few moves carry a number of
 **Charges** a fight. Each cast spends one. With none left, the move can't be used for the rest of the
 fight. This replaces the rising mana cost (`manaCostGainOnUse`) as the way a lockout is kept from
 being spammed, and it generalizes the existing `oncePerFight` gate, which becomes one Charge.
@@ -202,6 +202,31 @@ decide one by one; none is decided here.
 
 The hero audit sheet could carry a Charges column so the decision is made as each type is reached.
 
+## The audit (phase 5, 2026-10-08)
+
+Every move in the game that guarantees a Daze or lays a guard or a redirect, read against the rule
+**"a guaranteed lockout is limited by Charges"**:
+
+- **Every player move that guarantees a Daze already holds Charges**: Blind, Feint and Pinning Shot
+  (2) and Ink Blast (1). Daze is the game's only turn-denying status (Freeze halves Speed). Two
+  others guarantee one and stay off Charges: **Perfect Creation** (Mech Late, 100 Mana, six statuses
+  at once — its price already makes it a once-a-fight cast) and **Transfix** (Ancient, the Herald's,
+  enemy-only, inside the finale's tuning).
+- **The Provoke family stays uncharged — a RECOMMENDATION, the designer's to overrule.** Provoke,
+  Bodyguard, Intercept (the Class) and three signatures (Wall Strike, Roost Guard, Nevermore) are six
+  moves and the whole tank archetype. A redirect is not a lockout: the enemy still acts, onto the
+  tank, which pays for it in HP, and the redirect lasts the round it is cast. Charging it would cap
+  the tank's one job at two rounds a fight. If a Provoke every round reads as a lock in play, the
+  answer is the same cooldown question Barrier has, not a count.
+- **Last Shot is BUILT** on Stormpiercer, Squall's Late Arrow: ×1.5 on its last Charge
+  (`conditionalPower.requiresLastCharge`, read off the count as the cast began, so the engine, the
+  forecast and the pilot agree; the fight row lights the bonus when one Charge is left). Not
+  simulated: Stormpiercer was cast 282 times in 3000 runs.
+- **Exhaust and Empty-handed are DEFERRED.** Exhaust strips an enemy's Charges, and today few enemy
+  kits hold any (the Arcane spawn's Barrier, a hero-pool enemy's Blind), so it would be a dead card
+  most fights; it waits for Charges to spread. Empty-handed wants a hero with several charged moves,
+  and only Squall has that.
+
 ## The AI
 
 `isMoveUsable` already keeps a spent move out of the enemy's options, so the AI is correct on day
@@ -221,7 +246,7 @@ round enemy Charges are spent will tell.
    and the AI's spend round. If a charged move is now cast less than it was, lower its mana cost.
 4. **Refills.** IN (below). A `restoreCharge` passive effect and an event (`ChargeRestored`) for the view to flash.
    Author two or three of the refills above, on Barrier's and Blind's holders first.
-5. **The audit.** Candidates move onto Charges one by one, and the Charge-reading moves are authored.
+5. **The audit.** DONE (below). Candidates move onto Charges one by one, and the Charge-reading moves are authored.
 
 ## Measured (phase 3, 2026-10-08)
 
@@ -259,7 +284,8 @@ charged kit can use. Tempest, Kite and Raiju are not in the default deck and wer
 - **Protect's back-to-back problem.** Two Charges still allow guard, attack, guard. If a guard on
   consecutive rounds is the real issue, a "not two rounds running" cooldown is a second gate.
   `isMoveUsable` can hold it beside Charges. Decide after phase 3 shows how Barrier is actually cast.
-- **Do charged moves get cheaper?** Measured in phase 3, not assumed.
+- **Do charged moves get cheaper?** Measured in phase 3: no.
+- **The Provoke family** (above): uncharged on recommendation.
 - **A Charge consumable** (an "Ether", a fourth purse kind) is held back. It is a free action, and
   one a fight is effectively a count raised by one on every charged move.
 

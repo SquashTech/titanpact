@@ -923,6 +923,8 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'damage',
     basePower: 105,
+    // Last Shot: the quiver's final Arrow is the one that counts.
+    conditionalPower: { requiresLastCharge: true, multiplier: 1.5 },
     manaCost: 55,
     chargesPerFight: 2,
     tags: ['arrow'],
