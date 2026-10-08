@@ -62,9 +62,12 @@ are what set them apart; Quiver is what they share.
 - **Why the innates now matter more:** a locked slot is one Arrow with 2–4 Charges, dead when it runs
   dry. Squall buys it back with kills, Sliver with crits, and Sleet holds the last one for the kill.
   Quiver poses the problem; each innate is a different answer.
-- **Arrows leave the archers' offer pools** (recommended): with Quiver rolling the whole family, an
-  Arrow learned in another slot would duplicate a face (Motley's pool already excludes a held move).
-  An archer meets Arrows through Quiver; non-archers who hold Iron Arrow keep it as an ordinary move.
+- **Each archer's own-element Arrows stay in its offer pool** (2026-10-08, per user direction), learned
+  like any move, and **Quiver never rolls an Arrow the active kit already holds** — Motley's rule
+  (`kitForRound` already drops held moves from the face pool). So a learned Arrow is the dependable
+  floor and Quiver rolls everything else; the two can never show the same Arrow twice. Arrows of
+  other elements, Iron Arrow included, come only through Quiver for an archer; non-archers who hold
+  Iron Arrow keep it as an ordinary move.
 - **The enemy side:** the AI reads the round's kit (`kitForRound`), so an enemy archer will likely
   cast its first face and lock at once. Acceptable; a smarter wait is a later AI tier.
 
@@ -72,7 +75,8 @@ are what set them apart; Quiver is what they share.
 
 Squall is built and keeps Retrieve / Retrieve+ (Restock), Gale Volley and Windshear / Dust Devil /
 Turbine. His kit becomes **Quiver + Rising Static**; Storm Arrow, Pinning Shot and Stormpiercer (Last
-Shot) move into the Arrow pool, and with Iron Arrow they leave his offers. He moves from the base to
+Shot) stay in his offers (Storm Arrow to his Early band) and in the Arrow pool, and Iron Arrow
+leaves his offers. He moves from the base to
 the bundle (`unlock: 'bundle.deadeyes'`).
 
 **Open:** make Gale Volley an Arrow (tag, 2 Charges), so his signature reads Retrieve too.
@@ -183,4 +187,5 @@ meets Arrows through Iron Arrow but buys the family.
   refunds about one Arrow in three there. Measure before the mastered figure.
 - **Price:** 8 stars, as Tall Grass.
 - **Quiver's name** (Nock? Draw?), and whether a locked slot that runs dry should fall back to rolling.
-- **Squall's existing players** lose Storm Arrow as a reliable opener; it becomes one face of ten.
+- **Squall's existing players** lose Storm Arrow as a reliable opener: it becomes one face of ten until
+  his first Early offer can teach it back.
