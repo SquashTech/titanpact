@@ -6,6 +6,7 @@ import './shield.test';
 import './heal.test';
 import './passives.test';
 import './tallGrass.test';
+import './charges.test';
 import './elementalForce.test';
 import './fieldEffects.test';
 import './pactClock.test';

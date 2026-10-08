@@ -143,6 +143,11 @@ export function moveKindLabel(move: MoveDefinition): string {
 const CATEGORY_LABELS: Record<MoveDefinition['category'], string> = { physical: 'PHY', magical: 'MAG' };
 
 /** Canonical player-facing name per TargetMode; FightScreen's targeting copy reads this too. */
+/** '1 Charge', '2 Charges'. */
+export function chargesLabel(n: number): string {
+  return `${n} Charge${n === 1 ? '' : 's'}`;
+}
+
 export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
   singleEnemy: 'Single Enemy',
   bothEnemies: 'Both Enemies',
@@ -406,7 +411,6 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   if (move.cleanses) parts.push(move.cleanseCount != null ? `Cleanses ${move.cleanseCount} at random` : 'Cleanses');
 
   if (move.manaDiscountOnUse) parts.push(`costs ${move.manaDiscountOnUse} less each use`);
-  if (move.manaCostGainOnUse) parts.push(`costs ${move.manaCostGainOnUse} more each use`);
 
   if (move.randomPriority?.length) {
     const brackets = [...move.randomPriority].sort((a, b) => a - b).map((p) => (p >= 0 ? `+${p}` : `${p}`));
@@ -438,7 +442,7 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   if (move.switchesUserOut) parts.push('Then switch out');
   if (move.manaCostAll) parts.push('Spends all Mana');
   if (move.firstTurnOnly) parts.push('First turn out only');
-  if (move.oncePerFight) parts.push('Once a fight');
+  if (move.chargesPerFight != null) parts.push(move.chargesPerFight === 1 ? 'Once a fight' : `${chargesLabel(move.chargesPerFight)} a fight`);
 
   if (move.fieldEffectApplication) {
     parts.push(`Field: ${fieldEffects[move.fieldEffectApplication]?.name ?? move.fieldEffectApplication}`);

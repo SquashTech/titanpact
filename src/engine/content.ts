@@ -534,18 +534,14 @@ export interface MoveDefinition {
     manaCost: number;
   };
   /** Each cast drops this move's cost for THAT combatant by this much for the rest of the fight, stacking, floored at 0 (Wave Shred; Combatant.moveManaDiscounts). */
-  manaDiscountOnUse?: number;
-  /**
-   * The mirror: each cast RAISES this move's cost for THAT combatant by this much for the rest of the
-   * fight, stacking (Feint, Blind, Barrier — the guaranteed lockouts, so none of them is a permanent
-   * lock). Banked in the same per-move ledger as the discount (Combatant.moveManaDiscounts, as a
-   * negative entry), so every price reader sees it. Pays the pre-increment price.
-   */
-  manaCostGainOnUse?: number;
-  /** The cast spends ALL of the caster's current Mana, overflow included; `manaCost` is its floor, below which it cannot be cast (Ink Blast). state.ts resolveManaCost. */
+  manaDiscountOnUse?: number;  /** The cast spends ALL of the caster's current Mana, overflow included; `manaCost` is its floor, below which it cannot be cast (Ink Blast). state.ts resolveManaCost. */
   manaCostAll?: true;
-  /** Castable once a fight by each combatant that holds it (Combatant.spentMoveIds). state.ts isMoveUsable. */
-  oncePerFight?: true;
+  /**
+   * Charges a fight (docs/charges.md): each cast spends one, and at none the move is unusable for the
+   * rest of the fight. Spent per combatant and kept through a switch (Combatant.chargesSpent); a fight
+   * opens full. Absent = unlimited. state.ts isMoveUsable / chargesLeft.
+   */
+  chargesPerFight?: number;
   /** Castable only on the combatant's first round on the field — round 1 for a lead, the round after it arrived otherwise (Combatant.firstActionRound). state.ts isMoveUsable. */
   firstTurnOnly?: true;
   /**

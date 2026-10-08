@@ -1679,9 +1679,8 @@ export const moves: Record<string, MoveDefinition> = {
     statDeltas: [],
     statusApplication: { statusId: 'Daze', target: 'moveTarget' },
     manaCost: 25,
-    // A guaranteed lockout is priced by the fight, not the cast: dearer every time, so it is never
-    // a permanent lock (2026-09-11, per user direction — Feint and Barrier carry the same).
-    manaCostGainOnUse: 20,
+    // A guaranteed lockout is limited by Charges, never a permanent lock (docs/charges.md).
+    chargesPerFight: 2,
     priority: 0,
     target: 'singleEnemy',
   },
@@ -2195,9 +2194,8 @@ export const moves: Record<string, MoveDefinition> = {
   // The roster's only guard, and deliberately a thin slice of it: Glyph and Reverie, both frail
   // casters whose problem is being the weakest body on the field rather than a weak one. Priority 2
   // is a bracket of its own above every other move, so the guard is always up before what it stops.
-  // Not spam-proofed by a consecutive-use rule — mana is the balance lever on reliable moves
-  // (CLAUDE.md), so the price is what limits it: 25, then 45, then 65 (manaCostGainOnUse). The
-  // counterplay is the partner: a guard protects one body of two, and the far side hits the other.
+  // Two Charges a fight (docs/charges.md). The counterplay is the partner: a guard protects one
+  // body of two, and the far side hits the other.
   barrier: {
     id: 'barrier',
     name: 'Barrier',
@@ -2210,8 +2208,8 @@ export const moves: Record<string, MoveDefinition> = {
     kind: 'buff',
     statusApplication: { statusId: 'Barrier', target: 'self' },
     manaCost: 25,
-    // Dearer every cast, like Blind and Feint: a wall every round was a lock, not a guard.
-    manaCostGainOnUse: 20,
+    // A wall every round was a lock, not a guard.
+    chargesPerFight: 2,
     priority: 2,
     target: 'self',
   },

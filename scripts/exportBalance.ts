@@ -158,7 +158,7 @@ export function effect(m: MoveDefinition): string {
     out.push(`costs ${c.manaCost} if ${cond}`);
   }
   if (m.manaDiscountOnUse !== undefined) out.push(`−${m.manaDiscountOnUse} mana each cast`);
-  if (m.manaCostGainOnUse !== undefined) out.push(`+${m.manaCostGainOnUse} mana each cast`);
+  if (m.chargesPerFight !== undefined) out.push(`${m.chargesPerFight} Charge${m.chargesPerFight === 1 ? '' : 's'} a fight`);
   if (m.randomPriority) out.push(`prio one of ${m.randomPriority.map(signed).join('/')}`);
   if (m.conditionalPriority) out.push(`${signed(m.conditionalPriority.bonus)} prio vs ${statusName(m.conditionalPriority.requiresTargetStatus)}`);
   if (m.switchesUserOut) out.push('then switches out');

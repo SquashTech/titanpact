@@ -297,12 +297,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     const previousMana = actor.currentMana;
     const newMana = previousMana - manaCost;
-    // One ledger for both ramps: a discount adds, a gain subtracts (state.ts effectiveManaCost).
-    const manaShift = (move.manaDiscountOnUse ?? 0) - (move.manaCostGainOnUse ?? 0);
-    const nextDiscounts =
-      manaShift !== 0
-        ? { ...actor.moveManaDiscounts, [move.id]: (actor.moveManaDiscounts[move.id] ?? 0) + manaShift }
-        : actor.moveManaDiscounts;
+    const nextDiscounts = move.manaDiscountOnUse
+      ? { ...actor.moveManaDiscounts, [move.id]: (actor.moveManaDiscounts[move.id] ?? 0) + move.manaDiscountOnUse }
+      : actor.moveManaDiscounts;
     // Banked on the actor BEFORE the hit rolls, so this cast lands at the pre-increment power.
     const nextBasePowerBonuses = move.basePowerGainOnUse
       ? { ...actor.moveBasePowerBonuses, [move.id]: (actor.moveBasePowerBonuses[move.id] ?? 0) + move.basePowerGainOnUse.amount }
@@ -316,7 +313,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           currentMana: newMana,
           moveManaDiscounts: nextDiscounts,
           moveBasePowerBonuses: nextBasePowerBonuses,
-          ...(move.oncePerFight ? { spentMoveIds: [...(actor.spentMoveIds ?? []), move.id] } : {}),
+          ...(move.chargesPerFight != null
+            ? { chargesSpent: { ...actor.chargesSpent, [move.id]: (actor.chargesSpent?.[move.id] ?? 0) + 1 } }
+            : {}),
           damageTakenSinceLastTurn: 0,
         },
       },

@@ -48,12 +48,12 @@ export interface Combatant {
   baselineStatusMagnitudes: Partial<Record<StatusId, number>>;
   /** One instance per status id — never stacked as multiple instances. */
   statuses: Record<StatusId, StatusInstance>;
-  /** Accumulated manaDiscountOnUse (positive) and manaCostGainOnUse (negative) per move id; grows only within a fight. Read via effectiveManaCost. */
+  /** Accumulated manaDiscountOnUse per move id; grows only within a fight. Read via effectiveManaCost. */
   moveManaDiscounts: Partial<Record<string, number>>;
   /** Every move's price raised by this much for the rest of the fight (a manaSurcharge passive effect — Deepgrip). Read by resolveManaCost. */
   manaSurcharge?: number;
-  /** `oncePerFight` moves already cast this fight. Read by isMoveUsable. */
-  spentMoveIds?: readonly string[];
+  /** Charges spent this fight per move id (`chargesPerFight`); kept through a switch, never refilled by Rest or the bench. Read via chargesLeft. */
+  chargesSpent?: Partial<Record<string, number>>;
   /** The round this combatant first acts after arriving (switching.ts performSwitch sets round + 1); unset for a lead, whose first round is 1. Read by isMoveUsable for `firstTurnOnly`. */
   firstActionRound?: number;
   /** Accumulated basePowerGainOnUse per move id; grows only within a fight. Read via effectiveBasePower. */
@@ -418,11 +418,17 @@ export function hasAffordableMoveInFight(
   return moveIds.some((id) => isMoveUsable(state, combatantId, moves[id]) && currentMana >= resolveManaCost(state, combatantId, moves[id], heroes));
 }
 
-/** The gates a move carries beyond its price: `oncePerFight` not yet spent, `firstTurnOnly` on the combatant's first round out. Engine, AI and view all read this. */
+/** Charges this combatant has left on `move`, or null for a move without Charges. */
+export function chargesLeft(combatant: Pick<Combatant, 'chargesSpent'>, move: MoveDefinition): number | null {
+  if (move.chargesPerFight == null) return null;
+  return Math.max(0, move.chargesPerFight - (combatant.chargesSpent?.[move.id] ?? 0));
+}
+
+/** The gates a move carries beyond its price: a Charge left, `firstTurnOnly` on the combatant's first round out. Engine, AI and view all read this. */
 export function isMoveUsable(state: CombatState, combatantId: string, move: MoveDefinition): boolean {
   const combatant = state.combatants[combatantId];
   if (!combatant) return false;
-  if (move.oncePerFight && combatant.spentMoveIds?.includes(move.id)) return false;
+  if (chargesLeft(combatant, move) === 0) return false;
   if (move.firstTurnOnly && (combatant.firstActionRound ?? 1) !== state.round) return false;
   return true;
 }

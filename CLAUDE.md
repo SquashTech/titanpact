@@ -399,10 +399,12 @@ don't silently override it.
   `docs/hero-audit.md`): Tusk's Stampede doubles its own Speed at every round end
   (`PassiveAmount` `targetStat`), held by the same ceiling. A fifth is a conversation again.
 - **No accuracy stat.** Moves always land. **Mana cost is the primary balance lever** on
-  reliable moves. **A guaranteed lockout is priced by the fight, not the cast** (2026-09-11):
-  Feint, Blind and Barrier carry `manaCostGainOnUse` = 20, so each cast is dearer for the rest
-  of the fight and none of them is a permanent lock. It banks in the same per-move ledger as
-  `manaDiscountOnUse` (`Combatant.moveManaDiscounts`, negative), so every price reader sees it.
+  reliable moves. **A guaranteed lockout is limited by CHARGES** (2026-10-08, per user direction,
+  `docs/charges.md`, replacing the +20-a-cast `manaCostGainOnUse` of 2026-09-11, deleted):
+  `MoveDefinition.chargesPerFight`, one spent a cast, the move unusable at none, a fight opening
+  full. **Charges belong to the hero** — kept through a switch, never refilled by Rest or the bench
+  (`Combatant.chargesSpent`, read through `isMoveUsable`) — both sides capped, drawn as pips.
+  Feint, Blind and Barrier hold 2; a move's `oncePerFight` is 1 Charge (Ink Blast).
 - **Priority uses integer brackets; Speed is the tiebreaker within a bracket.**
 - **No spread damage reduction** — this is a doubles-only game.
 

@@ -1,6 +1,6 @@
 # Charges
 
-**DECIDED in shape 2026-10-08, per user direction. NOT BUILT.** A few moves carry a number of
+**DECIDED in shape 2026-10-08, per user direction. Phase 1 (the engine) is IN.** A few moves carry a number of
 **Charges** a fight. Each cast spends one. With none left, the move can't be used for the rest of the
 fight. This replaces the rising mana cost (`manaCostGainOnUse`) as the way a lockout is kept from
 being spammed, and it generalizes the existing `oncePerFight` gate, which becomes one Charge.

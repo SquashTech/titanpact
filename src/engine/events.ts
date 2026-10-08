@@ -47,7 +47,7 @@ export interface MoveUsedEvent extends BaseEvent {
   moveId: string;
   /** What was actually paid (state.ts effectiveManaCost). */
   manaSpent: number;
-  /** Authored cost minus what was paid: positive for a discount, NEGATIVE for a manaCostGainOnUse surcharge. Absent (not 0) otherwise. */
+  /** Authored cost minus what was paid: positive for a discount, NEGATIVE for a surcharge (manaSurcharge). Absent (not 0) otherwise. */
   manaDiscount?: number;
   /** A damage-kind move (MoveDefinition.kind === 'damage'); a MoveUsed passive reads it. */
   damaging: boolean;
@@ -216,7 +216,7 @@ export interface StatusRefusedEvent extends BaseEvent {
 export interface ActionBlockedEvent extends BaseEvent {
   type: 'ActionBlocked';
   combatantId: string;
-  /** 'noValidTarget': declared target no longer legal. 'targetStatusMissing': requiresTargetStatus unmet. 'switchBlocked': switchesUserOut pivot refused by lock-in or an empty bench — payload still landed, mana spent. 'moveUnavailable': a oncePerFight or firstTurnOnly gate unmet (state.ts isMoveUsable) — no mana spent. 'callUnavailable': a Call with none left, no caster, or a caller no longer on the field — nothing spent. */
+  /** 'noValidTarget': declared target no longer legal. 'targetStatusMissing': requiresTargetStatus unmet. 'switchBlocked': switchesUserOut pivot refused by lock-in or an empty bench — payload still landed, mana spent. 'moveUnavailable': no Charge left or a firstTurnOnly gate unmet (state.ts isMoveUsable) — no mana spent. 'callUnavailable': a Call with none left, no caster, or a caller no longer on the field — nothing spent. */
   reason: 'dazed' | 'noValidTarget' | 'targetStatusMissing' | 'switchBlocked' | 'moveUnavailable' | 'callUnavailable';
 }
 

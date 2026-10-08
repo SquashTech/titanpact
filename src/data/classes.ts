@@ -21,7 +21,7 @@ export const classMoves: Record<string, MoveDefinition> = {
     basePower: 40,
     statusApplication: { statusId: 'Daze', target: 'moveTarget' },
     manaCost: 30,
-    manaCostGainOnUse: 20,
+    chargesPerFight: 2,
     priority: 2,
     target: 'singleEnemy',
   },

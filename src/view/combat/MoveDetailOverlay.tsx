@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition, StatKey } from '../../engine/content';
 import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { activePartnerTypes, applyStatModifierDelta, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveManaCost, moveForHero, moveForPrimaryType, statusMagnitude } from '../../engine/state';
+import { activePartnerTypes, applyStatModifierDelta, chargesLeft, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveManaCost, moveForHero, moveForPrimaryType, statusMagnitude } from '../../engine/state';
 import { statDeltaLandsOnCasterSide } from '../../engine/combat/statDeltaScaling';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
@@ -22,7 +22,7 @@ import { fieldEffectFactsLine } from '../shared/fieldEffectFacts';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, chargesLabel, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
 import { forecastDamage, koLabel } from './forecast';
 import { ForecastBite } from './ForecastBite';
@@ -232,7 +232,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
       move.critChance != null ||
       move.drainPercent ||
       move.manaDiscountOnUse ||
-      move.manaCostGainOnUse ||
+      move.chargesPerFight != null ||
       move.typeFollowsUser ||
       move.basePowerGainOnUse ||
       move.randomBasePower ||
@@ -646,14 +646,14 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
               }
             />
           )}
-          {move.manaCostGainOnUse != null && (
+          {move.chargesPerFight != null && (
             <EffectRow
-              glyph={<StatGlyph stat="manaPool" />}
-              text={`Costs ${move.manaCostGainOnUse} more each use`}
+              glyph={<MoveKindGlyph kind="debuff" />}
+              text={`${chargesLabel(move.chargesPerFight)} a fight`}
               note={
                 attacker
-                  ? `costs ${liveCost} now, ${liveCost + move.manaCostGainOnUse} after this cast · this fight`
-                  : 'this hero, this fight'
+                  ? `${chargesLabel(chargesLeft(attacker, move) ?? 0)} left · spent Charges stay spent through a switch`
+                  : 'spent Charges stay spent through a switch'
               }
             />
           )}

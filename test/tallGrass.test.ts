@@ -1,5 +1,5 @@
 // From the Tall Grass: Nautilus's engine verbs — the SwitchedOut hook (Ink), a move's
-// firstTurnOnly / oncePerFight / manaCostAll gates (Ink Blast), and a passive's manaSurcharge
+// firstTurnOnly / one-Charge / manaCostAll gates (Ink Blast), and a passive's manaSurcharge
 // (Deepgrip).
 
 import * as assert from 'assert';
@@ -85,7 +85,7 @@ test('tall grass: Ink Blast on the lead turn Dazes both foes first, spends every
   assert.strictEqual(events.find((e) => e.type === 'MoveUsed' && e.combatantId === 'a1' && e.type === 'MoveUsed')?.type, 'MoveUsed');
   assert.ok(next.bench.A.includes('a1'), 'and Nautilus is gone behind it');
   assert.strictEqual(next.combatants.b1.statModifiers.attack, -10, 'the retreat fired Ink');
-  assert.deepStrictEqual(next.combatants.a1.spentMoveIds, ['inkBlast']);
+  assert.deepStrictEqual(next.combatants.a1.chargesSpent, { inkBlast: 1 });
 });
 
 test('tall grass: Ink Blast is first-turn-only — gone on round two, back on the round after a switch-in', () => {
@@ -105,7 +105,7 @@ test('tall grass: Ink Blast is first-turn-only — gone on round two, back on th
 });
 
 test('tall grass: Ink Blast is once a fight — a second first turn does not reopen it', () => {
-  const spent = patch(fixture(406), 'a1', { spentMoveIds: ['inkBlast'], firstActionRound: 5 });
+  const spent = patch(fixture(406), 'a1', { chargesSpent: { inkBlast: 1 }, firstActionRound: 5 });
   assert.ok(!isMoveUsable({ ...spent, round: 5 }, 'a1', moves.inkBlast));
 });
 

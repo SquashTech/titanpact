@@ -1,6 +1,6 @@
 // The two engine verbs the Class moves added (docs/growth-overhaul.md §11): `typeFollowsUser` (a
-// move wears its holder's primary type, STAB guaranteed) and `manaCostGainOnUse` (a guaranteed
-// lockout dearer every cast, so it is never a permanent lock).
+// move wears its holder's primary type, STAB guaranteed) and `chargesPerFight` (a guaranteed
+// lockout spent after its Charges, so it is never a permanent lock).
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -13,7 +13,7 @@ import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
-import { effectiveManaCost, hasStatus, moveForHero, moveForPrimaryType, resolveManaCost } from '../src/engine/state';
+import { chargesLeft, hasStatus, isMoveUsable, moveForHero, moveForPrimaryType } from '../src/engine/state';
 import type { CombatState } from '../src/engine/state';
 import type { Action } from '../src/engine/combat/actions';
 
@@ -74,16 +74,16 @@ test('class moves: in a fight the move is rolled at the user\'s type — STAB fo
   assert.strictEqual(hit.stab, 1.25, 'and it carries STAB');
 });
 
-// --- manaCostGainOnUse ---
+// --- Charges (docs/charges.md) ---
 
-test('class moves: Feint, Blind and Barrier are the guaranteed lockouts, and each is dearer every cast', () => {
+test('class moves: Feint, Blind and Barrier are the guaranteed lockouts, and each holds two Charges', () => {
   for (const id of ['feint', 'blind', 'barrier']) {
-    assert.strictEqual(moves[id].manaCostGainOnUse, 20, `${id} should climb 20 a cast`);
+    assert.strictEqual(moves[id].chargesPerFight, 2, `${id} should hold two Charges`);
   }
-  assert.strictEqual(moves.feint.statusApplication && (moves.feint.statusApplication as any).chance, undefined, 'Feint\'s Daze is guaranteed');
+  assert.strictEqual(moves.feint.statusApplication && (moves.feint.statusApplication as any).chance, undefined, "Feint's Daze is guaranteed");
 });
 
-test('class moves: Feint pays its authored cost first, then 20 more every cast, on this hero only, and the log carries the surcharge', () => {
+test('class moves: Feint pays its authored cost every cast, twice, and is then spent on this hero only', () => {
   const state = withDeepPools(fixture(32));
   const cast: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'feint', declaredTarget: 'b1' }];
 
@@ -92,18 +92,15 @@ test('class moves: Feint pays its authored cost first, then 20 more every cast, 
   const third = resolveRound(second.state, cast, config);
 
   assert.strictEqual(spentOn(first), moves.feint.manaCost);
-  assert.strictEqual(spentOn(second), moves.feint.manaCost + 20);
-  assert.strictEqual(spentOn(third), moves.feint.manaCost + 40);
-  assert.strictEqual((second.events.find((e) => e.type === 'MoveUsed') as any).manaDiscount, -20, 'a surcharge is a negative discount');
+  assert.strictEqual(spentOn(second), moves.feint.manaCost, 'no surcharge');
   // Daze is flinch — cleared at the end of the round it lands in — so the proof is the event, not the state after.
   assert.ok(first.events.some((e) => e.type === 'StatusApplied' && (e as any).statusId === 'Daze' && (e as any).combatantId === 'b1'), 'and the target is Dazed every time');
   assert.ok(!hasStatus(first.state.combatants.b1, 'Daze'), 'and it does not outlive the round');
 
-  // The ledger banks AFTER each cast (the cast pays pre-increment), so three casts leave the fourth at +60;
-  // it is per hero, and every price reader agrees with it.
-  assert.strictEqual(third.state.combatants.a1.moveManaDiscounts.feint, -60);
-  assert.strictEqual(effectiveManaCost(moves.feint, third.state.combatants.a1.moveManaDiscounts), moves.feint.manaCost + 60);
-  assert.strictEqual(resolveManaCost(third.state, 'a1', moves.feint, heroes), moves.feint.manaCost + 60);
-  assert.strictEqual(resolveManaCost(third.state, 'a2', moves.feint, heroes), moves.feint.manaCost, 'the partner still pays full price');
-  assert.strictEqual(moves.feint.manaCost, 30, 'the catalog is never mutated');
+  assert.strictEqual(chargesLeft(second.state.combatants.a1, moves.feint), 0);
+  assert.ok(!isMoveUsable(second.state, 'a1', moves.feint));
+  assert.ok(third.events.some((e) => e.type === 'ActionBlocked' && e.combatantId === 'a1' && e.reason === 'moveUnavailable'), 'a third cast is refused');
+  assert.ok(!third.events.some((e) => e.type === 'MoveUsed' && e.combatantId === 'a1'), 'and spends nothing');
+  assert.strictEqual(chargesLeft(second.state.combatants.a2, moves.feint), 2, 'the partner holds its own');
+  assert.strictEqual(moves.feint.chargesPerFight, 2, 'the catalog is never mutated');
 });

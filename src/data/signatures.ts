@@ -131,7 +131,7 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     statusApplication: { statusId: 'Daze', target: 'moveTarget' },
     manaCost: 45,
     manaCostAll: true,
-    oncePerFight: true,
+    chargesPerFight: 1,
     firstTurnOnly: true,
     switchesUserOut: true,
     priority: 2,
