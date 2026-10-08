@@ -24,7 +24,7 @@ import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TARGET_MODE_LABELS, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
-import { forecastDamage } from './forecast';
+import { forecastDamage, koLabel } from './forecast';
 import { ForecastBite } from './ForecastBite';
 
 /** The live fight a move is inspected inside. Optional: the hero sheet, level-up and recruit preview have no combat to forecast against. */
@@ -63,7 +63,8 @@ function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mov
   const forecast = forecastDamage(move, ctx.combat, ctx.attackerId, defenderId);
   if (!forecast) return null;
 
-  const { min, max, maxFraction, minFraction, hpFraction, typeMult, ko } = forecast;
+  const { min, max, maxFraction, minFraction, hpFraction, typeMult, koChance } = forecast;
+  const ko = koLabel(koChance);
 
   return (
     <div className="move-forecast-row">
@@ -87,7 +88,7 @@ function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mov
           {min === max ? min : `${min}–${max}`}
           <span className="move-forecast-of"> / {defender.currentHp}</span>
         </span>
-        {ko && <span className={`move-forecast-ko ${ko === 'sure' ? 'is-sure' : 'is-maybe'}`}>{ko === 'sure' ? 'KO' : 'KO?'}</span>}
+        {ko && <span className={`move-forecast-ko ${ko === 'KO' ? 'is-sure' : 'is-maybe'}`}>{ko}</span>}
       </div>
       </div>
     </div>

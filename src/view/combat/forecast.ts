@@ -12,6 +12,7 @@ import {
   resolveConditionalPowerMultiplier,
   resolveElementalForceBonus,
   resolveStatRatio,
+  PROVISIONAL_CRIT_CHANCE,
   VARIANCE_MAX,
   VARIANCE_MIN,
   type DamageModifier,
@@ -33,8 +34,8 @@ export interface DamageForecast {
   /** Fraction of max HP the defender currently stands on, so the bite is drawn against what is left. */
   hpFraction: number;
   typeMult: number;
-  /** 'sure' when even the worst roll finishes it, 'maybe' when only the best one does; never while a Blessing would refuse the KO. */
-  ko: 'sure' | 'maybe' | null;
+  /** The chance this move knocks it out, 0–1, over every hit's variance AND crit roll; 0 while a Blessing would refuse the KO. */
+  koChance: number;
 }
 
 export interface HealForecast {
@@ -91,20 +92,20 @@ export function forecastDamage(authored: MoveDefinition, combat: CombatState, at
   const typeFloor = fieldTypeMultFloor(move.type, fieldEffectCtx);
   const hits = move.hitCount ?? 1;
 
-  const roll = (variance: number) =>
-    hits *
+  // One hit as resolveRound lands it: the formula, then rounded.
+  const hit = (variance: number, crit: boolean) =>
     Math.round(
-      calcDamage(move, ratio, attackerTypes, defenderTypes, typeChart, variance, false, modifiers, undefined, undefined, forceBonus, conditionalMult, rolledBasePower, typeFloor)
+      calcDamage(move, ratio, attackerTypes, defenderTypes, typeChart, variance, crit, modifiers, undefined, undefined, forceBonus, conditionalMult, rolledBasePower, typeFloor)
         .damage
     );
 
-  const min = roll(VARIANCE_MIN);
-  const max = roll(VARIANCE_MAX);
+  const min = hits * hit(VARIANCE_MIN, false);
+  const max = hits * hit(VARIANCE_MAX, false);
   // A hit empties the Shield before it touches HP (docs/shield.md).
   const shield = shieldHeld(defender, statuses);
   const hpLossMin = Math.max(0, min - shield);
   const hpLossMax = Math.max(0, max - shield);
-  const ko = defender.blessed ? null : hpLossMin >= defender.currentHp ? 'sure' : hpLossMax >= defender.currentHp ? 'maybe' : null;
+  const koChance = defender.blessed ? 0 : chanceTotalReaches(hit, move.critChance ?? PROVISIONAL_CRIT_CHANCE, hits, defender.currentHp + shield);
   return {
     kind: 'damage',
     min,
@@ -113,8 +114,45 @@ export function forecastDamage(authored: MoveDefinition, combat: CombatState, at
     minFraction: Math.min(1, hpLossMin / maxHp),
     hpFraction: Math.min(1, Math.max(0, defender.currentHp) / maxHp),
     typeMult: Math.max(typeFloor, resolveTypeMult(typeChart, move.type, defenderTypes)),
-    ko,
+    koChance,
   };
+}
+
+/** Steps the variance roll is read at; each carries an equal share of its probability. */
+const VARIANCE_STEPS = 400;
+
+/**
+ * P(the hits' summed damage ≥ needed): each hit's distribution over whole damage values is read
+ * off the formula at evenly spaced variance points, with and without a crit, then the hits are
+ * convolved, since each rolls its own variance and crit.
+ */
+function chanceTotalReaches(hit: (variance: number, crit: boolean) => number, critChance: number, hits: number, needed: number): number {
+  const one = new Map<number, number>();
+  for (let i = 0; i < VARIANCE_STEPS; i++) {
+    const variance = VARIANCE_MIN + ((i + 0.5) / VARIANCE_STEPS) * (VARIANCE_MAX - VARIANCE_MIN);
+    for (const [crit, weight] of [[false, 1 - critChance], [true, critChance]] as const) {
+      if (weight <= 0) continue;
+      const amount = hit(variance, crit);
+      one.set(amount, (one.get(amount) ?? 0) + weight / VARIANCE_STEPS);
+    }
+  }
+  let total = new Map<number, number>([[0, 1]]);
+  for (let h = 0; h < hits; h++) {
+    const next = new Map<number, number>();
+    for (const [sum, p] of total) for (const [amount, q] of one) next.set(sum + amount, (next.get(sum + amount) ?? 0) + p * q);
+    total = next;
+  }
+  let chance = 0;
+  for (const [sum, p] of total) if (sum >= needed) chance += p;
+  return Math.min(1, chance);
+}
+
+/** The KO readout: "KO" when certain, else the percent — never rounded up to a certainty it is not. */
+export function koLabel(chance: number): string | null {
+  if (chance <= 0) return null;
+  if (chance >= 1 - 1e-9) return 'KO';
+  const percent = chance * 100;
+  return `${percent < 1 ? '<1' : Math.min(99, Math.round(percent))}% KO`;
 }
 
 /** The heal move's one number on one ally — target-independent in the engine, capped here by what the target is missing. */

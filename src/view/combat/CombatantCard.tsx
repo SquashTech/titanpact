@@ -18,7 +18,7 @@ import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeFx } from './TypeFx';
 import { BlessingMark } from '../shared/BlessingMark';
 import { statusHeldText } from '../shared/statusFacts';
-import type { MoveForecast } from './forecast';
+import { koLabel, type MoveForecast } from './forecast';
 import { ForecastBite } from './ForecastBite';
 
 export interface Popup {
@@ -182,11 +182,12 @@ function ForecastChip({ forecast }: { forecast: MoveForecast }) {
     if (forecast.restored <= 0) return <span className="forecast-chip is-blocked">Full</span>;
     return <span className="forecast-chip is-heal">+{forecast.restored}</span>;
   }
-  const { min, max, ko } = forecast;
+  const { min, max, koChance } = forecast;
+  const ko = koLabel(koChance);
   return (
     <span className="forecast-chip is-damage">
       {min === max ? min : `${min}–${max}`}
-      {ko && <span className={`forecast-ko ${ko === 'sure' ? 'is-sure' : 'is-maybe'}`}>{ko === 'sure' ? 'KO' : 'KO?'}</span>}
+      {ko && <span className={`forecast-ko ${ko === 'KO' ? 'is-sure' : 'is-maybe'}`}>{ko}</span>}
     </span>
   );
 }
