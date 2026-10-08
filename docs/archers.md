@@ -1,6 +1,7 @@
-# The Archers — a hero bundle
+# The Deadeyes — a hero bundle
 
-**PROPOSED 2026-10-08, per user direction. NOT BUILT.** The second hero bundle after From the Tall
+**PROPOSED 2026-10-08, per user direction. NOT BUILT.** **The Deadeyes** (the name decided the same
+day, per user direction: a superhero trio's callsign, not a description) is the second hero bundle after From the Tall
 Grass: three elemental archers who all shoot **Arrows** (`docs/charges.md`) and each relate to the
 quiver differently. **Squall leaves the free base for it**, and a new Storm hero takes his seat.
 
@@ -41,7 +42,7 @@ Blood Trail, Rending Leap); Shadow holds crit (Fade Strike) and chanced Bleed. A
 
 Squall is built and keeps everything: Storm Arrow kit, Retrieve / Retrieve+ (Restock), Pinning Shot,
 Stormpiercer (Last Shot), Gale Volley, Windshear / Dust Devil / Turbine. He moves from the base to the
-bundle (`unlock: 'bundle.archers'`).
+bundle (`unlock: 'bundle.deadeyes'`).
 
 **Open:** make Gale Volley an Arrow (tag, 2 Charges), so his signature reads Retrieve too.
 
@@ -123,8 +124,8 @@ meets Arrows through Iron Arrow but buys the family.
    move form's twin (`conditionalPower.requiresLastCharge`).
 4. **Content:** six Arrows, two kits, two innates and their mastered cards, two signatures, six paths,
    Stormhorn whole; Steady Aim if kept.
-5. **Shelf:** `bundle.archers` in `src/data/starShop.ts` at **8 stars** like Tall Grass; Squall's
-   `unlock: 'bundle.archers'`.
+5. **Shelf:** `bundle.deadeyes` in `src/data/starShop.ts` at **8 stars** like Tall Grass; Squall's
+   `unlock: 'bundle.deadeyes'`.
 6. **Profiles:** Squall leaves the base, so an existing profile keeps him free — the
    `LEFT_BASE_2026_09_28` precedent (`src/run/profile.ts`): a grant ledger entry and a
    `PROFILE_VERSION` bump. Such a profile then sees the bundle discounted to 6 (`offerPrice`).
@@ -136,7 +137,8 @@ meets Arrows through Iron Arrow but buys the family.
 
 ## Open
 
-- **Names:** Stormhorn, and the bundle's own (*The Quiver*? *Three Bows*?). The trio is decided.
+- **Names:** Stormhorn. The trio and the bundle (The Deadeyes) are decided. Sleet's innate shares the
+  word (Deadeye); kept on purpose as the team's namesake, unless it reads as confusing in play.
 - **Gale Volley as an Arrow.**
 - **Steady Aim:** a new Frost buff, or borrow Rime Coat.
 - **Sleet's Freeze loop:** the enemy AI never switches, so a Frozen foe stays Frozen all fight, and
