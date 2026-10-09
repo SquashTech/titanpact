@@ -10,6 +10,7 @@
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node dist/test/index.js",
     "demo": "npm run build && node dist/scripts/demo-fight.js",
+    "telemetry": "npm run build && node dist/scripts/telemetry/report.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "vite",
     "build:view": "tsc -p tsconfig.view.json --noEmit && vite build",

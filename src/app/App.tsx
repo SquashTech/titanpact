@@ -172,6 +172,7 @@ import type { Squad } from '../run/squad';
 import { statScaleFor } from '../run/statScale';
 import { RoadGate } from '../view/run/RoadEncounter';
 import { eventIcon } from '../view/run/mapNodeArt';
+import { flushTelemetry, telemetryFight, telemetryRunEnded, telemetryRunStarted } from './telemetry';
 
 /** The screen machine (run/resume.ts), so a save can carry the screen it was written on. */
 type Screen = RunScreen;
@@ -569,7 +570,9 @@ export function App() {
   // Re-read on the way back to the title so Records and the Constellation show what the run
   // just banked. Nothing else in the app renders the profile, so nothing else needs this.
   useEffect(() => {
-    if (screen.kind === 'title') setProfile(readProfile());
+    if (screen.kind !== 'title') return;
+    setProfile(readProfile());
+    void flushTelemetry();
   }, [screen.kind]);
 
   // Monotonic in the profile, so an act reached and then abandoned still counts. Keyed on the
@@ -614,6 +617,12 @@ export function App() {
     const band = end.outcome === 'win' && playerRun.cycle === FIRST_CYCLE ? wardensFromRun(playerRun, heroes) : [];
     const after = updateProfile((current) => recordWardens(recordRunEnded(current, end, now), band));
     setRunOutcome({ before, after });
+    telemetryRunEnded({
+      ...end,
+      companionType: end.companionType ?? null,
+      durationMs: after.runHistory[0]?.durationMs ?? null,
+      locationIds: [...playerRun.locationIds],
+    });
   }, [screen.kind]);
 
   function handleEraseAllData() {
@@ -923,6 +932,15 @@ export function App() {
     mvp: MvpPick | null = null
   ) {
     setResumedCombat(null);
+    telemetryFight({
+      act: playerRun.actNumber,
+      node: playerRun.map!.nodes[nodeId].type,
+      outcome,
+      rounds: finalState?.round ?? null,
+      playerKos: koRosterIds.length,
+      roster: playerRun.roster.map((entry) => ({ heroId: entry.heroId, level: levelOf(entry) })),
+      enemies: encounter.run.roster.map((entry) => entry.heroId),
+    });
     if (outcome === 'loss') {
       setScreen({ kind: 'runFailed' });
       return;
@@ -1169,6 +1187,7 @@ export function App() {
     // Sealing the pact is the start, not pressing the title button: a draft backed out of
     // is not a run. An abandoned run still counts here — it was played.
     updateProfile((current) => recordRunStarted(current, Date.now()));
+    telemetryRunStarted(run.cycle, chosenIds);
   }
 
   /** TEMPORARY DEV/TEST — the Crucible sits behind a Guardian, which is three fights away. */
