@@ -22825,14 +22825,28 @@ button.evo-gift-press:active .evo-gift-medal {
   color: #e6d6b6;
 }
 
-/* A move is the fight's own button, which brings its own face: no light under it. */
-.evo-gift.is-move .evo-gift-press::before {
-  display: none;
+/* A move or passive is the fight's own card, full width. The thread runs
+   behind it, so the backing is solid: the line meets the card's top edge and
+   leaves from its bottom. */
+.evo-gift-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: #0b0907;
+  color: inherit;
+  font: inherit;
+  text-align: left;
 }
 
-.evo-gift.is-move .move-button {
+button.evo-gift-card {
+  cursor: pointer;
+}
+
+.evo-gift-card > .move-button {
   width: 100%;
-  margin-top: 3px;
 }
 
 .evo-gift.is-rewire {

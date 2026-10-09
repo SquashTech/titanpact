@@ -5,7 +5,7 @@ import type { RosterEntry, RunState } from '../../run/state';
 import { offenseSwapDelta, pathTypes, type EvolutionNode, type EvolutionPath } from '../../run/progression';
 import { pathTint, pathTintStyle } from '../shared/pathTint';
 import { passives } from '../../data/passives';
-import { PassiveGlyph, passiveColor } from '../shared/passiveIcons';
+import { PassiveGlyph, PassiveReadout, passiveColor } from '../shared/passiveIcons';
 import { PassiveDetailOverlay } from '../shared/PassiveDossier';
 import { moves } from '../../data/moves';
 import { MoveDetailOverlay } from '../combat/MoveDetailOverlay';
@@ -496,10 +496,11 @@ function ShowcaseChevron({ flip }: { flip?: boolean }) {
 }
 
 /**
- * One gift on the showcase's thread: its medal (the form card's, so the two screens read as one
- * thing at two sizes), what kind of gift, its name, and one line of what it does. A move is drawn
- * as the fight's own move button (2026-10-08, per user direction) — the gem, the glyphs, the power
- * and the effect line the player reads every turn, not a paraphrase of them.
+ * One gift on the showcase's thread. A new type is a medal (the form card's, so the two screens
+ * read as one thing at two sizes) and a line; a move and a passive are drawn exactly as the fight
+ * draws them (2026-10-08, per user direction) — the move button and the hero sheet's passive
+ * readout, full width, the thread running into the card and out of it — so what the player reads
+ * here is what they will read every turn, glyphs and all, with no medal repeating the card's icon.
  */
 function GiftLine({
   grant,
@@ -515,54 +516,36 @@ function GiftLine({
   onRead?: () => void;
 }) {
   const style = { '--grant': grantColor(grant), '--i': order } as CSSProperties;
-  const medal = (
-    <span className="evo-gift-medal">
-      <GrantGlyph grant={grant} />
-    </span>
-  );
-  // The move button is a press of its own, so this row is not wrapped in one.
   if (grant.kind === 'move') {
     return (
-      <li className="evo-gift is-move" style={style}>
-        <span className="evo-gift-press">
-          {medal}
-          <span className="evo-gift-body">
-            <span className="evo-gift-kind">{GRANT_KIND_LABEL.move}</span>
-            <MoveButtonReplica move={moves[grant.id]} caster={caster} onClick={onRead} onLongPress={onRead} />
-          </span>
+      <li className="evo-gift is-card" style={style}>
+        <span className="evo-gift-card">
+          <MoveButtonReplica move={moves[grant.id]} caster={caster} onClick={onRead} onLongPress={onRead} />
         </span>
       </li>
     );
   }
-  const body = (
-    <>
-      {medal}
-      <span className="evo-gift-body">
-        <span className="evo-gift-kind">{GRANT_KIND_LABEL[grant.kind]}</span>
-        {grant.kind === 'type' && (
-          <>
-            <span className="evo-gift-name">{grant.type}</span>
-            <span className="evo-gift-text">{traded ? `Trades ${traded} for ${grant.type}` : `Joins its typing as a second type`}</span>
-          </>
-        )}
-        {grant.kind === 'passive' && (
-          <>
-            <span className="evo-gift-name">{passives[grant.id].name}</span>
-            <span className="evo-gift-text">{passives[grant.id].description}</span>
-          </>
-        )}
-      </span>
-    </>
-  );
-  return (
-    <li className={`evo-gift is-${grant.kind}`} style={style}>
-      {onRead ? (
-        <button type="button" className="evo-gift-press" data-sfx="ui.select" onClick={onRead}>
-          {body}
+  if (grant.kind === 'passive') {
+    return (
+      <li className="evo-gift is-card" style={style}>
+        <button type="button" className="evo-gift-card" data-sfx="ui.select" onClick={onRead}>
+          <PassiveReadout passive={passives[grant.id]} />
         </button>
-      ) : (
-        <span className="evo-gift-press">{body}</span>
-      )}
+      </li>
+    );
+  }
+  return (
+    <li className="evo-gift is-type" style={style}>
+      <span className="evo-gift-press">
+        <span className="evo-gift-medal">
+          <GrantGlyph grant={grant} />
+        </span>
+        <span className="evo-gift-body">
+          <span className="evo-gift-kind">{GRANT_KIND_LABEL.type}</span>
+          <span className="evo-gift-name">{grant.type}</span>
+          <span className="evo-gift-text">{traded ? `Trades ${traded} for ${grant.type}` : `Joins its typing as a second type`}</span>
+        </span>
+      </span>
     </li>
   );
 }
