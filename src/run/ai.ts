@@ -8,7 +8,7 @@
 // happens outside resolution, and drawing from `state.rngState` here would
 // shift the AI's choices with every damage roll that preceded them.
 
-import { statusApplicationsOf, type HeroDefinition, type MoveDefinition, type PassiveDefinition, type PassiveId, type StatusApplication, type StatusDefinition, type TargetMode } from '../engine/content';
+import { statusApplicationsOf, type HeroDefinition, type MoveDefinition, type PassiveDefinition, type PassiveId, type StatusApplication, type StatusDefinition, type TargetMode, type FieldEffectDefinition } from '../engine/content';
 import type { Action } from '../engine/combat/actions';
 import type { CombatState, Side } from '../engine/state';
 import {
@@ -24,7 +24,7 @@ import {
   resolveTargetMode,
   statusMagnitude,
 } from '../engine/state';
-import { selectableTargets, statusGatedTargets } from '../engine/combat/statusEngine';
+import { selectableTargets, statusGatedTargets, timedRemainingAmount } from '../engine/combat/statusEngine';
 import { replacementCandidates } from '../engine/combat/switching';
 import { resolveTypeMult, TYPE_MULT_FLOOR, type TypeChart } from '../engine/damage/typeMult';
 import { kitForRound } from './metamorphic';
@@ -150,8 +150,8 @@ function riderReceivers(app: StatusApplication, casterId: string, targets: reado
 }
 
 /**
- * Every receiver already holds it AND it does not stack (an additive status like Burn is never
- * redundant) — or, for a Shield, every receiver's pool is already at its max HP and can't go any
+ * Every receiver already holds it AND it does not stack (an additive status is never redundant)
+ * — or, for a Shield, every receiver's pool is already at its max HP and can't go any
  * higher (docs/shield.md §3.6), the same clause a capped stat gets.
  */
 function riderIsRedundant(state: CombatState, ctx: AiContext, app: StatusApplication, casterId: string, targets: readonly string[]): boolean {
@@ -166,9 +166,12 @@ function riderIsRedundant(state: CombatState, ctx: AiContext, app: StatusApplica
     });
   }
   if (def.stacking !== 'none') return false;
+  // A timed status (Burn, Renew) is reset by a re-application: redundant only on a fresh one.
+  const full = def.timed?.tickPercents.length;
   return receivers.every((id) => {
     const combatant = state.combatants[id];
-    return combatant != null && hasStatus(combatant, app.statusId);
+    if (combatant == null || !hasStatus(combatant, app.statusId)) return false;
+    return full === undefined || (combatant.statuses[app.statusId]?.duration ?? 0) >= full;
   });
 }
 
@@ -369,12 +372,25 @@ function pickTarget(state: CombatState, casterId: string, move: MoveDefinition, 
   return pickOne(tied, random);
 }
 
-/** The combatant holds a Rest-cleared ladder status (Burn) at its top level. */
-export function atTopOfRestableLadder(combatant: CombatState['combatants'][string], statusDefs: Record<string, StatusDefinition>): boolean {
-  return Object.values(combatant.statuses).some((instance) => {
+/** The field on the board, as its definition. */
+export function activeFieldEffectDef(state: CombatState): FieldEffectDefinition | undefined {
+  const id = state.activeFieldEffect?.fieldEffectId;
+  return id ? fieldEffects[id] : undefined;
+}
+
+/** What the Rest-cleared timed statuses (Burn) the combatant holds would still deal would knock it out — a Rest puts them out first. */
+export function restOutlastsBurn(
+  combatant: CombatState['combatants'][string],
+  statusDefs: Record<string, StatusDefinition>,
+  maxHp: number,
+  fieldEffect?: FieldEffectDefinition
+): boolean {
+  let owed = 0;
+  for (const instance of Object.values(combatant.statuses)) {
     const def = statusDefs[instance.statusId];
-    return !!def?.clearsOnRest && !!def.levels && (instance.magnitude ?? 0) >= def.levels.tickPercents.length;
-  });
+    if (def?.clearsOnRest && def.timed && def.pipeline === 'dot') owed += timedRemainingAmount(def, instance.duration, maxHp, fieldEffect);
+  }
+  return owed > 0 && owed >= combatant.currentHp;
 }
 
 /**
@@ -394,8 +410,10 @@ export function pickAiAction(state: CombatState, combatantId: string, ctx: AiCon
   if (!hasAffordableMoveInFight(state, combatantId, moveIds, ctx.moves, ctx.heroes)) {
     return { kind: 'rest', combatantId };
   }
-  // Engulfed is a quarter of max HP a round: Rest puts it out, and that is worth the turn.
-  if (atTopOfRestableLadder(combatant, ctx.statuses)) return { kind: 'rest', combatantId };
+  // A Burn that would finish this hero: Rest puts it out, and that is worth the turn.
+  if (restOutlastsBurn(combatant, ctx.statuses, getMaxHp(ctx.heroes[combatant.heroId], combatant), activeFieldEffectDef(state))) {
+    return { kind: 'rest', combatantId };
+  }
 
   const affordable = moveIds.filter((id) => isMoveUsable(state, combatantId, moveOf(id)) && combatant.currentMana >= resolveManaCost(state, combatantId, moveOf(id), ctx.heroes));
   // The one HARD filter in the cascade — every narrowing below it falls back, this one cannot.

@@ -117,7 +117,7 @@ test('passives: Sanguine heals its owner by the enemy Bleed tick amount', () => 
   const bleeding = withStatus(withGrant, 'b1', 'Bleed', {});
 
   const maxHp = fixtureMaxHp('ironWarden');
-  const expectedTick = Math.ceil(maxHp * 0.05);
+  const expectedTick = Math.ceil(maxHp * 0.06);
 
   const { state: next, events } = resolveRound(bleeding, [], config);
 
@@ -143,7 +143,7 @@ test('passives: two stacks of Sanguine heal twice per enemy Bleed tick', () => {
   const bleeding = withStatus(withGrant, 'b1', 'Bleed', {});
 
   const maxHp = fixtureMaxHp('ironWarden');
-  const expectedTick = Math.ceil(maxHp * 0.05);
+  const expectedTick = Math.ceil(maxHp * 0.06);
 
   const { state: next } = resolveRound(bleeding, [], config);
   assert.strictEqual(next.combatants.a1.currentHp, 10 + expectedTick * 2);
@@ -561,18 +561,18 @@ function natureFixture(seed: number) {
   );
 }
 
-test('passives: Restorative Toxin pays one Renew heal for the Poison it just applied', () => {
+test('passives: Restorative Toxin lands a Renew on its owner for the Poison it just applied', () => {
   const state = withPassive(natureFixture(360), 'a1', 'restorativeToxin');
   const { state: next, events } = resolveRound(
     state,
     [{ kind: 'move', combatantId: 'a1', moveId: 'toxicSpores', declaredTarget: 'b1' } as Action],
     config
   );
-  assert.ok(events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Renew' && e.combatantId === 'a1' && e.magnitude === 1));
+  assert.ok(events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Renew' && e.combatantId === 'a1' && e.duration === 3));
 
   assert.strictEqual(next.combatants.b1.statuses.Poison?.magnitude, 10);
-  // Renew 1 is one heal, spent as it lands (docs/status-ladders-and-fields.md §2): nothing is left held.
-  assert.ok(!hasStatus(next.combatants.a1, 'Renew'));
+  // A timed Renew heals at round ends (docs/timed-statuses.md): it ticked once this round and holds two more.
+  assert.strictEqual(next.combatants.a1.statuses.Renew?.duration, 2);
 });
 
 test('passives: Restorative Toxin pays once per Poison application, so Blight on both foes pays twice', () => {
@@ -581,7 +581,7 @@ test('passives: Restorative Toxin pays once per Poison application, so Blight on
 
   const renews = events.filter((e) => e.type === 'StatusApplied' && (e as any).statusId === 'Renew') as any[];
   assert.strictEqual(renews.length, 2, 'one firing per Poison application');
-  assert.deepStrictEqual(renews.map((r) => r.magnitude), [1, 1], 'Renew 1 twice — each heals as it lands and is spent');
+  assert.deepStrictEqual(renews.map((r) => r.duration), [3, 3], 'the second resets the three rather than adding');
 });
 
 test('passives: Restorative Toxin is source-role — a Poison the holder RECEIVES pays nothing', () => {
@@ -616,7 +616,7 @@ const sylvaArrives: Action = { kind: 'switch', combatantId: 'a1', benchedCombata
 
 test("passives: Nature's Purification cleanses the PARTNER on arrival, and never the owner", () => {
   const base = withPassive(benchedSylvaFixture(363), 'a3', 'naturesPurification');
-  const afflicted = withStatus(withStatus(base, 'a2', 'Burn', { magnitude: 10 }), 'a3', 'Burn', { magnitude: 10 });
+  const afflicted = withStatus(withStatus(base, 'a2', 'Burn', { duration: 3 }), 'a3', 'Burn', { duration: 3 });
   const { state: next } = resolveRound(afflicted, [sylvaArrives], config);
 
   assert.ok(!hasStatus(next.combatants.a2, 'Burn'), 'the partner is cleansed');
@@ -625,7 +625,7 @@ test("passives: Nature's Purification cleanses the PARTNER on arrival, and never
 
 test("passives: Nature's Purification spares a positive status — the partner keeps its Renew", () => {
   const base = withPassive(benchedSylvaFixture(364), 'a3', 'naturesPurification');
-  const mixed = withStatus(withStatus(base, 'a2', 'Poison', { magnitude: 10, duration: 3 }), 'a2', 'Renew', { magnitude: 40 });
+  const mixed = withStatus(withStatus(base, 'a2', 'Poison', { magnitude: 10, duration: 3 }), 'a2', 'Renew', { duration: 3 });
   const { state: next } = resolveRound(mixed, [sylvaArrives], config);
 
   assert.ok(!hasStatus(next.combatants.a2, 'Poison'));
@@ -677,7 +677,7 @@ test('passives: Bloodmeal pays Renew on the Bleed Vex applies, and nothing on a 
   const fed = resolveRound({ ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentMana: 999, currentHp: 50 } } } as CombatState, [{ kind: 'move', combatantId: 'a1', moveId: 'duskBlade', declaredTarget: 'b1' } as Action], config);
   assert.ok(hasStatus(fed.state.combatants.b1, 'Bleed'));
   assert.ok(
-    fed.events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Renew' && e.combatantId === 'a1' && e.magnitude === (passives.bloodmeal.reactive!.effect as { magnitude: number }).magnitude),
+    fed.events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Renew' && e.combatantId === 'a1' && e.duration === 3),
     'Renew landed on the feeder'
   );
 });
@@ -1062,8 +1062,8 @@ test('passives: Refresh can land on Kappa itself, so Brimming fires off its own 
   const hurt: CombatState = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 50, currentMana: 999 } } };
   const state = withPassive(hurt, 'a1', 'brimming');
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'refresh', declaredTarget: 'a1' } as Action], config);
-  // Renew heals as it lands and again at the round's end: two ticks, two stacks.
-  assert.strictEqual(next.combatants.a1.statModifiers.attack, 20);
+  // Renew heals nothing as it lands, once at the round's end: one tick, one stack.
+  assert.strictEqual(next.combatants.a1.statModifiers.attack, 10);
 });
 
 // --- The recruit-only slate's four NEW shapes (2026-09-05) ---
@@ -1109,7 +1109,7 @@ test('passives: Flameproof — an active holder\'s side refuses Burn, and a Burn
     combatants: {
       ...base.combatants,
       a1: { ...base.combatants.a1, sideStatusImmunities: { Burn: 'flameproof' } },
-      a2: { ...base.combatants.a2, statuses: { ...base.combatants.a2.statuses, Burn: { statusId: 'Burn', magnitude: 2 } } },
+      a2: { ...base.combatants.a2, statuses: { ...base.combatants.a2.statuses, Burn: { statusId: 'Burn', duration: 3 } } },
     },
   };
   const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'b1', moveId: 'setAlight', declaredTarget: 'a1' } as Action], config);
@@ -1117,22 +1117,23 @@ test('passives: Flameproof — an active holder\'s side refuses Burn, and a Burn
   assert.ok(events.some((e) => e.type === 'StatusRefused' && e.combatantId === 'a1' && e.passiveId === 'flameproof'), 'and says so');
   assert.ok(events.some((e) => e.type === 'StatusRefused' && e.combatantId === 'a2' && e.holderCombatantId === 'a1'), 'a held Burn kept from ticking is a refusal too');
   assert.ok(!events.some((e) => e.type === 'StatusTicked' && e.combatantId === 'a2' && e.statusId === 'Burn'), 'the partner\'s Burn does no harm');
-  assert.strictEqual(statusMagnitude(next.combatants.a2, 'Burn'), 2, 'held, not cleansed');
+  assert.strictEqual(next.combatants.a2.statuses.Burn?.duration, 3, 'held, not cleansed, and its clock stalled');
 });
 
-test('passives: Top Billing is PER Burn level on the defender, and nothing on a foe not Burning', () => {
+test('passives: Top Billing is +30% against a Burning defender, and nothing on a foe not Burning', () => {
   const state = withPassive(deepFixture(802, ['tinder', 'aegis'], ['crag', 'sentinel']), 'a1', 'topBilling');
-  const burned = { ...state.combatants.b1, statuses: { ...state.combatants.b1.statuses, Burn: { statusId: 'Burn', magnitude: 2 } } };
+  const burned = { ...state.combatants.b1, statuses: { ...state.combatants.b1.statuses, Burn: { statusId: 'Burn', duration: 3 } } };
   const mods = collectPassiveDamageModifiers(state.combatants.a1, moves.ember, passives, burned);
   assert.strictEqual(mods.reduce((sum, m) => sum + m.amount, 0).toFixed(2), '0.30');
   assert.strictEqual(collectPassiveDamageModifiers(state.combatants.a1, moves.ember, passives, state.combatants.b1).length, 0);
 });
 
-test('passives: Fire-Breather leaves one random enemy Badly Burned when Tinder switches out', () => {
+test('passives: Fire-Breather Burns one random enemy when Tinder switches out', () => {
   const state = withPassive(deepFixture(803, ['tinder', 'aegis', 'crimson'], ['crag', 'sentinel']), 'a1', 'fireBreather');
   const { state: next } = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
-  const levels = [statusMagnitude(next.combatants.b1, 'Burn') ?? 0, statusMagnitude(next.combatants.b2, 'Burn') ?? 0].sort();
-  assert.deepStrictEqual(levels, [0, 2]);
+  // Landed this round and ticked once at its end: two rounds left on the one it hit.
+  const left = [next.combatants.b1.statuses.Burn?.duration ?? 0, next.combatants.b2.statuses.Burn?.duration ?? 0].sort();
+  assert.deepStrictEqual(left, [0, 2]);
 });
 
 test('passives: Dawnfire answers Sanctuary being set — a FieldEffectSet reaction', () => {

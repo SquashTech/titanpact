@@ -63,10 +63,11 @@ test('guardians: Yugzulach and the Kraken carry their authored kits', () => {
 test('guardians: the Elder Bough is one turn paying out three times, and Speed 30 is the price', () => {
   const guardian = enemies[ELDER_BOUGH_ID];
   assert.deepStrictEqual([...guardian.moveIds], ['wardingSigil', 'abide', 'branchSlam', 'forceOfNature']);
-  // Overgrowth is the three-payout turn: Renew on itself, healing doubled under Verdant Earth (and past
-  // max HP turned to Shield, docs/blessings-and-statuses.md §5), and the switch that doubles Branch Slam's 80.
-  const selfPlant = statusApplicationsOf(moves.overgrowth).find((app) => app.statusId === 'Renew')!.magnitude!;
-  assert.ok(selfPlant >= 6, `Overgrowth is the big self-plant — ${selfPlant} heals`);
+  // Overgrowth is the three-payout turn: a big heal with Renew riding it, Renew doubled under Verdant Earth
+  // (and past max HP turned to Shield, docs/blessings-and-statuses.md §5), and the switch that doubles Branch Slam's 80.
+  assert.strictEqual(moves.overgrowth.kind, 'heal');
+  assert.ok((moves.overgrowth.healPower ?? 0) >= 70, 'Overgrowth is the big self-plant — a heal, not only a Renew');
+  assert.ok(statusApplicationsOf(moves.overgrowth).some((app) => app.statusId === 'Renew'));
   assert.strictEqual(moves.branchSlam.conditionalPower!.requiresUserStatus, 'Renew');
   assert.strictEqual(moves.forceOfNature.fieldEffectApplication, 'verdantEarth');
   assert.ok(guardian.baseStats.manaPool >= moves.overgrowth.manaCost + moves.branchSlam.manaCost);

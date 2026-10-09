@@ -25,18 +25,18 @@ export const statuses: Record<string, StatusDefinition> = {
   Burn: {
     id: 'Burn',
     name: 'Burn',
-    shape: 'magnitude',
+    shape: 'duration',
     ticksAtEndOfRound: true,
     decay: 'none',
-    // A ladder (docs/status-ladders-and-fields.md §1): each Burn climbs it, nothing but a player's answer comes down it.
-    stacking: 'additive',
+    // docs/timed-statuses.md: a fire that dies down over three rounds; a new Burn lights it again.
+    stacking: 'none',
     clearsOnSwitch: true,
     clearsOnRest: true,
     pipeline: 'dot',
     fixedMagnitude: true,
-    levels: { tickPercents: [5, 10, 25], names: ['Burning', 'Badly Burned', 'Engulfed'] },
+    timed: { tickPercents: [15, 8, 4] },
     description:
-      'Each Burn climbs a level: Burning loses 5% of max HP at the end of each round, Badly Burned 10%, Engulfed 25%. Rest, Cleanse or switching puts it out.',
+      'Burns for 15% of max HP at the end of the round, then 8%, then 4%, and goes out. Another Burn lights it again at 15%. Rest, Cleanse or switching puts it out.',
   },
   Bleed: {
     id: 'Bleed',
@@ -47,8 +47,8 @@ export const statuses: Record<string, StatusDefinition> = {
     stacking: 'none',
     clearsOnSwitch: false,
     pipeline: 'dot',
-    flatPercentOfMaxHp: 0.05,
-    description: "End of round: deal 5% of the target's max HP.",
+    flatPercentOfMaxHp: 0.06,
+    description: "End of round: deal 6% of the target's max HP.",
   },
   Freeze: {
     id: 'Freeze',
@@ -122,22 +122,21 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'trigger',
     description: "Whoever's hit breaks this hero's Shield is Frozen. Spent when it fires.",
   },
-  // docs/status-ladders-and-fields.md §2: the number is the heals left, each one a tenth of max HP.
+  // docs/timed-statuses.md: on or off, three rounds; a new Renew sets the three back up.
   Renew: {
     id: 'Renew',
     name: 'Renew',
-    shape: 'magnitude',
+    shape: 'duration',
     ticksAtEndOfRound: true,
     decay: 'none',
-    stacking: 'additive',
+    stacking: 'none',
     clearsOnSwitch: false,
     positive: true,
     pipeline: 'hot',
     fixedMagnitude: true,
-    ticksOnApply: true,
-    charges: { tickPercent: 10 },
+    timed: { tickPercents: [10, 10, 10] },
     description:
-      'Heals 10% of max HP when it lands and again at the end of each round, one heal for each point of Renew. Another Renew adds to it. Persists through switching and Cleanse.',
+      'Heals 10% of max HP at the end of each round for 3 rounds. Another Renew sets it back to 3. Persists through switching and Cleanse.',
   },
   Conduct: {
     id: 'Conduct',

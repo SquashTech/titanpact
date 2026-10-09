@@ -307,7 +307,7 @@ test('herald: a reaction from the far side cannot afflict it while warded, and c
   assert.ok(bareHit.events.some((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'h'));
   assert.ok(hasStatus(bareHit.state.combatants.h, 'Burn'), 'alone, it burns');
   // Its own side's benefit lands either way (Raise the Standard is the Herald's own buff).
-  const buffed = applyStatus(heraldFixture(23), 1, 'h', statuses.Renew, { magnitude: 20, sourceCombatantId: 's1' });
+  const buffed = applyStatus(heraldFixture(23), 1, 'h', statuses.Renew, { sourceCombatantId: 's1' });
   assert.ok(hasStatus(buffed.state.combatants.h, 'Renew'));
 });
 

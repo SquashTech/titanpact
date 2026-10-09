@@ -100,37 +100,52 @@ export function healBlocked(state: CombatState, combatantId: string, fieldEffect
   return !!statusId && !!combatant && hasStatus(combatant, statusId);
 }
 
-/** A level status's level as held — the magnitude, kept inside 1..top. */
-export function statusLevel(def: StatusDefinition, magnitude: number | undefined): number {
-  const top = def.levels?.tickPercents.length ?? 0;
-  return Math.max(1, Math.min(top, magnitude ?? 1));
+/**
+ * The percent a timed status's NEXT round end ticks for (docs/timed-statuses.md), read off the rounds
+ * it has left; under a field that holds it (Scorched Land), always its first round's.
+ */
+export function timedTickPercent(def: StatusDefinition, roundsLeft: number | undefined, fieldEffect?: FieldEffectDefinition): number {
+  const percents = def.timed?.tickPercents ?? [];
+  if (percents.length === 0) return 0;
+  if (fieldEffect?.holdsTimedStatusAtFirst?.includes(def.id)) return percents[0];
+  const left = Math.max(1, Math.min(percents.length, roundsLeft ?? percents.length));
+  return percents[percents.length - left];
 }
 
-/** What one tick of a dot deals: a level's percent (Burn), a flat fraction (Bleed), or the magnitude itself. */
-export function dotTickAmount(def: StatusDefinition, magnitude: number | undefined, maxHp: number): number {
-  if (def.levels) return Math.ceil((maxHp * def.levels.tickPercents[statusLevel(def, magnitude) - 1]) / 100);
-  if (magnitude === undefined && def.flatPercentOfMaxHp) return Math.ceil(maxHp * def.flatPercentOfMaxHp);
-  return magnitude ?? 0;
+/** What one tick of a dot deals: a timed round's percent (Burn), a flat fraction (Bleed), or the magnitude itself. */
+export function dotTickAmount(def: StatusDefinition, instance: { magnitude?: number; duration?: number }, maxHp: number, fieldEffect?: FieldEffectDefinition): number {
+  if (def.timed) return Math.ceil((maxHp * timedTickPercent(def, instance.duration, fieldEffect)) / 100);
+  if (instance.magnitude === undefined && def.flatPercentOfMaxHp) return Math.ceil(maxHp * def.flatPercentOfMaxHp);
+  return instance.magnitude ?? 0;
 }
 
-/** What one heal of a hot restores before any field: a charge's percent of max HP (Renew), or the magnitude itself. */
-export function hotTickAmount(def: StatusDefinition, magnitude: number | undefined, maxHp: number): number {
-  if (def.charges) return Math.ceil((maxHp * def.charges.tickPercent) / 100);
-  return magnitude ?? 0;
+/** What one heal of a hot restores before any field: a timed round's percent of max HP (Renew), or the magnitude itself. */
+export function hotTickAmount(def: StatusDefinition, instance: { magnitude?: number; duration?: number }, maxHp: number): number {
+  if (def.timed) return Math.ceil((maxHp * timedTickPercent(def, instance.duration)) / 100);
+  return instance.magnitude ?? 0;
+}
+
+/** Everything a timed status deals or heals over its rounds left (the AI's and the pilot's horizon). */
+export function timedRemainingAmount(def: StatusDefinition, roundsLeft: number | undefined, maxHp: number, fieldEffect?: FieldEffectDefinition): number {
+  let total = 0;
+  for (let left = roundsLeft ?? def.timed?.tickPercents.length ?? 0; left > 0; left--) {
+    total += Math.ceil((maxHp * timedTickPercent(def, left, fieldEffect)) / 100);
+  }
+  return total;
 }
 
 /**
- * A HoT's heal, the one path for its on-landing tick and its round-end ticks: one charge's share of
- * the holder's max HP (or a flat amount), times the field's `amplifiesStatusHealing`, and — under a
- * field that says so — whatever passes max HP laid on as Shield (Verdant Earth). A holder the field
- * refuses healing (Blood Moon) ticks for nothing, and the tick says so (`blocked`).
+ * A HoT's round-end heal: its share of the holder's max HP (or a flat amount), times the field's
+ * `amplifiesStatusHealing`, and — under a field that says so — whatever passes max HP laid on as
+ * Shield (Verdant Earth). A holder the field refuses healing (Blood Moon) ticks for nothing, and
+ * the tick says so (`blocked`).
  */
 function healFromStatus(
   state: CombatState,
   round: number,
   combatantId: string,
   def: StatusDefinition,
-  magnitude: number,
+  instance: { magnitude?: number; duration?: number },
   maxHp: number,
   fieldEffect: FieldEffectDefinition | undefined,
   statusDefs: Record<string, StatusDefinition> | undefined,
@@ -139,7 +154,7 @@ function healFromStatus(
   if (healBlocked(state, combatantId, fieldEffect)) {
     return { state, events: [{ type: 'StatusTicked', round, combatantId, statusId: def.id, kind: 'heal', amount: 0, blocked: true, ...tick }] };
   }
-  const base = hotTickAmount(def, magnitude, maxHp);
+  const base = hotTickAmount(def, instance, maxHp);
   const amplified = fieldEffect?.amplifiesStatusHealing;
   const boosted = amplified?.statusIds.includes(def.id) ? Math.round(base * amplified.multiplier) : base;
   const events: CombatEvent[] = [{ type: 'StatusTicked', round, combatantId, statusId: def.id, kind: 'heal', amount: boosted, ...tick }];
@@ -181,12 +196,15 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
   if (refused) return { state, events: [refused] };
 
   const existing = combatant.statuses[def.id];
-  let magnitude = params.magnitude;
-  // A level status lands higher under a field that raises it (Scorched Land); a Burn authored without a level is one.
-  if (def.levels) {
-    const raised = params.fieldEffect?.raisesStatusLevel;
-    magnitude = (magnitude ?? 1) + (raised?.statusIds.includes(def.id) ? raised.by : 0);
+  // A timed status carries no number: every application lands it whole, back at its first round.
+  if (def.timed) {
+    const duration = def.timed.tickPercents.length;
+    return {
+      state: setStatus(state, combatantId, def.id, { statusId: def.id, duration }),
+      events: [{ type: 'StatusApplied', round, combatantId, sourceCombatantId: params.sourceCombatantId, statusId: def.id, duration }],
+    };
   }
+  let magnitude = params.magnitude;
   let duration = params.duration;
   let capped = false;
 
@@ -214,14 +232,9 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
     magnitude = params.holderMaxHp;
     capped = true;
   }
-  // A ladder stops at its top rung, and says so as a Shield at its ceiling does.
-  if (def.levels && magnitude !== undefined && magnitude > def.levels.tickPercents.length) {
-    magnitude = def.levels.tickPercents.length;
-    capped = true;
-  }
 
   const nextState = setStatus(state, combatantId, def.id, { statusId: def.id, magnitude, duration });
-  const applied: StatusResult = {
+  return {
     state: nextState,
     events: [
       {
@@ -236,24 +249,6 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
       },
     ],
   };
-  // Renew's first heal lands with it and spends one charge; the last charge spent takes the status with it.
-  if (def.ticksOnApply && def.pipeline === 'hot' && params.holderMaxHp !== undefined && (params.magnitude ?? 0) > 0) {
-    const left = (magnitude ?? 1) - 1;
-    const healed = healFromStatus(applied.state, round, combatantId, def, magnitude ?? 1, params.holderMaxHp, params.fieldEffect, params.statusDefs, {
-      newMagnitude: left,
-    });
-    let working = healed.state;
-    const events = [...applied.events, ...healed.events];
-    if (left <= 0) {
-      const rm = removeStatus(working, round, combatantId, def.id, 'expired');
-      working = rm.state;
-      events.push(...rm.events);
-    } else {
-      working = setStatus(working, combatantId, def.id, { ...working.combatants[combatantId].statuses[def.id], magnitude: left });
-    }
-    return { state: working, events };
-  }
-  return applied;
 }
 
 /**
@@ -348,24 +343,32 @@ export function tickEndOfRound(
           events.push({ type: 'StatusTicked', round, combatantId, statusId, kind: 'duration', amount: 0, newDuration });
           working = setStatus(working, combatantId, statusId, { ...instance, duration: newDuration });
         }
-      } else if (def.pipeline === 'hot' && def.charges) {
-        // A charged HoT (Renew): one heal a round, one charge spent, gone with the last.
-        const left = (instance.magnitude ?? 0) - 1;
-        const healed = healFromStatus(working, round, combatantId, def, instance.magnitude ?? 0, maxHpOf(combatantId), activeFieldEffectDef, statusDefs, {
-          newMagnitude: left,
-        });
-        working = healed.state;
-        events.push(...healed.events);
-        if (left <= 0) {
+      } else if (def.timed && (def.pipeline === 'dot' || def.pipeline === 'hot')) {
+        // A timed status (Burn, Renew): this round's percent, one round spent, gone with the last.
+        const maxHp = maxHpOf(combatantId);
+        const newDuration = (instance.duration ?? 1) - 1;
+        if (def.pipeline === 'hot') {
+          const healed = healFromStatus(working, round, combatantId, def, instance, maxHp, activeFieldEffectDef, statusDefs, { newDuration });
+          working = healed.state;
+          events.push(...healed.events);
+        } else {
+          const amount = dotTickAmount(def, instance, maxHp, activeFieldEffectDef);
+          events.push({ type: 'StatusTicked', round, combatantId, statusId, kind: 'damage', amount, newDuration });
+          const hpResult = applyHpDelta(working, round, combatantId, -amount, maxHp);
+          working = hpResult.state;
+          events.push(...hpResult.events);
+        }
+        if (!working.combatants[combatantId].statuses[statusId]) continue;
+        if (newDuration <= 0) {
           const rm = removeStatus(working, round, combatantId, statusId, 'expired');
           working = rm.state;
           events.push(...rm.events);
         } else {
-          working = setStatus(working, combatantId, statusId, { ...working.combatants[combatantId].statuses[statusId], magnitude: left });
+          working = setStatus(working, combatantId, statusId, { ...working.combatants[combatantId].statuses[statusId], duration: newDuration });
         }
       } else if (def.pipeline === 'dot' || def.pipeline === 'hot') {
         const maxHp = maxHpOf(combatantId);
-        const magnitude = def.pipeline === 'dot' ? dotTickAmount(def, instance.magnitude, maxHp) : hotTickAmount(def, instance.magnitude, maxHp);
+        const magnitude = def.pipeline === 'dot' ? dotTickAmount(def, instance, maxHp) : hotTickAmount(def, instance, maxHp);
         const delta = def.pipeline === 'dot' ? -magnitude : magnitude;
         // undefined (not 0) for a non-decaying status, so the view never renders "Bleed 0".
         const decayedMagnitude = def.decay === 'halve' ? Math.floor((instance.magnitude ?? 0) * DEFAULT_DECAY_RETAIN) : undefined;

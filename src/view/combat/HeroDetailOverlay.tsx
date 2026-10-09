@@ -35,7 +35,7 @@ import { TypeMatchups } from '../shared/TypeMatchups';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HubGlyph } from '../shared/nodeIcons';
 import { getTypeColor } from './typeColors';
-import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
+import { StatusGlyph, statusColor, statusTint, StatusPips } from '../shared/statusIcons';
 import { passives } from '../../data/passives';
 import { PassiveReadout } from '../shared/passiveIcons';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
@@ -62,9 +62,9 @@ function fmtMod(n: number): string {
   return n > 0 ? `+${n}` : `${n}`;
 }
 
-/** "Burn 20" / "Bleed" — boolean statuses carry no number and render bare. */
+/** "Shield 45" / "Bleed" — boolean statuses carry no number, and a timed one (Burn) its pips instead. */
 function fmtStatus(statusId: string, magnitude: number | undefined, duration: number | undefined): string {
-  const n = magnitude ?? duration;
+  const n = statuses[statusId]?.timed ? undefined : (magnitude ?? duration);
   return n !== undefined ? `${statusId} ${n}` : statusId;
 }
 
@@ -262,7 +262,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
                       >
                         <StatusGlyph statusId={s.statusId} />
                         {fmtStatus(s.statusId, s.magnitude, s.duration)}
-                        {s.statusId === 'Poison' && <PoisonPips duration={s.duration} />}
+                        <StatusPips instance={s} />
                       </span>
                     ))}
                   </div>

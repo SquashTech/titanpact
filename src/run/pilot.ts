@@ -41,7 +41,7 @@ import {
   declarationTargetMode,
   statusMagnitude,
 } from '../engine/state';
-import { dotTickAmount, hotTickAmount, selectableTargets, statusGatedTargets } from '../engine/combat/statusEngine';
+import { dotTickAmount, hotTickAmount, selectableTargets, statusGatedTargets, timedRemainingAmount } from '../engine/combat/statusEngine';
 import { collectPassiveDamageModifiers } from '../engine/combat/passiveEngine';
 import {
   calcDamage,
@@ -65,7 +65,7 @@ import { statuses } from '../data/statuses';
 import { passives } from '../data/passives';
 import { fieldEffects } from '../data/fieldEffects';
 import { typeChart } from '../data/typechart';
-import { atTopOfRestableLadder, type AiContext } from './ai';
+import { activeFieldEffectDef, restOutlastsBurn, type AiContext } from './ai';
 import { kitForRound } from './metamorphic';
 
 /** Variance is uniform, so its expectation is the midpoint; crit folds in as its expected multiplier. */
@@ -427,25 +427,26 @@ function riderValue(
     }
     case 'dot': {
       const maxHp = getMaxHp(allCombatants[holder.heroId], holder);
-      // A ladder (Burn) is worth what the climb adds to every tick, over a horizon a Rest may cut short.
-      if (def.levels) {
-        const held = statusMagnitude(holder, def.id);
-        const before = held > 0 ? dotTickAmount(def, held, maxHp) : 0;
-        const after = dotTickAmount(def, held + (magnitude || 1), maxHp);
-        return Math.min((after - before) * HORIZON * 0.75, holder.currentHp);
+      // A timed Burn is worth the rounds a fresh one adds over what is left, which a Rest or a switch may cut short.
+      if (def.timed) {
+        const field = activeFieldEffectDef(state);
+        const gain = timedRemainingAmount(def, undefined, maxHp, field) - timedRemainingAmount(def, holder.statuses[def.id]?.duration ?? 0, maxHp, field);
+        return Math.min(gain * 0.75, holder.currentHp);
       }
       const perTick = def.flatPercentOfMaxHp != null ? def.flatPercentOfMaxHp * maxHp : magnitude;
       const total = def.decay === 'halve' ? perTick * 2 : perTick * Math.min(duration, HORIZON);
       return Math.min(total, holder.currentHp);
     }
     case 'hot': {
-      // A charged Renew heals on landing and once a round after, one heal a charge.
-      const perTick = hotTickAmount(def, magnitude, getMaxHp(allCombatants[holder.heroId], holder));
-      const ticks = def.charges ? Math.min(magnitude, HORIZON) : Math.min(duration, HORIZON);
-      const total = def.decay === 'halve' ? perTick * 2 : perTick * ticks;
-      // Only the tick that lands with the cast can refuse this round's KO.
-      const landing = def.ticksOnApply ? Math.min(perTick, missingHp(state, holderId)) : 0;
-      return Math.min(total, missingHp(state, holderId) + perTick) + lethalSaveValue(state, ctx, holderId, landing, cache);
+      const maxHp = getMaxHp(allCombatants[holder.heroId], holder);
+      // A timed Renew is worth the rounds a fresh one sets back up; it heals nothing the round it lands.
+      if (def.timed) {
+        const gain = timedRemainingAmount(def, undefined, maxHp) - timedRemainingAmount(def, holder.statuses[def.id]?.duration ?? 0, maxHp);
+        return Math.min(gain, missingHp(state, holderId) + hotTickAmount(def, {}, maxHp));
+      }
+      const perTick = hotTickAmount(def, { magnitude }, maxHp);
+      const total = def.decay === 'halve' ? perTick * 2 : perTick * Math.min(duration, HORIZON);
+      return Math.min(total, missingHp(state, holderId) + perTick);
     }
     case 'control':
       // A turn taken off the holder is a round of its output.
@@ -476,8 +477,9 @@ function cleanseValue(state: CombatState, ctx: AiContext, holderId: string, cach
     if (!def || def.positive) continue;
     const magnitude = instance.magnitude ?? 0;
     if (def.pipeline === 'dot') {
-      const perTick = dotTickAmount(def, instance.magnitude, getMaxHp(allCombatants[holder.heroId], holder));
-      total += def.decay === 'halve' ? perTick * 2 : perTick * HORIZON;
+      const maxHp = getMaxHp(allCombatants[holder.heroId], holder);
+      if (def.timed) total += timedRemainingAmount(def, instance.duration, maxHp, activeFieldEffectDef(state));
+      else total += def.decay === 'halve' ? dotTickAmount(def, instance, maxHp) * 2 : dotTickAmount(def, instance, maxHp) * HORIZON;
     } else if (def.pipeline === 'control') {
       total += threatOf(state, ctx, holderId, cache);
     } else if (def.pipeline === 'timer') {
@@ -960,8 +962,9 @@ export function pilotActions(state: CombatState, side: Side, ctx: AiContext, opt
       }
     }
 
-    // Engulfed costs a quarter of max HP a round; Rest puts it out (switching already would have, above).
-    if (!best || atTopOfRestableLadder(state.combatants[casterId], ctx.statuses)) {
+    // A Burn that would finish the hero: Rest puts it out (switching already would have, above).
+    const caster = state.combatants[casterId];
+    if (!best || restOutlastsBurn(caster, ctx.statuses, getMaxHp(allCombatants[caster.heroId], caster), activeFieldEffectDef(state))) {
       actions.push({ kind: 'rest', combatantId: casterId });
       continue;
     }

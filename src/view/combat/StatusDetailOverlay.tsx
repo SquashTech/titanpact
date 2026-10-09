@@ -2,8 +2,8 @@ import { createPortal } from 'react-dom';
 import type { CSSProperties } from 'react';
 import type { StatusInstance } from '../../engine/state';
 import { statuses } from '../../data/statuses';
-import { StatusGlyph, statusColor, pipelineLabel, PoisonPips } from '../shared/statusIcons';
-import { statusFacts, statusHeldText } from '../shared/statusFacts';
+import { StatusGlyph, statusColor, pipelineLabel, StatusPips } from '../shared/statusIcons';
+import { statusFacts } from '../shared/statusFacts';
 import { overlayHost } from '../shared/overlayHost';
 
 interface Props {
@@ -63,21 +63,15 @@ export function StatusDetailOverlay({ instance, onClose }: Props) {
               <span style={{ color: def.positive ? 'var(--hp-high)' : 'var(--hp-low)' }}>{def.positive ? 'Buff' : 'Debuff'}</span>
             </div>
           </div>
-          {instance.statusId === 'Poison' && <PoisonPips duration={instance.duration} />}
+          <StatusPips instance={instance} />
         </div>
 
         <div className="move-detail-stats">
           {instance.magnitude !== undefined && (
             <span className="move-detail-stat">
               <StatusGlyph statusId={instance.statusId} />
-              <strong>{def.levels ? statusHeldText(instance.statusId, instance.magnitude) : instance.magnitude}</strong>
-              <span className="move-detail-unit">
-                {def.levels
-                  ? `${def.levels.tickPercents[Math.max(1, Math.min(def.levels.tickPercents.length, instance.magnitude)) - 1]}% max HP / round`
-                  : def.charges
-                    ? `heals left, ${def.charges.tickPercent}% max HP each`
-                    : magnitudeUnit(def.pipeline, def.shape)}
-              </span>
+              <strong>{instance.magnitude}</strong>
+              <span className="move-detail-unit">{magnitudeUnit(def.pipeline, def.shape)}</span>
             </span>
           )}
           {instance.duration !== undefined && (

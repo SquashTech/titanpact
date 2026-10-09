@@ -18,9 +18,9 @@ export const fieldEffects: Record<string, FieldEffectDefinition> = {
   scorchedLand: {
     id: 'scorchedLand',
     name: 'Scorched Land',
-    description: 'Every Burn lands one level higher.',
+    description: "Burn doesn't fade: it burns for 15% every round it lasts.",
     flavorType: 'Fire',
-    raisesStatusLevel: { statusIds: ['Burn'], by: 1 },
+    holdsTimedStatusAtFirst: ['Burn'],
   },
   stasisBubble: {
     id: 'stasisBubble',

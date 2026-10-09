@@ -11,7 +11,7 @@ import { StatGlyph, STAT_ORDER, hpTier, ShieldFill, ShieldLabel } from '../share
 import { shieldHeld } from '../../engine/status/shield';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
-import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
+import { StatusGlyph, statusColor, statusTint, StatusPips } from '../shared/statusIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { StatusDetailOverlay } from './StatusDetailOverlay';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
@@ -194,10 +194,10 @@ function ForecastChip({ forecast }: { forecast: MoveForecast }) {
   );
 }
 
-/** Icon + bare number (magnitude, falling back to duration). A ~500ms hold opens StatusDetailOverlay; a tap only stops propagation. */
+/** Icon + bare number (magnitude, falling back to duration); a timed status (Burn, Renew) wears its pips instead. A ~500ms hold opens StatusDetailOverlay; a tap only stops propagation. */
 function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspect: () => void }) {
   const longPress = useLongPress(onInspect);
-  const n = instance.magnitude ?? instance.duration;
+  const n = statuses[instance.statusId]?.timed ? undefined : (instance.magnitude ?? instance.duration);
   const color = statusColor(instance.statusId);
   return (
     <span
@@ -208,7 +208,7 @@ function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspe
     >
       <StatusGlyph statusId={instance.statusId} />
       {n !== undefined && <span className="status-badge-count">{n}</span>}
-      {instance.statusId === 'Poison' && <PoisonPips duration={instance.duration} />}
+      <StatusPips instance={instance} />
     </span>
   );
 }

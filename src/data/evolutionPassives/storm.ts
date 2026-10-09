@@ -97,7 +97,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'SwitchedOut',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn' },
     },
   },
 };

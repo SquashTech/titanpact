@@ -86,7 +86,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
     },
   },
   // Aurum's Sunlord: a Daze is a flinch only when it lands first, so the sun climbing is what

@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import type { StatusDefinition } from '../../engine/content';
+import { statuses } from '../../data/statuses';
 import { getTypeColor } from '../combat/typeColors';
 import { ELEMENT_PATHS, FLAME } from './elementIcons';
 
@@ -227,13 +228,19 @@ export function statusClearText(def: StatusDefinition): string {
   return def.positive ? "Persists through switching — Cleanse can't remove it." : 'Persists through switching — removed by Cleanse.';
 }
 
-/** The 3-pip "how close to detonation" meter beside Poison's badge. */
-export function PoisonPips({ duration }: { duration: number | undefined }) {
-  const tier = poisonTier(duration);
+/**
+ * The clock beside a badge: Poison's three pips fill toward detonation; a timed status (Burn,
+ * Renew) shows one pip a round it has left, emptying as it runs down. Anything else draws nothing.
+ */
+export function StatusPips({ instance }: { instance: { statusId: string; duration?: number } }) {
+  const timed = statuses[instance.statusId]?.timed;
+  const total = instance.statusId === 'Poison' ? 3 : timed?.tickPercents.length;
+  if (!total) return null;
+  const filled = instance.statusId === 'Poison' ? poisonTier(instance.duration) : Math.max(0, Math.min(total, instance.duration ?? total));
   return (
-    <span className="status-pips" style={{ color: statusColor('Poison') }} aria-hidden="true">
-      {[1, 2, 3].map((i) => (
-        <span key={i} className={`status-pip${i <= tier ? ' status-pip-filled' : ''}`} />
+    <span className="status-pips" style={{ color: statusColor(instance.statusId) }} aria-hidden="true">
+      {Array.from({ length: total }, (_, i) => (
+        <span key={i} className={`status-pip${i < filled ? ' status-pip-filled' : ''}`} />
       ))}
     </span>
   );

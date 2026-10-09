@@ -21,9 +21,9 @@ function statusNames(ids: readonly string[]): string {
 function effectFacts(def: FieldEffectDefinition): FieldEffectFact[] {
   const rows: FieldEffectFact[] = [];
   if (def.mpRegenMultiplier != null) rows.push({ label: 'MP Regen', text: `×${def.mpRegenMultiplier}, every hero on both sides` });
-  if (def.raisesStatusLevel) {
-    const { statusIds, by } = def.raisesStatusLevel;
-    rows.push({ label: 'Climb', text: `Every ${statusNames(statusIds)} lands ${by === 1 ? 'one level' : `${by} levels`} higher` });
+  if (def.holdsTimedStatusAtFirst) {
+    const held = def.holdsTimedStatusAtFirst.map((id) => statuses[id]).filter((s) => s?.timed);
+    for (const s of held) rows.push({ label: 'No fade', text: `${s.name} ticks ${s.timed!.tickPercents[0]}% every round it lasts` });
   }
   if (def.blocksHealingWhile) rows.push({ label: 'Healing', text: `None for a hero with ${statusNames([def.blocksHealingWhile])} — a potion still works` });
   if (def.lifestealAgainst) {

@@ -46,9 +46,9 @@ function withDeepPools(state: CombatState): CombatState {
   return { ...state, combatants } as CombatState;
 }
 
-/** Puts `magnitude` Renew on one combatant through the real status engine. */
-function withRenew(state: CombatState, combatantId: string, magnitude: number): CombatState {
-  return applyStatus(state, 1, combatantId, statuses.Renew, { magnitude }).state;
+/** Puts a fresh Renew on one combatant through the real status engine. */
+function withRenew(state: CombatState, combatantId: string): CombatState {
+  return applyStatus(state, 1, combatantId, statuses.Renew, {}).state;
 }
 
 /** Puts `magnitude` Poison on one combatant, on a fresh 3-round timer. */
@@ -62,14 +62,14 @@ test('nature: Seed Shot doubles off the USER carrying Renew, not the target', ()
   const plain = withDeepPools(natureFixture(101));
   assert.strictEqual(resolveConditionalPowerMultiplier(moves.seedShot, plain.combatants.b1, plain.combatants.a1), 1);
 
-  const renewedTarget = withRenew(plain, 'b1', 20);
+  const renewedTarget = withRenew(plain, 'b1');
   assert.strictEqual(
     resolveConditionalPowerMultiplier(moves.seedShot, renewedTarget.combatants.b1, renewedTarget.combatants.a1),
     1,
     "the target's Renew is not the caster's"
   );
 
-  const renewedUser = withRenew(plain, 'a1', 20);
+  const renewedUser = withRenew(plain, 'a1');
   assert.strictEqual(resolveConditionalPowerMultiplier(moves.seedShot, renewedUser.combatants.b1, renewedUser.combatants.a1), 2);
 
   const frozen = applyStatus(plain, 1, 'b1', statuses.Freeze, {}).state;
@@ -88,7 +88,7 @@ test('nature: the user-side multiplier is a BasePower-stage term, not a damage m
 test('nature: Branch Slam actually hits twice as hard through resolveRound once the caster holds Renew', () => {
   const swing = (renewed: boolean) => {
     const base = withDeepPools(natureFixture(102));
-    const state = renewed ? withRenew(base, 'a2', 20) : base;
+    const state = renewed ? withRenew(base, 'a2') : base;
     const { events } = resolveRound(
       state,
       [{ kind: 'move', combatantId: 'a2', moveId: 'branchSlam', declaredTarget: 'b1' }],
@@ -123,7 +123,7 @@ test('nature: a Renew granted earlier in the SAME round already counts', () => {
 });
 
 test('nature: a user-side conditional is all-or-nothing across a spread, where a target-side one is per target', () => {
-  const state = withRenew(withDeepPools(natureFixture(104)), 'a1', 20);
+  const state = withRenew(withDeepPools(natureFixture(104)), 'a1');
   const spread = { ...moves.blight, id: 'testSpreadSeedShot', kind: 'damage' as const, basePower: 30, statusApplication: undefined, conditionalPower: moves.seedShot.conditionalPower };
   const withSpread = { ...config, moves: { ...moves, testSpreadSeedShot: spread } };
   const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'testSpreadSeedShot' }], withSpread);
@@ -135,7 +135,7 @@ test('nature: neither user-side move consumes the Renew it read', () => {
   assert.strictEqual(moves.seedShot.conditionalPower?.consumesStatus, undefined);
   assert.strictEqual(moves.branchSlam.conditionalPower?.consumesStatus, undefined);
 
-  const state = withRenew(withDeepPools(natureFixture(105)), 'a1', 40);
+  const state = withRenew(withDeepPools(natureFixture(105)), 'a1');
   const { state: after } = resolveRound(
     state,
     [{ kind: 'move', combatantId: 'a1', moveId: 'seedShot', declaredTarget: 'b1' }],
@@ -210,7 +210,7 @@ test('nature: the detonation emits Detonated / Removed / HpChanged, in the order
 });
 
 test('nature: detonatesStatus is gated on the timer SHAPE, not on a status id', () => {
-  const state = withRenew(withDeepPools(natureFixture(205)), 'b1', 20);
+  const state = withRenew(withDeepPools(natureFixture(205)), 'b1');
   const maxHp = getMaxHp(heroes[state.combatants.b1.heroId], state.combatants.b1);
 
   const renew = detonateStatusNow(state, 1, 'b1', 'Renew', statuses, maxHp);

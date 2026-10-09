@@ -334,8 +334,8 @@ test('light: Vigil shields one ally off the caster\'s Defense and Renews it as a
 
   assert.strictEqual(statusMagnitude(next.combatants.a2, 'Shield'), expectedShield);
   assert.ok(
-    events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Renew' && e.combatantId === 'a2' && e.magnitude === renewApp.magnitude),
-    'the Renew landed at the authored count — no Wisdom scaling'
+    events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Renew' && e.combatantId === 'a2' && e.duration === 3 && e.magnitude === undefined),
+    'the Renew landed as an ordinary three rounds — no Wisdom scaling'
   );
   assert.strictEqual(statusMagnitude(next.combatants.a1, 'Shield'), 0, 'single ally');
 });

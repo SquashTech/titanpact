@@ -88,17 +88,14 @@ export interface StatusDefinition {
   /** Boolean-shape DoT (Bleed): a fixed fraction of max HP per tick instead of a magnitude. */
   flatPercentOfMaxHp?: number;
   /**
-   * The magnitude is a LEVEL, 1 to `tickPercents.length` (Burn, docs/status-ladders-and-fields.md §1):
-   * each application adds its magnitude in levels, held at the top; a tick deals
-   * `tickPercents[level − 1]`% of the holder's max HP, and nothing decays it. `names` are the levels' names.
+   * A fixed run of round ends (Burn, Renew — docs/timed-statuses.md): the status lasts
+   * `tickPercents.length` rounds, its k-th round end dealing (dot) or healing (hot)
+   * `tickPercents[k]`% of the holder's max HP, then it is gone. No magnitude: every application
+   * lands the same status and puts it back to its first round. `StatusInstance.duration` is rounds left.
    */
-  levels?: { tickPercents: readonly number[]; names: readonly string[] };
-  /** The magnitude is HEALS LEFT (Renew, docs/status-ladders-and-fields.md §2): each heal is `tickPercent`% of the holder's max HP and spends one; applications add. */
-  charges?: { tickPercent: number };
-  /** The authored magnitude is what lands — never caster-scaled (Burn, Renew; statusMagnitude.ts magnitudeScales). */
+  timed?: { tickPercents: readonly number[] };
+  /** The authored magnitude is what lands — never caster-scaled (statusMagnitude.ts magnitudeScales). */
   fixedMagnitude?: boolean;
-  /** A HoT whose first heal lands the moment it is applied, spending one charge (Renew; statusEngine.ts applyStatus). */
-  ticksOnApply?: boolean;
   /** Removed when the holder Rests (Burn) — StatusRemoved 'rest'. */
   clearsOnRest?: boolean;
   /** Conduct: a damage move of one of these types detonates this status on the target for detonateBonusPercentMaxHp of its max HP, then consumes it. Detonate-only — planting it is an ordinary rider (statusEngine.ts detonateTriggeredStatuses). */
@@ -392,8 +389,8 @@ export interface FieldEffectDefinition {
   flavorType?: TypeId;
   /** Multiplies every combatant's MP Regen (2 = doubled). Applied in manaRegen.ts, never folded into the mpRegen stat. */
   mpRegenMultiplier?: number;
-  /** Every application of these level statuses lands `by` levels higher (Scorched Land on Burn). statusEngine.ts applyStatus. */
-  raisesStatusLevel?: { statusIds: readonly StatusId[]; by: number };
+  /** These timed statuses never fade while the field holds: every round end ticks their FIRST round's percent (Scorched Land on Burn). statusEngine.ts timedTickPercent. */
+  holdsTimedStatusAtFirst?: readonly StatusId[];
   /** A combatant holding this status restores no HP — no heal move, Renew, drain or passive heal; a potion still works (Blood Moon on Bleed). statusEngine.ts healBlocked. */
   blocksHealingWhile?: StatusId;
   /** A hit on a target holding `statusId` heals the attacker `percent` of the HP it removed, as a drain (Blood Moon on Bleed). resolveRound.ts. */

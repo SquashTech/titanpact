@@ -1,5 +1,9 @@
 # Status ladders and three new fields
 
+> **§1 (Burn's levels) and §2 (Renew's count) are SUPERSEDED by `docs/timed-statuses.md`**
+> (2026-10-09): both are now timed — on or off, three rounds, no number. §3–5 (the fields) stand,
+> except that Scorched Land now stops Burn fading instead of raising its level.
+
 Decided and built 2026-10-06, per user direction. It replaces Burn's halving percent and Renew's
 Wisdom-scaled percent with numbers a player can read off the badge, and adds three Field Effects
 that bend a rule instead of adding a bonus. It supersedes `blessings-and-statuses.md` §3–5 wherever

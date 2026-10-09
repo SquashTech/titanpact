@@ -274,8 +274,10 @@ don't silently override it.
 > Act 1 dial left alone per user direction. Its §9 lists what it reverses.
 
 > **A thirteenth is BUILT, not measured: `docs/status-ladders-and-fields.md`** (2026-10-06, per user
-> direction). **Burn is three levels** (5 / 10 / 25%, Rest puts it out) and **Renew a count of 10%
-> heals**, replacing their authored percents; Scorched Land lands every Burn a level higher. **Three
+> direction). Its Burn levels and Renew count are **superseded by `docs/timed-statuses.md`**
+> (2026-10-09, per user direction): **Burn is 15 → 8 → 4% over three rounds and out, a fresh Burn
+> re-lights it at 15%; Renew is 10% at each of three round ends, a fresh one resets the three; no
+> number on either, the rounds drawn as pips; Bleed 6%; Scorched Land: Burn doesn't fade.** **Three
 > fields join**, each with a Herald, an Early rider and a Mid reader: **Blood Moon** (Beast — Bleeding
 > heroes can't be healed, hits on them heal the attacker 25%), **Downpour** (Water — Water and Frost
 > attacks are never resisted) and **Bedrock** (Stone — physical attacks hit with the higher of Attack
@@ -327,9 +329,9 @@ don't silently override it.
   `WisdomMult = 1 + (Wisdom − 50)/100`. Scales with the **caster's Wisdom** (whatever the
   move's category), **never with the target's max HP**, and carries **no variance**. A HoT
   snapshots it at application time. Reasoning + open questions: `docs/combat.md`. **One named
-  exception, Renew** (2026-10-06, per user direction, `docs/status-ladders-and-fields.md` §2): its
-  number is **heals left**, each one **10% of the HOLDER's max HP**, the first as it lands — never
-  caster-scaled (`StatusDefinition.charges`); a heal move stays on the formula above.
+  exception, Renew** (2026-10-09, per user direction, `docs/timed-statuses.md`): **10% of the
+  HOLDER's max HP at each of three round ends**, nothing on landing, a re-application resetting the
+  three — never caster-scaled (`StatusDefinition.timed`); a heal move stays on the formula above.
 - **Status magnitude formula (2026-09-05):** a DoT or HoT rider's authored magnitude is a
   BASE — `magnitude = authored × StatMult × STAB`, `StatMult = 1 + (stat − 50)/100` clamped
   `[0.5, 2.0]`, snapshotted at application. Same shape and same constants as the heal
@@ -345,11 +347,11 @@ don't silently override it.
   heal formula's WisdomMult off the owner (`docs/innate-passives.md` §7c). It exists because `HP_SCALE` is
   neutral for what repeats and not for what decays: `decay: 'halve'` caps a Burn's lifetime
   output at ≈2× its magnitude however long the fight runs. `docs/combat.md`.
-  **Burn and Renew left the formula** (2026-10-06, per user direction,
-  `docs/status-ladders-and-fields.md`): **Burn is a LEVEL, 1–3** — Burning 5%, Badly Burned 10%,
-  Engulfed 25% of the holder's max HP a round, each Burn climbing one, no decay, put out by **Rest**,
-  Cleanse or switching (`StatusDefinition.levels`, `clearsOnRest`); a frequent passive Burn is capped
-  at level 1. Renew is a count of heals (above). Both land as authored (`fixedMagnitude`), so the
+  **Burn and Renew left the formula** (2026-10-06; reshaped 2026-10-09 per user direction,
+  `docs/timed-statuses.md`): both are **TIMED** — no magnitude, a fixed run of round ends
+  (`StatusDefinition.timed`). **Burn deals 15%, 8%, then 4% of the holder's max HP and goes out**;
+  a fresh Burn re-lights it at 15%; **Rest**, Cleanse or switching put it out (`clearsOnRest`);
+  under Scorched Land it does not fade. Renew is above. Both land as authored (`fixedMagnitude`), so the
   `dot` and `hot` arms and `scaledBy` on a status have no holder today; Shield is the scaled pool left.
 - **Stat line:** HP, Attack/Defense, Intelligence/Wisdom, Speed, Mana, MP Regen.
 - **Every hero's seven stats sum to exactly 550** — HP/Attack/Defense/Intelligence/

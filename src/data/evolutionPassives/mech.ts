@@ -5,11 +5,11 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   ignition: {
     id: 'ignition',
     name: 'Ignition',
-    description: 'When this hero sets off a Conduct, its target climbs a level of Burn.',
+    description: 'When this hero sets off a Conduct, its target is Burned.',
     reactive: {
       hook: 'StatusDetonated',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
     },
   },
   // Bellows' Bulkhead: Ironbound never leaves, so the partner beside it is always the one plated.
@@ -38,11 +38,11 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   heatSink: {
     id: 'heatSink',
     name: 'Heat Sink',
-    description: "When this hero's partner is Burned, the partner gains Renew 3.",
+    description: "When this hero's partner is Burned, the partner gains Renew.",
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'ally', eventFieldEquals: { statusId: 'Burn' } },
-      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Renew', magnitude: 3 },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Renew' },
     },
   },
   // Abacus's Difference Engine: Perfect Creation lays both at once; Backfire and Malfunction build it.

@@ -177,28 +177,43 @@ test('fieldEffects: casting magicCloak again while it is already active does not
   assert.strictEqual(next.activeFieldEffect?.roundsRemaining, 2); // ticked down again this round (3 -> 2), not reset to 5
 });
 
-// --- Scorched Land: Burn decays a quarter as fast ---
+// --- Scorched Land: Burn doesn't fade ---
 
-test('fieldEffects: under Scorched Land every Burn lands one level higher; with none up it climbs one', () => {
+test("fieldEffects: under Scorched Land Burn doesn't fade — 15% every round it lasts, against 15/8/4 with none up", () => {
   const built = twoVTwoFixture(410);
-  const plain = applyStatus(built, 1, 'a1', statuses.Burn, { magnitude: 1 }).state;
-  assert.strictEqual(plain.combatants.a1.statuses.Burn?.magnitude, 1, 'Burning');
-  const scorched = applyStatus(built, 1, 'a1', statuses.Burn, { magnitude: 1, fieldEffect: fieldEffects.scorchedLand }).state;
-  assert.strictEqual(scorched.combatants.a1.statuses.Burn?.magnitude, 2, 'Badly Burned off one Burn');
-  const again = applyStatus(scorched, 1, 'a1', statuses.Burn, { magnitude: 1, fieldEffect: fieldEffects.scorchedLand }).state;
-  assert.strictEqual(again.combatants.a1.statuses.Burn?.magnitude, 3, 'Engulfed off the second');
+  const maxHp = getMaxHp(heroes.ironWarden, built.combatants.b1);
+  const burnTicks = (state: CombatState) => {
+    let working = applyStatus(state, 1, 'b1', statuses.Burn, {}).state;
+    const amounts: number[] = [];
+    for (let i = 0; i < 3; i++) {
+      const r = resolveRound(working, [], config);
+      const tick = r.events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Burn' && e.combatantId === 'b1');
+      amounts.push(tick && tick.type === 'StatusTicked' ? tick.amount : 0);
+      working = r.state;
+    }
+    assert.strictEqual(working.combatants.b1.statuses.Burn, undefined, 'out after three rounds either way');
+    return amounts;
+  };
+  assert.deepStrictEqual(burnTicks(built), [0.15, 0.08, 0.04].map((p) => Math.ceil(maxHp * p)));
+  const scorched = { ...built, activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+  const held = Math.ceil(maxHp * 0.15);
+  assert.deepStrictEqual(burnTicks(scorched), [held, held, held]);
 });
 
-test('fieldEffects: a move cast under Scorched Land lands its Burn a level higher, end to end', () => {
+test('fieldEffects: a Burn cast under Scorched Land lands as an ordinary Burn and holds its 15% tick, end to end', () => {
   const built = twoVTwoFixture(411);
+  const maxHp = getMaxHp(heroes.ironWarden, built.combatants.b1);
   const state = {
     ...built,
     activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS },
     combatants: { ...built.combatants, a1: { ...built.combatants.a1, currentMana: 999 } },
   };
-  const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'moltenLash', declaredTarget: 'b1' }] as Action[], config);
-  const applied = events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Burn' && e.combatantId === 'b1');
-  assert.ok(applied && applied.type === 'StatusApplied' && applied.magnitude === 2, 'Molten Lash authors one level; the field adds one');
+  const first = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'moltenLash', declaredTarget: 'b1' }] as Action[], config);
+  const applied = first.events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Burn' && e.combatantId === 'b1');
+  assert.ok(applied && applied.type === 'StatusApplied' && applied.duration === 3 && applied.magnitude === undefined, 'the field changes nothing at landing');
+  const second = resolveRound(first.state, [], config);
+  const tick = second.events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Burn' && e.combatantId === 'b1');
+  assert.strictEqual(tick && tick.type === 'StatusTicked' ? tick.amount : 0, Math.ceil(maxHp * 0.15), 'its second round still 15%, not 8');
 });
 
 // --- Stasis Bubble: reverse Speed order within a shared priority bracket ---
@@ -268,8 +283,7 @@ test('fieldEffects: under Verdant Earth a Renew tick heals twice its tenth', () 
   const base = twoVTwoFixture(430);
   const maxHp = getMaxHp(heroes.cinderKnight, base.combatants.a1);
   const hurt = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 10 } } };
-  // Applied with no holder max HP, so no landing heal: the round-end tick is all that is read.
-  const renewed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 2 }).state;
+  const renewed = applyStatus(hurt, 1, 'a1', statuses.Renew, {}).state;
   const plain = resolveRound(renewed, [], config).state.combatants.a1.currentHp;
   const doubled = resolveRound(verdant(renewed), [], config).state.combatants.a1.currentHp;
   assert.strictEqual(plain, 10 + Math.ceil(maxHp * 0.1));
@@ -280,7 +294,7 @@ test('fieldEffects: under Verdant Earth a Renew heal past max HP lands as Shield
   const base = twoVTwoFixture(431);
   const maxHp = getMaxHp(heroes.cinderKnight, base.combatants.a1);
   const nearlyWhole = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: maxHp - 5 } } };
-  const renewed = applyStatus(nearlyWhole, 1, 'a1', statuses.Renew, { magnitude: 10, duration: 2 }).state;
+  const renewed = applyStatus(nearlyWhole, 1, 'a1', statuses.Renew, {}).state;
 
   const plain = resolveRound(renewed, [], config).state.combatants.a1;
   assert.strictEqual(plain.currentHp, maxHp);
@@ -293,16 +307,18 @@ test('fieldEffects: under Verdant Earth a Renew heal past max HP lands as Shield
   assert.ok(grown.events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1' && e.statusId === 'Shield'));
 });
 
-test('fieldEffects: Verdant Earth also doubles the heal a Renew makes the moment it lands', () => {
+test('fieldEffects: under Verdant Earth a Renew still heals nothing as it lands — the doubling is on its round-end ticks', () => {
   const base = verdant(twoVTwoFixture(432));
   const maxHp = getMaxHp(heroes.cinderKnight, base.combatants.a1);
   const hurt = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 10 } } };
-  const landed = applyStatus(hurt, 1, 'a1', statuses.Renew, { magnitude: 2, holderMaxHp: maxHp, fieldEffect: fieldEffects.verdantEarth, statusDefs: statuses });
-  assert.strictEqual(landed.state.combatants.a1.currentHp, 10 + 2 * Math.ceil(maxHp * 0.1));
+  const landed = applyStatus(hurt, 1, 'a1', statuses.Renew, { holderMaxHp: maxHp, fieldEffect: fieldEffects.verdantEarth, statusDefs: statuses });
+  assert.strictEqual(landed.state.combatants.a1.currentHp, 10);
+  const r = resolveRound(landed.state, [], config);
+  assert.strictEqual(r.state.combatants.a1.currentHp, 10 + 2 * Math.ceil(maxHp * 0.1));
 });
 
 test('fieldEffects: Verdant Earth grants no stats any more — Attack and Intelligence read the same with Renew held', () => {
-  const renewed = applyStatus(twoVTwoFixture(433), 1, 'a1', statuses.Renew, { magnitude: 10, duration: 2 }).state;
+  const renewed = applyStatus(twoVTwoFixture(433), 1, 'a1', statuses.Renew, {}).state;
   const ctx = { active: { fieldEffectId: 'verdantEarth', roundsRemaining: 5 }, defs: fieldEffects };
   assert.strictEqual(getEffectiveStat(heroes.cinderKnight, renewed.combatants.a1, 'attack', ctx), getEffectiveStat(heroes.cinderKnight, renewed.combatants.a1, 'attack'));
 });
@@ -328,7 +344,7 @@ test('fieldEffects: Sanctuary multiplies a heal-kind move\'s restored HP by heal
 });
 
 test('fieldEffects: Sanctuary\'s heal term does not reach a Renew tick — a HoT is not a heal-kind move', () => {
-  const built = applyStatus(twoVTwoFixture(451), 1, 'a1', statuses.Renew, { magnitude: 10 }).state;
+  const built = applyStatus(twoVTwoFixture(451), 1, 'a1', statuses.Renew, {}).state;
   const hurt: CombatState = { ...built, combatants: { ...built.combatants, a1: { ...built.combatants.a1, currentHp: 1 } } };
   const maxHpOf = (id: string) => getMaxHp(heroes[hurt.combatants[id].heroId], hurt.combatants[id]);
   const plainTick = tickEndOfRound(hurt, 1, statuses, fieldEffects, maxHpOf).events.find((e) => e.type === 'StatusTicked');
@@ -492,12 +508,12 @@ test('fieldEffects: under Blood Moon a Bleeding hero is healed by nothing — a 
   const base = underField(twoVTwoFixture(470), 'bloodMoon');
   const hurt = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentHp: 50, currentMana: 999 }, a2: { ...base.combatants.a2, currentMana: 999 } } };
   const bleeding = withBleed(hurt, 'a1');
-  const renewed = applyStatus(bleeding, 1, 'a1', statuses.Renew, { magnitude: 3 }).state;
+  const renewed = applyStatus(bleeding, 1, 'a1', statuses.Renew, {}).state;
   const { state: next, events } = resolveRound(renewed, [{ kind: 'move', combatantId: 'a2', moveId: 'refresh', declaredTarget: 'a1' }] as Action[], config);
   const ticks = events.filter((e) => e.type === 'StatusTicked' && e.statusId === 'Renew' && e.combatantId === 'a1');
   assert.ok(ticks.length > 0 && ticks.every((e) => e.type === 'StatusTicked' && e.blocked && e.amount === 0), 'every Renew heal refused');
   const maxHp = getMaxHp(heroes.cinderKnight, next.combatants.a1);
-  const bled = Math.ceil(maxHp * 0.05);
+  const bled = Math.ceil(maxHp * 0.06);
   assert.strictEqual(next.combatants.a1.currentHp, 50 - bled, 'only the Bleed tick moved the bar');
 });
 

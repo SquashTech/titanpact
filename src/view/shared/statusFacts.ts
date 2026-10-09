@@ -6,21 +6,22 @@
 import type { StatusDefinition } from '../../engine/content';
 import { statuses } from '../../data/statuses';
 
-/** What a rider ADDS, as the player reads it: a level status climbs (Burn +1), anything else is its number (Renew 3). */
-export function statusAmountText(statusId: string, amount: number): string {
-  return statuses[statusId]?.levels ? `+${amount}` : `${amount}`;
+/** What a rider ADDS, as the player reads it: its number (Shield 45). */
+export function statusAmountText(_statusId: string, amount: number): string {
+  return `${amount}`;
 }
 
-/** What a hero HOLDS, as the player reads it: a level status by its level's name (Badly Burned), anything else its number. */
+/** What a hero HOLDS, as the player reads it: its number, or a timed status's rounds left. */
 export function statusHeldText(statusId: string, amount: number): string {
-  const levels = statuses[statusId]?.levels;
-  if (!levels) return `${amount}`;
-  return levels.names[Math.max(1, Math.min(levels.names.length, amount)) - 1];
+  if (statuses[statusId]?.timed) return `${amount} ${amount === 1 ? 'round' : 'rounds'} left`;
+  return `${amount}`;
 }
 
-/** A ladder's rungs as one line: `Burning 5% · Badly Burned 10% · Engulfed 25%`. */
-function levelsText(levels: NonNullable<StatusDefinition['levels']>): string {
-  return levels.names.map((name, i) => `${name} ${levels.tickPercents[i]}%`).join(' · ');
+/** A timed status's rounds as one line: `15% → 8% → 4%`, or `10% for 3 rounds` when every round is alike. */
+export function timedText(timed: NonNullable<StatusDefinition['timed']>): string {
+  const percents = timed.tickPercents;
+  if (percents.every((p) => p === percents[0])) return `${percents[0]}% of max HP for ${percents.length} rounds`;
+  return `${percents.map((p) => `${p}%`).join(' → ')} of max HP`;
 }
 
 export interface StatusFact {
@@ -38,8 +39,8 @@ function tickText(def: StatusDefinition): string | null {
   if (def.flatPercentOfMaxHp != null) return `Deals ${Math.round(def.flatPercentOfMaxHp * 100)}% of max HP`;
   if (def.shape === 'timer') return 'Counts down — at 0, deals its magnitude in % of max HP';
   if (!def.ticksAtEndOfRound) return null;
-  if (def.pipeline === 'dot') return def.levels ? `Deals by level: ${levelsText(def.levels)} of max HP` : 'Deals its magnitude';
-  if (def.pipeline === 'hot') return def.charges ? `Heals ${def.charges.tickPercent}% of max HP and spends one` : 'Heals its magnitude';
+  if (def.pipeline === 'dot') return def.timed ? `Deals ${timedText(def.timed)}, then goes out` : 'Deals its magnitude';
+  if (def.pipeline === 'hot') return def.timed ? `Heals ${timedText(def.timed)}` : 'Heals its magnitude';
   if (def.shape === 'duration') return 'Counts down one round';
   return null;
 }
@@ -47,8 +48,6 @@ function tickText(def: StatusDefinition): string | null {
 function stackingText(def: StatusDefinition): string {
   switch (def.stacking) {
     case 'additive':
-      if (def.levels) return `Climbs a level, up to ${def.levels.names[def.levels.names.length - 1]}`;
-      if (def.charges) return 'Adds its heals to what is there';
       return def.pipeline === 'shield' ? "Adds to what is there, up to this hero's max HP" : 'Adds to what is there';
     case 'takeHigher':
       return 'Keeps the higher';
@@ -57,6 +56,7 @@ function stackingText(def: StatusDefinition): string {
     case 'additiveRefreshDuration':
       return 'Adds, and the timer tops back up';
     case 'none':
+      if (def.timed) return `Starts it over from round 1${def.pipeline === 'dot' ? ` (${def.timed.tickPercents[0]}%)` : ''}`;
       return def.shape === 'boolean' ? 'Already there — nothing' : 'Refreshes it';
   }
 }
@@ -64,9 +64,8 @@ function stackingText(def: StatusDefinition): string {
 export function statusFacts(def: StatusDefinition): StatusFact[] {
   const rows: StatusFact[] = [];
   const tick = tickText(def);
-  if (def.ticksOnApply && def.charges) rows.push({ label: 'Lands', text: `Heals ${def.charges.tickPercent}% of max HP at once, spending one` });
   if (tick) rows.push({ label: 'Each round', text: tick });
-  if (def.charges) rows.push({ label: 'Lasts', text: 'One heal for each point' });
+  if (def.timed) rows.push({ label: 'Lasts', text: `${def.timed.tickPercents.length} rounds` });
   if (def.shape === 'magnitude' && def.decay === 'halve') rows.push({ label: 'Then', text: 'Halves' });
   if (def.blocksIncomingMoves) rows.push({ label: 'Guard', text: 'Every enemy move aimed here turns away — an ally’s still lands' });
   // The one thing a player has to learn once about a Shield: what goes through it (docs/shield.md §3.2).

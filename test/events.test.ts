@@ -21,7 +21,7 @@ import { runEvents, type EventCost, type HeroOutcome, type ResolvableOutcome, ty
 import { isValidFlatStatGrant } from '../src/engine/content';
 import type { PassiveInstance, CombatState } from '../src/engine/state';
 import type { CombatEvent } from '../src/engine/events';
-import { getEffectiveStat } from '../src/engine/state';
+import { getEffectiveStat, getMaxHp } from '../src/engine/state';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../src/engine/combat/passiveEngine';
 import { applyForcedReplacement } from '../src/engine/combat/switching';
@@ -370,26 +370,24 @@ test('imposingPresence: one trigger emits one PassiveTriggered followed by one S
 
 // --- The same hook pointed inward: Unstoppable Growth (Crag's Rootwarden) ---
 
+/** Rounds of Renew left (docs/timed-statuses.md): a timed status carries no number. */
 function renewOf(state: CombatState, id: string): number {
-  return state.combatants[id].statuses.Renew?.magnitude ?? 0;
+  return state.combatants[id].statuses.Renew?.duration ?? 0;
 }
 
-/** Renew's magnitude as each StatusApplied reports it — the RESULTING total. */
+/** Each Renew landing on `id`, as the rounds its StatusApplied reports. */
 function renewGrants(events: readonly CombatEvent[], id: string): number[] {
   return events
     .filter((e): e is Extract<CombatEvent, { type: 'StatusApplied' }> => e.type === 'StatusApplied' && e.combatantId === id && e.statusId === 'Renew')
-    .map((e) => e.magnitude ?? 0);
+    .map((e) => e.duration ?? 0);
 }
-
-/** What Unstoppable Growth authors: a count of heals (docs/status-ladders-and-fields.md §2). */
-const GROWTH = (passives.unstoppableGrowth.reactive!.effect as { magnitude: number }).magnitude;
 
 test('unstoppableGrowth: arriving grants the hero itself its Renew, and nobody else', () => {
   const state = withPassive(fixture(20), 'a3', 'unstoppableGrowth');
   const result = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
 
-  assert.deepStrictEqual(renewGrants(result.events, 'a3'), [GROWTH]);
-  assert.strictEqual(renewOf(result.state, 'a3'), GROWTH - 2, 'one heal spent landing, one at the round end');
+  assert.deepStrictEqual(renewGrants(result.events, 'a3'), [3]);
+  assert.strictEqual(renewOf(result.state, 'a3'), 2, 'one round spent at the round end');
   assert.strictEqual(renewOf(result.state, 'a2'), 0, 'the partner is not part of this');
   assert.strictEqual(renewOf(result.state, 'b1'), 0);
 });
@@ -397,35 +395,40 @@ test('unstoppableGrowth: arriving grants the hero itself its Renew, and nobody e
 test('unstoppableGrowth: the opening lead counts as arriving', () => {
   const state = withPassive(fixture(21), 'a1', 'unstoppableGrowth');
   const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects);
-  assert.strictEqual(renewOf(opened.state, 'a1'), GROWTH - 1, 'it heals as it lands');
+  assert.strictEqual(renewOf(opened.state, 'a1'), 3, 'three rounds, nothing healed yet');
 });
 
-test('unstoppableGrowth: a pivot out and back re-seeds it once the last one has run out', () => {
+test('unstoppableGrowth: a pivot out and back re-seeds it — a fresh three rounds, reset rather than added', () => {
   let state = withPassive(fixture(22), 'a3', 'unstoppableGrowth');
   state = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config).state;
   state = resolveRound(state, [{ kind: 'switch', combatantId: 'a3', benchedCombatantId: 'a1' }], config).state;
-  assert.strictEqual(renewOf(state, 'a3'), 0, 'two round-end ticks: the Renew has expired on the bench');
+  assert.strictEqual(renewOf(state, 'a3'), 1, 'it keeps ticking on the bench');
 
   const back = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
-  assert.deepStrictEqual(renewGrants(back.events, 'a3'), [GROWTH], 'a fresh Renew on the way back in');
+  assert.deepStrictEqual(renewGrants(back.events, 'a3'), [3], 'a fresh Renew on the way back in');
+  assert.strictEqual(renewOf(back.state, 'a3'), 2, 'reset to three and ticked once, not 1 + 3');
 });
 
-test('unstoppableGrowth: a passive-applied HoT is FLAT — it is not run through the healing formula', () => {
-  // cinderKnight and sentinel hold different Wisdom and must both read the authored count.
+test('unstoppableGrowth: a passive-applied Renew heals a tenth of the holder\'s max HP whatever its Wisdom', () => {
   assert.notStrictEqual(
     heroes.cinderKnight.baseStats.wisdom,
     heroes.sentinel.baseStats.wisdom,
     'the two holders must differ in Wisdom for this to prove anything'
   );
   const lead = resolveBattleStartEntries(withPassive(fixture(23), 'a1', 'unstoppableGrowth'), 1, heroes, statuses, passives, fieldEffects);
+  const leadTick = resolveRound(lead.state, [], config).events.find(
+    (e) => e.type === 'StatusTicked' && e.combatantId === 'a1' && e.statusId === 'Renew'
+  );
   const arrival = resolveRound(
     withPassive(fixture(24), 'a3', 'unstoppableGrowth'),
     [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }],
     config
   );
+  const arrivalTick = arrival.events.find((e) => e.type === 'StatusTicked' && e.combatantId === 'a3' && e.statusId === 'Renew');
 
-  assert.strictEqual(renewOf(lead.state, 'a1'), GROWTH - 1);
-  assert.deepStrictEqual(renewGrants(arrival.events, 'a3'), [GROWTH]);
+  const tenth = (id: string, s: CombatState) => Math.ceil(getMaxHp(heroes[s.combatants[id].heroId], s.combatants[id]) * 0.1);
+  assert.strictEqual(leadTick && leadTick.type === 'StatusTicked' ? leadTick.amount : -1, tenth('a1', lead.state));
+  assert.strictEqual(arrivalTick && arrivalTick.type === 'StatusTicked' ? arrivalTick.amount : -1, tenth('a3', arrival.state));
 });
 
 test('events: every event has its own road icon in art/events', () => {

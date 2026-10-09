@@ -239,8 +239,12 @@ function flatFigure(passive: PassiveDefinition): number | null {
   if (!effect) return null;
   // Reach counts: one random enemy widened to both is a doubling.
   const reach = 'target' in effect && effect.target === 'activeEnemies' ? 2 : 1;
-  // A ladder status (Burn) is sized by how high it may climb: its cap, or the ladder's top.
-  if (effect.kind === 'applyStatus' && statuses[effect.statusId]?.levels) return reach * (effect.maxMagnitude ?? statuses[effect.statusId].levels!.tickPercents.length);
+  // A timed status (Burn, Renew) carries no figure: it is sized by how often and how widely it lands —
+  // its roll, its reach, and a second body by `alsoEffect`.
+  if (effect.kind === 'applyStatus' && statuses[effect.statusId]?.timed) {
+    const also = passive.reactive?.alsoEffect;
+    return reach * (passive.reactive?.chance ?? 1) * (also?.kind === 'applyStatus' && also.statusId === effect.statusId ? 2 : 1);
+  }
   if (effect.kind === 'statDelta' || effect.kind === 'applyStatus') {
     const value = effect.kind === 'statDelta' ? effect.amount : effect.magnitude;
     return typeof value === 'number' ? Math.abs(value) : null;

@@ -333,7 +333,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   unstoppableGrowth: {
     id: 'unstoppableGrowth',
     name: 'Unstoppable Growth',
-    description: 'When this hero enters the battlefield, it gains Renew 3.',
+    description: 'When this hero enters the battlefield, it gains Renew.',
     // Same arrival shape as Imposing Presence, pointed inward: every arrival including the
     // opening lead, so a pivot out and back re-seeds it. Renew stacks additively, which is
     // the intended payoff. A passive-applied HoT is FLAT — the healing formula's Wisdom
@@ -341,7 +341,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 3 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew' },
     },
   },
   frozenStone: {
@@ -463,7 +463,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   restorativeToxin: {
     id: 'restorativeToxin',
     name: 'Restorative Toxin',
-    description: 'When this hero applies Poison, it gains Renew 1.',
+    description: 'When this hero applies Poison, it gains Renew.',
     // Firestarter's source-role shape. One heal an application (docs/status-ladders-and-fields.md §2): Poison
     // stacks, so every re-application pays again.
     reactive: {
@@ -630,14 +630,14 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   grief: {
     id: 'grief',
     name: 'Grief',
-    description: 'When this hero takes damage, it gains Renew 1.',
+    description: 'When this hero takes damage, it gains Renew.',
     // Tempering's trigger paying a HoT instead of Defense, which is the only way a 45-Defense
     // body gets to be the one that stays. Renew is additive and survives switching, so a pivot
     // out to the bench carries the stack with it.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew' },
     },
   },
   sentry: {
@@ -796,25 +796,25 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   nanites: {
     id: 'nanites',
     name: 'Nanites',
-    description: 'When this hero enters the battlefield, its partner gains Renew 2.',
+    description: 'When this hero enters the battlefield, its partner gains Renew.',
     // The partner-on-arrival shape (Arcane Reservoir's mana, Bodyguard's Defense) paying a HoT:
     // the medic starts work on whoever it walks in beside, and a pivot out and back re-seeds it.
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 2 },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
     },
   },
   bloodmeal: {
     id: 'bloodmeal',
     name: 'Bloodmeal',
-    description: 'When this hero applies Bleed, it gains Renew 1.',
+    description: 'When this hero applies Bleed, it gains Renew.',
     // Restorative Toxin's trigger on Bleed, flat since Bleed carries no magnitude: the bat feeds
     // on what it opens, and a 170-HP body that keeps cutting keeps standing.
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Bleed' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew' },
     },
   },
   // --- From the Tall Grass ---
@@ -1048,7 +1048,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Burn' },
     },
   },
   drag: {
@@ -1276,7 +1276,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Mech' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
       chance: 0.3,
     },
   },
@@ -1406,11 +1406,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   hallowedStep: {
     id: 'hallowedStep',
     name: 'Hallowed Step',
-    description: "When this hero enters the battlefield, its partner gains Renew 2.",
+    description: "When this hero enters the battlefield, its partner gains Renew.",
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 2 },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
     },
   },
   smoulder: {
@@ -1540,17 +1540,17 @@ const innatePassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
     },
   },
   fireBreather: {
     id: 'fireBreather',
     name: 'Fire-Breather',
-    description: 'When this hero switches out, a random enemy becomes Badly Burned.',
+    description: 'When this hero switches out, a random enemy is Burned.',
     reactive: {
       hook: 'SwitchedOut',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Burn', magnitude: 2, maxMagnitude: 2 },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Burn' },
     },
   },
   saltTears: {
@@ -1889,7 +1889,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn' },
     },
   },
 
@@ -2231,11 +2231,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   boilingPoint: {
     id: 'boilingPoint',
     name: 'Boiler+',
-    description: 'Mech attacks from this hero always climb their target a level of Burn, up to Badly Burned.',
+    description: 'Mech attacks from this hero always Burn their target.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Mech' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 1, maxMagnitude: 2 },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
     },
   },
   // The Burden mastered: the cost stays (it is priced in the 610), and the hero that cannot
@@ -2414,11 +2414,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   springtide: {
     id: 'springtide',
     name: 'Hallowed Step+',
-    description: "When this hero enters the battlefield, its partner gains Renew 4.",
+    description: 'When this hero enters the battlefield, it and its partner gain Renew.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew', magnitude: 4 },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
+      alsoEffect: { kind: 'applyStatus', target: 'self', statusId: 'Renew' },
     },
   },
   rebirth: {
@@ -2535,21 +2536,21 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   kitsunebi: {
     id: 'kitsunebi',
     name: 'Foxfire+',
-    description: 'When this hero lands a Spirit attack, its target climbs a level of Burn, up to Badly Burned.',
+    description: 'When this hero lands a Spirit attack, both active enemies are Burned.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 1, maxMagnitude: 2 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn' },
     },
   },
   showstopper: {
     id: 'showstopper',
     name: 'Fire-Breather+',
-    description: 'When this hero switches out, both active enemies become Badly Burned.',
+    description: 'When this hero switches out, both active enemies are Burned.',
     reactive: {
       hook: 'SwitchedOut',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 2, maxMagnitude: 2 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn' },
     },
   },
   // One affliction has no figure to double, so the reach widens to all of them.

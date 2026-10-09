@@ -52,7 +52,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Provoke' } },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 1, maxMagnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn' },
     },
   },
   // Flurry's Avalanche, beside Killing Frost: the Rest is the snow settling.

@@ -6,11 +6,11 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   rekindle: {
     id: 'rekindle',
     name: 'Rekindle',
-    description: 'When this hero lands a Fire attack on a Burning foe, that foe climbs a level of Burn.',
+    description: "When this hero lands a Fire attack on a Burning foe, that foe's Burn flares back up to 15%.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' }, eventTargetHasStatus: 'Burn' },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', magnitude: 1 },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
     },
   },
   // Crimson's Cinderveil: the Spirit graft's own spread, laid by every Fire hit.
@@ -89,12 +89,12 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
       alsoEffect: { kind: 'restoreMana', target: 'self' },
     },
   },
-  // Tinder's Headliner: Fire-Breather leaves one foe Badly Burned; a partner's Burns climb the rest.
+  // Tinder's Headliner.
   topBilling: {
     id: 'topBilling',
     name: 'Top Billing',
-    description: 'This hero deals 15% more damage to a Burning foe for each level of Burn it holds.',
-    damageModifier: { perTargetStatusLevel: 'Burn', amount: 0.15 },
+    description: 'This hero deals 30% more damage to a Burning foe.',
+    damageModifier: { requiresTargetStatuses: ['Burn'], amount: 0.3 },
   },
   // Tinder's Limelight. Daze only bites before the foe has acted, which the roster's fastest hero usually is.
   footlights: {

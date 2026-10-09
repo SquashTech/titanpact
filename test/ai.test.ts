@@ -28,7 +28,7 @@ const testMoves: Record<string, MoveDefinition> = {
     type: 'Nature',
     kind: 'buff',
     target: 'singleAlly',
-    statusApplication: { statusId: 'Renew', magnitude: 20, target: 'moveTarget' },
+    statusApplication: { statusId: 'Renew', target: 'moveTarget' },
   },
   freezer: {
     ...base,
