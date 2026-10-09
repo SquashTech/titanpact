@@ -544,7 +544,7 @@ export function simulateFight(input: FightInput): FightOutcome {
   recordEvents(opening.events, telemetry, undefined, undefined, undefined, field);
   // The whole stream, for what is read off a finished fight (run/mvp.ts).
   const allEvents: CombatEvent[] = [...opening.events];
-  let beats = countBeats(opening.events);
+  let beats = countBeats(opening.events, start.combatants);
 
   const playerCtx = { ...contextFor(playerRoster, aiRoster, state), random: rng };
   const aiCtx = { ...contextFor(playerRoster, aiRoster, state), random: rng, playsEngines: input.aiPlaysEngines };
@@ -589,7 +589,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     state = fillOpenSlots(state, PLAYER_SIDE, events);
     allEvents.push(...events);
     recordEvents(events, telemetry);
-    beats += countBeats(events);
+    beats += countBeats(events, state.combatants);
 
     const playerActive = aliveActiveIdsOn(state, PLAYER_SIDE);
     const aiActive = aliveActiveIdsOn(state, AI_SIDE);
@@ -629,7 +629,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     }
     allEvents.push(...roundEvents);
     recordEvents(roundEvents, telemetry, casts, deltas, shield, field, moveTallies, dots);
-    beats += countBeats(roundEvents);
+    beats += countBeats(roundEvents, state.combatants);
     creditKos(roundEvents, telemetry, moveTallies, dots);
 
     // The ceiling question (docs/stat-scaling.md §10) is asked of stats a hero USES: the offensive

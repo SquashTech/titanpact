@@ -54,6 +54,7 @@ import './locations.test';
 import './manticore.test';
 import './titanEyes.test';
 import './entrances.test';
+import './beats.test';
 import './guardians.test';
 import './mobLayer.test';
 import './encounters.test';

@@ -88,14 +88,14 @@ import { MoveDetailOverlay, formatMult, multClass } from './MoveDetailOverlay';
 import { forecastMove } from './forecast';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
-import { buildBeats, type Beat } from './buildBeats';
+import { buildBeats, beatDwellMs, KO_HOLD_MS, type Beat, type BeatRider } from './buildBeats';
 import { openingBeat } from './openingBeats';
 import { AUTO_PLAY_STEP_MS, readAutoPlayMode, writeAutoPlayMode, type AutoPlayMode } from './autoPlay';
 import { playBeatSfx } from '../../audio/beatSfx';
 import { setMusicRate } from '../../audio/music';
 import { getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
-import { MoveKindBadge, MoveTraitChips, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderTargetLabel, statDeltaReadout, useLongPress } from '../shared/MoveTile';
+import { MoveButtonReplica, MoveKindBadge, MoveTraitChips, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderTargetLabel, statDeltaReadout, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
@@ -384,6 +384,75 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
         )}
       </div>
     </button>
+  );
+}
+
+/** The most rider chips a beat shows; the rest are counted, and every one is in the Battle Log. */
+const RIDER_LIMIT = 5;
+
+/** A rider chip wears the colour of the popup it repeats (styles.css .banner-rider.tone-*). */
+function riderTone(className: string | undefined): string {
+  switch (className) {
+    case 'popup-heal':
+    case 'popup-passive-heal':
+    case 'popup-renew':
+      return 'heal';
+    case 'popup-buff':
+    case 'popup-ceiling':
+      return 'buff';
+    case 'popup-debuff':
+    case 'popup-floor':
+      return 'debuff';
+    case 'popup-mana':
+      return 'mana';
+    case 'popup-shield':
+    case 'popup-shield-gain':
+    case 'popup-shield-broken':
+      return 'shield';
+    case 'popup-status':
+    case 'popup-haunt':
+      return 'status';
+    case undefined:
+      return 'plain';
+    default:
+      return 'damage';
+  }
+}
+
+/**
+ * A declaration: the caster's sprite and name in its side's colour, and the move as the bar the
+ * player presses to cast it — so a move is recognised by the object that offers it.
+ */
+function DeclaredMove({ lead, sub, enemy, combatant, move, caster }: { lead: string; sub?: string; enemy: boolean; combatant: Combatant; move: MoveDefinition; caster: HealCaster }) {
+  return (
+    <div className={`combat-banner-declare${enemy ? ' is-enemy' : ' is-ally'}`}>
+      <div className="combat-banner-declare-head">
+        <HeroPortrait heroId={combatant.heroId} pathId={combatant.formPathId} className="combat-banner-declare-portrait" />
+        <span className="combat-banner-declare-name">{lead}</span>
+      </div>
+      <div className="combat-banner-declare-move">
+        <MoveButtonReplica move={move} caster={caster} chargeHolder={combatant} />
+      </div>
+      {sub && <span className="combat-banner-sub">{sub}</span>}
+    </div>
+  );
+}
+
+/** Everything an action did beside its headline, one chip each (buildBeats `fold`). */
+function BannerRiders({ riders }: { riders: readonly BeatRider[] }) {
+  const shown = riders.slice(0, RIDER_LIMIT);
+  const more = riders.length - shown.length;
+  return (
+    <span className="combat-banner-riders">
+      {shown.map((rider, i) => (
+        <span key={i} className={`banner-rider tone-${riderTone(rider.className)}`} style={{ animationDelay: `${0.1 + 0.05 * i}s` }}>
+          {rider.source && <span className="banner-rider-source">{rider.source}</span>}
+          {rider.who && <span className="banner-rider-who">{rider.who}</span>}
+          <span className="banner-rider-text">{rider.text}</span>
+        </span>
+      ))}
+      {more > 0 && <span className="banner-rider banner-rider-more">+{more} more</span>}
+    </span>
   );
 }
 
@@ -762,13 +831,16 @@ export function FightScreen({
   const [playbackOrder, setPlaybackOrder] = useState<{ order: RoundOrderEntry[]; reversedSpeed: boolean; begun: string[]; ended: boolean } | null>(null);
   /** Only a React key: consecutive beats can carry identical text, and the headline must remount to replay its arrival. */
   const [beatSeq, setBeatSeq] = useState(0);
-  const [popups, setPopups] = useState<Record<string, Popup>>({});
+  /** Per figure, every popup the beat on screen plays there, in order (CombatantCard staggers them). */
+  const [popups, setPopups] = useState<Record<string, Popup[]>>({});
   /** Per figure, the element last declared against it. Not cleared per beat: the effect times itself out, so a quick tap never cuts it short. */
   const [figureFx, setFigureFx] = useState<Record<string, FigureFx>>({});
   /** The move dossier, opened by holding a move row. Carries the holder: every number on the card is relative to the commanding hero. */
   const [movePopup, setMovePopup] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   const popupSeq = useRef(0);
   const beatQueue = useRef<Beat[]>([]);
+  /** The beat last revealed, for the auto pace (startAutoPlay) — `beat` is a render behind inside a timer. */
+  const shownBeat = useRef<Beat | null>(null);
   const displayState = useRef<CombatState | null>(null);
   const finalState = useRef<CombatState | null>(null);
   /** "combatantId:moveId" → Charges given back in the round being played, for the pips' flash. */
@@ -778,11 +850,14 @@ export function FightScreen({
   // What a snapshot reads, current even from a playback closure older than the render that changed it.
   const snapshotParts = useRef({ usedConsumables, leadsPending });
   snapshotParts.current = { usedConsumables, leadsPending };
-  /** A switch beat's swap, held back until the recall has played; the next advance lands it early. */
-  const pendingSwap = useRef<{ events: readonly CombatEvent[]; timer: number } | null>(null);
+  /**
+   * What a beat holds back: a switch's swap until the recall has played, or a folded KO until the
+   * bar has emptied (buildBeats KO_HOLD_MS). The next advance lands it early.
+   */
+  const pendingLanding = useRef<{ events: readonly CombatEvent[]; timer: number } | null>(null);
   // Hold-to-auto-play: `autoEngaged` lets the trailing click (pointerup always fires one) be swallowed.
   const holdTimer = useRef<number | null>(null);
-  const autoPlayInterval = useRef<number | null>(null);
+  const autoPlayTimer = useRef<number | null>(null);
   const autoEngaged = useRef(false);
   // The latched Auto keys. Mirrored in a ref because the interval callback and startBeatPlayback
   // both run from closures older than the press that changed it.
@@ -792,7 +867,7 @@ export function FightScreen({
   useEffect(() => {
     return () => {
       if (holdTimer.current !== null) clearTimeout(holdTimer.current);
-      if (autoPlayInterval.current !== null) clearInterval(autoPlayInterval.current);
+      if (autoPlayTimer.current !== null) clearTimeout(autoPlayTimer.current);
       // The act's track keeps playing past this screen, so the dread rate is restored here or never.
       setMusicRate(1);
     };
@@ -815,6 +890,14 @@ export function FightScreen({
 
   /** The one StatContext every number on this screen reads through, so cards, dossier and forecast agree with resolveRound. */
   const statCtx = { active: combat.activeFieldEffect, defs: fieldEffects, board: { state: combat, passives } };
+
+  /** A combatant as a caster, for a move bar's resolved figures (a heal's HP, a Class move's type). */
+  function healCasterOf(id: string): HealCaster {
+    const combatant = combat.combatants[id];
+    const hero = allCombatants[combatant.heroId];
+    const stats = Object.fromEntries(STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat, statCtx)])) as Record<StatKey, number>;
+    return { wisdom: stats.wisdom, types: effectiveTypes(hero, combatant), stats, fieldMult: fieldHealMultiplier(statCtx) };
+  }
 
   const playerActiveAlive = aliveActiveIdsOn(combat, PLAYER_SIDE);
   const enemyActiveAlive = aliveActiveIdsOn(combat, AI_SIDE);
@@ -1194,11 +1277,13 @@ export function FightScreen({
     playSfx(kind === 'mpPotion' ? 'mana' : 'heal');
     setPopups((prev) => ({
       ...prev,
-      [combatantId]: {
-        key: popupSeq.current++,
-        text: kind === 'mpPotion' ? `+${amount} MP` : `+${amount}`,
-        className: kind === 'mpPotion' ? 'popup-mana' : 'popup-heal',
-      },
+      [combatantId]: [
+        {
+          key: popupSeq.current++,
+          text: kind === 'mpPotion' ? `+${amount} MP` : `+${amount}`,
+          className: kind === 'mpPotion' ? 'popup-mana' : 'popup-heal',
+        },
+      ],
     }));
     const spent = { ...usedConsumables, [kind]: usedConsumables[kind] + 1 };
     setUsedConsumables(spent);
@@ -1389,12 +1474,12 @@ export function FightScreen({
   }
 
   /** Reveals the next beat, or finalizes the round once the queue is empty. Returns whether a beat was shown, so the auto-play loop knows when to stop. */
-  /** Lands a held switch now: its timer ran out, or something is about to be drawn on top of it. */
-  function landPendingSwap() {
-    const held = pendingSwap.current;
+  /** Lands what a beat held back now: its timer ran out, or something is about to be drawn on top of it. */
+  function landPending() {
+    const held = pendingLanding.current;
     if (!held) return;
     window.clearTimeout(held.timer);
-    pendingSwap.current = null;
+    pendingLanding.current = null;
     let next = displayState.current!;
     for (const event of held.events) next = applyEventToState(next, event);
     displayState.current = next;
@@ -1402,8 +1487,9 @@ export function FightScreen({
   }
 
   function handleAdvance(): boolean {
-    landPendingSwap();
+    landPending();
     const revealed = beatQueue.current.shift();
+    shownBeat.current = revealed ?? null;
 
     if (!revealed) {
       setCombat(finalState.current!);
@@ -1423,10 +1509,12 @@ export function FightScreen({
 
     // A switch is ONE beat (buildBeats): the outgoing hero recalls on the field as it lands, and the
     // swap follows once the recall has played — the incoming card's send-out plays as it mounts.
-    const holdsSwap = !!revealed.recallCombatantId && !!revealed.summonCombatantId;
+    // A folded KO is held the same way, so the bar empties before the card leaves.
+    const holdsSwap = !!revealed.recallCombatantId && !!revealed.summonCombatantIds?.length;
+    const held = holdsSwap ? revealed.events : revealed.holdsKo ? revealed.events.filter((e) => e.type === 'Fainted') : [];
     let next = displayState.current!;
-    if (holdsSwap) pendingSwap.current = { events: revealed.events, timer: window.setTimeout(landPendingSwap, RECALL_MS) };
-    else for (const event of revealed.events) next = applyEventToState(next, event);
+    for (const event of revealed.events) if (!held.includes(event)) next = applyEventToState(next, event);
+    if (held.length > 0) pendingLanding.current = { events: held, timer: window.setTimeout(landPending, holdsSwap ? RECALL_MS : KO_HOLD_MS) };
     displayState.current = next;
     // Walk the order: a turn begins on TurnStarted, on a Daze block (no TurnStarted precedes it)
     // and on a voluntary switch (the outgoing hero is the actor). A skipped action — its owner
@@ -1453,11 +1541,11 @@ export function FightScreen({
     if (revealed.cinematic) stopAutoAdvance();
     setBeat(revealed);
     setBeatSeq((n) => n + 1);
-    setPopups(
-      Object.fromEntries(
-        revealed.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className, glyph: p.glyph }])
-      )
-    );
+    const byFigure: Record<string, Popup[]> = {};
+    for (const p of revealed.popups) {
+      (byFigure[p.combatantId] ??= []).push({ key: popupSeq.current++, text: p.text, className: p.className, glyph: p.glyph });
+    }
+    setPopups(byFigure);
     if (revealed.fx) {
       const landings = revealed.fx;
       setFigureFx((prev) => ({
@@ -1473,18 +1561,30 @@ export function FightScreen({
       clearTimeout(holdTimer.current);
       holdTimer.current = null;
     }
-    if (autoPlayInterval.current !== null) {
-      clearInterval(autoPlayInterval.current);
-      autoPlayInterval.current = null;
+    if (autoPlayTimer.current !== null) {
+      clearTimeout(autoPlayTimer.current);
+      autoPlayTimer.current = null;
     }
   }
 
-  /** Runs the queue down on a timer at the mode's pace, and stops itself when the round ends. */
+  /**
+   * Runs the queue down at the mode's pace, plus whatever the beat on screen still has to play — a
+   * folded beat's stacked popups and held KO (buildBeats beatDwellMs) — and stops itself when the
+   * round ends.
+   */
   function startAutoPlay(mode: Exclude<AutoPlayMode, 'off'>) {
-    if (autoPlayInterval.current !== null) clearInterval(autoPlayInterval.current);
-    autoPlayInterval.current = window.setInterval(() => {
-      if (!handleAdvance()) stopAutoAdvance();
-    }, AUTO_PLAY_STEP_MS[mode]);
+    if (autoPlayTimer.current !== null) clearTimeout(autoPlayTimer.current);
+    const shown = shownBeat.current;
+    const wait = AUTO_PLAY_STEP_MS[mode] + (shown ? beatDwellMs(shown, mode === 'fast' ? 0.35 : 1) : 0);
+    const timer = window.setTimeout(() => {
+      if (!handleAdvance()) {
+        stopAutoAdvance();
+        return;
+      }
+      // The beat just shown may have stopped the run (a cinematic); only a timer still ours goes on.
+      if (autoPlayTimer.current === timer) startAutoPlay(mode);
+    }, wait);
+    autoPlayTimer.current = timer;
   }
 
   function engageAutoPlay() {
@@ -1534,11 +1634,11 @@ export function FightScreen({
           acting={id === actingId}
           onSelectTarget={() => handleTargetClick(id)}
           onInspect={() => setInspecting(id)}
-          popup={popups[id]}
+          popups={popups[id]}
           statCtx={statCtx}
           striking={beat?.strikeCombatantId === id}
           recalling={resolving && beat?.recallCombatantId === id}
-          summoning={(resolving && beat?.summonCombatantId === id) || summonedIds.includes(id)}
+          summoning={(resolving && !!beat?.summonCombatantIds?.includes(id)) || summonedIds.includes(id)}
           fx={figureFx[id]}
           warded={wardOn(combat, id, passives)}
         />
@@ -1768,6 +1868,17 @@ export function FightScreen({
             style={beat.bannerAccent ? ({ '--banner-accent': beat.bannerAccent } as CSSProperties) : undefined}
           >
             <div className="combat-banner-current" key={beatSeq}>
+              {beat.bannerMove && combat.combatants[beat.bannerMove.casterId] ? (
+                <DeclaredMove
+                  lead={beat.bannerLead ?? ''}
+                  sub={beat.bannerSub}
+                  enemy={beat.bannerMove.enemy}
+                  combatant={combat.combatants[beat.bannerMove.casterId]}
+                  move={moves[beat.bannerMove.moveId]}
+                  caster={healCasterOf(beat.bannerMove.casterId)}
+                />
+              ) : (
+              <>
               {beat.bannerLead && <span className="combat-banner-lead">{beat.bannerLead}</span>}
               {beat.bannerRoster ? (
                 /* The opening beat: a VS mark, then one lead per line. */
@@ -1801,6 +1912,8 @@ export function FightScreen({
               )}
               {beat.bannerSub && <span className="combat-banner-sub">{beat.bannerSub}</span>}
               {beat.bannerTag && <span className="combat-banner-tag">{beat.bannerTag}</span>}
+              {beat.bannerKo && <span className="combat-banner-ko">{beat.bannerKo}</span>}
+              {beat.bannerRiders && <BannerRiders riders={beat.bannerRiders} />}
               {beat.bannerCast && (
                 <span
                   className="combat-banner-cast"
@@ -1821,6 +1934,8 @@ export function FightScreen({
                     </span>
                   )}
                 </span>
+              )}
+              </>
               )}
               {beat.bannerMeta && (
                 <span className={`combat-banner-meta${beat.bannerMetaClass ? ` ${beat.bannerMetaClass}` : ''}`}>{beat.bannerMeta}</span>
@@ -1874,7 +1989,7 @@ export function FightScreen({
                         selected={replacementPick === benchId}
                         onSelectTarget={() => setReplacementPick(benchId)}
                         onInspect={() => setInspecting(benchId)}
-                        popup={popups[benchId]}
+                        popups={popups[benchId]}
                         statCtx={statCtx}
                       />
                     );
@@ -1941,7 +2056,7 @@ export function FightScreen({
                           level={levelFor(tid)}
                           targetable={!spread}
                           onSelectTarget={spread ? undefined : () => handleTargetClick(tid)}
-                          popup={popups[tid]}
+                          popups={popups[tid]}
                           effBadge={mult === 1 ? null : { text: effLabel(mult), className: multClass(mult) }}
                           forecast={forecastMove(move, combat, id, tid)}
                         />

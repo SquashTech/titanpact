@@ -11,7 +11,8 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import { STAT_LABELS } from './StatBars';
 import { ElementGlyph } from './elementIcons';
-import { MoveKindGlyph, StatGlyph, type MoveKindGlyphKind } from './statIcons';
+import { MoveKindGlyph, StatGlyph } from './statIcons';
+import { isDebuff, moveKindGlyph } from './moveKind';
 import { ManaCost } from './ManaCost';
 import { ChargePips } from './ChargePips';
 import { playSfx } from '../../audio/sfx';
@@ -122,19 +123,7 @@ export function grantsRatherThanInflicts(app: StatusApplication): boolean {
   return app.target === 'self' || statuses[app.statusId]?.positive === true;
 }
 
-// `kind: 'buff'` covers both signs in the data; the sign is recovered here, once, so glyph, badge
-// colour and label can never disagree. A move carrying both reads as a debuff (open UI question).
-function isDebuff(move: MoveDefinition): boolean {
-  if (move.statDeltas?.some(({ amount }) => amount < 0)) return true;
-  return statusApplicationsOf(move).some((app) => app.target !== 'self' && !statuses[app.statusId]?.positive);
-}
-
-/** The one MoveDefinition -> MoveKindGlyphKind mapping in the app. */
-export function moveKindGlyph(move: MoveDefinition): MoveKindGlyphKind {
-  if (move.kind === 'damage') return move.category;
-  if (move.kind === 'heal') return 'heal';
-  return isDebuff(move) ? 'debuff' : 'buff';
-}
+export { moveKindGlyph };
 
 export function moveKindLabel(move: MoveDefinition): string {
   if (move.kind === 'damage') return 'Damage';

@@ -7,16 +7,17 @@ import type {
   CombatEvent,
   HealedEvent,
   HpChangedEvent,
+  ManaGrantedEvent,
   ManaSurchargedEvent,
   MoveUsedEvent,
   StatChangedEvent,
   StatusAppliedEvent,
   StatusRemovedEvent,
+  StatusTickedEvent,
 } from '../../engine/events';
 import type { CombatState, Side } from '../../engine/state';
 import { moveForHero } from '../../engine/state';
 import type { HeroDefinition, MoveDefinition, StatKey } from '../../engine/content';
-import { STAT_LABELS } from '../shared/StatBars';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
@@ -24,8 +25,28 @@ import { getTypeColor } from './typeColors';
 import { statusHeldText } from '../shared/statusFacts';
 import { cinematicEntranceFor, dramaticEntranceFor, type CinematicEntrance } from '../shared/entrances';
 import { WARDEN_ARRIVAL_LINE, isWardenCombatant } from '../../run/wardens';
-import { moveKindGlyph } from '../shared/MoveTile';
-import type { MoveKindGlyphKind } from '../shared/statIcons';
+import { STAT_LABELS, moveKindGlyph, type MoveKindGlyphKind } from '../shared/moveKind';
+
+/**
+ * How long a folded beat holds a knockout back (FightScreen), so the bar is seen to empty before
+ * the card leaves — the reason a KO used to cost a tap of its own. The next tap lands it early.
+ */
+export const KO_HOLD_MS = 700;
+
+/** Between popups on one figure in one beat (CombatantCard, beatSfx): a multi-hit reads as hits. */
+export const POPUP_STAGGER_MS = 240;
+
+/** The most popups one figure plays in a beat; the rest are in the console's riders and the log. */
+export const MAX_POPUPS_PER_FIGURE = 4;
+
+/** What a beat needs past the auto pace to finish playing: its popup stagger, a held KO, its riders read. */
+export function beatDwellMs(beat: Beat, scale = 1): number {
+  const perFigure = new Map<string, number>();
+  for (const p of beat.popups) perFigure.set(p.combatantId, (perFigure.get(p.combatantId) ?? 0) + 1);
+  const most = Math.min(MAX_POPUPS_PER_FIGURE, Math.max(0, ...perFigure.values()));
+  const riders = Math.min(4, beat.bannerRiders?.length ?? 0);
+  return Math.round(scale * (Math.max(0, most - 1) * POPUP_STAGGER_MS + (beat.holdsKo ? KO_HOLD_MS : 0) + riders * 120));
+}
 
 export interface BeatPopup {
   combatantId: string;
@@ -97,6 +118,22 @@ export interface BeatFlavor {
    */
   /** `called`: cast by the companion off a hero's turn (docs/companion-call.md) — no mana, so the strip says Call. */
   bannerCast?: { kind: MoveKindGlyphKind; label: string; cost: number; called?: true };
+  /**
+   * A declaration drawn as the move bar the player presses in combat, beside the caster's sprite,
+   * the caster's name in its side's colour — a move is read by the same object that offers it,
+   * not explained in new words. FightScreen resolves the bar against the live caster.
+   */
+  bannerMove?: { moveId: string; casterId: string; enemy: boolean };
+  /**
+   * Everything else the action did, beside the headline (a rider status, the passives that answered
+   * it, recoil) — one small chip each, so the whole outcome of a move is one beat rather than a tap
+   * per consequence. The figures carry the same facts as stacked popups.
+   */
+  bannerRiders?: readonly BeatRider[];
+  /** "Selkie is knocked out!" — a folded KO's stamp, set under the headline in the KO's colour. */
+  bannerKo?: string;
+  /** The beat's Fainted events wait KO_HOLD_MS before landing, so the bar empties before the card goes. */
+  holdsKo?: true;
   /** Secondary readout — a Field Effect's rules text. */
   bannerMeta?: string;
   /** Extra class for the bannerMeta span. */
@@ -118,11 +155,12 @@ export interface BeatFlavor {
   /**
    * A switch (2026-09-25, per user direction — Pokémon's recall and send-out, without the ball;
    * one beat since 2026-09-30): `recallCombatantId` is the hero leaving, drawn back into its
-   * platform while FightScreen holds the swap back; `summonCombatantId` is the one arriving, rising
-   * out of the same ground once the swap lands (styles.css .recalling / .summoning).
+   * platform while FightScreen holds the swap back; `summonCombatantIds` are the ones arriving,
+   * rising out of the same ground once the swap lands (styles.css .recalling / .summoning) — two
+   * when both fallen slots are filled at once.
    */
   recallCombatantId?: string;
-  summonCombatantId?: string;
+  summonCombatantIds?: readonly string[];
   /**
    * A move's payload LANDING on a figure this beat (TypeFx.tsx), and the cast
    * sound beatSfx layers under it. Stamped on the beat where the target takes it
@@ -139,6 +177,37 @@ function castLabel(move: MoveDefinition): string {
   if (move.kind === 'damage') return move.category === 'physical' ? 'Physical' : 'Magical';
   if (move.kind === 'heal') return 'Heal';
   return moveKindGlyph(move) === 'debuff' ? 'Debuff' : 'Buff';
+}
+
+/** One consequence of an action folded beside its headline: who it landed on, and what. */
+export interface BeatRider {
+  /** The passive that produced it, when one did. */
+  source?: string;
+  who?: string;
+  text: string;
+  /** The popup class it carried on the figure, so the chip wears the same colour. */
+  className?: string;
+}
+
+/**
+ * What the post-pass (`fold`) needs to know about a beat it did not build: which action it
+ * belongs to and what part it plays there. Never on a Beat — the view has no use for it.
+ */
+interface BeatMeta {
+  /** The action, switch or run of reactions the beat belongs to; null for one that stands apart. */
+  group: number | null;
+  /** The declaration that opens an action: its own beat, the move announced before it lands. */
+  declares?: true;
+  /** Never folded, whatever surrounds it — a Blessing breaking keeps its tap. */
+  solo?: true;
+  /** The passive the beat narrates, named on its rider chip. */
+  source?: string;
+  /** The move's own blow (not recoil, a self-cost or a passive): the headline a run of them shares. */
+  hit?: { targetId: string; amount: number; tag?: string; tagKind: NonNullable<BeatFlavor['bannerFocusKind']> };
+  /** Who this beat knocks out — a KO beat, folded into the blow before it. */
+  ko?: readonly string[];
+  /** A switch's arrival, so two fallen slots filled at once read as one send-out. */
+  switchIn?: string;
 }
 
 export interface BeatFx {
@@ -194,7 +263,11 @@ const ACTION_EVENTS: ReadonlySet<CombatEvent['type']> = new Set([
   'ActionBlocked',
   'MoveGuarded',
   'StatusRefused',
+  'ChargeRestored',
 ]);
+
+/** What keeps an action's (or a switch's) group open: its own events, and a Renew healing as it lands. */
+const GROUP_EVENTS: ReadonlySet<CombatEvent['type']> = new Set([...ACTION_EVENTS, 'StatusTicked']);
 
 /** The card vocabulary (ATK, WIS), not the engine's field name — StatChangedEvent.stat is a bare string. */
 function statLabel(stat: string): string {
@@ -208,6 +281,11 @@ function targetClause(targetIds: readonly string[], actorId: string, name: (id: 
   const names = ids.map(name);
   const joined = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
   return ` on ${joined}`;
+}
+
+/** What the player is shown for a status: its name, never its id ("Storm Force", not "StormForce"). */
+function statusName(statusId: string): string {
+  return statuses[statusId]?.name ?? statusId;
 }
 
 /** "A", "A and B", "A, B and C". */
@@ -285,13 +363,47 @@ function statClause(targetName: string, changes: readonly StatChangedEvent[]): s
   return `${targetName}'s ${joinNames(changes.map((c) => c.stat))} ${statVerb(changes, false)} (${deltaSummary(changes)})`;
 }
 
+/**
+ * The engine reads a guard before it declares the move the guard stops (resolveRound: guards are
+ * checked after every redirect, ahead of the mana spend), so "Endbringer turns it away!" would play
+ * before the move it turned away was named. Shown after that move's declaration instead, with the
+ * reactions it set off, as part of the move's outcome. Presentation only: the end state is the
+ * engine's either way.
+ */
+function guardsAfterDeclaration(events: readonly CombatEvent[]): CombatEvent[] {
+  const out: CombatEvent[] = [];
+  let i = 0;
+  while (i < events.length) {
+    const e = events[i];
+    if (e.type !== 'MoveGuarded') {
+      out.push(e);
+      i++;
+      continue;
+    }
+    let j = i;
+    while (j < events.length && events[j].type !== 'MoveDeclared' && events[j].type !== 'TurnStarted' && events[j].type !== 'ActionBlocked') j++;
+    const declared = events[j];
+    if (declared?.type !== 'MoveDeclared' || declared.combatantId !== e.sourceCombatantId) {
+      out.push(...events.slice(i, j));
+      i = j;
+      continue;
+    }
+    let k = j + 1;
+    while (events[k]?.type === 'MoveUsed' || events[k]?.type === 'ManaChanged') k++;
+    out.push(...events.slice(j, k), ...events.slice(i, j));
+    i = k;
+  }
+  return out;
+}
+
 export function buildBeats(
-  events: readonly CombatEvent[],
+  stream: readonly CombatEvent[],
   heroes: Record<string, HeroDefinition>,
   moves: Record<string, MoveDefinition>,
   combatants: CombatState['combatants'],
   playerSide: Side
 ): Beat[] {
+  const events = guardsAfterDeclaration(stream);
   const name = (id: string) => heroes[combatants[id]?.heroId]?.name ?? id;
   /** A combatant's primary type — what a passive's own effect is tinted in, having no move to read. */
   const ownerType = (id: string) => heroes[combatants[id]?.heroId]?.types[0] ?? 'Iron';
@@ -312,10 +424,24 @@ export function buildBeats(
   let roundEndBeat = null as Beat | null;
   // The Call that put the next declaration's caster on the field (Called rides into its beat).
   let calledBy: { callerId: string; casterId: string } | null = null;
+  // The action, switch or run of reactions being narrated (BeatMeta.group); `fold` makes each one beat.
+  let group: number | null = null;
+  let groupSeq = 0;
+  // The group a send-out into a fallen slot opened, so a second one beside it joins it.
+  let replacementGroup: number | null = null;
+  const meta = new Map<Beat, BeatMeta>();
 
-  function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], flavor: BeatFlavor = {}) {
-    beats.push({ events: [...carry, ...applied], banner, popups, strikeCombatantId: striker, ...flavor });
+  function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], flavor: BeatFlavor = {}, about: Omit<BeatMeta, 'group'> = {}) {
+    const beat: Beat = { events: [...carry, ...applied], banner, popups, strikeCombatantId: striker, ...flavor };
+    beats.push(beat);
+    meta.set(beat, { group, ...about });
     carry = [];
+  }
+
+  /** A KO split off the blow before it: its own beat until `fold` puts it back, held, on that blow. */
+  function pushKo(faints: readonly FaintedEvent[]) {
+    const who = joinNames(faints.map((f) => name(f.combatantId)));
+    push([...faints], `${who} ${faints.length > 1 ? 'are' : 'is'} knocked out!`, [], { bannerFocusKind: 'ko' }, { ko: faints.map((f) => f.combatantId) });
   }
 
   /** The landing on `targetId` of the move being narrated, or nothing if there is no move or it already landed there. */
@@ -336,12 +462,48 @@ export function buildBeats(
   /** A Blessing spent on anything but a move's hit: its own beat, the guard seen to break. */
   function blessingBeat(e: BlessingSpentEvent) {
     const blessedName = name(e.combatantId);
-    push([e], `${blessedName}'s Blessing breaks — it turns aside ${e.prevented} damage! The Blessing is used up.`, [{ combatantId: e.combatantId, text: `${e.prevented}`, className: 'popup-blessed' }], {
-      bannerLead: `${blessedName}'s Blessing breaks`,
-      bannerFocus: `${e.prevented} damage turned aside`,
-      bannerFocusKind: 'blessing',
-      bannerTag: 'Blessing used up',
-    });
+    push(
+      [e],
+      `${blessedName}'s Blessing breaks — it turns aside ${e.prevented} damage! The Blessing is used up.`,
+      [{ combatantId: e.combatantId, text: `${e.prevented}`, className: 'popup-blessed' }],
+      {
+        bannerLead: `${blessedName}'s Blessing breaks`,
+        bannerFocus: `${e.prevented} damage turned aside`,
+        bannerFocusKind: 'blessing',
+        bannerTag: 'Blessing used up',
+      },
+      { solo: true }
+    );
+  }
+
+  /**
+   * A heal-over-time that heals as it lands (Renew's first heal, docs/status-ladders-and-fields.md
+   * §2), inside the move that put it there: part of that move's outcome, not the round's end.
+   */
+  function landingTicks() {
+    const applied: CombatEvent[] = [];
+    const popups: BeatPopup[] = [];
+    const clauses: string[] = [];
+    while (events[i]?.type === 'StatusTicked') {
+      const tick = events[i++] as StatusTickedEvent;
+      applied.push(tick);
+      if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
+      if (tick.kind === 'duration') continue;
+      const who = name(tick.combatantId);
+      const flavored = STATUS_TICK_BANNER[tick.statusId] !== undefined;
+      popups.push({
+        combatantId: tick.combatantId,
+        text: tick.blocked ? 'No heal' : `${tick.kind === 'damage' ? '-' : '+'}${tick.amount}`,
+        className: tick.blocked ? 'popup-debuff' : flavored ? `popup-${tick.statusId.toLowerCase()}` : tick.kind === 'heal' ? 'popup-heal' : 'popup-damage',
+        glyph: tick.statusId,
+      });
+      clauses.push(tick.blocked ? `${who} can't be healed` : STATUS_TICK_BANNER[tick.statusId]?.(who, tick.amount) ?? `${who} ${tick.kind === 'damage' ? 'takes' : 'recovers'} ${tick.amount} from ${tick.statusId}`);
+    }
+    if (popups.length === 0) {
+      carry.push(...applied);
+      return;
+    }
+    push(applied, clauses.join('; '), popups, { bannerFocus: clauses.join('; '), bannerFocusKind: popups.every((p) => p.text.startsWith('+')) ? 'heal' : 'damage' });
   }
 
   /**
@@ -495,7 +657,11 @@ export function buildBeats(
 
   while (i < events.length) {
     const e = events[i];
-    if (!ACTION_EVENTS.has(e.type)) striker = undefined;
+    if (!GROUP_EVENTS.has(e.type) && e.type !== 'SwitchedIn') {
+      group = null;
+      replacementGroup = null;
+    }
+    if (!ACTION_EVENTS.has(e.type) && !(e.type === 'StatusTicked' && group !== null)) striker = undefined;
 
     switch (e.type) {
       case 'RoundEnded':
@@ -523,6 +689,8 @@ export function buildBeats(
       case 'MoveDeclared': {
         striker = e.combatantId;
         landed = new Set();
+        group = ++groupSeq;
+        replacementGroup = null;
         const applied: CombatEvent[] = [e];
         i++;
         let manaSpent: number | undefined;
@@ -542,15 +710,27 @@ export function buildBeats(
         // A Called caster's declaration names who called it: the hero's turn is what paid for it.
         const call = calledBy?.casterId === e.combatantId ? calledBy : null;
         calledBy = null;
-        const lead = call ? `${name(call.callerId)} calls ${name(e.combatantId)}` : actorName;
-        push(applied, call ? `${lead}: ${move.name}${clause}` : `${actorName} uses ${move.name}${clause}`, [], {
-          bannerLead: lead,
-          bannerFocus: move.name,
-          // `clause` is " on X and Y" — slice past " on".
-          bannerSub: clause ? `▸${clause.slice(3)}` : undefined,
-          bannerAccent: getTypeColor(move.type),
-          bannerCast: { kind: moveKindGlyph(move), label: castLabel(move), cost, ...(call ? { called: true as const } : {}) },
-        });
+        const lead = call ? `${name(call.callerId)} calls ${name(e.combatantId)}` : name(e.combatantId);
+        push(
+          applied,
+          call ? `${lead}: ${move.name}${clause}` : `${actorName} uses ${move.name}${clause}`,
+          [],
+          {
+            bannerLead: lead,
+            bannerFocus: move.name,
+            // `clause` is " on X and Y" — slice past " on".
+            bannerSub: clause ? `▸${clause.slice(3)}` : undefined,
+            bannerAccent: getTypeColor(move.type),
+            bannerCast: {
+              kind: moveKindGlyph(move),
+              label: castLabel(move),
+              cost,
+              ...(call ? { called: true as const } : {}),
+            },
+            bannerMove: { moveId: e.moveId, casterId: e.combatantId, enemy: !!actorSide && actorSide !== playerSide },
+          },
+          { declares: true }
+        );
         break;
       }
 
@@ -565,9 +745,10 @@ export function buildBeats(
         }
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
         if (events[i]?.type === 'BlessingSpent') applied.push(events[i++]);
-        // Fainted gets its OWN beat so the bar is seen to hit 0 before the card vanishes.
-        let faintEvent: CombatEvent | null = null;
-        if (events[i]?.type === 'Fainted') faintEvent = events[i++];
+        // Fainted gets its OWN beat here, so the bar is seen to hit 0 before the card vanishes;
+        // `fold` puts it back on this blow and FightScreen holds it there for KO_HOLD_MS.
+        let faintEvent: FaintedEvent | null = null;
+        if (events[i]?.type === 'Fainted') faintEvent = events[i++] as FaintedEvent;
         const tagText = e.isCrit ? 'Critical hit!' : e.typeMult >= 2 ? 'Super effective!' : e.typeMult <= 0.5 ? 'Not very effective...' : undefined;
         // A Blessing turned the killing blow aside (docs/blessings-and-statuses.md §1.6): the number
         // that would have landed is shown struck through, in the Blessing's own tone.
@@ -583,7 +764,8 @@ export function buildBeats(
               bannerFocusKind: 'blessing',
               bannerTag: tagText ? `${tagText} Blessing used up` : 'Blessing used up',
               fx: landing(e.targetCombatantId, true),
-            }
+            },
+            { solo: true }
           );
           break;
         }
@@ -645,9 +827,12 @@ export function buildBeats(
             bannerTag: tagText,
             // The caster paying its own price is not the element arriving anywhere.
             fx: e.recoil || e.retribution || e.selfCost ? undefined : landing(e.targetCombatantId, true),
-          }
+          },
+          e.recoil || e.selfCost || e.retribution
+            ? {}
+            : { hit: { targetId: e.targetCombatantId, amount: e.amount + absorbed, tag: tagText, tagKind: absorbed > 0 && !shieldBroken ? 'shield' : tagKind } }
         );
-        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`, [], { bannerFocusKind: 'ko' });
+        if (faintEvent) pushKo([faintEvent]);
         break;
       }
 
@@ -658,8 +843,8 @@ export function buildBeats(
         if (events[i]?.type === 'StatusRemoved') applied.push(events[i++]);
         if (events[i]?.type === 'StatusRemoved' && (events[i] as { reason?: string }).reason === 'broken') applied.push(events[i++]);
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
-        let faintEvent: CombatEvent | null = null;
-        if (events[i]?.type === 'Fainted') faintEvent = events[i++];
+        let faintEvent: FaintedEvent | null = null;
+        if (events[i]?.type === 'Fainted') faintEvent = events[i++] as FaintedEvent;
         const targetName = name(e.combatantId);
         const absorbed = e.absorbed ?? 0;
         const through = e.amount - absorbed;
@@ -675,7 +860,7 @@ export function buildBeats(
             bannerFocusKind: 'detonate',
           }
         );
-        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`, [], { bannerFocusKind: 'ko' });
+        if (faintEvent) pushKo([faintEvent]);
         break;
       }
 
@@ -687,6 +872,10 @@ export function buildBeats(
         const ownerName = name(e.combatantId);
         const label = def?.name ?? e.passiveId;
         const effectKind = def?.reactive?.effect.kind;
+        // A passive answering outside any action (a fight's opening, an entry) opens a run of its own,
+        // so every reaction that follows it folds into one beat.
+        if (group === null) group = ++groupSeq;
+        const source = passiveFamily(label);
 
         if (effectKind === 'heal' && events[i]?.type === 'HpChanged') {
           const hp = events[i++] as HpChangedEvent;
@@ -696,7 +885,8 @@ export function buildBeats(
             applied,
             `${label} heals ${ownerName} for ${amount} HP!`,
             [{ combatantId: e.combatantId, text: `+${amount}`, className: 'popup-passive-heal' }],
-            { bannerLead: `${label} · ${ownerName}`, bannerFocus: `+${amount} HP`, bannerFocusKind: 'heal' }
+            { bannerLead: `${label} · ${ownerName}`, bannerFocus: `+${amount} HP`, bannerFocusKind: 'heal' },
+            { source }
           );
         } else if (effectKind === 'applyStatus' && events[i]?.type === 'StatusApplied') {
           // EVERY consecutive trigger of the same passive, as one beat: three spawn's Marks at a
@@ -704,6 +894,17 @@ export function buildBeats(
           // parenthetical, so each type's Mark of the Titan folds with the others.
           const landed: StatusAppliedEvent[] = [events[i++] as StatusAppliedEvent];
           applied.push(landed[0]);
+          // One trigger aimed at a group (Barbs at both foes) lands once per member.
+          const statusEffect = def?.reactive?.effect;
+          const groupAimed = statusEffect?.kind === 'applyStatus' && statusEffect.target === 'activeEnemies';
+          const takeLandings = () => {
+            while (groupAimed && events[i]?.type === 'StatusApplied' && (events[i] as StatusAppliedEvent).statusId === landed[0].statusId) {
+              const more = events[i++] as StatusAppliedEvent;
+              applied.push(more);
+              landed.push(more);
+            }
+          };
+          takeLandings();
           while (
             events[i]?.type === 'PassiveTriggered' &&
             events[i + 1]?.type === 'StatusApplied' &&
@@ -714,20 +915,26 @@ export function buildBeats(
             const more = events[i++] as StatusAppliedEvent;
             applied.push(more);
             landed.push(more);
+            takeLandings();
           }
-          const statusIds = [...new Set(landed.map((l) => l.statusId))];
+          const statusIds = [...new Set(landed.map((l) => statusName(l.statusId)))];
           const who = joinNames([...new Set(landed.map((l) => name(l.combatantId)))]);
           const shownLabel = landed.length > 1 ? passiveFamily(label) : label;
           push(
             applied,
             landed.length > 1 ? `${shownLabel} marks ${who}!` : `${label} afflicts ${who} with ${statusIds[0]}!`,
-            landed.map((l) => ({ combatantId: l.combatantId, text: l.statusId, className: 'popup-status' })),
-            { bannerLead: `${shownLabel} · ${who}`, bannerFocus: statusIds.join(' · '), bannerFocusKind: 'status' }
+            landed.map((l) => ({ combatantId: l.combatantId, text: statusName(l.statusId), className: 'popup-status' })),
+            { bannerLead: `${shownLabel} · ${who}`, bannerFocus: statusIds.join(' · '), bannerFocusKind: 'status' },
+            { source }
           );
         } else if (effectKind === 'statDelta' && events[i]?.type === 'StatChanged') {
-          // EVERY consecutive StatChanged: a group-target effect emits one per member behind a single trigger.
+          // A group-target effect emits one per member behind a single trigger; any other target is
+          // one figure, so a StatChanged on another figure behind it is the move's own, not this passive's.
+          const effect = def?.reactive?.effect;
+          const spread = effect?.kind === 'statDelta' && effect.target === 'activeEnemies';
+          const owner = (events[i] as StatChangedEvent).combatantId;
           const changes: StatChangedEvent[] = [];
-          while (events[i]?.type === 'StatChanged') {
+          while (events[i]?.type === 'StatChanged' && (spread || (events[i] as StatChangedEvent).combatantId === owner)) {
             const changed = events[i++] as StatChangedEvent;
             changes.push(changed);
             applied.push(changed);
@@ -752,7 +959,8 @@ export function buildBeats(
               bannerLead: `${label} · ${who}`,
               bannerFocus: deltaSummary(groups[0].changes),
               bannerFocusKind: changes.every((c) => c.delta < 0) ? 'debuff' : 'buff',
-            }
+            },
+            { source }
           );
         } else if (effectKind === 'manaSurcharge' && events[i]?.type === 'ManaSurcharged') {
           const taxed = events[i++] as ManaSurchargedEvent;
@@ -761,17 +969,30 @@ export function buildBeats(
             applied,
             `${label} grips ${name(taxed.combatantId)}: every move costs ${taxed.total} more Mana!`,
             [{ combatantId: taxed.combatantId, text: `+${taxed.delta} MP`, className: 'popup-debuff' }],
-            { bannerLead: `${label} · ${name(taxed.combatantId)}`, bannerFocus: `+${taxed.total} MP a move`, bannerFocusKind: 'debuff' }
+            { bannerLead: `${label} · ${name(taxed.combatantId)}`, bannerFocus: `+${taxed.total} MP a move`, bannerFocusKind: 'debuff' },
+            { source }
+          );
+        } else if (effectKind === 'manaGrant' && events[i]?.type === 'ManaGranted') {
+          const granted = events[i++] as ManaGrantedEvent;
+          applied.push(granted);
+          const over = granted.overflow > 0 ? ` (${granted.overflow} over)` : '';
+          push(
+            applied,
+            `${label} gives ${name(granted.targetCombatantId)} ${granted.amount} MP${over}`,
+            [{ combatantId: granted.targetCombatantId, text: `+${granted.amount} MP`, className: 'popup-mana' }],
+            { bannerLead: `${label} · ${name(granted.targetCombatantId)}`, bannerFocus: `+${granted.amount} MP${over}`, bannerFocusKind: 'mana' },
+            { source }
           );
         } else if (effectKind === 'damage' && events[i]?.type === 'HpChanged') {
           // EVERY consecutive HpChanged, each with the Fainted that may trail it: a group-target
           // effect (Broadside's volley, Dread's Nightmare) is one blow with several landings.
           const hits: HpChangedEvent[] = [];
+          const faints: FaintedEvent[] = [];
           while (events[i]?.type === 'HpChanged') {
             const hp = events[i++] as HpChangedEvent;
             hits.push(hp);
             applied.push(hp);
-            if (events[i]?.type === 'Fainted') applied.push(events[i++]);
+            if (events[i]?.type === 'Fainted') faints.push(events[i++] as FaintedEvent);
           }
           // The status the payload spent (Broadside's magazine), so the chip clears on the same
           // beat — and what it held, which is how many balls the volley draws.
@@ -803,8 +1024,10 @@ export function buildBeats(
                     })),
                   }
                 : {}),
-            }
+            },
+            { source }
           );
+          if (faints.length > 0) pushKo(faints);
         } else {
           // No state change followed (e.g. target already fainted) — carry rather than surface an empty beat.
           carry.push(...applied);
@@ -818,8 +1041,16 @@ export function buildBeats(
         // The scene first, on its own beat with nothing applied, so the field is still the Herald's
         // fall when the Titan rises over it; the Eye's reveal beat is the one that puts it on the board.
         const cinematic = cinematicEntranceFor(arriving);
-        if (cinematic) push([], 'The Titan rises', [], { cinematic, bannerFocusKind: 'ko' });
         const entrance = dramaticEntranceFor(arriving);
+        // An entrance with a scene or a horn is its own moment, never folded into a send-out.
+        if (cinematic || entrance || isWardenCombatant(e.inCombatantId)) {
+          group = null;
+          replacementGroup = null;
+        } else if (e.outCombatantId || replacementGroup === null || group !== replacementGroup) {
+          group = ++groupSeq;
+          replacementGroup = e.outCombatantId ? null : group;
+        }
+        if (cinematic) push([], 'The Titan rises', [], { cinematic, bannerFocusKind: 'ko' });
         if (entrance) {
           push([e], `${inName} takes the field!`, [], {
             bannerLead: entrance.lead,
@@ -840,7 +1071,7 @@ export function buildBeats(
             bannerMeta: WARDEN_ARRIVAL_LINE,
             bannerMetaClass: 'banner-meta-rules',
             dramaticEntrance: true,
-            summonCombatantId: e.inCombatantId,
+            summonCombatantIds: [e.inCombatantId],
           });
           i++;
           break;
@@ -856,8 +1087,8 @@ export function buildBeats(
             bannerSub: 'switches in',
             bannerFocusKind: 'buff',
             recallCombatantId: e.outCombatantId,
-            summonCombatantId: e.inCombatantId,
-          });
+            summonCombatantIds: [e.inCombatantId],
+          }, { switchIn: e.inCombatantId });
           i++;
           break;
         }
@@ -865,8 +1096,8 @@ export function buildBeats(
           bannerLead: 'Switching in',
           bannerFocus: inName,
           bannerFocusKind: 'buff',
-          summonCombatantId: e.inCombatantId,
-        });
+          summonCombatantIds: [e.inCombatantId],
+        }, { switchIn: e.inCombatantId });
         i++;
         break;
       }
@@ -1038,18 +1269,18 @@ export function buildBeats(
           const pluralVerb = statuses[e.statusId]?.positive || group.every((g) => g.sourceCombatantId === g.combatantId) ? 'gain' : 'are afflicted with';
           push(
             group,
-            `${who} ${pluralVerb} ${e.statusId}${same ? detail : ''}`,
-            group.map((g) => ({ combatantId: g.combatantId, text: e.statusId, className: 'popup-status' })),
-            { bannerLead: `${who} ${pluralVerb}`, bannerFocus: `${e.statusId}${same ? detail : ''}`, bannerFocusKind: 'status', fx: landings(group.map((g) => g.combatantId)) }
+            `${who} ${pluralVerb} ${statusName(e.statusId)}${same ? detail : ''}`,
+            group.map((g) => ({ combatantId: g.combatantId, text: statusName(e.statusId), className: 'popup-status' })),
+            { bannerLead: `${who} ${pluralVerb}`, bannerFocus: `${statusName(e.statusId)}${same ? detail : ''}`, bannerFocusKind: 'status', fx: landings(group.map((g) => g.combatantId)) }
           );
           i = j;
           break;
         }
         push(
           [e],
-          `${targetName} ${verb} ${e.statusId}${detail}`,
-          [{ combatantId: e.combatantId, text: e.statusId, className: 'popup-status' }],
-          { bannerLead: `${targetName} ${verb}`, bannerFocus: `${e.statusId}${detail}`, bannerFocusKind: 'status', fx: landing(e.combatantId) }
+          `${targetName} ${verb} ${statusName(e.statusId)}${detail}`,
+          [{ combatantId: e.combatantId, text: statusName(e.statusId), className: 'popup-status' }],
+          { bannerLead: `${targetName} ${verb}`, bannerFocus: `${statusName(e.statusId)}${detail}`, bannerFocusKind: 'status', fx: landing(e.combatantId) }
         );
         i++;
         break;
@@ -1059,7 +1290,8 @@ export function buildBeats(
       case 'BenchRegenTicked':
       case 'ManaRegenTicked':
       case 'StatusTicked':
-        roundEnd();
+        if (e.type === 'StatusTicked' && group !== null) landingTicks();
+        else roundEnd();
         break;
 
       // A status leaving on its own — expiry, decay, a switch — is bookkeeping, carried so the
@@ -1284,5 +1516,119 @@ export function buildBeats(
     beats[beats.length - 1].events.push(...carry);
   }
 
-  return beats;
+  return fold(beats);
+
+  /**
+   * One tap per consequence became, late in a run, a dozen taps a round — a hit, the status it
+   * rode in on, three passives answering it and the KO, each its own beat. So every run of beats
+   * in one group (an action's payload, a switch and its entry passives, a run of reactions) is
+   * folded into ONE: the first beat's headline, a rider chip for each other consequence, every
+   * figure's popups stacked, and a KO held on the blow rather than given a tap. A declaration
+   * stays its own beat, so an action is two taps — what is about to happen, then what did.
+   */
+  function fold(raw: readonly Beat[]): Beat[] {
+    const out: Beat[] = [];
+    let k = 0;
+    while (k < raw.length) {
+      const first = raw[k];
+      const m = meta.get(first);
+      if (!m || m.group === null || m.declares || m.solo) {
+        out.push(first);
+        k++;
+        continue;
+      }
+      const run = [first];
+      while (k + run.length < raw.length) {
+        const nm = meta.get(raw[k + run.length]);
+        if (!nm || nm.group !== m.group || nm.declares || nm.solo) break;
+        run.push(raw[k + run.length]);
+      }
+      out.push(run.length === 1 ? first : merge(run));
+      k += run.length;
+    }
+    return out;
+  }
+
+  function merge(run: readonly Beat[]): Beat {
+    const about = run.map((b) => meta.get(b)!);
+    const hostIndex = Math.max(0, about.findIndex((m) => !m.ko));
+    const host = run[hostIndex];
+    const merged: Beat = { ...host, events: [], popups: [], fx: undefined };
+
+    // Several blows (a spread, a multi-hit) share one headline: the damage, by target.
+    const hitIndexes = about.flatMap((m, j) => (m.hit ? [j] : []));
+    const folded = new Set<number>([hostIndex]);
+    if (hitIndexes.length > 1 && about[hostIndex].hit) {
+      for (const j of hitIndexes) folded.add(j);
+      const hits = hitIndexes.map((j) => about[j].hit!);
+      const targets = [...new Set(hits.map((h) => h.targetId))];
+      const totalOn = (id: string) => hits.filter((h) => h.targetId === id).reduce((sum, h) => sum + h.amount, 0);
+      // The loudest stamp any blow earned; named per target when the blows disagree.
+      const rank = ['crit', 'super', 'shield', 'resist'] as const;
+      const loudest = rank.find((kind) => hits.some((h) => h.tagKind === kind));
+      const stamped = loudest ? hits.filter((h) => h.tagKind === loudest) : [];
+      const stampedTargets = [...new Set(stamped.map((h) => h.targetId))];
+      const tag = stamped.find((h) => h.tag)?.tag;
+      if (targets.length === 1) {
+        merged.bannerLead = `${name(targets[0])} takes`;
+        merged.bannerFocus = `${totalOn(targets[0])} damage`;
+        merged.bannerSub = `${hits.length} hits`;
+      } else {
+        merged.bannerLead = undefined;
+        merged.bannerFocus = targets.map((id) => `${name(id)} −${totalOn(id)}`).join(' · ');
+        merged.bannerSub = undefined;
+      }
+      merged.bannerTag = tag && stamped.length < hits.length && targets.length > 1 ? `${tag.replace(/[!.]+$/, '')} on ${joinNames(stampedTargets.map(name))}` : tag;
+      merged.bannerFocusKind = loudest ?? 'damage';
+    }
+
+    const riders: (BeatRider & { whoIds?: string[] })[] = [];
+    const kos: string[] = [];
+    run.forEach((beat, j) => {
+      if (about[j].ko) {
+        kos.push(...about[j].ko!);
+        return;
+      }
+      // A second send-out is part of the headline (arrivals, below), not a consequence of the first.
+      if (folded.has(j) || about[j].switchIn) return;
+      const source = about[j].source;
+      if (beat.popups.length === 0) {
+        riders.push({ source, text: beat.bannerFocus ?? beat.banner });
+        return;
+      }
+      for (const popup of beat.popups) {
+        // The same consequence on several figures (Barbs on both attackers) is one chip naming them all.
+        const twin = riders.find((r) => r.source === source && r.text === popup.text && r.className === popup.className && r.whoIds);
+        const who = name(popup.combatantId);
+        if (twin) {
+          if (!twin.whoIds!.includes(popup.combatantId)) twin.whoIds!.push(popup.combatantId);
+          twin.who = joinNames(twin.whoIds!.map(name));
+        } else {
+          riders.push({ source, who, text: popup.text, className: popup.className, whoIds: [popup.combatantId] });
+        }
+      }
+    });
+    for (const rider of riders) delete rider.whoIds;
+
+    // Two fallen slots filled at once: one send-out, both arriving.
+    const arrivals = about.flatMap((m) => (m.switchIn ? [m.switchIn] : []));
+    if (arrivals.length > 1) {
+      merged.summonCombatantIds = arrivals;
+      merged.bannerFocus = joinNames(arrivals.map(name));
+      merged.banner = `${joinNames(arrivals.map(name))} switch in!`;
+    }
+
+    const all = run.flatMap((b) => b.events);
+    merged.events = [...all.filter((e) => e.type !== 'Fainted'), ...all.filter((e) => e.type === 'Fainted')];
+    merged.popups = run.flatMap((b) => b.popups);
+    const fx = run.flatMap((b) => b.fx ?? []).filter((l, n, list) => list.findIndex((o) => o.combatantId === l.combatantId) === n);
+    merged.fx = fx.length > 0 ? fx : undefined;
+    if (riders.length > 0) merged.bannerRiders = riders;
+    if (kos.length > 0) {
+      merged.bannerKo = `${joinNames(kos.map(name))} ${kos.length > 1 ? 'are' : 'is'} knocked out!`;
+      merged.holdsKo = true;
+    }
+    if (arrivals.length <= 1) merged.banner = run.map((b) => b.banner).join(' ');
+    return merged;
+  }
 }

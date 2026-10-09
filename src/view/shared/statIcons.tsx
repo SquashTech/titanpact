@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { StatKey } from '../../engine/content';
+import type { MoveKindGlyphKind } from './moveKind';
 
 // The eight stat glyphs as inline vector art: 24x24 grid, `currentColor` only, nothing finer than
 // ~2 units. Drawn as rhyming pairs — Attack/Defense are forged metal, Intelligence/Wisdom the same
@@ -91,8 +92,8 @@ export function StatGlyph({ stat, tone = 'stat', className }: StatGlyphProps) {
   );
 }
 
-/** `moveKindGlyph` (MoveTile.tsx) is the one place a MoveDefinition is mapped onto this. */
-export type MoveKindGlyphKind = 'physical' | 'magical' | 'heal' | 'buff' | 'debuff';
+/** `moveKindGlyph` (moveKind.ts) is the one place a MoveDefinition is mapped onto this. */
+export type { MoveKindGlyphKind };
 
 // Move kinds borrow the stat glyphs: physical/magical wear the stat each pipeline reads (two-pipeline
 // separation), heal wears HP, buff the shield. Colour comes from the badge class, never STAT_COLORS.

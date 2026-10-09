@@ -18,6 +18,7 @@ import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeFx } from './TypeFx';
 import { BlessingMark } from '../shared/BlessingMark';
 import { statusHeldText } from '../shared/statusFacts';
+import { MAX_POPUPS_PER_FIGURE, POPUP_STAGGER_MS } from './buildBeats';
 import { koLabel, type MoveForecast } from './forecast';
 import { ForecastBite } from './ForecastBite';
 
@@ -123,7 +124,8 @@ interface Props {
   targetable?: boolean;
   onSelectTarget?: () => void;
   onInspect?: () => void;
-  popup?: Popup | null;
+  /** Every popup the beat on screen plays on this figure, staggered in order (buildBeats POPUP_STAGGER_MS). */
+  popups?: readonly Popup[];
   /** Visual highlight for the committed choice in the forced-replacement panel, independent of `targetable`. */
   selected?: boolean;
   /** The player combatant whose move panel is on screen — a pulsing glow instead of a text label. */
@@ -310,7 +312,7 @@ export function CombatantCard({
   targetable,
   onSelectTarget,
   onInspect,
-  popup,
+  popups,
   selected,
   acting,
   effBadge,
@@ -325,9 +327,13 @@ export function CombatantCard({
   forecast,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
-  const hitClass = popup ? POPUP_HIT_CLASS[popup.className] : undefined;
+  const shown = (popups ?? []).slice(0, MAX_POPUPS_PER_FIGURE);
+  // The first blow among them sets the recoil; the first popup with a flash sets the card's flash.
+  const hitPopup = shown.find((p) => POPUP_HIT_CLASS[p.className]);
+  const hitClass = hitPopup ? POPUP_HIT_CLASS[hitPopup.className] : undefined;
+  const flashPopup = shown.find((p) => POPUP_FLASH_CLASS[p.className]);
   // Keyed on the popup, not on the class: the same figure taking the same kind of hit twice running must replay.
-  const struck = useOneShot(hitClass ? popup!.key : null, HIT_REACT_MS);
+  const struck = useOneShot(hitPopup ? hitPopup.key : null, HIT_REACT_MS);
   // Taking a hit wins over landing one, so a hero that swung and got answered reads as the one who came off worse.
   // A knocked-out Eye stays on the field with its lid shut (FightScreen keeps its card in the slot).
   const pose: Pose = combatant.fainted && isTitanEye(hero.id) ? 'closed' : hitClass ? 'hurt' : striking ? 'attack' : 'idle';
@@ -403,7 +409,7 @@ export function CombatantCard({
   if (selected) classes.push('selected');
   if (acting) classes.push('acting');
   if (effBadge) classes.push(effBadge.className);
-  if (popup && POPUP_FLASH_CLASS[popup.className]) classes.push(POPUP_FLASH_CLASS[popup.className]);
+  if (flashPopup) classes.push(POPUP_FLASH_CLASS[flashPopup.className]);
   if (striking) classes.push('striking');
   if (recalling) classes.push('recalling');
   if (sendingOut) classes.push('summoning');
@@ -443,12 +449,17 @@ export function CombatantCard({
         </div>
       )}
       {combatant.fainted && <span className="fainted-tag">KO</span>}
-      {popup && (
-        <div key={popup.key} className={`dmg-popup ${popup.className}`}>
+      {shown.map((popup, i) => (
+        <div
+          key={popup.key}
+          className={`dmg-popup ${popup.className}`}
+          // Each later one starts a line lower and a step later, so a stack reads top to bottom in order.
+          style={i > 0 ? ({ marginTop: `${i * 1.1}em`, animationDelay: `${i * POPUP_STAGGER_MS}ms`, animationFillMode: 'both' } as CSSProperties) : undefined}
+        >
           {popup.glyph && <StatusGlyph statusId={popup.glyph} className="dmg-popup-glyph" />}
           {popup.text}
         </div>
-      )}
+      ))}
       <div className="combatant-stage">
         <span className="combatant-platform" aria-hidden="true" />
         <HeroPortrait
@@ -459,7 +470,7 @@ export function CombatantCard({
           pose={pose}
         />
         {fx && <TypeFx key={fx.key} type={fx.type} kind={fx.kind} count={fx.count} />}
-        {popup?.className === 'popup-blessed' && <BlessingBreak key={popup.key} />}
+        {shown.filter((p) => p.className === 'popup-blessed').map((p) => <BlessingBreak key={p.key} />)}
       </div>
       {/* Always rendered so the row reserves its height whether or not this card has a badge. */}
       <div className="eff-badge-row">

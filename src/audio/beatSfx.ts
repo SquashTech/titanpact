@@ -1,8 +1,8 @@
 // Combat audio: one sound per revealed beat (buildBeats.ts), chosen from the beat's most
 // salient event. View-layer subscriber — nothing here reaches back into the engine.
 
-import type { Beat } from '../view/combat/buildBeats';
-import type { CombatEvent, StatChangedEvent, StatusTickedEvent } from '../engine/events';
+import { KO_HOLD_MS, MAX_POPUPS_PER_FIGURE, POPUP_STAGGER_MS, type Beat } from '../view/combat/buildBeats';
+import type { CombatEvent, DamageDealtEvent, StatChangedEvent, StatusTickedEvent } from '../engine/events';
 import { playSfx } from './sfx';
 import { sounds, type SfxId } from './sounds';
 
@@ -29,6 +29,8 @@ function leadEvent(beat: Beat): CombatEvent | null {
   let lead: CombatEvent | null = null;
   let best = Infinity;
   for (const e of beat.events) {
+    // A held KO speaks after its hold (below), so the blow it follows leads.
+    if (beat.holdsKo && e.type === 'Fainted') continue;
     const rank = RANK.get(e.type);
     if (rank !== undefined && rank < best) {
       best = rank;
@@ -100,8 +102,17 @@ export function playBeatSfx(beat: Beat): void {
     if (typed in sounds) playSfx(typed, { gain: landing.kind === 'buff' ? 0.6 : 0.8 });
   }
 
+  // The knockout a folded beat holds back lands with the card, not with the blow.
+  if (beat.holdsKo) playSfx('faint', { delay: KO_HOLD_MS / 1000 });
+
   switch (lead.type) {
     case 'DamageDealt': {
+      // Every blow a folded beat carries (a spread, a multi-hit) sounds on its own popup's step.
+      const blows = beat.events.filter((e): e is DamageDealtEvent => e.type === 'DamageDealt' && !e.recoil && !e.selfCost);
+      blows.slice(1, MAX_POPUPS_PER_FIGURE).forEach((blow, n) => {
+        const kind: SfxId = blow.category === 'physical' ? 'hit.physical' : 'hit.magical';
+        playSfx(kind, { ...damageVoicing(blow.amount + (blow.absorbed ?? 0), blow.typeMult), delay: ((n + 1) * POPUP_STAGGER_MS) / 1000 });
+      });
       const id: SfxId = lead.category === 'physical' ? 'hit.physical' : 'hit.magical';
       playSfx(id, damageVoicing(lead.amount + (lead.absorbed ?? 0), lead.typeMult));
       // Layered, not substituted: a crit is the same attack landing harder.

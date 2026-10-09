@@ -1863,6 +1863,163 @@ textarea,
   color: var(--mana);
 }
 
+/* A declaration (buildBeats bannerMove): the caster's sprite and name, the name in its side's
+   colour, over the move bar exactly as the player presses it in combat — a move is recognised by
+   the object that offers it. */
+.combat-banner-declare {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  --declare-side: var(--ally);
+}
+
+.combat-banner-declare.is-enemy {
+  --declare-side: var(--enemy);
+}
+
+.combat-banner-declare-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  animation: banner-lead-in 0.2s var(--ease-out) both;
+}
+
+.combat-banner-declare-portrait {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--declare-side) 55%, transparent)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+}
+
+.combat-banner-declare-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--declare-side);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--declare-side) 45%, transparent), 0 2px 3px rgba(0, 0, 0, 0.85);
+}
+
+.combat-banner-declare-move {
+  width: 100%;
+  max-width: 300px;
+  pointer-events: none;
+  animation: banner-strike 0.26s cubic-bezier(0.2, 1.5, 0.5, 1) 0.04s both;
+}
+
+.combat-banner-declare-move .move-button {
+  width: 100%;
+  text-align: left;
+}
+
+/* A folded KO (buildBeats fold): the blow and the knockout are one beat now, so the knockout is
+   a second stamp under the first rather than a tap of its own. Lands after the card has had its
+   moment to empty (KO_HOLD_MS is 700). */
+.combat-banner-ko {
+  margin-top: 4px;
+  padding: 4px 13px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--enemy);
+  background: color-mix(in srgb, var(--enemy) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--enemy) 45%, transparent),
+    0 0 18px -4px color-mix(in srgb, var(--enemy) 60%, transparent);
+  animation: banner-stamp 0.22s cubic-bezier(0.2, 1.4, 0.45, 1) 0.45s both;
+}
+
+/* Everything else an action did — the status it rode in on, the passives that answered it,
+   recoil — as small chips under the headline, each in the colour of the popup it repeats on the
+   figure. A few at most (FightScreen RIDER_LIMIT); the rest is counted, and all of it is in the
+   Battle Log. */
+.combat-banner-riders {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 5px;
+  max-width: 100%;
+  margin-top: 5px;
+}
+
+.banner-rider {
+  --rider-color: var(--text);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text-dim);
+  background: rgba(10, 12, 18, 0.62);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rider-color) 35%, transparent);
+  animation: banner-lead-in 0.2s var(--ease-out) both;
+}
+
+.banner-rider-source {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 96px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.banner-rider-who {
+  color: var(--text);
+}
+
+.banner-rider-text {
+  font-weight: 800;
+  color: var(--rider-color);
+}
+
+.banner-rider.tone-damage {
+  --rider-color: var(--hp-low);
+}
+
+.banner-rider.tone-heal {
+  --rider-color: var(--hp-high);
+}
+
+.banner-rider.tone-buff {
+  --rider-color: var(--buff);
+}
+
+.banner-rider.tone-debuff {
+  --rider-color: var(--hp-low);
+}
+
+.banner-rider.tone-mana {
+  --rider-color: var(--mana);
+}
+
+.banner-rider.tone-shield {
+  --rider-color: var(--shield);
+}
+
+.banner-rider.tone-status {
+  --rider-color: var(--haunt);
+}
+
+.banner-rider-more {
+  color: var(--text-dim);
+  box-shadow: none;
+}
+
 /* Meta line carrying rules text rather than a mana cost (the Field Effect
    arrival beat, buildBeats.ts) — mana blue would misread it as a cost, and a
    full sentence needs to wrap and centre rather than sit as a short chip. */

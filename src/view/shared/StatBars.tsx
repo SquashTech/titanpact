@@ -3,22 +3,11 @@ import { STAT_ORDER } from '../../engine/content';
 import { GRADE_CHANCE, gradeMaxPoints, growthUnitFor, type GrowthGrade, type GrowthGrades } from '../../run/growth';
 import { BASE_STAT_SCALE, type StatScale } from '../../run/statScale';
 import { STAT_COLORS, StatGlyph } from './statIcons';
+import { STAT_LABELS } from './moveKind';
 
 // Re-exported so screens keep one import site for the stat-block vocabulary.
-export { STAT_ORDER };
+export { STAT_ORDER, STAT_LABELS };
 export { STAT_COLORS, StatGlyph } from './statIcons';
-
-/** 3-letter codes for the fixed-width bar-label column; relicStacks.ts has the full words. */
-export const STAT_LABELS: Record<StatKey, string> = {
-  hp: 'HP',
-  attack: 'ATK',
-  defense: 'DEF',
-  intelligence: 'INT',
-  wisdom: 'WIS',
-  speed: 'SPD',
-  manaPool: 'MP',
-  mpRegen: 'MPR',
-};
 
 /**
  * A stat's 0-1 fraction of the reference ceiling (run/statScale.ts) — every stat readout draws on

@@ -19,8 +19,8 @@ const DEFAULT_PREFS: AudioPrefs = { muted: false, sfx: 0.7, music: 0.5 };
 let prefs: AudioPrefs = { ...DEFAULT_PREFS };
 let started = false;
 
-// Two identical impacts a millisecond apart (a spread move, a tick chain) sound like one
-// loud phasey hit, so the duplicate is suppressed.
+// Two identical impacts a millisecond apart (a tick chain) sound like one loud phasey hit, so
+// the duplicate is suppressed.
 const lastPlayedAt = new Map<SfxId, number>();
 const DEDUPE_MS = 35;
 
@@ -79,10 +79,11 @@ export function playSfx(id: SfxId, opts: PlayOptions = {}): void {
   const spec = sounds[id];
   if (!spec) return;
 
-  const now = performance.now();
+  // Compared at the moment each will sound, so a delayed repeat (a folded beat's second blow) plays.
+  const at = performance.now() + (opts.delay ?? 0) * 1000;
   const last = lastPlayedAt.get(id);
-  if (last !== undefined && now - last < DEDUPE_MS) return;
-  lastPlayedAt.set(id, now);
+  if (last !== undefined && Math.abs(at - last) < DEDUPE_MS) return;
+  lastPlayedAt.set(id, at);
 
   playSpec(spec, opts);
 }
