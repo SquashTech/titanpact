@@ -16866,6 +16866,24 @@ button.star-shop-bundle-face {
   opacity: 0.8;
 }
 
+/* Rows hold the whole card: a card clips its overflow, so an auto row let the grid squeeze it
+   and the name and the Mastery count were what went. Past the screen it scrolls instead. */
+.gem-screen .pick-grid.is-filling {
+  grid-auto-rows: min-content;
+}
+
+/* Six cards in three rows fit a phone without scrolling: the stat and pip rows are paid for out
+   of the headroom above the sprite, which only holds the level mark. */
+.gem-screen .pick-figure {
+  height: calc(var(--pick-portrait) * 1.04);
+  padding-bottom: calc(var(--pick-portrait) * 0.08);
+}
+
+/* With no header above it the Gem in hand rises to the top edge, beside the roster button. */
+.gem-screen.is-bare .gem-hand {
+  margin-right: 62px;
+}
+
 /* A hero's card: the stat the Gem raises, and the pips it lights. */
 .gem-card-detail {
   display: flex;

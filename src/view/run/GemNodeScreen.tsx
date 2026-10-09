@@ -40,8 +40,6 @@ const LEAVE_MS = 800;
 /** How long a hero's card flares in the Gem's colour after taking it. */
 const BURST_MS = 700;
 
-const EYEBROW: Record<GemPlan['source'], string> = { scribe: 'By the Roadside', cache: 'Gem Cache', shelf: 'Off the Shelf', drop: 'Spoils' };
-
 /**
  * The who-screen for Gems (docs/gems.md): the Gems come up one at a time in a fixed order, the one
  * in hand shown large, and every hero shows the stat it raises and its ten Mastery pips. A tap
@@ -112,29 +110,25 @@ export function GemNodeScreen({ run, onRunChange, plan, onDone, progress, onProg
 
   return (
     <div
-      className="node-screen rite-screen is-scribe scroll-screen gem-screen"
+      className={`node-screen rite-screen is-scribe scroll-screen gem-screen${plan.source === 'scribe' ? '' : ' is-bare'}`}
       style={{ '--node-rgb': NODE_TINT_PARCHMENT, '--rite-color': `rgb(${NODE_TINT_PARCHMENT})`, '--gem-color': stone.tones[1] } as CSSProperties}
     >
       <span className="node-sky scribe-ground" aria-hidden="true" />
       <NodeMotes count={12} />
       <RosterPeek run={run} />
 
-      {plan.source === 'scribe' ? (
+      {/* Only the Lapidary is introduced; anywhere else the Gem in hand says what the screen is. */}
+      {plan.source === 'scribe' && (
         <header className="keeper-head">
           <span className="keeper-figure">
             <span className="rite-pool" aria-hidden="true" />
             <img src={lapidaryArt} className="keeper-art" alt="" draggable={false} />
           </span>
           <span className="keeper-words">
-            <span className="rite-eyebrow">{EYEBROW.scribe}</span>
+            <span className="rite-eyebrow">By the Roadside</span>
             <h2 className="rite-name">The Lapidary</h2>
             <KeeperVoice line={voice} />
           </span>
-        </header>
-      ) : (
-        <header className="rite-head">
-          <span className="rite-eyebrow">{EYEBROW[plan.source]}</span>
-          <h2 className="rite-name">Gems</h2>
         </header>
       )}
 
