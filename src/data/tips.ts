@@ -100,7 +100,8 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   academy: tip(
     'academy',
     'Academy',
-    'Classes teach heroes powerful new abilities or moves within their type. Each hero can learn only one.'
+    'Classes teach heroes powerful new abilities or moves within their type. Each hero can learn only one.',
+    'Choose a Class first, then a hero to learn it. A dimmed hero below already has a Class.'
   ),
   locationChoice: tip(
     'locationChoice',

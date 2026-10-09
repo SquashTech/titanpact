@@ -12,14 +12,19 @@ onto the map. It replaces the Crucible of `docs/growth-overhaul.md` §11.
   (`ACADEMY_ROW` = 6, `src/run/map.ts`). The act is ten rows: Fight, reward, Mentor/Tutor, reward,
   the Lapidary, the fork, **the Academy**, reward, the Guild Hall, the Guardian. `academyReward`
   is absent from `REWARD_WEIGHTS`, so this row is its only seat.
-- **Same grant.** Pick a hero with no Class, then one of three Classes rolled from the whole
-  catalog (`rollClassOffers`). One Class a hero, a move or a passive, never a stat line.
-  Non-bankable. **No way back** once a hero is enrolled — the old rim rule, kept.
+- **Same grant, Classes first.** The three Classes rolled from the whole catalog
+  (`rollClassOffers`) are shown on landing, each readable with a hold, over a **Who can learn**
+  strip of the roster: a hero with no Class lit, one with a Class dimmed and wearing its mark. Pick
+  a Class, then the hero — each card shows the Class move at that hero's type — and the hero's tap
+  commits. One Class a hero, a move or a passive, never a stat line. Non-bankable.
+- **The way back is one step earlier** (2026-10-09, per user direction): from the hero grid to the
+  Classes, where nothing has been granted. The Crucible's order (hero, then Class, no way back)
+  left the player committing to a hero before seeing what it would learn.
 - **A building, not a keeper** (per user direction: "more epic than a schoolhouse"): a spired
   college on a crag, 96px at 2x like the Guild Hall (`art/map-nodes/landmarks/academy.png`,
   landmark kind `building`, `BUILDING_ART` in `mapLandmarks.tsx`). The screen keeps the keeper
   header's shape with the castle in the figure's seat, one of `ACADEMY_LINES` in the voice line,
-  then a hero grid, the three Class cards and the reveal (`AcademyNodeScreen`). The node colour
+  then the three Class cards, the hero grid and the reveal (`AcademyNodeScreen`). The node colour
   and icon glyph are laurel (`#b8c95a`) and a mortarboard. Rejected rolls (a schoolmistress, two
   schoolhouses, a second castle) are in `art/concepts/academy/`.
 
@@ -51,7 +56,3 @@ switches, so Vanish is dead there), and crowd a track whose appeal is "5 and 10"
 - **Saves:** a run saved on the old `crucible` screen resumes on what followed it; the Class is
   forfeit (`decodeScreen`, `src/run/resume.ts`).
 
-## Open
-
-- Whether the Class choice should allow a way back to the hero grid (the Tutor's move list has
-  one). Kept as the Crucible had it until decided.

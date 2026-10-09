@@ -580,8 +580,8 @@ don't silently override it.
   (2026-10-02, per user direction: Volley/Cascade, Feint/Jinx, Vanish/Blink, pinned by test), and
   Succor is the Cleric's on-hit partner heal, no longer a move; the Academy rolls **three distinct from the whole catalog**,
   un-labelled — the one-per-kind roll and its Offensive/Defensive/Utility tags came off 2026-09-11
-  per user direction). One per hero, replace-not-stack. **The hero enrolled is the hero
-  taught**: the Class choice has no way back to the roster.
+  per user direction). One per hero, replace-not-stack. **The Classes are shown first** and
+  the hero's tap commits: back from the heroes to the Classes, never from a hero taught.
   **Two exclusivity rules**, without which a Class is a Boon with a hat: a class passive is in no
   Boon pool, and a class move is in no level-up pool and no Tutor pool — untiered, and it **wears
   its holder's innate primary type** (`typeFollowsUser`, resolved once at the edge by

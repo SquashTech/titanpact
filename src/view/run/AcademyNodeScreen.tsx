@@ -11,10 +11,10 @@ import { ACADEMY_LINES } from '../../data/roadLines';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { anyClassAvailable, classMoveOverflows, grantClass, rollClassOffers, type ClassDefinition, type ClassKind } from '../../run/classes';
-import { rosterEntryTypes, formIdFor } from '../../run/progression';
+import { formIdFor } from '../../run/progression';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
-import { getTypeAbbr, getTypeColor } from '../combat/typeColors';
+import { getTypeColor } from '../combat/typeColors';
 import { MoveDetailCard, MoveDetailOverlay } from '../combat/MoveDetailOverlay';
 import { CLASS_PATHS } from '../shared/classIcons';
 import { ElementGlyph } from '../shared/elementIcons';
@@ -51,41 +51,44 @@ const KIND_COLORS: Record<ClassKind, string> = {
 };
 
 /**
- * `academyReward` node (docs/academy.md): pick a hero with no Class, then one of three Classes
- * rolled from the whole catalog. A Class is a VERB — a move or a passive — never a stat line, one
- * a hero for the run. Non-bankable: walking on without enrolling anyone spends the visit.
+ * `academyReward` node (docs/academy.md): the three Classes first, each readable with a hold, and
+ * the roster under them showing who can still learn one; then, with a Class chosen, the hero who
+ * takes it. A hero's tap commits — the hero enrolled is the hero taught — so the way back lives one
+ * step earlier, from the heroes to the Classes, where nothing has been granted yet. A Class is a
+ * VERB — a move or a passive — never a stat line, one a hero for the run. Non-bankable.
  */
 export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props) {
-  const [studentId, setStudentId] = useState<string | null>(null);
   /** Rolled once, on mount: three from the whole catalog. */
   const [offers] = useState(() => rollClassOffers(classes, seededRandom(seed)));
   const [pickedClassId, setPickedClassId] = useState<string | null>(null);
+  /** The Class carried to the hero step. */
+  const [teachingId, setTeachingId] = useState<string | null>(null);
+  const [reading, setReading] = useState<ClassDefinition | null>(null);
   /** A move-Class whose move the kit refuses: the replace-or-decline before the grant lands. */
   const [overflow, setOverflow] = useState<{ rosterId: string; classId: string } | null>(null);
   const [learned, setLearned] = useState<{ rosterId: string; classId: string } | null>(null);
   const [previewing, setPreviewing] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const voice = useKeeperLine(ACADEMY_LINES);
 
-  const student = studentId ? (run.roster.find((r) => r.rosterId === studentId) ?? null) : null;
   const overflowEntry = overflow ? (run.roster.find((r) => r.rosterId === overflow.rosterId) ?? null) : null;
   const learnedEntry = learned ? (run.roster.find((r) => r.rosterId === learned.rosterId) ?? null) : null;
   const anyEligible = anyClassAvailable(run.roster);
+  const picked = pickedClassId ? offers.find((c) => c.id === pickedClassId) ?? null : null;
+  const teaching = teachingId ? classes[teachingId] : null;
 
   function commit(rosterId: string, classId: string, replaceMoveId?: string) {
     playSfx('class.learn');
     onRunChange(grantClass(run, classes, rosterId, classId, replaceMoveId));
     setOverflow(null);
-    setStudentId(null);
     setLearned({ rosterId, classId });
   }
 
-  function confirm() {
-    if (!student || !pickedClassId) return;
-    const cls = classes[pickedClassId];
+  function teach(entry: RosterEntry) {
+    if (!teaching || entry.classId !== null) return;
     // The kit is full: the class move is the same replace-or-decline an Evolution's grant makes,
     // and declining still takes the Class — the hero just holds the verb it cannot fit.
-    if (classMoveOverflows(cls, student)) setOverflow({ rosterId: student.rosterId, classId: cls.id });
-    else commit(student.rosterId, cls.id);
+    if (classMoveOverflows(teaching, entry)) setOverflow({ rosterId: entry.rosterId, classId: teaching.id });
+    else commit(entry.rosterId, teaching.id);
   }
 
   if (overflow && overflowEntry) {
@@ -104,21 +107,74 @@ export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props)
     return <ClassLearnedReveal run={run} entry={learnedEntry} cls={classes[learned.classId]} onContinue={onContinue} />;
   }
 
-  if (student) {
+  const rite = { '--node-rgb': ACADEMY_RGB, '--rite-color': picked ? classColor(picked) : `rgb(${ACADEMY_RGB})` } as CSSProperties;
+
+  if (teaching) {
+    const authored = teaching.grantsMoveId ? moves[teaching.grantsMoveId] : null;
     return (
-      <ClassChoice
-        run={run}
-        entry={student}
-        offers={offers}
-        pickedClassId={pickedClassId}
-        onPick={(id) => setPickedClassId(pickedClassId === id ? null : id)}
-        onConfirm={confirm}
-      />
+      <div className="node-screen rite-screen is-academy tutor-node-screen academy-heroes" style={{ ...rite, '--rite-color': classColor(teaching) } as CSSProperties}>
+        <span className="node-sky academy-ground" aria-hidden="true" />
+        <NodeMotes count={14} />
+        <RosterPeek run={run} />
+
+        <div className="tutor-moves-head academy-heroes-head">
+          <button type="button" className="tutor-moves-back" onClick={() => setTeachingId(null)}>
+            ‹ Classes
+          </button>
+          <span className="academy-teaching" style={{ color: classColor(teaching) }}>
+            <ClassGlyph cls={teaching} />
+            {teaching.name}
+          </span>
+        </div>
+        <span className="rite-eyebrow academy-ask">Who learns it?</span>
+
+        <HeroPickGrid count={run.roster.length} fill>
+          {run.roster.map((entry) => {
+            const hero = rosterHeroes[entry.heroId];
+            const open = entry.classId === null;
+            const held = entry.classId ? classes[entry.classId] : null;
+            // A class move wears its holder's type: shown at the type it would have on this hero.
+            const typed = authored ? moveForPrimaryType(authored, hero.types[0]) : null;
+            return (
+              <HeroPickCard
+                key={entry.rosterId}
+                hero={hero}
+                entry={entry}
+                disabled={!open}
+                onActivate={() => teach(entry)}
+                onPreview={() => setPreviewing({ hero, entry })}
+                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${open ? `learns ${teaching.name}` : `already a ${held?.name}`}`}
+                detail={
+                  open && typed ? (
+                    <span className="tutor-fit" style={{ color: getTypeColor(typed.type) }}>
+                      <ElementGlyph type={typed.type} /> {typed.name}
+                    </span>
+                  ) : undefined
+                }
+                ctaClassName="is-accent"
+                cta={open ? 'Teach' : held ? `Is a ${held.name}` : 'Has a Class'}
+              />
+            );
+          })}
+        </HeroPickGrid>
+
+        {previewing && (
+          <HeroPreviewOverlay
+            hero={previewing.hero}
+            entry={previewing.entry}
+            equipmentLookup={equipment}
+            relicIds={run.relics}
+            gold={run.gold}
+            scale={statScaleFor(run)}
+            onClose={() => setPreviewing(null)}
+          />
+        )}
+      </div>
     );
   }
 
   return (
-    <div className="node-screen rite-screen is-academy tutor-node-screen" style={{ '--node-rgb': ACADEMY_RGB, '--rite-color': `rgb(${ACADEMY_RGB})` } as CSSProperties}>
+    <div className={`node-screen rite-screen is-academy tutor-node-screen academy-landing${picked ? ' has-pick' : ''}`} style={rite}>
       <span className="node-sky academy-ground" aria-hidden="true" />
       <NodeMotes count={14} />
       <RosterPeek run={run} />
@@ -144,50 +200,57 @@ export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props)
       </header>
 
       {anyEligible ? (
-        <HeroPickGrid count={run.roster.length} fill>
-          {run.roster.map((entry) => {
-            const hero = rosterHeroes[entry.heroId];
-            const open = entry.classId === null;
-            const held = entry.classId ? classes[entry.classId]?.name : null;
-            return (
-              <HeroPickCard
-                key={entry.rosterId}
-                hero={hero}
-                entry={entry}
-                disabled={!open}
-                onActivate={() => {
+        <>
+          <div className="verb-card-list academy-class-list">
+            {offers.map((cls) => (
+              <ClassCard
+                key={cls.id}
+                cls={cls}
+                picked={pickedClassId === cls.id}
+                dimmed={!!picked && pickedClassId !== cls.id}
+                onPick={() => {
                   playSfx('ui.pick');
-                  setStudentId(entry.rosterId);
+                  setPickedClassId(pickedClassId === cls.id ? null : cls.id);
                 }}
-                onPreview={() => setPreviewing({ hero, entry })}
-                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${open ? 'no Class yet' : `already a ${held}`}`}
-                ctaClassName="is-accent"
-                cta={open ? 'Enrol' : held ?? 'Has a Class'}
+                onRead={() => setReading(cls)}
               />
-            );
-          })}
-        </HeroPickGrid>
+            ))}
+          </div>
+
+          {/* Who can still learn one: a lit figure is free, a dimmed one already wears its Class's mark. */}
+          <span className="rite-eyebrow academy-students-label">Who can learn</span>
+          <div className="academy-students" aria-label="Heroes who can learn a Class">
+            {run.roster.map((entry) => {
+              const hero = rosterHeroes[entry.heroId];
+              const held = entry.classId ? classes[entry.classId] : null;
+              return (
+                <span key={entry.rosterId} className={`academy-student${held ? ' has-class' : ''}`} title={held ? `${hero.name} · ${held.name}` : hero.name}>
+                  <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="academy-student-portrait" />
+                  {held && (
+                    <span className="academy-student-mark" style={{ color: classColor(held) }} aria-hidden="true">
+                      <ClassGlyph cls={held} />
+                    </span>
+                  )}
+                </span>
+              );
+            })}
+          </div>
+
+          <button className="resolve-button" disabled={!picked} onClick={() => picked && setTeachingId(picked.id)}>
+            {picked ? `Choose a student — ${picked.name}` : 'Choose a Class'}
+          </button>
+        </>
       ) : (
-        <div className="node-spacer" />
+        <>
+          <div className="node-spacer" />
+          <button className="resolve-button" onClick={onContinue}>
+            Continue
+          </button>
+        </>
       )}
 
-      {!anyEligible && (
-        <button className="resolve-button" onClick={onContinue}>
-          Continue
-        </button>
-      )}
-
-      {previewing && (
-        <HeroPreviewOverlay
-          hero={previewing.hero}
-          entry={previewing.entry}
-          equipmentLookup={equipment}
-          relicIds={run.relics}
-          gold={run.gold}
-          scale={statScaleFor(run)}
-          onClose={() => setPreviewing(null)}
-        />
-      )}
+      {reading?.grantsMoveId && <MoveDetailOverlay move={moves[reading.grantsMoveId]} onClose={() => setReading(null)} />}
+      {reading?.grantsPassiveId && <PassiveDetailOverlay passive={passives[reading.grantsPassiveId]} onClose={() => setReading(null)} />}
     </div>
   );
 }
@@ -206,103 +269,24 @@ export function classColor(cls: ClassDefinition): string {
   return cls.grantsPassiveId ? passiveColor(cls.grantsPassiveId) : KIND_COLORS[cls.kind];
 }
 
-interface ChoiceProps {
-  run: RunState;
-  entry: RosterEntry;
-  offers: ClassDefinition[];
-  pickedClassId: string | null;
-  onPick: (classId: string) => void;
-  onConfirm: () => void;
-}
-
-/**
- * Three Classes, pick then confirm: the hero up front, taking the colour of the Class it is leaning
- * toward, and the three verbs as cards of one height — the Class's mark, its name, and the move or
- * passive it grants. A hold reads the verb whole. No way back: the hero enrolled is the hero taught.
- */
-function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: ChoiceProps) {
-  const hero = rosterHeroes[entry.heroId];
-  const caster = healCasterForEntry(hero, entry, run.relics);
-  const picked = pickedClassId ? offers.find((c) => c.id === pickedClassId) ?? null : null;
-  const [reading, setReading] = useState<ClassDefinition | null>(null);
-  return (
-    <div
-      className={`node-screen rite-screen is-academy academy-choice${picked ? ' has-pick' : ''}`}
-      style={{ '--node-rgb': ACADEMY_RGB, '--rite-color': picked ? classColor(picked) : `rgb(${ACADEMY_RGB})` } as CSSProperties}
-    >
-      <span className="node-sky academy-ground" aria-hidden="true" />
-      <NodeMotes count={14} />
-      <RosterPeek run={run} />
-
-      <header className="rite-head">
-        <span className="rite-hero">
-          <span className="rite-pool" aria-hidden="true" />
-          <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="rite-portrait" />
-          {picked && (
-            <span className="rite-mark" key={picked.id} aria-hidden="true">
-              <ClassGlyph cls={picked} />
-            </span>
-          )}
-        </span>
-        <span className="rite-eyebrow">Choose a Class</span>
-        <h2 className="rite-name">{hero.name}</h2>
-        <span className="rite-types">
-          {rosterEntryTypes(hero, entry).map((t) => (
-            <span key={t} className="pick-type-code" style={{ color: getTypeColor(t) }}>
-              <ElementGlyph type={t} />
-              {getTypeAbbr(t)}
-            </span>
-          ))}
-        </span>
-      </header>
-
-      <div className="verb-card-list academy-class-list">
-        {offers.map((cls) => (
-          <ClassCard
-            key={cls.id}
-            cls={cls}
-            picked={pickedClassId === cls.id}
-            dimmed={!!picked && pickedClassId !== cls.id}
-            caster={caster}
-            onPick={() => {
-              playSfx('ui.pick');
-              onPick(cls.id);
-            }}
-            onRead={() => setReading(cls)}
-          />
-        ))}
-      </div>
-
-      <button className="resolve-button" disabled={!picked} onClick={onConfirm}>
-        {picked ? `Learn — ${picked.name}` : 'Choose a Class'}
-      </button>
-
-      {reading?.grantsMoveId && <MoveDetailOverlay move={moves[reading.grantsMoveId]} caster={caster} onClose={() => setReading(null)} />}
-      {reading?.grantsPassiveId && <PassiveDetailOverlay passive={passives[reading.grantsPassiveId]} onClose={() => setReading(null)} />}
-    </div>
-  );
-}
-
 interface CardProps {
   cls: ClassDefinition;
   picked: boolean;
   dimmed: boolean;
-  caster: ReturnType<typeof healCasterForEntry>;
   onPick: () => void;
   onRead: () => void;
 }
 
 /**
  * One Class: its mark and name over the verb drawn as the player already knows it — a move as the
- * fight's own move button (at the type it will have on THIS hero), a passive as the innate readout.
- * Tap picks; hold reads.
+ * fight's own move button, tagged as wearing its holder's type (no hero is chosen yet), a passive as
+ * the innate readout. Tap picks; hold reads.
  */
-function ClassCard({ cls, picked, dimmed, caster, onPick, onRead }: CardProps) {
-  const authored = cls.grantsMoveId ? moves[cls.grantsMoveId] : null;
-  const move = authored && caster ? moveForPrimaryType(authored, caster.types[0]) : authored;
+function ClassCard({ cls, picked, dimmed, onPick, onRead }: CardProps) {
+  const move = cls.grantsMoveId ? moves[cls.grantsMoveId] : null;
   const passive = cls.grantsPassiveId ? passives[cls.grantsPassiveId] : null;
   const longPress = useLongPress(onRead, onPick);
-  const summary = move ? moveEffectSummary(move, caster) : passive?.description ?? '';
+  const summary = move ? moveEffectSummary(move) : passive?.description ?? '';
   return (
     <div
       className={`verb-card class-card${picked ? ' is-picked' : ''}${dimmed ? ' is-dimmed' : ''}`}
@@ -328,7 +312,7 @@ function ClassCard({ cls, picked, dimmed, caster, onPick, onRead }: CardProps) {
       </span>
       {/* Read-only: the card takes the press, so the replica is drawn and never pressed. */}
       <span className="class-card-verb">
-        {authored && <MoveButtonReplica move={authored} caster={caster} />}
+        {move && <MoveButtonReplica move={move} tag={move.typeFollowsUser ? "Hero's type" : undefined} />}
         {passive && <PassiveReadout passive={passive} />}
       </span>
     </div>
