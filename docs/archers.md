@@ -71,6 +71,15 @@ are what set them apart; Quiver is what they share.
 - **The enemy side:** the AI reads the round's kit (`kitForRound`), so an enemy archer will likely
   cast its first face and lock at once. Acceptable; a smarter wait is a later AI tier.
 
+**BUILT for Squall, 2026-10-08** (per user direction, ahead of the art): `quiver` in `src/data/moves.ts`
+(`metamorphic: { poolTag: 'arrow', locksOnCast: true }`, `MetamorphicRule`), faces narrowed in
+`run/metamorphic.ts kitForRound`, the kit and opened tiers stamped at fight build
+(`buildCombatState quiverStamp` → `Combatant.kitMoveIds`, `openTiers`), and the lock written at the
+cast (`state.ts faceLockFor` → `Combatant.lockedFaces`). The skilled pilot now reads the round's kit
+too (it did not, for Motley either). Squall opens on Quiver + Rising Static with Storm Arrow in his
+Early offers; the refill Boons count Quiver as an Arrow. Sliver and Sleet only need their Arrows and a
+kit. Not simulated yet. Quiver wears Iron, the shared Arrow's metal, since it is never cast as itself.
+
 ## Squall (his shelf, and Quiver)
 
 Squall is built and keeps Retrieve / Retrieve+ (Restock), Gale Volley and Windshear / Dust Devil /

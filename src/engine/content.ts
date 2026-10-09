@@ -431,6 +431,16 @@ export type SelfHpCost =
 /** A family label a passive can read across types (docs/charges.md): Squall's Arrows, Barrier's guard. Never a type. */
 export type MoveTag = 'arrow' | 'guard';
 
+/**
+ * A narrowed metamorphic move (Quiver, docs/archers.md): faces only from moves carrying `poolTag`, of
+ * the tiers the holder has opened (Combatant.openTiers); `locksOnCast` keeps the first face cast as the
+ * slot for the rest of the fight (Combatant.lockedFaces). Motley's Trick is the bare `true`.
+ */
+export interface MetamorphicRule {
+  poolTag: MoveTag;
+  locksOnCast?: true;
+}
+
 export interface MoveDefinition {
   id: string;
   name: string;
@@ -593,7 +603,7 @@ export interface MoveDefinition {
    * DERIVED from (seed, round, combatantId) like randomBasePower — and the face is what is declared,
    * priced and resolved. run/metamorphic.ts kitForRound is the one place the swap happens.
    */
-  metamorphic?: true;
+  metamorphic?: true | MetamorphicRule;
   /** No replace path may take this move off a hero (run/progression.ts isLockedMove): it is part of who the hero is. */
   permanent?: true;
   target: TargetMode;

@@ -5,7 +5,7 @@
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatDelta, StatKey, StatusDefinition, StatusId } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
-import { activePartnerTypes, availableCall, chargesLeft, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta } from '../state';
+import { activePartnerTypes, availableCall, chargesLeft, faceLockFor, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -325,6 +325,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           ...(move.chargesPerFight != null
             ? { chargesSpent: { ...actor.chargesSpent, [move.id]: (actor.chargesSpent?.[move.id] ?? 0) + 1 } }
             : {}),
+          ...(faceLockFor(actor, move, moves) ? { lockedFaces: { ...actor.lockedFaces, [faceLockFor(actor, move, moves)!]: move.id } } : {}),
           damageTakenSinceLastTurn: 0,
         },
       },

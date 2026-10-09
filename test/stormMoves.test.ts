@@ -326,7 +326,8 @@ test('storm: every Storm hero attacks off its better stat — the "no trap pick"
   for (const heroId of ['stormRanger', 'tempest']) {
     const hero = heroes[heroId];
     const { attack, intelligence } = hero.baseStats;
-    const attacks = hero.moveIds.map((id) => moves[id]).filter((m) => m.kind === 'damage');
+    // Quiver's faces are physical Arrows, so it is the kit's attack (docs/archers.md).
+    const attacks = hero.moveIds.map((id) => moves[id]).filter((m) => m.kind === 'damage' || typeof m.metamorphic === 'object');
     assert.ok(attacks.length > 0, `${heroId} has no damage move at all`);
     // A tied Atk/Int line (Tempest) is honest either way; only an exclusively-weaker-stat kit is the trap.
     if (attack === intelligence) continue;

@@ -437,7 +437,8 @@ test('schedule: offers are staggered across the roster — no fight at par fires
 test('move tiers: a starting kit is one attack and one move that is not — Widow alone holds two', () => {
   const TWO_ATTACKS = new Set(['widow']);
   for (const hero of Object.values(heroesById)) {
-    const attacks = hero.moveIds.filter((id) => moves[id]?.kind === 'damage').length;
+    // Quiver (docs/archers.md) is an attack: every face it can show is an Arrow.
+    const attacks = hero.moveIds.filter((id) => moves[id]?.kind === 'damage' || typeof moves[id]?.metamorphic === 'object').length;
     assert.strictEqual(attacks, TWO_ATTACKS.has(hero.id) ? 2 : 1, `${hero.name} starts with ${attacks} attacks`);
   }
 });

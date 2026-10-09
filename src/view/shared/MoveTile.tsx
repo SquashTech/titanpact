@@ -460,6 +460,13 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(`Field: ${fieldEffects[move.fieldEffectApplication]?.name ?? move.fieldEffectApplication}`);
   }
 
+  // A metamorphic move is never cast as itself: say what it turns into, not who it targets.
+  if (move.metamorphic) {
+    return typeof move.metamorphic === 'object'
+      ? `Shows one ${move.metamorphic.poolTag === 'arrow' ? 'Arrow' : 'move'} a round; the first one cast stays for the fight`
+      : 'Becomes a random move each round';
+  }
+
   // The row's height is reserved either way; say something rather than leave a gap.
   if (parts.length === 0) return TARGET_MODE_LABELS[move.target];
 

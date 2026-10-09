@@ -1,6 +1,6 @@
 // Combat state — the COMBAT tier only (docs/architecture.md "State shapes"). Run and meta state are separate tiers.
 
-import type { FieldEffectDefinition, FieldEffectId, HeroDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatKey, StatusId, TargetMode, TypeId } from './content';
+import type { FieldEffectDefinition, FieldEffectId, HeroDefinition, MoveDefinition, MoveTier, PassiveDefinition, PassiveId, StatKey, StatusId, TargetMode, TypeId } from './content';
 import { nextRange, type RngState } from './rng/seededRng';
 
 export type Side = 'A' | 'B';
@@ -54,6 +54,12 @@ export interface Combatant {
   manaSurcharge?: number;
   /** Charges spent this fight per move id (`chargesPerFight`); kept through a switch, never refilled by Rest or the bench. Read via chargesLeft. */
   chargesSpent?: Partial<Record<string, number>>;
+  /** The kit this combatant entered the fight with; stamped only for a kit holding a locking metamorphic move (Quiver), so a cast can tell a face from a held move. */
+  kitMoveIds?: readonly string[];
+  /** The move tiers this combatant's level has opened (its schedule's bands); a narrowed metamorphic move rolls faces only from these. Absent = every tier. */
+  openTiers?: readonly MoveTier[];
+  /** A locking metamorphic move's id -> the face cast first, kept as that slot for the rest of the fight (Quiver). Holds through a switch. */
+  lockedFaces?: Partial<Record<string, string>>;
   /** The round this combatant first acts after arriving (switching.ts performSwitch sets round + 1); unset for a lead, whose first round is 1. Read by isMoveUsable for `firstTurnOnly`. */
   firstActionRound?: number;
   /** Accumulated basePowerGainOnUse per move id; grows only within a fight. Read via effectiveBasePower. */
@@ -416,6 +422,21 @@ export function hasAffordableMoveInFight(
 ): boolean {
   const currentMana = state.combatants[combatantId]?.currentMana ?? 0;
   return moveIds.some((id) => isMoveUsable(state, combatantId, moves[id]) && currentMana >= resolveManaCost(state, combatantId, moves[id], heroes));
+}
+
+/**
+ * The locking metamorphic move (Quiver) that casting `move` locks, or null: the cast is a face — not a
+ * move the kit holds — carrying the rule's tag, and that slot is not locked yet.
+ */
+export function faceLockFor(combatant: Combatant, move: MoveDefinition, moves: Record<string, MoveDefinition>): string | null {
+  const kit = combatant.kitMoveIds;
+  if (!kit || kit.includes(move.id)) return null;
+  for (const id of kit) {
+    const rule = moves[id]?.metamorphic;
+    if (typeof rule !== 'object' || !rule.locksOnCast || combatant.lockedFaces?.[id]) continue;
+    if (move.tags?.includes(rule.poolTag)) return id;
+  }
+  return null;
 }
 
 /** Charges this combatant has left on `move`, or null for a move without Charges. */

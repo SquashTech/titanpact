@@ -180,6 +180,6 @@ test('tall grass: Poised lifts only an attack — a second stance move neither r
 });
 
 test('tall grass: Lure leaves Tixwick Poised whenever it is struck', () => {
-  const { state: next } = resolveRound(mantisFixture(415, 'lure'), [swing('b1', 'stormRanger', 'a1')], config);
+  const { state: next } = resolveRound(mantisFixture(415, 'lure'), [{ kind: 'move', combatantId: 'b1', moveId: 'stormArrow', declaredTarget: 'a1' } as Action], config);
   assert.ok(hasStatus(next.combatants.a1, 'Poised'));
 });

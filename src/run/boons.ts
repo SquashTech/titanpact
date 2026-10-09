@@ -62,6 +62,9 @@ export function chargeBoonMoveCount(passive: PassiveDefinition | undefined, entr
   if (!refill || refill.kind !== 'restoreCharge') return null;
   return entry.unlockedMoveIds.filter((id) => {
     const move = moveLookup[id];
+    // Quiver locks an Arrow in every fight, and every Arrow holds Charges.
+    const rule = move?.metamorphic;
+    if (typeof rule === 'object') return refill.moveTag === undefined || refill.moveTag === rule.poolTag;
     return move?.chargesPerFight != null && (refill.moveTag === undefined || !!move.tags?.includes(refill.moveTag));
   }).length;
 }

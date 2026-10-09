@@ -884,6 +884,20 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 1,
     target: 'singleEnemy',
   },
+  // Quiver (docs/archers.md): the archers' shared opener. Never cast as itself — each round it shows one
+  // Arrow from the whole family, of the tiers the archer has opened, and the first one cast is locked in.
+  quiver: {
+    id: 'quiver',
+    name: 'Quiver',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'buff',
+    manaCost: 0,
+    priority: 0,
+    target: 'self',
+    metamorphic: { poolTag: 'arrow', locksOnCast: true },
+    permanent: true,
+  },
   // Squall's Arrows (docs/charges.md): cheap and hard for their price, held to a quiver of Charges.
   // Retrieve and Restock, his innate, are what give them back. First-pass figures.
   stormArrow: {

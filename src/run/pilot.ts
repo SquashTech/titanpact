@@ -66,6 +66,7 @@ import { passives } from '../data/passives';
 import { fieldEffects } from '../data/fieldEffects';
 import { typeChart } from '../data/typechart';
 import { atTopOfRestableLadder, type AiContext } from './ai';
+import { kitForRound } from './metamorphic';
 
 /** Variance is uniform, so its expectation is the midpoint; crit folds in as its expected multiplier. */
 const MEAN_VARIANCE = (VARIANCE_MIN + VARIANCE_MAX) / 2;
@@ -839,7 +840,8 @@ function statDeltaReceivers(
 /** Every option this caster could declare, scored. */
 function scoreOptions(state: CombatState, casterId: string, ctx: AiContext, cache: Map<string, number>): Scored[] {
   const caster = state.combatants[casterId];
-  const moveIds = ctx.moveIdsFor(casterId);
+  // This round's kit: a metamorphic move (Motley's Trick, Quiver) is already its face here.
+  const moveIds = kitForRound(state, casterId, ctx.moveIdsFor(casterId), moves, ctx.passives ?? passives);
   const affordable = moveIds.filter((id) => moves[id] && isMoveUsable(state, casterId, moves[id]) && caster.currentMana >= resolveManaCost(state, casterId, moves[id], allCombatants));
 
   // The reference an unpriceable payload is credited against: the best plain hit available this turn.
@@ -921,7 +923,7 @@ export function pilotActions(state: CombatState, side: Side, ctx: AiContext, opt
 
   const bestOf = new Map<string, Scored | null>();
   for (const casterId of actingIds) {
-    const moveIds = ctx.moveIdsFor(casterId);
+    const moveIds = kitForRound(state, casterId, ctx.moveIdsFor(casterId), moves, ctx.passives ?? passives);
     const options = hasAffordableMoveInFight(state, casterId, moveIds, moves, allCombatants)
       ? scoreOptions(state, casterId, ctx, cache)
       : [];

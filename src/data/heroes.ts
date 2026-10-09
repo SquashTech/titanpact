@@ -225,7 +225,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Squall',
     types: ['Storm'],
     baseStats: { hp: 190, attack: 85, defense: 45, intelligence: 30, wisdom: 45, speed: 105, manaPool: 50, mpRegen: 10 },
-    moveIds: ['stormArrow', 'risingStatic'],
+    moveIds: ['quiver', 'risingStatic'],
     growthGrades: { hp: 'B', attack: 'A', defense: 'A', intelligence: 'D', wisdom: 'B', speed: 'B', manaPool: 'B' },
     schedule: { offerLevels: [5, 8, 11, 17, 21], midLevel: 10, lateLevel: 20, signatureLevel: 20 },
     signatureMoveId: 'galeVolley',

@@ -117,8 +117,10 @@ function squall(seed: number, passiveId: string): CombatState {
 const arrow = (target: string): Action => ({ kind: 'move', combatantId: 'a1', moveId: 'stormArrow', declaredTarget: target }) as Action;
 const setHp = (state: CombatState, id: string, hp: number): CombatState => ({ ...state, combatants: { ...state.combatants, [id]: { ...state.combatants[id], currentHp: hp } } });
 
-test('charges: Squall opens with Storm Arrow, an Arrow, and holds Retrieve', () => {
-  assert.ok(heroes.stormRanger.moveIds.includes('stormArrow'));
+test('charges: Squall opens with Quiver, holds Storm Arrow in his offers, and holds Retrieve', () => {
+  assert.ok(heroes.stormRanger.moveIds.includes('quiver'));
+  const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
+  assert.ok(progressionTable.moveTiers.stormRanger.includes('stormArrow'));
   assert.ok(moves.stormArrow.tags?.includes('arrow') && moves.stormArrow.chargesPerFight! > 0);
   assert.deepStrictEqual(heroes.stormRanger.passiveIds, ['retrieve']);
 });

@@ -15,7 +15,10 @@ import type { Squad } from './squad';
 import type { EquipmentDefinition } from './equipment';
 import { entryPassiveCounts, entryStatModifiers } from './entryStats';
 import { innatePassiveIdsFor } from './innate';
-import { formIdFor } from './progression';
+import { formIdFor, scheduleFor } from './progression';
+import { levelOf } from './growth';
+import { moves as moveCatalog } from '../data/moves';
+import type { MoveTier } from '../engine/content';
 import { turnedCurse } from './curse';
 import { enduranceOf, sideImmunitiesOf, switchLockOf, toPassiveInstances } from './passives';
 import { equipmentStatusGrants, mergeStatusGrants, toStatusInstances } from './statusGrants';
@@ -81,8 +84,25 @@ function placeEntry(
     ...(entry.blessed ? { blessed: true } : {}),
     ...(turnedCurse(entry) ? { typeOverride: turnedCurse(entry)!.types } : {}),
     ...(formPathId ? { formPathId } : {}),
+    ...quiverStamp(entry, hero),
   };
   return { ...withMods, currentHp: woundedHp(getMaxHp(hero, withMods), entry.wounds), currentMana: getMaxMana(hero, withMods) };
+}
+
+/**
+ * A kit holding a locking metamorphic move (Quiver, docs/archers.md) carries the kit itself — so a cast
+ * can tell a face from a held move — and the tiers the hero's level has opened, the bands its offers
+ * read. Nothing is stamped for any other kit.
+ */
+export function quiverStamp(entry: RosterEntry, hero: HeroLookup[string]): { kitMoveIds?: readonly string[]; openTiers?: readonly MoveTier[] } {
+  const kit = entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : hero.moveIds;
+  if (!kit.some((id) => typeof moveCatalog[id]?.metamorphic === 'object')) return {};
+  const schedule = scheduleFor(hero);
+  const level = levelOf(entry);
+  const openTiers: MoveTier[] = ['early'];
+  if (level >= schedule.midLevel) openTiers.push('mid');
+  if (level >= schedule.lateLevel) openTiers.push('late');
+  return { kitMoveIds: [...kit], openTiers };
 }
 
 export function buildCombatState(

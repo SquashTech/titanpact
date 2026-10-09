@@ -229,7 +229,8 @@ test('iron: Reinforce pays BOTH allies, including the caster', () => {
 // --- Conduct: Iron cashes, never plants ---
 
 test('iron: every damage row detonates Conduct for free, and the slate plants it zero times', () => {
-  const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron' && !signatureMoves[m.id] && !classMoves[m.id]);
+  // Quiver wears Iron but is never cast as itself (docs/archers.md): not a slate row.
+  const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron' && !signatureMoves[m.id] && !classMoves[m.id] && !m.metamorphic);
   const damage = ironMoves.filter((m) => m.kind === 'damage');
   const planters = ironMoves.filter((m) => firstStatusApplication(m)?.statusId === 'Conduct');
 

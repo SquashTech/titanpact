@@ -214,6 +214,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     'pinDown','icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rimeCoat', 'rockToss', 'openingStrike', 'ironFist', 'frostWall', 'cogBop', 'snowball', 'heavyBlow', 'iceShatter', 'rubbleRush', 'momentumSwing', 'serratedSlice', 'titanicCrush', 'hoarfrostEdge'],
     // --- Storm ---
     stormRanger: [
+      'stormArrow',
       'ironArrow',
       'thunderclap',
       'pinningShot',

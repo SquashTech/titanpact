@@ -44,10 +44,25 @@ export function kitForRound(
   passives: Record<PassiveId, PassiveDefinition>
 ): string[] {
   if (!moveIds.some((id) => moves[id]?.metamorphic)) return [...moveIds];
-  // Never a move the kit already holds: two identical rows would be one choice wearing two buttons.
-  const pool = metamorphicPool(moves).filter((id) => !moveIds.includes(id));
-  const faces = resolveMetamorphicFaces(state, combatantId, pool, facesFor(state, combatantId, passives));
-  return moveIds.flatMap((id) => (moves[id]?.metamorphic ? faces : [id]));
+  const combatant = state.combatants[combatantId];
+  const faceCount = facesFor(state, combatantId, passives);
+  return moveIds.flatMap((id) => {
+    const rule = moves[id]?.metamorphic;
+    if (!rule) return [id];
+    // A locked slot (Quiver) is its first-cast face for the rest of the fight.
+    const locked = typeof rule === 'object' ? combatant?.lockedFaces?.[id] : undefined;
+    if (locked) return [locked];
+    // Never a move the kit already holds: two identical rows would be one choice wearing two buttons.
+    let pool = metamorphicPool(moves).filter((faceId) => !moveIds.includes(faceId));
+    if (typeof rule === 'object') {
+      const open = combatant?.openTiers;
+      pool = pool.filter((faceId) => {
+        const face = moves[faceId];
+        return !!face?.tags?.includes(rule.poolTag) && (!open || open.includes(face.tier ?? 'early'));
+      });
+    }
+    return resolveMetamorphicFaces(state, combatantId, pool, faceCount);
+  });
 }
 
 /** The metamorphic move a face came from, if `faceId` is one of this round's faces — for the button's tag. */
