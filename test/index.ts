@@ -61,6 +61,7 @@ import './encounters.test';
 import './companion.test';
 import './companionCall.test';
 import './cycles.test';
+import './chronicle.test';
 import './wardens.test';
 import './warbands.test';
 import './finale.test';

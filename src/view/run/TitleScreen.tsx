@@ -11,7 +11,10 @@ import { starBalance, type StarShopOffer } from '../../run/starShop';
 import { TitanColossus, TitanRidge } from './titanArt';
 import { SealArt } from '../shared/SealArt';
 import { HubGlyph } from '../shared/nodeIcons';
-import { CYCLES, FIRST_CYCLE } from '../../run/cycles';
+import { FIRST_CYCLE } from '../../run/cycles';
+import { chronicleBand, chronicleLines, chronicleWovenTipId, pendingWeave } from '../../run/chronicle';
+import { heroes } from '../../data/heroes';
+import { CycleTapestry } from './CycleTapestry';
 import { AudioSettings } from '../shared/AudioSettings';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
@@ -43,6 +46,8 @@ interface Props {
   onStartRun: (cycle: number) => void;
   /** The highest Cycle the profile may start on; Cycle I until a run has been cleared. */
   openCycle: number;
+  /** Records a seen-once beat (the Chronicle weave) in the profile. */
+  onSeeTip: (id: string) => void;
   /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
   onResetTips: () => void;
   /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +50 stars to test the Constellation and the stakes. */
@@ -105,6 +110,7 @@ export function TitleScreen({
   onContinueRun,
   onStartRun,
   openCycle,
+  onSeeTip,
   onResetTips,
   onGrantDevStars,
   onQuickBattle,
@@ -130,7 +136,8 @@ export function TitleScreen({
   const [showDev, setShowDev] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [confirmingNewRun, setConfirmingNewRun] = useState(false);
-  const [pickingCycle, setPickingCycle] = useState(false);
+  // The weave is chosen as the tapestry opens and held, since marking it seen re-renders the profile.
+  const [pickingCycle, setPickingCycle] = useState<{ weave?: number } | null>(null);
   const [staleNoteDismissed, setStaleNoteDismissed] = useState(false);
   const [mode, setMode] = useState<TitleMode>('pact');
   /** Which way the mode page slid in: +1 from the right, -1 from the left. */
@@ -214,7 +221,9 @@ export function TitleScreen({
   /** Nothing to ask until Cycle I is cleared; then the Cycle is the one question between the press and the draft. */
   function startFresh() {
     if (openCycle > FIRST_CYCLE) {
-      setPickingCycle(true);
+      const weave = pendingWeave(profile);
+      if (weave) onSeeTip(chronicleWovenTipId(weave));
+      setPickingCycle({ weave });
       return;
     }
     launch(() => onStartRun(FIRST_CYCLE));
@@ -493,36 +502,20 @@ export function TitleScreen({
         </div>
       )}
 
-      {/* The Cycles (docs/cycles.md §4): every open one selectable, the rest teased by name, greyed. */}
+      {/* The Cycles (docs/cycles.md §4) as the Chronicle: every open one selectable, the rest woven ahead as bare warp. */}
       {pickingCycle && (
-        <div className="log-overlay" onClick={() => setPickingCycle(false)}>
-          <div className="log-panel title-confirm-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="title-confirm-title">Which Cycle?</div>
-            {CYCLES.map((c) => {
-              const open = c.cycle <= openCycle;
-              return (
-                <button
-                  key={c.cycle}
-                  className={`options-item title-cycle${open && c.cycle > FIRST_CYCLE ? ' options-item-danger' : ''}`}
-                  disabled={!open}
-                  onClick={() => {
-                    setPickingCycle(false);
-                    launch(() => onStartRun(c.cycle));
-                  }}
-                >
-                  <span className="title-cycle-head">
-                    <span className="title-cycle-name">
-                      <span className="title-cycle-numeral">{c.numeral}</span>
-                      {c.name}
-                    </span>
-                    {open && <span className="title-cycle-bonus">Clear +★ {c.clearBonus}</span>}
-                  </span>
-                  {open && <span className="title-cycle-line">{c.line}</span>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <CycleTapestry
+          openCycle={openCycle}
+          cleared={profile.cyclesCleared}
+          wardens={chronicleBand(profile)}
+          chronicle={chronicleLines(profile, (id) => heroes[id]?.name)}
+          weaveCycle={pickingCycle.weave}
+          onBegin={(cycle) => {
+            setPickingCycle(null);
+            launch(() => onStartRun(cycle));
+          }}
+          onClose={() => setPickingCycle(null)}
+        />
       )}
 
       {showLocations && <LocationSelectOverlay onPick={onVisitLocation} onClose={() => setShowLocations(false)} />}

@@ -1317,6 +1317,7 @@ export function App() {
           onContinueRun={handleContinueRun}
           onStartRun={handleStartNewRun}
           openCycle={openCycle(profile)}
+          onSeeTip={markTipSeen}
           onResetTips={handleResetTips}
           onGrantDevStars={handleGrantDevStars}
           onQuickBattle={handleQuickBattle}

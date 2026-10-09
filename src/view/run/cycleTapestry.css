@@ -1,0 +1,309 @@
+/* The Cycle picker as a woven chronicle (CycleTapestry.tsx). */
+
+.tp-root {
+  /* Fixed inside the transformed shell, which is what pins it to the canvas (as .log-overlay is). */
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  background: radial-gradient(120% 70% at 50% 20%, #2a1f17 0%, #120d0a 70%);
+  color: #3a2a1a;
+}
+
+/* --- The rod the hanging unrolls from --- */
+.tp-rod {
+  position: absolute;
+  top: 14px;
+  left: 6px;
+  right: 6px;
+  height: 20px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+}
+.tp-rod-bar {
+  flex: 1;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #8a5a32 0%, #5a3518 45%, #3a210d 100%);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 220, 170, 0.35);
+}
+.tp-finial {
+  width: 18px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff1b8 0%, #e0a83c 35%, #8a5a14 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.tp-plaque {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 4px 14px 5px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff3d6;
+  text-shadow: 0 1px 0 #1a0f07;
+  background: linear-gradient(180deg, #7a4f24, #4a2c12);
+  border: 1px solid #e0a83c;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.tp-close {
+  position: absolute;
+  top: 46px;
+  right: 10px;
+  z-index: 4;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(10, 6, 4, 0.6);
+  color: #e9dcc0;
+  font-size: 13px;
+}
+
+/* --- The cloth --- */
+.tp-scroll {
+  position: absolute;
+  top: 26px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  animation: tp-unroll 1100ms cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+.tp-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes tp-unroll {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.tp-cloth {
+  position: relative;
+  width: 340px;
+  margin: 0 auto 120px;
+  padding: 30px 0 10px;
+  background-color: #d8c49a;
+  /* The weave of the ground cloth; captions sit on their own flat band. */
+  background-image:
+    repeating-linear-gradient(90deg, rgba(90, 60, 30, 0.07) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(0deg, rgba(255, 245, 220, 0.12) 0 1px, transparent 1px 3px),
+    linear-gradient(90deg, rgba(60, 35, 15, 0.35), transparent 8%, transparent 92%, rgba(60, 35, 15, 0.35));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  border-left: 4px double #8a5a32;
+  border-right: 4px double #8a5a32;
+}
+
+/* --- A Cycle --- */
+.tp-panel {
+  position: relative;
+  margin: 0 auto 18px;
+  width: 312px;
+  transition: transform 180ms ease;
+}
+.tp-panel.is-picked {
+  transform: translateY(-3px) scale(1.02);
+}
+
+.tp-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.tp-numeral {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #5a3518;
+}
+.tp-name {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #4a2c12;
+}
+.tp-panel.is-warp .tp-numeral,
+.tp-panel.is-warp .tp-name {
+  color: rgba(74, 44, 18, 0.32);
+}
+
+.tp-frame {
+  position: relative;
+  padding: 3px;
+  border: 3px dashed var(--thread);
+  background: #2a1d12;
+  box-shadow: 0 0 0 1px rgba(60, 35, 15, 0.5), 0 3px 0 rgba(60, 35, 15, 0.25);
+}
+.tp-frame.is-rainbow {
+  border-color: #d8c49a;
+  background:
+    linear-gradient(#16121c, #16121c) padding-box,
+    linear-gradient(90deg, #e94b4b, #f3a33a, #f2e24a, #5fd17a, #4aa3f0, #9a6cf0, #e94b4b) border-box;
+}
+.tp-panel.is-warp .tp-frame {
+  border-color: rgba(74, 44, 18, 0.28);
+  background: #c9b48a;
+}
+.tp-panel.is-warp .tp-frame.is-rainbow {
+  background: #c9b48a;
+}
+.tp-panel.is-open .tp-frame {
+  background: #c9b48a;
+}
+.tp-panel.is-picked .tp-frame {
+  box-shadow: 0 0 0 1px #e0a83c, 0 0 18px rgba(224, 168, 60, 0.75);
+}
+
+.tp-panel-art {
+  position: relative;
+  width: 300px;
+  height: 168px;
+  overflow: hidden;
+}
+.tp-canvas {
+  display: block;
+  image-rendering: pixelated;
+}
+
+.tp-shuttle {
+  position: absolute;
+  right: 8px;
+  width: 34px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #b7834c, #6a4220);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 230, 190, 0.5);
+  transition: top 40ms linear;
+}
+.tp-shuttle::after {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 3px;
+  width: 8px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--thread);
+}
+.tp-shuttle.is-weaving {
+  animation: tp-shuttle 520ms ease-in-out infinite alternate;
+}
+@keyframes tp-shuttle {
+  from {
+    right: 8px;
+  }
+  to {
+    right: 258px;
+  }
+}
+
+.tp-caption {
+  min-height: 15px;
+  margin: 6px 2px 0;
+  padding: 5px 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  font-style: italic;
+  text-align: center;
+  color: #3a2410;
+  background: #e8d8b2;
+}
+.tp-caption:empty {
+  background: none;
+}
+.tp-panel.is-open .tp-caption {
+  color: rgba(58, 36, 16, 0.6);
+}
+
+.tp-tassels {
+  display: flex;
+  justify-content: space-around;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -26px;
+}
+.tp-tassel {
+  width: 5px;
+  height: 26px;
+  border-radius: 0 0 3px 3px;
+  box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* --- The sheet a picked Cycle raises --- */
+.tp-sheet {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 5;
+  padding: 12px 14px 14px;
+  background: #1b130d;
+  border: 1px solid #8a5a32;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.7);
+  transform: translateY(calc(100% + 20px));
+  transition: transform 220ms cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+.tp-sheet.is-up {
+  transform: none;
+}
+.tp-sheet .tp-numeral {
+  color: #e0a83c;
+}
+.tp-sheet-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.tp-sheet-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f1e3c4;
+}
+.tp-sheet-bonus {
+  font-size: 11px;
+  font-weight: 700;
+  color: #e0a83c;
+}
+.tp-sheet-line {
+  margin: 6px 0 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #cbbd9f;
+}
+.tp-begin {
+  display: block;
+  width: 100%;
+  padding: 0 2px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 18px;
+  letter-spacing: 0.06em;
+  color: #fff3d6;
+  text-shadow: 0 2px 0 #1a0f07, 0 0 8px rgba(224, 166, 60, 0.7);
+  border: 10px solid transparent;
+  border-image: url('../../../art/ui/plank-gilt.png') 5 fill / 10px round;
+  background: none;
+  image-rendering: pixelated;
+}

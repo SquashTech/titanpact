@@ -98,6 +98,12 @@ itself. Also a candidate: the Wardens stand with the player at the end.
   reached Cycle II's Permadeath can still take a breezy Cycle I run.
 - **After Cycle V is cleared**, the story is over and every Cycle stays playable — for the stars
   (§5) and for its own sake.
+- **The picker is the Chronicle** (2026-10-09, per user direction; `CycleTapestry.tsx`, `run/chronicle.ts`):
+  a woven hanging, one cross-stitched panel a Cycle drawn from the game's own art — the Wardens in
+  Cycle I's, held red in II's, the Eye in V's. A cleared Cycle is woven and captioned off its first win
+  in Run History, an open one half-woven with its threads hanging, a locked one bare warp with its
+  figure ghosted through. The newest clear weaves itself in once (`chronicle.cycle<N>` in `seenTipIds`),
+  and the next open Cycle starts on the loom behind it. Frames are stitched in the star colours (§5).
 
 ## 5. Stars
 
