@@ -14,12 +14,14 @@ import { MasteryPips } from '../shared/MasteryPips';
 import { NodeMotes, NODE_TINT_PARCHMENT } from '../shared/NodeStage';
 import { STAT_FULL_LABELS } from '../shared/relicStacks';
 import { entryStatTotals } from '../shared/entryStatTotals';
-import lapidaryArt from '../../../art/npc/lapidary.png';
 import { EvolutionScreen } from './EvolutionScreen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { MasteredInnateOverlay } from './MasteredInnateOverlay';
 import { RosterPeek } from './RosterPeek';
+import { useRoadGreeting } from './RoadEncounter';
+import { LapidaryOnTheRoad } from './LapidaryOnTheRoad';
+import { SCRIBE_LINES } from '../../data/roadLines';
 import { useMasteryFlow } from './masteryFlow';
 
 interface Props {
@@ -44,7 +46,14 @@ const BURST_MS = 700;
  * places it — the stat and a pip, for good. The only decision that can appear over it is the
  * Evolution or the mastered innate a pip opens (masteryFlow.ts).
  */
-export function GemNodeScreen({ run, onRunChange, plan, onDone, progress, onProgress }: Props) {
+export function GemNodeScreen(props: Props) {
+  // The Lapidary hands the Gems over on the road first; a visit resumed part-way skips straight on.
+  const [line, dismiss] = useRoadGreeting(props.run, SCRIBE_LINES, props.plan.source === 'scribe' && !props.progress);
+  if (line) return <LapidaryOnTheRoad line={line} gems={props.plan.gems} onDone={dismiss} />;
+  return <GemPlacement {...props} />;
+}
+
+function GemPlacement({ run, onRunChange, plan, onDone, progress, onProgress }: Props) {
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [burst, setBurst] = useState<{ rosterId: string; key: number } | null>(null);
   const flow = useMasteryFlow(run, onRunChange);
@@ -104,11 +113,10 @@ export function GemNodeScreen({ run, onRunChange, plan, onDone, progress, onProg
   const stone = GEM_STONES[shown.stat];
   const statName = shown.stat === 'manaPool' ? 'Mana' : STAT_FULL_LABELS[shown.stat];
   const amount = gemAmount(shown);
-  const folded = plan.source === 'scribe';
   const gemHand = anyEligible ? (
     <section className="gem-hand" aria-live="polite">
       <span className="gem-hand-stone" key={index}>
-        <GemIcon stat={shown.stat} size={folded ? 44 : 60} live={!!gem} large={shown.points >= 10} />
+        <GemIcon stat={shown.stat} size={60} live={!!gem} large={shown.points >= 10} />
       </span>
       <span className="gem-hand-words">
         <span className="gem-hand-name">
@@ -121,7 +129,7 @@ export function GemNodeScreen({ run, onRunChange, plan, onDone, progress, onProg
       <ol className="gem-tray" aria-label={`${remaining} of ${total} Gems left`}>
         {plan.gems.map((g, i) => (
           <li key={i} className={`gem-tray-slot${i < index ? ' is-set' : i === index ? ' is-current' : ''}`}>
-            <GemIcon stat={g.stat} size={folded ? 18 : 22} large={g.points >= 10} />
+            <GemIcon stat={g.stat} size={22} large={g.points >= 10} />
           </li>
         ))}
       </ol>
@@ -132,29 +140,15 @@ export function GemNodeScreen({ run, onRunChange, plan, onDone, progress, onProg
 
   return (
     <div
-      className={`node-screen rite-screen is-scribe scroll-screen gem-screen${folded ? '' : ' is-bare'}`}
+      className="node-screen rite-screen is-scribe scroll-screen gem-screen"
       style={{ '--node-rgb': NODE_TINT_PARCHMENT, '--rite-color': `rgb(${NODE_TINT_PARCHMENT})`, '--gem-color': stone.tones[1] } as CSSProperties}
     >
       <span className="node-sky scribe-ground" aria-hidden="true" />
       <NodeMotes count={12} />
       <RosterPeek run={run} />
 
-      {/* Only the Lapidary is introduced, the Gem in hand folded in beside it so the roster keeps
-          its room; anywhere else the Gem in hand says what the screen is. */}
-      {folded ? (
-        <header className="keeper-head is-gem-fold">
-          <span className="keeper-figure">
-            <span className="rite-pool" aria-hidden="true" />
-            <img src={lapidaryArt} className="keeper-art" alt="" draggable={false} />
-          </span>
-          <span className="keeper-words">
-            <h2 className="rite-name">The Lapidary</h2>
-          </span>
-          {gemHand}
-        </header>
-      ) : (
-        gemHand
-      )}
+      {/* No header: the Gem in hand says what the screen is. */}
+      {gemHand}
 
       <HeroPickGrid count={run.roster.length} fill>
         {run.roster.map((entry) => {
