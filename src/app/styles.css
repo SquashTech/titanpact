@@ -16866,17 +16866,34 @@ button.star-shop-bundle-face {
   opacity: 0.8;
 }
 
-/* Rows hold the whole card: a card clips its overflow, so an auto row let the grid squeeze it
-   and the name and the Mastery count were what went. Past the screen it scrolls instead. */
+/* The roster never scrolls here, whatever sits above it (the Lapidary's intro, a short phone):
+   rows take their full height while there is room and share what is left when there is not, and
+   it is the SPRITE that gives — the name, the stat, the pips and the count keep their size. */
 .gem-screen .pick-grid.is-filling {
-  grid-auto-rows: min-content;
+  grid-auto-rows: minmax(0, max-content);
+  overflow: hidden;
 }
 
-/* Six cards in three rows fit a phone without scrolling: the stat and pip rows are paid for out
-   of the headroom above the sprite, which only holds the level mark. */
-.gem-screen .pick-figure {
-  height: calc(var(--pick-portrait) * 1.04);
+.gem-screen .pick-card {
+  min-height: 0;
+}
+
+.gem-screen .pick-card > * {
+  flex-shrink: 0;
+}
+
+/* Headroom above the sprite only holds the level mark, so it is trimmed too. */
+.gem-screen .pick-card > .pick-figure {
+  flex: 0 1 calc(var(--pick-portrait) * 1.04);
+  height: auto;
+  min-height: 0;
   padding-bottom: calc(var(--pick-portrait) * 0.08);
+}
+
+.gem-screen .pick-figure .pick-portrait {
+  width: auto;
+  height: min(var(--pick-portrait), 100%);
+  aspect-ratio: 1;
 }
 
 /* With no header above it the Gem in hand rises to the top edge, beside the roster button. */
