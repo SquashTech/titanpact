@@ -7,7 +7,8 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { isWardenCombatant } from '../../run/wardens';
 import { isTitanEye } from '../../data/enemies';
-import { StatGlyph, STAT_ORDER, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
+import { STAT_ORDER, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
+import { STAT_LABELS } from '../shared/moveKind';
 import { shieldHeld } from '../../engine/status/shield';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -296,7 +297,8 @@ function StatModBadge({ stat, mod, tier, held }: { stat: StatKey; mod: number; t
       className={`stat-mod-badge ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${held ? ' stat-held' : ''}`}
       title={`${stat} ${mod > 0 ? '+' : ''}${mod}${held ? (mod > 0 ? " — can't go any higher" : " — can't go any lower") : ''}`}
     >
-      <StatGlyph stat={stat} tone="inherit" />
+      <span className="stat-mod-label">{STAT_LABELS[stat]}</span>
+      <span className="stat-mod-arrow" aria-hidden="true">{mod > 0 ? '▲' : '▼'}</span>
       <span className="stat-mod-pips" aria-hidden="true">
         {Array.from({ length: tier }, (_, i) => (
           <span key={i} className="stat-mod-pip" />

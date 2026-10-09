@@ -4692,62 +4692,47 @@ textarea,
   font-size: 10px;
   line-height: 1;
   padding: 1px 3px;
+  border: 1px solid transparent;
   border-radius: 5px;
   background: rgba(13, 14, 18, 0.75);
 }
 
-/* The glyph here takes the badge's own green/red rather than its stat color
-   (StatGlyph tone="inherit"): on the battlefield the question is "is this
-   hero up or down", and a purple Intelligence glyph inside a green badge
-   would answer a different one. Slightly larger than the arrow beside it —
-   the icon says WHICH stat, the arrow only says which way. */
-.stat-mod-badge .stat-glyph {
-  width: 11px;
-  height: 11px;
+/* Gold up, slate down — off the app's green/red on purpose, so direction never rests on a
+   red/green read; the arrow carries it in greyscale too. */
+.stat-mod-badge.stat-buff {
+  color: #ef9f27;
 }
 
-/* The pip strip (docs/stat-scaling.md §5): one, two or three marks by how far the stat has
-   moved against what it started the fight at — a quarter, a half, past that. Drawn as
-   clip-path triangles with a gap rather than as glyphs, which fuse into a saw-tooth at this
-   size. A debuff at its floor (.stat-held) dims to the low tone and gains a baseline under the
-   marks: "this cannot go lower" is a state, not a direction. */
+.stat-mod-badge.stat-debuff {
+  color: #85b7eb;
+}
+
+.stat-mod-label {
+  font-size: 9px;
+  letter-spacing: 0.02em;
+}
+
+.stat-mod-arrow {
+  font-size: 7px;
+}
+
+/* Filled pips only, one per step — no empty slots, which crowded a full field. */
 .stat-mod-pips {
   display: inline-flex;
   align-items: center;
-  gap: 1.5px;
-  margin: 0 1px;
+  gap: 1px;
+  margin-left: 1px;
 }
 
 .stat-mod-pip {
-  width: 6px;
-  height: 5px;
+  width: 3px;
+  height: 8px;
   background: currentColor;
-  clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }
 
-.stat-debuff .stat-mod-pip {
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
-}
-
+/* At the limit the badge is framed: "can't go any higher / lower" is a state. */
 .stat-mod-badge.stat-held {
-  color: color-mix(in srgb, var(--hp-low) 72%, var(--text-dim));
-}
-
-.stat-mod-badge.stat-buff.stat-held {
-  color: color-mix(in srgb, var(--hp-high) 72%, var(--text-dim));
-}
-
-/* The baseline under a held drop; over a held rise — the line sits at the end that stopped it. */
-.stat-mod-badge.stat-held .stat-mod-pips {
-  padding-bottom: 1px;
-  border-bottom: 1.5px solid currentColor;
-}
-
-.stat-mod-badge.stat-buff.stat-held .stat-mod-pips {
-  padding-bottom: 0;
-  border-bottom: 0;
-  padding-top: 1px;
-  border-top: 1.5px solid currentColor;
+  border-color: currentColor;
 }
 
 /* Switch-row/bench-panel picker cards are too small for these to read —
