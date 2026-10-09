@@ -34,7 +34,7 @@ import {
   type TeamSlot,
 } from '../src/run/constructed';
 
-const content: ConstructedContent = { heroes, table: progressionTable, equipment };
+const content: ConstructedContent = { heroes, table: progressionTable, equipment, moves, passives };
 
 const cinder = (over: Partial<TeamSlot> = {}): TeamSlot => ({
   heroId: 'cinderKnight',

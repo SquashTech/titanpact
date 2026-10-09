@@ -1,12 +1,14 @@
-# gauntlet.md — The Gauntlet: draft six from fifteen, win five before you lose two
+# gauntlet.md — The Gauntlet: draft six, one of three at a time, win five before you lose two
 
 > **STATUS: DECIDED 2026-10-07 (per user direction); phase 1 BUILT the same day** — the rules
 > (`src/run/gauntlet.ts`), the profile record, the screen (`GauntletScreen`), and the title's three
 > doors. Numbers are first pass; §9 lists what is open.
+> **2026-10-09 (per user direction): the board of fifteen is six offers of three** (§2) — fifteen at
+> once was overwhelming in play — and **no hero is dealt a move over its Mana pool** (§3).
 
 A third mode beside **Seal the Pact** (the roguelike, Classic in code) and **the Trials**
-(Constructed). The game rolls fifteen heroes the player owns, each in a random Evolution with a
-random kit; the player drafts six; the six fight random six-hero teams until they have **five wins
+(Constructed). Six times the game offers three heroes the player owns, each in a random Evolution
+with a random kit, and the player takes one; the six fight random six-hero teams until they have **five wins
 or two losses**. Five wins stars every unstarred path on the team.
 
 ---
@@ -30,7 +32,7 @@ or two losses**. Five wins stars every unstarred path on the team.
 | Rule | Decision |
 |---|---|
 | Gate | Opens on the first **Cycle I** clear — the same gate as the Trials (`isGauntletOpen`). |
-| The board | Fifteen heroes, **owned only** (the whole Collection, not the deck). Unowned heroes never appear on it. |
+| The draft | Six offers of three, one taken from each; **owned only** (the whole Collection, not the deck). Unowned heroes never appear in it. |
 | Each hero | A random Evolution path and a random kit; the player picks six. |
 | The run | Fight random six-hero teams; **five wins** clear, **two losses** end it. |
 | Reward | **Nothing below five wins.** A clear stars every path on the team not already starred, and pays a flat clear bonus. |
@@ -39,28 +41,35 @@ or two losses**. Five wins stars every unstarred path on the team.
 
 ---
 
-## 2. The board
+## 2. The draft
 
-**Fifteen** (`BOARD_SIZE`), drawn as hero–path pairs from every hero the account owns:
+**Six offers of three** (`OFFER_SIZE`, `rollOffer`, `draftPick`), one taken from each — 18 heroes
+seen. It was a board of fifteen seen at once (MTG Sealed); in play that was overwhelming, and a pick
+of one from three (Hearthstone Arena) asks one question at a time. Each offer is drawn as hero–path
+pairs from every hero the account owns:
 
-- **One a hero.** A hero never appears twice, in two forms or one.
-- **At most two of a primary type** (`BOARD_TYPE_LIMIT`), so the board spans at least eight types
-  and a team can be built around the chart rather than against it.
+- **One a hero.** A hero is offered once in a run, taken or not (`GauntletRun.seen`).
+- **Three primary types an offer**, and **never a type the team already holds two of**
+  (`TEAM_TYPE_LIMIT`), so the six can be built around the chart rather than against it. Where an
+  account's heroes run short the type rules give way before the offer does.
 - **Unstarred first, not only.** A pair the account has not starred weighs `UNSTARRED_WEIGHT` = 3
   against a starred pair's 1. A filter would run dry late on an account and, before that, skew every
-  board toward the forms the player has done worst with. The board marks unstarred paths, so the
+  offer toward the forms the player has done worst with. An offer marks unstarred paths, so the
   choice between the strong team and the missing star is in front of the player.
-- **Always evolved.** A path is what the board is for; an unevolved hero has no star to win.
+- **Always evolved.** A path is what the draft is for; an unevolved hero has no star to win.
+- **Fixed by the seed and the pick number**, and stored on the run, so a reload shows the same three.
+  An offer reads the team so far (the type rule), so it is rolled when the pick before it is made.
 
-Five rows of three fits the portrait screen. A tap opens the hero read-only (path, typing, innate,
-kit, stats); a second control drafts it.
+The six seats sit above the three cards. A card shows the form, typing and kit; a tap opens the hero
+read-only (path, typing, innate, kit, stats) with Draft on it. A run saved under the board drafts on
+from the board's first three.
 
 ## 3. A rolled hero
 
 A Gauntlet hero is the Trials' `TeamSlot` — **level 30, Mastery 10, the expected growth line** —
 so the engine and the fight builder never learn a third mode exists. Rolled (`rollGauntletSlot`):
 
-- **The path**: the board's pair.
+- **The path**: the offer's pair.
 - **The kit**: `MOVE_CAP` = 4 moves off the same pool the Trials' builder offers
   (`constructedMovePool`). **The signature is always held** — it is the hero at level 30 — and the
   path's own move is always held; the rest are rolled.
@@ -68,7 +77,11 @@ so the engine and the fight builder never learn a third mode exists. Rolled (`ro
   after a rewire) weighs a quarter; Late moves weigh 3, Mid 2, Early 1. An off-stat move can still
   turn up — that is allowed (off-stat moves are fine) — but a whole off-stat kit is a roll the
   weights make vanishingly rare. At least two of the four deal damage.
-- **No items**, either side. Items double the board's density, and symmetric absence is fair.
+- **Castable** (2026-10-09): no move costing more than the form's Mana pool at level 30 is ever
+  dealt, either side. The roll weights Late moves up and the Late moves are the dear ones, so 40 of
+  252 forms could be handed one they could never cast — Judgment 120 on a pool of 88, Overdrive 100
+  on 62. The rule is the Trials' (`docs/constructed.md` §3), where Gems can lift the pool instead.
+- **No items**, either side. Items double each offer's density, and symmetric absence is fair.
 
 ## 4. The run
 

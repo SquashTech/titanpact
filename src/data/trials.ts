@@ -8,12 +8,13 @@ import { equipment } from './equipment';
 import { heroes } from './heroes';
 import { progressionTable } from './progression';
 import { moves } from './moves';
+import { passives } from './passives';
 import { typeChart } from './typechart';
 
-export const constructedContent: ConstructedContent = { heroes, table: progressionTable, equipment };
+export const constructedContent: ConstructedContent = { heroes, table: progressionTable, equipment, moves, passives };
 
 /** The Gauntlet's rolls read the move table and the chart besides (run/gauntlet.ts). */
-export const gauntletContent: GauntletContent = { ...constructedContent, moves, typeChart };
+export const gauntletContent: GauntletContent = { ...constructedContent, typeChart };
 
 export const trials: Record<string, TrialDefinition> = {
   fire: {
@@ -617,6 +618,8 @@ export const trials: Record<string, TrialDefinition> = {
           pathId: 'gallant-charger',
           moveIds: ['fullTilt', 'rideTheLightning', 'metallicBlade', 'onslaught'],
           itemIds: ['sword.mythic', 'dagger.mythic', 'greataxe.mythic'],
+          // Onslaught is 80 against a pool of 79: one Mana Gem is the breakpoint.
+          gems: ['manaPool'],
         },
         {
           heroId: 'scallywag',
@@ -644,6 +647,8 @@ export const trials: Record<string, TrialDefinition> = {
           pathId: 'steamColossus-bulkhead',
           moveIds: ['boilerBlow', 'thunderclap', 'onslaught', 'cogSlam'],
           itemIds: ['greataxe.mythic', 'plate.mythic', 'shield.mythic'],
+          // Onslaught is 80 against a pool of 70.
+          gems: ['manaPool', 'manaPool'],
         },
         {
           heroId: 'patch',
@@ -668,6 +673,8 @@ export const trials: Record<string, TrialDefinition> = {
           pathId: 'forgewright-runaway',
           moveIds: ['overwind', 'steamVent', 'volcanicSurge', 'cogSlam'],
           itemIds: ['sword.mythic', 'greataxe.mythic', 'plate.mythic'],
+          // Volcanic Surge is 65 against a pool of 62.
+          gems: ['manaPool'],
         },
         {
           heroId: 'whirr',
@@ -737,7 +744,7 @@ export const TRIAL_LIST: readonly TrialDefinition[] = Object.values(trials);
 export function suggestedSlotFor(heroId: string): TeamSlot | null {
   for (const trial of TRIAL_LIST) {
     const slot = trial.team.slots.find((s) => s.heroId === heroId);
-    if (slot) return { ...slot, moveIds: [...slot.moveIds], itemIds: [...slot.itemIds] };
+    if (slot) return { ...slot, moveIds: [...slot.moveIds], itemIds: [...slot.itemIds], ...(slot.gems && { gems: [...slot.gems] }) };
   }
   return null;
 }

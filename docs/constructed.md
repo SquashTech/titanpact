@@ -81,7 +81,14 @@ it is in:
 | Mastery | 10 | the mastered innate (`masteredPassiveIds`) |
 | Evolution | any of three paths (§2) | graft, move and passive as in Classic; the rewire where pinned |
 | Moves | four (`MOVE_CAP`) from the hero's whole pool — every band, plus the signature and the path's move | no schedule, no roll |
+| Gems | ten, sized as a run finds them (four +5, six +10; HP at 3 a point) — **each one a stat the player picks, or left to fit** (2026-10-09, per user direction) | a pip left empty is filled as an enemy's is, on the hero's best grades (`fittedGem`); the stat emphasis, and the Mana a move's price needs, are the player's to buy |
 | Items | three family items at Mythic, **no enchants** (2026-10-04, per user direction — six heroes × three sockets of the same element pick was repetition, not a decision) | one per family still holds (no merge here, so it is a legality rule); **no Uniques** |
+
+**A held move must be castable** (2026-10-09, per user direction): its authored cost may not be
+over the hero's Mana pool as it fields — base, growth, Gems, items, passives (`slotManaPool`,
+`overPoolMoveIds`). The builder lets the move be picked and says what it needs ("Onslaught costs 80
+Mana — 1 more needed"), and Review will not confirm it until Gems or items lift the pool. Three
+Trial heroes broke it and now carry Mana Gems (Gallant, Steam Colossus, Forgewright).
 
 **No Classes and no Uniques** (2026-10-04, per user direction): a constructed hero is an
 Evolution, a moveset and equipment, nothing else. A Class was a fifth axis on a screen already
@@ -218,9 +225,12 @@ the "Titanpact Teambuilder" design canvas; tabs and locked heroes in full colour
   build for all 84 heroes; **those are the suggestions**, behind a Suggested button. A hero added
   to a team arrives blank (no path, no moves, no items) and opens on its Path tab (2026-10-04, per
   user direction): the player builds it, and one who wants the shortcut taps it.
-- **Three tabs: Path, Moves, Items** (decided over an accordion). Path first, since it changes
-  the pool. Each tab carries its current pick under its name, so the whole build reads without
-  opening one; the open tab takes the rest of the screen.
+- **A guided walk: Path → Moves → Gems → Items → Review** (2026-10-09, per user direction,
+  replacing three free tabs and a Done button). The steps sit along the bottom where the thumb is,
+  each carrying its current pick; a choice that finishes a step moves on to the next one still open
+  (a path picked, the fourth move, the tenth Gem, the third item), and Gems and Items can be left
+  with a press. **Review** reads the build whole with **Back** and **Confirm**; the hero is on the
+  team only once confirmed, and the top arrow leaves without the edits. Remove lives on Review.
 - **Locked heroes show in full colour** in the picker (decided), with a lock and the condition —
   "Win a run with Crimson" — so the player knows whom to go win with.
 - **Never illegal.** The builder only offers legal picks — no error states. A pick that would

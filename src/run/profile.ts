@@ -11,7 +11,10 @@
 import { spawnPosition } from '../data/titanspawn';
 import { cycleOf } from './cycles';
 import { grantLedgerId } from './recruitment';
-import { unenchanted, type Team, type TeamSlot } from './constructed';
+import { TEAM_SIZE, unenchanted, type Team, type TeamSlot } from './constructed';
+import { GEM_ORDER } from './gems';
+import { MASTERY_CAP } from './mastery';
+import type { GrowthStatKey } from '../engine/content';
 import type { Warden } from './wardens';
 import type { GauntletRun } from './gauntlet';
 
@@ -397,16 +400,23 @@ function decodeDeck(value: Record<string, unknown>): Record<string, string[]> {
 /** A slot keeps its hero id and whatever else reads; a team keeps its readable slots. */
 function decodeTeamSlot(raw: unknown): TeamSlot | null {
   if (!isRecord(raw) || typeof raw.heroId !== 'string' || raw.heroId.length === 0) return null;
-  return { heroId: raw.heroId, pathId: typeof raw.pathId === 'string' ? raw.pathId : null, moveIds: stringList(raw.moveIds), itemIds: stringList(raw.itemIds).map(unenchanted) };
+  const slot: TeamSlot = { heroId: raw.heroId, pathId: typeof raw.pathId === 'string' ? raw.pathId : null, moveIds: stringList(raw.moveIds), itemIds: stringList(raw.itemIds).map(unenchanted) };
+  if (Array.isArray(raw.gems)) slot.gems = raw.gems.slice(0, MASTERY_CAP).map((g) => (typeof g === 'string' && (GEM_ORDER as readonly string[]).includes(g) ? (g as GrowthStatKey) : null));
+  return slot;
 }
 
-/** An open Gauntlet whose board cannot be read is dropped: the entry is lost, never the profile. */
+/**
+ * An open Gauntlet whose draft cannot be read is dropped: the entry is lost, never the profile. A run
+ * saved under the fifteen-hero board drafts on from its first three.
+ */
 function decodeGauntlet(value: unknown): GauntletRun | null {
-  if (!isRecord(value) || !Array.isArray(value.board)) return null;
-  const board = value.board.map(decodeTeamSlot).filter((s): s is TeamSlot => s !== null);
-  const team = Array.isArray(value.team) ? value.team.map(decodeTeamSlot).filter((s): s is TeamSlot => s !== null) : [];
-  if (board.length === 0) return null;
-  return { seed: count(value.seed), board, team, wins: count(value.wins), losses: count(value.losses), fighting: value.fighting === true };
+  if (!isRecord(value)) return null;
+  const slots = (list: unknown) => (Array.isArray(list) ? list.map(decodeTeamSlot).filter((s): s is TeamSlot => s !== null) : []);
+  const team = slots(value.team).slice(0, TEAM_SIZE);
+  const offer = Array.isArray(value.offer) ? slots(value.offer) : slots(value.board).slice(0, 3);
+  if (team.length < TEAM_SIZE && offer.length === 0) return null;
+  const seen = Array.isArray(value.seen) ? stringList(value.seen) : [];
+  return { seed: count(value.seed), offer: team.length < TEAM_SIZE ? offer : [], seen, team, wins: count(value.wins), losses: count(value.losses), fighting: value.fighting === true };
 }
 
 function decodeTeams(value: unknown): Team[] {

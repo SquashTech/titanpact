@@ -1,4 +1,4 @@
-// The Gauntlet (docs/gauntlet.md): the entry, the board of fifteen, the six drafted, the record
+// The Gauntlet (docs/gauntlet.md): the entry, six offers of three, the six drafted, the record
 // between fights, and what a finished run paid. The rules are run/gauntlet.ts's; this only renders.
 
 import { useMemo, useState } from 'react';
@@ -39,7 +39,7 @@ interface Props {
   notice: string | null;
   opponent: TeamSlot[] | null;
   onEnter: () => void;
-  onDraft: (boardIndices: number[]) => void;
+  onDraft: (offerIndex: number) => void;
   onFight: () => void;
   onRetire: () => void;
   onDismissResult: () => void;
@@ -157,78 +157,98 @@ function HeroSheet({ slot, stars, action, onBack }: { slot: TeamSlot; stars: Pro
   );
 }
 
-// --- The board ---
+// --- The draft ---
 
-function BoardCard({ slot, stars, order, onOpen }: { slot: TeamSlot; stars: Props['stars']; order: number | null; onOpen: () => void }) {
+function OfferCard({ slot, stars, onOpen }: { slot: TeamSlot; stars: Props['stars']; onOpen: () => void }) {
   const hero = heroes[slot.heroId];
   const path = constructedPath(constructedContent.table, slot.heroId, slot.pathId);
   const held = starred(stars, slot);
   return (
-    <button type="button" className={`gx-card${order !== null ? ' is-picked' : ''}`} onClick={onOpen}>
-      {order !== null && <span className="gx-order">{order + 1}</span>}
+    <button type="button" className="gx-offer-card" onClick={onOpen}>
       {!held && (
         <span className="gx-unstarred" aria-label="Not yet starred">
           <StarGlyph filled={false} />
         </span>
       )}
-      <HeroPortrait heroId={slot.heroId} pathId={slot.pathId ?? undefined} className="gx-card-portrait" />
-      <span className="gx-card-name">{hero.name}</span>
-      {path && (
-        <span className="gx-card-path" style={{ color: pathTint(hero, path).lead }}>
-          {path.name}
+      <HeroPortrait heroId={slot.heroId} pathId={slot.pathId ?? undefined} className="gx-offer-portrait" />
+      <span className="gx-offer-text">
+        <span className="gx-card-name">{hero.name}</span>
+        {path && (
+          <span className="gx-card-path" style={{ color: pathTint(hero, path).lead }}>
+            {path.name}
+          </span>
+        )}
+        <span className="gx-offer-types">
+          {slotTypes(constructedContent, slot).map((t) => (
+            <TypeBadge key={t} type={t} />
+          ))}
         </span>
-      )}
-      <span className="gx-card-types">
-        {slotTypes(constructedContent, slot).map((t) => (
-          <TypeBadge key={t} type={t} />
-        ))}
+        <span className="gx-offer-moves">{slot.moveIds.map((id) => moves[id]?.name ?? id).join(' · ')}</span>
       </span>
     </button>
   );
 }
 
-function BoardView({ run, stars, onDraft, onClose }: { run: GauntletRun; stars: Props['stars']; onDraft: (indices: number[]) => void; onClose: () => void }) {
-  const [picks, setPicks] = useState<number[]>([]);
-  const [reading, setReading] = useState<number | null>(null);
-
-  if (reading !== null) {
-    const picked = picks.includes(reading);
-    const full = picks.length >= TEAM_SIZE;
-    return (
-      <HeroSheet
-        slot={run.board[reading]}
-        stars={stars}
-        onBack={() => setReading(null)}
-        action={
-          <button
-            type="button"
-            className={picked ? 'secondary-button' : 'resolve-button'}
-            disabled={!picked && full}
-            onClick={() => {
-              setPicks(picked ? picks.filter((i) => i !== reading) : [...picks, reading]);
-              setReading(null);
-            }}
-          >
-            {picked ? 'Take off the team' : full ? 'The team is full' : 'Draft'}
+/** The six seats: the picks so far, then the empties still to fill. */
+function Seats({ team, onOpen }: { team: readonly TeamSlot[]; onOpen: (i: number) => void }) {
+  return (
+    <div className="gx-seats">
+      {Array.from({ length: TEAM_SIZE }, (_, i) =>
+        team[i] ? (
+          <button key={i} type="button" className="gx-seat is-filled" onClick={() => onOpen(i)} aria-label={heroes[team[i].heroId]?.name ?? team[i].heroId}>
+            <HeroPortrait heroId={team[i].heroId} pathId={team[i].pathId ?? undefined} className="gx-seat-portrait" />
           </button>
-        }
-      />
-    );
+        ) : (
+          <span key={i} className={`gx-seat${i === team.length ? ' is-next' : ''}`} aria-hidden="true" />
+        )
+      )}
+    </div>
+  );
+}
+
+function DraftView({ run, stars, onDraft, onClose }: { run: GauntletRun; stars: Props['stars']; onDraft: (offerIndex: number) => void; onClose: () => void }) {
+  const [reading, setReading] = useState<{ from: 'offer' | 'team'; index: number } | null>(null);
+
+  if (reading) {
+    const slot = reading.from === 'offer' ? run.offer[reading.index] : run.team[reading.index];
+    if (slot) {
+      return (
+        <HeroSheet
+          slot={slot}
+          stars={stars}
+          onBack={() => setReading(null)}
+          action={
+            reading.from === 'offer' ? (
+              <button
+                type="button"
+                className="resolve-button"
+                onClick={() => {
+                  onDraft(reading.index);
+                  setReading(null);
+                }}
+              >
+                Draft
+              </button>
+            ) : undefined
+          }
+        />
+      );
+    }
   }
 
   return (
     <>
-      <Header title="Draft six" side={<span className="cx-team-state">{`${picks.length} / ${TEAM_SIZE}`}</span>} />
-      <div className="screen-scroll gx-board">
-        {run.board.map((slot, i) => (
-          <BoardCard key={slot.heroId} slot={slot} stars={stars} order={picks.includes(i) ? picks.indexOf(i) : null} onOpen={() => setReading(i)} />
-        ))}
+      <Header title="Draft" side={<span className="cx-team-state">{`${run.team.length + 1} / ${TEAM_SIZE}`}</span>} />
+      <div className="screen-scroll gx-draft">
+        <Seats team={run.team} onOpen={(i) => setReading({ from: 'team', index: i })} />
+        <div className="gx-offer">
+          {run.offer.map((slot, i) => (
+            <OfferCard key={slot.heroId} slot={slot} stars={stars} onOpen={() => setReading({ from: 'offer', index: i })} />
+          ))}
+        </div>
       </div>
-      <div className="gx-footer">
+      <div className="gx-footer is-back-only">
         <Back label="Back to the title" onClick={onClose} />
-        <button type="button" className="resolve-button" disabled={picks.length !== TEAM_SIZE} onClick={() => onDraft(picks)}>
-          Lock in the six
-        </button>
       </div>
     </>
   );
@@ -341,7 +361,7 @@ function EntryView({ freeEntry, balance, entered, clears, onEnter, onClose }: Pi
       <Header title="The Gauntlet" />
       <div className="screen-scroll gx-entry">
         <p className="gx-entry-copy">
-          {`Fifteen of your heroes, each rolled into a random form. Draft six. Win ${WINS_TO_CLEAR} fights before you lose ${LOSSES_TO_END}, and every path on your team is starred, plus ${GAUNTLET_CLEAR_BONUS} ★.`}
+          {`Draft six, one at a time, each from three of your heroes rolled into random forms. Win ${WINS_TO_CLEAR} fights before you lose ${LOSSES_TO_END}, and every path on your team is starred, plus ${GAUNTLET_CLEAR_BONUS} ★.`}
         </p>
         {entered > 0 && (
           <div className="gx-entry-record">
@@ -368,8 +388,8 @@ export function GauntletScreen(props: Props) {
         <ResultView result={result} onDone={onDismissResult} />
       ) : !run ? (
         <EntryView {...props} />
-      ) : run.team.length === 0 ? (
-        <BoardView run={run} stars={stars} onDraft={onDraft} onClose={onClose} />
+      ) : run.team.length < TEAM_SIZE ? (
+        <DraftView run={run} stars={stars} onDraft={onDraft} onClose={onClose} />
       ) : (
         opponent && <BetweenView run={run} stars={stars} opponent={opponent} notice={notice} onFight={onFight} onRetire={onRetire} onClose={onClose} />
       )}

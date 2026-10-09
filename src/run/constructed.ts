@@ -2,7 +2,7 @@
 // Pure — the shape, its legality, and the projection onto RosterEntry/Squad the fight builder
 // already reads, so the engine never knows which mode it is in.
 
-import type { HeroDefinition, StatKey, TypeId } from '../engine/content';
+import type { GrowthStatKey, HeroDefinition, MoveDefinition, PassiveDefinition, StatKey, TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import type { Profile } from './profile';
 import type { Squad } from './squad';
@@ -11,6 +11,9 @@ import { createRosterEntry, createRunState, ROSTER_CAP, type RosterEntry, type R
 import { BASE_ITEM_SLOTS, equipmentIdFor, parseEquipmentId, type EquipmentDefinition, type EquipmentRarity } from './equipment';
 import { MAX_LEVEL, expectedGrowthAt, xpForLevel } from './growth';
 import { MASTERY_CAP } from './mastery';
+import { GEM_ORDER, fittedGem, gemPointsForPip, type Gem } from './gems';
+import { entryPassiveCounts, entryStatModifiers } from './entryStats';
+import { innatePassiveIdsFor } from './innate';
 import { MOVE_CAP, chooseEvolutionPath, rosterEntryTypes, scheduleEntries, scheduleFor, signatureIdFor, type EvolutionPath, type ProgressionTable } from './progression';
 
 export const TEAM_SIZE = ROSTER_CAP;
@@ -25,6 +28,11 @@ export interface TeamSlot {
   moveIds: string[];
   /** Up to BASE_ITEM_SLOTS family items at Mythic, one a family; no enchants, no Uniques. */
   itemIds: string[];
+  /**
+   * The ten Gems behind Mastery 10, by pip: a stat the player chose, or null (or past the end) for
+   * one filled by fit as an enemy's is. A pip's size is the run's (`gemPointsForPip`).
+   */
+  gems?: (GrowthStatKey | null)[];
 }
 
 export interface Team {
@@ -54,6 +62,8 @@ export interface ConstructedContent {
   heroes: HeroLookup;
   table: ProgressionTable;
   equipment: Record<string, EquipmentDefinition>;
+  moves: Record<string, MoveDefinition>;
+  passives: Record<string, PassiveDefinition>;
 }
 
 export class ConstructedError extends Error {}
@@ -108,6 +118,15 @@ export function slotProblems(content: ConstructedContent, slot: TeamSlot, unlock
   if (new Set(slot.moveIds).size !== slot.moveIds.length) problems.push(`${slot.heroId} holds a move twice`);
   const pool = new Set(constructedMovePool(content, slot));
   for (const id of slot.moveIds) if (!pool.has(id)) problems.push(`${id} is not in ${slot.heroId}'s pool`);
+
+  const gems = slot.gems ?? [];
+  if (gems.length > MASTERY_CAP) problems.push(`${slot.heroId} holds ${gems.length} Gems, Mastery is ${MASTERY_CAP}`);
+  for (const stat of gems) if (stat !== null && !GEM_ORDER.includes(stat)) problems.push(`${stat} is not a Gem`);
+
+  // A move the pool can never pay for is dead weight (§3): the hero's Mana at level 30 is the bar.
+  if (slot.pathId === null || constructedPath(content.table, slot.heroId, slot.pathId)) {
+    for (const id of overPoolMoveIds(content, slot)) problems.push(`${id} costs more Mana than ${slot.heroId} holds`);
+  }
 
   if (slot.itemIds.length > BASE_ITEM_SLOTS) problems.push(`${slot.heroId} holds ${slot.itemIds.length} items, the sockets are ${BASE_ITEM_SLOTS}`);
   const bases = new Set<string>();
@@ -169,7 +188,31 @@ export function slotEntry(content: ConstructedContent, slot: TeamSlot): RosterEn
     unlockedMoveIds: [...slot.moveIds],
     offeredMoveIds: [],
     equipment: [...slot.itemIds],
+    gems: slotGems(hero, evolved, slot),
   };
+}
+
+/** All ten Gems the slot fields with, the player's where placed and fit's elsewhere. */
+export function slotGems(hero: HeroDefinition, entry: Pick<RosterEntry, 'offenseSwapped'>, slot: Pick<TeamSlot, 'gems'>): Gem[] {
+  return Array.from({ length: MASTERY_CAP }, (_, i) => {
+    const stat = slot.gems?.[i] ?? null;
+    return stat && GEM_ORDER.includes(stat) ? { stat, points: gemPointsForPip(i) } : fittedGem(hero, entry, i);
+  });
+}
+
+/** The slot's Mana pool as it would field: base, growth, Gems, items and passives. */
+export function slotManaPool(content: ConstructedContent, slot: TeamSlot): number {
+  const hero = content.heroes[slot.heroId];
+  if (!hero) return 0;
+  const entry = slotEntry(content, slot);
+  const counts = entryPassiveCounts(entry, content.equipment, {}, innatePassiveIdsFor(hero, entry) ?? []);
+  return hero.baseStats.manaPool + (entryStatModifiers(entry, content.equipment, content.passives, counts).manaPool ?? 0);
+}
+
+/** Held moves whose authored cost is over the slot's pool. */
+export function overPoolMoveIds(content: ConstructedContent, slot: TeamSlot): string[] {
+  const pool = slotManaPool(content, slot);
+  return slot.moveIds.filter((id) => (content.moves[id]?.manaCost ?? 0) > pool);
 }
 
 export function constructedRoster(content: ConstructedContent, team: Team): RosterEntry[] {
@@ -235,6 +278,15 @@ export function setItem(slot: TeamSlot, index: number, itemId: string | null): T
   else items.push(itemId);
   const placed = Math.min(index, items.length - 1);
   return { ...slot, itemIds: items.filter((id, i) => i === placed || parseEquipmentId(id).base !== family).slice(0, BASE_ITEM_SLOTS) };
+}
+
+/** Pip `index` takes `stat`, or goes back to fit on null. */
+export function setGem(slot: TeamSlot, index: number, stat: GrowthStatKey | null): TeamSlot {
+  if (index < 0 || index >= MASTERY_CAP) return slot;
+  const gems = Array.from({ length: MASTERY_CAP }, (_, i) => slot.gems?.[i] ?? null);
+  gems[index] = stat;
+  while (gems.length > 0 && gems[gems.length - 1] === null) gems.pop();
+  return { ...slot, gems };
 }
 
 /** An item id without its enchant — a team saved while Constructed still took them reads as the bare piece. */

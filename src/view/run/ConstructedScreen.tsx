@@ -1,6 +1,7 @@
 // Constructed (docs/constructed.md §9): the teambuilder. One screen with its own navigation —
-// teams, a team, one hero's build (Path / Moves / Items), the hero picker, and the Trial to face.
-// Every edit lands on the profile at once, as the deck does; the verbs are run/constructed.ts's.
+// teams, a team, one hero's build (Path / Moves / Gems / Items, then Review), the hero picker, and
+// the Trial to face. A team's edits land on the profile at once, as the deck does; a hero's land on
+// Confirm. The verbs are run/constructed.ts's.
 
 import { useMemo, useState } from 'react';
 import { heroes } from '../../data/heroes';
@@ -8,7 +9,7 @@ import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import { equipment } from '../../data/equipment';
 import { constructedContent, suggestedSlotFor, TRIAL_LIST } from '../../data/trials';
-import type { HeroDefinition, MoveDefinition, MoveTier, TypeId } from '../../engine/content';
+import type { GrowthStatKey, HeroDefinition, MoveDefinition, MoveTier, TypeId } from '../../engine/content';
 import {
   CONSTRUCTED_RARITY,
   TEAM_SIZE,
@@ -16,7 +17,10 @@ import {
   constructedMovePool,
   constructedPath,
   isTeamReady,
+  overPoolMoveIds,
+  setGem,
   setItem,
+  slotManaPool,
   slotEntry,
   slotProblems,
   slotTypes,
@@ -28,6 +32,9 @@ import {
 import { BASE_ITEM_SLOTS, EQUIPMENT_FAMILIES, equipmentIdFor, parseEquipmentId, type EquipmentDefinition } from '../../run/equipment';
 import { innatePassiveOf, masteredInnateOf } from '../../run/innate';
 import { TRIAL_CLEAR_STARS } from '../../run/profile';
+import { GEM_ORDER, gemAmount, gemPointsForPip } from '../../run/gems';
+import { MASTERY_CAP } from '../../run/mastery';
+import type { RosterEntry } from '../../run/state';
 import { MOVE_CAP, pathTypes, signatureIdFor } from '../../run/progression';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -42,7 +49,7 @@ import { pathTint, pathTintStyle } from '../shared/pathTint';
 import { PassiveReadout } from '../shared/passiveIcons';
 import { EvolutionStar } from '../shared/EvolutionStar';
 import { StageMovePopup } from '../shared/HeroStage';
-import { STAT_ORDER, StatGlyph } from '../shared/StatBars';
+import { STAT_LABELS, STAT_ORDER, StatGlyph } from '../shared/StatBars';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { healCasterForEntry } from '../shared/healCaster';
 
@@ -52,11 +59,12 @@ const RAIL_TYPES: readonly TypeId[] = ['Fire', 'Water', 'Frost', 'Storm', 'Stone
 type View =
   | { kind: 'teams' }
   | { kind: 'team'; team: number }
-  | { kind: 'hero'; team: number; slot: number }
+  /** `slot` past the team's end is a hero being added — on the team only once confirmed. */
+  | { kind: 'hero'; team: number; slot: number; draft: TeamSlot }
   | { kind: 'pick'; team: number }
   | { kind: 'trials'; team: number };
 
-type Tab = 'path' | 'moves' | 'items';
+type Tab = 'path' | 'moves' | 'gems' | 'items' | 'review';
 
 /** The move list's order under the signature: the bands a level-30 team actually picks from, first. */
 const TIER_RANK: Record<MoveTier, number> = { late: 1, mid: 2, early: 3 };
@@ -284,7 +292,7 @@ function PathTab({ hero, slot, caster, onPick }: { hero: HeroDefinition; slot: T
   );
 }
 
-function MovesTab({ slot, caster, onToggle }: { slot: TeamSlot; caster: ReturnType<typeof healCasterForEntry>; onToggle: (moveId: string) => void }) {
+function MovesTab({ slot, caster, mana, onToggle }: { slot: TeamSlot; caster: ReturnType<typeof healCasterForEntry>; mana: number; onToggle: (moveId: string) => void }) {
   const [filter, setFilter] = useState<string>('All');
   const [inspect, setInspect] = useState<MoveDefinition | null>(null);
   const hero = heroes[slot.heroId];
@@ -296,7 +304,9 @@ function MovesTab({ slot, caster, onToggle }: { slot: TeamSlot; caster: ReturnTy
     .sort((a, b) => rank(a) - rank(b));
   const types = ['All', ...new Set(pool.map((id) => moves[id].type))];
   const shown = pool.filter((id) => filter === 'All' || moves[id].type === filter);
-  const tagFor = (id: string) => (id === signature ? 'Signature' : path?.unlocksMoveIds.includes(id) ? 'Path' : undefined);
+  // Over the pool still holds — Gems can lift the pool — but says so, and Review will not confirm it.
+  const tagFor = (id: string) =>
+    moves[id].manaCost > mana ? `Needs ${moves[id].manaCost} MP` : id === signature ? 'Signature' : path?.unlocksMoveIds.includes(id) ? 'Path' : undefined;
 
   return (
     <div className="cx-moves">
@@ -330,7 +340,7 @@ function MovesTab({ slot, caster, onToggle }: { slot: TeamSlot; caster: ReturnTy
   );
 }
 
-function ItemsTab({ slot, onSet }: { slot: TeamSlot; onSet: (index: number, itemId: string | null) => void }) {
+function ItemsTab({ slot, onSet, onNext }: { slot: TeamSlot; onSet: (index: number, itemId: string | null) => void; onNext: () => void }) {
   const [socket, setSocket] = useState(() => Math.min(slot.itemIds.length, BASE_ITEM_SLOTS - 1));
   const [inspect, setInspect] = useState<EquipmentDefinition | null>(null);
   const held = slot.itemIds[socket] ?? null;
@@ -364,11 +374,16 @@ function ItemsTab({ slot, onSet }: { slot: TeamSlot; onSet: (index: number, item
         })}
       </div>
 
-      {held && (
-        <button type="button" className="secondary-button cx-clear" onClick={() => onSet(socket, null)}>
-          Empty this socket
+      <div className="cx-step-actions">
+        {held && (
+          <button type="button" className="secondary-button" onClick={() => onSet(socket, null)}>
+            Empty this socket
+          </button>
+        )}
+        <button type="button" className="secondary-button" onClick={onNext}>
+          Review
         </button>
-      )}
+      </div>
 
       <div className="cx-families">
         {options.map((item) => (
@@ -382,20 +397,222 @@ function ItemsTab({ slot, onSet }: { slot: TeamSlot; onSet: (index: number, item
   );
 }
 
-function HeroView({ slot, onChange, onRemove, onBack }: { slot: TeamSlot; onChange: (slot: TeamSlot) => void; onRemove: () => void; onBack: () => void }) {
-  const [tab, setTab] = useState<Tab>('path');
+/** The guided order a build is walked in; Review is the lock-in, not a step. */
+const STEPS: readonly Exclude<Tab, 'review'>[] = ['path', 'moves', 'gems', 'items'];
+
+const gemsPlaced = (slot: TeamSlot) => (slot.gems ?? []).filter((g) => g !== null).length;
+
+/** The next step after `after` neither finished nor already passed, else Review. */
+function firstOpenStep(slot: TeamSlot, after: Tab | null, visited: ReadonlySet<Tab>): Tab {
+  const done = (step: Tab) =>
+    step === 'path' ? slot.pathId !== null : step === 'moves' ? slot.moveIds.length >= MOVE_CAP : step === 'gems' ? gemsPlaced(slot) >= MASTERY_CAP : slot.itemIds.length >= BASE_ITEM_SLOTS;
+  const from = after === null ? 0 : STEPS.indexOf(after as Exclude<Tab, 'review'>) + 1;
+  return STEPS.slice(from).find((step) => !done(step) && !visited.has(step)) ?? 'review';
+}
+
+/** What a held move over the pool still needs, said the same way on every step. */
+function manaNeedLine(moveId: string, mana: number): string {
+  const move = moves[moveId];
+  return `${move.name} costs ${move.manaCost} Mana — ${move.manaCost - mana} more needed`;
+}
+
+/** Ten pips, sized as a run finds them; each one a stat the player picks, or left to fit (drawn dim). */
+function GemsTab({
+  slot,
+  entry,
+  mana,
+  overPool,
+  onSet,
+  onNext,
+}: {
+  slot: TeamSlot;
+  entry: RosterEntry;
+  mana: number;
+  overPool: string[];
+  onSet: (index: number, stat: GrowthStatKey | null) => void;
+  onNext: () => void;
+}) {
+  const [pip, setPip] = useState(() => Math.max(0, Array.from({ length: MASTERY_CAP }, (_, j) => j).findIndex((j) => !slot.gems?.[j])));
+  const chosen = slot.gems?.[pip] ?? null;
+  const points = gemPointsForPip(pip);
+
+  const choose = (stat: GrowthStatKey) => {
+    onSet(pip, stat);
+    // On to the next pip still left to fit, so ten Gems are ten taps.
+    const gems = Array.from({ length: MASTERY_CAP }, (_, j) => (j === pip ? stat : (slot.gems?.[j] ?? null)));
+    const after = gems.findIndex((g, j) => g === null && j > pip);
+    const before = gems.findIndex((g) => g === null);
+    if (after >= 0) setPip(after);
+    else if (before >= 0) setPip(before);
+  };
+
+  return (
+    <div className="cx-gems">
+      {overPool.length > 0 && (
+        <div className="cx-mana-need">
+          {overPool.map((id) => (
+            <span key={id}>{manaNeedLine(id, mana)}</span>
+          ))}
+        </div>
+      )}
+      <div className="cx-gem-pips">
+        {entry.gems.map((gem, i) => {
+          const placed = !!slot.gems?.[i];
+          return (
+            <button
+              key={i}
+              type="button"
+              className={`cx-gem-pip${i === pip ? ' is-active' : ''}${placed ? ' is-placed' : ''}`}
+              aria-pressed={i === pip}
+              aria-label={`Gem ${i + 1}: +${gemAmount(gem)} ${STAT_LABELS[gem.stat]}${placed ? '' : ', by fit'}`}
+              onClick={() => setPip(i)}
+            >
+              <StatGlyph stat={gem.stat} />
+              <span className="cx-gem-amount">{`+${gemAmount(gem)}`}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="cx-gem-stats">
+        {GEM_ORDER.map((stat) => (
+          <button key={stat} type="button" className={`cx-gem-stat${chosen === stat ? ' is-active' : ''}`} onClick={() => choose(stat)}>
+            <StatGlyph stat={stat} />
+            <span className="cx-gem-stat-label">{STAT_LABELS[stat]}</span>
+            <span className="cx-gem-amount">{`+${gemAmount({ stat, points })}`}</span>
+          </button>
+        ))}
+      </div>
+      <div className="cx-step-actions">
+        {chosen && (
+          <button type="button" className="secondary-button" onClick={() => onSet(pip, null)}>
+            Leave to fit
+          </button>
+        )}
+        <button type="button" className="secondary-button" onClick={onNext}>
+          {gemsPlaced(slot) >= MASTERY_CAP ? 'Next' : 'Fit the rest'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** The build read whole before it is locked in: what fields, and what still stops it. */
+function ReviewPanel({
+  slot,
+  mana,
+  overPool,
+  caster,
+  onRemove,
+}: {
+  slot: TeamSlot;
+  mana: number;
+  overPool: string[];
+  caster: ReturnType<typeof healCasterForEntry>;
+  onRemove: (() => void) | null;
+}) {
+  const [inspect, setInspect] = useState<MoveDefinition | null>(null);
+  const [armed, setArmed] = useState(false);
+  const hero = heroes[slot.heroId];
+  const path = constructedPath(constructedContent.table, slot.heroId, slot.pathId);
+  const chosenGems = gemsPlaced(slot);
+  const blockers = [...(slot.moveIds.length === 0 ? ['Pick at least one move.'] : []), ...overPool.map((id) => manaNeedLine(id, mana))];
+  return (
+    <div className="cx-review">
+      {blockers.length > 0 && (
+        <div className="cx-mana-need">
+          {blockers.map((line) => (
+            <span key={line}>{line}</span>
+          ))}
+        </div>
+      )}
+      <div className="cx-review-row">
+        <span className="cx-label">Path</span>
+        <span className="cx-review-value" style={path ? { color: pathTint(hero, path).lead } : undefined}>
+          {path?.name ?? 'Unevolved'}
+        </span>
+      </div>
+      <div className="move-list cx-review-moves">
+        {slot.moveIds
+          .filter((id) => moves[id])
+          .map((id) => (
+            <MoveButtonReplica
+              key={id}
+              move={moves[id]}
+              caster={caster}
+              tag={overPool.includes(id) ? `Needs ${moves[id].manaCost} MP` : undefined}
+              onClick={() => setInspect(moves[id])}
+              onLongPress={() => setInspect(moves[id])}
+            />
+          ))}
+      </div>
+      <div className="cx-review-row">
+        <span className="cx-label">Gems</span>
+        <span className="cx-review-value">{chosenGems === 0 ? 'All by fit' : chosenGems >= MASTERY_CAP ? 'All chosen' : `${chosenGems} chosen, the rest by fit`}</span>
+      </div>
+      <div className="cx-review-row">
+        <span className="cx-label">Items</span>
+        <span className="cx-review-value">{slot.itemIds.length === 0 ? 'None' : slot.itemIds.map((id) => equipment[id]?.name ?? id).join(' · ')}</span>
+      </div>
+      {onRemove && (
+        <button type="button" className={`secondary-button cx-delete cx-review-remove${armed ? ' is-armed' : ''}`} onClick={() => (armed ? onRemove() : setArmed(true))}>
+          {armed ? 'Take off the team' : 'Remove'}
+        </button>
+      )}
+      {inspect && <StageMovePopup move={inspect} caster={caster} onClose={() => setInspect(null)} />}
+    </div>
+  );
+}
+
+/**
+ * One hero's build, walked Path → Moves → Gems → Items and locked in on Review. Edits stay on a
+ * draft until Confirm; the top arrow leaves without them. A choice that finishes a step moves on.
+ */
+function HeroView({
+  initial,
+  isNew,
+  unlocked,
+  onConfirm,
+  onRemove,
+  onBack,
+}: {
+  initial: TeamSlot;
+  isNew: boolean;
+  unlocked: ReadonlySet<string>;
+  onConfirm: (slot: TeamSlot) => void;
+  onRemove: () => void;
+  onBack: () => void;
+}) {
+  const [slot, setSlot] = useState(initial);
+  const [visited, setVisited] = useState<ReadonlySet<Tab>>(() => new Set());
+  const [tab, setTab] = useState<Tab>(() => (isNew ? 'path' : slotLegal(initial, unlocked) ? 'review' : firstOpenStep(initial, null, new Set())));
+  const [lastStep, setLastStep] = useState<Tab>(() => (isNew ? 'path' : 'items'));
   const hero = heroes[slot.heroId];
   const entry = useMemo(() => slotEntry(constructedContent, slot), [slot]);
   const totals = useMemo(() => entryStatTotals(hero, entry), [hero, entry]);
   const caster = useMemo(() => healCasterForEntry(hero, entry), [hero, entry]);
+  const mana = useMemo(() => slotManaPool(constructedContent, slot), [slot]);
+  const overPool = useMemo(() => overPoolMoveIds(constructedContent, slot), [slot]);
   const innate = masteredInnateOf(hero) ?? innatePassiveOf(hero);
   const path = constructedPath(constructedContent.table, slot.heroId, slot.pathId);
   const suggested = suggestedSlotFor(slot.heroId);
+  const legal = slotLegal(slot, unlocked);
 
-  const tabs: { id: Tab; label: string; summary: string }[] = [
-    { id: 'path', label: 'Path', summary: path?.name ?? 'Unevolved' },
+  const go = (next: Tab) => {
+    if (next !== 'review') setLastStep(next);
+    setTab(next);
+  };
+  /** Off the step just finished to the next one still open — Review once none is. */
+  const advance = (from: Tab, next: TeamSlot) => {
+    const seen = new Set(visited).add(from);
+    setVisited(seen);
+    go(firstOpenStep(next, from, seen));
+  };
+
+  const tabs: { id: Exclude<Tab, 'review'>; label: string; summary: string }[] = [
+    { id: 'path', label: 'Path', summary: path?.name ?? 'Choose' },
     { id: 'moves', label: 'Moves', summary: `${slot.moveIds.length} / ${MOVE_CAP}` },
-    { id: 'items', label: 'Items', summary: `${slot.itemIds.length} / 3` },
+    { id: 'gems', label: 'Gems', summary: `${gemsPlaced(slot)} / ${MASTERY_CAP}` },
+    { id: 'items', label: 'Items', summary: `${slot.itemIds.length} / ${BASE_ITEM_SLOTS}` },
   ];
 
   return (
@@ -403,10 +620,11 @@ function HeroView({ slot, onChange, onRemove, onBack }: { slot: TeamSlot; onChan
       <Header
         title={hero.name}
         onBack={onBack}
-        backLabel="Back to the team"
+        backLabel={isNew ? 'Back to the team without this hero' : 'Back to the team without these changes'}
         side={
-          suggested && (
-            <button type="button" className="secondary-button cx-suggest" onClick={() => onChange(suggested)}>
+          suggested &&
+          tab !== 'review' && (
+            <button type="button" className="secondary-button cx-suggest" onClick={() => setSlot(suggested)}>
               Suggested
             </button>
           )
@@ -432,27 +650,89 @@ function HeroView({ slot, onChange, onRemove, onBack }: { slot: TeamSlot; onChan
           </span>
         ))}
       </div>
-      <div className="cx-tabs" role="tablist" aria-label="Build">
-        {tabs.map((t) => (
-          <button key={t.id} type="button" role="tab" aria-selected={t.id === tab} aria-label={`${t.label}: ${t.summary}`} className={`cx-tab${t.id === tab ? ' is-active' : ''}`} onClick={() => setTab(t.id)}>
-            <span className="cx-tab-label">{t.label}</span>
-            <span className="cx-tab-summary">{t.summary}</span>
-          </button>
-        ))}
-      </div>
       <div className="screen-scroll cx-tab-body" role="tabpanel">
-        {tab === 'path' && <PathTab hero={hero} slot={slot} caster={caster} onPick={(pathId) => onChange(withPath(constructedContent, slot, pathId))} />}
-        {tab === 'moves' && <MovesTab slot={slot} caster={caster} onToggle={(id) => onChange(toggleMove(slot, id))} />}
-        {tab === 'items' && <ItemsTab slot={slot} onSet={(i, id) => onChange(setItem(slot, i, id))} />}
+        {tab === 'path' && (
+          <PathTab
+            hero={hero}
+            slot={slot}
+            caster={caster}
+            onPick={(pathId) => {
+              const next = withPath(constructedContent, slot, pathId);
+              setSlot(next);
+              advance('path', next);
+            }}
+          />
+        )}
+        {tab === 'moves' && (
+          <MovesTab
+            slot={slot}
+            caster={caster}
+            mana={mana}
+            onToggle={(id) => {
+              const next = toggleMove(slot, id);
+              setSlot(next);
+              if (next.moveIds.length >= MOVE_CAP && slot.moveIds.length < MOVE_CAP) advance('moves', next);
+            }}
+          />
+        )}
+        {tab === 'gems' && (
+          <GemsTab
+            slot={slot}
+            entry={entry}
+            mana={mana}
+            overPool={overPool}
+            onSet={(i, stat) => {
+              const next = setGem(slot, i, stat);
+              setSlot(next);
+              if (gemsPlaced(next) >= MASTERY_CAP && gemsPlaced(slot) < MASTERY_CAP) advance('gems', next);
+            }}
+            onNext={() => advance('gems', slot)}
+          />
+        )}
+        {tab === 'items' && (
+          <ItemsTab
+            slot={slot}
+            onSet={(i, id) => {
+              const next = setItem(slot, i, id);
+              setSlot(next);
+              if (next.itemIds.length >= BASE_ITEM_SLOTS && slot.itemIds.length < BASE_ITEM_SLOTS) advance('items', next);
+            }}
+            onNext={() => advance('items', slot)}
+          />
+        )}
+        {tab === 'review' && <ReviewPanel slot={slot} mana={mana} overPool={overPool} caster={caster} onRemove={isNew ? null : onRemove} />}
       </div>
-      <div className="cx-footer">
-        <button type="button" className="secondary-button" onClick={onRemove}>
-          Remove
-        </button>
-        <button type="button" className="resolve-button" onClick={onBack}>
-          Done
-        </button>
-      </div>
+      {tab === 'review' ? (
+        <div className="cx-footer is-even">
+          <button type="button" className="secondary-button" onClick={() => go(lastStep)}>
+            Back
+          </button>
+          <button type="button" className="resolve-button" disabled={!legal} onClick={() => onConfirm(slot)}>
+            Confirm
+          </button>
+        </div>
+      ) : (
+        <div className="cx-tabs" role="tablist" aria-label="Build">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={t.id === tab}
+              aria-label={`${t.label}: ${t.summary}`}
+              className={`cx-tab${t.id === tab ? ' is-active' : ''}`}
+              onClick={() => go(t.id)}
+            >
+              <span className="cx-tab-label">{t.label}</span>
+              <span className="cx-tab-summary">{t.summary}</span>
+            </button>
+          ))}
+          <button type="button" role="tab" aria-selected={false} className={`cx-tab cx-tab-review${legal ? ' is-ready' : ''}`} onClick={() => go('review')}>
+            <span className="cx-tab-label">Review</span>
+            <span className="cx-tab-summary">{legal ? 'Ready' : '—'}</span>
+          </button>
+        </div>
+      )}
     </>
   );
 }
@@ -587,7 +867,7 @@ export function ConstructedScreen({ teams, unlocked, cleared, notice = null, onC
           notice={shownNotice}
           onDismissNotice={() => setShownNotice(null)}
           onRename={(name) => replaceTeam(view.team, { ...teams[view.team], name })}
-          onOpenSlot={(slot) => setView({ kind: 'hero', team: view.team, slot })}
+          onOpenSlot={(slot) => setView({ kind: 'hero', team: view.team, slot, draft: teams[view.team].slots[slot] })}
           onAdd={() => setView({ kind: 'pick', team: view.team })}
           onDelete={() => {
             onChangeTeams(teams.filter((_, i) => i !== view.team));
@@ -597,10 +877,17 @@ export function ConstructedScreen({ teams, unlocked, cleared, notice = null, onC
           onBack={() => setView({ kind: 'teams' })}
         />
       )}
-      {view.kind === 'hero' && teams[view.team].slots[view.slot] && (
+      {view.kind === 'hero' && (
         <HeroView
-          slot={teams[view.team].slots[view.slot]}
-          onChange={(next) => replaceSlot(view.team, view.slot, next)}
+          key={`${view.team}:${view.slot}:${view.draft.heroId}`}
+          initial={view.draft}
+          isNew={view.slot >= teams[view.team].slots.length}
+          unlocked={unlocked}
+          onConfirm={(next) => {
+            if (view.slot >= teams[view.team].slots.length) replaceTeam(view.team, { ...teams[view.team], slots: [...teams[view.team].slots, next] });
+            else replaceSlot(view.team, view.slot, next);
+            setView({ kind: 'team', team: view.team });
+          }}
           onRemove={() => {
             replaceTeam(view.team, { ...teams[view.team], slots: teams[view.team].slots.filter((_, i) => i !== view.slot) });
             setView({ kind: 'team', team: view.team });
@@ -613,9 +900,7 @@ export function ConstructedScreen({ teams, unlocked, cleared, notice = null, onC
           team={teams[view.team]}
           unlocked={unlocked}
           onPick={(heroId) => {
-            const slot: TeamSlot = { heroId, pathId: null, moveIds: [], itemIds: [] };
-            replaceTeam(view.team, { ...teams[view.team], slots: [...teams[view.team].slots, slot] });
-            setView({ kind: 'hero', team: view.team, slot: teams[view.team].slots.length });
+            setView({ kind: 'hero', team: view.team, slot: teams[view.team].slots.length, draft: { heroId, pathId: null, moveIds: [], itemIds: [] } });
           }}
           onBack={() => setView({ kind: 'team', team: view.team })}
         />

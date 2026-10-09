@@ -1,9 +1,9 @@
-// The Gauntlet (docs/gauntlet.md §8 phase 2): whole runs — a board rolled, six drafted by a policy,
+// The Gauntlet (docs/gauntlet.md §8 phase 2): whole runs — six offers of three, one taken from each by a policy,
 // the seeded opponents fought on the shipped AI (run/pilot.ts) until five wins or two losses.
 //
 //   node dist/scripts/sim/gauntlet.js --runs 300 --pilot chart --draft chart
 //   node dist/scripts/sim/gauntlet.js --pilot greedy               the skilled pilot flies the player side
-//   node dist/scripts/sim/gauntlet.js --draft random               six off the board in roll order
+//   node dist/scripts/sim/gauntlet.js --draft random               the first hero of every offer
 //   node dist/scripts/sim/gauntlet.js --pilot-from 6                the Trials pilot never flies (Classic's AI throughout)
 //   node dist/scripts/sim/gauntlet.js --flat                       no escalation: the same fights, any six
 
@@ -13,7 +13,7 @@ import { typeChart } from '../../src/data/typechart';
 import type { TypeId } from '../../src/engine/content';
 import { resolveTypeMult } from '../../src/engine/damage/typeMult';
 import { constructedSide, slotTypes, TEAM_SIZE, type TeamSlot } from '../../src/run/constructed';
-import { LOSSES_TO_END, PILOT_FROM_WINS, WINS_TO_CLEAR, gauntletAiPilot, gauntletOpponent, rollBoard, type GauntletRun } from '../../src/run/gauntlet';
+import { LOSSES_TO_END, PILOT_FROM_WINS, WINS_TO_CLEAR, gauntletAiPilot, gauntletOpponent, draftPick, rollOffer, type GauntletRun } from '../../src/run/gauntlet';
 import { simulateFight, type PilotKind } from './fight';
 import { makeRng } from './rng';
 
@@ -59,24 +59,19 @@ function teamValue(team: readonly TeamSlot[]): number {
   return covered - 0.5 * pileUp;
 }
 
-/** Board indices in draft order: greedy on the chart value, or the first six as rolled. */
-function draft(board: readonly TeamSlot[], kind: DraftKind): number[] {
-  if (kind === 'random') return [0, 1, 2, 3, 4, 5];
-  const picked: number[] = [];
-  while (picked.length < TEAM_SIZE) {
-    let best = -1;
-    let bestValue = -Infinity;
-    board.forEach((slot, i) => {
-      if (picked.includes(i)) return;
-      const value = teamValue([...picked.map((j) => board[j]), slot]);
-      if (value > bestValue) {
-        bestValue = value;
-        best = i;
-      }
-    });
-    picked.push(best);
-  }
-  return picked;
+/** The offer index to take: greedy on the chart value, or the first as rolled. */
+function draft(team: readonly TeamSlot[], offer: readonly TeamSlot[], kind: DraftKind): number {
+  if (kind === 'random') return 0;
+  let best = 0;
+  let bestValue = -Infinity;
+  offer.forEach((slot, i) => {
+    const value = teamValue([...team, slot]);
+    if (value > bestValue) {
+      bestValue = value;
+      best = i;
+    }
+  });
+  return best;
 }
 
 /**
@@ -105,9 +100,9 @@ interface RunOutcome {
 }
 
 function playGauntlet(seed: number, args: Args, owned: readonly string[]): RunOutcome {
-  const board = rollBoard(gauntletContent, owned, {}, seed);
-  const picks = draft(board, args.draft);
-  let run: GauntletRun = { seed, board, team: picks.map((i) => board[i]), wins: 0, losses: 0, fighting: false };
+  const start = { seed, team: [], seen: [] };
+  let run: GauntletRun = { ...start, offer: rollOffer(gauntletContent, owned, {}, start), wins: 0, losses: 0, fighting: false };
+  while (run.team.length < TEAM_SIZE) run = draftPick(gauntletContent, owned, {}, run, draft(run.team, run.offer, args.draft));
   const fights: RunOutcome['fights'] = [];
   while (run.wins < WINS_TO_CLEAR && run.losses < LOSSES_TO_END) {
     // The opponent's seed reads wins + losses and its candidate count reads wins, so moving the wins

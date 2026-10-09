@@ -161,9 +161,9 @@ import {
   recordPermanentStatGains,
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
-import { constructedHeroIds, constructedSide, type Team } from '../run/constructed';
+import { constructedHeroIds, constructedSide, TEAM_SIZE, type Team } from '../run/constructed';
 import { constructedContent, gauntletContent, trials } from '../data/trials';
-import { draftTeam, endGauntlet, enterGauntlet, freeEntryAvailable, gauntletAiPilot, gauntletLocationId, gauntletOpponent, localDay, recordGauntletFight, settleLeftFight, startGauntletFight, type GauntletResult } from '../run/gauntlet';
+import { draftPick, endGauntlet, enterGauntlet, freeEntryAvailable, gauntletAiPilot, gauntletLocationId, gauntletOpponent, localDay, recordGauntletFight, settleLeftFight, startGauntletFight, type GauntletResult } from '../run/gauntlet';
 import { createStatusTestSides } from '../run/statusTestFight';
 import { atEvolution, currentEvolutionPathId, fullMovepool } from '../run/progression';
 import { progressionTable } from '../data/progression';
@@ -466,7 +466,7 @@ export function App() {
   // hero (run/recruitment.ts heroPool) and fields no strangers.
   const ownedPool = useMemo(() => heroPool(heroes, profile.purchases), [profile.purchases]);
   const runPools = useMemo(() => encounterPools(playerRun, heroes, ownedPool), [playerRun.deck, ownedPool]);
-  const gauntletOpponentTeam = useMemo(() => (profile.gauntlet && profile.gauntlet.team.length > 0 ? gauntletOpponent(gauntletContent, profile.gauntlet).team : null), [profile.gauntlet]);
+  const gauntletOpponentTeam = useMemo(() => (profile.gauntlet && profile.gauntlet.team.length === TEAM_SIZE ? gauntletOpponent(gauntletContent, profile.gauntlet).team : null), [profile.gauntlet]);
   const recruitPool = runPools.heroes;
   // The cold launch's loading screen (LaunchScreen): `launched` mounts the title under it for its
   // fade, `launchDone` takes it down. Neither goes back to false this session.
@@ -1423,7 +1423,13 @@ export function App() {
           notice={screen.notice ?? null}
           opponent={gauntletOpponentTeam}
           onEnter={handleEnterGauntlet}
-          onDraft={(indices) => setProfile(updateProfile((current) => (current.gauntlet ? { ...current, gauntlet: draftTeam(current.gauntlet, indices) } : current)))}
+          onDraft={(offerIndex) =>
+            setProfile(
+              updateProfile((current) =>
+                current.gauntlet ? { ...current, gauntlet: draftPick(gauntletContent, Object.keys(heroPool(heroes, current.purchases)), current.evolutionStars, current.gauntlet, offerIndex) } : current
+              )
+            )
+          }
           onFight={handleGauntletFight}
           onRetire={handleRetireGauntlet}
           onDismissResult={() => setScreen({ kind: 'gauntlet' })}

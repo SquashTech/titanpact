@@ -7,33 +7,34 @@ import { constructedContent, TRIAL_LIST } from '../src/data/trials';
 import { FINALE_LOCATION_ID, locations } from '../src/data/locations';
 import { arenaLocationIds, locationForType } from '../src/run/locations';
 import { createProfile, decodeProfile, type Profile } from '../src/run/profile';
-import { constructedHeroIds, constructedSide, slotProblems, TEAM_SIZE } from '../src/run/constructed';
+import { constructedHeroIds, constructedSide, overPoolMoveIds, slotManaPool, slotProblems, TEAM_SIZE } from '../src/run/constructed';
 import { signatureIdFor } from '../src/run/progression';
+import { createRng } from '../src/engine/rng/seededRng';
 import { starsSpent } from '../src/run/starShop';
 import {
-  BOARD_SIZE,
-  BOARD_TYPE_LIMIT,
+  OFFER_SIZE,
+  TEAM_TYPE_LIMIT,
   GAUNTLET_CLEAR_BONUS,
   GAUNTLET_ENTRY_PRICE,
   PILOT_FROM_WINS,
   WINS_TO_CLEAR,
   GauntletError,
   canEnterGauntlet,
-  draftTeam,
+  draftPick,
   endGauntlet,
   enterGauntlet,
   gauntletAiPilot,
   gauntletLocationId,
   gauntletOpponent,
   recordGauntletFight,
-  rollBoard,
+  rollGauntletSlot,
   settleLeftFight,
   startGauntletFight,
   type GauntletContent,
   type GauntletRun,
 } from '../src/run/gauntlet';
 
-const content: GauntletContent = { ...constructedContent, moves, typeChart };
+const content: GauntletContent = { ...constructedContent, typeChart };
 const owned = Object.values(heroes)
   .filter((h) => !h.unlock)
   .map((h) => h.id);
@@ -43,25 +44,51 @@ function opened(): Profile {
   return { ...createProfile(), cyclesCleared: 1, runsCompleted: 1 };
 }
 
-function drafted(profile: Profile): Profile {
-  return { ...profile, gauntlet: draftTeam(profile.gauntlet!, [0, 1, 2, 3, 4, 5]) };
+/** Six picks, the first of every offer. */
+function draft(run: GauntletRun, stars: Record<string, readonly string[]> = {}): GauntletRun {
+  while (run.team.length < TEAM_SIZE) run = draftPick(content, owned, stars, run, 0);
+  return run;
 }
 
-test('gauntlet: a board is fifteen owned heroes, one form each, at most two of a primary type', () => {
+function drafted(profile: Profile): Profile {
+  return { ...profile, gauntlet: draft(profile.gauntlet!) };
+}
+
+/** Every offer a run shows, drafting the `take`th of each. */
+function offersOf(seed: number, stars: Record<string, readonly string[]> = {}, take = 0) {
+  let run = enterGauntlet({ ...opened(), evolutionStars: stars as Record<string, string[]> }, content, owned, seed, TODAY, 0).gauntlet!;
+  const offers = [];
+  while (run.team.length < TEAM_SIZE) {
+    offers.push(run.offer);
+    run = draftPick(content, owned, stars, run, Math.min(take, run.offer.length - 1));
+  }
+  return { offers, run };
+}
+
+test('gauntlet: six offers of three owned heroes, none offered twice, three types an offer, never a type the team is full of', () => {
   for (let seed = 1; seed <= 20; seed++) {
-    const board = rollBoard(content, owned, {}, seed);
-    assert.strictEqual(board.length, BOARD_SIZE);
-    assert.strictEqual(new Set(board.map((s) => s.heroId)).size, BOARD_SIZE);
-    for (const slot of board) assert.ok(owned.includes(slot.heroId), `${slot.heroId} is not owned`);
-    const perType = new Map<string, number>();
-    for (const slot of board) perType.set(heroes[slot.heroId].types[0], (perType.get(heroes[slot.heroId].types[0]) ?? 0) + 1);
-    for (const [type, n] of perType) assert.ok(n <= BOARD_TYPE_LIMIT, `${n} of ${type}`);
+    for (let take = 0; take < OFFER_SIZE; take++) {
+      const { offers, run } = offersOf(seed, {}, take);
+      assert.strictEqual(offers.length, TEAM_SIZE);
+      const seen = offers.flat().map((s) => s.heroId);
+      assert.strictEqual(new Set(seen).size, seen.length, 'a hero offered twice');
+      for (const id of seen) assert.ok(owned.includes(id), `${id} is not owned`);
+      let team: string[] = [];
+      for (const offer of offers) {
+        assert.strictEqual(offer.length, OFFER_SIZE);
+        const types = offer.map((s) => heroes[s.heroId].types[0]);
+        assert.strictEqual(new Set(types).size, OFFER_SIZE, `an offer repeats a type: ${types.join(', ')}`);
+        for (const t of types) assert.ok(team.filter((u) => u === t).length < TEAM_TYPE_LIMIT, `${t} offered to a team holding ${TEAM_TYPE_LIMIT}`);
+        team = [...team, heroes[offer[Math.min(take, offer.length - 1)].heroId].types[0]];
+      }
+      assert.strictEqual(run.offer.length, 0);
+    }
   }
 });
 
-test('gauntlet: every rolled hero is evolved, legal, holds its signature, and swings at least twice', () => {
+test('gauntlet: every rolled hero is evolved, legal, castable, holds its signature, and swings at least twice', () => {
   for (let seed = 1; seed <= 30; seed++) {
-    for (const slot of rollBoard(content, owned, {}, seed)) {
+    for (const slot of offersOf(seed).offers.flat()) {
       assert.ok(slot.pathId, `${slot.heroId} is unevolved`);
       assert.deepStrictEqual(slotProblems(content, slot), [], `${slot.heroId}: ${slotProblems(content, slot).join('; ')}`);
       assert.strictEqual(slot.moveIds.length, 4, `${slot.heroId} holds ${slot.moveIds.length}`);
@@ -74,19 +101,32 @@ test('gauntlet: every rolled hero is evolved, legal, holds its signature, and sw
   }
 });
 
-test('gauntlet: the board is fixed by its seed', () => {
-  assert.deepStrictEqual(rollBoard(content, owned, {}, 7), rollBoard(content, owned, {}, 7));
-  assert.notDeepStrictEqual(rollBoard(content, owned, {}, 7), rollBoard(content, owned, {}, 8));
+test('gauntlet: no hero in any form is dealt a move over its Mana pool', () => {
+  // Every form, rolled many times: the pool is the cap, whatever the roll favours.
+  for (const heroId of owned) {
+    for (const path of content.table.evolutions[heroId].flatMap((n) => n.paths)) {
+      for (let seed = 1; seed <= 6; seed++) {
+        const { slot } = rollGauntletSlot(content, heroId, path.id, createRng(seed));
+        assert.deepStrictEqual(overPoolMoveIds(content, slot), [], `${path.id} holds ${overPoolMoveIds(content, slot).join(', ')} over ${slotManaPool(content, slot)}`);
+      }
+    }
+  }
+});
+
+test('gauntlet: the offers are fixed by the seed and the picks', () => {
+  assert.deepStrictEqual(offersOf(7).offers, offersOf(7).offers);
+  assert.notDeepStrictEqual(offersOf(7).offers, offersOf(8).offers);
+  assert.deepStrictEqual(offersOf(7, {}, 1).offers[0], offersOf(7, {}, 0).offers[0]);
 });
 
 test('gauntlet: unstarred paths are weighted up, not filtered', () => {
-  // Every hero's first path starred: uniform would put a third of the board on a starred path.
+  // Every hero's first path starred: uniform would put a third of the offers on a starred path.
   const stars: Record<string, string[]> = {};
   for (const id of owned) stars[id] = [content.table.evolutions[id][0].paths[0].id];
   let starred = 0;
   let total = 0;
   for (let seed = 1; seed <= 40; seed++) {
-    for (const slot of rollBoard(content, owned, stars, seed)) {
+    for (const slot of offersOf(seed, stars).offers.flat()) {
       total++;
       if (stars[slot.heroId].includes(slot.pathId!)) starred++;
     }
@@ -147,14 +187,24 @@ test('gauntlet: one free entry a day; the next costs stars; one run at a time', 
   assert.strictEqual(canEnterGauntlet(endGauntlet(profile).profile, 0, '2026-10-09'), false);
 });
 
-test('gauntlet: the draft is six different heroes off the board, once', () => {
-  const run = enterGauntlet(opened(), content, owned, 1, TODAY, 0).gauntlet!;
-  assert.throws(() => draftTeam(run, [0, 1, 2, 3, 4]), GauntletError);
-  assert.throws(() => draftTeam(run, [0, 0, 1, 2, 3, 4]), GauntletError);
-  assert.throws(() => draftTeam(run, [0, 1, 2, 3, 4, 99]), GauntletError);
-  const team = draftTeam(run, [5, 4, 3, 2, 1, 0]);
-  assert.deepStrictEqual(team.team.map((s) => s.heroId), [5, 4, 3, 2, 1, 0].map((i) => run.board[i].heroId));
-  assert.throws(() => draftTeam(team, [0, 1, 2, 3, 4, 5]), GauntletError);
+test('gauntlet: a pick is one of the offer, the team fills once, in order', () => {
+  let run = enterGauntlet(opened(), content, owned, 1, TODAY, 0).gauntlet!;
+  assert.throws(() => draftPick(content, owned, {}, run, OFFER_SIZE), GauntletError);
+  const picked: string[] = [];
+  while (run.team.length < TEAM_SIZE) {
+    picked.push(run.offer[2].heroId);
+    run = draftPick(content, owned, {}, run, 2);
+  }
+  assert.deepStrictEqual(run.team.map((s) => s.heroId), picked);
+  assert.throws(() => draftPick(content, owned, {}, run, 0), GauntletError);
+});
+
+test('gauntlet: a run saved under the fifteen-hero board drafts on from its first three', () => {
+  const offer = offersOf(3).offers;
+  const old = { seed: 3, board: [...offer[0], ...offer[1]], team: [], wins: 0, losses: 0, fighting: false };
+  const profile = decodeProfile({ ...JSON.parse(JSON.stringify(opened())), gauntlet: old });
+  assert.deepStrictEqual(profile.gauntlet!.offer.map((s) => s.heroId), offer[0].map((s) => s.heroId));
+  assert.deepStrictEqual(profile.gauntlet!.team, []);
 });
 
 test('gauntlet: five wins stars every unstarred path on the team and pays the bonus', () => {

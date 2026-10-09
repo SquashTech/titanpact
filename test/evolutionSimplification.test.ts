@@ -210,7 +210,7 @@ test('evolution simplification: the signature follows the rewire — learned bef
   assert.strictEqual(pendingSignature(heroes.cinderKnight, { ...swapped, offenseSwapped: false }), 'hammerbrand');
 
   // Constructed: the pool holds the form's own, and a path change carries a held one across.
-  const content = { heroes, table: progressionTable, equipment };
+  const content = { heroes, table: progressionTable, equipment, moves, passives };
   const slot = { heroId: 'cinderKnight', pathId: 'cinderKnight-ironclad', moveIds: ['hammerbrand'], itemIds: [] };
   assert.ok(constructedMovePool(content, { ...slot, pathId: 'cinderKnight-explosive' }).includes(twin));
   assert.ok(!constructedMovePool(content, { ...slot, pathId: 'cinderKnight-explosive' }).includes('hammerbrand'));

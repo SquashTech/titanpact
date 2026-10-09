@@ -1,17 +1,18 @@
-// The Gauntlet (docs/gauntlet.md): fifteen rolled heroes, a drafted six, five wins before two
-// losses. Pure — the board, the kit roll, the opponent, the record and its pay. A Gauntlet hero is
+// The Gauntlet (docs/gauntlet.md): six offers of three rolled heroes, one taken from each, five
+// wins before two losses. Pure — the offers, the kit roll, the opponent, the record and its pay. A Gauntlet hero is
 // the Trials' TeamSlot, so constructedSide fields it and the engine never learns a third mode.
 
-import type { HeroDefinition, MoveCategory, MoveDefinition, TypeId } from '../engine/content';
+import type { HeroDefinition, MoveCategory, TypeId } from '../engine/content';
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import { resolveTypeMult, type TypeChart } from '../engine/damage/typeMult';
-import { constructedMovePool, constructedPath, slotTypes, TEAM_SIZE, type ConstructedContent, type TeamSlot } from './constructed';
+import { constructedMovePool, constructedPath, slotManaPool, slotTypes, TEAM_SIZE, type ConstructedContent, type TeamSlot } from './constructed';
 import type { Profile } from './profile';
 import { MOVE_CAP, signatureIdFor } from './progression';
 
-export const BOARD_SIZE = 15;
-/** Heroes of one primary type a board may hold. */
-export const BOARD_TYPE_LIMIT = 2;
+/** Heroes an offer shows; one is taken. */
+export const OFFER_SIZE = 3;
+/** Heroes of one primary type a team may hold — an offer never shows a type the team is full of. */
+export const TEAM_TYPE_LIMIT = 2;
 /** A path the account has not starred, against a starred one's 1. */
 export const UNSTARRED_WEIGHT = 3;
 export const WINS_TO_CLEAR = 5;
@@ -29,15 +30,17 @@ const OFF_STAT_WEIGHT = 0.25;
 const MIN_DAMAGE_MOVES = 2;
 
 export interface GauntletContent extends ConstructedContent {
-  moves: Record<string, MoveDefinition>;
   typeChart: TypeChart;
 }
 
 export interface GauntletRun {
-  /** Fixes the board and every opponent, so a preview is the fight and a reload changes nothing. */
+  /** Fixes every offer and every opponent, so a preview is the fight and a reload changes nothing. */
   seed: number;
-  board: TeamSlot[];
-  /** Empty until drafted; then TEAM_SIZE slots, in the order picked. */
+  /** The three on offer; empty once the team is full. */
+  offer: TeamSlot[];
+  /** Every hero offered so far, taken or not — none is offered twice. */
+  seen: string[];
+  /** The heroes taken, one an offer, in order; the fights open at TEAM_SIZE. */
   team: TeamSlot[];
   wins: number;
   losses: number;
@@ -77,13 +80,14 @@ export function canEnterGauntlet(profile: Profile, balance: number, today: strin
   return isGauntletOpen(profile) && !profile.gauntlet && (freeEntryAvailable(profile, today) || balance >= GAUNTLET_ENTRY_PRICE);
 }
 
-/** Spends today's free entry if it is there, else GAUNTLET_ENTRY_PRICE stars, and rolls the board. */
+/** Spends today's free entry if it is there, else GAUNTLET_ENTRY_PRICE stars, and rolls the first offer. */
 export function enterGauntlet(profile: Profile, content: GauntletContent, ownedHeroIds: readonly string[], seed: number, today: string, balance: number): Profile {
   if (!isGauntletOpen(profile)) throw new GauntletError('the Gauntlet opens on the first Cycle I clear');
   if (profile.gauntlet) throw new GauntletError('a Gauntlet is already open');
   const free = freeEntryAvailable(profile, today);
   if (!free && balance < GAUNTLET_ENTRY_PRICE) throw new GauntletError(`an entry costs ${GAUNTLET_ENTRY_PRICE}, balance is ${balance}`);
-  const run: GauntletRun = { seed: seed >>> 0, board: rollBoard(content, ownedHeroIds, profile.evolutionStars, seed), team: [], wins: 0, losses: 0, fighting: false };
+  const draft = { seed: seed >>> 0, team: [], seen: [] };
+  const run: GauntletRun = { ...draft, offer: rollOffer(content, ownedHeroIds, profile.evolutionStars, draft), wins: 0, losses: 0, fighting: false };
   return {
     ...profile,
     gauntlet: run,
@@ -118,11 +122,15 @@ function leadCategory(hero: HeroDefinition, swapped: boolean): MoveCategory | nu
   return (attack > intelligence) !== swapped ? 'physical' : 'magical';
 }
 
-/** One hero in one form: the signature and the path's move held, the rest rolled for fit (§3). No items. */
+/**
+ * One hero in one form: the signature and the path's move held, the rest rolled for fit (§3). No
+ * items. Nothing over the form's Mana pool is ever dealt — a move it could never cast.
+ */
 export function rollGauntletSlot(content: GauntletContent, heroId: string, pathId: string, state: RngState): { slot: TeamSlot; state: RngState } {
   const hero = content.heroes[heroId];
   const path = constructedPath(content.table, heroId, pathId);
-  const pool = constructedMovePool(content, { heroId, pathId }).filter((id) => content.moves[id]);
+  const mana = slotManaPool(content, { heroId, pathId, moveIds: [], itemIds: [] });
+  const pool = constructedMovePool(content, { heroId, pathId }).filter((id) => content.moves[id] && content.moves[id].manaCost <= mana);
   const signature = signatureIdFor(hero, { offenseSwapped: !!path?.swapsOffense });
   const held = [...new Set([signature, ...(path?.unlocksMoveIds ?? [])])].filter((id): id is string => !!id && pool.includes(id)).slice(0, MOVE_CAP);
 
@@ -147,39 +155,57 @@ export function rollGauntletSlot(content: GauntletContent, heroId: string, pathI
   return { slot: { heroId, pathId, moveIds: held, itemIds: [] }, state };
 }
 
-/** Fifteen owned heroes, one form each, at most two of a primary type, unstarred paths weighted up (§2). */
-export function rollBoard(content: GauntletContent, ownedHeroIds: readonly string[], stars: Record<string, readonly string[]>, seed: number): TeamSlot[] {
-  let state = createRng(seed);
+/**
+ * The next three: owned heroes not yet offered, one form each, three primary types, none the team
+ * already holds TEAM_TYPE_LIMIT of, unstarred paths weighted up (§2). Fixed by the seed and the pick
+ * number. Where the owned heroes run short, the type rules give way before the offer does.
+ */
+export function rollOffer(
+  content: GauntletContent,
+  ownedHeroIds: readonly string[],
+  stars: Record<string, readonly string[]>,
+  run: Pick<GauntletRun, 'seed' | 'team' | 'seen'>
+): TeamSlot[] {
+  let state = createRng((run.seed ^ Math.imul(run.team.length + 1, 0xc2b2ae35)) >>> 0);
   type Pair = { heroId: string; pathId: string; type: TypeId };
+  const typeOf = (heroId: string) => content.heroes[heroId].types[0];
+  const taken = new Set([...run.seen, ...run.team.map((s) => s.heroId)]);
   let pairs: Pair[] = ownedHeroIds
-    .filter((id) => content.heroes[id])
-    .flatMap((heroId) => pathsOf(content, heroId).map((pathId) => ({ heroId, pathId, type: content.heroes[heroId].types[0] })));
-  const perType = new Map<TypeId, number>();
-  const board: TeamSlot[] = [];
-  while (board.length < BOARD_SIZE) {
-    const open = pairs.filter((p) => (perType.get(p.type) ?? 0) < BOARD_TYPE_LIMIT);
+    .filter((id) => content.heroes[id] && !taken.has(id))
+    .flatMap((heroId) => pathsOf(content, heroId).map((pathId) => ({ heroId, pathId, type: typeOf(heroId) })));
+  const full = new Set(run.team.map((s) => typeOf(s.heroId)).filter((t, _, all) => all.filter((u) => u === t).length >= TEAM_TYPE_LIMIT));
+  const offer: TeamSlot[] = [];
+  while (offer.length < OFFER_SIZE && pairs.length > 0) {
+    const shown = new Set(offer.map((s) => typeOf(s.heroId)));
+    const fresh = pairs.filter((p) => !full.has(p.type) && !shown.has(p.type));
+    const open = fresh.length > 0 ? fresh : pairs.filter((p) => !full.has(p.type)).length > 0 ? pairs.filter((p) => !full.has(p.type)) : pairs;
     const roll = pick(state, open, (p) => (stars[p.heroId]?.includes(p.pathId) ? 1 : UNSTARRED_WEIGHT));
     state = roll.state;
     if (!roll.item) break;
-    const { heroId, pathId, type } = roll.item;
-    perType.set(type, (perType.get(type) ?? 0) + 1);
+    const { heroId, pathId } = roll.item;
     pairs = pairs.filter((p) => p.heroId !== heroId);
     const rolled = rollGauntletSlot(content, heroId, pathId, state);
     state = rolled.state;
-    board.push(rolled.slot);
+    offer.push(rolled.slot);
   }
-  return board;
+  return offer;
 }
 
 // --- The draft ---
 
-/** The six, in the order tapped. */
-export function draftTeam(run: GauntletRun, boardIndices: readonly number[]): GauntletRun {
-  if (run.team.length > 0) throw new GauntletError('the team is already drafted');
-  if (boardIndices.length !== TEAM_SIZE || new Set(boardIndices).size !== TEAM_SIZE) throw new GauntletError(`a team is ${TEAM_SIZE} different heroes`);
-  const team = boardIndices.map((i) => run.board[i]);
-  if (team.some((slot) => !slot)) throw new GauntletError('a pick is off the board');
-  return { ...run, team };
+/** One of the three onto the team; the next offer rolls until the team is TEAM_SIZE. */
+export function draftPick(
+  content: GauntletContent,
+  ownedHeroIds: readonly string[],
+  stars: Record<string, readonly string[]>,
+  run: GauntletRun,
+  offerIndex: number
+): GauntletRun {
+  if (run.team.length >= TEAM_SIZE) throw new GauntletError('the team is already drafted');
+  const slot = run.offer[offerIndex];
+  if (!slot) throw new GauntletError('a pick is off the offer');
+  const next = { ...run, team: [...run.team, slot], seen: [...run.seen, ...run.offer.map((s) => s.heroId)] };
+  return { ...next, offer: next.team.length < TEAM_SIZE ? rollOffer(content, ownedHeroIds, stars, next) : [] };
 }
 
 // --- The opponent ---
@@ -294,7 +320,7 @@ export function endGauntlet(profile: Profile): { profile: Profile; result: Gaunt
   };
 }
 
-/** Starred on this account — the board's mark. */
+/** Starred on this account — the offer card's mark. */
 export function isSlotStarred(profile: Pick<Profile, 'evolutionStars'>, slot: TeamSlot): boolean {
   return !!slot.pathId && (profile.evolutionStars[slot.heroId]?.includes(slot.pathId) ?? false);
 }

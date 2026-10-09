@@ -125,14 +125,19 @@ export function gemStatModifiers(entry: Pick<RosterEntry, 'gems' | 'mastery' | '
   const out: Partial<Record<StatKey, number>> = {};
   const add = (gem: Gem) => (out[gem.stat] = (out[gem.stat] ?? 0) + gemAmount(gem));
   for (const gem of entry.gems) add(gem);
-  const unfilled = entry.mastery - entry.gems.length;
-  if (unfilled > 0) {
-    const fit = fittedStats(hero, entry);
-    for (let i = entry.gems.length; i < entry.mastery; i++) {
-      add({ stat: fit[i % fit.length], points: gemPointsForAct(Math.floor(i / 2) + 1) });
-    }
-  }
+  for (let i = entry.gems.length; i < entry.mastery; i++) add(fittedGem(hero, entry, i));
   return out;
+}
+
+/** The size of a hero's `index`th Gem: the act it would have been found in, two an act. */
+export function gemPointsForPip(index: number): number {
+  return gemPointsForAct(Math.floor(index / 2) + 1);
+}
+
+/** What a pip with no Gem placed behind it is filled with. */
+export function fittedGem(hero: HeroDefinition | undefined, entry: Pick<RosterEntry, 'offenseSwapped'>, index: number): Gem {
+  const fit = fittedStats(hero, entry);
+  return { stat: fit[index % fit.length], points: gemPointsForPip(index) };
 }
 
 /** The three stats a fitted Gem lands on: the hero's best grades, ties in `GEM_ORDER`. */
