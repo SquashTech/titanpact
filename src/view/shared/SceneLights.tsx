@@ -27,7 +27,6 @@ const DEFAULT_SIZE: Record<SceneLightKind, number> = { star: 1.2, twinkle: 7 * M
 /** The Locations' arrival paintings (art/locations), by Location id. */
 export const LOCATION_LIGHTS: Record<string, readonly SceneLight[]> = {
   wildsEdge: [
-    { kind: 'moon', x: 46.9, y: 22.6, size: 14 },
     { kind: 'glimmer', x: 95.7, y: 46.8, rgb: '223, 222, 227' },
     { kind: 'glimmer', x: 82.9, y: 50.3, rgb: '223, 222, 227' },
     { kind: 'firefly', x: 84.1, y: 91.6 },
@@ -38,7 +37,6 @@ export const LOCATION_LIGHTS: Record<string, readonly SceneLight[]> = {
     { kind: 'firefly', x: 56, y: 65.3 },
   ],
   necropolis: [
-    { kind: 'moon', x: 47.1, y: 22.6, size: 16 },
     { kind: 'glimmer', x: 57.3, y: 10.9, rgb: '223, 229, 187' },
     { kind: 'glimmer', x: 27.2, y: 20.3, rgb: '223, 229, 187' },
     { kind: 'glimmer', x: 62.4, y: 30.7, rgb: '223, 229, 187' },

@@ -40,11 +40,11 @@ const SHOOTING = [
 ];
 
 /** The night sky the draft and the pact's forging stand under: pixel stars twinkling, a band of the galaxy, a shooting star now and then. */
-export function StarField({ className }: { className?: string }) {
+export function StarField({ className, horizon = 100 }: { className?: string; /** No star is drawn below this, in % of the sky's height. */ horizon?: number }) {
   return (
     <div className={`star-field${className ? ` ${className}` : ''}`} aria-hidden="true">
       <span className="star-field-band" />
-      {STARS.map((star, i) => (
+      {STARS.filter((star) => star.y < horizon).map((star, i) => (
         <span
           key={i}
           className={`star-field-star${star.bright ? ' is-bright' : ''}${star.warm ? ' is-warm' : ''}`}
