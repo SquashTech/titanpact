@@ -91,7 +91,7 @@ export type RunScreen =
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; gemsBought: number[]; revivesBought: number; rerolls: number; itemsBought: number[] }
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; gemsBought: number[]; rerolls: number; itemsBought: number[] }
   /** `seed` fixes what the chest holds, so a reload opens the same one. */
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType; seed: number; settled?: boolean }
   /** An item has arrived and asks who carries it (docs/gear-absorption.md §2). `next` is where the run goes once it is absorbed or sold. */
@@ -449,7 +449,6 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
           gems: raw.offers.gems === undefined ? rollShelfGems(ctx.run.actNumber) : decodeGems(raw.offers.gems, 'shop.offers.gems'),
         },
         gemsBought: Array.isArray(raw.gemsBought) && raw.gemsBought.every((slot) => isInt(slot, 0)) ? [...(raw.gemsBought as number[])] : [],
-        revivesBought: int(raw.revivesBought, 'shop.revivesBought'),
         rerolls: int(raw.rerolls, 'shop.rerolls'),
         itemsBought: [...(raw.itemsBought as number[])],
       };

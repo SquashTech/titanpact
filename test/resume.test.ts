@@ -94,7 +94,7 @@ test('resume: every resumable kind round trips, nested chains included', () => {
     { kind: 'actIntro' },
     { kind: 'locationChoice', candidateIds: Object.keys(locations).slice(0, 2) },
     { kind: 'herald', next: { kind: 'titanBound', next: { kind: 'champions' } } },
-    { kind: 'shop', nodeId, offers: { heroOfferIds: ['a'], itemIds: [item], gems: [{ stat: 'wisdom', points: 10 }] }, gemsBought: [0], revivesBought: 0, rerolls: 2, itemsBought: [0] },
+    { kind: 'shop', nodeId, offers: { heroOfferIds: ['a'], itemIds: [item], gems: [{ stat: 'wisdom', points: 10 }] }, gemsBought: [0], rerolls: 2, itemsBought: [0] },
     { kind: 'reward', nodeId, nodeType: 'currencyReward', seed: 11 },
     { kind: 'boonNode', nodeId, seed: 1 },
     { kind: 'mentorNode', nodeId, seed: 2 },

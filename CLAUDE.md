@@ -776,19 +776,17 @@ don't silently override it.
   moves). **Not a passive trigger source**, like the Pact Clock. **A restore, never a grant** —
   Mana caps at the pool and overflow reads as full. **Player-only**; enemies never drink.
   Irreversible once drunk. Every run opens with one of each; **hold cap 3 a kind**, an over-cap
-  drop or purchase is lost; faucets are the Guild Hall shelf (flat 20 gold, a pure sink) and a
-  low-odds drop off a won encounter — deliberately no reward-node type. What a fight drank comes
+  drop is lost; **the one faucet is a low-odds drop off a won encounter** — deliberately no
+  reward-node type, and **nothing sells a flask** (2026-10-08, per user direction: the Guild
+  Hall's potions and Revive were never a good use of gold, and came off its bar). What a fight drank comes
   off the purse at resolve, so a replayed fight refunds it. **The Revive** (2026-09-17, per user
   direction) is the third kind and different in every way that matters: spent on a hero that is
   DOWN — a downed hero enters every fight fallen (`Squad.downIds`, `enteredDown`), so it is spent
   on the lead pick (2026-09-28) or from the Bag on the potions' terms (2026-09-18),
   the fallen hero standing onto the bench at half (`useConsumable` 'revive') — the saved-for-the-
   finale layer of safety in a fight nothing mends inside;
-  **sold steep, one a visit** (`REVIVE_PRICE` = 80, `REVIVE_PURCHASE_LIMIT` = 1, 2026-09-18 per
-  user direction — the 09-17 "never sold" stood against a CHEAP one: a KO that 20g undoes is not
-  a KO, one that 80g undoes and travels is a trade against the Anvil; measured, a pilot that buys
-  one first at the Vigil takes the finale 52 → 57%) and never started with; its other faucet is
-  its own rarer drop roll (`REVIVE_DROP_CHANCE`), taken only when the potion roll missed, so a
+  **never sold** (the 80g one-a-visit shelf of 2026-09-18 came off with the potions, 2026-10-08)
+  and never started with; its one faucet is its own rarer drop roll (`REVIVE_DROP_CHANCE`), taken only when the potion roll missed, so a
   fight drops one thing at most. `docs/run-loop.md` "Consumables".
 
 ### Architecture
@@ -849,12 +847,12 @@ what's still unimplemented:
   **Blacksmith** (item slots, the Anvil, the Enchanter). **Reversed 2026-09-15**
   (`docs/gear-absorption.md` §6): the Blacksmith is deleted, the funnel is **one forced Guild
   Hall every act**; nothing is sold. **The hall is three counters since 2026-10-08** (per user
-  direction, `docs/run-loop.md` §1): **Tavern** (hires, and a bar with the Contract, the reroll,
-  the mend, the potions and the Revive), **Gems** (9: every stat once and two seconds) and
+  direction, `docs/run-loop.md` §1): **Tavern** (hires, and a bar with the Contract, the reroll
+  and the mend), **Gems** (9: every stat once and two seconds) and
   **Gear** (6 pieces on the act's standard curve, at `shopItemPrice`). The Gem and Gear counters
   show the whole roster — pips, sockets — and a pick lands straight on the hero tapped, no
   who-screen. **The Smithy (Anvil, Enchanter) is the VIGIL's alone**, which has no Tavern: no
-  hire, mend, potion or Revive is sold before the finale. Map tiles
+  hire or mend is sold before the finale. Map tiles
   **dropped their labels** to pay for the extra row — glyph, silhouette and colour carry
   what the words did, a long press still reads any node out, and this supersedes the
   two-word Monsters/Skirmish vocabulary below. **Labels came back 2026-10-02** (per user

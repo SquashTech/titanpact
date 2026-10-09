@@ -9,7 +9,6 @@ import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel } from '../../run/difficulty';
-import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, CONSUMABLE_NAMES, REVIVE_PURCHASE_LIMIT, canBuyConsumable, consumablePrice, type ConsumableKind } from '../../run/consumables';
 import { anyWounded, canBuyMend, mendPrice } from '../../run/wounds';
 import { WoundBar, entryHp } from '../shared/WoundBar';
 import {
@@ -70,8 +69,6 @@ interface Props {
   tab: GuildHallTab;
   /** Shelf Gems sold this visit (offers.gems indices). */
   gemsBought: readonly number[];
-  /** Revives bought this visit (run/consumables.ts REVIVE_PURCHASE_LIMIT). */
-  revivesBought: number;
   /** Tavern rerolls this visit; the next one costs tavernRerollCost(rerolls). */
   rerolls: number;
   /** Gear-counter slots sold this visit (offers.itemIds indices). */
@@ -85,8 +82,6 @@ interface Props {
   onBuyItem: (slot: number, rosterId: string) => RunState | null;
   /** Hands off to App.tsx, which charges the gold and swaps the shelf on the screen (run/shop.ts rerollGuildHallOffers). */
   onReroll: () => void;
-  /** Hands off to App.tsx, which charges the gold and fills the flask (run/consumables.ts). */
-  onBuyConsumable: (kind: ConsumableKind) => void;
   /** The whole roster made whole for what is missing (run/wounds.ts mendPrice). */
   onBuyMend: () => void;
   /** Recruiting at a full roster hands off to App.tsx's RosterReplaceScreen gate. */
@@ -136,7 +131,6 @@ export function GuildHallPanel({
   run,
   offers,
   gemsBought,
-  revivesBought,
   rerolls,
   itemsBought,
   onRunChange,
@@ -144,7 +138,6 @@ export function GuildHallPanel({
   onGemPlaced,
   onBuyItem,
   onReroll,
-  onBuyConsumable,
   onBuyMend,
   onRequestRosterReplace,
   onOverlayChange,
@@ -220,28 +213,6 @@ export function GuildHallPanel({
                 <span className="hall-poster is-note">No one is looking for work this visit.</span>
               )}
             </div>
-          </div>
-
-          {/* The flasks on the back shelf, behind the bar (the flask's own cap is the counter's; the Revive is one a visit). */}
-          <div className="hall-flasks">
-            {CONSUMABLE_KINDS.map((kind) => {
-              const held = run.consumables[kind];
-              const atCap = held >= CONSUMABLE_HOLD_CAP;
-              const visitDone = kind === 'revive' && revivesBought >= REVIVE_PURCHASE_LIMIT;
-              return (
-                <HallGood
-                  key={kind}
-                  art={GOOD_ART[kind === 'hpPotion' ? 'hp' : kind === 'mpPotion' ? 'mp' : 'revive']}
-                  name={CONSUMABLE_NAMES[kind]}
-                  price={atCap ? (kind === 'revive' ? 'Holding three' : 'Flask full') : visitDone ? 'One a visit' : consumablePrice(kind)}
-                  soldOut={atCap || visitDone}
-                  held={held > 0 ? `${held}/${CONSUMABLE_HOLD_CAP}` : undefined}
-                  disabled={!canBuyConsumable(run, kind, revivesBought)}
-                  confirm={consumablePrice(kind) >= CONFIRM_PURCHASE_FROM}
-                  onClick={() => onBuyConsumable(kind)}
-                />
-              );
-            })}
           </div>
 
           {/* The bar: the Contract, the bell that calls a fresh shelf of faces (dearer each ring this

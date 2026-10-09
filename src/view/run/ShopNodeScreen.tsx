@@ -1,7 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import type { GuildHallOffers } from '../../run/shop';
-import type { ConsumableKind } from '../../run/consumables';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
 import { useAmbientLocation } from '../shared/LocationContext';
@@ -21,7 +20,6 @@ interface Props {
   offers: GuildHallOffers;
   /** Shelf Gems sold this visit (offers.gems indices), carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the who screen. */
   gemsBought: readonly number[];
-  revivesBought: number;
   /** Tavern rerolls this visit (run/shop.ts tavernRerollCost). */
   rerolls: number;
   /** Gear-counter slots sold this visit. */
@@ -30,7 +28,6 @@ interface Props {
   onBuyGem: (slot: number, rosterId: string) => RunState | null;
   onBuyItem: (slot: number, rosterId: string) => RunState | null;
   onReroll: () => void;
-  onBuyConsumable: (kind: ConsumableKind) => void;
   onBuyMend: () => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
@@ -49,14 +46,12 @@ export function ShopNodeScreen({
   run,
   offers,
   gemsBought,
-  revivesBought,
   rerolls,
   itemsBought,
   onRunChange,
   onBuyGem,
   onBuyItem,
   onReroll,
-  onBuyConsumable,
   onBuyMend,
   onRequestRosterReplace,
   onContinue,
@@ -119,7 +114,6 @@ export function ShopNodeScreen({
           run={run}
           offers={offers}
           gemsBought={gemsBought}
-          revivesBought={revivesBought}
           rerolls={rerolls}
           itemsBought={itemsBought}
           onRunChange={onRunChange}
@@ -127,7 +121,6 @@ export function ShopNodeScreen({
           onGemPlaced={(rosterId, landed, fromMastery) => flow.raise(rosterId, landed, fromMastery)}
           onBuyItem={onBuyItem}
           onReroll={onReroll}
-          onBuyConsumable={onBuyConsumable}
           onBuyMend={onBuyMend}
           onRequestRosterReplace={onRequestRosterReplace}
           onOverlayChange={setOverlayOpen}

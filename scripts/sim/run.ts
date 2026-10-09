@@ -6,9 +6,9 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
 import { companionCallFor, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
-import { fallenAfterFight, isGathering, isLongWinter, isPermadeath, releaseFallen } from '../../src/run/cycles';
+import { fallenAfterFight, isGathering, isLongWinter, releaseFallen } from '../../src/run/cycles';
 import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
-import { buyConsumable, canBuyConsumable, canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
+import { canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
 import { relics, guardianBannersFor } from '../../src/data/relics';
@@ -1127,14 +1127,6 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     if (canBuyMend(next, mendCost) && policy.rosterHpFraction(next.roster) < 0.6) {
       if (anyDown(next)) record.knockouts.mendsWhileDown += 1;
       spend('mend', () => buyMend(next, mendCost));
-    }
-
-    // Under Permadeath the Revive is the price of the rule (docs/ascension.md §1): one a visit,
-    // bought before a hire whenever the stock is below two — insurance ahead of a body.
-    let revivesBought = 0;
-    if (isPermadeath(next) && next.consumables.revive < 2 && canBuyConsumable(next, 'revive', revivesBought)) {
-      spend('revive', () => buyConsumable(next, 'revive', revivesBought));
-      revivesBought += 1;
     }
 
     // A hire is one contract (docs/run-loop.md "Contracts"): a held one first, else one bought on the

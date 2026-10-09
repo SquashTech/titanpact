@@ -19,7 +19,6 @@ import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
 import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
 import { smithyPrice } from '../../run/cycles';
 import { CONTRACT_BASE_PRICE, CONTRACT_DROP_CHANCE, CONTRACT_PRICE_STEP } from '../../run/recruitment';
-import { CONSUMABLE_PRICE, REVIVE_PRICE } from '../../run/consumables';
 import { MEND_PRICE_PER_HERO } from '../../run/wounds';
 import { TYPE_DAMAGE_BONUS } from '../../data/passives';
 
@@ -260,10 +259,9 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
           { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },
-          { glyph: 'hp', label: 'Potion · Revive', value: `${CONSUMABLE_PRICE}g · ${REVIVE_PRICE}g` },
         ],
         odds: null,
-        about: 'Where gold is spent. The Tavern hires heroes for a Recruit Contract — raw: an act behind, unevolved, bare-socketed — and its bar sells Contracts, potions, one Revive and the mend, which heals everyone, knocked-out heroes included. The Gem and Gear counters sell straight onto the hero you pick.',
+        about: 'Where gold is spent. The Tavern hires heroes for a Recruit Contract — raw: an act behind, unevolved, bare-socketed — and its bar sells Contracts, a fresh shelf of faces and the mend, which heals everyone, knocked-out heroes included. The Gem and Gear counters sell straight onto the hero you pick.',
         terms: [TERMS.contract],
       };
     case 'muster':

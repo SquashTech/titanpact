@@ -16,7 +16,7 @@ export type ConsumableKind = PotionKind | 'revive';
 
 export class ConsumableError extends Error {}
 
-/** The in-fight kinds: the Bag's tabs and the shelf's goods. */
+/** The in-fight kinds: the Bag's tabs. */
 export const POTION_KINDS: readonly PotionKind[] = ['hpPotion', 'mpPotion'];
 
 export const CONSUMABLE_KINDS: readonly ConsumableKind[] = [...POTION_KINDS, 'revive'];
@@ -28,17 +28,14 @@ export const STARTING_CONSUMABLES: ConsumablePurse = { hpPotion: 1, mpPotion: 1,
 
 /**
  * Held count cap, per kind. One MP potion bends the mana invariant on purpose (docs/mana.md);
- * five banked by Act 4 would break it, so the purse cannot grow past this and a drop or a
- * purchase onto a full purse is refused rather than banked.
+ * five banked by Act 4 would break it, so the purse cannot grow past this and a drop onto a
+ * full purse is refused rather than banked.
  */
 export const CONSUMABLE_HOLD_CAP = 3;
 
-/** Flat Guild Hall price, per potion. A pure gold sink: nothing here ever pays gold back. The Revive's own is REVIVE_PRICE. */
-export const CONSUMABLE_PRICE = 20;
-
 /**
- * Chance a won encounter drops ONE potion, kind rolled evenly. Low but not impossible: the shelf
- * is the faucet you can plan around, the drop is the one you cannot. First-pass figures.
+ * Chance a won encounter drops ONE potion, kind rolled evenly. With the run's opening pair, the
+ * only faucet: nothing sells them (2026-10-08, per user direction). First-pass figures.
  */
 export const CONSUMABLE_DROP_CHANCE: Record<EncounterNodeKind, number> = {
   fight: 0.12,
@@ -50,11 +47,9 @@ export const CONSUMABLE_DROP_CHANCE: Record<EncounterNodeKind, number> = {
 };
 
 /**
- * Chance a won encounter drops a Revive, rolled on its own so it never dilutes the potions. Rarer
- * than a potion and off the shelf (2026-09-17, per user direction): with knockouts persisting
- * through an act, a Revive that could be planned around would make a KO a 20g mistake. The Rest
- * seat and the Guild Hall's mend are the faucets you can plan around; this is the one you cannot.
- * First-pass figures.
+ * Chance a won encounter drops a Revive, rolled on its own so it never dilutes the potions — its
+ * only faucet, nothing sells one (2026-10-08, per user direction). The Rest seat and the Guild
+ * Hall's mend are the faucets you can plan around; this is the one you cannot. First-pass figures.
  */
 export const REVIVE_DROP_CHANCE: Record<EncounterNodeKind, number> = {
   fight: 0.06,
@@ -78,7 +73,7 @@ export const CONSUMABLE_SHORT_NAMES: Record<ConsumableKind, string> = {
   revive: 'Revive',
 };
 
-/** What each one does, in the words every receipt and shelf line uses. */
+/** What each one does, in the words every receipt uses. */
 export const CONSUMABLE_BLURBS: Record<ConsumableKind, string> = {
   hpPotion: 'Restores half of max HP',
   mpPotion: 'Restores half of max Mana',
@@ -100,38 +95,6 @@ export function spendConsumables(run: RunState, used: Readonly<Partial<Consumabl
     purse[kind] -= n;
   }
   return { ...run, consumables: purse };
-}
-
-/**
- * The Revive on the shelf (2026-09-18, per user direction), steep and one a visit: twice the
- * mend at its old flat price, most of an act-1 purse, a third of act 5's — where the choice to
- * carry one into the final battle actually lives. Below the mend and it would be bought instead
- * of mending; the 09-17 "never sold" stood against a CHEAP one, and this is not that.
- */
-export const REVIVE_PRICE = 80;
-export const REVIVE_PURCHASE_LIMIT = 1;
-
-export function consumablePrice(kind: ConsumableKind): number {
-  return kind === 'revive' ? REVIVE_PRICE : CONSUMABLE_PRICE;
-}
-
-/** `boughtThisVisit` is the Revive's per-visit count (the shop screen carries it, as it does the Scrolls'); the potions have no visit limit. */
-export function canBuyConsumable(run: RunState, kind: ConsumableKind, boughtThisVisit = 0, cost = consumablePrice(kind)): boolean {
-  if (kind === 'revive' && boughtThisVisit >= REVIVE_PURCHASE_LIMIT) return false;
-  return run.consumables[kind] < CONSUMABLE_HOLD_CAP && run.gold >= cost;
-}
-
-export function buyConsumable(run: RunState, kind: ConsumableKind, boughtThisVisit = 0, cost = consumablePrice(kind)): RunState {
-  if (kind === 'revive' && boughtThisVisit >= REVIVE_PURCHASE_LIMIT) {
-    throw new ConsumableError(`The shelf sells ${REVIVE_PURCHASE_LIMIT} Revive a visit`);
-  }
-  if (run.consumables[kind] >= CONSUMABLE_HOLD_CAP) {
-    throw new ConsumableError(`Already holding ${CONSUMABLE_HOLD_CAP} ${CONSUMABLE_NAMES[kind]}s`);
-  }
-  if (run.gold < cost) {
-    throw new ConsumableError(`${CONSUMABLE_NAMES[kind]} costs ${cost} gold, only ${run.gold} available`);
-  }
-  return grantConsumable({ ...run, gold: run.gold - cost }, kind);
 }
 
 /**

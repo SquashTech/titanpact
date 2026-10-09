@@ -8,14 +8,7 @@ import type { ConsumableUsedEvent } from '../src/engine/events';
 import { CONSUMABLE_RESTORE_FRACTION, ConsumableUseError, consumableRefusal, useConsumable } from '../src/engine/combat/consumables';
 import {
   CONSUMABLE_HOLD_CAP,
-  CONSUMABLE_PRICE,
-  REVIVE_PRICE,
-  REVIVE_PURCHASE_LIMIT,
-  ConsumableError,
-  consumablePrice,
   STARTING_CONSUMABLES,
-  buyConsumable,
-  canBuyConsumable,
   grantConsumable,
   rollConsumableDrop,
   spendConsumables,
@@ -131,24 +124,6 @@ test('consumables: a Revive in a fight stands a fallen hero onto the bench at ha
   assert.ok(!events.some((e) => e.type === 'Fainted'));
 });
 
-test('consumables: the shelf sells a Revive steep, one a visit, never past the cap, and the potions are untouched by the visit count', () => {
-  assert.ok(REVIVE_PRICE >= 2 * CONSUMABLE_PRICE, 'steep: it is a KO undone in the pocket, not a potion');
-  assert.strictEqual(consumablePrice('revive'), REVIVE_PRICE);
-  assert.strictEqual(consumablePrice('hpPotion'), CONSUMABLE_PRICE);
-  let run = createRunState(REVIVE_PRICE * 2);
-  assert.ok(canBuyConsumable(run, 'revive', 0));
-  run = buyConsumable(run, 'revive', 0);
-  assert.strictEqual(run.consumables.revive, 1);
-  assert.strictEqual(run.gold, REVIVE_PRICE);
-  assert.ok(!canBuyConsumable(run, 'revive', REVIVE_PURCHASE_LIMIT), 'one a visit');
-  assert.throws(() => buyConsumable(run, 'revive', REVIVE_PURCHASE_LIMIT), ConsumableError);
-  assert.ok(canBuyConsumable(run, 'hpPotion', REVIVE_PURCHASE_LIMIT), 'the visit count is the Revive’s alone');
-  assert.ok(!canBuyConsumable({ ...run, gold: REVIVE_PRICE - 1 }, 'revive', 0));
-  const full = { ...run, consumables: { ...run.consumables, revive: CONSUMABLE_HOLD_CAP } };
-  assert.ok(!canBuyConsumable(full, 'revive', 0));
-  assert.throws(() => buyConsumable(full, 'revive', 0), ConsumableError);
-});
-
 // --- The run half ---
 
 test('consumables: a run opens with one of each, the purse caps per kind, and an over-cap grant is lost', () => {
@@ -157,20 +132,6 @@ test('consumables: a run opens with one of each, the purse caps per kind, and an
   const full = grantConsumable(run, 'hpPotion', 10);
   assert.strictEqual(full.consumables.hpPotion, CONSUMABLE_HOLD_CAP);
   assert.strictEqual(full.consumables.mpPotion, 1, 'the other kind is untouched');
-});
-
-test('consumables: the shelf sells at the flat price, refuses at the cap and refuses without the gold', () => {
-  let run = createRunState(CONSUMABLE_PRICE * 2 + 5);
-  assert.ok(canBuyConsumable(run, 'mpPotion'));
-  run = buyConsumable(run, 'mpPotion');
-  assert.strictEqual(run.consumables.mpPotion, 2);
-  assert.strictEqual(run.gold, CONSUMABLE_PRICE + 5);
-  run = buyConsumable(run, 'mpPotion');
-  assert.strictEqual(run.consumables.mpPotion, CONSUMABLE_HOLD_CAP);
-  assert.ok(!canBuyConsumable(run, 'mpPotion'), 'at the cap');
-  assert.throws(() => buyConsumable(run, 'mpPotion'), ConsumableError);
-  assert.ok(!canBuyConsumable(run, 'hpPotion'), `${run.gold} gold buys nothing at ${CONSUMABLE_PRICE}`);
-  assert.throws(() => buyConsumable(run, 'hpPotion'), ConsumableError);
 });
 
 test('consumables: a fight’s use comes off the purse at resolve, and cannot spend more than was held', () => {

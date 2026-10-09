@@ -38026,15 +38026,6 @@ img.smithy-service-art {
   text-align: center;
 }
 
-/* -- The Tavern's back shelf: the flasks stand behind the bar, their tags hanging just over it. -- */
-.hall-flasks {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-  flex: none;
-  margin-bottom: 4px;
-}
-
 /* -- The Gem and Gear counters (HallCounters.tsx): the stock on parchment above, the roster below. -- */
 .shop-node-screen.is-gems .guild-hall,
 .shop-node-screen.is-gear .guild-hall {

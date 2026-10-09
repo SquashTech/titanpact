@@ -109,7 +109,7 @@ import { MASTERY_CAP, MasteryError, anyMasteryEligible } from '../run/mastery';
 import { GEM_CACHE_COUNT, SCRIBE_GEMS, buyShelfGem, canBuyShelfGem, placeGem, rollGemDrop, rollGems, type Gem } from '../run/gems';
 import type { MvpPick } from '../run/mvp';
 import { ShopItemError, TavernRerollError, buyShopItem, rerollGuildHallOffers, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
-import { ConsumableError, buyConsumable, grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
+import { grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
 import { anyClassAvailable } from '../run/classes';
 import { generateMap, type MapNodeType, type RewardNodeType } from '../run/map';
@@ -834,7 +834,6 @@ export function App() {
         nodeId,
         offers: rollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool), node.type === 'muster'),
         gemsBought: [],
-        revivesBought: 0,
         rerolls: 0,
         itemsBought: [],
       });
@@ -1047,21 +1046,6 @@ export function App() {
   function handleNodeContinue(nodeId: string) {
     setPlayerRun((run) => advanceToNode(run, nodeId));
     setScreen({ kind: 'map' });
-  }
-
-  /** One off the Guild Hall shelf; the Revive's visit count rides the shop screen, as the Scrolls' does. */
-  function handleBuyGuildConsumable(kind: ConsumableKind) {
-    if (screen.kind !== 'shop') return;
-    let next: RunState;
-    try {
-      next = buyConsumable(playerRun, kind, screen.revivesBought);
-    } catch (err) {
-      if (!(err instanceof ConsumableError)) throw err;
-      return;
-    }
-    playSfx('gold.coin');
-    setPlayerRun(next);
-    if (kind === 'revive') setScreen({ ...screen, revivesBought: screen.revivesBought + 1 });
   }
 
   /** The Guild Hall's mend (run/wounds.ts): the whole roster whole, for what is missing. */
@@ -1608,14 +1592,12 @@ export function App() {
           run={playerRun}
           offers={screen.offers}
           gemsBought={screen.gemsBought}
-          revivesBought={screen.revivesBought}
           rerolls={screen.rerolls}
           itemsBought={screen.itemsBought}
           onRunChange={setPlayerRun}
           onBuyGem={handleBuyShelfGem}
           onBuyItem={handleBuyGuildItem}
           onReroll={handleRerollTavern}
-          onBuyConsumable={handleBuyGuildConsumable}
           onBuyMend={handleBuyGuildMend}
           onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}

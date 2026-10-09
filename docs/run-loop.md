@@ -71,8 +71,9 @@ only way to a move AHEAD of its schedule. `SPLICED_ROW`, `LAST_MENTOR_ACT`.
 
 **The Guild Hall's three counters (2026-10-08, per user direction; replacing the Shop / Tavern /
 Smithy split of 2026-09-24):** **Tavern** (the hire board — each hire one Recruit Contract — and the
-bar: the Contract for gold, the reroll, the party mend, and on the back shelf the two potions and
-the Revive), **Gems** and **Gear**. It opens on the Tavern. The Smithy came off the every-act hall:
+bar: the Contract for gold, the reroll and the party mend), **Gems** and **Gear**. **The flasks
+came off the bar 2026-10-08** (per user direction): potions and the Revive were never a good or
+exciting use of gold, so neither is sold anywhere — they are found. It opens on the Tavern. The Smithy came off the every-act hall:
 an Anvil and an Enchanter over every worn piece every act was a freedom that made a visit homework.
 The Gem and Gear counters each show the whole roster under the stock — **every hero's Mastery pips
 at the Gems, every hero's three sockets at the Gear** — so the decision is made on the counter and
@@ -82,7 +83,7 @@ an Evolution or masters the innate raises it over the hall (`HallCounters.tsx`).
 with the room: **`SHELF_GEM_COUNT` = 9 — every stat once and two seconds**, and
 **`SHOP_ITEM_COUNT` = 6** pieces on the act's standard curve at `EQUIPMENT_PRICE_BY_RARITY`.
 **The Vigil trades the Tavern for the Smithy**: Gems, Gear, and the Anvil and Enchanter over worn
-gear — nobody joins for the finale, and with no bar no mend, potion or Revive is sold there.
+gear — nobody joins for the finale, and with no bar no mend is sold there.
 Cycle III's "the Smithy ×1.5" (`smithyPrice`) now prices only the Vigil's Smithy.
 **The reroll** is the Tavern's one lever on WHO shows up: a fresh shelf for
 `TAVERN_REROLL_BASE_COST` = 10g, +`TAVERN_REROLL_STEP` = 10 each time a visit
@@ -333,9 +334,9 @@ Back cannot un-drink.
   business.
 
 **Scarcity is the whole price, so scarcity is capped.** The mana invariant is bent on purpose by
-one MP potion and broken by five banked. `CONSUMABLE_HOLD_CAP` = 3 a kind; an over-cap drop or
-purchase is lost. Faucets: the starting pair; the Shop at a flat `CONSUMABLE_PRICE` = 20g (a pure
-sink, the cap its only limit); and a **drop** (`CONSUMABLE_DROP_CHANCE`: 12% a fight, 20% an Elite,
+one MP potion and broken by five banked. `CONSUMABLE_HOLD_CAP` = 3 a kind; an over-cap drop is
+lost. Faucets: the starting pair and a **drop** (nothing sells them since 2026-10-08; the Guild
+Hall's 20g shelf went, per user direction) (`CONSUMABLE_DROP_CHANCE`: 12% a fight, 20% an Elite,
 25% a Guardian, none from the finale), rolled at squad-confirm so the victory ledger can show it.
 No reward node sells potions. **What a fight drank comes off the purse at resolve**, so a fight
 quit and replayed refunds it. Potions are not drinkable on the map: drinking at a fight's start is
@@ -344,17 +345,16 @@ strictly better.
 In a fight they live in the **Bag**, the console's fourth key (`BagPanel`): a chip row of kinds,
 the chosen kind's effect, then WHO drinks it; every row reserves its readout line so the panel
 never resizes under the thumb. The struck token they wear is one die (`Coin.tsx`, tinted by
-`--coin-rgb`) on the Bag key, its chips and the Shop shelf.
+`--coin-rgb`) on the Bag key and its chips.
 
 **The Revive.** One downed hero stood up at **half HP** (`REVIVE_FRACTION`), spent on the **lead
 pick** at the top of a fight — a downed hero enters fallen, and its cell wears the key while one
 is held — **or in a fight from the Bag** on the potions' terms: a free command-phase action on a
 FALLEN hero, who stands onto the bench and is one fewer KO against lock-in. The merged finale (one
 fight, two phases, nothing mended between) is the fight that wants one saved for it; measured,
-the finale 41.9 → 48.6% with the sim's leftovers. **Sold steep, one a visit** (`REVIVE_PRICE` = 80,
-`REVIVE_PURCHASE_LIMIT` = 1): a KO that 20g undoes is not a KO; at 80 it is a trade against the
-Anvil, and a pilot that buys one at the Vigil takes the finale 52 → 57%. **Never started with.**
-Its other faucet is its own drop roll (`REVIVE_DROP_CHANCE`: 6% a fight, 8% a Skirmish, 15% an
+the finale 41.9 → 48.6% with the sim's leftovers. **Never sold** (2026-10-08, per user direction,
+reversing the 80g one-a-visit shelf of 09-18) and **never started with.** Its one faucet is its own
+drop roll (`REVIVE_DROP_CHANCE`: 6% a fight, 8% a Skirmish, 15% an
 Elite, 20% a Guardian), taken only when the potion roll missed, so a fight drops one thing at most.
 A Revive never saves the companion.
 
