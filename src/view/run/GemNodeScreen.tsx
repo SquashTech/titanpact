@@ -107,54 +107,57 @@ export function GemNodeScreen({ run, onRunChange, plan, onDone, progress, onProg
   const stone = GEM_STONES[shown.stat];
   const statName = shown.stat === 'manaPool' ? 'Mana' : STAT_FULL_LABELS[shown.stat];
   const amount = gemAmount(shown);
+  const folded = plan.source === 'scribe';
+  const gemHand = anyEligible ? (
+    <section className="gem-hand" aria-live="polite">
+      <span className="gem-hand-stone" key={index}>
+        <GemIcon stat={shown.stat} size={folded ? 44 : 60} live={!!gem} large={shown.points >= 10} />
+      </span>
+      <span className="gem-hand-words">
+        <span className="gem-hand-name">
+          {stone.name} <span className="gem-hand-pip">· +1 Mastery</span>
+        </span>
+        <span className="gem-hand-grant">
+          +{amount} {statName}
+        </span>
+      </span>
+      <ol className="gem-tray" aria-label={`${remaining} of ${total} Gems left`}>
+        {plan.gems.map((g, i) => (
+          <li key={i} className={`gem-tray-slot${i < index ? ' is-set' : i === index ? ' is-current' : ''}`}>
+            <GemIcon stat={g.stat} size={folded ? 18 : 22} large={g.points >= 10} />
+          </li>
+        ))}
+      </ol>
+    </section>
+  ) : (
+    <p className="gem-hand-none">Every hero is already at {MASTERY_CAP} Mastery — there is nobody left to take a Gem.</p>
+  );
 
   return (
     <div
-      className={`node-screen rite-screen is-scribe scroll-screen gem-screen${plan.source === 'scribe' ? '' : ' is-bare'}`}
+      className={`node-screen rite-screen is-scribe scroll-screen gem-screen${folded ? '' : ' is-bare'}`}
       style={{ '--node-rgb': NODE_TINT_PARCHMENT, '--rite-color': `rgb(${NODE_TINT_PARCHMENT})`, '--gem-color': stone.tones[1] } as CSSProperties}
     >
       <span className="node-sky scribe-ground" aria-hidden="true" />
       <NodeMotes count={12} />
       <RosterPeek run={run} />
 
-      {/* Only the Lapidary is introduced; anywhere else the Gem in hand says what the screen is. */}
-      {plan.source === 'scribe' && (
-        <header className="keeper-head">
+      {/* Only the Lapidary is introduced, the Gem in hand folded in beside it so the roster keeps
+          its room; anywhere else the Gem in hand says what the screen is. */}
+      {folded ? (
+        <header className="keeper-head is-gem-fold">
           <span className="keeper-figure">
             <span className="rite-pool" aria-hidden="true" />
             <img src={lapidaryArt} className="keeper-art" alt="" draggable={false} />
           </span>
           <span className="keeper-words">
-            <span className="rite-eyebrow">By the Roadside</span>
             <h2 className="rite-name">The Lapidary</h2>
             <KeeperVoice line={voice} />
           </span>
+          {gemHand}
         </header>
-      )}
-
-      {anyEligible ? (
-        <section className="gem-hand" aria-live="polite">
-          <span className="gem-hand-stone" key={index}>
-            <GemIcon stat={shown.stat} size={60} live={!!gem} large={shown.points >= 10} />
-          </span>
-          <span className="gem-hand-words">
-            <span className="gem-hand-name">
-              {stone.name} <span className="gem-hand-pip">· +1 Mastery</span>
-            </span>
-            <span className="gem-hand-grant">
-              +{amount} {statName}
-            </span>
-          </span>
-          <ol className="gem-tray" aria-label={`${remaining} of ${total} Gems left`}>
-            {plan.gems.map((g, i) => (
-              <li key={i} className={`gem-tray-slot${i < index ? ' is-set' : i === index ? ' is-current' : ''}`}>
-                <GemIcon stat={g.stat} size={22} large={g.points >= 10} />
-              </li>
-            ))}
-          </ol>
-        </section>
       ) : (
-        <p className="gem-hand-none">Every hero is already at {MASTERY_CAP} Mastery — there is nobody left to take a Gem.</p>
+        gemHand
       )}
 
       <HeroPickGrid count={run.roster.length} fill>

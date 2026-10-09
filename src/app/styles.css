@@ -16896,6 +16896,46 @@ button.star-shop-bundle-face {
   aspect-ratio: 1;
 }
 
+/* The Lapidary's intro with the Gem in hand folded in: portrait down the left, name and line over
+   a compact Gem panel on the right — one block where it was two stacked. */
+.keeper-head.is-gem-fold {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 6px;
+  align-items: center;
+  margin: 0 12px 8px;
+}
+
+.keeper-head.is-gem-fold > .keeper-figure {
+  grid-row: 1 / span 2;
+}
+
+.keeper-head.is-gem-fold > .gem-hand {
+  margin: 0;
+  padding: 6px 10px;
+  gap: 2px 10px;
+}
+
+.keeper-head.is-gem-fold .gem-hand-name {
+  font-size: 10px;
+}
+
+.keeper-head.is-gem-fold .gem-hand-grant {
+  font-size: 18px;
+}
+
+.keeper-head.is-gem-fold .gem-tray-slot {
+  width: 22px;
+  height: 22px;
+}
+
+.keeper-head.is-gem-fold .gem-hand-none {
+  margin: 0;
+  font-size: 12px;
+  text-align: left;
+}
+
 /* With no header above it the Gem in hand rises to the top edge, beside the roster button. */
 .gem-screen.is-bare .gem-hand {
   margin-right: 62px;
