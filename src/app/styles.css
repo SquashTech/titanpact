@@ -14784,6 +14784,39 @@ button.star-shop-bundle-face {
   font-variant-numeric: tabular-nums;
 }
 
+/* The Recruit Contracts held, beside the gold at the Guild Hall: a hairline apart, in the contract's blue, dim at none. */
+.node-purse-contracts {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  padding-left: 9px;
+  border-left: 1px solid rgba(224, 166, 60, 0.35);
+  height: 16px;
+  color: #9bc9ff;
+  animation: node-purse-contracts-tick 0.4s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+.node-purse-contracts.is-none {
+  opacity: 0.5;
+}
+
+.node-purse-contracts .resource-glyph {
+  width: 15px;
+  height: 15px;
+}
+
+@keyframes node-purse-contracts-tick {
+  from {
+    transform: scale(1.35);
+    filter: brightness(1.8);
+  }
+  to {
+    transform: none;
+    filter: none;
+  }
+}
+
 .guild-hall-section {
   display: flex;
   flex-direction: column;
@@ -48516,9 +48549,284 @@ img.smithy-service-art {
   }
 }
 
-/* The victory ledger's Gem row: the dropped stones side by side in the disc. */
-.fight-result-row-glyph.is-gems {
+/* The victory's loot pile (FightResultOverlay LootPile): the drops as things, not lines. Each piece
+   pops up out of the well with an overshoot, throws a ring of sparks in its own colour, and then
+   sits glowing and twinkling. The slot itself only fades in — the pieces are the motion. */
+.fight-result-ledger-slot.is-loot,
+.fight-result-ledger-slot.is-loot.is-shown {
+  transform: none;
+  animation: none;
+  opacity: 1;
+}
+
+.fight-result-loot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 6px 2px;
+  padding: 12px 0 10px;
+}
+
+.fight-result-ledger-slot + .fight-result-ledger-slot.is-loot .fight-result-loot {
+  border-top: 2px solid #1b1e27;
+  box-shadow: inset 0 2px 0 #08090d;
+}
+
+.fight-result-loot-piece {
+  position: relative;
+  flex: 0 0 57px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 1px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  opacity: 0;
+  transform: translateY(16px) scale(0.3);
+}
+
+.fight-result-loot-piece.is-out {
+  animation: fight-result-loot-pop 0.52s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+@keyframes fight-result-loot-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.3);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1.18);
+  }
+  75% {
+    transform: translateY(2px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fight-result-loot-art {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+}
+
+.fight-result-loot-thing {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fight-result-loot-bob 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--loot-i) * -0.45s);
+}
+
+.fight-result-loot-thing > img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 6px var(--loot-color));
+}
+
+/* The Gem bobs on its own (GemIcon is-live). */
+.fight-result-loot-piece.is-gem .fight-result-loot-thing {
+  animation: none;
+}
+
+.fight-result-loot-piece.is-item .fight-result-loot-thing {
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(0 0 7px var(--loot-color));
+}
+
+@keyframes fight-result-loot-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* The light it sits in: a soft disc of its own colour, breathing. */
+.fight-result-loot-glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--loot-color) 0%, transparent 64%);
+  opacity: 0.32;
+  animation: fight-result-loot-breathe 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--loot-i) * -0.3s);
+}
+
+@keyframes fight-result-loot-breathe {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.42;
+    transform: scale(1.06);
+  }
+}
+
+/* The pop's burst: eight sparks thrown out along their angle, and a ring flashing wide behind them. */
+.fight-result-loot-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fight-result-loot-burst::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--loot-color);
+  box-shadow: 0 0 10px var(--loot-color);
+  animation: fight-result-loot-ring 0.5s ease-out both;
+}
+
+@keyframes fight-result-loot-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+.fight-result-loot-burst > i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  background: #ffffff;
+  box-shadow: 0 0 4px #ffffff, 0 0 8px var(--loot-color);
+  transform: rotate(var(--a)) translateY(0) scale(1);
+  animation: fight-result-loot-spark 0.55s cubic-bezier(0.1, 0.8, 0.3, 1) both;
+}
+
+@keyframes fight-result-loot-spark {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateY(-6px) scale(1.3);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateY(-34px) scale(0.4);
+  }
+}
+
+/* Two four-point stars that keep twinkling off the piece once it has landed. */
+.fight-result-loot-star {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  top: 2px;
+  right: 2px;
+  background: #ffffff;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  filter: drop-shadow(0 0 3px var(--loot-color));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fight-result-loot-star.is-second {
+  width: 6px;
+  height: 6px;
+  top: auto;
+  right: auto;
+  bottom: 6px;
+  left: 3px;
+}
+
+.fight-result-loot-piece.is-out .fight-result-loot-star {
+  animation: fight-result-loot-twinkle 1.9s ease-in-out infinite;
+  animation-delay: calc(0.5s + var(--loot-i) * 0.37s);
+}
+
+.fight-result-loot-piece.is-out .fight-result-loot-star.is-second {
+  animation-delay: calc(1.4s + var(--loot-i) * 0.37s);
+}
+
+@keyframes fight-result-loot-twinkle {
+  0%,
+  60%,
+  100% {
+    opacity: 0;
+    transform: scale(0.2) rotate(0deg);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1.1) rotate(45deg);
+  }
+}
+
+.fight-result-loot-label {
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fight-result-loot-piece.is-item .fight-result-loot-label {
+  color: var(--loot-color);
+}
+
+.fight-result-loot-sub {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.fight-result-loot-piece.is-item .fight-result-loot-sub {
+  color: var(--loot-color);
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fight-result-loot-piece,
+  .fight-result-loot-piece.is-out {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .fight-result-loot-thing,
+  .fight-result-loot-glow,
+  .fight-result-loot-burst,
+  .fight-result-loot-piece.is-out .fight-result-loot-star {
+    animation: none;
+  }
+
+  .fight-result-loot-burst {
+    display: none;
+  }
 }
 
 /* --- Charges (docs/charges.md) ------------------------------------------------------------------ */

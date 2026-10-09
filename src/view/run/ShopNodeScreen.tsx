@@ -106,7 +106,8 @@ export function ShopNodeScreen({
         </>
       )}
       <RosterPeek run={run} />
-      <NodePurse gold={run.gold} />
+      {/* Contracts beside the gold wherever one can be bought or spent — every hall but the Vigil's, which has no Tavern. */}
+      <NodePurse gold={run.gold} contracts={muster ? undefined : run.recruitContracts} />
 
       {/* The Smithy's own forge is its sign: six benches fit under the anvil only once the hall's is off the top. */}
       {tab !== 'smithy' && (

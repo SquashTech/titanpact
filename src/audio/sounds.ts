@@ -38,6 +38,7 @@ export type SfxId =
   | 'shrine'
   | 'scroll.spend'
   | 'gem.set'
+  | 'loot.twinkle'
   | 'blessing'
   | 'class.learn'
   | 'cache.open'
@@ -506,6 +507,24 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 1568, detune: 7, gain: 0.14, attack: 0.004, decay: 0.6, delay: 0.04 },
       { wave: 'sine', freq: 3136, detune: -9, gain: 0.07, attack: 0.004, decay: 0.7, delay: 0.06 },
       { wave: 'sine', freq: 4699, detune: 12, gain: 0.03, attack: 0.006, decay: 0.8, delay: 0.09 },
+    ],
+  },
+
+  /**
+   * One piece of loot popping up on the victory screen: a round pop, then three tiny bells
+   * climbing a major triad a few ms apart so they glitter rather than chord, with a breath of air
+   * over the top. The caller raises `pitch` piece by piece so a pile climbs.
+   */
+  'loot.twinkle': {
+    gain: 0.32,
+    jitter: 0.01,
+    voices: [
+      { wave: 'sine', freq: 520, freqEnd: 1040, gain: 0.2, attack: 0.002, decay: 0.07 },
+      { wave: 'sine', freq: 2093, detune: 6, gain: 0.12, attack: 0.002, decay: 0.3, delay: 0.03 },
+      { wave: 'sine', freq: 2637, detune: -8, gain: 0.1, attack: 0.002, decay: 0.34, delay: 0.07 },
+      { wave: 'sine', freq: 3136, detune: 10, gain: 0.09, attack: 0.002, decay: 0.42, delay: 0.11 },
+      { wave: 'triangle', freq: 4186, gain: 0.04, attack: 0.003, decay: 0.5, delay: 0.14 },
+      { wave: 'noise', gain: 0.05, attack: 0.02, decay: 0.3, delay: 0.03, filter: { type: 'highpass', freq: 6500 } },
     ],
   },
 

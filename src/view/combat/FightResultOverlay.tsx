@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { CONSUMABLE_BLURBS, CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
+import { CONSUMABLE_NAMES, type ConsumableKind } from '../../run/consumables';
 import { MAX_LEVEL, MAX_XP, fightXpFor, levelForXp, levelOf, previewLevelUp, xpForLevel, xpProgress } from '../../run/growth';
 import { formIdFor } from '../../run/progression';
 import { LevelUpList } from '../run/LevelUpList';
@@ -11,17 +11,18 @@ import { overlayHost } from '../shared/overlayHost';
 import { WoundBar } from '../shared/WoundBar';
 import type { RosterEntry } from '../../run/state';
 import type { MvpColumn, MvpPick } from '../../run/mvp';
-import { ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { NODE_TINT_GOLD, NodeMotes } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { useCoinCount } from '../shared/useCoinCount';
-import { ResourceGlyph } from '../shared/RunGlyph';
+import { RESOURCE_COLORS, ResourceGlyph } from '../shared/RunGlyph';
 import { playXpBar, xpBarSegments, xpBarTickTimes, xpBarTotalMs } from '../shared/xpBar';
 import { getTypeColor } from './typeColors';
-import type { Gem } from '../../run/gems';
+import { gemAmount, type Gem } from '../../run/gems';
 import { GemIcon, GEM_STONES } from '../shared/GemIcon';
+import { GOOD_ART } from '../run/guildHallArt';
 
 /** A loss wears the enemy's red; a win, the run's gold — the Location's own tint stays on the field behind. */
 const TINT_LOSS = '217, 83, 79';
@@ -34,6 +35,8 @@ const CAPTION_LEAD_MS = 60;
 const LEDGER_LEAD_MS = 200;
 const LEDGER_STAGGER_MS = 150;
 const CTA_LEAD_MS = 180;
+/** One piece of the loot pile after the last: long enough that each twinkle is heard on its own. */
+const LOOT_STAGGER_MS = 190;
 
 const STAGE_TITLE = 0;
 const STAGE_FILL = 1;
@@ -41,6 +44,9 @@ const STAGE_CAPTION = 2;
 const STAGE_LEDGER = 3;
 
 const NO_GEMS: readonly Gem[] = [];
+
+/** Whether the whole sequence has landed, played out or tapped through — read by the loot pile. */
+const LandedContext = createContext(false);
 
 export interface FightResultProps {
   outcome: 'win' | 'loss';
@@ -123,15 +129,13 @@ export function FightResultOverlay({
   const longestBar = barsByHero.reduce((best, bar) => (xpBarTotalMs(bar) > xpBarTotalMs(best) ? bar : best), barsByHero[0] ?? []);
 
   const ledger = useMemo(() => {
-    const rows: { key: string; render: (shown: boolean) => ReactNode }[] = [];
+    const rows: { key: string; render: (shown: boolean) => ReactNode; holdMs?: number }[] = [];
     if (!won) return rows;
     const mvpEntry = mvp ? roster.find((entry) => entry.rosterId === mvp.rosterId) : undefined;
     if (mvp && mvpEntry) rows.push({ key: 'mvp', render: () => <MvpRow heroId={mvpEntry.heroId} pathId={formIdFor(mvpEntry)} pick={mvp} bonusXp={fightXpFor(xpGained, mvp.rosterId, mvp.rosterId) - xpGained} /> });
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
-    if (equipmentReward) rows.push({ key: 'item', render: () => <ItemRow item={equipmentReward} onInspect={() => setInspecting(true)} /> });
-    if (consumableReward) rows.push({ key: 'potion', render: () => <PotionRow kind={consumableReward} /> });
-    if (gemReward.length > 0) rows.push({ key: 'gems', render: () => <GemRow gems={gemReward} /> });
-    if (contractReward) rows.push({ key: 'contract', render: () => <ContractRow /> });
+    const loot = lootPieces(equipmentReward, gemReward, consumableReward, contractReward, () => setInspecting(true));
+    if (loot.length > 0) rows.push({ key: 'loot', render: (shown) => <LootPile pieces={loot} shown={shown} />, holdMs: loot.length * LOOT_STAGGER_MS });
     return rows;
   }, [won, goldFrom, goldReward, equipmentReward, consumableReward, gemReward, contractReward, mvp, xpGained]);
 
@@ -164,10 +168,11 @@ export function FightResultOverlay({
       at(t, () => setStage((s) => Math.max(s, STAGE_CAPTION)));
     }
     t += LEDGER_LEAD_MS;
-    ledger.forEach((_, i) => {
-      at(t + i * LEDGER_STAGGER_MS, () => setStage((s) => Math.max(s, STAGE_LEDGER + i + 1)));
+    ledger.forEach((row, i) => {
+      at(t, () => setStage((s) => Math.max(s, STAGE_LEDGER + i + 1)));
+      t += LEDGER_STAGGER_MS + (row.holdMs ?? 0);
     });
-    t += ledger.length * LEDGER_STAGGER_MS + CTA_LEAD_MS;
+    t += CTA_LEAD_MS;
     at(t, () => setStage(stageDone));
     return () => timers.forEach(window.clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -242,16 +247,18 @@ export function FightResultOverlay({
         )}
 
         {ledger.length > 0 && (
+          <LandedContext.Provider value={landed}>
           <section className="fight-result-ledger">
             {ledger.map((row, i) => {
               const shown = stage >= STAGE_LEDGER + i + 1;
               return (
-                <div key={row.key} className={`fight-result-ledger-slot${shown ? ' is-shown' : ''}`}>
+                <div key={row.key} className={`fight-result-ledger-slot is-${row.key}${shown ? ' is-shown' : ''}`}>
                   {row.render(shown)}
                 </div>
               );
             })}
           </section>
+          </LandedContext.Provider>
         )}
       </div>
 
@@ -427,76 +434,133 @@ function MvpRow({ heroId, pathId, pick, bonusXp }: { heroId: string; pathId: str
   );
 }
 
-function PotionRow({ kind }: { kind: ConsumableKind }) {
-  return (
-    <div className="fight-result-row">
-      <span className={`fight-result-row-glyph is-${kind}`}>
-        <ResourceGlyph kind={kind} />
-      </span>
-      <span className="fight-result-row-text">
-        <span className="fight-result-row-label">{CONSUMABLE_NAMES[kind]}</span>
-        <span className="fight-result-row-sub">{CONSUMABLE_BLURBS[kind]}</span>
-      </span>
-      <span className="fight-result-row-value">+1</span>
-    </div>
-  );
+const GEM_STAT_SHORT: Record<Gem['stat'], string> = { hp: 'HP', manaPool: 'Mana', attack: 'Atk', defense: 'Def', intelligence: 'Int', wisdom: 'Wis', speed: 'Spd' };
+
+const BURST_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
+
+interface LootPiece {
+  key: string;
+  /** The glow behind the piece and the burst it pops with. */
+  color: string;
+  art: ReactNode;
+  label: string;
+  sub?: string;
+  /** The item opens its readout; nothing else here does. */
+  onInspect?: () => void;
 }
 
-function GemRow({ gems }: { gems: readonly Gem[] }) {
-  const one = gems.length === 1;
-  return (
-    <div className="fight-result-row">
-      <span className="fight-result-row-glyph is-gems">
-        {gems.map((gem, i) => (
-          <GemIcon key={i} stat={gem.stat} size={one ? 26 : 20} large={gem.points >= 10} />
-        ))}
-      </span>
-      <span className="fight-result-row-text">
-        <span className="fight-result-row-label">{one ? GEM_STONES[gems[0].stat].name : 'Gems'}</span>
-        <span className="fight-result-row-sub">{one ? 'A stat and a Mastery pip, for one hero' : 'Each a stat and a Mastery pip, for one hero'}</span>
-      </span>
-      <span className="fight-result-row-value">+{gems.length}</span>
-    </div>
+/** What the fight dropped, as things rather than lines: the piece of gear, each Gem, the flask, the Contract. */
+function lootPieces(
+  item: EquipmentDefinition | null,
+  gems: readonly Gem[],
+  potion: ConsumableKind | null,
+  contract: boolean,
+  onInspectItem: () => void
+): LootPiece[] {
+  const pieces: LootPiece[] = [];
+  if (item) {
+    pieces.push({
+      key: 'item',
+      color: RARITY_COLOR_VARS[item.rarity],
+      art: <ItemPiece item={item} />,
+      label: item.name,
+      sub: RARITY_LABELS[item.rarity],
+      onInspect: onInspectItem,
+    });
+  }
+  gems.forEach((gem, i) =>
+    pieces.push({
+      key: `gem-${i}`,
+      color: GEM_STONES[gem.stat].tones[1],
+      art: <GemIcon stat={gem.stat} size={40} live large={gem.points >= 10} />,
+      label: `+${gemAmount(gem)} ${GEM_STAT_SHORT[gem.stat]}`,
+      sub: GEM_STONES[gem.stat].name,
+    })
   );
+  if (potion) {
+    pieces.push({
+      key: 'potion',
+      color: RESOURCE_COLORS[potion],
+      art: <img src={GOOD_ART[potion === 'hpPotion' ? 'hp' : potion === 'mpPotion' ? 'mp' : 'revive']} alt="" draggable={false} />,
+      label: CONSUMABLE_NAMES[potion],
+    });
+  }
+  if (contract) {
+    pieces.push({ key: 'contract', color: RESOURCE_COLORS.contract, art: <img src={GOOD_ART.contract} alt="" draggable={false} />, label: 'Contract' });
+  }
+  return pieces;
 }
 
-function ContractRow() {
-  return (
-    <div className="fight-result-row">
-      <span className="fight-result-row-glyph">
-        <ResourceGlyph kind="contract" />
-      </span>
-      <span className="fight-result-row-text">
-        <span className="fight-result-row-label">Recruit Contract</span>
-        <span className="fight-result-row-sub">Sign one of the heroes you just beat</span>
-      </span>
-      <span className="fight-result-row-value">+1</span>
-    </div>
-  );
-}
+/**
+ * The drops, spilled out one after another — each popping up with a burst and a twinkle, the pitch
+ * climbing as the pile grows. A tap through the overlay lands the rest at once, silently.
+ */
+function LootPile({ pieces, shown }: { pieces: LootPiece[]; shown: boolean }) {
+  const [popped, setPopped] = useState(() => (prefersReducedMotion() ? pieces.length : 0));
+  const landed = useContext(LandedContext);
 
-/** The drop, as the chit it will be on the roster; a tap opens the full readout. */
-function ItemRow({ item, onInspect }: { item: EquipmentDefinition; onInspect: () => void }) {
+  useEffect(() => {
+    if (!shown) return;
+    if (landed || prefersReducedMotion()) {
+      setPopped(pieces.length);
+      return;
+    }
+    const timers = pieces.map((_, i) =>
+      window.setTimeout(() => {
+        setPopped((n) => Math.max(n, i + 1));
+        playSfx('loot.twinkle', { pitch: 1 + i * 0.12 });
+      }, i * LOOT_STAGGER_MS)
+    );
+    return () => timers.forEach(window.clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shown, landed]);
+
   return (
-    <div className="fight-result-row is-item" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
-      <button
-        type="button"
-        className="item-box filled fight-result-chit"
-        aria-label={`${item.name}, ${RARITY_LABELS[item.rarity]}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onInspect();
-        }}
-      >
-        <ItemPiece item={item} />
-      </button>
-      <span className="fight-result-row-text">
-        <span className="fight-result-row-label fight-result-item-name">{item.name}</span>
-        <span className="fight-result-row-chips">
-          <ItemEffectChips item={item} />
-        </span>
-      </span>
-      <span className="fight-result-row-value fight-result-rarity">{RARITY_LABELS[item.rarity]}</span>
+    <div className="fight-result-loot">
+      {pieces.map((piece, i) => {
+        const out = i < popped;
+        const body = (
+          <>
+            <span className="fight-result-loot-art">
+              <span className="fight-result-loot-glow" aria-hidden="true" />
+              {out && (
+                <span className="fight-result-loot-burst" aria-hidden="true">
+                  {BURST_ANGLES.map((a) => (
+                    <i key={a} style={{ '--a': `${a}deg` } as CSSProperties} />
+                  ))}
+                </span>
+              )}
+              <span className="fight-result-loot-thing">{piece.art}</span>
+              <i className="fight-result-loot-star" aria-hidden="true" />
+              <i className="fight-result-loot-star is-second" aria-hidden="true" />
+            </span>
+            <span className="fight-result-loot-label">{piece.label}</span>
+            {piece.sub && <span className="fight-result-loot-sub">{piece.sub}</span>}
+          </>
+        );
+        const className = `fight-result-loot-piece is-${piece.key.split('-')[0]}${out ? ' is-out' : ''}`;
+        const style = { '--loot-color': piece.color, '--loot-i': i } as CSSProperties;
+        const label = piece.sub ? `${piece.label}, ${piece.sub}` : piece.label;
+        return piece.onInspect ? (
+          <button
+            key={piece.key}
+            type="button"
+            className={className}
+            style={style}
+            aria-label={label}
+            onClick={(e) => {
+              e.stopPropagation();
+              piece.onInspect!();
+            }}
+          >
+            {body}
+          </button>
+        ) : (
+          <div key={piece.key} className={className} style={style} aria-label={label}>
+            {body}
+          </div>
+        );
+      })}
     </div>
   );
 }

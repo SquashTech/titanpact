@@ -176,11 +176,18 @@ export function NodeHeader({
  * in the scroll because this is the number every decision below is measured against, and a
  * readout that scrolls away is not a readout.
  */
-export function NodePurse({ gold }: { gold: number }) {
+/** The purse in the corner; `contracts` adds the Recruit Contracts held beside the gold, wherever they are bought or spent. */
+export function NodePurse({ gold, contracts }: { gold: number; contracts?: number }) {
   return (
-    <span className="node-purse" aria-label={`${gold} gold`}>
+    <span className="node-purse" aria-label={`${gold} gold${contracts === undefined ? '' : `, ${contracts} Recruit ${contracts === 1 ? 'Contract' : 'Contracts'}`}`}>
       <ResourceGlyph kind="gold" />
       <span className="node-purse-count">{gold}</span>
+      {contracts !== undefined && (
+        <span key={contracts} className={`node-purse-contracts${contracts === 0 ? ' is-none' : ''}`}>
+          <ResourceGlyph kind="contract" />
+          <span className="node-purse-count">{contracts}</span>
+        </span>
+      )}
     </span>
   );
 }
