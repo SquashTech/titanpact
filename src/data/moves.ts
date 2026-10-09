@@ -3440,7 +3440,7 @@ export const moves: Record<string, MoveDefinition> = {
     type: 'Mech',
     category: 'magical',
     kind: 'damage',
-    basePower: 40,
+    basePower: 50,
     statusApplication: [
       { statusId: 'Burn', target: 'moveTarget' },
       { statusId: 'Burn', target: 'self' },
@@ -3614,7 +3614,7 @@ export const moves: Record<string, MoveDefinition> = {
     type: 'Mech',
     category: 'physical',
     kind: 'damage',
-    basePower: 30,
+    basePower: 40,
     // A self-Burn is a COST and never scales (CLAUDE.md "Status magnitude formula").
     statusApplication: { statusId: 'Burn', target: 'self' },
     manaCost: 25,
