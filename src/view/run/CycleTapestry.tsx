@@ -4,7 +4,8 @@ import { locationBackdrop } from '../shared/locationBackdrops';
 import { heroArt } from '../shared/heroArt';
 import { evolutionArt } from '../shared/evolutionArt';
 import { GUARDIAN_VIEW_BOX, guardianMarkup } from '../shared/guardianFigures';
-import { LEFT_EYE_ID, ROC_ID } from '../../data/enemies';
+import { titanspawnMarkup } from '../shared/titanspawnArt';
+import { LEFT_EYE_ID } from '../../data/enemies';
 import './cycleTapestry.css';
 
 // The Cycle picker as a woven chronicle (docs/cycles.md §4). Each Cycle is a panel cross-stitched
@@ -19,11 +20,12 @@ const OPEN_ROWS = 50;
 /** Star colours by Cycle (docs/cycles.md §5); V is drawn as a rainbow frame. */
 const THREAD: Record<number, string> = { 1: '#f3eee2', 2: '#c07a3e', 3: '#c9d2dc', 4: '#e6b640', 5: '#ffffff' };
 
-type FigureSpec = { src: string; tint?: string };
+/** `at` places a figure by its centre column, the row its feet stand on and its height, all in cells; without it the figures stand in a row along the bottom. */
+type FigureSpec = { src: string; tint?: string; at?: { cx: number; foot: number; h: number } };
 interface Scene {
   backdrop?: { src: string; y: number };
   ground?: string;
-  /** Sprites standing along the bottom, left to right. */
+  /** Drawn in order, so a back rank goes first. */
   figures: FigureSpec[];
   figureRows: number;
   /** Darkens the ground so the figures read against it. */
@@ -55,6 +57,28 @@ function svgUrl(markup: string, viewBox: string): string {
   return URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
 }
 
+/** Cycle IV: three warbands marching as one host (data/warbands.ts), each a column of its type in three ranks, Earlies at the back. */
+const GATHERING_TYPES = ['Fire', 'Light', 'Nature'] as const;
+const SPAWN_VIEW_BOX = '-4 -20 108 108';
+const GATHERING_RANKS = [
+  { tier: 'early', foot: 45, h: 11, dx: [-17, -6, 6, 17], tint: 'rgba(14, 8, 6, 0.45)' },
+  { tier: 'mid', foot: 61, h: 15, dx: [-12, 12], tint: 'rgba(14, 8, 6, 0.2)' },
+  { tier: 'late', foot: 81, h: 21, dx: [0] },
+] as const;
+
+function gatheringFigures(): FigureSpec[] {
+  const centres = [26, 75, 124];
+  return GATHERING_RANKS.flatMap((rank, r) =>
+    GATHERING_TYPES.flatMap((type, i) =>
+      rank.dx.map((dx, j) => ({
+        src: svgUrl(titanspawnMarkup(type, rank.tier, 'idle', `tpG${r}${i}${j}`), SPAWN_VIEW_BOX),
+        tint: 'tint' in rank ? rank.tint : undefined,
+        at: { cx: centres[i] + dx, foot: rank.foot, h: rank.h },
+      }))
+    )
+  );
+}
+
 function sceneFor(cycle: number, wardens: readonly TapestryWarden[]): Scene {
   const band = wardens.map((w) => (w.pathId && evolutionArt[w.pathId]) || heroArt[w.heroId]).filter((s): s is string => !!s);
   switch (cycle) {
@@ -71,9 +95,10 @@ function sceneFor(cycle: number, wardens: readonly TapestryWarden[]): Scene {
       return { backdrop: { src: locationBackdrop('frozenReach') ?? '', y: 120 }, figures: [], figureRows: 0 };
     case 4:
       return {
-        backdrop: { src: locationBackdrop('thunderAerie') ?? '', y: 110 },
-        figures: [{ src: svgUrl(guardianMarkup(ROC_ID, 'idle', 'tpRoc'), GUARDIAN_VIEW_BOX) }],
-        figureRows: 64,
+        backdrop: { src: locationBackdrop('thunderAerie') ?? '', y: 150 },
+        figures: gatheringFigures(),
+        figureRows: 0,
+        groundDim: 0.55,
       };
     default:
       return {
@@ -146,10 +171,11 @@ async function rasterise(scene: Scene): Promise<Pixels> {
   imgs.forEach(({ img, spec }, i) => {
     if (!img) return;
     const b = opaqueBounds(img);
-    const h = scene.figureRows;
-    const w = Math.min((b.w / b.h) * h, n === 1 ? COLS : slot + 6);
-    const x = n === 1 ? (COLS - w) / 2 : 2 + slot * i + (slot - w) / 2;
-    const y = n === 1 ? (ROWS - h) / 2 : ROWS - h - 2;
+    const at = spec.at;
+    const h = at ? at.h : scene.figureRows;
+    const w = at ? (b.w / b.h) * h : Math.min((b.w / b.h) * h, n === 1 ? COLS : slot + 6);
+    const x = at ? at.cx - w / 2 : n === 1 ? (COLS - w) / 2 : 2 + slot * i + (slot - w) / 2;
+    const y = at ? at.foot - h : n === 1 ? (ROWS - h) / 2 : ROWS - h - 2;
     const layer = make();
     layer.imageSmoothingEnabled = true;
     layer.drawImage(img, b.x, b.y, b.w, b.h, x, y, w, h);
