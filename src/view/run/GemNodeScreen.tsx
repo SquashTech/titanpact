@@ -20,8 +20,6 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { MasteredInnateOverlay } from './MasteredInnateOverlay';
 import { RosterPeek } from './RosterPeek';
-import { KeeperVoice, useKeeperLine } from './RoadEncounter';
-import { SCRIBE_LINES } from '../../data/roadLines';
 import { useMasteryFlow } from './masteryFlow';
 
 interface Props {
@@ -50,7 +48,6 @@ export function GemNodeScreen({ run, onRunChange, plan, onDone, progress, onProg
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [burst, setBurst] = useState<{ rosterId: string; key: number } | null>(null);
   const flow = useMasteryFlow(run, onRunChange);
-  const voice = useKeeperLine(SCRIBE_LINES);
 
   const total = plan.gems.length;
   const remaining = progress?.remaining ?? total;
@@ -152,7 +149,6 @@ export function GemNodeScreen({ run, onRunChange, plan, onDone, progress, onProg
           </span>
           <span className="keeper-words">
             <h2 className="rite-name">The Lapidary</h2>
-            <KeeperVoice line={voice} />
           </span>
           {gemHand}
         </header>

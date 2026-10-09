@@ -16,14 +16,6 @@ export const TUTOR_LINES: readonly string[] = [
   'I have buried better students than yours. Prove me wrong about them.',
 ];
 
-export const SCRIBE_LINES: readonly string[] = [
-  'Oh! Travellers. Hold still, the light is good. These stones were cut for hands like yours.',
-  'Every Titan seal leaves a little of itself in the rock. I dig it out and cut it clean. Who wants one?',
-  'A stone set in the right hero remembers what it was for. Choose well. It does not come out again.',
-  'Ruby for the fist, sapphire for the well, diamond for the wall. Mind which goes where.',
-  'Careful, the edges are still sharp. I have a few here that were meant for someone. Perhaps for you.',
-];
-
 export const PACTWARDEN_LINES: readonly string[] = [
   'You found my stones again. The light has a little left in it. Who will carry it?',
   'I cannot walk this road with you. But one of you may take my blessing a little further.',
