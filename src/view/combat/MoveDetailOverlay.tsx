@@ -271,7 +271,13 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
           <ElementGlyph type={move.type} />
         </span>
         <div className="move-detail-titles">
-          <div className="move-detail-name">{move.name}</div>
+          <div
+            className="move-detail-name"
+            // The row head shrinks the name to fit its longest word, which is the part that cannot wrap.
+            style={rowHead ? ({ '--word-len': Math.max(...move.name.split(' ').map((w) => w.length)) } as CSSProperties) : undefined}
+          >
+            {move.name}
+          </div>
           {!rowHead && detailLine}
         </div>
         {!rowHead && !free && <ManaCost cost={liveCost} />}

@@ -7747,6 +7747,7 @@ textarea,
    fill used to, over a fraction of the area. */
 .mana-gem {
   position: relative;
+  isolation: isolate;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -7824,6 +7825,8 @@ textarea,
 
 .mana-gem-value {
   position: relative;
+  /* Above the filtered facets: iOS composited the cut over the numeral inside the signature's spinning frame. */
+  z-index: 1;
   font-size: 12px;
   font-weight: 800;
   line-height: 1;
@@ -7837,6 +7840,12 @@ textarea,
   color: #e2f2ff;
   font-variant-numeric: tabular-nums;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Three digits overrun the facets at every size; drawn smaller rather than resized per context. */
+.mana-gem.is-wide .mana-gem-value {
+  transform: scale(0.8);
+  letter-spacing: -0.03em;
 }
 
 .mana-gem-sm .mana-gem-value {
@@ -16409,10 +16418,10 @@ button.star-shop-bundle-face {
 @keyframes offer-move-glow {
   0%,
   100% {
-    box-shadow: 0 0 10px 1px rgba(224, 166, 60, 0.35);
+    box-shadow: 0 0 10px 1px rgba(var(--offer-rgb, 224, 166, 60), 0.35);
   }
   50% {
-    box-shadow: 0 0 20px 5px rgba(224, 166, 60, 0.65);
+    box-shadow: 0 0 20px 5px rgba(var(--offer-rgb, 224, 166, 60), 0.65);
   }
 }
 
@@ -24361,8 +24370,14 @@ button.evo-gift-press:active .evo-gift-medal {
   gap: 8px;
 }
 
+.move-detail-head.is-row .move-detail-titles {
+  container-type: inline-size;
+}
+
+/* At most the step's size, and never wider than the column for the longest word (--word-len, set
+   inline), which is the part that cannot wrap: 0.62em is this face's widest average bold glyph. */
 .move-detail-head.is-row .move-detail-name {
-  font-size: 18px;
+  font-size: min(var(--row-name-size, 18px), calc(100cqi / (var(--word-len, 8) * 0.62)));
 }
 
 /* Type · category · target, out from beside the name onto its own line. */
@@ -29264,7 +29279,8 @@ button.evo-gift-press:active .evo-gift-medal {
   font-size: 21px;
 }
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-head.is-row .move-detail-name {
-  font-size: 20px;
+  --row-name-size: 20px;
+  font-size: min(var(--row-name-size), calc(100cqi / (var(--word-len, 8) * 0.62)));
 }
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-line {
   font-size: 12px;
@@ -29367,7 +29383,8 @@ button.evo-gift-press:active .evo-gift-medal {
   font-size: 23px;
 }
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-head.is-row .move-detail-name {
-  font-size: 21px;
+  --row-name-size: 21px;
+  font-size: min(var(--row-name-size), calc(100cqi / (var(--word-len, 8) * 0.62)));
 }
 /* Held at step 1's 12px: at 13 "Fire · Physical · Single Enemy" wraps beside the disc and the
    line it costs is more than the point it buys. */
@@ -39106,16 +39123,15 @@ img.smithy-service-art {
   box-shadow: inset 0 2px 0 rgba(224, 166, 60, 0.6), 0 0 14px -2px rgba(224, 166, 60, 0.5);
 }
 
-/* -- A node's headline card in the kit: the move a Mentor, a Tutor or a level offers is a stone
-   window of its own (the signature keeps its own frame), and the either/or under it is a pair of
-   planks — Confirm gilt with a green label, so committing still reads apart from a gold Continue. -- */
+/* -- A node's headline card: the signature's rounded card without its spinning frame, lit from the
+   top in the offered move's type (--offer-rgb, set inline; gold where nothing sets it). The
+   either/or under it is a pair of planks — Confirm gilt with a green label, so committing still
+   reads apart from a gold Continue. -- */
 .offer-move-highlight:not(.is-signature) {
-  padding: 0 2px;
-  border: 20px solid transparent;
-  border-image: url('../../art/ui/frame-stone.png') 10 fill / 20px round;
-  border-radius: 0;
-  background: none;
-  image-rendering: pixelated;
+  border-color: rgba(var(--offer-rgb, 224, 166, 60), 0.55);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(var(--offer-rgb, 224, 166, 60), 0.2), transparent 70%),
+    var(--surface-raised);
 }
 
 .moveoffer-button,

@@ -34,6 +34,7 @@ import { freshRosterId } from '../../run/recruitment';
 import { grantMove, MOVE_CAP, replaceableMoveIds } from '../../run/progression';
 import { ROSTER_CAP, type RosterEntry, type RunState } from '../../run/state';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
+import { getTypeColorRgb } from '../combat/typeColors';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { healCasterForEntry } from '../shared/healCaster';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
@@ -458,7 +459,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
               <p className="offer-hero-sub">
                 {rosterHeroes[swappingEntry.heroId].name} already knows {MOVE_CAP} moves — pick one to replace, or go back.
               </p>
-              <div className="offer-move-highlight">
+              <div className="offer-move-highlight" style={{ '--offer-rgb': getTypeColorRgb(offeredMove.type) } as CSSProperties}>
                 <MoveDetailCard
                   move={offeredMove}
                   label="Offered by the event"

@@ -104,7 +104,7 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve, signa
         </div>
         <p className="offer-hero-eyebrow">{eyebrow}</p>
 
-        <SignatureFrame on={signature}>
+        <SignatureFrame on={signature} type={moves[moveId].type}>
           <MoveDetailCard move={moves[moveId]} label="New move offered" caster={caster} terse rowHead />
         </SignatureFrame>
 
@@ -195,7 +195,7 @@ export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose, signa
         </div>
         <p className="offer-hero-eyebrow">{eyebrow}</p>
 
-        <SignatureFrame on={signature}>
+        <SignatureFrame on={signature} type={moves[moveId].type}>
           <MoveDetailCard move={moves[moveId]} label="Move learned" caster={caster} terse rowHead />
         </SignatureFrame>
 
@@ -244,6 +244,11 @@ export function SignatureBox({ run, entry, offer, onResolve, onClose }: Signatur
   );
 }
 
+/** The offered move's type colour, for the card's border, wash and glow. */
+function offerTint(type: string): CSSProperties {
+  return { '--offer-rgb': getTypeColorRgb(type) } as CSSProperties;
+}
+
 /** The hero's type colour, handed to every signature layer as one pair of custom properties. */
 function signatureStyle(type: string): CSSProperties {
   return { '--sig-color': getTypeColor(type), '--sig-rgb': getTypeColorRgb(type) } as CSSProperties;
@@ -265,8 +270,8 @@ function SignatureCrest() {
 }
 
 /** The move card's panel — for a signature, inside a shimmering type-coloured frame with motes rising off it. */
-function SignatureFrame({ on, children }: { on: boolean; children: ReactNode }) {
-  if (!on) return <div className="offer-move-highlight">{children}</div>;
+function SignatureFrame({ on, type, children }: { on: boolean; type: string; children: ReactNode }) {
+  if (!on) return <div className="offer-move-highlight" style={offerTint(type)}>{children}</div>;
   return (
     <div className="signature-frame">
       <span className="signature-frame-sheen" aria-hidden="true" />

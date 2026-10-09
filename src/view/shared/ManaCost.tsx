@@ -10,7 +10,7 @@ interface ManaCostProps {
 
 export function ManaCost({ cost, size = 'md', className }: ManaCostProps) {
   return (
-    <span className={`mana-gem mana-gem-${size}${className ? ` ${className}` : ''}`} title={`${cost} Mana`}>
+    <span className={`mana-gem mana-gem-${size}${cost >= 100 ? ' is-wide' : ''}${className ? ` ${className}` : ''}`} title={`${cost} Mana`}>
       <svg className="mana-gem-cut" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         {/* Halo: near-black outer stroke, load-bearing where the gem overlaps a portrait. */}
         <path className="mana-gem-halo" d="M12 1.3 22.3 7v10L12 22.7 1.7 17V7Z" />
