@@ -4,8 +4,8 @@
 // sends on the next launch.
 
 // Blank = telemetry off. The anon key is public by design; the table's policy only allows insert.
-const SUPABASE_URL = '';
-const SUPABASE_ANON_KEY = '';
+const SUPABASE_URL = 'https://iojeparerflkdtmtppbj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvamVwYXJlcmZsa2R0bXRwcGJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1Njc4NDYsImV4cCI6MjEwNzE0Mzg0Nn0.OLdTgrBElDjSQYi6M8BvZnpuSgabIBO85meweSNlRvs';
 
 const PLAYER_KEY = 'titanpact.telemetry.player';
 const RUN_KEY = 'titanpact.telemetry.run';
