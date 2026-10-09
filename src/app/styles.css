@@ -11571,8 +11571,9 @@ button.star-shop-bundle-face {
   box-shadow: 0 0 3px -1px rgba(0, 0, 0, 0.9);
 }
 
+/* An empty socket is its mount marks alone: the socket glyph sat off-centre inside them. */
 .item-box.empty .item-box-icon {
-  opacity: 0.45;
+  display: none;
 }
 
 /* Manage Roster: the box picked as the move source. */
@@ -37976,7 +37977,7 @@ img.smithy-service-art {
   text-align: center;
 }
 
-/* -- The Gem and Gear counters (HallCounters.tsx): the stock on parchment above, the roster below. -- */
+/* -- The Gem and Gear counters (HallCounters.tsx): the roster above, the stock on parchment along the bottom. -- */
 .shop-node-screen.is-gems .guild-hall,
 .shop-node-screen.is-gear .guild-hall {
   display: flex;
@@ -38095,7 +38096,7 @@ img.smithy-service-art {
   min-height: 0;
 }
 
-/* Three columns under the stock: the figure at its 48px source, so the name, the pips or all three
+/* Three columns over the stock: the figure at its 48px source, so the name, the pips or all three
    sockets in a row, and the CTA all fit two rows of heroes. */
 .counter-roster.pick-cols-3 {
   --pick-portrait: 48px;
@@ -48675,7 +48676,7 @@ img.smithy-service-art {
   flex-wrap: wrap;
   justify-content: center;
   align-items: flex-start;
-  gap: 6px 2px;
+  gap: 6px 4px;
   padding: 12px 0 10px;
 }
 
@@ -48686,7 +48687,7 @@ img.smithy-service-art {
 
 .fight-result-loot-piece {
   position: relative;
-  flex: 0 0 57px;
+  flex: 0 0 72px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -48907,10 +48908,15 @@ img.smithy-service-art {
   color: var(--loot-color);
 }
 
+/* One line held inside the piece, so a long stone name never runs into its neighbour's. */
 .fight-result-loot-sub {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-dim);
 }

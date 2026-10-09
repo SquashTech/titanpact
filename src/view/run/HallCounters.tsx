@@ -18,16 +18,15 @@ import { MasteryPips } from '../shared/MasteryPips';
 import { useLongPress } from '../shared/MoveTile';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { overlayHost } from '../shared/overlayHost';
-import { STAT_FULL_LABELS } from '../shared/relicStacks';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { CONFIRM_PURCHASE_FROM } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MergeBurst } from './MergeBurst';
 
-// The Guild Hall's Gem and Gear counters (docs/run-loop.md "The Guild Hall"): the stock above, the
-// whole roster below with what the choice reads off it — Mastery pips at the Gems, sockets at the
-// Gear — so the decision is made here and not on the Roster screen. Pick a piece, then the hero:
+// The Guild Hall's Gem and Gear counters (docs/run-loop.md "The Guild Hall"): the whole roster above,
+// the stock along the bottom, each hero showing what the choice reads off it — Mastery pips at the Gems,
+// sockets at the Gear — so the decision is made here and not on the Roster screen. Pick a piece, then the hero:
 // the purchase lands on that hero on the spot, with no who-screen after it.
 
 const ARMED_MS = 4000;
@@ -98,7 +97,7 @@ export function GemCounter({ run, gems, sold, onBuy, onPlaced }: GemCounterProps
 
   const gem = pick !== null && !sold.includes(pick) ? gems[pick] : null;
   const price = gem ? shelfGemPrice(gem) : 0;
-  const statName = gem ? (gem.stat === 'manaPool' ? 'Mana' : STAT_FULL_LABELS[gem.stat]) : '';
+  const statName = gem ? GEM_STAT_SHORT[gem.stat] : '';
 
   function handleHero(entry: RosterEntry) {
     if (pick === null || !gem || !canTakeMastery(entry) || run.gold < price) return;
@@ -118,35 +117,6 @@ export function GemCounter({ run, gems, sold, onBuy, onPlaced }: GemCounterProps
 
   return (
     <div className="hall-counter-room is-gems" style={gem ? ({ '--gem-color': GEM_STONES[gem.stat].tones[1] } as CSSProperties) : undefined}>
-      <div className="counter-stock is-gems">
-        {gems.map((g, i) => {
-          const isSold = sold.includes(i);
-          const cost = shelfGemPrice(g);
-          return (
-            <button
-              key={i}
-              type="button"
-              className={`counter-good${pick === i ? ' is-picked' : ''}${isSold ? ' is-sold' : ''}`}
-              disabled={isSold}
-              onClick={() => {
-                playSfx('ui.pick');
-                setPick(pick === i ? null : i);
-              }}
-            >
-              <span className="counter-good-art">
-                <GemIcon stat={g.stat} size={30} large={g.points >= 10} live={pick === i} />
-              </span>
-              <span className="counter-good-words">
-                <span className="counter-good-name">
-                  +{gemAmount(g)} {GEM_STAT_SHORT[g.stat]}
-                </span>
-                {isSold ? <span className="counter-good-price is-note">Sold</span> : <Price gold={cost} />}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
       <HeroPickGrid count={run.roster.length} columns={3} fill className="counter-roster">
         {run.roster.map((entry) => {
           const hero = rosterHeroes[entry.heroId];
@@ -199,6 +169,35 @@ export function GemCounter({ run, gems, sold, onBuy, onPlaced }: GemCounterProps
           );
         })}
       </HeroPickGrid>
+
+      <div className="counter-stock is-gems">
+        {gems.map((g, i) => {
+          const isSold = sold.includes(i);
+          const cost = shelfGemPrice(g);
+          return (
+            <button
+              key={i}
+              type="button"
+              className={`counter-good${pick === i ? ' is-picked' : ''}${isSold ? ' is-sold' : ''}`}
+              disabled={isSold}
+              onClick={() => {
+                playSfx('ui.pick');
+                setPick(pick === i ? null : i);
+              }}
+            >
+              <span className="counter-good-art">
+                <GemIcon stat={g.stat} size={30} large={g.points >= 10} live={pick === i} />
+              </span>
+              <span className="counter-good-words">
+                <span className="counter-good-name">
+                  +{gemAmount(g)} {GEM_STAT_SHORT[g.stat]}
+                </span>
+                {isSold ? <span className="counter-good-price is-note">Sold</span> : <Price gold={cost} />}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       {preview && createPortal(<Preview run={run} preview={preview} onClose={() => setPreview(null)} />, overlayHost())}
     </div>
@@ -295,27 +294,6 @@ export function GearCounter({ run, itemIds, sold, onBuy }: GearCounterProps) {
 
   return (
     <div className="hall-counter-room is-gear">
-      <div className="counter-stock is-gear">
-        {itemIds.map((id, i) => (
-          <GearGood
-            key={i}
-            itemId={id}
-            picked={pick === i}
-            isSold={sold.includes(i)}
-            onPick={() => {
-              playSfx('ui.pick');
-              setPick(pick === i ? null : i);
-            }}
-            onInspect={() => setInspecting(id)}
-          />
-        ))}
-      </div>
-
-      {/* The piece in hand, read whole: name, tier and every grant spelled out. */}
-      <div className="counter-focus">
-        {item && <EquipChoiceCard key={item.id} item={item} revealDelayMs={0} labelled onInspect={() => setInspecting(item.id)} />}
-      </div>
-
       <HeroPickGrid count={run.roster.length} columns={3} fill className="counter-roster">
         {run.roster.map((entry) => {
           const hero = rosterHeroes[entry.heroId];
@@ -361,6 +339,27 @@ export function GearCounter({ run, itemIds, sold, onBuy }: GearCounterProps) {
           );
         })}
       </HeroPickGrid>
+
+      {/* The piece in hand, read whole: name, tier and every grant spelled out. */}
+      <div className="counter-focus">
+        {item && <EquipChoiceCard key={item.id} item={item} revealDelayMs={0} labelled onInspect={() => setInspecting(item.id)} />}
+      </div>
+
+      <div className="counter-stock is-gear">
+        {itemIds.map((id, i) => (
+          <GearGood
+            key={i}
+            itemId={id}
+            picked={pick === i}
+            isSold={sold.includes(i)}
+            onPick={() => {
+              playSfx('ui.pick');
+              setPick(pick === i ? null : i);
+            }}
+            onInspect={() => setInspecting(id)}
+          />
+        ))}
+      </div>
 
       {/* Portalled: the counter sits inside the hall's .screen-scroll, a stacking context of its own. */}
       {createPortal(
