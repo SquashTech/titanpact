@@ -1212,6 +1212,7 @@ const authoredSignatures: Record<string, MoveDefinition> = {
       { statusId: 'Renew', target: 'moveTarget' },
     ],
     manaCost: 55,
+    chargesPerFight: 3,
     priority: 0,
     target: 'bothAllies',
   },

@@ -408,6 +408,8 @@ don't silently override it.
   (`Combatant.chargesSpent`, read through `isMoveUsable`) — both sides capped, drawn as pips.
   Feint, Blind and Barrier hold 2; a move's `oncePerFight` is 1 Charge (Ink Blast). **The Provoke
   family holds 5** (per user direction): a large count that breaks the tank + Renew + Provoke checkmate.
+  **Every pure Shield move holds 3–5** (2026-10-09, per user direction) so shielding cannot outpace a
+  side's damage forever; an attack with a self-Shield rider stays uncharged.
 - **Priority uses integer brackets; Speed is the tiebreaker within a bracket.**
 - **No spread damage reduction** — this is a doubles-only game.
 

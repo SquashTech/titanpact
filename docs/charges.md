@@ -232,6 +232,26 @@ Every move in the game that guarantees a Daze or lays a guard or a redirect, rea
   most fights; it waits for Charges to spread. Empty-handed wants a hero with several charged moves,
   and only Squall has that.
 
+## Shield moves (BUILT 2026-10-09, per user direction)
+
+Shield could outpace a side's damage — a strong support (Mellow: Tide Guard, Bastion, Rampart, Seawall,
+All Aboard, and an innate that shrinks every attacker's Attack and Intelligence) stacked pools faster
+than the far side could break them, the same checkmate the Provoke family made. **Every pure Shield
+move holds Charges, generous and sized by what one cast lays down**: both allies or a big pool 3,
+middling 4, small or self-only 5.
+
+| Charges | Moves |
+|---|---|
+| 3 | Bastion (45 both), Rampart (65 both), Seawall (70 one), All Aboard (Mellow's signature, 35 both) |
+| 4 | Tide Guard (20 both), Benediction (25 both), Ice Shell (50 one), Living Wall (40 self, pivots) |
+| 5 | Rime Coat, Vigil, Iron Skin, Parry, Dig In (25–30) |
+
+Left uncharged: an ATTACK that shields its caster as a rider (Crest, Wardblade, Whiteout, Raise the
+Cairn, Foreseen Blow) — it spends the turn dealing damage, so it cannot build a wall alone — and the
+Ancient slate's two (enemy-only, the finale's tuning). Bodyguard and Nevermore already hold 5 as
+Provoke moves. A passive that grants Shield (Live Wire, Stone Wall's kin) is not a move and has no
+Charges; watch those if the stall returns. Not simulated.
+
 ## Spreading Charges (BUILT 2026-10-08, per user direction)
 
 Charges belong on an effect too strong to repeat, and **damage is an effect** (Storm Arrow is the
