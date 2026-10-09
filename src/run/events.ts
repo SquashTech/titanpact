@@ -63,7 +63,7 @@ export function rollRunEvent(
 
 /**
  * An omitted filter means every move in the game (Wildcard) — less the two that belong to somebody:
- * a signature (one hero's identity, docs/mastery.md §5) and a Class move (the Crucible's alone).
+ * a signature (one hero's identity, docs/mastery.md §5) and a Class move (the Academy's alone).
  */
 export function movePoolFor(filter: MovePoolFilter | undefined, moves: Record<string, MoveDefinition>): string[] {
   const needle = filter?.nameIncludes?.toLowerCase();

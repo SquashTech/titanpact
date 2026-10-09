@@ -113,6 +113,8 @@ export type RunScreen =
   | { kind: 'mentorNode'; nodeId: string; seed: number; settled?: boolean }
   /** The Tutor (acts 4-5): pick a hero, and one Late move is rolled for it. */
   | { kind: 'tutorNode'; nodeId: string; seed: number; settled?: boolean }
+  /** The Academy (docs/academy.md): pick a hero, and it learns a Class. `seed` fixes the three offered. */
+  | { kind: 'academyNode'; nodeId: string; seed: number; settled?: boolean }
   /** Which event this node is gets rolled ONCE at node-select time; `seed` fixes what its options hold. */
   | { kind: 'event'; nodeId: string; eventId: string; seed: number; settled?: boolean }
   /** What the fight just did to the roster. `taken` is who has already taken a schedule entry this report. */
@@ -121,8 +123,6 @@ export type RunScreen =
   | { kind: 'companion'; beat: CompanionBeat; next: RunScreen }
   /** Guardian's Banner after a Guardian win. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: RunScreen; settled?: boolean }
-  /** The Crucible: pick one hero, and that hero takes a Class. The Guardian's beat. */
-  | { kind: 'crucible'; next: RunScreen; seed: number; settled?: boolean }
   /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
   | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: RunScreen }
   /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
@@ -179,11 +179,11 @@ const RESUMABLE: ReadonlySet<RunScreenKind> = new Set<RunScreenKind>([
   'boonNode',
   'mentorNode',
   'tutorNode',
+  'academyNode',
   'event',
   'levelUp',
   'companion',
   'guardianBanner',
-  'crucible',
   'rosterReplace',
   'recruit',
   'champions',
@@ -371,7 +371,7 @@ function decodePlan(value: unknown, ctx: Ctx): GemPlan {
 }
 
 const NODE_SCREENS = ['manaWell', 'blessingShrine', 'forge', 'leyLine', 'rest'] as const;
-const SEEDED_NODE_SCREENS = ['boonNode', 'mentorNode', 'tutorNode'] as const;
+const SEEDED_NODE_SCREENS = ['boonNode', 'mentorNode', 'tutorNode', 'academyNode'] as const;
 const PASS_THROUGH = ['pactSeal', 'blessing', 'actIntro', 'map', 'champions'] as const;
 
 function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
@@ -380,6 +380,8 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
   const raw = value;
   // A run saved on the old cold open (deleted 2026-10-06, its eyes now on the lore cards) picks up on the screen it led to.
   if (raw.kind === 'titanWake') return { kind: 'blessing' };
+  // A run saved in the Guardian's Crucible (moved onto the map as the Academy, 2026-10-09) walks on past it.
+  if (raw.kind === 'crucible') return decodeScreen(raw.next, ctx, depth + 1);
   const kind = raw.kind as RunScreenKind;
   if (!isResumable(kind)) reject(`screen "${kind}" is not one a run is saved on`);
   const next = () => decodeScreen(raw.next, ctx, depth + 1);
@@ -490,8 +492,6 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
       return { kind, beat: decodeBeat(raw.beat, ctx), next: next() };
     case 'guardianBanner':
       return { kind, next: next(), ...settled(raw) };
-    case 'crucible':
-      return { kind, next: next(), seed: int(raw.seed, 'crucible.seed'), ...settled(raw) };
     case 'rosterReplace':
       return { kind, candidate: decodeCandidate(raw.candidate, ctx), next: next() };
     case 'recruit': {

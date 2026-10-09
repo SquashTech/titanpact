@@ -29,6 +29,7 @@ export const MAP_NODE_TYPES = [
   'mentorReward',
   'tutorReward',
   'scribeReward',
+  'academyReward',
   'event',
   // Act 6 only (docs/run-loop.md §4). `muster` is the Vigil, `finale` the Herald and, behind it
   // in the same fight, the Titan's Eyes (docs/titan-eyes.md §10).
@@ -56,13 +57,13 @@ export interface RunMap {
   bossNodeId: string;
 }
 
-// row 0 fight, 1/3/6 pick-1-of-3 rewards, 2 the spliced seat, 4 the Scribe, 5 elite-or-skirmish,
-// 7 the funnel, 8 boss. Three fights an act since 2026-09-14 (per user direction): the un-forked
-// Skirmish row came out to shorten the run without cutting an act, so the fork is the act's one
-// Skirmish and every act 1-5 carries the spliced row — the shape is the same in all five. The
+// row 0 fight, 1/3/7 pick-1-of-3 rewards, 2 the spliced seat, 4 the Scribe, 5 elite-or-skirmish,
+// 6 the Academy, 8 the funnel, 9 boss. Three fights an act since 2026-09-14 (per user direction): the
+// un-forked Skirmish row came out to shorten the run without cutting an act, so the fork is the
+// act's one Skirmish and every act carries the spliced row — the shape is the same in all four. The
 // Scribe row joined the same day (docs/mastery.md §3), ahead of the fork so the Evolution it buys
 // is in hand for the previewed Elite and the Guardian.
-const ROW_WIDTHS = [1, 3, 1, 3, 1, 2, 3, 1, 1] as const;
+const ROW_WIDTHS = [1, 3, 1, 3, 1, 2, 1, 3, 1, 1] as const;
 
 /**
  * Forced single-node row between the act's first two reward rows. Acts 1-3 it is the Mentor
@@ -83,6 +84,15 @@ const SPLICED_ROW = 2;
  * player prioritises. Absent from REWARD_WEIGHTS, so this row is its only seat.
  */
 const SCRIBE_ROW = 4;
+
+const ELITE_ROW = 5;
+
+/**
+ * The Academy (2026-10-09, per user direction, docs/academy.md): a forced row every act right after
+ * the fork — pick one hero, and it learns a Class. It was the Crucible, a beat behind each Guardian;
+ * on the road it lands with half the act left to use it. Absent from REWARD_WEIGHTS.
+ */
+const ACADEMY_ROW = 6;
 
 const LAST_MENTOR_ACT = 3;
 
@@ -204,18 +214,17 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
   const rowWidths = rowWidthsFor(actNumber);
   const bossRow = rowWidths.length - 1;
   const funnelRow = bossRow - 1;
-  // A pick-1-of-3 reward row sits between the Elite/Skirmish choice and the funnel, so the Elite
-  // row is two up from the funnel rather than one.
-  const eliteRow = funnelRow - 2;
+  const eliteRow = ELITE_ROW;
 
   function isRewardRow(row: number): boolean {
-    return row !== 0 && row !== SPLICED_ROW && row !== SCRIBE_ROW && row !== eliteRow && row !== funnelRow && row !== bossRow;
+    return row !== 0 && row !== SPLICED_ROW && row !== SCRIBE_ROW && row !== eliteRow && row !== ACADEMY_ROW && row !== funnelRow && row !== bossRow;
   }
 
   function fixedNodeType(row: number, col: number): MapNodeType {
     if (row === 0) return 'fight';
     if (row === SPLICED_ROW) return splicedRowType(actNumber);
     if (row === SCRIBE_ROW) return 'scribeReward';
+    if (row === ACADEMY_ROW) return 'academyReward';
     // Elite-or-Skirmish since 2026-09-13 — both hero pool, both recruitable, and the two
     // preview their typing on the tile (run/encounters.ts guarantees they differ in a type).
     if (row === eliteRow) return col === 0 ? 'elite' : 'skirmish';

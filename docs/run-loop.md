@@ -130,7 +130,7 @@ two reds a shade apart on the act's one real difficulty choice, and was reverted
 | `fight` | The act's opener: **Titanspawn** (`run/spawn.ts`, "The mob layer is Titanspawn" below). Not recruitable. |
 | `skirmish` | Four heroes from the **recruitable pool**, at par. The fork's plain option; a Recruit Contract shot. |
 | `elite` | As `skirmish`, one level over it (`ENEMY_LEVEL_OFFSET`), loot one tier ahead, XP ×1.5. |
-| `boss` | The Location's champion over Titanspawn escorts, all at the node's level (`docs/enemy-levels.md` §4). Pays the Guardian's Banner and the Crucible, and ends the act (§3). It paid a Recruit Contract until 2026-10-05 ("Contracts" below). |
+| `boss` | The Location's champion over Titanspawn escorts, all at the node's level (`docs/enemy-levels.md` §4). Pays the Guardian's Banner and ends the act (§3). It paid a Recruit Contract until 2026-10-05 ("Contracts" below). |
 | `shop` | The **Guild Hall** — Tavern, Gems and Gear (§1); the Vigil's is Gems, Gear and Smithy. Rolled once a visit (`rollGuildHallOffers`). |
 | `equipmentReward` ("Items") | `NodeRewardScreen` — pick 1 of 3 items on the act's curve; the pick goes straight to the who-screen (`docs/gear-absorption.md`). Weight 78. |
 | `currencyReward` | An instant gold grant (15–30 at Act 1, × `ACT_GOLD_SCALE`), paid on arrival and counted up into the purse. |
@@ -388,13 +388,11 @@ each beat skipped when it has nothing to ask:
 7. **Recruit Contract claim** (`RecruitScreen`) — up to `MAX_CONTRACT_OFFERS` = 2 beaten
    recruitable heroes, **skipped when the player holds no contracts** or nothing beaten was
    recruitable. A boss node never reaches it: its escorts are spawn and the act grant is gone.
-8. **The Crucible** (`CrucibleScreen`) — boss nodes: pick ONE hero, which takes a **Class** —
-   three rolled from the whole catalog, a move or a passive. Skipped when every hero holds one.
-9. **The Pact Seal** (§4), then the next act — boss nodes.
+8. **The Pact Seal** (§4), then the next act — boss nodes. (The Crucible stood between the claim
+   and the seal until 2026-10-09; the Class is the Academy's now, a map row, `docs/academy.md`.)
 
 What the fight did comes first, what the ACT pays after. The Banner goes before the contract so a
-hero recruited in the same beat arrives under it, and the contract before the Crucible so that hero
-can walk into it. The claim was once a band on the victory overlay, which priced a permanent roster
+hero recruited in the same beat arrives under it. The claim was once a band on the victory overlay, which priced a permanent roster
 decision below the item drop; it is its own screen on the draft's stage.
 
 ### Contracts

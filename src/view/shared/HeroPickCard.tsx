@@ -111,7 +111,7 @@ export function HeroPickGrid({
   /**
    * Override the column count. For a screen that passes `fill` but does not actually own the whole
    * stage — the Event node, which prints the move on offer above the roster and leaves the grid
-   * about half the height the Crucible gives it. Two columns there squash the card past what its
+   * about half the height a rite screen gives it. Two columns there squash the card past what its
    * content needs and `overflow: hidden` eats the name, the types and the CTA without a trace.
    */
   columns?: 2 | 3;
@@ -123,7 +123,7 @@ export function HeroPickGrid({
    *
    * It was `count > 4 ? 3 : 2`, so a six-hero roster always went to three — and on the screens
    * where this grid OWNS the stage that put six 118x124 cards, portraits at 48px, in the middle of
-   * a 570-660px box with ~150-200px of nothing above and below them (measured on the Crucible, the
+   * a 570-660px box with ~150-200px of nothing above and below them (measured on the old Crucible, the
    * Forge and the Tutor). The screen's whole question is "which hero", and it was asking it in
    * thumbnails with most of the frame empty.
    *

@@ -1,5 +1,5 @@
 // The Class catalog (docs/growth-overhaul.md §11): fourteen verbs, tempered into one
-// hero at each Guardian's Crucible. A Class is a role any hero can take — the doubles toolkit no
+// hero at each act's Academy (docs/academy.md). A Class is a role any hero can take — the doubles toolkit no
 // single type slate covers evenly. A class move wears the HOLDER's type (`typeFollowsUser`, so STAB is
 // guaranteed and the tile is the hero's colour) and is authored as a role verb rather than a nuke,
 // and a class passive is exclusive to its Class (never in the Boon pool: run/boons.ts).

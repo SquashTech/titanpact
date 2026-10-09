@@ -79,7 +79,7 @@ function BoonCard({
 /**
  * `passiveReward` node: pick 1 of 3 Boons, then the hero it settles on, then the reveal — a
  * permanent, hero-specific grant the player should not be able to mis-tap their way into. It is
- * staged as a rite at the woken Shrine (the Crucible's shape in violet): the Boons as verb cards,
+ * staged as a rite at the woken Shrine (the Academy's Class choice in violet): the Boons as verb cards,
  * the chosen one lit over the roster, and the hero it settles on standing in its light.
  *
  * Unlike a Class, a Boon STACKS: `grantEventPassive` appends, so every hero is eligible however

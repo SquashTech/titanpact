@@ -699,7 +699,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
               }
             />
           )}
-          {/* Only while the type is unresolved: drawn at a hero's type (the Crucible, the fight), the badge already says it. */}
+          {/* Only while the type is unresolved: drawn at a hero's type (the Academy, the fight), the badge already says it. */}
           {move.typeFollowsUser && !attacker && !caster && (
             <EffectRow
               glyph={<ElementGlyph type={move.type} />}

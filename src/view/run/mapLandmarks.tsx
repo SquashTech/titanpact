@@ -8,6 +8,7 @@ import { SceneLights, type SceneLight } from '../shared/SceneLights';
 import mentorArt from '../../../art/map-nodes/landmarks/mentor.png';
 import tutorArt from '../../../art/map-nodes/landmarks/tutor.png';
 import lapidaryArt from '../../../art/map-nodes/landmarks/lapidary.png';
+import academyArt from '../../../art/map-nodes/landmarks/academy.png';
 import guildHallArt from '../../../art/map-nodes/landmarks/guildHall.png';
 import gateArt from '../../../art/map-nodes/landmarks/guardianGate.png';
 import gateFrameArt from '../../../art/map-nodes/landmarks/guardianGateFrame.png';
@@ -21,7 +22,7 @@ import titanGateLeafRightArt from '../../../art/map-nodes/landmarks/titanGateLea
 
 // The act's beats, drawn as themselves rather than as a stone medallion: the opening fight is a
 // standing stone the Titan's eye has cracked open on the road, the Mentor, the Tutor and the Scribe are met at the
-// roadside (a fire, a practice post, a writing desk), the Guild Hall is a building you walk into,
+// roadside (a fire, a practice post, a writing desk), the Guild Hall and the Academy are buildings you walk into,
 // the act's Guardian waits behind a sealed gate standing in the Pact Seal, and the finale is a
 // greater gate sealed with the Titan's own eye.
 
@@ -35,6 +36,7 @@ const KIND: Partial<Record<MapNodeType, LandmarkKind>> = {
   mentorReward: 'npc',
   tutorReward: 'npc',
   scribeReward: 'npc',
+  academyReward: 'building',
   shop: 'building',
   muster: 'building',
   boss: 'gate',
@@ -45,6 +47,11 @@ const NPC_ART: Partial<Record<MapNodeType, string>> = {
   mentorReward: mentorArt,
   tutorReward: tutorArt,
   scribeReward: lapidaryArt,
+};
+
+/** A building's own sprite; the Guild Hall's when a type has none. */
+const BUILDING_ART: Partial<Record<MapNodeType, string>> = {
+  academyReward: academyArt,
 };
 
 // The stone's eye (rows 12-26 of 64) burning, and embers lifting off the cracks at its foot.
@@ -101,7 +108,9 @@ const LANDMARK_STILL: Partial<Record<LandmarkKind, string>> = {
 export function landmarkStillArt(type: MapNodeType): string | undefined {
   const kind = KIND[type];
   if (!kind) return undefined;
-  return kind === 'npc' ? NPC_ART[type] : LANDMARK_STILL[kind];
+  if (kind === 'npc') return NPC_ART[type];
+  if (kind === 'building') return BUILDING_ART[type] ?? guildHallArt;
+  return LANDMARK_STILL[kind];
 }
 
 export function MapLandmarkFace({
@@ -135,7 +144,7 @@ export function MapLandmarkFace({
     case 'npc':
       return <img src={NPC_ART[type]} className="map-landmark-art" alt="" draggable={false} />;
     case 'building':
-      return <img src={guildHallArt} className="map-landmark-art" alt="" draggable={false} />;
+      return <img src={BUILDING_ART[type] ?? guildHallArt} className="map-landmark-art" alt="" draggable={false} />;
     case 'gate': {
       // The gate stands in the Pact Seal it guards: the wardens already broken struck out, this
       // act's burning in its Guardian's element — what is behind the door is felt, never shown.

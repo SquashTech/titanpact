@@ -59,7 +59,7 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   },
   recruit: { pages: [['.recruit-sign', '.recruit-contracts'], null] },
   banner: { pages: [['.relic-pick-row']] },
-  crucible: { pages: [['.crucible-class-list']] },
+  academy: { pages: [[PICK_CARDS]] },
   locationChoice: { pages: [['.location-choice-domains', '.location-choice-domains-all']] },
 
   // --- Fights ---

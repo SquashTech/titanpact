@@ -325,7 +325,7 @@ test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW —
   const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
   const hired = recruitFromGuildHall(run, offer, 'hired').roster.find((r) => r.rosterId === 'hired')!;
 
-  // Axis 1 — Evolution. Chosen for you, or yours to spend a Crucible on.
+  // Axis 1 — Evolution. Chosen for you, or yours to spend the Academy on.
   assert.deepStrictEqual(claimed.chosenPathIds, ['ironWarden-bulwark']);
   assert.deepStrictEqual(hired.chosenPathIds, []);
 

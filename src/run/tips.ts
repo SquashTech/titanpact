@@ -82,7 +82,7 @@ export const SCREEN_TIP_IDS = [
   'shop',
   'recruit',
   'banner',
-  'crucible',
+  'academy',
   'locationChoice',
 ] as const;
 

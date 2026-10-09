@@ -1,5 +1,5 @@
 // The Class system (docs/growth-overhaul.md §11): a one-per-hero, run-scoped VERB — a move
-// granted outright, or a passive — tempered into a hero at the Crucible. Content is in
+// granted outright, or a passive — taught to a hero at the Academy. Content is in
 // src/data/classes.ts; this module owns the schema, the offer and the grant.
 
 import type { PassiveId } from '../engine/content';
@@ -17,7 +17,7 @@ export type ClassKind = 'offensive' | 'defensive' | 'utility';
 export interface ClassDefinition {
   id: string;
   name: string;
-  /** Documentation of intent ("differ in kind") — the Crucible offers one of each. */
+  /** Documentation of intent ("differ in kind") — the Academy offered one of each. */
   kind: ClassKind;
   /** Granted outright on the choice, replace-or-decline at MOVE_CAP exactly as an Evolution's grant. */
   grantsMoveId?: string;
@@ -41,7 +41,7 @@ export function isValidClassDefinition(cls: ClassDefinition): boolean {
 }
 
 /**
- * The Crucible's three: distinct, drawn uniformly from the whole catalog (2026-09-11, per user
+ * The Academy's three: distinct, drawn uniformly from the whole catalog (2026-09-11, per user
  * direction — it was one per kind, which read as a category the screen then had to label). `rng`
  * in [0, 1). `kind` stays on the schema as authoring intent; the roll no longer reads it.
  */
@@ -54,10 +54,10 @@ export function rollClassOffers(classes: Record<string, ClassDefinition>, rng: (
   return picked;
 }
 
-/** How many Classes the Crucible lays out. */
+/** How many Classes the Academy lays out. */
 export const CRUCIBLE_OFFER_COUNT = 3;
 
-/** Whether the Crucible has anyone to temper: a hero holding no Class. */
+/** Whether the Academy has anyone to teach: a hero holding no Class. */
 export function anyClassAvailable(roster: readonly RosterEntry[]): boolean {
   return roster.some((entry) => entry.classId === null);
 }

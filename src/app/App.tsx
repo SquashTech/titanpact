@@ -43,7 +43,7 @@ import { RestNodeScreen } from '../view/run/RestNodeScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { levelPayoffOwed } from '../view/run/levelUpFlow';
-import { CrucibleScreen } from '../view/run/CrucibleScreen';
+import { AcademyNodeScreen } from '../view/run/AcademyNodeScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
 import { RecruitFanfare } from '../view/run/RecruitFanfare';
@@ -111,7 +111,6 @@ import type { MvpPick } from '../run/mvp';
 import { ShopItemError, TavernRerollError, buyShopItem, rerollGuildHallOffers, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
-import { anyClassAvailable } from '../run/classes';
 import { generateMap, type MapNodeType, type RewardNodeType } from '../run/map';
 import { firstUnseenTip, LORE_TIP_ID, type ScreenTipId } from '../run/tips';
 import { LORE_LINES, SCREEN_TIPS } from '../data/tips';
@@ -415,8 +414,8 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
       return ['recruit'];
     case 'guardianBanner':
       return ['banner'];
-    case 'crucible':
-      return ['crucible'];
+    case 'academyNode':
+      return ['academy'];
     case 'locationChoice':
       return ['locationChoice'];
     default:
@@ -866,6 +865,8 @@ export function App() {
       setScreen({ kind: 'boonNode', nodeId, seed: randomSeed() });
     } else if (node.type === 'tutorReward') {
       setScreen({ kind: 'tutorNode', nodeId, seed: randomSeed() });
+    } else if (node.type === 'academyReward') {
+      setScreen({ kind: 'academyNode', nodeId, seed: randomSeed() });
     } else if (node.type === 'event') {
       const rolled = rollRunEvent(runEvents, playerRun.actNumber, location.id);
       // Nothing eligible skips the node rather than stranding the player on an empty screen.
@@ -1015,18 +1016,12 @@ export function App() {
 
     setPlayerRun(next);
 
-    // The Crucible is the GUARDIAN's beat, not every fight's (docs/growth-overhaul.md §5, §11): one
-    // hero takes a Class, in the chain Guardian → Banner → Crucible → Pact Seal → act intro. Team,
-    // hero, run — three scales ascending. Skipped when every hero already holds one.
-    const crucible = isGuardian && anyClassAvailable(next.roster);
-    const afterCrucible: Screen = crucible ? { kind: 'crucible', next: afterScreen, seed: randomSeed() } : afterScreen;
-
-    // Gate order is deliberate: banner, then recruit, then the Crucible — so a hero recruited
-    // this beat already stands under the Banner, and can walk into the Crucible itself.
+    // Gate order is deliberate: banner, then recruit — so a hero recruited this beat already
+    // stands under the Banner.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
     const recruitable = defeatedRoster.filter((entry) => !isWarden(entry) && isRecruitable(entry.heroId, recruitPool));
     const contractOffers = next.recruitContracts > 0 ? pickContractOffers(recruitable) : [];
-    const afterRecruit: Screen = contractOffers.length > 0 ? { kind: 'recruit', offers: contractOffers, next: afterCrucible } : afterCrucible;
+    const afterRecruit: Screen = contractOffers.length > 0 ? { kind: 'recruit', offers: contractOffers, next: afterScreen } : afterScreen;
     const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
 
     // The drop asks who carries it right behind the levels — the fight's own consequence, ahead of
@@ -1190,11 +1185,14 @@ export function App() {
     telemetryRunStarted(run.cycle, chosenIds);
   }
 
-  /** TEMPORARY DEV/TEST — the Crucible sits behind a Guardian, which is three fights away. */
-  function handleStartCrucibleTestRun() {
+  /** TEMPORARY DEV/TEST — the Academy sits behind the act's fork. */
+  function handleStartAcademyTestRun() {
     fallback.current = null;
-    setPlayerRun(createLevel4TestRun());
-    setScreen({ kind: 'crucible', next: { kind: 'map' }, seed: randomSeed() });
+    const base = createLevel4TestRun();
+    // Stood on the fork, so the Academy right after it is the next step.
+    const run = { ...base, currentNodeId: base.map!.rows[5][0] };
+    setPlayerRun(run);
+    setScreen({ kind: 'academyNode', nodeId: run.map!.rows[6][0], seed: randomSeed() });
   }
 
   /** TEMPORARY DEV/TEST — see createTitanEyesTestRun. */
@@ -1274,8 +1272,8 @@ export function App() {
     });
   }
 
-  // Across an act break the place stays with the act just cleared: the Banner, the contract, the
-  // Crucible and the spoils belong to the fight that paid them, and the next act's sky and music
+  // Across an act break the place stays with the act just cleared: the Banner, the contract
+  // and the spoils belong to the fight that paid them, and the next act's sky and music
   // are the arrival screen's to start (`enterAct`).
   // The Trials and the Gauntlet are placeless screens that borrow a place for their fights.
   const borrowedLocationId = screen.kind === 'constructedFight' || screen.kind === 'gauntletFight' ? screen.locationId ?? null : null;
@@ -1346,7 +1344,7 @@ export function App() {
           onOpenGauntlet={handleOpenGauntlet}
           onVisitLocation={handleVisitLocation}
           onStartLevel4TestRun={handleStartLevel4TestRun}
-          onStartCrucibleTestRun={handleStartCrucibleTestRun}
+          onStartAcademyTestRun={handleStartAcademyTestRun}
           onStartStatusTestFight={handleStatusTestFight}
           onStartTitanEyesTestRun={handleStartTitanEyesTestRun}
         />
@@ -1787,8 +1785,8 @@ export function App() {
         <GuardianBannerScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => setScreen(screen.next)} />
       )}
 
-      {screen.kind === 'crucible' && (
-        <CrucibleScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => setScreen(screen.next)} seed={screen.seed} />
+      {screen.kind === 'academyNode' && (
+        <AcademyNodeScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} seed={screen.seed} />
       )}
 
       {screen.kind === 'champions' && <ChampionScreen run={playerRun} onContinue={() => setScreen({ kind: 'runComplete' })} />}

@@ -166,6 +166,15 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   mentorReward: OPEN_BOOK,
   // One large cut gem: the Lapidary sets Gems, and the Guild Hall shelf sells the same glyph (RunGlyph RESOURCE_PATHS scroll).
   scribeReward: GEM,
+  // A mortarboard and its tassel: the Academy schools a hero in a Class.
+  academyReward: (
+    <>
+      <path d="M12 3.2 23 8.4l-11 5.2L1 8.4Z" />
+      <path d="M5.8 11.4v4.4c1.7 1.9 3.8 2.8 6.2 2.8s4.5-.9 6.2-2.8v-4.4L12 14.4Z" />
+      <path d="M20.3 9.6h1.4v6.6h-1.4Z" />
+      <circle cx="21" cy="17.6" r="1.5" />
+    </>
+  ),
   // A branching skill tree, not a second book: the Mentor hands over something new, the Tutor
   // opens a door the hero was already standing in front of.
   tutorReward: (

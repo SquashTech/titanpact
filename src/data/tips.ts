@@ -97,9 +97,9 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Your roster holds six. Past that, you must choose a hero to leave the party.'
   ),
   banner: tip('banner', 'Banner', 'Choose one Banner. It boosts your whole team for the rest of the run. Banners stack.'),
-  crucible: tip(
-    'crucible',
-    'Crucible',
+  academy: tip(
+    'academy',
+    'Academy',
     'Classes teach heroes powerful new abilities or moves within their type. Each hero can learn only one.'
   ),
   locationChoice: tip(

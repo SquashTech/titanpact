@@ -1,5 +1,5 @@
 // The Class system (src/data/classes.ts, src/run/classes.ts): a Class is a VERB — a move or a
-// passive, never a stat line — one per hero per run, tempered in at the Crucible
+// passive, never a stat line — one per hero per run, taught at the Academy
 // (docs/growth-overhaul.md §11).
 
 import * as assert from 'assert';
@@ -152,7 +152,7 @@ test('classes: chosenClass resolves a granted classId back to its full data, or 
   assert.strictEqual(chosenClass(classes, withWarden.roster[0])?.name, 'Warden');
 });
 
-test('classes: anyClassAvailable is what the Crucible opens on — false only once every hero holds one', () => {
+test('classes: anyClassAvailable is what the Academy opens on — false only once every hero holds one', () => {
   let run = seedRoster(['cinderKnight', 'tidecaller']);
   assert.ok(anyClassAvailable(run.roster));
   run = grantClass(run, classes, 'cinderKnight', 'warden');

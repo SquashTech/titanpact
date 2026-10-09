@@ -66,7 +66,8 @@ first meeting with two things shows the second on its next visit.
 | `scribe` | the first Scribe or Scroll Cache screen, whichever comes first (a bought Scroll gets none — the Guild Hall's tip named it) |
 | `shop` | the Guild Hall |
 | `recruit` | the Recruit Contract claim (roster cap, termination) |
-| `banner`, `crucible` | the Guardian's two beats |
+| `banner` | the Guardian's Banner |
+| `academy` | the first Academy (a Class) |
 | `locationChoice` | the act-2+ location pick |
 
 None fires over a fight (FightScreen owns those) or over a cinematic (the cold open, the Herald,

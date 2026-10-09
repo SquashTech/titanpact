@@ -26827,217 +26827,6 @@ button.evo-gift-card {
   }
 }
 
-/* --- The Crucible's ranks (CrucibleScreen.tsx), standing in front of the fire in CrucibleRite --- */
-
-.crucible-ranks {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.crucible-rank {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-/* A step up and behind, and CLEAR of the front rank (2026-09-11, per user direction): the
-   ranks used to overlap by 22px for depth, which read as three figures standing on three
-   others' heads. Depth is carried by the light alone now. */
-.crucible-rank.is-back {
-  margin-bottom: 6px;
-  z-index: 0;
-}
-
-.crucible-rank.is-front {
-  z-index: 1;
-}
-
-.crucible-figure {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 112px;
-  padding: 6px 4px 4px;
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: transform var(--dur-mid) var(--ease-spring), opacity var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out);
-}
-
-/* Further from the fire: darker, and the ground under it barely catches the light. */
-.crucible-rank.is-back .crucible-figure {
-  filter: brightness(0.72);
-}
-
-.crucible-portrait {
-  position: relative;
-  z-index: 1;
-  width: 96px;
-  height: 96px;
-  image-rendering: pixelated;
-  /* Lit from below: the shadow falls UP and warm, where every other portrait's falls down. */
-  filter: drop-shadow(0 -4px 8px rgba(255, 160, 60, 0.35)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
-  transform-origin: center bottom;
-  --idle-period: 3.1s;
-  --idle-squash: 0.035;
-  animation: hero-idle-breath calc(var(--idle-period) * var(--idle-rate, 1)) ease-in-out infinite;
-  animation-delay: calc(var(--idle-period) * var(--idle-rate, 1) * var(--idle-phase, 0) * -1);
-}
-
-/* The fire on the floor under each hero. */
-.crucible-figure-ground {
-  position: absolute;
-  left: 50%;
-  top: 92px;
-  width: 92px;
-  height: 22px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 50%, rgba(255, 190, 90, 0.55), rgba(240, 120, 40, 0.22) 55%, transparent 75%);
-  filter: blur(1px);
-  transition: opacity var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out);
-}
-
-.crucible-figure-name {
-  position: relative;
-  z-index: 1;
-  margin-top: 2px;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-  transition: color var(--dur-mid) var(--ease-out);
-}
-
-.crucible-figure-types {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 1px;
-}
-
-/* The frame: nothing at rest, the affordance once chosen. A hot rim in the fire's
-   colour rather than the hero's type — it is the Crucible claiming them. */
-.crucible-figure-frame {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1px solid rgba(255, 200, 110, 0);
-  box-shadow: 0 0 0 0 rgba(255, 170, 60, 0);
-  transition: border-color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
-  pointer-events: none;
-}
-
-.crucible-figure:hover:not(.is-ashen) .crucible-portrait {
-  filter: drop-shadow(0 -6px 10px rgba(255, 170, 60, 0.55)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
-}
-
-/* Chosen: a step down toward the bowl, brighter, framed, and the ground flares. */
-.crucible-figure.is-armed {
-  z-index: 2;
-  transform: translateY(8px) scale(1.06);
-  filter: none;
-}
-
-.crucible-figure.is-armed .crucible-figure-frame {
-  border-color: rgba(255, 200, 110, 0.85);
-  background: linear-gradient(180deg, rgba(255, 170, 60, 0.05), rgba(255, 140, 40, 0.16));
-  box-shadow:
-    0 0 0 1px rgba(255, 140, 40, 0.35),
-    0 0 22px 4px rgba(255, 160, 50, 0.45),
-    inset 0 -18px 24px -12px rgba(255, 150, 40, 0.45);
-  animation: crucible-frame-pulse 1.9s ease-in-out infinite;
-}
-
-@keyframes crucible-frame-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 1px rgba(255, 140, 40, 0.35),
-      0 0 22px 4px rgba(255, 160, 50, 0.45),
-      inset 0 -18px 24px -12px rgba(255, 150, 40, 0.45);
-  }
-  50% {
-    box-shadow:
-      0 0 0 1px rgba(255, 170, 70, 0.6),
-      0 0 34px 8px rgba(255, 170, 60, 0.7),
-      inset 0 -22px 28px -12px rgba(255, 170, 60, 0.6);
-  }
-}
-
-.crucible-figure.is-armed .crucible-figure-ground {
-  transform: translateX(-50%) scale(1.25);
-  opacity: 1;
-}
-
-.crucible-figure.is-armed .crucible-figure-name {
-  color: var(--accent);
-}
-
-.crucible-figure.is-armed .crucible-portrait {
-  filter: drop-shadow(0 -8px 14px rgba(255, 180, 70, 0.75)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
-}
-
-/* The rest step back into the dark once someone is at the rim. */
-.crucible-figure.is-dimmed {
-  opacity: 0.55;
-}
-
-.crucible-rank.is-back .crucible-figure.is-dimmed {
-  filter: brightness(0.5);
-}
-
-/* Already walked it: ash. Still holdable for the sheet, never armable. */
-.crucible-figure.is-ashen {
-  cursor: default;
-  opacity: 0.6;
-}
-
-.crucible-figure.is-ashen .crucible-portrait {
-  filter: grayscale(0.85) brightness(0.7) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
-  animation: none;
-}
-
-.crucible-figure.is-ashen .crucible-figure-ground {
-  opacity: 0.25;
-}
-
-.crucible-figure.is-ashen .crucible-figure-name {
-  color: var(--text-dim);
-}
-
-.crucible-figure-ashen {
-  position: absolute;
-  top: 8px;
-  right: 6px;
-  z-index: 2;
-  padding: 2px 5px;
-  border-radius: var(--radius-xs);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(10, 11, 15, 0.8);
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.crucible-screen.is-cold .crucible-figure-ground {
-  opacity: 0.1;
-}
-
-/* The commit. Disabled, it is the instruction; armed, it carries the name. */
-.crucible-enter:disabled {
-  opacity: 0.55;
-}
-
 /* --- First-time tips (docs/tutorial.md) -----------------------------------
    Plain game text, once, the first time a mechanic appears. Centred where the
    eye already rests; the scrim dims WITHOUT the blur the modal panels use, since
@@ -31667,11 +31456,11 @@ button.evo-gift-card {
   margin-block: 0;
 }
 
-/* --- Rites: the Crucible's Class and the Shrine's Boon (CrucibleScreen.tsx, BoonNodeScreen.tsx) ---
+/* --- Rites: the Academy's Class and the Shrine's Boon (AcademyNodeScreen.tsx, BoonNodeScreen.tsx) ---
    A place that grants one hero a verb: a lit ground, the hero at 2x with a pool under it taking the
    colour of the verb it leans toward, and three carved verb cards of one height — the mark in a
    medallion socket, the name, the verb in a line. `--rite-color` is set inline; the place sets the
-   inks below (the Crucible's fire by default, the Shrine's violet). */
+   inks below (warm by default; the Academy's laurel, the Shrine's violet). */
 .rite-screen {
   --rite-ink: #c87a3a;
   --rite-title: #ffe2a6;
@@ -31854,6 +31643,13 @@ button.evo-gift-card {
   pointer-events: none;
 }
 
+.rite-screen.is-academy {
+  --rite-ink: #d3df8c;
+  --rite-title: #f7fbe2;
+  --rite-glow: rgba(184, 201, 90, 0.55);
+  --rite-glow-far: rgba(120, 140, 40, 0.35);
+}
+
 .rite-screen.is-mentor {
   --rite-ink: #7fd8cf;
   --rite-title: #e6fffb;
@@ -31983,7 +31779,7 @@ button.evo-gift-card {
 }
 
 .is-forged .forge-flare {
-  animation: crucible-rite-flare 1.1s var(--ease-out) both;
+  animation: rite-flare 1.1s var(--ease-out) both;
 }
 
 .keeper-words {
@@ -32127,13 +31923,13 @@ button.evo-gift-card {
   }
 }
 
-.crucible-ground {
+.academy-ground {
   position: absolute;
   inset: calc(var(--shell-pad) * -1);
   background:
-    radial-gradient(ellipse 80% 30% at 50% 12%, color-mix(in srgb, var(--rite-color, #ff8a2a) 30%, transparent), transparent 70%),
-    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(255, 110, 30, 0.2), transparent 70%),
-    linear-gradient(180deg, #070404, #120806 55%, #2a0e05);
+    radial-gradient(ellipse 80% 30% at 50% 12%, color-mix(in srgb, var(--rite-color, #b8c95a) 28%, transparent), transparent 70%),
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(110, 125, 45, 0.22), transparent 70%),
+    linear-gradient(180deg, #050604, #0d1108 55%, #1a2010);
   transition: background 0.6s var(--ease-out);
   pointer-events: none;
 }
@@ -32391,7 +32187,7 @@ button.evo-gift-card {
   color: var(--text-dim);
 }
 
-/* A Class card (CrucibleScreen ClassCard): the mark and name over the verb drawn as the fight draws it —
+/* A Class card (AcademyNodeScreen ClassCard): the mark and name over the verb drawn as the fight draws it —
    the move button, or the innate readout — so a move reads as a move and a passive as a passive. */
 .verb-card.class-card {
   height: auto;
@@ -32401,7 +32197,7 @@ button.evo-gift-card {
   padding: 8px 10px 10px;
 }
 
-.crucible-class-list {
+.academy-class-list {
   overflow-y: auto;
   justify-content: safe center;
 }
@@ -32461,7 +32257,7 @@ button.evo-gift-card {
   background: radial-gradient(ellipse, rgba(255, 240, 200, 0.85), color-mix(in srgb, var(--rite-color) 45%, transparent) 35%, transparent 68%);
   opacity: 0;
   pointer-events: none;
-  animation: crucible-rite-flare 1.1s var(--ease-out) both;
+  animation: rite-flare 1.1s var(--ease-out) both;
 }
 
 .rite-mark.is-reveal {
@@ -32493,7 +32289,7 @@ button.evo-gift-card {
   width: 100%;
   margin-top: 16px;
   text-align: left;
-  animation: crucible-rite-step-up 0.6s var(--ease-out) 0.6s both;
+  animation: rite-step-up 0.6s var(--ease-out) 0.6s both;
 }
 
 .rite-reveal-verb > * {
@@ -33773,7 +33569,7 @@ button.evo-gift-card {
 }
 
 .is-rested .camp-flare {
-  animation: crucible-rite-flare 1.1s var(--ease-out) both;
+  animation: rite-flare 1.1s var(--ease-out) both;
 }
 
 .camp-line {
@@ -36922,33 +36718,8 @@ button.evo-gift-card {
   }
 }
 
-/* --- The Crucible (CrucibleRite.tsx) -------------------------------------------
-   Dark, then the vessel lowered on its chains, a flare and a shudder as it comes
-   to rest, the fallen Guardian's shape burning behind it, and the line catching
-   fire a letter at a time; then the roster steps up in front of the fire. The
-   vessel and the line are placed from the top, the ranks stand on the floor. */
-.crucible-rite {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.crucible-rite-stage {
-  position: relative;
-  z-index: 4;
-  margin-top: auto;
-  animation: crucible-rite-step-up 0.6s var(--ease-out) both;
-}
-
-.crucible-rite-footer {
-  display: flex;
-  flex-direction: column;
-  animation: crucible-rite-step-up 0.6s var(--ease-out) 0.15s both;
-}
-
-@keyframes crucible-rite-step-up {
+/* Shared by the rite screens' reveals and the Forge / Rest flares. */
+@keyframes rite-step-up {
   from {
     opacity: 0;
     transform: translateY(16px);
@@ -36959,118 +36730,7 @@ button.evo-gift-card {
   }
 }
 
-.crucible-rite-glow {
-  position: absolute;
-  inset: calc(var(--shell-pad) * -1);
-  background:
-    radial-gradient(ellipse 70% 38% at 50% 30%, rgba(255, 138, 42, 0.16), transparent 70%),
-    linear-gradient(180deg, #040305, #0b0605 55%, #240c05);
-  transition: background 1.2s var(--ease-out);
-}
-
-.crucible-rite.is-landed .crucible-rite-glow {
-  background:
-    radial-gradient(ellipse 80% 42% at 50% 30%, rgba(255, 150, 50, 0.34), transparent 70%),
-    linear-gradient(180deg, #070404, #140806 55%, #3a1206);
-  animation: crucible-rite-flicker 2.8s ease-in-out infinite;
-}
-
-@keyframes crucible-rite-flicker {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  40% {
-    opacity: 0.86;
-  }
-  65% {
-    opacity: 0.96;
-  }
-}
-
-/* 96px frames at 2x, lowered from above the screen and settling with a small swing. */
-.crucible-rite-vessel {
-  position: absolute;
-  left: 50%;
-  top: 14px;
-  width: 192px;
-  height: 192px;
-  margin-left: -96px;
-  z-index: 2;
-  animation: crucible-rite-lower 1.4s cubic-bezier(0.22, 0.9, 0.32, 1.12) both;
-  filter: drop-shadow(0 0 24px rgba(255, 130, 40, 0.55));
-}
-
-@keyframes crucible-rite-lower {
-  from {
-    transform: translateY(-460px);
-  }
-  78% {
-    transform: translateY(6px);
-  }
-  to {
-    transform: none;
-  }
-}
-
-.crucible-rite-frames {
-  position: absolute;
-  inset: 0;
-  background-image: var(--crucible-frames);
-  background-size: 1536px 192px;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
-  animation: crucible-rite-churn 0.8s steps(8) infinite;
-}
-
-@keyframes crucible-rite-churn {
-  from {
-    background-position: 0 0;
-  }
-  to {
-    background-position: -1536px 0;
-  }
-}
-
-/* The chains carried on up out of frame from where they leave the sprite (x 28 and 64 of 96). */
-.crucible-rite-chains::before,
-.crucible-rite-chains::after {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  width: 8px;
-  height: 600px;
-  background: repeating-linear-gradient(180deg, #3a302a 0 5px, #120e0c 5px 7px, #241d19 7px 12px, #120e0c 12px 14px);
-}
-
-.crucible-rite-chains::before {
-  left: 52px;
-}
-
-.crucible-rite-chains::after {
-  left: 125px;
-}
-
-/* White-gold light out of the bowl as it comes to rest. */
-.crucible-rite-flare {
-  position: absolute;
-  left: 50%;
-  top: -22px;
-  width: 360px;
-  height: 260px;
-  margin-left: -180px;
-  z-index: 3;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(255, 240, 200, 0.9), rgba(255, 170, 60, 0.4) 35%, transparent 68%);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.crucible-rite.is-landed .crucible-rite-flare {
-  animation: crucible-rite-flare 0.8s var(--ease-out) both;
-}
-
-@keyframes crucible-rite-flare {
+@keyframes rite-flare {
   from {
     opacity: 0.95;
     transform: scale(0.5);
@@ -37079,113 +36739,6 @@ button.evo-gift-card {
     opacity: 0;
     transform: scale(1.3);
   }
-}
-
-.crucible-rite.is-landed:not(.is-still) {
-  animation: crucible-rite-shake 0.42s linear;
-}
-
-@keyframes crucible-rite-shake {
-  0%,
-  100% {
-    transform: none;
-  }
-  20% {
-    transform: translate(-3px, 2px);
-  }
-  40% {
-    transform: translate(3px, -2px);
-  }
-  60% {
-    transform: translate(-2px, 1px);
-  }
-  80% {
-    transform: translate(1px, -1px);
-  }
-}
-
-/* The Guardian that fell, as a shape of black cut out of the fire behind the bowl, rising. */
-.crucible-rite-ghost {
-  position: absolute;
-  left: 50%;
-  top: -66px;
-  width: 260px;
-  height: 260px;
-  margin-left: -130px;
-  z-index: 1;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.crucible-rite.is-landed .crucible-rite-ghost {
-  animation: crucible-rite-ghost 3.2s var(--ease-out) 0.2s both;
-}
-
-@keyframes crucible-rite-ghost {
-  from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.92);
-  }
-  to {
-    opacity: 0.55;
-    transform: none;
-  }
-}
-
-.crucible-rite-ghost-figure {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  filter: brightness(0) drop-shadow(0 0 6px #ff8a2a) drop-shadow(0 0 22px rgba(255, 110, 30, 0.7));
-}
-
-/* Under the vessel (14 + 192), in the flow so the ranks below never cover it. */
-.crucible-rite-words {
-  position: relative;
-  z-index: 4;
-  margin: 214px -4px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-align: center;
-}
-
-.crucible-rite-eyebrow {
-  color: #c87a3a;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
-}
-
-.crucible-rite-line {
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.4;
-  white-space: pre-line;
-}
-
-/* Each letter sits as a dark ember until its turn, then catches. */
-.crucible-rite-line > span {
-  color: rgba(110, 40, 14, 0.35);
-  transition: color 0.35s ease-out, text-shadow 0.35s ease-out;
-}
-
-.crucible-rite-line > span.is-lit {
-  color: #ffe2a6;
-  text-shadow: 0 0 8px rgba(255, 150, 40, 0.9), 0 0 20px rgba(255, 90, 20, 0.55);
-}
-
-.crucible-rite.is-still .crucible-rite-vessel,
-.crucible-rite.is-still .crucible-rite-frames {
-  animation: none;
-}
-
-.crucible-rite.is-still .crucible-rite-ghost {
-  animation: none;
-  opacity: 0.55;
 }
 
 .road-encounter-label {

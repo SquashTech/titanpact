@@ -83,7 +83,7 @@ test('resume: every resumable kind round trips, nested chains included', () => {
         next: {
           kind: 'itemWho',
           itemId: item,
-          next: { kind: 'guardianBanner', next: { kind: 'recruit', offers: enemy.run.roster, claimedRosterIds: [], next: { kind: 'crucible', seed: 3, next: { kind: 'pactSeal' } } } },
+          next: { kind: 'guardianBanner', next: { kind: 'recruit', offers: enemy.run.roster, claimedRosterIds: [], next: { kind: 'pactSeal' } } },
         },
       },
     },
@@ -99,6 +99,7 @@ test('resume: every resumable kind round trips, nested chains included', () => {
     { kind: 'boonNode', nodeId, seed: 1 },
     { kind: 'mentorNode', nodeId, seed: 2 },
     { kind: 'tutorNode', nodeId, seed: 3, settled: true },
+    { kind: 'academyNode', nodeId, seed: 5 },
     { kind: 'event', nodeId, eventId: Object.keys(runEvents)[0], seed: 4 },
     { kind: 'manaWell', nodeId },
     { kind: 'rest', nodeId },
@@ -159,6 +160,12 @@ test('resume: a bad node, item or hero fails the screen, which then falls back r
   assert.strictEqual(roundTrip({ screen: { kind: 'fallen', rosterIds: ['ghost-1'], next: { kind: 'map' } } }, run), null);
   assert.strictEqual(decodeResume('junk', index, run), null);
   assert.strictEqual(decodeResume({ screen: { kind: 'map', next: 5 } }, index, run)?.screen.kind, 'map');
+});
+
+test('resume: a run saved in the old Guardian Crucible walks on to what followed it', () => {
+  const run = sampleRun();
+  const back = roundTrip({ screen: { kind: 'crucible', seed: 3, next: { kind: 'pactSeal' } } as unknown as RunScreen }, run);
+  assert.strictEqual(back?.screen.kind, 'pactSeal');
 });
 
 test('resume: the title, the draft, the dev fights and the run end are never resumed', () => {

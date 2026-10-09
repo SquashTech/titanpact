@@ -18,7 +18,6 @@ export type ScreenKind =
   | 'moveLearned'
   | 'evolution'
   | 'banner'
-  | 'crucible'
   | 'pactSeal'
   | 'locationChoice'
   | 'actIntro'
@@ -35,6 +34,7 @@ export type ScreenKind =
   | 'mentorReward'
   | 'tutorReward'
   | 'scribeReward'
+  | 'academyReward'
   | 'blacksmith'
   | 'event'
   | 'shop'
@@ -61,7 +61,6 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   moveLearned: 4,
   evolution: 30,
   banner: 12,
-  crucible: 20,
   pactSeal: 8,
   // Two scenes to weigh against the roster's coverage: the Banner's price.
   locationChoice: 12,
@@ -85,6 +84,8 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   tutorReward: 30,
   // Two taps on a pick-a-hero screen, no comparison asked: the Forge's price, less.
   scribeReward: 8,
+  // Pick a hero, then one of three verbs to read: the old Crucible's price.
+  academyReward: 20,
   blacksmith: 30,
   event: 15,
   shop: 45,

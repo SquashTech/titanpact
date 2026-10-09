@@ -162,7 +162,7 @@ const TERMS = {
   },
   class: {
     term: 'Class',
-    text: 'The Crucible tempers one hero into a Class: a move or a passive in its own element, one per hero.',
+    text: 'The Academy schools one hero in a Class: a move or a passive in its own element, one per hero.',
   },
   blessing: {
     term: 'Blessing',
@@ -230,11 +230,10 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
         facts: [
           ...encounterFacts('boss', actNumber),
           { glyph: 'banner', label: 'Banner', value: '1 of 3', note: 'team-wide' },
-          { glyph: 'class', label: 'Class', value: '1 hero', note: 'the Crucible' },
         ],
         odds: odds('boss'),
-        about: 'The act’s end: its champion stands over an escort. Beat it for a Banner and the Crucible. Closing the act mends the roster and stands knocked-out heroes back up.',
-        terms: [TERMS.banner, TERMS.class],
+        about: 'The act’s end: its champion stands over an escort. Beat it for a Banner. Closing the act mends the roster and stands knocked-out heroes back up.',
+        terms: [TERMS.banner],
       };
     case 'finale':
       return {
@@ -377,6 +376,14 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
         odds: null,
         about: 'Pick a hero, and it takes a lump of XP: levels, their stat rolls, and any move those levels reach. A hero further behind climbs more levels from the same XP.',
         terms: [],
+      };
+    case 'academyReward':
+      return {
+        kind: 'Reward · Growth',
+        facts: [{ glyph: 'class', label: 'Class', value: '1 of 3', note: 'to 1 hero without one' }],
+        odds: null,
+        about: 'Pick a hero that has no Class yet, then one of three Classes: a move or a passive it keeps for the run, in its own element.',
+        terms: [TERMS.class, TERMS.moveCap],
       };
     case 'tutorReward':
       return {

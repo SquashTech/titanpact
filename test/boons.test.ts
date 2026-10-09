@@ -52,7 +52,7 @@ test('boons: the generic pool is roster-agnostic — no Evolution passive and no
   }
   for (const id of Object.keys(boonPassives)) {
     assert.ok(!evolutionGranted.has(id), `${id} is an Evolution path's identity and must not be a Boon`);
-    assert.ok(!classPassives[id], `${id} is a Class's verb and belongs to the Crucible alone`);
+    assert.ok(!classPassives[id], `${id} is a Class's verb and belongs to the Academy alone`);
     assert.ok(passives[id], `${id} is missing from the passive catalog`);
   }
 });

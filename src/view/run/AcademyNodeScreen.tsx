@@ -1,33 +1,36 @@
 import { type CSSProperties, useState } from 'react';
 import { playSfx } from '../../audio/sfx';
+import academyArt from '../../../art/map-nodes/landmarks/academy.png';
 import { seededRandom } from '../shared/seededRandom';
 import { classes } from '../../data/classes';
 import { equipment } from '../../data/equipment';
 import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
+import { ACADEMY_LINES } from '../../data/roadLines';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { anyClassAvailable, classMoveOverflows, grantClass, rollClassOffers, type ClassDefinition, type ClassKind } from '../../run/classes';
 import { rosterEntryTypes, formIdFor } from '../../run/progression';
-import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { levelOf } from '../../run/growth';
+import { statScaleFor } from '../../run/statScale';
+import { getTypeAbbr, getTypeColor } from '../combat/typeColors';
 import { MoveDetailCard, MoveDetailOverlay } from '../combat/MoveDetailOverlay';
 import { CLASS_PATHS } from '../shared/classIcons';
 import { ElementGlyph } from '../shared/elementIcons';
 import { healCasterForEntry } from '../shared/healCaster';
+import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { MoveButtonReplica, moveEffectSummary, useLongPress } from '../shared/MoveTile';
-import { NodeMotes, NODE_TINT_GOLD } from '../shared/NodeStage';
+import { NodeMotes } from '../shared/NodeStage';
 import { PassiveGlyph, PassiveReadout, passiveColor } from '../shared/passiveIcons';
 import { PassiveDetailOverlay } from '../shared/PassiveDossier';
 import { moveForPrimaryType } from '../../engine/state';
 import { STAT_COLORS } from '../shared/StatBars';
-import { CrucibleRite } from './CrucibleRite';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
-import { levelOf } from '../../run/growth';
-import { statScaleFor } from '../../run/statScale';
+import { KeeperVoice, useKeeperLine } from './RoadEncounter';
 
 interface Props {
   run: RunState;
@@ -37,6 +40,9 @@ interface Props {
   seed: number;
 }
 
+/** The Academy's laurel (mapNodes NODE_COLORS academyReward). */
+const ACADEMY_RGB = '184, 201, 90';
+
 /** The colour a kind wears — the stat the kind is about, the same palette an Evolution's kind chip uses. */
 const KIND_COLORS: Record<ClassKind, string> = {
   offensive: STAT_COLORS.attack,
@@ -44,25 +50,13 @@ const KIND_COLORS: Record<ClassKind, string> = {
   utility: STAT_COLORS.speed,
 };
 
-/** A sentence a line: the ask reads whole rather than wrapping mid-phrase. */
-const CRUCIBLE_LINE = "The Guardian's heart burns in the Crucible.\nTeach a hero a powerful Class.";
-
 /**
- * The Crucible — the Guardian's beat (docs/growth-overhaul.md §5, §11): pick ONE hero, and the fire
- * tempers it into a Class. Chain: Guardian falls → Banner → Crucible → Pact Seal → act intro. Team,
- * hero, run — three scales ascending.
- *
- * It used to grant the Evolution. That moved onto the Scroll ladder (the 6th Scroll into a hero)
- * so the player builds toward it, and the beat and its stage stayed for the Class: the same shape
- * (one hero, then one of three differing in kind) and the same fiction (a Guardian's death is where
- * a hero changes). A Class is a VERB — a move, or a passive — never a stat line.
- *
- * **Non-bankable.** A turning point is decided now, which is why it is a beat rather than an item.
+ * `academyReward` node (docs/academy.md): pick a hero with no Class, then one of three Classes
+ * rolled from the whole catalog. A Class is a VERB — a move or a passive — never a stat line, one
+ * a hero for the run. Non-bankable: walking on without enrolling anyone spends the visit.
  */
-export function CrucibleScreen({ run, onRunChange, onContinue, seed }: Props) {
-  /** Standing at the rim — chosen, not yet committed. */
-  const [armedRosterId, setArmedRosterId] = useState<string | null>(null);
-  const [chosenRosterId, setChosenRosterId] = useState<string | null>(null);
+export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props) {
+  const [studentId, setStudentId] = useState<string | null>(null);
   /** Rolled once, on mount: three from the whole catalog. */
   const [offers] = useState(() => rollClassOffers(classes, seededRandom(seed)));
   const [pickedClassId, setPickedClassId] = useState<string | null>(null);
@@ -70,28 +64,28 @@ export function CrucibleScreen({ run, onRunChange, onContinue, seed }: Props) {
   const [overflow, setOverflow] = useState<{ rosterId: string; classId: string } | null>(null);
   const [learned, setLearned] = useState<{ rosterId: string; classId: string } | null>(null);
   const [previewing, setPreviewing] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
+  const voice = useKeeperLine(ACADEMY_LINES);
 
-  const chosen = chosenRosterId ? (run.roster.find((r) => r.rosterId === chosenRosterId) ?? null) : null;
+  const student = studentId ? (run.roster.find((r) => r.rosterId === studentId) ?? null) : null;
   const overflowEntry = overflow ? (run.roster.find((r) => r.rosterId === overflow.rosterId) ?? null) : null;
   const learnedEntry = learned ? (run.roster.find((r) => r.rosterId === learned.rosterId) ?? null) : null;
-  const eligible = run.roster.filter((entry) => entry.classId === null);
+  const anyEligible = anyClassAvailable(run.roster);
 
   function commit(rosterId: string, classId: string, replaceMoveId?: string) {
     playSfx('class.learn');
     onRunChange(grantClass(run, classes, rosterId, classId, replaceMoveId));
     setOverflow(null);
-    setChosenRosterId(null);
-    setArmedRosterId(null);
+    setStudentId(null);
     setLearned({ rosterId, classId });
   }
 
   function confirm() {
-    if (!chosen || !pickedClassId) return;
+    if (!student || !pickedClassId) return;
     const cls = classes[pickedClassId];
     // The kit is full: the class move is the same replace-or-decline an Evolution's grant makes,
     // and declining still takes the Class — the hero just holds the verb it cannot fit.
-    if (classMoveOverflows(cls, chosen)) setOverflow({ rosterId: chosen.rosterId, classId: cls.id });
-    else commit(chosen.rosterId, cls.id);
+    if (classMoveOverflows(cls, student)) setOverflow({ rosterId: student.rosterId, classId: cls.id });
+    else commit(student.rosterId, cls.id);
   }
 
   if (overflow && overflowEntry) {
@@ -107,16 +101,14 @@ export function CrucibleScreen({ run, onRunChange, onContinue, seed }: Props) {
   }
 
   if (learned && learnedEntry) {
-    return (
-      <ClassLearnedReveal run={run} entry={learnedEntry} cls={classes[learned.classId]} onContinue={onContinue} />
-    );
+    return <ClassLearnedReveal run={run} entry={learnedEntry} cls={classes[learned.classId]} onContinue={onContinue} />;
   }
 
-  if (chosen) {
+  if (student) {
     return (
       <ClassChoice
         run={run}
-        entry={chosen}
+        entry={student}
         offers={offers}
         pickedClassId={pickedClassId}
         onPick={(id) => setPickedClassId(pickedClassId === id ? null : id)}
@@ -125,67 +117,65 @@ export function CrucibleScreen({ run, onRunChange, onContinue, seed }: Props) {
     );
   }
 
-  const armedEntry = armedRosterId ? (run.roster.find((r) => r.rosterId === armedRosterId) ?? null) : null;
-  const cold = !anyClassAvailable(run.roster);
-  // Two ranks around the bowl, the nearer three closest to the fire. Depth is carried by light,
-  // never by size: a 48px source scales cleanly to 96 and to nothing in between.
-  const frontCount = Math.min(3, run.roster.length);
-  const back = run.roster.slice(0, run.roster.length - frontCount);
-  const front = run.roster.slice(run.roster.length - frontCount);
-
-  // The pick is the decision and the fire is its seal, so the figure sounds as a card chosen
-  // (`ui.pick`, on the arm rather than the press — the same press starts the hold that only inspects).
-  function arm(rosterId: string) {
-    playSfx('ui.pick');
-    setArmedRosterId(rosterId);
-  }
-
-  // No sound of its own: a `resolve-button` already plays `ui.confirm` on the press (uiSfx.ts).
-  function enter() {
-    if (!armedEntry) return;
-    setChosenRosterId(armedEntry.rosterId);
-  }
-
   return (
-    <div className={`node-screen crucible-screen${cold ? ' is-cold' : ''}`} style={{ '--node-rgb': NODE_TINT_GOLD } as CSSProperties}>
+    <div className="node-screen rite-screen is-academy tutor-node-screen" style={{ '--node-rgb': ACADEMY_RGB, '--rite-color': `rgb(${ACADEMY_RGB})` } as CSSProperties}>
+      <span className="node-sky academy-ground" aria-hidden="true" />
+      <NodeMotes count={14} />
       <RosterPeek run={run} />
-      <CrucibleRite
-        line={cold ? 'The fire is cold. Every hero already carries a Class.' : CRUCIBLE_LINE}
-        stage={
-          // No boxes — a figure is lit by the fire and grows a frame only once it is the one chosen,
-          // the battlefield's own targetability idiom.
-          <div className="crucible-ranks">
-            {[back, front].map((rank, r) => (
-              <div key={r} className={`crucible-rank ${r === 0 ? 'is-back' : 'is-front'}`}>
-                {rank.map((entry) => (
-                  <CrucibleFigure
-                    key={entry.rosterId}
-                    entry={entry}
-                    pending={entry.classId === null}
-                    armed={entry.rosterId === armedRosterId}
-                    dimmed={!!armedEntry && entry.rosterId !== armedRosterId}
-                    onArm={() => arm(entry.rosterId)}
-                    onPreview={() => setPreviewing({ hero: rosterHeroes[entry.heroId], entry })}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        }
-        footer={
-          // An unspent Crucible is never walked past — it does not bank, so leaving is the same as
-          // burning it. The button commits only once a hero stands at the rim; cold, it is the exit.
-          cold ? (
-            <button className="resolve-button" onClick={onContinue}>
-              Continue
-            </button>
+
+      <header className="keeper-head">
+        <span className="keeper-figure">
+          <span className="rite-pool" aria-hidden="true" />
+          <img src={academyArt} className="keeper-art is-icon" alt="" draggable={false} />
+        </span>
+        <span className="keeper-words">
+          <span className="rite-eyebrow">By the Roadside</span>
+          <h2 className="rite-name">The Academy</h2>
+          <KeeperVoice line={voice} />
+          {anyEligible ? (
+            <span className="keeper-offer">
+              <span className="keeper-line">Schools one hero in a Class.</span>
+              <span className="keeper-terms">1 of 3 · one Class a hero</span>
+            </span>
           ) : (
-            <button className="resolve-button crucible-enter" disabled={!armedEntry} onClick={enter}>
-              {armedEntry ? `Enter the Crucible — ${rosterHeroes[armedEntry.heroId].name}` : 'Choose a hero'}
-            </button>
-          )
-        }
-      />
+            <span className="keeper-offer">Every hero already has a Class. There is nothing left to teach.</span>
+          )}
+        </span>
+      </header>
+
+      {anyEligible ? (
+        <HeroPickGrid count={run.roster.length} fill>
+          {run.roster.map((entry) => {
+            const hero = rosterHeroes[entry.heroId];
+            const open = entry.classId === null;
+            const held = entry.classId ? classes[entry.classId]?.name : null;
+            return (
+              <HeroPickCard
+                key={entry.rosterId}
+                hero={hero}
+                entry={entry}
+                disabled={!open}
+                onActivate={() => {
+                  playSfx('ui.pick');
+                  setStudentId(entry.rosterId);
+                }}
+                onPreview={() => setPreviewing({ hero, entry })}
+                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${open ? 'no Class yet' : `already a ${held}`}`}
+                ctaClassName="is-accent"
+                cta={open ? 'Enrol' : held ?? 'Has a Class'}
+              />
+            );
+          })}
+        </HeroPickGrid>
+      ) : (
+        <div className="node-spacer" />
+      )}
+
+      {!anyEligible && (
+        <button className="resolve-button" onClick={onContinue}>
+          Continue
+        </button>
+      )}
 
       {previewing && (
         <HeroPreviewOverlay
@@ -226,11 +216,9 @@ interface ChoiceProps {
 }
 
 /**
- * Three Classes, pick then confirm, still standing in the Crucible's fire: the hero at the rim, lit
- * from below and taking the colour of the Class it is leaning toward, and the three verbs as carved
- * cards of one height — the Class's mark in a socket, its name, and the move or passive it grants in
- * a line. A hold reads the verb whole. No way back: the hero at the rim is the hero tempered, so the
- * only press is the one that commits.
+ * Three Classes, pick then confirm: the hero up front, taking the colour of the Class it is leaning
+ * toward, and the three verbs as cards of one height — the Class's mark, its name, and the move or
+ * passive it grants. A hold reads the verb whole. No way back: the hero enrolled is the hero taught.
  */
 function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: ChoiceProps) {
   const hero = rosterHeroes[entry.heroId];
@@ -239,10 +227,10 @@ function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: C
   const [reading, setReading] = useState<ClassDefinition | null>(null);
   return (
     <div
-      className={`node-screen crucible-screen rite-screen crucible-choice${picked ? ' has-pick' : ''}`}
-      style={{ '--node-rgb': NODE_TINT_GOLD, '--rite-color': picked ? classColor(picked) : '#ff8a2a' } as CSSProperties}
+      className={`node-screen rite-screen is-academy academy-choice${picked ? ' has-pick' : ''}`}
+      style={{ '--node-rgb': ACADEMY_RGB, '--rite-color': picked ? classColor(picked) : `rgb(${ACADEMY_RGB})` } as CSSProperties}
     >
-      <span className="node-sky crucible-ground" aria-hidden="true" />
+      <span className="node-sky academy-ground" aria-hidden="true" />
       <NodeMotes count={14} />
       <RosterPeek run={run} />
 
@@ -268,7 +256,7 @@ function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: C
         </span>
       </header>
 
-      <div className="verb-card-list crucible-class-list">
+      <div className="verb-card-list academy-class-list">
         {offers.map((cls) => (
           <ClassCard
             key={cls.id}
@@ -286,7 +274,7 @@ function ClassChoice({ run, entry, offers, pickedClassId, onPick, onConfirm }: C
       </div>
 
       <button className="resolve-button" disabled={!picked} onClick={onConfirm}>
-        {picked ? `Temper — ${picked.name}` : 'Choose a Class'}
+        {picked ? `Learn — ${picked.name}` : 'Choose a Class'}
       </button>
 
       {reading?.grantsMoveId && <MoveDetailOverlay move={moves[reading.grantsMoveId]} caster={caster} onClose={() => setReading(null)} />}
@@ -354,16 +342,15 @@ interface RevealProps {
   onContinue: () => void;
 }
 
-/** What the fire made: the hero, the Class, and the verb it now carries. */
+/** What the Academy taught: the hero, the Class, and the verb it now carries. */
 function ClassLearnedReveal({ run, entry, cls, onContinue }: RevealProps) {
   const hero = rosterHeroes[entry.heroId];
   const caster = healCasterForEntry(hero, entry, run.relics);
   const move = cls.grantsMoveId ? moves[cls.grantsMoveId] : null;
   const passive = cls.grantsPassiveId ? passives[cls.grantsPassiveId] : null;
-  const color = classColor(cls);
   return (
-    <div className="node-screen crucible-screen rite-screen" style={{ '--node-rgb': NODE_TINT_GOLD, '--rite-color': color } as CSSProperties}>
-      <span className="node-sky crucible-ground" aria-hidden="true" />
+    <div className="node-screen rite-screen is-academy" style={{ '--node-rgb': ACADEMY_RGB, '--rite-color': classColor(cls) } as CSSProperties}>
+      <span className="node-sky academy-ground" aria-hidden="true" />
       <NodeMotes count={14} />
       <div className="screen-scroll">
         <div className="rite-reveal">
@@ -375,7 +362,7 @@ function ClassLearnedReveal({ run, entry, cls, onContinue }: RevealProps) {
               <ClassGlyph cls={cls} />
             </span>
           </span>
-          <span className="rite-eyebrow">Tempered</span>
+          <span className="rite-eyebrow">Graduated</span>
           <h2 className="rite-name">{hero.name}</h2>
           <span className="rite-reveal-name">{cls.name}</span>
           <div className={`rite-reveal-verb${move ? ' is-move' : ''}`}>
@@ -387,57 +374,6 @@ function ClassLearnedReveal({ run, entry, cls, onContinue }: RevealProps) {
       <button className="resolve-button" onClick={onContinue}>
         Continue
       </button>
-    </div>
-  );
-}
-interface FigureProps {
-  entry: RosterEntry;
-  /** Holds no Class yet. A tempered hero stands ashen and cannot be armed. */
-  pending: boolean;
-  armed: boolean;
-  dimmed: boolean;
-  onArm: () => void;
-  onPreview: () => void;
-}
-
-/** One hero at the rim: figure on fire-lit ground, name, types. Tap arms; hold opens the sheet. */
-function CrucibleFigure({ entry, pending, armed, dimmed, onArm, onPreview }: FigureProps) {
-  const hero = rosterHeroes[entry.heroId];
-  const longPress = useLongPress(onPreview, pending ? onArm : undefined);
-  const classes = ['crucible-figure', pending ? '' : 'is-ashen', armed ? 'is-armed' : '', dimmed ? 'is-dimmed' : '']
-    .filter(Boolean)
-    .join(' ');
-  return (
-    <div
-      className={classes}
-      style={{ '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
-      role="button"
-      tabIndex={pending ? 0 : -1}
-      aria-disabled={!pending}
-      aria-pressed={armed}
-      aria-label={`${hero.name}, level ${levelOf(entry)} — ${pending ? 'stand at the rim' : 'already tempered'}`}
-      data-sfx={pending ? 'none' : undefined}
-      onKeyDown={(e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && pending) {
-          e.preventDefault();
-          onArm();
-        }
-      }}
-      {...longPress}
-    >
-      <span className="crucible-figure-frame" aria-hidden="true" />
-      <span className="crucible-figure-ground" aria-hidden="true" />
-      <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="crucible-portrait" />
-      <span className="crucible-figure-name">{hero.name}</span>
-      <span className="crucible-figure-types">
-        {rosterEntryTypes(hero, entry).map((t) => (
-          <span key={t} className="pick-type-code" style={{ color: getTypeColor(t) }} title={t}>
-            <ElementGlyph type={t} />
-            {getTypeAbbr(t)}
-          </span>
-        ))}
-      </span>
-      {!pending && <span className="crucible-figure-ashen">Tempered</span>}
     </div>
   );
 }

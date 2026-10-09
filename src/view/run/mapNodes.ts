@@ -26,6 +26,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   mentorReward: 'Mentor',
   tutorReward: 'Tutor',
   scribeReward: 'The Lapidary',
+  academyReward: 'The Academy',
   event: 'Event',
   muster: 'The Vigil',
   finale: 'The Titan',
@@ -53,6 +54,7 @@ export const NODE_LABELS: Record<MapNodeType, string> = {
   mentorReward: 'Mentor',
   tutorReward: 'Tutor',
   scribeReward: 'Gems',
+  academyReward: 'Academy',
   event: 'Event',
   muster: 'Vigil',
   finale: 'The Titan',
@@ -94,6 +96,8 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   tutorReward: '#48c9e8',
   // Jewel rose, the only pink on the map, so the Gems' row reads as its own thing.
   scribeReward: '#ff7ab6',
+  // Laurel: the one olive-gold on the map, the wreath a school hands its graduates.
+  academyReward: '#b8c95a',
   event: 'var(--tier-common)',
   muster: 'var(--accent)',
   // The one node in a run that wears the mythic red: the Herald, and what looks down once it falls.
@@ -123,6 +127,7 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   mentorReward: 'reward',
   tutorReward: 'reward',
   scribeReward: 'reward',
+  academyReward: 'reward',
   event: 'reward',
   muster: 'landmark',
   finale: 'ancient',

@@ -253,12 +253,11 @@ function entryOf(run: RunState, rosterId: string): RosterEntry {
 }
 
 /**
- * The Crucible: one Class into one hero (docs/growth-overhaul.md §11). Three offered, one a kind,
- * taken at random — the catalog is under test, not the policy — and the target is the strongest
+ * The Academy: one Class into one hero (docs/academy.md). Three offered, taken at random — the catalog is under test, not the policy — and the target is the strongest
  * hero with no Class yet, since the screen offers only those and an offer nobody can take is
  * wasted. Random across the offer rather than greedy so the lift table lights up for all nine.
  */
-function resolveCrucible(run: RunState, rng: Rng, choices: ChoiceEvent[]): RunState {
+function resolveAcademy(run: RunState, rng: Rng, choices: ChoiceEvent[]): RunState {
   const target = policy.passiveTarget(run.roster.filter((entry) => entry.classId === null));
   const offered = rollClassOffers(classes, rng);
   if (!target || offered.length === 0) return run;
@@ -470,10 +469,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
             growthStatGrants: champion.growthStatGrants,
           });
         }
-        // Guardian → Banner → Crucible (a Class) → Pact Seal.
-        run = resolveCrucible(run, rng, record.choices);
+        // Guardian → Banner → Pact Seal.
         tally(record, run.actNumber, 'banner');
-        tally(record, run.actNumber, 'crucible');
         tally(record, run.actNumber, 'pactSeal');
         if (run.actNumber < TOTAL_ACTS) {
           run = advanceToNextAct(run, randomSeed(rng));
@@ -891,6 +888,8 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return resolveMentor(run, rng, record);
     case 'tutorReward':
       return resolveTutor(run, rng, record);
+    case 'academyReward':
+      return resolveAcademy(run, rng, record.choices);
     case 'event':
       return resolveEvent(run, locationId, rng, record);
     case 'shop':

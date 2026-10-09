@@ -63,8 +63,8 @@ interface Props {
   onVisitLocation: (locationId: string) => void;
   /** TEMPORARY DEV/TEST — App.tsx createLevel4TestRun. Remove with its Dev-menu row. */
   onStartLevel4TestRun: () => void;
-  /** TEMPORARY DEV/TEST — App.tsx handleStartCrucibleTestRun. Remove with its Dev-menu row. */
-  onStartCrucibleTestRun: () => void;
+  /** TEMPORARY DEV/TEST — App.tsx handleStartAcademyTestRun. Remove with its Dev-menu row. */
+  onStartAcademyTestRun: () => void;
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. */
   onStartStatusTestFight: () => void;
   /** TEMPORARY DEV/TEST — App.tsx createTitanEyesTestRun. Remove with its Dev-menu row. */
@@ -120,7 +120,7 @@ export function TitleScreen({
   onOpenGauntlet,
   onVisitLocation,
   onStartLevel4TestRun,
-  onStartCrucibleTestRun,
+  onStartAcademyTestRun,
   onStartStatusTestFight,
   onStartTitanEyesTestRun,
 }: Props) {
@@ -437,8 +437,8 @@ export function TitleScreen({
             <button className="title-dev-item" onClick={() => runDev(onStartStatusTestFight)}>
               🧪 Test: Status FX
             </button>
-            <button className="title-dev-item" onClick={() => runDev(onStartCrucibleTestRun)}>
-              🧪 Test: Crucible
+            <button className="title-dev-item" onClick={() => runDev(onStartAcademyTestRun)}>
+              🧪 Test: Academy
             </button>
             <button className="title-dev-item" onClick={() => runDev(onStartTitanEyesTestRun)}>
               👁️ Test: Titan's Eyes

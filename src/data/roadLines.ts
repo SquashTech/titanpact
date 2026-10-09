@@ -24,6 +24,14 @@ export const SCRIBE_LINES: readonly string[] = [
   'Careful, the edges are still sharp. These were meant for someone. Perhaps for you.',
 ];
 
+export const ACADEMY_LINES: readonly string[] = [
+  'Come in, come in. The Academy has trained pact-bearers since the first seal. One seat is free.',
+  'Strength is common on this road. A discipline is not. Send me a student, and I will give them one.',
+  'Duelist, warden, sage. Every hero is good at something. Here they learn what to be.',
+  'One seat, one discipline, and no second enrolment. Choose your student well.',
+  'The last company that stopped here broke a seal. The one before did not stop. Sit down.',
+];
+
 export const PACTWARDEN_LINES: readonly string[] = [
   'You found my stones again. The light has a little left in it. Who will carry it?',
   'I cannot walk this road with you. But one of you may take my blessing a little further.',

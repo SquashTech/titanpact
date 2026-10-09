@@ -58,7 +58,7 @@ test('map: the per-act shape — Fight, pick-3 reward, spliced seat, pick-3 rewa
       const rowTypes = (r: number) => rows[r].map((id) => map.nodes[id].type);
       const where = `act ${actNumber} seed ${seed}`;
 
-      assert.strictEqual(rows.length, 9, `${where}: every act is the 9-row shape`);
+      assert.strictEqual(rows.length, 10, `${where}: every act is the 10-row shape`);
       assert.deepStrictEqual(rowTypes(0), ['fight']);
       assert.ok(rowTypes(1).every((t) => REWARD_TYPES.has(t)), `${where} row 1 has a non-reward type: ${rowTypes(1)}`);
       assert.strictEqual(rows[1].length, 3);
@@ -70,16 +70,21 @@ test('map: the per-act shape — Fight, pick-3 reward, spliced seat, pick-3 rewa
       assert.deepStrictEqual(rowTypes(4), ['scribeReward'], `${where}: the Scribe row`);
       assert.strictEqual(rows[5].length, 2);
       assert.deepStrictEqual(rowTypes(5).slice().sort(), ['elite', 'skirmish'], `${where}: the fork is the act's one Skirmish`);
-      assert.ok(rowTypes(6).every((t) => REWARD_TYPES.has(t)), `${where} row 6 has a non-reward type: ${rowTypes(6)}`);
-      assert.strictEqual(rows[6].length, 3, 'the third reward row sits between Elite-or-Skirmish and the funnel');
-      assert.deepStrictEqual(rowTypes(7), ['shop'], `${where}: the funnel is one forced Guild Hall (docs/gear-absorption.md §6)`);
-      assert.deepStrictEqual(rowTypes(8), ['boss']);
+      // The Academy (docs/academy.md): forced, every act, right after the fork. Never from REWARD_WEIGHTS.
+      assert.deepStrictEqual(rowTypes(6), ['academyReward'], `${where}: the Academy row`);
+      assert.ok(rowTypes(7).every((t) => REWARD_TYPES.has(t)), `${where} row 7 has a non-reward type: ${rowTypes(7)}`);
+      assert.strictEqual(rows[7].length, 3, 'the third reward row sits between the Academy and the funnel');
+      assert.deepStrictEqual(rowTypes(8), ['shop'], `${where}: the funnel is one forced Guild Hall (docs/gear-absorption.md §6)`);
+      assert.deepStrictEqual(rowTypes(9), ['boss']);
       // No un-forked Skirmish anywhere: the fork is the only one.
       const skirmishes = Object.values(map.nodes).filter((n) => n.type === 'skirmish');
       assert.strictEqual(skirmishes.length, 1, `${where}: ${skirmishes.length} Skirmish nodes`);
       assert.strictEqual(skirmishes[0].row, 5);
       const scribes = Object.values(map.nodes).filter((n) => n.type === 'scribeReward');
       assert.strictEqual(scribes.length, 1, `${where}: ${scribes.length} Scribe nodes`);
+      const academies = Object.values(map.nodes).filter((n) => n.type === 'academyReward');
+      assert.strictEqual(academies.length, 1, `${where}: ${academies.length} Academy nodes`);
+      for (const id of rows[5]) assert.deepStrictEqual(map.nodes[id].nextIds, rows[6], `${where}: both fork options lead to the Academy`);
     }
   }
 });
@@ -181,7 +186,7 @@ test('map: mentorReward never rerolls into a pick-1-of-3 reward row — the forc
 
 test('map: omitting actNumber defaults to Act 1 (the Mentor in the spliced seat)', () => {
   const map = generateMap(1);
-  assert.strictEqual(map.rows.length, 9);
+  assert.strictEqual(map.rows.length, 10);
   assert.strictEqual(map.nodes[map.rows[2][0]].type, 'mentorReward');
 });
 
@@ -202,7 +207,7 @@ test('map: the Scribe above Elite-or-Skirmish keeps both options open', () => {
   for (const act of [1, 2, 3]) {
     for (const seed of [1, 7, 42, 99, 2024]) {
       const map = generateMap(seed, act);
-      const eliteRow = map.rows.length - 4;
+      const eliteRow = 5;
       const feeding = map.rows[eliteRow - 1];
       const [eliteId, skirmishId] = map.rows[eliteRow];
       assert.strictEqual(map.nodes[eliteId].type, 'elite');
@@ -227,7 +232,7 @@ test('map: the reward row above the Scribe has nothing left to signpost', () => 
   for (const act of [1, 2, 3, 4]) {
     for (const seed of [1, 7, 42, 99, 2024]) {
       const map = generateMap(seed, act);
-      const feeding = map.rows[map.rows.length - 6];
+      const feeding = map.rows[3];
       const signatures = new Set(feeding.map((id) => [...map.nodes[id].nextIds].sort().join('+')));
       assert.strictEqual(signatures.size, 1, `act ${act} seed ${seed}: options still lead somewhere different`);
     }

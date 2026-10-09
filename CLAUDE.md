@@ -568,19 +568,20 @@ don't silently override it.
   at par; the per-hero pass places it. A generated hero walks the same entries
   (`enemyGen.ts rollLevelProgression`), so rank and Evolution come from the same number a roster
   hero uses. `atEvolution` is the fixture helper that stands a hero at its entry.
-- **The Crucible grants a CLASS** (2026-09-11). Same beat, same stage — *Guardian falls → Banner →
-  Crucible → Pact Seal → act intro*, non-bankable, pick ONE hero — but what the fire tempers a
-  hero into is a Class. Five Guardians, five Classes, six heroes: one hero ends Classless, the
-  price of a late recruit. `crucibleReward` is deleted; its weight went to the (now Ichor) seat.
+- **The Academy grants a CLASS** (2026-10-09, per user direction, `docs/academy.md`, replacing the
+  Guardian's Crucible of 2026-09-11): a **forced single-tile row every act, right after the fork**
+  (`academyReward`, `AcademyNodeScreen`), non-bankable, pick ONE hero with no Class. Nothing after
+  the Banner in the post-Guardian chain picks a hero now. Four acts, four Classes, six heroes: two
+  end Classless, the price of a late recruit.
   **A Class is a VERB, never a number**: its schema is the Evolution path's minus the graft and
   the hero — a name, a kind, and exactly ONE of a granted move (`grantMove`, replace-or-decline
   at `MOVE_CAP`) or a passive (`ClassDefinition`, `src/run/classes.ts`; fourteen in
   `src/data/classes.ts` — **every damaging class move has a twin in the other category**
   (2026-10-02, per user direction: Volley/Cascade, Feint/Jinx, Vanish/Blink, pinned by test), and
-  Succor is the Cleric's on-hit partner heal, no longer a move; the Crucible rolls **three distinct from the whole catalog**,
+  Succor is the Cleric's on-hit partner heal, no longer a move; the Academy rolls **three distinct from the whole catalog**,
   un-labelled — the one-per-kind roll and its Offensive/Defensive/Utility tags came off 2026-09-11
-  per user direction). One per hero, replace-not-stack. **The hero at the rim is the hero
-  tempered**: the Class choice has no way back to the roster.
+  per user direction). One per hero, replace-not-stack. **The hero enrolled is the hero
+  taught**: the Class choice has no way back to the roster.
   **Two exclusivity rules**, without which a Class is a Boon with a hat: a class passive is in no
   Boon pool, and a class move is in no level-up pool and no Tutor pool — untiered, and it **wears
   its holder's innate primary type** (`typeFollowsUser`, resolved once at the edge by
@@ -835,10 +836,10 @@ what's still unimplemented:
 - Run structure (2026-08-16 sign-off, multi-act extension 2026-08-17): **a Slay the
   Spire-style branching map** — a uniform per-act shape of forced Fight → pick 1 of 3
   reward → **the spliced seat** (Mentor in acts 1–3, Tutor in act 4) → pick 1 of 3
-  reward → pick 1 of 2 (**Elite or Skirmish** since
+  reward → the Lapidary → pick 1 of 2 (**Elite or Skirmish** since
   2026-09-13, both recruitable, each tile previewing the enemy typing it fields from a draw
   seeded off the map so the preview IS the fight, and the two guaranteed to differ in a type —
-  `src/run/encounters.ts`; it was Elite or Battle) → pick 1 of 3
+  `src/run/encounters.ts`; it was Elite or Battle) → **the Academy** (2026-10-09) → pick 1 of 3
   reward → the funnel → an end-of-act **Guardian** boss fight, no path ever skipping a
   fight, and no path ever losing a choice (`docs/run-loop.md`). **Three fights an act since
   2026-09-14** (per user direction): the un-forked Skirmish row between the opener and the

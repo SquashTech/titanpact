@@ -4,8 +4,8 @@
 //
 // That is the whole of the flat-value / decaying-runway split, and since 2026-09-10 it is true on
 // three axes instead of one. A CONTRACT hero is the enemy you beat, entire: act level, the rank
-// its level bought, an Evolution already chosen, a kit already picked. You save its schedule and a
-// Crucible, and in exchange you authored none of it. A hire costs 50 gold and arrives one act
+// its level bought, an Evolution already chosen, a kit already picked. You save its schedule, and
+// in exchange you authored none of it. A hire costs 50 gold and arrives one act
 // behind — but every decision about what it becomes is still yours.
 //
 // It DOES get its levels rolled. "Raw" means unbuilt, not hollow: a level-13 hire with no growth
