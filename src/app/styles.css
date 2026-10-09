@@ -22794,13 +22794,6 @@ button.evo-gift-press:active .evo-gift-medal {
   color: #e8c170;
 }
 
-.evo-gift-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
 .evo-gift-name {
   min-width: 0;
   overflow: hidden;
@@ -22813,28 +22806,6 @@ button.evo-gift-press:active .evo-gift-medal {
   text-shadow: 0 2px 0 #000, 0 0 12px color-mix(in srgb, var(--grant) 60%, transparent);
 }
 
-.evo-gift-facts {
-  flex: none;
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.evo-gift-power {
-  font-size: 16px;
-  font-weight: 900;
-  color: #fff3d6;
-}
-
-.evo-gift-power.is-heal {
-  color: var(--hp-high);
-}
-
-.evo-gift-facts .move-kind-badge {
-  margin: 0;
-}
-
 .evo-gift-text {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -22845,8 +22816,14 @@ button.evo-gift-press:active .evo-gift-medal {
   color: #e6d6b6;
 }
 
-.evo-gift-text .move-eff-trait {
-  margin-right: 5px;
+/* A move is the fight's own button, which brings its own face: no light under it. */
+.evo-gift.is-move .evo-gift-press::before {
+  display: none;
+}
+
+.evo-gift.is-move .move-button {
+  width: 100%;
+  margin-top: 3px;
 }
 
 .evo-gift.is-rewire {
