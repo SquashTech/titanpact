@@ -15,6 +15,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { evolutionName } from './evolutionName';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   run: RunState;
@@ -147,9 +148,9 @@ export function ChampionScreen({ run, onContinue }: Props) {
             })}
           </div>
           <p className="champion-line">Their names are kept where the seals are. The last two held; the world is still here.</p>
-          <button type="button" className="resolve-button champion-continue" onClick={onContinue}>
+          <PlateButton className="champion-continue" onClick={onContinue}>
             Continue
-          </button>
+          </PlateButton>
         </div>
       )}
     </div>

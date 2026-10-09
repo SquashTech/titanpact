@@ -25,6 +25,7 @@ import { StageMovePopup } from '../shared/HeroStage';
 import { STAT_ORDER, StatGlyph } from '../shared/StatBars';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { healCasterForEntry } from '../shared/healCaster';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   run: GauntletRun | null;
@@ -219,16 +220,14 @@ function DraftView({ run, stars, onDraft, onClose }: { run: GauntletRun; stars: 
           onBack={() => setReading(null)}
           action={
             reading.from === 'offer' ? (
-              <button
-                type="button"
-                className="resolve-button"
+              <PlateButton
                 onClick={() => {
                   onDraft(reading.index);
                   setReading(null);
                 }}
               >
                 Draft
-              </button>
+              </PlateButton>
             ) : undefined
           }
         />
@@ -299,9 +298,7 @@ function BetweenView({ run, stars, opponent, notice, onFight, onRetire, onClose 
         <button type="button" className={`secondary-button cx-delete${confirmRetire ? ' is-armed' : ''}`} onClick={() => (confirmRetire ? onRetire() : setConfirmRetire(true))}>
           {confirmRetire ? (run.wins >= WINS_TO_CLEAR ? 'Retire' : 'Retire for nothing') : 'Retire'}
         </button>
-        <button type="button" className="resolve-button" onClick={onFight}>
-          Fight
-        </button>
+        <PlateButton onClick={onFight}>Fight</PlateButton>
       </div>
     </>
   );
@@ -372,9 +369,9 @@ function EntryView({ freeEntry, balance, entered, clears, onEnter, onClose }: Pi
       </div>
       <div className="gx-footer">
         <Back label="Back to the title" onClick={onClose} />
-        <button type="button" className="resolve-button" disabled={!affordable} onClick={onEnter}>
+        <PlateButton disabled={!affordable} onClick={onEnter}>
           {freeEntry ? 'Enter — free today' : `Enter — ${GAUNTLET_ENTRY_PRICE} ★`}
-        </button>
+        </PlateButton>
       </div>
     </>
   );

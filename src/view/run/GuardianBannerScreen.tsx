@@ -11,6 +11,7 @@ import { BannerGrantPlaque } from './BannerGrantPlaque';
 import { RelicChoiceCard } from './RelicChoiceCard';
 import { RelicFamilyTally } from './RelicFamilyTally';
 import { RosterPeek } from './RosterPeek';
+import { PlateButton } from '../shared/PlateButton';
 
 /** Six is the roster cap, so a run never holds more Banners than this can name. */
 const COUNT_WORDS = ['', 'one', 'two', 'three', 'four', 'five', 'six'];
@@ -110,22 +111,22 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
       </div>
 
       {!claimed ? (
-        <button
-          className="resolve-button relic-banner-claim-button"
+        <PlateButton
           style={pickedRelic ? clothStyle(pickedRelic.id) : undefined}
+          tint={pickedRelic ? 'var(--relic-color)' : undefined}
           disabled={!pickedRelicId}
           onClick={() => pickedRelicId && handleClaim(pickedRelicId)}
         >
           {pickedRelic ? `Raise the ${pickedRelic.name}` : 'Choose a banner'}
-        </button>
+        </PlateButton>
       ) : (
-        <button
-          className="resolve-button relic-banner-claim-button"
+        <PlateButton
           style={claimedRelic ? clothStyle(claimedRelic.id) : undefined}
+          tint={claimedRelic ? 'var(--relic-color)' : undefined}
           onClick={onContinue}
         >
           Continue
-        </button>
+        </PlateButton>
       )}
     </div>
   );

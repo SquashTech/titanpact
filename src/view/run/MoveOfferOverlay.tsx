@@ -137,6 +137,7 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve, signa
           </button>
           <button
             className="moveoffer-button moveoffer-confirm"
+            style={offerTint(moves[moveId].type)}
             disabled={atCap && !selectedReplaceId}
             onClick={() => resolve(selectedReplaceId, true)}
           >
@@ -200,7 +201,7 @@ export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose, signa
         </SignatureFrame>
 
         <div className="reward-panel-actions moveoffer-actions">
-          <button className="moveoffer-button moveoffer-confirm" onClick={onClose}>
+          <button className="moveoffer-button moveoffer-confirm" style={offerTint(moves[moveId].type)} onClick={onClose}>
             <span className="moveoffer-icon" aria-hidden="true">
               ✓
             </span>

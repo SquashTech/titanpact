@@ -114,6 +114,7 @@ import { EntranceFlood } from '../shared/EntranceFlood';
 import { ENDBRINGER_ID, EYE_IDS, isTitanEye } from '../../data/enemies';
 import type { LocationDefinition } from '../../data/locations';
 import type { Gem } from '../../run/gems';
+import { PlateButton } from '../shared/PlateButton';
 
 /** One enemy's live matchup for a move row, precomputed by FightScreen so MoveRow needs no combat state of its own. */
 interface MoveMatchup {
@@ -1995,13 +1996,14 @@ export function FightScreen({
                     );
                   })}
                 </div>
-                <button
-                  className="resolve-button replacement-confirm-button"
+                <PlateButton
+                  compact
+                  className="replacement-confirm-button"
                   disabled={!replacementPick}
                   onClick={() => replacementPick && handleForcedReplacement(slot, replacementPick)}
                 >
                   Confirm
-                </button>
+                </PlateButton>
               </div>
             );
           })()}

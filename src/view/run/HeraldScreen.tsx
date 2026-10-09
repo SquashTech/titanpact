@@ -6,6 +6,7 @@ import { TitanBody } from '../combat/TitanBody';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { EntranceFlood } from '../shared/EntranceFlood';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   onContinue: () => void;
@@ -72,16 +73,15 @@ export function HeraldScreen({ onContinue }: Props) {
           The Titan's hand and its voice. The eye on its banner is not its own. It walks at the front, and
           what the four lands turned walks behind it.
         </p>
-        <button
-          type="button"
-          className="resolve-button herald-continue"
+        <PlateButton
+          className="herald-continue"
           onClick={(event) => {
             event.stopPropagation();
             onContinue();
           }}
         >
           Stand
-        </button>
+        </PlateButton>
       </div>
     </div>
   );

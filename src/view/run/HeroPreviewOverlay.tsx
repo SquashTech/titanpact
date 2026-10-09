@@ -32,6 +32,7 @@ import { PassiveReadout } from '../shared/passiveIcons';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
 import { HubGlyph } from '../shared/nodeIcons';
 import { StatusGlyph } from '../shared/statusIcons';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   hero: HeroDefinition;
@@ -302,9 +303,9 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
       <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
         {action?.note && <div className="detail-action-note">{action.note}</div>}
         {action && (
-          <button className="resolve-button sheet-close-button" disabled={action.disabled} onClick={action.onConfirm}>
+          <PlateButton disabled={action.disabled} onClick={action.onConfirm}>
             {action.label}
-          </button>
+          </PlateButton>
         )}
         <button className={action ? 'secondary-button' : 'resolve-button sheet-close-button'} onClick={onClose}>
           Close

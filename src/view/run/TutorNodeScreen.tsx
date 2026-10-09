@@ -21,6 +21,8 @@ import { KeeperVoice, useKeeperLine } from './RoadEncounter';
 import { TUTOR_LINES } from '../../data/roadLines';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
+import { PlateButton } from '../shared/PlateButton';
+import { getTypeColor } from '../combat/typeColors';
 
 interface Props {
   run: RunState;
@@ -234,9 +236,9 @@ function TutorMoveList({ entry, run, pool, chosen, onChoose, onInspect, onBack, 
           </div>
         ))}
       </div>
-      <button className="resolve-button tutor-teach" disabled={!chosen} onClick={onTeach}>
+      <PlateButton className="tutor-teach" tint={chosen ? getTypeColor(moves[chosen].type) : undefined} disabled={!chosen} onClick={onTeach}>
         {chosen ? `Teach ${moves[chosen].name}` : 'Choose a move'}
-      </button>
+      </PlateButton>
     </section>
   );
 }

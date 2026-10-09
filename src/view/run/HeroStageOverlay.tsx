@@ -17,6 +17,7 @@ import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { StageDais, StageFigure, StageInnate, StageKit, StageSheet, StageTypes, heroHasBurden } from '../shared/HeroStage';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   hero: HeroDefinition;
@@ -92,9 +93,9 @@ export function HeroStageOverlay({ hero, entry, relicIds, scale, unowned = false
       <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
         {note && <div className="detail-action-note">{note}</div>}
         {action && (
-          <button className="resolve-button sheet-close-button stage-overlay-action" disabled={action.disabled} onClick={action.onConfirm}>
+          <PlateButton className="stage-overlay-action" disabled={action.disabled} onClick={action.onConfirm}>
             {action.label}
-          </button>
+          </PlateButton>
         )}
         <button className={action ? 'secondary-button' : 'resolve-button sheet-close-button'} onClick={onClose}>
           Close

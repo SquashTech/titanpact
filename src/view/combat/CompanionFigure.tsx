@@ -9,6 +9,7 @@ import { MoveDetailCard } from './MoveDetailOverlay';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { companionCallMoveId, companionHeroId, companionTier } from '../../run/companion';
 import type { RunState } from '../../run/state';
+import { PlateButton } from '../shared/PlateButton';
 
 const TIER_NAMES = { early: 'Early', mid: 'Mid', late: 'Late' } as const;
 
@@ -101,9 +102,9 @@ export function CallSheet({
           </span>
         </div>
         <MoveDetailCard move={move} context={{ combat, attackerId: caster.combatantId, defenderIds }} terse free />
-        <button type="button" className="resolve-button call-sheet-button" disabled={refusal !== null} onClick={onCall}>
+        <PlateButton className="call-sheet-button" tint={getTypeColor(hero.types[0])} disabled={refusal !== null} onClick={onCall}>
           {refusal ?? (callerName ? `${callerName} calls ${hero.name}` : `Call ${hero.name}`)}
-        </button>
+        </PlateButton>
       </div>
     </div>,
     overlayHost()

@@ -6,6 +6,7 @@ import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { prefersReducedMotion } from '../shared/reducedMotion';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   heroId: string;
@@ -74,16 +75,15 @@ export function CompanionAwakensScreen({ heroId, onContinue }: Props) {
           Made of the Titan, it stands against it. What the Titan is wakes in it now — and in every {type ?? ''}{' '}
           Titanspawn that joins you after this.
         </p>
-        <button
-          type="button"
-          className="resolve-button awaken-continue"
+        <PlateButton
+          className="awaken-continue"
           onClick={(event) => {
             event.stopPropagation();
             onContinue();
           }}
         >
           Stand together
-        </button>
+        </PlateButton>
       </div>
     </div>
   );

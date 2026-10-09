@@ -18,6 +18,7 @@ import { RosterPeek } from './RosterPeek';
 import cacheOpen from '../../../art/cache/chest-open.png';
 
 import type { RewardNodeType } from '../../run/map';
+import { PlateButton } from '../shared/PlateButton';
 export type { RewardNodeType };
 
 /** The chest on the road (ms from mount): the map tile's chest drops in, rattles, bursts open. */
@@ -248,14 +249,14 @@ function EquipmentCache({ run, onClaimEquipment, seed }: Pick<Props, 'run' | 'on
         </div>
       </div>
 
-      <button
-        className="resolve-button equip-cache-reveal-in"
+      <PlateButton
+        className="equip-cache-reveal-in"
         style={{ animationDelay: `${120 + choices.length * 90}ms` } as CSSProperties}
         disabled={!pickedItemId}
         onClick={() => pickedItemId && onClaimEquipment(pickedItemId)}
       >
         {pickedItemId ? `Take — ${choices.find((i) => i.id === pickedItemId)?.name}` : 'Choose a piece'}
-      </button>
+      </PlateButton>
 
       {inspectItemId &&
         (() => {

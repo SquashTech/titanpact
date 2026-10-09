@@ -25,6 +25,7 @@ import { MoveButtonReplica, moveEffectSummary, useLongPress } from '../shared/Mo
 import { NodeMotes } from '../shared/NodeStage';
 import { PassiveGlyph, PassiveReadout, passiveColor } from '../shared/passiveIcons';
 import { PassiveDetailOverlay } from '../shared/PassiveDossier';
+import { PlateButton } from '../shared/PlateButton';
 import { moveForPrimaryType } from '../../engine/state';
 import { STAT_COLORS } from '../shared/StatBars';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -236,9 +237,9 @@ export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props)
             })}
           </div>
 
-          <button className="resolve-button" disabled={!picked} onClick={() => picked && setTeachingId(picked.id)}>
+          <PlateButton disabled={!picked} tint={picked ? classColor(picked) : undefined} onClick={() => picked && setTeachingId(picked.id)}>
             {picked ? `Choose a student — ${picked.name}` : 'Choose a Class'}
-          </button>
+          </PlateButton>
         </>
       ) : (
         <>

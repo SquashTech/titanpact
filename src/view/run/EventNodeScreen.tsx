@@ -56,6 +56,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   /** Rolled at node-select time (App.tsx) — see src/run/events.ts. */
@@ -497,6 +498,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
                 </button>
                 <button
                   className="moveoffer-button moveoffer-confirm"
+                  style={{ '--offer-rgb': getTypeColorRgb(offeredMove.type) } as CSSProperties}
                   disabled={!selectedReplaceId}
                   onClick={() => selectedReplaceId && teach(swappingEntry.rosterId, selectedReplaceId)}
                 >
@@ -638,13 +640,12 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
         picked !== null &&
         !arriving &&
         (outcome?.kind === 'loot' ? (
-          <button
-            className="resolve-button"
+          <PlateButton
             disabled={!arrived}
             onClick={() => onGrantEquipment(lootItems.map((i) => i.id), applyEventCost(run, active?.cost, maxHpOf))}
           >
             {lootItems.length > 0 ? `Take all ${lootItems.length}` : 'Continue'}
-          </button>
+          </PlateButton>
         ) : isChoice && !resolvedTo ? (
           <button className="resolve-button event-back-button" disabled={!arrived} onClick={() => setPicked(null)}>
             Back

@@ -14,6 +14,7 @@ import { NodeMotes, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { WoundBar, entryHp } from '../shared/WoundBar';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import heartArt from '../../../art/map-nodes/icons/restReward.png';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   run: RunState;
@@ -141,9 +142,7 @@ export function RestNodeScreen({ run, onRunChange, onContinue }: Props) {
           Continue
         </button>
       ) : (
-        <button className="resolve-button" onClick={handleRest}>
-          Rest
-        </button>
+        <PlateButton onClick={handleRest}>Rest</PlateButton>
       )}
 
       {previewEntry && (

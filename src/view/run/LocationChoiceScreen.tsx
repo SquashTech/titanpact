@@ -10,6 +10,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { NodeHeader, NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
+import { PlateButton } from '../shared/PlateButton';
 import { RosterPeek } from './RosterPeek';
 
 interface Props {
@@ -73,10 +74,9 @@ export function LocationChoiceScreen({ run, candidateIds, onChoose }: Props) {
         ))}
       </div>
 
-      <button className="resolve-button" disabled={!picked} onClick={handleSetOut}>
-        {/* Lower-cased article so a name that carries one does not read "Set out for The Threshold". */}
-        {picked ? `Set out for ${picked.name.replace(/^The /, 'the ')}` : 'Choose a seal'}
-      </button>
+      <PlateButton disabled={!picked} tint={picked ? `rgb(${picked.tintRgb})` : undefined} onClick={handleSetOut}>
+        {picked ? picked.name : 'Choose a seal'}
+      </PlateButton>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { TypeWheel } from '../shared/TypeWheel';
 import { getTypeColor } from '../combat/typeColors';
 import { RosterPeek } from './RosterPeek';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   run: RunState;
@@ -78,10 +79,7 @@ export function ActIntroScreen({ run, location, onEnter }: Props) {
 
       <div className="node-spacer" />
 
-      <button className="resolve-button" onClick={onEnter}>
-        {/* Lower-cased article so a name that carries one does not read "Enter The Threshold". */}
-        Enter {location.name.replace(/^The /, 'the ')}
-      </button>
+      <PlateButton onClick={onEnter}>{location.name}</PlateButton>
     </div>
   );
 }

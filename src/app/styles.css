@@ -14923,12 +14923,6 @@ button.star-shop-bundle-face {
   overflow-y: auto;
 }
 
-/* The action under it keeps the sheet slab's size and gets its hue back: a
-   Close has the room's light switched off (.sheet-close-button above), a
-   purchase or a mark does not. Gold, not the hero's type. */
-.resolve-button.sheet-close-button.stage-overlay-action {
-  --cta-rgb: 224, 166, 60;
-}
 
 /* Both of these are written as `.equip-cache-* .guild-hall-*` (0,2,0) rather
    than as the bare `.guild-hall-*` class they used to be. The base
@@ -16185,29 +16179,6 @@ button.star-shop-bundle-face {
 
 .relic-pick.picked .relic-pick-name {
   color: var(--text);
-}
-
-/* Gold rather than the reward rows' violet: a Banner comes off a Guardian. */
-.relic-banner-claim-button {
-  background: linear-gradient(165deg, #f0cf8a, #c08f2c);
-  border: 1px solid var(--accent);
-  color: #211705;
-  text-shadow: none;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 0 1px rgba(224, 166, 60, 0.35), 0 4px 16px rgba(224, 166, 60, 0.35);
-  transition: opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
-}
-
-.relic-banner-claim-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 20px rgba(224, 166, 60, 0.45);
-}
-
-.relic-banner-claim-button:disabled {
-  background: var(--panel-alt);
-  border-color: var(--border);
-  color: var(--text-dim);
-  box-shadow: none;
-  opacity: 0.45;
 }
 
 /* --- The claim tally (RelicFamilyTally.tsx) -------------------------------
@@ -26057,23 +26028,6 @@ button.evo-gift-card {
    the wash inside it take the place's tint from the one property the whole
    location system keys off, and the screen's --node-rgb (the pick's, or
    gold) stays with the sky, the header and the button. */
-/* Set out, once a seal is picked: the plank breathes in the picked place's colour (--node-rgb, set on the screen). */
-.location-choice-screen.has-pick .resolve-button:not(:disabled) {
-  color: color-mix(in srgb, rgb(var(--node-rgb)) 45%, #fff6e0);
-  text-shadow: 0 2px 0 #1a0f07, 0 0 12px rgba(var(--node-rgb), 0.9);
-  animation: location-cta-glow 2.2s ease-in-out infinite;
-}
-
-@keyframes location-cta-glow {
-  0%,
-  100% {
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 6px rgba(var(--node-rgb), 0.55));
-  }
-  50% {
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 16px rgba(var(--node-rgb), 0.95)) brightness(1.12);
-  }
-}
-
 .location-choice-options {
   position: relative;
   z-index: 1;
@@ -39234,17 +39188,6 @@ img.smithy-service-art {
   filter: grayscale(0.9) brightness(0.55);
 }
 
-/* The Banner screen's way forward burns in the picked standard's colour, the Strike's idiom. */
-.resolve-button.relic-banner-claim-button:not(:disabled) {
-  color: color-mix(in srgb, var(--relic-color, var(--accent)) 60%, #fff3d6);
-  text-shadow: 0 2px 0 #1a0f07, 0 0 12px var(--relic-color, var(--accent));
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 4px var(--relic-color, var(--accent))) drop-shadow(0 0 14px color-mix(in srgb, var(--relic-color, var(--accent)) 70%, transparent));
-}
-
-.resolve-button.relic-banner-claim-button:not(:disabled):hover {
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 5px var(--relic-color, var(--accent))) drop-shadow(0 0 18px color-mix(in srgb, var(--relic-color, var(--accent)) 85%, transparent)) brightness(1.08);
-}
-
 .smithy-element,
 .smithy-element.is-held,
 .smithy-element.is-picked {
@@ -41219,15 +41162,6 @@ img.smithy-service-art {
 .target-panel-title {
   font-size: 10px;
   text-shadow: 0 1px 0 #0b0a0e, 0 0 10px rgba(var(--console-rgb, 224, 166, 60), 0.5);
-}
-
-.resolve-button.replacement-confirm-button {
-  min-height: 0;
-  margin-top: 6px;
-  padding: 3px 4px;
-  border-width: 10px;
-  border-image: url('../../art/ui/plank-gilt.png') 5 fill / 10px round;
-  font-size: 15px;
 }
 
 .target-panel .bench-row {
@@ -48632,4 +48566,278 @@ img.smithy-service-art {
 
 .move-row-top .charge-pips {
   margin-left: -2px;
+}
+
+/* ==========================================================================
+   The plate (PlateButton): the title's chamfered metal at screen size, for a
+   screen's commit press. Every layer is mixed from one colour, --plate-color —
+   the thing being chosen, or the screen's --node-rgb when nothing is. Planks stay
+   for what belongs to a place (the Hall, the Smithy, the map) and for the way out.
+   ========================================================================== */
+.plate-socket {
+  --plate-color: rgb(var(--node-rgb, 224, 166, 60));
+  --plate-face: linear-gradient(178deg,
+      color-mix(in oklab, var(--plate-color) 18%, #fffaf0) 0%,
+      color-mix(in oklab, var(--plate-color) 55%, #fff6e6) 9%,
+      color-mix(in oklab, var(--plate-color) 92%, #ffffff) 30%,
+      var(--plate-color) 52%,
+      color-mix(in oklab, var(--plate-color) 66%, #000000) 82%,
+      color-mix(in oklab, var(--plate-color) 38%, #000000) 100%);
+  --plate-bezel: linear-gradient(160deg,
+      color-mix(in oklab, var(--plate-color) 45%, #ffffff),
+      color-mix(in oklab, var(--plate-color) 70%, transparent) 40%,
+      color-mix(in oklab, var(--plate-color) 40%, #000000));
+  --plate-ink: color-mix(in oklab, var(--plate-color) 18%, #050302);
+  --plate-glow: color-mix(in srgb, var(--plate-color) 45%, transparent);
+  --plate-glow-hot: color-mix(in srgb, var(--plate-color) 75%, transparent);
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: calc(100% - 52px);
+  margin-inline: auto;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 14px var(--plate-glow));
+  animation: plate-pulse 3.6s ease-in-out infinite;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.node-screen > .plate-socket,
+.draft-screen > .plate-socket {
+  margin-bottom: 14px;
+}
+
+@keyframes plate-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 12px var(--plate-glow));
+  }
+  50% {
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 26px var(--plate-glow-hot));
+  }
+}
+
+.plate-frame {
+  position: absolute;
+  inset: -4px;
+  clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+  background: var(--plate-bezel);
+  pointer-events: none;
+}
+
+.plate-cta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 60px;
+  padding: 16px 14px;
+  border: 0;
+  border-radius: 0;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  background: var(--plate-face);
+  color: var(--plate-ink);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 color-mix(in oklab, var(--plate-color) 30%, rgba(255, 255, 255, 0.55));
+  box-shadow: none;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
+}
+
+/* The etch just inside the plate, doubling as the focus ring a clip-path would otherwise eat. */
+.plate-cta::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid color-mix(in oklab, var(--plate-color) 45%, rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+
+.plate-cta:focus-visible::after {
+  border: 2px solid var(--plate-ink);
+}
+
+.plate-sheen {
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 40%;
+  height: 180%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  transform: skewX(-22deg);
+  pointer-events: none;
+  animation: title-cta-sweep 4.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.plate-label {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.plate-label::before,
+.plate-label::after {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: var(--plate-ink);
+  opacity: 0.65;
+  transform: rotate(45deg);
+}
+
+.plate-socket:hover:not(.is-disabled) {
+  transform: translateY(-1px);
+}
+
+.plate-cta:not(:disabled):hover {
+  filter: brightness(1.07);
+}
+
+.plate-cta:not(:disabled):active {
+  transform: translateY(1px);
+  filter: brightness(0.9);
+}
+
+/* Wings off the flanks, in the gap the socket leaves, each ending in a diamond. */
+.plate-socket::before,
+.plate-socket::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 2px;
+  margin-top: -1px;
+  background: linear-gradient(90deg, transparent, var(--plate-color));
+  pointer-events: none;
+}
+
+.plate-socket::before {
+  right: calc(100% + 6px);
+}
+
+.plate-socket::after {
+  left: calc(100% + 6px);
+  transform: scaleX(-1);
+}
+
+.plate-wing-tip {
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin-top: -3.5px;
+  background: var(--plate-color);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.plate-wing-tip.is-left {
+  right: calc(100% + 17px);
+}
+
+.plate-wing-tip.is-right {
+  left: calc(100% + 17px);
+}
+
+/* Waiting on a pick: the metal gone cold, still solid, no pulse and no sweep. */
+.plate-socket.is-disabled {
+  --plate-color: #6f6a62;
+  animation: none;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)) brightness(0.72);
+}
+
+.plate-socket.is-disabled .plate-cta {
+  cursor: not-allowed;
+  letter-spacing: 0.08em;
+}
+
+/* The post-fight Continue waits cold while the bars fill, then strikes in the result's colour. */
+.plate-socket.fight-result-cta:not(.is-lit) {
+  --plate-color: #8f96a6;
+}
+
+.plate-socket.fight-result-cta.is-lit {
+  animation: fight-result-cta-in 0.4s var(--ease-out) both, fight-result-cta-lit 0.5s ease-out both,
+    plate-pulse 3.6s ease-in-out 0.5s infinite;
+}
+
+/* The console size, for a plate in a fight action panel. */
+.plate-socket.is-compact {
+  width: calc(100% - 48px);
+}
+
+.plate-socket.is-compact .plate-cta {
+  min-height: 42px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.plate-socket.is-compact::before,
+.plate-socket.is-compact::after {
+  width: 8px;
+}
+
+.plate-socket.is-compact .plate-wing-tip.is-left {
+  right: calc(100% + 12px);
+}
+
+.plate-socket.is-compact .plate-wing-tip.is-right {
+  left: calc(100% + 12px);
+}
+
+/* Screens that bring their plate in on a beat keep that entrance under the pulse. */
+.plate-socket.equip-cache-reveal-in {
+  animation: equip-cache-fade-up 0.3s ease-out backwards, plate-pulse 3.6s ease-in-out 0.4s infinite;
+}
+
+.plate-socket.champion-continue {
+  animation: champion-plate-in 0.6s var(--ease-out) 1.3s backwards, plate-pulse 3.6s ease-in-out 1.9s infinite;
+}
+
+/* A move offer either/or: Learn is struck in the offered move type, Decline stays a plank. */
+.moveoffer-confirm,
+.moveoffer-confirm:not(:disabled):hover {
+  --plate-color: rgb(var(--offer-rgb, 95, 207, 143));
+  border: 0;
+  border-image: none;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  background: linear-gradient(178deg,
+      color-mix(in oklab, var(--plate-color) 18%, #fffaf0) 0%,
+      color-mix(in oklab, var(--plate-color) 55%, #fff6e6) 9%,
+      color-mix(in oklab, var(--plate-color) 92%, #ffffff) 30%,
+      var(--plate-color) 52%,
+      color-mix(in oklab, var(--plate-color) 66%, #000000) 82%,
+      color-mix(in oklab, var(--plate-color) 38%, #000000) 100%);
+  color: color-mix(in oklab, var(--plate-color) 18%, #050302);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 0 0 4px color-mix(in oklab, var(--plate-color) 80%, #000000 20%), inset 0 0 0 5px color-mix(in oklab, var(--plate-color) 45%, rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
+}
+
+.moveoffer-confirm .moveoffer-label {
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.moveoffer-confirm:not(:disabled):hover {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55)) brightness(1.07);
+}
+
+.moveoffer-confirm:disabled {
+  --plate-color: #6f6a62;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  border: 0;
+  background: linear-gradient(178deg, #b9b3aa 0%, #8c877e 30%, #6f6a62 52%, #3b3833 100%);
+  color: #12100d;
+  text-shadow: none;
+  filter: brightness(0.72);
 }

@@ -13,6 +13,7 @@ import { HeroStageOverlay } from './HeroStageOverlay';
 import { swallowGhostClick } from '../shared/MoveTile';
 import { levelOf } from '../../run/growth';
 import type { StatScale } from '../../run/statScale';
+import { PlateButton } from '../shared/PlateButton';
 
 export type { RosterReplaceCandidate };
 
@@ -139,9 +140,9 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
           <button className="secondary-button" onClick={onCancel}>
             Cancel
           </button>
-          <button className="resolve-button" disabled={!selectedEntry} onClick={handleConfirm}>
+          <PlateButton tint="rgb(217, 83, 79)" disabled={!selectedEntry} onClick={handleConfirm}>
             {selectedEntry ? `Terminate ${rosterHeroes[selectedEntry.heroId].name} & Add ${hero.name}` : 'Select a Hero to Terminate'}
-          </button>
+          </PlateButton>
         </div>
       </div>
 

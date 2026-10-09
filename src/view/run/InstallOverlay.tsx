@@ -5,6 +5,7 @@ import { canPromptInstall, onInstallPromptChange, promptInstall } from '../../ap
 import { INSTALL_CARD } from '../../data/tips';
 import type { InstallPlatform } from '../../run/installHint';
 import { overlayHost } from '../shared/overlayHost';
+import { PlateButton } from '../shared/PlateButton';
 
 /** iOS's Share mark: a box with an arrow out of its top. */
 function ShareGlyph() {
@@ -84,9 +85,9 @@ export function InstallOverlay({ platform, onDone }: Props) {
               <button className="secondary-button" data-sfx="none" onClick={handleDismiss}>
                 Not now
               </button>
-              <button className="resolve-button" data-sfx="none" onClick={handleInstall}>
+              <PlateButton data-sfx="none" onClick={handleInstall}>
                 Install
-              </button>
+              </PlateButton>
             </>
           ) : (
             <button className="resolve-button" data-sfx="none" onClick={handleDismiss}>

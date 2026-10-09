@@ -10,6 +10,7 @@ import { TRIAL_LIST } from '../../data/trials';
 import { constructedPath, type TeamSlot, type TrialDefinition } from '../../run/constructed';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
+import { PlateButton } from '../shared/PlateButton';
 
 type Pick = 'player' | 'opponent';
 
@@ -91,9 +92,9 @@ export function TrialsDevScreen({ onFight, onClose }: Props) {
         </div>
       </div>
 
-      <button className="resolve-button" onClick={() => onFight(playerId, opponentId)}>
+      <PlateButton onClick={() => onFight(playerId, opponentId)}>
         Fight: {TRIAL_LIST.find((t) => t.id === playerId)?.name} vs {TRIAL_LIST.find((t) => t.id === opponentId)?.name}
-      </button>
+      </PlateButton>
     </div>
   );
 }

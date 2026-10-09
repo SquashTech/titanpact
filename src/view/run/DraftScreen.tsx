@@ -7,6 +7,7 @@ import { STARTER_PICK_COUNT } from '../../run/draft';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { PlateButton } from '../shared/PlateButton';
 import { PactForging } from './PactForging';
 import { PassiveDetailOverlay } from '../shared/PassiveDossier';
 import {
@@ -162,9 +163,9 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
         })}
       </StageRail>
 
-      <button className="resolve-button draft-cta" disabled={!complete || forging} onClick={() => setForging(true)}>
+      <PlateButton disabled={!complete || forging} tint="#e0a63c" data-sfx="ui.commit" onClick={() => setForging(true)}>
         {complete ? 'Seal the Pact' : `Choose ${STARTER_PICK_COUNT - pickedIds.length} more`}
-      </button>
+      </PlateButton>
 
       {forging && <PactForging heroIds={pickedIds} onDone={() => onConfirm(pickedIds)} />}
 

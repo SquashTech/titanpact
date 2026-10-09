@@ -22,6 +22,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   run: RunState;
@@ -206,9 +207,9 @@ export function BoonNodeScreen({ run, onRunChange, onContinue, seed }: Props) {
               />
             ))}
           </div>
-          <button className="resolve-button" disabled={!picked} onClick={() => pickedId && setConfirmedId(pickedId)}>
+          <PlateButton disabled={!picked} onClick={() => pickedId && setConfirmedId(pickedId)}>
             {picked ? `Take — ${picked.name}` : 'Choose a Boon'}
-          </button>
+          </PlateButton>
         </>
       ) : (
         <>

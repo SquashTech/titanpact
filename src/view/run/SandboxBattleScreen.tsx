@@ -24,6 +24,7 @@ import { MoveTile } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ORDER, StatGlyph } from '../shared/StatBars';
+import { PlateButton } from '../shared/PlateButton';
 
 type SideKey = 'A' | 'B';
 
@@ -403,9 +404,9 @@ export function SandboxBattleScreen({ sideA, sideB, onChangeSideA, onChangeSideB
         )}
       </div>
 
-      <button className="resolve-button" disabled={!canStart} onClick={() => onStartFight(sideA, sideB)}>
+      <PlateButton disabled={!canStart} onClick={() => onStartFight(sideA, sideB)}>
         {canStart ? 'Start Fight' : 'Both sides need an active hero'}
-      </button>
+      </PlateButton>
     </div>
   );
 }

@@ -29,6 +29,7 @@ const CLASS_SFX: readonly (readonly [string, SfxId])[] = [
   ['title-cta', 'ui.launch'],
   ['draft-cta', 'ui.commit'],
   ['resolve-button', 'ui.confirm'],
+  ['plate-cta', 'ui.confirm'],
   ['replacement-confirm-button', 'ui.confirm'],
   ['moveoffer-button', 'ui.confirm'],
   ['move-button', 'ui.move'],

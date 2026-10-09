@@ -52,6 +52,7 @@ import { StageMovePopup } from '../shared/HeroStage';
 import { STAT_LABELS, STAT_ORDER, StatGlyph } from '../shared/StatBars';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { healCasterForEntry } from '../shared/healCaster';
+import { PlateButton } from '../shared/PlateButton';
 
 /** The fourteen draftable types, in chart order — the picker's rail. */
 const RAIL_TYPES: readonly TypeId[] = ['Fire', 'Water', 'Frost', 'Storm', 'Stone', 'Nature', 'Light', 'Shadow', 'Arcane', 'Mind', 'Spirit', 'Iron', 'Mech', 'Beast'];
@@ -225,9 +226,9 @@ function TeamView({
         <button type="button" className={`secondary-button cx-delete${confirmDelete ? ' is-armed' : ''}`} onClick={() => (confirmDelete ? onDelete() : setConfirmDelete(true))}>
           {confirmDelete ? 'Delete it' : 'Delete'}
         </button>
-        <button type="button" className="resolve-button cx-fight" disabled={!ready} onClick={onFight}>
+        <PlateButton className="cx-fight" disabled={!ready} onClick={onFight}>
           Fight a Trial
-        </button>
+        </PlateButton>
       </div>
     </>
   );
@@ -707,9 +708,9 @@ function HeroView({
           <button type="button" className="secondary-button" onClick={() => go(lastStep)}>
             Back
           </button>
-          <button type="button" className="resolve-button" disabled={!legal} onClick={() => onConfirm(slot)}>
+          <PlateButton disabled={!legal} onClick={() => onConfirm(slot)}>
             Confirm
-          </button>
+          </PlateButton>
         </div>
       ) : (
         <div className="cx-tabs" role="tablist" aria-label="Build">

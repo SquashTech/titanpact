@@ -3155,8 +3155,18 @@ materials, each with one meaning, so the rule above survives the change of mater
 | Material | Means | Where |
 |---|---|---|
 | Stone with a gold inlay | a window — a place the game shows you something | `.detail-panel`, `.log-panel`, `.result-panel`, the console's flagstones, ledge and move slots |
-| Wooden plank | something you press; **gilt** is the screen's one way forward, or a key being held | `.resolve-button` (gilt), `.secondary-button`, close buttons, the console keys |
+| Chamfered metal plate | a **decision** — committing to a pick, or a ceremony's way on — struck in the colour of what is chosen | `PlateButton` (`.plate-socket`), a move offer's Learn |
+| Wooden plank | something you press that belongs to a place, or a way on after a node is done; **gilt** is the screen's one way forward, or a key being held | `.resolve-button` (gilt), `.secondary-button`, close buttons, the console keys, the Guild Hall |
 | Parchment | a note for the player | `.tip-box`, the Guild Hall's tags and posters |
+
+**Plate or plank** (2026-10-09, per user direction — the gilt plank on every Confirm read as
+over-used). A plate is a decision: Seal the Pact, a seal Location (labelled with the place
+name alone), a Class, a Boon, an item or Banner taken, a Tutor's move, a contract's
+Terminate (red), the forced replacement in a fight (compact), the post-fight Continue (grey
+while the bars fill, then gold or red), and the beats of the finale and the champion's hall.
+Its colour is the thing chosen — the Location's tint, the Class's colour, the move's type, the
+Banner's cloth — or the screen's `--node-rgb`. A plain Continue after a node is done, the Guild
+Hall's counters, the console keys and every way out stay planks; Evolve keeps its own button.
 
 A frame paints over its rule's existing padding rather than adding to it, so no
 screen grows. The Guild Hall keeps its own wood: it is a place, not a window.

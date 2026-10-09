@@ -14,6 +14,7 @@ import type { MvpColumn, MvpPick } from '../../run/mvp';
 import { ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { PlateButton } from '../shared/PlateButton';
 import { NODE_TINT_GOLD, NodeMotes } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { useCoinCount } from '../shared/useCoinCount';
@@ -262,15 +263,15 @@ export function FightResultOverlay({
         )}
       </div>
 
-      <button
-        className={`resolve-button fight-result-cta${landed ? ' is-lit' : ''}`}
+      <PlateButton
+        className={`fight-result-cta${landed ? ' is-lit' : ''}`}
         onClick={(e) => {
           e.stopPropagation();
           onContinue();
         }}
       >
         Continue
-      </button>
+      </PlateButton>
 
       {inspecting && <ItemDetailOverlay item={equipmentReward} onClose={() => setInspecting(false)} />}
       {showingGains && levelReport && <StatGainsSheet report={levelReport} roster={roster} onClose={() => setShowingGains(false)} />}

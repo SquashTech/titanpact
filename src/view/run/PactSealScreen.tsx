@@ -8,6 +8,7 @@ import { SealArt } from '../shared/SealArt';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { NodeHeader, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { TitanColossus, TitanRidge } from './titanArt';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   run: RunState;
@@ -231,9 +232,7 @@ export function PactSealScreen({ run, onContinue }: Props) {
 
       <div className="node-spacer" />
 
-      <button className="resolve-button" onClick={onContinue}>
-        {complete ? 'Walk to the Threshold' : 'Onward'}
-      </button>
+      <PlateButton onClick={onContinue}>{complete ? 'Walk to the Threshold' : 'Onward'}</PlateButton>
     </div>
   );
 }

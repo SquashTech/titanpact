@@ -11,6 +11,7 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 
 import type { CompanionBeat } from '../../run/companion';
+import { PlateButton } from '../shared/PlateButton';
 export type { CompanionBeat };
 
 interface Props {
@@ -98,9 +99,7 @@ export function CompanionScreen({ run, beat, onContinue }: Props) {
 
       <div className="node-spacer" />
 
-      <button className="resolve-button" onClick={onContinue}>
-        {copy.button}
-      </button>
+      <PlateButton onClick={onContinue}>{copy.button}</PlateButton>
     </div>
   );
 }

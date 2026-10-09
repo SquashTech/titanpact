@@ -4,6 +4,7 @@ import { SEAL_ACTS } from '../../run/state';
 import { SealArt } from '../shared/SealArt';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { TitanColossus } from './titanArt';
+import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
   onContinue: () => void;
@@ -120,9 +121,9 @@ export function TitanBoundScreen({ onContinue }: Props) {
             <div className="titan-bound-eyebrow">The last seals held</div>
             <h2 className="titan-bound-title">The Titan is bound</h2>
             <p className="titan-bound-line">Bound to those who put it down. It wakes again in a year.</p>
-            <button type="button" className="resolve-button titan-bound-continue" onClick={() => done.current()}>
+            <PlateButton className="titan-bound-continue" onClick={() => done.current()}>
               Continue
-            </button>
+            </PlateButton>
           </div>
         </div>
       )}
