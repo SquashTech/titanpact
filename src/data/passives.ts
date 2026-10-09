@@ -630,14 +630,13 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   grief: {
     id: 'grief',
     name: 'Grief',
-    description: 'When this hero takes damage, it gains Renew.',
-    // Tempering's trigger paying a HoT instead of Defense, which is the only way a 45-Defense
-    // body gets to be the one that stays. Renew is additive and survives switching, so a pivot
-    // out to the bench carries the stack with it.
+    description: 'The first time this hero takes damage each fight, it gains Renew.',
+    // Once a fight (docs/timed-statuses.md §6): every hit would otherwise reset it, a standing 10% a round.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew' },
+      oncePerFight: true,
     },
   },
   sentry: {

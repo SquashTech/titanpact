@@ -82,3 +82,17 @@ a hit.
 
 **Measured** (3000 runs, seed 7, before §5): full-clear 76.1 → 74.6% skilled, 22.4 → 23.6% chart,
 every act within two points — noise. The status change is a reshape, not a power shift.
+
+## 6. Warm Spring and Grief
+
+Decided 2026-10-09, per user direction. Both re-applied a Renew often enough that it never ran out —
+a standing 10% a round for nothing.
+
+- **Warm Spring** (Mellow's Hot Spring) was "at the end of each round, the partner gains Renew":
+  permanent, free, and carried to the bench. It is now **"When this hero Rests, it and its partner
+  gain Renew"** (`Rested`) — the turn a Rest spends pays for 30% on both, and Mellow's 55-Mana pool
+  Rests it naturally.
+- **Grief** (Sorrow's Mourner) was "when this hero takes damage, it gains Renew" — a Renew that
+  never lapsed while Sorrow was being hit. It is now **"The first time this hero takes damage each
+  fight, it gains Renew"** (`oncePerFight`). A light-never-refuel rule could not throttle it: a hit
+  lands every round, so a lapsed Renew is relit before it misses a tick.

@@ -77,16 +77,16 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Shield', magnitude: 15 },
     },
   },
-  // Renew heals what each application adds and lapses after two rounds, so the cap is a ceiling
-  // the soak rises to and falls from, never a standing 10% a round.
+  // Mellow's Hot Spring: the soak is paid for with the turn a Rest spends (docs/timed-statuses.md §6).
   warmSpring: {
     id: 'warmSpring',
     name: 'Warm Spring',
-    description: "At the end of each round, this hero's partner gains Renew.",
+    description: 'When this hero Rests, it and its partner gain Renew.',
     reactive: {
-      hook: 'RoundEnded',
+      hook: 'Rested',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew' },
+      alsoEffect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
     },
   },
 };

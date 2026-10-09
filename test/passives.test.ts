@@ -1144,6 +1144,25 @@ test('passives: Foxfire lights a Burn on a foe not Burning, and never refuels on
   assert.strictEqual(fading.combatants.b1.statuses.Burn?.duration, 1, 'a second hit leaves the fire to fade');
 });
 
+test('passives: Grief lands a Renew on the first hit the holder takes, and on no hit after', () => {
+  const state = withPassive(deepFixture(807, ['sorrow', 'aegis'], ['crag', 'sentinel']), 'a1', 'grief');
+  const hit = (s: CombatState) => resolveRound(s, [{ kind: 'move', combatantId: 'b1', moveId: 'rockToss', declaredTarget: 'a1' } as Action], config);
+  const first = hit(state);
+  assert.ok(first.events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1' && e.statusId === 'Renew'), 'the first hit pays');
+  const second = hit(first.state);
+  assert.ok(!second.events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1' && e.statusId === 'Renew'), 'the second does not');
+  assert.strictEqual(second.state.combatants.a1.statuses.Renew?.duration, 1, 'the one Renew runs down');
+});
+
+test('passives: Warm Spring Renews the holder and its partner when it Rests, and not at a round it does not', () => {
+  const state = withPassive(deepFixture(808, ['mellow', 'aegis'], ['crag', 'sentinel']), 'a1', 'warmSpring');
+  const idle = resolveRound(state, [], config);
+  assert.ok(!idle.events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Renew'), 'a round without a Rest pays nothing');
+  const rested = resolveRound(state, [{ kind: 'rest', combatantId: 'a1' } as Action], config);
+  const renewed = rested.events.filter((e) => e.type === 'StatusApplied' && e.statusId === 'Renew').map((e) => (e as { combatantId: string }).combatantId).sort();
+  assert.deepStrictEqual(renewed, ['a1', 'a2']);
+});
+
 test('passives: Dawnfire answers Sanctuary being set — a FieldEffectSet reaction', () => {
   const state = withPassive(deepFixture(804, ['ashwing', 'aegis'], ['crag', 'sentinel']), 'a1', 'dawnfire');
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'consecrate', declaredTarget: 'a2' } as Action], config);
