@@ -13934,15 +13934,22 @@ button.star-shop-bundle-face {
 }
 
 /* The top-left corner, opposite the roster glyph, at its height: the seals cost the stage no row. */
+/* Drawn as the Guild Hall's purse chip (.node-purse), in the contract's blue, so the count reads the same wherever a contract is spent. */
 .recruit-contracts {
   position: absolute;
   top: 0;
   left: 0;
   z-index: 6;
-  height: 44px;
+  height: 30px;
   display: flex;
   align-items: center;
   gap: 4px;
+  padding: 0 11px 0 9px;
+  border-radius: var(--radius-pill);
+  background: rgba(155, 201, 255, 0.1);
+  border: 1px solid rgba(155, 201, 255, 0.35);
+  box-shadow: var(--hairline), var(--elev-1);
+  color: #9bc9ff;
 }
 
 .recruit-seal {
@@ -13950,7 +13957,7 @@ button.star-shop-bundle-face {
   width: 15px;
   height: 15px;
   line-height: 1;
-  filter: drop-shadow(0 0 6px rgba(164, 99, 217, 0.65));
+  filter: drop-shadow(0 0 5px rgba(155, 201, 255, 0.55));
   transition: opacity var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out);
 }
 
@@ -13979,7 +13986,8 @@ button.star-shop-bundle-face {
   margin-left: 2px;
   font-size: 13px;
   font-weight: 800;
-  color: #caa0ef;
+  font-variant-numeric: tabular-nums;
+  color: #9bc9ff;
 }
 
 /* The veteran's level, on the figure itself. A drafted candidate is always
