@@ -1136,6 +1136,14 @@ test('passives: Fire-Breather Burns one random enemy when Tinder switches out', 
   assert.deepStrictEqual(left, [0, 2]);
 });
 
+test('passives: Foxfire lights a Burn on a foe not Burning, and never refuels one already lit (onlyIfAbsent)', () => {
+  const state = withPassive(deepFixture(806, ['kitsu', 'aegis'], ['crag', 'sentinel']), 'a1', 'foxfire');
+  const lit = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'drain', declaredTarget: 'b1' } as Action], config).state;
+  assert.strictEqual(lit.combatants.b1.statuses.Burn?.duration, 2, 'lit by the hit, ticked once at the round end');
+  const fading = resolveRound(lit, [{ kind: 'move', combatantId: 'a1', moveId: 'drain', declaredTarget: 'b1' } as Action], config).state;
+  assert.strictEqual(fading.combatants.b1.statuses.Burn?.duration, 1, 'a second hit leaves the fire to fade');
+});
+
 test('passives: Dawnfire answers Sanctuary being set — a FieldEffectSet reaction', () => {
   const state = withPassive(deepFixture(804, ['ashwing', 'aegis'], ['crag', 'sentinel']), 'a1', 'dawnfire');
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'consecrate', declaredTarget: 'a2' } as Action], config);

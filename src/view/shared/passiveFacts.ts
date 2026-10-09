@@ -212,7 +212,7 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
             ? ` ${statusAmountText(effect.statusId, effect.magnitude)}`
             : ` at ${amountWord(effect.magnitude, '').replace('the same amount', hook === 'Rested' ? 'the Mana restored' : 'the same magnitude')}`;
       const duration = effect.duration ? `, ${effect.duration} ${effect.duration === 1 ? 'round' : 'rounds'}` : '';
-      const scaled = (effect.scaledBy ? `, scaled by ${STAT_FULL_LABELS[effect.scaledBy]}` : '') + (effect.maxMagnitude !== undefined ? `, up to ${effect.maxMagnitude}` : '');
+      const scaled = (effect.scaledBy ? `, scaled by ${STAT_FULL_LABELS[effect.scaledBy]}` : '') + (effect.maxMagnitude !== undefined ? `, up to ${effect.maxMagnitude}` : '') + (effect.onlyIfAbsent ? ', unless already held' : '');
       return {
         label: 'Then',
         text: `${statusName(effect.statusId)}${magnitude} on ${targetWord(effect.target, condition, hook)}${duration}${scaled}`,

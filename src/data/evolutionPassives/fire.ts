@@ -1,16 +1,15 @@
 import type { PassiveDefinition } from '../../engine/content';
 
 export const firePathPassives: Record<string, PassiveDefinition> = {
-  // Cinder's Explosive. A Burn keeps the higher, so this is a floor under a fire already lit: it
-  // keeps Immolate's triple live without ever stacking past what a move laid down.
+  // Cinder's Explosive: a Fire hit lights a fire, never feeds one already burning.
   rekindle: {
     id: 'rekindle',
     name: 'Rekindle',
-    description: "When this hero lands a Fire attack on a Burning foe, that foe's Burn flares back up to 15%.",
+    description: "Every Fire attack this hero lands sets its target Burning, unless it already is.",
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' }, eventTargetHasStatus: 'Burn' },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', onlyIfAbsent: true },
     },
   },
   // Crimson's Cinderveil: the Spirit graft's own spread, laid by every Fire hit.

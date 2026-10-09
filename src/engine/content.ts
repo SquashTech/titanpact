@@ -228,7 +228,8 @@ export type PassiveEffect =
    * passive has no move to take it from): Boiler's Burn off Clockwork's Intelligence, the one
    * authored exception to "passive-applied magnitudes are flat" (docs/innate-passives.md §7).
    */
-  | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number | PassiveAmount; duration?: number; scaledBy?: StatKey; maxMagnitude?: number }
+  /** `onlyIfAbsent` lands only on a receiver not already holding the status — it lights, never refreshes (a per-hit passive Burn). */
+  | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number | PassiveAmount; duration?: number; scaledBy?: StatKey; maxMagnitude?: number; onlyIfAbsent?: true }
   /**
    * One stat, or several sharing an amount (Afterglow's Attack and Intelligence) — one StatChanged
    * each. A PassiveAmount reads the event (Neuroplastic: the Wisdom an enemy just lost).

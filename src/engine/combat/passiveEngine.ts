@@ -307,6 +307,8 @@ function resolveEffectOn(
       if (!def) return { state, events: [] };
       // A warded target refuses it (the Herald struck through an Ice Shell, a Thorns-shaped reaction).
       if (wardRefusesStatus(state, targetId, ownerId, def, passiveDefs)) return { state, events: [] };
+      // Lights a fire, never refuels one (docs/timed-statuses.md §5): a holder already carrying it is skipped.
+      if (effect.onlyIfAbsent && target.statuses[effect.statusId]) return { state, events: [] };
       let magnitude = resolveMagnitude(effect.magnitude, context);
       // An event-read magnitude of nothing (a Rest that restored 0) is no status at all.
       if (typeof effect.magnitude === 'object' && (magnitude ?? 0) <= 0) return { state, events: [] };

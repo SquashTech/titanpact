@@ -1536,11 +1536,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   foxfire: {
     id: 'foxfire',
     name: 'Foxfire',
-    description: 'When this hero lands a Spirit attack, its target is set Burning.',
+    description: "When this hero lands a Spirit attack, its target is set Burning, unless it already is.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', onlyIfAbsent: true },
     },
   },
   fireBreather: {
@@ -2231,11 +2231,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   boilingPoint: {
     id: 'boilingPoint',
     name: 'Boiler+',
-    description: 'Mech attacks from this hero always Burn their target.',
+    description: "Every Mech attack this hero lands sets its target Burning, unless it already is.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Mech' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', onlyIfAbsent: true },
     },
   },
   // The Burden mastered: the cost stays (it is priced in the 610), and the hero that cannot
@@ -2536,11 +2536,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   kitsunebi: {
     id: 'kitsunebi',
     name: 'Foxfire+',
-    description: 'When this hero lands a Spirit attack, both active enemies are Burned.',
+    description: "When this hero lands a Spirit attack, both active enemies are set Burning, unless they already are.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', onlyIfAbsent: true },
     },
   },
   showstopper: {

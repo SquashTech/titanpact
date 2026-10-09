@@ -63,3 +63,22 @@ tick is its first round's 15% (15 / 15 / 15). It replaced "every Burn lands a le
   read a yes/no now, which is what they always meant.
 - **The AI Rests off a Burn only when what is left of it would knock the hero out**
   (`restOutlastsBurn`, `src/run/ai.ts`); the pilot reads the same.
+
+## 5. A passive lights a fire, never refuels one
+
+Decided 2026-10-09, per user direction, after the re-light rule made every per-hit passive Burn a
+permanent 15% a round (it had been capped at Burning, 5%). `onlyIfAbsent` on a passive's
+`applyStatus` lands only on a receiver not already holding the status. It is on the five cards
+that Burn on every hit — **Foxfire** and **Foxfire+** (Kitsu), **Boiler+** (Clockwork),
+**Kindled Mane** (Aurum's Sunfire) and **Rekindle** (Cinder's Explosive, which was a refresh by
+design and is now a lighter for Fire hits). The fade is the throttle: a passive Burn runs
+15 / 8 / 4 and lights again, about 9% a round. A move's Burn still re-lights at 15%.
+
+Left alone on purpose: the 30% Boiler (refreshes about one hit in three), the switch-triggered
+Burns (a switch is an action), Portcullis (a Provoke cast), Ashen Pyre and Ignition (a detonation).
+The Renew passives need nothing: re-applying resets rather than adds, so a frequent trigger tops out
+at 10% a round — what Warm Spring's "Renew 1, up to 2" already paid, and less than Grief's old heal
+a hit.
+
+**Measured** (3000 runs, seed 7, before §5): full-clear 76.1 → 74.6% skilled, 22.4 → 23.6% chart,
+every act within two points — noise. The status change is a reshape, not a power shift.
