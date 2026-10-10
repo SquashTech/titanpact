@@ -38,11 +38,11 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   sporeRing: {
     id: 'sporeRing',
     name: 'Spore Ring',
-    description: 'When this hero grants Renew, whoever receives it gains 10 Attack and 10 Intelligence.',
+    description: 'When this hero grants Renew, whoever receives it gains ATK ▲ and INT ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], amount: 10 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
     },
   },
   // Morel's Corpselight: the Poison plants the mark, the grafted Spirit line spreads through it.
@@ -60,11 +60,11 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   petalStorm: {
     id: 'petalStorm',
     name: 'Petal Storm',
-    description: 'When this hero lands a Nature attack, its target loses 10 Wisdom.',
+    description: 'When this hero lands a Nature attack, its target loses WIS ▼. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Nature' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', amount: -10 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1, perFight: 3 },
     },
   },
   // Lotus's Moonpond: read off the tick, so a Renew pays on landing and twice more.

@@ -37,32 +37,32 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   glitter: {
     id: 'glitter',
     name: 'Glitter',
-    description: 'At the end of each round, its partner gains 10 Speed.',
+    description: 'At the end of each round, its partner gains SPD ▲. Up to 3 times a fight.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'ally', stat: 'speed', amount: 10 },
+      effect: { kind: 'statDelta', target: 'ally', stat: 'speed', stages: 1, perFight: 3 },
     },
   },
   mirage: {
     id: 'mirage',
     name: 'Mirage',
-    description: 'When this hero takes damage, both active enemies lose 10 Attack and 10 Intelligence.',
+    description: 'When this hero takes damage, both active enemies lose ATK ▼ and INT ▼. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], amount: -10 },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], stages: -1, perFight: 3 },
     },
   },
   // Folio's Magnum Opus: Twin Cast is two hits, so two pages a cast.
   crescendo: {
     id: 'crescendo',
     name: 'Crescendo',
-    description: 'When this hero lands a hit, it gains 10 Intelligence.',
+    description: 'When this hero lands a hit, it gains INT ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
     },
   },
   illumination: {

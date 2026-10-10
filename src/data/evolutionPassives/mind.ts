@@ -77,11 +77,11 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   hubris: {
     id: 'hubris',
     name: 'Hubris',
-    description: "When an enemy's stat rises, it loses 15 Defense and 15 Wisdom.",
+    description: "When an enemy's stat rises, it loses DEF ▼ and WIS ▼. Once a round, up to 3 times a fight.",
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldPositive: 'delta' },
-      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['defense', 'wisdom'], amount: -15 },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['defense', 'wisdom'], stages: -1, perFight: 3 },
     },
   },
   // Koan's Third Eye: a 45 pool Rests often, and every Rest is a sitting.

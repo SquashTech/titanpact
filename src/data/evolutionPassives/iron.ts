@@ -25,11 +25,11 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   gallop: {
     id: 'gallop',
     name: 'Gallop',
-    description: 'When this hero lands an attack, it gains 10 Speed.',
+    description: 'When this hero lands an attack, it gains SPD ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1, perFight: 3 },
     },
   },
   // Scallywag's Seawise: the bench is where Broadside loads, and now where the crew mends too.
@@ -47,11 +47,11 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   readyStance: {
     id: 'readyStance',
     name: 'Ready Stance',
-    description: 'When an enemy enters the battlefield, this hero gains 15 Attack.',
+    description: 'When an enemy enters the battlefield, this hero gains ATK ▲.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'enemy' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 15 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   unseenCut: {
@@ -81,11 +81,11 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   induction: {
     id: 'induction',
     name: 'Induction',
-    description: 'When an enemy\'s Conduct mark is set off, this hero gains 15 Intelligence.',
+    description: "When an enemy\'s Conduct mark is set off, this hero gains INT ▲. Once a round, up to 3 times a fight.",
     reactive: {
       hook: 'StatusDetonated',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 15 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
     },
   },
 };

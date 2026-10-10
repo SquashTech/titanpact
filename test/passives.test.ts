@@ -794,9 +794,9 @@ test('passives: Afterglow buys the healed ally 20 Attack AND 20 Intelligence', (
   const state = withPassive(solaceFixture(500), 'a1', 'afterglow');
   const { state: next } = resolveRound(state, [mends], config);
 
-  assert.strictEqual(next.combatants.a2.statModifiers.attack, 20);
-  assert.strictEqual(next.combatants.a2.statModifiers.intelligence, 20);
-  assert.strictEqual(next.combatants.a1.statModifiers.attack ?? 0, 0, 'only the one healed');
+  assert.strictEqual(next.combatants.a2.statStages?.attack, 1);
+  assert.strictEqual(next.combatants.a2.statStages?.intelligence, 1);
+  assert.strictEqual(next.combatants.a1.statStages?.attack ?? 0, 0, 'only the one healed');
 });
 
 test('passives: Afterglow reports one StatChanged per stat, the way a move does', () => {
@@ -805,25 +805,26 @@ test('passives: Afterglow reports one StatChanged per stat, the way a move does'
 
   const changes = (events.filter((e) => e.type === 'StatChanged') as any[]).filter((e) => e.combatantId === 'a2');
   assert.deepStrictEqual(changes.map((c) => c.stat).sort(), ['attack', 'intelligence']);
-  assert.ok(changes.every((c) => c.delta === 20));
+  assert.ok(changes.every((c) => c.delta === 1 && c.stages === true));
 });
 
-test('passives: Afterglow fires once per target of a spread heal, and stacks across casts', () => {
+test('passives: Afterglow is braked — one firing a round however many it heals, and a step a round after', () => {
   const state = withPassive(solaceFixture(502), 'a1', 'afterglow');
   const consecrates: Action = { kind: 'move', combatantId: 'a1', moveId: 'consecrate' };
   const once = resolveRound(state, [consecrates], config).state;
-  assert.strictEqual(once.combatants.a1.statModifiers.attack, 20, 'a self-heal counts');
-  assert.strictEqual(once.combatants.a2.statModifiers.attack, 20);
+  const raised = ['a1', 'a2'].filter((id) => once.combatants[id].statStages?.attack === 1);
+  assert.strictEqual(raised.length, 1, 'a spread heal is one firing, not one per target (docs/stat-stages.md §6.3)');
 
   const twice = resolveRound(once, [consecrates], config).state;
-  assert.strictEqual(twice.combatants.a2.statModifiers.attack, 40, 'nothing caps it but the mana');
+  const total = (['a1', 'a2'] as const).reduce((sum, id) => sum + (twice.combatants[id].statStages?.attack ?? 0), 0);
+  assert.strictEqual(total, 2, 'a step the next round');
 });
 
 test('passives: Afterglow is source-role — being healed BY someone does not arm it', () => {
   const state = withPassive(solaceFixture(503), 'a2', 'afterglow');
   const { state: next } = resolveRound(state, [mends], config);
 
-  assert.strictEqual(next.combatants.a2.statModifiers.attack ?? 0, 0, 'receiving a heal is not casting one');
+  assert.strictEqual(next.combatants.a2.statStages?.attack ?? 0, 0, 'receiving a heal is not casting one');
 });
 
 test('passives: Afterglow pays at FULL HP — the heal is wasted and the buff is not', () => {
@@ -837,7 +838,7 @@ test('passives: Afterglow pays at FULL HP — the heal is wasted and the buff is
   const { state: next } = resolveRound(withPassive(full, 'a1', 'afterglow'), [mends], config);
 
   assert.strictEqual(next.combatants.a2.currentHp, fixtureMaxHp('crag'), 'no HP to give back');
-  assert.strictEqual(next.combatants.a2.statModifiers.attack, 20, 'the turn still bought something');
+  assert.strictEqual(next.combatants.a2.statStages?.attack, 1, 'the turn still bought something');
 });
 
 // --- The last four starters: Overspill, Communion, Tempering, Combustion ---
@@ -915,10 +916,10 @@ test('passives: Tempering hardens Valor every time it is hit', () => {
   );
   const swing: Action = { kind: 'move', combatantId: 'b1', moveId: 'heavyBlow', declaredTarget: 'a1' };
   const once = resolveRound(state, [swing], config).state;
-  assert.strictEqual(once.combatants.a1.statModifiers.defense, 10);
+  assert.strictEqual(once.combatants.a1.statStages?.defense, 1);
 
   const twice = resolveRound(once, [swing], config).state;
-  assert.strictEqual(twice.combatants.a1.statModifiers.defense, 20, 'it compounds — the Pact Clock is what ends this');
+  assert.strictEqual(twice.combatants.a1.statStages?.defense, 2, 'a step a round, to its cap');
 });
 
 test('passives: Tempering is the RECEIVER role — Valor dealing damage hardens nothing', () => {
@@ -954,7 +955,7 @@ test('passives: Combustion turns Clockwork\'s own Meltdown backfire into Attack'
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'meltdown' } as Action], config);
 
   assert.ok(hasStatus(next.combatants.a1, 'Burn'), 'Meltdown burns its own caster');
-  assert.strictEqual(next.combatants.a1.statModifiers.attack, 20, 'and that is the point');
+  assert.strictEqual(next.combatants.a1.statStages?.attack, 1, 'and that is the point');
 });
 
 test('passives: Combustion reads the ROLE — burning a FOE with a clean Fire move pays nothing', () => {
@@ -964,7 +965,7 @@ test('passives: Combustion reads the ROLE — burning a FOE with a clean Fire mo
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'setAlight', declaredTarget: 'b1' } as Action], config);
 
   assert.ok(hasStatus(next.combatants.b1, 'Burn'), 'the foe is burning');
-  assert.strictEqual(next.combatants.a1.statModifiers.attack ?? 0, 0, 'but Clockwork is not');
+  assert.strictEqual(next.combatants.a1.statStages?.attack ?? 0, 0, 'but Clockwork is not');
 });
 
 // --- Enthrall (Riptide / Siren) ---
@@ -995,10 +996,10 @@ test('passives: Enthrall wears both active enemies\' Wisdom down at every round\
   const state = withPassive(riptideFixture(700), 'a1', 'enthrall');
   const once = resolveRound(state, [], config).state;
   const twice = resolveRound(once, [], config).state;
-  assert.strictEqual(once.combatants.b1.statModifiers.wisdom, -10);
-  assert.strictEqual(once.combatants.b2.statModifiers.wisdom, -10);
-  assert.ok((twice.combatants.b1.statModifiers.wisdom ?? 0) < -10, 'and again, down to what it can halve');
-  assert.ok(!twice.combatants.a2.statModifiers.wisdom, 'never its own side');
+  assert.strictEqual(once.combatants.b1.statStages?.wisdom, -1);
+  assert.strictEqual(once.combatants.b2.statStages?.wisdom, -1);
+  assert.strictEqual(twice.combatants.b1.statStages?.wisdom, -2, 'and again the next round');
+  assert.ok(!twice.combatants.a2.statStages?.wisdom, 'never its own side');
 });
 
 test('passives: Ember Veil Haunts what its Fire hits, and only that', () => {
@@ -1034,10 +1035,10 @@ test('passives: planting and cashing stay SEPARATE columns — a Fire hit never 
 test('passives: Swell pays the OTHER hand — a physical hit grants Intelligence, a magical one Attack (alsoReactive)', () => {
   const state = withPassive(riptideFixture(705), 'a1', 'swell');
   const physical = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'undertow', declaredTarget: 'b1' } as Action], config).state;
-  assert.strictEqual(physical.combatants.a1.statModifiers.intelligence, 10);
-  assert.ok(!physical.combatants.a1.statModifiers.attack);
+  assert.strictEqual(physical.combatants.a1.statStages?.intelligence, 1);
+  assert.ok(!physical.combatants.a1.statStages?.attack);
   const magical = resolveRound(physical, [waterHit], config).state;
-  assert.strictEqual(magical.combatants.a1.statModifiers.attack, 10);
+  assert.strictEqual(magical.combatants.a1.statStages?.attack, 1);
 });
 
 test('passives: Freezing Rain and Tidal Mass answer Downpour being set', () => {
@@ -1063,7 +1064,7 @@ test('passives: Refresh can land on Kappa itself, so Brimming fires off its own 
   const state = withPassive(hurt, 'a1', 'brimming');
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'refresh', declaredTarget: 'a1' } as Action], config);
   // Renew heals nothing as it lands, once at the round's end: one tick, one stack.
-  assert.strictEqual(next.combatants.a1.statModifiers.attack, 10);
+  assert.strictEqual(next.combatants.a1.statStages?.attack, 1);
 });
 
 // --- The recruit-only slate's four NEW shapes (2026-09-05) ---
@@ -1096,7 +1097,7 @@ test('passives: Cinderguard is a RoundStarted reaction — the Defense lands bef
     [{ kind: 'move', combatantId: 'b1', moveId: 'rockToss', declaredTarget: 'a1' } as Action],
     config
   );
-  assert.strictEqual(next.combatants.a1.statModifiers.defense, 10);
+  assert.strictEqual(next.combatants.a1.statStages?.defense, 1);
   const plated = events.findIndex((e) => e.type === 'StatChanged' && e.combatantId === 'a1' && e.stat === 'defense');
   const struck = events.findIndex((e) => e.type === 'DamageDealt');
   assert.ok(plated >= 0 && plated < struck, 'the plate is on before the hit');
@@ -1206,8 +1207,8 @@ test('passives: Constrict pays a STAT to the hero its magical hit landed on, and
     [{ kind: 'move', combatantId: 'a1', moveId: 'psiBolt', declaredTarget: 'b1' } as Action],
     config
   );
-  assert.strictEqual(slowed.combatants.b1.statModifiers.speed, -10);
-  assert.strictEqual(slowed.combatants.b2.statModifiers.speed ?? 0, 0);
+  assert.strictEqual(slowed.combatants.b1.statStages?.speed, -1);
+  assert.strictEqual(slowed.combatants.b2.statStages?.speed ?? 0, 0);
 
   const physical = withPassive(deepFixture(803, ['coil', 'aegis'], ['crag', 'sentinel']), 'a1', 'constrict');
   const { state: untouched } = resolveRound(

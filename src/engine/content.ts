@@ -238,7 +238,20 @@ export type PassiveEffect =
    * fight writes onto RosterEntry.bonusStatGrants (run/runProgress.ts recordPermanentStatGains) —
    * Rex's Tyrant's Due, the one innate that outlives the fight. Self only.
    */
-  | { kind: 'statDelta'; target: PassiveEffectTarget; stat: StatKey | readonly StatKey[]; amount: number | PassiveAmount; permanent?: true; /** Rises past the ×4 fight ceiling — Stampede's Speed alone, by name (CLAUDE.md). */ uncapped?: true }
+  | {
+      kind: 'statDelta';
+      target: PassiveEffectTarget;
+      stat: StatKey | readonly StatKey[];
+      /** Steps, as a move's (docs/stat-stages.md). Exactly one of `stages` and `amount`. */
+      stages?: number;
+      /** The brake (docs/stat-stages.md §6.3): at most one step a round from this card, and this many a fight (× its stacks). Set on every card on a repeating hook; a switch or a once-a-fight card has none. */
+      perFight?: number;
+      /** FLAT, on statModifiers: a PassiveAmount read off live state (§6.4), or a number only with `permanent` — a run-long gain is what the hero brings. */
+      amount?: number | PassiveAmount;
+      permanent?: true;
+      /** Rises past the ×4 fight ceiling — Stampede's Speed alone, by name (CLAUDE.md). */
+      uncapped?: true;
+    }
   /** Raises every move's price for the target by `amount` for the rest of the fight, stacking to `max` (Deepgrip; Combatant.manaSurcharge, read by state.ts resolveManaCost). */
   | { kind: 'manaSurcharge'; target: PassiveEffectTarget; amount: number; max: number }
   /**

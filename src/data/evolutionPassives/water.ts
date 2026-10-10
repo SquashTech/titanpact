@@ -5,16 +5,16 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   swell: {
     id: 'swell',
     name: 'Swell',
-    description: 'When this hero lands a physical move, it gains 10 Intelligence. When it lands a magical move, it gains 10 Attack.',
+    description: 'When this hero lands a physical move, it gains INT ▲. When it lands a magical move, it gains ATK ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'physical' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
     },
     alsoReactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
     },
   },
   // Pincer's Ironshell. Shield is scaled off Defense, so each plate thickens the next one.
@@ -67,27 +67,27 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   inkCloud: {
     id: 'inkCloud',
     name: 'Ink Cloud',
-    description: 'When this hero enters the battlefield, both active enemies lose 10 Intelligence and 10 Speed.',
+    description: 'When this hero enters the battlefield, both active enemies lose INT ▼ and SPD ▼.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['intelligence', 'speed'], amount: -10 },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['intelligence', 'speed'], stages: -1 },
     },
   },
   // Kappa's Deep Pool: Brimming, shared with whoever stands beside it.
   sharedDish: {
     id: 'sharedDish',
     name: 'Shared Dish',
-    description: 'When this hero is healed, Renew included, its partner gains 10 Attack and 10 Intelligence.',
+    description: 'When this hero is healed, Renew included, its partner gains ATK ▲ and INT ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], amount: 10 },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
     },
     alsoReactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' }, eventFieldPositive: 'amount' },
-      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], amount: 10 },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
     },
   },
   // Kappa's Yokai: the dish spills over into a haunting.

@@ -109,21 +109,21 @@ export const classPassives: Record<string, PassiveDefinition> = {
   berserker: {
     id: 'berserker',
     name: 'Frenzy',
-    description: 'Every hit this hero lands raises its Attack and Intelligence by 5.',
+    description: 'Every hit this hero lands raises its ATK ▲ and INT ▲. Once a round, up to 2 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], amount: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1, perFight: 2 },
     },
   },
   warden: {
     id: 'warden',
     name: 'Stalwart',
-    description: 'When this hero enters the battlefield, it gains 10 Defense and 10 Wisdom.',
+    description: 'When this hero enters the battlefield, it gains DEF ▲ and WIS ▲.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], stages: 1 },
     },
   },
   monk: {
@@ -170,11 +170,11 @@ export const classPassives: Record<string, PassiveDefinition> = {
   sage: {
     id: 'sage',
     name: 'Deep Breath',
-    description: 'When this hero Rests, it gains 20 Intelligence and 20 Wisdom.',
+    description: 'When this hero Rests, it gains INT ▲ and WIS ▲. Once a round, up to 5 times a fight.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['intelligence', 'wisdom'], amount: 20 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['intelligence', 'wisdom'], stages: 1, perFight: 5 },
     },
   },
 };

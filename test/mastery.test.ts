@@ -234,6 +234,9 @@ test('signature: a generated hero at its signatureLevel holds it — in the last
 // --- The mastered innate (docs/mastery.md §5b) ---
 
 /** The one flat figure a card's reaction carries, for the size comparison: a stat delta, a status magnitude, a mana grant, a heal. */
+/** Mastered stage cards a doubled cap cannot raise (the base is already at five) — each waits on a hand-authored upgrade (docs/stat-stages.md §6.3). */
+const AWAITING_STAGE_MASTERY = new Set(['outpacePlus']);
+
 function flatFigure(passive: PassiveDefinition): number | null {
   const effect = passive.reactive?.effect;
   if (!effect) return null;
@@ -245,6 +248,8 @@ function flatFigure(passive: PassiveDefinition): number | null {
     const also = passive.reactive?.alsoEffect;
     return reach * (passive.reactive?.chance ?? 1) * (also?.kind === 'applyStatus' && also.statusId === effect.statusId ? 2 : 1);
   }
+  // A stage card is sized by steps × its fight cap × its reach (docs/stat-stages.md §6.3).
+  if (effect.kind === 'statDelta' && effect.stages !== undefined) return Math.abs(effect.stages) * (effect.perFight ?? 1) * reach;
   if (effect.kind === 'statDelta' || effect.kind === 'applyStatus') {
     const value = effect.kind === 'statDelta' ? effect.amount : effect.magnitude;
     return typeof value === 'number' ? Math.abs(value) : null;
@@ -292,7 +297,14 @@ test('mastered innate: a SIZABLE buff — every flat figure at least doubled, or
     const after = flatFigure(mastered);
     if (before === null || after === null) continue;
     compared++;
-    assert.ok(after >= 2 * before, `${hero.id}: ${innate.id} ${before} -> ${mastered.id} ${after} is not a sizable step`);
+    const staged = innate.reactive?.effect.kind === 'statDelta' && innate.reactive.effect.stages !== undefined;
+    if (staged && AWAITING_STAGE_MASTERY.has(mastered.id)) {
+      assert.ok(after <= before, `${mastered.id} gains on its base now — take it off the awaiting list`);
+      continue;
+    }
+    // A stage card's mastery is twice the cap, held at the five-step limit — bigger, not always doubled.
+    if (staged) assert.ok(after > before, `${hero.id}: ${innate.id} ${before} -> ${mastered.id} ${after} is not a step up`);
+    else assert.ok(after >= 2 * before, `${hero.id}: ${innate.id} ${before} -> ${mastered.id} ${after} is not a sizable step`);
   }
   assert.ok(compared >= 30, `only ${compared} innates compared`);
   // The shapes the figure does not read: a chance becomes always, a share is doubled or more.

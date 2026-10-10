@@ -18,6 +18,7 @@ import { statuses } from '../../data/statuses';
 import type { MoveKindGlyphKind } from './statIcons';
 import { STAT_FULL_LABELS } from './relicStacks';
 import { statusAmountText } from './statusFacts';
+import { stageText } from './moveKind';
 import { BURDEN_SURPLUS, HERO_STAT_TOTAL } from '../../run/statBudget';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
@@ -222,6 +223,18 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
     }
     case 'statDelta': {
       const stats: readonly StatKey[] = Array.isArray(effect.stat) ? (effect.stat as readonly StatKey[]) : [effect.stat as StatKey];
+      // Steps (docs/stat-stages.md), and the brake when the card carries one (§6.3).
+      if (effect.stages !== undefined) {
+        const steps = stats.map((s) => stageText(s, effect.stages!)).join(' & ');
+        const perRound = hook === 'RoundEnded' || hook === 'RoundStarted' ? '' : ', once a round';
+        const brake = effect.perFight !== undefined ? `${perRound}, up to ${effect.perFight} a fight` : '';
+        return {
+          label: 'Then',
+          text: `${steps} to ${targetWord(effect.target, condition, hook)}${brake}`,
+          glyph: { kind: 'stat', stat: stats[0] },
+        };
+      }
+      if (effect.amount === undefined) return { label: 'Then', text: '', glyph: { kind: 'stat', stat: stats[0] } };
       if (typeof effect.amount !== 'number' && effect.amount.kind === 'targetStat') {
         const times = 1 + (effect.amount.multiplier ?? 1);
         return {

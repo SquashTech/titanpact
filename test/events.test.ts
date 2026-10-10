@@ -21,7 +21,7 @@ import { runEvents, type EventCost, type HeroOutcome, type ResolvableOutcome, ty
 import { isValidFlatStatGrant } from '../src/engine/content';
 import type { PassiveInstance, CombatState } from '../src/engine/state';
 import type { CombatEvent } from '../src/engine/events';
-import { getEffectiveStat, getMaxHp } from '../src/engine/state';
+import { getEffectiveStat, getMaxHp, stageMultiplier } from '../src/engine/state';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../src/engine/combat/passiveEngine';
 import { applyForcedReplacement } from '../src/engine/combat/switching';
@@ -304,8 +304,8 @@ test('imposingPresence: switching in drops BOTH active enemies 10 Attack, and le
   const actions: Action[] = [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }];
   const result = resolveRound(state, actions, config);
 
-  assert.strictEqual(attackOf(result.state, 'b1'), before[0] - 10);
-  assert.strictEqual(attackOf(result.state, 'b2'), before[1] - 10);
+  assert.strictEqual(attackOf(result.state, 'b1'), Math.round(before[0] * stageMultiplier(-1)));
+  assert.strictEqual(attackOf(result.state, 'b2'), Math.round(before[1] * stageMultiplier(-1)));
   assert.strictEqual(attackOf(result.state, 'b3'), before[2]);
 });
 
@@ -320,7 +320,7 @@ test('imposingPresence: it fires for the OPENING lead too, not only for a later 
   const state = withPassive(fixture(9), 'a1', 'imposingPresence');
   const before = attackOf(state, 'b1');
   const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects);
-  assert.strictEqual(attackOf(opened.state, 'b1'), before - 10);
+  assert.strictEqual(attackOf(opened.state, 'b1'), Math.round(before * stageMultiplier(-1)));
   assert.ok(opened.events.some((e) => e.type === 'PassiveTriggered'));
   // The synthesised SwitchedIn events must not leak out — the view would narrate a switch that never happened.
   assert.ok(!opened.events.some((e) => e.type === 'SwitchedIn'));
@@ -339,7 +339,7 @@ test('imposingPresence: a forced replacement after a KO is an arrival like any o
   const before = attackOf(state, 'b1');
   const replaced = applyForcedReplacement(state, 1, 'A', 0, 'a3', statuses);
   const entry = resolvePassiveReactions(replaced.state, 1, replaced.events, heroes, statuses, passives, fieldEffects);
-  assert.strictEqual(attackOf(entry.state, 'b1'), before - 10);
+  assert.strictEqual(attackOf(entry.state, 'b1'), Math.round(before * stageMultiplier(-1)));
 });
 
 test('imposingPresence: re-entering re-applies — the debuff compounds across a fight', () => {
@@ -348,14 +348,14 @@ test('imposingPresence: re-entering re-applies — the debuff compounds across a
   state = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config).state;
   state = resolveRound(state, [{ kind: 'switch', combatantId: 'a3', benchedCombatantId: 'a1' }], config).state;
   state = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config).state;
-  assert.strictEqual(attackOf(state, 'b1'), before - 20);
+  assert.strictEqual(attackOf(state, 'b1'), Math.round(before * stageMultiplier(-2)));
 });
 
 test('imposingPresence: two held stacks resolve twice, same discipline as every other passive', () => {
   const state = withPassive(fixture(13), 'a3', 'imposingPresence', 2);
   const before = attackOf(state, 'b1');
   const result = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
-  assert.strictEqual(attackOf(result.state, 'b1'), before - 20);
+  assert.strictEqual(attackOf(result.state, 'b1'), Math.round(before * stageMultiplier(-2)));
 });
 
 test('imposingPresence: one trigger emits one PassiveTriggered followed by one StatChanged per enemy', () => {

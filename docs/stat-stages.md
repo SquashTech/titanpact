@@ -3,9 +3,9 @@
 > **STATUS: DECIDED 2026-10-09 (per user direction); phases 0–1 BUILT and phase 2 mechanically**
 > (same day): the badge, the engine (`Combatant.statStages`, `applyStageDelta`, `stageMultiplier`),
 > the beat copy, the tip and its chart, every move's delta converted by the §6.1 bands, and the
-> §6.2 statement moves re-authored as suggested (Break Will's clear is `clearsRaisedStages`). **Passive stat effects and derived
-> grants are still FLAT** on `statModifiers` and its −½ … ×4 band until §6.3's brake is decided,
-> except an echo of a stage change (Neuroplastic), which answers in steps. Not measured.
+> §6.2 statement moves re-authored as suggested (Break Will's clear is `clearsRaisedStages`), and
+> **the passive brake (§6.3) built**: every passive stat effect is a stage (119), the 100 on a repeating hook
+> braked. **Only the derived grants (§6.4) and Tyrant's Due's run-long gain are still FLAT.** Not measured.
 > Every buff and debuff a fight hands out becomes a **stage**: a stat moves **up to five steps
 > either way**, each step a fixed multiplier on what the hero brought to the fight. This
 > **supersedes `docs/stat-scaling.md`** (caster-scaled flat deltas and the −½ … ×4 band) and
@@ -203,8 +203,10 @@ innates), so the brake is roster design, not loot tuning.
   round**, whatever it answers — a spread hit, two hits, a tick and a hit are still one step. One
   step a firing always: a repeating card's old size buys its CAP, never a bigger step.
 - **Ceiling, per card:** a repeating card stops after a number of steps a fight, read off its old
-  figure — **±5 → 2, ±10 or ±15 → 3, ±20 and past → 5** (the stage limit). Authored on the card
-  (`maxFiresPerFight`, the existing field), so a card can be moved off the band by hand.
+  figure — **±5 → 2, ±10 or ±15 → 3, ±20 and past → 5** (the stage limit). Authored on the EFFECT
+  as `perFight` beside `stages` (built so, not on the reaction's `maxFiresPerFight`): the brake holds
+  the stat change alone, so a card's other half — Wildfire's Mana — keeps firing past it. A step the
+  limit swallows whole is not a firing and spends nothing.
 - **Mastered = twice the base card's cap**, held at 5 — mastering ramps LONGER, not faster
   (Fang's Pack Hunter 2 → Alpha's Call 4; Cinder's Kindling 3 → Forgeheart 5). A mastered card
   whose base has no repeating stat effect (Bellows, Rex, Ursa, Vex) takes the band off its own
@@ -215,8 +217,8 @@ innates), so the brake is roster design, not loot tuning.
   (+5 … +15 → ▲, +20 … +35 → ▲▲, +40 → ▲▲▲) a firing, no round rule.
 - **Derived amounts** (Stampede, Surging Intellect, Neuroplastic) are §6.4's.
 
-Open inside it: whether a STACKED card (a Boon taken twice) multiplies the cap or the tempo —
-proposed: the cap, never the one-a-round tempo.
+A STACKED card (a Boon taken twice) multiplies the cap, never the one-a-round tempo (built so;
+the user's to overturn).
 
 ### 6.4 Derived grants — decided one by one
 
@@ -269,8 +271,9 @@ reflect a drop · gain stages when dropped · a threshold rider ("at ▲▲ ATK,
    and the pilot pricing a step as the points it moves; the beat copy ("rises sharply"), the
    `[stages]` tip token and `fight.stages`.
 2. **Moves** — BUILT: the §6.1 mapping, and the §6.2 statement moves re-authored.
-3. **Passives** — the brake DECIDED (§6.3); next the engine rule, the caps on every card, the
-   card text; then the derived grants (§6.4).
+3. **Passives** — BUILT: the brake (`PassiveInstance.steppedRound` / `stepsThisFight`), `stages` +
+   `perFight` on every card (112 converted), the card text and the readout rows. Next: the derived
+   grants (§6.4) and Kite's mastery.
 4. **Measure** — one sim pass, then play.
 
 ---
@@ -281,7 +284,7 @@ reflect a drop · gain stages when dropped · a threshold rider ("at ▲▲ ATK,
    does it want a stage-flavoured second job?
 2. **The debuff floor** — ÷3.5 is far below today's ½, and the enemy AI never switches out of a
    drop. Start at −5 and pull back to −3 if debuffs dominate.
-3. ~~The repeating-passive brake~~ — decided (§6.3); a stacked card's cap is still open there.
+3. ~~The repeating-passive brake~~ — built (§6.3).
 4. **Arcane Overflow and Surging Intellect** — converted or kept as named flat exceptions.
 5. **Stampede's exception** — capped at ▲5 or still uncapped.
 6. **+10/+15 moves at ×1.5** — re-priced in mana, or left as a buff to the Early slates.

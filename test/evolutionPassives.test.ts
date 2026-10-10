@@ -90,16 +90,16 @@ test('evolution passives: Ink Cloud clouds both active enemies the moment Nautil
   const base = withPassive(threeVThree(701), 'a3', 'inkCloud');
   const { state } = resolveRound(base, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
   for (const id of ['b1', 'b2']) {
-    assert.strictEqual(state.combatants[id].statModifiers.intelligence, -10, id);
-    assert.strictEqual(state.combatants[id].statModifiers.speed, -10, id);
+    assert.strictEqual(state.combatants[id].statStages?.intelligence, -1, id);
+    assert.strictEqual(state.combatants[id].statStages?.speed, -1, id);
   }
-  assert.strictEqual(state.combatants.b3.statModifiers.intelligence, undefined, 'never the bench');
+  assert.strictEqual(state.combatants.b3.statStages?.intelligence, undefined, 'never the bench');
 });
 
 test('evolution passives: Ready Stance answers every enemy that steps onto the field', () => {
   const base = withPassive(threeVThree(702), 'a1', 'readyStance');
   const { state } = resolveRound(base, [{ kind: 'switch', combatantId: 'b1', benchedCombatantId: 'b3' } as Action], config);
-  assert.strictEqual(state.combatants.a1.statModifiers.attack, 15);
+  assert.strictEqual(state.combatants.a1.statStages?.attack, 1);
 });
 
 test('evolution passives: Dead Leaf Haunts the enemies still standing when its hit knocks one out', () => {

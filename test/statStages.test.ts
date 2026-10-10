@@ -153,3 +153,61 @@ test('stages: no statement move is still on the mechanical band — nothing over
   }
   assert.deepStrictEqual(moves.study.statDeltas, [{ stat: 'intelligence', stages: 2 }]);
 });
+
+// --- The passive brake (docs/stat-stages.md §6.3) ---
+
+const REPEATING_EXEMPT_HOOKS = new Set(['SwitchedIn', 'SwitchedOut']);
+
+function holding(state: CombatState, id: string, passiveId: string, stacks = 1): CombatState {
+  const c = state.combatants[id];
+  return { ...state, combatants: { ...state.combatants, [id]: { ...c, passives: { ...c.passives, [passiveId]: { passiveId, stacks } } } } };
+}
+
+/** Valor holding Tempering, deep enough in HP to take two hits a round for eight rounds. */
+function tempered(seed: number, stacks = 1): CombatState {
+  const state = holding(fixture(seed, 'valor', 'crimson'), 'a1', 'tempering', stacks);
+  const a1 = state.combatants.a1;
+  return { ...state, combatants: { ...state.combatants, a1: { ...a1, currentHp: 9000, statModifiers: { ...a1.statModifiers, hp: 9000 } } } };
+}
+const struckTwice = (state: CombatState) =>
+  resolveRound(state, [
+    { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a1' } as Action,
+    { kind: 'move', combatantId: 'b2', moveId: 'ironFist', declaredTarget: 'a1' } as Action,
+  ], config);
+
+test('brake: a repeating card moves a stat ONE step a round, however often it is set off', () => {
+  const { state, events } = struckTwice(tempered(20));
+  assert.strictEqual(state.combatants.a1.statStages?.defense, 1, 'two hits, one step');
+  assert.strictEqual(events.filter((e) => e.type === 'PassiveTriggered' && (e as any).passiveId === 'tempering').length, 1);
+});
+
+test('brake: and stops at its cap a fight — Tempering (old +10) at three', () => {
+  assert.strictEqual((passives.tempering.reactive!.effect as { perFight?: number }).perFight, 3);
+  let state = tempered(21);
+  for (let round = 0; round < 6; round++) state = struckTwice(state).state;
+  assert.strictEqual(state.combatants.a1.statStages?.defense, 3);
+});
+
+test('brake: a second stack raises the cap, never the pace', () => {
+  const { state } = struckTwice(tempered(22, 2));
+  assert.strictEqual(state.combatants.a1.statStages?.defense, 1, 'still one step a round');
+  let worn = tempered(23, 2);
+  for (let round = 0; round < 8; round++) worn = struckTwice(worn).state;
+  assert.strictEqual(worn.combatants.a1.statStages?.defense, 5, 'twice the cap of 3, held at the limit');
+});
+
+test('brake: the data — every repeating stage card is braked, a switch card is not, and a flat number is a run-long gain only', () => {
+  for (const p of Object.values(passives)) {
+    for (const r of [p.reactive, p.alsoReactive]) {
+      if (!r) continue;
+      for (const e of [r.effect, r.alsoEffect]) {
+        if (!e || e.kind !== 'statDelta') continue;
+        if (typeof e.amount === 'number') assert.ok(e.permanent, `${p.id} authors a flat number in a fight`);
+        if (e.stages === undefined) continue;
+        const repeating = !REPEATING_EXEMPT_HOOKS.has(r.hook) && !r.oncePerFight;
+        if (repeating) assert.ok(e.perFight !== undefined && e.perFight >= 1 && e.perFight <= 5 && Math.abs(e.stages) === 1, `${p.id}: a repeating card is one step, braked`);
+        else assert.strictEqual(e.perFight, undefined, `${p.id}: a switch or once-a-fight card carries no brake`);
+      }
+    }
+  }
+});

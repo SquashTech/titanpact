@@ -16,11 +16,11 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   wellFed: {
     id: 'wellFed',
     name: 'Well Fed',
-    description: 'When this hero gains Renew, it gains 10 Attack.',
+    description: 'When this hero gains Renew, it gains ATK ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
     },
   },
   // Coil's Mesmer: StatChanged carries no source, so a partner's Lull arms it too. Serpent's Eye
@@ -49,22 +49,22 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   troopLeader: {
     id: 'troopLeader',
     name: 'Troop Leader',
-    description: "When this hero attacks, its partner gains 10 Attack and 10 Speed.",
+    description: 'When this hero attacks, its partner gains ATK ▲ and SPD ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'true' } },
-      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'speed'], amount: 10 },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
     },
   },
   // Chest Beat on the way in, the canopy on the way out.
   closingCanopy: {
     id: 'closingCanopy',
     name: 'Closing Canopy',
-    description: 'When this hero switches out, both active enemies lose 20 Speed.',
+    description: 'When this hero switches out, both active enemies lose SPD ▼▼.',
     reactive: {
       hook: 'SwitchedOut',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -20 },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', stages: -2 },
     },
   },
   broadBack: {

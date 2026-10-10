@@ -24,6 +24,9 @@ export interface PassiveInstance {
   firedThisFight?: boolean;
   /** Firings so far this fight, counted only for a `reactive.maxFiresPerFight` passive. */
   firesThisFight?: number;
+  /** The brake (docs/stat-stages.md §6.3): the round this card last moved a stat, and how many times it has this fight. */
+  steppedRound?: number;
+  stepsThisFight?: number;
 }
 
 /** Flat additive only — never % or stages. Locked: mods persist on switch, so they live on the Combatant, not the slot. */

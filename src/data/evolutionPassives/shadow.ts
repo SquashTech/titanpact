@@ -72,11 +72,11 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   heldUnder: {
     id: 'heldUnder',
     name: 'Held Under',
-    description: 'When this hero lands a hit, its target loses 10 Defense and 10 Speed.',
+    description: 'When this hero lands a hit, its target loses DEF ▼ and SPD ▼. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['defense', 'speed'], amount: -10 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['defense', 'speed'], stages: -1, perFight: 3 },
     },
   },
   // Rook's Coven: any curse counts, her partner's included — a table of witches, not one.

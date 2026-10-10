@@ -38,11 +38,11 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   reverberation: {
     id: 'reverberation',
     name: 'Reverberation',
-    description: 'When this hero heals an ally, both active enemies lose 10 Speed.',
+    description: 'When this hero heals an ally, both active enemies lose SPD ▼. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -10 },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', stages: -1, perFight: 3 },
     },
   },
   // Carillon's Knell: Enthrall's shape — the Light hit plants the mark, the grafted Spirit line cashes it.
@@ -94,11 +94,11 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   highNoon: {
     id: 'highNoon',
     name: 'High Noon',
-    description: 'Every Light attack this hero lands gives it 10 Speed.',
+    description: 'Every Light attack this hero lands gives it SPD ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1, perFight: 3 },
     },
   },
 };

@@ -55,21 +55,21 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   eldestFace: {
     id: 'eldestFace',
     name: 'Eldest Face',
-    description: "When this hero's partner lands an attack, this hero gains 10 Intelligence.",
+    description: "When this hero's partner lands an attack, this hero gains INT ▲. Once a round, up to 3 times a fight.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
     },
   },
   spiritPack: {
     id: 'spiritPack',
     name: 'Spirit Pack',
-    description: "At the end of each round, this hero's partner gains 10 Attack and 10 Speed.",
+    description: "At the end of each round, this hero's partner gains ATK ▲ and SPD ▲. Up to 3 times a fight.",
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'speed'], amount: 10 },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
     },
   },
   // Keen's Harbinger: Last Rites costs 50, so a kill pays for the next one.

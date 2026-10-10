@@ -15,11 +15,11 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   rollingSnow: {
     id: 'rollingSnow',
     name: 'Rolling Snow',
-    description: 'When this hero knocks out an enemy, it gains 20 Attack and 20 Speed.',
+    description: 'When this hero knocks out an enemy, it gains ATK ▲ and SPD ▲. Once a round, up to 5 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], amount: 20 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 5 },
     },
   },
   // Floe's Icebreaker.
@@ -82,12 +82,12 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   matriarchsFury: {
     id: 'matriarchsFury',
     name: "Matriarch's Fury",
-    description: "When this hero's partner takes damage, both active allies gain 10 Attack.",
+    description: "When this hero's partner takes damage, both active allies gain ATK ▲. Once a round, up to 3 times a fight.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
-      alsoEffect: { kind: 'statDelta', target: 'ally', stat: 'attack', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: 'attack', stages: 1, perFight: 3 },
     },
   },
   // Hush's Tundra Hunter.
@@ -101,11 +101,11 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   owlsGaze: {
     id: 'owlsGaze',
     name: "Owl's Gaze",
-    description: 'When this hero lands a magical attack, its target loses 10 Wisdom.',
+    description: 'When this hero lands a magical attack, its target loses WIS ▼. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', amount: -10 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1, perFight: 3 },
     },
   },
 };

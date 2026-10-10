@@ -38,11 +38,11 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   anvilCrown: {
     id: 'anvilCrown',
     name: 'Anvil Crown',
-    description: 'When this hero takes damage, it gains 10 Intelligence.',
+    description: 'When this hero takes damage, it gains INT ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
     },
   },
   // Nimbus's Sunshower: a partner's Conduct counts too; Anvil Cloud's own does not, a passive never chaining.
@@ -71,11 +71,11 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   gildedString: {
     id: 'gildedString',
     name: 'Gilded String',
-    description: "When this hero uses a move that deals no damage, its partner gains 15 Attack and 15 Intelligence.",
+    description: 'When this hero uses a move that deals no damage, its partner gains ATK ▲ and INT ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
-      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], amount: 15 },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
     },
   },
   // Raiju's Kaminari: every arrival, and a pivot is how it arrives.

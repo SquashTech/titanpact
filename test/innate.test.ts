@@ -449,8 +449,8 @@ test('omen: Haunting one foe Haunts both, and arriving Haunts nobody', () => {
 test('rivet: at each round end the partner gains 5 Defense, and alone on the field nobody does', () => {
   const state = withPassive(twoVTwo(27, 'ironWarden', 'valor', 'crag', 'rime'), 'a1', 'rivet');
   const r = resolveRound(state, restAll(state), config);
-  assert.strictEqual(r.state.combatants.a2.statModifiers.defense, 5);
-  assert.strictEqual(r.state.combatants.a1.statModifiers.defense, undefined);
+  assert.strictEqual(r.state.combatants.a2.statStages?.defense, 1);
+  assert.strictEqual(r.state.combatants.a1.statStages?.defense, undefined);
 });
 
 test('ancestral guidance: at each round end the partner gains Ambush 15, and Totem itself does not', () => {
@@ -468,11 +468,11 @@ test('death wail: a Spirit hit takes 5 Attack and 5 Intelligence off BOTH active
   };
   const wailed = struck('wisp');
   for (const id of ['b1', 'b2']) {
-    assert.strictEqual(wailed.combatants[id].statModifiers.attack, -5, `${id} Attack`);
-    assert.strictEqual(wailed.combatants[id].statModifiers.intelligence, -5, `${id} Intelligence`);
+    assert.strictEqual(wailed.combatants[id].statStages?.attack, -1, `${id} Attack`);
+    assert.strictEqual(wailed.combatants[id].statStages?.intelligence, -1, `${id} Intelligence`);
   }
   const chilled = struck('rimeWind');
-  assert.strictEqual(chilled.combatants.b2.statModifiers.attack, undefined);
+  assert.strictEqual(chilled.combatants.b2.statStages?.attack, undefined);
 });
 
 // --- Broadside: the one bench-side reaction ---
@@ -523,11 +523,11 @@ test('surging intellect: a ManaGained hook — a Rest and a grant both pay Intel
 test('outpace: Intelligence each round both allies move first, stacking; nothing when a partner is slower than an enemy', () => {
   let state = withPassive(twoVTwo(42, 'kite', 'whirr', 'ursa', 'steamColossus'), 'a1', 'outpace');
   state = resolveRound(state, restAll(state), config).state;
-  assert.strictEqual(state.combatants.a1.statModifiers.intelligence, 20);
+  assert.strictEqual(state.combatants.a1.statStages?.intelligence, 1);
   state = resolveRound(state, restAll(state), config).state;
-  assert.strictEqual(state.combatants.a1.statModifiers.intelligence, 40, 'it stacks while the lead holds');
+  assert.strictEqual(state.combatants.a1.statStages?.intelligence, 2, 'it stacks while the lead holds');
   const slow = withPassive(twoVTwo(43, 'kite', 'steamColossus', 'ursa', 'crag'), 'a1', 'outpace');
-  assert.strictEqual(resolveRound(slow, restAll(slow), config).state.combatants.a1.statModifiers.intelligence, undefined);
+  assert.strictEqual(resolveRound(slow, restAll(slow), config).state.combatants.a1.statStages?.intelligence, undefined);
 });
 
 test('mana chime: the active partner regenerates 10 more while Pixie stands beside it; Pixie and the bench do not', () => {
@@ -579,7 +579,7 @@ test('deep breath (Sage): a Rest grants the holder 20 Intelligence and 20 Wisdom
   const { events } = resolveRound(state, restAll(state), config);
   for (const stat of ['intelligence', 'wisdom']) {
     const gain = events.find((e) => e.type === 'StatChanged' && e.combatantId === 'a1' && e.stat === stat) as { delta: number } | undefined;
-    assert.strictEqual(gain?.delta, 20, stat);
+    assert.strictEqual(gain?.delta, 1, stat);
   }
 });
 

@@ -14,7 +14,7 @@ import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import type { CombatState } from '../src/engine/state';
 import type { MoveDefinition, StatusDefinition } from '../src/engine/content';
-import { getEffectiveStat, hasStatus, statusMagnitude } from '../src/engine/state';
+import { getEffectiveStat, hasStatus, stageMultiplier, statusMagnitude } from '../src/engine/state';
 import { applyHpDelta } from '../src/engine/combat/faintHandling';
 import { resolveStatusMagnitudeFor, magnitudeStatKey, magnitudeScales } from '../src/engine/status/statusMagnitude';
 import { shieldHeld } from '../src/engine/status/shield';
@@ -165,7 +165,7 @@ test('shield: an absorbed hit still counts as a hit — Second Skin fires on the
   const defBefore = getEffectiveStat(heroes.ironWarden, state.combatants.b1, 'defense');
   const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'ironFist', declaredTarget: 'b1' }, rest('a2'), rest('b1'), rest('b2')], config);
   assert.ok(events.some((e) => e.type === 'PassiveTriggered' && e.combatantId === 'b1' && e.passiveId === 'secondSkin'));
-  assert.strictEqual(getEffectiveStat(heroes.ironWarden, next.combatants.b1, 'defense'), defBefore + 5);
+  assert.strictEqual(getEffectiveStat(heroes.ironWarden, next.combatants.b1, 'defense'), Math.round(defBefore * stageMultiplier(1)));
 });
 
 test('shield: a drain heals for what got through to HP, not for what the Shield took', () => {

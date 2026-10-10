@@ -393,6 +393,19 @@ function resolveEffectOn(
       // One stat or several; each lands separately and reports its own StatChanged, so a
       // stat-reactive passive (Entanglement) sees them one at a time exactly as a move's would.
       const stats: readonly StatKey[] = Array.isArray(effect.stat) ? (effect.stat as readonly StatKey[]) : [effect.stat as StatKey];
+      if (effect.stages !== undefined) {
+        let stages = target.statStages ?? {};
+        const stepped: CombatEvent[] = [];
+        for (const stat of stats) {
+          const { newValue, landed, capped } = applyStageDelta({ ...target, statStages: stages }, stat, effect.stages);
+          if (landed === 0) continue;
+          stages = { ...stages, [stat]: newValue };
+          stepped.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, stages: true, ...(capped ? { capped: true } : {}), newValue });
+        }
+        if (!stepped.length) return { state, events: [] };
+        return { state: { ...state, combatants: { ...state.combatants, [targetId]: { ...target, statStages: stages } } }, events: stepped };
+      }
+      if (effect.amount === undefined) return { state, events: [] };
       const amount =
         typeof effect.amount === 'number'
           ? effect.amount
@@ -538,13 +551,21 @@ export function resolvePassiveReactions(
               working = { ...working, rngState: roll.nextState };
               if (roll.value >= reactive.chance) continue;
             }
-            const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.effect, context, moves);
-            working = resolved.state;
-            if (reactive.alsoEffect) {
-              const also = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, reactive.alsoEffect, context, moves);
-              working = also.state;
-              resolved.events.push(...also.events);
-            }
+            const held = working.combatants[ownerId]?.passives[instance.passiveId];
+            const braked = (effect: PassiveEffect) => effect.kind === 'statDelta' && effect.perFight !== undefined;
+            const stepAllowed = (effect: PassiveEffect) =>
+              effect.kind !== 'statDelta' || effect.perFight === undefined || (held?.steppedRound !== round && (held?.stepsThisFight ?? 0) < effect.perFight * instance.stacks);
+            let stepped = false;
+            const fire = (effect: PassiveEffect) => {
+              if (!stepAllowed(effect)) return [];
+              const out = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, effect, context, moves);
+              working = out.state;
+              if (braked(effect) && out.events.length) stepped = true;
+              return out.events;
+            };
+            const resolved = { events: fire(reactive.effect) };
+            if (reactive.alsoEffect) resolved.events.push(...fire(reactive.alsoEffect));
+            if (stepped) working = updateInstance(working, ownerId, instance.passiveId, (h) => ({ steppedRound: round, stepsThisFight: (h.stepsThisFight ?? 0) + 1 }));
             // A no-op (a heal at full HP, a target already fainted) is not a trigger: nothing to log.
             if (resolved.events.length === 0) continue;
             if (limit !== undefined) working = updateInstance(working, ownerId, instance.passiveId, (held) => ({ firesThisFight: (held.firesThisFight ?? 0) + 1 }));

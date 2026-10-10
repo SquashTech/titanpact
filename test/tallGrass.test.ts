@@ -52,8 +52,8 @@ test('tall grass: Ink fires as Nautilus switches out — both enemies lose Attac
   const { state: next, events } = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
   assert.ok(next.bench.A.includes('a1'));
   for (const id of ['b1', 'b2']) {
-    assert.strictEqual(next.combatants[id].statModifiers.attack, -10, `${id} Attack`);
-    assert.strictEqual(next.combatants[id].statModifiers.intelligence, -10, `${id} Intelligence`);
+    assert.strictEqual(next.combatants[id].statStages?.attack, -1, `${id} Attack`);
+    assert.strictEqual(next.combatants[id].statStages?.intelligence, -1, `${id} Intelligence`);
   }
   assert.ok(events.some((e) => e.type === 'PassiveTriggered' && e.passiveId === 'ink'));
 });
@@ -84,7 +84,7 @@ test('tall grass: Ink Blast on the lead turn Dazes both foes first, spends every
   assert.deepStrictEqual(dazed.sort(), ['b1', 'b2'], 'both foes flinch');
   assert.strictEqual(events.find((e) => e.type === 'MoveUsed' && e.combatantId === 'a1' && e.type === 'MoveUsed')?.type, 'MoveUsed');
   assert.ok(next.bench.A.includes('a1'), 'and Nautilus is gone behind it');
-  assert.strictEqual(next.combatants.b1.statModifiers.attack, -10, 'the retreat fired Ink');
+  assert.strictEqual(next.combatants.b1.statStages?.attack, -1, 'the retreat fired Ink');
   assert.deepStrictEqual(next.combatants.a1.chargesSpent, { inkBlast: 1 });
 });
 
