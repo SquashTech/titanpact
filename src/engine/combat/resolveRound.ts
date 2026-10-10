@@ -726,32 +726,24 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     const statChangedEvents: CombatEvent[] = [];
 
     // Stat deltas resolve AFTER the damage/heal body: the debuff shapes the next hit, not this one.
-    // Derived deltas (content.ts derivedStatDeltas) are the documented exemption from the
-    // multiples-of-5/10 rule: mana is read pre-spend (`previousMana`), Attack is read live.
-    const derived = move.derivedStatDeltas;
-    const derivedAmount =
-      derived?.source === 'userEffectiveAttack'
-        ? getEffectiveStat(attackerHero, working.combatants[action.combatantId], 'attack', {
-            active: working.activeFieldEffect,
-            defs: fieldEffects,
-            board: { state: working, passives },
-          })
-        : previousMana;
-    // Derived grants stay FLAT, on statModifiers and its band (docs/stat-stages.md §6.4); MP Regen too.
-    const flatDeltas: { stat: StatKey; amount: number }[] = derived ? derived.stats.map((stat) => ({ stat, amount: derivedAmount })) : [];
-    if (move.mpRegenGrant) flatDeltas.push({ stat: 'mpRegen', amount: move.mpRegenGrant });
+    // MP Regen is the one flat grant a move makes (docs/stat-stages.md §1).
+    const flatDeltas: { stat: StatKey; amount: number }[] = move.mpRegenGrant ? [{ stat: 'mpRegen', amount: move.mpRegenGrant }] : [];
+    // stagesPerManaHeld reads the mana held BEFORE the cost (`previousMana`), overflow included.
+    const manaReel = move.stagesPerManaHeld;
+    const manaSteps = manaReel ? Math.min(manaReel.max, Math.floor(previousMana / manaReel.per)) : 0;
+    const manaDeltas: StatDelta[] = manaSteps > 0 ? manaReel!.stats.map((stat) => ({ stat, stages: manaSteps })) : [];
     // conditionalStatDeltas scales the STAGES (one ▲▲, not two ▲s) and never touches the flat grants.
     const packMultiplier =
       move.conditionalStatDeltas && partnerTypes?.includes(move.conditionalStatDeltas.requiresPartnerType)
         ? move.conditionalStatDeltas.multiplier
         : 1;
-    const authoredDeltas: readonly StatDelta[] =
-      packMultiplier === 1
-        ? (move.statDeltas ?? [])
-        : (move.statDeltas ?? []).map(({ stat, stages }) => ({ stat, stages: stages * packMultiplier }));
+    const authoredDeltas: readonly StatDelta[] = [
+      ...(packMultiplier === 1 ? (move.statDeltas ?? []) : (move.statDeltas ?? []).map(({ stat, stages }) => ({ stat, stages: stages * packMultiplier }))),
+      ...manaDeltas,
+    ];
 
     // A randomStatDeltas move may author no statDeltas at all, so the emptiness guard asks about both.
-    const statDeltaTargets = !authoredDeltas.length && !flatDeltas.length && !move.randomStatDeltas && !move.clearsRaisedStages
+    const statDeltaTargets = !authoredDeltas.length && !flatDeltas.length && !move.randomStatDeltas && !move.clearsRaisedStages && !move.doublesStages
       ? []
       : move.statDeltaTarget === 'self'
         ? (called ? [] : [action.combatantId])
@@ -798,7 +790,12 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           }
         }
       }
-      const staged = rolledDeltas.length ? [...authoredDeltas, ...rolledDeltas] : authoredDeltas;
+      // doublesStages (Apex Predator): each stat's current steps again, or ▲▲ from none or below.
+      const doubled: StatDelta[] = (move.doublesStages ?? []).map((stat) => {
+        const held = working.combatants[targetId].statStages?.[stat] ?? 0;
+        return { stat, stages: held >= 1 ? held : 2 };
+      });
+      const staged = [...authoredDeltas, ...rolledDeltas, ...doubled];
       // A stage is a stage, whoever casts it; held at ±5, and a change the limit swallowed whole still emits, so the player sees why nothing moved.
       for (const delta of staged) {
         const current = working.combatants[targetId];

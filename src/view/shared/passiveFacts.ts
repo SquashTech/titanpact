@@ -246,7 +246,7 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
       const amount = typeof effect.amount === 'number' ? fmt(effect.amount) : `${amountWord(effect.amount, '').replace('the same amount', 'as much')}`;
       return {
         label: 'Then',
-        text: `${amount} ${stats.map((s) => STAT_FULL_LABELS[s]).join(' & ')} to ${targetWord(effect.target, condition, hook)}${effect.permanent ? ', kept for the whole run' : ''}`,
+        text: `${amount} ${stats.map((s) => STAT_FULL_LABELS[s]).join(' & ')} to ${targetWord(effect.target, condition, hook)}${effect.permanent ? ', kept for the whole run' : ''}${effect.perFight !== undefined ? `, once a round, up to ${effect.perFight} a fight` : ''}`,
         glyph: { kind: 'stat', stat: stats[0] },
       };
     }

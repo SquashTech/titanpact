@@ -1,4 +1,4 @@
-// Beast slate: requiresPartnerType (power / mana cost / stat deltas), statusApplication lists, derived Apex Predator. Hand-off findings: docs/authoring-moves.md §10.
+// Beast slate: requiresPartnerType (power / mana cost / stat deltas), statusApplication lists, Apex Predator doubling stages. Hand-off findings: docs/authoring-moves.md §10.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -18,7 +18,7 @@ import {
   activePartnerTypes,
   effectiveManaCost,
   getEffectiveStat,
-  STAT_CEILING_MULTIPLE, stageMultiplier,
+  stageMultiplier,
   hasStatus,
   resolveManaCost,
   statusMagnitude,
@@ -208,49 +208,34 @@ test('beast: the pack price is spent at the price the BOARD says, not the one th
   assert.strictEqual(stagesRecordOf(after, 'a2').speed, landedDelta(state, 'a1', moves.packLeader, 'speed', stagesOf(moves.packLeader, 'speed' as any), 'a2'));
 });
 
-// --- Apex Predator: the derived grant ---
+// --- Apex Predator: doublesStages (docs/stat-stages.md §6.4) ---
 
-test('beast: Apex Predator grants Attack equal to the Attack the caster currently has', () => {
+const apex = (state: CombatState) => resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'apexPredator', declaredTarget: 'a1' }], config).state;
+
+test('beast: Apex Predator from no Attack steps gives ▲▲ — exactly the old doubling', () => {
   const state = withDeepPools(beastFixture(720, 'cinderKnight'));
   const fang = heroes.packAlpha;
   const before = getEffectiveStat(fang, state.combatants.a1, 'attack');
-  const { state: after } = resolveRound(
-    state,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'apexPredator', declaredTarget: 'a1' }],
-    config
-  );
-  assert.strictEqual(modifiersOf(after, 'a1').attack, before, 'the grant is the figure it read');
+  const after = apex(state);
+  assert.strictEqual(after.combatants.a1.statStages?.attack, 2);
   assert.strictEqual(getEffectiveStat(fang, after.combatants.a1, 'attack'), before * 2, 'which doubles the bar');
 });
 
-test('beast: Apex Predator COMPOUNDS, and a buff cast first is doubled with everything else', () => {
+test('beast: Apex Predator COMPOUNDS — it doubles the steps already there, and a cast first is inside the doubling', () => {
   const state = withDeepPools(beastFixture(721, 'cinderKnight'));
-  const fang = heroes.packAlpha;
-  const base = getEffectiveStat(fang, state.combatants.a1, 'attack');
+  const rallied = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'rally', declaredTarget: 'a1' }], config).state;
+  const rally = rallied.combatants.a1.statStages?.attack ?? 0;
+  assert.ok(rally >= 1, 'Rally raised Attack');
+  const once = apex(rallied);
+  assert.strictEqual(once.combatants.a1.statStages?.attack, Math.min(5, rally * 2), 'the Rally is doubled');
+  const twice = apex(once);
+  assert.strictEqual(twice.combatants.a1.statStages?.attack, Math.min(5, rally * 4), 'and again, held at five');
+});
 
-  const rallied = resolveRound(
-    state,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'rally', declaredTarget: 'a1' }],
-    config
-  ).state;
-  const rallied_ = Math.round(base * stageMultiplier(landedDelta(state, 'a1', moves.rally, 'attack', stagesOf(moves.rally, 'attack'), 'a1')));
-  assert.strictEqual(getEffectiveStat(fang, rallied.combatants.a1, 'attack'), rallied_);
-
-  const once = resolveRound(
-    rallied,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'apexPredator', declaredTarget: 'a1' }],
-    config
-  ).state;
-  assert.strictEqual(getEffectiveStat(fang, once.combatants.a1, 'attack'), rallied_ * 2, 'the Rally is inside the doubling');
-
-  const twice = resolveRound(
-    once,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'apexPredator', declaredTarget: 'a1' }],
-    config
-  ).state;
-  // The derived grant is FLAT and its band holds the flat part at +3× what the hero brought
-  // (state.ts statModifierCeiling); the Rally's stage sits outside that band, on top of it.
-  assert.strictEqual(getEffectiveStat(fang, twice.combatants.a1, 'attack'), rallied_ + base * (STAT_CEILING_MULTIPLE - 1), 'and a second cast is held at the flat band');
+test('beast: Apex Predator on a lowered Attack climbs ▲▲ from where it is, never doubling a drop', () => {
+  const state = withDeepPools(beastFixture(722, 'cinderKnight'));
+  const lowered = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, statStages: { attack: -1 } } } } as CombatState;
+  assert.strictEqual(apex(lowered).combatants.a1.statStages?.attack, 1);
 });
 
 // --- Bleed as a currency ---

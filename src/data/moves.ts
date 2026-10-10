@@ -2466,7 +2466,7 @@ export const moves: Record<string, MoveDefinition> = {
     kind: 'buff',
     statDeltas: [],
     // Read before this move's cost is paid; overflow mana counts.
-    derivedStatDeltas: { source: 'userManaBeforeCast', stats: ['attack', 'intelligence'] },
+    stagesPerManaHeld: { stats: ['attack', 'intelligence'], per: 40, max: 3 },
     manaCost: 70,
     priority: 0,
     target: 'bothAllies',
@@ -3870,7 +3870,7 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'buff',
     // Grants the caster's current effective Attack — a doubling, and it compounds on recast.
-    derivedStatDeltas: { source: 'userEffectiveAttack', stats: ['attack'] },
+    doublesStages: ['attack'],
     statDeltaTarget: 'self',
     manaCost: 80,
     priority: 0,

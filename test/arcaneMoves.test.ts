@@ -1,4 +1,4 @@
-// Arcane slate: manaGrant / overflow, conditionalTarget, derivedStatDeltas. Hand-off findings: docs/authoring-moves.md §10.
+// Arcane slate: manaGrant / overflow, conditionalTarget, stagesPerManaHeld. Hand-off findings: docs/authoring-moves.md §10.
 
 import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
@@ -13,7 +13,6 @@ import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
-import { statModifierCeiling } from '../src/engine/state';
 import { applyManaRegen } from '../src/engine/combat/manaRegen';
 import { setFieldEffect } from '../src/engine/combat/fieldEffectEngine';
 import { getMaxMana, resolveTargetMode } from '../src/engine/state';
@@ -261,44 +260,28 @@ test('arcane: a move with no conditionalTarget answers exactly as move.target, f
   }
 });
 
-// --- derivedStatDeltas ---
+// --- stagesPerManaHeld (docs/stat-stages.md §6.4) ---
 
-test('arcane: Arcane Overflow grants Attack and Intelligence equal to the mana held BEFORE the cost', () => {
-  const banked = 173; // deliberately not a multiple of 5 — see the next test
-  const built = withMana(survivable(arcaneFixture(13)), 'a2', banked);
+const overflowAt = (seed: number, banked: number) =>
+  resolveRound(withMana(survivable(arcaneFixture(seed)), 'a2', banked), [{ kind: 'move', combatantId: 'a2', moveId: 'arcaneOverflow' }], config);
 
-  const { state: next, events } = resolveRound(
-    built,
-    [{ kind: 'move', combatantId: 'a2', moveId: 'arcaneOverflow' }],
-    config
-  );
-
-  // The read is the whole banked figure; what LANDS is held at the band's top, ×4 of base + loadout
-  // (state.ts statModifierCeiling) — which binds the 20–25 Attack of two casters long before the 85–90 Intelligence.
+test('arcane: Arcane Overflow gives both allies an ATK and INT step per 40 Mana held BEFORE the cost, up to three', () => {
+  const { state: next, events } = overflowAt(13, 173);
   for (const id of ['a1', 'a2']) {
-    const c = next.combatants[id];
-    assert.strictEqual(c.statModifiers.attack, Math.min(banked, statModifierCeiling(heroes[c.heroId], c, 'attack')), `${id} Attack`);
-    assert.strictEqual(c.statModifiers.intelligence, banked, `${id} Intelligence`);
+    assert.strictEqual(next.combatants[id].statStages?.attack, 3, `${id} Attack`);
+    assert.strictEqual(next.combatants[id].statStages?.intelligence, 3, `${id} Intelligence`);
   }
-  // Not `banked - manaCost`: the row reads the mana BEFORE the cost.
-  const changes = events.filter((e) => e.type === 'StatChanged' && (e as { stat: string }).stat === 'intelligence') as Array<{ delta: number }>;
-  assert.ok(changes.length > 0 && changes.every((c) => c.delta === banked));
+  const changes = events.filter((e) => e.type === 'StatChanged' && (e as { stat: string }).stat === 'intelligence') as Array<{ delta: number; stages?: true }>;
+  assert.ok(changes.length > 0 && changes.every((c) => c.delta === 3 && c.stages === true));
 });
 
-test('arcane: the derived grant is the one stat modifier exempt from the multiples-of-5 rule', () => {
-  const built = withMana(survivable(arcaneFixture(14)), 'a2', 173);
-  const { state: next } = resolveRound(built, [{ kind: 'move', combatantId: 'a2', moveId: 'arcaneOverflow' }], config);
-  assert.strictEqual(next.combatants.a2.statModifiers.intelligence! % 5, 3, 'the exact figure lands, unrounded');
-
-  for (const move of Object.values(moves)) {
-    for (const delta of move.statDeltas ?? []) {
-      // Math.abs: -10 % 5 is -0, which strictEqual distinguishes from 0.
-      assert.ok(Number.isInteger(delta.stages), `${move.id} authors a fractional stage`);
-    }
+test('arcane: the steps read the mana held, not what is left — 79 is one, 80 two, 120 three', () => {
+  for (const [banked, steps] of [[79, 1], [80, 2], [119, 2], [120, 3]] as const) {
+    assert.strictEqual(overflowAt(14, banked).state.combatants.a2.statStages?.intelligence, steps, `${banked} Mana`);
   }
 });
 
-test('arcane: the derived grant READS the mana, it does not spend it', () => {
+test('arcane: Arcane Overflow READS the mana, it does not spend it', () => {
   const banked = 200;
   const built = withMana(survivable(arcaneFixture(15)), 'a2', banked);
   const { state: next } = resolveRound(built, [{ kind: 'move', combatantId: 'a2', moveId: 'arcaneOverflow' }], config);
@@ -307,7 +290,7 @@ test('arcane: the derived grant READS the mana, it does not spend it', () => {
   assert.strictEqual(next.combatants.a2.currentMana, banked - moves.arcaneOverflow.manaCost);
 });
 
-test('arcane: overflow counts toward the derived grant — the Font of Power into Arcane Overflow combo', () => {
+test('arcane: overflow counts toward the steps — the Font of Power into Arcane Overflow combo', () => {
   const raw = survivable(arcaneFixture(16));
   const pool = maxManaOf(raw, 'a2');
   // Exactly the price, so what it ends up holding is the grant and nothing else.
@@ -318,8 +301,9 @@ test('arcane: overflow counts toward the derived grant — the Font of Power int
 
   const held = charged.combatants.a2.currentMana;
   const { state: next } = resolveRound(charged, [{ kind: 'move', combatantId: 'a2', moveId: 'arcaneOverflow' }], config);
-  // Intelligence, since Runescribe's 25 Attack caps at +75 and the held figure passes it.
-  assert.strictEqual(next.combatants.a1.statModifiers.intelligence, held, 'the buff is the FULL held figure, overflow included');
+  const steps = Math.min(moves.arcaneOverflow.stagesPerManaHeld!.max, Math.floor(held / moves.arcaneOverflow.stagesPerManaHeld!.per));
+  assert.ok(held > pool && steps >= 1);
+  assert.strictEqual(next.combatants.a1.statStages?.intelligence, steps, 'the steps read the FULL held figure, overflow included');
 });
 
 // --- The slate as a whole ---

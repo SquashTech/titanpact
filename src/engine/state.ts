@@ -541,8 +541,9 @@ export function getEffectiveStat(
     }
   }
 
-  // Floor of 1 across every stat, applied last — a 0 or negative defStat would break the off/def ratio.
-  return Math.max(1, raw);
+  // Floor of 1 across every stat, applied last — a 0 or negative defStat would break the off/def ratio —
+  // and a hard ceiling, so an uncapped grant (Stampede) can never grow a number past what the game can hold.
+  return Math.min(STAT_HARD_CAP, Math.max(1, raw));
 }
 
 export function hasStatus(combatant: Combatant, statusId: StatusId): boolean {
@@ -565,6 +566,9 @@ export function statusMagnitude(combatant: Combatant, statusId: StatusId): numbe
  */
 export const STAT_CEILING_MULTIPLE = 4;
 
+/** No effective stat passes this, uncapped grants included (Stampede doubling every round). */
+export const STAT_HARD_CAP = 9999;
+
 export function statModifierFloor(hero: HeroDefinition, combatant: Combatant, stat: StatKey): number {
   const s = hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0);
   return -Math.floor(Math.max(0, s) / 2);
@@ -586,7 +590,7 @@ export function applyStatModifierDelta(
 ): { newValue: number; landed: number; capped: boolean } {
   const current = combatant.statModifiers[stat] ?? 0;
   // A modifier already past the ceiling (an uncapped rise) is never clawed back by a later change; it just cannot climb further.
-  const ceiling = uncapped ? Infinity : Math.max(statModifierCeiling(hero, combatant, stat), current);
+  const ceiling = uncapped ? STAT_HARD_CAP : Math.max(statModifierCeiling(hero, combatant, stat), current);
   const newValue = Math.min(ceiling, Math.max(statModifierFloor(hero, combatant, stat), current + delta));
   return { newValue, landed: newValue - current, capped: newValue !== current + delta };
 }

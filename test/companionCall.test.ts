@@ -69,7 +69,7 @@ test('companionCall: a Call asks nothing of the caster — no cost, no pivot, no
     assert.ok(!move.switchesUserOut, `${where} pivots`);
     assert.ok(!move.selfHpCost && !move.recoilPercent, `${where} costs the caster HP`);
     assert.ok(!move.drainPercent, `${where} heals a caster that is not there`);
-    assert.ok(!move.derivedStatDeltas, `${where} reads the caster's own state`);
+    assert.ok(!move.stagesPerManaHeld && !move.doublesStages, `${where} reads the caster's own state`);
     assert.ok(move.statDeltaTarget !== 'self', `${where} lands its deltas on the caster`);
     assert.ok(!move.conditionalPower?.requiresUserHpBelow && !move.conditionalPower?.requiresUserStatus, `${where} reads the caster's own state`);
     assert.ok(!move.conditionalPower?.requiresPartnerType, `${where} reads a partner the caster does not have`);

@@ -704,7 +704,8 @@ function scoreCast(
   // --- Payloads with no closed form: credited, never zeroed ---
   const opaque =
     move.randomStatDeltas != null ||
-    move.derivedStatDeltas != null ||
+    move.doublesStages != null ||
+    move.stagesPerManaHeld != null ||
     move.detonatesStatus != null ||
     move.fieldEffectApplication != null;
   if (opaque) {

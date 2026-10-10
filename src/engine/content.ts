@@ -522,11 +522,10 @@ export interface MoveDefinition {
     stages: number;
     from: readonly StatKey[];
   };
-  /** Any kind. Delta read off live state at cast: 'userManaBeforeCast' (before the cost is spent; overflow counts) or 'userEffectiveAttack' (via getEffectiveStat, so a recast doubles the doubled figure). Exempt from the multiples-of-5 rule (CLAUDE.md). */
-  derivedStatDeltas?: {
-    source: 'userManaBeforeCast' | 'userEffectiveAttack';
-    stats: readonly StatKey[];
-  };
+  /** Doubles each stat-delta target's current steps on these stats, or gives ▲▲ from none or below (docs/stat-stages.md §6.4) — Apex Predator. Read after clearsRaisedStages, held at ±5. */
+  doublesStages?: readonly StatKey[];
+  /** A step on each of `stats` per `per` Mana the caster held before the cost (overflow counts), up to `max` — Arcane Overflow (docs/stat-stages.md §6.4). */
+  stagesPerManaHeld?: { stats: readonly StatKey[]; per: number; max: number };
   /** Any kind. Flat mana to each resolved target; may exceed the pool — uncapped, sticky overflow (docs/mana.md "Overflow"). Ally modes include the caster. Emits ManaGranted. */
   manaGrant?: number;
   /** Flat MP Regen to every stat-delta target, outside the stage system (Mana Font). */

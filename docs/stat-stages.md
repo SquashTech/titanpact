@@ -5,7 +5,8 @@
 > the beat copy, the tip and its chart, every move's delta converted by the §6.1 bands, and the
 > §6.2 statement moves re-authored as suggested (Break Will's clear is `clearsRaisedStages`), and
 > **the passive brake (§6.3) built**: every passive stat effect is a stage (119), the 100 on a repeating hook
-> braked. **Only the derived grants (§6.4) and Tyrant's Due's run-long gain are still FLAT.** Not measured.
+> braked, and the derived grants decided (§6.4). **Flat now: Surging Intellect, Stampede (under the
+> 9999 hard ceiling) and Tyrant's Due's run-long gain, by decision.** Not measured.
 > Every buff and debuff a fight hands out becomes a **stage**: a stat moves **up to five steps
 > either way**, each step a fixed multiplier on what the hero brought to the fight. This
 > **supersedes `docs/stat-scaling.md`** (caster-scaled flat deltas and the −½ … ×4 band) and
@@ -220,9 +221,17 @@ innates), so the brake is roster design, not loot tuning.
 A STACKED card (a Boon taken twice) multiplies the cap, never the one-a-round tempo (built so;
 the user's to overturn).
 
-### 6.4 Derived grants — decided one by one
+### 6.4 Derived grants — DECIDED AND BUILT 2026-10-10 (per user direction)
 
-| Grant | Today | Suggested |
+Built: Apex Predator `doublesStages` (the Attack steps doubled, ▲▲ from none or below — a lowered
+Attack climbs two, never doubles its drop); Arcane Overflow `stagesPerManaHeld` (▲ per 40 Mana held
+before the cost, overflow counted, up to ▲▲▲); `derivedStatDeltas` deleted. **Stampede stays flat
+and uncapped**, the named exception, under a hard ceiling every effective stat now obeys
+(`STAT_HARD_CAP` = 9999, so a doubling every round cannot grow a number the game cannot hold).
+**Surging Intellect stays flat** on the ×4 band. Neuroplastic / Mindthief echo a stage drop in
+steps and carry the brake like every repeating card (3 a fight, Mindthief 5).
+
+| Grant | Before | Suggested (superseded by the line above) |
 |---|---|---|
 | Apex Predator (move) | ATK equal to its own ATK | ATK ▲▲ — it is ×2, exactly |
 | Arcane Overflow (move) | ATK/INT equal to mana before the cast, both allies | a step per 40 mana spent, max ▲▲▲ — or kept as the named flat exception |
@@ -272,8 +281,8 @@ reflect a drop · gain stages when dropped · a threshold rider ("at ▲▲ ATK,
    `[stages]` tip token and `fight.stages`.
 2. **Moves** — BUILT: the §6.1 mapping, and the §6.2 statement moves re-authored.
 3. **Passives** — BUILT: the brake (`PassiveInstance.steppedRound` / `stepsThisFight`), `stages` +
-   `perFight` on every card (112 converted), the card text and the readout rows. Next: the derived
-   grants (§6.4) and Kite's mastery.
+   `perFight` on every card (112 converted), the card text and the readout rows; the derived grants (§6.4)
+   built 2026-10-10. Next: Kite's mastery.
 4. **Measure** — one sim pass, then play.
 
 ---

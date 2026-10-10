@@ -136,9 +136,10 @@ export function effect(m: MoveDefinition): string {
     const r = m.randomStatDeltas;
     out.push(`${signed(r.stages)} stage to ${r.count >= r.from.length ? 'every' : r.count} random stat${r.count === 1 ? '' : 's'}${landsOn(m.statDeltaTarget ?? 'moveTarget', m)}`);
   }
-  if (m.derivedStatDeltas) {
-    const src = m.derivedStatDeltas.source === 'userManaBeforeCast' ? 'mana before the cast' : 'own current Atk';
-    out.push(`+${m.derivedStatDeltas.stats.map((s) => STAT_ABBR[s]).join('/')} equal to ${src}`);
+  if (m.doublesStages) out.push(`doubles ${m.doublesStages.map((s) => STAT_ABBR[s]).join('/')} stages (+2 from none)`);
+  if (m.stagesPerManaHeld) {
+    const r = m.stagesPerManaHeld;
+    out.push(`${r.stats.map((s) => STAT_ABBR[s]).join('/')} +1 stage per ${r.per} mana held, max ${r.max}`);
   }
   if (m.manaGrant !== undefined) out.push(`+${m.manaGrant} mana`);
   for (const app of statusApplicationsOf(m)) out.push(rider(app, m));

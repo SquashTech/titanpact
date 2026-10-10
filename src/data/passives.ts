@@ -1203,12 +1203,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   neuroplastic: {
     id: 'neuroplastic',
     name: 'Neuroplastic',
-    description: "When an enemy's Wisdom is lowered, this hero gains that much Wisdom.",
+    description: "When an enemy's Wisdom is lowered, this hero's Wisdom rises as many steps. Once a round, up to 3 times a fight.",
     // The drop is read off the StatChanged that landed (negative delta → the same figure, positive).
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'wisdom' }, eventFieldNegative: 'delta' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'wisdom', amount: { kind: 'matchTriggerAmount', field: 'delta', multiplier: -1 } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'wisdom', amount: { kind: 'matchTriggerAmount', field: 'delta', multiplier: -1 }, perFight: 3 },
     },
   },
   hunger: {
@@ -2109,12 +2109,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   mindthief: {
     id: 'mindthief',
     name: 'Neuroplastic+',
-    description: "When an enemy's Wisdom is lowered, this hero gains that much Wisdom, Attack and Intelligence.",
+    description: "When an enemy's Wisdom is lowered, this hero's Wisdom, Attack and Intelligence rise as many steps. Once a round, up to 5 times a fight.",
     // Both hands, so Construct's rewire keeps it live (docs/evolution-simplification.md §5).
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'wisdom' }, eventFieldNegative: 'delta' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['wisdom', 'attack', 'intelligence'], amount: { kind: 'matchTriggerAmount', field: 'delta', multiplier: -1 } },
+      effect: { kind: 'statDelta', target: 'self', stat: ['wisdom', 'attack', 'intelligence'], amount: { kind: 'matchTriggerAmount', field: 'delta', multiplier: -1 }, perFight: 5 },
     },
   },
   insatiable: {

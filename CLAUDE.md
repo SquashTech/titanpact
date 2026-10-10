@@ -391,16 +391,15 @@ don't silently override it.
   Overhaul phase 3): a growth roll grants **+1 to +4**, or **+3 to +12 HP**, none of which is a
   multiple of 5. The rule was written to keep authored grants legible, and a roll nobody authors per-hero
   is not that kind of grant — the legibility lives in the GRADE instead (`src/run/growth.ts`).
-  A further exemption
-  (2026-08-30): a **derived** grant, whose amount is read off live state rather than
-  authored, lands unrounded — Arcane Overflow grants Attack/Intelligence equal to the
-  caster's current Mana, and Beast's Apex Predator grants Attack equal to the caster's
-  own current Attack (`MoveDefinition.derivedStatDeltas`, `docs/combat.md`). **The third
-  was that conversation** (2026-09-29, per user direction): Zenith's Surging Intellect grants
-  Intelligence equal to every Mana it gains — regen, a grant, a Rest — bounded by the ×4 fight
-  ceiling (`docs/innate-passives.md` §7c). **The fourth** (2026-10-08, per user direction,
-  `docs/hero-audit.md`): Tusk's Stampede doubles its own Speed at every round end
-  (`PassiveAmount` `targetStat`), held by the same ceiling. A fifth is a conversation again.
+  A further exemption: a **derived** grant, whose amount is read off live state rather than
+  authored, lands FLAT and unrounded — and since stages (2026-10-10, `docs/stat-stages.md` §6.4,
+  per user direction) there are exactly two: Zenith's **Surging Intellect** grants Intelligence
+  equal to every Mana it gains, bounded by the ×4 flat ceiling (`docs/innate-passives.md` §7c),
+  and Tusk's **Stampede** doubles its own Speed at every round end, uncapped but held under
+  `STAT_HARD_CAP` = 9999, the ceiling no effective stat passes. Arcane Overflow and Apex
+  Predator became stage verbs (`stagesPerManaHeld`: a step per 40 Mana held, up to ▲▲▲;
+  `doublesStages`: the Attack steps doubled, ▲▲ from none), and `derivedStatDeltas` is deleted.
+  A third is a conversation again.
 - **No accuracy stat.** Moves always land. **Mana cost is the primary balance lever** on
   reliable moves. **A guaranteed lockout is limited by CHARGES** (2026-10-08, per user direction,
   `docs/charges.md`, replacing the +20-a-cast `manaCostGainOnUse` of 2026-09-11, deleted):

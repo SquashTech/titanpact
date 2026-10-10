@@ -177,7 +177,7 @@ function riderIsRedundant(state: CombatState, ctx: AiContext, app: StatusApplica
 
 /** A move whose only stat payload is plain deltas — the one kind the band can make a no-op. */
 function isPureStatMove(move: MoveDefinition): boolean {
-  return !!move.statDeltas?.length && !move.conditionalStatDeltas && !move.randomStatDeltas && !move.derivedStatDeltas;
+  return !!move.statDeltas?.length && !move.conditionalStatDeltas && !move.randomStatDeltas && !move.doublesStages && !move.stagesPerManaHeld;
 }
 
 /** Would every one of this move's deltas land 0 on this target — is it at ±5 on every stat the move touches? */
@@ -199,7 +199,8 @@ function isInertOnBoard(state: CombatState, casterId: string, move: MoveDefiniti
     move.conditionalStatDeltas ||
     move.randomStatDeltas ||
     move.clearsRaisedStages ||
-    move.derivedStatDeltas ||
+    move.doublesStages ||
+    move.stagesPerManaHeld ||
     move.manaGrant != null ||
     move.detonatesStatus ||
     move.switchesUserOut ||

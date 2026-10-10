@@ -13,7 +13,7 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import type { CombatState } from '../src/engine/state';
-import { applyStageDelta, getEffectiveStat, stageMultiplier, STAGED_STATS, STAGE_LIMIT, statDeltaLandsOnCasterSide, statModifierCeiling } from '../src/engine/state';
+import { applyStageDelta, applyStatModifierDelta, getEffectiveStat, stageMultiplier, STAGED_STATS, STAGE_LIMIT, STAT_HARD_CAP, statDeltaLandsOnCasterSide } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
@@ -104,11 +104,11 @@ test('stages: Mana Font\'s MP Regen stays flat, outside the stage system', () =>
   for (const e of statChanged(events)) assert.strictEqual(e.stages, undefined);
 });
 
-test('stages: a DERIVED grant stays flat on statModifiers and its band (docs/stat-stages.md §6.4)', () => {
-  const before = fixture(7, 'runescribe', 'crimson').combatants.a1.currentMana;
-  const { state, events } = cast(fixture(7, 'runescribe', 'crimson'), 'a1', 'arcaneOverflow');
-  assert.strictEqual(state.combatants.a1.statModifiers.intelligence, Math.min(before, statModifierCeiling(heroes.runescribe, state.combatants.a1, 'intelligence')));
-  for (const e of statChanged(events)) assert.strictEqual(e.stages, undefined);
+test('stages: an uncapped flat grant (Stampede) stops at the hard ceiling, and no stat ever reads past it', () => {
+  const tusk = { ...fixture(7).combatants.a1, heroId: 'tusk' };
+  const { newValue } = applyStatModifierDelta(heroes.tusk, tusk, 'speed', 1e12, true);
+  assert.strictEqual(newValue, STAT_HARD_CAP);
+  assert.strictEqual(getEffectiveStat(heroes.tusk, { ...tusk, statModifiers: { speed: newValue } }, 'speed'), STAT_HARD_CAP);
 });
 
 test('stages: the card-only side read — self, ally and bothAllies deltas are the caster\'s side; a hit\'s rider is not', () => {

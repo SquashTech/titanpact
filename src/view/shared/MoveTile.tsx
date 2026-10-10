@@ -285,20 +285,19 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   if (move.mpRegenGrant) parts.push(`+${move.mpRegenGrant} ${STAT_LABELS.mpRegen}${statDeltaWhere(move)}`);
 
 
-  // No number to print: the value is whatever live state says. States the rule.
-  if (move.derivedStatDeltas) {
+  // Read off live state at cast, so the summary states the rule (docs/stat-stages.md §6.4).
+  if (move.doublesStages || move.stagesPerManaHeld) {
     const where =
       move.statDeltaTarget === 'bothAllies' || (move.statDeltaTarget == null && move.target === 'bothAllies')
         ? ' (Both Allies)'
         : move.statDeltaTarget === 'self' || (move.statDeltaTarget == null && move.target === 'self')
           ? ' (Self)'
           : '';
-    const stats = move.derivedStatDeltas.stats.map((stat) => STAT_LABELS[stat]).join(' and ');
-    parts.push(
-      move.derivedStatDeltas.source === 'userEffectiveAttack'
-        ? `Doubles your ${stats}${where}`
-        : `+${stats} equal to your Mana before casting${where}`
-    );
+    if (move.doublesStages) parts.push(`Doubles your ${move.doublesStages.map((stat) => STAT_LABELS[stat]).join(' and ')} steps, ▲▲ from none${where}`);
+    if (move.stagesPerManaHeld) {
+      const { stats, per, max } = move.stagesPerManaHeld;
+      parts.push(`${stats.map((stat) => STAT_LABELS[stat]).join(' and ')} ▲ per ${per} Mana held, up to ${'▲'.repeat(max)}${where}`);
+    }
   }
 
   // A hard gate: with no legal target the move cannot be cast at all.
@@ -514,6 +513,7 @@ export function MoveButtonReplica({
   selected,
   unusable,
   tag,
+  lead,
   caster,
   chargeHolder,
   onClick,
@@ -525,6 +525,8 @@ export function MoveButtonReplica({
   unusable?: boolean;
   /** Short chip in the top row, right of the name (the Tutor's "Known"). */
   tag?: ReactNode;
+  /** Leads the effect row, where a fight's row puts its matchup chips (a tip's staged scene). */
+  lead?: ReactNode;
   /** So a heal shows what THIS hero restores — see healReadout. */
   caster?: HealCaster;
   /** The live holder, for spent Charge pips; omitted, a charged move's pips are drawn full. */
@@ -578,6 +580,7 @@ export function MoveButtonReplica({
       </div>
       <div className="move-row-effect">
         <span className="move-eff-row">
+          {lead}
           <MoveTraitChips move={move} />
           <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>
         </span>

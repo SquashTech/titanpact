@@ -225,7 +225,8 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
     move.statDeltas?.length ||
     move.mpRegenGrant != null ||
     move.clearsRaisedStages ||
-      move.derivedStatDeltas ||
+      move.doublesStages ||
+      move.stagesPerManaHeld ||
       move.manaGrant ||
       move.conditionalTarget ||
       statusApps.length ||
@@ -436,15 +437,20 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
             />
             );
           })}
+          {move.doublesStages?.map((stat) => (
+            <EffectRow key={`doubles-${stat}`} glyph={<StatGlyph stat={stat} />} text={`Doubles ${STAT_LABELS[stat]} steps on ${TARGET_MODE_LABELS[move.target].toLowerCase()}`} note="▲▲ from none or below" />
+          ))}
           {/* Read before the cost is paid, which is why it is not `manaAfter`. */}
-          {move.derivedStatDeltas?.stats.map((stat) => (
+          {move.stagesPerManaHeld?.stats.map((stat) => (
             <EffectRow
-              key={`derived-${stat}`}
+              key={`mana-steps-${stat}`}
               glyph={<StatGlyph stat={stat} />}
               text={
                 attacker
-                  ? `+${attacker.currentMana} ${STAT_LABELS[stat]} on ${TARGET_MODE_LABELS[move.target].toLowerCase()}`
-                  : `+${STAT_LABELS[stat]} equal to your current Mana`
+                  ? Math.floor(attacker.currentMana / move.stagesPerManaHeld!.per) > 0
+                    ? `${stageText(stat, Math.min(move.stagesPerManaHeld!.max, Math.floor(attacker.currentMana / move.stagesPerManaHeld!.per)))} on ${TARGET_MODE_LABELS[move.target].toLowerCase()}`
+                    : `No ${STAT_LABELS[stat]} step below ${move.stagesPerManaHeld!.per} Mana`
+                  : `${STAT_LABELS[stat]} ▲ per ${move.stagesPerManaHeld!.per} Mana held, up to ${'▲'.repeat(move.stagesPerManaHeld!.max)}`
               }
               note="read before the cost is paid — overflow included"
             />
