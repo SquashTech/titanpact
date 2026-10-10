@@ -1,9 +1,10 @@
-// The staged pictures fight tips show (docs/tutorial.md "Scenes"): which heroes, which moves, which
+// The staged pictures tips show (docs/tutorial.md "Scenes"): which heroes, which moves, which
 // part is ringed. Words stay in tips.ts; the view draws these with the fight's own components
 // (src/view/run/TipScene.tsx), so a picture can never disagree with the screen it explains.
 // test/tips.test.ts checks every id here and every multiplier a scene promises.
 
 import type { StatKey } from '../engine/content';
+import type { Gem } from '../run/gems';
 
 /** A fighter in a scene. */
 export interface TipSceneFighter {
@@ -30,7 +31,11 @@ export type TipSceneFocus =
   | 'rest'
   | 'switch'
   | 'bag'
-  | 'field';
+  | 'field'
+  | 'posters'
+  | 'bar'
+  | 'stock'
+  | 'heroCards';
 
 export interface TipScene {
   /** Enemy figures across the top; a damage row shows its matchup against each. */
@@ -56,6 +61,35 @@ export interface TipScene {
   expect?: Readonly<Record<string, readonly number[]>>;
 }
 
+/** A roster hero at a Guild Hall counter. */
+export interface TipHallHero {
+  heroId: string;
+  mastery?: number;
+  items?: readonly string[];
+  /** HP missing, as a fraction of max. */
+  wounded?: number;
+}
+
+/** A Guild Hall counter, staged: the hall's own panel on a made-up visit, with a piece already picked. */
+export interface TipHallScene {
+  hall: 'tavern' | 'gems' | 'gear';
+  roster: readonly TipHallHero[];
+  /** Tavern hires, by hero id. */
+  hires?: readonly string[];
+  gems?: readonly Gem[];
+  items?: readonly string[];
+  /** The stock slot already picked (Gems, Gear). */
+  pick?: number;
+  gold: number;
+  focus?: readonly TipSceneFocus[];
+}
+
+export type TipPicture = TipScene | TipHallScene;
+
+export function isHallScene(scene: TipPicture): scene is TipHallScene {
+  return 'hall' in scene;
+}
+
 // --- The casts ---
 
 /** A Fire caster against a foe Fire beats and one that shrugs it off. */
@@ -74,8 +108,48 @@ const ANCIENT_CAST = {
   moves: ['siphon', 'jolt'],
 } as const;
 
-/** Per fight tip, per page: the picture above the words, or null for none. */
-export const TIP_SCENES: Readonly<Record<string, readonly (TipScene | null)[]>> = {
+/** The same three heroes at every counter, so the pages read as one visit. */
+const HALL_ROSTER = ['cinderKnight', 'wildOracle', 'leviathan'] as const;
+
+/** Per tip, per page: the picture above the words, or null for none. */
+export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>> = {
+  shop: [
+    {
+      hall: 'tavern',
+      roster: [{ heroId: HALL_ROSTER[0] }, { heroId: HALL_ROSTER[1], wounded: 0.4 }, { heroId: HALL_ROSTER[2] }],
+      hires: ['crimson', 'sentinel'],
+      gold: 120,
+      focus: ['posters', 'bar'],
+    },
+    {
+      hall: 'gems',
+      roster: [
+        { heroId: HALL_ROSTER[0], mastery: 2 },
+        { heroId: HALL_ROSTER[1], mastery: 4 },
+        { heroId: HALL_ROSTER[2], mastery: 1 },
+      ],
+      gems: [
+        { stat: 'attack', points: 5 },
+        { stat: 'hp', points: 5 },
+        { stat: 'speed', points: 5 },
+      ],
+      pick: 0,
+      gold: 120,
+      focus: ['stock', 'heroCards'],
+    },
+    {
+      hall: 'gear',
+      roster: [
+        { heroId: HALL_ROSTER[0], items: ['sword.common'] },
+        { heroId: HALL_ROSTER[1] },
+        { heroId: HALL_ROSTER[2], items: ['dagger.common', 'bow.common', 'spear.common'] },
+      ],
+      items: ['sword.common', 'greataxe.rare', 'bow.rare'],
+      pick: 0,
+      gold: 120,
+      focus: ['stock', 'heroCards'],
+    },
+  ],
   'fight.basics': [
     null,
     { hero: { heroId: 'cinderKnight', mana: 0.6 }, heroFigure: true, moves: ['singe', 'kindle'], focus: ['manaGem', 'mpBar'] },

@@ -27080,6 +27080,10 @@ button.evo-gift-card {
 .tip-scene.focus-foe .tip-scene-foes .combatant-portrait,
 .tip-scene.focus-stageMarks .stat-mod-badge,
 .tip-scene.focus-rest .rest-button,
+.tip-scene.focus-posters .hall-poster,
+.tip-scene.focus-bar .hall-counter-goods .hall-good,
+.tip-scene.focus-stock .counter-good.is-picked,
+.tip-scene.focus-heroCards .pick-card.is-offered .pick-cta,
 .tip-scene.focus-switch .bottom-action-switch,
 .tip-scene.focus-bag .bottom-action-bag,
 .tip-scene.focus-field > .field-effect-badge {
@@ -27087,6 +27091,19 @@ button.evo-gift-card {
   outline-offset: 2px;
   border-radius: 6px;
   animation: tip-scene-ring 1.4s ease-in-out infinite alternate;
+}
+
+/* A Guild Hall counter, drawn by the hall's own panel at a size the note can hold. */
+.tip-scene-hall {
+  zoom: 0.8;
+}
+
+.tip-scene.is-tavern .tip-scene-hall {
+  zoom: 0.68;
+}
+
+.tip-scene.is-hall .hall-signs {
+  zoom: 0.8;
 }
 
 /* Inside a move row, which clips: the ring is drawn inward instead. */

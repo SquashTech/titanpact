@@ -98,7 +98,7 @@ Checked at the top of every command phase — never between two orders — again
 The Guardian's own tip and the Locked In tip are gone (2026-09-26, per user direction): the
 Ancient tip is the Guardian's, and lock-in is the Switching tip's last page.
 
-### Scenes (fight tips)
+### Scenes (fight tips and the Guild Hall)
 
 **A fight tip shows a staged picture, never a spotlight on the live board** (2026-10-10, per user
 direction). A live board rarely holds the example a page needs — a 2× and a ½× on the same move,
@@ -123,6 +123,13 @@ picture lie fails the build instead.
 | `fight.rest` | 1 | Cinder at 0 MP over the Rest row |
 | `fight.ancient` | 1, 2 | the Dragon (Fire/Ancient); its types, then Siphon 1× and Jolt 0.5× |
 | `fight.field` | 1 | the Scorched Land plaque |
+| `shop` | 1 | the Tavern: two hire posters and the bar (Contract, New Faces, Party Heal) ringed |
+| `shop` | 2 | the Gem counter, +5 Atk picked: two heroes take it, Sylva Evolves |
+| `shop` | 3 | the Gear counter, a Sword picked: Cinder merges it, Sylva takes it, Leviathan is full |
+
+The Guild Hall's pictures are the hall's own panels (`GuildHallPanel`, `GemCounter`,
+`GearCounter` with an `initialPick`) on a made-up visit. The other screen tips keep their
+spotlights (2026-10-10, per user direction: they are quicker and simpler as they are).
 
 A page without a scene is words only. A scene's tip dims the screen behind it fully and sits in the
 middle.

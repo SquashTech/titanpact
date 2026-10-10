@@ -81,10 +81,12 @@ interface GemCounterProps {
   onBuy: (slot: number, rosterId: string) => RunState | null;
   /** What the pip opened (an Evolution, the mastered innate) is raised by the host over the landed run. */
   onPlaced: (rosterId: string, landed: RunState, fromMastery: number) => void;
+  /** A stock slot picked on arrival — a tip's staged picture of the counter mid-choice. */
+  initialPick?: number;
 }
 
-export function GemCounter({ run, gems, sold, onBuy, onPlaced }: GemCounterProps) {
-  const [pick, setPick] = useState<number | null>(null);
+export function GemCounter({ run, gems, sold, onBuy, onPlaced, initialPick }: GemCounterProps) {
+  const [pick, setPick] = useState<number | null>(initialPick ?? null);
   const [armed, setArmed] = useArmedHero(pick);
   const [burst, setBurst] = useState<{ rosterId: string; key: number } | null>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
@@ -210,6 +212,8 @@ interface GearCounterProps {
   sold: readonly number[];
   /** Pays for the piece and seats it on the hero (a free socket, or a merge); the landed run, or null. */
   onBuy: (slot: number, rosterId: string) => RunState | null;
+  /** A stock slot picked on arrival, as GemCounter's. */
+  initialPick?: number;
 }
 
 /** A piece on the Gear counter: tap picks it, hold reads it whole. */
@@ -237,8 +241,8 @@ function GearGood({ itemId, picked, isSold, onPick, onInspect }: { itemId: strin
   );
 }
 
-export function GearCounter({ run, itemIds, sold, onBuy }: GearCounterProps) {
-  const [pick, setPick] = useState<number | null>(null);
+export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCounterProps) {
+  const [pick, setPick] = useState<number | null>(initialPick ?? null);
   const [armed, setArmed] = useArmedHero(pick);
   const [inspecting, setInspecting] = useState<string | null>(null);
   const [burst, setBurst] = useState<string | null>(null);

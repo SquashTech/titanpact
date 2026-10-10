@@ -88,7 +88,7 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Guild Hall',
     'The Tavern hires heroes for a Recruit Contract. Its bar sells Contracts, a fresh shelf of faces, and a meal that heals your whole roster.',
     'The Gem counter sells single Gems. Pick one, then the hero to set it in.',
-    'The Gear counter sells items. Pick one, then the hero to wear it. It never comes off.'
+    'The Gear counter sells items. Pick one, then the hero to wear it. A second of the same kind merges into a stronger one.'
   ),
   recruit: tip(
     'recruit',

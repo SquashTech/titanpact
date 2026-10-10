@@ -8,7 +8,7 @@
 // on every move at once). A selector that matches nothing lights nothing, and the card falls back
 // to the middle — a spotlight is emphasis, never a precondition.
 //
-// Fight tips are not staged here: they show a drawn scene instead (src/data/tipScenes.ts), since a
+// Fight tips and the Guild Hall's are not staged here: they show a drawn scene instead (src/data/tipScenes.ts), since a
 // live board rarely holds the example a page needs — a 2× and a ½× on one move, all four kinds.
 
 /** One page's staging: the selectors to light, or null for none. */
@@ -40,9 +40,6 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   item: { pages: [[PICK_CARDS], ['.item-who-sockets'], ['.item-who-sell']] },
   fallen: { pages: [[PICK_CARDS]] },
   scribe: { pages: [['.gem-hand', PICK_CARDS], ['.scroll-screen .mastery-pips']] },
-  shop: {
-    pages: [['.hall-sign[data-tab="tavern"]', '.hall-good'], ['.hall-sign[data-tab="gems"]'], ['.hall-sign[data-tab="gear"]']],
-  },
   recruit: { pages: [['.recruit-sign', '.recruit-contracts'], null] },
   banner: { pages: [['.relic-pick-row']] },
   academy: { pages: [['.academy-class-list'], ['.academy-students']] },

@@ -12,7 +12,12 @@ import {
   type Tip,
 } from '../src/run/tips';
 import { createProfile, decodeProfile, recordTipSeen, resetTips } from '../src/run/profile';
-import { TIP_SCENES, type TipScene } from '../src/data/tipScenes';
+import { isHallScene, TIP_SCENES, type TipHallScene, type TipScene } from '../src/data/tipScenes';
+import { equipment } from '../src/data/equipment';
+import { guildHallOffersFor } from '../src/data/recruitment';
+import { heroes } from '../src/data/heroes';
+import { itemReceiptFor } from '../src/run/runProgress';
+import { createRosterEntry } from '../src/run/state';
 import { allCombatants } from '../src/data/content';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
@@ -122,14 +127,14 @@ test('tips: a seen fight tip never shows again', () => {
 
 // --- Scenes ---
 
-const scenePages = Object.entries(TIP_SCENES).flatMap(([id, pages]) =>
-  pages.flatMap((scene, page) => (scene ? [{ id, page, scene }] : []))
-) as { id: string; page: number; scene: TipScene }[];
+const allPictures = Object.entries(TIP_SCENES).flatMap(([id, pages]) => pages.flatMap((scene, page) => (scene ? [{ id, page, scene }] : [])));
+const scenePages = allPictures.filter((p) => !isHallScene(p.scene)) as { id: string; page: number; scene: TipScene }[];
+const hallPages = allPictures.filter((p) => isHallScene(p.scene)) as { id: string; page: number; scene: TipHallScene }[];
 
-test('tips: every scene belongs to a fight tip page that exists', () => {
+test('tips: every scene belongs to a tip page that exists', () => {
   for (const [id, pages] of Object.entries(TIP_SCENES)) {
-    const tip = FIGHT_TIPS.find((t) => t.id === id);
-    assert.ok(tip, `${id} is a fight tip`);
+    const tip = allTips.find((t) => t.id === id);
+    assert.ok(tip, `${id} is a tip`);
     assert.ok(pages.length <= tip.pages.length, `${id}: ${pages.length} scenes for ${tip.pages.length} pages`);
   }
 });
@@ -146,6 +151,32 @@ test('tips: every hero, move and field a scene draws exists', () => {
   }
 });
 
+test('tips: every hero, hire, Gem and item a Guild Hall scene draws exists', () => {
+  const hires = new Set(guildHallOffersFor(heroes).map((o) => o.heroId));
+  for (const { id, page, scene } of hallPages) {
+    const where = `${id} page ${page + 1}`;
+    for (const h of scene.roster) {
+      assert.ok(allCombatants[h.heroId], `${where}: hero ${h.heroId}`);
+      for (const itemId of h.items ?? []) assert.ok(equipment[itemId], `${where}: item ${itemId}`);
+    }
+    for (const heroId of scene.hires ?? []) assert.ok(hires.has(heroId), `${where}: hire ${heroId}`);
+    for (const itemId of scene.items ?? []) assert.ok(equipment[itemId], `${where}: item ${itemId}`);
+    const stock = scene.hall === 'gems' ? scene.gems : scene.items;
+    if (scene.pick !== undefined) assert.ok(stock && scene.pick < stock.length, `${where}: pick in stock`);
+  }
+});
+
+test('tips: the Gear counter scene shows a merge, a take and a full hero', () => {
+  const gear = hallPages.find((p) => p.scene.hall === 'gear')!.scene;
+  const item = equipment[gear.items![gear.pick!]];
+  const kinds = gear.roster.map((h, i) => {
+    const entry = createRosterEntry(`t${i}`, h.heroId, []);
+    entry.equipment = [...(h.items ?? [])];
+    return itemReceiptFor(entry, item, allCombatants[h.heroId], equipment).kind;
+  });
+  assert.deepStrictEqual(kinds, ['merge', 'take', 'none']);
+});
+
 test('tips: a scene shows the matchups its words promise', () => {
   for (const { id, page, scene } of scenePages) {
     for (const [moveId, expected] of Object.entries(scene.expect ?? {})) {
@@ -156,14 +187,14 @@ test('tips: a scene shows the matchups its words promise', () => {
 });
 
 test('tips: the Kinds of Move scene holds one of each kind, and the STAB scene one move on-type and one off', () => {
-  const kinds = TIP_SCENES['fight.attacks'][0]!;
+  const kinds = TIP_SCENES['fight.attacks'][0] as TipScene;
   const kit = (kinds.moves ?? []).map((id) => moves[id]);
   assert.ok(kit.some((m) => m.kind === 'damage' && m.category === 'physical'), 'a physical move');
   assert.ok(kit.some((m) => m.kind === 'damage' && m.category === 'magical'), 'a magical move');
   const deltas = kit.filter((m) => m.kind === 'buff').flatMap((m) => (m.statDeltas ?? []).map((d) => ({ d, m })));
   assert.ok(deltas.some(({ d, m }) => d.stages > 0 && m.target === 'self'), 'a buff');
   assert.ok(deltas.some(({ d, m }) => d.stages < 0 && m.target === 'singleEnemy'), 'a debuff');
-  const stab = TIP_SCENES['fight.types'][1]!;
+  const stab = TIP_SCENES['fight.types'][1] as TipScene;
   const types = allCombatants[stab.hero.heroId].types as readonly string[];
   const onType = (stab.moves ?? []).map((id) => types.includes(moves[id].type));
   assert.deepStrictEqual(onType, [true, false]);

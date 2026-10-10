@@ -5,7 +5,7 @@ import { parseTipText, type Tip, type TipIconToken } from '../../run/tips';
 import { MoveKindGlyph } from '../shared/statIcons';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { pageSpotlight, TIP_STAGING } from './tipStaging';
-import { TipScene } from './TipScene';
+import { TipPictureView } from './TipScene';
 import { TIP_SCENES } from '../../data/tipScenes';
 
 /**
@@ -220,7 +220,7 @@ export function TipOverlay({ tip, onDone }: Props) {
         {/* Keyed on the page so each one re-runs its arrival. */}
         {scene && (
           <div className="tip-scene-frame" key={`scene-${index}`}>
-            <TipScene scene={scene} />
+            <TipPictureView scene={scene} />
           </div>
         )}
         <p className="tip-page" key={index}>
