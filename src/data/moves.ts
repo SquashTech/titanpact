@@ -3679,6 +3679,39 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'bothEnemies',
   },
+  // Spark Plug's twin for a medic: the mark is the job, swung off the Wisdom Patch actually has.
+  jumperCable: {
+    id: 'jumperCable',
+    name: 'Jumper Cable',
+    tier: 'early',
+    type: 'Mech',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 30,
+    offStatOverride: 'wisdom',
+    statusApplication: { statusId: 'Conduct', target: 'moveTarget' },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+  },
+  // Malfunction without the roll: both of Mech's marks, every time, and no self-Burn.
+  shortCircuit: {
+    id: 'shortCircuit',
+    name: 'Short Circuit',
+    tier: 'mid',
+    type: 'Mech',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    offStatOverride: 'wisdom',
+    statusApplication: [
+      { statusId: 'Burn', target: 'moveTarget' },
+      { statusId: 'Conduct', target: 'moveTarget' },
+    ],
+    manaCost: 45,
+    priority: 0,
+    target: 'singleEnemy',
+  },
 
   // --- Beast ---
 

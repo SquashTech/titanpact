@@ -653,7 +653,7 @@ export const trials: Record<string, TrialDefinition> = {
         {
           heroId: 'patch',
           pathId: 'patch-triage',
-          moveIds: ['overhaul', 'divineGrace', 'mend', 'sparkPlug'],
+          moveIds: ['overhaul', 'divineGrace', 'mend', 'jumperCable'],
           itemIds: ['robe.mythic', 'tome.mythic', 'ring.mythic'],
         },
         {

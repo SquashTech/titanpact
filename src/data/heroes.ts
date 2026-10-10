@@ -660,7 +660,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Patch',
     types: ['Mech'],
     baseStats: { hp: 190, attack: 20, defense: 65, intelligence: 55, wisdom: 85, speed: 60, manaPool: 75, mpRegen: 10 },
-    moveIds: ['sparkPlug', 'kickstart'],
+    moveIds: ['jumperCable', 'kickstart'],
     growthGrades: { hp: 'B', attack: 'F', defense: 'A', intelligence: 'C', wisdom: 'S', speed: 'B', manaPool: 'S' },
     schedule: { offerLevels: [5, 8, 10, 17, 21], midLevel: 10, lateLevel: 20, signatureLevel: 16 },
     signatureMoveId: 'overhaul',

@@ -34,15 +34,15 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 50 },
     },
   },
-  // Patch's Coolant: a Mech partner burns itself to cast (Backfire, Overheat, Steam Vent).
-  heatSink: {
-    id: 'heatSink',
-    name: 'Heat Sink',
-    description: "When this hero's partner is Burned, the partner gains Renew.",
+  // Patch's Coolant: the heat Short Circuit and Backfire put into the enemy is drawn off to the partner.
+  heatExchanger: {
+    id: 'heatExchanger',
+    name: 'Heat Exchanger',
+    description: "When an enemy takes Burn damage, this hero's partner heals for the same amount.",
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'ally', eventFieldEquals: { statusId: 'Burn' } },
-      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Renew' },
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'matchTriggerAmount' } },
     },
   },
   // Abacus's Difference Engine: Perfect Creation lays both at once; Backfire and Malfunction build it.

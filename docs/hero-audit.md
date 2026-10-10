@@ -154,3 +154,16 @@ Per user direction; build these first when the audit resumes, then update the sh
 - **Squall, Slipstream** — REVERSED the same day (per user direction): Squall's innate is **Retrieve** (an Arrow that KOs gets its Charge back), mastered **Retrieve+** with Restock, and he opens with Storm Arrow. BUILT; see `docs/charges.md` "Squall's Arrows".
 - **Squall, Windshear's Squall Line**: "This hero's Storm attacks have +30% crit chance" (replaces +5 Atk / +5 Spd per hit). Check whether a passive can grant crit chance yet — crit lives on moves and loadout today.
 - Still proposed, no answer yet: Skyshear's Stormveil → Storm Force on setting off Conduct; Kite's Outpace → both allies +10 Atk/Int; Tempest's Forked → Thunderbolt instead of Skyfall; Squall's Dust Devil passive (Thornshot) review.
+
+## Mech — Patch (2026-10-10, per user direction)
+
+Patch's damage is meant to come from the marks he plants (Conduct, Burn) for a partner to cash, not from his own hits.
+
+| Change | Detail |
+|---|---|
+| **Jumper Cable** (new, Early Mech) | Spark Plug's magical twin: Pow 30, swings with Wisdom (`offStatOverride`), plants Conduct, 20 mana. Replaces Spark Plug in his kit; Spark Plug stays with the four physical Mech heroes. |
+| **Short Circuit** (new, Mid Mech) | Malfunction without the roll: Pow 40, swings with Wisdom, plants Burn AND Conduct, no self-Burn, 45 mana. Replaces Malfunction in his pool (Clockwork and Abacus keep Malfunction). |
+| Pool trimmed | Infuse and Empower out (off-type mana grants); Battery Pack and Conduit stay. 19 → 17 moves. |
+| **Coolant**: Heat Sink → **Heat Exchanger** | When an enemy takes Burn damage, Patch's partner heals for the same amount (Ashfeast's shape, aimed at the partner). |
+
+**The sim pilot now prices marks** (`src/run/pilot.ts` `riderValue`): Conduct is worth its 15% burst when an active ally can pay for a Storm/Iron/Mech hit (×0.7, ×0.85 with two), Haunt one echo of our best Spirit/Mind hit on the holder's partner (×0.5); neither when the mark is already there. Both priced at 0 before, so the pilot never chose to plant one. This is also the Trials' and the Gauntlet's late AI, which now plants marks on purpose.

@@ -318,19 +318,20 @@ test('mech: the slate cashes the Conduct it plants and plants a Haunt it cannot 
 
   const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech' && !signatureMoves[m.id]);
   const allRiders = mechMoves.flatMap((m) => [...statusApplicationsOf(m), ...(m.randomStatusApplication ?? [])]);
-  assert.strictEqual(allRiders.filter((a) => a.statusId === 'Conduct').length, 4, 'Conduct planters');
+  assert.strictEqual(allRiders.filter((a) => a.statusId === 'Conduct').length, 6, 'Conduct planters');
   // Its own read of the mark, beside Storm's four and Iron's one: Whirling Blades at half price.
   assert.deepStrictEqual(moves.whirlingBlades.conditionalManaCost, { requiresAnyEnemyStatus: 'Conduct', manaCost: 30 });
   assert.strictEqual(moves.sparkPlug.tier, 'early', 'the guaranteed planter is reachable from the draft');
   assert.strictEqual(allRiders.filter((a) => a.statusId === 'Haunt').length, 1, 'Haunt planters');
 });
 
-test('mech: the slate is fifteen rows with the authored shape, plus the four 2026-09-15 additions, Spark Plug and the three Charge kits', () => {
+test("mech: the slate is fifteen rows with the authored shape, plus the four 2026-09-15 additions, Spark Plug, the three Charge kits and Patch's two Wisdom planters", () => {
   const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech' && !signatureMoves[m.id]);
-  assert.strictEqual(mechMoves.length, 23, 'the authored slate is fifteen rows, plus four, plus the Early planter, plus Rocket Pod, Repair Kit and Battery Pack (docs/charges.md)');
+  assert.strictEqual(mechMoves.length, 25, 'the authored slate is fifteen rows, plus four, plus the Early planter, plus Rocket Pod, Repair Kit and Battery Pack (docs/charges.md), plus Jumper Cable and Short Circuit');
 
-  // Four magical rows against a roster whose best Intelligence is 45 — pinned so it cannot silently grow.
-  assert.strictEqual(mechMoves.filter((m) => m.category === 'magical' && m.kind === 'damage').length, 4);
+  // Four magical rows, plus Patch's two planters that swing with Wisdom — pinned so it cannot silently grow.
+  assert.strictEqual(mechMoves.filter((m) => m.category === 'magical' && m.kind === 'damage').length, 6);
+  assert.deepStrictEqual(mechMoves.filter((m) => m.offStatOverride === 'wisdom').map((m) => m.id).sort(), ['jumperCable', 'shortCircuit']);
   const heals = mechMoves.filter((m) => m.kind === 'heal');
   assert.strictEqual(heals.length, 4);
   assert.strictEqual(moves.salvage.target, 'self');

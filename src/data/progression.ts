@@ -765,8 +765,9 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'whirlingBlades', 'cogSlam', 'shockCoil', 'juryRig', 'patchUp', 'momentumSwing', 'kickstart',
       'jackpot', 'salvo', 'overdrive', 'onslaught',
     ],
-    // Patch: the repair column, with Light, Water and Arcane support as the off-type — a medic's
-    // colours. Beacon's and Coolant's lines are the heal columns proper, so they are not here.
+    // Patch: the repair column and Mech's two marks (Jumper Cable in the kit, Short Circuit here),
+    // with Light, Water and Arcane support as the off-type. Beacon's and Coolant's lines are the heal
+    // columns proper, so they are not here.
     patch: [
       'batteryPack',
       'repairKit',
@@ -775,13 +776,11 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'purify',
       'mend',
       'refresh',
-      'infuse',
       'manaFont',
       'patchUp',
       'salvage',
       'juryRig',
-      'malfunction',
-      'empower',
+      'shortCircuit',
       'radiantBeam',
       'overdrive',
       'perfectCreation',
@@ -2591,7 +2590,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['cleansingRain'],
             typeGraft: 'Water',
             learnableMoveIds: evolutionLine('patch', 'Water', { granted: ['cleansingRain'] }),
-            grantsPassiveIds: ['heatSink'],
+            grantsPassiveIds: ['heatExchanger'],
           },
         ],
       },

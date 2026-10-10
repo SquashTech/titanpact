@@ -299,6 +299,17 @@ function bestHitOn(state: CombatState, ctx: AiContext, attackerId: string, targe
   return best;
 }
 
+/** The damaging moves `combatantId` can pay for whose type is one of `types` — a class move reads as its holder's primary. */
+function castableOfTypes(state: CombatState, ctx: AiContext, combatantId: string, types: readonly string[]): MoveDefinition[] {
+  const combatant = state.combatants[combatantId];
+  if (!combatant || combatant.fainted) return [];
+  const primary = allCombatants[combatant.heroId].types[0];
+  return ctx.moveIdsFor(combatantId)
+    .map((id) => moves[id])
+    .filter((move): move is MoveDefinition => !!move && isDamaging(move) && types.includes(move.typeFollowsUser ? primary : move.type))
+    .filter((move) => combatant.currentMana >= resolveManaCost(state, combatantId, move, allCombatants));
+}
+
 function speedOf(state: CombatState, id: string): number {
   const combatant = state.combatants[id];
   return getEffectiveStat(allCombatants[combatant.heroId], combatant, 'speed');
@@ -453,6 +464,26 @@ function riderValue(
     case 'basePower':
       // Elemental Force / Ambush: flat BasePower on the holder's casts, priced off the pipeline.
       return basePowerGrantValue(state, ctx, holderId, def, magnitude);
+    case 'trigger': {
+      // Conduct: worth its burst only if our side can cash it, and a mark already there adds nothing.
+      // Discounted because the cash-in is a later turn the target may not wait for.
+      if (!def.triggerTypes || !def.detonateBonusPercentMaxHp || holder.statuses[def.id]) return 0;
+      const cashers = aliveActiveIdsOn(state, otherSide(holder.side)).filter((id) => castableOfTypes(state, ctx, id, def.triggerTypes!).length > 0);
+      if (cashers.length === 0) return 0;
+      const burst = Math.min(def.detonateBonusPercentMaxHp * getMaxHp(allCombatants[holder.heroId], holder), holder.currentHp);
+      return burst * (cashers.length > 1 ? 0.85 : 0.7);
+    }
+    case 'target': {
+      // Haunt: one echo of our best Spirit or Mind hit onto the holder's partner, halved because a switch clears it.
+      if (!def.spreadTriggerTypes || holder.statuses[def.id]) return 0;
+      const partnerId = aliveActiveIdsOn(state, holder.side).find((id) => id !== holderId);
+      if (!partnerId) return 0;
+      let echo = 0;
+      for (const allyId of aliveActiveIdsOn(state, otherSide(holder.side))) {
+        for (const move of castableOfTypes(state, ctx, allyId, def.spreadTriggerTypes)) echo = Math.max(echo, expectedHit(state, allyId, move, partnerId));
+      }
+      return Math.min(echo, state.combatants[partnerId].currentHp) * 0.5;
+    }
     case 'timer': {
       // Poison: X% of the holder's max HP, once, when a timer the holder must stay active through
       // runs out (statusEngine detonateTimer). Priced at that burst, held to what is left, and
