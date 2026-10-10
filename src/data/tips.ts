@@ -112,8 +112,8 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
 
 /**
  * Checked at the top of every command phase; the first unseen one whose conditions all hold is
- * shown. Each page names ONE thing on screen, and TipOverlay lights it (src/view/run/tipStaging.ts
- * says which) — so a page says "the number beside each enemy's name", never "the number".
+ * shown. A page may carry a staged picture (src/data/tipScenes.ts) with ONE thing ringed, so the
+ * words name that thing — "each enemy's name on a move", never "the number".
  */
 export const FIGHT_TIPS: readonly FightTip[] = [
   {
@@ -122,8 +122,8 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     when: {},
     pages: [
       'Each round, choose a move and a target for both heroes on the field. Then the round plays out in Speed order.',
-      'Moves cost Mana. Everyone regains some each round. Heroes can choose to Rest to recover all Mana. Sometimes, Rest will be the only option.',
-      'Tap a fighter or hold down on a move to read more information about them.',
+      'A move costs the Mana in its gem, paid from the blue bar. Everyone regains some each round, and Rest recovers all of it.',
+      'Tap a fighter to read about it. Hold down on a move to read what it does.',
     ],
   },
   {
@@ -164,15 +164,18 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     title: 'Types',
     when: { minRound: 2 },
     pages: [
-      "The number on a move is how well it hits the target's type: above 1 is strong, below 1 is resisted.",
+      "Each enemy's name on a move shows how well it hits them. 2× deals double damage; 0.5× deals half.",
       "The icon before a move's name is its type. A move that shares a type with the hero using it deals 25% more.",
     ],
   },
   {
     id: 'fight.attacks',
-    title: 'Attacks',
+    title: 'Kinds of Move',
     when: { minRound: 2 },
-    pages: ['[physical] Physical moves use Attack against Defense. [magical] Magical moves use Intelligence against Wisdom.'],
+    pages: [
+      '[physical] Physical moves use Attack against Defense. [magical] Magical moves use Intelligence against Wisdom.',
+      "[buff] Buffs raise a stat for the rest of the fight. [debuff] Debuffs lower an enemy's.",
+    ],
   },
   {
     id: 'fight.rest',
@@ -209,7 +212,7 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     id: 'fight.field',
     title: 'Field Effect',
     when: { fieldEffectActive: true },
-    pages: ['A Field Effect is up. It changes the rules for everyone until its pips run out; tap it to read it.'],
+    pages: ['A Field Effect is up. It changes the rules for everyone until its pips run out. Tap it to read it.'],
   },
 ];
 

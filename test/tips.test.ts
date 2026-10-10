@@ -12,6 +12,12 @@ import {
   type Tip,
 } from '../src/run/tips';
 import { createProfile, decodeProfile, recordTipSeen, resetTips } from '../src/run/profile';
+import { TIP_SCENES, type TipScene } from '../src/data/tipScenes';
+import { allCombatants } from '../src/data/content';
+import { moves } from '../src/data/moves';
+import { typeChart } from '../src/data/typechart';
+import { fieldEffects } from '../src/data/fieldEffects';
+import { resolveTypeMult } from '../src/engine/damage/typeMult';
 
 const allTips: Tip[] = [...Object.values(SCREEN_TIPS), ...FIGHT_TIPS];
 
@@ -112,6 +118,55 @@ test('tips: a seen fight tip never shows again', () => {
   const seen = FIGHT_TIPS.map((tip) => tip.id);
   const everything = ctx({ round: 40, nodeType: 'boss', anyOutOfMana: true, benchSize: 3, enemyTypesOnField: ['Ancient'], fieldEffectActive: true, callReady: true, statStaged: true });
   assert.strictEqual(matchFightTip(FIGHT_TIPS, everything, seen), null);
+});
+
+// --- Scenes ---
+
+const scenePages = Object.entries(TIP_SCENES).flatMap(([id, pages]) =>
+  pages.flatMap((scene, page) => (scene ? [{ id, page, scene }] : []))
+) as { id: string; page: number; scene: TipScene }[];
+
+test('tips: every scene belongs to a fight tip page that exists', () => {
+  for (const [id, pages] of Object.entries(TIP_SCENES)) {
+    const tip = FIGHT_TIPS.find((t) => t.id === id);
+    assert.ok(tip, `${id} is a fight tip`);
+    assert.ok(pages.length <= tip.pages.length, `${id}: ${pages.length} scenes for ${tip.pages.length} pages`);
+  }
+});
+
+test('tips: every hero, move and field a scene draws exists', () => {
+  for (const { id, page, scene } of scenePages) {
+    const where = `${id} page ${page + 1}`;
+    for (const fighter of [scene.hero, ...(scene.foes ?? [])]) assert.ok(allCombatants[fighter.heroId], `${where}: hero ${fighter.heroId}`);
+    for (const moveId of scene.moves ?? []) assert.ok(moves[moveId], `${where}: move ${moveId}`);
+    for (const moveId of [...(scene.focusMoves ?? []), ...Object.keys(scene.tags ?? {}), ...Object.keys(scene.expect ?? {})]) {
+      assert.ok(scene.moves?.includes(moveId), `${where}: ${moveId} is one of the scene's moves`);
+    }
+    if (scene.field) assert.ok(fieldEffects[scene.field], `${where}: field ${scene.field}`);
+  }
+});
+
+test('tips: a scene shows the matchups its words promise', () => {
+  for (const { id, page, scene } of scenePages) {
+    for (const [moveId, expected] of Object.entries(scene.expect ?? {})) {
+      const shown = (scene.foes ?? []).map((foe) => resolveTypeMult(typeChart, moves[moveId].type, allCombatants[foe.heroId].types));
+      assert.deepStrictEqual(shown, [...expected], `${id} page ${page + 1}: ${moveId}`);
+    }
+  }
+});
+
+test('tips: the Kinds of Move scene holds one of each kind, and the STAB scene one move on-type and one off', () => {
+  const kinds = TIP_SCENES['fight.attacks'][0]!;
+  const kit = (kinds.moves ?? []).map((id) => moves[id]);
+  assert.ok(kit.some((m) => m.kind === 'damage' && m.category === 'physical'), 'a physical move');
+  assert.ok(kit.some((m) => m.kind === 'damage' && m.category === 'magical'), 'a magical move');
+  const deltas = kit.filter((m) => m.kind === 'buff').flatMap((m) => (m.statDeltas ?? []).map((d) => ({ d, m })));
+  assert.ok(deltas.some(({ d, m }) => d.stages > 0 && m.target === 'self'), 'a buff');
+  assert.ok(deltas.some(({ d, m }) => d.stages < 0 && m.target === 'singleEnemy'), 'a debuff');
+  const stab = TIP_SCENES['fight.types'][1]!;
+  const types = allCombatants[stab.hero.heroId].types as readonly string[];
+  const onType = (stab.moves ?? []).map((id) => types.includes(moves[id].type));
+  assert.deepStrictEqual(onType, [true, false]);
 });
 
 // --- Profile ---

@@ -525,7 +525,7 @@ export function MoveButtonReplica({
   unusable?: boolean;
   /** Short chip in the top row, right of the name (the Tutor's "Known"). */
   tag?: ReactNode;
-  /** Leads the effect row, where a fight's row puts its matchup chips (a tip's staged scene). */
+  /** Matchup chips, as a fight's row leads with them (a tip's staged scene); they take the effect text's place. */
   lead?: ReactNode;
   /** So a heal shows what THIS hero restores — see healReadout. */
   caster?: HealCaster;
@@ -582,7 +582,7 @@ export function MoveButtonReplica({
         <span className="move-eff-row">
           {lead}
           <MoveTraitChips move={move} />
-          <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>
+          {!lead && <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>}
         </span>
       </div>
     </button>

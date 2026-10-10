@@ -88,7 +88,7 @@ Checked at the top of every command phase — never between two orders — again
 | `fight.skirmish` | the first Skirmish or Elite: other heroes who would seal the pact themselves, and a Contract recruits one after a win |
 | `fight.switching` | the first fight with a bench: what Switch does and when to use it, bench Mana, lock-in |
 | `fight.types` | round 2+: the multiplier beside each enemy's name, the type icon and STAB |
-| `fight.attacks` | the next phase: physical vs magical (with the move-kind glyphs inline) |
+| `fight.attacks` | the next phase, "Kinds of Move": physical vs magical, then buff vs debuff (with the move-kind glyphs inline) |
 | `fight.rest` | a player hero can afford nothing |
 | `fight.ancient` | an Ancient on the field (every Guardian): it resists everything, what breaks even, Ancient moves are never resisted |
 | `fight.pactClock` | "One Last Thing", the first Guardian fight: the Pact Clock from round 30, and that only a stall loses |
@@ -98,9 +98,38 @@ Checked at the top of every command phase — never between two orders — again
 The Guardian's own tip and the Locked In tip are gone (2026-09-26, per user direction): the
 Ancient tip is the Guardian's, and lock-in is the Switching tip's last page.
 
-### Staging
+### Scenes (fight tips)
 
-Every tip that names something on screen points at it, screen tips and fight tips alike
+**A fight tip shows a staged picture, never a spotlight on the live board** (2026-10-10, per user
+direction). A live board rarely holds the example a page needs — a 2× and a ½× on the same move,
+a kit with all four kinds of move — so each page that needs one carries a **scene**
+(`src/data/tipScenes.ts`, pure data: which heroes, which moves, what is ringed) drawn by
+`src/view/run/TipScene.tsx` with the fight's OWN components (`CombatantCard`, `MoveButtonReplica`,
+the command bar's classes). It is not a screenshot: it cannot go stale when the fight's UI changes,
+it is crisp at every scale, and the multipliers it shows are computed from the chart.
+`test/tips.test.ts` checks every id a scene names and every multiplier it promises (`expect`), and
+that the Kinds of Move kit holds one of each kind — so a chart or move change that would make a
+picture lie fails the build instead.
+
+| Tip | Page | Scene |
+| --- | --- | --- |
+| `fight.basics` | 2 | Cinder at 30/50 MP over two moves; the gems and the MP bar ringed |
+| `fight.basics` | 3 | a foe and a move; the fighter and the row ringed |
+| `fight.stages` | 1 | Cinder at Atk ▲▲, Spd ▼; the marks ringed |
+| `fight.switching`, `fight.bag` | 1 | the command bar; Switch / Bag ringed |
+| `fight.types` | 1 | Crimson's Ember against Sylva (2×) and Leviathan (0.5×); the chips ringed |
+| `fight.types` | 2 | Cinder with Singe (Fire, tagged +25%) and Rock Toss; the type icons ringed |
+| `fight.attacks` | 1, 2 | Singe, Ember, Kindle, Weaken; the physical and magical, then buff and debuff, badges ringed |
+| `fight.rest` | 1 | Cinder at 0 MP over the Rest row |
+| `fight.ancient` | 1, 2 | the Dragon (Fire/Ancient); its types, then Siphon 1× and Jolt 0.5× |
+| `fight.field` | 1 | the Scorched Land plaque |
+
+A page without a scene is words only. A scene's tip dims the screen behind it fully and sits in the
+middle.
+
+### Staging (screen tips)
+
+Every screen tip that names something on screen points at it
 (`src/view/run/tipStaging.ts`, per page; the map's tiles carry `data-node-type` and the Guild
 Hall's tabs `data-tab` so a page can name one of them):
 the named elements are cut out of a darker scrim and ringed, and the card moves to whichever band
@@ -126,7 +155,8 @@ save still holding them decodes (the fields are ignored), so no `SAVE_VERSION` b
 ## 5. Adding a tip
 
 1. Write it in `src/data/tips.ts` — a screen tip under `SCREEN_TIPS`, a fight tip in
-   `FIGHT_TIPS` at the priority it deserves.
+   `FIGHT_TIPS` at the priority it deserves. A fight tip's picture goes in `TIP_SCENES`
+   (`src/data/tipScenes.ts`); a screen tip's spotlight in `TIP_STAGING`.
 2. A screen tip's id goes in `SCREEN_TIP_IDS` (`src/run/tips.ts`) and in `screenTipIds`
    (App.tsx); the test fails if content and list disagree. A fight tip needing a new signal adds
    a field to `FightTipCondition` and `FightTipContext` and derives it in FightScreen.

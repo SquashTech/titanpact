@@ -5,6 +5,8 @@ import { parseTipText, type Tip, type TipIconToken } from '../../run/tips';
 import { MoveKindGlyph } from '../shared/statIcons';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { pageSpotlight, TIP_STAGING } from './tipStaging';
+import { TipScene } from './TipScene';
+import { TIP_SCENES } from '../../data/tipScenes';
 
 /**
  * Which badge class an inline token wears — the move grid's own (`MoveKindBadge`), so the mark in
@@ -171,6 +173,7 @@ export function TipOverlay({ tip, onDone }: Props) {
   const index = Math.min(step, tip.pages.length - 1);
   const last = index >= tip.pages.length - 1;
 
+  const scene = TIP_SCENES[tip.id]?.[index] ?? null;
   const holes = useHoles(pageSpotlight(staging, index));
   const lit = holes.length > 0;
   const placement: Placement | 'low' =
@@ -189,7 +192,7 @@ export function TipOverlay({ tip, onDone }: Props) {
   return createPortal(
     <div
       ref={overlayRef}
-      className={`tip-overlay${lit ? ' has-spotlight' : ''} is-${placement}`}
+      className={`tip-overlay${lit ? ' has-spotlight' : ''}${scene ? ' has-scene' : ''} is-${placement}`}
       onClick={advance}
       role="dialog"
       aria-live="polite"
@@ -215,6 +218,11 @@ export function TipOverlay({ tip, onDone }: Props) {
         <div className="tip-title">{tip.title}</div>
 
         {/* Keyed on the page so each one re-runs its arrival. */}
+        {scene && (
+          <div className="tip-scene-frame" key={`scene-${index}`}>
+            <TipScene scene={scene} />
+          </div>
+        )}
         <p className="tip-page" key={index}>
           <TipText text={tip.pages[index]} />
         </p>
