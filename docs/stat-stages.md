@@ -194,13 +194,29 @@ return to 0 before the move's own drops land; a lowered one is kept).
 `DamageDealt` alone. Under flat deltas the ×4 ceiling took many hits to reach; at a step a hit
 they reach ▲5 in five. The magnitude mapping (+5 … +15 → ▲, +20 … +35 → ▲▲, +40 → ▲▲▲, the same
 for drops) is in Appendix B, but **a repeating passive needs a brake before its stage means
-anything.** Proposed, not decided:
+anything.** 99 of the 127 are a hero's identity (36 mastered innates, 34 path passives, 29
+innates), so the brake is roster design, not loot tuning.
 
-- Every repeating stat passive carries `maxFiresPerFight` (the verb exists): +5 cards at 1, +10
-  at 2, +20 at 3 as a first pass.
-- An `everyNthFire` reaction verb for the "+5 a hit" cards — one step every third hit — where a
-  single firing is too little and a cap reads wrong.
-- A `SwitchedIn` passive (15 of them) re-fires on every pivot and needs neither.
+**The brake — DECIDED 2026-10-09 (per user direction): one step a round, up to a cap a fight.**
+
+- **Tempo, an engine rule:** a passive on a repeating hook moves a stat **at most one step a
+  round**, whatever it answers — a spread hit, two hits, a tick and a hit are still one step. One
+  step a firing always: a repeating card's old size buys its CAP, never a bigger step.
+- **Ceiling, per card:** a repeating card stops after a number of steps a fight, read off its old
+  figure — **±5 → 2, ±10 or ±15 → 3, ±20 and past → 5** (the stage limit). Authored on the card
+  (`maxFiresPerFight`, the existing field), so a card can be moved off the band by hand.
+- **Mastered = twice the base card's cap**, held at 5 — mastering ramps LONGER, not faster
+  (Fang's Pack Hunter 2 → Alpha's Call 4; Cinder's Kindling 3 → Forgeheart 5). A mastered card
+  whose base has no repeating stat effect (Bellows, Rex, Ursa, Vex) takes the band off its own
+  figure. **Kite gains nothing** (Outpace is already at 5) and needs its mastery authored by hand.
+- **Card text says both:** "Once a round, when it hits: ATK ▲ (3 a fight)".
+- **Bounded hooks are untouched:** a `SwitchedIn` / `SwitchedOut` card (19) re-fires only on a
+  pivot, which costs a turn, and a once-a-fight card is already capped. Those land their band
+  (+5 … +15 → ▲, +20 … +35 → ▲▲, +40 → ▲▲▲) a firing, no round rule.
+- **Derived amounts** (Stampede, Surging Intellect, Neuroplastic) are §6.4's.
+
+Open inside it: whether a STACKED card (a Boon taken twice) multiplies the cap or the tempo —
+proposed: the cap, never the one-a-round tempo.
 
 ### 6.4 Derived grants — decided one by one
 
@@ -253,7 +269,8 @@ reflect a drop · gain stages when dropped · a threshold rider ("at ▲▲ ATK,
    and the pilot pricing a step as the points it moves; the beat copy ("rises sharply"), the
    `[stages]` tip token and `fight.stages`.
 2. **Moves** — BUILT: the §6.1 mapping, and the §6.2 statement moves re-authored.
-3. **Passives** — the brake decided (§6.3), then the mapping; the derived grants (§6.4).
+3. **Passives** — the brake DECIDED (§6.3); next the engine rule, the caps on every card, the
+   card text; then the derived grants (§6.4).
 4. **Measure** — one sim pass, then play.
 
 ---
@@ -264,7 +281,7 @@ reflect a drop · gain stages when dropped · a threshold rider ("at ▲▲ ATK,
    does it want a stage-flavoured second job?
 2. **The debuff floor** — ÷3.5 is far below today's ½, and the enemy AI never switches out of a
    drop. Start at −5 and pull back to −3 if debuffs dominate.
-3. **The repeating-passive brake** (§6.3).
+3. ~~The repeating-passive brake~~ — decided (§6.3); a stacked card's cap is still open there.
 4. **Arcane Overflow and Surging Intellect** — converted or kept as named flat exceptions.
 5. **Stampede's exception** — capped at ▲5 or still uncapped.
 6. **+10/+15 moves at ×1.5** — re-priced in mana, or left as a buff to the Early slates.
