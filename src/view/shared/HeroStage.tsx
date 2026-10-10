@@ -61,7 +61,7 @@ export function StageSky({ motes = DEFAULT_MOTES, starry = false }: { motes?: nu
     <div className={`draft-sky${starry ? ' is-starry' : ''}`} aria-hidden="true">
       <span className="draft-sky-wash" />
       {/* Starless where the innate and the kit stand, so no star sits in the gaps between their rows. */}
-      {starry && <StarField horizon={50} />}
+      {starry && <StarField horizon={40} />}
       <div className="draft-motes">
         {field.map((m, i) => (
           <span
