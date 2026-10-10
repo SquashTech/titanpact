@@ -12,18 +12,16 @@ import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 
 // The run's opening (docs/blessings-and-statuses.md §1.5): the two drafted heroes forge the pact
-// under the draft's own night sky, the seal they make rises to become a star, and the Pactwarden's
-// blessing falls from it onto both. One sequence where the draft ended — no scene change.
+// under the draft's own night sky, the seal they make rises to become a star, and the blessing
+// falls from it onto both. One sequence where the draft ended — no scene change and no speaker:
+// the plate under the title says what the light did.
 
-const LINE = 'I bless you for this journey. You may need it.';
-/** Per character (ms) — RoadEncounter's pace. */
-const TYPE_MS = 24;
 /** When each automatic beat begins, in ms from the press that sealed the pact. */
-const BEATS = { oath: 1000, forge: 2100, ascend: 3000, speak: 3900 } as const;
+const BEATS = { oath: 1000, forge: 2100, ascend: 3000, bless: 3900 } as const;
 /** The light falling and settling, before a tap moves on (ms). Matches `pact-forge-cone`. */
 const BLESS_MS = 1400;
 
-type Phase = 'gather' | 'oath' | 'forge' | 'ascend' | 'speak' | 'bless' | 'blessed';
+type Phase = 'gather' | 'oath' | 'forge' | 'ascend' | 'bless' | 'blessed';
 
 /** The stage's own units (px): the heroes' feet, the seal they forge, and where it settles as a star. */
 const STAGE = { w: 340, h: 460 } as const;
@@ -34,9 +32,7 @@ const STAR = { x: 170, y: 40 } as const;
 
 export function PactForging({ heroIds, onDone }: { heroIds: readonly string[]; onDone: () => void }) {
   const instant = prefersReducedMotion();
-  const [phase, setPhase] = useState<Phase>(instant ? 'speak' : 'gather');
-  const [shown, setShown] = useState(instant ? LINE.length : 0);
-  const typed = shown >= LINE.length;
+  const [phase, setPhase] = useState<Phase>(instant ? 'blessed' : 'gather');
   // Through a ref: the parent rebuilds `onDone` on its own renders (TitanRiseScreen's note).
   const done = useRef(onDone);
   done.current = onDone;
@@ -44,6 +40,9 @@ export function PactForging({ heroIds, onDone }: { heroIds: readonly string[]; o
   const pair = heroIds.slice(0, 2).flatMap((id) => (rosterHeroes[id] ? [rosterHeroes[id]] : []));
   const types = [...new Set(pair.flatMap((h) => h.types))] as TypeId[];
   const names = pair.map((h) => h.name);
+  const plural = names.length > 1;
+  const blessedNames = `${names.join(' and ')} ${plural ? 'are' : 'is'}`;
+  const blessedRule = plural ? 'They will survive their first fatal blow on this journey.' : 'It will survive its first fatal blow on this journey.';
 
   useEffect(() => {
     if (instant) return;
@@ -63,35 +62,21 @@ export function PactForging({ heroIds, onDone }: { heroIds: readonly string[]; o
         setPhase((p) => (p === 'forge' ? 'ascend' : p));
         playSfx('star.reveal');
       }),
-      at(BEATS.speak, () => setPhase((p) => (p === 'ascend' ? 'speak' : p))),
+      at(BEATS.bless, () => setPhase((p) => (p === 'ascend' ? 'bless' : p))),
     ];
     return () => timers.forEach(window.clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (phase !== 'speak' || typed) return;
-    const t = window.setTimeout(() => setShown((n) => n + 1), TYPE_MS);
-    return () => window.clearTimeout(t);
-  }, [phase, typed, shown]);
-
-  useEffect(() => {
     if (phase !== 'bless') return;
     playSfx('blessing');
-    const t = window.setTimeout(() => setPhase('blessed'), instant ? 0 : BLESS_MS);
+    const t = window.setTimeout(() => setPhase('blessed'), BLESS_MS);
     return () => window.clearTimeout(t);
-  }, [phase, instant]);
+  }, [phase]);
 
   function advance() {
     if (phase === 'gather' || phase === 'oath' || phase === 'forge' || phase === 'ascend') {
-      setPhase('speak');
-      return;
-    }
-    if (phase === 'speak' && !typed) {
-      setShown(LINE.length);
-      return;
-    }
-    if (phase === 'speak') {
       setPhase('bless');
       return;
     }
@@ -103,15 +88,13 @@ export function PactForging({ heroIds, onDone }: { heroIds: readonly string[]; o
     done.current();
   }
 
-  const blessedLine = `${names.join(' and ')} ${names.length > 1 ? 'are' : 'is'} Blessed. ${names.length > 1 ? 'Each' : 'It'} will shrug off the first blow that would knock it out.`;
-
   return createPortal(
     <button
       type="button"
       className={`pact-forge is-${phase}${instant ? ' is-still' : ''}`}
       onClick={advance}
       data-sfx="none"
-      aria-label={`The pact is forged. The Pactwarden: ${LINE}`}
+      aria-label={`The pact is forged. ${blessedNames} Blessed. ${blessedRule}`}
     >
       <span className="pact-forge-sky">
         <span className="pact-forge-wash" />
@@ -175,7 +158,11 @@ export function PactForging({ heroIds, onDone }: { heroIds: readonly string[]; o
         <span className="pact-forge-plate">
           <span className="pact-forge-eyebrow">A Titan Stirs</span>
           <span className="pact-forge-title">The Pact is Forged</span>
-          <span className="pact-forge-names">{names.join(' · ')}</span>
+          {/* What the light did, said under the title as it lands rather than by a speaker. */}
+          <span className="pact-forge-blessed">
+            <span className="pact-forge-blessed-names">{blessedNames}</span>
+            <span className="pact-forge-blessed-word">Blessed</span>
+          </span>
         </span>
 
         {pair.map((hero, i) => (
@@ -192,19 +179,8 @@ export function PactForging({ heroIds, onDone }: { heroIds: readonly string[]; o
         ))}
       </span>
 
-      <span className={`road-encounter-speech pact-forge-speech${phase === 'speak' ? ' is-open' : ''}`} aria-hidden="true">
-        <span className="road-encounter-name">The Pactwarden</span>
-        <span className="road-encounter-line">
-          {LINE.slice(0, shown)}
-          <span className="road-encounter-rest">{LINE.slice(shown)}</span>
-        </span>
-        {typed && <span className="road-encounter-more" />}
-      </span>
-      {/* What the light did, said where it happened rather than on the map after. */}
-      <span className={`road-encounter-speech pact-forge-speech${phase === 'blessed' ? ' is-open' : ''}`} aria-hidden="true">
-        <span className="road-encounter-name">Blessed</span>
-        <span className="road-encounter-line">{blessedLine}</span>
-        <span className="road-encounter-more" />
+      <span className="pact-forge-rule" aria-hidden="true">
+        {blessedRule}
       </span>
     </button>,
     overlayHost()

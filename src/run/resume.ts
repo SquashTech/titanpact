@@ -41,7 +41,7 @@ export type RunScreen =
   | { kind: 'draft'; optionIds: string[] }
   /** Permadeath's post-fight beat (docs/ascension.md §3): the KO'd heroes, still on the roster until Continue. */
   | { kind: 'fallen'; rosterIds: string[]; next: RunScreen }
-  /** The act-boundary beat: five sockets, one per Guardian (docs/run-loop.md §4). */
+  /** The seal: four rings, one per Guardian — the run's opening frame, and every act's close (docs/run-loop.md §4). */
   | { kind: 'pactSeal' }
   /** Acts 2-5 open on a 1-of-2 (docs/locations.md §1): the offer is drawn once, when the seal is behind the player. */
   | { kind: 'locationChoice'; candidateIds: string[] }

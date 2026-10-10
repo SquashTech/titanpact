@@ -89,7 +89,7 @@ a question for whoever next gives a hero the verb.
   figure — the pair hold the stage; her art `art/npc/pactwarden.png` stands at her Shrine.
 - **The beat** (`PactForging.tsx`): the opening pair gather either side, each sends a beam of its
   own colour into the type chart between them, the chart locks — the pact forged — and rises into
-  the sky as a star. Her one line: *"I bless you for this journey. You may need it."* A tap sends
+  the sky as a star. Her one line: *"I bless you for this journey. You may need it."* (cut 2026-10-10, per user direction: no speaker — the plate under *The Pact is Forged* says *"{A} and {B} are **Blessed**"*, and the foot of the screen *"They will survive their first fatal blow on this journey."*; the seal, every ring open, follows, carrying the run's first tip) A tap sends
   that star's light down onto each hero and leaves the gold rim at their feet; a second tap moves on.
 - **What it does is said by a first-time tip, not by her.** The `blessing` tip fires on the first
   map where any roster hero is Blessed. In code and copy these are **the opening pair**.

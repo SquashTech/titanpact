@@ -11,6 +11,12 @@
 > already in the game, not an addition to it. **The fiction has not been re-counted for four
 > acts** (2026-10-02): where it says five seals broken and one shut, the game now breaks four
 > and leaves two of the base six shut (§5).
+>
+> **The run LOCKS the seal; it does not break it** (2026-10-10, per user direction). The player-facing
+> fiction already said so — the lore card's *"We must seal the pact"*, Cycle I's *"Seal it"* — and only
+> the Pact Seal screen still struck chains through. Read §1, §2 and §5 as rewritten below; where an
+> older line elsewhere says a seal is *broken*, read *a ring is locked*. Code names stay as they were
+> (`BrokenSeal`, `brokenSeals`, `unbrokenSealLocationIds`) — they are save-format and internal.
 
 ---
 
@@ -18,11 +24,11 @@
 
 A **Titan** cannot be killed. It can only be **bound**, and only to something that has
 already put it on the ground — binding is mutual, so the Titan gets a leash and the world
-gets a hand on the other end. The last binding is failing. A player's run is the journey
-to break what remains of it on purpose, so that the thing behind it comes out facing
-someone rather than facing nobody. **What comes out is the Titan's Herald** (2026-09-16,
-per user direction): a Titan does not walk through a breach, it sends its hand and its
-voice ahead of it, and the Herald is both. Putting the Herald on the ground is putting the
+gets a hand on the other end. Sealed, it sleeps for a year, and the year is up: the seal's
+four rings stand open. A player's run is the journey to **lock them again**, one Guardian a
+ring (2026-10-10, reversing "break what remains of it"). **What comes against the shut seal is
+the Titan's Herald** (2026-09-16, per user direction): a Titan does not walk out of a seal, it
+sends its hand and its voice ahead of it, and the Herald is both. Putting the Herald on the ground is putting the
 Titan on the ground in the only sense the Titan has — which is why a pact can be sealed
 with something that never takes the field.
 
@@ -62,9 +68,12 @@ Three things fall out of this at no cost:
   a people. It is the Titan's weight, felt before the Titan. **And a Guardian looks like its
   brood** (2026-09-16, `titanspawn-overhaul.md` §2 "Guardian art"): geometry in its mortal
   type's colour, with the Titan's eye in it.
-- **The run is a sacrilege, deliberately.** Every Guardian broken is a lock broken. The
-  player is not clearing dungeons; they are dismantling the thing keeping the world
-  shut, because it is coming apart anyway and an accident is worse than a decision.
+- **The run is a re-sealing.** Each Guardian is a warden that, in the year the Titan slept,
+  stopped holding its ring shut and started holding it open — the Ancient half it wears is
+  that ring. Beat it and the ring goes back into the seal, locked (2026-10-10, replacing "the
+  run is a sacrilege": every Guardian broken was a lock broken). The Pact Seal screen draws it:
+  four rings open at the run's start, one locked at every act's close, its chain hauled taut
+  into the dark toward the Titan, the Titan's eyes narrower each time.
 - **A champion is the hardest fight in its act for a reason the player can feel.** It is
   not a difficulty tier. It is a load-bearing wall.
 
@@ -113,12 +122,13 @@ Location (`unbrokenSealLocationIds`, `src/run/locations.ts`). The fiction below 
 five broken and one shut and has not been re-written; read "the sixth" as "the seals that held".
 The Champion screen already says "The last two held".
 
-- The seals you broke are why the Herald walks.
-- **The sixth is why it is only the Herald.** One warden held. The binding failed at five
-  points out of six, and a breach five-sixths open is wide enough for the Titan's hand and
-  not for the Titan — the seal the player never reached is the difference between "the
-  Herald is through" and "the Titan is loose *and nothing is holding it*". It is why there
-  is a world left at all.
+**Reversed 2026-10-10:** a run locks four rings, and the seals it never stood in are the ones
+that held through the year on their own. With the fourth ring locked the seal is shut, and the
+Titan sends its Herald against it — one Late Titanspawn behind it for every ring locked, what each
+land turned before it was taken back. Putting the Herald and then the Eyes down is what makes the
+shut seal a binding (§1: a Titan is bound only to something that has put it on the ground). The
+earlier reading — the seals you broke are why the Herald walks, the one that held is why it is
+only the Herald — is retired with it.
 
 Which location that is changes every run, and the player is told which one it was. This is
 the natural anchor for `progression.md`'s light meta-progression: the unbroken seal is the

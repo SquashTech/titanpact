@@ -28,7 +28,7 @@ const DRAMATIC_ENTRANCES: Readonly<Record<string, DramaticEntrance>> = {
   [SPHINX_ID]: { lead: 'The riddle stands up', meta: 'It has been waiting for you to get it wrong.' },
   [ROC_ID]: { lead: 'The sky folds its wings', meta: 'The thunder was never the storm.' },
   [WENDIGO_ID]: { lead: 'Something comes over the ice', meta: 'It is thinner than the cold should allow.' },
-  [ENDBRINGER_ID]: { lead: 'The last seal gives', meta: 'It was never in a hurry.' },
+  [ENDBRINGER_ID]: { lead: 'Sent against the seal', meta: 'It was never in a hurry.' },
   // The Titan's Eyes (docs/titan-eyes.md §2, §10): the pair open, wide, as the Herald falls.
   [LEFT_EYE_ID]: { lead: 'The Titan looks down', meta: 'One eye fixes on the field.' },
   [RIGHT_EYE_ID]: { lead: 'The other eye opens', meta: 'Nowhere to look but away.' },

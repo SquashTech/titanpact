@@ -245,7 +245,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
           { glyph: 'hero', label: 'Roster', value: `up to ${ROSTER_CAP} v ${SEAL_ACTS + 1}` },
         ],
         odds: null,
-        about: 'The Herald leads one Late Titanspawn for every seal you broke, and nothing reaches it while any of its company stands. Nobody is recruited here: you arrive with the roster you kept.',
+        about: 'The Herald leads one Late Titanspawn for every ring you locked, and nothing reaches it while any of its company stands. Nobody is recruited here: you arrive with the roster you kept.',
         terms: [],
       };
     case 'shop':

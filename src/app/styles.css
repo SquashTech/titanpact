@@ -26471,10 +26471,10 @@ button.evo-gift-card {
 }
 
 /* --- The Pact Seal (docs/run-loop.md §4) -----------------------------------
-   The between-acts beat: five sockets, one per Guardian, in the same
+   The run's frame and the between-acts beat: four rings, one per Guardian, in the same
    fixed-denominator idiom as the draft's pact sockets and the Field Effect
    plaque's 5-pip clock. A ring rather than a row, because the object being
-   counted out here is a seal — and because the fifth socket closing it is the
+   counted out here is a seal — and because the last ring locking it is the
    whole payoff. Positioned by rotate/translate/counter-rotate off one radius
    so the pentagon is a single number to change. */
 .pact-seal-ring {
@@ -26496,32 +26496,34 @@ button.evo-gift-card {
   background: radial-gradient(circle, rgba(var(--node-rgb), 0.1), transparent 70%);
 }
 
-/* The ring gives way once every warden is down: the dashed guide goes solid
-   and red, the one place in the run that colour appears outside the map's
-   finale node. */
-.pact-seal-screen.is-broken .pact-seal-core {
+/* The seal shuts once every warden is down: the dashed guide goes solid and
+   burns gold. */
+.pact-seal-screen.is-locked .pact-seal-core {
   border-style: solid;
-  border-color: rgba(var(--tier-mythic-rgb), 0.55);
-  background: radial-gradient(circle, rgba(var(--tier-mythic-rgb), 0.18), transparent 72%);
+  border-color: rgba(246, 220, 140, 0.8);
+  background: radial-gradient(circle, rgba(246, 220, 140, 0.2), transparent 72%);
+  box-shadow: 0 0 22px rgba(224, 166, 60, 0.45), inset 0 0 22px rgba(224, 166, 60, 0.3);
 }
 
 /* `:not(.is-charge)` rather than `.is-strike`, so the class flipping to
    `.is-settled` mid-flight leaves the declaration untouched and the animation
-   runs on instead of restarting. The ring goes on the same frame as the cut. */
-.pact-seal-screen.is-broken:not(.is-charge) .pact-seal-core {
-  animation: pact-seal-break 1.1s var(--ease-spring) both;
+   runs on instead of restarting. The seal shuts on the same frame as the lock. */
+.pact-seal-screen.is-locked:not(.is-charge) .pact-seal-core {
+  animation: pact-seal-shut 1.1s var(--ease-spring) both;
 }
 
-@keyframes pact-seal-break {
+@keyframes pact-seal-shut {
   0% {
-    transform: scale(1);
+    transform: scale(1.18);
+    opacity: 0.3;
   }
-  40% {
-    transform: scale(0.92);
+  45% {
+    transform: scale(0.94);
+    opacity: 1;
   }
   100% {
-    transform: scale(1.16);
-    opacity: 0.25;
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
@@ -26579,14 +26581,14 @@ button.evo-gift-card {
   image-rendering: pixelated;
 }
 
-/* --- The strike (PactSealScreen's useSealStrike) ----------------------------
-   The socket the player just earned is not seated with the others: it holds its
-   empty face while the record behind it fills, then gets struck through. Every
+/* --- The lock (PactSealScreen's useSealStrike) ------------------------------
+   The ring the player just earned is not seated with the others: it holds its
+   open face while the record behind it fills, then locks. Every
    layer here lives INSIDE the socket, which is already counter-rotated upright,
    so none of them has to compose with the ring's placement transform. */
 
 /* The wind-up. Held under the record's own seating so the eye finishes reading
-   the standing wardens before the empty socket asks for attention. */
+   the locked rings before the open one asks for attention. */
 .pact-seal-screen.is-charge .pact-seal-socket.is-new {
   animation: pact-seal-wind 0.82s ease-in-out both;
 }
@@ -26598,10 +26600,10 @@ button.evo-gift-card {
     box-shadow: none;
   }
   75% {
-    border-color: rgba(var(--tier-mythic-rgb), 0.6);
-    box-shadow: 0 0 22px rgba(var(--tier-mythic-rgb), 0.3);
+    border-color: rgba(246, 220, 140, 0.7);
+    box-shadow: 0 0 22px rgba(224, 166, 60, 0.35);
   }
-  /* Snaps dark on the last frames — the drawn breath before the cut. */
+  /* Snaps dark on the last frames — the drawn breath before the lock. */
   100% {
     border-color: rgba(var(--type-rgb), 0.16);
     box-shadow: none;
@@ -26632,53 +26634,46 @@ button.evo-gift-card {
   }
 }
 
-/* The cut. Anchored below-left of the socket and swept from there, rather than
-   drawn from the middle out, so the bright head crosses the portrait's face.
-   The -54deg is not a taste value: it is the angle from that anchor through the
-   socket's centre, so moving the anchor means recomputing it. */
-.pact-seal-slash {
+/* The clasp: a gold ring closing down onto the socket from outside it, so the
+   lock reads as something taking hold rather than something breaking. */
+.pact-seal-clasp {
   position: absolute;
-  top: 126%;
-  left: -6%;
-  width: 190%;
-  height: 3px;
-  margin-top: -1.5px;
-  border-radius: 2px;
-  transform-origin: 0 50%;
-  transform: rotate(-54deg) scaleX(0);
+  inset: -3px;
+  border-radius: 50%;
+  border: 3px solid rgba(246, 220, 140, 0.95);
+  box-shadow: 0 0 12px rgba(246, 220, 140, 0.8), inset 0 0 8px rgba(246, 220, 140, 0.5);
   opacity: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95) 45%, rgba(var(--tier-mythic-rgb), 0.9));
 }
 
-.pact-seal-screen.is-strike .pact-seal-slash,
-.pact-seal-screen.is-settled .pact-seal-slash {
-  animation: pact-seal-slash 0.5s cubic-bezier(0.15, 0.85, 0.25, 1) both;
+.pact-seal-screen.is-strike .pact-seal-clasp,
+.pact-seal-screen.is-settled .pact-seal-clasp {
+  animation: pact-seal-clasp 0.6s cubic-bezier(0.3, 0.9, 0.3, 1.25) both;
 }
 
-@keyframes pact-seal-slash {
+@keyframes pact-seal-clasp {
   0% {
-    opacity: 1;
-    transform: rotate(-54deg) scaleX(0);
-    box-shadow: 0 0 12px rgba(255, 255, 255, 0.75);
+    opacity: 0;
+    transform: scale(2.4);
   }
-  38% {
+  30% {
     opacity: 1;
-    transform: rotate(-54deg) scaleX(1);
-    box-shadow: 0 0 12px rgba(255, 255, 255, 0.75);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1);
   }
   100% {
-    opacity: 0;
-    transform: rotate(-54deg) scaleX(1);
-    box-shadow: none;
+    opacity: 0.85;
+    transform: scale(1);
   }
 }
 
-/* The socket taking it: one ring out, no fill, so it reads as force leaving. */
+/* The ring taking it: one ring out, no fill, the lock's force going into the seal. */
 .pact-seal-shock {
   position: absolute;
   inset: -4px;
   border-radius: 50%;
-  border: 2px solid rgba(var(--tier-mythic-rgb), 0.7);
+  border: 2px solid rgba(246, 220, 140, 0.7);
   opacity: 0;
 }
 
@@ -26727,18 +26722,18 @@ button.evo-gift-card {
 }
 
 /* Bleeds past the shell padding the way .node-sky does, and sits over the whole
-   screen: the cut is the loudest thing in the act boundary, so it gets the room. */
+   screen: the lock is the loudest thing in the act boundary, so it gets the room. */
 .pact-seal-flash {
   position: absolute;
   inset: calc(var(--shell-pad) * -1);
   z-index: 5;
   opacity: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.5), rgba(var(--tier-mythic-rgb), 0.22) 45%, transparent 72%);
+  background: radial-gradient(circle at 50% 42%, rgba(255, 250, 230, 0.5), rgba(224, 166, 60, 0.22) 45%, transparent 72%);
 }
 
 .pact-seal-screen.is-strike .pact-seal-flash,
-.pact-seal-screen.is-settled .pact-seal-flash {
+.pact-seal-screen.is-settled:not(.is-opening) .pact-seal-flash {
   animation: pact-seal-flash 0.44s ease-out both;
 }
 
@@ -26754,9 +26749,9 @@ button.evo-gift-card {
 @media (prefers-reduced-motion: reduce) {
   .pact-seal-socket.filled,
   .pact-seal-socket.filled.is-new,
-  .pact-seal-screen.is-broken:not(.is-charge) .pact-seal-core,
-  .pact-seal-screen.is-strike .pact-seal-slash,
-  .pact-seal-screen.is-settled .pact-seal-slash,
+  .pact-seal-screen.is-locked:not(.is-charge) .pact-seal-core,
+  .pact-seal-screen.is-strike .pact-seal-clasp,
+  .pact-seal-screen.is-settled .pact-seal-clasp,
   .pact-seal-screen.is-strike .pact-seal-shock,
   .pact-seal-screen.is-settled .pact-seal-shock,
   .pact-seal-screen.is-strike .pact-seal-shard,
@@ -39780,6 +39775,11 @@ img.smithy-service-art {
 }
 
 .map-gate-pact .title-seal-sigil {
+  background: rgba(40, 44, 54, 0.9);
+  box-shadow: none;
+}
+
+.map-gate-pact .title-seal-sigil.is-lit {
   background: rgba(250, 210, 120, 0.95);
   box-shadow: 0 0 10px rgba(240, 180, 70, 0.8);
 }
@@ -39809,8 +39809,8 @@ img.smithy-service-art {
   }
 }
 
-/* The wardens hold still, turned so this act's stands at the crown: the broken ones to its left,
-   the ones to come to its right. Its own sigil gives way to the burning gem over the arch. */
+/* The rings hold still, turned so this act's stands at the crown: the locked ones to its left,
+   lit, and the ones to come to its right. Its own sigil gives way to the burning gem over the arch. */
 .map-gate-pact .title-seal-sigils {
   animation: none;
   transform: rotate(calc(var(--warden) * -72deg));
@@ -39821,11 +39821,6 @@ img.smithy-service-art {
   left: -6px;
   width: 12px;
   height: 12px;
-}
-
-.map-gate-pact .title-seal-sigil.is-spent {
-  background: rgba(40, 44, 54, 0.9);
-  box-shadow: none;
 }
 
 .map-gate-pact .title-seal-sigil.is-current {
@@ -46679,10 +46674,47 @@ img.smithy-service-art {
   text-shadow: 0 0 16px rgba(224, 166, 60, 0.55), 0 0 34px rgba(164, 99, 217, 0.35);
 }
 
-.pact-forge-names {
-  font-size: 12px;
-  font-style: italic;
-  color: var(--text-dim);
+/* The Blessing, said under the title once the light lands: the names, then the word, large and
+   in the star's gold. Held back until the cone falls, so the title reads alone first. */
+.pact-forge-blessed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 12px;
+  opacity: 0;
+}
+
+.pact-forge:is(.is-bless, .is-blessed) .pact-forge-blessed {
+  animation: evolve-plate-in 0.7s cubic-bezier(0.2, 0.9, 0.25, 1) 0.5s both;
+}
+
+.pact-forge-blessed-names {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pact-forge-blessed-word {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: #f6dc8c;
+  text-shadow: 0 0 14px rgba(246, 220, 140, 0.75), 0 0 34px rgba(224, 166, 60, 0.55);
+}
+
+.pact-forge.is-blessed .pact-forge-blessed-word {
+  animation: pact-forge-word-glow 2.6s ease-in-out infinite;
+}
+
+@keyframes pact-forge-word-glow {
+  0%,
+  100% {
+    text-shadow: 0 0 14px rgba(246, 220, 140, 0.75), 0 0 34px rgba(224, 166, 60, 0.55);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(255, 240, 190, 0.95), 0 0 46px rgba(224, 166, 60, 0.75);
+  }
 }
 
 /* The pair, at 2x, the left one turned in to face the other. */
@@ -46849,8 +46881,22 @@ img.smithy-service-art {
   }
 }
 
-.pact-forge-speech {
-  z-index: 1;
+/* What the Blessing does, plainly, at the foot of the screen once it has landed. */
+.pact-forge-rule {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  font-size: 15px;
+  line-height: 1.45;
+  text-align: center;
+  color: rgba(236, 228, 210, 0.92);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pact-forge.is-blessed .pact-forge-rule {
+  animation: evolve-plate-in 0.6s cubic-bezier(0.2, 0.9, 0.25, 1) both;
 }
 
 .pact-forge.is-still,
@@ -48019,11 +48065,12 @@ img.smithy-service-art {
 }
 
 /* --- The Pact Seal's scene (PactSealScreen.tsx, 2026-10-07) ----------------
-   What the seals hold, drawn: the title's Titan over the seal, its eyes opening
-   wider with every seal broken (`--lid`, set by the screen from the count, and
-   eased so the strike visibly widens them), a chain off every socket running
-   into the dark toward it, the fallen warden drawn into its socket before the
-   cut, and a tablet a seal under the ring keeping the run's record. */
+   What the seal holds, drawn: the title's Titan over the seal, its eyes closing
+   narrower with every ring locked (`--lid`, set by the screen from the count,
+   and eased so the lock visibly narrows them), a chain off every ring — slack
+   while it is open, hauled taut into the dark toward the Titan once it locks —
+   the fallen warden drawn into its ring before the lock, and a tablet a ring
+   under the seal keeping the run's record. */
 .pact-seal-scene {
   background: radial-gradient(ellipse 90% 60% at 50% 30%, #0d0a12, #05060a 75%);
 }
@@ -48034,7 +48081,7 @@ img.smithy-service-art {
 }
 
 /* The lids held at the count's width rather than the title's idle widen, and
-   eased to the new width on the cut. */
+   eased to the new width on the lock. */
 .pact-seal-titan .titan-eye-open {
   animation: none;
   transform: scaleY(var(--lid));
@@ -48063,7 +48110,7 @@ img.smithy-service-art {
   }
 }
 
-/* The whole place shakes with the cut. */
+/* The whole place shakes with the lock. */
 .pact-seal-screen.is-strike .pact-seal-scene,
 .pact-seal-screen.is-strike .pact-seal-ring {
   animation: pact-forge-quake 0.45s linear;
@@ -48138,25 +48185,31 @@ img.smithy-service-art {
   mask-image: linear-gradient(90deg, #000, #000 35%, transparent 85%);
 }
 
-/* A broken seal's chain: the stub hanging off the socket, the rest fallen away. */
-.pact-seal-arm.is-snapped .pact-seal-chain.is-near {
+/* An open ring's chain: the stub hanging off the socket, the rest slack in the dark. */
+.pact-seal-arm:not(.is-taut) .pact-seal-chain.is-near {
   transform: rotate(55deg);
   opacity: 0.55;
 }
 
-.pact-seal-arm.is-snapped .pact-seal-chain.is-far {
+.pact-seal-arm:not(.is-taut) .pact-seal-chain.is-far {
   transform: translateX(52px) rotate(-14deg);
   opacity: 0.16;
 }
 
-/* The chain about to go: red-hot and straining through the wind-up. */
+/* A locked ring's chain runs taut toward the Titan, and burns faintly gold. */
+.pact-seal-arm.is-taut {
+  --chain: #c9a85c;
+  --chain-edge: #8a7240;
+}
+
+/* The chain being hauled in: bright and straining through the wind-up. */
 .pact-seal-screen.is-charge .pact-seal-arm.is-new {
-  --chain: #e8704e;
-  --chain-edge: #a83a30;
+  --chain: #f6dc8c;
+  --chain-edge: #c9a85c;
 }
 
 .pact-seal-screen.is-charge .pact-seal-arm.is-new .pact-seal-chain {
-  filter: drop-shadow(0 0 5px rgba(var(--tier-mythic-rgb), 0.9));
+  filter: drop-shadow(0 0 5px rgba(246, 220, 140, 0.9));
   animation: pact-seal-chain-strain 0.08s linear infinite;
 }
 
@@ -48170,50 +48223,50 @@ img.smithy-service-art {
   }
 }
 
-/* The snap: the far run whips outward before it falls, the stub swings down. */
-.pact-seal-arm.is-new.is-snapped .pact-seal-chain.is-near {
-  animation: pact-seal-chain-stub 0.7s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+/* The lock: the stub swings up into line and the far run is hauled in taut,
+   overshooting toward the Titan before it settles. */
+.pact-seal-arm.is-new.is-taut .pact-seal-chain.is-near {
+  animation: pact-seal-chain-raise 0.6s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
 }
 
-.pact-seal-arm.is-new.is-snapped .pact-seal-chain.is-far {
-  animation: pact-seal-chain-whip 0.8s cubic-bezier(0.15, 0.8, 0.3, 1) both;
+.pact-seal-arm.is-new.is-taut .pact-seal-chain.is-far {
+  animation: pact-seal-chain-haul 0.8s cubic-bezier(0.15, 0.8, 0.3, 1) both;
 }
 
-@keyframes pact-seal-chain-stub {
+@keyframes pact-seal-chain-raise {
   from {
-    transform: none;
-    opacity: 1;
-  }
-  to {
     transform: rotate(55deg);
     opacity: 0.55;
   }
-}
-
-@keyframes pact-seal-chain-whip {
-  0% {
+  to {
     transform: none;
     opacity: 1;
-    filter: brightness(2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.9));
   }
-  30% {
-    transform: translateX(90px) rotate(-18deg);
-    opacity: 0.9;
-  }
-  100% {
+}
+
+@keyframes pact-seal-chain-haul {
+  0% {
     transform: translateX(52px) rotate(-14deg);
     opacity: 0.16;
   }
+  35% {
+    transform: translateX(-10px);
+    opacity: 1;
+    filter: brightness(2) drop-shadow(0 0 8px rgba(255, 250, 230, 0.9));
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
 }
 
-/* Once nothing holds, every chain falls. */
-.pact-seal-screen.is-broken:not(.is-charge) .pact-seal-arm .pact-seal-chain.is-far {
-  animation: pact-seal-chain-whip 0.8s cubic-bezier(0.15, 0.8, 0.3, 1) both;
-  opacity: 0.12;
+/* Once every ring is locked, every chain burns. */
+.pact-seal-screen.is-locked:not(.is-charge) .pact-seal-arm .pact-seal-chain {
+  filter: drop-shadow(0 0 6px rgba(246, 220, 140, 0.8));
 }
 
 /* --- The fallen warden: rises over the seal in its Location's light, then is
-   drawn down into its own socket as the chain strains. */
+   drawn down into its own ring as the chain is hauled in. */
 .pact-seal-champion {
   position: absolute;
   top: 50%;
@@ -48255,8 +48308,8 @@ img.smithy-service-art {
   }
 }
 
-/* --- The record: four tablets, one a seal. A broken one wears its Location's
-   colour struck through; one still holding is gold; one not reached is dim. */
+/* --- The record: four tablets, one a ring. A locked one wears its Location's
+   colour; one still open is gold; one not reached is dim. */
 .pact-seal-ledger {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -48322,7 +48375,7 @@ img.smithy-service-art {
   opacity: 0.5;
 }
 
-.pact-seal-tablet.is-broken {
+.pact-seal-tablet.is-locked {
   border-color: rgba(var(--type-rgb), 0.6);
   background:
     radial-gradient(ellipse at 50% 0%, rgba(var(--type-rgb), 0.22), transparent 70%),
@@ -48330,35 +48383,19 @@ img.smithy-service-art {
   box-shadow: 0 0 12px rgba(var(--type-rgb), 0.18);
 }
 
-.pact-seal-tablet.is-broken .pact-seal-tablet-act {
+.pact-seal-tablet.is-locked .pact-seal-tablet-act {
   color: rgb(var(--type-rgb));
 }
 
-.pact-seal-tablet.is-broken .pact-seal-tablet-state {
-  color: rgba(var(--tier-mythic-rgb), 0.95);
+.pact-seal-tablet.is-locked .pact-seal-tablet-state {
+  color: #f6dc8c;
 }
 
-/* The cut, carried down to the record: a crack across the tablet. */
-.pact-seal-tablet.is-broken::after {
-  content: '';
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  top: 52%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(var(--tier-mythic-rgb), 0.8), transparent);
-  transform: rotate(-14deg);
+.pact-seal-tablet.is-new.is-locked {
+  animation: pact-seal-tablet-lock 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
 
-.pact-seal-tablet.is-new.is-broken {
-  animation: pact-seal-tablet-break 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
-}
-
-.pact-seal-tablet.is-new.is-broken::after {
-  animation: pact-seal-tablet-crack 0.4s ease-out both;
-}
-
-@keyframes pact-seal-tablet-break {
+@keyframes pact-seal-tablet-lock {
   0% {
     transform: scale(1.12);
     filter: brightness(2);
@@ -48369,20 +48406,10 @@ img.smithy-service-art {
   }
 }
 
-@keyframes pact-seal-tablet-crack {
-  from {
-    transform: rotate(-14deg) scaleX(0);
-  }
-  to {
-    transform: rotate(-14deg) scaleX(1);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .pact-seal-champion,
   .pact-seal-arm .pact-seal-chain,
   .pact-seal-tablet,
-  .pact-seal-tablet::after,
   .pact-seal-screen.is-strike .pact-seal-scene,
   .pact-seal-screen.is-strike .pact-seal-ring {
     animation: none !important;

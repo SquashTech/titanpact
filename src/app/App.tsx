@@ -379,7 +379,8 @@ function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
   switch (screen.kind) {
     case 'draft':
       return ['draft'];
-    case 'actIntro':
+    case 'pactSeal':
+      // The run's goal, on the seal it names: the opening one, every ring open.
       return ['run'];
     case 'map': {
       // The map tip waits for the first real choice: the act's opener is the only node on offer,
@@ -1175,8 +1176,8 @@ export function App() {
     // The deck is snapshotted onto the run, so an edit between sessions never moves a run's pools.
     const run = { ...createStartingRun(chosenIds, playerRun.cycle), deck: deckHeroIds(profileDeck(profile, heroes)) };
     setPlayerRun(run);
-    // The Blessing played on the draft's own sky (PactForging), so the act opens next.
-    enterAct(run);
+    // The Blessing played on the draft's own sky (PactForging); the seal, every ring open, frames the run next.
+    setScreen({ kind: 'pactSeal' });
     fallback.current = null;
     persistStorage();
     // Sealing the pact is the start, not pressing the title button: a draft backed out of
@@ -1288,8 +1289,8 @@ export function App() {
   // The title is the exception — it is placeless, so it names its own track (audio/tracks.ts) — and
   // the Trials' and the Gauntlet's menus carry it on, since they are reached from it.
   const titleTrack = screen.kind === 'title' || screen.kind === 'constructed' || screen.kind === 'gauntlet';
-  // The draft and the pact forged at its end (the resumed `blessing` screen) carry the starter track.
-  const starterTrack = screen.kind === 'draft' || screen.kind === 'blessing';
+  // The draft, the pact forged at its end (the resumed `blessing` screen) and the seal that opens the run carry the starter track.
+  const starterTrack = screen.kind === 'draft' || screen.kind === 'blessing' || (screen.kind === 'pactSeal' && playerRun.brokenSeals.length === 0);
   const trackId = titleTrack ? 'titleScreen' : starterTrack ? 'starterScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
   useEffect(() => {
     setTrack(trackId);
@@ -1516,7 +1517,7 @@ export function App() {
 
 
       {/* A run saved on the old Blessing screen picks up on the forging that replaced it. */}
-      {screen.kind === 'blessing' && <PactForging heroIds={playerRun.roster.map((entry) => entry.heroId)} onDone={() => enterAct()} />}
+      {screen.kind === 'blessing' && <PactForging heroIds={playerRun.roster.map((entry) => entry.heroId)} onDone={() => setScreen({ kind: 'pactSeal' })} />}
 
       {screen.kind === 'locationChoice' && (
         <LocationChoiceScreen run={playerRun} candidateIds={screen.candidateIds} onChoose={handleLocationChosen} />

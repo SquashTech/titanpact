@@ -29,7 +29,7 @@ export const ACADEMY_LINES: readonly string[] = [
   'Strength is common on this road. A discipline is not. Send me a student, and I will give them one.',
   'Duelist, warden, sage. Every hero is good at something. Here they learn what to be.',
   'One seat, one discipline, and no second enrolment. Choose your student well.',
-  'The last company that stopped here broke a seal. The one before did not stop. Sit down.',
+  'The last company that stopped here locked a ring of the seal. The one before did not stop. Sit down.',
 ];
 
 export const PACTWARDEN_LINES: readonly string[] = [

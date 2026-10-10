@@ -50,7 +50,7 @@ export function ActIntroScreen({ run, location, onEnter }: Props) {
         )}
 
         <NodeHeader
-          eyebrow={isFinale ? `All ${SEAL_ACTS} seals broken` : `${actLabel(run.actNumber)} of ${ROMAN[SEAL_ACTS - 1]}`}
+          eyebrow={isFinale ? `All ${SEAL_ACTS} rings locked` : `${actLabel(run.actNumber)} of ${ROMAN[SEAL_ACTS - 1]}`}
           title={location.name}
         />
 

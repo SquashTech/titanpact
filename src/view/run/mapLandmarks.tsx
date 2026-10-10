@@ -146,8 +146,8 @@ export function MapLandmarkFace({
     case 'building':
       return <img src={BUILDING_ART[type] ?? guildHallArt} className="map-landmark-art" alt="" draggable={false} />;
     case 'gate': {
-      // The gate stands in the Pact Seal it guards: the wardens already broken struck out, this
-      // act's burning in its Guardian's element — what is behind the door is felt, never shown.
+      // The gate stands in the seal it guards: the rings already locked lit, this act's burning in
+      // its Guardian's element — what is behind the door is felt, never shown.
       if (quiet) return <img src={gateArt} className="map-landmark-art" alt="" draggable={false} />;
       const type = guardianId ? allCombatants[guardianId]?.types[0] : undefined;
       const warden = Math.min(actNumber, SEAL_ACTS) - 1;
@@ -157,7 +157,7 @@ export function MapLandmarkFace({
         <>
           <span className="map-gate-pact" style={style} aria-hidden="true">
             <span className="map-gate-pact-light" />
-            <SealArt spent={warden} current={warden} />
+            <SealArt lit={warden} current={warden} />
           </span>
           <GateArt door={GUARDIAN_DOOR} light={light} />
           <span className="map-gate-seam" style={style} aria-hidden="true" />

@@ -101,7 +101,7 @@ export function TitanRiseScreen({ onDone }: Props) {
       <div className="titan-rise-caption">
         <div className="titan-rise-eyebrow">The Herald has fallen</div>
         <h2 className="titan-rise-title">The Titan rises</h2>
-        <p className="titan-rise-line">Nothing is holding the other end. It has found the breach, and it is looking at you.</p>
+        <p className="titan-rise-line">The seal is shut, but it can still look. It is looking at you.</p>
       </div>
 
       <div className="titan-wake-blackout" aria-hidden="true" />

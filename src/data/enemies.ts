@@ -324,7 +324,7 @@ function unseal(champion: HeroDefinition): HeroDefinition {
   const [primary, secondary] = champion.types;
   // The Ancient-second convention is a rule, not a habit (docs/lore.md §8): a champion
   // without a seal to take off it is not part of the binding.
-  if (secondary !== 'Ancient') throw new Error(`${champion.id} is not Ancient-second — it carries no seal to break`);
+  if (secondary !== 'Ancient') throw new Error(`${champion.id} is not Ancient-second — it holds no ring of the seal`);
   return { ...champion, id: unsealedIdFor(champion.id), types: [primary] };
 }
 
