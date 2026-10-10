@@ -101,4 +101,74 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
     },
   },
+  // Widow's Carapace: the shell takes the first blow, and Apex Predator doubles the step.
+  chitin: {
+    id: 'chitin',
+    name: 'Chitin',
+    description: 'When this hero enters the battlefield, it gains Shield 30 and ATK ▲.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 30 },
+      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
+    },
+  },
+  // Marrow's Ossuary: a Poison that goes off seeds the next, and Necrosis drinks each one.
+  charnel: {
+    id: 'charnel',
+    name: 'Charnel',
+    description: 'When an enemy takes Poison damage, both active enemies gain Poison 10. Up to 3 times a fight.',
+    reactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Poison', kind: 'damage' } },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Poison', magnitude: 10, duration: 3 },
+      maxFiresPerFight: 3,
+    },
+  },
+  // Nightshade's Hemlock: Corrode's Poison numbs before the foe can swing.
+  paralytic: {
+    id: 'paralytic',
+    name: 'Paralytic',
+    description: 'When this hero Poisons an enemy, that enemy is Dazed. Up to 2 times a fight.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Daze' },
+      maxFiresPerFight: 2,
+    },
+  },
+  // Jinx's Lucky Cat: Bad Luck's mirror, fortune for its own side.
+  beckoningPaw: {
+    id: 'beckoningPaw',
+    name: 'Beckoning Paw',
+    description: 'When this hero lands a hit, there is a 30% chance its partner gains ATK ▲ and INT ▲. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
+      chance: 0.3,
+    },
+  },
+  // Murk's Mossback: the slow wall soaks the blow and the moss on its back tends its partner.
+  mossMantle: {
+    id: 'mossMantle',
+    name: 'Moss Mantle',
+    description: 'When this hero takes a hit, its partner gains Renew.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
+    },
+  },
+  // Rook's Nightcrow: every curse marks a soul, and Poltergeist carries across it.
+  crowsign: {
+    id: 'crowsign',
+    name: 'Crowsign',
+    description: 'When this hero uses a move that deals no damage, a random enemy is Haunted.',
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Haunt' },
+    },
+  },
 };

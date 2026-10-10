@@ -244,8 +244,10 @@ don't silently override it.
 > Starfall-only; the Heroes page keeps an empty seat for curated **Alignments**. Its §8 lists the rest it reverses.
 
 > **A tenth is BUILT for all 84 heroes: `docs/evolution-simplification.md`**
-> (2026-09-29, per user direction). A path grants **exactly two of a type, a move and a passive,
-> and no stat line**; a hero's three paths are the three pairs; a graft's line is DERIVED
+> (2026-09-29, per user direction). **Revised 2026-10-10 (per user direction, §10): every path
+> pays TWO GOOD THINGS — a move and a passive** (two passives by name, rarely), and a type graft
+> rides ON TOP on two of a hero's three paths, never counted as one of the two, because a type is a
+> blessing and a curse. No stat line; a graft's line is DERIVED
 > (`evolutionLine`), not authored; the one stat exception is the **rewire**, Attack ⇄ Intelligence
 > (`swapsOffense`, a third derived grant, pinned per path; an innate reading a traded stat reads
 > both). A **dual** hero retypes on both type paths and keeps its pairing on the third, with a Late
@@ -600,14 +602,12 @@ don't silently override it.
   absorbed — `docs/gear-absorption.md` §4). Act 5 is the finale, Vigil → fight, with no Tutor.
 - **Evolutions are authored branch points**, each option carrying a **single
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
-  **Every path is exactly TWO of a type graft, ONE move and ONE passive, and never a stat
-  line; a hero's three paths are the three pairs** (2026-09-29, all 84 heroes,
-  `docs/evolution-simplification.md`, replacing the five-clause framework). A graft's line is
+  **Every path pays ONE move and ONE passive, and never a stat line** (2026-10-10, per user
+  direction, `docs/evolution-simplification.md` §10, replacing 2026-09-29's "two of a type, a move
+  and a passive"): a type is a blessing and a curse, not a grant, so it rides on top — **two of a
+  hero's three paths graft a type, one keeps its typing**. Two passives and no move is the rare
+  exception, pinned by name (`TWO_PASSIVES`, `test/evolutionSimplification`). A graft's line is
   derived (`evolutionLine`); the one stat verb is the pinned **rewire**, Attack ⇄ Intelligence.
-  **Loosened by the hero audit** (2026-10-07, per user direction, `docs/hero-audit.md`): a
-  **dual** hero's paths EACH pay a move and a passive (a retype that costs a type gains nothing
-  otherwise), and a named path may pay more than a pair — both pinned by list in
-  `test/evolutionSimplification`, converted type by type as the audit reaches them.
   Options take the hero in different directions, are **permanent within a run**, and gate the
   movepool. **The offensive / defensive / utility label is GONE** (2026-09-16, per user
   direction): `EvolutionPath.kind` and its badges are deleted, and a path is known by its name

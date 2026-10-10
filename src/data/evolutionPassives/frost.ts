@@ -108,4 +108,72 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1, perFight: 3 },
     },
   },
+  // Flurry's Snow Spirit: Frostbite takes from the frozen, this gives to Flurry, by anyone's hand.
+  coldComfort: {
+    id: 'coldComfort',
+    name: 'Cold Comfort',
+    description: 'When an enemy is Frozen, this hero heals 15% of its max HP.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Freeze' } },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.15 } },
+    },
+  },
+  // Rime's Hydrofreeze: the Water hit freezes, so Bitter Cold pays on the next one.
+  blackIce: {
+    id: 'blackIce',
+    name: 'Black Ice',
+    description: 'When this hero lands a Water attack, there is a 30% chance its target is Frozen.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Freeze' },
+      chance: 0.3,
+    },
+  },
+  // Floe's Cryolattice: Wardblade's own Shield, cast across to the partner.
+  refraction: {
+    id: 'refraction',
+    name: 'Refraction',
+    description: 'When this hero gains Shield, its partner gains Shield 30.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Shield' } },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 30 },
+    },
+  },
+  // Igloo's Aurora.
+  polarLight: {
+    id: 'polarLight',
+    name: 'Polar Light',
+    description: "At the end of each round, this hero's partner is washed of one affliction.",
+    reactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'cleanse', target: 'ally', count: 1 },
+    },
+  },
+  // Tusk's Erratic: a Daze bites only on a foe that has not moved yet, and Stampede sees to that.
+  deadWeight: {
+    id: 'deadWeight',
+    name: 'Dead Weight',
+    description: 'When this hero lands a Stone attack, its target is Dazed. Up to 2 times a fight.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Daze' },
+      maxFiresPerFight: 2,
+    },
+  },
+  // Hush's Night Owl: the opening leads count, so it starts the fight with a strike banked.
+  nightWatch: {
+    id: 'nightWatch',
+    name: 'Night Watch',
+    description: 'When an enemy enters the battlefield, this hero gains Ambush 20.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'enemy' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 20 },
+    },
+  },
 };

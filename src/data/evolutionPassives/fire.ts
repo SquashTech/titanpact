@@ -107,4 +107,48 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
       chance: 0.25,
     },
   },
+  // Cinder's Thunderblaze: the lightning fans the fire Kindling feeds on.
+  fannedFlame: {
+    id: 'fannedFlame',
+    name: 'Fanned Flame',
+    description: 'When this hero lands a Storm attack on a Burning foe, the Burn lights again.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Storm' }, eventTargetHasStatus: 'Burn' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
+    },
+  },
+  // Crimson's Emberweave: the weave catches on whatever is already alight.
+  spellfire: {
+    id: 'spellfire',
+    name: 'Spellfire',
+    description: 'When this hero lands an Arcane attack on a Burning foe, that foe loses 8% of its max HP.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Arcane' }, eventTargetHasStatus: 'Burn' },
+      effect: { kind: 'damage', target: 'triggerTarget', percentMaxHp: 0.08 },
+    },
+  },
+  // Drake's Wyvern: it wakes on the wing, and Slumber's Ambush comes down first.
+  wingwake: {
+    id: 'wingwake',
+    name: 'Wingwake',
+    description: 'When this hero Rests, its next attack goes at +1 priority.',
+    reactive: {
+      hook: 'Rested',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+    },
+  },
+  // Tinder's Sparkler: a burning foe crackles, and Chain Lightning sets off both.
+  crackle: {
+    id: 'crackle',
+    name: 'Crackle',
+    description: 'When an enemy takes Burn damage, it starts Conducting.',
+    reactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Conduct' },
+    },
+  },
 };

@@ -88,4 +88,67 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
     },
   },
+  // Warden's Sunderer: the wall built to open other walls.
+  shieldbreaker: {
+    id: 'shieldbreaker',
+    name: 'Shieldbreaker',
+    description: 'Deals 50% bonus damage to a Shielded foe.',
+    damageModifier: { requiresTargetStatuses: ['Shield'], amount: 0.5 },
+  },
+  // Valor's Galvanize: Storm Lash marks, Iron Fist sets it off, and the partner charges in behind.
+  rallyingSpark: {
+    id: 'rallyingSpark',
+    name: 'Rallying Spark',
+    description: 'When this hero sets off a Conduct mark, its partner gains Ambush 25.',
+    reactive: {
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Ambush', magnitude: 25 },
+    },
+  },
+  // Gallant's Oathbound: the knight who mends rides harder for it.
+  vowOfArms: {
+    id: 'vowOfArms',
+    name: 'Vow of Arms',
+    description: 'When this hero heals, it gains ATK ▲ and SPD ▲. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
+    },
+  },
+  // Scallywag's Stormrunner: every mark it blows loads a gun for Broadside. 4 is Broadside's magazine.
+  powderRun: {
+    id: 'powderRun',
+    name: 'Powder Run',
+    description: 'When this hero sets off a Conduct mark, it loads a cannonball (up to 4).',
+    reactive: {
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Cannonball', magnitude: 1, maxMagnitude: 4 },
+    },
+  },
+  // Ronin's Raijin: each bolt that fells one comes down faster and harder on the next.
+  rollingThunder: {
+    id: 'rollingThunder',
+    name: 'Rolling Thunder',
+    description: 'When this hero knocks out a foe, it gains ATK ▲ and SPD ▲. Up to 3 times a fight.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
+    },
+  },
+  // Ferra's Railgun: Lodestone marks both, and each burst charges the coils for Overheat.
+  coilGun: {
+    id: 'coilGun',
+    name: 'Coil Gun',
+    description: 'When this hero sets off a Conduct mark, it gains Mech Force 10. Up to 3 times a fight.',
+    reactive: {
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'MechForce', magnitude: 10 },
+      maxFiresPerFight: 3,
+    },
+  },
 };

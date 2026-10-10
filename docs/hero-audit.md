@@ -36,11 +36,9 @@ already read as their new types.
 ## Rules the audit changed
 
 - **A dual hero's paths each pay a move AND a passive.** A retype on a dual hero swaps a type
-  rather than gaining one, so a bare graft + one grant left it with nothing new. Applied hero by
-  hero as the audit reaches each type; `DUALS_MOVE_AND_PASSIVE` in
-  `test/evolutionSimplification.test.ts` lists the converted ones.
-- **A path may pay more than a pair, by name.** `BEYOND_THE_PAIR` in the same test pins each one
-  with its exact shape.
+  rather than gaining one, so a bare graft + one grant left it with nothing new. **Generalised to
+  every hero on 2026-10-10** (`docs/evolution-simplification.md` §10): every path pays a move and
+  a passive, the type on top; two passives and no move is pinned by name (`TWO_PASSIVES`).
 
 ## Engine vocabulary added
 

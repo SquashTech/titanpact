@@ -83,4 +83,72 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.05 } },
     },
   },
+  // Clockwork's Hydraulics: Boiler's fires meet the water lines, and the steam is armour.
+  steamCurtain: {
+    id: 'steamCurtain',
+    name: 'Steam Curtain',
+    description: 'When an enemy takes Burn damage, this hero gains Shield for the same amount.',
+    reactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: { kind: 'matchTriggerAmount' } },
+    },
+  },
+  // Bellows' Overpressure: Ironbound never leaves, so the valve blows where it stands.
+  blowoffValve: {
+    id: 'blowoffValve',
+    name: 'Blowoff Valve',
+    description: 'At the end of each round, a random enemy is set Burning. Up to 3 times a fight.',
+    reactive: {
+      maxFiresPerFight: 3,
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Burn' },
+    },
+  },
+  // Rex's Primal: a lead or a replacement is fresh prey, and the first blow lands on it.
+  scentOfPrey: {
+    id: 'scentOfPrey',
+    name: 'Scent of Prey',
+    description: "When an enemy enters the battlefield, this hero's next attack goes at +1 priority.",
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'enemy' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+    },
+  },
+  // Patch's Beacon: Consecrate lights both allies, and both move first after it.
+  guidingLight: {
+    id: 'guidingLight',
+    name: 'Guiding Light',
+    description: "When this hero heals an ally, that ally's next attack goes at +1 priority.",
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Poised' },
+    },
+  },
+  // Abacus's Prognosticator: every swing it sees coming, the partner is braced for the next.
+  forewarning: {
+    id: 'forewarning',
+    name: 'Forewarning',
+    description: "When an enemy attacks, this hero's partner gains Shield 10.",
+    reactive: {
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { damaging: 'true' } },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 10 },
+    },
+  },
+  // Whirr's Sparkwing: the spark jumps on. The count stops a mark that re-arms itself.
+  arcJump: {
+    id: 'arcJump',
+    name: 'Arc Jump',
+    description: 'When this hero sets off a Conduct, a random enemy starts Conducting. Up to 3 times a fight.',
+    reactive: {
+      maxFiresPerFight: 3,
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Conduct' },
+    },
+  },
 };

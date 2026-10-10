@@ -93,4 +93,73 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Haunt' },
     },
   },
+  // Revenant's Soulbinder: Wicked Fear binds the soul, and every hit on it wears the will thinner.
+  soulChain: {
+    id: 'soulChain',
+    name: 'Soul Chain',
+    description: 'When this hero lands an attack on a Haunted foe, that foe loses WIS ▼. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Haunt' },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1, perFight: 3 },
+    },
+  },
+  // Sorrow's Dirge: Torment marks the pair, Psionic Wave sings to both, and the song swells.
+  mourningSong: {
+    id: 'mourningSong',
+    name: 'Mourning Song',
+    description: 'When this hero lands an attack on a Haunted foe, it gains INT ▲. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Haunt' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
+    },
+  },
+  // Dread's Ironfeather: Reinforce raises its Defense, and the wings close over the partner.
+  mantling: {
+    id: 'mantling',
+    name: 'Mantling',
+    description: "When this hero's Defense rises, its partner gains Shield 30. Up to 3 times a fight.",
+    reactive: {
+      hook: 'StatChanged',
+      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 30 },
+      maxFiresPerFight: 3,
+    },
+  },
+  // Kitsu's Emberfox: Foxfire lights the one it hits, and the fire jumps to its partner.
+  spreadingFlame: {
+    id: 'spreadingFlame',
+    name: 'Spreading Flame',
+    description: 'When this hero lands an attack on a Burning foe, both active enemies are set Burning, unless they already are.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Burn' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', onlyIfAbsent: true },
+    },
+  },
+  // Totem's Old Growth: every mend it gives grows a ring of bark on the old pole.
+  livingBark: {
+    id: 'livingBark',
+    name: 'Living Bark',
+    description: 'When this hero heals, it gains Shield equal to the HP it restored. Up to 4 times a fight.',
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: { kind: 'matchTriggerAmount' } },
+      maxFiresPerFight: 4,
+    },
+  },
+  // Keen's Shroud: it steps out of the dark untouchable, long enough to cast.
+  nightveil: {
+    id: 'nightveil',
+    name: 'Nightveil',
+    description: 'When this hero enters the battlefield, it gains Barrier for the rest of the round. Twice a fight.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Barrier' },
+      maxFiresPerFight: 2,
+    },
+  },
 };

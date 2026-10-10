@@ -112,4 +112,72 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'SpiritForce', magnitude: 10 },
     },
   },
+  // Crag's Mountainheart: Juggernaut's lost Speed comes back as armour.
+  immovable: {
+    id: 'immovable',
+    name: 'Immovable',
+    description: 'When this hero loses Speed, it gains Shield 30. Up to 3 times a fight.',
+    reactive: {
+      maxFiresPerFight: 3,
+      hook: 'StatChanged',
+      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'speed' }, eventFieldNegative: 'delta' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 30 },
+    },
+  },
+  // Sentinel's Cathedral: the wall it raises holds its partner up too.
+  flyingButtress: {
+    id: 'flyingButtress',
+    name: 'Flying Buttress',
+    description: "When this hero's Defense rises, its partner gains DEF ▲ and WIS ▲. Once a round, up to 3 times a fight.",
+    reactive: {
+      hook: 'StatChanged',
+      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['defense', 'wisdom'], stages: 1, perFight: 3 },
+    },
+  },
+  // Petra's Magma: Scorch lights the fire, the Stone line keeps it at its hottest.
+  slagHeap: {
+    id: 'slagHeap',
+    name: 'Slag Heap',
+    description: 'When this hero lands a Stone attack on a Burning foe, it sets that foe Burning again.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' }, eventTargetHasStatus: 'Burn' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
+    },
+  },
+  // Scree's Ironscale: every taunt hardens the plates Shield Bash swings with.
+  bristlingScales: {
+    id: 'bristlingScales',
+    name: 'Bristling Scales',
+    description: 'When this hero becomes Provoking, it gains Iron Force 15. Up to 3 times a fight.',
+    reactive: {
+      maxFiresPerFight: 3,
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Provoke' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'IronForce', magnitude: 15 },
+    },
+  },
+  // Dune's Glassback: Firebrand's crits fuse the sand into burning glass.
+  moltenGlass: {
+    id: 'moltenGlass',
+    name: 'Molten Glass',
+    description: 'When this hero lands a critical hit, its target is set Burning.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { isCrit: 'true' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
+    },
+  },
+  // Cairn's Riverbed: the water under every Shield it lays.
+  riverfed: {
+    id: 'riverfed',
+    name: 'Riverfed',
+    description: 'When this hero grants Shield, whoever receives it also gains Renew.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Shield' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Renew' },
+    },
+  },
 };

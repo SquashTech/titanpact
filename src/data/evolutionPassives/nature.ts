@@ -78,4 +78,68 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
     },
   },
+  // Sylva's Druid: the bear's claws still tend the grove.
+  mossclaw: {
+    id: 'mossclaw',
+    name: 'Mossclaw',
+    description: 'When this hero lands a Beast attack, its partner gains Renew.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Beast' } },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
+    },
+  },
+  // Mordrax's Ironbark: Bastion's plate hardens into the bark it strikes with.
+  ironsap: {
+    id: 'ironsap',
+    name: 'Ironsap',
+    description: 'When this hero gains Shield, it gains ATK ▲. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Shield' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+    },
+  },
+  // Hollowbark's Wraithwood: every blow it takes wakes something for Poltergeist to spread through.
+  whisperingBoughs: {
+    id: 'whisperingBoughs',
+    name: 'Whispering Boughs',
+    description: 'When this hero takes damage, a random enemy is Haunted.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Haunt' },
+    },
+  },
+  // Tixwick's Reaper: Serrated Slice opens the wound, the scythe follows it in.
+  reaping: {
+    id: 'reaping',
+    name: 'Reaping',
+    description: 'This hero deals 30% more damage to a Bleeding foe.',
+    damageModifier: { requiresTargetStatuses: ['Bleed'], amount: 0.3 },
+  },
+  // Morel's Deathcap: every Poison Grim Harvest reaps feeds the next.
+  gravemould: {
+    id: 'gravemould',
+    name: 'Gravemould',
+    description: 'When this hero sets off a Poison, it gains Shadow Force 15. Up to 3 times a fight.',
+    reactive: {
+      maxFiresPerFight: 3,
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'ShadowForce', magnitude: 15 },
+    },
+  },
+  // Lotus's Enlightened: each mind Psionic Wave opens deepens the next wave.
+  insight: {
+    id: 'insight',
+    name: 'Insight',
+    description: "When an enemy's Wisdom drops, this hero gains Mind Force 10. Up to 3 times a fight.",
+    reactive: {
+      maxFiresPerFight: 3,
+      hook: 'StatChanged',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'wisdom' }, eventFieldNegative: 'delta' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'MindForce', magnitude: 10 },
+    },
+  },
 };

@@ -101,4 +101,72 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1, perFight: 3 },
     },
   },
+  // Solace's Sunflare: the dawn that mends one side scalds the other; Scorch re-lights it.
+  sunscald: {
+    id: 'sunscald',
+    name: 'Sunscald',
+    description: 'When this hero heals an ally, a random enemy is set Burning, unless it already is.',
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Burn', onlyIfAbsent: true },
+    },
+  },
+  // Aegis's Verdant Oath: Holy Strike's and Second Wind's Renew is shared with whoever stands beside it.
+  sharedRoot: {
+    id: 'sharedRoot',
+    name: 'Shared Root',
+    description: 'When this hero gains Renew, its partner gains Renew too.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
+    },
+  },
+  // Empyrean's Stormwing: arrives with the marks its Electric Burst jumps the queue on.
+  chargedPlumes: {
+    id: 'chargedPlumes',
+    name: 'Charged Plumes',
+    description: 'When this hero enters the battlefield, both active enemies start Conducting.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Conduct' },
+    },
+  },
+  // Carillon's Bellfounder: the bell rings at the start of the round On the Hour closes.
+  bronzePeal: {
+    id: 'bronzePeal',
+    name: 'Bronze Peal',
+    description: 'At the start of every third round, the bell rings out and a random enemy is Dazed.',
+    reactive: {
+      hook: 'RoundStarted',
+      condition: { relativeTo: 'self', everyNRounds: 3 },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Daze' },
+    },
+  },
+  // Hart's Greenwood: Hallowed Step and Sow lay the Renew; every mend grows bark.
+  barkskin: {
+    id: 'barkskin',
+    name: 'Barkskin',
+    description: "When Renew mends this hero's partner, the partner gains DEF ▲ and WIS ▲. Once a round, up to 3 times a fight.",
+    reactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'ally', eventFieldEquals: { statusId: 'Renew', kind: 'heal' }, eventFieldPositive: 'amount' },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['defense', 'wisdom'], stages: 1, perFight: 3 },
+    },
+  },
+  // Aurum's Pride: Rampage takes the kill, the pride shares it.
+  lionsShare: {
+    id: 'lionsShare',
+    name: "Lion's Share",
+    description: 'When this hero knocks an enemy out, its partner heals a quarter of its max HP and gains ATK ▲. Up to 3 times a fight.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'percentMaxHp', value: 0.25 } },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: 'attack', stages: 1, perFight: 3 },
+      maxFiresPerFight: 3,
+    },
+  },
 };

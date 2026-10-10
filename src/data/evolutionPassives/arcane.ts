@@ -119,4 +119,73 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Bleed' },
     },
   },
+  // Glyph's Blackletter: every line it writes blots out a foe's spellcraft, and Enfeeble takes the rest.
+  blottedPage: {
+    id: 'blottedPage',
+    name: 'Blotted Page',
+    description: 'When this hero lands a hit, its target loses 20 Mana.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'loseMana', target: 'triggerTarget', amount: 20 },
+    },
+  },
+  // Zenith's Halo: Consecrate's mend keeps glowing on both allies after the cast.
+  lingeringLight: {
+    id: 'lingeringLight',
+    name: 'Lingering Light',
+    description: 'When this hero heals a hero, that hero gains Renew.',
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Renew' },
+    },
+  },
+  // Pixie's Wisplight: a lifted partner swings loaded, and Soul Offering lifts two stats at once.
+  guidingWisp: {
+    id: 'guidingWisp',
+    name: 'Guiding Wisp',
+    description: "When its partner's stat rises, its partner gains Ambush 20.",
+    reactive: {
+      hook: 'StatChanged',
+      condition: { relativeTo: 'ally', eventFieldPositive: 'delta' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Ambush', magnitude: 20 },
+    },
+  },
+  // Folio's Prophecy: the glass cannon foresaw the blow, and answers it first.
+  writtenFate: {
+    id: 'writtenFate',
+    name: 'Written Fate',
+    description: 'The first time this hero would be knocked out each fight, it stands at 1 HP instead and its next attack goes at +1 priority.',
+    enduresOnce: true,
+    reactive: {
+      hook: 'Endured',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+    },
+  },
+  // Thane's Ironsworn: Etched Runes' trigger, paid into the grafted Iron line.
+  ironOath: {
+    id: 'ironOath',
+    name: 'Iron Oath',
+    description: 'When this hero uses a move that deals no damage, it gains Iron Force 10. Up to 3 times a fight.',
+    reactive: {
+      maxFiresPerFight: 3,
+      hook: 'MoveUsed',
+      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'IronForce', magnitude: 10 },
+    },
+  },
+  // Trove's Vaultshade: a Provoking wall, so the curse on the vault is paid by whoever is near it.
+  vaultCurse: {
+    id: 'vaultCurse',
+    name: 'Vault Curse',
+    description: 'When this hero takes damage, a random enemy loses 5% of its max HP. Up to 4 times a fight.',
+    reactive: {
+      maxFiresPerFight: 4,
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'damage', target: 'randomEnemy', percentMaxHp: 0.05 },
+    },
+  },
 };

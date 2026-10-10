@@ -170,16 +170,16 @@ test('move tiers: levelMovePool only offers what the hero\'s LEVEL has opened', 
 test("move tiers: a graft's line is gated on REACHING a tier, so its Mid moves survive the expiry", () => {
   // A line is Mid and Late only (evolutionLine), and an Evolution can land late: gating it the way
   // the base pool is gated would take its Mid half away the moment the hero reached lateLevel.
-  // Cinderveil grafts Spirit and its line opens with Soul Rend, a Mid Spirit move.
+  // Cinderveil grafts Spirit and its line opens with Poltergeist, a Mid Spirit move.
   const path = progressionTable.evolutions.crimson[0].paths.find((p) => p.typeGraft === 'Spirit')!;
-  assert.strictEqual(moves.soulRend.tier, 'mid');
-  assert.ok(path.learnableMoveIds?.includes('soulRend'));
-  assert.ok(!isMoveTierOfferable(moves.soulRend, 3), 'Mid is expired from Late');
+  assert.strictEqual(moves.poltergeist.tier, 'mid');
+  assert.ok(path.learnableMoveIds?.includes('poltergeist'));
+  assert.ok(!isMoveTierOfferable(moves.poltergeist, 3), 'Mid is expired from Late');
 
   const grafted = entryAtRank('crimson', 3);
   const pool = poolOf({ ...grafted, chosenPathIds: [path.id] });
-  assert.ok(pool.includes('soulRend'), 'the graft carries its own Mid moves past the expiry');
-  assert.ok(!poolOf(grafted).includes('soulRend'), 'and only for a hero that actually took the path');
+  assert.ok(pool.includes('poltergeist'), 'the graft carries its own Mid moves past the expiry');
+  assert.ok(!poolOf(grafted).includes('poltergeist'), 'and only for a hero that actually took the path');
   assert.ok(!pool.includes('scorch'), "the BASE pool's Mid half is still expired");
 });
 

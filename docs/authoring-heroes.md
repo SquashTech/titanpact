@@ -26,8 +26,8 @@ path, signature — against `src` and `docs` before using it.
 5. `src/data/progression.ts`: a move pool (`moveTiers`) with enough Early/Mid/Late moves to
    survive the offers, and an Evolution node of **three paths with three different lead
    types**: one mono path plus grafts (`typeGraft`) whose `learnableMoveIds` are that type's
-   moves. Each path is exactly TWO of a type graft, a move and a passive — the three paths are the
-   three pairs, and no path carries a stat line (`docs/evolution-simplification.md`). No path hands
+   moves. Every path grants ONE move and ONE passive, two of the three graft a type on top,
+   and no path carries a stat line (`docs/evolution-simplification.md`). No path hands
    over a move already in the pool, kit or signature.
 6. Art: move the three PNGs into `art/heroes/unlocks/` (or `art/heroes/`) and add the idle to
    `src/view/shared/heroArt.ts` (import plus entry); pose frames are picked up by filename.

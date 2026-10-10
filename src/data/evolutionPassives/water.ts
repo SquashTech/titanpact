@@ -139,4 +139,48 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
     },
   },
+  // Riptide's Frostbound: ice makes the foe brittle on both columns Riptide swings with.
+  brittle: {
+    id: 'brittle',
+    name: 'Brittle',
+    description: 'When an enemy is Frozen, it loses DEF ▼ and WIS ▼. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Freeze' } },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['defense', 'wisdom'], stages: -1, perFight: 3 },
+    },
+  },
+  // Pincer's Squallshell: the charged shell marks a foe for Storm Lash and its Iron hits.
+  staticShell: {
+    id: 'staticShell',
+    name: 'Static Shell',
+    description: 'When this hero takes damage, a random enemy starts Conducting.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Conduct' },
+    },
+  },
+  // Nautilus's Mimic: a broken guard copies itself onto the column Nautilus casts at.
+  mimicry: {
+    id: 'mimicry',
+    name: 'Mimicry',
+    description: "When an enemy's Defense is lowered, its Wisdom drops as many steps. Once a round, up to 3 times a fight.",
+    reactive: {
+      hook: 'StatChanged',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'defense' }, eventFieldNegative: 'delta' },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: 'wisdom', amount: { kind: 'matchTriggerAmount', field: 'delta' }, perFight: 3 },
+    },
+  },
+  // Selkie's Seasinger: the song that mends her side dulls the far one for Mind Shatter.
+  tidesong: {
+    id: 'tidesong',
+    name: 'Tidesong',
+    description: 'When this hero grants Renew, both active enemies lose WIS ▼. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'wisdom', stages: -1, perFight: 3 },
+    },
+  },
 };

@@ -6,6 +6,10 @@ is deleted and `test/evolutionSimplification.test.ts` binds every hero. The five
 built (§7). §9 records what the roster pass found. Still outstanding: a per-path sim pass (§7) and
 the engine verbs §9 set aside.
 
+**§2's "two of three" is REVISED (2026-10-10, per user direction, §10): every path pays a move
+AND a passive, and the type rides on top.** §2's table and §8's pair assignments are history; the
+line (§3), the rewire (§4) and the dual rules (§6.1) stand.
+
 ## 1. The problem
 
 An Evolution path could carry up to five things: a stat line, a granted move, a set of learnable
@@ -228,3 +232,49 @@ Both failure shapes are now pinned by `test/evolutionPassives.test.ts`.
   could be fixed by moving Avalanche out of her pool so the path can grant it.
 - **Rewired heroes keep their old pool.** A rewired hero's level-up pool still offers the
   column it left. Off-stat moves are a normal pick, so this is left as is.
+
+## 10. Two good things, the type on top (2026-10-10)
+
+**Decided, per user direction.** A type is a blessing and a curse: a graft opens a chart column,
+a slate and STAB, and it also adds a weakness column, and on a dual hero it costs the type it
+replaces. It is not a strict upgrade, so a Type + Move or Type + Passive path read as one good
+thing beside a trade, and the graft paths felt underwhelming next to the mono path's two.
+
+**The rule:** every path pays **two good things — one move and one passive**. **Two passives and no
+move** is the rare exception, pinned by name (`TWO_PASSIVES`: Crimson's Pyroclasm, Flurry's
+Avalanche). The type is not one of the two: **two of a hero's three paths graft a type on top, and
+one keeps its typing**, exactly where the grafts already were. No stat line, as before.
+
+- **The move** is usually a plain Mid option that pushes the path's concept. On a graft path it is
+  of the grafted type by default. Never a move already in the hero's kit or pool (pinned).
+- **The passive** follows §8's rules unchanged.
+- A graft path now pays more than the mono path: a type, its line, a move and a passive. Accepted:
+  the type is a trade, and the mono path's move tends to be Late.
+
+**What it reverses:** §2's "exactly two of three" and the three pairs; the hero audit's
+`DUALS_MOVE_AND_PASSIVE` (now every hero) and `BEYOND_THE_PAIR` (type + move + passive is the norm).
+
+**Built the same day**, in seven parallel groups of two types: **161 paths completed**, 81 moves granted
+and **80 new path passives** (`src/data/evolutionPassives/`). Every granted move is Mid and of the
+grafted type, except Totem's Spirit Animal (Animal Spirit, Late: every Mid Beast move is a
+physical attack). Census: 168 paths type + move + passive, 82 move + passive, 2 two passives.
+Fixed in review: a second `barkskin` card (Mordrax's became **Ironsap**), and Black Ice's Freeze on
+every Water hit (now 30%, the Frost proc's rate, since a guaranteed lockout is limited by Charges).
+
+**Watch in play** (the authors' own flags):
+- **Burst chains:** Tinder's Crackle + Chain Lightning (two Conducts a cast), Tempest's Return
+  Stroke, Igloo's Hearthglow (Spreading Blaze's Scorched Land under Warm Hearth's Burns).
+- **Unbraked per-hit procs:** Lucius's Void Gnaw (5% max HP every hit, spreads and Twin Cast
+  included), Murk's Moss Mantle (Renew on every hit taken), Drift's Bell Veil, Prognosticator's
+  Forewarning. No per-round brake exists for a non-stat effect.
+- **Large single picks:** Zenith's Oracle (Hindsight reads the Stasis Field Foreordained sets),
+  Clockwork's Steam Curtain (Shield equal to every enemy Burn tick), Cairn's Riverfed (Renew on
+  every Shield it grants, on an all-Shield pool), Keen's Wintermourn (Permafrost Freezes both).
+- **New verbs on the enemy's mana:** Glyph's Blotted Page drains it. The sim can't see mana.
+- **Weak:** Mellow's Hot Spring (Aqua Slice on Attack 40, the only legal Mid Water) and Meadow's
+  Sow (Early). Warden's Sunderer (Shieldbreaker) is dead against an unshielded side.
+
+**Verbs asked for and not built:** a target for whoever hit the holder; the other enemy (the
+partner of the one hit); a once-a-round brake for non-stat effects; a Shield-broken passive hook;
+a passive crit grant; a damage modifier on the target's HP fraction; `moveType` on MoveUsed; a
+delayed self-buff that survives the hit that earned it.

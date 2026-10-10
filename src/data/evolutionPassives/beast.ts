@@ -89,4 +89,66 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
       alsoEffect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
     },
   },
+  // Mellow's Meadow: Sow's Renew settles the partner as well as mending it.
+  greenPasture: {
+    id: 'greenPasture',
+    name: 'Green Pasture',
+    description: "When this hero's partner gains Renew, the partner gains DEF ▲ and WIS ▲. Once a round, up to 3 times a fight.",
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'ally', eventFieldEquals: { statusId: 'Renew' } },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['defense', 'wisdom'], stages: 1, perFight: 3 },
+    },
+  },
+  // Fang's Warhowl: Pack Hunter in reverse — its Haunt arms the partner whose hits arm it.
+  ghostChorus: {
+    id: 'ghostChorus',
+    name: 'Ghost Chorus',
+    description: 'When this hero Haunts a foe, its partner gains ATK ▲ and INT ▲. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Haunt' } },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
+    },
+  },
+  // Ursa's Polar: any hand's Freeze is a seal on the ice, and the slow bear closes in.
+  sealHunt: {
+    id: 'sealHunt',
+    name: 'Seal Hunt',
+    description: 'When an enemy is Frozen, this hero gains ATK ▲ and SPD ▲. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Freeze' } },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
+    },
+  },
+  // Coil's Hooded: Landslide raises the hood, and the hood is a threat.
+  hoodFlare: {
+    id: 'hoodFlare',
+    name: 'Hood Flare',
+    description: "When this hero's Defense rises, both active enemies lose ATK ▼. Once a round, up to 3 times a fight.",
+    reactive: {
+      hook: 'StatChanged',
+      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'attack', stages: -1, perFight: 3 },
+    },
+  },
+  // Vex's Vampyr: Dusk Blade opens the vein the next bite drinks from.
+  nightThirst: {
+    id: 'nightThirst',
+    name: 'Night Thirst',
+    description: 'This hero deals 30% more damage to a Bleeding foe.',
+    damageModifier: { requiresTargetStatuses: ['Bleed'], amount: 0.3 },
+  },
+  // Kong's Stonefist: what Rubble Rush breaks off the ground hits both of them.
+  flyingRubble: {
+    id: 'flyingRubble',
+    name: 'Flying Rubble',
+    description: 'When this hero lands a Stone attack, both active enemies lose 5% of their max HP.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.05 },
+    },
+  },
 };

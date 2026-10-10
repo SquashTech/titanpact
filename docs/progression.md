@@ -37,8 +37,8 @@ Moves come from each hero's level **schedule**. Full spec: `docs/leveling-and-ra
   bumps.
 - **Every path carries a single identifiable name** — e.g. Cinder's Explosive / Ironclad /
   Thunderblaze. The old `kind` label is deleted (2026-09-16).
-- **A path grants exactly two of a type graft, a move and a passive, and no stat line**
-  (`docs/evolution-simplification.md`). The one stat verb is the rewire, Attack ⇄ Intelligence.
+- **A path grants a move and a passive, and no stat line**; two of a hero's three paths graft a
+  type on top (`docs/evolution-simplification.md` §10). The one stat verb is the rewire, Attack ⇄ Intelligence.
 - **The hero's innate primary type is immutable across all Evolution** (`types-and-heroes.md`).
 - **Mono is a valid terminal state** — a hero can be fully realized without ever branching into a
   second type. Don't gate "finished" on dual-typing.

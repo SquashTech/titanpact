@@ -1,6 +1,6 @@
-// The simplified Evolution (docs/evolution-simplification.md): a path pays exactly two of a type,
-// a move and a passive, never a stat line, and a hero's three paths are the three pairs. Every hero
-// is on it (the roster pass landed 2026-09-29).
+// The simplified Evolution (docs/evolution-simplification.md): every path pays TWO GOOD THINGS — a
+// move and a passive, or by name two passives — never a stat line. A type is not one of them: two of
+// a hero's three paths graft one on top (2026-10-10, §10).
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -35,15 +35,6 @@ function pathsOf(heroId: string): EvolutionPath[] {
 
 const heroIds = Object.keys(heroes);
 
-function pairOf(path: EvolutionPath): string {
-  const parts = [
-    path.typeGraft ? 'type' : null,
-    path.unlocksMoveIds.length > 0 ? 'move' : null,
-    (path.grantsPassiveIds ?? []).length > 0 ? 'passive' : null,
-  ];
-  return parts.filter(Boolean).join('+');
-}
-
 function seed(id: string): RunState {
   return addRosterEntry(createRunState(0), atEvolution(createRosterEntry(id, id, heroes[id].moveIds)));
 }
@@ -52,65 +43,40 @@ test('evolution simplification: every hero has one Evolution node of three paths
   for (const heroId of heroIds) assert.strictEqual(pathsOf(heroId).length, 3, heroId);
 });
 
-/**
- * The type audit (2026-10-07, per user direction) loosened "exactly two": a dual hero gains nothing
- * by a retype that also costs a type, so EVERY path of a converted dual pays a move and a passive,
- * and a few named paths carry more than a pair. Both lists are pinned so each addition is a decision.
- */
-const DUALS_MOVE_AND_PASSIVE = ['brimstone'];
-const BEYOND_THE_PAIR: Record<string, string> = {
-  'crimson-pyroclasm': 'passive+passive',
-  'ashwing-sunbird': 'type+move+passive',
-  'brimstone-ashguard': 'type+move+passive',
-  'brimstone-hexfume': 'type+move+passive',
-  'leviathan-deepfrost': 'type+move+passive',
-  'kappa-yokai': 'type+move+passive',
-  'glacialWarden-avalanche': 'passive+passive',
-  'rime-hoarsteel': 'type+move+passive',
-  'hush-athene': 'type+move+passive',
-};
+/** Two passives and no move: the rare exception to a move and a passive, pinned so each is a decision. */
+const TWO_PASSIVES = ['crimson-pyroclasm', 'glacialWarden-avalanche'];
 
-function grantCount(path: EvolutionPath): number {
-  return (path.typeGraft ? 1 : 0) + path.unlocksMoveIds.length + (path.grantsPassiveIds ?? []).length;
-}
-
-test('evolution simplification: past the pair only by name — every pinned path pays exactly what it is pinned to', () => {
-  for (const heroId of heroIds) {
-    for (const path of pathsOf(heroId)) {
-      const pinned = BEYOND_THE_PAIR[path.id];
-      if (!pinned) continue;
-      const passives = (path.grantsPassiveIds ?? []).length;
-      const shape = [path.typeGraft ? 'type' : null, path.unlocksMoveIds.length ? 'move' : null, ...Array(passives).fill('passive')].filter(Boolean).join('+');
-      assert.strictEqual(shape, pinned, path.id);
-    }
-  }
-  for (const heroId of DUALS_MOVE_AND_PASSIVE) {
-    assert.strictEqual(heroes[heroId].types.length, 2, `${heroId} is not dual`);
-    for (const path of pathsOf(heroId)) {
-      assert.ok(path.unlocksMoveIds.length === 1 && (path.grantsPassiveIds ?? []).length === 1, `${path.id}: a dual pays a move and a passive on every path`);
-    }
-  }
-});
-
-test('evolution simplification: every hero offers the three pairs, one of each — one move, one passive, never a stat line', () => {
+test('evolution simplification: every path pays two good things — a move and a passive, or two passives by name — and never a stat line', () => {
   for (const heroId of heroIds) {
     const paths = pathsOf(heroId);
-    const pairsOnly = paths.every((path) => !BEYOND_THE_PAIR[path.id]);
-    if (pairsOnly) assert.deepStrictEqual(paths.map(pairOf).sort(), ['move+passive', 'type+move', 'type+passive'], heroId);
     for (const path of paths) {
-      assert.ok(grantCount(path) >= 2, `${path.id} grants fewer than two things`);
-      if (!BEYOND_THE_PAIR[path.id]) assert.strictEqual(grantCount(path), 2, `${path.id} grants more than a pair and is not pinned`);
-      assert.ok(path.unlocksMoveIds.length <= 1, `${path.id} grants more than one move`);
-      for (const id of path.grantsPassiveIds ?? []) {
+      const passiveIds = path.grantsPassiveIds ?? [];
+      if (TWO_PASSIVES.includes(path.id)) {
+        assert.ok(path.unlocksMoveIds.length === 0 && passiveIds.length === 2, `${path.id} is pinned to two passives and no move`);
+      } else {
+        assert.strictEqual(path.unlocksMoveIds.length, 1, `${path.id} grants ${path.unlocksMoveIds.length} moves, not one`);
+        assert.strictEqual(passiveIds.length, 1, `${path.id} grants ${passiveIds.length} passives, not one`);
+      }
+      for (const id of passiveIds) {
         const passive = passives[id];
         assert.ok(passive, `${path.id} grants unknown passive ${id}`);
         const verbs = Object.keys(passive).filter((key) => !['id', 'name', 'description', 'statGrants'].includes(key));
         assert.ok(verbs.length > 0, `${path.id}'s ${id} is a bare stat line`);
       }
+      for (const id of path.unlocksMoveIds) assert.ok(moves[id], `${path.id} grants unknown move ${id}`);
       assert.strictEqual(!!path.swapsOffense, REWIRES.includes(path.id), `${path.id}: a rewire must be on the pinned list, and only a rewire`);
     }
     const grafts = paths.filter((path) => path.typeGraft).map((path) => path.typeGraft);
+    assert.strictEqual(grafts.length, 2, `${heroId} has ${grafts.length} type paths, not two`);
     assert.strictEqual(new Set(grafts).size, grafts.length, `${heroId}'s two type paths graft the same type`);
+  }
+});
+
+test('evolution simplification: no path hands over a move the hero already holds or is already offered', () => {
+  for (const heroId of heroIds) {
+    const own = new Set([...heroes[heroId].moveIds, ...(progressionTable.moveTiers[heroId] ?? [])]);
+    const granted = pathsOf(heroId).flatMap((path) => path.unlocksMoveIds);
+    for (const id of granted) assert.ok(!own.has(id), `${heroId}'s path grants ${id}, already in its own pool`);
   }
 });
 

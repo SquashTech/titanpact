@@ -221,9 +221,9 @@ author paths as tiered stat bumps of the same shape.
 `defensive` / `utility` label was deleted on 2026-09-16 (it read as a category the paths never
 fitted), and a path id is `heroId-pathName` (`test/moveTiers`).
 
-**What a path grants** (`docs/evolution-simplification.md`, binding every hero): **exactly two of
-a type graft, ONE granted move (`unlocksMoveIds`) and ONE passive, and never a stat line**; a
-hero's three paths are the three pairs. A graft's learnable line is DERIVED (`evolutionLine`), not
+**What a path grants** (`docs/evolution-simplification.md`, binding every hero): **ONE granted move
+(`unlocksMoveIds`) and ONE passive, and never a stat line**, with a type graft on top on two of a
+hero's three paths (§10 of that doc, 2026-10-10). A graft's learnable line is DERIVED (`evolutionLine`), not
 authored. The one stat verb is the **rewire**, Attack ⇄ Intelligence (`swapsOffense`), pinned per
 path. **Staying mono is a valid path** and a valid terminal identity.
 
@@ -232,7 +232,7 @@ path. **Staying mono is a valid path** and a valid terminal identity.
 The five-clause framework this heading named (stat lines sized Rare-to-Epic, a mono path trading
 stats for a passive, a graft paying three ways, the signed refocus line, a granted move) is
 **retired by `docs/evolution-simplification.md`**, which replaced it with the two-of-three rule
-above. Two of its findings still stand:
+above (itself revised 2026-10-10 to a move and a passive on every path). Two of its findings still stand:
 
 - **A path GRANTS a move, not only the promise of one.** `unlocksMoveIds` is what lets a path land
   the turn it is chosen. Priced against `MOVE_CAP`: `applyEvolutionMoves` fills open slots and
@@ -256,8 +256,7 @@ one and loses STAB on moves it already holds. It does not make duals better than
 their node contain a real fork.
 
 **How many paths retype** is set by `docs/evolution-simplification.md` §6.1 (2026-09-29): a dual
-hero takes the same three pairs, so **both type paths retype**, and the path that keeps its
-pairing is the Move + Passive one, whose move is a Late move of its secondary type. This retired
+hero's **both type paths retype**, and the path that keeps its pairing grants a move is a Late move of its secondary type. This retired
 the 2026-09-05 rule of exactly one retype per dual hero.
 
 ## The immutability nuance (reconciles with `types-and-heroes.md`)

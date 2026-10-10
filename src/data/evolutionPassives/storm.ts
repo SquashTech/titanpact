@@ -100,4 +100,73 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn' },
     },
   },
+  // Squall's Turbine: Rising Static plants, Cog Slam or an Arrow cashes, the quiver winds back.
+  autoloader: {
+    id: 'autoloader',
+    name: 'Autoloader',
+    description: 'When this hero sets off Conduct, each of its Arrows gets a Charge back. Up to 3 times a fight.',
+    reactive: {
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'restoreCharge', target: 'self', amount: 1, moveTag: 'arrow' },
+      maxFiresPerFight: 3,
+    },
+  },
+  // Tempest's Lightning Rod: the mark comes back, so Metallic Blade stays free and Live Wire keeps firing.
+  returnStroke: {
+    id: 'returnStroke',
+    name: 'Return Stroke',
+    description: 'When this hero sets off Conduct, a random enemy starts Conducting. Up to 3 times a fight.',
+    reactive: {
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Conduct' },
+      maxFiresPerFight: 3,
+    },
+  },
+  // Skyshear's Farsight: any hand's burst leaves a Haunt, and Psyshock reaches both through it.
+  afterimage: {
+    id: 'afterimage',
+    name: 'Afterimage',
+    description: "When an enemy's Conduct is set off, that enemy is Haunted.",
+    reactive: {
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Haunt' },
+    },
+  },
+  // Nimbus's Raincloud: Rainmaker's Downpour soaks both foes for Nimbus's Storm hits.
+  staticRain: {
+    id: 'staticRain',
+    name: 'Static Rain',
+    description: 'When Downpour is set, both active enemies start Conducting.',
+    reactive: {
+      hook: 'FieldEffectSet',
+      condition: { relativeTo: 'self', eventFieldEquals: { fieldEffectId: 'downpour' } },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Conduct' },
+    },
+  },
+  // Kite's Seedwind: every arrival is sown and slowed, which is what Outpace wants.
+  windsown: {
+    id: 'windsown',
+    name: 'Windsown',
+    description: 'When an enemy enters the battlefield, it gains Poison 10 and loses SPD ▼.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'enemy' },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Poison', magnitude: 10, duration: 3 },
+      alsoEffect: { kind: 'statDelta', target: 'triggerSubject', stat: 'speed', stages: -1 },
+    },
+  },
+  // Raiju's Kamaitachi: Brushfire's sibling at the other door, a cut on the way in.
+  sickleWind: {
+    id: 'sickleWind',
+    name: 'Sickle Wind',
+    description: 'When this hero enters the battlefield, a random enemy starts Bleeding.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Bleed' },
+    },
+  },
 };

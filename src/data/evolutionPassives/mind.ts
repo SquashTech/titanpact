@@ -105,4 +105,71 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount', multiplier: 0.25 } },
     },
   },
+  // Reverie's Construct: Cerebral Shock plants the mark, Cog Slam cashes it, and the machine tightens.
+  clockworkMind: {
+    id: 'clockworkMind',
+    name: 'Clockwork Mind',
+    description: 'When this hero sets off Conduct, it gains ATK ▲ and DEF ▲. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'StatusDetonated',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], stages: 1, perFight: 3 },
+    },
+  },
+  // Lucius's Voidcaller: every bite drags a foe toward the half where Eclipse doubles.
+  voidGnaw: {
+    id: 'voidGnaw',
+    name: 'Void Gnaw',
+    description: 'When this hero lands a hit, its target loses 5% of its max HP.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'damage', target: 'triggerTarget', percentMaxHp: 0.05 },
+    },
+  },
+  // Trance's Ringmaster: Blinding Flash stops the act, and the partner takes the stage.
+  centerRing: {
+    id: 'centerRing',
+    name: 'Center Ring',
+    description: "When an enemy is Dazed, this hero's partner gains Ambush 30.",
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Daze' } },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Ambush', magnitude: 30 },
+    },
+  },
+  // Drift's Deepbloom: the bell of the bloom closes over its partner as the tide goes out.
+  bellVeil: {
+    id: 'bellVeil',
+    name: 'Bell Veil',
+    description: 'When this hero lands a Water attack, its partner gains Shield 20.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 20 },
+    },
+  },
+  // Motley's Conjurer: now you see the partner, now you don't.
+  vanishingAct: {
+    id: 'vanishingAct',
+    name: 'Vanishing Act',
+    description: 'When this hero enters the battlefield, its partner gains Barrier for the rest of the round. Up to 2 times a fight.',
+    reactive: {
+      maxFiresPerFight: 2,
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Barrier' },
+    },
+  },
+  // Koan's Crane: Rending Leap opens the wound, and every strike after it rises higher.
+  whiteCrane: {
+    id: 'whiteCrane',
+    name: 'White Crane',
+    description: 'When this hero lands an attack on a Bleeding foe, it gains ATK ▲ and SPD ▲. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Bleed' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
+    },
+  },
 };

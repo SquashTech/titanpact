@@ -313,19 +313,19 @@ test('progression: a graft path adds its learnableMoveIds to the level-up pool w
   run = atEvolutionRung(run, 'crimson');
 
   const before = poolAtTop(run.roster[0]);
-  assert.ok(!before.includes('soulRend'), 'Spirit moves must not be offerable before the graft');
+  assert.ok(!before.includes('poltergeist'), 'Spirit moves must not be offerable before the graft');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-cinderveil');
   const after = poolAtTop(next.roster[0]);
 
-  for (const id of ['soulOffering', 'soulRend', 'banish', 'ascendant']) {
+  for (const id of ['soulOffering', 'poltergeist', 'banish', 'ascendant']) {
     assert.ok(after.includes(id), `${id} should be learnable after Cinderveil`);
     assert.ok(!next.roster[0].unlockedMoveIds.includes(id), `${id} should be LEARNABLE, not granted`);
   }
   // The Fire pool is widened, not replaced.
   assert.ok(after.includes('inferno'));
-  // Cinderveil is Type + Passive: it grants no move, only the line and Ember Veil.
-  assert.deepStrictEqual(next.roster[0].unlockedMoveIds, [...heroes.crimson.moveIds]);
+  // Cinderveil grants Soul Rend outright, beside the line and Ember Veil.
+  assert.deepStrictEqual(next.roster[0].unlockedMoveIds, [...heroes.crimson.moveIds, 'soulRend']);
   assert.deepStrictEqual(next.roster[0].evolutionPassiveGrants, ['emberVeil']);
 });
 
