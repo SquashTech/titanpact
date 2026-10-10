@@ -23098,6 +23098,11 @@ button.evo-gift-card {
   .evo-gift-name {
     font-size: 15px;
   }
+
+  /* A rewire, a type, a move and a passive: four rows, the most a path pays. */
+  .evo-gifts:has(.is-rewire) {
+    gap: 6px;
+  }
 }
 
 @container (max-height: 540px) {
