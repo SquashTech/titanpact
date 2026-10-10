@@ -3,6 +3,7 @@
 
 import type { MoveDefinition, StatKey } from '../../engine/content';
 import { statusApplicationsOf } from '../../engine/content';
+import { statDeltaLandsOnCasterSide } from '../../engine/state';
 import { statuses } from '../../data/statuses';
 
 export type MoveKindGlyphKind = 'physical' | 'magical' | 'heal' | 'buff' | 'debuff';
@@ -27,7 +28,7 @@ export function stageText(stat: StatKey, stages: number): string {
 // `kind: 'buff'` covers both signs in the data; the sign is recovered here, once, so glyph, badge
 // colour and label can never disagree. A move carrying both reads as a debuff (open UI question).
 export function isDebuff(move: MoveDefinition): boolean {
-  if (move.statDeltas?.some(({ stages }) => stages < 0)) return true;
+  if (!statDeltaLandsOnCasterSide(move) && (move.statDeltas?.some(({ stages }) => stages < 0) || move.clearsRaisedStages)) return true;
   return statusApplicationsOf(move).some((app) => app.target !== 'self' && !statuses[app.statusId]?.positive);
 }
 

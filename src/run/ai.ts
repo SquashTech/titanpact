@@ -198,6 +198,7 @@ function isInertOnBoard(state: CombatState, casterId: string, move: MoveDefiniti
     (move.statDeltas && !isPureStatMove(move)) ||
     move.conditionalStatDeltas ||
     move.randomStatDeltas ||
+    move.clearsRaisedStages ||
     move.derivedStatDeltas ||
     move.manaGrant != null ||
     move.detonatesStatus ||

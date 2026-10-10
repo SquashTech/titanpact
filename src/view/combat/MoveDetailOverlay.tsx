@@ -224,6 +224,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
   const hasPayload = Boolean(
     move.statDeltas?.length ||
     move.mpRegenGrant != null ||
+    move.clearsRaisedStages ||
       move.derivedStatDeltas ||
       move.manaGrant ||
       move.conditionalTarget ||
@@ -385,6 +386,9 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
           )}
           {move.mpRegenGrant != null && (
             <EffectRow glyph={<StatGlyph stat="mpRegen" />} text={`+${move.mpRegenGrant} ${STAT_LABELS.mpRegen} to ${TARGET_MODE_LABELS[move.target].toLowerCase()}`} />
+          )}
+          {move.clearsRaisedStages && (
+            <EffectRow glyph={<StatGlyph stat="attack" />} text={`Any raised stat on ${TARGET_MODE_LABELS[move.target].toLowerCase()} returns to normal first`} />
           )}
           {move.statDeltas?.map(({ stat, stages }) => {
             // A change into a hero already at, or near, ±5 lands short — say so before the press (docs/stat-stages.md).

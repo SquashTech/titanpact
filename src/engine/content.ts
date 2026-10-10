@@ -518,6 +518,8 @@ export interface MoveDefinition {
   manaGrant?: number;
   /** Flat MP Regen to every stat-delta target, outside the stage system (Mana Font). */
   mpRegenGrant?: number;
+  /** Before its deltas land, every RAISED stage on each delta target returns to 0 (Break Will); a lowered one is left alone. */
+  clearsRaisedStages?: true;
   /** Any kind. Replaces `target` while the field effect is active, read at RESOLUTION (a same-round setter counts). Declared against the authored `target`; applied before Provoke/Haunt. */
   conditionalTarget?: {
     requiresFieldEffect: FieldEffectId;

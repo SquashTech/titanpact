@@ -751,7 +751,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         : (move.statDeltas ?? []).map(({ stat, stages }) => ({ stat, stages: stages * packMultiplier }));
 
     // A randomStatDeltas move may author no statDeltas at all, so the emptiness guard asks about both.
-    const statDeltaTargets = !authoredDeltas.length && !flatDeltas.length && !move.randomStatDeltas
+    const statDeltaTargets = !authoredDeltas.length && !flatDeltas.length && !move.randomStatDeltas && !move.clearsRaisedStages
       ? []
       : move.statDeltaTarget === 'self'
         ? (called ? [] : [action.combatantId])
@@ -782,6 +782,22 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         }
       }
 
+      // clearsRaisedStages: the target's raised stages go first, so the move's own drops land from 0.
+      if (move.clearsRaisedStages) {
+        const current = working.combatants[targetId];
+        const raised = Object.entries(current.statStages ?? {}).filter(([, n]) => (n ?? 0) > 0) as [StatKey, number][];
+        if (raised.length) {
+          working = {
+            ...working,
+            combatants: { ...working.combatants, [targetId]: { ...current, statStages: { ...current.statStages, ...Object.fromEntries(raised.map(([stat]) => [stat, 0])) } } },
+          };
+          for (const [stat, n] of raised) {
+            const cleared: CombatEvent = { type: 'StatChanged', round, combatantId: targetId, stat, delta: -n, stages: true, newValue: 0 };
+            events.push(cleared);
+            statChangedEvents.push(cleared);
+          }
+        }
+      }
       const staged = rolledDeltas.length ? [...authoredDeltas, ...rolledDeltas] : authoredDeltas;
       // A stage is a stage, whoever casts it; held at ±5, and a change the limit swallowed whole still emits, so the player sees why nothing moved.
       for (const delta of staged) {

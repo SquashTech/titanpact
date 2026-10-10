@@ -656,6 +656,14 @@ function scoreCast(
         : 1;
     for (const { id, share } of receivers) {
       const onCasterSide = state.combatants[id]?.side === casterSide;
+      if (move.clearsRaisedStages) {
+        const receiver = state.combatants[id];
+        for (const [stat, n] of Object.entries(receiver.statStages ?? {}) as [StatKey, number][]) {
+          if (n <= 0) continue;
+          const value = statDeltaValue(state, ctx, id, stat, stageDeltaPoints(allCombatants[receiver.heroId], receiver, stat, -n), cache);
+          score += (onCasterSide ? value : -value) * share * chance;
+        }
+      }
       for (const delta of move.statDeltas) {
         // Steps priced as the points they move on this receiver, after the ±5 limit (docs/stat-stages.md).
         const landed = stageDeltaPoints(allCombatants[state.combatants[id].heroId], state.combatants[id], delta.stat, delta.stages * conditional);

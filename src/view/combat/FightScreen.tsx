@@ -252,6 +252,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 {stageText(stat, stages)}
               </span>
             ))}
+            {move.clearsRaisedStages && <span className="move-eff-status">Clears raised stats</span>}
             {move.mpRegenGrant != null && (
               <span className="move-eff-status">
                 +{move.mpRegenGrant} {STAT_LABELS.mpRegen}

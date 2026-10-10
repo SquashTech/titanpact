@@ -280,6 +280,8 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(`${'▲'.repeat(stages)} to ${count === 1 ? 'a random stat' : `${count} random stats`}${statDeltaWhere(move)}`);
   }
 
+  if (move.clearsRaisedStages) parts.push(`Clears raised stats${statDeltaWhere(move)}`);
+
   if (move.mpRegenGrant) parts.push(`+${move.mpRegenGrant} ${STAT_LABELS.mpRegen}${statDeltaWhere(move)}`);
 
 

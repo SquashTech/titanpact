@@ -2,8 +2,8 @@
 
 > **STATUS: DECIDED 2026-10-09 (per user direction); phases 0–1 BUILT and phase 2 mechanically**
 > (same day): the badge, the engine (`Combatant.statStages`, `applyStageDelta`, `stageMultiplier`),
-> the beat copy, the tip and its chart, and every move's delta converted by the §6.1 bands — the
-> §6.2 statement moves are ON THE BAND, not yet re-authored. **Passive stat effects and derived
+> the beat copy, the tip and its chart, every move's delta converted by the §6.1 bands, and the
+> §6.2 statement moves re-authored as suggested (Break Will's clear is `clearsRaisedStages`). **Passive stat effects and derived
 > grants are still FLAT** on `statModifiers` and its −½ … ×4 band until §6.3's brake is decided,
 > except an echo of a stage change (Neuroplastic), which answers in steps. Not measured.
 > Every buff and debuff a fight hands out becomes a **stage**: a stat moves **up to five steps
@@ -169,10 +169,12 @@ The bands sit where today's figure landed against a median stat: +20 on a 60-Att
 `statDeltaChance` and `statDeltaTarget` carry over unchanged. Prowl's partner multiplier
 (`statDeltaPartnerType`) becomes **one extra step** with the partner.
 
-### 6.2 Statement moves — re-authored, not mapped
+### 6.2 Statement moves — re-authored, not mapped (BUILT 2026-10-09)
 
-The mechanical band would make these +3s; each should instead use the axes stages open. First
-suggestions:
+The mechanical band would make these +3s; each instead uses the axes stages open. Built as below,
+mana costs untouched; a self-side drop is a cost and the tile still reads it as a Buff, and Break
+Will's clear is a new verb, `MoveDefinition.clearsRaisedStages` (raised stages on each delta target
+return to 0 before the move's own drops land; a lowered one is kept).
 
 | Move | Today | Suggested |
 |---|---|---|
@@ -250,7 +252,7 @@ reflect a drop · gain stages when dropped · a threshold rider ("at ▲▲ ATK,
    `StatChanged.stages`, `statDeltaScaling.ts` deleted, `hasStatReduction` reading stages, the AI
    and the pilot pricing a step as the points it moves; the beat copy ("rises sharply"), the
    `[stages]` tip token and `fight.stages`.
-2. **Moves** — the §6.1 mapping BUILT; the §6.2 statement moves still to re-author.
+2. **Moves** — BUILT: the §6.1 mapping, and the §6.2 statement moves re-authored.
 3. **Passives** — the brake decided (§6.3), then the mapping; the derived grants (§6.4).
 4. **Measure** — one sim pass, then play.
 

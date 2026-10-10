@@ -127,3 +127,29 @@ test('stages: every authored delta is a whole, non-zero step count inside ±5, o
     }
   }
 });
+
+// --- The statement moves (docs/stat-stages.md §6.2) ---
+
+test('stages: Break Will clears what both foes had raised, then lowers both offences a step from there', () => {
+  let state = fixture(8, 'crimson', 'cinderKnight');
+  const b1 = state.combatants.b1;
+  state = { ...state, combatants: { ...state.combatants, b1: { ...b1, statStages: { attack: 3, defense: 2, speed: -2 } } } };
+  const { state: next, events } = cast(state, 'a1', 'breakWill', 'b1');
+  assert.deepStrictEqual(next.combatants.b1.statStages, { attack: -1, defense: 0, speed: -2, intelligence: -1 }, 'raised cleared, lowered kept, then the drops');
+  assert.deepStrictEqual(next.combatants.b2.statStages, { intelligence: -1, attack: -1 });
+  const clears = statChanged(events).filter((e) => e.combatantId === 'b1' && e.newValue === 0);
+  assert.deepStrictEqual(clears.map((e) => [e.stat, e.delta]).sort(), [['attack', -3], ['defense', -2]]);
+});
+
+test('stages: the trades — Shadow Form and Juggernaut pay a step on their own side, and land it', () => {
+  assert.deepStrictEqual(moves.shadowForm.statDeltas, [{ stat: 'attack', stages: 3 }, { stat: 'defense', stages: -1 }]);
+  assert.deepStrictEqual(moves.juggernaut.statDeltas, [{ stat: 'attack', stages: 2 }, { stat: 'defense', stages: 2 }, { stat: 'speed', stages: -1 }]);
+  assert.strictEqual(statDeltaLandsOnCasterSide(moves.juggernaut), true, 'a self-side drop is a cost, never a debuff');
+});
+
+test('stages: no statement move is still on the mechanical band — nothing over ▲▲▲, and a Mid move at ▲▲', () => {
+  for (const move of Object.values(moves)) {
+    for (const { stages } of move.statDeltas ?? []) assert.ok(Math.abs(stages) <= 3, `${move.id} authors ${stages} stages`);
+  }
+  assert.deepStrictEqual(moves.study.statDeltas, [{ stat: 'intelligence', stages: 2 }]);
+});
