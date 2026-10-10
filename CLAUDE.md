@@ -369,14 +369,15 @@ don't silently override it.
   **It deliberately over-charges HP** — measured break-even is ≈0.33 a point, enemy lines
   still pay `HP_BUDGET_VALUE` = 0.5 and equipment ⅓ (`HP_PER_POINT` = 3, 2026-09-11) — so it is a legibility call to be
   judged in playtest, and the walls are what to watch (`docs/progression.md` "Pricing HP").
-- **Stat modifiers are flat additive integers, multiples of 5 or 10.** No % stat mods.
-  **A MOVE's delta is authored as a BASE and lands scaled off the caster** (2026-09-14,
-  `docs/stat-scaling.md` phase 1, per user direction — a stage system was weighed and set
-  aside): `landed = round(authored × StatMult × STAB)`, the status-magnitude formula, a buff
-  reading the caster's Wisdom and a debuff the offensive stat its move swings with. The rule
-  binds the BASE, as it binds a Burn's; loadout grants (equipment, Banners, Evolution, Class)
-  stay exactly authored, and a self-side cost, a derived grant, a passive's delta and MP Regen
-  land flat. Still additive, still the stat pipeline — no % term touches a stat. **A fight
+- **A MOVE's buff or debuff is a STAGE** (2026-10-09, per user direction, `docs/stat-stages.md`,
+  superseding the caster-scaled flat deltas of `docs/stat-scaling.md`): a stat moves up to
+  **five steps either way** — ×1.5 / 2 / 2.5 / 3 / 3.5 up and the same divided down — on (base +
+  loadout), `Combatant.statStages`; no caster scaling; stages survive a switch; drawn as pips,
+  never a number. Still the stat pipeline: a stage multiplies the stat, which still outputs only
+  the ratio. **Every other stat modifier is a flat additive integer, a multiple of 5 or 10** — no
+  other % term touches a stat. Loadout grants (equipment, Banners, Evolution, Class) stay exactly
+  authored; until `docs/stat-stages.md` §6.3 lands, a passive's delta, a derived grant and MP Regen
+  land FLAT on `statModifiers`, and **a flat fight
   modifier is held inside −½ … +3× of (base + loadout) at write** (`statModifierFloor` /
   `statModifierCeiling`, `STAT_CEILING_MULTIPLE` = 4; the floor on phase 1's measurement, the
   ceiling per user direction after a full playtest run, ×4 over the proposed ×2) — a debuff can

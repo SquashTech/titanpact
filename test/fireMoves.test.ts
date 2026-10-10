@@ -4,7 +4,8 @@
 import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState, landedDelta } from './fixtures';
+import { createFightState, landedDelta, stagesOf, stagesRecordOf } from './fixtures';
+import { stageMultiplier } from '../src/engine/state';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { signatureMoves } from '../src/data/signatures';
@@ -221,11 +222,11 @@ test("fire: Molten Lash deals damage, applies Burn, and drops the target's Defen
   assert.ok(events.some((e) => e.type === 'DamageDealt'));
   // An ordinary three-round Burn, one round spent at the round's end.
   assert.strictEqual(next.combatants.b1.statuses.Burn?.duration, 2);
-  // The −20 is a base a PHYSICAL move scales off Attack: −20 × 1.35 × 1.25 STAB = −34 (docs/stat-scaling.md §2).
-  const drop = landedDelta(state, 'a2', moves.moltenLash, 'defense', -20, 'b1');
-  assert.strictEqual(drop, -34);
-  assert.strictEqual(next.combatants.b1.statModifiers.defense, drop);
-  assert.ok(events.some((e) => e.type === 'StatChanged' && (e as any).stat === 'defense' && (e as any).delta === drop && (e as any).authored === -20));
+  // One step down, whoever casts it (docs/stat-stages.md).
+  const drop = landedDelta(state, 'a2', moves.moltenLash, 'defense', stagesOf(moves.moltenLash, 'defense'), 'b1');
+  assert.strictEqual(drop, -1);
+  assert.strictEqual(next.combatants.b1.statStages?.defense, drop);
+  assert.ok(events.some((e) => e.type === 'StatChanged' && (e as any).stat === 'defense' && (e as any).delta === drop && (e as any).stages === true));
 });
 
 test('fire: the Defense drop lands AFTER the hit that delivered it, so it only pays off next round', () => {
@@ -238,7 +239,7 @@ test('fire: the Defense drop lands AFTER the hit that delivered it, so it only p
 
   const second = resolveRound(first.state, once, config);
   const secondHit = second.events.find((e: any) => e.type === 'DamageDealt') as any;
-  assert.strictEqual(secondHit.defStat, heroes.ironWarden.baseStats.defense + landedDelta(state, 'a2', moves.moltenLash, 'defense', -20, 'b1'));
+  assert.strictEqual(secondHit.defStat, Math.round(heroes.ironWarden.baseStats.defense * stageMultiplier(stagesOf(moves.moltenLash, 'defense'))));
 });
 
 // --- Spread + field effect + self-inflicted riders ---

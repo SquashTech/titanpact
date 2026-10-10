@@ -3,7 +3,7 @@
 import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState, landedDelta, withFullPools } from './fixtures';
+import { createFightState, landedDelta, withFullPools, stagesOf, stagesRecordOf } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { signatureMoves } from '../src/data/signatures';
@@ -152,8 +152,8 @@ test('spirit: Soul Offering pays the ally FIRST and bills the caster after', () 
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'soulOffering', declaredTarget: 'a2' }];
   const { state: next, events } = resolveRound(state, actions, config);
 
-  assert.strictEqual(next.combatants.a2.statModifiers.intelligence, landedDelta(state, 'a1', moves.soulOffering, 'intelligence', 40, 'a2'));
-  assert.strictEqual(next.combatants.a2.statModifiers.attack, landedDelta(state, 'a1', moves.soulOffering, 'attack', 40, 'a2'));
+  assert.strictEqual(next.combatants.a2.statStages?.intelligence, landedDelta(state, 'a1', moves.soulOffering, 'intelligence', stagesOf(moves.soulOffering, 'intelligence' as any), 'a2'));
+  assert.strictEqual(next.combatants.a2.statStages?.attack, landedDelta(state, 'a1', moves.soulOffering, 'attack', stagesOf(moves.soulOffering, 'attack' as any), 'a2'));
   assert.strictEqual(hpOf(next, 'a1'), before - Math.round(maxHp * 0.2));
   const bill = events.find((e) => e.type === 'DamageDealt' && e.selfCost);
   assert.ok(bill && bill.type === 'DamageDealt');
@@ -166,8 +166,8 @@ test('spirit: Soul Offering can be pointed at the caster — ally modes include 
   const state = withDeepPools(spiritFixture(21));
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'soulOffering', declaredTarget: 'a1' }];
   const { state: next } = resolveRound(state, actions, config);
-  assert.strictEqual(next.combatants.a1.statModifiers.intelligence, landedDelta(state, 'a1', moves.soulOffering, 'intelligence', 40, 'a1'));
-  assert.strictEqual(next.combatants.a1.statModifiers.attack, landedDelta(state, 'a1', moves.soulOffering, 'attack', 40, 'a1'));
+  assert.strictEqual(next.combatants.a1.statStages?.intelligence, landedDelta(state, 'a1', moves.soulOffering, 'intelligence', stagesOf(moves.soulOffering, 'intelligence' as any), 'a1'));
+  assert.strictEqual(next.combatants.a1.statStages?.attack, landedDelta(state, 'a1', moves.soulOffering, 'attack', stagesOf(moves.soulOffering, 'attack' as any), 'a1'));
 });
 
 test('spirit: a percentMaxHp cost has NO floor — it can faint its own caster, and the buff still lands', () => {
@@ -177,7 +177,7 @@ test('spirit: a percentMaxHp cost has NO floor — it can faint its own caster, 
 
   assert.ok(next.combatants.a1.fainted, '25% of MAX HP should out-bill a caster sitting at 10%');
   assert.ok(events.some((e) => e.type === 'Fainted' && e.combatantId === 'a1'));
-  assert.strictEqual(next.combatants.a2.statModifiers.intelligence, landedDelta(state, 'a1', moves.soulOffering, 'intelligence', 40, 'a2'));
+  assert.strictEqual(next.combatants.a2.statStages?.intelligence, landedDelta(state, 'a1', moves.soulOffering, 'intelligence', stagesOf(moves.soulOffering, 'intelligence' as any), 'a2'));
 });
 
 test('spirit: Last Rites deals its damage, then drops the caster to exactly 1 HP', () => {

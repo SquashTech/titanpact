@@ -3,7 +3,7 @@
 import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState, fixtureMaxHp, landedDelta, withFullPools } from './fixtures';
+import { createFightState, fixtureMaxHp, landedDelta, withFullPools, stagesOf, stagesRecordOf } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { signatureMoves } from '../src/data/signatures';
@@ -58,7 +58,7 @@ function withStatus(state: CombatState, combatantId: string, statusId: string): 
 }
 
 function modifiersOf(state: CombatState, combatantId: string) {
-  return state.combatants[combatantId].statModifiers as Record<string, number>;
+  return (state.combatants[combatantId].statStages ?? {}) as Record<string, number>;
 }
 
 // --- conditionalManaCost.requiresAnyEnemyStatus ---
@@ -165,7 +165,7 @@ test('iron: the Attack ramp compounds across casts and is never spent', () => {
   // Each row's base lands scaled off the caster's Wisdom (docs/stat-scaling.md §2), which no cast here moves.
   let running = 0;
   const expected = casts.map(
-    (moveId) => (running += landedDelta(state, 'a1', moves[moveId], 'attack', moves[moveId].statDeltas!.find((d) => d.stat === 'attack')!.amount, 'a1'))
+    (moveId) => (running += landedDelta(state, 'a1', moves[moveId], 'attack', moves[moveId].statDeltas!.find((d) => d.stat === 'attack')!.stages, 'a1'))
   );
 
   casts.forEach((moveId, i) => {
@@ -190,7 +190,7 @@ test('iron: a damage row\'s stat delta lands AFTER its own hit, so Opening Strik
     [{ kind: 'move', combatantId: 'a1', moveId: 'openingStrike', declaredTarget: 'b1' }],
     config
   );
-  const drop = landedDelta(state, 'a1', moves.openingStrike, 'defense', -10, 'b1');
+  const drop = landedDelta(state, 'a1', moves.openingStrike, 'defense', stagesOf(moves.openingStrike, 'defense' as any), 'b1');
   assert.strictEqual(modifiersOf(first.state, 'b1').defense ?? 0, drop);
 
   const second = twice('openingStrike');
@@ -207,8 +207,8 @@ test('iron: Pin Down is a debuff — a buff-kind move with a negative payload ai
 
   assert.strictEqual(moves.pinDown.kind, 'buff');
   assert.strictEqual(moves.pinDown.target, 'singleEnemy');
-  assert.strictEqual(modifiersOf(next, 'b1').defense, landedDelta(state, 'a1', moves.pinDown, 'defense', -20, 'b1'));
-  assert.strictEqual(modifiersOf(next, 'b1').speed, landedDelta(state, 'a1', moves.pinDown, 'speed', -10, 'b1'));
+  assert.strictEqual(stagesRecordOf(next, 'b1').defense, landedDelta(state, 'a1', moves.pinDown, 'defense', stagesOf(moves.pinDown, 'defense' as any), 'b1'));
+  assert.strictEqual(stagesRecordOf(next, 'b1').speed, landedDelta(state, 'a1', moves.pinDown, 'speed', stagesOf(moves.pinDown, 'speed' as any), 'b1'));
   assert.strictEqual(events.some((e) => e.type === 'DamageDealt'), false, 'no damage body');
 });
 
@@ -220,8 +220,8 @@ test('iron: Reinforce pays BOTH allies, including the caster', () => {
     config
   );
   for (const id of ['a1', 'a2']) {
-    assert.strictEqual(modifiersOf(next, id).attack, landedDelta(state, 'a1', moves.reinforce, 'attack', 20, id), `${id} attack`);
-    assert.strictEqual(modifiersOf(next, id).defense, landedDelta(state, 'a1', moves.reinforce, 'defense', 20, id), `${id} defense`);
+    assert.strictEqual(stagesRecordOf(next, id).attack, landedDelta(state, 'a1', moves.reinforce, 'attack', stagesOf(moves.reinforce, 'attack' as any), id), `${id} attack`);
+    assert.strictEqual(stagesRecordOf(next, id).defense, landedDelta(state, 'a1', moves.reinforce, 'defense', stagesOf(moves.reinforce, 'defense' as any), id), `${id} defense`);
   }
   assert.strictEqual(modifiersOf(next, 'b1').attack ?? 0, 0, 'and nothing on the enemy side');
 });
@@ -293,13 +293,13 @@ test('iron: every priority row is a POSITIVE bracket, and the slate has no heal,
 test('iron: the re-authored Fortify is a guard buff only, and Wisdom is grantable off-Mind only by Overdrive', () => {
   // Off-Mind Wisdom grants are a pinned list: Overdrive (safe by price — one fifth of a 100-mana capstone)
   // and Archon Blast (safe by reach — enemy-only, held by no hero kit or pool). A new one is a decision.
-  assert.deepStrictEqual(moves.fortify.statDeltas, [{ stat: 'defense', amount: 20 }]);
+  assert.deepStrictEqual(moves.fortify.statDeltas, [{ stat: 'defense', stages: 1 }]);
   assert.strictEqual(moves.fortify.target, 'self');
   // statDeltaTarget 'self' on a self-target move is a no-op the label renders as "(Self) — Self".
   assert.strictEqual(moves.fortify.statDeltaTarget, undefined);
 
   const wisdomGrants = Object.values(moves).filter((m) =>
-    m.statDeltas?.some((d) => d.stat === 'wisdom' && d.amount > 0)
+    m.statDeltas?.some((d) => d.stat === 'wisdom' && d.stages > 0)
   );
   assert.deepStrictEqual(wisdomGrants.map((m) => m.id).sort(), ['archonBlast', 'brainWard', 'mentalFortress', 'overdrive', 'stasis']);
   for (const move of wisdomGrants) {
@@ -409,7 +409,7 @@ test('iron: the enemy side can demonstrate the type end to end', () => {
   assert.ok(kit.every((m) => m.type === 'Iron' && !signatureMoves[m.id]));
   assert.ok(kit.some((m) => m.statDeltaTarget === 'self'), 'no way to show the Attack ramp');
   assert.ok(
-    kit.some((m) => m.statDeltas?.some((d) => d.stat === 'defense' && d.amount < 0)),
+    kit.some((m) => m.statDeltas?.some((d) => d.stat === 'defense' && d.stages < 0)),
     'no way to show the Defense debuff'
   );
   for (const move of kit) assert.ok(move.manaCost <= warrior.baseStats.manaPool);

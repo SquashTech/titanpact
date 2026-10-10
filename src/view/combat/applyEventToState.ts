@@ -103,7 +103,9 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
           ...state.combatants,
           [event.combatantId]: {
             ...state.combatants[event.combatantId],
-            statModifiers: { ...state.combatants[event.combatantId].statModifiers, [event.stat]: event.newValue },
+            ...(event.stages
+              ? { statStages: { ...state.combatants[event.combatantId].statStages, [event.stat]: event.newValue } }
+              : { statModifiers: { ...state.combatants[event.combatantId].statModifiers, [event.stat]: event.newValue } }),
           },
         },
       };

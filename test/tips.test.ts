@@ -25,6 +25,7 @@ function ctx(overrides: Partial<FightTipContext> = {}): FightTipContext {
     enemyTypesOnField: [],
     fieldEffectActive: false,
     callReady: false,
+    statStaged: false,
     ...overrides,
   };
 }
@@ -60,6 +61,7 @@ test('tips: every inline icon token is one the view can draw', () => {
     for (const page of tip.pages) assert.deepStrictEqual(unknownIconTokens(page), [], `${tip.id}: "${page}"`);
   }
   assert.deepStrictEqual(parseTipText('a [physical] b [nope]'), [{ text: 'a ' }, { icon: 'physical' }, { text: ' b [nope]' }]);
+  assert.deepStrictEqual(parseTipText('[stages]'), [{ block: 'stages' }], 'the stage chart is a block token');
 });
 
 test('tips: the lore card is the four lines, the last the draft\'s verb', () => {
@@ -86,6 +88,7 @@ test('tips: the first command phase of the first fight is the basics, whatever e
 
 test('tips: each fight tip waits for its own moment', () => {
   const seenBasics = ['fight.basics'];
+  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ statStaged: true }), seenBasics)?.id, 'fight.stages', 'the first raised or lowered stat');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx(), seenBasics), null, 'round 1, nothing new');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ round: 2 }), seenBasics)?.id, 'fight.types');
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ round: 2 }), [...seenBasics, 'fight.types'])?.id, 'fight.attacks', 'physical vs magical, the phase after types');
@@ -107,7 +110,7 @@ test('tips: each fight tip waits for its own moment', () => {
 
 test('tips: a seen fight tip never shows again', () => {
   const seen = FIGHT_TIPS.map((tip) => tip.id);
-  const everything = ctx({ round: 40, nodeType: 'boss', anyOutOfMana: true, benchSize: 3, enemyTypesOnField: ['Ancient'], fieldEffectActive: true, callReady: true });
+  const everything = ctx({ round: 40, nodeType: 'boss', anyOutOfMana: true, benchSize: 3, enemyTypesOnField: ['Ancient'], fieldEffectActive: true, callReady: true, statStaged: true });
   assert.strictEqual(matchFightTip(FIGHT_TIPS, everything, seen), null);
 });
 

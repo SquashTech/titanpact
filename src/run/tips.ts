@@ -31,7 +31,12 @@ export const TIP_ICON_TOKENS = ['physical', 'magical', 'heal', 'buff', 'debuff']
 
 export type TipIconToken = (typeof TIP_ICON_TOKENS)[number];
 
-export type TipSegment = { text: string } | { icon: TipIconToken };
+/** Block tokens: a page that IS the token renders a drawn panel in its place — `[stages]` is the stage chart (docs/stat-stages.md §5). */
+export const TIP_BLOCK_TOKENS = ['stages'] as const;
+
+export type TipBlockToken = (typeof TIP_BLOCK_TOKENS)[number];
+
+export type TipSegment = { text: string } | { icon: TipIconToken } | { block: TipBlockToken };
 
 /** Any `[word]`, so an unknown token can be reported rather than silently printed as prose. */
 const TOKEN_PATTERN = /\[([a-zA-Z]+)\]/g;
@@ -46,10 +51,11 @@ export function parseTipText(text: string): TipSegment[] {
   let cursor = 0;
   for (const match of text.matchAll(TOKEN_PATTERN)) {
     const token = match[1];
-    if (!isTipIconToken(token)) continue;
+    const block = (TIP_BLOCK_TOKENS as readonly string[]).includes(token);
+    if (!isTipIconToken(token) && !block) continue;
     const at = match.index ?? 0;
     if (at > cursor) segments.push({ text: text.slice(cursor, at) });
-    segments.push({ icon: token });
+    segments.push(block ? { block: token as TipBlockToken } : { icon: token as TipIconToken });
     cursor = at + match[0].length;
   }
   if (cursor < text.length) segments.push({ text: text.slice(cursor) });
@@ -58,7 +64,7 @@ export function parseTipText(text: string): TipSegment[] {
 
 /** Every `[word]` in a page that is NOT a known token. */
 export function unknownIconTokens(text: string): string[] {
-  return [...text.matchAll(TOKEN_PATTERN)].map((m) => m[1]).filter((token) => !isTipIconToken(token));
+  return [...text.matchAll(TOKEN_PATTERN)].map((m) => m[1]).filter((token) => !isTipIconToken(token) && !(TIP_BLOCK_TOKENS as readonly string[]).includes(token));
 }
 
 // --- Out-of-fight tips ---
@@ -127,6 +133,8 @@ export interface FightTipCondition {
   fieldEffectActive?: boolean;
   /** The companion's Call is there to be made (docs/companion-call.md). */
   callReady?: boolean;
+  /** A stat on the field has been raised or lowered, either side (docs/stat-stages.md). */
+  statStaged?: boolean;
 }
 
 export interface FightTip extends Tip {
@@ -142,6 +150,7 @@ export interface FightTipContext {
   enemyTypesOnField: readonly TypeId[];
   fieldEffectActive: boolean;
   callReady: boolean;
+  statStaged: boolean;
 }
 
 function fightTipMatches(when: FightTipCondition, ctx: FightTipContext): boolean {
@@ -152,6 +161,7 @@ function fightTipMatches(when: FightTipCondition, ctx: FightTipContext): boolean
   if (when.enemyTypeOnField !== undefined && !ctx.enemyTypesOnField.includes(when.enemyTypeOnField)) return false;
   if (when.fieldEffectActive !== undefined && ctx.fieldEffectActive !== when.fieldEffectActive) return false;
   if (when.callReady !== undefined && ctx.callReady !== when.callReady) return false;
+  if (when.statStaged !== undefined && ctx.statStaged !== when.statStaged) return false;
   return true;
 }
 

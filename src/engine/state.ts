@@ -38,8 +38,10 @@ export interface Combatant {
   currentMana: number;
   /** Loadout grants (equipment, relics, Evolution, Class), set once at fight build and never mutated — kept apart from `statModifiers` so the view can tell the stat block from what this fight did to it. */
   baselineStatModifiers: StatModifiers;
-  /** Flat deltas applied DURING the fight; starts empty every fight. */
+  /** Flat deltas applied DURING the fight — passives, derived grants, MP Regen; starts empty every fight. */
   statModifiers: StatModifiers;
+  /** A move's buffs and debuffs, in steps of −5 … +5 (docs/stat-stages.md); starts empty every fight. Absent on a save from before stages. */
+  statStages?: StatModifiers;
   /** Type-graft Evolution grants on top of HeroDefinition.types (which never changes). */
   grantedTypes: readonly TypeId[];
   /** The Evolution path whose form the view draws (art/evolutions/). Presentation only: the engine never reads it. */
@@ -495,9 +497,10 @@ export function getEffectiveStat(
   stat: StatKey,
   fieldEffectCtx?: FieldEffectContext
 ): number {
-  const base = hero.baseStats[stat];
-  const modifier = (combatant.baselineStatModifiers[stat] ?? 0) + (combatant.statModifiers[stat] ?? 0);
-  let raw = base + modifier;
+  const brought = hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0);
+  const stages = combatant.statStages?.[stat] ?? 0;
+  const staged = stages === 0 ? brought : Math.round(brought * stageMultiplier(stages));
+  let raw = staged + (combatant.statModifiers[stat] ?? 0);
 
   // Freeze halves Speed (boolean-shape — presence is the signal).
   if (stat === 'speed' && hasStatus(combatant, FREEZE_STATUS_ID)) {
@@ -549,7 +552,8 @@ export function statusMagnitude(combatant: Combatant, statusId: StatusId): numbe
 }
 
 /**
- * The band a stat's fight modifier lives in (docs/stat-scaling.md §3): −½ of base + loadout at
+ * The band a FLAT fight modifier lives in — a passive's or a derived grant's; a move's buff is a
+ * stage and is held at ±5 instead (docs/stat-stages.md). From docs/stat-scaling.md §3: −½ of base + loadout at
  * the bottom — a debuff can at most halve a stat — and +3× at the top, so a buffed stat is at
  * most **four times** what it started the fight at (2026-09-14, per user direction after play;
  * the +S the doc first proposed read as too tight once buffs landed scaled). Applied at WRITE,
@@ -582,6 +586,42 @@ export function applyStatModifierDelta(
   const ceiling = uncapped ? Infinity : Math.max(statModifierCeiling(hero, combatant, stat), current);
   const newValue = Math.min(ceiling, Math.max(statModifierFloor(hero, combatant, stat), current + delta));
   return { newValue, landed: newValue - current, capped: newValue !== current + delta };
+}
+
+/** The stats a stage can move (docs/stat-stages.md §1). */
+export const STAGED_STATS: readonly StatKey[] = ['attack', 'defense', 'intelligence', 'wisdom', 'speed'];
+
+/** Five steps either way. */
+export const STAGE_LIMIT = 5;
+
+/** ×1.5, ×2 … ×3.5 up; the same divided down — +n and −n cancel exactly. */
+export function stageMultiplier(stages: number): number {
+  return stages >= 0 ? (2 + stages) / 2 : 2 / (2 - stages);
+}
+
+/** A change in steps, held at ±STAGE_LIMIT: the stage to store, the steps that landed, and whether the limit took any. */
+export function applyStageDelta(combatant: Combatant, stat: StatKey, steps: number): { newValue: number; landed: number; capped: boolean } {
+  const current = combatant.statStages?.[stat] ?? 0;
+  const newValue = Math.min(STAGE_LIMIT, Math.max(-STAGE_LIMIT, current + steps));
+  return { newValue, landed: newValue - current, capped: newValue !== current + steps };
+}
+
+/**
+ * Where a move's deltas land, read off the card alone — for a screen with no board.
+ * 'allOthers' lands on both sides and reads as enemy-side, the debuff being the reason to cast it.
+ */
+export function statDeltaLandsOnCasterSide(move: MoveDefinition): boolean {
+  if (move.statDeltaTarget === 'self' || move.statDeltaTarget === 'bothAllies') return true;
+  const target = move.target;
+  return target === 'self' || target === 'singleAlly' || target === 'bothAllies' || target === 'randomAlly';
+}
+
+/** What a stage change is worth in stat points on this holder, after the ±5 limit — for pricing (the AI, the pilot). */
+export function stageDeltaPoints(hero: HeroDefinition, combatant: Combatant, stat: StatKey, steps: number): number {
+  const brought = hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0);
+  const current = combatant.statStages?.[stat] ?? 0;
+  const { newValue } = applyStageDelta(combatant, stat, steps);
+  return Math.round(brought * stageMultiplier(newValue)) - Math.round(brought * stageMultiplier(current));
 }
 
 /** Effective minus loadout baseline — the part this fight contributed. Badges temporary buffs/debuffs only. */
@@ -628,6 +668,7 @@ export function createCombatant(
     currentMana: startingMana,
     baselineStatModifiers: {},
     statModifiers: {},
+    statStages: {},
     grantedTypes: [],
     baselineStatusMagnitudes: {},
     moveManaDiscounts: {},

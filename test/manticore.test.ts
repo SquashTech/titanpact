@@ -96,7 +96,7 @@ test('archonBlast: 55 base power for 40 mana, magical, and the +20 Wisdom lands 
   // for a single-target attack on purpose. Shared with the Kraken and the Endbringer.
   assert.strictEqual(move.basePower, 55);
   assert.strictEqual(move.manaCost, 40);
-  assert.deepStrictEqual(move.statDeltas, [{ stat: 'wisdom', amount: 20 }]);
+  assert.deepStrictEqual(move.statDeltas, [{ stat: 'wisdom', stages: 1 }]);
   // Without statDeltaTarget the deltas follow the move's targets and hand the ENEMY the Wisdom.
   assert.strictEqual(move.statDeltaTarget, 'self');
 });

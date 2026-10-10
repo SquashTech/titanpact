@@ -1,6 +1,11 @@
 # stat-stages.md — Buffs and debuffs as counted steps
 
-> **STATUS: DECIDED 2026-10-09 (per user direction), NOT BUILT** except phase 0, the badge (§4).
+> **STATUS: DECIDED 2026-10-09 (per user direction); phases 0–1 BUILT and phase 2 mechanically**
+> (same day): the badge, the engine (`Combatant.statStages`, `applyStageDelta`, `stageMultiplier`),
+> the beat copy, the tip and its chart, and every move's delta converted by the §6.1 bands — the
+> §6.2 statement moves are ON THE BAND, not yet re-authored. **Passive stat effects and derived
+> grants are still FLAT** on `statModifiers` and its −½ … ×4 band until §6.3's brake is decided,
+> except an echo of a stage change (Neuroplastic), which answers in steps. Not measured.
 > Every buff and debuff a fight hands out becomes a **stage**: a stat moves **up to five steps
 > either way**, each step a fixed multiplier on what the hero brought to the fight. This
 > **supersedes `docs/stat-scaling.md`** (caster-scaled flat deltas and the −½ … ×4 band) and
@@ -240,9 +245,12 @@ reflect a drop · gain stages when dropped · a threshold rider ("at ▲▲ ATK,
 ## 9. Phases
 
 0. **The badge** — BUILT (`ac5d3f47`).
-1. **The engine** — stage record, curve, clamp, `StatChanged`, delete scaling and the band; the
-   beat copy; the tip and its chart.
-2. **Moves** — the §6.1 mapping applied mechanically, the §6.2 statement moves re-authored.
+1. **The engine** — BUILT: `statStages` beside the flat `statModifiers` (which keeps passives,
+   derived grants and MP Regen — Mana Font moved to `mpRegenGrant`), the curve and the ±5 clamp,
+   `StatChanged.stages`, `statDeltaScaling.ts` deleted, `hasStatReduction` reading stages, the AI
+   and the pilot pricing a step as the points it moves; the beat copy ("rises sharply"), the
+   `[stages]` tip token and `fight.stages`.
+2. **Moves** — the §6.1 mapping BUILT; the §6.2 statement moves still to re-author.
 3. **Passives** — the brake decided (§6.3), then the mapping; the derived grants (§6.4).
 4. **Measure** — one sim pass, then play.
 

@@ -181,9 +181,10 @@ export function formatEvents(
         break;
       case 'StatChanged': {
         const sign = e.delta > 0 ? '+' : '';
-        const up = e.delta !== 0 ? e.delta > 0 : (e.authored ?? 0) > 0;
+        const up = e.delta !== 0 ? e.delta > 0 : e.newValue > 0;
         const held = e.capped ? (e.delta === 0 ? ` (can't go any ${up ? 'higher' : 'lower'})` : ` (can't go much ${up ? 'higher' : 'lower'})`) : '';
-        lines.push({ key, text: `${name(e.combatantId)}'s ${e.stat} ${sign}${e.delta}${held}`, className: e.delta > 0 ? 'log-buff' : 'log-debuff' });
+        const amount = e.stages ? (e.delta > 0 ? '▲' : '▼').repeat(Math.abs(e.delta)) : `${sign}${e.delta}`;
+        lines.push({ key, text: `${name(e.combatantId)}'s ${e.stat} ${amount}${held}`, className: e.delta > 0 ? 'log-buff' : 'log-debuff' });
         break;
       }
       case 'StatusApplied': {

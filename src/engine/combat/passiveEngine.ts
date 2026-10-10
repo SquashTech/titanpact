@@ -4,7 +4,7 @@
 // (synchronous, evaluated before a hit is rolled).
 
 import type { HeroLookup, CombatState, Combatant, PassiveInstance, Side } from '../state';
-import { getMaxHp, getMaxMana, applyStatModifierDelta, getEffectiveStat } from '../state';
+import { getMaxHp, getMaxMana, applyStatModifierDelta, applyStageDelta, getEffectiveStat } from '../state';
 import type { FieldEffectDefinition, PassiveDefinition, PassiveId, PassiveEffect, PassiveEffectTarget, PassiveTriggerCondition, PassiveAmount, StatKey, StatusDefinition, MoveDefinition } from '../content';
 import type { CombatEvent } from '../events';
 import type { DamageModifier } from '../damage/damagePipeline';
@@ -400,6 +400,17 @@ function resolveEffectOn(
             ? Math.round(getEffectiveStat(heroes[target.heroId], target, effect.amount.stat) * (effect.amount.multiplier ?? 1))
             : resolveAmount(effect.amount, context);
       if (amount === 0) return { state, events: [] };
+      // An amount read off a STAGE change (Neuroplastic answering a drop) is itself in steps.
+      if (typeof effect.amount !== 'number' && effect.amount.kind === 'matchTriggerAmount' && context.stages === true) {
+        let stages = target.statStages ?? {};
+        const stepped: CombatEvent[] = [];
+        for (const stat of stats) {
+          const { newValue, landed, capped } = applyStageDelta({ ...target, statStages: stages }, stat, amount);
+          stages = { ...stages, [stat]: newValue };
+          stepped.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, stages: true, ...(capped ? { capped: true } : {}), newValue });
+        }
+        return { state: { ...state, combatants: { ...state.combatants, [targetId]: { ...target, statStages: stages } } }, events: stepped };
+      }
       let modifiers = target.statModifiers;
       const changes: CombatEvent[] = [];
       for (const stat of stats) {

@@ -240,12 +240,13 @@ test('arcane repose: a Rested hook — the Shield equals the Mana the Rest resto
 
 test('neuroplastic: a statDelta read off the event — Reverie gains exactly the Wisdom an enemy lost, and nothing when it rose', () => {
   const state = withPassive(twoVTwo(15, 'mindweaver', 'trance', 'ironWarden', 'crag'), 'a1', 'neuroplastic');
-  const before = state.combatants.a1.statModifiers.wisdom ?? 0;
+  const before = state.combatants.a1.statStages?.wisdom ?? 0;
   const r = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'enervate', declaredTarget: 'b1' }, ...restAll(state).filter((a) => a.combatantId !== 'a2')], config);
   const drop = r.events.find((e) => e.type === 'StatChanged' && e.combatantId === 'b1' && e.stat === 'wisdom');
   assert.ok(drop && drop.type === 'StatChanged' && drop.delta < 0, 'Enervate lowered its Wisdom');
-  const gained = (r.state.combatants.a1.statModifiers.wisdom ?? 0) - before;
-  assert.strictEqual(gained, -(drop as { delta: number }).delta, 'that much, as landed');
+  // A stage drop is answered in stages (docs/stat-stages.md §6.4).
+  const gained = (r.state.combatants.a1.statStages?.wisdom ?? 0) - before;
+  assert.strictEqual(gained, -(drop as { delta: number }).delta, 'that many steps, as landed');
 });
 
 test('boiler: chance — at chance 1 every Mech hit Burns the authored percent, scaled by nothing; at chance 0 never', () => {

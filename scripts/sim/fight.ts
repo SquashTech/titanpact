@@ -274,14 +274,14 @@ function recordEvents(
       if (casterSide === PLAYER_SIDE) deltas.held += 1;
       else deltas.enemyHeld += 1;
     }
-    if (event.type === 'StatChanged' && deltas && event.authored !== undefined && casterSide) {
+    if (event.type === 'StatChanged' && deltas && event.stages && casterSide) {
       if (casterSide === PLAYER_SIDE) {
         deltas.count += 1;
-        deltas.authored += Math.abs(event.authored);
+        deltas.authored += Math.abs(event.delta);
         deltas.landed += Math.abs(event.delta);
       } else {
         deltas.enemyCount += 1;
-        deltas.enemyAuthored += Math.abs(event.authored);
+        deltas.enemyAuthored += Math.abs(event.delta);
         deltas.enemyLanded += Math.abs(event.delta);
       }
     }

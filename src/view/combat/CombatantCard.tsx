@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { HeroDefinition, PassiveId, StatKey } from '../../engine/content';
 import type { Combatant, StatContext, StatusInstance } from '../../engine/state';
-import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana, statModifierCeiling, statModifierFloor } from '../../engine/state';
+import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana, statModifierCeiling, statModifierFloor, STAGE_LIMIT } from '../../engine/state';
 import { fieldEffects } from '../../data/fieldEffects';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -217,16 +217,19 @@ function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspe
 // getCombatStatDelta (effective − loadout baseline), NOT baselineStatModifiers:
 // equipment/relic/Evolution grants read as the hero's stat block, not as a
 // battlefield indicator. Only what changed DURING this fight shows here.
-function activeStatMods(hero: HeroDefinition, combatant: Combatant, statCtx: StatContext | undefined): Array<{ stat: StatKey; mod: number; tier: number; held: boolean }> {
+function activeStatMods(hero: HeroDefinition, combatant: Combatant, statCtx: StatContext | undefined): Array<{ stat: StatKey; mod: number; stages: number; tier: number; held: boolean }> {
   const fieldEffectCtx = statCtx ?? { active: null, defs: fieldEffects };
   return STAT_ORDER.flatMap((stat) => {
     const mod = getCombatStatDelta(hero, combatant, stat, fieldEffectCtx);
     if (mod === 0) return [];
+    const stages = combatant.statStages?.[stat] ?? 0;
     const floor = statModifierFloor(hero, combatant, stat);
     const ceiling = statModifierCeiling(hero, combatant, stat);
     const fightMod = combatant.statModifiers[stat] ?? 0;
-    const held = mod < 0 ? floor < 0 && fightMod <= floor : ceiling > 0 && fightMod >= ceiling;
-    return [{ stat, mod, tier: modTier(mod, hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0)), held }];
+    const flatHeld = mod < 0 ? floor < 0 && fightMod <= floor : ceiling > 0 && fightMod >= ceiling;
+    // One pip a step (docs/stat-stages.md §4); a flat change with no stage behind it (a passive's) keeps the old size marks.
+    const tier = stages !== 0 ? Math.abs(stages) : modTier(mod, hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0));
+    return [{ stat, mod, stages, tier, held: Math.abs(stages) >= STAGE_LIMIT || flatHeld }];
   });
 }
 
@@ -291,11 +294,13 @@ function usePoseRelease(pose: Pose): Pose | null {
   return released;
 }
 
-function StatModBadge({ stat, mod, tier, held }: { stat: StatKey; mod: number; tier: number; held: boolean }) {
+function StatModBadge({ stat, mod, stages, tier, held }: { stat: StatKey; mod: number; stages: number; tier: number; held: boolean }) {
+  const label = STAT_LABELS[stat];
+  const reading = stages !== 0 ? `${label} ${(stages > 0 ? '▲' : '▼').repeat(Math.abs(stages))} — ${stages > 0 ? '×' : '÷'}${(2 + Math.abs(stages)) / 2}` : `${label} ${mod > 0 ? '+' : ''}${mod}`;
   return (
     <span
       className={`stat-mod-badge ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${held ? ' stat-held' : ''}`}
-      title={`${stat} ${mod > 0 ? '+' : ''}${mod}${held ? (mod > 0 ? " — can't go any higher" : " — can't go any lower") : ''}`}
+      title={`${reading}${held ? (mod > 0 ? " — can't go any higher" : " — can't go any lower") : ''}`}
     >
       <span className="stat-mod-label">{STAT_LABELS[stat]}</span>
       <span className="stat-mod-arrow" aria-hidden="true">{mod > 0 ? '▲' : '▼'}</span>
@@ -438,15 +443,15 @@ export function CombatantCard({
     >
       {leftMods.length > 0 && (
         <div className="stat-mod-corner stat-mod-corner-left">
-          {leftMods.map(({ stat, mod, tier, held }) => (
-            <StatModBadge key={stat} stat={stat} mod={mod} tier={tier} held={held} />
+          {leftMods.map(({ stat, mod, stages, tier, held }) => (
+            <StatModBadge key={stat} stat={stat} mod={mod} stages={stages} tier={tier} held={held} />
           ))}
         </div>
       )}
       {rightMods.length > 0 && (
         <div className="stat-mod-corner stat-mod-corner-right">
-          {rightMods.map(({ stat, mod, tier, held }) => (
-            <StatModBadge key={stat} stat={stat} mod={mod} tier={tier} held={held} />
+          {rightMods.map(({ stat, mod, stages, tier, held }) => (
+            <StatModBadge key={stat} stat={stat} mod={mod} stages={stages} tier={tier} held={held} />
           ))}
         </div>
       )}

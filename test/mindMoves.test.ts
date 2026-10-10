@@ -54,8 +54,9 @@ function withModifiers(state: CombatState, combatantId: string, mods: Record<str
   } as CombatState;
 }
 
+/** What a move raised or lowered — stages (docs/stat-stages.md). */
 function modifiersOf(state: CombatState, combatantId: string) {
-  return state.combatants[combatantId].statModifiers as Record<string, number>;
+  return (state.combatants[combatantId].statStages ?? {}) as Record<string, number>;
 }
 
 // --- statDeltaChance ---
@@ -283,7 +284,7 @@ test('mind: the authored slate is 16 moves plus the three 2026-09-15 additions, 
   assert.strictEqual(mind.length, 22);
   for (const m of mind) {
     for (const d of m.statDeltas ?? []) {
-      assert.strictEqual(Math.abs(d.amount) % 5, 0, `${m.id} authors a non-multiple-of-5 delta`);
+      assert.ok(Number.isInteger(d.stages), `${m.id} authors a fractional stage`);
     }
   }
 });

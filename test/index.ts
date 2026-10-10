@@ -11,7 +11,7 @@ import './quiver.test';
 import './elementalForce.test';
 import './fieldEffects.test';
 import './pactClock.test';
-import './statScaling.test';
+import './statStages.test';
 import './consumables.test';
 import './fireMoves.test';
 import './waterMoves.test';

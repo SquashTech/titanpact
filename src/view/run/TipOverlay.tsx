@@ -23,7 +23,9 @@ function TipText({ text }: { text: string }) {
   return (
     <>
       {parseTipText(text).map((segment, i) =>
-        'icon' in segment ? (
+        'block' in segment ? (
+          <StageChart key={i} />
+        ) : 'icon' in segment ? (
           <span key={i} className={`category-badge move-kind-badge tip-inline-icon ${TOKEN_BADGE_CLASS[segment.icon]}`}>
             <MoveKindGlyph kind={segment.icon} className="move-kind-glyph" />
           </span>
@@ -32,6 +34,34 @@ function TipText({ text }: { text: string }) {
         )
       )}
     </>
+  );
+}
+
+const STEPS = [1, 2, 3, 4, 5];
+
+/** The stage chart (docs/stat-stages.md §5): what each step up and down does, ▲ ×, ▼ ÷. */
+function StageChart() {
+  return (
+    <span className="tip-stage-chart" role="table" aria-label="Each step up multiplies the stat, each step down divides it">
+      <span className="tip-stage-row tip-stage-head" role="row">
+        <span role="columnheader" />
+        {STEPS.map((n) => (
+          <span key={n} role="columnheader">{n}</span>
+        ))}
+      </span>
+      <span className="tip-stage-row tip-stage-up" role="row">
+        <span role="rowheader">▲</span>
+        {STEPS.map((n) => (
+          <span key={n} role="cell">×{(2 + n) / 2}</span>
+        ))}
+      </span>
+      <span className="tip-stage-row tip-stage-down" role="row">
+        <span role="rowheader">▼</span>
+        {STEPS.map((n) => (
+          <span key={n} role="cell">÷{(2 + n) / 2}</span>
+        ))}
+      </span>
+    </span>
   );
 }
 

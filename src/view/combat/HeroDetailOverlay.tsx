@@ -13,6 +13,9 @@ import {
   moveForHero,
   statModifierCeiling,
   statModifierFloor,
+  stageMultiplier,
+  STAGED_STATS,
+  STAGE_LIMIT,
 } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { StatScale } from '../../run/statScale';
@@ -22,6 +25,7 @@ import { chosenClass } from '../../run/classes';
 import { levelOf } from '../../run/growth';
 import { progressionTable } from '../../data/progression';
 import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, PowerReadout, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
+import { stageText } from '../shared/moveKind';
 import { shieldHeld } from '../../engine/status/shield';
 import { statuses } from '../../data/statuses';
 import { EquipmentSlotGrid, ItemReadout } from '../shared/EquipmentBox';
@@ -82,25 +86,31 @@ function fmtStatus(statusId: string, magnitude: number | undefined, duration: nu
  */
 export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, statCtx, scale, onClose }: Props) {
   // In-fight changes only: what the loadout grants is levels and gear, which a run teaches, and the room is the passives'.
-  const fightModifiers = Object.fromEntries(STAT_ORDER.map((stat) => [stat, combatant.statModifiers[stat] ?? 0])) as Record<StatKey, number>;
+  // A move's stages (docs/stat-stages.md) and the flat changes passives make, as points against what the hero brought.
+  const brought = (stat: StatKey) => hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0);
+  const stageOf = (stat: StatKey) => combatant.statStages?.[stat] ?? 0;
+  const flatOf = (stat: StatKey) => combatant.statModifiers[stat] ?? 0;
+  const fightModifiers = Object.fromEntries(
+    STAT_ORDER.map((stat) => [stat, Math.round(brought(stat) * stageMultiplier(stageOf(stat))) - brought(stat) + flatOf(stat)])
+  ) as Record<StatKey, number>;
   const hasModifiers = STAT_ORDER.some((stat) => fightModifiers[stat] !== 0);
-  // What THIS fight did, apart from the loadout: the → readout and the floor tick (docs/stat-scaling.md §5).
+  // What THIS fight did, apart from the loadout: the → readout and the ticks at ±5 steps.
   const fightReadout = {
     deltas: fightModifiers,
     floors: Object.fromEntries(
-      STAT_ORDER.map((stat) => [stat, hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0) + statModifierFloor(hero, combatant, stat)])
+      STAT_ORDER.filter((stat) => STAGED_STATS.includes(stat)).map((stat) => [stat, Math.round(brought(stat) * stageMultiplier(-STAGE_LIMIT))])
     ) as Partial<Record<StatKey, number>>,
     ceilings: Object.fromEntries(
-      STAT_ORDER.map((stat) => [stat, hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0) + statModifierCeiling(hero, combatant, stat)])
+      STAT_ORDER.filter((stat) => STAGED_STATS.includes(stat)).map((stat) => [stat, Math.round(brought(stat) * stageMultiplier(STAGE_LIMIT))])
     ) as Partial<Record<StatKey, number>>,
   };
   const heldAtFloor = (stat: StatKey) => {
     const floor = statModifierFloor(hero, combatant, stat);
-    return floor < 0 && (combatant.statModifiers[stat] ?? 0) <= floor;
+    return stageOf(stat) <= -STAGE_LIMIT || (floor < 0 && flatOf(stat) <= floor);
   };
   const heldAtCeiling = (stat: StatKey) => {
     const ceiling = statModifierCeiling(hero, combatant, stat);
-    return ceiling > 0 && (combatant.statModifiers[stat] ?? 0) >= ceiling;
+    return stageOf(stat) >= STAGE_LIMIT || (ceiling > 0 && flatOf(stat) >= ceiling);
   };
   const effectiveTotals = Object.fromEntries(
     STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat, statCtx)])
@@ -236,7 +246,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
                           key={stat}
                           className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${heldAtFloor(stat) || heldAtCeiling(stat) ? ' stat-held' : ''}`}
                         >
-                          <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtMod(mod)}
+                          <StatGlyph stat={stat} tone="inherit" /> {stageOf(stat) !== 0 ? stageText(stat, stageOf(stat)) : STAT_LABELS[stat]}{flatOf(stat) !== 0 ? ` ${fmtMod(flatOf(stat))}` : ''}
                           {heldAtFloor(stat) && <span className="detail-modifier-floor"> · can't go any lower</span>}
                           {heldAtCeiling(stat) && <span className="detail-modifier-floor"> · can't go any higher</span>}
                         </span>

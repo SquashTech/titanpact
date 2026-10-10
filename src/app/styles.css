@@ -26943,6 +26943,42 @@ button.evo-gift-card {
 /* An inline `[physical]` token. Wears the move grid's own badge classes on
    purpose — the mark in the sentence is the mark on the button. Only the
    metrics differ: this one sits in running prose rather than a tile. */
+/* The stage chart page (TipOverlay StageChart, docs/stat-stages.md §5): gold up, slate down, as on the badge. */
+.tip-stage-chart {
+  display: grid;
+  gap: 3px;
+  margin: 2px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.tip-stage-row {
+  display: grid;
+  grid-template-columns: 22px repeat(5, 1fr);
+  gap: 3px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.tip-stage-row > span {
+  padding: 3px 0;
+  border-radius: 3px;
+}
+
+.tip-stage-head {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.tip-stage-up > span {
+  color: #633806;
+  background: #f6d79a;
+}
+
+.tip-stage-down > span {
+  color: #0c447c;
+  background: #cfe0f2;
+}
+
 .tip-inline-icon {
   /* Nudged up off the baseline; a bordered box aligned to text sits low. */
   vertical-align: -2px;

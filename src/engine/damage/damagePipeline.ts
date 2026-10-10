@@ -109,7 +109,8 @@ export function resolveConditionalPowerMultiplier(
 
 /** Any in-fight stat reduction standing on a combatant (requiresTargetStatReduction's read; the view's too). */
 export function hasStatReduction(combatant: Combatant): boolean {
-  return Object.values(combatant.statModifiers).some((v) => typeof v === 'number' && v < 0);
+  const lowered = (record: object | undefined) => Object.values(record ?? {}).some((v) => typeof v === 'number' && v < 0);
+  return lowered(combatant.statStages) || lowered(combatant.statModifiers);
 }
 
 /** Which raw stats feed the off/def ratio for a damage category. */

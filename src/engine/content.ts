@@ -133,10 +133,11 @@ export interface StatusGrant {
   magnitude?: number;
 }
 
+/** A move's buff or debuff in STAGES (docs/stat-stages.md): steps of ×1.5 / ÷1.5 on (base + loadout), held at ±5. ATK, DEF, INT, WIS and SPD only. */
 export interface StatDelta {
   stat: StatKey;
-  /** Flat additive; negative = debuff. */
-  amount: number;
+  /** Negative = down. */
+  stages: number;
 }
 
 /** A move's status rider (docs/conditions.md §5). Any move kind may carry one. */
@@ -467,7 +468,7 @@ export interface MoveDefinition {
     requiresFieldEffect?: FieldEffectId;
     /** The hit's target is below this fraction of max HP, read BEFORE this hit's own damage; per target. */
     requiresTargetHpBelow?: number;
-    /** The hit's target carries any in-fight stat reduction — a negative `statModifiers` entry, never the loadout (Brain Flay). Per target, so a spread doubles against the debuffed foe only; a foe held at its floor still counts. */
+    /** The hit's target carries any in-fight stat reduction — a stage below 0 or a negative `statModifiers` entry, never the loadout (Brain Flay). Per target, so a spread doubles against the debuffed foe only; a foe held at its floor still counts. */
     requiresTargetStatReduction?: boolean;
     /** The user is below this fraction of max HP, snapshotted before the target loop — all-or-nothing across a spread even on a draining move. */
     requiresUserHpBelow?: number;
@@ -497,15 +498,15 @@ export interface MoveDefinition {
   statDeltaTarget?: 'moveTarget' | 'self' | 'bothAllies';
   /** Probability in [0, 1] the statDeltas (and derivedStatDeltas) land, rolled once per delta target after the damage rolls; one flip gates the whole list. Omitted = always, no RNG. */
   statDeltaChance?: number;
-  /** Multiplies every statDelta AMOUNT while the user's ACTIVE partner is this type (Prowl) — one StatChanged per stat. Does not reach derivedStatDeltas. */
+  /** Multiplies every statDelta's STAGES while the user's ACTIVE partner is this type (Prowl) — one StatChanged per stat. Does not reach derivedStatDeltas. */
   conditionalStatDeltas?: {
     requiresPartnerType: TypeId;
     multiplier: number;
   };
-  /** Any kind. Grants `amount` to `count` DISTINCT stats drawn from `from`, rolled per target; count >= from.length grants all. `from` is authored (RANDOM_STAT_POOL, moves.ts). */
+  /** Any kind. Grants `stages` to `count` DISTINCT stats drawn from `from`, rolled per target; count >= from.length grants all. `from` is authored (RANDOM_STAT_POOL, moves.ts). */
   randomStatDeltas?: {
     count: number;
-    amount: number;
+    stages: number;
     from: readonly StatKey[];
   };
   /** Any kind. Delta read off live state at cast: 'userManaBeforeCast' (before the cost is spent; overflow counts) or 'userEffectiveAttack' (via getEffectiveStat, so a recast doubles the doubled figure). Exempt from the multiples-of-5 rule (CLAUDE.md). */
@@ -515,6 +516,8 @@ export interface MoveDefinition {
   };
   /** Any kind. Flat mana to each resolved target; may exceed the pool — uncapped, sticky overflow (docs/mana.md "Overflow"). Ally modes include the caster. Emits ManaGranted. */
   manaGrant?: number;
+  /** Flat MP Regen to every stat-delta target, outside the stage system (Mana Font). */
+  mpRegenGrant?: number;
   /** Any kind. Replaces `target` while the field effect is active, read at RESOLUTION (a same-round setter counts). Declared against the authored `target`; applied before Provoke/Haunt. */
   conditionalTarget?: {
     requiresFieldEffect: FieldEffectId;

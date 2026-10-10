@@ -157,7 +157,7 @@ test('pact: a fight that ends before the start round never sees it', () => {
 // --- The acceptance test: the stall it exists to break ---
 
 /**
- * An infinite-mana wall spamming Reinforce (uncapped +20 Def per cast) against a foe attacking every
+ * An infinite-mana wall spamming Reinforce (a Defense step per cast, to the five-step limit) against a foe attacking every
  * round: the damage ratio collapses within a few rounds and nothing else in the engine ends the fight.
  * The wall's setup goes on baselineStatModifiers (the loadout channel) so `statModifiers` stays a
  * clean record of what Reinforce alone added.
@@ -207,8 +207,8 @@ test('pact: WITHOUT the clock, an infinite-mana setup loop never resolves', () =
   assert.strictEqual(state.combatants.wall.fainted, false);
   assert.strictEqual(state.combatants.foe.fainted, false);
   assert.ok(
-    (state.combatants.wall.statModifiers.defense ?? 0) >= 20 * 70,
-    'Defense should have compounded for the whole fight, unbounded'
+    (state.combatants.wall.statStages?.defense ?? 0) === 5,
+    'Defense should have climbed to its limit and held there'
   );
 });
 

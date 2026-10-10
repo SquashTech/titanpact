@@ -127,14 +127,14 @@ export function effect(m: MoveDefinition): string {
   if (m.healPower !== undefined) out.push(`Heal ${m.healPower}`);
   if (m.statDeltas && m.statDeltas.length) {
     const chance = m.statDeltaChance !== undefined && m.statDeltaChance < 1 ? `${pct(m.statDeltaChance)}: ` : '';
-    const deltas = m.statDeltas.map((d) => `${signed(d.amount)} ${STAT_ABBR[d.stat]}`).join(', ');
+    const deltas = m.statDeltas.map((d) => `${STAT_ABBR[d.stat]} ${signed(d.stages)} stage${Math.abs(d.stages) === 1 ? "" : "s"}`).join(', ');
     let s = `${chance}${deltas}${landsOn(m.statDeltaTarget ?? 'moveTarget', m)}`;
     if (m.conditionalStatDeltas) s += ` (×${m.conditionalStatDeltas.multiplier} if partner is ${m.conditionalStatDeltas.requiresPartnerType})`;
     out.push(s);
   }
   if (m.randomStatDeltas) {
     const r = m.randomStatDeltas;
-    out.push(`${signed(r.amount)} to ${r.count >= r.from.length ? 'every' : r.count} random stat${r.count === 1 ? '' : 's'}${landsOn(m.statDeltaTarget ?? 'moveTarget', m)}`);
+    out.push(`${signed(r.stages)} stage to ${r.count >= r.from.length ? 'every' : r.count} random stat${r.count === 1 ? '' : 's'}${landsOn(m.statDeltaTarget ?? 'moveTarget', m)}`);
   }
   if (m.derivedStatDeltas) {
     const src = m.derivedStatDeltas.source === 'userManaBeforeCast' ? 'mana before the cast' : 'own current Atk';

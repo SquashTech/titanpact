@@ -109,21 +109,21 @@ test('ancient: Raise the Standard lands on BOTH of the Herald’s side, and on n
   const state = heraldFixture(1);
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'b1', moveId: 'raiseTheStandard' } as Action], config);
   for (const id of ['b1', 'b2']) {
-    assert.ok((next.combatants[id].statModifiers.attack ?? 0) >= 20, `${id} gained no Attack`);
-    assert.ok((next.combatants[id].statModifiers.intelligence ?? 0) >= 20, `${id} gained no Intelligence`);
+    assert.ok((next.combatants[id].statStages?.attack ?? 0) >= 1, `${id} gained no Attack`);
+    assert.ok((next.combatants[id].statStages?.intelligence ?? 0) >= 1, `${id} gained no Intelligence`);
   }
   for (const id of ['a1', 'a2']) {
-    assert.strictEqual(next.combatants[id].statModifiers.attack ?? 0, 0);
-    assert.strictEqual(next.combatants[id].statModifiers.intelligence ?? 0, 0);
+    assert.strictEqual(next.combatants[id].statStages?.attack ?? 0, 0);
+    assert.strictEqual(next.combatants[id].statStages?.intelligence ?? 0, 0);
   }
 });
 
-test('ancient: Erode drops both heroes’ walls, scaled off the Herald’s Intelligence and held at the floor', () => {
+test('ancient: Erode drops both heroes’ walls a step or more', () => {
   const state = heraldFixture(2);
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'b1', moveId: 'erode' } as Action], config);
   for (const id of ['a1', 'a2']) {
-    assert.ok((next.combatants[id].statModifiers.defense ?? 0) <= -15, `${id}'s Defense did not drop`);
-    assert.ok((next.combatants[id].statModifiers.wisdom ?? 0) <= -15, `${id}'s Wisdom did not drop`);
+    assert.ok((next.combatants[id].statStages?.defense ?? 0) <= -1, `${id}'s Defense did not drop`);
+    assert.ok((next.combatants[id].statStages?.wisdom ?? 0) <= -1, `${id}'s Wisdom did not drop`);
   }
 });
 

@@ -1,12 +1,9 @@
 import type { CombatState, Combatant, Side } from '../src/engine/state';
-import { createCombatant, getMaxHp, getMaxMana, applyStatModifierDelta } from '../src/engine/state';
+import { createCombatant, getMaxHp, getMaxMana, applyStageDelta } from '../src/engine/state';
 import { createRng } from '../src/engine/rng/seededRng';
 import { heroes } from '../src/data/heroes';
 import { allCombatants } from '../src/data/content';
-import { fieldEffects } from '../src/data/fieldEffects';
-import { passives } from '../src/data/passives';
 import type { MoveDefinition, StatKey } from '../src/engine/content';
-import { scaleStatDelta } from '../src/engine/combat/statDeltaScaling';
 
 export interface FixtureCombatant {
   combatantId: string;
@@ -68,20 +65,17 @@ export function createFightState(seed: number, sideA: FixtureCombatant[], sideB:
   };
 }
 
-/**
- * What a move's authored delta lands as for this caster, on a board where the target is on that
- * side or not (docs/stat-scaling.md §2). A slate test pins THIS, since the authored base is no
- * longer the figure that lands. Read off the pre-cast state, as the engine snapshots it, and
- * held at the target's floor (state.ts statModifierFloor) as the engine holds it.
- */
-export function landedDelta(state: CombatState, casterId: string, move: MoveDefinition, stat: StatKey, authored: number, targetId: string): number {
-  const caster = state.combatants[casterId];
-  const target = state.combatants[targetId];
-  const onCasterSide = target.side === caster.side;
-  const scaled = scaleStatDelta(stat, authored, move, allCombatants[caster.heroId], caster, onCasterSide, {
-    active: state.activeFieldEffect,
-    defs: fieldEffects,
-    board: { state, passives },
-  });
-  return applyStatModifierDelta(allCombatants[target.heroId], target, stat, scaled).landed;
+/** The steps a move's delta lands on this target after the ±5 limit (docs/stat-stages.md) — no caster scaling, so neither caster nor move is read. */
+export function landedDelta(state: CombatState, _casterId: string, _move: MoveDefinition, stat: StatKey, stages: number, targetId: string): number {
+  return applyStageDelta(state.combatants[targetId], stat, stages).landed;
+}
+
+/** The steps a move authors on `stat` — its statDeltas row, or its randomStatDeltas reel. */
+export function stagesOf(move: MoveDefinition, stat: StatKey): number {
+  return move.statDeltas?.find((d) => d.stat === stat)?.stages ?? move.randomStatDeltas?.stages ?? 0;
+}
+
+/** A combatant's stage record, for the slate tests that read what a move raised or lowered. */
+export function stagesRecordOf(state: CombatState, combatantId: string): Record<string, number> {
+  return (state.combatants[combatantId].statStages ?? {}) as Record<string, number>;
 }

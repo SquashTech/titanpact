@@ -3,8 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition, StatKey } from '../../engine/content';
 import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { activePartnerTypes, applyStatModifierDelta, chargesLeft, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveManaCost, moveForHero, moveForPrimaryType, statusMagnitude } from '../../engine/state';
-import { statDeltaLandsOnCasterSide } from '../../engine/combat/statDeltaScaling';
+import { activePartnerTypes, applyStageDelta, statDeltaLandsOnCasterSide, chargesLeft, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveManaCost, moveForHero, moveForPrimaryType, statusMagnitude } from '../../engine/state';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -22,7 +21,8 @@ import { fieldEffectFactsLine } from '../shared/fieldEffectFacts';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS, chargesLabel, restoresChargesText, grantsRatherThanInflicts, healReadout, MoveKindBadge, moveKindGlyph, moveKindLabel, riderTargetLabel, statDeltaReadout } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, chargesLabel, restoresChargesText, grantsRatherThanInflicts, healReadout, MoveKindBadge, moveKindGlyph, moveKindLabel, riderTargetLabel } from '../shared/MoveTile';
+import { stageText } from '../shared/moveKind';
 import { overlayHost } from '../shared/overlayHost';
 import { ChargePips } from '../shared/ChargePips';
 import { forecastDamage, koLabel } from './forecast';
@@ -223,6 +223,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
   const conditionalTargetField = move.conditionalTarget ? fieldEffects[move.conditionalTarget.requiresFieldEffect] : undefined;
   const hasPayload = Boolean(
     move.statDeltas?.length ||
+    move.mpRegenGrant != null ||
       move.derivedStatDeltas ||
       move.manaGrant ||
       move.conditionalTarget ||
@@ -382,28 +383,30 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
               text={`+${move.manaGrant} MP to ${TARGET_MODE_LABELS[move.target].toLowerCase()}, past the pool`}
             />
           )}
-          {move.statDeltas?.map(({ stat, amount: authored }) => {
-            const amount = statDeltaReadout(move, stat, authored, healCaster);
-            // A change into a hero already at, or near, the edge of the band lands short — say so before the press (docs/stat-scaling.md §3).
+          {move.mpRegenGrant != null && (
+            <EffectRow glyph={<StatGlyph stat="mpRegen" />} text={`+${move.mpRegenGrant} ${STAT_LABELS.mpRegen} to ${TARGET_MODE_LABELS[move.target].toLowerCase()}`} />
+          )}
+          {move.statDeltas?.map(({ stat, stages }) => {
+            // A change into a hero already at, or near, ±5 lands short — say so before the press (docs/stat-stages.md).
             const held = (() => {
-              if (amount === 0 || !context) return undefined;
+              if (stages === 0 || !context) return undefined;
               const ownSide = statDeltaLandsOnCasterSide(move);
               const receivers = ownSide
                 ? move.statDeltaTarget === 'self' || move.target === 'self'
                   ? [context.attackerId]
                   : context.combat.active[context.combat.combatants[context.attackerId]?.side ?? 'A'].filter((id): id is string => id !== null)
                 : context.defenderIds;
-              const edge = amount > 0 ? 'higher' : 'lower';
+              const edge = stages > 0 ? 'higher' : 'lower';
               const parts = receivers
                 .map((id) => {
                   const d = context.combat.combatants[id];
                   if (!d || d.fainted) return null;
-                  const { landed, capped } = applyStatModifierDelta(allCombatants[d.heroId], d, stat, amount);
+                  const { landed, capped } = applyStageDelta(d, stat, stages);
                   if (!capped) return null;
                   const who = allCombatants[d.heroId]?.name ?? id;
                   return landed === 0
                     ? `${who}'s ${STAT_LABELS[stat]} can't go any ${edge} — lands nothing`
-                    : `${who}'s ${STAT_LABELS[stat]} can't go much ${edge} — lands ${landed > 0 ? '+' : ''}${landed}`;
+                    : `${who}'s ${STAT_LABELS[stat]} can't go much ${edge} — lands ${stageText(stat, landed)}`;
                 })
                 .filter(Boolean);
               return parts.length ? parts.join('; ') : undefined;
@@ -412,7 +415,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
             <EffectRow
               key={stat}
               glyph={<StatGlyph stat={stat} />}
-              text={`${move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : ''}${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]} to ${(move.statDeltaTarget === 'bothAllies'
+              text={`${move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : ''}${stageText(stat, stages)} to ${(move.statDeltaTarget === 'bothAllies'
                 ? TARGET_MODE_LABELS.bothAllies
                 : move.statDeltaTarget === 'self'
                   ? TARGET_MODE_LABELS.self
@@ -421,7 +424,6 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
               note={
                 [
                   held,
-                  amount !== authored ? `base ${authored >= 0 ? '+' : ''}${authored}, scaled off your ${amount > 0 ? 'Wisdom' : 'attacking stat'}` : undefined,
                   move.statDeltaChance != null ? 'rolled per target' : undefined,
                 ]
                   .filter(Boolean)

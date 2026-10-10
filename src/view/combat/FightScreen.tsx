@@ -95,7 +95,7 @@ import { playBeatSfx } from '../../audio/beatSfx';
 import { setMusicRate } from '../../audio/music';
 import { getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
-import { MoveButtonReplica, MoveKindBadge, MoveTraitChips, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderTargetLabel, statDeltaReadout, useLongPress } from '../shared/MoveTile';
+import { MoveButtonReplica, MoveKindBadge, MoveTraitChips, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderTargetLabel, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
@@ -103,6 +103,7 @@ import { ChargePips } from '../shared/ChargePips';
 import { MoveKindGlyph } from '../shared/statIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_LABELS } from '../shared/StatBars';
+import { stageText } from '../shared/moveKind';
 import { HubGlyph } from '../shared/nodeIcons';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { useAmbientLocation } from '../shared/LocationContext';
@@ -244,18 +245,18 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 </span>
               );
             })}
-            {move.statDeltas?.map(({ stat, amount: authored }, i) => {
-              // What lands off this caster — the number the dossier and the draft print too.
-              const amount = statDeltaReadout(move, stat, authored, caster);
-              return (
-                <span key={stat} className="move-eff-status">
-                  {/* One roll gates the whole list, so the odds print once. */}
-                  {move.statDeltaChance != null && i === 0 ? `${Math.round(move.statDeltaChance * 100)}% ` : ''}
-                  {amount >= 0 ? '+' : ''}
-                  {amount} {STAT_LABELS[stat]}
-                </span>
-              );
-            })}
+            {move.statDeltas?.map(({ stat, stages }, i) => (
+              <span key={stat} className="move-eff-status">
+                {/* One roll gates the whole list, so the odds print once. */}
+                {move.statDeltaChance != null && i === 0 ? `${Math.round(move.statDeltaChance * 100)}% ` : ''}
+                {stageText(stat, stages)}
+              </span>
+            ))}
+            {move.mpRegenGrant != null && (
+              <span className="move-eff-status">
+                +{move.mpRegenGrant} {STAT_LABELS.mpRegen}
+              </span>
+            )}
             {move.conditionalPower && (
               <span
                 className={`move-eff-status${
@@ -300,7 +301,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
             )}
             {move.randomStatDeltas && (
               <span className="move-eff-status">
-                +{move.randomStatDeltas.amount}{' '}
+                {'▲'.repeat(move.randomStatDeltas.stages)}{' '}
                 {move.randomStatDeltas.count === 1 ? 'random stat' : `${move.randomStatDeltas.count} random stats`}
                 {move.statDeltaTarget === 'self' ? ' (Self)' : ''}
               </span>
@@ -1009,6 +1010,7 @@ export function FightScreen({
       }),
       fieldEffectActive: combat.activeFieldEffect != null,
       callReady: (combat.calls?.[PLAYER_SIDE]?.remaining ?? 0) > 0,
+      statStaged: [...playerActiveAlive, ...enemyActiveAlive].some((id) => Object.values(combat.combatants[id].statStages ?? {}).some((n) => n !== 0)),
     };
     return matchFightTip(FIGHT_TIPS, ctx, tips.seenIds);
   })();

@@ -2,7 +2,7 @@
 
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState, landedDelta, withFullPools } from './fixtures';
+import { createFightState, landedDelta, withFullPools, stagesOf, stagesRecordOf } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { moves } from '../src/data/moves';
@@ -18,7 +18,7 @@ import {
   activePartnerTypes,
   effectiveManaCost,
   getEffectiveStat,
-  STAT_CEILING_MULTIPLE,
+  STAT_CEILING_MULTIPLE, stageMultiplier,
   hasStatus,
   resolveManaCost,
   statusMagnitude,
@@ -151,8 +151,8 @@ test('beast: Prowl grants its authored delta alone and double beside a Beast, as
   // Derived from what Prowl authors: the claim is the DOUBLING and that it arrives as one delta,
   // not that the grant is any particular size.
   const base = {
-    attack: moves.prowl.statDeltas!.find((d) => d.stat === 'attack')!.amount,
-    speed: moves.prowl.statDeltas!.find((d) => d.stat === 'speed')!.amount,
+    attack: moves.prowl.statDeltas!.find((d) => d.stat === 'attack')!.stages,
+    speed: moves.prowl.statDeltas!.find((d) => d.stat === 'speed')!.stages,
   };
   const prowl = (partnerHeroId: string) => {
     const state = withDeepPools(beastFixture(712, partnerHeroId));
@@ -161,9 +161,9 @@ test('beast: Prowl grants its authored delta alone and double beside a Beast, as
       [{ kind: 'move', combatantId: 'a1', moveId: 'prowl', declaredTarget: 'a1' }],
       config
     );
-    // The pack multiplier doubles the BASE, and the scaling lands on that (docs/stat-scaling.md §2).
+    // The pack multiplier doubles the steps (docs/stat-stages.md).
     const landed = (stat: 'attack' | 'speed', pack: number) => landedDelta(state, 'a1', moves.prowl, stat, base[stat] * pack, 'a1');
-    return { mods: modifiersOf(after, 'a1'), changes: events.filter((e) => e.type === 'StatChanged'), landed };
+    return { mods: stagesRecordOf(after, 'a1'), changes: events.filter((e) => e.type === 'StatChanged'), landed };
   };
 
   const alone = prowl('cinderKnight');
@@ -203,9 +203,9 @@ test('beast: the pack price is spent at the price the BOARD says, not the one th
   const alonePaid = cast('cinderKnight').after.combatants.a1.currentMana;
   const { state, after } = cast('packAlpha');
   assert.strictEqual(after.combatants.a1.currentMana - alonePaid, 50);
-  assert.strictEqual(modifiersOf(after, 'a1').attack, landedDelta(state, 'a1', moves.packLeader, 'attack', 50, 'a1'));
-  assert.strictEqual(modifiersOf(after, 'a2').attack, landedDelta(state, 'a1', moves.packLeader, 'attack', 50, 'a2'));
-  assert.strictEqual(modifiersOf(after, 'a2').speed, landedDelta(state, 'a1', moves.packLeader, 'speed', 50, 'a2'));
+  assert.strictEqual(stagesRecordOf(after, 'a1').attack, landedDelta(state, 'a1', moves.packLeader, 'attack', stagesOf(moves.packLeader, 'attack' as any), 'a1'));
+  assert.strictEqual(stagesRecordOf(after, 'a2').attack, landedDelta(state, 'a1', moves.packLeader, 'attack', stagesOf(moves.packLeader, 'attack' as any), 'a2'));
+  assert.strictEqual(stagesRecordOf(after, 'a2').speed, landedDelta(state, 'a1', moves.packLeader, 'speed', stagesOf(moves.packLeader, 'speed' as any), 'a2'));
 });
 
 // --- Apex Predator: the derived grant ---
@@ -233,24 +233,24 @@ test('beast: Apex Predator COMPOUNDS, and a buff cast first is doubled with ever
     [{ kind: 'move', combatantId: 'a1', moveId: 'rally', declaredTarget: 'a1' }],
     config
   ).state;
-  const rally = landedDelta(state, 'a1', moves.rally, 'attack', 20, 'a1');
-  assert.strictEqual(getEffectiveStat(fang, rallied.combatants.a1, 'attack'), base + rally);
+  const rallied_ = Math.round(base * stageMultiplier(landedDelta(state, 'a1', moves.rally, 'attack', stagesOf(moves.rally, 'attack'), 'a1')));
+  assert.strictEqual(getEffectiveStat(fang, rallied.combatants.a1, 'attack'), rallied_);
 
   const once = resolveRound(
     rallied,
     [{ kind: 'move', combatantId: 'a1', moveId: 'apexPredator', declaredTarget: 'a1' }],
     config
   ).state;
-  assert.strictEqual(getEffectiveStat(fang, once.combatants.a1, 'attack'), (base + rally) * 2, 'the Rally is inside the doubling');
+  assert.strictEqual(getEffectiveStat(fang, once.combatants.a1, 'attack'), rallied_ * 2, 'the Rally is inside the doubling');
 
   const twice = resolveRound(
     once,
     [{ kind: 'move', combatantId: 'a1', moveId: 'apexPredator', declaredTarget: 'a1' }],
     config
   ).state;
-  // A second cast would pass the band's top — a stat is at most ×4 what it started the fight at
-  // (state.ts statModifierCeiling) — so it lands the rest of the way to the ceiling and no further.
-  assert.strictEqual(getEffectiveStat(fang, twice.combatants.a1, 'attack'), base * STAT_CEILING_MULTIPLE, 'and a second cast is held at ×4');
+  // The derived grant is FLAT and its band holds the flat part at +3× what the hero brought
+  // (state.ts statModifierCeiling); the Rally's stage sits outside that band, on top of it.
+  assert.strictEqual(getEffectiveStat(fang, twice.combatants.a1, 'attack'), rallied_ + base * (STAT_CEILING_MULTIPLE - 1), 'and a second cast is held at the flat band');
 });
 
 // --- Bleed as a currency ---
@@ -350,8 +350,8 @@ test('beast: only positive bracket rows, two magical rows, one field (Blood Moon
   assert.deepStrictEqual(beast.filter((m) => m.fieldEffectApplication).map((m) => [m.id, m.fieldEffectApplication]), [['gash', 'bloodMoon']]);
   assert.strictEqual(beast.filter((m) => m.drainPercent != null).length, 0);
   for (const move of beast) {
-    for (const { stat, amount } of move.statDeltas ?? []) {
-      assert.ok(amount > 0, `${move.id} debuffs ${stat}, which the slate does nowhere else`);
+    for (const { stat, stages } of move.statDeltas ?? []) {
+      assert.ok(stages > 0, `${move.id} debuffs ${stat}, which the slate does nowhere else`);
     }
   }
 });

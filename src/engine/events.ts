@@ -106,11 +106,11 @@ export interface StatChangedEvent extends BaseEvent {
   type: 'StatChanged';
   combatantId: string;
   stat: string;
-  /** What landed. */
+  /** What landed — in steps when `stages`, else flat points. */
   delta: number;
-  /** The authored base when a move scaled the delta (docs/stat-scaling.md §2); absent when delta IS the authored figure (a passive, a derived grant). */
-  authored?: number;
-  /** The band took some or all of the change (state.ts statModifierFloor / statModifierCeiling); `delta` is what landed, and may be 0. */
+  /** A move's stage change (docs/stat-stages.md): `delta` and `newValue` count steps on Combatant.statStages. Absent = a flat change on statModifiers (a passive, a derived grant, MP Regen). */
+  stages?: true;
+  /** The limit took some or all of the change (±5 steps, or the flat band); `delta` is what landed, and may be 0. */
   capped?: boolean;
   newValue: number;
 }

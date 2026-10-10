@@ -327,17 +327,20 @@ function statVerb(changes: readonly StatChangedEvent[], plural: boolean): string
   const rising = changes.every((c) => c.delta > 0);
   // A drop the floor took whole is still a fall in kind, so "-24 DEF (no lower), WIS can't go lower" reads as one.
   const heldWhole = changes.every((c) => c.capped && c.delta === 0);
-  // A change the band took whole is still a rise or a fall in kind; which end is read off the sign of the authored base.
-  const heldUp = heldWhole && changes.every((c) => (c.authored ?? 0) > 0);
+  // A change the band took whole is still a rise or a fall in kind; which end is read off where it stopped (newValue).
+  const heldUp = heldWhole && changes.every((c) => c.newValue > 0);
   const falling = changes.every((c) => c.delta < 0 || (c.capped && c.delta === 0 && !heldUp));
   const verb = heldWhole ? (heldUp ? "can't go any higher" : "can't go any lower") : rising ? 'rise' : falling ? 'fall' : 'shift';
-  if (plural || changes.length > 1) return verb;
-  return heldWhole ? verb : `${verb}s`;
+  // A stage change says how far: "rises sharply" at two steps, "drastically" at three or more (docs/stat-stages.md §4).
+  const steps = Math.max(...changes.map((c) => (c.stages ? Math.abs(c.delta) : 0)));
+  const adverb = heldWhole || !(rising || falling) ? '' : steps >= 3 ? ' drastically' : steps === 2 ? ' sharply' : '';
+  if (plural || changes.length > 1) return `${verb}${adverb}`;
+  return heldWhole ? verb : `${verb}s${adverb}`;
 }
 
 /** What two targets have to match on for the beat to read as one sentence about both. */
 function signatureOf(changes: readonly StatChangedEvent[]): string {
-  return changes.map((c) => `${c.stat}:${c.delta}${c.capped ? (c.delta > 0 || (c.delta === 0 && (c.authored ?? 0) > 0) ? 'c' : 'f') : ''}`).join(',');
+  return changes.map((c) => `${c.stat}:${c.delta}${c.capped ? (c.delta > 0 || (c.delta === 0 && c.newValue > 0) ? 'c' : 'f') : ''}`).join(',');
 }
 
 /**
@@ -346,14 +349,17 @@ function signatureOf(changes: readonly StatChangedEvent[]): string {
  */
 function deltaSummary(changes: readonly StatChangedEvent[]): string {
   const sign = (d: number) => (d > 0 ? '+' : '');
-  const up = (c: StatChangedEvent) => (c.delta !== 0 ? c.delta > 0 : (c.authored ?? 0) > 0);
+  const up = (c: StatChangedEvent) => (c.delta !== 0 ? c.delta > 0 : c.newValue > 0);
   const edge = (c: StatChangedEvent) => (up(c) ? 'higher' : 'lower');
+  // A stage reads as arrows, never a number: "ATK ▲▲" (docs/stat-stages.md §4).
+  const amount = (c: StatChangedEvent, labels: string) =>
+    c.stages ? `${labels} ${(c.delta > 0 ? '▲' : '▼').repeat(Math.abs(c.delta))}` : `${sign(c.delta)}${c.delta} ${labels}`;
   const one = (c: StatChangedEvent) =>
-    c.capped && c.delta === 0 ? `${statLabel(c.stat)} can't go ${edge(c)}` : `${sign(c.delta)}${c.delta} ${statLabel(c.stat)}${c.capped ? ` (no ${edge(c)})` : ''}`;
+    c.capped && c.delta === 0 ? `${statLabel(c.stat)} can't go ${edge(c)}` : `${amount(c, statLabel(c.stat))}${c.capped ? ` (no ${edge(c)})` : ''}`;
   const first = changes[0];
-  if (changes.every((c) => c.delta === first.delta && !!c.capped === !!first.capped && up(c) === up(first))) {
+  if (changes.every((c) => c.delta === first.delta && !!c.stages === !!first.stages && !!c.capped === !!first.capped && up(c) === up(first))) {
     if (first.capped && first.delta === 0) return `${changes.map((c) => statLabel(c.stat)).join('/')} can't go ${edge(first)}`;
-    return `${sign(first.delta)}${first.delta} ${changes.map((c) => statLabel(c.stat)).join('/')}${first.capped ? ` (no ${edge(first)})` : ''}`;
+    return `${amount(first, changes.map((c) => statLabel(c.stat)).join('/'))}${first.capped ? ` (no ${edge(first)})` : ''}`;
   }
   return changes.map(one).join(' ');
 }
@@ -948,7 +954,7 @@ export function buildBeats(
               combatantId: g.combatantId,
               text: deltaSummary(g.changes),
               className: g.changes.every((c) => c.capped && c.delta === 0)
-              ? g.changes.every((c) => (c.authored ?? 0) > 0)
+              ? g.changes.every((c) => c.newValue > 0)
                 ? 'popup-ceiling'
                 : 'popup-floor'
               : g.changes.every((c) => c.delta > 0)
@@ -1178,7 +1184,7 @@ export function buildBeats(
         const changes: StatChangedEvent[] = [];
         while (events[i]?.type === 'StatChanged') changes.push(events[i++] as StatChangedEvent);
         const groups = groupByCombatant(changes);
-        const falling = changes.every((c) => c.delta < 0 || (c.capped && c.delta === 0 && (c.authored ?? 0) <= 0));
+        const falling = changes.every((c) => c.delta < 0 || (c.capped && c.delta === 0 && c.newValue <= 0));
         // Identical payloads across targets read as one sentence about both, not as a list.
         const uniform = groups.every((g) => signatureOf(g.changes) === signatureOf(groups[0].changes));
         const lead = uniform

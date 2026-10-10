@@ -19,10 +19,15 @@ export const STAT_LABELS: Record<StatKey, string> = {
   mpRegen: 'MPR',
 };
 
+/** A stage change as the player reads it: "ATK ▲▲", never a number (docs/stat-stages.md §4). */
+export function stageText(stat: StatKey, stages: number): string {
+  return `${STAT_LABELS[stat]} ${(stages > 0 ? '▲' : '▼').repeat(Math.abs(stages))}`;
+}
+
 // `kind: 'buff'` covers both signs in the data; the sign is recovered here, once, so glyph, badge
 // colour and label can never disagree. A move carrying both reads as a debuff (open UI question).
 export function isDebuff(move: MoveDefinition): boolean {
-  if (move.statDeltas?.some(({ amount }) => amount < 0)) return true;
+  if (move.statDeltas?.some(({ stages }) => stages < 0)) return true;
   return statusApplicationsOf(move).some((app) => app.target !== 'self' && !statuses[app.statusId]?.positive);
 }
 

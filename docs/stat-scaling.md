@@ -1,5 +1,9 @@
 # stat-scaling.md — Buffs and debuffs: scaled bases, the ceiling, the noise floor
 
+> **SUPERSEDED 2026-10-09 by `docs/stat-stages.md`** for every move delta: a move's buff is a
+> stage now, uncaled by the caster, held at ±5. The band below still holds the FLAT channel —
+> passives and derived grants — until that doc's §6.3 lands.
+>
 > **STATUS: BUILT IN FULL 2026-09-14** (per user direction — option A of two, after a
 > Pokémon-shaped stage system was weighed and set aside, §0). A move's stat delta lands scaled off
 > the caster (§2), every fight modifier is held inside **−½ … +3× of (base + loadout)** (§3 — the

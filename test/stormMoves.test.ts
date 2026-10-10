@@ -3,7 +3,7 @@
 import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState, landedDelta } from './fixtures';
+import { createFightState, landedDelta, stagesOf, stagesRecordOf } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { signatureMoves } from '../src/data/signatures';
@@ -227,7 +227,7 @@ test('storm: Tailwind buffs the ally and THEN sends its caster to the bench', ()
   ];
   const { state: next } = resolveRound(state, actions, config);
 
-  assert.strictEqual(next.combatants.a1.statModifiers.speed ?? 0, landedDelta(state, 'a2', moves.tailwind, 'speed', 40, 'a1'), 'the ally was not buffed');
+  assert.strictEqual(next.combatants.a1.statStages?.speed ?? 0, landedDelta(state, 'a2', moves.tailwind, 'speed', stagesOf(moves.tailwind, 'speed' as any), 'a1'), 'the ally was not buffed');
   assert.ok(next.active.A.includes('a3'), 'the declared replacement did not come in');
   assert.ok(next.bench.A.includes('a2'), 'the caster did not leave');
 });
@@ -241,7 +241,7 @@ test('storm: the pivot respects lock-in — at 2 KOs the buff still lands and on
   ];
   const { state: next, events } = resolveRound(locked, actions, config);
 
-  assert.strictEqual(next.combatants.a1.statModifiers.speed ?? 0, landedDelta(locked, 'a2', moves.tailwind, 'speed', 40, 'a1'), 'lock-in swallowed the buff too');
+  assert.strictEqual(next.combatants.a1.statStages?.speed ?? 0, landedDelta(locked, 'a2', moves.tailwind, 'speed', stagesOf(moves.tailwind, 'speed' as any), 'a1'), 'lock-in swallowed the buff too');
   assert.ok(next.active.A.includes('a2'), 'the caster left despite lock-in');
   assert.ok(next.combatants.a2.currentMana < before, 'the mana was refunded — the move fizzled instead of degrading');
   assert.ok(events.some((e) => e.type === 'ActionBlocked' && e.reason === 'switchBlocked'));
@@ -252,7 +252,7 @@ test('storm: a pivot with no declared replacement still delivers its buff, and s
   const actions: Action[] = [{ kind: 'move', combatantId: 'a2', moveId: 'tailwind', declaredTarget: 'a1' }];
   const { state: next, events } = resolveRound(state, actions, config);
 
-  assert.strictEqual(next.combatants.a1.statModifiers.speed ?? 0, landedDelta(state, 'a2', moves.tailwind, 'speed', 40, 'a1'));
+  assert.strictEqual(next.combatants.a1.statStages?.speed ?? 0, landedDelta(state, 'a2', moves.tailwind, 'speed', stagesOf(moves.tailwind, 'speed' as any), 'a1'));
   assert.ok(next.active.A.includes('a2'));
   assert.ok(events.some((e) => e.type === 'ActionBlocked' && e.reason === 'switchBlocked'));
 });
@@ -290,8 +290,8 @@ test('storm: Storm Surge buffs both allies and nobody else', () => {
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'stormSurge', declaredTarget: null }];
   const { state: next } = resolveRound(state, actions, config);
   for (const id of ['a1', 'a2']) {
-    assert.strictEqual(next.combatants[id].statModifiers.attack ?? 0, landedDelta(state, 'a1', moves.stormSurge, 'attack', 50, id));
-    assert.strictEqual(next.combatants[id].statModifiers.speed ?? 0, landedDelta(state, 'a1', moves.stormSurge, 'speed', 50, id));
+    assert.strictEqual(next.combatants[id].statStages?.attack ?? 0, landedDelta(state, 'a1', moves.stormSurge, 'attack', stagesOf(moves.stormSurge, 'attack' as any), id));
+    assert.strictEqual(next.combatants[id].statStages?.speed ?? 0, landedDelta(state, 'a1', moves.stormSurge, 'speed', stagesOf(moves.stormSurge, 'speed' as any), id));
   }
   for (const id of ['b1', 'b2']) assert.strictEqual(next.combatants[id].statModifiers.attack ?? 0, 0);
 });

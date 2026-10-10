@@ -293,7 +293,7 @@ test('arcane: the derived grant is the one stat modifier exempt from the multipl
   for (const move of Object.values(moves)) {
     for (const delta of move.statDeltas ?? []) {
       // Math.abs: -10 % 5 is -0, which strictEqual distinguishes from 0.
-      assert.strictEqual(Math.abs(delta.amount % 5), 0, `${move.id} authors a non-multiple-of-5 stat delta`);
+      assert.ok(Number.isInteger(delta.stages), `${move.id} authors a fractional stage`);
     }
   }
 });

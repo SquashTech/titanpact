@@ -5,7 +5,7 @@
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatDelta, StatKey, StatusDefinition, StatusId } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
-import { activePartnerTypes, availableCall, chargesLeft, faceLockFor, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta } from '../state';
+import { activePartnerTypes, availableCall, chargesLeft, faceLockFor, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta, applyStageDelta } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -25,7 +25,6 @@ import {
 import type { TypeChart } from '../damage/typeMult';
 import { resolveHeal } from '../heal/healPipeline';
 import { scaleStatusMagnitude } from '../status/statusMagnitude';
-import { scaleStatDelta } from './statDeltaScaling';
 import { applyHpDelta } from './faintHandling';
 import {
   detonateTriggeredStatuses,
@@ -738,8 +737,10 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             board: { state: working, passives },
           })
         : previousMana;
-    const derivedDeltas: StatDelta[] = derived ? derived.stats.map((stat) => ({ stat, amount: derivedAmount })) : [];
-    // conditionalStatDeltas scales the AMOUNTS (one +20, not two +10s) and never touches derived deltas.
+    // Derived grants stay FLAT, on statModifiers and its band (docs/stat-stages.md §6.4); MP Regen too.
+    const flatDeltas: { stat: StatKey; amount: number }[] = derived ? derived.stats.map((stat) => ({ stat, amount: derivedAmount })) : [];
+    if (move.mpRegenGrant) flatDeltas.push({ stat: 'mpRegen', amount: move.mpRegenGrant });
+    // conditionalStatDeltas scales the STAGES (one ▲▲, not two ▲s) and never touches the flat grants.
     const packMultiplier =
       move.conditionalStatDeltas && partnerTypes?.includes(move.conditionalStatDeltas.requiresPartnerType)
         ? move.conditionalStatDeltas.multiplier
@@ -747,11 +748,10 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     const authoredDeltas: readonly StatDelta[] =
       packMultiplier === 1
         ? (move.statDeltas ?? [])
-        : (move.statDeltas ?? []).map(({ stat, amount }) => ({ stat, amount: amount * packMultiplier }));
-    const allStatDeltas: readonly StatDelta[] = derivedDeltas.length ? [...authoredDeltas, ...derivedDeltas] : authoredDeltas;
+        : (move.statDeltas ?? []).map(({ stat, stages }) => ({ stat, stages: stages * packMultiplier }));
 
     // A randomStatDeltas move may author no statDeltas at all, so the emptiness guard asks about both.
-    const statDeltaTargets = !allStatDeltas.length && !move.randomStatDeltas
+    const statDeltaTargets = !authoredDeltas.length && !flatDeltas.length && !move.randomStatDeltas
       ? []
       : move.statDeltaTarget === 'self'
         ? (called ? [] : [action.combatantId])
@@ -778,32 +778,34 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         for (let i = 0; i < draws; i++) {
           const pick = nextInt(working.rngState, 0, pool.length);
           working = { ...working, rngState: pick.nextState };
-          rolledDeltas.push({ stat: pool.splice(pick.value, 1)[0], amount: reel.amount });
+          rolledDeltas.push({ stat: pool.splice(pick.value, 1)[0], stages: reel.stages });
         }
       }
 
-      const deltas = rolledDeltas.length ? [...allStatDeltas, ...rolledDeltas] : allStatDeltas;
-      // Authored (and rolled) deltas are BASES scaled off the caster (docs/stat-scaling.md §2);
-      // a derived delta already reads live state and passes through. The caster's stat is read
-      // once here, at cast, so the figure is a snapshot.
-      const landsOnCasterSide = working.combatants[targetId].side === actor.side;
-      const derivedCount = derivedDeltas.length;
-      const scaled = deltas.map((delta, i) =>
-        i >= authoredDeltas.length && i < authoredDeltas.length + derivedCount
-          ? delta
-          : {
-              ...delta,
-              amount: scaleStatDelta(delta.stat, delta.amount, move, attackerHero, working.combatants[action.combatantId], landsOnCasterSide, {
-                active: working.activeFieldEffect,
-                defs: fieldEffects,
-                board: { state: working, passives },
-              }),
-              authored: delta.amount,
-            }
-      );
-      for (const delta of scaled) {
+      const staged = rolledDeltas.length ? [...authoredDeltas, ...rolledDeltas] : authoredDeltas;
+      // A stage is a stage, whoever casts it; held at ±5, and a change the limit swallowed whole still emits, so the player sees why nothing moved.
+      for (const delta of staged) {
         const current = working.combatants[targetId];
-        // Held at the floor (state.ts statModifierFloor); a drop that lands at 0 still emits, so the player sees why nothing moved.
+        const { newValue, landed, capped } = applyStageDelta(current, delta.stat, delta.stages);
+        working = {
+          ...working,
+          combatants: { ...working.combatants, [targetId]: { ...current, statStages: { ...current.statStages, [delta.stat]: newValue } } },
+        };
+        const statChanged: CombatEvent = {
+          type: 'StatChanged',
+          round,
+          combatantId: targetId,
+          stat: delta.stat,
+          delta: landed,
+          stages: true,
+          ...(capped ? { capped: true } : {}),
+          newValue,
+        };
+        events.push(statChanged);
+        statChangedEvents.push(statChanged);
+      }
+      for (const delta of flatDeltas) {
+        const current = working.combatants[targetId];
         const { newValue, landed, capped } = applyStatModifierDelta(heroes[current.heroId], current, delta.stat, delta.amount);
         working = {
           ...working,
@@ -815,7 +817,6 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           combatantId: targetId,
           stat: delta.stat,
           delta: landed,
-          ...('authored' in delta ? { authored: delta.authored } : {}),
           ...(capped ? { capped: true } : {}),
           newValue,
         };

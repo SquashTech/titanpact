@@ -23,7 +23,7 @@ import { statusApplicationsOf } from '../engine/content';
 import type { Action } from '../engine/combat/actions';
 import type { CombatState, FieldEffectContext, Side } from '../engine/state';
 import {
-  applyStatModifierDelta,
+  stageDeltaPoints,
   activePartnerTypes,
   availableCall,
   isFighter,
@@ -58,7 +58,6 @@ import {
 import { resolveHeal } from '../engine/heal/healPipeline';
 import { scaleStatusMagnitude } from '../engine/status/statusMagnitude';
 import { shieldStatusDef } from '../engine/status/shield';
-import { scaleStatDelta } from '../engine/combat/statDeltaScaling';
 import { allCombatants } from '../data/content';
 import { moves } from '../data/moves';
 import { statuses } from '../data/statuses';
@@ -658,10 +657,8 @@ function scoreCast(
     for (const { id, share } of receivers) {
       const onCasterSide = state.combatants[id]?.side === casterSide;
       for (const delta of move.statDeltas) {
-        // The authored figure is a base scaled off the caster (docs/stat-scaling.md §2) — price what lands.
-        const scaled = scaleStatDelta(delta.stat, delta.amount * conditional, move, allCombatants[caster.heroId], caster, onCasterSide, fieldCtx(state));
-        // ...and held at the receiver's floor (state.ts statModifierFloor), which the card will say (phase 4).
-        const landed = applyStatModifierDelta(allCombatants[state.combatants[id].heroId], state.combatants[id], delta.stat, scaled).landed;
+        // Steps priced as the points they move on this receiver, after the ±5 limit (docs/stat-stages.md).
+        const landed = stageDeltaPoints(allCombatants[state.combatants[id].heroId], state.combatants[id], delta.stat, delta.stages * conditional);
         // statDeltaValue is the receiver's gain; a drop on the far side is the caster's.
         const value = statDeltaValue(state, ctx, id, delta.stat, landed, cache);
         score += (onCasterSide ? value : -value) * share * chance;

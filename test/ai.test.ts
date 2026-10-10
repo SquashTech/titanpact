@@ -7,7 +7,7 @@ import { statuses } from '../src/data/statuses';
 import type { MoveDefinition } from '../src/engine/content';
 import type { CombatState } from '../src/engine/state';
 import { pickAiAction, type AiContext } from '../src/run/ai';
-import { getMaxHp, statModifierCeiling, statModifierFloor } from '../src/engine/state';
+import { getMaxHp, STAGE_LIMIT } from '../src/engine/state';
 import { setFieldEffect } from '../src/engine/combat/fieldEffectEngine';
 
 /** Test-local movepool: the AI's rules are about SHAPES of move, so authored content would make this fail on every slate retune. */
@@ -65,12 +65,11 @@ const testMoves: Record<string, MoveDefinition> = {
 
 const AI = 'ai:caster';
 
-/** Holds a player hero at its floor on `stats` (state.ts statModifierFloor) — the board a drop can do nothing to. */
+/** Holds a player hero five steps down on `stats` — the board a drop can do nothing to. */
 function atFloor(state: CombatState, id: string, stats: readonly ('defense' | 'wisdom')[]): CombatState {
   const c = state.combatants[id];
-  const hero = heroes[c.heroId];
-  const held = Object.fromEntries(stats.map((stat) => [stat, statModifierFloor(hero, c, stat)]));
-  return { ...state, combatants: { ...state.combatants, [id]: { ...c, statModifiers: { ...c.statModifiers, ...held } } } } as CombatState;
+  const held = Object.fromEntries(stats.map((stat) => [stat, -STAGE_LIMIT]));
+  return { ...state, combatants: { ...state.combatants, [id]: { ...c, statStages: { ...c.statStages, ...held } } } } as CombatState;
 }
 const LEFT = 'p:left';
 const RIGHT = 'p:right';
@@ -308,8 +307,8 @@ const weakener: MoveDefinition = {
   kind: 'buff',
   target: 'singleEnemy',
   statDeltas: [
-    { stat: 'defense', amount: -20 },
-    { stat: 'wisdom', amount: -20 },
+    { stat: 'defense', stages: -1 },
+    { stat: 'wisdom', stages: -1 },
   ],
 };
 
@@ -335,11 +334,11 @@ test('ai: a pure debuff with nowhere left to land is inert, so a hit is cast ins
 });
 
 test('ai: a self-buff whose stat can\'t go any higher is inert, so a hit is cast instead', () => {
-  const sharpener: MoveDefinition = { ...base, id: 'sharpener', name: 'Sharpener', type: 'Iron', kind: 'buff', target: 'self', statDeltas: [{ stat: 'attack', amount: 20 }] };
+  const sharpener: MoveDefinition = { ...base, id: 'sharpener', name: 'Sharpener', type: 'Iron', kind: 'buff', target: 'self', statDeltas: [{ stat: 'attack', stages: 1 }] };
   const ctx: AiContext = { heroes, moves: { ...testMoves, sharpener }, statuses, typeChart, moveIdsFor: () => ['sharpener', 'fireBolt'], random: () => 0.99 };
   let state = board('crimson', 'tempest', 'rime');
   const c = state.combatants[AI];
-  state = { ...state, combatants: { ...state.combatants, [AI]: { ...c, statModifiers: { ...c.statModifiers, attack: statModifierCeiling(heroes.crimson, c, 'attack') } } } } as CombatState;
+  state = { ...state, combatants: { ...state.combatants, [AI]: { ...c, statStages: { ...c.statStages, attack: STAGE_LIMIT } } } } as CombatState;
   for (let i = 0; i < 6; i++) {
     const action = pickAiAction(state, AI, { ...ctx, random: () => i / 6 });
     assert.strictEqual(action.kind === 'move' && action.moveId, 'fireBolt', 'the rise would land nothing');
