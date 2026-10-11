@@ -442,3 +442,12 @@ test('move tiers: a starting kit is one attack and one move that is not — Wido
     assert.strictEqual(attacks, TWO_ATTACKS.has(hero.id) ? 2 : 1, `${hero.name} starts with ${attacks} attacks`);
   }
 });
+
+test('schedule: Leviathan\'s first Mid offer is always Rainmaker, and a guarantee spent rolls as usual', () => {
+  const hero = heroesById.leviathan;
+  const base = createRosterEntry('lev', 'leviathan', hero.moveIds);
+  const atEleven = { ...base, xp: xpForLevel(11), scheduleTaken: 2 };
+  assert.deepStrictEqual(levelMovePool(progressionTable, moves, hero, atEleven), ['rainmaker']);
+  const spent = { ...atEleven, offeredMoveIds: [...atEleven.offeredMoveIds, 'rainmaker'] };
+  assert.ok(levelMovePool(progressionTable, moves, hero, spent).length > 1);
+});

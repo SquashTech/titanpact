@@ -708,4 +708,6 @@ export interface LevelSchedule {
   lateLevel: number;
   /** Omitted for a definition with no signature — the Titanspawn's default schedule. */
   signatureLevel?: number;
+  /** An offer level whose roll is fixed to one move while that move is still in the pool (Leviathan's Rainmaker); otherwise it rolls as usual. */
+  guaranteedOffers?: Readonly<Record<number, string>>;
 }

@@ -156,7 +156,8 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 190, attack: 30, defense: 40, intelligence: 100, wisdom: 45, speed: 75, manaPool: 70, mpRegen: 10 },
     moveIds: ['siphon', 'undercurrent'],
     growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'C', speed: 'A', manaPool: 'S' },
-    schedule: { offerLevels: [4, 8, 11, 17, 21], midLevel: 10, lateLevel: 19, signatureLevel: 23 },
+    // Its first Mid offer is always Rainmaker: two of its paths read Downpour (docs/hero-audit.md).
+    schedule: { offerLevels: [4, 8, 11, 17, 21], midLevel: 10, lateLevel: 19, signatureLevel: 23, guaranteedOffers: { 11: 'rainmaker' } },
     signatureMoveId: 'deepsurge',
     passiveIds: ['overchannel'],
     masteredPassiveIds: ['abyssalWell'],

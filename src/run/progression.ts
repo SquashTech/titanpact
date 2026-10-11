@@ -238,12 +238,16 @@ export function levelMovePool(
   const rank = entryBandRank(hero, entry);
   const grafted = new Set(chosenEvolutionPaths(table, entry).flatMap((path) => path.learnableMoveIds ?? []));
   const pool = [...new Set([...(table.moveTiers[entry.heroId] ?? []), ...grafted])];
-  return pool.filter(
+  const open = pool.filter(
     (id) =>
       !entry.unlockedMoveIds.includes(id) &&
       !entry.offeredMoveIds.includes(id) &&
       (grafted.has(id) ? isMoveTierReached(moves[id], rank) : isMoveTierOfferable(moves[id], rank))
   );
+  const schedule = scheduleFor(hero);
+  const owedLevel = scheduleEntries(schedule)[entry.scheduleTaken]?.level;
+  const fixed = owedLevel !== undefined ? schedule.guaranteedOffers?.[owedLevel] : undefined;
+  return fixed && open.includes(fixed) ? [fixed] : open;
 }
 
 /**

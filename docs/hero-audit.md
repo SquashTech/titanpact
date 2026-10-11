@@ -242,5 +242,8 @@ Salt Tears and Salt Tears+ are UNBRAKED by name (same day, per user direction): 
 receiver, a two-target one both (`test/statStages` names them). To watch: Mire is unbraked too — Poison adds 10 per Speed drop, and Drag and Rootbind
 both feed it.
 
-Still open: Leviathan (innate rethink toward a late-game carry; a guaranteed Downpour offer), and
+**Leviathan's first Mid offer is always Rainmaker** (same day, per user direction): `LevelSchedule.guaranteedOffers`, read in
+`levelMovePool` so a roster hero, an enemy and the sim all get it; a guarantee already spent rolls as usual.
+
+Still open: Leviathan's innate (a late-game carry; a forced first-turn Rest was proposed and dropped as unfun), and
 Selkie's Roane (Empower + Drowned Gift, unanswered).
