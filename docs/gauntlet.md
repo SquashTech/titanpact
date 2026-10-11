@@ -98,7 +98,7 @@ so the engine and the fight builder never learn a third mode exists. Rolled (`ro
   (run/ai.ts); from three wins on, the Trials' pilot (run/pilot.ts) flies it
   (`gauntletAiPilot`). Losses never move it, so a run that stumbles early stays on the easier AI.
   Its leads are its two best-scoring heroes. The player picks leads in the fight, as everywhere.
-- **Whole every fight.** No Wounds, no carried KOs, no potions.
+- **Whole every fight.** No Wounds, no carried KOs; one HP Potion and one MP Potion a fight, fresh each time (2026-10-11, `CONSTRUCTED_POTIONS`).
 - **A place to stand** (2026-10-07, per user direction): each fight borrows a run Location for its
   backdrop and music, rolled off the same seed as the opponent (`gauntletLocationId`) from every place
   but the Threshold. Presentation only.

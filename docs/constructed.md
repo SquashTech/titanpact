@@ -104,8 +104,9 @@ the teams that answered it lost Class tools.
 Pact Clock, lock-in (3 of 6), Field Effects and the whole roster fielding with leads picked in
 the fight all stand.
 
-**Consumables, first pass: none, both sides.** A potion is a decision about scarcity; here it
-would be a fixed opening. Open (§12).
+**Consumables: one HP Potion and one MP Potion a fight, no Revive** (2026-10-11, per user
+direction, replacing "none"): so a card that answers a drink — Drake's Hoard — works here too
+(`CONSTRUCTED_POTIONS`). Fresh every fight; the AI side holds them too and never drinks.
 
 ---
 
@@ -272,7 +273,7 @@ answers *is this fun against this AI* before paying for the teambuilder.
    table pool, the path's moves and line, and the signature.
 2. **A fight without a RunState — IN (same day).** Nothing to audit away: `buildCombatState`
    already takes plain rosters and squads, and Quick Battle already hands `FightScreen` a
-   throwaway run. `constructedSide` is that throwaway — no gold, relics, Banners or potions,
+   throwaway run. `constructedSide` is that throwaway — no gold, relics or Banners, one of each potion,
    nobody wounded or down — with authored leads for the AI and none for the player, who picks
    them in the fight.
 3. **The fourteen teams as data** (`src/data/trials.ts`), pinned legal by test. **Pilot IN

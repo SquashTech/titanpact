@@ -219,13 +219,17 @@ export function constructedRoster(content: ConstructedContent, team: Team): Rost
   return team.slots.map((slot) => constructedEntry(content, slot));
 }
 
+/** One of each potion every Trials and Gauntlet fight (§3), so a card that answers a drink (Drake's Hoard) has one to answer. No Revive. */
+export const CONSTRUCTED_POTIONS = { hpPotion: 1, mpPotion: 1, revive: 0 } as const;
+
 /**
- * A team as one side of a fight: a throwaway RunState holding no gold, relics or potions (§3), and
- * its squad — the authored `leads` for the AI's side, else no leads, picked in the fight as in Classic.
+ * A team as one side of a fight: a throwaway RunState holding no gold or relics and one of each
+ * potion (§3), and its squad — the authored `leads` for the AI's side, else no leads, picked in the
+ * fight as in Classic. The AI never drinks, so only the player's potions are ever used.
  */
 export function constructedSide(content: ConstructedContent, team: Team, leads?: readonly [string, string]): { run: RunState; squad: Squad } {
   const roster = constructedRoster(content, team);
-  const run: RunState = { ...createRunState(0, 0), roster, consumables: { hpPotion: 0, mpPotion: 0, revive: 0 } };
+  const run: RunState = { ...createRunState(0, 0), roster, consumables: { ...CONSTRUCTED_POTIONS } };
   if (!leads) return { run, squad: openingSquad(roster) };
   for (const id of leads) if (!roster.some((r) => r.rosterId === id)) throw new ConstructedError(`lead ${id} is not on the team`);
   return { run, squad: { activeIds: [leads[0], leads[1]], benchIds: roster.map((r) => r.rosterId).filter((id) => !leads.includes(id)) } };
