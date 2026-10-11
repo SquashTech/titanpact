@@ -24,9 +24,10 @@ export interface RestAction {
 }
 
 /**
- * The caller spends its turn to Call its side's off-field caster (docs/companion-call.md §3.1), which
- * casts its one move: no move id and no target here — the side's SideCall holds the move, and a Call
- * move never asks for one. Once a fight; spent only if the caller's turn happens.
+ * A side's companion acting on its own (docs/companion-call.md §12): `combatantId` is the off-field
+ * caster itself. Never declared by a hero or the AI — the engine adds it to the round its act falls
+ * in (companionActions) — so it carries no move id and no target: the side's SideCall holds the
+ * move, and a companion move never asks for one.
  */
 export interface CallAction {
   kind: 'call';

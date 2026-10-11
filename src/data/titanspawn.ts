@@ -48,10 +48,36 @@ export interface TitanspawnLine {
   names: Record<SpawnTier, string>;
   stats: Record<SpawnTier, StatLine>;
   moveIds: Record<SpawnTier, readonly string[]>;
-  /** The one move the companion casts when Called at each tier (docs/companion-call.md §3.2): it never asks for a target. */
+  /** The one move the companion casts at each tier (docs/companion-call.md §3.2): it never asks for a target. */
   callMoveIds: Record<SpawnTier, string>;
+  /** When in a fight the companion acts on its own (docs/companion-call.md §12.2). */
+  callTiming: CallTiming;
   growthGrades: Record<GrowthStatKey, GrowthGrade>;
 }
+
+/** A line's temperament as the companion: `early` acts in a fight's opening rounds, `mid` in its middle. */
+export type CallTiming = 'early' | 'mid';
+
+/**
+ * Setters, guards and debuffers open; healers, cleansers and finishers wait for something to fix
+ * or finish (docs/companion-call.md §12.2). First pass, for playtest.
+ */
+const CALL_TIMING: Partial<Record<TypeId, CallTiming>> = {
+  Fire: 'early',
+  Water: 'mid',
+  Frost: 'early',
+  Storm: 'early',
+  Stone: 'early',
+  Nature: 'mid',
+  Light: 'mid',
+  Shadow: 'early',
+  Arcane: 'mid',
+  Mind: 'early',
+  Spirit: 'mid',
+  Iron: 'mid',
+  Mech: 'mid',
+  Beast: 'early',
+};
 
 /**
  * The Call table (docs/companion-call.md §3.2), in TYPES order: every entry `bothEnemies`,
@@ -89,6 +115,7 @@ const line = (
   stats: { early: stats[0], mid: stats[1], late: stats[2] },
   moveIds: { early: moveIds[0], mid: moveIds[1], late: moveIds[2] },
   callMoveIds: callMovesFor(type),
+  callTiming: CALL_TIMING[type] ?? 'mid',
   growthGrades,
 });
 

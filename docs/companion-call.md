@@ -6,6 +6,14 @@
 > casts its tier's ONE move, which never asks for a target, from off the field. **No
 > stake**: it cannot be lost. **The awakening refreshes the Call** for the Eyes. §11 is the build
 > order; §10 lists what is still open. Reverses part of `docs/titanspawn-overhaul.md` §5 (§9 here).
+>
+> **REVISED 2026-10-11, per user direction — §12: the companion ACTS ON ITS OWN.** Nobody Calls it.
+> Once a fight it casts its one move, free, in a round rolled inside its line's window (opening or
+> middle), and that round is **telegraphed from the top of the command phase** — a ! on its figure
+> and a seat on the order track; a tap reads the exact move. The enemy AI reads the telegraph too.
+> **Woken, in the finale, it acts once in EACH phase** (the Herald, then the Eyes) **and its move
+> resolves as Ancient**, and it opens a Titan eye. §12 supersedes §3.1, §3.4, §7's action, §8's
+> Call card and the sim's Call policy; §3.2's move table and every rule in §4–§5 stand.
 
 ---
 
@@ -354,3 +362,134 @@ fallback is a key in the Bag or the bottom row).
 6. **Docs — BUILT 2026-10-04.** This file; CLAUDE.md's twelfth-overhaul banner, roster-cap paragraph
    and Ascension lines; `titanspawn-overhaul.md` §5 and `ascension.md` §7 marked superseded. The Act
    1 dial (§6.1) is left alone, per user direction.
+
+---
+
+## 12. The companion acts on its own (2026-10-11, per user direction)
+
+### 12.0 Why
+
+In play, the Call was a poor choice to make: it asked a hero to give up its turn for a move the
+team had not built around, and the sim showed what it turned into — the chart pilot Called *in
+place of its first Rest* 98% of the time. A way to skip a Rest, not a decision. And the finale's
+awakening did nothing anyone could see: an extra Call in a fight the player had already planned,
+and an Ancient secondary type on a body that is never hit.
+
+The rework is Into the Breach's intent system, turned on the player's own side: the decision is no
+longer *whether to spend it* but *what to do knowing it is coming*.
+
+### 12.1 The rule
+
+- **It acts on its own, once a fight.** No hero spends a turn; nobody declares it. The engine adds
+  its act to the round it falls in (`companionActions`, `src/engine/combat/priority.ts`) as a
+  `{ kind: 'call', combatantId: <the companion> }` action. A hero or the AI declaring one is ignored.
+- **Free**, as the Call was: no mana, every caster-side cost dropped, no passives (§3.1's rules
+  for the cast itself all stand). Unlike the Call it costs no turn — *a free action, and see how
+  the balance shakes out* (per user direction). The concern is the later Cycles, not Cycle I.
+- **The same one move a tier** (§3.2's table). Tapping the figure reads the exact move.
+- **Random targets roll at resolution** (Spirit), as every `randomEnemy` move does — not at the
+  telegraph (per user direction).
+- **Ordered as any move is**: its move's bracket, its own Speed the tiebreak.
+
+### 12.2 When: a window a line
+
+`TitanspawnLine.callTiming` (`src/data/titanspawn.ts`) gives each line a temperament, and
+`CALL_WINDOWS` (`src/run/companion.ts`) a window of rounds for it. The act round is **rolled inside
+the window off the fight's seeded RNG when the fight is built** (`withCalledCaster`) — so a replayed
+fight acts on the same round, and the variance is in WHEN, never in what.
+
+| Timing | Window | Lines |
+|---|---|---|
+| **early** — setters, guards, debuffers | rounds 1–2 | Fire, Frost, Storm, Stone, Shadow, Mind, Beast |
+| **mid** — healers, cleansers, finishers | rounds 3–5 | Water, Nature, Light, Spirit, Arcane, Iron, Mech |
+
+First pass, for playtest. A fight that ends before a mid line's round never sees it act.
+
+### 12.3 The telegraph
+
+The act round is known from the moment the fight is built, so **from the top of that round's
+command phase** (`callIntent`, `src/engine/state.ts`):
+
+- **A ! on its figure** (between and behind the pair), lit in its move's colour, pulsing, and a
+  quicker bob.
+- **A seat on the order track**, at its bracket and Speed, its frame wearing the same ! — the
+  track is previewed with its act in it before the player commands anyone.
+- **Tap the figure → its card**: the move read whole against the live board, and *Acts this round*
+  / *Acts on its own, once a fight* / *Has acted this fight*. Nothing to press.
+- **The playback banner** says *Free* where a move would print its mana.
+- A first-time tip (`fight.companion`) the first time the ! is up. A new id, so a player who read
+  the old Call tip reads this one.
+
+**The enemy AI reads it** (per user direction). Classic's AI (`src/run/ai.ts` `braceWeight`) makes
+a guard or a Shield `WEIGHT_SUPER / WEIGHT_NEUTRAL` times likelier while the far side's companion
+telegraphs a damaging move — the same ratio every other pull in that file uses, so it usually
+braces and not always. The skilled pilot (`src/run/pilot.ts` `telegraphedHitOn`) counts the
+telegraphed hit into what each body stands to take this round — the lethal it would refuse, a
+guard's worth, a Shield's — half of it for a move that rolls one of two foes.
+
+### 12.4 The awakening
+
+Woken in the finale (`companionAwakenedFor`: `ascended` and `actNumber === FINALE_ACT`):
+
+- **It acts once in EACH phase** — the Herald's and the Eyes' are separate (per user direction;
+  acting every few rounds was weighed and set aside as softening the endgame). A new phase hands it
+  its act back, rolled inside its window counted from the phase's first round
+  (`rearmCallsForPhase`, from `switching.ts` where the phase begins). Unwoken, it acts once a fight
+  however many phases there are.
+- **Its move resolves as Ancient** (`SideCall.moveType`, read through `calledMove`). Ancient's
+  attacks are neutral against everything, and the Eyes are mono-Ancient, whose column resists all
+  fourteen other types (`docs/types-and-heroes.md`): in the Eyes' phase every hero hits at half and
+  the woken companion at full — the one thing in the run the Titan's body does not shrug off. Its
+  Ancient secondary (the graft it already took) gives the retyped move STAB. A heal or a Shield
+  retyped to Ancient keeps its STAB too.
+- **It opens a Titan eye** — the Guardians' lens (`figurePrimitives.ts` `makeEye`), drawn over its
+  head on the field. The Guardians wear one Titan eye and nothing Ancient on the body; the woken
+  companion has taken one from it.
+
+A line woken on an earlier run (`Profile.ascendedSpawnTypes`) joins `ascended`, so it is woken in
+every finale of that line; outside the finale it is the ordinary companion. What it carries into
+the rest of a run is still open (§10).
+
+### 12.5 What it reverses
+
+- **§3.1** — the turn as the price, the caller, the flinch/KO refund, the round-3 brake (moot).
+- **§3.4** — the awakening's refresh is now an act a phase, and the Ancient graft now does
+  something: the move resolves as Ancient.
+- **§7** — `CallAction` is the companion's own act; the `callUnavailable` block, `availableCall`,
+  `grantCalls` and `SideCall.phaseGrant` are deleted; `Called` carries the companion and its
+  resolved `moveType`.
+- **§8** — the Call card's button, the queued state and the caller's console socket are gone; the
+  figure is *waiting / intends / acting / spent*.
+- **§11.5** — both pilots' Call policies (`pickCaller`, `CALL_HOLD`, `CALL_SPEND_BY`,
+  `CHART_CALL_ROUND`) are deleted; the report prints how often the companion acted and the HP an act.
+
+### 12.6 Measured (2026-10-11, sim, skilled pilot, 1000 runs a side, seed 101)
+
+The Call build against this one, same seed:
+
+| | Cycle I, Call | Cycle I, free act | Cycle II, Call | Cycle II, free act |
+|---|---|---|---|---|
+| **full-clear** | 83.2% | **85.4%** | 16.5% | **23.1%** |
+| Act 1 | 96.8 | 97.7 | 82.9 | 88.4 |
+| Act 2 | 98.9 | 99.3 | 78.0 | 83.4 |
+| Act 3 | 99.6 | 99.3 | 77.7 | 83.9 |
+| Act 4 | 97.6 | 98.1 | 65.6 | 69.6 |
+| finale | 89.5 | 90.4 | 50.0 | 53.7 |
+| acted, of fights with one | 68% (Called) | 88% | 70% (Called) | 89% |
+| HP an act | 91 | 66 | 81 | 62 |
+
+- **Cycle I barely moves (+2.2)**, as expected. **Cycle II moves +6.6**, about +5 an act in the
+  front half, where permadeath makes every early fight count — the number to watch.
+- An act lands for less (66 against 91 HP): it no longer waits for the best moment, and the AI
+  braces against it. But it lands in nearly nine fights of ten, and it costs no turn.
+- The ~11% of fights it never acts in are mid lines in fights over before round 3.
+
+### 12.7 Open — DO NOT silently resolve
+
+- **The windows and the line assignments** (§12.2): first pass.
+- **The power of a free act.** The Call's measured figures (§6.1) were for a move that cost a turn.
+  Cycle I is expected to stay easy; the later Cycles are where to look. The dials, in order: the
+  windows (a later act lands on a weaker board), the move table, the act-a-phase rule.
+- **The AI's brace ratio**: borrowed, not tuned.
+- **The Titan eye** is drawn over the figure, not on each spawn's body — a per-line placement is
+  art work if the overlay reads as a sticker.

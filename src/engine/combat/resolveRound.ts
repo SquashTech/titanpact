@@ -5,10 +5,10 @@
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatDelta, StatKey, StatusDefinition, StatusId } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
-import { activePartnerTypes, availableCall, chargesLeft, faceLockFor, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta, applyStageDelta } from '../state';
+import { activePartnerTypes, callIntent, calledMove, chargesLeft, faceLockFor, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta, applyStageDelta } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
-import { orderActions } from './priority';
+import { companionActions, orderActions } from './priority';
 import { resolveTargets, resolveTargetsRolled, rollRiderTarget, slotOfActiveCombatant, TargetNoLongerValidError } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
 import { applyManaRegen } from './manaRegen';
@@ -109,7 +109,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     events.push(...reactions.events);
   };
 
-  const { ordered, keys, reversedSpeed, nextRngState } = orderActions(working, heroes, actions, moves, working.rngState, fieldEffects, passives, statuses);
+  // A hero never declares a companion act; the engine adds one on each side whose act falls this round.
+  const roundActions = [...actions.filter((a) => a.kind !== 'call'), ...companionActions(working)];
+  const { ordered, keys, reversedSpeed, nextRngState } = orderActions(working, heroes, roundActions, moves, working.rngState, fieldEffects, passives, statuses);
   working = { ...working, rngState: nextRngState };
   if (keys.length > 0) {
     events.push({
@@ -125,36 +127,20 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     const caller = working.combatants[declared.combatantId];
     if (!caller || caller.fainted) continue;
 
-    // A Call (docs/companion-call.md §3.1) is the caller's turn spent to have its side's off-field
-    // caster cast its one move: blocked as a move is by a flinch, and spent only once the turn
-    // happens. From there it is that caster's move, cost waived and every caster-side cost dropped.
+    // The companion's act (docs/companion-call.md §12): its one move off the field, telegraphed
+    // since the round was commanded, cost waived and every caster-side cost dropped.
     let action: Action = declared;
     let called = false;
+    let calledType: MoveDefinition['type'] | undefined;
     if (declared.kind === 'call') {
-      if (hasStatus(caller, 'Daze')) {
-        events.push({ type: 'ActionBlocked', round, combatantId: declared.combatantId, reason: 'dazed' });
-        continue;
-      }
-      const call = availableCall(working, caller.side);
-      if (!call || !slotOfActiveCombatant(working, declared.combatantId)) {
-        events.push({ type: 'ActionBlocked', round, combatantId: declared.combatantId, reason: 'callUnavailable' });
-        continue;
-      }
-      events.push({ type: 'TurnStarted', round, combatantId: declared.combatantId });
-      working = {
-        ...resetDamageTaken(working, declared.combatantId),
-        calls: { ...working.calls, [caller.side]: { ...call, remaining: call.remaining - 1 } },
-      };
-      events.push({
-        type: 'Called',
-        round,
-        combatantId: declared.combatantId,
-        calledCombatantId: call.combatantId,
-        moveId: call.moveId,
-        callsRemaining: call.remaining - 1,
-      });
+      const call = callIntent(working, caller.side);
+      if (!call) continue;
+      working = { ...working, calls: { ...working.calls, [caller.side]: { ...call, remaining: call.remaining - 1 } } };
+      const move = calledMove(call, moves);
+      events.push({ type: 'Called', round, combatantId: call.combatantId, moveId: call.moveId, moveType: move.type, callsRemaining: call.remaining - 1 });
       action = { kind: 'move', combatantId: call.combatantId, moveId: call.moveId, declaredTarget: null };
       called = true;
+      calledType = call.moveType;
     }
 
     const actor = working.combatants[action.combatantId];
@@ -210,7 +196,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     // action.kind === 'move'. Resolved for the actor once, here: a typeFollowsUser move is the
     // actor's type for every read below — STAB, the chart, Force, Conduct, the events' moveType.
-    const move = moveForHero(moves[action.moveId], heroes[actor.heroId]);
+    const authored = moveForHero(moves[action.moveId], heroes[actor.heroId]);
+    const move = calledType ? { ...authored, type: calledType } : authored;
 
     if (!called && hasStatus(actor, 'Daze')) {
       events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'dazed' });

@@ -133,12 +133,12 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     pages: ['An arrow beside a stat means it was raised or lowered in this fight. Arrows stay through a switch.', '[stages]'],
   },
   {
-    id: 'fight.call',
+    id: 'fight.companion',
     title: 'Your Companion',
-    when: { callReady: true },
+    when: { companionIntends: true },
     pages: [
-      'Your companion waits behind your heroes. Tap it to read the move it can cast.',
-      'Once a fight, a hero can spend its turn to Call it. The move costs no Mana and needs no target.',
+      'When your companion is about to act, it wears a ! and takes a place in the turn order. Tap it to read the move.',
+      "It acts on its own, once a fight. It costs no Mana, needs no target, and takes no hero's turn.",
     ],
   },
   {

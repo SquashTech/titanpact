@@ -267,13 +267,15 @@ don't silently override it.
 > **A twelfth is BUILT IN FULL: `docs/companion-call.md`** (2026-10-04, per user direction). **The
 > companion is a summon, not a party member**: `RunState.companion` (its line, and whether it has
 > woken), never a roster slot, never fielded, cannot be lost, no XP / pips / offers / items, its tier
-> read off the act. **Once a fight an active hero spends its turn to Call it** (`{ kind: 'call' }`):
-> the off-field caster (`Combatant.called`, `CombatState.calls`) casts its tier's ONE move — a
-> whole-side move, or for Spirit one heavy hit on a random foe — so a Call never asks for a target;
-> no mana, the caster's own costs dropped, its stats the line's at par on the expected line
-> (`TitanspawnLine.callMoveIds`, ten moves authored for it, each also in two heroes' pools). The awakening adds a
-> Call for the Eyes. Measured: full-clear flat (90.6 / 49.3%), Act 1 −2 / −6, Act 2 +1 / +4 — the
-> Act 1 dial left alone per user direction. Its §9 lists what it reverses.
+> read off the act. **Once a fight it ACTS ON ITS OWN** (§12, 2026-10-11, per user direction,
+> replacing the hero-spent Call): the off-field caster (`Combatant.called`, `CombatState.calls`)
+> casts its tier's ONE move — a whole-side move, or for Spirit one heavy hit on a random foe rolled
+> at resolution — free, costing no turn, its own costs dropped, its stats the line's at par on the
+> expected line (`TitanspawnLine.callMoveIds`), in a round rolled inside its line's window
+> (`callTiming`: rounds 1–2 or 3–5) and **telegraphed from the top of that round's command phase**
+> — a ! on its figure and a seat on the order track; the enemy AI reads it too. **Woken, in the
+> finale, it acts once in EACH phase and its move resolves as Ancient** — the one thing the Eyes'
+> resistances do not halve. Its §9 and §12.5 list what it reverses.
 
 > **A thirteenth is BUILT, not measured: `docs/status-ladders-and-fields.md`** (2026-10-06, per user
 > direction). Its Burn levels and Renew count are **superseded by `docs/timed-statuses.md`**
@@ -657,8 +659,8 @@ don't silently override it.
   requires **terminating** an existing one. Equipment strips on termination; no gold refund.
   **The companion is not on the roster** (2026-10-04, `docs/companion-call.md`, replacing the
   mortal slot-holder of 2026-09-13): after the run's first fight one of the Early spawn it beat
-  joins — it cannot be declined — as `RunState.companion`, and once a fight an active hero can
-  spend its turn to **Call** it (`src/run/companion.ts`). There is no exception to the cap, and the
+  joins — it cannot be declined — as `RunState.companion`, and once a fight it acts on its own,
+  telegraphed (`src/run/companion.ts`, `docs/companion-call.md` §12). There is no exception to the cap, and the
   Act 1 Skirmish is 2v2. `rosterHeroes` (`data/content.ts`) still holds the spawn bodies, for the
   screens that draw the companion; `heroes` stays the recruitable pool.
 - **Items are uncategorised, and ABSORBED** (2026-09-06 for the first half, replacing the

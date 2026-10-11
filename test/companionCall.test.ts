@@ -1,7 +1,7 @@
-// The companion's Call (docs/companion-call.md). The content (§3.2): one move a line a tier, and
-// every one of them castable from off the field — it never asks for a target; of the line's type
-// and the tier's band; swinging with the stat the line spikes; and asking nothing of a caster that
-// is not there. The engine (§7): the caller's turn, the caster's move, once a fight.
+// The companion (docs/companion-call.md). The content (§3.2): one move a line a tier, and every one
+// of them castable from off the field — it never asks for a target; of the line's type and the
+// tier's band; swinging with the stat the line spikes; and asking nothing of a caster that is not
+// there. The engine (§12): it acts on its own, once a fight, in a round rolled inside its window.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -10,8 +10,8 @@ import { moves } from '../src/data/moves';
 import { statusApplicationsOf } from '../src/engine/content';
 import type { Action } from '../src/engine/combat/actions';
 import type { CombatEvent } from '../src/engine/events';
-import type { CombatState } from '../src/engine/state';
-import { createCombatant, getEffectiveStat, getMaxHp, getMaxMana, grantCalls, lockInThreshold, sideDefeated, withCalledCaster } from '../src/engine/state';
+import type { CalledCasterOptions, CombatState } from '../src/engine/state';
+import { callIntent, createCombatant, getEffectiveStat, getMaxHp, getMaxMana, lockInThreshold, rearmCallsForPhase, sideDefeated, withCalledCaster } from '../src/engine/state';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import { allCombatants } from '../src/data/content';
 import { typeChart } from '../src/data/typechart';
@@ -20,7 +20,7 @@ import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { createFightState } from './fixtures';
 import { pilotActions } from '../src/run/pilot';
-import type { AiContext } from '../src/run/ai';
+import { pickAiAction, type AiContext } from '../src/run/ai';
 
 const NO_TARGET_ASKED = new Set(['bothEnemies', 'bothAllies', 'randomEnemy']);
 
@@ -77,7 +77,7 @@ test('companionCall: a Call asks nothing of the caster — no cost, no pivot, no
   }
 });
 
-// --- The engine (§7) ---
+// --- The engine (§12) ---
 
 const engineConfig = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
@@ -97,104 +97,121 @@ function board(seed = 7): CombatState {
   );
 }
 
-/** Side A's companion, seated as the Called caster of `type`'s line at `tier`, casting `moveId` (its Call move by default). */
-function withCompanion(state: CombatState, type: 'Fire' | 'Frost' | 'Stone' | 'Spirit' | 'Mech', tier: 'early' | 'mid' | 'late', moveId?: string): CombatState {
+/**
+ * Side A's companion of `type`'s line at `tier`, casting `moveId` (its line's move by default),
+ * acting in round 1 unless `options` give it another window.
+ */
+function withCompanion(
+  state: CombatState,
+  type: 'Fire' | 'Frost' | 'Stone' | 'Spirit' | 'Mech',
+  tier: 'early' | 'mid' | 'late',
+  moveId?: string,
+  options: Partial<CalledCasterOptions> = {}
+): CombatState {
   const line = spawnLineOf(type)!;
   const heroId = spawnId(line, tier);
   const hero = allCombatants[heroId];
   const blank = createCombatant('A:call', heroId, 'A', 0, 0);
   const caster = { ...blank, currentHp: getMaxHp(hero, blank), currentMana: getMaxMana(hero, blank) };
-  return withCalledCaster(state, caster, moveId ?? line.callMoveIds[tier]);
+  return withCalledCaster(state, caster, moveId ?? line.callMoveIds[tier], { window: [1, 1], ...options });
 }
 
-const call = (combatantId: string): Action => ({ kind: 'call', combatantId });
 const ofType = <T extends CombatEvent['type']>(events: CombatEvent[], type: T) =>
   events.filter((e): e is Extract<CombatEvent, { type: T }> => e.type === type);
 
-test('companionCall: a Call is the caller’s turn — the caster casts its move free, and the side’s Call is spent', () => {
+test('companionCall: in its round the companion acts on its own — its move free, no hero’s turn spent', () => {
   const state = withCompanion(board(), 'Fire', 'mid');
-  const { state: next, events } = resolveRound(state, [call('a1')], engineConfig);
+  assert.ok(callIntent(state, 'A'), 'telegraphed before the round is commanded');
+  const declared: Action[] = [
+    { kind: 'rest', combatantId: 'a1' },
+    { kind: 'rest', combatantId: 'a2' },
+  ];
+  const { state: next, events } = resolveRound(state, declared, engineConfig);
 
   const called = ofType(events, 'Called');
   assert.strictEqual(called.length, 1);
   assert.deepStrictEqual(
-    { caller: called[0].combatantId, caster: called[0].calledCombatantId, move: called[0].moveId, left: called[0].callsRemaining },
-    { caller: 'a1', caster: 'A:call', move: 'backdraft', left: 0 }
+    { caster: called[0].combatantId, move: called[0].moveId, type: called[0].moveType, left: called[0].callsRemaining },
+    { caster: 'A:call', move: 'backdraft', type: 'Fire', left: 0 }
   );
   const used = ofType(events, 'MoveUsed');
-  assert.deepStrictEqual(used.map((e) => [e.combatantId, e.manaSpent]), [['A:call', 0]], 'the caller casts nothing; the caster pays nothing');
-  assert.ok(!ofType(events, 'ManaChanged').some((e) => e.combatantId === 'A:call'));
+  assert.deepStrictEqual(used.map((e) => [e.combatantId, e.manaSpent]), [['A:call', 0]], 'the companion pays nothing');
+  assert.deepStrictEqual(ofType(events, 'Rested').map((e) => e.combatantId).sort(), ['a1', 'a2'], 'both heroes still took their turns');
   assert.deepStrictEqual(ofType(events, 'DamageDealt').map((e) => e.targetCombatantId).sort(), ['b1', 'b2'], 'Backdraft takes the whole far side');
   assert.strictEqual(next.calls?.A?.remaining, 0);
+  assert.strictEqual(callIntent(next, 'A'), null);
   assert.ok(events.indexOf(called[0]) < events.indexOf(used[0]), 'Called plays ahead of the move');
 });
 
-test('companionCall: once a fight — a second Call is refused and nothing is cast', () => {
-  const state = withCompanion(board(), 'Fire', 'mid');
-  const first = resolveRound(state, [call('a1')], engineConfig).state;
-  const { state: next, events } = resolveRound(first, [call('a2')], engineConfig);
-  assert.deepStrictEqual(ofType(events, 'ActionBlocked').map((e) => [e.combatantId, e.reason]), [['a2', 'callUnavailable']]);
-  assert.strictEqual(ofType(events, 'MoveUsed').length, 0);
-  assert.strictEqual(next.calls?.A?.remaining, 0);
+test('companionCall: it waits for its round, then acts once and is done for the fight', () => {
+  let state = withCompanion(board(), 'Fire', 'mid', undefined, { window: [3, 3] });
+  assert.strictEqual(state.calls?.A?.actRound, 3);
+  const acted: number[] = [];
+  for (let round = 1; round <= 5; round++) {
+    assert.strictEqual(callIntent(state, 'A') !== null, round === 3, `telegraphed in round ${round} only`);
+    const result = resolveRound(state, [], engineConfig);
+    if (ofType(result.events, 'Called').length > 0) acted.push(round);
+    state = result.state;
+  }
+  assert.deepStrictEqual(acted, [3]);
 });
 
-test('companionCall: a flinched caller, or one already down, spends nothing', () => {
-  const base = withCompanion(board(), 'Fire', 'mid');
-  const dazed = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, statuses: { Daze: { statusId: 'Daze' } } } } };
-  const flinch = resolveRound(dazed, [call('a1')], engineConfig);
-  assert.deepStrictEqual(ofType(flinch.events, 'ActionBlocked').map((e) => e.reason), ['dazed']);
-  assert.strictEqual(flinch.state.calls?.A?.remaining, 1);
-
-  const fallen = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, fainted: true, currentHp: 0 } } };
-  const down = resolveRound(fallen, [call('a1')], engineConfig);
-  assert.strictEqual(ofType(down.events, 'Called').length, 0);
-  assert.strictEqual(down.state.calls?.A?.remaining, 1);
+test('companionCall: the act round is rolled inside the window, off the fight’s seed', () => {
+  const rounds = new Set<number>();
+  for (let seed = 1; seed <= 40; seed++) {
+    const state = withCompanion(board(seed), 'Fire', 'mid', undefined, { window: [3, 5] });
+    const round = state.calls!.A!.actRound;
+    assert.ok(round >= 3 && round <= 5, `round ${round} inside 3–5`);
+    rounds.add(round);
+    assert.strictEqual(withCompanion(board(seed), 'Fire', 'mid', undefined, { window: [3, 5] }).calls!.A!.actRound, round, 'the same seed, the same round');
+  }
+  assert.deepStrictEqual([...rounds].sort(), [3, 4, 5], 'every round of the window turns up');
 });
 
-test('companionCall: a benched caller cannot Call', () => {
-  const state = withCompanion(board(), 'Fire', 'mid');
-  const { state: next, events } = resolveRound(state, [call('a3')], engineConfig);
-  assert.deepStrictEqual(ofType(events, 'ActionBlocked').map((e) => e.reason), ['callUnavailable']);
+test('companionCall: a hero cannot declare the companion’s act — a declared one is ignored', () => {
+  const state = withCompanion(board(), 'Fire', 'mid', undefined, { window: [3, 3] });
+  const { state: next, events } = resolveRound(state, [{ kind: 'call', combatantId: 'A:call' }], engineConfig);
+  assert.strictEqual(ofType(events, 'Called').length, 0);
   assert.strictEqual(next.calls?.A?.remaining, 1);
 });
 
-test('companionCall: the Call is ordered by its move’s bracket and the caster’s Speed, not the caller’s', () => {
+test('companionCall: it is ordered by its move’s bracket and its own Speed, and sits on the order as itself', () => {
   const state = withCompanion(board(), 'Fire', 'mid');
-  const { events } = resolveRound(state, [call('a1')], engineConfig);
+  const { events } = resolveRound(state, [], engineConfig);
   const entry = ofType(events, 'RoundOrdered')[0].order[0];
   const caster = state.combatants['A:call'];
   assert.strictEqual(entry.kind, 'call');
-  assert.strictEqual(entry.combatantId, 'a1');
+  assert.strictEqual(entry.combatantId, 'A:call');
   assert.strictEqual(entry.speed, getEffectiveStat(allCombatants[caster.heroId], caster, 'speed'));
 });
 
-test('companionCall: a whole-side Call on allies lands on the fielded pair, never on the caster', () => {
+test('companionCall: a whole-side move on allies lands on the fielded pair, never on the companion', () => {
   const state = withCompanion(board(), 'Stone', 'mid'); // Bastion: Shield on both allies
-  const { events } = resolveRound(state, [call('a1')], engineConfig);
+  const { events } = resolveRound(state, [], engineConfig);
   const shielded = ofType(events, 'StatusApplied').filter((e) => e.statusId === 'Shield').map((e) => e.combatantId).sort();
   assert.deepStrictEqual(shielded, ['a1', 'a2']);
 });
 
-test('companionCall: Spirit’s Call lands on one foe the roll picks', () => {
+test('companionCall: Spirit’s move lands on one foe the roll picks, at resolution', () => {
   const state = withCompanion(board(), 'Spirit', 'late'); // Requiem
-  const { events } = resolveRound(state, [call('a1')], engineConfig);
+  const { events } = resolveRound(state, [], engineConfig);
   const hit = ofType(events, 'DamageDealt').map((e) => e.targetCombatantId);
   assert.strictEqual(hit.length, 1);
   assert.ok(hit[0] === 'b1' || hit[0] === 'b2');
 });
 
-test('companionCall: every cost on the caster is dropped, and the caster holds no passive', () => {
-  const state = withCompanion(board(), 'Mech', 'late', 'meltdown'); // a self-Burn the Call table never seats
+test('companionCall: every cost on the companion is dropped, and it holds no passive', () => {
+  const state = withCompanion(board(), 'Mech', 'late', 'meltdown'); // a self-Burn the table never seats
   assert.deepStrictEqual(state.combatants['A:call'].passives, {}, 'no Mark, no innate');
-  const { state: next, events } = resolveRound(state, [call('a1')], engineConfig);
+  const { state: next, events } = resolveRound(state, [], engineConfig);
   assert.ok(ofType(events, 'DamageDealt').length > 0);
   assert.ok(!ofType(events, 'StatusApplied').some((e) => e.combatantId === 'A:call'));
   assert.strictEqual(next.combatants['A:call'].statuses.Burn, undefined);
 });
 
-test('companionCall: the caster never counts — not toward lock-in, defeat, regen, or a target', () => {
+test('companionCall: the companion never counts — not toward lock-in, defeat, regen, or a target', () => {
   const plain = board();
-  const state = withCompanion(plain, 'Fire', 'mid');
+  const state = withCompanion(plain, 'Fire', 'mid', undefined, { window: [5, 5] });
   assert.strictEqual(lockInThreshold(state, 'A'), lockInThreshold(plain, 'A'));
 
   const beaten = {
@@ -203,7 +220,7 @@ test('companionCall: the caster never counts — not toward lock-in, defeat, reg
       Object.entries(state.combatants).map(([id, c]) => [id, c.side === 'A' && id !== 'A:call' ? { ...c, fainted: true, currentHp: 0 } : c])
     ),
   };
-  assert.ok(sideDefeated(beaten, 'A'), 'a standing caster does not keep a beaten side alive');
+  assert.ok(sideDefeated(beaten, 'A'), 'a standing companion does not keep a beaten side alive');
 
   const drained = { ...state, combatants: { ...state.combatants, 'A:call': { ...state.combatants['A:call'], currentMana: 0 } } };
   const { events } = resolveRound(drained, [{ kind: 'move', combatantId: 'b1', moveId: 'tremor' }], engineConfig);
@@ -211,14 +228,23 @@ test('companionCall: the caster never counts — not toward lock-in, defeat, reg
   assert.ok(!ofType(events, 'DamageDealt').some((e) => e.targetCombatantId === 'A:call'), 'a spread never reaches it');
 });
 
-test('companionCall: grantCalls refreshes a side with a caster and leaves one without alone', () => {
-  const state = withCompanion(board(), 'Fire', 'mid');
-  const spent = resolveRound(state, [call('a1')], engineConfig).state;
-  assert.strictEqual(grantCalls(spent, 'A', 1).calls?.A?.remaining, 1);
-  assert.strictEqual(grantCalls(spent, 'B', 1).calls?.B, undefined);
+test('companionCall: woken, it acts as Ancient, and a new phase hands it its act back inside its window', () => {
+  const state = withCompanion(board(), 'Fire', 'mid', undefined, { perPhase: true, moveType: 'Ancient' });
+  const { state: spent, events } = resolveRound(state, [], engineConfig);
+  assert.strictEqual(ofType(events, 'Called')[0].moveType, 'Ancient');
+  assert.ok(ofType(events, 'DamageDealt').every((e) => e.moveType === 'Ancient'), 'its hits resolve as Ancient');
+  assert.strictEqual(spent.calls?.A?.remaining, 0);
+
+  const rearmed = rearmCallsForPhase({ ...spent, calls: { ...spent.calls, A: { ...spent.calls!.A!, window: [1, 2] } } }, 4);
+  assert.strictEqual(rearmed.calls?.A?.remaining, 1);
+  assert.ok([4, 5].includes(rearmed.calls!.A!.actRound), 'the phase’s first two rounds');
+
+  const once = withCompanion(board(), 'Fire', 'mid');
+  const onceSpent = resolveRound(once, [], engineConfig).state;
+  assert.strictEqual(rearmCallsForPhase(onceSpent, 4).calls?.A?.remaining, 0, 'an unwoken companion acts once a fight');
 });
 
-// --- The pilot (src/run/pilot.ts pickCaller) ---
+// --- The pilot and the AI read the telegraph (src/run/pilot.ts, src/run/ai.ts) ---
 
 const pilotCtx: AiContext = {
   heroes: allCombatants,
@@ -229,20 +255,9 @@ const pilotCtx: AiContext = {
   moveIdsFor: (id) => allCombatants[board().combatants[id]?.heroId ?? '']?.moveIds ?? [],
 };
 
-test('companionCall: the pilot Calls in place of a turn that would only Rest', () => {
+test('companionCall: neither pilot ever declares the companion’s act', () => {
   const base = withCompanion(board(), 'Fire', 'mid');
   const dry = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentMana: 0 } } };
-  const actions = pilotActions(dry, 'A', pilotCtx, { switching: false });
-  assert.deepStrictEqual(actions.find((a) => a.combatantId === 'a1'), { kind: 'call', combatantId: 'a1' });
-});
-
-test('companionCall: the pilot holds the Call while its heroes’ own lines come close, and spends it at the end', () => {
-  // Rime Wind, 25 to both off a level-1 Early body, against two full-mana heroes' own hits.
-  const early = withCompanion(board(), 'Frost', 'early');
-  assert.ok(!pilotActions(early, 'A', pilotCtx, { switching: false }).some((a) => a.kind === 'call'), 'held');
-
-  // One foe left standing: nothing is worth keeping it for.
-  const late = withCompanion(board(), 'Fire', 'late');
-  const lastFoe = { ...late, combatants: { ...late.combatants, b2: { ...late.combatants.b2, fainted: true, currentHp: 0 } }, active: { ...late.active, B: ['b1', null] as [string, null] } };
-  assert.ok(pilotActions(lastFoe, 'A', pilotCtx, { switching: false }).some((a) => a.kind === 'call'), 'spent on the last foe');
+  assert.ok(!pilotActions(dry, 'A', pilotCtx, { switching: false }).some((a) => a.kind === 'call'));
+  assert.ok(!['a1', 'a2'].some((id) => pickAiAction(dry, id, { ...pilotCtx, random: () => 0.5 }).kind === 'call'));
 });

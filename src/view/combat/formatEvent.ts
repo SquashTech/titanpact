@@ -245,7 +245,7 @@ export function formatEvents(
         });
         break;
       case 'Called':
-        lines.push({ key, text: `${name(e.combatantId)} calls ${name(e.calledCombatantId)}`, className: 'log-field-effect' });
+        // Its own MoveDeclared line follows and names it.
         break;
       case 'ActionBlocked': {
         const reasonText =
@@ -255,9 +255,7 @@ export function formatEvents(
               ? 'left without a marked target'
               : e.reason === 'moveUnavailable'
                 ? 'past the moment for that move'
-                : e.reason === 'callUnavailable'
-                  ? 'unable to call'
-                  : 'out of valid targets';
+                : 'out of valid targets';
         lines.push({ key, text: `${name(e.combatantId)} is ${reasonText} and can't act`, className: 'log-faint' });
         break;
       }

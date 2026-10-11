@@ -131,8 +131,8 @@ export interface FightTipCondition {
   enemyTypeOnField?: TypeId;
   /** A Field Effect is up. */
   fieldEffectActive?: boolean;
-  /** The companion's Call is there to be made (docs/companion-call.md). */
-  callReady?: boolean;
+  /** The companion acts this round — its ! is up (docs/companion-call.md §12). */
+  companionIntends?: boolean;
   /** A stat on the field has been raised or lowered, either side (docs/stat-stages.md). */
   statStaged?: boolean;
 }
@@ -149,7 +149,7 @@ export interface FightTipContext {
   benchSize: number;
   enemyTypesOnField: readonly TypeId[];
   fieldEffectActive: boolean;
-  callReady: boolean;
+  companionIntends: boolean;
   statStaged: boolean;
 }
 
@@ -160,7 +160,7 @@ function fightTipMatches(when: FightTipCondition, ctx: FightTipContext): boolean
   if (when.benchHeld !== undefined && ctx.benchSize > 0 !== when.benchHeld) return false;
   if (when.enemyTypeOnField !== undefined && !ctx.enemyTypesOnField.includes(when.enemyTypeOnField)) return false;
   if (when.fieldEffectActive !== undefined && ctx.fieldEffectActive !== when.fieldEffectActive) return false;
-  if (when.callReady !== undefined && ctx.callReady !== when.callReady) return false;
+  if (when.companionIntends !== undefined && ctx.companionIntends !== when.companionIntends) return false;
   if (when.statStaged !== undefined && ctx.statStaged !== when.statStaged) return false;
   return true;
 }

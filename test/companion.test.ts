@@ -15,6 +15,7 @@ import { statuses } from '../src/data/statuses';
 import { generateMap } from '../src/run/map';
 import {
   ANCIENT,
+  CALL_WINDOWS,
   COMPANION_ROSTER_ID,
   awakenCompanion,
   companionCallFor,
@@ -103,7 +104,7 @@ test('companion: an act boundary that changes the tier is a grown beat, and one 
   assert.strictEqual(companionGrowth(starterRun(), 1, 2), null, 'no companion, no beat');
 });
 
-test('companion: the Call it brings is the act\'s body at par on the expected line, one Call, nothing the roster carries', () => {
+test('companion: the seat it brings is the act\'s body at par on the expected line, its line\'s window, nothing the roster carries', () => {
   const run = { ...joinCompanion(starterRun(), 'cubling'), encountersWon: 4, actNumber: 2 };
   const call = companionCallFor(run, allCombatants)!;
   const level = levelAfterEncounters(4);
@@ -113,8 +114,9 @@ test('companion: the Call it brings is the act\'s body at par on the expected li
   assert.deepStrictEqual(call.entry.growthStatGrants, expectedGrowthAt(allCombatants.ravager, level));
   assert.deepStrictEqual(call.entry.equipment, []);
   assert.strictEqual(call.moveId, spawnLineOf('Beast')!.callMoveIds.mid);
-  assert.strictEqual(call.calls, 1);
-  assert.strictEqual(call.phaseGrant, 0);
+  assert.deepStrictEqual(call.window, CALL_WINDOWS[spawnLineOf('Beast')!.callTiming]);
+  assert.strictEqual(call.perPhase, undefined, 'once a fight');
+  assert.strictEqual(call.moveType, undefined, 'its move as authored');
   assert.strictEqual(companionCallFor(starterRun(), allCombatants), null);
 });
 
@@ -126,10 +128,16 @@ test('companion: a fight seats it as the side\'s Called caster — on no slot an
   assert.ok(caster?.called, 'the caster is seated and marked');
   assert.deepStrictEqual(caster.passives, {}, 'no Mark');
   assert.ok(![...state.active.A, ...state.bench.A].includes(caster.combatantId));
-  assert.deepStrictEqual(state.calls?.A, { combatantId: caster.combatantId, moveId: companionCallMoveId(run)!, remaining: 1 });
+  const seat = state.calls!.A!;
+  assert.deepStrictEqual(
+    { combatantId: seat.combatantId, moveId: seat.moveId, remaining: seat.remaining },
+    { combatantId: caster.combatantId, moveId: companionCallMoveId(run)!, remaining: 1 }
+  );
+  const window = CALL_WINDOWS[spawnLineOf('Beast')!.callTiming];
+  assert.ok(seat.actRound >= window[0] && seat.actRound <= window[1], 'its act round is inside its line\'s window');
 });
 
-test('companion: brought to the finale it wakes once, and a woken Call refreshes when the Eyes\' phase begins', () => {
+test('companion: brought to the finale it wakes once, acts as Ancient, and acts again when the Eyes\' phase begins', () => {
   const run = joinCompanion(starterRun(), 'cubling');
   assert.deepStrictEqual(companionToAwaken(run), { type: 'Beast', ascended: false });
   const woken = awakenCompanion(run);
@@ -142,7 +150,9 @@ test('companion: brought to the finale it wakes once, and a woken Call refreshes
   const finale = { ...woken, actNumber: 5, encountersWon: 12 };
   const call = companionCallFor(finale, allCombatants)!;
   assert.strictEqual(call.entry.evolutionTypeGraft, ANCIENT);
-  assert.strictEqual(call.phaseGrant, 1);
+  assert.strictEqual(call.perPhase, true);
+  assert.strictEqual(call.moveType, ANCIENT);
+  assert.strictEqual(companionCallFor({ ...woken, actNumber: 4, encountersWon: 9 }, allCombatants)!.perPhase, undefined, 'woken only counts in the finale');
 
   // A later phase entering on the far side hands the side its refresh.
   const enemy = { ...createRosterEntry('eye', 'valor', heroes.valor.moveIds), xp: xpForLevel(3) };
@@ -161,6 +171,8 @@ test('companion: brought to the finale it wakes once, and a woken Call refreshes
   const spent = { ...state, calls: { ...state.calls, A: { ...state.calls!.A!, remaining: 0 } } };
   const after = applyForcedReplacement(spent, 3, 'B', 0, 'B:eye2', statuses).state;
   assert.strictEqual(after.calls?.A?.remaining, 1);
+  const window = CALL_WINDOWS[spawnLineOf('Beast')!.callTiming];
+  assert.ok(after.calls!.A!.actRound >= 3 + window[0] - 1 && after.calls!.A!.actRound <= 3 + window[1] - 1, 'inside its window, counted from the phase');
 });
 
 test('companion: it survives a save, and a file from before the Call reads its roster companion off the roster', () => {

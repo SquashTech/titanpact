@@ -1,19 +1,20 @@
 // The companion (docs/companion-call.md): one of the two Early spawn the player beats in the run's
 // first fight asks to join, and it does — there is no declining (per user direction). It is a summon,
 // not a party member: it takes no roster slot, levels with nobody, holds nothing, and cannot be
-// lost. Once a fight an active hero can spend its turn to Call it, and it casts its tier's one move
-// from off the field. Its tier follows the act (SPAWN_TIER_BY_ACT), and its stats are its line's at
-// the run's par on the expected line, so a Call scales with the run without the companion levelling.
+// lost. Once a fight it acts on its own, casting its tier's one move from off the field in a round
+// rolled inside its line's window (§12) and telegraphed from the top of that round. Its tier follows
+// the act (SPAWN_TIER_BY_ACT), and its stats are its line's at the run's par on the expected line,
+// so its move scales with the run without the companion levelling.
 
 import type { TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import type { Encounter } from './enemyGen';
 import type { CallPlacement } from './buildCombatState';
-import { spawnId, spawnLineOf, spawnPosition, type SpawnTier } from '../data/titanspawn';
+import { spawnId, spawnLineOf, spawnPosition, type CallTiming, type SpawnTier } from '../data/titanspawn';
 import { MAX_LEVEL, expectedGrowthAt, levelAfterEncounters, xpForLevel } from './growth';
 import { SPAWN_TIER_BY_ACT } from './difficulty';
 import { GATHERING_COMPANION_LEVEL_BONUS, isGathering } from './cycles';
-import { createRosterEntry, type RunState } from './state';
+import { FINALE_ACT, createRosterEntry, type RunState } from './state';
 
 /** The companion a run took: its line, and whether it has woken to Ancient (this run, or its line on an earlier one). */
 export interface CompanionState {
@@ -67,23 +68,38 @@ export function companionHeroId(run: Pick<RunState, 'companion' | 'actNumber' | 
   return line ? spawnId(line, companionTier(run.actNumber, run.cycle)) : null;
 }
 
-/** The one move the companion casts when Called this act, or null without one. */
+/** The one move the companion casts this act, or null without one. */
 export function companionCallMoveId(run: Pick<RunState, 'companion' | 'actNumber' | 'cycle'>): string | null {
   const line = run.companion && spawnLineOf(run.companion.type);
   return line ? line.callMoveIds[companionTier(run.actNumber, run.cycle)] : null;
 }
 
 /**
- * The Called caster a fight seats (docs/companion-call.md §3.1): the act's body at the run's par,
- * every level at its grade's mean so the figure is the same every fight of a stretch — no gear, no
- * Banners, nothing the roster carries. One Call; a woken companion takes one more when a later
- * phase of the fight begins (the Eyes, §3.4).
+ * The rounds into a fight (or a phase) a line's companion acts in, inclusive (docs/companion-call.md
+ * §12.2): the opening two, or the third to the fifth. First pass, for playtest.
+ */
+export const CALL_WINDOWS: Record<CallTiming, readonly [number, number]> = {
+  early: [1, 2],
+  mid: [3, 5],
+};
+
+/** Woken and in the finale: it acts once in each phase, and its move resolves as Ancient (§12.4). */
+export function companionAwakenedFor(run: Pick<RunState, 'companion' | 'actNumber'>): boolean {
+  return !!run.companion?.ascended && run.actNumber === FINALE_ACT;
+}
+
+/**
+ * The companion a fight seats (docs/companion-call.md §12): the act's body at the run's par, every
+ * level at its grade's mean so the figure is the same every fight of a stretch — no gear, no
+ * Banners, nothing the roster carries. It acts once, in a round rolled inside its line's window;
+ * woken, in the finale, once in each phase and as Ancient.
  */
 export function companionCallFor(run: RunState, heroes: HeroLookup): CallPlacement | null {
   const heroId = companionHeroId(run);
   const moveId = companionCallMoveId(run);
   const hero = heroId ? heroes[heroId] : undefined;
-  if (!heroId || !moveId || !hero) return null;
+  const line = run.companion && spawnLineOf(run.companion.type);
+  if (!heroId || !moveId || !hero || !line) return null;
   const level = Math.min(MAX_LEVEL, levelAfterEncounters(run.encountersWon) + (isGathering(run) ? GATHERING_COMPANION_LEVEL_BONUS : 0));
   const entry = {
     ...createRosterEntry(COMPANION_ROSTER_ID, heroId, [moveId]),
@@ -91,7 +107,8 @@ export function companionCallFor(run: RunState, heroes: HeroLookup): CallPlaceme
     growthStatGrants: expectedGrowthAt(hero, level),
     evolutionTypeGraft: run.companion!.ascended ? ANCIENT : null,
   };
-  return { entry, moveId, calls: 1, phaseGrant: run.companion!.ascended ? 1 : 0 };
+  const awakened = companionAwakenedFor(run);
+  return { entry, moveId, window: CALL_WINDOWS[line.callTiming], ...(awakened ? { perPhase: true, moveType: ANCIENT } : {}) };
 }
 
 /** The companion as the finale opens, when it has not yet woken — the one the awakening beat is for. */
@@ -99,7 +116,7 @@ export function companionToAwaken(run: RunState): CompanionState | null {
   return run.companion && !run.companion.ascended ? run.companion : null;
 }
 
-/** The companion reaches its true potential: Ancient takes its secondary slot, and its Call refreshes for the Eyes. */
+/** The companion reaches its true potential: Ancient takes its secondary slot, and in the finale it acts as Ancient once in each phase. */
 export function awakenCompanion(run: RunState): RunState {
   return companionToAwaken(run) ? { ...run, companion: { ...run.companion!, ascended: true } } : run;
 }
@@ -119,7 +136,7 @@ export function companionGrowth(run: Pick<RunState, 'companion' | 'cycle'>, from
 /**
  * The companion's beats (docs/companion-call.md §8): `join` — the run's first fight is won and one
  * of the Earlies asks to come along; there is no declining, so the one button is a welcome. `grown`
- * — the act boundary steps its tier, the same creature in its next body with its next Call.
+ * — the act boundary steps its tier, the same creature in its next body with its next move.
  */
 export type CompanionBeat =
   | { kind: 'join'; heroId: string }

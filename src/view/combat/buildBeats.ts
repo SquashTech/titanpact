@@ -17,7 +17,7 @@ import type {
 } from '../../engine/events';
 import type { CombatState, Side } from '../../engine/state';
 import { moveForHero } from '../../engine/state';
-import type { HeroDefinition, MoveDefinition, StatKey } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition, StatKey, TypeId } from '../../engine/content';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
@@ -116,14 +116,15 @@ export interface BeatFlavor {
    * and what it cost, as the same objects the move tile wears — the kind glyph and the mana gem —
    * rather than "20 MP" in small type. FightScreen draws it; buildBeats only says what it is.
    */
-  /** `called`: cast by the companion off a hero's turn (docs/companion-call.md) — no mana, so the strip says Call. */
+  /** `called`: cast by the companion on its own (docs/companion-call.md §12) — no mana, so the strip says Free. */
   bannerCast?: { kind: MoveKindGlyphKind; label: string; cost: number; called?: true };
   /**
    * A declaration drawn as the move bar the player presses in combat, beside the caster's sprite,
    * the caster's name in its side's colour — a move is read by the same object that offers it,
    * not explained in new words. FightScreen resolves the bar against the live caster.
    */
-  bannerMove?: { moveId: string; casterId: string; enemy: boolean };
+  /** `calledType`: the companion's act, free, cast at the type it resolves as. */
+  bannerMove?: { moveId: string; casterId: string; enemy: boolean; calledType?: TypeId };
   /**
    * Everything else the action did, beside the headline (a rider status, the passives that answered
    * it, recoil) — one small chip each, so the whole outcome of a move is one beat rather than a tap
@@ -428,8 +429,8 @@ export function buildBeats(
   let landed = new Set<string>();
   // The round's end beat (regen and ticks), so a field lapsing right behind it can ride on it.
   let roundEndBeat = null as Beat | null;
-  // The Call that put the next declaration's caster on the field (Called rides into its beat).
-  let calledBy: { callerId: string; casterId: string } | null = null;
+  // The companion act whose declaration comes next (Called rides into its beat), and the type it resolves as.
+  let calledBy: { casterId: string; moveType: TypeId } | null = null;
   // The action, switch or run of reactions being narrated (BeatMeta.group); `fold` makes each one beat.
   let group: number | null = null;
   let groupSeq = 0;
@@ -687,7 +688,7 @@ export function buildBeats(
         break;
 
       case 'Called':
-        calledBy = { callerId: e.combatantId, casterId: e.calledCombatantId };
+        calledBy = { casterId: e.combatantId, moveType: e.moveType };
         carry.push(e);
         i++;
         break;
@@ -706,20 +707,21 @@ export function buildBeats(
         }
         if (events[i]?.type === 'ManaChanged') applied.push(events[i++]);
 
+        // The companion's act is cast at the type it resolves as (the woken companion's Ancient).
+        const call = calledBy?.casterId === e.combatantId ? calledBy : null;
+        calledBy = null;
         const actorHero = heroes[combatants[e.combatantId]?.heroId];
-        const move = actorHero ? moveForHero(moves[e.moveId], actorHero) : moves[e.moveId];
+        const authored = actorHero ? moveForHero(moves[e.moveId], actorHero) : moves[e.moveId];
+        const move = call ? { ...authored, type: call.moveType } : authored;
         strikerMove = move;
         const actorSide = combatants[e.combatantId]?.side;
         const actorName = `${actorSide && actorSide !== playerSide ? 'Enemy ' : ''}${name(e.combatantId)}`;
         const clause = targetClause(e.targetCombatantIds, e.combatantId, name);
         const cost = manaSpent ?? move.manaCost;
-        // A Called caster's declaration names who called it: the hero's turn is what paid for it.
-        const call = calledBy?.casterId === e.combatantId ? calledBy : null;
-        calledBy = null;
-        const lead = call ? `${name(call.callerId)} calls ${name(e.combatantId)}` : name(e.combatantId);
+        const lead = name(e.combatantId);
         push(
           applied,
-          call ? `${lead}: ${move.name}${clause}` : `${actorName} uses ${move.name}${clause}`,
+          `${actorName} uses ${move.name}${clause}`,
           [],
           {
             bannerLead: lead,
@@ -733,7 +735,7 @@ export function buildBeats(
               cost,
               ...(call ? { called: true as const } : {}),
             },
-            bannerMove: { moveId: e.moveId, casterId: e.combatantId, enemy: !!actorSide && actorSide !== playerSide },
+            bannerMove: { moveId: e.moveId, casterId: e.combatantId, enemy: !!actorSide && actorSide !== playerSide, ...(call ? { calledType: call.moveType } : {}) },
           },
           { declares: true }
         );

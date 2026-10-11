@@ -286,7 +286,7 @@ function createLevel4TestRun(): RunState {
     }),
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
-    // A companion along, so the Call is there to try from the first fight.
+    // A companion along, so it acts from the first fight.
     companion: { type: 'Fire', ascended: false },
   };
 }

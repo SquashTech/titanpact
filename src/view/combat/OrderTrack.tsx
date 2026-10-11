@@ -8,6 +8,8 @@ export interface OrderTrackEntry {
   /** Which zone the fighter stands in — its frame takes that zone's tint. */
   side: 'enemy' | 'ally';
   mark: OrderMark;
+  /** The side's companion acting on its own (docs/companion-call.md §12): its frame wears the ! it wears on the field. */
+  companion?: boolean;
 }
 
 interface Props {
@@ -55,6 +57,7 @@ export function OrderTrack({ entries, onInspect }: Props) {
                 `is-${entry.side}`,
                 mark.effect ? `is-${mark.effect}` : '',
                 mark.phase ? `is-${mark.phase}` : '',
+                entry.companion ? 'is-companion' : '',
                 onInspect ? 'is-tappable' : '',
               ]
                 .filter(Boolean)
@@ -65,6 +68,11 @@ export function OrderTrack({ entries, onInspect }: Props) {
             >
               <span className="order-track-frame">
                 <HeroPortrait heroId={entry.heroId} pathId={entry.formPathId} seed={entry.combatantId} className="order-track-sprite" />
+                {entry.companion && (
+                  <span className="order-track-intent" aria-hidden="true">
+                    !
+                  </span>
+                )}
               </span>
             </span>
           </span>

@@ -3,24 +3,27 @@
 
 import type { Action } from './actions';
 import type { CombatState, HeroLookup } from '../state';
-import { getEffectiveStat, hasStatus } from '../state';
+import { callIntent, getEffectiveStat, hasStatus } from '../state';
 
 /**
- * Who an action's move and Speed are read off, and which move: the declarer, except for a Call,
- * which is ordered as its off-field caster casting its one move (docs/companion-call.md §3.1).
- * Null for a switch or a Rest, and for a Call whose side has no caster.
+ * Which move an action casts, and who casts it: the declarer, or for a companion's act the off-field
+ * caster, whose side's SideCall holds its one move (docs/companion-call.md §12). Null for a switch
+ * or a Rest.
  */
 export function castOf(state: CombatState, action: Action): { combatantId: string; moveId: string } | null {
   if (action.kind === 'move') return { combatantId: action.combatantId, moveId: action.moveId };
   if (action.kind !== 'call') return null;
-  const caller = state.combatants[action.combatantId];
-  const call = caller && state.calls?.[caller.side];
+  const caster = state.combatants[action.combatantId];
+  const call = caster && state.calls?.[caster.side];
   return call ? { combatantId: call.combatantId, moveId: call.moveId } : null;
 }
 
-/** The combatant whose Speed orders the action: the Called caster for a Call, the declarer otherwise. */
-function speedSourceOf(state: CombatState, action: Action): string {
-  return action.kind === 'call' ? (castOf(state, action)?.combatantId ?? action.combatantId) : action.combatantId;
+/** The companion acts this round on each side whose act falls in it, appended to what was declared. */
+export function companionActions(state: CombatState): Action[] {
+  return (['A', 'B'] as const).flatMap((side): Action[] => {
+    const call = callIntent(state, side);
+    return call ? [{ kind: 'call', combatantId: call.combatantId }] : [];
+  });
 }
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
 import { nextInt, type RngState } from '../rng/seededRng';
@@ -117,7 +120,7 @@ export function orderActions(
 
   const statCtx = { active: state.activeFieldEffect, defs: fieldEffects, board: { state, passives } };
   const withKeys: OrderedAction[] = actions.map((action) => {
-    const combatant = state.combatants[speedSourceOf(state, action)];
+    const combatant = state.combatants[action.combatantId];
     const hero = heroes[combatant.heroId];
     return {
       action,
@@ -210,7 +213,7 @@ export function previewOrder(
 
   const keyed = combatantIds.map((combatantId) => {
     const action = byId.get(combatantId);
-    const combatant = state.combatants[action ? speedSourceOf(state, action) : combatantId];
+    const combatant = state.combatants[action?.combatantId ?? combatantId];
     const cast = action && castOf(state, action);
     const random = !!cast && (moves[cast.moveId]?.randomPriority?.length ?? 0) > 0;
     return {

@@ -23,8 +23,9 @@ type AwakenPhase = 'still' | 'wake' | 'woken';
 /**
  * The finale's second beat, only when the companion made it this far: the Herald has named what
  * comes, and the one piece of the Titan the player turned stands up to it. It was made of the
- * Titan; here that wakes — Ancient takes its secondary slot for the fight, and every later
- * companion of its line joins already woken (profile.ts `ascendedSpawnTypes`).
+ * Titan; here that wakes — its move strikes as Ancient, it acts against the Herald and again
+ * against the Eyes (docs/companion-call.md §12.4), and every later companion of its line joins
+ * already woken (profile.ts `ascendedSpawnTypes`).
  */
 export function CompanionAwakensScreen({ heroId, onContinue }: Props) {
   const [phase, setPhase] = useState<AwakenPhase>('still');
@@ -72,8 +73,8 @@ export function CompanionAwakensScreen({ heroId, onContinue }: Props) {
           </span>
         </div>
         <p className="awaken-line">
-          Made of the Titan, it stands against it. What the Titan is wakes in it now — and in every {type ?? ''}{' '}
-          Titanspawn that joins you after this.
+          Made of the Titan, it stands against it. Its move now strikes as Ancient, which the Titan cannot shrug off, and it
+          acts against the Herald and again against the Eyes. Every {type ?? ''} Titanspawn that joins you after this wakes too.
         </p>
         <PlateButton
           className="awaken-continue"

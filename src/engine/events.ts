@@ -216,21 +216,21 @@ export interface StatusRefusedEvent extends BaseEvent {
 export interface ActionBlockedEvent extends BaseEvent {
   type: 'ActionBlocked';
   combatantId: string;
-  /** 'noValidTarget': declared target no longer legal. 'targetStatusMissing': requiresTargetStatus unmet. 'switchBlocked': switchesUserOut pivot refused by lock-in or an empty bench — payload still landed, mana spent. 'moveUnavailable': no Charge left or a firstTurnOnly gate unmet (state.ts isMoveUsable) — no mana spent. 'callUnavailable': a Call with none left, no caster, or a caller no longer on the field — nothing spent. */
-  reason: 'dazed' | 'noValidTarget' | 'targetStatusMissing' | 'switchBlocked' | 'moveUnavailable' | 'callUnavailable';
+  /** 'noValidTarget': declared target no longer legal. 'targetStatusMissing': requiresTargetStatus unmet. 'switchBlocked': switchesUserOut pivot refused by lock-in or an empty bench — payload still landed, mana spent. 'moveUnavailable': no Charge left or a firstTurnOnly gate unmet (state.ts isMoveUsable) — no mana spent. */
+  reason: 'dazed' | 'noValidTarget' | 'targetStatusMissing' | 'switchBlocked' | 'moveUnavailable';
 }
 
 /**
- * A caller spent its turn and one of its side's Calls (docs/companion-call.md §7): the off-field
- * caster's own MoveDeclared / MoveUsed follow under `calledCombatantId`. Ahead of them so the view
- * can bring the caster in before its move plays.
+ * A side's companion acts (docs/companion-call.md §12): its own MoveDeclared / MoveUsed follow
+ * under the same `combatantId`. Ahead of them so the view can bring it in before its move plays.
  */
 export interface CalledEvent extends BaseEvent {
   type: 'Called';
-  /** The caller — the active hero whose turn it was. */
+  /** The companion — the off-field caster. */
   combatantId: string;
-  calledCombatantId: string;
   moveId: string;
+  /** The type its move resolves as — the woken companion's Ancient, else the move's own. */
+  moveType: TypeId;
   callsRemaining: number;
 }
 

@@ -35,7 +35,7 @@ function ctx(overrides: Partial<FightTipContext> = {}): FightTipContext {
     benchSize: 0,
     enemyTypesOnField: [],
     fieldEffectActive: false,
-    callReady: false,
+    companionIntends: false,
     statStaged: false,
     ...overrides,
   };
@@ -116,12 +116,12 @@ test('tips: each fight tip waits for its own moment', () => {
     'the Skirmish card first; switching waits a round'
   );
   assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ fieldEffectActive: true }), past)?.id, 'fight.field');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ callReady: true }), seenBasics)?.id, 'fight.call', 'the first fight with a companion');
+  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ companionIntends: true }), seenBasics)?.id, 'fight.companion', 'the first fight with a companion');
 });
 
 test('tips: a seen fight tip never shows again', () => {
   const seen = FIGHT_TIPS.map((tip) => tip.id);
-  const everything = ctx({ round: 40, nodeType: 'boss', anyOutOfMana: true, benchSize: 3, enemyTypesOnField: ['Ancient'], fieldEffectActive: true, callReady: true, statStaged: true });
+  const everything = ctx({ round: 40, nodeType: 'boss', anyOutOfMana: true, benchSize: 3, enemyTypesOnField: ['Ancient'], fieldEffectActive: true, companionIntends: true, statStaged: true });
   assert.strictEqual(matchFightTip(FIGHT_TIPS, everything, seen), null);
 });
 

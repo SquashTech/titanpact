@@ -9,7 +9,7 @@ import { woundedHp } from './wounds';
 
 export { koRosterIdsOf, rosterIdOfCombatant };
 import { createRng } from '../engine/rng/seededRng';
-import type { PassiveDefinition, PassiveId, StatusId } from '../engine/content';
+import type { PassiveDefinition, PassiveId, StatusId, TypeId } from '../engine/content';
 import type { RosterEntry } from './state';
 import type { Squad } from './squad';
 import type { EquipmentDefinition } from './equipment';
@@ -36,17 +36,20 @@ export interface SquadPlacement {
   teamStatusGrants?: Record<StatusId, number>;
   /** The side's purse, for a goldStatGrants passive (Gilded Mane). Omitted = none: the AI holds no gold. */
   gold?: number;
-  /** The side's companion, seated as its Called caster (run/companion.ts companionCallFor). Omitted = no Call. */
+  /** The side's companion, seated off the field (run/companion.ts companionCallFor). Omitted = none. */
   call?: CallPlacement | null;
 }
 
-/** An off-field caster for one side (docs/companion-call.md §7): the entry it is built from, its one move, its Calls. */
+/** A side's companion (docs/companion-call.md §12): the entry it is built from, its one move, and when it acts. */
 export interface CallPlacement {
   entry: RosterEntry;
   moveId: string;
-  calls: number;
-  /** Calls added when a later phase of the fight begins. */
-  phaseGrant?: number;
+  /** Rounds into the fight (or a phase) it may act in, inclusive. */
+  window: readonly [number, number];
+  /** Acts again in each later phase (the woken companion in the finale). */
+  perPhase?: boolean;
+  /** Its move resolves as this type (the woken companion's Ancient). */
+  moveType?: TypeId;
 }
 
 // Mana starts full (docs/mana.md); HP starts where the act's wounds left it (run/wounds.ts).
@@ -162,7 +165,7 @@ export function buildCombatState(
     activeFieldEffect: null,
   };
   return calls.reduce(
-    (state, { combatant, placement }) => withCalledCaster(state, combatant, placement.moveId, placement.calls, placement.phaseGrant ?? 0),
+    (state, { combatant, placement }) => withCalledCaster(state, combatant, placement.moveId, { window: placement.window, perPhase: placement.perPhase, moveType: placement.moveType }),
     built
   );
 }

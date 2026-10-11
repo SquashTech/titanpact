@@ -11,7 +11,7 @@ import { fieldEffects } from '../../src/data/fieldEffects';
 import { equipment } from '../../src/data/equipment';
 import { relics } from '../../src/data/relics';
 import type { CombatState, Side } from '../../src/engine/state';
-import { availableCall, getMaxHp, getMaxMana, getEffectiveStat, isFighter, sideDefeated } from '../../src/engine/state';
+import { getMaxHp, getMaxMana, getEffectiveStat, isFighter, sideDefeated } from '../../src/engine/state';
 import { useConsumable } from '../../src/engine/combat/consumables';
 import type { CombatEvent } from '../../src/engine/events';
 import type { StatKey } from '../../src/engine/content';
@@ -119,7 +119,7 @@ export interface FightOutcome {
   /** Player-side turns taken, and how many were spent Resting or cycling out. */
   playerTurns: number;
   playerRests: number;
-  /** The companion's Call (docs/companion-call.md): whether the fight had one, Calls that resolved, and the HP they took. */
+  /** The companion (docs/companion-call.md §12): whether the fight had one, the acts that resolved, and the HP they took. */
   callable: boolean;
   playerCalls: number;
   callDamage: number;
@@ -471,30 +471,18 @@ export interface FightInput {
   aiPilot?: PilotKind;
   /** Revives the pilot may spend in this fight, on the first fallen hero, before its command phase (engine/combat/consumables.ts). Default none. */
   revives?: number;
-  /** The player's companion, seated as its Called caster (run/companion.ts companionCallFor). Default none. */
+  /** The player's companion, seated off the field (run/companion.ts companionCallFor). Default none. */
   playerCall?: CallPlacement | null;
   /** A Gathering's enemy plays its warband's engine (run/ai.ts AiContext.playsEngines). Default off. */
   aiPlaysEngines?: boolean;
 }
 
-/** The round by which the chart pilot has spent its Call, if no Rest gave it a reason sooner. */
-const CHART_CALL_ROUND = 3;
-
-/**
- * The original player side: run/ai.ts plus the reactive mana cycle. Its Call (docs/companion-call.md)
- * is a plain player's: in place of the first Rest, or on CHART_CALL_ROUND with the first hero that
- * is not switching — used early, never weighed.
- */
+/** The original player side: run/ai.ts plus the reactive mana cycle. The companion acts on its own. */
 function chartPilotActions(state: CombatState, playerCtx: AiContext, playerActive: readonly string[], switching: boolean): Action[] {
   const switches = switching ? manaCycleSwitches(state, PLAYER_SIDE, playerCtx, playerActive) : {};
-  const actions = playerActive.map((id): Action =>
+  return playerActive.map((id): Action =>
     switches[id] ? { kind: 'switch', combatantId: id, benchedCombatantId: switches[id] } : pickAiAction(state, id, playerCtx)
   );
-  if (!availableCall(state, PLAYER_SIDE)) return actions;
-  const resting = actions.findIndex((a) => a.kind === 'rest');
-  const at = resting !== -1 ? resting : state.round >= CHART_CALL_ROUND ? actions.findIndex((a) => a.kind !== 'switch') : -1;
-  if (at !== -1) actions[at] = { kind: 'call', combatantId: actions[at].combatantId };
-  return actions;
 }
 
 export function simulateFight(input: FightInput): FightOutcome {

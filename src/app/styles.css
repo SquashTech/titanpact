@@ -2700,6 +2700,28 @@ textarea,
   --side-rgb: 217, 83, 79;
 }
 
+/* The companion's seat on the track (docs/companion-call.md §12): the ! it wears on the field, inside its frame. */
+.order-track-frame {
+  position: relative;
+}
+
+.order-track-intent {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 11px;
+  height: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgb(224, 166, 60);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+
 /* Glass, lit from above in the side's colour, rimmed in it, and seated with a dark drop. */
 .order-track-frame {
   display: flex;
@@ -33393,10 +33415,11 @@ button.evo-gift-card {
   }
 }
 
-/* --- The companion on the field (CompanionFigure.tsx, docs/companion-call.md §8) ---
-   Small, between and behind the pair — a summon waiting at the edge of the fight, never a slot.
-   48px art at a clean 1x. Lit with a bob while a Call is left; the ground brightens and a mark
-   rides it while a Call is committed; it leaps in on its move's beat; dimmed once spent. */
+/* --- The companion on the field (CompanionFigure.tsx, docs/companion-call.md §12) ---
+   Small, between and behind the pair — a summon at the edge of the fight, never a slot. 48px art
+   at a clean 1x. A bob while it bides its time; the round it acts, the ground brightens and a !
+   rides it from the top of the command phase; it leaps in on its move's beat; dimmed once spent.
+   Woken, a Titan eye opens over it. */
 .companion-perch {
   position: absolute;
   left: 50%;
@@ -33440,26 +33463,66 @@ button.evo-gift-card {
   transition: filter var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
 }
 
-.companion-perch.is-ready .companion-perch-portrait {
+.companion-perch.is-waiting .companion-perch-portrait {
   animation: companion-perch-bob 1.6s ease-in-out infinite;
 }
 
-.companion-perch.is-queued .companion-perch-ground {
+.companion-perch.is-intends .companion-perch-ground {
   background: radial-gradient(ellipse at 50% 50%, rgba(var(--type-rgb), 0.9), rgba(var(--type-rgb), 0.3) 55%, transparent 76%);
 }
 
-.companion-perch.is-queued .companion-perch-portrait {
+.companion-perch.is-intends .companion-perch-portrait {
   filter: drop-shadow(0 0 10px rgba(var(--type-rgb), 0.95));
+  animation: companion-perch-bob 0.8s ease-in-out infinite;
 }
 
+/* The telegraph: a ! in the move's colour, pulsing, at the figure's shoulder. */
 .companion-perch-mark {
   position: absolute;
-  top: -4px;
-  right: 2px;
-  font-size: 12px;
+  top: -6px;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgb(var(--type-rgb));
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
   line-height: 1;
-  color: rgb(var(--type-rgb));
-  text-shadow: 0 0 6px rgba(var(--type-rgb), 0.9);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 8px rgba(var(--type-rgb), 0.95);
+  animation: companion-perch-pulse 1s ease-in-out infinite;
+}
+
+/* The woken companion's Titan eye, over its head. */
+.companion-perch-eye {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 20px;
+  height: 12px;
+  margin-left: -10px;
+  filter: drop-shadow(0 0 4px rgba(224, 57, 63, 0.8));
+}
+
+.companion-perch-eye svg {
+  display: block;
+  width: 20px;
+  height: 12px;
+}
+
+@keyframes companion-perch-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
 }
 
 .companion-perch.is-acting {

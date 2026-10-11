@@ -13,6 +13,8 @@ import type { Action } from '../engine/combat/actions';
 import type { CombatState, Side } from '../engine/state';
 import {
   applyStageDelta,
+  callIntent,
+  calledMove,
   effectiveTypes,
   getMaxHp,
   hasAffordableMoveInFight,
@@ -68,6 +70,9 @@ const WEIGHT_GATE_OPEN = WEIGHT_SUPER / WEIGHT_NEUTRAL;
 // An engine's move at its moment (AiContext.playsEngines): the same ratio again, so a warband
 // usually plays its combo and not always.
 const WEIGHT_ENGINE = WEIGHT_SUPER / WEIGHT_NEUTRAL;
+// The far side's companion telegraphs a hit this round (docs/companion-call.md §12.3): a guard or
+// a Shield is that much likelier, at the same ratio — the AI reads the ! as the player does.
+const WEIGHT_BRACE = WEIGHT_SUPER / WEIGHT_NEUTRAL;
 
 function aliveActiveIdsOn(state: CombatState, side: Side): string[] {
   return state.active[side].filter((id): id is string => id !== null && !state.combatants[id]?.fainted);
@@ -277,9 +282,21 @@ function engineWeight(state: CombatState, casterId: string, move: MoveDefinition
   return 1;
 }
 
+/** WEIGHT_BRACE for a guard or a Shield while the far side's companion telegraphs a damaging move this round; 1 otherwise. */
+function braceWeight(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext): number {
+  const call = callIntent(state, otherSide(state.combatants[casterId].side));
+  const incoming = call && calledMove(call, ctx.moves);
+  if (!incoming || !isDamaging(incoming)) return 1;
+  const braces = statusApplicationsOf(move).some((app) => {
+    const def = ctx.statuses[app.statusId];
+    return !!def && (def.blocksIncomingMoves || def.pipeline === 'shield');
+  });
+  return braces ? WEIGHT_BRACE : 1;
+}
+
 function weightFor(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext): number {
   // Only ever reached for a declarable move, so a gated one here has its gate open.
-  const gate = (move.requiresTargetStatus ? WEIGHT_GATE_OPEN : 1) * engineWeight(state, casterId, move, ctx);
+  const gate = (move.requiresTargetStatus ? WEIGHT_GATE_OPEN : 1) * engineWeight(state, casterId, move, ctx) * braceWeight(state, casterId, move, ctx);
   if (!isDamaging(move)) return WEIGHT_NEUTRAL * gate;
   const mult = bestEffectiveness(state, casterId, move, ctx);
   if (mult >= 4) return WEIGHT_QUAD_SUPER * gate;
