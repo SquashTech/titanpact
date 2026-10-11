@@ -246,11 +246,11 @@ test('evolution passives: Cold Housing Shields the partner when its holder\'s De
   assert.ok(!hasStatus(state.combatants.a1, 'Shield'));
 });
 
-test('evolution passives: Warm Hearth and Winter\'s Weight answer an entry — Burn and INT ▲▲, Frost Force', () => {
+test('evolution passives: Warm Hearth and Winter\'s Weight answer an entry — Burn and ATK ▲▲, Frost Force', () => {
   let base = withPassive(withPassive(threeVThree(734), 'a3', 'warmHearth'), 'a3', 'wintersWeight');
   const { state } = resolveRound(base, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
   assert.ok(hasStatus(state.combatants.a3, 'Burn'));
-  assert.strictEqual(state.combatants.a3.statStages?.intelligence, 2);
+  assert.strictEqual(state.combatants.a3.statStages?.attack, 2);
   assert.ok(hasStatus(state.combatants.a3, 'FrostForce'));
 });
 

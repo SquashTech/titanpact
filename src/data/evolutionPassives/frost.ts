@@ -60,12 +60,12 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   warmHearth: {
     id: 'warmHearth',
     name: 'Warm Hearth',
-    description: 'When this hero enters the battlefield, it is set Burning and gains INT ▲▲.',
+    description: 'When this hero enters the battlefield, it is set Burning and gains ATK ▲▲.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Burn' },
-      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
+      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 2 },
     },
   },
   // Flurry's Avalanche, beside Killing Frost: the Rest is the snow settling.
@@ -83,11 +83,11 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   wintersWeight: {
     id: 'wintersWeight',
     name: "Winter's Weight",
-    description: 'When this hero enters the battlefield, it gains Frost Force 20.',
+    description: 'When this hero enters the battlefield, it gains Frost Force 10.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'FrostForce', magnitude: 20 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'FrostForce', magnitude: 10 },
     },
   },
   // Tusk's Matriarch.
