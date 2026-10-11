@@ -19,7 +19,7 @@ export function applyManaRegen(
   const combatants = { ...state.combatants };
   const activeFieldEffectId = state.activeFieldEffect?.fieldEffectId;
   const mpRegenMultiplier = (activeFieldEffectId ? fieldEffects[activeFieldEffectId]?.mpRegenMultiplier : undefined) ?? 1;
-  const statCtx = { active: state.activeFieldEffect, defs: fieldEffects, board: { state, passives } };
+  const statCtx = { active: state.activeFieldEffect, defs: fieldEffects, board: { state, passives, heroes } };
 
   for (const id of Object.keys(state.combatants)) {
     if (state.combatants[id].called) continue; // a Called caster's cost is waived; it has no pool to fill

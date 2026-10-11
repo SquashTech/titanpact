@@ -351,7 +351,10 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
       rows.push({ label: 'While', text: `The target has ${needs.map(statusName).join(' and ')}`, glyph: { kind: 'status', statusId: needs[0] }, color: 'status' });
     }
   }
-  if (def.conditionalStatGrants) {
+  if (def.conditionalStatGrants?.requiresFastest) {
+    rows.push({ label: 'While', text: 'It is faster than every other hero on the field', glyph: { kind: 'stat', stat: 'speed' } });
+  }
+  if (def.conditionalStatGrants?.requiresEnemyStatus) {
     const statusId = def.conditionalStatGrants.requiresEnemyStatus;
     rows.push({
       label: 'While',

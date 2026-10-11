@@ -1129,7 +1129,7 @@ export function FightScreen({
 
   // Gate first, Provoke second, matching resolveRound's order.
   function visibleTargets(move: MoveDefinition, mode: TargetMode, ids: string[]): string[] {
-    return selectableTargets(combat, mode, statusGatedTargets(combat, move, ids), statuses, passives);
+    return selectableTargets(combat, mode, statusGatedTargets(combat, move, ids), statuses, passives, actingId ?? undefined);
   }
 
   /**

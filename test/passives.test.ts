@@ -286,16 +286,16 @@ const boardOf = (state: CombatState) => ({ active: state.activeFieldEffect, defs
 const guardSelf: Action = { kind: 'move', combatantId: 'a1', moveId: 'frostArmor', declaredTarget: 'a1' };
 const frozenEnemies = (state: CombatState) => ['b1', 'b2'].filter((id) => hasStatus(state.combatants[id], 'Freeze'));
 
-test('passives: Frozen Stone freezes exactly one enemy when its owner\'s Defense rises', () => {
-  const state = withPassive(twoVTwoFixture(360), 'a1', 'frozenStone');
+test('passives: Pack Ice freezes exactly one enemy when its owner\'s Defense rises', () => {
+  const state = withPassive(twoVTwoFixture(360), 'a1', 'absoluteZero');
   const { state: next, events } = resolveRound(state, [guardSelf], config);
 
   assert.strictEqual(frozenEnemies(next).length, 1, 'one of the two, not both — this is a rolled target, not a spread');
-  assert.ok(events.some((e) => e.type === 'PassiveTriggered' && e.combatantId === 'a1' && e.passiveId === 'frozenStone'));
+  assert.ok(events.some((e) => e.type === 'PassiveTriggered' && e.combatantId === 'a1' && e.passiveId === 'absoluteZero'));
 });
 
-test('passives: Frozen Stone reads the SIGN — a Defense debuff is a stat change, but not a rise', () => {
-  const state = withPassive(twoVTwoFixture(361), 'b1', 'frozenStone'); // the hero being peeled holds it
+test('passives: Pack Ice reads the SIGN — a Defense debuff is a stat change, but not a rise', () => {
+  const state = withPassive(twoVTwoFixture(361), 'b1', 'absoluteZero'); // the hero being peeled holds it
   const { state: next } = resolveRound(
     state,
     [{ kind: 'move', combatantId: 'a1', moveId: 'rendArmor', declaredTarget: 'b1' }],
@@ -306,14 +306,14 @@ test('passives: Frozen Stone reads the SIGN — a Defense debuff is a stat chang
   assert.ok(!hasStatus(next.combatants.a1, 'Freeze'), 'and nothing lands on the attacker either');
 });
 
-test('passives: Frozen Stone reads the STAT — a Speed buff on its owner does nothing', () => {
-  const state = withPassive(twoVTwoFixture(362), 'a1', 'frozenStone');
+test('passives: Pack Ice reads the STAT — a Speed buff on its owner does nothing', () => {
+  const state = withPassive(twoVTwoFixture(362), 'a1', 'absoluteZero');
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'charge' }], config);
   assert.strictEqual(frozenEnemies(next).length, 0);
 });
 
-test('passives: Frozen Stone is relative to its OWNER — a partner\'s Defense rising is not its own', () => {
-  const state = withPassive(twoVTwoFixture(363), 'a1', 'frozenStone');
+test('passives: Pack Ice is relative to its OWNER — a partner\'s Defense rising is not its own', () => {
+  const state = withPassive(twoVTwoFixture(363), 'a1', 'absoluteZero');
   const { state: next } = resolveRound(
     state,
     [{ kind: 'move', combatantId: 'a2', moveId: 'frostArmor', declaredTarget: 'a2' }],
@@ -325,7 +325,7 @@ test('passives: Frozen Stone is relative to its OWNER — a partner\'s Defense r
 test('passives: a rolled passive target does not always land on the same enemy', () => {
   const hit = new Set<string>();
   for (let seed = 0; seed < 40; seed++) {
-    const state = withPassive(twoVTwoFixture(seed), 'a1', 'frozenStone');
+    const state = withPassive(twoVTwoFixture(seed), 'a1', 'absoluteZero');
     const { state: next } = resolveRound(state, [guardSelf], config);
     for (const id of frozenEnemies(next)) hit.add(id);
   }
@@ -334,7 +334,7 @@ test('passives: a rolled passive target does not always land on the same enemy',
 
 test('passives: the rolled target draws RNG only when a passive asks for one', () => {
   const bare = twoVTwoFixture(364);
-  const held = withPassive(bare, 'a1', 'frozenStone');
+  const held = withPassive(bare, 'a1', 'absoluteZero');
   const without = resolveRound(bare, [guardSelf], config);
   const with_ = resolveRound(held, [guardSelf], config);
 

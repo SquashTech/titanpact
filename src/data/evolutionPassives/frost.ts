@@ -1,14 +1,26 @@
 import type { PassiveDefinition } from '../../engine/content';
 
 export const frostPathPassives: Record<string, PassiveDefinition> = {
-  // Flurry's Blizzard: a live grant, so it holds exactly as long as her Deep Chill does.
-  bedrockIce: {
-    id: 'bedrockIce',
-    name: 'Bedrock Ice',
-    description: 'This hero has +20 Defense and +20 Wisdom while an enemy is Frozen.',
-    conditionalStatGrants: {
-      requiresEnemyStatus: 'Freeze',
-      statGrants: { defense: 20, wisdom: 20 },
+  // Flurry's Blizzard: the ice plants the mark, Chain Lightning's spread cashes it on both.
+  thundersnow: {
+    id: 'thundersnow',
+    name: 'Thundersnow',
+    description: 'When an enemy is Frozen, it starts Conducting.',
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Freeze' } },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Conduct' },
+    },
+  },
+  // Rime's Hoarsteel: Bitter Cold's ATK, and the hoarfrost plating with it.
+  coldIron: {
+    id: 'coldIron',
+    name: 'Cold Iron',
+    description: 'When this hero lands an attack on a Frozen foe, it gains DEF ▲. Once a round, up to 3 times a fight.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Freeze' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1, perFight: 3 },
     },
   },
   // Rime's Snowbound.
@@ -22,15 +34,15 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 5 },
     },
   },
-  // Floe's Icebreaker.
+  // Floe's Icebreaker: the Defense that freezes a foe through Pack Ice also plates the partner.
   coldHousing: {
     id: 'coldHousing',
     name: 'Cold Housing',
-    description: 'At the end of each round, this hero gains Shield 20.',
+    description: "When this hero's Defense rises, its partner gains Shield 30.",
     reactive: {
-      hook: 'RoundEnded',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
+      hook: 'StatChanged',
+      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 30 },
     },
   },
   // Igloo's Snowfort: every arrival, the opening lead included.
@@ -44,15 +56,16 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
     },
   },
-  // Igloo's Hearthglow: target-role StatusApplied, so its own Provoke arms it — the hearth bites whoever comes knocking.
-  portcullis: {
-    id: 'portcullis',
+  // Igloo's Hearthglow: it lights its own hearth on the way in, and the fire thinks for it.
+  warmHearth: {
+    id: 'warmHearth',
     name: 'Warm Hearth',
-    description: 'When this hero becomes Provoking, both active enemies are set Burning.',
+    description: 'When this hero enters the battlefield, it is set Burning and gains INT ▲▲.',
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Provoke' } },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn' },
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Burn' },
+      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
     },
   },
   // Flurry's Avalanche, beside Killing Frost: the Rest is the snow settling.
@@ -66,16 +79,15 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
     },
   },
-  // Tusk's Ice Age: rolled per Frost hit, so a slow body buys the turn order back.
+  // Tusk's Ice Age: the cold comes in with it. Force never clears on a switch, so each arrival stacks.
   wintersWeight: {
     id: 'wintersWeight',
     name: "Winter's Weight",
-    description: 'When this hero lands a Frost attack, there is a 30% chance its target is Frozen.',
+    description: 'When this hero enters the battlefield, it gains Frost Force 20.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Frost' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Freeze' },
-      chance: 0.3,
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'FrostForce', magnitude: 20 },
     },
   },
   // Tusk's Matriarch.
@@ -90,12 +102,12 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       alsoEffect: { kind: 'statDelta', target: 'ally', stat: 'attack', stages: 1, perFight: 3 },
     },
   },
-  // Hush's Tundra Hunter.
+  // Hush's Tundra Hunter: the frozen cannot find the owl. A spread is not aimed, and still lands.
   stillPrey: {
     id: 'stillPrey',
     name: 'Still Prey',
-    description: "This hero's attacks deal 30% more damage to a Frozen enemy.",
-    damageModifier: { requiresTargetStatuses: ['Freeze'], amount: 0.3 },
+    description: "Frozen enemies can't aim a move at this hero. Spread moves still hit.",
+    untargetableByStatus: 'Freeze',
   },
   // Hush's Athene.
   owlsGaze: {
@@ -108,27 +120,27 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1, perFight: 3 },
     },
   },
-  // Flurry's Snow Spirit: Frostbite takes from the frozen, this gives to Flurry, by anyone's hand.
-  coldComfort: {
-    id: 'coldComfort',
-    name: 'Cold Comfort',
-    description: 'When an enemy is Frozen, this hero heals 15% of its max HP.',
+  // Flurry's Snow Spirit: whoever freezes is haunted, so Soul Rend reaches its partner too.
+  wraithfrost: {
+    id: 'wraithfrost',
+    name: 'Wraithfrost',
+    description: 'When an enemy is Frozen, it is Haunted.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Freeze' } },
-      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.15 } },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Haunt' },
     },
   },
-  // Rime's Hydrofreeze: the Water hit freezes, so Bitter Cold pays on the next one.
+  // Rime's Hydrofreeze: the first Water hit freezes, so Bitter Cold pays on the next one.
   blackIce: {
     id: 'blackIce',
     name: 'Black Ice',
-    description: 'When this hero lands a Water attack, there is a 30% chance its target is Frozen.',
+    description: 'The first time each fight this hero lands a Water attack, its target is Frozen.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
+      oncePerFight: true,
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Freeze' },
-      chance: 0.3,
     },
   },
   // Floe's Cryolattice: Wardblade's own Shield, cast across to the partner.
@@ -153,17 +165,12 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'cleanse', target: 'ally', count: 1 },
     },
   },
-  // Tusk's Erratic: a Daze bites only on a foe that has not moved yet, and Stampede sees to that.
-  deadWeight: {
-    id: 'deadWeight',
-    name: 'Dead Weight',
-    description: 'When this hero lands a Stone attack, its target is Dazed. Up to 2 times a fight.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Daze' },
-      maxFiresPerFight: 2,
-    },
+  // Tusk's Erratic: once Stampede has carried it past everyone, the boulder keeps rolling.
+  headOfTheHerd: {
+    id: 'headOfTheHerd',
+    name: 'Head of the Herd',
+    description: 'While this hero is faster than every other hero on the field, it has +10 MP Regen.',
+    conditionalStatGrants: { requiresFastest: true, statGrants: { mpRegen: 10 } },
   },
   // Hush's Night Owl: the opening leads count, so it starts the fight with a strike banked.
   nightWatch: {

@@ -40,3 +40,24 @@ export function wardRefusesStatus(
   return wardOn(state, targetId, passiveDefs) !== null;
 }
 
+
+/**
+ * Hush's Still Prey (content.ts PassiveDefinition.untargetableByStatus): a far-side actor holding
+ * the named status cannot aim a single-target move at the owner. Read at declaration (the picker)
+ * and at resolution (the move turns away as from a guard); a spread move is not aimed and still hits.
+ */
+export function shunnedBy(
+  state: CombatState,
+  targetId: string,
+  actorId: string | undefined,
+  passiveDefs: Record<PassiveId, PassiveDefinition>
+): PassiveId | null {
+  const owner = state.combatants[targetId];
+  const actor = actorId ? state.combatants[actorId] : undefined;
+  if (!owner || owner.fainted || !actor || actor.side === owner.side) return null;
+  const held = Object.keys(owner.passives).find((id) => {
+    const statusId = passiveDefs[id]?.untargetableByStatus;
+    return !!statusId && actor.statuses[statusId] !== undefined;
+  });
+  return held ?? null;
+}

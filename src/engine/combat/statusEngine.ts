@@ -7,7 +7,7 @@ import type { CombatState, Combatant, StatusInstance } from '../state';
 import { hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import { applyHpDelta } from './faintHandling';
-import { wardOn, wardRefusesStatus } from './ward';
+import { shunnedBy, wardOn, wardRefusesStatus } from './ward';
 import { nextInt } from '../rng/seededRng';
 
 type StatusResult = { state: CombatState; events: CombatEvent[] };
@@ -678,7 +678,9 @@ export function selectableTargets(
   /** Omitted narrows nothing. */
   statusDefs?: Record<string, StatusDefinition>,
   /** Omitted = no ward is read; with it, a warded foe is left off a single-target picker while anyone else is on it. */
-  passiveDefs?: Record<PassiveId, PassiveDefinition>
+  passiveDefs?: Record<PassiveId, PassiveDefinition>,
+  /** The caster: a foe it may not aim at (Still Prey) is left off a single-target picker the same way. */
+  actorId?: string
 ): string[] {
   if (statusDefs && targetMode === 'singleEnemy') {
     const taunts = tauntStatusIds(statusDefs);
@@ -691,7 +693,7 @@ export function selectableTargets(
   // A ward is permanent for as long as it holds, so unlike a Barrier it is never a guess worth
   // offering: the picker skips it. Only ever narrows — a pool that is all warded is left alone.
   if (passiveDefs && targetMode === 'singleEnemy') {
-    const open = candidateIds.filter((id) => wardOn(state, id, passiveDefs) === null);
+    const open = candidateIds.filter((id) => wardOn(state, id, passiveDefs) === null && shunnedBy(state, id, actorId, passiveDefs) === null);
     if (open.length > 0) return open;
   }
 

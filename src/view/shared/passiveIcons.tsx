@@ -152,9 +152,9 @@ export function passiveStatGrants(def: PassiveDefinition): [StatKey, number][] {
  * thing; what prose leaves out is that a conditional grant reads the ACTIVE slots only.
  */
 export function passiveEffectSummary(def: PassiveDefinition): string | undefined {
-  if (!def.conditionalStatGrants) return undefined;
-  const status = statuses[def.conditionalStatGrants.requiresEnemyStatus];
-  const name = status?.name ?? def.conditionalStatGrants.requiresEnemyStatus;
+  const statusId = def.conditionalStatGrants?.requiresEnemyStatus;
+  if (!statusId) return undefined;
+  const name = statuses[statusId]?.name ?? statusId;
   return `Only an enemy on the field counts — a benched ${name} carrier does nothing.`;
 }
 

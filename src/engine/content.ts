@@ -302,7 +302,9 @@ export interface PassiveDamageModifier {
 /** A stat grant that holds only while a board condition does — read live in state.ts getEffectiveStat, never folded into baselineStatModifiers. Stat pipeline, never a damage modifier. */
 export interface PassiveConditionalStatGrants {
   /** Holds while any living ACTIVE enemy of the owner carries this status. */
-  requiresEnemyStatus: StatusId;
+  requiresEnemyStatus?: StatusId;
+  /** Holds while the owner is active and strictly faster than every other living active hero, either side (Tusk's Erratic). */
+  requiresFastest?: true;
   statGrants: Partial<Record<StatKey, number>>;
 }
 
@@ -332,6 +334,8 @@ export interface PassiveDefinition {
    * wardOn), never a status. The Pact Clock and a self-cost go through, being neither.
    */
   wardedWhileCompanyStands?: true;
+  /** Still Prey: a far-side actor holding this status cannot aim a single-target move at the owner — spread moves still hit (ward.ts shunnedBy). */
+  untargetableByStatus?: StatusId;
   /**
    * Lingering (docs/innate-passives.md §7): the first time the holder would be knocked out each
    * fight, it stands at 1 HP instead. Any loss — a hit, a DoT, the Pact Clock — since it is not a
@@ -380,6 +384,7 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.conditionalStatGrants !== undefined ||
     passive.partnerStatGrants !== undefined ||
     passive.wardedWhileCompanyStands !== undefined ||
+    passive.untargetableByStatus !== undefined ||
     passive.enduresOnce !== undefined ||
     passive.cannotSwitchOut !== undefined ||
     passive.sideRefusesStatuses !== undefined ||

@@ -18,7 +18,8 @@ import { resolveRound } from '../src/engine/combat/resolveRound';
 import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import type { Action } from '../src/engine/combat/actions';
 import { hasStatus } from '../src/engine/state';
-import { applyStatus } from '../src/engine/combat/statusEngine';
+import { applyStatus, selectableTargets } from '../src/engine/combat/statusEngine';
+import { getEffectiveStat } from '../src/engine/state';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -206,4 +207,70 @@ test('evolution passives: Drowned Gift fills the Mana of whoever its Renew lands
   base = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentMana: 0 } } };
   const { state } = resolveRound(base, [{ kind: 'move', combatantId: 'a2', moveId: 'refresh', declaredTarget: 'a1' } as Action], config);
   assert.ok(state.combatants.a1.currentMana >= heroes.cinderKnight.baseStats.manaPool, 'filled, not just regenerated');
+});
+
+// --- Frost, second pass (docs/hero-audit.md) ---
+
+function freeze(state: CombatState, id: string): CombatState {
+  return applyStatus(state, 1, id, statuses.Freeze, {}).state;
+}
+
+function staged(state: CombatState, id: string, stat: string, steps: number): CombatState {
+  const c = state.combatants[id];
+  return { ...state, combatants: { ...state.combatants, [id]: { ...c, statStages: { ...c.statStages, [stat]: steps } } } };
+}
+
+test('evolution passives: Thundersnow and Wraithfrost mark whoever is Frozen — Conduct and Haunt', () => {
+  let base = withPassive(withPassive(threeVThree(730), 'a1', 'thundersnow'), 'a1', 'wraithfrost');
+  const { state } = resolveRound(base, [{ kind: 'move', combatantId: 'a2', moveId: 'deepChill', declaredTarget: 'b1' } as Action], config);
+  assert.ok(hasStatus(state.combatants.b1, 'Freeze'));
+  assert.ok(hasStatus(state.combatants.b1, 'Conduct'));
+  assert.ok(hasStatus(state.combatants.b1, 'Haunt'));
+  assert.ok(!hasStatus(state.combatants.b2, 'Conduct'));
+});
+
+test('evolution passives: Cold Iron raises Defense on a hit against a Frozen foe; Black Ice freezes on the first Water hit only', () => {
+  const iron = resolveRound(withPassive(freeze(threeVThree(731), 'b1'), 'a1', 'coldIron'), [{ kind: 'move', combatantId: 'a1', moveId: 'iceShard', declaredTarget: 'b1' } as Action], config).state;
+  assert.strictEqual(iron.combatants.a1.statStages?.defense, 1);
+
+  const splash = (target: string) => [{ kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: target } as Action];
+  const once = resolveRound(withPassive(threeVThree(732), 'a2', 'blackIce'), splash('b1'), config).state;
+  assert.ok(hasStatus(once.combatants.b1, 'Freeze'));
+  const twice = resolveRound(once, splash('b2'), config).state;
+  assert.ok(!hasStatus(twice.combatants.b2, 'Freeze'), 'the first Water hit only');
+});
+
+test('evolution passives: Cold Housing Shields the partner when its holder\'s Defense rises', () => {
+  const { state } = resolveRound(withPassive(threeVThree(733), 'a1', 'coldHousing'), [{ kind: 'move', combatantId: 'a1', moveId: 'frostArmor', declaredTarget: 'a1' } as Action], config);
+  assert.ok(hasStatus(state.combatants.a2, 'Shield'));
+  assert.ok(!hasStatus(state.combatants.a1, 'Shield'));
+});
+
+test('evolution passives: Warm Hearth and Winter\'s Weight answer an entry — Burn and INT ▲▲, Frost Force', () => {
+  let base = withPassive(withPassive(threeVThree(734), 'a3', 'warmHearth'), 'a3', 'wintersWeight');
+  const { state } = resolveRound(base, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
+  assert.ok(hasStatus(state.combatants.a3, 'Burn'));
+  assert.strictEqual(state.combatants.a3.statStages?.intelligence, 2);
+  assert.ok(hasStatus(state.combatants.a3, 'FrostForce'));
+});
+
+test('evolution passives: Head of the Herd adds 10 MP Regen only while its holder outspeeds every active hero', () => {
+  const held = withPassive(threeVThree(735), 'a1', 'headOfTheHerd');
+  const ctx = (s: CombatState) => ({ active: null, defs: fieldEffects, board: { state: s, passives, heroes } });
+  const base = heroes.cinderKnight.baseStats.mpRegen;
+  const fastest = staged(held, 'a1', 'speed', 5);
+  assert.strictEqual(getEffectiveStat(heroes.cinderKnight, fastest.combatants.a1, 'mpRegen', ctx(fastest)), base + 10);
+  const slower = staged(held, 'a1', 'speed', -5);
+  assert.strictEqual(getEffectiveStat(heroes.cinderKnight, slower.combatants.a1, 'mpRegen', ctx(slower)), base);
+});
+
+test('evolution passives: Still Prey — a Frozen foe cannot aim at its holder, but a spread still lands', () => {
+  const held = freeze(withPassive(threeVThree(736), 'a1', 'stillPrey'), 'b1');
+  assert.deepStrictEqual(selectableTargets(held, 'singleEnemy', ['a1', 'a2'], statuses, passives, 'b1'), ['a2']);
+  assert.deepStrictEqual(selectableTargets(held, 'singleEnemy', ['a1', 'a2'], statuses, passives, 'b2').sort(), ['a1', 'a2'], 'an unfrozen foe still may');
+  const aimed = resolveRound(held, [{ kind: 'move', combatantId: 'b1', moveId: 'splash', declaredTarget: 'a1' } as Action], config);
+  assert.ok(aimed.events.some((e) => e.type === 'MoveGuarded' && e.combatantId === 'a1'));
+  assert.ok(!aimed.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'a1'));
+  const spread = resolveRound(held, [{ kind: 'move', combatantId: 'b1', moveId: 'rimeWind', declaredTarget: 'a1' } as Action], config);
+  assert.ok(spread.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'a1'));
 });

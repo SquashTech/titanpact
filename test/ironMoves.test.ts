@@ -284,7 +284,7 @@ test('iron: every priority row is a POSITIVE bracket, and the slate has no heal,
   assert.strictEqual(firstStatusApplication(moves.ironSkin)?.statusId, 'Shield');
   assert.strictEqual(firstStatusApplication(moves.livingWall)?.statusId, 'Shield');
   assert.strictEqual(firstStatusApplication(moves.serratedSlice)?.statusId, 'Bleed');
-  assert.strictEqual(firstStatusApplication(moves.serratedSlice)?.chance, 0.3);
+  assert.strictEqual(firstStatusApplication(moves.serratedSlice)?.chance, 0.5);
   // Fortify's is the Ambush the guard turn now pays (docs/conditions.md "Ambush").
   assert.strictEqual(firstStatusApplication(moves.fortify)?.statusId, 'Ambush');
   assert.strictEqual(firstStatusApplication(moves.fortify)?.target, 'self');

@@ -1469,7 +1469,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['chainLightning'],
             typeGraft: 'Storm',
             learnableMoveIds: evolutionLine('glacialWarden', 'Storm', { granted: ['chainLightning'] }),
-            grantsPassiveIds: ['bedrockIce'],
+            grantsPassiveIds: ['thundersnow'],
           },
           {
             id: 'glacialWarden-snowSpirit',
@@ -1478,7 +1478,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['soulRend'],
             typeGraft: 'Spirit',
             learnableMoveIds: evolutionLine('glacialWarden', 'Spirit', { granted: ['soulRend'] }),
-            grantsPassiveIds: ['coldComfort'],
+            grantsPassiveIds: ['wraithfrost'],
           },
         ],
       },
@@ -1500,7 +1500,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['reinforce'],
             typeGraft: 'Iron',
             learnableMoveIds: evolutionLine('rime', 'Iron', { granted: ['reinforce'] }),
-            grantsPassiveIds: ['frozenStone'],
+            grantsPassiveIds: ['coldIron'],
           },
           {
             id: 'rime-hydrofreeze',
@@ -2770,7 +2770,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['spreadingBlaze'],
             typeGraft: 'Fire',
             learnableMoveIds: evolutionLine('rimehold', 'Fire', { granted: ['spreadingBlaze'] }),
-            grantsPassiveIds: ['portcullis'],
+            grantsPassiveIds: ['warmHearth'],
           },
           {
             id: 'rimehold-aurora',
@@ -2925,7 +2925,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['titanicCrush'],
             typeGraft: 'Stone',
             learnableMoveIds: evolutionLine('tusk', 'Stone', { granted: ['titanicCrush'] }),
-            grantsPassiveIds: ['deadWeight'],
+            grantsPassiveIds: ['headOfTheHerd'],
           },
           {
             id: 'tusk-matriarch',

@@ -44,7 +44,7 @@ import {
 } from './statusEngine';
 import { collectPassiveDamageModifiers, resolvePassiveReactions } from './passiveEngine';
 import { restoreCharges } from './charges';
-import { wardOn } from './ward';
+import { shunnedBy, wardOn } from './ward';
 import { nextFloat, nextInt } from '../rng/seededRng';
 import { DEFAULT_PACT_CLOCK, tickPactClock, type PactClockConfig } from './pactClock';
 
@@ -264,7 +264,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       if (working.combatants[targetId]?.side === actor.side) return null;
       const statusId = blockingStatusId(working, targetId, statuses);
       if (statusId) return { statusId };
-      const passiveId = wardOn(working, targetId, passives);
+      const passiveId = wardOn(working, targetId, passives) ?? (targetMode === 'singleEnemy' ? shunnedBy(working, targetId, action.combatantId, passives) : null);
       return passiveId ? { passiveId } : null;
     };
     const guarded: CombatEvent[] = [];

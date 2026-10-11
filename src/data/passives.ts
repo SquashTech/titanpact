@@ -344,19 +344,6 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew' },
     },
   },
-  frozenStone: {
-    id: 'frozenStone',
-    name: 'Frozen Stone',
-    description: 'When this hero\'s Defense rises, Freeze a random enemy.',
-    // eventFieldPositive is what makes this "rises" rather than "changes" — a Defense DEBUFF
-    // must not freeze anyone. Fed only by a move's own stat deltas, so the hero's own Bastion
-    // and a partner's Frost Wall both arm it, and a passive-caused change never chains.
-    reactive: {
-      hook: 'StatChanged',
-      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
-      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
-    },
-  },
   overspill: {
     id: 'overspill',
     name: 'Overspill',
@@ -515,7 +502,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     id: 'coldForge',
     name: 'Cold Forge',
     description: "When this hero's Defense rises, it gains ATK ▲. Once a round, up to 3 times a fight.",
-    // Frozen Stone's trigger with an inward payout: eventFieldPositive is what makes this "rises"
+    // Pack Ice's trigger with an inward payout: eventFieldPositive is what makes this "rises"
     // and not "changes". Floe's own Frost Armor and a partner's Bastion or Frost Wall all arm it,
     // which is the whole build — the wall it puts up is the weapon it swings.
     reactive: {

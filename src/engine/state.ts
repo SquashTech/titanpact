@@ -526,7 +526,8 @@ export function activePartnerTypes(
 export interface StatContext {
   active: ActiveFieldEffect | null;
   defs: Record<string, FieldEffectDefinition>;
-  board?: { state: CombatState; passives: Record<PassiveId, PassiveDefinition> };
+  /** `heroes` lets a condition read OTHER combatants' stats (Erratic's fastest-on-the-field); without it that condition never holds. */
+  board?: { state: CombatState; passives: Record<PassiveId, PassiveDefinition>; heroes?: HeroLookup };
 }
 
 /** Older name for StatContext; kept for existing call sites. */
@@ -538,6 +539,23 @@ function anyActiveEnemyHasStatus(state: CombatState, side: Side, statusId: Statu
   return state.active[enemySide].some((id) => {
     const enemy = id ? state.combatants[id] : undefined;
     return !!enemy && !enemy.fainted && hasStatus(enemy, statusId);
+  });
+}
+
+/** The combatant is active and strictly faster than every other living active hero, either side. Needs `board.heroes`. */
+function isFastestActive(hero: HeroDefinition, combatant: Combatant, ctx: StatContext): boolean {
+  const board = ctx.board;
+  if (!board?.heroes) return false;
+  const state = board.state;
+  const actives = [...state.active.A, ...state.active.B];
+  if (!actives.includes(combatant.combatantId)) return false;
+  const mine = getEffectiveStat(hero, combatant, 'speed', ctx);
+  return actives.every((id) => {
+    if (!id || id === combatant.combatantId) return true;
+    const other = state.combatants[id];
+    if (!other || other.fainted) return true;
+    const otherHero = board.heroes![other.heroId];
+    return !otherHero || mine > getEffectiveStat(otherHero, other, 'speed', ctx);
   });
 }
 
@@ -571,7 +589,9 @@ export function getEffectiveStat(
       const conditional = fieldEffectCtx.board.passives[instance.passiveId]?.conditionalStatGrants;
       const amount = conditional?.statGrants[stat];
       if (!conditional || !amount) continue;
-      if (!anyActiveEnemyHasStatus(fieldEffectCtx.board.state, combatant.side, conditional.requiresEnemyStatus)) continue;
+      if (conditional.requiresEnemyStatus && !anyActiveEnemyHasStatus(fieldEffectCtx.board.state, combatant.side, conditional.requiresEnemyStatus)) continue;
+      // Speed itself never reads this, or the comparison would read itself.
+      if (conditional.requiresFastest && (stat === 'speed' || !isFastestActive(hero, combatant, fieldEffectCtx))) continue;
       raw += amount * instance.stacks;
     }
     // A partner's aura (Mana Chime): only between the two actives, so the bench and a lone lead hold none.

@@ -341,7 +341,7 @@ test('shadow: Dusk Blade is the only guaranteed Bleed, and Bleed is the type fla
   assert.strictEqual(firstStatusApplication(moves.shadowsweep)!.chance, 0.3);
   assert.strictEqual(firstStatusApplication(moves.duskBlade)!.chance, undefined);
   assert.strictEqual(firstStatusApplication(moves.backstab)!.chance, 0.5);
-  assert.strictEqual(firstStatusApplication(moves.shadowSlice)!.chance, 0.3);
+  assert.strictEqual(firstStatusApplication(moves.shadowSlice)!.chance, 0.5);
   assert.strictEqual(statuses.Bleed.decay, 'none');
   assert.strictEqual(statuses.Bleed.clearsOnSwitch, false);
 });

@@ -262,3 +262,25 @@ The audit's new moves (Pinch, Dawnsong, Brine Hex) sit LAST in `moves.ts`: `evol
 slate in order, and placed early they displaced other heroes' line picks. Last, Pinch fills four
 physical Water graft lines one move short (Rime Hydrofreeze, Scallywag Seawise, Murk Drowner, Mellow
 Hot Spring); the other two join no line.
+
+## Frost, second pass (2026-10-11, per user direction)
+
+Grafts were already one type each (Nature unused); details only.
+
+| Hero | Change |
+|---|---|
+| Flurry | **Blizzard**'s Bedrock Ice → **Thundersnow**: an enemy Frozen starts Conducting (Chain Lightning cashes it on both). **Snow Spirit**'s Cold Comfort → **Wraithfrost**: an enemy Frozen is Haunted. |
+| Rime | **Hoarsteel**'s Frozen Stone (Floe's Pack Ice word for word) → **Cold Iron**: a hit on a Frozen foe → DEF ▲ (3 a fight). **Hydrofreeze**'s Black Ice: the first Water hit each fight Freezes, guaranteed (was 30% every hit). |
+| All | **Every Slice move's Bleed is 50%** (was 30%): Aqua, Shock, Leaf, Holy, Shadow, Spooky, Serrated. |
+| Floe | **Icebreaker**'s Cold Housing: its Defense rising → partner Shield 30 (was Shield 20 every round). |
+| Igloo | **Hearthglow**'s Warm Hearth (id `warmHearth`, was `portcullis`): on entering, it is set Burning and gains INT ▲▲ (was: Provoking Burns both enemies). Cold Front kept. |
+| Tusk | **Ice Age**'s Winter's Weight: on entering, Frost Force 20 (was a 30% Freeze). **Erratic**'s Dead Weight → **Head of the Herd**: +10 MP Regen while faster than every other hero on the field. |
+| Hush | **Tundra Hunter**'s Still Prey: Frozen enemies can't aim a move at it — a spread still hits (was +30% damage to Frozen). |
+
+Engine: `PassiveDefinition.untargetableByStatus` (ward.ts `shunnedBy`, read at the picker for the
+player, the AI and the pilot, and at resolution as a MoveGuarded); `conditionalStatGrants.requiresFastest`
+(read through `StatContext.board.heroes`, which mana regen now passes). Frozen Stone is deleted; its
+engine tests pin Pack Ice, the same verb.
+
+To watch: Winter's Weight stacks Frost Force on every entry. Warm Hearth's INT ▲▲ lands on Igloo's
+Int 20 — a wacky one by request. Ice Age still grants Snowball, as Rime's Snowbound does.
