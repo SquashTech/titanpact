@@ -29,6 +29,11 @@ type's look. Strike a row when its three frames are redrawn.
 | `glacialWarden-blizzard` | Flurry | Blizzard | Stone | Storm — check: the snowman wizard may read fine |
 | `glacialWarden-snowSpirit` | Flurry | Snow Spirit | Water | Spirit — check |
 | `rimehold-aurora` | Igloo | Aurora | Water | Light — check |
+| `tidecaller-salamander` | Riptide | Salamander | Frost | Fire |
+| `tidecaller-marshrunner` | Riptide | Marshrunner | Mind | Nature |
+| `pincer-reefshell` | Pincer | Reefshell | Storm | Stone |
+| `selkie-seasinger` | Selkie | Seasinger | Mind | Light |
+| `selkie-roane` | Selkie | Roane | Spirit | Arcane |
 
 Rime's Hoarsteel (an armoured knight, now Iron) and Floe's Cryolattice (a crystal, now Arcane)
 already read as their new types.
@@ -195,3 +200,21 @@ Engine: `PassiveTriggerCondition.requiresFieldEffect` (Dawnfire) and `PassiveDef
 `docs/stat-stages.md` §6.3 stays for every other repeating card; `test/statStages` names the
 exception. Engine: `ConsumableUsed` hook; an `ally` target on a hero that has just switched
 out means the partner it stood beside, not the hero taking its slot.
+
+## Water, second pass — grafts (2026-10-11, per user direction)
+
+Mind three times, Frost, Storm and Spirit twice each across twelve grafts; spread so each type
+appears once (Mech unused). Leviathan keeps Frost and Storm, Nautilus Mind and Shadow, Kappa Beast
+and Spirit. Siren and Seasinger were one myth doing one thing; Siren is the one that left.
+
+| Hero | Path (was) | Graft (was) | Granted move (was) |
+|---|---|---|---|
+| Riptide | Salamander (Frostbound) | Fire (Frost) | Molten Lash (Permafrost) |
+| Riptide | Marshrunner (Siren) | Nature (Mind) | Rootbind (Psyshock) |
+| Pincer | Reefshell (Squallshell) | Stone (Storm) | Dig In (Storm Lash) |
+| Selkie | Seasinger | Light (Mind) | Consecrate (Mind Shatter) |
+| Selkie | Roane | Arcane (Spirit) | Empower (Soul Offering) |
+
+Passives are unchanged and owed in the details pass: Brittle (Salamander) has no Freeze to read,
+Static Shell (Reefshell) no Storm hit to cash its Conduct, and Seasinger lost the Wisdom-swung
+nuke that made it. Art moved with the ids; all five drawings were made for the old types.

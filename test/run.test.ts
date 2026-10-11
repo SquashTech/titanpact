@@ -412,8 +412,8 @@ test('progression: a type-graft path grants a second type without touching the i
   let run = seedRoster(['tidecaller']);
   run = atEvolutionRung(run, 'tidecaller');
 
-  const next = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-frostbound');
-  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Frost');
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-salamander');
+  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Fire');
   assert.deepStrictEqual(heroes.tidecaller.types, ['Water']); // innate type untouched
 
   const squad = pickSquad(next.roster, ['tidecaller']);
@@ -423,12 +423,12 @@ test('progression: a type-graft path grants a second type without touching the i
     { side: 'A', squad, roster: next.roster },
     { side: 'B', squad: aiSquad, roster: aiRun.roster },
   ]);
-  assert.deepStrictEqual(state.combatants['A:tidecaller'].grantedTypes, ['Frost']);
+  assert.deepStrictEqual(state.combatants['A:tidecaller'].grantedTypes, ['Fire']);
   // The view draws the form the hero is in (art/evolutions/); an unevolved hero carries none.
-  assert.strictEqual(state.combatants['A:tidecaller'].formPathId, 'tidecaller-frostbound');
+  assert.strictEqual(state.combatants['A:tidecaller'].formPathId, 'tidecaller-salamander');
   assert.strictEqual(state.combatants['B:ironWarden'].formPathId, undefined);
   // Out-of-combat screens read the graft off the RosterEntry, with no Combatant built yet.
-  assert.deepStrictEqual(rosterEntryTypes(heroes.tidecaller, next.roster[0]), ['Water', 'Frost']);
+  assert.deepStrictEqual(rosterEntryTypes(heroes.tidecaller, next.roster[0]), ['Water', 'Fire']);
 });
 
 test('progression: a graft on an already-dual-typed hero TRADES the innate secondary, never stacks a third', () => {
@@ -485,8 +485,8 @@ test('progression: a graft on an already-dual-typed hero TRADES the innate secon
 test('progression: a later type-graft path shifts (replaces) the secondary type rather than stacking a third', () => {
   let run = seedRoster(['tidecaller']);
   run = atEvolutionRung(run, 'tidecaller');
-  run = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-frostbound');
-  assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Frost');
+  run = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-salamander');
+  assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Fire');
 
   // A synthetic second node (the future multi-node "Deep line" shape, docs/leveling-and-ranks.md).
   const shiftTable = {
