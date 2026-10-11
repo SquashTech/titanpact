@@ -550,7 +550,13 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             events.push(...damageReactions.events);
 
             // Conduct detonation: its own beat after the base hit, never folded into DamageDealt.
-            const triggered = detonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses, action.combatantId);
+            const extraTriggers = new Set(
+              Object.keys(working.combatants[action.combatantId]?.passives ?? {})
+                .map((id) => passives[id]?.setsOffStatus)
+                .filter((s): s is NonNullable<typeof s> => !!s && s.moveTypes.includes(move.type))
+                .map((s) => s.statusId)
+            );
+            const triggered = detonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses, action.combatantId, extraTriggers);
             working = triggered.state;
 
             if (triggered.bonusDamage > 0) {

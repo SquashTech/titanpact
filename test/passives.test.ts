@@ -1090,17 +1090,36 @@ function deepFixture(seed: number, sideA: readonly string[], sideB: readonly str
   } as CombatState;
 }
 
-test('passives: Cinderguard is a RoundStarted reaction — the Defense lands before the round\'s first hit', () => {
+test('passives: Cinderguard — a hit taken sets a random enemy Burning, and never refreshes one already alight', () => {
   const state = withPassive(deepFixture(800, ['cinderKnight', 'aegis'], ['crag', 'sentinel']), 'a1', 'cinderguard');
-  const { state: next, events } = resolveRound(
-    state,
-    [{ kind: 'move', combatantId: 'b1', moveId: 'rockToss', declaredTarget: 'a1' } as Action],
-    config
-  );
-  assert.strictEqual(next.combatants.a1.statStages?.defense, 1);
-  const plated = events.findIndex((e) => e.type === 'StatChanged' && e.combatantId === 'a1' && e.stat === 'defense');
-  const struck = events.findIndex((e) => e.type === 'DamageDealt');
-  assert.ok(plated >= 0 && plated < struck, 'the plate is on before the hit');
+  const hit = [{ kind: 'move', combatantId: 'b1', moveId: 'rockToss', declaredTarget: 'a1' } as Action];
+  const { state: next } = resolveRound(state, hit, config);
+  assert.ok(hasStatus(next.combatants.b1, 'Burn') || hasStatus(next.combatants.b2, 'Burn'), 'an enemy is alight');
+
+  const bothBurning: CombatState = {
+    ...state,
+    combatants: {
+      ...state.combatants,
+      b1: { ...state.combatants.b1, statuses: { ...state.combatants.b1.statuses, Burn: { statusId: 'Burn', duration: 2 } } },
+      b2: { ...state.combatants.b2, statuses: { ...state.combatants.b2.statuses, Burn: { statusId: 'Burn', duration: 2 } } },
+    },
+  };
+  const { events } = resolveRound(bothBurning, hit, config);
+  assert.ok(!events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Burn'), 'a Burn already lit is left as it is');
+});
+
+test('passives: Stormfire — the holder\'s Fire hit sets off Conduct, and the same hit without it does not', () => {
+  const base = deepFixture(806, ['cinderKnight', 'aegis'], ['crag', 'sentinel']);
+  const marked: CombatState = {
+    ...base,
+    combatants: { ...base.combatants, b1: { ...base.combatants.b1, statuses: { ...base.combatants.b1.statuses, Conduct: { statusId: 'Conduct' } } } },
+  };
+  const hit = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' } as Action];
+  const plain = resolveRound(marked, hit, config);
+  assert.ok(!plain.events.some((e) => e.type === 'StatusDetonated'), 'a Fire hit leaves Conduct alone');
+  const fired = resolveRound(withPassive(marked, 'a1', 'stormfire'), hit, config);
+  assert.ok(fired.events.some((e) => e.type === 'StatusDetonated' && e.statusId === 'Conduct' && e.combatantId === 'b1'));
+  assert.ok(!hasStatus(fired.state.combatants.b1, 'Conduct'), 'and the mark is spent');
 });
 
 test('passives: Flameproof — an active holder\'s side refuses Burn, and a Burn already held does not tick', () => {
@@ -1164,10 +1183,14 @@ test('passives: Warm Spring Renews the holder and its partner when it Rests, and
   assert.deepStrictEqual(renewed, ['a1', 'a2']);
 });
 
-test('passives: Dawnfire answers Sanctuary being set — a FieldEffectSet reaction', () => {
-  const state = withPassive(deepFixture(804, ['ashwing', 'aegis'], ['crag', 'sentinel']), 'a1', 'dawnfire');
-  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'consecrate', declaredTarget: 'a2' } as Action], config);
-  assert.strictEqual(statusMagnitude(next.combatants.a1, 'FireForce'), 15);
+test('passives: Dawnfire — a Fire hit mends the partner while Sanctuary is up, and only then (requiresFieldEffect)', () => {
+  const base = withPassive(deepFixture(804, ['ashwing', 'aegis'], ['crag', 'sentinel']), 'a1', 'dawnfire');
+  const hurt: CombatState = { ...base, combatants: { ...base.combatants, a2: { ...base.combatants.a2, currentHp: 400 } } };
+  const hit = [{ kind: 'move', combatantId: 'a1', moveId: 'ember', declaredTarget: 'b1' } as Action];
+  const plain = resolveRound(hurt, hit, config);
+  assert.strictEqual(plain.state.combatants.a2.currentHp, 400, 'no field, no mend');
+  const lit = resolveRound({ ...hurt, activeFieldEffect: { fieldEffectId: 'sanctuary', roundsRemaining: 5 } }, hit, config);
+  assert.ok(lit.state.combatants.a2.currentHp > 400, 'under Sanctuary the partner is healed');
 });
 
 test('passives: Funeral Pyre carries two verbs on one firing — full HP and a full pool (alsoEffect)', () => {

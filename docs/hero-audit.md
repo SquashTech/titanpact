@@ -167,3 +167,18 @@ Patch's damage is meant to come from the marks he plants (Conduct, Burn) for a p
 | **Coolant**: Heat Sink → **Heat Exchanger** | When an enemy takes Burn damage, Patch's partner heals for the same amount (Ashfeast's shape, aimed at the partner). |
 
 **The sim pilot now prices marks** (`src/run/pilot.ts` `riderValue`): Conduct is worth its 15% burst when an active ally can pay for a Storm/Iron/Mech hit (×0.7, ×0.85 with two), Haunt one echo of our best Spirit/Mind hit on the holder's partner (×0.5); neither when the mark is already there. Both priced at 0 before, so the pilot never chose to plant one. This is also the Trials' and the Gauntlet's late AI, which now plants marks on purpose.
+
+## Fire, second pass (2026-10-11, per user direction)
+
+The audit restarted at Fire after every Evolution path became a move and a passive.
+
+| Hero | Change |
+|---|---|
+| Cinder | **Kindling**: the hero AND its partner gain ATK ▲ INT ▲ on hitting a Burning foe (3 a fight); **Kindling+** the same, 5 a fight. **Ironclad**'s Cinderguard: taking damage sets a random enemy Burning (unless already). **Thunderblaze**: Fanned Flame → **Stormfire**, its Fire attacks set off Conduct as Storm attacks do. |
+| Crimson | **Emberweave**'s Spellfire: an enemy taking Burn damage gives Arcane Force 10 (3 a fight). |
+| Drake | **Wyvern**'s Wingwake: on entering, its next attack is +1 priority with Ambush 20. **Cinderscale**'s Magma Hide: taking damage gives Fire Force 10 (3 a fight). |
+| Ashwing | **Ashen** grants Soul Rend (was Vengeance, whose low-HP window Funeral Pyre erased). **Sunbird**'s Dawnfire: while Sanctuary is up, its Fire attacks heal the partner a third of the damage. |
+
+Engine: `PassiveTriggerCondition.requiresFieldEffect` (Dawnfire) and `PassiveDefinition.setsOffStatus` (Stormfire; read at the hit in resolveRound).
+
+**Open:** Brimstone's Sulphur (too strong?), Drake's Hoard (a potion trigger reverses "potions are not a trigger source"), Tinder's Limelight passive, and whether a mastered innate may break the one-step-a-round brake (Kindling+ / Stoke+ as ▲▲; Stoke+ unchanged until then).

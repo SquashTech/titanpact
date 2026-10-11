@@ -503,11 +503,11 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   cinderguard: {
     id: 'cinderguard',
     name: 'Cinderguard',
-    description: 'At the start of each round, this hero gains DEF ▲. Up to 3 times a fight.',
+    description: 'When this hero takes damage, a random enemy is set Burning, unless it already is.',
     reactive: {
-      hook: 'RoundStarted',
+      hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1, perFight: 3 },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Burn', onlyIfAbsent: true },
     },
   },
   ashfeast: {
@@ -851,11 +851,12 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   magmaHide: {
     id: 'magmaHide',
     name: 'Magma Hide',
-    description: 'When this hero Rests, it gains Shield 60.',
+    description: 'When this hero takes damage, it gains Fire Force 10. Up to 3 times a fight.',
     reactive: {
-      hook: 'Rested',
+      maxFiresPerFight: 3,
+      hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 60 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'FireForce', magnitude: 10 },
     },
   },
 };
@@ -998,12 +999,13 @@ const innatePassives: Record<string, PassiveDefinition> = {
   kindling: {
     id: 'kindling',
     name: 'Kindling',
-    description: 'When this hero lands an attack on a Burning foe, it gains ATK ▲ and INT ▲. Once a round, up to 3 times a fight.',
-    // Light it once, then every hit builds. Both columns, so the knight's Explosive turn keeps it live.
+    description: 'When this hero lands an attack on a Burning foe, it and its partner gain ATK ▲ and INT ▲. Once a round, up to 3 times a fight.',
+    // Light it once, then every hit builds the whole front line. Both columns, so the knight's Explosive turn keeps it live.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Burn' },
       effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
     },
   },
   stoke: {
@@ -1860,11 +1862,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   forgeheart: {
     id: 'forgeheart',
     name: 'Kindling+',
-    description: 'When this hero lands an attack on a Burning foe, it gains ATK ▲ and INT ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero lands an attack on a Burning foe, it and its partner gain ATK ▲ and INT ▲. Once a round, up to 5 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Burn' },
       effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1, perFight: 5 },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1, perFight: 5 },
     },
   },
   wildfire: {

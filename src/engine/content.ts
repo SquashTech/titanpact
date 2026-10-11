@@ -195,6 +195,8 @@ export interface PassiveTriggerCondition {
   sideOutspeeds?: true;
   /** The event's move carries this tag (DamageDealt, MoveUsed — any event with a moveId). Squall's Retrieve. */
   moveTag?: MoveTag;
+  /** This field effect is on the board when the reaction is read, by any setter (Ashwing's Dawnfire under Sanctuary). */
+  requiresFieldEffect?: FieldEffectId;
 }
 
 /** matchTriggerAmount reads the triggering event's `field` (default 'amount'): Sanguine takes a tick's amount, Restorative Toxin a StatusApplied's magnitude. */
@@ -347,6 +349,8 @@ export interface PassiveDefinition {
    * Combatant.sideStatusImmunities at fight build; checked live against the field in statusEngine.
    */
   sideRefusesStatuses?: readonly StatusId[];
+  /** The holder's attacks of these types also set off this trigger status, beside its own `triggerTypes` (Cinder's Thunderblaze: Fire sets off Conduct). Read at the hit, in resolveRound. */
+  setsOffStatus?: { statusId: StatusId; moveTypes: readonly TypeId[] };
   /**
    * How many faces each `metamorphic` move in the holder's kit shows a round (Motley's Trick 1, its
    * mastered form 2), the player picking either. The largest held wins; absent, a metamorphic move shows one.
@@ -378,6 +382,7 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.enduresOnce !== undefined ||
     passive.cannotSwitchOut !== undefined ||
     passive.sideRefusesStatuses !== undefined ||
+    passive.setsOffStatus !== undefined ||
     passive.metamorphicFaces !== undefined ||
     passive.goldStatGrants !== undefined;
   if (!hasEffect) return false;

@@ -537,6 +537,7 @@ export function resolvePassiveReactions(
             if (!moveId || !moves?.[moveId]?.tags?.includes(reactive.condition.moveTag)) continue;
           }
           if (reactive.condition.sideOutspeeds && !sideOutspeeds(working, owner.side, heroes, passiveDefs, fieldEffectDefs)) continue;
+          if (reactive.condition.requiresFieldEffect !== undefined && working.activeFieldEffect?.fieldEffectId !== reactive.condition.requiresFieldEffect) continue;
           // Checked AFTER the match and marked BEFORE the effect resolves, so a re-entrant reaction cannot fire itself twice.
           if (reactive.oncePerFight) {
             if (working.combatants[ownerId]?.passives[instance.passiveId]?.firedThisFight) continue;

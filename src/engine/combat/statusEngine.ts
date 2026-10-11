@@ -479,14 +479,17 @@ export function detonateTriggeredStatuses(
   moveType: TypeId,
   maxHp: number,
   statusDefs: Record<string, StatusDefinition>,
-  sourceCombatantId?: string
+  sourceCombatantId?: string,
+  /** Statuses the source's passives let this hit set off beyond their own triggerTypes (PassiveDefinition.setsOffStatus). */
+  extraTriggers: ReadonlySet<StatusId> = new Set()
 ): { state: CombatState; bonusDamage: number; events: CombatEvent[] } {
   let working = state;
   const events: CombatEvent[] = [];
   let bonusDamage = 0;
 
   for (const def of Object.values(statusDefs)) {
-    if (!def.triggerTypes?.includes(moveType)) continue;
+    if (!def.triggerTypes) continue;
+    if (!def.triggerTypes.includes(moveType) && !extraTriggers.has(def.id)) continue;
     const target = working.combatants[targetId];
     if (!target || target.fainted) continue;
     if (!hasStatus(target, def.id)) continue;

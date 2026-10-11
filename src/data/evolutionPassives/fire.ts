@@ -64,16 +64,15 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'FireForce', magnitude: 15 },
     },
   },
-  // Ashwing's Sunbird: Consecrate's Sanctuary stokes the bird it came from.
+  // Ashwing's Sunbird: under Consecrate's Sanctuary the bird's fire mends its partner.
   dawnfire: {
     id: 'dawnfire',
     name: 'Dawnfire',
-    description: 'When Sanctuary is set, this hero gains Fire Force 15. Up to 3 times a fight.',
+    description: "While Sanctuary is up, this hero's Fire attacks heal its partner for a third of the damage dealt.",
     reactive: {
-      maxFiresPerFight: 3,
-      hook: 'FieldEffectSet',
-      condition: { relativeTo: 'self', eventFieldEquals: { fieldEffectId: 'sanctuary' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'FireForce', magnitude: 15 },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' }, requiresFieldEffect: 'sanctuary' },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'matchTriggerAmount', multiplier: 0.33 } },
     },
   },
   // Ashwing's Ashen: Smoulder is what arms it — the phoenix rises whole.
@@ -107,37 +106,35 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
       chance: 0.25,
     },
   },
-  // Cinder's Thunderblaze: the lightning fans the fire Kindling feeds on.
-  fannedFlame: {
-    id: 'fannedFlame',
-    name: 'Fanned Flame',
-    description: 'When this hero lands a Storm attack on a Burning foe, the Burn lights again.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Storm' }, eventTargetHasStatus: 'Burn' },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
-    },
+  // Cinder's Thunderblaze: Storm Lash plants the mark, and his fire sets it off.
+  stormfire: {
+    id: 'stormfire',
+    name: 'Stormfire',
+    description: "This hero's Fire attacks set off Conduct, as Storm attacks do.",
+    setsOffStatus: { statusId: 'Conduct', moveTypes: ['Fire'] },
   },
-  // Crimson's Emberweave: the weave catches on whatever is already alight.
+  // Crimson's Emberweave: every enemy fire feeds the weave Arc Pulse spends.
   spellfire: {
     id: 'spellfire',
     name: 'Spellfire',
-    description: 'When this hero lands an Arcane attack on a Burning foe, that foe loses 8% of its max HP.',
+    description: 'When an enemy takes Burn damage, this hero gains Arcane Force 10. Up to 3 times a fight.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Arcane' }, eventTargetHasStatus: 'Burn' },
-      effect: { kind: 'damage', target: 'triggerTarget', percentMaxHp: 0.08 },
+      maxFiresPerFight: 3,
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'ArcaneForce', magnitude: 10 },
     },
   },
-  // Drake's Wyvern: it wakes on the wing, and Slumber's Ambush comes down first.
+  // Drake's Wyvern: it comes in on the wing and strikes first.
   wingwake: {
     id: 'wingwake',
     name: 'Wingwake',
-    description: 'When this hero Rests, its next attack goes at +1 priority.',
+    description: 'When this hero enters the battlefield, its next attack goes at +1 priority and gains Ambush 20.',
     reactive: {
-      hook: 'Rested',
+      hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+      alsoEffect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 20 },
     },
   },
   // Tinder's Sparkler: a burning foe crackles, and Chain Lightning sets off both.
