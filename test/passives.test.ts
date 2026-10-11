@@ -1308,6 +1308,11 @@ test("passives: Hoard answers a potion — the one card a drink sets off, and on
   const drunk = useConsumableWithReactions(state, 1, 'a1', 'mpPotion', maxHpOf, maxManaOf, defs);
   assert.strictEqual(statusMagnitude(drunk.state.combatants.a1, 'Ambush'), 40);
   assert.ok(drunk.events.some((e) => e.type === 'PassiveTriggered' && e.passiveId === 'hoard'));
+  // Once a fight: the second potion restores, and adds no Ambush.
+  const thirsty: CombatState = { ...drunk.state, combatants: { ...drunk.state.combatants, a1: { ...drunk.state.combatants.a1, currentHp: 10 } } };
+  const again = useConsumableWithReactions(thirsty, 1, 'a1', 'hpPotion', maxHpOf, maxManaOf, defs);
+  assert.strictEqual(statusMagnitude(again.state.combatants.a1, 'Ambush'), 40);
+  assert.ok(!again.events.some((e) => e.type === 'PassiveTriggered' && e.passiveId === 'hoard'));
   // The bare verb runs no reactions, as every other caller expects.
   assert.strictEqual(statusMagnitude(useConsumable(state, 1, 'a1', 'mpPotion', maxHpOf, maxManaOf).state.combatants.a1, 'Ambush'), 0);
 });

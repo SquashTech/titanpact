@@ -817,9 +817,10 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   hoard: {
     id: 'hoard',
     name: 'Hoard',
-    description: 'When this hero drinks a potion, it gains Ambush 40.',
+    description: 'The first time this hero drinks a potion each fight, it gains Ambush 40.',
     // The one card a drink sets off (consumables.ts useConsumableWithReactions): a dragon that drinks instead of sleeping still wakes hungry.
     reactive: {
+      oncePerFight: true,
       hook: 'ConsumableUsed',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 40 },

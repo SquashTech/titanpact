@@ -188,7 +188,7 @@ Engine: `PassiveTriggerCondition.requiresFieldEffect` (Dawnfire) and `PassiveDef
 | Cinder | **Kindling+**: it and its partner gain ATK ▲▲ INT ▲▲ (3 a fight). |
 | Crimson | **Stoke+**: INT ▲▲ (3 a fight); the Mana is gone. |
 | Brimstone | Sulphur stays as it is. |
-| Drake | **Hoardwyrm**'s Hoard: drinking a potion gives Ambush 40 — the named exception to "a potion is not a trigger" (Drake warrants exceptions). |
+| Drake | **Hoardwyrm**'s Hoard: the first potion drunk each fight gives Ambush 40 (once a fight since the Trials and the Gauntlet hand out two potions every fight) — the named exception to "a potion is not a trigger" (Drake warrants exceptions). |
 | Tinder | Every path rewards the pivot: **Headliner** Curtain Call (switching out heals the partner 15% of max HP), **Sparkler** Spotlight (entering gives the partner Ambush 20, 3 a fight), **Limelight** Footlights (entering gives Light Force 15, 3 a fight). Top Billing and Crackle are gone. |
 
 **A mastered innate may take two steps a firing** (per user direction): the one-step brake of
