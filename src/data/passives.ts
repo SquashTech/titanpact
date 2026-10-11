@@ -817,12 +817,12 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   hoard: {
     id: 'hoard',
     name: 'Hoard',
-    description: 'When this hero Rests, it heals for the Mana it recovered.',
-    // A flat heal off the Rest's own number, outside the heal formula: a Rest that recovers nothing heals nothing.
+    description: 'When this hero drinks a potion, it gains Ambush 40.',
+    // The one card a drink sets off (consumables.ts useConsumableWithReactions): a dragon that drinks instead of sleeping still wakes hungry.
     reactive: {
-      hook: 'Rested',
+      hook: 'ConsumableUsed',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount', field: 'manaRestored' } },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 40 },
     },
   },
   deepgrip: {
@@ -1862,23 +1862,22 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   forgeheart: {
     id: 'forgeheart',
     name: 'Kindling+',
-    description: 'When this hero lands an attack on a Burning foe, it and its partner gain ATK ▲ and INT ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero lands an attack on a Burning foe, it and its partner gain ATK ▲▲ and INT ▲▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Burn' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1, perFight: 5 },
-      alsoEffect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 2, perFight: 3 },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 2, perFight: 3 },
     },
   },
   wildfire: {
     id: 'wildfire',
     name: 'Stoke+',
-    description: 'When an enemy takes Burn damage, this hero gains 10 Mana, past its pool, and INT ▲ (once a round, up to 5 times a fight).',
+    description: 'When an enemy takes Burn damage, this hero gains INT ▲▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 5 },
-      alsoEffect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2, perFight: 3 },
     },
   },
   hellmouth: {

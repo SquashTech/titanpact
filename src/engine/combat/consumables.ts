@@ -7,9 +7,11 @@
 // hero, who stands onto the bench at half — the map's Revive brought into the fight, so one
 // saved for the final battle is a layer of safety in a fight nothing mends inside.
 
-import type { CombatState } from '../state';
+import type { CombatState, HeroLookup } from '../state';
 import type { CombatEvent } from '../events';
+import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
 import { applyHpDelta } from './faintHandling';
+import { resolvePassiveReactions } from './passiveEngine';
 
 export type PotionKind = 'hpPotion' | 'mpPotion';
 /** Everything the Bag can use on the field. */
@@ -99,4 +101,24 @@ export function useConsumable(
       { type: 'ManaChanged', round, combatantId, previousMana, newMana, maxMana },
     ],
   };
+}
+
+/**
+ * useConsumable, then the ConsumableUsed hook and nothing else: Drake's Hoard is the one card that
+ * answers a drink (2026-10-11, per user direction). Every other event of the drink stays out of
+ * the reaction pass, so a potion is still not a heal or a mana gain to any other passive.
+ */
+export function useConsumableWithReactions(
+  state: CombatState,
+  round: number,
+  combatantId: string,
+  kind: FightConsumableKind,
+  maxHpOf: (combatantId: string) => number,
+  maxManaOf: (combatantId: string) => number,
+  defs: { heroes: HeroLookup; statuses: Record<string, StatusDefinition>; passives: Record<string, PassiveDefinition>; fieldEffects: Record<string, FieldEffectDefinition>; moves: Record<string, MoveDefinition> }
+): { state: CombatState; events: CombatEvent[] } {
+  const used = useConsumable(state, round, combatantId, kind, maxHpOf, maxManaOf);
+  const drink = used.events.filter((e) => e.type === 'ConsumableUsed');
+  const reacted = resolvePassiveReactions(used.state, round, drink, defs.heroes, defs.statuses, defs.passives, defs.fieldEffects, defs.moves);
+  return { state: reacted.state, events: [...used.events, ...reacted.events] };
 }

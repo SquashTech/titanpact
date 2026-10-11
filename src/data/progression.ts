@@ -3229,7 +3229,7 @@ export const progressionTable: ProgressionTable = {
             heroId: 'tinder',
             name: 'Headliner',
             unlocksMoveIds: ['firestorm'],
-            grantsPassiveIds: ['topBilling'],
+            grantsPassiveIds: ['curtainCall'],
           },
           {
             id: 'tinder-sparkler',
@@ -3238,7 +3238,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['chainLightning'],
             typeGraft: 'Storm',
             learnableMoveIds: evolutionLine('tinder', 'Storm', { granted: ['chainLightning'] }),
-            grantsPassiveIds: ['crackle'],
+            grantsPassiveIds: ['spotlight'],
           },
           {
             id: 'tinder-limelight',

@@ -292,7 +292,8 @@ export interface RestedEvent extends BaseEvent {
 /**
  * A consumable used during the command phase (combat/consumables.ts): a potion drunk, or a
  * Revive that stood a fallen hero onto the bench. Followed by the HpChanged or ManaChanged
- * carrying the restore. Never a passive trigger source.
+ * carrying the restore. A passive trigger source only through `useConsumableWithReactions`, for a
+ * ConsumableUsed card (Drake's Hoard, the one named exception, 2026-10-11).
  */
 export interface ConsumableUsedEvent extends BaseEvent {
   type: 'ConsumableUsed';

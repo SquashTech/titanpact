@@ -181,4 +181,17 @@ The audit restarted at Fire after every Evolution path became a move and a passi
 
 Engine: `PassiveTriggerCondition.requiresFieldEffect` (Dawnfire) and `PassiveDefinition.setsOffStatus` (Stormfire; read at the hit in resolveRound).
 
-**Open:** Brimstone's Sulphur (too strong?), Drake's Hoard (a potion trigger reverses "potions are not a trigger source"), Tinder's Limelight passive, and whether a mastered innate may break the one-step-a-round brake (Kindling+ / Stoke+ as ▲▲; Stoke+ unchanged until then).
+**Settled the same day:**
+
+| Hero | Change |
+|---|---|
+| Cinder | **Kindling+**: it and its partner gain ATK ▲▲ INT ▲▲ (3 a fight). |
+| Crimson | **Stoke+**: INT ▲▲ (3 a fight); the Mana is gone. |
+| Brimstone | Sulphur stays as it is. |
+| Drake | **Hoardwyrm**'s Hoard: drinking a potion gives Ambush 40 — the named exception to "a potion is not a trigger" (Drake warrants exceptions). |
+| Tinder | Every path rewards the pivot: **Headliner** Curtain Call (switching out heals the partner 15% of max HP), **Sparkler** Spotlight (entering gives the partner Ambush 20, 3 a fight), **Limelight** Footlights (entering gives Light Force 15, 3 a fight). Top Billing and Crackle are gone. |
+
+**A mastered innate may take two steps a firing** (per user direction): the one-step brake of
+`docs/stat-stages.md` §6.3 stays for every other repeating card; `test/statStages` names the
+exception. Engine: `ConsumableUsed` hook; an `ally` target on a hero that has just switched
+out means the partner it stood beside, not the hero taking its slot.

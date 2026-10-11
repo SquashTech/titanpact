@@ -778,7 +778,9 @@ don't silently override it.
   flat — outside the heal formula, no variance, no STAB. Drunk during the command phase on any
   **active** hero and applied to state on the spot, NOT declared into the round: the player sees
   the outcome before declaring, which is the point (an out-of-mana Rest row turns back into
-  moves). **Not a passive trigger source**, like the Pact Clock. **A restore, never a grant** —
+  moves). **Not a passive trigger source**, like the Pact Clock — **one named exception** (2026-10-11,
+  per user direction): Drake's **Hoard** answers a drink (`ConsumableUsed`, read only through
+  `useConsumableWithReactions`; a potion is still no heal or mana gain to any other card). **A restore, never a grant** —
   Mana caps at the pool and overflow reads as full. **Player-only**; enemies never drink.
   Irreversible once drunk. Every run opens with one of each; **hold cap 3 a kind**, an over-cap
   drop is lost; **the one faucet is a low-odds drop off a won encounter** — deliberately no

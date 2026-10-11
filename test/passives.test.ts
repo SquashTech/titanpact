@@ -13,7 +13,8 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { matchesTrigger, collectPassiveDamageModifiers } from '../src/engine/combat/passiveEngine';
-import { getEffectiveStat, hasStatus, statusMagnitude } from '../src/engine/state';
+import { getEffectiveStat, getMaxHp, getMaxMana, hasStatus, statusMagnitude } from '../src/engine/state';
+import { useConsumable, useConsumableWithReactions } from '../src/engine/combat/consumables';
 import { resolveMultiplierTerm } from '../src/engine/damage/damagePipeline';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
 import { equipmentPassiveGrants, relicTeamPassiveGrants, mergePassiveGrants, toPassiveInstances } from '../src/run/passives';
@@ -1140,12 +1141,12 @@ test('passives: Flameproof — an active holder\'s side refuses Burn, and a Burn
   assert.strictEqual(next.combatants.a2.statuses.Burn?.duration, 3, 'held, not cleansed, and its clock stalled');
 });
 
-test('passives: Top Billing is +30% against a Burning defender, and nothing on a foe not Burning', () => {
-  const state = withPassive(deepFixture(802, ['tinder', 'aegis'], ['crag', 'sentinel']), 'a1', 'topBilling');
-  const burned = { ...state.combatants.b1, statuses: { ...state.combatants.b1.statuses, Burn: { statusId: 'Burn', duration: 3 } } };
-  const mods = collectPassiveDamageModifiers(state.combatants.a1, moves.ember, passives, burned);
-  assert.strictEqual(mods.reduce((sum, m) => sum + m.amount, 0).toFixed(2), '0.30');
-  assert.strictEqual(collectPassiveDamageModifiers(state.combatants.a1, moves.ember, passives, state.combatants.b1).length, 0);
+test('passives: Curtain Call heals the partner left on the field when Tinder switches out', () => {
+  const base = withPassive(deepFixture(802, ['tinder', 'aegis', 'crimson'], ['crag', 'sentinel']), 'a1', 'curtainCall');
+  const state: CombatState = { ...base, combatants: { ...base.combatants, a2: { ...base.combatants.a2, currentHp: 400 } } };
+  const { state: next } = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
+  assert.ok(next.combatants.a2.currentHp > 400, 'the partner is healed');
+  assert.strictEqual(next.combatants.a3.currentHp, state.combatants.a3.currentHp, 'not the hero coming in');
 });
 
 test('passives: Fire-Breather Burns one random enemy when Tinder switches out', () => {
@@ -1298,12 +1299,15 @@ test('passives: Slumber banks Ambush 45 on the Rest, and a spread spends it on b
   assert.ok(!hasStatus(breathed.combatants.a1, 'Ambush'), 'and the Ambush is spent');
 });
 
-test('passives: Hoard heals exactly the Mana the Rest recovered', () => {
-  const { events } = resolveRound(drakeFixture(368, 'hoard'), [{ kind: 'rest', combatantId: 'a1' }], config);
-  const rested = events.find((e) => e.type === 'Rested');
-  // A passive heal lands as a bare HpChanged, outside the heal formula — no Healed beat.
-  const healed = events.find((e) => e.type === 'HpChanged' && e.combatantId === 'a1');
-  assert.ok(rested && rested.type === 'Rested' && rested.manaRestored > 0);
-  assert.ok(healed && healed.type === 'HpChanged');
-  assert.strictEqual(healed.newHp - healed.previousHp, rested.manaRestored);
+test("passives: Hoard answers a potion — the one card a drink sets off, and only through useConsumableWithReactions", () => {
+  const base = drakeFixture(368, 'hoard');
+  const state: CombatState = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentMana: 0 } } };
+  const maxHpOf = (id: string) => getMaxHp(heroes[state.combatants[id].heroId], state.combatants[id]);
+  const maxManaOf = (id: string) => getMaxMana(heroes[state.combatants[id].heroId], state.combatants[id]);
+  const defs = { heroes, statuses, passives, fieldEffects, moves };
+  const drunk = useConsumableWithReactions(state, 1, 'a1', 'mpPotion', maxHpOf, maxManaOf, defs);
+  assert.strictEqual(statusMagnitude(drunk.state.combatants.a1, 'Ambush'), 40);
+  assert.ok(drunk.events.some((e) => e.type === 'PassiveTriggered' && e.passiveId === 'hoard'));
+  // The bare verb runs no reactions, as every other caller expects.
+  assert.strictEqual(statusMagnitude(useConsumable(state, 1, 'a1', 'mpPotion', maxHpOf, maxManaOf).state.combatants.a1, 'Ambush'), 0);
 });

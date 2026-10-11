@@ -185,6 +185,8 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
       };
     case 'Endured':
       return { label: 'When', text: `${who} refuses a knockout`, glyph: { kind: 'stat', stat: 'hp' } };
+    case 'ConsumableUsed':
+      return { label: 'When', text: `${who} drinks a potion`, glyph: { kind: 'stat', stat: 'hp' } };
     case 'ManaGained':
       return { label: 'When', text: `${who} gains Mana — regen, a grant or a Rest`, glyph: { kind: 'stat', stat: 'manaPool' } };
     case 'MoveUsed':

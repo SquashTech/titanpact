@@ -35,7 +35,7 @@ import { fieldHealMultiplier, type HealCaster } from '../../engine/heal/healPipe
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor, pactRoundOf } from '../../engine/combat/pactClock';
 import { applyForcedReplacement, placeLeads, replacementCandidates } from '../../engine/combat/switching';
-import { consumableRefusal, useConsumable, type FightConsumableKind } from '../../engine/combat/consumables';
+import { consumableRefusal, useConsumableWithReactions, type FightConsumableKind } from '../../engine/combat/consumables';
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumableKind, type ConsumablePurse } from '../../run/consumables';
 import { BagPanel, type BagTarget } from './BagPanel';
 import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
@@ -1273,7 +1273,7 @@ export function FightScreen({
    */
   function handleDrinkPotion(combatantId: string, kind: FightConsumableKind) {
     if (flaskPurse[kind] <= 0 || flaskRefusal(combatantId, kind) !== null) return;
-    const result = useConsumable(combat, combat.round, combatantId, kind, maxHpOf, maxManaOf);
+    const result = useConsumableWithReactions(combat, combat.round, combatantId, kind, maxHpOf, maxManaOf, { heroes: allCombatants, statuses, passives, fieldEffects, moves });
     const used = result.events[0];
     const amount = used.type === 'ConsumableUsed' ? used.amount : 0;
     setCombat(result.state);

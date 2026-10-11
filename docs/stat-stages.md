@@ -199,6 +199,7 @@ anything.** 99 of the 127 are a hero's identity (36 mastered innates, 34 path pa
 innates), so the brake is roster design, not loot tuning.
 
 **The brake — DECIDED 2026-10-09 (per user direction): one step a round, up to a cap a fight.**
+**One exception, 2026-10-11 (per user direction): a mastered innate may move two steps a firing** — still once a round and braked a fight (Kindling+, Stoke+).
 
 - **Tempo, an engine rule:** a passive on a repeating hook moves a stat **at most one step a
   round**, whatever it answers — a spread hit, two hits, a tick and a hit are still one step. One

@@ -87,23 +87,27 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
       alsoEffect: { kind: 'restoreMana', target: 'self' },
     },
   },
-  // Tinder's Headliner.
-  topBilling: {
-    id: 'topBilling',
-    name: 'Top Billing',
-    description: 'This hero deals 30% more damage to a Burning foe.',
-    damageModifier: { requiresTargetStatuses: ['Burn'], amount: 0.3 },
+  // Tinder's Headliner: the bow on the way off, which gives Grand Finale its reason.
+  curtainCall: {
+    id: 'curtainCall',
+    name: 'Curtain Call',
+    description: "When this hero switches out, its partner heals 15% of its max HP.",
+    reactive: {
+      hook: 'SwitchedOut',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'percentMaxHp', value: 0.15 } },
+    },
   },
-  // Tinder's Limelight. Daze only bites before the foe has acted, which the roster's fastest hero usually is.
+  // Tinder's Limelight: every entrance lights the stage for Radiant Beam.
   footlights: {
     id: 'footlights',
     name: 'Footlights',
-    description: 'When this hero lands a Fire attack, its target is Dazed 25% of the time.',
+    description: 'When this hero enters the battlefield, it gains Light Force 15. Up to 3 times a fight.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Daze' },
-      chance: 0.25,
+      maxFiresPerFight: 3,
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'LightForce', magnitude: 15 },
     },
   },
   // Cinder's Thunderblaze: Storm Lash plants the mark, and his fire sets it off.
@@ -137,15 +141,16 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
       alsoEffect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 20 },
     },
   },
-  // Tinder's Sparkler: a burning foe crackles, and Chain Lightning sets off both.
-  crackle: {
-    id: 'crackle',
-    name: 'Crackle',
-    description: 'When an enemy takes Burn damage, it starts Conducting.',
+  // Tinder's Sparkler: the warm-up act, and the partner takes the stage.
+  spotlight: {
+    id: 'spotlight',
+    name: 'Spotlight',
+    description: 'When this hero enters the battlefield, its partner gains Ambush 20. Up to 3 times a fight.',
     reactive: {
-      hook: 'StatusTicked',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
-      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Conduct' },
+      maxFiresPerFight: 3,
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Ambush', magnitude: 20 },
     },
   },
 };

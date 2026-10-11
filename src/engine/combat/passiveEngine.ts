@@ -106,6 +106,7 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
     case 'Endured':
     case 'ManaRegenTicked':
     case 'MoveGuarded':
+    case 'ConsumableUsed':
       return event.combatantId;
     case 'ManaGranted':
       return event.targetCombatantId;
@@ -231,7 +232,9 @@ function resolveTargetIds(
       // The owner's ACTIVE partner. Alone on the field (a KO not yet replaced), this aims at nobody.
       const side = state.combatants[ownerId]?.side;
       if (!side) return [];
-      const partner = state.active[side].find((id): id is string => id !== null && id !== ownerId);
+      // An owner that has just switched out (Curtain Call) means the hero it stood beside, not the one taking its slot.
+      const leaving = !state.active[side].includes(ownerId);
+      const partner = state.active[side].find((id): id is string => id !== null && id !== ownerId && !(leaving && id === eventTargetId));
       return partner ? [partner] : [];
     }
     case 'triggerSubject':
