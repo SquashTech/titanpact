@@ -227,7 +227,7 @@ nuke that made it. Art moved with the ids; all five drawings were made for the o
 | Pincer | **Tideclaw** grants **Pinch** (new Mid Water physical, Pow 55, 40 mana, ATK ▲ to self) and **Shell Shards** (its Shield broken → both active enemies DEF ▼, 3 a fight); the Iron move and Static Tide are gone. **Ironshell** grants Juggernaut (was Shield Bash). **Reefshell**'s Coral Growth: gaining Shield → DEF ▲ (3 a fight). |
 | Nautilus | **Inkmind** grants Wicked Fear (was Disorient); its passive is renamed **Murk** (it shared Ink Cloud's name). **Mimic**'s Mimicry: an enemy raising a stat → Nautilus raises the same one as many steps (3 a fight). |
 | Kappa | Unchanged: Snapper's Bleed feeds Brimming through Blood Moon's lifesteal. |
-| Selkie | **Salt Tears**: granting Renew → the receiver INT ▲ WIS ▲ (3 a fight); **Salt Tears+** ▲▲ (3 a fight) — no longer a cleanse. **Seasinger** grants **Dawnsong** (new Late Light, Pow 115, 70 mana, swings with Wisdom — Mind Shatter's shape); Tidesong stays. |
+| Selkie | **Salt Tears**: granting Renew → the receiver INT ▲ WIS ▲; **Salt Tears+** ▲▲ — unbraked — no longer a cleanse. **Seasinger** grants **Dawnsong** (new Late Light, Pow 115, 70 mana, swings with Wisdom — Mind Shatter's shape); Tidesong stays. |
 
 Deleted: Brittle, Enthrall, Static Tide, Static Shell (Storm Drinker is the one Conduct planter on a
 Water path; Static Tide's tests now pin it).
@@ -238,8 +238,8 @@ joins the damage reaction pass); a statDelta `stat: 'trigger'` (Mimicry); and
 card did before (Scald and Mire hearing Drag, Mimicry hearing a Kindling). Every other card still
 hears moves alone.
 
-To watch: the once-a-round brake means a two-target Renew (High Tide) lifts only the first
-receiver through Salt Tears. Mire is unbraked — Poison adds 10 per Speed drop, and Drag and Rootbind
+Salt Tears and Salt Tears+ are UNBRAKED by name (same day, per user direction): every Renew lifts its
+receiver, a two-target one both (`test/statStages` names them). To watch: Mire is unbraked too — Poison adds 10 per Speed drop, and Drag and Rootbind
 both feed it.
 
 Still open: Leviathan (innate rethink toward a late-game carry; a guaranteed Downpour offer), and

@@ -161,3 +161,12 @@ test('evolution passives: Salt Tears lifts Intelligence and Wisdom on whoever it
   assert.strictEqual(state.combatants.a1.statStages?.intelligence, 1);
   assert.strictEqual(state.combatants.a1.statStages?.wisdom, 1);
 });
+
+test('evolution passives: Salt Tears is unbraked — a two-target Renew lifts both receivers', () => {
+  const base = withPassive(threeVThree(726), 'a2', 'saltTears');
+  const { state } = resolveRound(base, [{ kind: 'move', combatantId: 'a2', moveId: 'highTide', declaredTarget: 'a1' } as Action], config);
+  for (const id of ['a1', 'a2']) {
+    assert.strictEqual(state.combatants[id].statStages?.intelligence, 1, id);
+    assert.strictEqual(state.combatants[id].statStages?.wisdom, 1, id);
+  }
+});

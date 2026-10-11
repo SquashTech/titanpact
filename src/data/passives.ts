@@ -1531,11 +1531,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   saltTears: {
     id: 'saltTears',
     name: 'Salt Tears',
-    description: 'When this hero grants Renew, whoever receives it gains INT ▲ and WIS ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero grants Renew, whoever receives it gains INT ▲ and WIS ▲.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['intelligence', 'wisdom'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['intelligence', 'wisdom'], stages: 1 },
     },
   },
   silentWings: {
@@ -2531,11 +2531,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   seaOfTears: {
     id: 'seaOfTears',
     name: 'Salt Tears+',
-    description: 'When this hero grants Renew, whoever receives it gains INT ▲▲ and WIS ▲▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero grants Renew, whoever receives it gains INT ▲▲ and WIS ▲▲.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['intelligence', 'wisdom'], stages: 2, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['intelligence', 'wisdom'], stages: 2 },
     },
   },
   moonlessGlide: {

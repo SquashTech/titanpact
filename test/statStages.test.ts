@@ -158,6 +158,8 @@ test('stages: no statement move is still on the mechanical band — nothing over
 
 const REPEATING_EXEMPT_HOOKS = new Set(['SwitchedIn', 'SwitchedOut']);
 const MASTERED_INNATES = new Set(Object.values(heroes).flatMap((h) => h.masteredPassiveIds ?? []));
+// Unbraked by name (2026-10-11, per user direction): Salt Tears answers every Renew, a spread one on both receivers.
+const UNBRAKED = new Set(['saltTears', 'seaOfTears']);
 
 function holding(state: CombatState, id: string, passiveId: string, stacks = 1): CombatState {
   const c = state.combatants[id];
@@ -205,7 +207,7 @@ test('brake: the data — every repeating stage card is braked, a switch card is
         if (!e || e.kind !== 'statDelta') continue;
         if (typeof e.amount === 'number') assert.ok(e.permanent, `${p.id} authors a flat number in a fight`);
         if (e.stages === undefined) continue;
-        const repeating = !REPEATING_EXEMPT_HOOKS.has(r.hook) && !r.oncePerFight;
+        const repeating = !REPEATING_EXEMPT_HOOKS.has(r.hook) && !r.oncePerFight && !UNBRAKED.has(p.id);
         // A mastered innate may take two steps a firing (2026-10-11, per user direction); every other repeating card takes one.
         const maxStep = MASTERED_INNATES.has(p.id) ? 2 : 1;
         if (repeating) assert.ok(e.perFight !== undefined && e.perFight >= 1 && e.perFight <= 5 && Math.abs(e.stages) >= 1 && Math.abs(e.stages) <= maxStep, `${p.id}: a repeating card is one step (a mastered innate two), braked`);
