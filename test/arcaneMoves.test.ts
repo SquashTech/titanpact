@@ -308,13 +308,14 @@ test('arcane: overflow counts toward the steps — the Font of Power into Arcane
 
 // --- The slate as a whole ---
 
-test('arcane: the slate is twenty-one moves, and every field effect and status it names exists', () => {
+test('arcane: the slate is twenty-two moves, and every field effect and status it names exists', () => {
   const slate = Object.values(moves).filter((m) => m.type === 'Arcane' && !signatureMoves[m.id] && !classMoves[m.id]);
   // Seventeen since 2026-09-09: Barrier joined the slate as the roster's only guard. It is Arcane
   // because shaped mana is the domain a wall of nothing draws on, not because Arcane needed a
   // sixteenth-plus move — Reverie holds it off-type. Nineteen since 2026-09-15 (Resonant Bolt, Twin Cast).
   // Twenty-one since 2026-09-28: Runeslash and Wardblade, the physical column Thane and Trove swing.
-  assert.strictEqual(slate.length, 21);
+  // Twenty-two since 2026-10-11: Brine Hex, Selkie's Roane.
+  assert.strictEqual(slate.length, 22);
   for (const move of slate) {
     if (move.fieldEffectApplication) assert.ok(fieldEffects[move.fieldEffectApplication], `${move.id} sets an unknown field`);
     if (move.conditionalTarget) {

@@ -254,4 +254,11 @@ Int 100 → 120, Mana 70 → 90, HP 190 → 210, Speed kept. Overchannel left th
 Staff's awakening); Overchannel+ is deleted. To watch: enemy Leviathans never master, so every one
 arrives groggy.
 
-Still open: Selkie's Roane (Empower + Drowned Gift, unanswered).
+**Selkie's Roane** (same day, per user direction): grants **Brine Hex** (new Mid Arcane, Pow 70, 45 mana,
+swings with Wisdom) so she is not pure support, and **Drowned Gift** is now: granting Renew fully
+restores the receiver's Mana (to its pool, never past it). To watch: a self-Refresh keeps Selkie full.
+
+The audit's new moves (Pinch, Dawnsong, Brine Hex) sit LAST in `moves.ts`: `evolutionLine` reads each
+slate in order, and placed early they displaced other heroes' line picks. Last, Pinch fills four
+physical Water graft lines one move short (Rime Hydrofreeze, Scallywag Seawise, Murk Drowner, Mellow
+Hot Spring); the other two join no line.

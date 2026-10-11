@@ -200,3 +200,10 @@ test('innate: Slumbering arrives groggy and wakes over two rounds on the field; 
   assert.strictEqual(woke.combatants.a1.statStages?.intelligence, 1);
   assert.strictEqual(woke.combatants.a1.statStages?.speed, undefined);
 });
+
+test('evolution passives: Drowned Gift fills the Mana of whoever its Renew lands on', () => {
+  let base = withPassive(threeVThree(728), 'a2', 'drownedGift');
+  base = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentMana: 0 } } };
+  const { state } = resolveRound(base, [{ kind: 'move', combatantId: 'a2', moveId: 'refresh', declaredTarget: 'a1' } as Action], config);
+  assert.ok(state.combatants.a1.currentMana >= heroes.cinderKnight.baseStats.manaPool, 'filled, not just regenerated');
+});

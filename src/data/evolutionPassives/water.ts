@@ -128,15 +128,15 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Shield', magnitude: 20 },
     },
   },
-  // Selkie's Roane: the seal-wife slipping her skin on and off, leaving a blessing each time she comes ashore.
+  // Selkie's Roane: the seal-wife's bargain — every blessing she gives comes with the sea's own strength.
   drownedGift: {
     id: 'drownedGift',
     name: 'Drowned Gift',
-    description: "When this hero enters the battlefield, its partner gains Renew.",
+    description: 'When this hero grants Renew, whoever receives it has its Mana fully restored.',
     reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
+      effect: { kind: 'restoreMana', target: 'triggerTarget' },
     },
   },
   // Riptide's Salamander: Drag slows a foe, and the slowed foe is the one left open.
