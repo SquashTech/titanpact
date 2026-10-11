@@ -344,35 +344,35 @@ test('passives: the rolled target draws RNG only when a passive asks for one', (
   assert.deepStrictEqual(unrelated.state.rngState, without.state.rngState);
 });
 
-// --- Static Tide (Riptide's Maelstrom): a source-role reaction that lands on the DEFENDER ---
+// --- Storm Drinker (Leviathan's Stormwyrm): a source-role reaction that lands on the DEFENDER ---
 
 const waterHitByOwner: Action = { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' };
 
-test('passives: Static Tide plants Conduct on the hero its owner just hit with a Water move, and not on the owner', () => {
-  const state = withPassive(twoVTwoFixture(340), 'a2', 'staticTide');
+test('passives: Storm Drinker plants Conduct on the hero its owner just hit with a Water move, and not on the owner', () => {
+  const state = withPassive(twoVTwoFixture(340), 'a2', 'stormDrinker');
   const { state: next, events } = resolveRound(state, [waterHitByOwner], config);
 
   assert.ok(hasStatus(next.combatants.b1, 'Conduct'), 'the defender is left conducting');
   assert.ok(!hasStatus(next.combatants.a2, 'Conduct'), 'triggerTarget, not triggerSubject — the source role must not mark itself');
-  assert.ok(events.some((e) => e.type === 'PassiveTriggered' && e.combatantId === 'a2' && e.passiveId === 'staticTide'));
+  assert.ok(events.some((e) => e.type === 'PassiveTriggered' && e.combatantId === 'a2' && e.passiveId === 'stormDrinker'));
 });
 
-test('passives: Static Tide reads the move TYPE — a Fire hit from the same owner plants nothing', () => {
-  const state = withPassive(twoVTwoFixture(341), 'a1', 'staticTide');
+test('passives: Storm Drinker reads the move TYPE — a Fire hit from the same owner plants nothing', () => {
+  const state = withPassive(twoVTwoFixture(341), 'a1', 'stormDrinker');
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'setAlight', declaredTarget: 'b1' }], config);
 
   assert.ok(!hasStatus(next.combatants.b1, 'Conduct'));
 });
 
-test('passives: Static Tide is attribution, not proximity — an ALLY\'s Water move does not plant it', () => {
-  const state = withPassive(twoVTwoFixture(342), 'a1', 'staticTide'); // a1 holds it, a2 does the hitting
+test('passives: Storm Drinker is attribution, not proximity — an ALLY\'s Water move does not plant it', () => {
+  const state = withPassive(twoVTwoFixture(342), 'a1', 'stormDrinker'); // a1 holds it, a2 does the hitting
   const { state: next } = resolveRound(state, [waterHitByOwner], config);
 
   assert.ok(!hasStatus(next.combatants.b1, 'Conduct'));
 });
 
-test('passives: Static Tide marks EVERY target of a spread Water move — one DamageDealt each', () => {
-  const state = withPassive(twoVTwoFixture(343), 'a2', 'staticTide');
+test('passives: Storm Drinker marks EVERY target of a spread Water move — one DamageDealt each', () => {
+  const state = withPassive(twoVTwoFixture(343), 'a2', 'stormDrinker');
   const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'deluge', declaredTarget: 'b1' }], config);
 
   assert.ok(hasStatus(next.combatants.b1, 'Conduct'));
@@ -992,16 +992,6 @@ function riptideFixture(seed: number) {
 const waterHit: Action = { kind: 'move', combatantId: 'a1', moveId: 'torrent', declaredTarget: 'b1' };
 
 const fireHit: Action = { kind: 'move', combatantId: 'a1', moveId: 'ember', declaredTarget: 'b1' };
-
-test('passives: Enthrall wears both active enemies\' Wisdom down at every round\'s end', () => {
-  const state = withPassive(riptideFixture(700), 'a1', 'enthrall');
-  const once = resolveRound(state, [], config).state;
-  const twice = resolveRound(once, [], config).state;
-  assert.strictEqual(once.combatants.b1.statStages?.wisdom, -1);
-  assert.strictEqual(once.combatants.b2.statStages?.wisdom, -1);
-  assert.strictEqual(twice.combatants.b1.statStages?.wisdom, -2, 'and again the next round');
-  assert.ok(!twice.combatants.a2.statStages?.wisdom, 'never its own side');
-});
 
 test('passives: Ember Veil Haunts what its Fire hits, and only that', () => {
   const state = withPassive(riptideFixture(701), 'a1', 'emberVeil');

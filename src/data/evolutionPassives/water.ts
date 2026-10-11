@@ -64,9 +64,9 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
     },
   },
   // Nautilus's Inkmind: every arrival clouds the water.
-  inkCloud: {
-    id: 'inkCloud',
-    name: 'Ink Cloud',
+  murk: {
+    id: 'murk',
+    name: 'Murk',
     description: 'When this hero enters the battlefield, both active enemies lose INT ▼ and SPD ▼.',
     reactive: {
       hook: 'SwitchedIn',
@@ -139,40 +139,65 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
     },
   },
-  // Riptide's Frostbound: ice makes the foe brittle on both columns Riptide swings with.
-  brittle: {
-    id: 'brittle',
-    name: 'Brittle',
-    description: 'When an enemy is Frozen, it loses DEF ▼ and WIS ▼. Once a round, up to 3 times a fight.',
+  // Riptide's Salamander: Drag slows a foe, and the slowed foe is the one left open.
+  scald: {
+    id: 'scald',
+    name: 'Scald',
+    description: "When an enemy's Speed is lowered, it loses DEF ▼. Once a round, up to 3 times a fight.",
+    reactive: {
+      hearsPassives: true,
+      hook: 'StatChanged',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'speed' }, eventFieldNegative: 'delta' },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: 'defense', stages: -1, perFight: 3 },
+    },
+  },
+  // Riptide's Marshrunner: the foe Drag slows is mired.
+  mire: {
+    id: 'mire',
+    name: 'Mire',
+    description: "When an enemy's Speed is lowered, it suffers Poison 10.",
+    reactive: {
+      hearsPassives: true,
+      hook: 'StatChanged',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'speed' }, eventFieldNegative: 'delta' },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Poison', magnitude: 10, duration: 3 },
+    },
+  },
+  // Pincer's Tideclaw: the shell breaks into the foe.
+  shellShards: {
+    id: 'shellShards',
+    name: 'Shell Shards',
+    description: "When this hero's Shield is broken, both active enemies lose DEF ▼. Once a round, up to 3 times a fight.",
+    reactive: {
+      hook: 'StatusRemoved',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Shield', reason: 'broken' } },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'defense', stages: -1, perFight: 3 },
+    },
+  },
+  // Pincer's Reefshell: every Shield grows the reef, and under Bedrock the reef is what it hits with.
+  coralGrowth: {
+    id: 'coralGrowth',
+    name: 'Coral Growth',
+    description: 'When this hero gains Shield, it gains DEF ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'StatusApplied',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Freeze' } },
-      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['defense', 'wisdom'], stages: -1, perFight: 3 },
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Shield' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1, perFight: 3 },
     },
   },
-  // Pincer's Squallshell: the charged shell marks a foe for Storm Lash and its Iron hits.
-  staticShell: {
-    id: 'staticShell',
-    name: 'Static Shell',
-    description: 'When this hero takes damage, a random enemy starts Conducting.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Conduct' },
-    },
-  },
-  // Nautilus's Mimic: a broken guard copies itself onto the column Nautilus casts at.
+  // Nautilus's Mimic: whatever a foe grows, the octopus grows too.
   mimicry: {
     id: 'mimicry',
     name: 'Mimicry',
-    description: "When an enemy's Defense is lowered, its Wisdom drops as many steps. Once a round, up to 3 times a fight.",
+    description: 'When an enemy raises a stat, this hero raises the same stat as many steps. Once a round, up to 3 times a fight.',
     reactive: {
+      hearsPassives: true,
       hook: 'StatChanged',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'defense' }, eventFieldNegative: 'delta' },
-      effect: { kind: 'statDelta', target: 'triggerSubject', stat: 'wisdom', amount: { kind: 'matchTriggerAmount', field: 'delta' }, perFight: 3 },
+      condition: { relativeTo: 'enemy', eventFieldPositive: 'delta' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'trigger', amount: { kind: 'matchTriggerAmount', field: 'delta' }, perFight: 3 },
     },
   },
-  // Selkie's Seasinger: the song that mends her side dulls the far one for Mind Shatter.
+  // Selkie's Seasinger: the song that mends her side dulls the far one for Dawnsong.
   tidesong: {
     id: 'tidesong',
     name: 'Tidesong',

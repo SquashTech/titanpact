@@ -73,7 +73,7 @@ function reactiveArt(effect: PassiveEffect): PassiveArt | undefined {
     case 'heal':
       return statArt('hp');
     case 'statDelta':
-      return statArt(effect.stat);
+      return statArt(effect.stat === 'trigger' ? undefined : effect.stat);
     case 'manaGrant':
     case 'manaSurcharge':
       return statArt('manaPool');

@@ -148,7 +148,7 @@ export const statuses: Record<string, StatusDefinition> = {
     // Persists through switch — provisional; treated as a mark to cash in later.
     clearsOnSwitch: false,
     // Detonate-only: `triggerTypes` never auto-applies Conduct. It is planted by a move's own
-    // statusApplication, or by a passive that plants it (Static Tide) — never by the detonation
+    // statusApplication, or by a passive that plants it (Storm Drinker) — never by the detonation
     // pass itself (statusEngine.ts detonateTriggeredStatuses).
     triggerTypes: ['Storm', 'Iron', 'Mech'],
     detonateBonusPercentMaxHp: 0.15,

@@ -187,6 +187,13 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
       return { label: 'When', text: `${who} refuses a knockout`, glyph: { kind: 'stat', stat: 'hp' } };
     case 'ConsumableUsed':
       return { label: 'When', text: `${who} drinks a potion`, glyph: { kind: 'stat', stat: 'hp' } };
+    case 'StatusRemoved':
+      return {
+        label: 'When',
+        text: `${whose} ${statusName(statusId)} ${fields.reason === 'broken' ? 'breaks' : 'ends'}`,
+        glyph: statusId ? { kind: 'status', statusId } : { kind: 'move', move: 'debuff' },
+        color: statusId ? 'status' : undefined,
+      };
     case 'ManaGained':
       return { label: 'When', text: `${who} gains Mana — regen, a grant or a Rest`, glyph: { kind: 'stat', stat: 'manaPool' } };
     case 'MoveUsed':
@@ -224,6 +231,10 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
       };
     }
     case 'statDelta': {
+      if (effect.stat === 'trigger') {
+        const brake = effect.perFight !== undefined ? `, once a round, up to ${effect.perFight} a fight` : '';
+        return { label: 'Then', text: `The same stat, as many steps, to ${targetWord(effect.target, condition, hook)}${brake}`, glyph: { kind: 'move', move: 'buff' } };
+      }
       const stats: readonly StatKey[] = Array.isArray(effect.stat) ? (effect.stat as readonly StatKey[]) : [effect.stat as StatKey];
       // Steps (docs/stat-stages.md), and the brake when the card carries one (§6.3).
       if (effect.stages !== undefined) {

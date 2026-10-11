@@ -45,7 +45,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', stages: -1, perFight: 3 },
     },
   },
-  // Carillon's Knell: Enthrall's shape — the Light hit plants the mark, the grafted Spirit line cashes it.
+  // Carillon's Knell: the Light hit plants the mark, the grafted Spirit line cashes it.
   lastToll: {
     id: 'lastToll',
     name: 'Last Toll',

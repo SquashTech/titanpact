@@ -357,30 +357,6 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
     },
   },
-  enthrall: {
-    id: 'enthrall',
-    name: 'Enthrall',
-    description: 'At the end of each round, both active enemies lose WIS ▼. Up to 3 times a fight.',
-    // Riptide's Siren: the song wears the mind down, which the grafted Mind line then strikes.
-    reactive: {
-      hook: 'RoundEnded',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'wisdom', stages: -1, perFight: 3 },
-    },
-  },
-  staticTide: {
-    id: 'staticTide',
-    name: 'Static Tide',
-    description: 'Every Water attack this hero lands leaves its target Conducting.',
-    // subjectRole 'source' + relativeTo 'self' = "I dealt this hit"; the Conduct then has to
-    // land on 'triggerTarget', the defender, because the condition's subject is the attacker.
-    // Pincer's Iron hits are what cash the mark in (Conduct.triggerTypes).
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
-    },
-  },
   overspill: {
     id: 'overspill',
     name: 'Overspill',
@@ -704,7 +680,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     id: 'constrict',
     name: 'Constrict',
     description: 'When this hero lands a magical attack, its target loses SPD ▼. Once a round, up to 3 times a fight.',
-    // Enthrall's source-role shape paying a stat debuff instead of a mark. Coil's slate is
+    // A source-role reaction paying a stat debuff. Coil's slate is
     // magical end to end, so every cast tightens; Psionic Wave reaching both foes slows both.
     reactive: {
       hook: 'DamageDealt',
@@ -1555,11 +1531,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   saltTears: {
     id: 'saltTears',
     name: 'Salt Tears',
-    description: 'When this hero grants Renew, it washes one affliction off whoever receives it.',
+    description: 'When this hero grants Renew, whoever receives it gains INT ▲ and WIS ▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'cleanse', target: 'triggerTarget', count: 1 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['intelligence', 'wisdom'], stages: 1, perFight: 3 },
     },
   },
   silentWings: {
@@ -1896,10 +1872,10 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   ripCurrent: {
     id: 'ripCurrent',
     name: 'Drag+',
-    description: 'When this hero lands a Water attack, its target loses SPD ▼ and this hero gains SPD ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero lands any attack, its target loses SPD ▼ and this hero gains SPD ▲. Once a round, up to 5 times a fight.',
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
+      condition: { relativeTo: 'self', subjectRole: 'source' },
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', stages: -1, perFight: 5 },
       alsoEffect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1, perFight: 5 },
     },
@@ -2552,15 +2528,14 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn' },
     },
   },
-  // One affliction has no figure to double, so the reach widens to all of them.
   seaOfTears: {
     id: 'seaOfTears',
     name: 'Salt Tears+',
-    description: 'When this hero grants Renew, it washes every affliction off whoever receives it.',
+    description: 'When this hero grants Renew, whoever receives it gains INT ▲▲ and WIS ▲▲. Once a round, up to 3 times a fight.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'cleanse', target: 'triggerTarget' },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['intelligence', 'wisdom'], stages: 2, perFight: 3 },
     },
   },
   moonlessGlide: {

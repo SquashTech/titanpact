@@ -17,6 +17,7 @@ import { progressionTable } from '../src/data/progression';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { hasStatus } from '../src/engine/state';
+import { applyStatus } from '../src/engine/combat/statusEngine';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -86,8 +87,8 @@ test('evolution passives: no path passive loads Ambush or Poised on its own hit 
   assert.deepStrictEqual(dead, []);
 });
 
-test('evolution passives: Ink Cloud clouds both active enemies the moment Nautilus arrives', () => {
-  const base = withPassive(threeVThree(701), 'a3', 'inkCloud');
+test('evolution passives: Murk clouds both active enemies the moment Nautilus arrives', () => {
+  const base = withPassive(threeVThree(701), 'a3', 'murk');
   const { state } = resolveRound(base, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
   for (const id of ['b1', 'b2']) {
     assert.strictEqual(state.combatants[id].statStages?.intelligence, -1, id);
@@ -108,4 +109,55 @@ test('evolution passives: Dead Leaf Haunts the enemies still standing when its h
   const hit = events.find((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'a1');
   assert.ok(hit && hit.type === 'DamageDealt' && hit.finishing, 'the hit finished b1');
   assert.ok(hasStatus(state.combatants.b2, 'Haunt'), 'the partner is Haunted');
+});
+
+// --- Water, second pass (docs/hero-audit.md) ---
+
+test('evolution passives: Scald and Mire hear Drag — a passive-made Speed drop costs the foe Defense and Poisons it', () => {
+  let base = withPassive(threeVThree(720), 'a2', 'drag');
+  base = withPassive(withPassive(base, 'a2', 'scald'), 'a2', 'mire');
+  const { state } = resolveRound(base, [{ kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' } as Action], config);
+  assert.strictEqual(state.combatants.b1.statStages?.speed, -1);
+  assert.strictEqual(state.combatants.b1.statStages?.defense, -1);
+  assert.ok(hasStatus(state.combatants.b1, 'Poison'));
+  assert.strictEqual(state.combatants.b2.statStages?.defense, undefined, 'only the slowed foe');
+});
+
+test('evolution passives: the same card without hearsPassives ignores a passive-made Speed drop', () => {
+  const deaf = { ...passives.scald, id: 'deafScald', reactive: { ...passives.scald.reactive!, hearsPassives: undefined } };
+  const deafConfig = { ...config, passives: { ...passives, deafScald: deaf } };
+  const base = withPassive(withPassive(threeVThree(721), 'a2', 'drag'), 'a2', 'deafScald');
+  const { state } = resolveRound(base, [{ kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' } as Action], deafConfig);
+  assert.strictEqual(state.combatants.b1.statStages?.speed, -1);
+  assert.strictEqual(state.combatants.b1.statStages?.defense, undefined);
+});
+
+test('evolution passives: Shell Shards answers a broken Shield with Defense off both active enemies', () => {
+  let base = withPassive(threeVThree(722), 'a1', 'shellShards');
+  base = applyStatus(base, 1, 'a1', statuses.Shield, { magnitude: 1 }).state;
+  const { state } = resolveRound(base, [{ kind: 'move', combatantId: 'b1', moveId: 'splash', declaredTarget: 'a1' } as Action], config);
+  assert.ok(!hasStatus(state.combatants.a1, 'Shield'), 'the Shield broke');
+  assert.strictEqual(state.combatants.b1.statStages?.defense, -1);
+  assert.strictEqual(state.combatants.b2.statStages?.defense, -1);
+});
+
+test('evolution passives: Coral Growth raises Defense when its holder gains Shield', () => {
+  const base = withPassive(threeVThree(723), 'a2', 'coralGrowth');
+  const { state } = resolveRound(base, [{ kind: 'move', combatantId: 'a2', moveId: 'tideGuard', declaredTarget: 'a2' } as Action], config);
+  assert.strictEqual(state.combatants.a2.statStages?.defense, 1);
+  assert.strictEqual(state.combatants.a1.statStages?.defense, undefined, 'the holder alone');
+});
+
+test('evolution passives: Mimicry copies the stat an enemy raises, by as many steps', () => {
+  const base = withPassive(threeVThree(724), 'a1', 'mimicry');
+  const { state } = resolveRound(base, [{ kind: 'move', combatantId: 'b1', moveId: 'kindle', declaredTarget: 'b1' } as Action], config);
+  assert.strictEqual(state.combatants.b1.statStages?.attack, 1);
+  assert.strictEqual(state.combatants.a1.statStages?.attack, 1);
+});
+
+test('evolution passives: Salt Tears lifts Intelligence and Wisdom on whoever its Renew lands on', () => {
+  const base = withPassive(threeVThree(725), 'a2', 'saltTears');
+  const { state } = resolveRound(base, [{ kind: 'move', combatantId: 'a2', moveId: 'refresh', declaredTarget: 'a1' } as Action], config);
+  assert.strictEqual(state.combatants.a1.statStages?.intelligence, 1);
+  assert.strictEqual(state.combatants.a1.statStages?.wisdom, 1);
 });

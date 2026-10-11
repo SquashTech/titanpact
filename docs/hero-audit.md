@@ -218,3 +218,29 @@ and Spirit. Siren and Seasinger were one myth doing one thing; Siren is the one 
 Passives are unchanged and owed in the details pass: Brittle (Salamander) has no Freeze to read,
 Static Shell (Reefshell) no Storm hit to cash its Conduct, and Seasinger lost the Wisdom-swung
 nuke that made it. Art moved with the ids; all five drawings were made for the old types.
+
+## Water, second pass — details (2026-10-11, per user direction)
+
+| Hero | Change |
+|---|---|
+| Riptide | **Drag+** fires off any attack (Drag stays Water). **Salamander**'s Scald: an enemy's Speed lowered → DEF ▼ (3 a fight). **Marshrunner**'s Mire: an enemy's Speed lowered → Poison 10. Both hear Drag. Swell unchanged. |
+| Pincer | **Tideclaw** grants **Pinch** (new Mid Water physical, Pow 55, 40 mana, ATK ▲ to self) and **Shell Shards** (its Shield broken → both active enemies DEF ▼, 3 a fight); the Iron move and Static Tide are gone. **Ironshell** grants Juggernaut (was Shield Bash). **Reefshell**'s Coral Growth: gaining Shield → DEF ▲ (3 a fight). |
+| Nautilus | **Inkmind** grants Wicked Fear (was Disorient); its passive is renamed **Murk** (it shared Ink Cloud's name). **Mimic**'s Mimicry: an enemy raising a stat → Nautilus raises the same one as many steps (3 a fight). |
+| Kappa | Unchanged: Snapper's Bleed feeds Brimming through Blood Moon's lifesteal. |
+| Selkie | **Salt Tears**: granting Renew → the receiver INT ▲ WIS ▲ (3 a fight); **Salt Tears+** ▲▲ (3 a fight) — no longer a cleanse. **Seasinger** grants **Dawnsong** (new Late Light, Pow 115, 70 mana, swings with Wisdom — Mind Shatter's shape); Tidesong stays. |
+
+Deleted: Brittle, Enthrall, Static Tide, Static Shell (Storm Drinker is the one Conduct planter on a
+Water path; Static Tide's tests now pin it).
+
+Engine: `PassiveHook` `'StatusRemoved'` (Shell Shards reads `reason: 'broken'`; a hit's broken Shield
+joins the damage reaction pass); a statDelta `stat: 'trigger'` (Mimicry); and
+`reactive.hearsPassives` — a card that opts in hears a StatChanged another passive made, which no
+card did before (Scald and Mire hearing Drag, Mimicry hearing a Kindling). Every other card still
+hears moves alone.
+
+To watch: the once-a-round brake means a two-target Renew (High Tide) lifts only the first
+receiver through Salt Tears. Mire is unbraked — Poison adds 10 per Speed drop, and Drag and Rootbind
+both feed it.
+
+Still open: Leviathan (innate rethink toward a late-game carry; a guaranteed Downpour offer), and
+Selkie's Roane (Empower + Drowned Gift, unanswered).

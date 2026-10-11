@@ -169,7 +169,7 @@ export type PassiveId = string;
 /** 'Endured' is a knockout refused (enduresOnce); its subject is the holder, read off a hit or a status tick — never the Pact Clock, which is no trigger source. */
 /** 'RoundStarted' is RoundEnded's mirror, read before the round's first action (Cinder's Ironclad plate). 'FieldEffectSet' a field taking the board, by any setter; both are about nobody, so each active owner is its own subject, and `fieldEffectId` is what eventFieldEquals reads. */
 /** 'ManaGained' reads every way mana arrives — a grant (move or passive), the round's regen, a Rest — never a potion; its subject is the receiver and `manaGained` what landed (Zenith). */
-export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured' | 'ManaGained' | 'RoundStarted' | 'FieldEffectSet' | 'MoveGuarded' | 'ConsumableUsed';
+export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured' | 'ManaGained' | 'RoundStarted' | 'FieldEffectSet' | 'MoveGuarded' | 'ConsumableUsed' | 'StatusRemoved';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';
@@ -243,7 +243,8 @@ export type PassiveEffect =
   | {
       kind: 'statDelta';
       target: PassiveEffectTarget;
-      stat: StatKey | readonly StatKey[];
+      /** 'trigger' = the stat the triggering StatChanged moved (Mimicry). */
+      stat: StatKey | readonly StatKey[] | 'trigger';
       /** Steps, as a move's (docs/stat-stages.md). Exactly one of `stages` and `amount`. */
       stages?: number;
       /** The brake (docs/stat-stages.md §6.3): at most one step a round from this card, and this many a fight (× its stacks). Set on every card on a repeating hook; a switch or a once-a-fight card has none. */
@@ -313,7 +314,7 @@ export interface PassiveDefinition {
   description: string;
   /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). `maxFiresPerFight` caps it at N firings per combat, stacks included (PassiveInstance.firesThisFight) — the brake on a reaction that banks a permanent stack each time it matches. `chance` (0–1) rolls the seeded rng per matched event, per stack; absent = always. `whileBenched` inverts the field rule: this reaction fires only while its owner is standing on the BENCH (Broadside loading a cannonball a round), where every other passive is silent. */
   /** `alsoEffect` is a second effect resolved after `effect` on the same firing — one trigger, two verbs (Funeral Pyre's HP and Mana). */
-  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; alsoEffect?: PassiveEffect; oncePerFight?: boolean; maxFiresPerFight?: number; chance?: number; whileBenched?: true };
+  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; alsoEffect?: PassiveEffect; oncePerFight?: boolean; maxFiresPerFight?: number; chance?: number; whileBenched?: true; /** Also hears a StatChanged another passive made (Scald hearing Drag); off, a card hears moves alone. */ hearsPassives?: true };
   /** A second reaction on its own hook and condition, sharing the card's caps (Swell: a physical hit and a magical one pay different stats). */
   alsoReactive?: PassiveDefinition['reactive'];
   damageModifier?: PassiveDamageModifier;

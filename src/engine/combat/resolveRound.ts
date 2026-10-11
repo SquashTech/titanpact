@@ -545,7 +545,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
             // A knockout this hit refused is read after the hit itself (the Endured hook).
             const endured = hpResult.events.filter((e) => e.type === 'Endured');
-            const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent, ...endured], heroes, statuses, passives, fieldEffects, moves);
+            // A Shield this hit emptied is read too (Shell Shards).
+            const broken = hpResult.events.filter((e) => e.type === 'StatusRemoved' && e.reason === 'broken');
+            const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent, ...endured, ...broken], heroes, statuses, passives, fieldEffects, moves);
             working = damageReactions.state;
             events.push(...damageReactions.events);
 

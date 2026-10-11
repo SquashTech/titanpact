@@ -118,8 +118,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // --- Water ---
     tidecaller: [
     'refresh','siphon', 'torrent', 'engulf', 'crest', 'deluge', 'oasis', 'tsunami', 'highTide', 'seawall', 'undertow', 'iceShard', 'psiBolt', 'glimmer', 'jolt', 'aquaSlice', 'shockBubble', 'waveShred', 'undercurrent', 'cleansingRain', 'rainfall', 'drench'],
-    // Shock Bubble plants Conduct and the Iron column detonates it — the mark and the payoff are
-    // both already in the pool, which is what Tideclaw's Static Tide then makes free.
     pincer: [
       'openingStrike',
       'aquaSlice',
@@ -1345,7 +1343,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['moltenLash'],
             typeGraft: 'Fire',
             learnableMoveIds: evolutionLine('tidecaller', 'Fire', { granted: ['moltenLash'] }),
-            grantsPassiveIds: ['brittle'],
+            grantsPassiveIds: ['scald'],
           },
           {
             id: 'tidecaller-marshrunner',
@@ -1354,7 +1352,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['rootbind'],
             typeGraft: 'Nature',
             learnableMoveIds: evolutionLine('tidecaller', 'Nature', { granted: ['rootbind'] }),
-            grantsPassiveIds: ['enthrall'],
+            grantsPassiveIds: ['mire'],
           },
         ],
       },
@@ -1366,17 +1364,16 @@ export const progressionTable: ProgressionTable = {
             id: 'pincer-tideclaw',
             heroId: 'pincer',
             name: 'Tideclaw',
-            // Off-type on the mono path on purpose: an Iron hit is the detonator Static Tide's mark wants.
-            unlocksMoveIds: ['metallicBlade'],
-            grantsPassiveIds: ['staticTide'],
+            unlocksMoveIds: ['pinch'],
+            grantsPassiveIds: ['shellShards'],
           },
           {
             id: 'pincer-ironshell',
             heroId: 'pincer',
             name: 'Ironshell',
-            unlocksMoveIds: ['shieldBash'],
+            unlocksMoveIds: ['juggernaut'],
             typeGraft: 'Iron',
-            learnableMoveIds: evolutionLine('pincer', 'Iron', { granted: ['shieldBash'] }),
+            learnableMoveIds: evolutionLine('pincer', 'Iron', { granted: ['juggernaut'] }),
             grantsPassiveIds: ['plating'],
           },
           {
@@ -1386,7 +1383,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['digIn'],
             typeGraft: 'Stone',
             learnableMoveIds: evolutionLine('pincer', 'Stone', { granted: ['digIn'] }),
-            grantsPassiveIds: ['staticShell'],
+            grantsPassiveIds: ['coralGrowth'],
           },
         ],
       },
@@ -1436,10 +1433,10 @@ export const progressionTable: ProgressionTable = {
             id: 'nautilus-inkmind',
             heroId: 'nautilus',
             name: 'Inkmind',
-            unlocksMoveIds: ['disorient'],
+            unlocksMoveIds: ['wickedFear'],
             typeGraft: 'Mind',
-            learnableMoveIds: evolutionLine('nautilus', 'Mind', { granted: ['disorient'] }),
-            grantsPassiveIds: ['inkCloud'],
+            learnableMoveIds: evolutionLine('nautilus', 'Mind', { granted: ['wickedFear'] }),
+            grantsPassiveIds: ['murk'],
           },
           {
             id: 'nautilus-mimic',
@@ -3266,9 +3263,9 @@ export const progressionTable: ProgressionTable = {
             id: 'selkie-seasinger',
             heroId: 'selkie',
             name: 'Seasinger',
-            unlocksMoveIds: ['consecrate'],
+            unlocksMoveIds: ['dawnsong'],
             typeGraft: 'Light',
-            learnableMoveIds: evolutionLine('selkie', 'Light', { granted: ['consecrate'] }),
+            learnableMoveIds: evolutionLine('selkie', 'Light', { granted: ['dawnsong'] }),
             grantsPassiveIds: ['tidesong'],
           },
           {

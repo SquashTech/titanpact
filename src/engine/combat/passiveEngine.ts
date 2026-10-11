@@ -92,6 +92,8 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
         return event.sourceCombatantId;
       case 'MoveGuarded':
         return event.sourceCombatantId;
+      case 'StatusRemoved':
+        return event.sourceCombatantId;
       default:
         return undefined;
     }
@@ -107,6 +109,7 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
     case 'ManaRegenTicked':
     case 'MoveGuarded':
     case 'ConsumableUsed':
+    case 'StatusRemoved':
       return event.combatantId;
     case 'ManaGranted':
       return event.targetCombatantId;
@@ -395,7 +398,11 @@ function resolveEffectOn(
     case 'statDelta': {
       // One stat or several; each lands separately and reports its own StatChanged, so a
       // stat-reactive passive (Entanglement) sees them one at a time exactly as a move's would.
-      const stats: readonly StatKey[] = Array.isArray(effect.stat) ? (effect.stat as readonly StatKey[]) : [effect.stat as StatKey];
+      const stats: readonly StatKey[] =
+        effect.stat === 'trigger'
+          ? typeof context.stat === 'string' ? [context.stat as StatKey] : []
+          : Array.isArray(effect.stat) ? (effect.stat as readonly StatKey[]) : [effect.stat as StatKey];
+      if (!stats.length) return { state, events: [] };
       if (effect.stages !== undefined) {
         let stages = target.statStages ?? {};
         const stepped: CombatEvent[] = [];
@@ -499,6 +506,8 @@ export function resolvePassiveReactions(
   const produced: CombatEvent[] = [];
   // Mana a reaction grants is itself mana gained, so it joins the queue (Attunement filling Zenith). Bounded: nothing grants mana off a gain.
   const queue: CombatEvent[] = [...events];
+  // A stat change a passive made is heard only by a card that opts in (Scald hearing Drag); every other card hears moves alone.
+  const passiveMade = new Set<CombatEvent>();
 
   for (let at = 0; at < queue.length; at++) {
     const event = queue[at];
@@ -519,6 +528,7 @@ export function resolvePassiveReactions(
           // SwitchedOut is the SwitchedIn that sent the owner out, read from the bench it has just reached.
           const switchedOut = reactive.hook === 'SwitchedOut';
           if (!hookMatches(switchedOut ? 'SwitchedIn' : reactive.hook, event)) continue;
+          if (passiveMade.has(event) && !reactive.hearsPassives) continue;
           if (reactive.whileBenched || switchedOut ? onField : !onField) continue;
           // A round's end is about nobody, so each active owner is its own subject: 'self' fires, nothing else does.
           const subjectId =
@@ -574,7 +584,10 @@ export function resolvePassiveReactions(
             if (resolved.events.length === 0) continue;
             if (limit !== undefined) working = updateInstance(working, ownerId, instance.passiveId, (held) => ({ firesThisFight: (held.firesThisFight ?? 0) + 1 }));
             produced.push({ type: 'PassiveTriggered', round, combatantId: ownerId, passiveId: instance.passiveId }, ...resolved.events);
-            if (queue.length < 64) queue.push(...resolved.events.filter((e) => e.type === 'ManaGranted' || e.type === 'FieldEffectSet'));
+            if (queue.length < 64) {
+              queue.push(...resolved.events.filter((e) => e.type === 'ManaGranted' || e.type === 'FieldEffectSet'));
+              for (const e of resolved.events) if (e.type === 'StatChanged') { passiveMade.add(e); queue.push(e); }
+            }
           }
         }
       }
