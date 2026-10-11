@@ -1341,7 +1341,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
     },
   },
   // The Burden (docs/innate-passives.md §4): a cost, and the hero born with it comes in
-  // BURDEN_SURPLUS over the 550. Bellows is the first and, for now, the only one.
+  // BURDEN_SURPLUS over the 550. Bellows and Leviathan carry one.
   ironbound: {
     id: 'ironbound',
     name: 'Ironbound',
@@ -1355,6 +1355,25 @@ const innatePassives: Record<string, PassiveDefinition> = {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
       effect: { kind: 'loseMana', target: 'self', amount: 15 },
+    },
+  },
+  // Leviathan's Burden: the old one wakes slowly. It never loses a turn — it acts groggy, and the
+  // steps it gets back are the two rounds the enemy has to kill it before the 610 pays out.
+  slumbering: {
+    id: 'slumbering',
+    name: 'Slumbering',
+    description: 'The first time this hero enters the battlefield each fight, it loses INT ▼▼ and SPD ▼▼. At the end of each round on the field, it wins back INT ▲ and SPD ▲, twice a fight.',
+    burden: true,
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      oncePerFight: true,
+      effect: { kind: 'statDelta', target: 'self', stat: ['intelligence', 'speed'], stages: -2 },
+    },
+    alsoReactive: {
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['intelligence', 'speed'], stages: 1, perFight: 2 },
     },
   },
   // --- Starfall ---
@@ -1890,14 +1909,17 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 75 },
     },
   },
-  abyssalWell: {
-    id: 'abyssalWell',
-    name: 'Overchannel+',
-    description: 'When this hero lands an attack, it gains 25 Mana, past its pool.',
+  // The one mastered card that sheds its Burden (per user direction): Leviathan arrives awake, and
+  // the 610 it was priced for stays.
+  leviathanWakes: {
+    id: 'leviathanWakes',
+    name: 'Slumbering+',
+    description: 'This hero arrives awake. The first time it enters the battlefield each fight, it gains INT ▲.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 25 } },
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      oncePerFight: true,
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
 

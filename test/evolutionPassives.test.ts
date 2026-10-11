@@ -15,6 +15,7 @@ import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { progressionTable } from '../src/data/progression';
 import { resolveRound } from '../src/engine/combat/resolveRound';
+import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import type { Action } from '../src/engine/combat/actions';
 import { hasStatus } from '../src/engine/state';
 import { applyStatus } from '../src/engine/combat/statusEngine';
@@ -169,4 +170,33 @@ test('evolution passives: Salt Tears is unbraked — a two-target Renew lifts bo
     assert.strictEqual(state.combatants[id].statStages?.intelligence, 1, id);
     assert.strictEqual(state.combatants[id].statStages?.wisdom, 1, id);
   }
+});
+
+test('innate: Slumbering arrives groggy and wakes over two rounds on the field; Slumbering+ arrives awake', () => {
+  const lev = createFightState(
+    727,
+    [
+      { combatantId: 'a1', heroId: 'leviathan', side: 'A' },
+      { combatantId: 'a2', heroId: 'tidecaller', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'crag', side: 'B' },
+    ]
+  );
+  const slumbering = withPassive(lev, 'a1', 'slumbering');
+  // A lead "enters" at the fight's start: the groggy steps land with the opening entries.
+  const opened = resolveBattleStartEntries(slumbering, 0, heroes, statuses, passives, fieldEffects).state;
+  assert.strictEqual(opened.combatants.a1.statStages?.intelligence, -2);
+  assert.strictEqual(opened.combatants.a1.statStages?.speed, -2);
+  const r1 = resolveRound(opened, [], config).state;
+  assert.strictEqual(r1.combatants.a1.statStages?.intelligence, -1);
+  const r2 = resolveRound(r1, [], config).state;
+  assert.strictEqual(r2.combatants.a1.statStages?.intelligence ?? 0, 0);
+  const r3 = resolveRound(r2, [], config).state;
+  assert.strictEqual(r3.combatants.a1.statStages?.intelligence ?? 0, 0, 'awake, and no further');
+
+  const woke = resolveBattleStartEntries(withPassive(lev, 'a1', 'leviathanWakes'), 0, heroes, statuses, passives, fieldEffects).state;
+  assert.strictEqual(woke.combatants.a1.statStages?.intelligence, 1);
+  assert.strictEqual(woke.combatants.a1.statStages?.speed, undefined);
 });

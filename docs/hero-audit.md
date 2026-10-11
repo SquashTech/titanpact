@@ -245,5 +245,13 @@ both feed it.
 **Leviathan's first Mid offer is always Rainmaker** (same day, per user direction): `LevelSchedule.guaranteedOffers`, read in
 `levelMovePool` so a roster hero, an enemy and the sim all get it; a guarantee already spent rolls as usual.
 
-Still open: Leviathan's innate (a late-game carry; a forced first-turn Rest was proposed and dropped as unfun), and
-Selkie's Roane (Empower + Drowned Gift, unanswered).
+**Leviathan is the second Burden** (same day, per user direction). A forced first-turn Rest was proposed
+and dropped as unfun; a pure-upside wake was dropped as no slumber at all. **Slumbering**: the first
+time it enters each fight it takes INT ▼▼ SPD ▼▼, and wins INT ▲ SPD ▲ back at each of its next two
+round ends on the field — groggy, never idle, and stages survive a switch, so it wakes once a fight.
+**Slumbering+** (the one mastered card that sheds its Burden) arrives awake with INT ▲. Line 610:
+Int 100 → 120, Mana 70 → 90, HP 190 → 210, Speed kept. Overchannel left the hero (it stays the
+Staff's awakening); Overchannel+ is deleted. To watch: enemy Leviathans never master, so every one
+arrives groggy.
+
+Still open: Selkie's Roane (Empower + Drowned Gift, unanswered).

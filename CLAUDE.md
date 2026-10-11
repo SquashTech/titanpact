@@ -173,7 +173,7 @@ don't silently override it.
 > own Force at each round end it stands on the field, the Pact Clock's shape — **and no Guardian
 > does** (measured: a Marked champion was the whole of a twelve-point Act 1 loss; the seal keeps it
 > off). **The Burden** is the one priced exception: a cost-innate whose hero comes in
-> `BURDEN_SURPLUS` = 60 OVER the 550, in base, permanent, printed `610 · Burden` — Bellows alone,
+> `BURDEN_SURPLUS` = 60 OVER the 550, in base, permanent, printed `610 · Burden` — Bellows and Leviathan (2026-10-11),
 > `test/roster` pins the list. Measured (3000 runs, chart pilot, same seed): full-clear 20.8 →
 > 22.5%, Act 1 67.8 → 68.3, the finale 52.8 → 62.6 (the Herald and the Eyes hold no innate), every
 > hero inside ±2.6 points; Revenant −5.4 die%, Bellows +4.9 die% / +8.6 DPR. Its §10 lists the
@@ -361,7 +361,7 @@ don't silently override it.
   budget that priced HP at half); **MP Regen sits outside it at a flat 10**. **One named
   exception, the Burden** (2026-09-20, `docs/innate-passives.md` §4): a hero whose innate is a
   COST comes in `BURDEN_SURPLUS` = 60 OVER, never under — printed on the sheet, pinned by test,
-  Bellows alone. The rule is
+  Bellows and Leviathan. The rule is
   the number the hero sheet already prints as **Power**, so a line being on budget is
   checkable by the player and not only by the repo (`heroStatTotal`,
   `src/run/statBudget.ts`; `test/roster.test.ts`; `docs/types-and-heroes.md`). A

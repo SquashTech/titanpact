@@ -129,7 +129,9 @@ a gigantic body attached to a flaw — but not Truant itself.
 printed surplus.** `BURDEN_SURPLUS` = 60 (first pass), in the base line, so the sheet's Stat Total
 row prints `610 · Burden` and the number is still the player's to check. `PassiveDefinition.burden`
 flags it; `heroStatTotalFor` and the roster test pin `550 + BURDEN_SURPLUS` for exactly
-`['steamColossus']` — **Bellows alone**.
+`['leviathan', 'steamColossus']` — **Bellows and Leviathan** (Leviathan's Slumbering, 2026-10-11, per user
+direction: it enters each fight at INT ▼▼ SPD ▼▼ and wins a step of each back at two round ends; its
+mastered card is the one that sheds the Burden — it arrives awake, the 610 kept).
 
 Why a *fixed* surplus rather than one priced per drawback: pricing each separately is the
 varied-BST problem coming back through the passive, and the repo's precedent for unlike things at
@@ -390,7 +392,7 @@ player chose to live with: Bellows leads or it sits, and its 610 is the reason y
    player-side buff in this document, and it has never been measured.
 2. **The Mark by tier.** One magnitude for all three tiers, or Early 3 / Mid 5 / Late 5? One dial
    until Act 1 says otherwise.
-3. **More Burdens.** Bellows alone today; any further one on a new seat (§4).
+3. **More Burdens.** Bellows and Leviathan today; any further one on a new seat (§4).
 4. **The buff/debuff rework.** The innates landed first; several §7 rows are stat riders on a hit,
    the shape the signature rework is waiting on, and would be re-read against it if it lands.
 5. **Whether Titanspawn *also* get a per-line passive** beyond the Mark. Not proposed; named so it

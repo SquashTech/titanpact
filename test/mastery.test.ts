@@ -274,8 +274,8 @@ test('mastered innate: every hero authors one — new cards, named as the innate
     if (innate.reactive) assert.strictEqual(mastered!.reactive?.hook, innate.reactive.hook, `${hero.id}: ${mastered!.id} reacts to a different hook than ${innate.id}`);
     if (innate.cannotSwitchOut) assert.strictEqual(mastered!.cannotSwitchOut, true, `${hero.id}: ${mastered!.id} dropped the verb it was born with`);
     assert.strictEqual(!!mastered!.damageModifier, !!innate.damageModifier, `${hero.id}: ${mastered!.id} changed shape`);
-    // A Burden stays a Burden — its price is in the 610.
-    assert.strictEqual(hero.masteredPassiveIds!.some(isBurden), (hero.passiveIds ?? []).some(isBurden), `${hero.id}: the Burden came or went`);
+    // A Burden stays a Burden — its price is in the 610 — save Leviathan's, which wakes out of it (per user direction).
+    if (hero.id !== 'leviathan') assert.strictEqual(hero.masteredPassiveIds!.some(isBurden), (hero.passiveIds ?? []).some(isBurden), `${hero.id}: the Burden came or went`);
   }
   // One per hero: no two heroes master into the same card.
   const firsts = Object.values(heroes).map((h) => masteredInnateOf(h)!.id);
@@ -293,6 +293,8 @@ test('mastered innate: a SIZABLE buff — every flat figure at least doubled, or
       assert.ok(innate.reactive?.oncePerFight && !mastered.reactive?.oncePerFight, `${mastered.id} was exempt for losing a cap it no longer loses`);
       continue;
     }
+    // A cost mastered into a gain (Slumbering): the figure would read the size of the cost.
+    if (mastered.id === 'leviathanWakes') continue;
     const before = flatFigure(innate);
     const after = flatFigure(mastered);
     if (before === null || after === null) continue;

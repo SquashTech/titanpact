@@ -151,16 +151,16 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'leviathan',
     name: 'Leviathan',
     types: ['Water'],
-    // The roster's top Intelligence: Water's slate is magical sixteen deep and nobody was swinging
-    // it at full weight — Riptide hedged, Pincer is the physical wall. Everything else is thin.
-    baseStats: { hp: 190, attack: 30, defense: 40, intelligence: 100, wisdom: 45, speed: 75, manaPool: 70, mpRegen: 10 },
+    // The Burden (docs/innate-passives.md §4): Slumbering, and BURDEN_SURPLUS over the 550 for it —
+    // the roster's top Intelligence pushed past reach, and the pool to cast with it once awake.
+    baseStats: { hp: 210, attack: 30, defense: 40, intelligence: 120, wisdom: 45, speed: 75, manaPool: 90, mpRegen: 10 },
     moveIds: ['siphon', 'undercurrent'],
     growthGrades: { hp: 'B', attack: 'F', defense: 'B', intelligence: 'S', wisdom: 'C', speed: 'A', manaPool: 'S' },
     // Its first Mid offer is always Rainmaker: two of its paths read Downpour (docs/hero-audit.md).
     schedule: { offerLevels: [4, 8, 11, 17, 21], midLevel: 10, lateLevel: 19, signatureLevel: 23, guaranteedOffers: { 11: 'rainmaker' } },
     signatureMoveId: 'deepsurge',
-    passiveIds: ['overchannel'],
-    masteredPassiveIds: ['abyssalWell'],
+    passiveIds: ['slumbering'],
+    masteredPassiveIds: ['leviathanWakes'],
   },
   // From the Tall Grass: the octopus. Water's control hand on a Wisdom-and-Intelligence body — it
   // clouds the water and slips out through it (Ink), and its opener Dazes the whole enemy line.

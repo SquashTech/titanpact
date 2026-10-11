@@ -31,7 +31,7 @@ test('roster: every seven-stat line sums to 550 — a Burden hero to 550 + the s
   assert.deepStrictEqual(offBudget, [], 'these lines do not sum to what they owe');
   // The exemption is a printed, fixed figure, and exactly the Burden heroes use it.
   const burdened = Object.values(heroes).filter((hero) => (hero.passiveIds ?? []).some(isBurden)).map((hero) => hero.id);
-  assert.deepStrictEqual(burdened, ['steamColossus'], 'the Burden roster is a decision, one hero at a time');
+  assert.deepStrictEqual(burdened, ['leviathan', 'steamColossus'], 'the Burden roster is a decision, one hero at a time');
   assert.strictEqual(heroStatTotalFor(heroes.steamColossus, isBurden), HERO_STAT_TOTAL + BURDEN_SURPLUS);
 
   const offRegen = Object.values(heroes).filter((hero) => hero.baseStats.mpRegen !== 10).map((hero) => hero.id);
