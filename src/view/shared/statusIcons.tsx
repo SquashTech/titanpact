@@ -122,6 +122,13 @@ export const STATUS_PATHS: Record<string, ReactNode> = {
       <path d="M18.2 13.4 23.4 20h-3.2v3.4h-4V20H13Z" />
     </>
   ),
+  // A cross of light, with the corner arrow: Grace powers every heal.
+  Grace: (
+    <>
+      <path d="M7.6 2h4.8v5.6H18v4.8h-5.6V18H7.6v-5.6H2V7.6h5.6Z" />
+      <path d="M18.2 13.4 23.4 20h-3.2v3.4h-4V20H13Z" />
+    </>
+  ),
   // A reticle, with the corner arrow: Aim powers every Arrow.
   Aim: (
     <>
@@ -195,6 +202,7 @@ const STATUS_COLOR: Record<string, string> = {
   Ambush: '#a8577a',
   Edge: '#c7ccd6',
   Aim: '#c9a46a',
+  Grace: '#f2d98a',
   Poised: '#b6d35a',
   Cannonball: '#8f8a80',
   Beheld: '#e0393f',

@@ -667,7 +667,9 @@ export function collectPassiveDamageModifiers(
   move: MoveDefinition,
   passiveDefs: Record<PassiveId, PassiveDefinition>,
   /** The defender of this hit, for a modifier gated on what it holds; a forecast with none reports such a modifier unfired. */
-  target?: Combatant
+  target?: Combatant,
+  /** The defender's max HP, for its own full-HP term (Gilded Mane); omitted, that term never fires. */
+  targetMaxHp?: number
 ): DamageModifier[] {
   const modifiers: DamageModifier[] = [];
   const context: TriggerContext = { moveType: move.type };
@@ -680,6 +682,13 @@ export function collectPassiveDamageModifiers(
     if (levels <= 0) continue;
     for (let i = 0; i < instance.stacks; i++) {
       modifiers.push({ source: instance.passiveId, amount: def.amount * levels });
+    }
+  }
+  // The defender's side of the same pipeline: a term on hits it takes, at full HP alone.
+  if (target && targetMaxHp !== undefined && target.currentHp >= targetMaxHp) {
+    for (const instance of Object.values(target.passives)) {
+      const taken = passiveDefs[instance.passiveId]?.damageTakenModifier;
+      if (taken?.whileFullHp) modifiers.push({ source: instance.passiveId, amount: taken.amount });
     }
   }
 

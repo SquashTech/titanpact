@@ -241,6 +241,20 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'basePower',
     description: 'Adds its magnitude as flat Base Power to every Slice this hero uses, whatever its type.',
   },
+  // The heal Force: Elemental Force for HealPower rather than BasePower, on every heal move whatever its type.
+  Grace: {
+    id: 'Grace',
+    name: 'Grace',
+    shape: 'magnitude',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'additive',
+    clearsOnSwitch: false,
+    positive: true,
+    forceHeal: true,
+    pipeline: 'basePower',
+    description: 'Adds its magnitude to the Heal Power of every heal move this hero casts, whatever its type.',
+  },
   Aim: {
     id: 'Aim',
     name: 'Aim',

@@ -385,7 +385,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             // offStatOverride changes WHICH stat is read — pipeline 1, not a multiplier.
             const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target, fieldEffectCtx, move.offStatOverride);
 
-            const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attackerNow, move, passives, target);
+            const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attackerNow, move, passives, target, maxHp);
             const elementalForceBonus = resolveElementalForceBonus(attackerNow, move, statuses);
             // maxHp read here, BEFORE applyHpDelta, so an execute never doubles against HP this hit removes.
             const basePowerMultiplier = resolveConditionalPowerMultiplier(
@@ -633,7 +633,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         // Target-independent (healPipeline.ts): one resolve covers every ally.
         const casterNow = working.combatants[action.combatantId];
         const healFieldCtx = { active: working.activeFieldEffect, defs: fieldEffects };
-        const healed = resolveHeal(move, attackerHero, casterNow, healFieldCtx);
+        const healed = resolveHeal(move, attackerHero, casterNow, healFieldCtx, statuses);
 
         for (const targetId of targetIds) {
           const target = working.combatants[targetId];

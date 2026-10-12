@@ -9,7 +9,7 @@ import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { resolveStab, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
-import { fieldHealMultiplier, resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
+import { fieldHealMultiplier, resolveHealFor, resolveHealForceBonus, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveStatusMagnitudeFor, scaleStatusMagnitude } from '../../engine/status/statusMagnitude';
 import { hasStatReduction, resolveElementalForceBonus, VARIANCE_MAX, VARIANCE_MIN } from '../../engine/damage/damagePipeline';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
@@ -143,6 +143,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
             STAT_ORDER.map((stat) => [stat, getEffectiveStat(attackerHero, attacker, stat, statCtx)])
           ) as Record<StatKey, number>,
           fieldMult: fieldHealMultiplier(statCtx),
+          healPowerBonus: resolveHealForceBonus(attacker, statuses),
         }
       : caster;
   const heal = move.kind === 'heal' ? healReadout(move, healCaster) : null;

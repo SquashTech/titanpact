@@ -843,12 +843,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   dawnlight: {
     id: 'dawnlight',
     name: 'Dawnlight',
-    description: 'When this hero enters the battlefield, it gains Light Force 10. Up to 3 times a fight.',
+    description: 'When this hero enters the battlefield, it gains Grace 10. Up to 3 times a fight.',
     reactive: {
       maxFiresPerFight: 3,
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'LightForce', magnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Grace', magnitude: 10 },
     },
   },
   surgingIntellect: {
@@ -1475,12 +1475,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.4 } },
     },
   },
-  // docs/wild-innates-and-events.md §2: gold as a combat stat — every Shop visit becomes spend-or-keep.
+  // Aurum's (2026-10-12, per user direction, replacing the gold read, which did nothing in the Trials or the Gauntlet).
   gildedMane: {
     id: 'gildedMane',
     name: 'Gilded Mane',
-    description: 'This hero gains +5 Attack and +5 Defense for every 50 gold you hold.',
-    goldStatGrants: { perGold: 50, statGrants: { attack: 5, defense: 5 } },
+    description: 'While this hero is at full HP, it takes 30% less damage.',
+    damageTakenModifier: { whileFullHp: true, amount: -0.3 },
   },
   badLuck: {
     id: 'badLuck',
@@ -1723,12 +1723,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   dawnlightPlus: {
     id: 'dawnlightPlus',
     name: 'Dawnlight+',
-    description: 'When this hero enters the battlefield, it gains Light Force 20. Up to 3 times a fight.',
+    description: 'When this hero enters the battlefield, it gains Grace 20. Up to 3 times a fight.',
     reactive: {
       maxFiresPerFight: 3,
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'LightForce', magnitude: 20 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Grace', magnitude: 20 },
     },
   },
   surgingIntellectPlus: {
@@ -2446,12 +2446,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 2 },
     },
   },
-  // The figure doubled: the same grant at half the gold.
   gildedManeMastered: {
     id: 'gildedManeMastered',
     name: 'Gilded Mane+',
-    description: 'This hero gains +5 Attack and +5 Defense for every 25 gold you hold.',
-    goldStatGrants: { perGold: 25, statGrants: { attack: 5, defense: 5 } },
+    description: 'While this hero is at full HP, it takes 60% less damage.',
+    damageTakenModifier: { whileFullHp: true, amount: -0.6 },
   },
   calamity: {
     id: 'calamity',

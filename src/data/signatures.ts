@@ -760,7 +760,7 @@ const authoredSignatures: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'bothEnemies',
   },
-  // Hart: the antlers lit.
+  // Argent: the antlers lit.
   antlerCrown: {
     id: 'antlerCrown',
     name: 'Antler Crown',

@@ -203,7 +203,7 @@ function expectedHit(state: CombatState, casterId: string, move: MoveDefinition,
   const defenderHero = allCombatants[target.heroId];
   const ctxField = fieldCtx(state);
   const ratio = resolveStatRatio(move.category, attackerHero, attacker, defenderHero, target, ctxField, move.offStatOverride);
-  const modifiers = collectPassiveDamageModifiers(attacker, move, passives, target);
+  const modifiers = collectPassiveDamageModifiers(attacker, move, passives, target, getMaxHp(defenderHero, target));
   const forceBonus = resolveElementalForceBonus(attacker, move, statuses);
   const attackerHp = { currentHp: attacker.currentHp, maxHp: getMaxHp(attackerHero, attacker) };
   const basePowerMultiplier = resolveConditionalPowerMultiplier(
@@ -638,7 +638,7 @@ function scoreCast(
 
   // --- Healing, capped at the hole it fills ---
   if (move.healPower != null) {
-    const heal = resolveHeal(move, allCombatants[caster.heroId], caster, fieldCtx(state)).heal;
+    const heal = resolveHeal(move, allCombatants[caster.heroId], caster, fieldCtx(state), statuses).heal;
     for (const { id, share } of targets) {
       if (state.combatants[id]?.side !== casterSide) continue;
       const filled = Math.min(heal, missingHp(state, id));

@@ -769,7 +769,7 @@ export const heroes: Record<string, HeroDefinition> = {
   // The radiant stag: Light's second healer, arriving with a mend already on its partner.
   hart: {
     id: 'hart',
-    name: 'Hart',
+    name: 'Argent',
     types: ['Light'],
     baseStats: { hp: 200, attack: 40, defense: 45, intelligence: 55, wisdom: 85, speed: 65, manaPool: 60, mpRegen: 10 },
     moveIds: ['mend', 'glimmer'],

@@ -328,7 +328,7 @@ export const trials: Record<string, TrialDefinition> = {
     type: 'Light',
     name: 'The Sounding Bell',
     line: 'The bell keeps the hour, and on the hour the ground is holy.',
-    gameplan: 'Keep Sanctuary standing all fight — Carillon’s bell tolls it every second round, Empyrean and Hart lay it between — and swing Smite and Sunlance doubled on hallowed ground.',
+    gameplan: 'Keep Sanctuary standing all fight — Carillon’s bell tolls it every third round, Empyrean and Argent lay it between — and swing Smite and Sunlance doubled on hallowed ground.',
     cover: 'Light itself hits Shadow; Empyrean’s Magic Bolt is Arcane into both Mind and Spirit; Solace’s Psi Bolt is Mind into Spirit; Aurum’s Claw is Beast into Mind.',
     leads: ['carillon', 'empyrean'],
     team: {

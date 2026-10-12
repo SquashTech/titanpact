@@ -68,7 +68,6 @@ import './finale.test';
 import './events.test';
 import './eventVocabulary.test';
 import './metamorphic.test';
-import './gildedMane.test';
 import './werewolf.test';
 import './ai.test';
 import './save.test';

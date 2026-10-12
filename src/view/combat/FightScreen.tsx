@@ -33,7 +33,7 @@ import {
   callIntent,
   calledMove,
 } from '../../engine/state';
-import { fieldHealMultiplier, type HealCaster } from '../../engine/heal/healPipeline';
+import { fieldHealMultiplier, resolveHealForceBonus, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor, pactRoundOf } from '../../engine/combat/pactClock';
 import { applyForcedReplacement, placeLeads, replacementCandidates } from '../../engine/combat/switching';
@@ -908,7 +908,7 @@ export function FightScreen({
     const combatant = combat.combatants[id];
     const hero = allCombatants[combatant.heroId];
     const stats = Object.fromEntries(STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat, statCtx)])) as Record<StatKey, number>;
-    return { wisdom: stats.wisdom, types: effectiveTypes(hero, combatant), stats, fieldMult: fieldHealMultiplier(statCtx) };
+    return { wisdom: stats.wisdom, types: effectiveTypes(hero, combatant), stats, fieldMult: fieldHealMultiplier(statCtx), healPowerBonus: resolveHealForceBonus(combatant, statuses) };
   }
 
   const playerActiveAlive = aliveActiveIdsOn(combat, PLAYER_SIDE);
@@ -2076,6 +2076,7 @@ export function FightScreen({
               types: effectiveTypes(hero, combatant),
               stats: casterStats,
               fieldMult: fieldHealMultiplier(statCtx),
+              healPowerBonus: resolveHealForceBonus(combatant, statuses),
             };
             return (
               <div className="action-panel" key={id}>

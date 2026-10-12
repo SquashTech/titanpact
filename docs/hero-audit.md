@@ -434,3 +434,10 @@ Engine: passive target `bothAllies`; a passive `damage` may read the trigger's `
 `manaGrant` may be `capped`. Open: Hart's new name, Aurum's innate (Gilded Mane does nothing in the
 Trials or the Gauntlet). Left as they were, not raised again: Sunblind, Dawnlight, Dawnherald's High
 Tide beside a Water graft.
+
+**Light follow-ups** (same day, per user direction): **Hart is renamed Argent** (id `hart` kept; the
+White Hart path keeps its name). **Gilded Mane**: while Aurum is at full HP it takes 30% less
+damage, Gilded Mane+ 60% (`PassiveDefinition.damageTakenModifier`, a defender-side term collected
+with the attacker's damage modifiers, per hit) — the gold read did nothing in the Trials or the
+Gauntlet; `goldStatGrants` is now held by nothing. **Dawnlight** gives **Grace** (the heal Force,
+`docs/edge-and-aim.md` §6) instead of Light Force.

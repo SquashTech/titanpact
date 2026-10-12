@@ -337,6 +337,10 @@ function reactiveFacts(reactive: NonNullable<PassiveDefinition['reactive']>): Pa
 export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
   const rows: PassiveFact[] = [];
   for (const reactive of [def.reactive, def.alsoReactive]) if (reactive) rows.push(...reactiveFacts(reactive));
+  if (def.damageTakenModifier) {
+    rows.push({ label: 'While', text: 'This hero is at full HP', glyph: { kind: 'stat', stat: 'hp' } });
+    rows.push({ label: 'Damage', text: `${fmt(Math.round(def.damageTakenModifier.amount * 100))}% on every hit it takes`, glyph: { kind: 'stat', stat: 'defense' } });
+  }
   if (def.damageModifier) {
     const type = def.damageModifier.eventFieldEquals?.moveType;
     rows.push({

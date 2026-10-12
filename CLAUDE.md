@@ -260,7 +260,7 @@ don't silently override it.
 > (raw at par, from the deck — an event may now GRANT a hero), `transform`, costs (gold, `woundAll`)
 > and weights; the slate is 26, most of it Location-gated. **Motley's Trick**: a `metamorphic`,
 > `permanent` move swapped each round for a face off the whole catalog (`run/metamorphic.ts`), on a
-> 170 / 50×5 / 130 Motley. **Gilded Mane** (Aurum): +5 Atk/Def per 50 gold held. **Werewolf Bite**:
+> 170 / 50×5 / 130 Motley. **Gilded Mane** (Aurum): 30% less damage at full HP (it read gold until 2026-10-12). **Werewolf Bite**:
 > a `curse` that MARKS a hero, which Turns at Mastery 5 (at once if past it) into pure Beast on a
 > 650 base line (`data/curses.ts`, `run/curse.ts`). Seven more innates there are PROPOSED.
 
@@ -332,7 +332,8 @@ don't silently override it.
 - **Healing formula (2026-08-28):** `Heal = HealPower × WisdomMult × STAB`, with
   `WisdomMult = 1 + (Wisdom − 50)/100`. Scales with the **caster's Wisdom** (whatever the
   move's category), **never with the target's max HP**, and carries **no variance**. A HoT
-  snapshots it at application time. Reasoning + open questions: `docs/combat.md`. **One named
+  snapshots it at application time. **Grace** (2026-10-12, `docs/edge-and-aim.md`) adds flat to HealPower, as
+  Elemental Force does to BasePower. Reasoning + open questions: `docs/combat.md`. **One named
   exception, Renew** (2026-10-09, per user direction, `docs/timed-statuses.md`): **10% of the
   HOLDER's max HP at each of three round ends**, nothing on landing, a re-application resetting the
   three — never caster-scaled (`StatusDefinition.timed`); a heal move stays on the formula above.

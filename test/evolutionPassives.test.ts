@@ -559,3 +559,26 @@ test("light: Lion's Share heals and raises both allies on a knockout", () => {
   assert.strictEqual(state.combatants.a2.statStages?.attack, 1);
   assert.ok(state.combatants.a2.currentHp > 30);
 });
+
+test('light: Grace adds to Heal Power before Wisdom, on every heal move whatever its type', () => {
+  const { resolveHeal } = require('../src/engine/heal/healPipeline') as typeof import('../src/engine/heal/healPipeline');
+  const base = threeVThree(754);
+  const graced = applyStatus(base, 1, 'a2', statuses.Grace, { magnitude: 10 }).state;
+  const hero = heroes[base.combatants.a2.heroId];
+  const bare = resolveHeal(moves.mend, hero, base.combatants.a2, undefined, statuses);
+  const lifted = resolveHeal(moves.mend, hero, graced.combatants.a2, undefined, statuses);
+  assert.strictEqual(lifted.healPower, bare.healPower + 10);
+  assert.ok(lifted.heal > bare.heal);
+  assert.strictEqual(passives.dawnlight.reactive?.effect.kind === 'applyStatus' && passives.dawnlight.reactive.effect.statusId, 'Grace');
+});
+
+test('light: Gilded Mane takes 30% off a hit landing at full HP, and nothing once scratched', () => {
+  const hit = [cut('b1', heroes.ironWarden.moveIds[0], 'a1')];
+  const lost = (s: CombatState) => s.combatants.a1.currentHp - resolveRound(s, hit, config).state.combatants.a1.currentHp;
+  const base = threeVThree(755);
+  const maned = withPassive(base, 'a1', 'gildedMane');
+  const ratio = lost(maned) / lost(base);
+  assert.ok(ratio > 0.6 && ratio < 0.8, `full-HP hit ×${ratio.toFixed(2)}`);
+  const scratched = withHp(maned, 'a1', maned.combatants.a1.currentHp - 1);
+  assert.strictEqual(lost(scratched), lost(withHp(base, 'a1', base.combatants.a1.currentHp - 1)));
+});

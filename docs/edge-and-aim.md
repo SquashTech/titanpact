@@ -53,3 +53,13 @@ Two statuses: `Edge` (`forceTag: 'slice'`) and `Aim` (`forceTag: 'arrow'`).
 
 - Whether Edge or Aim ever go on gear, and at what price per magnitude.
 - Whether Hone's pool list should follow the Slice count as pools change, or be authored by hand.
+
+## 6. Grace — the heal Force
+
+**BUILT 2026-10-12, per user direction** ("Heal Force"; the name is Claude's pick, open to change).
+`StatusDefinition.forceHeal`: a magnitude status whose figure is added to the **HealPower** of every
+heal move its holder casts, whatever the move's type — before WisdomMult, STAB and Sanctuary, as
+Elemental Force sits before the damage multipliers (`resolveHealForceBonus`,
+`engine/heal/healPipeline.ts`). Persistent, kept through a switch. It never touches Renew (a timed
+share of max HP) or a passive's heal. The one source today is **Solace's Dawnlight**: entering the
+field gives Grace 10 (Dawnlight+ 20), up to 3 times a fight — Mend's 45 becomes 55 a stack.

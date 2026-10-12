@@ -4,7 +4,7 @@
 // A Field Effect's healMultiplier (Sanctuary) is a term of THIS pipeline, as a damage modifier is
 // of the damage pipeline — never a Wisdom bonus (docs/field-effects.md).
 
-import type { HeroDefinition, MoveDefinition, StatKey, TypeId } from '../content';
+import type { HeroDefinition, MoveDefinition, StatKey, StatusDefinition, TypeId } from '../content';
 import type { Combatant, FieldEffectContext } from '../state';
 import { getEffectiveStat, effectiveTypes } from '../state';
 import { resolveStab } from '../damage/typeMult';
@@ -51,6 +51,8 @@ export interface HealCaster {
   stats?: Partial<Record<StatKey, number>>;
   /** The active Field Effect's healMultiplier, resolved by whoever holds the board (fieldHealMultiplier). Omitted = 1. */
   fieldMult?: number;
+  /** Grace held, added to HealPower (resolveHealForceBonus). Omitted = 0. */
+  healPowerBonus?: number;
 }
 
 export interface HealCalcResult {
@@ -75,7 +77,15 @@ export function fieldHealMultiplier(fieldEffectCtx?: FieldEffectContext): number
 
 /** The formula from a plain stat + type pair. */
 export function resolveHealFor(move: MoveDefinition, caster: HealCaster): HealCalcResult {
-  return calcHeal(move.healPower ?? 0, magnitudeMultFromStat(caster.wisdom), resolveStab(move.type, caster.types), caster.fieldMult ?? 1);
+  return calcHeal((move.healPower ?? 0) + (caster.healPowerBonus ?? 0), magnitudeMultFromStat(caster.wisdom), resolveStab(move.type, caster.types), caster.fieldMult ?? 1);
+}
+
+/** Grace: the summed magnitude of held heal Forces — a HealPower input, as Elemental Force is a BasePower one. */
+export function resolveHealForceBonus(caster: Combatant, statusDefs?: Record<string, StatusDefinition>): number {
+  if (!statusDefs) return 0;
+  let bonus = 0;
+  for (const [statusId, instance] of Object.entries(caster.statuses)) if (statusDefs[statusId]?.forceHeal) bonus += instance.magnitude ?? 0;
+  return bonus;
 }
 
 /** The whole formula for one caster + one heal move. Target-independent, so a bothAllies heal resolves once. */
@@ -83,11 +93,13 @@ export function resolveHeal(
   move: MoveDefinition,
   casterHero: HeroDefinition,
   caster: Combatant,
-  fieldEffectCtx?: FieldEffectContext
+  fieldEffectCtx?: FieldEffectContext,
+  statusDefs?: Record<string, StatusDefinition>
 ): HealCalcResult {
   return resolveHealFor(move, {
     wisdom: getEffectiveStat(casterHero, caster, 'wisdom', fieldEffectCtx),
     types: effectiveTypes(casterHero, caster),
     fieldMult: fieldHealMultiplier(fieldEffectCtx),
+    healPowerBonus: resolveHealForceBonus(caster, statusDefs),
   });
 }

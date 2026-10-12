@@ -114,6 +114,8 @@ export interface StatusDefinition {
   forceAllTypes?: boolean;
   /** Edge and Draw (docs/edge-and-aim.md): a family Force — magnitude added to the BasePower of every move carrying this tag, whatever its type. Exclusive with forceType and forceAllTypes. */
   forceTag?: MoveTag;
+  /** Grace (docs/edge-and-aim.md §6): the heal Force — magnitude added to the HealPower of every heal move the holder casts, before Wisdom and STAB. */
+  forceHeal?: true;
   /** Ambush: spent once the damage move that read it has resolved all of its hits, so a spread pays on every target and still costs one. */
   consumedOnDamage?: boolean;
   /** Raises the holder's DAMAGE moves by this many priority brackets while held (Poised; priority.ts actionPriority). Paired with consumedOnDamage, it is one early strike. */
@@ -341,6 +343,8 @@ export interface PassiveDefinition {
   /** A second reaction on its own hook and condition, sharing the card's caps (Swell: a physical hit and a magical one pay different stats). */
   alsoReactive?: PassiveDefinition['reactive'];
   damageModifier?: PassiveDamageModifier;
+  /** Gilded Mane (Aurum): a damage-pipeline term on hits the HOLDER takes — `amount` < 0 is a reduction (−0.3 = 30% less) — read per hit, only while the holder stands at full HP before it. */
+  damageTakenModifier?: { whileFullHp: true; amount: number };
   /** Always-on flat grants, applied at fight build like Equipment/Relic statGrants (src/run/passives.ts); not read by passiveEngine. Classes are this alone. */
   statGrants?: Partial<Record<StatKey, number>>;
   /** Conditional counterpart of `statGrants` (Bloodthirsty). */
@@ -405,6 +409,7 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
   const hasEffect =
     passive.reactive !== undefined ||
     passive.damageModifier !== undefined ||
+    passive.damageTakenModifier !== undefined ||
     passive.statGrants !== undefined ||
     passive.conditionalStatGrants !== undefined ||
     passive.partnerStatGrants !== undefined ||

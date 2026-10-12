@@ -67,7 +67,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'cleanse', target: 'triggerTarget' },
     },
   },
-  // Hart's Dream Stag, fed by its own innate: every arrival lays Renew on the partner.
+  // Argent's Dream Stag, fed by its own innate: every arrival lays Renew on the partner.
   deathwatch: {
     id: 'deathwatch',
     name: 'Deathwatch',
@@ -144,7 +144,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Daze' },
     },
   },
-  // Hart's Greenwood: Hallowed Step and Sow lay the Renew; every mend grows bark.
+  // Argent's Greenwood: Hallowed Step and Sow lay the Renew; every mend grows bark.
   barkskin: {
     id: 'barkskin',
     name: 'Barkskin',
