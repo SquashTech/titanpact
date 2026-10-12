@@ -327,3 +327,32 @@ Trials build swaps Skyfall for Storm Arrow.
 
 To watch: Brushfire after Blazing Retreat (Burn, then leave) is a Daze the same round; Stormveil
 stacks Shield every round a mark sits on the far side.
+
+## Stone, second pass (2026-10-11, per user direction)
+
+Iron three times, Shadow, Fire and Water twice across twelve grafts; spread so each type appears once
+(Mech unused). The details were left to Claude's judgement ("go with your gut").
+
+| Hero | Path (was) | Graft (was) | Move (was) | Passive |
+|---|---|---|---|---|
+| Crag | Snowcap (Mountainheart) | Frost (Iron) | Cold Snap (Juggernaut) | **Snowpack**: the first hit taken each fight Freezes both enemies |
+| Crag | Rootwarden | Nature | Rootbind | **Deep Roots**: taking damage gives Renew (was Unstoppable Growth, Renew on entry — deleted) |
+| Sentinel | Cathedral | Light (Iron) | Benediction (Juggernaut) | Flying Buttress, kept |
+| Sentinel | Gloomwatch | Shadow | Cutthroat | **Night Vigil**: hit while Provoking → Ambush 20 (was: the partner hit, which Provoke prevents) |
+| Petra | Quakebringer | — | Rockfall (Titanic Crush), off its own pool | Aftershock, kept — the magical spread lowers both Defenses |
+| Scree | Pangolin (Riverstone) | Beast (Water) | **Scale Rake** — new Mid Beast, Pow 60, swings with Defense (Cleansing Rain) | **Scale Edges**: an enemy that hits it starts Bleeding |
+| Dune | Worldworm | — | Rubble Rush (Body Crush), off its own pool | Desert Body, kept |
+| Dune | Shimmer (Glassback) | Mind (Fire) | Psychokinesis (Firebrand) | **Mirage Step**: the first entry each fight, Barrier for the round and Poised |
+| Dune | Sandstorm (Duneshade) | Storm (Shadow) | Storm Lash (Rend) | **Static Sand**: its Stone attacks set off Conduct |
+| Cairn | Menhir | — | Body Blow | **Standing Stone**: entering sets Bedrock (was Settling Stone, DEF ▲ a round) |
+
+Innate: **Stone Wall** (Sentinel) Shields the partner when Sentinel becomes Provoking (was: on entry,
+about once a fight); Stone Wall+ Shield 60. **Shield Bash's Daze is certain, 2 Charges** (was 30%) —
+every holder (Warden, Valor, Bellows, Carillon, Trove, Scree, Cinder's Ironclad pool).
+
+Engine: trigger condition `targetsOwner` (Scale Edges). Deleted: Immovable, Sinking Sands, Molten
+Glass, Settling Stone, Riverworn, Unstoppable Growth (its general Renew test now pins Deep Roots). No
+path art existed for the renamed paths. Dune's Trials build carries Rubble Rush.
+
+To watch: Juggernaut is now granted by Pincer's Ironshell alone. Snowpack + Cold Snap is a
+first-blow combo; Standing Stone hands the partner Bedrock every entry.

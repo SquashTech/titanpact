@@ -350,3 +350,42 @@ test('evolution passives: Brushfire Dazes every Burning enemy as Raiju switches 
   const dazed = events.filter((e) => e.type === 'StatusApplied' && e.statusId === 'Daze').map((e) => (e as { combatantId: string }).combatantId);
   assert.deepStrictEqual(dazed, ['b1']);
 });
+
+// --- Stone, second pass (docs/hero-audit.md) ---
+
+test('stone: Stone Wall Shields the partner when Sentinel Provokes, and Night Vigil answers a hit taken while Provoking', () => {
+  const base = withPassive(withPassive(side(750, ['sentinel', 'crag'], ['ironWarden', 'dune']), 'a1', 'stoneWall'), 'a1', 'nightVigil');
+  const { state } = resolveRound(base, [cast('a1', 'provoke'), cast('b1', 'ironFist', 'a2')], config);
+  assert.ok(hasStatus(state.combatants.a2, 'Shield'), 'the partner is walled');
+  assert.ok(hasStatus(state.combatants.a1, 'Ambush'), 'the redirected blow is answered');
+});
+
+test('stone: Snowpack freezes both foes on the first hit taken, once a fight', () => {
+  const base = withPassive(side(751, ['crag', 'sentinel'], ['ironWarden', 'dune']), 'a1', 'snowpack');
+  const hit = (s: CombatState) => resolveRound(s, [cast('b1', 'ironFist', 'a1')], config);
+  const first = hit(base);
+  assert.ok(hasStatus(first.state.combatants.b1, 'Freeze') && hasStatus(first.state.combatants.b2, 'Freeze'));
+  const freezes = hit(first.state).events.filter((e) => e.type === 'StatusApplied' && e.statusId === 'Freeze').length;
+  assert.strictEqual(freezes, 0);
+});
+
+test('stone: Scale Edges Bleeds whoever hits Scree, and not whoever hits its partner', () => {
+  const base = withPassive(side(752, ['scree', 'crag'], ['ironWarden', 'dune']), 'a1', 'scaleEdges');
+  const { state } = resolveRound(base, [cast('b1', 'ironFist', 'a1'), cast('b2', 'rockToss', 'a2')], config);
+  assert.ok(hasStatus(state.combatants.b1, 'Bleed'));
+  assert.ok(!hasStatus(state.combatants.b2, 'Bleed'));
+});
+
+test('stone: Static Sand — a Stone hit sets off Conduct', () => {
+  let base = withPassive(side(753, ['dune', 'crag'], ['ironWarden', 'sentinel']), 'a1', 'staticSand');
+  base = applyStatus(base, 1, 'b1', statuses.Conduct, {}).state;
+  const { events } = resolveRound(base, [cast('a1', 'rockToss', 'b1')], config);
+  assert.ok(events.some((e) => e.type === 'StatusDetonated' && e.statusId === 'Conduct'));
+});
+
+test('stone: Mirage Step arrives Barriered and Poised; Standing Stone sets Bedrock on entry', () => {
+  const dune = resolveBattleStartEntries(withPassive(side(754, ['dune', 'cairn'], ['ironWarden', 'sentinel']), 'a1', 'mirageStep'), 0, heroes, statuses, passives, fieldEffects).state;
+  assert.ok(hasStatus(dune.combatants.a1, 'Barrier') && hasStatus(dune.combatants.a1, 'Poised'));
+  const cairn = resolveBattleStartEntries(withPassive(side(755, ['cairn', 'dune'], ['ironWarden', 'sentinel']), 'a1', 'standingStone'), 0, heroes, statuses, passives, fieldEffects).state;
+  assert.strictEqual(cairn.activeFieldEffect?.fieldEffectId, 'bedrock');
+});

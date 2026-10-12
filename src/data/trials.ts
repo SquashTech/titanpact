@@ -253,7 +253,7 @@ export const trials: Record<string, TrialDefinition> = {
         {
           heroId: 'dune',
           pathId: 'dune-worldworm',
-          moveIds: ['sandbreach', 'bodyCrush', 'stoneheart', 'thunderclap'],
+          moveIds: ['sandbreach', 'rubbleRush', 'stoneheart', 'thunderclap'],
           itemIds: ['sword.mythic', 'spear.mythic', 'greataxe.mythic'],
         },
         {

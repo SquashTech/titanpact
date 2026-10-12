@@ -330,20 +330,6 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       oncePerFight: true,
     },
   },
-  unstoppableGrowth: {
-    id: 'unstoppableGrowth',
-    name: 'Unstoppable Growth',
-    description: 'When this hero enters the battlefield, it gains Renew.',
-    // Same arrival shape as Imposing Presence, pointed inward: every arrival including the
-    // opening lead, so a pivot out and back re-seeds it. Renew stacks additively, which is
-    // the intended payoff. A passive-applied HoT is FLAT — the healing formula's Wisdom
-    // scaling belongs to a move's own heal, and a passive has no move to take STAB from.
-    reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew' },
-    },
-  },
   overspill: {
     id: 'overspill',
     name: 'Overspill',
@@ -1075,13 +1061,14 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
     },
   },
+  // Sentinel: the wall goes up every time it calls the blows onto itself.
   stoneWall: {
     id: 'stoneWall',
     name: 'Stone Wall',
-    description: 'When this hero enters the battlefield, its partner gains Shield 20.',
+    description: 'When this hero becomes Provoking, its partner gains Shield 20.',
     reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Provoke' } },
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 20 },
     },
   },
@@ -1954,10 +1941,10 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   fortress: {
     id: 'fortress',
     name: 'Stone Wall+',
-    description: 'When this hero enters the battlefield, its partner gains Shield 60.',
+    description: 'When this hero becomes Provoking, its partner gains Shield 60.',
     reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Provoke' } },
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 60 },
     },
   },

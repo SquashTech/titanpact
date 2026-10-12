@@ -275,7 +275,7 @@ test('beast: Rampage bills a quarter of the damage it actually dealt back to its
 
 test('beast: the slate is fifteen moves plus the four 2026-09-15 additions, Primal Roar (2026-09-29) and Blood Moon\'s rider and reader, and every status it names exists', () => {
   const beast = Object.values(moves).filter((m) => m.type === 'Beast' && !signatureMoves[m.id]);
-  assert.strictEqual(beast.length, 22);
+  assert.strictEqual(beast.length, 23);
   for (const move of beast) {
     for (const app of statusApplicationsOf(move)) {
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);

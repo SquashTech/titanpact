@@ -201,6 +201,8 @@ export interface PassiveTriggerCondition {
   ownerManaFull?: true;
   /** A living active enemy of the owner holds this status when the reaction is read (Skyshear's Stormveil). */
   anyEnemyHasStatus?: StatusId;
+  /** The event's target is the owner itself — with a source-role, enemy-relative condition, "an enemy struck this hero" (Scree's Pangolin). */
+  targetsOwner?: true;
   /** The owner entered the fight holding both a physical and a magical attack (Combatant.mixedKit — Either Hand). */
   requiresMixedKit?: true;
 }

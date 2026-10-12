@@ -3375,8 +3375,10 @@ export const moves: Record<string, MoveDefinition> = {
     basePower: 55,
     // Swings with Defense (Body Blow's shape): the wall's own stat is the one it hits with.
     offStatOverride: 'defense',
-    statusApplication: { statusId: 'Daze', target: 'moveTarget', chance: 0.3 },
+    // A certain Daze is a guaranteed lockout, so it is held to Charges (CLAUDE.md).
+    statusApplication: { statusId: 'Daze', target: 'moveTarget' },
     manaCost: 40,
+    chargesPerFight: 2,
     priority: 0,
     target: 'singleEnemy',
   },
@@ -4583,6 +4585,20 @@ export const moves: Record<string, MoveDefinition> = {
     basePower: 60,
     offStatOverride: 'wisdom',
     statusApplication: { statusId: 'Haunt', target: 'moveTarget' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+  },
+  // Scree's Pangolin: Body Blow's shape on the Beast slate — the armour is the weapon.
+  scaleRake: {
+    id: 'scaleRake',
+    name: 'Scale Rake',
+    tier: 'mid',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    offStatOverride: 'defense',
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',

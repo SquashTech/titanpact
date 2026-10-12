@@ -23,15 +23,15 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1 },
     },
   },
-  // Sentinel's Gloomwatch: Ambush is flat Base Power, so it pays a hero with no Attack to speak of.
+  // Sentinel's Gloomwatch: the gargoyle draws the blow, and answers it.
   nightVigil: {
     id: 'nightVigil',
     name: 'Night Vigil',
-    description: "When this hero's partner is hit, this hero gains Ambush 15.",
+    description: 'When this hero is hit while Provoking, it gains Ambush 20.',
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'ally' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 15 },
+      condition: { relativeTo: 'self', eventTargetHasStatus: 'Provoke' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 20 },
     },
   },
   // Petra's Runestone: Fault Line's Shields are what the runes drink.
@@ -56,15 +56,15 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 10 },
     },
   },
-  // Scree's Riverstone.
-  riverworn: {
-    id: 'riverworn',
-    name: 'Riverworn',
-    description: 'At the end of each round, this hero is washed of one affliction.',
+  // Scree's Pangolin: curled tight, every scale a blade.
+  scaleEdges: {
+    id: 'scaleEdges',
+    name: 'Scale Edges',
+    description: 'When an enemy hits this hero, that enemy starts Bleeding.',
     reactive: {
-      hook: 'RoundEnded',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'cleanse', target: 'self', count: 1 },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'enemy', subjectRole: 'source', targetsOwner: true },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Bleed' },
     },
   },
   // Dune's Worldworm: every crush adds to the bulk Body Crush swings with.
@@ -78,26 +78,22 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1 },
     },
   },
-  // Dune's Duneshade: Undermine's Defense drop, paid on the way under.
-  sinkingSands: {
-    id: 'sinkingSands',
-    name: 'Sinking Sands',
-    description: 'When this hero switches out, both active enemies lose DEF ▼.',
-    reactive: {
-      hook: 'SwitchedOut',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'defense', stages: -1 },
-    },
+  // Dune's Sandstorm: Storm Lash marks, and every Stone hit after it cashes the mark.
+  staticSand: {
+    id: 'staticSand',
+    name: 'Static Sand',
+    description: "This hero's Stone attacks set off Conduct, as Storm attacks do.",
+    setsOffStatus: { statusId: 'Conduct', moveTypes: ['Stone'] },
   },
-  // Cairn's Menhir: Body Blow swings with the Defense this stacks.
-  settlingStone: {
-    id: 'settlingStone',
-    name: 'Settling Stone',
-    description: 'At the end of each round, this hero gains DEF ▲.',
+  // Cairn's Menhir: the stone is raised and the ground answers — its partner's blows ride the higher of Attack and Defense.
+  standingStone: {
+    id: 'standingStone',
+    name: 'Standing Stone',
+    description: 'When this hero enters the battlefield, it sets Bedrock.',
     reactive: {
-      hook: 'RoundEnded',
+      hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1 },
+      effect: { kind: 'setFieldEffect', fieldEffectId: 'bedrock' },
     },
   },
   // Cairn's Barrow: Waystone lays the Shields, the Spirit line spends the Force.
@@ -112,16 +108,16 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'SpiritForce', magnitude: 10 },
     },
   },
-  // Crag's Mountainheart: Juggernaut's lost Speed comes back as armour.
-  immovable: {
-    id: 'immovable',
-    name: 'Immovable',
-    description: 'When this hero loses Speed, it gains Shield 30. Up to 3 times a fight.',
+  // Crag's Snowcap: the first blow shakes the peak loose, and Cold Snap cashes the freeze.
+  snowpack: {
+    id: 'snowpack',
+    name: 'Snowpack',
+    description: 'The first time this hero takes damage each fight, both active enemies are Frozen.',
     reactive: {
-      maxFiresPerFight: 3,
-      hook: 'StatChanged',
-      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'speed' }, eventFieldNegative: 'delta' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 30 },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      oncePerFight: true,
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Freeze' },
     },
   },
   // Sentinel's Cathedral: the wall it raises holds its partner up too.
@@ -158,15 +154,17 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'IronForce', magnitude: 15 },
     },
   },
-  // Dune's Glassback: Firebrand's crits fuse the sand into burning glass.
-  moltenGlass: {
-    id: 'moltenGlass',
-    name: 'Molten Glass',
-    description: 'When this hero lands a critical hit, its target is set Burning.',
+  // Dune's Shimmer: the far side swings at a heat haze, and the worm strikes first.
+  mirageStep: {
+    id: 'mirageStep',
+    name: 'Mirage Step',
+    description: 'The first time this hero enters the battlefield each fight, it gains Barrier for the rest of the round and its next attack goes at +1 priority.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { isCrit: 'true' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      oncePerFight: true,
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Barrier' },
+      alsoEffect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
     },
   },
   // Cairn's Riverbed: the water under every Shield it lays.
@@ -178,6 +176,17 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Shield' } },
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Renew' },
+    },
+  },
+  // Crag's Rootwarden: struck, it roots deeper and mends.
+  deepRoots: {
+    id: 'deepRoots',
+    name: 'Deep Roots',
+    description: 'When this hero takes damage, it gains Renew.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew' },
     },
   },
 };

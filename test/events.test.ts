@@ -382,53 +382,24 @@ function renewGrants(events: readonly CombatEvent[], id: string): number[] {
     .map((e) => e.duration ?? 0);
 }
 
-test('unstoppableGrowth: arriving grants the hero itself its Renew, and nobody else', () => {
-  const state = withPassive(fixture(20), 'a3', 'unstoppableGrowth');
-  const result = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
-
-  assert.deepStrictEqual(renewGrants(result.events, 'a3'), [3]);
-  assert.strictEqual(renewOf(result.state, 'a3'), 2, 'one round spent at the round end');
-  assert.strictEqual(renewOf(result.state, 'a2'), 0, 'the partner is not part of this');
-  assert.strictEqual(renewOf(result.state, 'b1'), 0);
-});
-
-test('unstoppableGrowth: the opening lead counts as arriving', () => {
-  const state = withPassive(fixture(21), 'a1', 'unstoppableGrowth');
-  const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects);
-  assert.strictEqual(renewOf(opened.state, 'a1'), 3, 'three rounds, nothing healed yet');
-});
-
-test('unstoppableGrowth: a pivot out and back re-seeds it — a fresh three rounds, reset rather than added', () => {
-  let state = withPassive(fixture(22), 'a3', 'unstoppableGrowth');
-  state = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config).state;
-  state = resolveRound(state, [{ kind: 'switch', combatantId: 'a3', benchedCombatantId: 'a1' }], config).state;
-  assert.strictEqual(renewOf(state, 'a3'), 1, 'it keeps ticking on the bench');
-
-  const back = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
-  assert.deepStrictEqual(renewGrants(back.events, 'a3'), [3], 'a fresh Renew on the way back in');
-  assert.strictEqual(renewOf(back.state, 'a3'), 2, 'reset to three and ticked once, not 1 + 3');
-});
-
-test('unstoppableGrowth: a passive-applied Renew heals a tenth of the holder\'s max HP whatever its Wisdom', () => {
-  assert.notStrictEqual(
-    heroes.cinderKnight.baseStats.wisdom,
-    heroes.sentinel.baseStats.wisdom,
-    'the two holders must differ in Wisdom for this to prove anything'
-  );
-  const lead = resolveBattleStartEntries(withPassive(fixture(23), 'a1', 'unstoppableGrowth'), 1, heroes, statuses, passives, fieldEffects);
-  const leadTick = resolveRound(lead.state, [], config).events.find(
-    (e) => e.type === 'StatusTicked' && e.combatantId === 'a1' && e.statusId === 'Renew'
-  );
-  const arrival = resolveRound(
-    withPassive(fixture(24), 'a3', 'unstoppableGrowth'),
-    [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }],
+test('deepRoots: a hit grants the struck hero Renew, which heals a tenth of max HP whatever its Wisdom', () => {
+  assert.notStrictEqual(heroes.cinderKnight.baseStats.wisdom, heroes.sentinel.baseStats.wisdom, 'the two holders must differ in Wisdom');
+  const pair = createFightState(23, [{ combatantId: 'a1', heroId: 'cinderKnight', side: 'A' }, { combatantId: 'a2', heroId: 'sentinel', side: 'A' }], [{ combatantId: 'b1', heroId: 'ironWarden', side: 'B' }, { combatantId: 'b2', heroId: 'wildOracle', side: 'B' }]);
+  const state = withPassive(withPassive(pair, 'a1', 'deepRoots'), 'a2', 'deepRoots');
+  const { events, state: after } = resolveRound(
+    state,
+    [
+      { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a1' },
+      { kind: 'move', combatantId: 'b2', moveId: 'ironFist', declaredTarget: 'a2' },
+    ],
     config
   );
-  const arrivalTick = arrival.events.find((e) => e.type === 'StatusTicked' && e.combatantId === 'a3' && e.statusId === 'Renew');
-
-  const tenth = (id: string, s: CombatState) => Math.ceil(getMaxHp(heroes[s.combatants[id].heroId], s.combatants[id]) * 0.1);
-  assert.strictEqual(leadTick && leadTick.type === 'StatusTicked' ? leadTick.amount : -1, tenth('a1', lead.state));
-  assert.strictEqual(arrivalTick && arrivalTick.type === 'StatusTicked' ? arrivalTick.amount : -1, tenth('a3', arrival.state));
+  const tenth = (id: string) => Math.ceil(getMaxHp(heroes[after.combatants[id].heroId], after.combatants[id]) * 0.1);
+  for (const id of ['a1', 'a2']) {
+    assert.deepStrictEqual(renewGrants(events, id), [3], id);
+    const tick = events.find((e) => e.type === 'StatusTicked' && e.combatantId === id && e.statusId === 'Renew');
+    assert.strictEqual(tick && tick.type === 'StatusTicked' ? tick.amount : -1, tenth(id), id);
+  }
 });
 
 test('events: every event has its own road icon in art/events', () => {
