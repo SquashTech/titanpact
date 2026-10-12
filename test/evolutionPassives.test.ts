@@ -389,3 +389,22 @@ test('stone: Mirage Step arrives Barriered and Poised; Standing Stone sets Bedro
   const cairn = resolveBattleStartEntries(withPassive(side(755, ['cairn', 'dune'], ['ironWarden', 'sentinel']), 'a1', 'standingStone'), 0, heroes, statuses, passives, fieldEffects).state;
   assert.strictEqual(cairn.activeFieldEffect?.fieldEffectId, 'bedrock');
 });
+
+test('innate: Unshakeable refuses every stat drop on Crag, and says so; a raise still lands', () => {
+  const base = side(760, ['crag', 'sentinel'], ['ironWarden', 'dune']);
+  const held = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, refusesStatDrops: 'unshakeable' } } };
+  const { state, events } = resolveRound(held, [cast('b2', 'rockToss', 'a1'), cast('b1', 'rendArmor', 'a1'), cast('a2', 'toughenUp', 'a1')], config);
+  assert.ok(!(state.combatants.a1.statStages?.defense! < 0), 'no drop landed');
+  assert.ok(events.some((e) => e.type === 'StatRefused' && e.combatantId === 'a1'));
+  assert.ok((state.combatants.a1.statStages?.attack ?? 0) > 0, 'a raise still lands');
+});
+
+test('innate: Unshakeable+ also refuses an enemy affliction, but not its holder\'s own', () => {
+  const base = side(761, ['crag', 'sentinel'], ['ironWarden', 'dune']);
+  const held = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, refusesAfflictions: 'unshakeablePlus' } } };
+  const enemy = applyStatus(held, 1, 'a1', statuses.Burn, { sourceCombatantId: 'b1' });
+  assert.ok(!hasStatus(enemy.state.combatants.a1, 'Burn'));
+  assert.ok(enemy.events.some((e) => e.type === 'StatusRefused'));
+  const own = applyStatus(held, 1, 'a1', statuses.Provoke, { sourceCombatantId: 'a1' });
+  assert.ok(hasStatus(own.state.combatants.a1, 'Provoke'), 'its own Provoke lands');
+});

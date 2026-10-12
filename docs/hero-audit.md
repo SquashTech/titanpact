@@ -356,3 +356,11 @@ path art existed for the renamed paths. Dune's Trials build carries Rubble Rush.
 
 To watch: Juggernaut is now granted by Pincer's Ironshell alone. Snowpack + Cold Snap is a
 first-blow combo; Standing Stone hands the partner Bedrock every entry.
+
+**Crag's innate** (2026-10-12, per user direction — Vengeful Emblem is a Greataxe's awakening already):
+**Unshakeable**: this hero's stats can't be lowered, by anyone. **Unshakeable+** also refuses every
+negative status another hand lays on it (its own Provoke and costs still land). Engine:
+`PassiveDefinition.refusesStatDrops` / `refusesAfflictions`, stamped on the combatant at fight build;
+a refused drop is a `StatRefused` beat ("Unshakeable: Crag's Defense can't be lowered!"), a refused
+status the existing `StatusRefused`. Vengeful Emblem+ (`bedrockWrath`) is deleted; Vengeful Emblem
+stays the Greataxe's.

@@ -264,6 +264,7 @@ const ACTION_EVENTS: ReadonlySet<CombatEvent['type']> = new Set([
   'ActionBlocked',
   'MoveGuarded',
   'StatusRefused',
+  'StatRefused',
   'ChargeRestored',
 ]);
 
@@ -1357,6 +1358,19 @@ export function buildBeats(
       // failure beat on the caster — the guard is the thing that happened.
       case 'MoveGuarded': {
         push([e], `${name(e.combatantId)} turns it away!`, [], { bannerFocusKind: 'buff' });
+        i++;
+        break;
+      }
+
+      // Unshakeable: a drop that never lands, named by the passive that refused it.
+      case 'StatRefused': {
+        const label = passives[e.passiveId]?.name ?? e.passiveId;
+        push(
+          [e],
+          `${label}: ${name(e.combatantId)}'s ${statLabel(e.stat)} can't be lowered!`,
+          [{ combatantId: e.combatantId, text: 'Unshakeable', className: 'popup-status' }],
+          { bannerLead: `${label} · ${name(e.combatantId)}`, bannerFocus: `${statLabel(e.stat)} held`, bannerFocusKind: 'buff' }
+        );
         i++;
         break;
       }

@@ -270,8 +270,8 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'A', attack: 'S', defense: 'A', intelligence: 'E', wisdom: 'A', speed: 'B', manaPool: 'D' },
     schedule: { offerLevels: [5, 8, 12, 17, 21], midLevel: 9, lateLevel: 18, signatureLevel: 16 },
     signatureMoveId: 'groundsplit',
-    passiveIds: ['vengefulEmblem'],
-    masteredPassiveIds: ['bedrockWrath'],
+    passiveIds: ['unshakeable'],
+    masteredPassiveIds: ['unshakeablePlus'],
   },
   sentinel: {
     id: 'sentinel',

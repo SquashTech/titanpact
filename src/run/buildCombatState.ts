@@ -20,7 +20,7 @@ import { levelOf } from './growth';
 import { moves as moveCatalog } from '../data/moves';
 import type { MoveTier } from '../engine/content';
 import { turnedCurse } from './curse';
-import { enduranceOf, sideImmunitiesOf, switchLockOf, toPassiveInstances } from './passives';
+import { enduranceOf, refusalOf, sideImmunitiesOf, switchLockOf, toPassiveInstances } from './passives';
 import { equipmentStatusGrants, mergeStatusGrants, toStatusInstances } from './statusGrants';
 
 export interface SquadPlacement {
@@ -83,6 +83,8 @@ function placeEntry(
     statuses,
     enduresLeft: enduranceOf(passiveCounts, passiveDefs),
     switchLocked: switchLockOf(passiveCounts, passiveDefs),
+    ...(refusalOf(passiveCounts, passiveDefs, 'refusesStatDrops') ? { refusesStatDrops: refusalOf(passiveCounts, passiveDefs, 'refusesStatDrops') } : {}),
+    ...(refusalOf(passiveCounts, passiveDefs, 'refusesAfflictions') ? { refusesAfflictions: refusalOf(passiveCounts, passiveDefs, 'refusesAfflictions') } : {}),
     ...(sideImmunitiesOf(passiveCounts, passiveDefs) ? { sideStatusImmunities: sideImmunitiesOf(passiveCounts, passiveDefs) } : {}),
     ...(entry.blessed ? { blessed: true } : {}),
     ...(turnedCurse(entry) ? { typeOverride: turnedCurse(entry)!.types } : {}),

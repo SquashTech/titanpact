@@ -58,6 +58,12 @@ export function switchLockOf(counts: Record<PassiveId, number>, passiveDefs: Rec
   return undefined;
 }
 
+/** The first held passive carrying `flag` (Unshakeable's refusals), stamped on the combatant at fight build. */
+export function refusalOf(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>, flag: 'refusesStatDrops' | 'refusesAfflictions'): PassiveId | undefined {
+  for (const [passiveId, stacks] of Object.entries(counts)) if (stacks > 0 && passiveDefs[passiveId]?.[flag]) return passiveId;
+  return undefined;
+}
+
 /** Every status the held passives make the holder's active side refuse (PassiveDefinition.sideRefusesStatuses); undefined when none. */
 export function sideImmunitiesOf(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>): Partial<Record<StatusId, PassiveId>> | undefined {
   const refused: Partial<Record<StatusId, PassiveId>> = {};

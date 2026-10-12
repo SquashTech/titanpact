@@ -346,6 +346,10 @@ export interface PassiveDefinition {
    * wardOn), never a status. The Pact Clock and a self-cost go through, being neither.
    */
   wardedWhileCompanyStands?: true;
+  /** Unshakeable (Crag): the holder's stats can't be lowered, by anyone (state.ts applyStageDelta / applyStatModifierDelta; a StatRefused beat). */
+  refusesStatDrops?: true;
+  /** Unshakeable+: the holder refuses every non-positive status another hand lays on it (statusEngine applyStatus; a StatusRefused beat). */
+  refusesAfflictions?: true;
   /** Still Prey: a far-side actor holding this status cannot aim a single-target move at the owner — spread moves still hit (ward.ts shunnedBy). */
   untargetableByStatus?: StatusId;
   /**
@@ -397,6 +401,8 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.partnerStatGrants !== undefined ||
     passive.wardedWhileCompanyStands !== undefined ||
     passive.untargetableByStatus !== undefined ||
+    passive.refusesStatDrops !== undefined ||
+    passive.refusesAfflictions !== undefined ||
     passive.chargeRider !== undefined ||
     passive.enduresOnce !== undefined ||
     passive.cannotSwitchOut !== undefined ||

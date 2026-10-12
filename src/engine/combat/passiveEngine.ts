@@ -415,7 +415,11 @@ function resolveEffectOn(
         let stages = target.statStages ?? {};
         const stepped: CombatEvent[] = [];
         for (const stat of stats) {
-          const { newValue, landed, capped } = applyStageDelta({ ...target, statStages: stages }, stat, effect.stages);
+          const { newValue, landed, capped, refused } = applyStageDelta({ ...target, statStages: stages }, stat, effect.stages);
+          if (refused) {
+            stepped.push({ type: 'StatRefused', round, combatantId: targetId, stat, passiveId: target.refusesStatDrops! });
+            continue;
+          }
           if (landed === 0) continue;
           stages = { ...stages, [stat]: newValue };
           stepped.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, stages: true, ...(capped ? { capped: true } : {}), newValue });
@@ -436,7 +440,11 @@ function resolveEffectOn(
         let stages = target.statStages ?? {};
         const stepped: CombatEvent[] = [];
         for (const stat of stats) {
-          const { newValue, landed, capped } = applyStageDelta({ ...target, statStages: stages }, stat, amount);
+          const { newValue, landed, capped, refused } = applyStageDelta({ ...target, statStages: stages }, stat, amount);
+          if (refused) {
+            stepped.push({ type: 'StatRefused', round, combatantId: targetId, stat, passiveId: target.refusesStatDrops! });
+            continue;
+          }
           stages = { ...stages, [stat]: newValue };
           stepped.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, stages: true, ...(capped ? { capped: true } : {}), newValue });
         }
@@ -446,7 +454,11 @@ function resolveEffectOn(
       const changes: CombatEvent[] = [];
       for (const stat of stats) {
         // Flat (no move to scale off), but held at the same floor as a move's drop.
-        const { newValue, landed, capped } = applyStatModifierDelta(heroes[target.heroId], { ...target, statModifiers: modifiers }, stat, amount, effect.uncapped);
+        const { newValue, landed, capped, refused } = applyStatModifierDelta(heroes[target.heroId], { ...target, statModifiers: modifiers }, stat, amount, effect.uncapped);
+        if (refused) {
+          changes.push({ type: 'StatRefused', round, combatantId: targetId, stat, passiveId: target.refusesStatDrops! });
+          continue;
+        }
         modifiers = { ...modifiers, [stat]: newValue };
         changes.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, ...(capped ? { capped: true } : {}), newValue });
       }

@@ -785,7 +785,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       // A stage is a stage, whoever casts it; held at ±5, and a change the limit swallowed whole still emits, so the player sees why nothing moved.
       for (const delta of staged) {
         const current = working.combatants[targetId];
-        const { newValue, landed, capped } = applyStageDelta(current, delta.stat, delta.stages);
+        const { newValue, landed, capped, refused } = applyStageDelta(current, delta.stat, delta.stages);
+        if (refused) {
+          events.push({ type: 'StatRefused', round, combatantId: targetId, stat: delta.stat, passiveId: current.refusesStatDrops! });
+          continue;
+        }
         working = {
           ...working,
           combatants: { ...working.combatants, [targetId]: { ...current, statStages: { ...current.statStages, [delta.stat]: newValue } } },
@@ -805,7 +809,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       }
       for (const delta of flatDeltas) {
         const current = working.combatants[targetId];
-        const { newValue, landed, capped } = applyStatModifierDelta(heroes[current.heroId], current, delta.stat, delta.amount);
+        const { newValue, landed, capped, refused } = applyStatModifierDelta(heroes[current.heroId], current, delta.stat, delta.amount);
+        if (refused) {
+          events.push({ type: 'StatRefused', round, combatantId: targetId, stat: delta.stat, passiveId: current.refusesStatDrops! });
+          continue;
+        }
         working = {
           ...working,
           combatants: { ...working.combatants, [targetId]: { ...current, statModifiers: { ...current.statModifiers, [delta.stat]: newValue } } },

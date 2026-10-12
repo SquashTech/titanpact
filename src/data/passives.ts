@@ -1061,6 +1061,13 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
     },
   },
+  // Crag: the rock does not budge — no debuff moves it, whoever casts it, its own costs included.
+  unshakeable: {
+    id: 'unshakeable',
+    name: 'Unshakeable',
+    description: "This hero's stats can't be lowered.",
+    refusesStatDrops: true,
+  },
   // Sentinel: the wall goes up every time it calls the blows onto itself.
   stoneWall: {
     id: 'stoneWall',
@@ -1928,15 +1935,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   },
 
   // --- Stone ---
-  bedrockWrath: {
-    id: 'bedrockWrath',
-    name: 'Vengeful Emblem+',
-    description: 'When this hero takes damage, it gains ATK ▲▲.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 2 },
-    },
+  unshakeablePlus: {
+    id: 'unshakeablePlus',
+    name: 'Unshakeable+',
+    description: "This hero's stats can't be lowered, and no enemy can afflict it with a negative status.",
+    refusesStatDrops: true,
+    refusesAfflictions: true,
   },
   fortress: {
     id: 'fortress',

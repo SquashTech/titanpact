@@ -85,6 +85,10 @@ export interface Combatant {
   switchLocked?: boolean;
   /** Statuses this combatant's active side refuses while it stands active, each with the passive that refuses it (PassiveDefinition.sideRefusesStatuses), set at fight build. Read by sideRefuses. */
   sideStatusImmunities?: Partial<Record<StatusId, PassiveId>>;
+  /** Unshakeable (Crag): the passive by which this combatant's stats can't be lowered, by anyone. Stamped at fight build. */
+  refusesStatDrops?: PassiveId;
+  /** Unshakeable+: the passive by which this combatant refuses every non-positive status. Stamped at fight build. */
+  refusesAfflictions?: PassiveId;
   /** Stat gains a `permanent` passive statDelta banked this fight, for the roster to keep (run/runProgress.ts recordPermanentStatGains). */
   permanentStatGains?: Partial<Record<StatKey, number>>;
   fainted: boolean;
@@ -654,8 +658,9 @@ export function applyStatModifierDelta(
   delta: number,
   /** Past the ×4 ceiling — Stampede's Speed alone (CLAUDE.md "Stat modifiers"). */
   uncapped = false
-): { newValue: number; landed: number; capped: boolean } {
+): { newValue: number; landed: number; capped: boolean; refused?: true } {
   const current = combatant.statModifiers[stat] ?? 0;
+  if (delta < 0 && combatant.refusesStatDrops) return { newValue: current, landed: 0, capped: false, refused: true };
   // A modifier already past the ceiling (an uncapped rise) is never clawed back by a later change; it just cannot climb further.
   const ceiling = uncapped ? STAT_HARD_CAP : Math.max(statModifierCeiling(hero, combatant, stat), current);
   const newValue = Math.min(ceiling, Math.max(statModifierFloor(hero, combatant, stat), current + delta));
@@ -674,8 +679,9 @@ export function stageMultiplier(stages: number): number {
 }
 
 /** A change in steps, held at ±STAGE_LIMIT: the stage to store, the steps that landed, and whether the limit took any. */
-export function applyStageDelta(combatant: Combatant, stat: StatKey, steps: number): { newValue: number; landed: number; capped: boolean } {
+export function applyStageDelta(combatant: Combatant, stat: StatKey, steps: number): { newValue: number; landed: number; capped: boolean; refused?: true } {
   const current = combatant.statStages?.[stat] ?? 0;
+  if (steps < 0 && combatant.refusesStatDrops) return { newValue: current, landed: 0, capped: false, refused: true };
   const newValue = Math.min(STAGE_LIMIT, Math.max(-STAGE_LIMIT, current + steps));
   return { newValue, landed: newValue - current, capped: newValue !== current + steps };
 }

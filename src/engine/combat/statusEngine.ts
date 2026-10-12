@@ -194,6 +194,10 @@ export function applyStatus(state: CombatState, round: number, combatantId: stri
   if (!combatant || combatant.fainted) return { state, events: [] };
   const refused = sideRefuses(state, round, combatantId, def.id);
   if (refused) return { state, events: [refused] };
+  // Unshakeable+: the holder refuses every affliction another hand lays on it; its own Provoke and costs still land.
+  if (!def.positive && combatant.refusesAfflictions && params.sourceCombatantId !== combatantId) {
+    return { state, events: [{ type: 'StatusRefused', round, combatantId, statusId: def.id, holderCombatantId: combatantId, passiveId: combatant.refusesAfflictions }] };
+  }
 
   const existing = combatant.statuses[def.id];
   // A timed status carries no number: every application lands it whole, back at its first round.

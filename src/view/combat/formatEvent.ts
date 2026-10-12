@@ -237,6 +237,9 @@ export function formatEvents(
           className: 'log-heal',
         });
         break;
+      case 'StatRefused':
+        lines.push({ key, text: `${passives[e.passiveId]?.name ?? e.passiveId} keeps ${name(e.combatantId)}'s ${e.stat} from dropping`, className: 'log-heal' });
+        break;
       case 'StatusRefused':
         lines.push({
           key,
