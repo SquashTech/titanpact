@@ -240,6 +240,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
       move.manaDiscountOnUse ||
       move.chargesPerFight != null ||
       move.restoresCharges ||
+      move.tags?.includes('slice') ||
       move.typeFollowsUser ||
       move.basePowerGainOnUse ||
       move.randomBasePower ||
@@ -696,6 +697,9 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
                   : `up to ${move.basePowerGainOnUse.max}, this hero, this fight`
               }
             />
+          )}
+          {move.tags?.includes('slice') && (
+            <EffectRow glyph={<MoveKindGlyph kind="physical" />} text="A Slice" note="a cutting move, of any type — some passives work only with Slices" />
           )}
           {move.restoresCharges && (
             <EffectRow glyph={<MoveKindGlyph kind="buff" />} text={restoresChargesText(move.restoresCharges)} note="never past a move's own count" />

@@ -1,15 +1,15 @@
 import type { PassiveDefinition } from '../../engine/content';
 
 export const naturePathPassives: Record<string, PassiveDefinition> = {
-  // Mordrax's Wildheart: Impale poisons every hit, so a Beast hit sets the table for both.
-  feralRend: {
-    id: 'feralRend',
-    name: 'Feral Rend',
-    description: 'Every Beast attack this hero lands leaves its target Bleeding.',
+  // Mordrax's Wildfire: Impale poisons every hit, so the thorns are always primed to catch.
+  brushburn: {
+    id: 'brushburn',
+    name: 'Brushburn',
+    description: 'When this hero hits a Poisoned foe, it is set Burning.',
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Beast' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Bleed' },
+      condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Poison' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
     },
   },
   // Hollowbark's Rootstone: an absorbed hit is still a hit, so Barbs keeps firing behind it.
@@ -23,15 +23,15 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 15 },
     },
   },
-  // Tixwick's Ghost Mantis.
+  // Tixwick's Ghost Mantis: each cut marks a foe, so Spooky Slice carries through to its partner.
   deadLeaf: {
     id: 'deadLeaf',
     name: 'Dead Leaf',
-    description: 'When this hero knocks an enemy out, both active enemies are Haunted.',
+    description: 'When this hero lands a Slice, its target is Haunted.',
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Haunt' },
+      condition: { relativeTo: 'self', subjectRole: 'source', moveTag: 'slice' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Haunt' },
     },
   },
   // Morel's Toadstool: per grant, so Wild Bloom pays both allies.
@@ -45,15 +45,15 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], stages: 1 },
     },
   },
-  // Morel's Corpselight: the Poison plants the mark, the grafted Spirit line spreads through it.
-  graveglow: {
-    id: 'graveglow',
-    name: 'Graveglow',
-    description: 'When this hero Poisons an enemy, that enemy is Haunted.',
+  // Morel's Fairy Ring: Sporefall poisons every round, so this is about 10 Mana a round.
+  fairyTithe: {
+    id: 'fairyTithe',
+    name: 'Fairy Tithe',
+    description: 'When this hero Poisons an enemy, it gains 10 Mana, past its pool.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Haunt' },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
     },
   },
   // Lotus's Thousand Petals.
@@ -89,7 +89,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
     },
   },
-  // Mordrax's Ironbark: Bastion's plate hardens into the bark it strikes with.
+  // Mordrax's Ironbark: Parry's plate hardens into the bark it strikes with.
   ironsap: {
     id: 'ironsap',
     name: 'Ironsap',
@@ -100,15 +100,15 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
-  // Hollowbark's Wraithwood: every blow it takes wakes something for Poltergeist to spread through.
-  whisperingBoughs: {
-    id: 'whisperingBoughs',
-    name: 'Whispering Boughs',
-    description: 'When this hero takes damage, a random enemy is Haunted.',
+  // Hollowbark's Rimewood: the slowest tank in the type drags its attackers down to its pace.
+  numbingRime: {
+    id: 'numbingRime',
+    name: 'Numbing Rime',
+    description: 'When an enemy hits this hero, that enemy loses SPD ▼.',
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Haunt' },
+      condition: { relativeTo: 'enemy', subjectRole: 'source', targetsOwner: true },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: 'speed', stages: -1 },
     },
   },
   // Tixwick's Reaper: Serrated Slice opens the wound, the scythe follows it in.

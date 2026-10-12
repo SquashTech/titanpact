@@ -16,7 +16,19 @@ import type { Action } from '../src/engine/combat/actions';
 import { hasStatus, isMoveUsable, resolveManaCost } from '../src/engine/state';
 import type { CombatState } from '../src/engine/state';
 
-const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
+// Poised as an innate left the roster with Tixwick's Twin Scythes; the card stays here to keep the
+// MoveUsed hook and the Poised status covered.
+const poised = {
+  id: 'poised',
+  name: 'Poised',
+  description: 'When this hero uses a move that deals no damage, its next attack goes at +1 priority.',
+  reactive: {
+    hook: 'MoveUsed',
+    condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+    effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+  },
+} as const;
+const config = { typeChart, heroes, moves, statuses, passives: { ...passives, poised }, fieldEffects, benchHpRegenFlat: 5 };
 
 function withPassive(state: CombatState, combatantId: string, passiveId: string): CombatState {
   const c = state.combatants[combatantId];
@@ -179,7 +191,7 @@ test('tall grass: Poised lifts only an attack — a second stance move neither r
   assert.ok(hasStatus(next.combatants.a1, 'Poised'), 'and not spent');
 });
 
-test('tall grass: Lure leaves Tixwick Poised whenever it is struck', () => {
+test('tall grass: Lure gives Tixwick Ambush whenever it is struck', () => {
   const { state: next } = resolveRound(mantisFixture(415, 'lure'), [{ kind: 'move', combatantId: 'b1', moveId: 'stormArrow', declaredTarget: 'a1' } as Action], config);
-  assert.ok(hasStatus(next.combatants.a1, 'Poised'));
+  assert.ok(hasStatus(next.combatants.a1, 'Ambush'));
 });

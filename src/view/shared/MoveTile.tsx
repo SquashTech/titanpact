@@ -434,6 +434,7 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   if (move.manaCostAll) parts.push('Spends all Mana');
   if (move.firstTurnOnly) parts.push('First turn out only');
   if (move.tags?.includes('arrow')) parts.push('Arrow');
+  if (move.tags?.includes('slice')) parts.push('Slice');
   if (move.restoresCharges) parts.push(restoresChargesText(move.restoresCharges));
 
   if (move.fieldEffectApplication) {

@@ -19,7 +19,7 @@ import { addRosterEntry, createRosterEntry, createRunState, type RunState } from
 /** The rewire is rare by rule: a new holder is a decision, not a habit. One a line. */
 const REWIRES = [
   'cinderKnight-explosive',
-  'hollowbark-wraithwood',
+  'hollowbark-rimewood',
   'wildOracle-druid',
   'revenant-wraithblade',
   'sorrow-dirge',

@@ -106,14 +106,6 @@ test('evolution passives: Ready Stance answers every enemy that steps onto the f
   assert.strictEqual(state.combatants.a1.statStages?.attack, 1);
 });
 
-test('evolution passives: Dead Leaf Haunts the enemies still standing when its hit knocks one out', () => {
-  const base = withHp(withPassive(threeVThree(703), 'a1', 'deadLeaf'), 'b1', 1);
-  const { state, events } = resolveRound(base, [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' } as Action], config);
-  const hit = events.find((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'a1');
-  assert.ok(hit && hit.type === 'DamageDealt' && hit.finishing, 'the hit finished b1');
-  assert.ok(hasStatus(state.combatants.b2, 'Haunt'), 'the partner is Haunted');
-});
-
 // --- Water, second pass (docs/hero-audit.md) ---
 
 test('evolution passives: Scald and Mire hear Drag — a passive-made Speed drop costs the foe Defense and Poisons it', () => {
@@ -423,4 +415,69 @@ test('stone: Grave Watch Haunts whoever hits Cairn\'s partner, and not whoever h
   const { state } = resolveRound(base, [cast('b1', 'ironFist', 'a2'), cast('b2', 'rockToss', 'a1')], config);
   assert.ok(hasStatus(state.combatants.b1, 'Haunt'));
   assert.ok(!hasStatus(state.combatants.b2, 'Haunt'));
+});
+
+// --- Nature, second pass (docs/hero-audit.md) ---
+
+function withMana(state: CombatState, combatantId: string): CombatState {
+  return { ...state, combatants: { ...state.combatants, [combatantId]: { ...state.combatants[combatantId], currentMana: 999 } } };
+}
+
+const cut = (combatantId: string, moveId: string, target: string) => ({ kind: 'move', combatantId, moveId, declaredTarget: target }) as Action;
+const hitsOn = (events: readonly { type: string }[], source: string, target: string) =>
+  events.filter((e) => e.type === 'DamageDealt' && (e as { sourceCombatantId?: string }).sourceCombatantId === source && (e as { targetCombatantId?: string }).targetCombatantId === target).length;
+
+test('evolution passives: Dead Leaf Haunts whatever a Slice lands on, and nothing else does', () => {
+  const base = withMana(withPassive(threeVThree(703), 'a1', 'deadLeaf'), 'a1');
+  assert.ok(hasStatus(resolveRound(base, [cut('a1', 'leafSlice', 'b1')], config).state.combatants.b1, 'Haunt'));
+  assert.ok(!hasStatus(resolveRound(base, [cut('a1', 'singe', 'b1')], config).state.combatants.b1, 'Haunt'), 'Singe is no Slice');
+});
+
+test('nature: Twin Scythes makes every Slice Bleed; Twin Scythes+ strikes a Slice an extra time and nothing else', () => {
+  for (const seed of [731, 732, 733, 734]) {
+    const base = withMana(withPassive(threeVThree(seed), 'a1', 'twinScythes'), 'a1');
+    assert.ok(hasStatus(resolveRound(base, [cut('a1', 'leafSlice', 'b1')], config).state.combatants.b1, 'Bleed'), `seed ${seed}`);
+  }
+  const mastered = withMana(withPassive(threeVThree(735), 'a1', 'twinScythesPlus'), 'a1');
+  assert.strictEqual(hitsOn(resolveRound(mastered, [cut('a1', 'leafSlice', 'b1')], config).events, 'a1', 'b1'), 2);
+  assert.strictEqual(hitsOn(resolveRound(mastered, [cut('a1', 'singe', 'b1')], config).events, 'a1', 'b1'), 1);
+});
+
+test('nature: Brushburn sets a Poisoned foe Burning, and a clean one is left alone', () => {
+  const base = withMana(withPassive(threeVThree(736), 'a1', 'brushburn'), 'a1');
+  const poisoned = applyStatus(base, 1, 'b1', statuses.Poison, { magnitude: 5, duration: 3 }).state;
+  assert.ok(hasStatus(resolveRound(poisoned, [cut('a1', 'heavyBlow', 'b1')], config).state.combatants.b1, 'Burn'));
+  assert.ok(!hasStatus(resolveRound(base, [cut('a1', 'heavyBlow', 'b1')], config).state.combatants.b1, 'Burn'));
+});
+
+test('nature: Numbing Rime slows the enemy that hits its holder', () => {
+  const base = withPassive(threeVThree(737), 'a1', 'numbingRime');
+  const { state } = resolveRound(base, [cut('b1', heroes.ironWarden.moveIds[0], 'a1')], config);
+  assert.strictEqual(state.combatants.b1.statStages?.speed, -1);
+});
+
+test('nature: Fairy Tithe pays 10 Mana, past the pool, for a Poison its holder lays', () => {
+  const base = withPassive(threeVThree(738), 'a1', 'fairyTithe');
+  const full = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentMana: 200 } } };
+  const { state } = resolveRound(full, [cut('a1', 'toxicSpores', 'b1')], config);
+  assert.ok(hasStatus(state.combatants.b1, 'Poison'));
+  assert.ok(state.combatants.a1.currentMana > 200 - moves.toxicSpores.manaCost, 'the tithe came back');
+});
+
+test("nature: Unfurl reads Renew's tick, so one Renew pays a stage at each round end", () => {
+  let base = withPassive(threeVThree(739), 'a1', 'unfurl');
+  base = applyStatus(base, 1, 'a1', statuses.Renew, {}).state;
+  const one = resolveRound(base, [], config).state;
+  assert.strictEqual(one.combatants.a1.statStages?.intelligence, 1);
+  const two = resolveRound({ ...one, round: one.round + 1 }, [], config).state;
+  assert.strictEqual(two.combatants.a1.statStages?.intelligence, 2);
+});
+
+test('nature: every move named for a cut is a Slice — the tag the player reads on the move, and Twin Scythes reads', () => {
+  const { signatureMoves } = require('../src/data/signatures') as typeof import('../src/data/signatures');
+  for (const move of [...Object.values(moves), ...Object.values(signatureMoves)]) {
+    if (/\b(Slice|Blades?)\b/.test(move.name)) assert.ok(move.tags?.includes('slice'), `${move.id} is named for a cut but is no Slice`);
+  }
+  for (const id of ['cutthroat', 'thousandCuts', 'hamstring', 'runeslash', 'hoarfrostEdge']) assert.ok(moves[id].tags?.includes('slice'), id);
+  assert.ok(signatureMoves.guillotine.tags?.includes('slice'));
 });

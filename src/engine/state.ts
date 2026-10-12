@@ -285,6 +285,17 @@ export function moveForHero(move: MoveDefinition, hero: HeroDefinition): MoveDef
   return moveForPrimaryType(move, hero.types[0]);
 }
 
+/** How many times a damaging move strikes for this combatant: its own `hitCount`, plus any held passive's `extraHits` on a tag the move carries. */
+export function hitCountFor(move: MoveDefinition, combatant: Combatant, passiveDefs: Record<PassiveId, PassiveDefinition>): number {
+  let hits = move.hitCount ?? 1;
+  if (move.kind !== 'damage' || !move.tags) return hits;
+  for (const instance of Object.values(combatant.passives)) {
+    const extra = passiveDefs[instance.passiveId]?.extraHits;
+    if (extra && move.tags.includes(extra.moveTag)) hits += extra.hits;
+  }
+  return hits;
+}
+
 /** The same, off a bare primary type — for fight-free surfaces that hold a HealCaster (types, primary first) rather than a hero. */
 export function moveForPrimaryType(move: MoveDefinition, primary: TypeId | undefined): MoveDefinition {
   return move.typeFollowsUser && primary !== undefined && move.type !== primary ? { ...move, type: primary } : move;

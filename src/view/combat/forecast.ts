@@ -1,6 +1,6 @@
 import type { MoveDefinition } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { activePartnerTypes, chargesLeft, effectiveTypes, getMaxHp, moveForHero, resolveCastBasePower } from '../../engine/state';
+import { activePartnerTypes, chargesLeft, effectiveTypes, getMaxHp, hitCountFor, moveForHero, resolveCastBasePower } from '../../engine/state';
 import { healBlocked } from '../../engine/combat/statusEngine';
 import { collectPassiveDamageModifiers } from '../../engine/combat/passiveEngine';
 import { shieldHeld } from '../../engine/status/shield';
@@ -90,7 +90,7 @@ export function forecastDamage(authored: MoveDefinition, combat: CombatState, at
   const attackerTypes = effectiveTypes(attackerHero, attacker);
   const defenderTypes = effectiveTypes(defenderHero, defender);
   const typeFloor = fieldTypeMultFloor(move.type, fieldEffectCtx);
-  const hits = move.hitCount ?? 1;
+  const hits = hitCountFor(move, attacker, passives);
 
   // One hit as resolveRound lands it, short of a crit: the formula, then rounded.
   const hit = (variance: number) =>

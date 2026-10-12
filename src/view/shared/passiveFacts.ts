@@ -320,6 +320,7 @@ function reactiveFacts(reactive: NonNullable<PassiveDefinition['reactive']>): Pa
   rows.push(effectFact(reactive.effect, reactive.condition, reactive.hook));
   if (reactive.alsoEffect) rows.push({ ...effectFact(reactive.alsoEffect, reactive.condition, reactive.hook), label: 'And' });
   if (reactive.condition.moveTag === 'arrow') rows.push({ label: 'Only', text: 'An Arrow', glyph: { kind: 'move', move: 'physical' } });
+  if (reactive.condition.moveTag === 'slice') rows.push({ label: 'Only', text: 'A Slice', glyph: { kind: 'move', move: 'physical' } });
   if (reactive.condition.finishingBlow) rows.push({ label: 'Only', text: 'A hit that knocks its target out', glyph: { kind: 'stat', stat: 'attack' } });
   if (reactive.condition.eventTargetHasStatus) rows.push({ label: 'While', text: `The one struck is ${statusName(reactive.condition.eventTargetHasStatus)}`, glyph: { kind: 'status', statusId: reactive.condition.eventTargetHasStatus }, color: 'status' });
   if (reactive.condition.sideOutspeeds) rows.push({ label: 'While', text: 'Both active allies move before both active enemies', glyph: { kind: 'stat', stat: 'speed' } });
@@ -347,6 +348,10 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
     if (needs && needs.length > 0) {
       rows.push({ label: 'While', text: `The target has ${needs.map(statusName).join(' and ')}`, glyph: { kind: 'status', statusId: needs[0] }, color: 'status' });
     }
+  }
+  if (def.extraHits) {
+    const family = def.extraHits.moveTag === 'slice' ? 'Slice' : def.extraHits.moveTag === 'arrow' ? 'Arrow' : 'tagged move';
+    rows.push({ label: 'Hits', text: `Every ${family} strikes ${def.extraHits.hits === 1 ? 'an extra time' : `${def.extraHits.hits} extra times`}`, glyph: { kind: 'move', move: 'physical' } });
   }
   if (def.conditionalStatGrants?.requiresFastest) {
     rows.push({ label: 'While', text: 'It is faster than every other hero on the field', glyph: { kind: 'stat', stat: 'speed' } });

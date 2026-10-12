@@ -329,6 +329,8 @@ export interface PassiveDefinition {
    * hit's target (resolveRound). Read off the pre-cast board, so the preview and the cast agree.
    */
   chargeRider?: { moveTag: MoveTag; when: 'last' | 'full'; priorityBonus?: number; statusId?: StatusId };
+  /** Twin Scythes+ (Tixwick): the holder's damaging moves carrying `moveTag` strike `hits` more times, as a `hitCount` would (state.ts hitCountFor). */
+  extraHits?: { moveTag: MoveTag; hits: number };
   /** The one exception to the round rule (a passive affects each hero at most once a round): every firing lands — Surging Intellect, whose verb is every Mana gained. */
   everyFiring?: true;
   /** A second reaction on its own hook and condition, sharing the card's caps (Swell: a physical hit and a magical one pay different stats). */
@@ -406,6 +408,7 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.refusesStatDrops !== undefined ||
     passive.refusesAfflictions !== undefined ||
     passive.chargeRider !== undefined ||
+    passive.extraHits !== undefined ||
     passive.enduresOnce !== undefined ||
     passive.cannotSwitchOut !== undefined ||
     passive.sideRefusesStatuses !== undefined ||
@@ -472,8 +475,8 @@ export type SelfHpCost =
   /** End at `amount` HP. Never heals. */
   | { mode: 'reduceToHp'; amount: number };
 
-/** A family label a passive can read across types (docs/charges.md): Squall's Arrows, Barrier's guard. Never a type. */
-export type MoveTag = 'arrow' | 'guard';
+/** A family label a passive can read across types (docs/charges.md): Squall's Arrows, Barrier's guard, Tixwick's Slices. Never a type. */
+export type MoveTag = 'arrow' | 'guard' | 'slice';
 
 /**
  * A narrowed metamorphic move (Quiver, docs/archers.md): faces only from moves carrying `poolTag`, of

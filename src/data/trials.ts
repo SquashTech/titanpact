@@ -278,15 +278,15 @@ export const trials: Record<string, TrialDefinition> = {
     name: 'The Undergrowth',
     line: 'Nothing here strikes twice. It only has to touch you once.',
     gameplan: 'Smother both foes in Poison from every angle at once — Morel’s spores each round, Sylva’s Renew, Hollowbark’s bark, Mordax’s and Tixwick’s blades — and let the ticks bring them under half for Guillotine.',
-    cover: 'Hollowbark’s Rock Toss, Mordax’s Body Blow, Sylva’s Tremor and Lotus’s Torrent answer Fire; Mordax’s Iron Fist, Tixwick’s Serrated Slice and Sylva’s Glimmer answer Frost; Morel’s Soul Rend and Sylva’s Glimmer answer Shadow; Hollowbark’s Ice Shard and Mordax’s Thunderclap answer Beast.',
+    cover: 'Hollowbark’s Rock Toss, Mordax’s Body Blow, Sylva’s Tremor and Lotus’s Torrent answer Fire; Mordax’s Iron Fist and Sylva’s Glimmer answer Frost; Sylva’s Glimmer answers Shadow; Hollowbark’s Ice Shard, Mordax’s Thunderclap and Tixwick’s Whirling Blades answer Beast.',
     leads: ['morel', 'wildOracle'],
     team: {
       name: 'The Undergrowth',
       slots: [
         {
           heroId: 'morel',
-          pathId: 'morel-corpselight',
-          moveIds: ['sporestorm', 'blight', 'soulRend', 'rootbind'],
+          pathId: 'morel-fairyRing',
+          moveIds: ['sporestorm', 'blight', 'overload', 'rootbind'],
           itemIds: ['staff.mythic', 'robe.mythic', 'tome.mythic'],
         },
         {
@@ -309,8 +309,8 @@ export const trials: Record<string, TrialDefinition> = {
         },
         {
           heroId: 'tixwick',
-          pathId: 'tixwick-reaper',
-          moveIds: ['guillotine', 'thornWhip', 'serratedSlice', 'pinDown'],
+          pathId: 'tixwick-thresher',
+          moveIds: ['guillotine', 'thornWhip', 'whirlingBlades', 'leafSlice'],
           itemIds: ['sword.mythic', 'spear.mythic', 'boots.mythic'],
         },
         {

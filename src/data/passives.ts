@@ -174,12 +174,12 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
     name: 'Barbs',
     // The Leathers'. A true counter-attack is not expressible — there is no `damage` effect, and a
     // target-role DamageDealt cannot reach its attacker (triggerTarget is the DEFENDER whatever the
-    // condition read) — so this hits activeEnemies instead. Lower than Impale's 5: it lands on both.
-    description: 'When this hero takes damage, enemies suffer Poison 3.',
+    // condition read) — so this hits activeEnemies instead. Impale's 5, on both.
+    description: 'When this hero takes damage, enemies suffer Poison 5.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Poison', magnitude: 3, duration: 3 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Poison', magnitude: 5, duration: 3 },
     },
   },
   manaWard: {
@@ -778,12 +778,12 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   lure: {
     id: 'lure',
     name: 'Lure',
-    description: 'When this hero takes damage, its next attack goes at +1 priority.',
-    // The orchid mantis: it is struck because it looks like a flower, and answers before the striker moves again.
+    description: 'When this hero takes damage, it gains Ambush 20.',
+    // The orchid mantis: struck because it looks like a flower, and the next cut is the answer.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 20 },
     },
   },
   magmaHide: {
@@ -969,14 +969,16 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 45 },
     },
   },
-  poised: {
-    id: 'poised',
-    name: 'Poised',
-    description: 'When this hero uses a move that deals no damage, its next attack goes at +1 priority.',
+  // Tixwick's: a Slice is any move tagged 'slice' (the blade family across types), so the innate
+  // reads the family, never the element.
+  twinScythes: {
+    id: 'twinScythes',
+    name: 'Twin Scythes',
+    description: 'Every Slice this hero lands leaves its target Bleeding.',
     reactive: {
-      hook: 'MoveUsed',
-      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', moveTag: 'slice' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Bleed' },
     },
   },
   sulphur: {
@@ -1543,10 +1545,10 @@ const innatePassives: Record<string, PassiveDefinition> = {
   unfurl: {
     id: 'unfurl',
     name: 'Unfurl',
-    description: 'When this hero gains Renew, it gains INT ▲.',
+    description: "Each time this hero's Renew heals it, it gains INT ▲.",
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' } },
       effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
@@ -1988,11 +1990,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   thornmail: {
     id: 'thornmail',
     name: 'Barbs+',
-    description: 'When this hero takes damage, enemies suffer Poison 8.',
+    description: 'When this hero takes damage, enemies suffer Poison 10.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Poison', magnitude: 8, duration: 3 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Poison', magnitude: 10, duration: 3 },
     },
   },
 
@@ -2324,27 +2326,16 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], stages: -2 },
     },
   },
-  // Poised carries no figure to double, so the mastered stance pays twice: the strike still goes a
-  // bracket early, and it lands with Ambush behind it. Two cards on the one trigger, read as one.
-  deathtrap: {
-    id: 'deathtrap',
-    name: 'Poised+',
-    description: 'When this hero uses a move that deals no damage, its next attack goes at +1 priority and gains Ambush 30.',
+  twinScythesPlus: {
+    id: 'twinScythesPlus',
+    name: 'Twin Scythes+',
+    description: "Every Slice this hero lands leaves its target Bleeding, and this hero's Slices strike an extra time.",
     reactive: {
-      hook: 'MoveUsed',
-      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', moveTag: 'slice' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Bleed' },
     },
-  },
-  deathtrapEdge: {
-    id: 'deathtrapEdge',
-    name: 'Poised+',
-    description: 'When this hero uses a move that deals no damage, it gains Ambush 30.',
-    reactive: {
-      hook: 'MoveUsed',
-      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 30 },
-    },
+    extraHits: { moveTag: 'slice', hits: 1 },
   },
   // --- Starfall ---
   nettlestorm: {
@@ -2431,7 +2422,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -2 },
     },
   },
-  // Poised carries no figure to double, so the mastered draw pays twice, as Deathtrap does.
+  // Poised carries no figure to double, so the mastered draw pays twice.
   iaijutsu: {
     id: 'iaijutsu',
     name: 'Iaido+',
@@ -2533,10 +2524,10 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   fullBloom: {
     id: 'fullBloom',
     name: 'Unfurl+',
-    description: 'When this hero gains Renew, it gains INT ▲▲.',
+    description: "Each time this hero's Renew heals it, it gains INT ▲▲.",
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' } },
       effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
     },
   },
@@ -2602,7 +2593,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'damage', target: 'randomEnemy', percentMaxHp: 0.1 },
     },
   },
-  // Poised carries no figure to double, so the mastered read pays twice, as Deathtrap does.
+  // Poised carries no figure to double, so the mastered read pays twice.
   satori: {
     id: 'satori',
     name: 'Foresight+',

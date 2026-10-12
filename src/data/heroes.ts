@@ -338,20 +338,20 @@ export const heroes: Record<string, HeroDefinition> = {
     passiveIds: ['barbs'],
     masteredPassiveIds: ['thornmail'],
   },
-  // From the Tall Grass: the mantis. The roster's top Attack short of the bears, on Speed 45 —
-  // slow, and first anyway: every move that deals no damage leaves it Poised to strike early.
+  // From the Tall Grass: the mantis. The roster's top Attack short of the bears, on Speed 45, and
+  // every cut it makes is a Slice: each one leaves its target Bleeding.
   tixwick: {
     id: 'tixwick',
     name: 'Tixwick',
     types: ['Nature'],
     baseStats: { hp: 200, attack: 105, defense: 50, intelligence: 20, wisdom: 50, speed: 45, manaPool: 80, mpRegen: 10 },
-    moveIds: ['ivySpike', 'lieInWait'],
+    moveIds: ['reedSlice', 'lieInWait'],
     unlock: 'bundle.tallGrass',
     growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'D', manaPool: 'S' },
     schedule: { offerLevels: [6, 10, 11, 19, 24], midLevel: 11, lateLevel: 20, signatureLevel: 18 },
     signatureMoveId: 'guillotine',
-    passiveIds: ['poised'],
-    masteredPassiveIds: ['deathtrap', 'deathtrapEdge'],
+    passiveIds: ['twinScythes'],
+    masteredPassiveIds: ['twinScythesPlus'],
   },
 
   // --- Light ---

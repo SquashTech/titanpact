@@ -36,6 +36,7 @@ import {
   isLockedIn,
   isMoveUsable,
   chargesLeft,
+  hitCountFor,
   canSwitchOut,
   resolveCastBasePower,
   resolveManaCost,
@@ -236,7 +237,7 @@ function expectedHit(state: CombatState, casterId: string, move: MoveDefinition,
     fieldTypeMultFloor(move.type, ctxField)
   ).damage;
 
-  return per * critTerm * (move.hitCount ?? 1);
+  return per * critTerm * hitCountFor(move, attacker, passives);
 }
 
 /**

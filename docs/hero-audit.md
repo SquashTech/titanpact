@@ -372,3 +372,40 @@ drops the +1 priority — the entry Barrier is the card. **Static Sand** and Fir
 with its Defense 90 under it) instead of Body Blow, off its own pool. **Barrow-Call → Grave Watch**:
 an enemy that hits Cairn's partner is Haunted. Engine: `targetsPartner` condition. Cairn's Trials
 build carries Tectonic Slam.
+
+## Nature, second pass (2026-10-12, per user direction)
+
+Beast and Stone twice, Spirit three times across twelve grafts; spread so each type appears once
+(Storm unused).
+
+| Hero | Path (was) | Graft (was) | Move (was) | Passive |
+|---|---|---|---|---|
+| Mordrax | Wildfire (Wildheart) | Fire (Beast) | Firebrand (Maul) | **Brushburn**: a hit on a Poisoned foe sets it Burning — Impale primes it (was Feral Rend) |
+| Mordrax | Ironbark | Iron (Stone) | Parry (Bastion) — Shield and ATK ▲, so Ironsap pays ▲▲ | Ironsap, kept |
+| Hollowbark | Rimewood (Wraithwood), rewire kept | Frost (Spirit) | Quick Freeze (Poltergeist) | **Numbing Rime**: an enemy that hits it loses SPD ▼ (was Whispering Boughs) |
+| Tixwick | Thresher (Reaper) | Mech (Iron) | Whirling Blades (Serrated Slice) | Reaping, kept |
+| Morel | Fairy Ring (Corpselight) | Arcane (Spirit) | Overload (Unquiet) | **Fairy Tithe**: Poisoning an enemy gives 10 Mana, past the pool — about 10 a round off Sporefall (was Graveglow) |
+
+**Tixwick is about slicing.** A **Slice** is a move tag (`MoveTag 'slice'`), not a type: every move
+named Slice or Blade(s), plus Cutthroat, Thousand Cuts, Hamstring, Runeslash, Hoarfrost Edge,
+Guillotine and Draw Cut — a test pins the names. The player reads it on the move ("Slice" in the
+summary, a row in the move detail). Innate **Twin Scythes**: every Slice it lands Bleeds (Slices
+are 50% bare). **Twin Scythes+**: that, and its Slices strike an extra time. Kit **Reed Slice**
+(new Early Nature, Pow 40, 20 mana, 50% Bleed) replaces Ivy Spike, which joins its pool.
+**Orchid**'s Lure: taking damage gives Ambush 20 (Poised already lifted the strike after Provoke).
+**Ghost Mantis**'s Dead Leaf: a Slice it lands Haunts its target (was: a KO Haunts both). Poised as
+a card is deleted (the status stays, Mirage Step's); Poised+ with it.
+
+**Lotus**: Unfurl reads Renew's TICK (`StatusTicked`), not its landing — one Regrowth is INT ▲ at
+each of three round ends; Unfurl+ ▲▲ a tick. The sim and play have her among the weakest; the
+next lever, if needed, is Petalfall's level (22).
+
+**Hollowbark**: Barbs Poison 3 → 5, Barbs+ 8 → 10. Barbs is also the Leathers' awakening, which
+rises with it (the awakening is priced flat, so the item budget is unmoved).
+
+Engine: `MoveTag 'slice'`; `PassiveDefinition.extraHits` (`hitCountFor` in state.ts, read by the
+resolver, the forecast and the pilot); the spawn slate skips only Arrows and the guard, a Slice
+being an ordinary hit. Trials: Morel carries Overload, Tixwick Whirling Blades and Leaf Slice.
+
+To watch: Twin Scythes+ on Thousand Cuts is four hits, each carrying Ambush; the move tile's hit
+chip still reads the move's own count, not the holder's. Fairy Tithe + Sporefall is steady overflow.

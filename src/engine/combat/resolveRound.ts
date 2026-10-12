@@ -5,7 +5,7 @@
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatDelta, StatKey, StatusDefinition, StatusId } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
-import { activePartnerTypes, callIntent, calledMove, chargeRidersOn, chargesLeft, faceLockFor, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta, applyStageDelta } from '../state';
+import { activePartnerTypes, callIntent, calledMove, chargeRidersOn, chargesLeft, faceLockFor, hitCountFor, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta, applyStageDelta } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { companionActions, orderActions } from './priority';
@@ -372,7 +372,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // hitCount (Thousand Cuts): the WHOLE per-target body repeats, so every hit rolls its own
           // variance and crit and re-reads every flat BasePower bonus — which is what makes a
           // multi-hit move multiply an Ambush rather than merely spend it. Stops on a mid-sequence KO.
-          const hitCount = move.hitCount ?? 1;
+          const hitCount = hitCountFor(move, attackerAtCast, passives);
           for (let hit = 0; hit < hitCount; hit++) {
             const target = working.combatants[targetId];
             if (!target || target.fainted) break;
