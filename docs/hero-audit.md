@@ -441,3 +441,20 @@ damage, Gilded Mane+ 60% (`PassiveDefinition.damageTakenModifier`, a defender-si
 with the attacker's damage modifiers, per hit) — the gold read did nothing in the Trials or the
 Gauntlet; `goldStatGrants` is now held by nothing. **Dawnlight** gives **Grace** (the heal Force,
 `docs/edge-and-aim.md` §6) instead of Light Force.
+
+## Shadow, second pass (2026-10-12, per user direction)
+
+Nature five times and Spirit twice across twelve grafts; spread so each type appears once (Light
+unused). Nightshade's Hemlock keeps Nature, Jinx's Nekomata Spirit.
+
+| Hero | Change |
+|---|---|
+| Widow | **Rimeweb** (Silkbinder): Frost (Nature), Icicle Thrust (Rootbind), Snare kept. **Venomfang** grants **Thousand Cuts** (Grim Harvest — magical, on Int 20), taken out of its level-up pool. |
+| Marrow | **Ossuary**: Stone (Nature), Rockfall (Blight); Charnel kept. |
+| Murk | **Bog Iron** (Mossback): Iron (Nature), Rend Armor (Regrowth), **Rustcoat** — a hit gives Shield 10 (was Moss Mantle). |
+| Rook | **Hedge Witch**: Arcane (Nature), Brine Hex (Blight), **Hexcraft** — lowering an enemy's stat gives Shadow Force 10, uncapped as the user wrote it (was Bitter Brew; "Witch's Brew" was Brimstone's already). **Augur** (Nightcrow): Mind (Spirit), Psyshock (Poltergeist); Crowsign kept — Mind attacks carry Haunt too. |
+
+Engine: `StatChanged.sourceCombatantId` (the caster or the passive's owner), read by a source-role
+condition; `applyRandomStatus` (one status rolled per target, for Jinx's Lucky Cat — pending).
+
+To watch: Hexcraft has no fight cap — Weaken every round is +10 Shadow Force a round.

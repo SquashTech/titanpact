@@ -94,6 +94,8 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
         return event.sourceCombatantId;
       case 'StatusRemoved':
         return event.sourceCombatantId;
+      case 'StatChanged':
+        return event.sourceCombatantId;
       default:
         return undefined;
     }
@@ -317,6 +319,12 @@ function resolveEffectOn(
       if (target.currentHp >= maxHp || healBlocked(state, targetId, fieldEffect)) return { state, events: [] };
       return applyHpDelta(state, round, targetId, amount, maxHp);
     }
+    case 'applyRandomStatus': {
+      if (effect.statusIds.length === 0) return { state, events: [] };
+      const roll = nextInt(state.rngState, 0, effect.statusIds.length);
+      const rolled = { ...state, rngState: roll.nextState };
+      return resolveEffectOn(rolled, round, heroes, statusDefs, passiveDefs, ownerId, targetId, rolled.combatants[targetId], { kind: 'applyStatus', target: effect.target, statusId: effect.statusIds[roll.value], magnitude: effect.magnitude }, context, fieldEffect, moves);
+    }
     case 'applyStatus': {
       const def = statusDefs[effect.statusId];
       if (!def) return { state, events: [] };
@@ -425,7 +433,7 @@ function resolveEffectOn(
           }
           if (landed === 0) continue;
           stages = { ...stages, [stat]: newValue };
-          stepped.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, stages: true, ...(capped ? { capped: true } : {}), newValue });
+          stepped.push({ type: 'StatChanged', round, combatantId: targetId, sourceCombatantId: ownerId, stat, delta: landed, stages: true, ...(capped ? { capped: true } : {}), newValue });
         }
         if (!stepped.length) return { state, events: [] };
         return { state: { ...state, combatants: { ...state.combatants, [targetId]: { ...target, statStages: stages } } }, events: stepped };
@@ -449,7 +457,7 @@ function resolveEffectOn(
             continue;
           }
           stages = { ...stages, [stat]: newValue };
-          stepped.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, stages: true, ...(capped ? { capped: true } : {}), newValue });
+          stepped.push({ type: 'StatChanged', round, combatantId: targetId, sourceCombatantId: ownerId, stat, delta: landed, stages: true, ...(capped ? { capped: true } : {}), newValue });
         }
         return { state: { ...state, combatants: { ...state.combatants, [targetId]: { ...target, statStages: stages } } }, events: stepped };
       }
@@ -463,7 +471,7 @@ function resolveEffectOn(
           continue;
         }
         modifiers = { ...modifiers, [stat]: newValue };
-        changes.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: landed, ...(capped ? { capped: true } : {}), newValue });
+        changes.push({ type: 'StatChanged', round, combatantId: targetId, sourceCombatantId: ownerId, stat, delta: landed, ...(capped ? { capped: true } : {}), newValue });
       }
       // A permanent gain is banked as AUTHORED, not as landed: the roster grant is not subject to the fight's band.
       const banked = effect.permanent

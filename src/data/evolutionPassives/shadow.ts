@@ -90,15 +90,15 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Poison', magnitude: 5, duration: 3 },
     },
   },
-  // Rook's Hedge Witch.
-  bitterBrew: {
-    id: 'bitterBrew',
-    name: 'Bitter Brew',
-    description: 'When this hero afflicts Poison, its partner gains Renew.',
+  // Rook's Hedge Witch: every curse it lays feeds the dark it casts with (per user direction, 2026-10-12).
+  hexcraft: {
+    id: 'hexcraft',
+    name: 'Hexcraft',
+    description: "When this hero lowers an enemy's stat, it gains Shadow Force 10.",
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
+      hook: 'StatChanged',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldNegative: 'delta' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'ShadowForce', magnitude: 10 },
     },
   },
   // Widow's Carapace: the shell takes the first blow, and Apex Predator doubles the step.
@@ -149,18 +149,18 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
       chance: 0.3,
     },
   },
-  // Murk's Mossback: the slow wall soaks the blow and the moss on its back tends its partner.
-  mossMantle: {
-    id: 'mossMantle',
-    name: 'Moss Mantle',
-    description: 'When this hero takes a hit, its partner gains Renew.',
+  // Murk's Bog Iron: the swamp rusts a hide onto the slow wall, a layer a blow.
+  rustcoat: {
+    id: 'rustcoat',
+    name: 'Rustcoat',
+    description: 'When this hero takes a hit, it gains Shield 10.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 10 },
     },
   },
-  // Rook's Nightcrow: every curse marks a soul, and Poltergeist carries across it.
+  // Rook's Augur: every curse marks a soul, and a Mind attack carries across it.
   crowsign: {
     id: 'crowsign',
     name: 'Crowsign',

@@ -113,6 +113,8 @@ export interface StatChangedEvent extends BaseEvent {
   /** The limit took some or all of the change (±5 steps, or the flat band); `delta` is what landed, and may be 0. */
   capped?: boolean;
   newValue: number;
+  /** Who made the change: the caster of the move, or the owner of the passive (Witch's Brew reads it). Absent on a change nobody made. */
+  sourceCombatantId?: string;
 }
 
 export interface HealedEvent extends BaseEvent {

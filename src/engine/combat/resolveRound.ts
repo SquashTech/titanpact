@@ -770,7 +770,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             combatants: { ...working.combatants, [targetId]: { ...current, statStages: { ...current.statStages, ...Object.fromEntries(raised.map(([stat]) => [stat, 0])) } } },
           };
           for (const [stat, n] of raised) {
-            const cleared: CombatEvent = { type: 'StatChanged', round, combatantId: targetId, stat, delta: -n, stages: true, newValue: 0 };
+            const cleared: CombatEvent = { type: 'StatChanged', round, combatantId: targetId, sourceCombatantId: action.combatantId, stat, delta: -n, stages: true, newValue: 0 };
             events.push(cleared);
             statChangedEvents.push(cleared);
           }
@@ -798,6 +798,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           type: 'StatChanged',
           round,
           combatantId: targetId,
+          sourceCombatantId: action.combatantId,
           stat: delta.stat,
           delta: landed,
           stages: true,
@@ -822,6 +823,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           type: 'StatChanged',
           round,
           combatantId: targetId,
+          sourceCombatantId: action.combatantId,
           stat: delta.stat,
           delta: landed,
           ...(capped ? { capped: true } : {}),

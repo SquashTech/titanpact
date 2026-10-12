@@ -598,3 +598,20 @@ test('light: Field Medic arrives with Grace 15', () => {
   const { state } = resolveRound(base, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
   assert.strictEqual(state.combatants.a3.statuses.Grace?.magnitude, 15);
 });
+
+// --- Shadow, second pass (docs/hero-audit.md) ---
+
+test('shadow: Hexcraft banks Shadow Force 10 when its holder lowers an enemy stat — and not for a drop someone else makes', () => {
+  const base = withMana(withPassive(threeVThree(760), 'a1', 'hexcraft'), 'a1');
+  const cursed = resolveRound(base, [cut('a1', 'weaken', 'b1')], config).state;
+  assert.strictEqual(cursed.combatants.a1.statuses.ShadowForce?.magnitude, 10);
+  const other = withMana(base, 'a2');
+  const byPartner = resolveRound(other, [cut('a2', 'weaken', 'b1')], config).state;
+  assert.ok(!byPartner.combatants.a1.statuses.ShadowForce, "the partner's curse is not this hero's");
+});
+
+test('shadow: Rustcoat gives Shield 10 when its holder is hit', () => {
+  const base = withPassive(threeVThree(761), 'a1', 'rustcoat');
+  const { state } = resolveRound(base, [cut('b1', heroes.ironWarden.moveIds[0], 'a1')], config);
+  assert.strictEqual(state.combatants.a1.statuses.Shield?.magnitude, 10);
+});
