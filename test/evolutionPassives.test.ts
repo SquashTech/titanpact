@@ -615,3 +615,18 @@ test('shadow: Rustcoat gives Shield 10 when its holder is hit', () => {
   const { state } = resolveRound(base, [cut('b1', heroes.ironWarden.moveIds[0], 'a1')], config);
   assert.strictEqual(state.combatants.a1.statuses.Shield?.magnitude, 10);
 });
+
+test('shadow: Beckoning Paw — a hit sometimes (20%) raises every stat of both allies a step', () => {
+  const stats = ['attack', 'defense', 'intelligence', 'wisdom', 'speed'] as const;
+  let hits = 0;
+  let misses = 0;
+  for (let seed = 770; seed < 830; seed++) {
+    const base = withMana(withPassive(threeVThree(seed), 'a1', 'beckoningPaw'), 'a1');
+    const { state } = resolveRound(base, [cut('a1', 'singe', 'b1')], config);
+    if (state.combatants.a1.statStages?.attack === 1) {
+      hits++;
+      for (const id of ['a1', 'a2']) for (const stat of stats) assert.strictEqual(state.combatants[id].statStages?.[stat], 1, `${id} ${stat}`);
+    } else misses++;
+  }
+  assert.ok(hits > 0 && misses > hits, `${hits} jackpots in ${hits + misses}`);
+});

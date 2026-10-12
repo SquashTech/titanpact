@@ -455,6 +455,10 @@ unused). Nightshade's Hemlock keeps Nature, Jinx's Nekomata Spirit.
 | Rook | **Hedge Witch**: Arcane (Nature), Brine Hex (Blight), **Hexcraft** — lowering an enemy's stat gives Shadow Force 10, uncapped as the user wrote it (was Bitter Brew; "Witch's Brew" was Brimstone's already). **Augur** (Nightcrow): Mind (Spirit), Psyshock (Poltergeist); Crowsign kept — Mind attacks carry Haunt too. |
 
 Engine: `StatChanged.sourceCombatantId` (the caster or the passive's owner), read by a source-role
-condition; `applyRandomStatus` (one status rolled per target, for Jinx's Lucky Cat — pending).
+condition.
+
+**Lucky Cat** (same day, per user direction, after a random-Force draft was dropped for chip clutter):
+**Beckoning Paw** — a hit has a 20% chance to give both allies ▲ to every stat, Ancient Power's
+shape (was 30% for the partner's ATK and INT).
 
 To watch: Hexcraft has no fight cap — Weaken every round is +10 Shadow Force a round.

@@ -319,12 +319,6 @@ function resolveEffectOn(
       if (target.currentHp >= maxHp || healBlocked(state, targetId, fieldEffect)) return { state, events: [] };
       return applyHpDelta(state, round, targetId, amount, maxHp);
     }
-    case 'applyRandomStatus': {
-      if (effect.statusIds.length === 0) return { state, events: [] };
-      const roll = nextInt(state.rngState, 0, effect.statusIds.length);
-      const rolled = { ...state, rngState: roll.nextState };
-      return resolveEffectOn(rolled, round, heroes, statusDefs, passiveDefs, ownerId, targetId, rolled.combatants[targetId], { kind: 'applyStatus', target: effect.target, statusId: effect.statusIds[roll.value], magnitude: effect.magnitude }, context, fieldEffect, moves);
-    }
     case 'applyStatus': {
       const def = statusDefs[effect.statusId];
       if (!def) return { state, events: [] };

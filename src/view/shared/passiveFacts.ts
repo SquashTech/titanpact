@@ -216,14 +216,6 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
         text: `Heals ${targetWord(effect.target, condition, hook)} ${amountWord(effect.amount, 'HP')}${effect.scaledBy ? `, scaled by ${STAT_FULL_LABELS[effect.scaledBy]}` : ''}`,
         glyph: { kind: 'stat', stat: 'hp' },
       };
-    case 'applyRandomStatus': {
-      const allForce = effect.statusIds.every((id) => statuses[id]?.forceType);
-      return {
-        label: 'Then',
-        text: `${targetWord(effect.target, condition, hook)} ${effect.target === 'bothAllies' || effect.target === 'activeEnemies' ? 'each gain' : 'gains'} ${effect.magnitude} of ${allForce ? 'a random Elemental Force' : `one of ${effect.statusIds.length} statuses at random`}`,
-        glyph: { kind: 'move', move: 'buff' },
-      };
-    }
     case 'applyStatus': {
       const magnitude =
         effect.magnitude === undefined

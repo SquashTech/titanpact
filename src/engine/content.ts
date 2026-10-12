@@ -285,8 +285,6 @@ export type PassiveEffect =
       /** Broadside: the share is PER point of this status the OWNER holds, and the status is spent by the firing. Nothing held, nothing fired. */
       perHeldStatus?: StatusId;
     }
-  /** One status rolled from `statusIds` for EACH target (seeded), then applied as applyStatus would (Beckoning Paw: a random Elemental Force). */
-  | { kind: 'applyRandomStatus'; target: PassiveEffectTarget; statusIds: readonly StatusId[]; magnitude: number }
   /** Strips non-`positive` statuses, same rules as a move's `cleanses`; `count` omitted = all. */
   | { kind: 'cleanse'; target: PassiveEffectTarget; count?: number }
   /** UNCAPPED, like a move's `manaGrant` — overflow past the pool is the point (docs/mana.md). */

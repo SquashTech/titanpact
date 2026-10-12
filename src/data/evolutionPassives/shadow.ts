@@ -141,12 +141,12 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   beckoningPaw: {
     id: 'beckoningPaw',
     name: 'Beckoning Paw',
-    description: 'When this hero lands a hit, there is a 30% chance its partner gains ATK ▲ and INT ▲.',
+    description: 'When this hero lands a hit, there is a 20% chance both allies gain ▲ to every stat.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1 },
-      chance: 0.3,
+      effect: { kind: 'statDelta', target: 'bothAllies', stat: ['attack', 'defense', 'intelligence', 'wisdom', 'speed'], stages: 1 },
+      chance: 0.2,
     },
   },
   // Murk's Bog Iron: the swamp rusts a hide onto the slow wall, a layer a blow.
