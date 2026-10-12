@@ -665,3 +665,22 @@ test('arcane: Foreordained sets Stasis Field on entry; Sunspot pays 10 Mana for 
   assert.ok(hasStatus(lit.combatants.b1, 'Burn'));
   assert.strictEqual(lit.combatants.a1.currentMana - resolveRound(plain, scorch, config).state.combatants.a1.currentMana, 10);
 });
+
+test('arcane: Mana Font gives both allies 10 Mana, so Zenith fires Surging Intellect off its own starting kit', () => {
+  const base = createFightState(
+    784,
+    [
+      { combatantId: 'a1', heroId: 'zenith', side: 'A' },
+      { combatantId: 'a2', heroId: 'tidecaller', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'crag', side: 'B' },
+    ]
+  );
+  const zenith = withPassive(base, 'a1', 'surgingIntellect');
+  const { events, state } = resolveRound(zenith, [{ kind: 'move', combatantId: 'a1', moveId: 'manaFont' } as Action], config);
+  const granted = events.filter((e) => e.type === 'ManaGranted').map((e) => (e as { targetCombatantId: string }).targetCombatantId).sort();
+  assert.deepStrictEqual(granted, ['a1', 'a2']);
+  assert.strictEqual(state.combatants.a1.statStages?.intelligence, 1);
+});

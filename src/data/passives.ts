@@ -842,10 +842,15 @@ const innatePassives: Record<string, PassiveDefinition> = {
   surgingIntellect: {
     id: 'surgingIntellect',
     name: 'Surging Intellect',
-    description: 'When this hero gains Mana from a move or a passive, it gains INT ▲.',
-    // A grant alone — a move's or a passive's, never regen or a Rest — a step a round (2026-10-12, per user direction).
+    description: 'When this hero gains Mana from a move, a passive or a Rest, it gains INT ▲.',
+    // A grant or a Rest — never regen — a step a round (2026-10-12, per user direction).
     reactive: {
       hook: 'ManaGranted',
+      condition: { relativeTo: 'self', eventFieldPositive: 'manaGained' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
+    },
+    alsoReactive: {
+      hook: 'Rested',
       condition: { relativeTo: 'self', eventFieldPositive: 'manaGained' },
       effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
@@ -1720,9 +1725,14 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   surgingIntellectPlus: {
     id: 'surgingIntellectPlus',
     name: 'Surging Intellect+',
-    description: 'When this hero gains Mana from a move or a passive, it gains INT ▲▲.',
+    description: 'When this hero gains Mana from a move, a passive or a Rest, it gains INT ▲▲.',
     reactive: {
       hook: 'ManaGranted',
+      condition: { relativeTo: 'self', eventFieldPositive: 'manaGained' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
+    },
+    alsoReactive: {
+      hook: 'Rested',
       condition: { relativeTo: 'self', eventFieldPositive: 'manaGained' },
       effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
     },

@@ -507,11 +507,14 @@ test('broadside: a cannonball loads each round on the bench (never on the field,
 
 // --- The 2026-09-29 innates (sim pass 14, per user direction) ---
 
-test('surging intellect: a grant from a move or a passive gives INT ▲; a Rest and regen give nothing', () => {
+test('surging intellect: a grant from a move or a passive, or a Rest, gives INT ▲; regen gives nothing', () => {
   let state = withPassive(twoVTwo(40, 'zenith', 'pixie', 'ironWarden', 'crag'), 'a1', 'surgingIntellect');
   state = withField(state, 'a1', { currentMana: 10 });
   const rested = resolveRound(state, restAll(state), config);
-  assert.strictEqual(rested.state.combatants.a1.statStages?.intelligence, undefined, 'a Rest is no grant');
+  assert.strictEqual(rested.state.combatants.a1.statStages?.intelligence, 1, 'a Rest pays a step');
+  const idle = withPassive(twoVTwo(42, 'zenith', 'pixie', 'ironWarden', 'crag'), 'a1', 'surgingIntellect');
+  const regen = resolveRound(withField(idle, 'a1', { currentMana: 10 }), [], config);
+  assert.strictEqual(regen.state.combatants.a1.statStages?.intelligence, undefined, 'regen alone pays nothing');
 
   const full = withPassive(twoVTwo(41, 'zenith', 'pixie', 'ironWarden', 'crag'), 'a1', 'surgingIntellect');
   const infused = resolveRound(full, [{ kind: 'move', combatantId: 'a2', moveId: 'infuse', declaredTarget: 'a1' }, ...restAll(full).filter((a) => a.combatantId !== 'a2')], config);

@@ -490,3 +490,8 @@ base deck, so Zenith, Folio and Trove have no measurement; their findings are th
 
 To watch: Zenith's starting kit (Mana Font, Magic Bolt) grants no Mana, so Surging Intellect needs a
 partner's grant or a path (Apogee, Sunspot) to fire.
+
+**Arcane follow-ups** (same day, per user direction): **Surging Intellect also pays on a Rest** (a
+grant or a Rest, never regen; Surging Intellect+ ▲▲ the same). **Mana Font gives both allies 10
+Mana** beside its +10 MP Regen and Surging Magic, so Zenith's innate fires off its starting kit — a
+buff to every Mana Font holder.

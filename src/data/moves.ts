@@ -2378,6 +2378,7 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'buff',
     mpRegenGrant: 10,
+    manaGrant: 10,
     fieldEffectApplication: 'surgingMagic',
     manaCost: 20,
     priority: 0,
