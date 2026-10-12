@@ -305,3 +305,25 @@ Lowered" tip's third page), never printed on a card. It replaced `docs/stat-stag
   Restorative Toxin, the Cleric's Succor, the Warlock's Siphon) now pay once a round.
 
 Not measured yet: buffs can now climb past their old caps in long fights.
+
+## Storm, second pass (2026-10-11, per user direction)
+
+Grafts were already one type each (Shadow unused).
+
+| Hero | Change |
+|---|---|
+| Squall | **Windshear** is two passives and no move (Skyfall and Squall Line gone): **Last Gust** — an Arrow with one Charge left goes at +1 priority; **Keen Fletching** — an Arrow with all its Charges leaves its target Bleeding. **Dust Devil**'s Thornshot → **Grit**: every Arrow takes DEF ▼ off its target. **Turbine**'s Autoloader → **Flywheel**: loosing an Arrow gives Mech Force 10. |
+| Tempest | **Ionosphere**'s Stored Charge: at a round's start, a full pool gives Storm Force 10 (3 a fight). **Either Hand** (shared with Reverie's Embodied and Nightshade's Blackout): the first entry each fight, a hero holding both a physical and a magical attack gains ATK ▲ INT ▲ (was +30% on alternating — "too confusing"). |
+| Skyshear | **Stormveil**: at each round's end, while an enemy is Conducting, Shield 20; **Stormveil+** Shield 40, one card (was a once-a-fight Barrier, two mastered cards). |
+| Nimbus | **Anvil Cloud**: the first time it takes damage each fight, a random enemy Conducts (was 50% every hit); **Anvil Cloud+** both enemies. |
+| Kite | **Outpace**: both allies gain ATK ▲ INT ▲ (Outpace+ ▲▲) while they outspeed both enemies (was INT on Kite alone). **Lantern Kite** grants **Lantern Light** (new Mid Spirit, Pow 60, 40 mana, swings with Wisdom, plants Haunt) and **Gilded String** heals Kite 15% on a move that deals no damage. |
+| Raiju | **Heat Lightning**'s Brushfire: switching out Dazes every Burning enemy (was: Burns both). |
+
+Engine: `PassiveDefinition.chargeRider` (Windshear; read in priority.ts and at the hit), trigger
+conditions `ownerManaFull`, `anyEnemyHasStatus`, `requiresMixedKit` (`Combatant.mixedKit`, stamped at
+fight build), and `onlyWithStatus` on a passive's applyStatus. Either Hand's alternation verb
+(`alternatesCategory`, `Combatant.lastHitCategory`) is deleted with the card that used it. Squall's
+Trials build swaps Skyfall for Storm Arrow.
+
+To watch: Brushfire after Blazing Retreat (Burn, then leave) is a Daze the same round; Stormveil
+stacks Shield every round a mark sits on the far side.

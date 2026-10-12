@@ -3,7 +3,7 @@
 
 import type { Action } from './actions';
 import type { CombatState, HeroLookup } from '../state';
-import { callIntent, getEffectiveStat, hasStatus } from '../state';
+import { callIntent, chargeRidersOn, getEffectiveStat, hasStatus } from '../state';
 
 /**
  * Which move an action casts, and who casts it: the declarer, or for a companion's act the off-field
@@ -45,7 +45,8 @@ function actionPriority(
   moves: Record<string, MoveDefinition>,
   activeFieldEffectDef: FieldEffectDefinition | undefined,
   rolledBracket?: number,
-  statusDefs: Record<string, StatusDefinition> = {}
+  statusDefs: Record<string, StatusDefinition> = {},
+  passiveDefs: Record<string, PassiveDefinition> = {}
 ): number {
   if (action.kind === 'switch') return SWITCH_PRIORITY_BRACKET;
   if (action.kind === 'rest') return REST_PRIORITY_BRACKET;
@@ -64,7 +65,9 @@ function actionPriority(
     move.kind === 'damage' && actor
       ? Object.keys(actor.statuses).reduce((sum, id) => sum + (statusDefs[id]?.priorityBonus ?? 0), 0)
       : 0;
-  return (rolledBracket ?? move.priority) + healBonus + conditionalBonus + statusBonus;
+  // A Charge rider (Windshear): a tagged move's bracket, by the Charges it holds as the cast begins.
+  const chargeBonus = actor ? chargeRidersOn(actor, move, passiveDefs).reduce((sum, r) => sum + (r.priorityBonus ?? 0), 0) : 0;
+  return (rolledBracket ?? move.priority) + healBonus + conditionalBonus + statusBonus + chargeBonus;
 }
 
 /** The bracket `action` will resolve in — the same number orderActions sorts on, for the view's live priority readout. */
@@ -73,9 +76,10 @@ export function effectivePriority(
   action: Action,
   moves: Record<string, MoveDefinition>,
   activeFieldEffectDef?: FieldEffectDefinition,
-  statusDefs: Record<string, StatusDefinition> = {}
+  statusDefs: Record<string, StatusDefinition> = {},
+  passives: Record<string, PassiveDefinition> = {}
 ): number {
-  return actionPriority(state, action, moves, activeFieldEffectDef, undefined, statusDefs);
+  return actionPriority(state, action, moves, activeFieldEffectDef, undefined, statusDefs, passives);
 }
 
 export interface OrderedAction {
@@ -124,7 +128,7 @@ export function orderActions(
     const hero = heroes[combatant.heroId];
     return {
       action,
-      priority: actionPriority(state, action, moves, activeFieldEffectDef, rolledBrackets.get(action), statusDefs),
+      priority: actionPriority(state, action, moves, activeFieldEffectDef, rolledBrackets.get(action), statusDefs, passives),
       speed: getEffectiveStat(hero, combatant, 'speed', statCtx),
     };
   });
@@ -218,7 +222,7 @@ export function previewOrder(
     const random = !!cast && (moves[cast.moveId]?.randomPriority?.length ?? 0) > 0;
     return {
       combatantId,
-      priority: random ? null : action ? actionPriority(state, action, moves, activeFieldEffectDef, undefined, statusDefs) : 0,
+      priority: random ? null : action ? actionPriority(state, action, moves, activeFieldEffectDef, undefined, statusDefs, passives) : 0,
       speed: getEffectiveStat(heroes[combatant.heroId], combatant, 'speed', statCtx),
     };
   });

@@ -197,6 +197,12 @@ export interface PassiveTriggerCondition {
   moveTag?: MoveTag;
   /** This field effect is on the board when the reaction is read, by any setter (Ashwing's Dawnfire under Sanctuary). */
   requiresFieldEffect?: FieldEffectId;
+  /** The owner's Mana is at or past its pool when the reaction is read (Tempest's Stored Charge). */
+  ownerManaFull?: true;
+  /** A living active enemy of the owner holds this status when the reaction is read (Skyshear's Stormveil). */
+  anyEnemyHasStatus?: StatusId;
+  /** The owner entered the fight holding both a physical and a magical attack (Combatant.mixedKit — Either Hand). */
+  requiresMixedKit?: true;
 }
 
 /** matchTriggerAmount reads the triggering event's `field` (default 'amount'): Sanguine takes a tick's amount, Restorative Toxin a StatusApplied's magnitude. */
@@ -232,7 +238,7 @@ export type PassiveEffect =
    * authored exception to "passive-applied magnitudes are flat" (docs/innate-passives.md §7).
    */
   /** `onlyIfAbsent` lands only on a receiver not already holding the status — it lights, never refreshes (a per-hit passive Burn). */
-  | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number | PassiveAmount; duration?: number; scaledBy?: StatKey; maxMagnitude?: number; onlyIfAbsent?: true }
+  | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number | PassiveAmount; duration?: number; scaledBy?: StatKey; maxMagnitude?: number; onlyIfAbsent?: true; /** Lands only on a target already holding this (Brushfire Dazes the Burning). */ onlyWithStatus?: StatusId }
   /**
    * One stat, or several sharing an amount (Afterglow's Attack and Intelligence) — one StatChanged
    * each. A PassiveAmount reads the event (Neuroplastic: the Wisdom an enemy just lost).
@@ -287,8 +293,6 @@ export type PassiveEffect =
 /** Damage-pipeline modifier from the attacker's own passives, evaluated per hit against { moveType }. */
 export interface PassiveDamageModifier {
   eventFieldEquals?: Partial<Record<string, string>>;
-  /** Fires only when the move's category differs from the attacker's last landed hit's (Combatant.lastHitCategory) — never on a first hit. The mixed attacker's verb: alternate, or it is nothing. */
-  alternatesCategory?: true;
   /** Fires only when the defender holds EVERY one of these (Lethal Bite: Bleed and Poison). Read per hit against the live target; a forecast with no target reports it unfired. */
   requiresTargetStatuses?: readonly StatusId[];
   /** The amount is PER LEVEL of this status on the defender (Top Billing: +15% a Burn level); nothing held, nothing added. */
@@ -315,6 +319,12 @@ export interface PassiveDefinition {
   /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). `maxFiresPerFight` caps it at N firings per combat, stacks included (PassiveInstance.firesThisFight) — the brake on a reaction that banks a permanent stack each time it matches. `chance` (0–1) rolls the seeded rng per matched event, per stack; absent = always. `whileBenched` inverts the field rule: this reaction fires only while its owner is standing on the BENCH (Broadside loading a cannonball a round), where every other passive is silent. */
   /** `alsoEffect` is a second effect resolved after `effect` on the same firing — one trigger, two verbs (Funeral Pyre's HP and Mana). */
   reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; alsoEffect?: PassiveEffect; oncePerFight?: boolean; maxFiresPerFight?: number; chance?: number; whileBenched?: true; /** Also hears a StatChanged another passive made (Scald hearing Drag); off, a card hears moves alone. */ hearsPassives?: true };
+  /**
+   * Squall's Windshear: a move carrying `moveTag`, read by the Charges it held as the cast began —
+   * `'last'` one left, `'full'` none spent. Lifts its bracket (priority.ts) and/or adds a rider on the
+   * hit's target (resolveRound). Read off the pre-cast board, so the preview and the cast agree.
+   */
+  chargeRider?: { moveTag: MoveTag; when: 'last' | 'full'; priorityBonus?: number; statusId?: StatusId };
   /** The one exception to the round rule (a passive affects each hero at most once a round): every firing lands — Surging Intellect, whose verb is every Mana gained. */
   everyFiring?: true;
   /** A second reaction on its own hook and condition, sharing the card's caps (Swell: a physical hit and a magical one pay different stats). */
@@ -385,6 +395,7 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.partnerStatGrants !== undefined ||
     passive.wardedWhileCompanyStands !== undefined ||
     passive.untargetableByStatus !== undefined ||
+    passive.chargeRider !== undefined ||
     passive.enduresOnce !== undefined ||
     passive.cannotSwitchOut !== undefined ||
     passive.sideRefusesStatuses !== undefined ||

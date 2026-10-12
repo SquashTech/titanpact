@@ -624,16 +624,12 @@ test('snowfall: a Rest Freezes one random enemy', () => {
   assert.strictEqual(frozen.length, 1);
 });
 
-test('stormveil: the first Conduct burst of the fight Barriers Skyshear, and the second does not', () => {
-  let state = withPassive(twoVTwo(48, 'skyshear', 'tempest', 'ironWarden', 'crag'), 'a1', 'stormveil');
-  state = withStatus(state, 'b1', 'Conduct');
-  const strike = (s: CombatState) => resolveRound(s, [{ kind: 'move', combatantId: 'a2', moveId: 'jolt', declaredTarget: 'b1' }, ...restAll(s).filter((a) => a.combatantId !== 'a2')], config);
-  const barriered = (r: ReturnType<typeof strike>) => r.events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1' && e.statusId === 'Barrier');
-  const first = strike(state);
-  assert.ok(first.events.some((e) => e.type === 'StatusDetonated'));
-  assert.ok(barriered(first), 'the first burst');
-  const second = strike(withStatus(first.state, 'b1', 'Conduct'));
-  assert.ok(!barriered(second), 'once a fight');
+test('stormveil: Skyshear gains Shield 20 at each round end while an enemy is Conducting, and none without', () => {
+  const base = withPassive(twoVTwo(48, 'skyshear', 'tempest', 'ironWarden', 'crag'), 'a1', 'stormveil');
+  const marked = resolveRound(withStatus(base, 'b1', 'Conduct'), restAll(base), config).state;
+  assert.strictEqual(marked.combatants.a1.statuses.Shield?.magnitude, 20);
+  const clean = resolveRound(base, restAll(base), config).state;
+  assert.ok(!clean.combatants.a1.statuses.Shield, 'no Conduct on the far side, no Shield');
 });
 
 test('on the hour: at the end of every third round Carillon sets Sanctuary and refills to its pool, never past it', () => {

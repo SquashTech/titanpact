@@ -322,6 +322,7 @@ function resolveEffectOn(
       if (wardRefusesStatus(state, targetId, ownerId, def, passiveDefs)) return { state, events: [] };
       // Lights a fire, never refuels one (docs/timed-statuses.md §5): a holder already carrying it is skipped.
       if (effect.onlyIfAbsent && target.statuses[effect.statusId]) return { state, events: [] };
+      if (effect.onlyWithStatus && !target.statuses[effect.onlyWithStatus]) return { state, events: [] };
       let magnitude = resolveMagnitude(effect.magnitude, context);
       // An event-read magnitude of nothing (a Rest that restored 0) is no status at all.
       if (typeof effect.magnitude === 'object' && (magnitude ?? 0) <= 0) return { state, events: [] };
@@ -558,6 +559,13 @@ export function resolvePassiveReactions(
           }
           if (reactive.condition.sideOutspeeds && !sideOutspeeds(working, owner.side, heroes, passiveDefs, fieldEffectDefs)) continue;
           if (reactive.condition.requiresFieldEffect !== undefined && working.activeFieldEffect?.fieldEffectId !== reactive.condition.requiresFieldEffect) continue;
+          if (reactive.condition.requiresMixedKit && !owner.mixedKit) continue;
+          if (reactive.condition.ownerManaFull && owner.currentMana < getMaxMana(heroes[owner.heroId], owner)) continue;
+          if (reactive.condition.anyEnemyHasStatus !== undefined) {
+            const foes = working.active[owner.side === 'A' ? 'B' : 'A'];
+            const held = reactive.condition.anyEnemyHasStatus;
+            if (!foes.some((id) => !!id && !working.combatants[id]?.fainted && hasStatus(working.combatants[id], held))) continue;
+          }
           // Checked AFTER the match and marked BEFORE the effect resolves, so a re-entrant reaction cannot fire itself twice.
           if (reactive.oncePerFight) {
             if (working.combatants[ownerId]?.passives[instance.passiveId]?.firedThisFight) continue;
@@ -647,7 +655,6 @@ export function collectPassiveDamageModifiers(
   for (const instance of Object.values(attacker.passives)) {
     const def = passiveDefs[instance.passiveId]?.damageModifier;
     if (!def || !matchesFields(def.eventFieldEquals, context)) continue;
-    if (def.alternatesCategory && (attacker.lastHitCategory === undefined || attacker.lastHitCategory === move.category)) continue;
     if (def.requiresTargetStatuses && !(target && def.requiresTargetStatuses.every((id) => hasStatus(target, id)))) continue;
     const levels = def.perTargetStatusLevel ? (target?.statuses[def.perTargetStatusLevel]?.magnitude ?? 0) : 1;
     if (levels <= 0) continue;

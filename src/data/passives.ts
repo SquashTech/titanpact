@@ -410,17 +410,17 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], stages: 1 },
     },
   },
+  // The mixed attacker's verb (Tempest's Forked, Reverie's Embodied, Nightshade's Blackout): a kit that swings both hands starts both raised.
   eitherHand: {
     id: 'eitherHand',
     name: 'Either Hand',
-    description: 'A blow of the other kind than the last one this hero landed strikes 30% harder.',
-    // The mixed attacker's verb (Tempest's Forked, Reverie's Embodied). A 70/70 line picking the
-    // weaker defence averages a stat ratio of 1.43 against a 100-point specialist's 1.77 — only
-    // 30% of enemy lines have the Def/Wis gap that would pay for the second stat — so mixing is
-    // dominated by construction until alternating itself pays: 1.43 x 1.3 lands level with the
-    // specialist, and only for a kit that can actually swing both hands every other turn.
-    // Never on a first hit, never on a repeat (passiveEngine alternatesCategory).
-    damageModifier: { alternatesCategory: true, amount: 0.3 },
+    description: 'The first time this hero enters each fight, if it holds both a physical and a magical attack, it gains ATK ▲ and INT ▲.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self', requiresMixedKit: true },
+      oncePerFight: true,
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1 },
+    },
   },
   restorativeToxin: {
     id: 'restorativeToxin',
@@ -509,18 +509,6 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       hook: 'StatChanged',
       condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
-    },
-  },
-  squallLine: {
-    id: 'squallLine',
-    name: 'Squall Line',
-    description: 'When this hero lands an attack, it gains ATK ▲ and SPD ▲.',
-    // Unconditional on a hit, held to a step a round and the smallest cap (2) for it. Speed on the
-    // roster's fastest hero compounds: the ramp buys the turn order it needs to keep ramping.
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1 },
     },
   },
   plunder: {
@@ -917,15 +905,16 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'damage', target: 'triggerSubject', percentMaxHp: 0.1 },
     },
   },
+  // Kite: the speed race is the whole game, and the whole side is paid for winning it.
   outpace: {
     id: 'outpace',
     name: 'Outpace',
-    description: 'At the end of each round, if both active allies move before both active enemies, this hero gains INT ▲.',
-    // Stacks every round the lead holds, to the fight ceiling — the speed race is the whole game.
+    description: 'At the end of each round, if both active allies move before both active enemies, both gain ATK ▲ and INT ▲.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self', sideOutspeeds: true },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1 },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1 },
     },
   },
   upkeep: {
@@ -950,15 +939,15 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Poison', magnitude: 5, duration: 3 },
     },
   },
+  // Skyshear: a frail body kept alive by the storm it has marked on the far side.
   stormveil: {
     id: 'stormveil',
     name: 'Stormveil',
-    description: "The first time each fight an enemy's Conduct bursts, this hero gains Barrier for the rest of the round.",
+    description: 'At the end of each round, if an enemy is Conducting, this hero gains Shield 20.',
     reactive: {
-      hook: 'StatusDetonated',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Barrier' },
-      oncePerFight: true,
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', anyEnemyHasStatus: 'Conduct' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 20 },
     },
   },
   kindling: {
@@ -1570,12 +1559,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   anvilCloud: {
     id: 'anvilCloud',
     name: 'Anvil Cloud',
-    description: 'When this hero takes damage, there is a 50% chance a random enemy becomes Conducting.',
+    description: 'The first time this hero takes damage each fight, a random enemy becomes Conducting.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
+      oncePerFight: true,
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Conduct' },
-      chance: 0.5,
     },
   },
   staticWake: {
@@ -1795,11 +1784,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   outpacePlus: {
     id: 'outpacePlus',
     name: 'Outpace+',
-    description: 'At the end of each round, if both active allies move before both active enemies, this hero gains INT ▲▲.',
+    description: 'At the end of each round, if both active allies move before both active enemies, both gain ATK ▲▲ and INT ▲▲.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self', sideOutspeeds: true },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 2 },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 2 },
     },
   },
   upkeepPlus: {
@@ -1825,23 +1815,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   stormveilPlus: {
     id: 'stormveilPlus',
     name: 'Stormveil+',
-    description: "The first time each fight an enemy's Conduct bursts, this hero and its partner gain Barrier for the rest of the round.",
+    description: 'At the end of each round, if an enemy is Conducting, this hero gains Shield 40.',
     reactive: {
-      hook: 'StatusDetonated',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Barrier' },
-      oncePerFight: true,
-    },
-  },
-  stormveilPartner: {
-    id: 'stormveilPartner',
-    name: 'Stormveil+',
-    description: "The first time each fight an enemy's Conduct bursts, this hero's partner gains Barrier for the rest of the round.",
-    reactive: {
-      hook: 'StatusDetonated',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Barrier' },
-      oncePerFight: true,
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', anyEnemyHasStatus: 'Conduct' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: 40 },
     },
   },
   // --- Fire ---
@@ -2571,15 +2549,15 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
     },
   },
-  // Conduct carries no figure to double, so the mastered cloud takes the roll off, as Boiling Point does.
   cumulonimbus: {
     id: 'cumulonimbus',
     name: 'Anvil Cloud+',
-    description: 'When this hero takes damage, a random enemy becomes Conducting.',
+    description: 'The first time this hero takes damage each fight, both active enemies become Conducting.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Conduct' },
+      oncePerFight: true,
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Conduct' },
     },
   },
   // Conduct carries no figure to double, so the mastered wake widens its reach to both.

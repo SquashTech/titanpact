@@ -15,6 +15,7 @@ import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { progressionTable } from '../src/data/progression';
 import { resolveRound } from '../src/engine/combat/resolveRound';
+import { effectivePriority } from '../src/engine/combat/priority';
 import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import type { Action } from '../src/engine/combat/actions';
 import { hasStatus } from '../src/engine/state';
@@ -273,4 +274,79 @@ test('evolution passives: Still Prey — a Frozen foe cannot aim at its holder, 
   assert.ok(!aimed.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'a1'));
   const spread = resolveRound(held, [{ kind: 'move', combatantId: 'b1', moveId: 'rimeWind', declaredTarget: 'a1' } as Action], config);
   assert.ok(spread.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'a1'));
+});
+
+// --- Storm, second pass (docs/hero-audit.md) ---
+
+function side(seed: number, a: string[], b: string[]): CombatState {
+  return createFightState(
+    seed,
+    a.map((heroId, i) => ({ combatantId: `a${i + 1}`, heroId, side: 'A' as const })),
+    b.map((heroId, i) => ({ combatantId: `b${i + 1}`, heroId, side: 'B' as const }))
+  );
+}
+const cast = (combatantId: string, moveId: string, declaredTarget?: string) => ({ kind: 'move', combatantId, moveId, declaredTarget } as Action);
+const spent = (state: CombatState, id: string, moveId: string, n: number): CombatState => ({
+  ...state,
+  combatants: { ...state.combatants, [id]: { ...state.combatants[id], chargesSpent: { [moveId]: n } } },
+});
+
+test('evolution passives: Windshear — the last Arrow goes at +1, and an Arrow with every Charge leaves a Bleed', () => {
+  let base = side(740, ['stormRanger', 'kite'], ['ironWarden', 'crag']);
+  base = withPassive(withPassive(base, 'a1', 'lastGust'), 'a1', 'keenFletching');
+  const arrow = cast('a1', 'stormArrow', 'b1');
+  assert.strictEqual(effectivePriority(spent(base, 'a1', 'stormArrow', 3), arrow, moves, undefined, statuses, passives), 1, 'one Charge left');
+  assert.strictEqual(effectivePriority(base, arrow, moves, undefined, statuses, passives), 0, 'a full quiver is not the last Arrow');
+  const full = resolveRound(base, [arrow], config).state;
+  assert.ok(hasStatus(full.combatants.b1, 'Bleed'));
+  const after = resolveRound(spent(base, 'a1', 'stormArrow', 1), [arrow], config).state;
+  assert.ok(!hasStatus(after.combatants.b1, 'Bleed'), 'a Charge already spent');
+});
+
+test('evolution passives: Grit and Flywheel answer an Arrow — DEF ▼ on the target, Mech Force on the archer', () => {
+  const base = withPassive(withPassive(side(741, ['stormRanger', 'kite'], ['ironWarden', 'crag']), 'a1', 'grit'), 'a1', 'flywheel');
+  const { state } = resolveRound(base, [cast('a1', 'stormArrow', 'b1')], config);
+  assert.strictEqual(state.combatants.b1.statStages?.defense, -1);
+  assert.strictEqual(state.combatants.a1.statuses.MechForce?.magnitude, 10);
+});
+
+test('evolution passives: Stored Charge pays Storm Force at a round\'s start only on a full pool', () => {
+  const base = withPassive(side(742, ['tempest', 'kite'], ['ironWarden', 'crag']), 'a1', 'storedCharge');
+  const full = resolveRound(base, [], config).state;
+  assert.strictEqual(full.combatants.a1.statuses.StormForce?.magnitude, 10);
+  const drained = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, currentMana: 0 } } };
+  assert.ok(!resolveRound(drained, [], config).state.combatants.a1.statuses.StormForce);
+});
+
+test('evolution passives: Anvil Cloud marks a foe the first time Nimbus is hit, and only the first', () => {
+  const base = withPassive(side(743, ['nimbus', 'kite'], ['ironWarden', 'crag']), 'a1', 'anvilCloud');
+  const hit = (s: CombatState) => resolveRound(s, [cast('b1', 'ironFist', 'a1')], config);
+  const conducts = (r: ReturnType<typeof hit>) => r.events.filter((e) => e.type === 'StatusApplied' && e.statusId === 'Conduct').length;
+  const first = hit(base);
+  assert.strictEqual(conducts(first), 1);
+  assert.strictEqual(conducts(hit(first.state)), 0);
+});
+
+test('evolution passives: Outpace lifts both allies when they outspeed both enemies', () => {
+  const base = withPassive(side(744, ['kite', 'skyshear'], ['ursa', 'steamColossus']), 'a1', 'outpace');
+  const { state } = resolveRound(base, [], config);
+  for (const id of ['a1', 'a2']) {
+    assert.strictEqual(state.combatants[id].statStages?.attack, 1, id);
+    assert.strictEqual(state.combatants[id].statStages?.intelligence, 1, id);
+  }
+});
+
+test('evolution passives: Gilded String heals Kite 15% on a move that deals no damage', () => {
+  let base = withPassive(side(745, ['kite', 'skyshear'], ['ursa', 'crag']), 'a1', 'gildedString');
+  base = withHp(base, 'a1', 50);
+  const { state } = resolveRound(base, [cast('a1', 'risingStatic')], config);
+  assert.ok(state.combatants.a1.currentHp >= 50 + Math.round(heroes.kite.baseStats.hp * 0.15) - 1);
+});
+
+test('evolution passives: Brushfire Dazes every Burning enemy as Raiju switches out, and no one else', () => {
+  let base = withPassive(side(746, ['raiju', 'kite', 'skyshear'], ['ironWarden', 'crag']), 'a1', 'brushfire');
+  base = applyStatus(base, 1, 'b1', statuses.Burn, {}).state;
+  const { events } = resolveRound(base, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
+  const dazed = events.filter((e) => e.type === 'StatusApplied' && e.statusId === 'Daze').map((e) => (e as { combatantId: string }).combatantId);
+  assert.deepStrictEqual(dazed, ['b1']);
 });

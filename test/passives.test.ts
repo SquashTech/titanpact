@@ -11,6 +11,7 @@ import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
+import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import type { Action } from '../src/engine/combat/actions';
 import { matchesTrigger, collectPassiveDamageModifiers } from '../src/engine/combat/passiveEngine';
 import { getEffectiveStat, getMaxHp, getMaxMana, hasStatus, statusMagnitude } from '../src/engine/state';
@@ -490,7 +491,7 @@ test('passives: toPassiveInstances converts counts to PassiveInstance records an
   assert.deepStrictEqual(instances, { sanguine: { passiveId: 'sanguine', stacks: 2 } });
 });
 
-// --- Either Hand (Tempest / Forked, Reverie / Embodied) ---
+// --- Either Hand (Tempest / Forked, Reverie / Embodied, Nightshade / Blackout) ---
 
 function stormFixture(seed: number) {
   return createFightState(
@@ -506,44 +507,14 @@ function stormFixture(seed: number) {
   );
 }
 
-const thunderclapAt = (target: string): Action => ({ kind: 'move', combatantId: 'a1', moveId: 'thunderclap', declaredTarget: target } as Action);
-const joltAt = (target: string): Action => ({ kind: 'move', combatantId: 'a1', moveId: 'jolt', declaredTarget: target } as Action);
-const modifiersOn = (events: readonly any[], moveId: string) => events.filter((e) => e.type === 'DamageDealt' && e.moveId === moveId).map((e) => e.modifiers as { source: string }[]);
-
-test('passives: Either Hand pays nothing on a first hit — there is no last hit to alternate from', () => {
-  const state = withPassive(stormFixture(350), 'a1', 'eitherHand');
-  const { state: next, events } = resolveRound(state, [thunderclapAt('b1')], config);
-
-  assert.strictEqual(next.combatants.a1.lastHitCategory, 'physical', 'the landed hit is remembered');
-  for (const mods of modifiersOn(events, 'thunderclap')) assert.ok(!mods.some((m) => m.source === 'eitherHand'));
-});
-
-test('passives: Either Hand fires on the other category — a Jolt after a Thunderclap is +30%, and the Thunderclap after that is too', () => {
-  const state = withPassive(stormFixture(351), 'a1', 'eitherHand');
-  const first = resolveRound(state, [thunderclapAt('b1')], config);
-  const second = resolveRound(first.state, [joltAt('b1')], config);
-  const third = resolveRound(second.state, [thunderclapAt('b1')], config);
-
-  assert.ok(modifiersOn(second.events, 'jolt').every((mods) => mods.some((m) => m.source === 'eitherHand')), 'magical after physical');
-  assert.strictEqual(second.state.combatants.a1.lastHitCategory, 'magical');
-  assert.ok(modifiersOn(third.events, 'thunderclap').every((mods) => mods.some((m) => m.source === 'eitherHand')), 'physical after magical');
-});
-
-test('passives: Either Hand pays nothing on a repeat — two Thunderclaps in a row is a specialist, not a mixed attacker', () => {
-  const state = withPassive(stormFixture(352), 'a1', 'eitherHand');
-  const first = resolveRound(state, [thunderclapAt('b1')], config);
-  const second = resolveRound(first.state, [thunderclapAt('b1')], config);
-
-  for (const mods of modifiersOn(second.events, 'thunderclap')) assert.ok(!mods.some((m) => m.source === 'eitherHand'));
-});
-
-test('passives: Either Hand is read per attacker — the partner landing the other category arms nothing', () => {
-  const state = withPassive(stormFixture(353), 'a1', 'eitherHand');
-  const first = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'jolt', declaredTarget: 'b1' } as Action], config);
-  const second = resolveRound(first.state, [thunderclapAt('b1')], config);
-
-  assert.strictEqual(first.state.combatants.a1.lastHitCategory, undefined);
-  for (const mods of modifiersOn(second.events, 'thunderclap')) assert.ok(!mods.some((m) => m.source === 'eitherHand'));
+test('passives: Either Hand raises Attack and Intelligence on the first entry of a hero holding both kinds of attack', () => {
+  const held = withPassive(stormFixture(350), 'a1', 'eitherHand');
+  const mixed = { ...held, combatants: { ...held.combatants, a1: { ...held.combatants.a1, mixedKit: true as const } } };
+  const opened = resolveBattleStartEntries(mixed, 0, heroes, statuses, passives, fieldEffects).state;
+  assert.strictEqual(opened.combatants.a1.statStages?.attack, 1);
+  assert.strictEqual(opened.combatants.a1.statStages?.intelligence, 1);
+  const specialist = resolveBattleStartEntries(held, 0, heroes, statuses, passives, fieldEffects).state;
+  assert.strictEqual(specialist.combatants.a1.statStages?.attack, undefined, 'one kind of attack, nothing');
 });
 
 // --- Restorative Toxin and Nature's Purification (Sylva / Apothecary, Lightsage) ---

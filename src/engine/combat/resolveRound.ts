@@ -5,7 +5,7 @@
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatDelta, StatKey, StatusDefinition, StatusId } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
-import { activePartnerTypes, callIntent, calledMove, chargesLeft, faceLockFor, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta, applyStageDelta } from '../state';
+import { activePartnerTypes, callIntent, calledMove, chargeRidersOn, chargesLeft, faceLockFor, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta, applyStageDelta } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { companionActions, orderActions } from './priority';
@@ -579,15 +579,6 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           }
         }
 
-        // What this move landed is the category the NEXT one is read against (Either Hand): written
-        // after the loop, so a spread's second target is priced off the same last hit as its first.
-        if (hitsResolved > 0 && working.combatants[action.combatantId]) {
-          working = {
-            ...working,
-            combatants: { ...working.combatants, [action.combatantId]: { ...working.combatants[action.combatantId], lastHitCategory: move.category } },
-          };
-        }
-
         // Ambush (consumedOnDamage): spent AFTER the loop, so a spread reads it on every
         // target and still pays once. Retribution never runs the formula, so it reads no
         // BasePower and owes nothing.
@@ -854,6 +845,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     // passive reactions in authored order. randomStatusApplication draws ONE candidate per CAST
     // (each carries its own target) and appends it to the authored list.
     let riders = statusApplicationsOf(move);
+    // A Charge rider (Windshear) adds its status on the hit's target, by the Charges the move held as the cast began.
+    for (const rider of chargeRidersOn(actor, move, passives)) if (rider.statusId) riders = [...riders, { statusId: rider.statusId, target: 'moveTarget' }];
     if (move.randomStatusApplication?.length) {
       const pick = nextInt(working.rngState, 0, move.randomStatusApplication.length);
       working = { ...working, rngState: pick.nextState };

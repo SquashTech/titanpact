@@ -44,7 +44,7 @@ test('evolution simplification: every hero has one Evolution node of three paths
 });
 
 /** Two passives and no move: the rare exception to a move and a passive, pinned so each is a decision. */
-const TWO_PASSIVES = ['crimson-pyroclasm', 'glacialWarden-avalanche'];
+const TWO_PASSIVES = ['crimson-pyroclasm', 'glacialWarden-avalanche', 'stormRanger-windshear'];
 
 test('evolution simplification: every path pays two good things — a move and a passive, or two passives by name — and never a stat line', () => {
   for (const heroId of heroIds) {

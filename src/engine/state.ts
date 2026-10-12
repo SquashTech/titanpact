@@ -59,6 +59,8 @@ export interface Combatant {
   manaSurcharge?: number;
   /** Charges spent this fight per move id (`chargesPerFight`); kept through a switch, never refilled by Rest or the bench. Read via chargesLeft. */
   chargesSpent?: Partial<Record<string, number>>;
+  /** Entered the fight holding both a physical and a magical attack (run/buildCombatState.ts); read by `requiresMixedKit` (Either Hand). */
+  mixedKit?: true;
   /** The kit this combatant entered the fight with; stamped only for a kit holding a locking metamorphic move (Quiver), so a cast can tell a face from a held move. */
   kitMoveIds?: readonly string[];
   /** The move tiers this combatant's level has opened (its schedule's bands); a narrowed metamorphic move rolls faces only from these. Absent = every tier. */
@@ -99,8 +101,6 @@ export interface Combatant {
   reservePhase?: number;
   /** A side's off-field caster for the companion's Call (withCalledCaster): never active, benched, targeted or counted. */
   called?: boolean;
-  /** The category of the last damaging move this combatant LANDED (resolveRound, after the move's hits; a Retribution counts). Unset until the first. Read by a passive's `alternatesCategory`; persists across a switch like a stat modifier. */
-  lastHitCategory?: DamageCategory;
 }
 
 /** The one global Field Effect (docs/field-effects.md). */
@@ -764,4 +764,19 @@ export function effectiveTypes(hero: HeroDefinition, combatant: Combatant): read
   // ever reaches three types. Identical to appending for a mono hero; for an innately dual one
   // the grant REPLACES the secondary, which is what lets a dual hero be offered a graft at all.
   return combatant.grantedTypes.length === 0 ? hero.types : [hero.types[0], ...combatant.grantedTypes];
+}
+
+/** The chargeRider passives that answer this cast (Squall's Windshear), read off the pre-cast Charges. */
+export function chargeRidersOn(
+  actor: Combatant,
+  move: MoveDefinition,
+  passiveDefs: Record<PassiveId, PassiveDefinition>
+): NonNullable<PassiveDefinition['chargeRider']>[] {
+  const left = chargesLeft(actor, move);
+  if (left === null || move.chargesPerFight === undefined) return [];
+  return Object.keys(actor.passives)
+    .map((id) => passiveDefs[id]?.chargeRider)
+    .filter((r): r is NonNullable<PassiveDefinition['chargeRider']> =>
+      !!r && !!move.tags?.includes(r.moveTag) && (r.when === 'last' ? left === 1 : left === move.chargesPerFight)
+    );
 }

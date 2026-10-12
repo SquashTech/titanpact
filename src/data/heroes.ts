@@ -258,7 +258,7 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [5, 8, 12, 17, 21], midLevel: 9, lateLevel: 18, signatureLevel: 19 },
     signatureMoveId: 'stoop',
     passiveIds: ['stormveil'],
-    masteredPassiveIds: ['stormveilPlus', 'stormveilPartner'],
+    masteredPassiveIds: ['stormveilPlus'],
   },
   // --- Stone ---
   crag: {

@@ -88,8 +88,16 @@ function placeEntry(
     ...(turnedCurse(entry) ? { typeOverride: turnedCurse(entry)!.types } : {}),
     ...(formPathId ? { formPathId } : {}),
     ...quiverStamp(entry, hero),
+    ...(holdsMixedKit(entry, hero) ? { mixedKit: true as const } : {}),
   };
   return { ...withMods, currentHp: woundedHp(getMaxHp(hero, withMods), entry.wounds), currentMana: getMaxMana(hero, withMods) };
+}
+
+/** A kit holding both a physical and a magical attack (Either Hand). */
+export function holdsMixedKit(entry: RosterEntry, hero: HeroLookup[string]): boolean {
+  const kit = entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : hero.moveIds;
+  const attacks = kit.map((id) => moveCatalog[id]).filter((m) => m?.kind === 'damage');
+  return attacks.some((m) => m!.category === 'physical') && attacks.some((m) => m!.category === 'magical');
 }
 
 /**

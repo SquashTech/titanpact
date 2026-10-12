@@ -184,7 +184,7 @@ export const trials: Record<string, TrialDefinition> = {
         {
           heroId: 'stormRanger',
           pathId: 'stormRanger-windshear',
-          moveIds: ['galeVolley', 'stormSurge', 'skyfall', 'heavyBlow'],
+          moveIds: ['galeVolley', 'stormSurge', 'stormArrow', 'heavyBlow'],
           itemIds: ['sword.mythic', 'boots.mythic', 'dagger.mythic'],
         },
         {

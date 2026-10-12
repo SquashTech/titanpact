@@ -4571,6 +4571,22 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
   },
+  // Kite's Lantern Kite: the support's own Spirit hit, swung with the Wisdom it leads with; the Haunt
+  // makes the next Spirit cast reach the partner too.
+  lanternLight: {
+    id: 'lanternLight',
+    name: 'Lantern Light',
+    tier: 'mid',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 60,
+    offStatOverride: 'wisdom',
+    statusApplication: { statusId: 'Haunt', target: 'moveTarget' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+  },
   // The Class moves (classes.ts): untiered, in no hero's pool — a Class is their only source.
   ...classMoves,
   // The signature moves (signatures.ts): untiered, in no pool — the hero's own signatureLevel is their only source.
