@@ -411,7 +411,7 @@ test('foresight: a hit taken leaves Koan Poised; Satori adds Ambush 30 beside it
   const read = struck(['foresight']);
   assert.ok(read.statuses.Poised, 'Poised after the hit');
   assert.strictEqual(statusMagnitude(read, 'Ambush'), 0);
-  const mastered = struck(['satori', 'satoriStrike']);
+  const mastered = struck(['satori']);
   assert.ok(mastered.statuses.Poised);
   assert.strictEqual(statusMagnitude(mastered, 'Ambush'), 30);
 });

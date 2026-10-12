@@ -495,3 +495,32 @@ partner's grant or a path (Apogee, Sunspot) to fire.
 grant or a Rest, never regen; Surging Intellect+ ▲▲ the same). **Mana Font gives both allies 10
 Mana** beside its +10 MP Regen and Surging Magic, so Zenith's innate fires off its starting kit — a
 buff to every Mana Font holder.
+
+## Mind, second pass (2026-10-12, per user direction)
+
+Measured first (sim, 2000 runs, the base deck only): Lucius 137.9 DPR, Drift 125.0, Trance 118.8
+against a median of 125 — no outlier on the scale of Zenith or Folio. Reverie, Motley and Koan are
+outside the base deck and unmeasured.
+
+- **Void Gnaw** (Lucius's Voidcaller) 5% → **8%** of max HP a hit. Voidcaller measured −0.46 against
+  Sanguine's +0.68, the widest path gap in the type: Gorge heals half on a knockout, while Void Gnaw
+  came to about 30% of one foe's HP over a six-round fight (now about 48%).
+- **Foresight+** (Koan) is one card — Poised and Ambush 30 on the same firing (`alsoEffect`); it was
+  two cards under one name.
+- Kept: Neuroplastic+ (bounded by the round rule and ▲5), Lullaby, Motley, Drift's Deepbloom (−0.30,
+  near the noise floor).
+
+Grafts: Shadow, Arcane and Light three times each; spread so each appears once (Storm unused).
+
+| Hero | Path (was) | Graft (was) | Move (was) | Passive |
+|---|---|---|---|---|
+| Reverie | Dustwing (Blindspot) | Nature (Shadow) | Corrode (Umbral Beam) | In the Gap, kept |
+| Lucius | Rosetta (Cipher) | Stone (Arcane) | Rockfall (Arc Pulse) | Sealed Script, kept |
+| Trance | Somnambulist | Spirit (Arcane) | Unquiet (Arcane Blast) | Sleepwalk, kept |
+| Trance | Ringmaster | Fire (Light) | Heat Haze (Blinding Flash) | Center Ring, kept |
+| Drift | Ice Jelly (Moon Jelly) | Frost (Light) | Permafrost (Consecrate) | Moonglow, kept |
+| Motley | Iron Mask (Tragedian) | Iron (Shadow) | Rend Armor (Rend) | Hubris, kept |
+
+To watch: Ringmaster's Center Ring (a Dazed enemy gives the partner Ambush 30) lost its Daze source
+with Blinding Flash; Trance's Sandman (50% Daze) and a partner's Dazes now feed it. The Mind Trial's
+Drift carries Permafrost.

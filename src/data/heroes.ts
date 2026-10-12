@@ -1111,7 +1111,7 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [6, 10, 11, 18, 24], midLevel: 11, lateLevel: 22, signatureLevel: 19 },
     signatureMoveId: 'foreseenBlow',
     passiveIds: ['foresight'],
-    masteredPassiveIds: ['satori', 'satoriStrike'],
+    masteredPassiveIds: ['satori'],
   },
   // The spellblade knight: Arcane's first physical attacker, every spell it casts loading the blade.
   thane: {

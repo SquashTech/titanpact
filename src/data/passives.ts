@@ -2570,7 +2570,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'damage', target: 'randomEnemy', percentMaxHp: 0.1 },
     },
   },
-  // Poised carries no figure to double, so the mastered read pays twice.
+  // Poised carries no figure to double, so the mastered read pays twice: the priority and an Ambush, one card.
   satori: {
     id: 'satori',
     name: 'Foresight+',
@@ -2579,16 +2579,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
-    },
-  },
-  satoriStrike: {
-    id: 'satoriStrike',
-    name: 'Foresight+',
-    description: 'When this hero takes damage, it gains Ambush 30.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 30 },
+      alsoEffect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 30 },
     },
   },
   runesAblaze: {

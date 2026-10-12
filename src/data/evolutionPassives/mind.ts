@@ -1,7 +1,7 @@
 import type { PassiveDefinition } from '../../engine/content';
 
 export const mindPathPassives: Record<string, PassiveDefinition> = {
-  // Reverie's Blindspot: target-role on the partner, so it waits out the blow aimed next to it.
+  // Reverie's Dustwing: target-role on the partner, so it waits out the blow aimed next to it.
   inTheGap: {
     id: 'inTheGap',
     name: 'In the Gap',
@@ -22,7 +22,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.5 } },
     },
   },
-  // Lucius's Cipher: Glittering Hoard's surcharge, earned a hit at a time on the foe it reads.
+  // Lucius's Rosetta: Glittering Hoard's surcharge, earned a hit at a time on the foe it reads.
   sealedScript: {
     id: 'sealedScript',
     name: 'Sealed Script',
@@ -120,14 +120,14 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   voidGnaw: {
     id: 'voidGnaw',
     name: 'Void Gnaw',
-    description: 'When this hero lands a hit, its target loses 5% of its max HP.',
+    description: 'When this hero lands a hit, its target loses 8% of its max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'damage', target: 'triggerTarget', percentMaxHp: 0.05 },
+      effect: { kind: 'damage', target: 'triggerTarget', percentMaxHp: 0.08 },
     },
   },
-  // Trance's Ringmaster: Blinding Flash stops the act, and the partner takes the stage.
+  // Trance's Ringmaster: the act stops on a Daze, and the partner takes the stage.
   centerRing: {
     id: 'centerRing',
     name: 'Center Ring',

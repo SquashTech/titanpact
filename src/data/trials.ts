@@ -482,7 +482,7 @@ export const trials: Record<string, TrialDefinition> = {
     name: 'The Unravelling',
     line: 'Nothing is taken from you all at once. It is only taken.',
     gameplan: 'Strip every stat the foes have — Trance’s Lullaby, Drift’s Nettle, Disorient, Hollowing — and cash it in with Brain Flay at double power, while every Wisdom lost feeds Reverie’s Mind Shatter.',
-    cover: 'Reverie’s Cog Slam is Mech into Arcane and Beast; Koan’s Rending Leap is Beast into Arcane; Drift’s Radiant Beam is Light and Lucius’s Soul Rend Spirit into Shadow.',
+    cover: 'Reverie’s Cog Slam is Mech into Arcane and Beast; Koan’s Rending Leap is Beast into Arcane; Lucius’s Soul Rend is Spirit into Shadow, and Drift’s Permafrost holds both foes still.',
     leads: ['trance', 'mindweaver'],
     team: {
       name: 'The Unravelling',
@@ -507,13 +507,13 @@ export const trials: Record<string, TrialDefinition> = {
         },
         {
           heroId: 'drift',
-          pathId: 'drift-moonJelly',
-          moveIds: ['stingingBloom', 'inkCloud', 'brainFlay', 'radiantBeam'],
+          pathId: 'drift-iceJelly',
+          moveIds: ['stingingBloom', 'inkCloud', 'brainFlay', 'permafrost'],
           itemIds: ['staff.mythic', 'robe.mythic', 'ring.mythic'],
         },
         {
           heroId: 'motley',
-          pathId: 'motley-tragedian',
+          pathId: 'motley-ironMask',
           moveIds: ['motleysTrick', 'tragicomedy', 'enervate', 'brainFlay'],
           itemIds: ['staff.mythic', 'orb.mythic', 'crest.mythic'],
         },
