@@ -82,7 +82,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   staticSand: {
     id: 'staticSand',
     name: 'Static Sand',
-    description: "This hero's Stone attacks set off Conduct, as Storm attacks do.",
+    description: "This hero's Stone attacks also set off Conduct.",
     setsOffStatus: { statusId: 'Conduct', moveTypes: ['Stone'] },
   },
   // Cairn's Menhir: the stone is raised and the ground answers — its partner's blows ride the higher of Attack and Defense.
@@ -96,16 +96,15 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'setFieldEffect', fieldEffectId: 'bedrock' },
     },
   },
-  // Cairn's Barrow: Waystone lays the Shields, the Spirit line spends the Force.
-  barrowCall: {
-    id: 'barrowCall',
-    name: 'Barrow-Call',
-    description: "When a hit lands on this hero's partner's Shield, this hero gains Spirit Force 10. Up to 3 times a fight.",
+  // Cairn's Barrow: whoever strikes the one it shelters is marked by the barrow's dead, and Soul Rend reaches its partner.
+  graveWatch: {
+    id: 'graveWatch',
+    name: 'Grave Watch',
+    description: "When an enemy hits this hero's partner, that enemy is Haunted.",
     reactive: {
-      maxFiresPerFight: 3,
       hook: 'DamageDealt',
-      condition: { relativeTo: 'ally', eventFieldPositive: 'absorbed' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'SpiritForce', magnitude: 10 },
+      condition: { relativeTo: 'enemy', subjectRole: 'source', targetsPartner: true },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Haunt' },
     },
   },
   // Crag's Snowcap: the first blow shakes the peak loose, and Cold Snap cashes the freeze.
@@ -135,11 +134,13 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   slagHeap: {
     id: 'slagHeap',
     name: 'Slag Heap',
-    description: 'When this hero lands a Stone attack on a Burning foe, it sets that foe Burning again.',
+    description: 'When this hero lands a Stone attack on a Burning foe, it gains Stone Force 10 and Fire Force 10. Up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' }, eventTargetHasStatus: 'Burn' },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
+      maxFiresPerFight: 3,
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'StoneForce', magnitude: 10 },
+      alsoEffect: { kind: 'applyStatus', target: 'self', statusId: 'FireForce', magnitude: 10 },
     },
   },
   // Scree's Ironscale: every taunt hardens the plates Shield Bash swings with.
@@ -154,17 +155,16 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'IronForce', magnitude: 15 },
     },
   },
-  // Dune's Shimmer: the far side swings at a heat haze, and the worm strikes first.
+  // Dune's Shimmer: the far side swings at a heat haze, and the worm arrives untouched.
   mirageStep: {
     id: 'mirageStep',
     name: 'Mirage Step',
-    description: 'The first time this hero enters the battlefield each fight, it gains Barrier for the rest of the round and its next attack goes at +1 priority.',
+    description: 'The first time this hero enters the battlefield each fight, it gains Barrier for the rest of the round.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       oncePerFight: true,
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Barrier' },
-      alsoEffect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
     },
   },
   // Cairn's Riverbed: the water under every Shield it lays.

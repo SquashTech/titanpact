@@ -114,7 +114,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   stormfire: {
     id: 'stormfire',
     name: 'Stormfire',
-    description: "This hero's Fire attacks set off Conduct, as Storm attacks do.",
+    description: "This hero's Fire attacks also set off Conduct.",
     setsOffStatus: { statusId: 'Conduct', moveTypes: ['Fire'] },
   },
   // Crimson's Emberweave: every enemy fire feeds the weave Arc Pulse spends.

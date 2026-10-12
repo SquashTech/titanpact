@@ -265,7 +265,7 @@ export const trials: Record<string, TrialDefinition> = {
         {
           heroId: 'cairn',
           pathId: 'cairn-menhir',
-          moveIds: ['raiseTheCairn', 'bodyBlow', 'provoke', 'rampart'],
+          moveIds: ['raiseTheCairn', 'tectonicSlam', 'provoke', 'rampart'],
           itemIds: ['tome.mythic', 'robe.mythic', 'shield.mythic'],
         },
       ],

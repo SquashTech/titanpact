@@ -364,3 +364,11 @@ negative status another hand lays on it (its own Provoke and costs still land). 
 a refused drop is a `StatRefused` beat ("Unshakeable: Crag's Defense can't be lowered!"), a refused
 status the existing `StatusRefused`. Vengeful Emblem+ (`bedrockWrath`) is deleted; Vengeful Emblem
 stays the Greataxe's.
+
+**Stone follow-ups** (2026-10-12, per user direction): **Slag Heap** (Petra's Magma) — a Stone hit on a
+Burning foe gives Stone Force 10 and Fire Force 10, 3 a fight (was: re-light the Burn). **Mirage Step**
+drops the +1 priority — the entry Barrier is the card. **Static Sand** and Fire's **Stormfire** read
+"also set off Conduct". **Menhir** grants **Tectonic Slam** (×2 under Bedrock; Cairn's physical swings
+with its Defense 90 under it) instead of Body Blow, off its own pool. **Barrow-Call → Grave Watch**:
+an enemy that hits Cairn's partner is Haunted. Engine: `targetsPartner` condition. Cairn's Trials
+build carries Tectonic Slam.

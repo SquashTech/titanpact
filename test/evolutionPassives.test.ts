@@ -383,9 +383,10 @@ test('stone: Static Sand — a Stone hit sets off Conduct', () => {
   assert.ok(events.some((e) => e.type === 'StatusDetonated' && e.statusId === 'Conduct'));
 });
 
-test('stone: Mirage Step arrives Barriered and Poised; Standing Stone sets Bedrock on entry', () => {
+test('stone: Mirage Step arrives Barriered; Standing Stone sets Bedrock on entry', () => {
   const dune = resolveBattleStartEntries(withPassive(side(754, ['dune', 'cairn'], ['ironWarden', 'sentinel']), 'a1', 'mirageStep'), 0, heroes, statuses, passives, fieldEffects).state;
-  assert.ok(hasStatus(dune.combatants.a1, 'Barrier') && hasStatus(dune.combatants.a1, 'Poised'));
+  assert.ok(hasStatus(dune.combatants.a1, 'Barrier'));
+  assert.ok(!hasStatus(dune.combatants.a1, 'Poised'), 'the Barrier alone');
   const cairn = resolveBattleStartEntries(withPassive(side(755, ['cairn', 'dune'], ['ironWarden', 'sentinel']), 'a1', 'standingStone'), 0, heroes, statuses, passives, fieldEffects).state;
   assert.strictEqual(cairn.activeFieldEffect?.fieldEffectId, 'bedrock');
 });
@@ -407,4 +408,19 @@ test('innate: Unshakeable+ also refuses an enemy affliction, but not its holder\
   assert.ok(enemy.events.some((e) => e.type === 'StatusRefused'));
   const own = applyStatus(held, 1, 'a1', statuses.Provoke, { sourceCombatantId: 'a1' });
   assert.ok(hasStatus(own.state.combatants.a1, 'Provoke'), 'its own Provoke lands');
+});
+
+test('stone: Slag Heap — a Stone hit on a Burning foe pays Stone Force and Fire Force', () => {
+  let base = withPassive(side(762, ['slate', 'crag'], ['ironWarden', 'dune']), 'a1', 'slagHeap');
+  base = applyStatus(base, 1, 'b1', statuses.Burn, {}).state;
+  const { state } = resolveRound(base, [cast('a1', 'rockToss', 'b1')], config);
+  assert.strictEqual(state.combatants.a1.statuses.StoneForce?.magnitude, 10);
+  assert.strictEqual(state.combatants.a1.statuses.FireForce?.magnitude, 10);
+});
+
+test('stone: Grave Watch Haunts whoever hits Cairn\'s partner, and not whoever hits Cairn', () => {
+  const base = withPassive(side(763, ['cairn', 'crag'], ['ironWarden', 'dune']), 'a1', 'graveWatch');
+  const { state } = resolveRound(base, [cast('b1', 'ironFist', 'a2'), cast('b2', 'rockToss', 'a1')], config);
+  assert.ok(hasStatus(state.combatants.b1, 'Haunt'));
+  assert.ok(!hasStatus(state.combatants.b2, 'Haunt'));
 });

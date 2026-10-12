@@ -203,6 +203,8 @@ export interface PassiveTriggerCondition {
   anyEnemyHasStatus?: StatusId;
   /** The event's target is the owner itself — with a source-role, enemy-relative condition, "an enemy struck this hero" (Scree's Pangolin). */
   targetsOwner?: true;
+  /** Its partner's mirror: the event's target is the owner's active partner (Cairn's Grave Watch). */
+  targetsPartner?: true;
   /** The owner entered the fight holding both a physical and a magical attack (Combatant.mixedKit — Either Hand). */
   requiresMixedKit?: true;
 }

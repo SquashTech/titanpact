@@ -1068,8 +1068,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'tideGuard',
       'mudBall', 'provoke', 'vigil', 'mend', 'purify',
       'bastion', 'bodyguard', 'rockfall', 'benediction', 'consecrate',
-      'rampart', 'landslide', 'divineGrace', 'digIn', 'tectonicSlam',
-    ],
+      'rampart', 'landslide', 'divineGrace', 'digIn', ],
     // Murk: Shadow's physical column with Stone's mud and Nature's moss as the off-types. Shadowstrike is Lurker's grant.
     murk: [
       'toughenUp',
@@ -3474,7 +3473,7 @@ export const progressionTable: ProgressionTable = {
             id: 'cairn-menhir',
             heroId: 'cairn',
             name: 'Menhir',
-            unlocksMoveIds: ['bodyBlow'],
+            unlocksMoveIds: ['tectonicSlam'],
             grantsPassiveIds: ['standingStone'],
           },
           {
@@ -3493,7 +3492,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['soulRend'],
             typeGraft: 'Spirit',
             learnableMoveIds: evolutionLine('cairn', 'Spirit', { granted: ['soulRend'] }),
-            grantsPassiveIds: ['barrowCall'],
+            grantsPassiveIds: ['graveWatch'],
           },
         ],
       },

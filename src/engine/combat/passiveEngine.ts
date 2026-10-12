@@ -573,6 +573,10 @@ export function resolvePassiveReactions(
           if (reactive.condition.requiresFieldEffect !== undefined && working.activeFieldEffect?.fieldEffectId !== reactive.condition.requiresFieldEffect) continue;
           if (reactive.condition.requiresMixedKit && !owner.mixedKit) continue;
           if (reactive.condition.targetsOwner && eventTargetId !== ownerId) continue;
+          if (reactive.condition.targetsPartner) {
+            const partner = working.active[owner.side].find((id) => id !== null && id !== ownerId);
+            if (!partner || eventTargetId !== partner) continue;
+          }
           if (reactive.condition.ownerManaFull && owner.currentMana < getMaxMana(heroes[owner.heroId], owner)) continue;
           if (reactive.condition.anyEnemyHasStatus !== undefined) {
             const foes = working.active[owner.side === 'A' ? 'B' : 'A'];
