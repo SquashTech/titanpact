@@ -842,14 +842,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   surgingIntellect: {
     id: 'surgingIntellect',
     name: 'Surging Intellect',
-    description: 'When this hero gains Mana, it gains that much Intelligence.',
-    everyFiring: true,
-    // Every way mana arrives — regen, a grant, a Rest — so it pays a little every round it spends
-    // and a lot off a Font of Power. The ×4 fight ceiling is what bounds it.
+    description: 'When this hero gains Mana from a move or a passive, it gains INT ▲.',
+    // A grant alone — a move's or a passive's, never regen or a Rest — a step a round (2026-10-12, per user direction).
     reactive: {
-      hook: 'ManaGained',
+      hook: 'ManaGranted',
       condition: { relativeTo: 'self', eventFieldPositive: 'manaGained' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: { kind: 'matchTriggerAmount', field: 'manaGained' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
   manaChime: {
@@ -1722,12 +1720,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   surgingIntellectPlus: {
     id: 'surgingIntellectPlus',
     name: 'Surging Intellect+',
-    description: 'When this hero gains Mana, it gains twice that much Intelligence.',
-    everyFiring: true,
+    description: 'When this hero gains Mana from a move or a passive, it gains INT ▲▲.',
     reactive: {
-      hook: 'ManaGained',
+      hook: 'ManaGranted',
       condition: { relativeTo: 'self', eventFieldPositive: 'manaGained' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: { kind: 'matchTriggerAmount', field: 'manaGained', multiplier: 2 } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
     },
   },
   manaChimePlus: {

@@ -507,17 +507,18 @@ test('broadside: a cannonball loads each round on the bench (never on the field,
 
 // --- The 2026-09-29 innates (sim pass 14, per user direction) ---
 
-test('surging intellect: a ManaGained hook — a Rest and a grant both pay Intelligence equal to the mana, and a full pool pays nothing', () => {
+test('surging intellect: a grant from a move or a passive gives INT ▲; a Rest and regen give nothing', () => {
   let state = withPassive(twoVTwo(40, 'zenith', 'pixie', 'ironWarden', 'crag'), 'a1', 'surgingIntellect');
   state = withField(state, 'a1', { currentMana: 10 });
   const rested = resolveRound(state, restAll(state), config);
-  const restored = rested.events.find((e) => e.type === 'Rested' && e.combatantId === 'a1');
-  assert.ok(restored && restored.type === 'Rested' && restored.manaRestored > 0);
-  assert.strictEqual(rested.state.combatants.a1.statModifiers.intelligence, restored.manaRestored);
+  assert.strictEqual(rested.state.combatants.a1.statStages?.intelligence, undefined, 'a Rest is no grant');
 
   const full = withPassive(twoVTwo(41, 'zenith', 'pixie', 'ironWarden', 'crag'), 'a1', 'surgingIntellect');
   const infused = resolveRound(full, [{ kind: 'move', combatantId: 'a2', moveId: 'infuse', declaredTarget: 'a1' }, ...restAll(full).filter((a) => a.combatantId !== 'a2')], config);
-  assert.strictEqual(infused.state.combatants.a1.statModifiers.intelligence, moves.infuse.manaGrant, 'the grant lands past a full pool, and pays in full');
+  assert.strictEqual(infused.state.combatants.a1.statStages?.intelligence, 1, 'Infuse is a grant: a step');
+  const plus = withPassive(twoVTwo(41, 'zenith', 'pixie', 'ironWarden', 'crag'), 'a1', 'surgingIntellectPlus');
+  const infusedPlus = resolveRound(plus, [{ kind: 'move', combatantId: 'a2', moveId: 'infuse', declaredTarget: 'a1' }, ...restAll(plus).filter((a) => a.combatantId !== 'a2')], config);
+  assert.strictEqual(infusedPlus.state.combatants.a1.statStages?.intelligence, 2, 'mastered: two steps');
 });
 
 test('outpace: Intelligence each round both allies move first, stacking; nothing when a partner is slower than an enemy', () => {

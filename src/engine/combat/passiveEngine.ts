@@ -588,6 +588,14 @@ export function resolvePassiveReactions(
             const held = reactive.condition.anyEnemyHasStatus;
             if (!foes.some((id) => !!id && !working.combatants[id]?.fainted && hasStatus(working.combatants[id], held))) continue;
           }
+          if (reactive.condition.everyNRoundsOnField !== undefined) {
+            const onField = round - (owner.firstActionRound ?? 1) + 1;
+            if (onField <= 0 || onField % reactive.condition.everyNRoundsOnField !== 0) continue;
+          }
+          if (reactive.oncePerTarget) {
+            if (!eventTargetId || working.combatants[ownerId]?.passives[instance.passiveId]?.firedOnIds?.includes(eventTargetId)) continue;
+            working = updateInstance(working, ownerId, instance.passiveId, (h) => ({ firedOnIds: [...(h.firedOnIds ?? []), eventTargetId] }));
+          }
           // Checked AFTER the match and marked BEFORE the effect resolves, so a re-entrant reaction cannot fire itself twice.
           if (reactive.oncePerFight) {
             if (working.combatants[ownerId]?.passives[instance.passiveId]?.firedThisFight) continue;
@@ -598,7 +606,7 @@ export function resolvePassiveReactions(
           // The round rule: a card affects each hero at most once a round. Read once before the firing,
           // so a firing's two effects (and its stacks) all land; a spread still reaches every hero once.
           const held = working.combatants[ownerId]?.passives[instance.passiveId];
-          const skip: ReadonlySet<string> = def.everyFiring || held?.touchedRound !== round ? new Set() : new Set(held.touchedIds ?? []);
+          const skip: ReadonlySet<string> = held?.touchedRound !== round ? new Set() : new Set(held.touchedIds ?? []);
           const touched = new Set<string>();
           for (let i = 0; i < (reactive.oncePerFight ? 1 : instance.stacks); i++) {
             if (limit !== undefined && firesSoFar(working, ownerId, instance.passiveId) >= limit) break;

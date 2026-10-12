@@ -27,6 +27,8 @@ export interface PassiveInstance {
   /** The round rule (a passive affects each hero at most once a round): the round this card last fired, and whom it affected in it. */
   touchedRound?: number;
   touchedIds?: string[];
+  /** A `oncePerTarget` card: the targets it has already fired on this fight. */
+  firedOnIds?: string[];
 }
 
 /** Flat additive only — never % or stages. Locked: mods persist on switch, so they live on the Combatant, not the slot. */

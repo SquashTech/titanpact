@@ -147,7 +147,11 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
     case 'RoundEnded':
       return {
         label: 'When',
-        text: condition.everyNRounds ? `Every ${ordinalWord(condition.everyNRounds)} round ends` : 'A round ends',
+        text: condition.everyNRoundsOnField
+          ? `Every ${ordinalWord(condition.everyNRoundsOnField)} round this hero stands on the field ends`
+          : condition.everyNRounds
+            ? `Every ${ordinalWord(condition.everyNRounds)} round ends`
+            : 'A round ends',
         glyph: { kind: 'move', move: 'buff' },
       };
     case 'StatChanged': {
@@ -198,6 +202,8 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
       };
     case 'ManaGained':
       return { label: 'When', text: `${who} gains Mana — regen, a grant or a Rest`, glyph: { kind: 'stat', stat: 'manaPool' } };
+    case 'ManaGranted':
+      return { label: 'When', text: `${who} gains Mana from a move or a passive`, glyph: { kind: 'stat', stat: 'manaPool' } };
     case 'MoveUsed':
       return {
         label: 'When',

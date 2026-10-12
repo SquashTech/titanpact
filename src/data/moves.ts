@@ -2520,7 +2520,7 @@ export const moves: Record<string, MoveDefinition> = {
     statDeltas: [],
     // Read before this move's cost is paid; overflow mana counts.
     stagesPerManaHeld: { stats: ['attack', 'intelligence'], per: 40, max: 3 },
-    manaCost: 70,
+    manaCost: 55,
     priority: 0,
     target: 'bothAllies',
   },

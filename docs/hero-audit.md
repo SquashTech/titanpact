@@ -462,3 +462,31 @@ condition.
 shape (was 30% for the partner's ATK and INT).
 
 To watch: Hexcraft has no fight cap — Weaken every round is +10 Shadow Force a round.
+
+## Arcane, second pass (2026-10-12, per user direction)
+
+Analysed for balance ranges first (the user's brief). Findings and what was done:
+
+| Finding | Was | Now |
+|---|---|---|
+| **Surging Intellect** (Zenith) paid Intelligence equal to EVERY Mana gained — regen, Rest, grant — bounded only by the ×4 flat ceiling: Mana Font alone made +40 Int a round, a partner's Font of Power +150 at once; Zenith hit 1× in round 1 and 4× by mid-fight, stages on top. | flat, every firing | **a Mana grant from a move or a passive gives INT ▲** (Surging Intellect+ ▲▲); regen and Rest pay nothing; the round rule applies. `everyFiring` is deleted with it. |
+| **Crescendo** (Folio's Magnum Opus) gave INT ▲ a hit while the innate Inscribe took WIS ▼ a hit: Int ÷ Wis at ×12.25 after five rounds on one target. | INT ▲ a hit | **every fifth round on the field, its Arcane moves gain 100 Base Power for the next round** (the `Crescendo` status: a one-round Arcane Force) |
+| **Foreordained** (Zenith's Oracle) set Stasis Field on any no-damage move, overwriting Mana Font's own Surging Magic. | no-damage move | **on entering the field** |
+| **Stormrune** (Thane's Stormbrand, the type's top path in the sim; Thane 184.5 DPR, 5th of 47) marked every Arcane hit. | every hit | **the first Arcane hit on each foe** (`oncePerTarget`) |
+| **Arcane Overflow** cost 70 against Thane's 55 pool (Spellsword −0.76, the weakest Arcane path measured). | 70 | **55** |
+| Singularity (150 Mana on a 95 pool) | — | kept: the setup is the point (user). |
+
+Grafts: Mind three times, Light, Shadow and Iron twice; spread so each type appears once (Stone
+unused). **Zenith Corona** (Halo): Fire (Light), Scorch (Consecrate), **Sunspot** — laying a Burn
+gives 10 Mana, which Surging Intellect turns into INT ▲ (was Lingering Light, deleted: no heal on the
+path left it dead). **Pixie Glamour**: Nature (Mind), Magic Growth (Disorient), Mirage kept. **Folio
+Scrying Pool** (Prophecy): Water (Mind), Torrent (Psyshock), Written Fate kept. **Thane Rimesworn**
+(Ironsworn): Frost (Iron), Icicle Thrust (Reinforce), **Frost Oath** (was Iron Oath). **Trove Mimic**
+(Vaultshade): Beast (Shadow), Gore (Shadow Form), Vault Curse kept.
+
+Engine: `ManaGranted` hook (a grant alone); `everyNRoundsOnField` (the owner's own tenure, off
+`Combatant.firstActionRound`); `oncePerTarget` (PassiveInstance.firedOnIds). The sim drafts only the
+base deck, so Zenith, Folio and Trove have no measurement; their findings are the arithmetic above.
+
+To watch: Zenith's starting kit (Mana Font, Magic Bolt) grants no Mana, so Surging Intellect needs a
+partner's grant or a path (Apogee, Sunspot) to fire.

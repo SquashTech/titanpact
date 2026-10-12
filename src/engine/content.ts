@@ -173,7 +173,8 @@ export type PassiveId = string;
 /** 'Endured' is a knockout refused (enduresOnce); its subject is the holder, read off a hit or a status tick — never the Pact Clock, which is no trigger source. */
 /** 'RoundStarted' is RoundEnded's mirror, read before the round's first action (Cinder's Ironclad plate). 'FieldEffectSet' a field taking the board, by any setter; both are about nobody, so each active owner is its own subject, and `fieldEffectId` is what eventFieldEquals reads. */
 /** 'ManaGained' reads every way mana arrives — a grant (move or passive), the round's regen, a Rest — never a potion; its subject is the receiver and `manaGained` what landed (Zenith). */
-export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured' | 'ManaGained' | 'RoundStarted' | 'FieldEffectSet' | 'MoveGuarded' | 'ConsumableUsed' | 'StatusRemoved';
+/** 'ManaGranted' hears a grant alone — a move's or a passive's, never regen or a Rest (Surging Intellect). */
+export type PassiveHook = 'ManaGranted' | 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured' | 'ManaGained' | 'RoundStarted' | 'FieldEffectSet' | 'MoveGuarded' | 'ConsumableUsed' | 'StatusRemoved';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';
@@ -191,6 +192,8 @@ export interface PassiveTriggerCondition {
   eventFieldNegative?: string;
   /** Fires only on rounds divisible by N, read off the event's `round` (the Eyes' Withering Gaze returning every third round). */
   everyNRounds?: number;
+  /** Fires only at the end of every Nth consecutive round the OWNER has stood on the field (Crescendo); a switch restarts the count (Combatant.firstActionRound). */
+  everyNRoundsOnField?: number;
   /** DamageDealt only: the hit knocked its target out (DamageDealtEvent.finishing). Rex's and Ursa's finishing blows. */
   finishingBlow?: true;
   /** The event's target-role combatant holds this status when the reaction is read (after the hit has landed). */
@@ -329,7 +332,7 @@ export interface PassiveDefinition {
   description: string;
   /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). `maxFiresPerFight` caps it at N firings per combat, stacks included (PassiveInstance.firesThisFight) — the brake on a reaction that banks a permanent stack each time it matches. `chance` (0–1) rolls the seeded rng per matched event, per stack; absent = always. `whileBenched` inverts the field rule: this reaction fires only while its owner is standing on the BENCH (Broadside loading a cannonball a round), where every other passive is silent. */
   /** `alsoEffect` is a second effect resolved after `effect` on the same firing — one trigger, two verbs (Funeral Pyre's HP and Mana). */
-  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; alsoEffect?: PassiveEffect; oncePerFight?: boolean; maxFiresPerFight?: number; chance?: number; whileBenched?: true; /** Also hears a StatChanged another passive made (Scald hearing Drag); off, a card hears moves alone. */ hearsPassives?: true };
+  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; alsoEffect?: PassiveEffect; oncePerFight?: boolean; maxFiresPerFight?: number; /** Fires at most once per event target per fight (Stormrune: the first Arcane hit on each foe). */ oncePerTarget?: true; chance?: number; whileBenched?: true; /** Also hears a StatChanged another passive made (Scald hearing Drag); off, a card hears moves alone. */ hearsPassives?: true };
   /**
    * Squall's Windshear: a move carrying `moveTag`, read by the Charges it held as the cast began —
    * `'last'` one left, `'full'` none spent. Lifts its bracket (priority.ts) and/or adds a rider on the
@@ -338,8 +341,6 @@ export interface PassiveDefinition {
   chargeRider?: { moveTag: MoveTag; when: 'last' | 'full'; priorityBonus?: number; statusId?: StatusId };
   /** Twin Scythes+ (Tixwick): the holder's damaging moves carrying `moveTag` strike `hits` more times, as a `hitCount` would (state.ts hitCountFor). */
   extraHits?: { moveTag: MoveTag; hits: number };
-  /** The one exception to the round rule (a passive affects each hero at most once a round): every firing lands — Surging Intellect, whose verb is every Mana gained. */
-  everyFiring?: true;
   /** A second reaction on its own hook and condition, sharing the card's caps (Swell: a physical hit and a magical one pay different stats). */
   alsoReactive?: PassiveDefinition['reactive'];
   damageModifier?: PassiveDamageModifier;

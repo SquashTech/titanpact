@@ -122,6 +122,12 @@ export const STATUS_PATHS: Record<string, ReactNode> = {
       <path d="M18.2 13.4 23.4 20h-3.2v3.4h-4V20H13Z" />
     </>
   ),
+  // A rising fan of bars: the music building to its peak.
+  Crescendo: (
+    <>
+      <path d="M2 20h3v2H2ZM6.5 16h3v6h-3ZM11 11h3v11h-3ZM15.5 6h3v16h-3ZM20 1h3v21h-3Z" />
+    </>
+  ),
   // A cross of light, with the corner arrow: Grace powers every heal.
   Grace: (
     <>
@@ -203,6 +209,7 @@ const STATUS_COLOR: Record<string, string> = {
   Edge: '#c7ccd6',
   Aim: '#c9a46a',
   Grace: '#f2d98a',
+  Crescendo: '#b98cf0',
   Poised: '#b6d35a',
   Cannonball: '#8f8a80',
   Beheld: '#e0393f',

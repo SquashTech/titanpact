@@ -630,3 +630,38 @@ test('shadow: Beckoning Paw — a hit sometimes (20%) raises every stat of both 
   }
   assert.ok(hits > 0 && misses > hits, `${hits} jackpots in ${hits + misses}`);
 });
+
+// --- Arcane, second pass (docs/hero-audit.md) ---
+
+test('arcane: Crescendo lands at the end of the fifth round on the field and lasts exactly the next round', () => {
+  let state = withPassive(threeVThree(780), 'a1', 'crescendo');
+  for (let round = 1; round <= 4; round++) state = resolveRound({ ...state, round }, [], config).state;
+  assert.ok(!state.combatants.a1.statuses.Crescendo, 'not before the fifth');
+  state = resolveRound({ ...state, round: 5 }, [], config).state;
+  assert.strictEqual(state.combatants.a1.statuses.Crescendo?.magnitude, 100, 'the fifth round ends: the peak is loaded');
+  const { resolveElementalForceBonus } = require('../src/engine/damage/damagePipeline') as typeof import('../src/engine/damage/damagePipeline');
+  assert.strictEqual(resolveElementalForceBonus(state.combatants.a1, moves.magicBolt, statuses), 100);
+  state = resolveRound({ ...state, round: 6 }, [], config).state;
+  assert.ok(!state.combatants.a1.statuses.Crescendo, 'gone when the next round ends');
+});
+
+test('arcane: Stormrune marks each foe once — the first Arcane hit on it, never the second', () => {
+  let state = withMana(withPassive(threeVThree(781), 'a1', 'stormrune'), 'a1');
+  state = resolveRound(state, [cut('a1', 'magicBolt', 'b1')], config).state;
+  assert.ok(hasStatus(state.combatants.b1, 'Conduct'));
+  const cleared = { ...state, round: 2, combatants: { ...state.combatants, b1: { ...state.combatants.b1, statuses: Object.fromEntries(Object.entries(state.combatants.b1.statuses).filter(([id]) => id !== 'Conduct')) } } };
+  const again = resolveRound(cleared, [cut('a1', 'magicBolt', 'b1')], config).state;
+  assert.ok(!hasStatus(again.combatants.b1, 'Conduct'), 'b1 has had its mark');
+  const other = resolveRound(cleared, [cut('a1', 'magicBolt', 'b2')], config).state;
+  assert.ok(hasStatus(other.combatants.b2, 'Conduct'), 'b2 has not');
+});
+
+test('arcane: Foreordained sets Stasis Field on entry; Sunspot pays 10 Mana for a Burn it lays', () => {
+  const entered = resolveRound(withPassive(threeVThree(782), 'a3', 'foreordained'), [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config).state;
+  assert.strictEqual(entered.activeFieldEffect?.fieldEffectId, 'stasisBubble');
+  const plain = withMana(threeVThree(783), 'a1');
+  const scorch = [cut('a1', 'scorch', 'b1')];
+  const lit = resolveRound(withPassive(plain, 'a1', 'sunspot'), scorch, config).state;
+  assert.ok(hasStatus(lit.combatants.b1, 'Burn'));
+  assert.strictEqual(lit.combatants.a1.currentMana - resolveRound(plain, scorch, config).state.combatants.a1.currentMana, 10);
+});

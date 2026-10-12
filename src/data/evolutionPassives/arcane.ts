@@ -23,14 +23,14 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 75 } },
     },
   },
-  // Zenith's Oracle: its own buffs set the field that lets the slowest act first.
+  // Zenith's Oracle: it arrives into the field that lets the slowest act first (on entry, so Mana Font's Surging Magic is not overwritten by its own cast).
   foreordained: {
     id: 'foreordained',
     name: 'Foreordained',
-    description: 'When this hero uses a move that deals no damage, set Stasis Field.',
+    description: 'When this hero enters the battlefield, set Stasis Field.',
     reactive: {
-      hook: 'MoveUsed',
-      condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
       effect: { kind: 'setFieldEffect', fieldEffectId: 'stasisBubble' },
     },
   },
@@ -54,15 +54,15 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], stages: -1 },
     },
   },
-  // Folio's Magnum Opus: Twin Cast is two hits, so two pages a cast.
+  // Folio's Magnum Opus: the long build to one enormous round (per user direction, 2026-10-12).
   crescendo: {
     id: 'crescendo',
     name: 'Crescendo',
-    description: 'When this hero lands a hit, it gains INT ▲.',
+    description: 'At the end of every fifth round this hero stands on the field, its Arcane moves gain 100 Base Power for the next round.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', everyNRoundsOnField: 5 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Crescendo', magnitude: 100 },
     },
   },
   illumination: {
@@ -91,8 +91,9 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   stormrune: {
     id: 'stormrune',
     name: 'Stormrune',
-    description: 'Every Arcane attack this hero lands leaves its target Conducting.',
+    description: 'The first Arcane attack this hero lands on each foe leaves it Conducting.',
     reactive: {
+      oncePerTarget: true,
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Arcane' } },
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
@@ -130,15 +131,15 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'loseMana', target: 'triggerTarget', amount: 20 },
     },
   },
-  // Zenith's Halo: Consecrate's mend keeps glowing on both allies after the cast.
-  lingeringLight: {
-    id: 'lingeringLight',
-    name: 'Lingering Light',
-    description: 'When this hero heals a hero, that hero gains Renew.',
+  // Zenith's Corona: every fire it lights pays Mana back, and Surging Intellect turns the grant into Intelligence.
+  sunspot: {
+    id: 'sunspot',
+    name: 'Sunspot',
+    description: 'When this hero sets a foe Burning, it gains 10 Mana, past its pool.',
     reactive: {
-      hook: 'Healed',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Renew' },
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Burn' } },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
     },
   },
   // Pixie's Wisplight: a lifted partner swings loaded, and Soul Offering lifts two stats at once.
@@ -164,19 +165,19 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
     },
   },
-  // Thane's Ironsworn: Etched Runes' trigger, paid into the grafted Iron line.
-  ironOath: {
-    id: 'ironOath',
-    name: 'Iron Oath',
-    description: 'When this hero uses a move that deals no damage, it gains Iron Force 10. Up to 3 times a fight.',
+  // Thane's Rimesworn: Etched Runes' trigger, paid into the grafted Frost line.
+  frostOath: {
+    id: 'frostOath',
+    name: 'Frost Oath',
+    description: 'When this hero uses a move that deals no damage, it gains Frost Force 10. Up to 3 times a fight.',
     reactive: {
       maxFiresPerFight: 3,
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'IronForce', magnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'FrostForce', magnitude: 10 },
     },
   },
-  // Trove's Vaultshade: a Provoking wall, so the curse on the vault is paid by whoever is near it.
+  // Trove's Mimic: a Provoking wall, so the curse on the vault is paid by whoever is near it.
   vaultCurse: {
     id: 'vaultCurse',
     name: 'Vault Curse',

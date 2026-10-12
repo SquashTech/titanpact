@@ -382,7 +382,7 @@ don't silently override it.
   the ratio. **A passive affects each hero at most once a round** (2026-10-11, per user
   direction, replacing §6.3's per-card brake and its fight caps): a game rule, explained once in a
   tip and never printed on a card; a spread reaches each hero once; the five-step limit is the only
-  ceiling; a mastered innate moves two steps a firing. **Surging Intellect** alone fires every time. **Every other stat modifier is a flat additive integer, a multiple of 5 or 10** — no
+  ceiling; a mastered innate moves two steps a firing; no card is exempt (Surging Intellect was, until 2026-10-12). **Every other stat modifier is a flat additive integer, a multiple of 5 or 10** — no
   other % term touches a stat. Loadout grants (equipment, Banners, Evolution, Class) stay exactly
   authored; until `docs/stat-stages.md` §6.3 lands, a passive's delta, a derived grant and MP Regen
   land FLAT on `statModifiers`, and **a flat fight
@@ -401,13 +401,12 @@ don't silently override it.
   is not that kind of grant — the legibility lives in the GRADE instead (`src/run/growth.ts`).
   A further exemption: a **derived** grant, whose amount is read off live state rather than
   authored, lands FLAT and unrounded — and since stages (2026-10-10, `docs/stat-stages.md` §6.4,
-  per user direction) there are exactly two: Zenith's **Surging Intellect** grants Intelligence
-  equal to every Mana it gains, bounded by the ×4 flat ceiling (`docs/innate-passives.md` §7c),
-  and Tusk's **Stampede** doubles its own Speed at every round end, uncapped but held under
+  per user direction) there is one: Tusk's **Stampede** doubles its own Speed at every round end, uncapped but held under
   `STAT_HARD_CAP` = 9999, the ceiling no effective stat passes. Arcane Overflow and Apex
   Predator became stage verbs (`stagesPerManaHeld`: a step per 40 Mana held, up to ▲▲▲;
   `doublesStages`: the Attack steps doubled, ▲▲ from none), and `derivedStatDeltas` is deleted.
-  A third is a conversation again.
+  Zenith's Surging Intellect followed (2026-10-12, per user direction): a Mana grant from a move
+  or a passive is INT ▲, never regen or a Rest. A second is a conversation again.
 - **No accuracy stat.** Moves always land. **Mana cost is the primary balance lever** on
   reliable moves. **A guaranteed lockout is limited by CHARGES** (2026-10-08, per user direction,
   `docs/charges.md`, replacing the +20-a-cast `manaCostGainOnUse` of 2026-09-11, deleted):

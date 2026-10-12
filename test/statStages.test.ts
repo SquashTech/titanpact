@@ -208,7 +208,4 @@ test('round rule: the data — a repeating card is one step a firing (a mastered
       }
     }
   }
-  // Every firing lands for one verb alone: Surging Intellect, whose verb is every Mana gained.
-  const everyFiring = Object.values(passives).filter((p) => p.everyFiring).map((p) => p.id).sort();
-  assert.deepStrictEqual(everyFiring, ['surgingIntellect', 'surgingIntellectPlus']);
 });

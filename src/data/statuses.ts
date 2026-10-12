@@ -241,6 +241,21 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'basePower',
     description: 'Adds its magnitude as flat Base Power to every Slice this hero uses, whatever its type.',
   },
+  // Folio's Crescendo: a one-round Arcane Force, laid at a round's end and cleared at the next one's.
+  Crescendo: {
+    id: 'Crescendo',
+    name: 'Crescendo',
+    shape: 'magnitude',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'none',
+    clearsOnSwitch: true,
+    clearsAtEndOfRound: true,
+    positive: true,
+    forceType: 'Arcane',
+    pipeline: 'basePower',
+    description: 'For this round, adds its magnitude as flat Base Power to every Arcane move this hero uses.',
+  },
   // The heal Force: Elemental Force for HealPower rather than BasePower, on every heal move whatever its type.
   Grace: {
     id: 'Grace',
