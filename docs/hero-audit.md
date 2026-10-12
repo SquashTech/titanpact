@@ -415,3 +415,22 @@ family — Edge on every Slice, Aim on every Arrow, any type. **Hone** (Early Ir
 Charges) in the pools of the seven heroes holding four or more Slices; **Take Aim** (Early Storm,
 Aim 20) in Squall's; Thresher's **Grindstone**; Restock adds Aim 10; the **Whetstone** and
 **Fletching** Boons, gated on the roster holding the family.
+
+## Light, second pass (2026-10-12, per user direction)
+
+Fire and Nature twice, Spirit three times across twelve grafts; spread so each type appears once
+(Shadow unused).
+
+| Hero | Change |
+|---|---|
+| Solace | **Dewfall** (Sunflare): Water (Fire), Cleansing Rain (Scorch), **Morning Dew** — healing an ally gives it 20 Mana, up to its pool (Light's Mana battery; Arcane owns overflow). Sunscald deleted. |
+| Aegis | **Cornerstone** (Verdant Oath): Stone (Nature), Bastion (Wild Bloom), **Keystone** — a broken Shield gives ATK ▲▲, the one path card at two steps (named in test/statStages). Shared Root deleted. Innate **Consecrate → Anointed** (it shared a name with the move). |
+| Empyrean | **Seraph**: Arcane (Spirit), Overload (Soul Rend); Radiant Vessel kept. |
+| Hart | **Dream Stag** (Spirit Stag): Mind (Spirit), Mental Fortress (Soul Offering); **Deathwatch** takes from a random enemy exactly what Renew mended (was 4% of max HP). |
+| Aurum | **High Noon** ATK ▲ (was SPD); **Kindled Mane** re-lights a Burn on every Light hit (the "unless it already is" gate is gone); **Lion's Share** heals and raises both allies. |
+| Carillon | **The Bell Tolls**: every third round, Sanctuary and this hero's Mana full; **The Bell Tolls+** both allies' Mana — one card each (was two cards under one name, mastered every second round). |
+
+Engine: passive target `bothAllies`; a passive `damage` may read the trigger's `amount`; a
+`manaGrant` may be `capped`. Open: Hart's new name, Aurum's innate (Gilded Mane does nothing in the
+Trials or the Gauntlet). Left as they were, not raised again: Sunblind, Dawnlight, Dawnherald's High
+Tide beside a Water graft.

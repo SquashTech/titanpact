@@ -69,6 +69,8 @@ function targetWord(target: PassiveEffectTarget, condition: PassiveTriggerCondit
       return 'this hero';
     case 'ally':
       return 'its partner';
+    case 'bothAllies':
+      return 'both allies';
     case 'triggerSubject':
       return condition.relativeTo === 'self' ? 'this hero' : condition.relativeTo === 'ally' ? 'that partner' : 'that enemy';
     case 'triggerTarget':
@@ -280,8 +282,8 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
         label: 'Then',
         text:
           effect.amount.kind === 'flat'
-            ? `+${effect.amount.value} Mana to ${targetWord(effect.target, condition, hook)}, past the pool`
-            : `Mana equal to ${amountWord(effect.amount, '')} to ${targetWord(effect.target, condition, hook)}, past the pool`,
+            ? `+${effect.amount.value} Mana to ${targetWord(effect.target, condition, hook)}${effect.capped ? ', up to the pool' : ', past the pool'}`
+            : `Mana equal to ${amountWord(effect.amount, '')} to ${targetWord(effect.target, condition, hook)}${effect.capped ? ', up to the pool' : ', past the pool'}`,
         glyph: { kind: 'stat', stat: 'manaPool' },
       };
     case 'manaSurcharge':
@@ -293,9 +295,11 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
     case 'damage':
       return {
         label: 'Then',
-        text: effect.perHeldStatus
-          ? `${Math.round(effect.percentMaxHp * 100)}% of max HP off ${targetWord(effect.target, condition, hook)} per ${statusName(effect.perHeldStatus)} held, all of them spent — direct, past any Shield`
-          : `${Math.round(effect.percentMaxHp * 100)}% of max HP off ${targetWord(effect.target, condition, hook)}${effect.onlyWithStatus ? ` that are ${statusName(effect.onlyWithStatus)}` : ''} — direct, past any Shield`,
+        text: effect.amount
+          ? `${amountWord(effect.amount, 'HP')} off ${targetWord(effect.target, condition, hook)} — direct, past any Shield`
+          : effect.perHeldStatus
+          ? `${Math.round((effect.percentMaxHp ?? 0) * 100)}% of max HP off ${targetWord(effect.target, condition, hook)} per ${statusName(effect.perHeldStatus)} held, all of them spent — direct, past any Shield`
+          : `${Math.round((effect.percentMaxHp ?? 0) * 100)}% of max HP off ${targetWord(effect.target, condition, hook)}${effect.onlyWithStatus ? ` that are ${statusName(effect.onlyWithStatus)}` : ''} — direct, past any Shield`,
         glyph: effect.onlyWithStatus ? { kind: 'status', statusId: effect.onlyWithStatus } : effect.perHeldStatus ? { kind: 'status', statusId: effect.perHeldStatus } : { kind: 'stat', stat: 'hp' },
         color: effect.onlyWithStatus || effect.perHeldStatus ? 'status' : undefined,
       };

@@ -67,60 +67,59 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'cleanse', target: 'triggerTarget' },
     },
   },
-  // Hart's Spirit Stag, fed by its own innate: every arrival lays Renew on the partner.
+  // Hart's Dream Stag, fed by its own innate: every arrival lays Renew on the partner.
   deathwatch: {
     id: 'deathwatch',
     name: 'Deathwatch',
-    description: "When Renew mends one of this hero's allies, a random enemy loses 4% of its max HP.",
+    description: "When Renew mends one of this hero's allies, a random enemy loses as much HP as it mended.",
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'ally', eventFieldEquals: { statusId: 'Renew', kind: 'heal' }, eventFieldPositive: 'amount' },
-      effect: { kind: 'damage', target: 'randomEnemy', percentMaxHp: 0.04 },
+      effect: { kind: 'damage', target: 'randomEnemy', amount: { kind: 'matchTriggerAmount' } },
     },
   },
-  // Aurum's Sunfire. A new Burn keeps the higher, so a steady Light hitter holds the foe at 6%.
+  // Aurum's Sunfire: a fresh Burn re-lights at 15%, so every Light hit stokes the fire.
   kindledMane: {
     id: 'kindledMane',
     name: 'Kindled Mane',
-    description: "Every Light attack this hero lands sets its target Burning, unless it already is.",
+    description: 'Every Light attack this hero lands sets its target Burning.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', onlyIfAbsent: true },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
     },
   },
-  // Aurum's Sunlord: a Daze is a flinch only when it lands first, so the sun climbing is what
-  // turns Blazing Mane's odds into lost turns.
+  // Aurum's Sunlord: the sun climbs with every strike.
   highNoon: {
     id: 'highNoon',
     name: 'High Noon',
-    description: 'Every Light attack this hero lands gives it SPD ▲.',
+    description: 'Every Light attack this hero lands gives it ATK ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
-  // Solace's Sunflare: the dawn that mends one side scalds the other; Scorch re-lights it.
-  sunscald: {
-    id: 'sunscald',
-    name: 'Sunscald',
-    description: 'When this hero heals an ally, a random enemy is set Burning, unless it already is.',
+  // Solace's Dewfall: Light's Mana battery — a refill, never past the pool (Arcane owns overflow).
+  morningDew: {
+    id: 'morningDew',
+    name: 'Morning Dew',
+    description: 'When this hero heals an ally, that ally gains 20 Mana, up to its pool.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Burn', onlyIfAbsent: true },
+      effect: { kind: 'manaGrant', target: 'triggerTarget', amount: { kind: 'flat', value: 20 }, capped: true },
     },
   },
-  // Aegis's Verdant Oath: Holy Strike's and Second Wind's Renew is shared with whoever stands beside it.
-  sharedRoot: {
-    id: 'sharedRoot',
-    name: 'Shared Root',
-    description: 'When this hero gains Renew, its partner gains Renew too.',
+  // Aegis's Cornerstone: a broken wall turns into a swing (▲▲ per user direction, 2026-10-12).
+  keystone: {
+    id: 'keystone',
+    name: 'Keystone',
+    description: "When this hero's Shield is broken, it gains ATK ▲▲.",
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
+      hook: 'StatusRemoved',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Shield', reason: 'broken' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 2 },
     },
   },
   // Empyrean's Stormwing: arrives with the marks its Electric Burst jumps the queue on.
@@ -134,7 +133,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Conduct' },
     },
   },
-  // Carillon's Bellfounder: the bell rings at the start of the round On the Hour closes.
+  // Carillon's Bellfounder: the bell rings at the start of the round The Bell Tolls closes.
   bronzePeal: {
     id: 'bronzePeal',
     name: 'Bronze Peal',
@@ -160,12 +159,12 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   lionsShare: {
     id: 'lionsShare',
     name: "Lion's Share",
-    description: 'When this hero knocks an enemy out, its partner heals a quarter of its max HP and gains ATK ▲. Up to 3 times a fight.',
+    description: 'When this hero knocks an enemy out, both allies heal a quarter of their max HP and gain ATK ▲. Up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'heal', target: 'ally', amount: { kind: 'percentMaxHp', value: 0.25 } },
-      alsoEffect: { kind: 'statDelta', target: 'ally', stat: 'attack', stages: 1 },
+      effect: { kind: 'heal', target: 'bothAllies', amount: { kind: 'percentMaxHp', value: 0.25 } },
+      alsoEffect: { kind: 'statDelta', target: 'bothAllies', stat: 'attack', stages: 1 },
       maxFiresPerFight: 3,
     },
   },

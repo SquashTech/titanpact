@@ -828,25 +828,16 @@ const innatePassives: Record<string, PassiveDefinition> = {
     },
   },
   // Re-authored 2026-09-29 (per user direction, sim pass 14).
-  // Carillon's bell: two ids under one name, as Broadside is, because it does two things on one beat.
-  onTheHour: {
-    id: 'onTheHour',
-    name: 'On the Hour',
-    description: "At the end of every third round, the bell tolls: Sanctuary is set, and this hero's Mana is fully restored.",
-    reactive: {
-      hook: 'RoundEnded',
-      condition: { relativeTo: 'self', everyNRounds: 3 },
-      effect: { kind: 'setFieldEffect', fieldEffectId: 'sanctuary' },
-    },
-  },
-  onTheHourMana: {
-    id: 'onTheHourMana',
-    name: 'On the Hour',
-    description: "At the end of every third round, this hero's Mana is fully restored.",
+  // Carillon's bell (2026-10-12, per user direction).
+  bellTolls: {
+    id: 'bellTolls',
+    name: 'The Bell Tolls',
+    description: "At the end of every third round, set Sanctuary and fully restore this hero's Mana.",
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self', everyNRounds: 3 },
       effect: { kind: 'restoreMana', target: 'self' },
+      alsoEffect: { kind: 'setFieldEffect', fieldEffectId: 'sanctuary' },
     },
   },
   dawnlight: {
@@ -1104,9 +1095,9 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Poison', magnitude: 5, duration: 3 },
     },
   },
-  consecrate: {
-    id: 'consecrate',
-    name: 'Consecrate',
+  anointed: {
+    id: 'anointed',
+    name: 'Anointed',
     description: 'When this hero is healed, it gains DEF ▲ and WIS ▲.',
     reactive: {
       hook: 'Healed',
@@ -1718,24 +1709,15 @@ const innatePassives: Record<string, PassiveDefinition> = {
 // magnitudes stay flat.
 const masteredInnatePassives: Record<string, PassiveDefinition> = {
   // Re-authored 2026-09-29 (per user direction, sim pass 14).
-  onTheHourPlus: {
-    id: 'onTheHourPlus',
-    name: 'On the Hour+',
-    description: "At the end of every second round, the bell tolls: Sanctuary is set, and this hero's Mana is fully restored.",
+  bellTollsPlus: {
+    id: 'bellTollsPlus',
+    name: 'The Bell Tolls+',
+    description: "At the end of every third round, set Sanctuary and fully restore both allies' Mana.",
     reactive: {
       hook: 'RoundEnded',
-      condition: { relativeTo: 'self', everyNRounds: 2 },
-      effect: { kind: 'setFieldEffect', fieldEffectId: 'sanctuary' },
-    },
-  },
-  onTheHourPlusMana: {
-    id: 'onTheHourPlusMana',
-    name: 'On the Hour+',
-    description: "At the end of every second round, this hero's Mana is fully restored.",
-    reactive: {
-      hook: 'RoundEnded',
-      condition: { relativeTo: 'self', everyNRounds: 2 },
-      effect: { kind: 'restoreMana', target: 'self' },
+      condition: { relativeTo: 'self', everyNRounds: 3 },
+      effect: { kind: 'restoreMana', target: 'bothAllies' },
+      alsoEffect: { kind: 'setFieldEffect', fieldEffectId: 'sanctuary' },
     },
   },
   dawnlightPlus: {
@@ -2001,7 +1983,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
 
   sanctified: {
     id: 'sanctified',
-    name: 'Consecrate+',
+    name: 'Anointed+',
     description: 'When this hero is healed, it gains DEF ▲▲ and WIS ▲▲.',
     reactive: {
       hook: 'Healed',

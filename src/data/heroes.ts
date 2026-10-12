@@ -376,7 +376,7 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'A', attack: 'D', defense: 'A', intelligence: 'B', wisdom: 'A', speed: 'C', manaPool: 'B' },
     schedule: { offerLevels: [6, 11, 12, 19, 24], midLevel: 12, lateLevel: 21, signatureLevel: 16 },
     signatureMoveId: 'bulwarkStrike',
-    passiveIds: ['consecrate'],
+    passiveIds: ['anointed'],
     masteredPassiveIds: ['sanctified'],
   },
   empyrean: {
@@ -763,8 +763,8 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'S', attack: 'S', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'D', manaPool: 'B' },
     schedule: { offerLevels: [5, 8, 10, 17, 21], midLevel: 10, lateLevel: 19, signatureLevel: 22 },
     signatureMoveId: 'greatToll',
-    passiveIds: ['onTheHour', 'onTheHourMana'],
-    masteredPassiveIds: ['onTheHourPlus', 'onTheHourPlusMana'],
+    passiveIds: ['bellTolls'],
+    masteredPassiveIds: ['bellTollsPlus'],
   },
   // The radiant stag: Light's second healer, arriving with a mend already on its partner.
   hart: {

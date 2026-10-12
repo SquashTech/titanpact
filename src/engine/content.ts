@@ -225,13 +225,14 @@ export type PassiveAmount =
  * target-role combatant whatever the condition read — the defender of a DamageDealt — which
  * is the only way a source-role passive (Static Tide) reaches the hero it just hit.
  * 'ally' is the owner's ACTIVE partner and never the owner (Nature's Purification); it
- * resolves to nothing when the owner is alone on the field.
+ * resolves to nothing when the owner is alone on the field. 'bothAllies' is the owner and that
+ * partner (Lion's Share).
  * 'activeEnemies' = every living ACTIVE enemy of the owner, resolved once per member, and
  * 'randomEnemy' is one of them drawn at resolution — the only passive target that costs RNG,
  * and it draws nothing unless a passive actually asks for it. Never the bench: an entry
  * passive must not tax uncommitted heroes.
  */
-export type PassiveEffectTarget = 'self' | 'ally' | 'triggerSubject' | 'triggerTarget' | 'activeEnemies' | 'randomEnemy';
+export type PassiveEffectTarget = 'self' | 'ally' | 'bothAllies' | 'triggerSubject' | 'triggerTarget' | 'activeEnemies' | 'randomEnemy';
 
 /** The reactive effect primitives. */
 export type PassiveEffect =
@@ -275,7 +276,9 @@ export type PassiveEffect =
   | {
       kind: 'damage';
       target: PassiveEffectTarget;
-      percentMaxHp: number;
+      /** Exactly one of `percentMaxHp` (a share of each target's max HP) and `amount` (Deathwatch: what the Renew just mended). */
+      percentMaxHp?: number;
+      amount?: PassiveAmount;
       onlyWithStatus?: StatusId;
       /** Broadside: the share is PER point of this status the OWNER holds, and the status is spent by the firing. Nothing held, nothing fired. */
       perHeldStatus?: StatusId;
@@ -283,8 +286,8 @@ export type PassiveEffect =
   /** Strips non-`positive` statuses, same rules as a move's `cleanses`; `count` omitted = all. */
   | { kind: 'cleanse'; target: PassiveEffectTarget; count?: number }
   /** UNCAPPED, like a move's `manaGrant` — overflow past the pool is the point (docs/mana.md). */
-  | { kind: 'manaGrant'; target: PassiveEffectTarget; amount: PassiveAmount }
-  /** Refills the target to its pool, as a Rest does: never past it, and never lowers an overflow (Carillon's On the Hour). */
+  | { kind: 'manaGrant'; target: PassiveEffectTarget; amount: PassiveAmount; /** Morning Dew: never past the pool, and never lowers an overflow. */ capped?: true }
+  /** Refills the target to its pool, as a Rest does: never past it, and never lowers an overflow (Carillon's The Bell Tolls). */
   | { kind: 'restoreMana'; target: PassiveEffectTarget }
   /** Mana lost outright, overflow first, never below 0 (Bellows' Boiler Pressure). */
   | { kind: 'loseMana'; target: PassiveEffectTarget; amount: number }

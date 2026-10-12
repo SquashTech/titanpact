@@ -20,7 +20,7 @@ import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import type { Action } from '../src/engine/combat/actions';
 import { hasStatus } from '../src/engine/state';
 import { applyStatus, selectableTargets } from '../src/engine/combat/statusEngine';
-import { getEffectiveStat } from '../src/engine/state';
+import { getEffectiveStat, getMaxMana } from '../src/engine/state';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -516,4 +516,46 @@ test("edge: Squall's Restock gives Aim 10 on a Rest", () => {
   const base = withPassive(threeVThree(743), 'a1', 'retrievePlus');
   const { state } = resolveRound(base, [{ kind: 'rest', combatantId: 'a1' } as Action], config);
   assert.strictEqual(state.combatants.a1.statuses.Aim?.magnitude, 10);
+});
+
+// --- Light, second pass (docs/hero-audit.md) ---
+
+test('light: Morning Dew pours 20 Mana into the ally it heals, never past the pool', () => {
+  const pool = (s: CombatState) => getMaxMana(heroes[s.combatants.a2.heroId], s.combatants.a2);
+  let base = withMana(threeVThree(750), 'a1');
+  base = { ...base, combatants: { ...base.combatants, a2: { ...base.combatants.a2, currentMana: 0, currentHp: 50 } } };
+  const mend = [cut('a1', 'mend', 'a2')];
+  const dry = resolveRound(base, mend, config).state.combatants.a2.currentMana;
+  const dewed = resolveRound(withPassive(base, 'a1', 'morningDew'), mend, config).state.combatants.a2.currentMana;
+  assert.strictEqual(dewed - dry, 20);
+  const nearFull = { ...base, combatants: { ...base.combatants, a2: { ...base.combatants.a2, currentMana: pool(base) - 5 } } };
+  assert.strictEqual(resolveRound(withPassive(nearFull, 'a1', 'morningDew'), mend, config).state.combatants.a2.currentMana, pool(base));
+});
+
+test('light: Keystone answers a broken Shield with ATK ▲▲', () => {
+  let base = withPassive(threeVThree(751), 'a1', 'keystone');
+  base = applyStatus(base, 1, 'a1', statuses.Shield, { magnitude: 1 }).state;
+  const { state } = resolveRound(base, [cut('b1', heroes.ironWarden.moveIds[0], 'a1')], config);
+  assert.strictEqual(state.combatants.a1.statStages?.attack, 2);
+});
+
+test('light: Deathwatch takes from a random enemy exactly what Renew mended', () => {
+  let base = withPassive(threeVThree(752), 'a1', 'deathwatch');
+  base = withHp(base, 'a2', 40);
+  base = applyStatus(base, 1, 'a2', statuses.Renew, {}).state;
+  const { state, events } = resolveRound(base, [], config);
+  const mended = events.filter((e) => e.type === 'StatusTicked' && (e as { combatantId: string }).combatantId === 'a2' && (e as { statusId: string }).statusId === 'Renew').reduce((sum, e) => sum + ((e as { amount: number }).amount ?? 0), 0);
+  const lost = ['b1', 'b2'].reduce((sum, id) => sum + (base.combatants[id].currentHp - state.combatants[id].currentHp), 0);
+  assert.ok(mended > 0);
+  assert.strictEqual(lost, mended);
+});
+
+test("light: Lion's Share heals and raises both allies on a knockout", () => {
+  let base = withMana(withPassive(threeVThree(753), 'a1', 'lionsShare'), 'a1');
+  base = withHp(withHp(base, 'b1', 1), 'a2', 30);
+  const { state } = resolveRound(base, [cut('a1', 'singe', 'b1')], config);
+  assert.ok(state.combatants.b1.fainted);
+  assert.strictEqual(state.combatants.a1.statStages?.attack, 1);
+  assert.strictEqual(state.combatants.a2.statStages?.attack, 1);
+  assert.ok(state.combatants.a2.currentHp > 30);
 });

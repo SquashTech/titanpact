@@ -311,7 +311,7 @@ test('mastered innate: a SIZABLE buff — every flat figure at least doubled, or
   assert.ok(compared >= 30, `only ${compared} innates compared`);
   // The shapes the figure does not read: a chance becomes always, a share is doubled or more.
   assert.ok((passives.boiler.reactive!.chance ?? 1) < 1 && passives.boilingPoint.reactive!.chance === undefined);
-  assert.ok(passives.nightTerror.reactive!.effect.kind === 'damage' && passives.nightTerror.reactive!.effect.percentMaxHp >= 2 * (passives.nightmare.reactive!.effect as { percentMaxHp: number }).percentMaxHp);
+  assert.ok(passives.nightTerror.reactive!.effect.kind === 'damage' && (passives.nightTerror.reactive!.effect.percentMaxHp ?? 0) >= 2 * (passives.nightmare.reactive!.effect as { percentMaxHp: number }).percentMaxHp);
   assert.ok(!passives.nightTerror.reactive!.whileBenched, 'nothing of Dread acts from the bench');
 });
 

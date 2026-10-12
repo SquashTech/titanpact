@@ -202,7 +202,8 @@ test('round rule: the data — a repeating card is one step a firing (a mastered
         if (typeof e.amount === 'number') assert.ok(e.permanent, `${p.id} authors a flat number in a fight`);
         if (e.stages === undefined) continue;
         const repeating = !REPEATING_EXEMPT_HOOKS.has(r.hook) && !r.oncePerFight;
-        const maxStep = MASTERED_INNATES.has(p.id) ? 2 : 1;
+        // Keystone (Aegis's Cornerstone) is the one path card at two steps, per user direction 2026-10-12: a broken Shield is rare.
+        const maxStep = MASTERED_INNATES.has(p.id) || p.id === 'keystone' ? 2 : 1;
         if (repeating) assert.ok(Math.abs(e.stages) >= 1 && Math.abs(e.stages) <= maxStep, `${p.id}: a repeating card is one step (a mastered innate two)`);
       }
     }

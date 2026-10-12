@@ -632,8 +632,8 @@ test('stormveil: Skyshear gains Shield 20 at each round end while an enemy is Co
   assert.ok(!clean.combatants.a1.statuses.Shield, 'no Conduct on the far side, no Shield');
 });
 
-test('on the hour: at the end of every third round Carillon sets Sanctuary and refills to its pool, never past it', () => {
-  let state = withPassive(withPassive(twoVTwo(49, 'carillon', 'valor', 'ironWarden', 'crag'), 'a1', 'onTheHour'), 'a1', 'onTheHourMana');
+test('the bell tolls: at the end of every third round Carillon sets Sanctuary and refills to its pool, never past it', () => {
+  let state = withPassive(twoVTwo(49, 'carillon', 'valor', 'ironWarden', 'crag'), 'a1', 'bellTolls');
   const swing = (s: CombatState) => resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'holyStrike', declaredTarget: 'b1' }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], config).state;
   state = swing(swing(state));
   assert.strictEqual(state.activeFieldEffect, null, 'the bell has not tolled by the end of round two');
@@ -641,6 +641,14 @@ test('on the hour: at the end of every third round Carillon sets Sanctuary and r
   state = swing(state);
   assert.strictEqual(state.activeFieldEffect?.fieldEffectId, 'sanctuary');
   assert.strictEqual(state.combatants.a1.currentMana, heroes.carillon.baseStats.manaPool, 'full, and no further');
+});
+
+test("the bell tolls+: every third round it refills BOTH allies' Mana", () => {
+  let state = withPassive(twoVTwo(51, 'carillon', 'valor', 'ironWarden', 'crag'), 'a1', 'bellTollsPlus');
+  state = { ...state, combatants: { ...state.combatants, a2: { ...state.combatants.a2, currentMana: 0 } } };
+  for (let round = 1; round <= 3; round++) state = resolveRound({ ...state, round }, restAll(state).filter((a) => a.combatantId !== 'a2'), config).state;
+  assert.strictEqual(state.activeFieldEffect?.fieldEffectId, 'sanctuary');
+  assert.strictEqual(state.combatants.a2.currentMana, heroes.valor.baseStats.manaPool, 'the partner rings full too');
 });
 
 test('boiler pressure: Ironbound vents 15 Mana at every round end on the field, after regen, never below 0', () => {

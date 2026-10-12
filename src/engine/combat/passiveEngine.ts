@@ -244,6 +244,8 @@ function resolveTargetIds(
       const partner = state.active[side].find((id): id is string => id !== null && id !== ownerId && !(leaving && id === eventTargetId));
       return partner ? [partner] : [];
     }
+    case 'bothAllies':
+      return [ownerId, ...resolveTargetIds(state, ownerId, subjectId, eventTargetId, 'ally')];
     case 'triggerSubject':
       return subjectId ? [subjectId] : [];
     case 'triggerTarget':
@@ -298,7 +300,7 @@ function resolveEffectOn(
       const maxHp = getMaxHp(heroes[target.heroId], target);
       const owner = state.combatants[ownerId];
       const loaded = effect.perHeldStatus ? (owner?.statuses[effect.perHeldStatus]?.magnitude ?? 0) : 1;
-      const amount = Math.round(maxHp * effect.percentMaxHp * loaded);
+      const amount = effect.amount ? resolveAmount(effect.amount, context, maxHp) : Math.round(maxHp * (effect.percentMaxHp ?? 0) * loaded);
       if (amount <= 0) return { state, events: [] };
       // Direct, like the Clock: no Shield, no reaction of its own beyond what applyHpDelta emits.
       return applyHpDelta(state, round, targetId, -amount, maxHp, { source: 'direct' });
@@ -380,12 +382,13 @@ function resolveEffectOn(
       if (amount <= 0) return { state, events: [] };
       // Uncapped by design, exactly as a move's manaGrant is — the overflow IS the payout.
       const previousMana = target.currentMana;
-      const newMana = previousMana + amount;
+      const maxMana = getMaxMana(heroes[target.heroId], target);
+      const newMana = effect.capped ? Math.max(previousMana, Math.min(previousMana + amount, maxMana)) : previousMana + amount;
+      if (newMana === previousMana) return { state, events: [] };
       const nextState: CombatState = {
         ...state,
         combatants: { ...state.combatants, [targetId]: { ...target, currentMana: newMana } },
       };
-      const maxMana = getMaxMana(heroes[target.heroId], target);
       return {
         state: nextState,
         events: [
@@ -394,7 +397,7 @@ function resolveEffectOn(
             round,
             sourceCombatantId: ownerId,
             targetCombatantId: targetId,
-            amount,
+            amount: newMana - previousMana,
             previousMana,
             newMana,
             maxMana,
