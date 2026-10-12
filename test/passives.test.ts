@@ -576,13 +576,12 @@ test('passives: Restorative Toxin lands a Renew on its owner for the Poison it j
   assert.strictEqual(next.combatants.a1.statuses.Renew?.duration, 2);
 });
 
-test('passives: Restorative Toxin pays once per Poison application, so Blight on both foes pays twice', () => {
+test('passives: Restorative Toxin pays its holder once a round, so Blight on both foes pays once', () => {
   const state = withPassive(natureFixture(361), 'a1', 'restorativeToxin');
   const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'blight' } as Action], config);
 
   const renews = events.filter((e) => e.type === 'StatusApplied' && (e as any).statusId === 'Renew') as any[];
-  assert.strictEqual(renews.length, 2, 'one firing per Poison application');
-  assert.deepStrictEqual(renews.map((r) => r.duration), [3, 3], 'the second resets the three rather than adding');
+  assert.strictEqual(renews.length, 1, 'the holder is one hero: once a round');
 });
 
 test('passives: Restorative Toxin is source-role — a Poison the holder RECEIVES pays nothing', () => {
@@ -809,16 +808,16 @@ test('passives: Afterglow reports one StatChanged per stat, the way a move does'
   assert.ok(changes.every((c) => c.delta === 1 && c.stages === true));
 });
 
-test('passives: Afterglow is braked — one firing a round however many it heals, and a step a round after', () => {
+test('passives: Afterglow lifts every hero it heals, each once a round', () => {
   const state = withPassive(solaceFixture(502), 'a1', 'afterglow');
   const consecrates: Action = { kind: 'move', combatantId: 'a1', moveId: 'consecrate' };
   const once = resolveRound(state, [consecrates], config).state;
   const raised = ['a1', 'a2'].filter((id) => once.combatants[id].statStages?.attack === 1);
-  assert.strictEqual(raised.length, 1, 'a spread heal is one firing, not one per target (docs/stat-stages.md §6.3)');
+  assert.strictEqual(raised.length, 2, 'a spread heal lifts both — each hero once a round');
 
   const twice = resolveRound(once, [consecrates], config).state;
   const total = (['a1', 'a2'] as const).reduce((sum, id) => sum + (twice.combatants[id].statStages?.attack ?? 0), 0);
-  assert.strictEqual(total, 2, 'a step the next round');
+  assert.strictEqual(total, 4, 'and each a step the next round');
 });
 
 test('passives: Afterglow is source-role — being healed BY someone does not arm it', () => {

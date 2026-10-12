@@ -158,6 +158,7 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
   'fight.stages': [
     { hero: { heroId: 'cinderKnight', stages: { attack: 2, speed: -1 } }, heroFigure: true, focus: ['stageMarks'] },
     null,
+    null,
   ],
   'fight.switching': [{ hero: { heroId: 'cinderKnight' }, bar: true, focus: ['switch'] }, null, null],
   'fight.types': [

@@ -46,11 +46,11 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
   vengefulEmblem: {
     id: 'vengefulEmblem',
     name: 'Vengeful Emblem',
-    description: 'When this hero takes damage, gain ATK ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero takes damage, gain ATK ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
 
@@ -63,11 +63,11 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
     name: 'Sunder',
     // subjectRole 'source' + relativeTo 'self' = "this hero dealt it"; 'triggerTarget' is then
     // the defender, which is the only way a source-role passive reaches who it just hit.
-    description: 'When this hero lands an attack, its target loses DEF ▼. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands an attack, its target loses DEF ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -1 },
     },
   },
   secondSkin: {
@@ -75,11 +75,11 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
     name: 'Second Skin',
     // Vengeful Emblem's shape turned inward — that one pays an attacker for being hit, this
     // one pays a wall for holding. One statDelta per stat, sharing the amount.
-    description: 'When this hero takes damage, it gains DEF ▲ and WIS ▲. Once a round, up to 2 times a fight.',
+    description: 'When this hero takes damage, it gains DEF ▲ and WIS ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], stages: 1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], stages: 1 },
     },
   },
   arcaneReservoir: {
@@ -374,18 +374,18 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   tempering: {
     id: 'tempering',
     name: 'Tempering',
-    description: 'When this hero takes damage, it gains DEF ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero takes damage, it gains DEF ▲.',
     // Target-role DamageDealt: "I was hit". Steel worked by blows, a step a round to its cap (docs/stat-stages.md §6.3).
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1 },
     },
   },
   combustion: {
     id: 'combustion',
     name: 'Combustion',
-    description: 'When this hero is Burned, it gains ATK ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero is Burned, it gains ATK ▲.',
     // Target-role StatusApplied: "I caught fire". Mech's whole Burn line burns its OWN caster —
     // Backfire, Overheat and Meltdown each apply Burn to the target AND to self — so the drawback
     // written into the type becomes the fuel, and an enemy burning Clockwork is a mistake.
@@ -393,13 +393,13 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Burn' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   afterglow: {
     id: 'afterglow',
     name: 'Afterglow',
-    description: 'When this hero heals an ally, that ally gains ATK ▲ and INT ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero heals an ally, that ally gains ATK ▲ and INT ▲.',
     // Source-role on the Healed hook: "I did the healing", landing on triggerTarget, the ally
     // who received it. BOTH offensive stats on purpose — Solace does not get to choose her
     // partner, so the buff has to be worth the same to a Crag as to a Glyph. It also means a
@@ -407,7 +407,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], stages: 1 },
     },
   },
   eitherHand: {
@@ -488,39 +488,39 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   killingFrost: {
     id: 'killingFrost',
     name: 'Killing Frost',
-    description: 'When this hero Freezes an enemy, it gains INT ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero Freezes an enemy, it gains INT ▲.',
     // Feedback Loop's shape on Freeze. Freeze is stacking 'none', so re-freezing an already
     // frozen foe emits nothing and pays nothing; the ramp costs fresh targets, and Permafrost
     // and Avalanche reaching both foes at once is the two-for-one that makes it worth a path.
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
   coldForge: {
     id: 'coldForge',
     name: 'Cold Forge',
-    description: "When this hero's Defense rises, it gains ATK ▲. Once a round, up to 3 times a fight.",
+    description: "When this hero's Defense rises, it gains ATK ▲.",
     // Pack Ice's trigger with an inward payout: eventFieldPositive is what makes this "rises"
     // and not "changes". Floe's own Frost Armor and a partner's Bastion or Frost Wall all arm it,
     // which is the whole build — the wall it puts up is the weapon it swings.
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   squallLine: {
     id: 'squallLine',
     name: 'Squall Line',
-    description: 'When this hero lands an attack, it gains ATK ▲ and SPD ▲. Once a round, up to 2 times a fight.',
+    description: 'When this hero lands an attack, it gains ATK ▲ and SPD ▲.',
     // Unconditional on a hit, held to a step a round and the smallest cap (2) for it. Speed on the
     // roster's fastest hero compounds: the ramp buys the turn order it needs to keep ramping.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1 },
     },
   },
   plunder: {
@@ -539,26 +539,26 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   thornrot: {
     id: 'thornrot',
     name: 'Thornrot',
-    description: 'When this hero applies Poison, it gains ATK ▲ and SPD ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero applies Poison, it gains ATK ▲ and SPD ▲.',
     // Restorative Toxin's trigger paying a stat line instead of a HoT — Sylva turns Poison into
     // sustain, Mordrax turns it into pressure. Poison stacks, so every re-application pays again.
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1 },
     },
   },
   heartwood: {
     id: 'heartwood',
     name: 'Heartwood',
-    description: "When this hero's Renew heals it, it gains ATK ▲ and DEF ▲. Once a round, up to 3 times a fight.",
+    description: "When this hero's Renew heals it, it gains ATK ▲ and DEF ▲.",
     // Read off the TICK, not the Healed hook: a HoT tick emits StatusTicked (kind 'heal'), never
     // Healed, so Communion's shape would never fire here. Renew heals on landing and twice more, and each
     // heal banks the stats, which is what turns Hollowbark's own Second Wind into a three-round ramp.
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' } },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], stages: 1 },
     },
   },
   shieldbearer: {
@@ -577,7 +577,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   puppetStrings: {
     id: 'puppetStrings',
     name: 'Puppet Strings',
-    description: "When an enemy's Intelligence drops, this hero gains INT ▲. Once a round, up to 3 times a fight.",
+    description: "When an enemy's Intelligence drops, this hero gains INT ▲.",
     // Entanglement's trigger on the other magical stat, paying the owner rather than marking the
     // foe. Trance's slate is an Intelligence shredder (Lull, Disorient, Break Will), and Disorient
     // reaching both foes is two firings. ATTRIBUTION: StatChanged carries no source, so a Mind
@@ -585,7 +585,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'intelligence' }, eventFieldNegative: 'delta' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
   grief: {
@@ -628,13 +628,13 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   runawayPressure: {
     id: 'runawayPressure',
     name: 'Runaway Pressure',
-    description: 'When this hero lands an attack, it gains ATK ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands an attack, it gains ATK ▲.',
     // Squall Line's shape at double the figure on one axis, because Bellows at 5 Speed acts last
     // in nearly every exchange — the ramp is what it is paid for never getting to go first.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   widowsKiss: {
@@ -666,38 +666,38 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   constrict: {
     id: 'constrict',
     name: 'Constrict',
-    description: 'When this hero lands a magical attack, its target loses SPD ▼. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands a magical attack, its target loses SPD ▼.',
     // A source-role reaction paying a stat debuff. Coil's slate is
     // magical end to end, so every cast tightens; Psionic Wave reaching both foes slows both.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', stages: -1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', stages: -1 },
     },
   },
   // --- The third-of-each-type six (2026-09-17) ---
   aftershock: {
     id: 'aftershock',
     name: 'Aftershock',
-    description: 'When this hero lands a magical attack, its target loses DEF ▼. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands a magical attack, its target loses DEF ▼.',
     // Constrict's shape aimed at Defense: the mixed line's two halves feed each other, since
     // Stone's magical column is all spread — one Rockfall softens both foes for the staff.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -1 },
     },
   },
   rampant: {
     id: 'rampant',
     name: 'Rampant',
-    description: 'When this hero takes damage, it gains ATK ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero takes damage, it gains ATK ▲.',
     // Tempering's trigger paying the offensive stat, on the body least interested in defending.
     // Every hit it eats is a bigger bite back; the Pact Clock is what brackets it.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   omen: {
@@ -716,14 +716,14 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   sunblind: {
     id: 'sunblind',
     name: 'Sunblind',
-    description: 'When this hero Dazes a foe, that foe loses WIS ▼. Once a round, up to 5 times a fight.',
+    description: 'When this hero Dazes a foe, that foe loses WIS ▼.',
     // Widow's Kiss on the Daze rider: a flash that lands before the foe acts costs them the
     // turn, and now the follow-up burns through them too. Only pays on a hero fast enough to
     // land the Daze first, which is the whole line.
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Daze' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1 },
     },
   },
   thickHide: {
@@ -846,11 +846,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   breach: {
     id: 'breach',
     name: 'Breach',
-    description: 'When this hero lands an attack, its target loses DEF ▼. Once a round, up to 2 times a fight.',
+    description: 'When this hero lands an attack, its target loses DEF ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -1 },
     },
   },
   // Re-authored 2026-09-29 (per user direction, sim pass 14).
@@ -890,6 +890,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
     id: 'surgingIntellect',
     name: 'Surging Intellect',
     description: 'When this hero gains Mana, it gains that much Intelligence.',
+    everyFiring: true,
     // Every way mana arrives — regen, a grant, a Rest — so it pays a little every round it spends
     // and a lot off a Font of Power. The ×4 fight ceiling is what bounds it.
     reactive: {
@@ -919,12 +920,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   outpace: {
     id: 'outpace',
     name: 'Outpace',
-    description: 'At the end of each round, if both active allies move before both active enemies, this hero gains INT ▲. Up to 5 times a fight.',
+    description: 'At the end of each round, if both active allies move before both active enemies, this hero gains INT ▲.',
     // Stacks every round the lead holds, to the fight ceiling — the speed race is the whole game.
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self', sideOutspeeds: true },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
   upkeep: {
@@ -963,23 +964,23 @@ const innatePassives: Record<string, PassiveDefinition> = {
   kindling: {
     id: 'kindling',
     name: 'Kindling',
-    description: 'When this hero lands an attack on a Burning foe, it and its partner gain ATK ▲ and INT ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands an attack on a Burning foe, it and its partner gain ATK ▲ and INT ▲.',
     // Light it once, then every hit builds the whole front line. Both columns, so the knight's Explosive turn keeps it live.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Burn' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
-      alsoEffect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1 },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1 },
     },
   },
   stoke: {
     id: 'stoke',
     name: 'Stoke',
-    description: 'When an enemy takes Burn damage, this hero gains INT ▲. Once a round, up to 3 times a fight.',
+    description: 'When an enemy takes Burn damage, this hero gains INT ▲.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
   slumber: {
@@ -1016,12 +1017,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   drag: {
     id: 'drag',
     name: 'Drag',
-    description: 'When this hero lands a Water attack, its target loses SPD ▼ and this hero gains SPD ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands a Water attack, its target loses SPD ▼ and this hero gains SPD ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', stages: -1, perFight: 3 },
-      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', stages: -1 },
+      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1 },
     },
   },
   ink: {
@@ -1047,11 +1048,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   coldSnap: {
     id: 'coldSnap',
     name: 'Bitter Cold',
-    description: 'When this hero lands an attack on a Frozen foe, it gains ATK ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands an attack on a Frozen foe, it gains ATK ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Freeze' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   absoluteZero: {
@@ -1121,11 +1122,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   consecrate: {
     id: 'consecrate',
     name: 'Consecrate',
-    description: 'When this hero is healed, it gains DEF ▲ and WIS ▲. Once a round, up to 2 times a fight.',
+    description: 'When this hero is healed, it gains DEF ▲ and WIS ▲.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], stages: 1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], stages: 1 },
     },
   },
   halo: {
@@ -1169,12 +1170,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   neuroplastic: {
     id: 'neuroplastic',
     name: 'Neuroplastic',
-    description: "When an enemy's Wisdom is lowered, this hero's Wisdom rises as many steps. Once a round, up to 3 times a fight.",
+    description: "When an enemy's Wisdom is lowered, this hero's Wisdom rises as many steps.",
     // The drop is read off the StatChanged that landed (negative delta → the same figure, positive).
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'wisdom' }, eventFieldNegative: 'delta' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'wisdom', amount: { kind: 'matchTriggerAmount', field: 'delta', multiplier: -1 }, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'wisdom', amount: { kind: 'matchTriggerAmount', field: 'delta', multiplier: -1 } },
     },
   },
   hunger: {
@@ -1191,11 +1192,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   lullaby: {
     id: 'lullaby',
     name: 'Lullaby',
-    description: 'At the end of each round, both active enemies lose SPD ▼. Up to 2 times a fight.',
+    description: 'At the end of each round, both active enemies lose SPD ▼.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', stages: -1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', stages: -1 },
     },
   },
   lament: {
@@ -1224,11 +1225,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   rivet: {
     id: 'rivet',
     name: 'Rivet',
-    description: "At the end of each round, this hero's partner gains DEF ▲. Up to 2 times a fight.",
+    description: "At the end of each round, this hero's partner gains DEF ▲.",
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'ally', stat: 'defense', stages: 1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'ally', stat: 'defense', stages: 1 },
     },
   },
   boiler: {
@@ -1291,12 +1292,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   packHunter: {
     id: 'packHunter',
     name: 'Pack Hunter',
-    description: "When this hero's partner lands an attack, this hero gains ATK ▲ and INT ▲. Once a round, up to 2 times a fight.",
+    description: "When this hero's partner lands an attack, this hero gains ATK ▲ and INT ▲.",
     // Both columns, so Warhowl's rewire keeps it live.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1 },
     },
   },
   serpentsEye: {
@@ -1360,18 +1361,19 @@ const innatePassives: Record<string, PassiveDefinition> = {
     alsoReactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['intelligence', 'speed'], stages: 1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['intelligence', 'speed'], stages: 1 },
+      maxFiresPerFight: 2,
     },
   },
   // --- Starfall ---
   nettle: {
     id: 'nettle',
     name: 'Nettle',
-    description: 'When this hero lands a hit, its target loses ATK ▼. Once a round, up to 2 times a fight.',
+    description: 'When this hero lands a hit, its target loses ATK ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'attack', stages: -1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'attack', stages: -1 },
     },
   },
   shelter: {
@@ -1403,16 +1405,16 @@ const innatePassives: Record<string, PassiveDefinition> = {
   brimming: {
     id: 'brimming',
     name: 'Brimming',
-    description: 'When this hero is healed, Renew included, it gains ATK ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero is healed, Renew included, it gains ATK ▲.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
     alsoReactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' }, eventFieldPositive: 'amount' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   stampede: {
@@ -1438,11 +1440,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   inscribe: {
     id: 'inscribe',
     name: 'Inscribe',
-    description: 'When this hero lands a hit, its target loses WIS ▼. Once a round, up to 2 times a fight.',
+    description: 'When this hero lands a hit, its target loses WIS ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1 },
     },
   },
   iaido: {
@@ -1468,11 +1470,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   curl: {
     id: 'curl',
     name: 'Curl',
-    description: 'When this hero takes damage, it gains DEF ▲. Once a round, up to 2 times a fight.',
+    description: 'When this hero takes damage, it gains DEF ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1 },
     },
   },
   // The Werewolf's Turn (docs/wild-innates-and-events.md §3.3): what the tenth pip pays a bitten
@@ -1507,11 +1509,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   badLuck: {
     id: 'badLuck',
     name: 'Bad Luck',
-    description: 'When this hero lands a hit, a random enemy loses ATK ▼ and INT ▼. Once a round, up to 2 times a fight.',
+    description: 'When this hero lands a hit, a random enemy loses ATK ▼ and INT ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'randomEnemy', stat: ['attack', 'intelligence'], stages: -1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'randomEnemy', stat: ['attack', 'intelligence'], stages: -1 },
     },
   },
   foxfire: {
@@ -1558,11 +1560,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   unfurl: {
     id: 'unfurl',
     name: 'Unfurl',
-    description: 'When this hero gains Renew, it gains INT ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero gains Renew, it gains INT ▲.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
   anvilCloud: {
@@ -1589,11 +1591,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   undermine: {
     id: 'undermine',
     name: 'Undermine',
-    description: 'When this hero lands a Stone attack, its target loses DEF ▼. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands a Stone attack, its target loses DEF ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -1 },
     },
   },
   waystone: {
@@ -1669,11 +1671,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   deathWail: {
     id: 'deathWail',
     name: 'Death Wail',
-    description: 'When this hero lands a Spirit attack, both active enemies lose ATK ▼ and INT ▼. Once a round, up to 2 times a fight.',
+    description: 'When this hero lands a Spirit attack, both active enemies lose ATK ▼ and INT ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], stages: -1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], stages: -1 },
     },
   },
   lodestone: {
@@ -1689,11 +1691,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   tally: {
     id: 'tally',
     name: 'Tally',
-    description: 'When an enemy attacks, this hero gains INT ▲. Once a round, up to 2 times a fight.',
+    description: 'When an enemy attacks, this hero gains INT ▲.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'enemy', eventFieldEquals: { damaging: 'true' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
   flit: {
@@ -1709,11 +1711,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   unbothered: {
     id: 'unbothered',
     name: 'Unbothered',
-    description: 'When an enemy lands a hit, that enemy loses ATK ▼ and INT ▼. Once a round, up to 2 times a fight.',
+    description: 'When an enemy lands a hit, that enemy loses ATK ▼ and INT ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'enemy', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['attack', 'intelligence'], stages: -1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['attack', 'intelligence'], stages: -1 },
     },
   },
 };
@@ -1766,6 +1768,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
     id: 'surgingIntellectPlus',
     name: 'Surging Intellect+',
     description: 'When this hero gains Mana, it gains twice that much Intelligence.',
+    everyFiring: true,
     reactive: {
       hook: 'ManaGained',
       condition: { relativeTo: 'self', eventFieldPositive: 'manaGained' },
@@ -1792,11 +1795,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   outpacePlus: {
     id: 'outpacePlus',
     name: 'Outpace+',
-    description: 'At the end of each round, if both active allies move before both active enemies, this hero gains INT ▲. Up to 5 times a fight.',
+    description: 'At the end of each round, if both active allies move before both active enemies, this hero gains INT ▲▲.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self', sideOutspeeds: true },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
     },
   },
   upkeepPlus: {
@@ -1845,22 +1848,22 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   forgeheart: {
     id: 'forgeheart',
     name: 'Kindling+',
-    description: 'When this hero lands an attack on a Burning foe, it and its partner gain ATK ▲▲ and INT ▲▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands an attack on a Burning foe, it and its partner gain ATK ▲▲ and INT ▲▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Burn' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 2, perFight: 3 },
-      alsoEffect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 2, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 2 },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 2 },
     },
   },
   wildfire: {
     id: 'wildfire',
     name: 'Stoke+',
-    description: 'When an enemy takes Burn damage, this hero gains INT ▲▲. Once a round, up to 3 times a fight.',
+    description: 'When an enemy takes Burn damage, this hero gains INT ▲▲.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
     },
   },
   hellmouth: {
@@ -1878,12 +1881,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   ripCurrent: {
     id: 'ripCurrent',
     name: 'Drag+',
-    description: 'When this hero lands any attack, its target loses SPD ▼ and this hero gains SPD ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero lands any attack, its target loses SPD ▼▼ and this hero gains SPD ▲▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', stages: -1, perFight: 5 },
-      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', stages: -2 },
+      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 2 },
     },
   },
   exoskeleton: {
@@ -1913,11 +1916,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   shatterpoint: {
     id: 'shatterpoint',
     name: 'Bitter Cold+',
-    description: 'When this hero lands an attack on a Frozen foe, it gains ATK ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero lands an attack on a Frozen foe, it gains ATK ▲▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Freeze' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 2 },
     },
   },
   zeroKelvin: {
@@ -1963,11 +1966,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   bedrockWrath: {
     id: 'bedrockWrath',
     name: 'Vengeful Emblem+',
-    description: 'When this hero takes damage, it gains ATK ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero takes damage, it gains ATK ▲▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 2 },
     },
   },
   fortress: {
@@ -2027,11 +2030,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   sanctified: {
     id: 'sanctified',
     name: 'Consecrate+',
-    description: 'When this hero is healed, it gains DEF ▲ and WIS ▲. Once a round, up to 4 times a fight.',
+    description: 'When this hero is healed, it gains DEF ▲▲ and WIS ▲▲.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], stages: 1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], stages: 2 },
     },
   },
   corona: {
@@ -2097,12 +2100,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   mindthief: {
     id: 'mindthief',
     name: 'Neuroplastic+',
-    description: "When an enemy's Wisdom is lowered, this hero's Wisdom, Attack and Intelligence rise as many steps. Once a round, up to 5 times a fight.",
+    description: "When an enemy's Wisdom is lowered, this hero's Wisdom, Attack and Intelligence rise as many steps.",
     // Both hands, so Construct's rewire keeps it live (docs/evolution-simplification.md §5).
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'wisdom' }, eventFieldNegative: 'delta' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['wisdom', 'attack', 'intelligence'], amount: { kind: 'matchTriggerAmount', field: 'delta', multiplier: -1 }, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['wisdom', 'attack', 'intelligence'], amount: { kind: 'matchTriggerAmount', field: 'delta', multiplier: -1 } },
     },
   },
   insatiable: {
@@ -2118,11 +2121,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   deepSlumber: {
     id: 'deepSlumber',
     name: 'Lullaby+',
-    description: 'At the end of each round, both active enemies lose SPD ▼. Up to 4 times a fight.',
+    description: 'At the end of each round, both active enemies lose SPD ▼▼.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', stages: -1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', stages: -2 },
     },
   },
 
@@ -2169,11 +2172,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   rivetedLine: {
     id: 'rivetedLine',
     name: 'Rivet+',
-    description: "At the end of each round, this hero's partner gains DEF ▲. Up to 4 times a fight.",
+    description: "At the end of each round, this hero's partner gains DEF ▲▲.",
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'ally', stat: 'defense', stages: 1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'ally', stat: 'defense', stages: 2 },
     },
   },
   clarionCall: {
@@ -2189,11 +2192,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   shatterlance: {
     id: 'shatterlance',
     name: 'Breach+',
-    description: 'When this hero lands an attack, its target loses DEF ▼. Once a round, up to 4 times a fight.',
+    description: 'When this hero lands an attack, its target loses DEF ▼▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -2 },
     },
   },
   // Broadside mastered: two balls a round into a deeper magazine. The firing card is Broadside's
@@ -2227,13 +2230,13 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   ironMountain: {
     id: 'ironMountain',
     name: 'Ironbound+',
-    description: 'This hero cannot switch. At the end of each round, it gains ATK ▲ and DEF ▲ (up to 3 times a fight), and its boiler vents 15 Mana.',
+    description: 'This hero cannot switch. At the end of each round, it gains ATK ▲ and DEF ▲, and its boiler vents 15 Mana.',
     cannotSwitchOut: true,
     burden: true,
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], stages: 1 },
     },
   },
   // The mastered Burden is still a Burden: the vent rides beside Iron Mountain under one name.
@@ -2263,21 +2266,21 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   alphasCall: {
     id: 'alphasCall',
     name: 'Pack Hunter+',
-    description: "When this hero's partner lands an attack, this hero gains ATK ▲ and INT ▲, and the partner ATK ▲. Once a round, up to 4 times a fight.",
+    description: "When this hero's partner lands an attack, this hero gains ATK ▲▲ and INT ▲▲, and the partner ATK ▲.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 2 },
     },
   },
   alphasCallFollow: {
     id: 'alphasCallFollow',
     name: 'Pack Hunter+',
-    description: "When this hero's partner lands an attack, the partner gains ATK ▲. Once a round, up to 3 times a fight.",
+    description: "When this hero's partner lands an attack, the partner gains ATK ▲.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'ally', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'ally', stat: 'attack', stages: 1 },
     },
   },
   glut: {
@@ -2293,11 +2296,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   glutRage: {
     id: 'glutRage',
     name: 'Feast+',
-    description: 'When this hero lands a finishing blow, it gains ATK ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero lands a finishing blow, it gains ATK ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   petrifyingStare: {
@@ -2323,11 +2326,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   hemophageFrenzy: {
     id: 'hemophageFrenzy',
     name: 'Sanguine+',
-    description: 'When an enemy takes Bleed damage, this hero gains ATK ▲. Once a round, up to 3 times a fight.',
+    description: 'When an enemy takes Bleed damage, this hero gains ATK ▲.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Bleed', kind: 'damage' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   // --- From the Tall Grass (2026-09-26) ---
@@ -2378,11 +2381,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   nettlestorm: {
     id: 'nettlestorm',
     name: 'Nettle+',
-    description: 'When this hero lands a hit, its target loses ATK ▼. Once a round, up to 4 times a fight.',
+    description: 'When this hero lands a hit, its target loses ATK ▼▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'attack', stages: -1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'attack', stages: -2 },
     },
   },
   hearthwall: {
@@ -2420,16 +2423,16 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   bottomlessDish: {
     id: 'bottomlessDish',
     name: 'Brimming+',
-    description: 'When this hero is healed, Renew included, it gains ATK ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero is healed, Renew included, it gains ATK ▲▲.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 2 },
     },
     alsoReactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' }, eventFieldPositive: 'amount' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 2 },
     },
   },
   glacialAdvance: {
@@ -2452,11 +2455,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   palimpsest: {
     id: 'palimpsest',
     name: 'Inscribe+',
-    description: 'When this hero lands a hit, its target loses WIS ▼. Once a round, up to 4 times a fight.',
+    description: 'When this hero lands a hit, its target loses WIS ▼▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -2 },
     },
   },
   // Poised carries no figure to double, so the mastered draw pays twice, as Deathtrap does.
@@ -2493,11 +2496,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   hardball: {
     id: 'hardball',
     name: 'Curl+',
-    description: 'When this hero takes damage, it gains DEF ▲. Once a round, up to 4 times a fight.',
+    description: 'When this hero takes damage, it gains DEF ▲▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 2 },
     },
   },
   // The figure doubled: the same grant at half the gold.
@@ -2510,11 +2513,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   calamity: {
     id: 'calamity',
     name: 'Bad Luck+',
-    description: 'When this hero lands a hit, a random enemy loses ATK ▼ and INT ▼. Once a round, up to 4 times a fight.',
+    description: 'When this hero lands a hit, a random enemy loses ATK ▼▼ and INT ▼▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'randomEnemy', stat: ['attack', 'intelligence'], stages: -1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'randomEnemy', stat: ['attack', 'intelligence'], stages: -2 },
     },
   },
   kitsunebi: {
@@ -2561,11 +2564,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   fullBloom: {
     id: 'fullBloom',
     name: 'Unfurl+',
-    description: 'When this hero gains Renew, it gains INT ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero gains Renew, it gains INT ▲▲.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
     },
   },
   // Conduct carries no figure to double, so the mastered cloud takes the roll off, as Boiling Point does.
@@ -2593,11 +2596,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   sinkhole: {
     id: 'sinkhole',
     name: 'Undermine+',
-    description: 'When this hero lands a Stone attack, its target loses DEF ▼. Once a round, up to 5 times a fight.',
+    description: 'When this hero lands a Stone attack, its target loses DEF ▼▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -2 },
     },
   },
   standingStones: {
@@ -2684,11 +2687,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   graveChorus: {
     id: 'graveChorus',
     name: 'Death Wail+',
-    description: 'When this hero lands a Spirit attack, both active enemies lose ATK ▼ and INT ▼. Once a round, up to 4 times a fight.',
+    description: 'When this hero lands a Spirit attack, both active enemies lose ATK ▼▼ and INT ▼▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], stages: -1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], stages: -2 },
     },
   },
   lodestorm: {
@@ -2714,11 +2717,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   calculus: {
     id: 'calculus',
     name: 'Tally+',
-    description: 'When an enemy attacks, this hero gains INT ▲. Once a round, up to 4 times a fight.',
+    description: 'When an enemy attacks, this hero gains INT ▲▲.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'enemy', eventFieldEquals: { damaging: 'true' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 2 },
     },
   },
   blur: {
@@ -2734,11 +2737,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   serene: {
     id: 'serene',
     name: 'Unbothered+',
-    description: 'When an enemy lands a hit, that enemy loses ATK ▼ and INT ▼. Once a round, up to 4 times a fight.',
+    description: 'When an enemy lands a hit, that enemy loses ATK ▼▼ and INT ▼▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'enemy', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['attack', 'intelligence'], stages: -1, perFight: 4 },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['attack', 'intelligence'], stages: -2 },
     },
   },
 };

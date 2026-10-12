@@ -232,18 +232,15 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
     }
     case 'statDelta': {
       if (effect.stat === 'trigger') {
-        const brake = effect.perFight !== undefined ? `, once a round, up to ${effect.perFight} a fight` : '';
-        return { label: 'Then', text: `The same stat, as many steps, to ${targetWord(effect.target, condition, hook)}${brake}`, glyph: { kind: 'move', move: 'buff' } };
+        return { label: 'Then', text: `The same stat, as many steps, to ${targetWord(effect.target, condition, hook)}`, glyph: { kind: 'move', move: 'buff' } };
       }
       const stats: readonly StatKey[] = Array.isArray(effect.stat) ? (effect.stat as readonly StatKey[]) : [effect.stat as StatKey];
-      // Steps (docs/stat-stages.md), and the brake when the card carries one (§6.3).
+      // Steps (docs/stat-stages.md).
       if (effect.stages !== undefined) {
         const steps = stats.map((s) => stageText(s, effect.stages!)).join(' & ');
-        const perRound = hook === 'RoundEnded' || hook === 'RoundStarted' ? '' : ', once a round';
-        const brake = effect.perFight !== undefined ? `${perRound}, up to ${effect.perFight} a fight` : '';
         return {
           label: 'Then',
-          text: `${steps} to ${targetWord(effect.target, condition, hook)}${brake}`,
+          text: `${steps} to ${targetWord(effect.target, condition, hook)}`,
           glyph: { kind: 'stat', stat: stats[0] },
         };
       }
@@ -259,7 +256,7 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
       const amount = typeof effect.amount === 'number' ? fmt(effect.amount) : `${amountWord(effect.amount, '').replace('the same amount', 'as much')}`;
       return {
         label: 'Then',
-        text: `${amount} ${stats.map((s) => STAT_FULL_LABELS[s]).join(' & ')} to ${targetWord(effect.target, condition, hook)}${effect.permanent ? ', kept for the whole run' : ''}${effect.perFight !== undefined ? `, once a round, up to ${effect.perFight} a fight` : ''}`,
+        text: `${amount} ${stats.map((s) => STAT_FULL_LABELS[s]).join(' & ')} to ${targetWord(effect.target, condition, hook)}${effect.permanent ? ', kept for the whole run' : ''}`,
         glyph: { kind: 'stat', stat: stats[0] },
       };
     }

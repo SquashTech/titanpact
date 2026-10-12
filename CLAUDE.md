@@ -378,7 +378,10 @@ don't silently override it.
   **five steps either way** — ×1.5 / 2 / 2.5 / 3 / 3.5 up and the same divided down — on (base +
   loadout), `Combatant.statStages`; no caster scaling; stages survive a switch; drawn as pips,
   never a number. Still the stat pipeline: a stage multiplies the stat, which still outputs only
-  the ratio. **Every other stat modifier is a flat additive integer, a multiple of 5 or 10** — no
+  the ratio. **A passive affects each hero at most once a round** (2026-10-11, per user
+  direction, replacing §6.3's per-card brake and its fight caps): a game rule, explained once in a
+  tip and never printed on a card; a spread reaches each hero once; the five-step limit is the only
+  ceiling; a mastered innate moves two steps a firing. **Surging Intellect** alone fires every time. **Every other stat modifier is a flat additive integer, a multiple of 5 or 10** — no
   other % term touches a stat. Loadout grants (equipment, Banners, Evolution, Class) stay exactly
   authored; until `docs/stat-stages.md` §6.3 lands, a passive's delta, a derived grant and MP Regen
   land FLAT on `statModifiers`, and **a flat fight

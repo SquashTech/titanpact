@@ -130,7 +130,7 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     id: 'fight.stages',
     title: 'Raised and Lowered',
     when: { statStaged: true },
-    pages: ['An arrow beside a stat means it was raised or lowered in this fight. Arrows stay through a switch.', '[stages]'],
+    pages: ['An arrow beside a stat means it was raised or lowered in this fight. Arrows stay through a switch.', '[stages]', 'A passive works on its own, and affects each hero at most once a round.'],
   },
   {
     id: 'fight.companion',

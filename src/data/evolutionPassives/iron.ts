@@ -25,11 +25,11 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   gallop: {
     id: 'gallop',
     name: 'Gallop',
-    description: 'When this hero lands an attack, it gains SPD ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands an attack, it gains SPD ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1 },
     },
   },
   // Scallywag's Seawise: the bench is where Broadside loads, and now where the crew mends too.
@@ -81,11 +81,11 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   induction: {
     id: 'induction',
     name: 'Induction',
-    description: "When an enemy\'s Conduct mark is set off, this hero gains INT ▲. Once a round, up to 3 times a fight.",
+    description: "When an enemy\'s Conduct mark is set off, this hero gains INT ▲.",
     reactive: {
       hook: 'StatusDetonated',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Conduct' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
   // Warden's Sunderer: the wall built to open other walls.
@@ -110,11 +110,11 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   vowOfArms: {
     id: 'vowOfArms',
     name: 'Vow of Arms',
-    description: 'When this hero heals, it gains ATK ▲ and SPD ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero heals, it gains ATK ▲ and SPD ▲.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1 },
     },
   },
   // Scallywag's Stormrunner: every mark it blows loads a gun for Broadside. 4 is Broadside's magazine.
@@ -132,11 +132,11 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   rollingThunder: {
     id: 'rollingThunder',
     name: 'Rolling Thunder',
-    description: 'When this hero knocks out a foe, it gains ATK ▲ and SPD ▲. Up to 3 times a fight.',
+    description: 'When this hero knocks out a foe, it gains ATK ▲ and SPD ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1 },
     },
   },
   // Ferra's Railgun: Lodestone marks both, and each burst charges the coils for Overheat.

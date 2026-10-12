@@ -154,12 +154,10 @@ test('stages: no statement move is still on the mechanical band — nothing over
   assert.deepStrictEqual(moves.study.statDeltas, [{ stat: 'intelligence', stages: 2 }]);
 });
 
-// --- The passive brake (docs/stat-stages.md §6.3) ---
+// --- The round rule: a passive affects each hero at most once a round (2026-10-11, per user direction) ---
 
 const REPEATING_EXEMPT_HOOKS = new Set(['SwitchedIn', 'SwitchedOut']);
 const MASTERED_INNATES = new Set(Object.values(heroes).flatMap((h) => h.masteredPassiveIds ?? []));
-// Unbraked by name (2026-10-11, per user direction): Salt Tears answers every Renew, a spread one on both receivers.
-const UNBRAKED = new Set(['saltTears', 'seaOfTears']);
 
 function holding(state: CombatState, id: string, passiveId: string, stacks = 1): CombatState {
   const c = state.combatants[id];
@@ -178,28 +176,24 @@ const struckTwice = (state: CombatState) =>
     { kind: 'move', combatantId: 'b2', moveId: 'ironFist', declaredTarget: 'a1' } as Action,
   ], config);
 
-test('brake: a repeating card moves a stat ONE step a round, however often it is set off', () => {
+test('round rule: a card affects a hero once a round, however often it is set off', () => {
   const { state, events } = struckTwice(tempered(20));
   assert.strictEqual(state.combatants.a1.statStages?.defense, 1, 'two hits, one step');
   assert.strictEqual(events.filter((e) => e.type === 'PassiveTriggered' && (e as any).passiveId === 'tempering').length, 1);
 });
 
-test('brake: and stops at its cap a fight — Tempering (old +10) at three', () => {
-  assert.strictEqual((passives.tempering.reactive!.effect as { perFight?: number }).perFight, 3);
+test('round rule: no cap a fight — the five-step limit is the only ceiling', () => {
   let state = tempered(21);
-  for (let round = 0; round < 6; round++) state = struckTwice(state).state;
-  assert.strictEqual(state.combatants.a1.statStages?.defense, 3);
+  for (let round = 0; round < 8; round++) state = struckTwice(state).state;
+  assert.strictEqual(state.combatants.a1.statStages?.defense, 5);
 });
 
-test('brake: a second stack raises the cap, never the pace', () => {
+test('round rule: a second stack lands on the same firing — two stacks, two steps a round', () => {
   const { state } = struckTwice(tempered(22, 2));
-  assert.strictEqual(state.combatants.a1.statStages?.defense, 1, 'still one step a round');
-  let worn = tempered(23, 2);
-  for (let round = 0; round < 8; round++) worn = struckTwice(worn).state;
-  assert.strictEqual(worn.combatants.a1.statStages?.defense, 5, 'twice the cap of 3, held at the limit');
+  assert.strictEqual(state.combatants.a1.statStages?.defense, 2);
 });
 
-test('brake: the data — every repeating stage card is braked, a switch card is not, and a flat number is a run-long gain only', () => {
+test('round rule: the data — a repeating card is one step a firing (a mastered innate two), and a flat number is a run-long gain only', () => {
   for (const p of Object.values(passives)) {
     for (const r of [p.reactive, p.alsoReactive]) {
       if (!r) continue;
@@ -207,12 +201,13 @@ test('brake: the data — every repeating stage card is braked, a switch card is
         if (!e || e.kind !== 'statDelta') continue;
         if (typeof e.amount === 'number') assert.ok(e.permanent, `${p.id} authors a flat number in a fight`);
         if (e.stages === undefined) continue;
-        const repeating = !REPEATING_EXEMPT_HOOKS.has(r.hook) && !r.oncePerFight && !UNBRAKED.has(p.id);
-        // A mastered innate may take two steps a firing (2026-10-11, per user direction); every other repeating card takes one.
+        const repeating = !REPEATING_EXEMPT_HOOKS.has(r.hook) && !r.oncePerFight;
         const maxStep = MASTERED_INNATES.has(p.id) ? 2 : 1;
-        if (repeating) assert.ok(e.perFight !== undefined && e.perFight >= 1 && e.perFight <= 5 && Math.abs(e.stages) >= 1 && Math.abs(e.stages) <= maxStep, `${p.id}: a repeating card is one step (a mastered innate two), braked`);
-        else assert.strictEqual(e.perFight, undefined, `${p.id}: a switch or once-a-fight card carries no brake`);
+        if (repeating) assert.ok(Math.abs(e.stages) >= 1 && Math.abs(e.stages) <= maxStep, `${p.id}: a repeating card is one step (a mastered innate two)`);
       }
     }
   }
+  // Every firing lands for one verb alone: Surging Intellect, whose verb is every Mana gained.
+  const everyFiring = Object.values(passives).filter((p) => p.everyFiring).map((p) => p.id).sort();
+  assert.deepStrictEqual(everyFiring, ['surgingIntellect', 'surgingIntellectPlus']);
 });

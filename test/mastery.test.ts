@@ -235,7 +235,7 @@ test('signature: a generated hero at its signatureLevel holds it — in the last
 
 /** The one flat figure a card's reaction carries, for the size comparison: a stat delta, a status magnitude, a mana grant, a heal. */
 /** Mastered stage cards a doubled cap cannot raise (the base is already at five) — each waits on a hand-authored upgrade (docs/stat-stages.md §6.3). */
-const AWAITING_STAGE_MASTERY = new Set(['outpacePlus']);
+const AWAITING_STAGE_MASTERY = new Set<string>();
 
 function flatFigure(passive: PassiveDefinition): number | null {
   const effect = passive.reactive?.effect;
@@ -249,7 +249,7 @@ function flatFigure(passive: PassiveDefinition): number | null {
     return reach * (passive.reactive?.chance ?? 1) * (also?.kind === 'applyStatus' && also.statusId === effect.statusId ? 2 : 1);
   }
   // A stage card is sized by steps × its fight cap × its reach (docs/stat-stages.md §6.3).
-  if (effect.kind === 'statDelta' && effect.stages !== undefined) return Math.abs(effect.stages) * (effect.perFight ?? 1) * reach;
+  if (effect.kind === 'statDelta' && effect.stages !== undefined) return Math.abs(effect.stages) * reach;
   if (effect.kind === 'statDelta' || effect.kind === 'applyStatus') {
     const value = effect.kind === 'statDelta' ? effect.amount : effect.magnitude;
     return typeof value === 'number' ? Math.abs(value) : null;

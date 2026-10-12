@@ -198,6 +198,11 @@ for drops) is in Appendix B, but **a repeating passive needs a brake before its 
 anything.** 99 of the 127 are a hero's identity (36 mastered innates, 34 path passives, 29
 innates), so the brake is roster design, not loot tuning.
 
+> **SUPERSEDED 2026-10-11 (per user direction): a passive affects each hero at most once a round** —
+> a game rule, never card text (PassiveInstance.touchedIds, passiveEngine.ts). The per-card fight caps
+> (`perFight`) are deleted; the five-step limit is the only ceiling; a mastered innate moves two steps a
+> firing; Surging Intellect (`everyFiring`) is the one exception. What follows is the history.
+
 **The brake — DECIDED 2026-10-09 (per user direction): one step a round, up to a cap a fight.**
 **One exception, 2026-10-11 (per user direction): a mastered innate may move two steps a firing** — still once a round and braked a fight (Kindling+, Stoke+).
 

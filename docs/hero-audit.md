@@ -283,3 +283,25 @@ player, the AI and the pilot, and at resolution as a MoveGuarded); `conditionalS
 engine tests pin Pack Ice, the same verb.
 
 To watch: Winter's Weight stacks Frost Force on every entry. Int 20 — a wacky one by request. Ice Age still grants Snowball, as Rime's Snowbound does.
+
+## The round rule (2026-10-11, per user direction)
+
+**A passive affects each hero at most once a round** — a game rule, explained once (the "Raised and
+Lowered" tip's third page), never printed on a card. It replaced `docs/stat-stages.md` §6.3's brake:
+"Once a round, up to N times a fight" came off 99 cards and `perFight` off 124 effects.
+
+- Per HERO, not per card: a spread still marks each target, a two-target Renew lifts both, a
+  self-buff lands once however many triggers fire. A random target draws among the heroes the card
+  has not touched this round. Stacks all land on their firing.
+- No fight cap: the five-step limit is the ceiling.
+- **Surging Intellect** (+) is the one exception (`everyFiring`): every Mana gained.
+- 19 mastered innates that differed from their base card only by the cap now move **two steps**:
+  Drag+, Bitter Cold+, Vengeful Emblem+, Consecrate+, Lullaby+, Rivet+, Breach+, Pack Hunter+,
+  Nettle+, Brimming+, Inscribe+, Curl+, Bad Luck+, Unfurl+, Outpace+, Undermine+, Death Wail+,
+  Tally+, Unbothered+.
+- Kept: "Up to N times a fight" where the cap IS the card (42, `maxFiresPerFight`), and "the first
+  time each fight". Slumbering's wake took `maxFiresPerFight: 2` — its cap was what stopped it at awake.
+- Weaker under it, accepted: once-per-hero conversions (lifesteal per hit, Burn-tick heals,
+  Restorative Toxin, the Cleric's Succor, the Warlock's Siphon) now pay once a round.
+
+Not measured yet: buffs can now climb past their old caps in long fights.

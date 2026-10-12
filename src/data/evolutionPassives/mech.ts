@@ -55,11 +55,11 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   recitation: {
     id: 'recitation',
     name: 'Recitation',
-    description: 'When this hero lands a magical attack, both active enemies lose WIS ▼. Once a round, up to 2 times a fight.',
+    description: 'When this hero lands a magical attack, both active enemies lose WIS ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'wisdom', stages: -1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'wisdom', stages: -1 },
     },
   },
   // Whirr's Gyre: the refund is uncapped like every mana grant, which is how a 65 pool reaches Overdrive.

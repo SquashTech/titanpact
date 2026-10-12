@@ -72,11 +72,11 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   heldUnder: {
     id: 'heldUnder',
     name: 'Held Under',
-    description: 'When this hero lands a hit, its target loses DEF ▼ and SPD ▼. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands a hit, its target loses DEF ▼ and SPD ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['defense', 'speed'], stages: -1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['defense', 'speed'], stages: -1 },
     },
   },
   // Rook's Coven: any curse counts, her partner's included — a table of witches, not one.
@@ -141,11 +141,11 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   beckoningPaw: {
     id: 'beckoningPaw',
     name: 'Beckoning Paw',
-    description: 'When this hero lands a hit, there is a 30% chance its partner gains ATK ▲ and INT ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands a hit, there is a 30% chance its partner gains ATK ▲ and INT ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1 },
       chance: 0.3,
     },
   },

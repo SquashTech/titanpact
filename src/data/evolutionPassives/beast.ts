@@ -16,11 +16,11 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   wellFed: {
     id: 'wellFed',
     name: 'Well Fed',
-    description: 'When this hero gains Renew, it gains ATK ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero gains Renew, it gains ATK ▲.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   // Coil's Mesmer: StatChanged carries no source, so a partner's Lull arms it too. Serpent's Eye
@@ -49,11 +49,11 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   troopLeader: {
     id: 'troopLeader',
     name: 'Troop Leader',
-    description: 'When this hero attacks, its partner gains ATK ▲ and SPD ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero attacks, its partner gains ATK ▲ and SPD ▲.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'true' } },
-      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'speed'], stages: 1 },
     },
   },
   // Chest Beat on the way in, the canopy on the way out.
@@ -93,44 +93,44 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   greenPasture: {
     id: 'greenPasture',
     name: 'Green Pasture',
-    description: "When this hero's partner gains Renew, the partner gains DEF ▲ and WIS ▲. Once a round, up to 3 times a fight.",
+    description: "When this hero's partner gains Renew, the partner gains DEF ▲ and WIS ▲.",
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'ally', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['defense', 'wisdom'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['defense', 'wisdom'], stages: 1 },
     },
   },
   // Fang's Warhowl: Pack Hunter in reverse — its Haunt arms the partner whose hits arm it.
   ghostChorus: {
     id: 'ghostChorus',
     name: 'Ghost Chorus',
-    description: 'When this hero Haunts a foe, its partner gains ATK ▲ and INT ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero Haunts a foe, its partner gains ATK ▲ and INT ▲.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Haunt' } },
-      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], stages: 1 },
     },
   },
   // Ursa's Polar: any hand's Freeze is a seal on the ice, and the slow bear closes in.
   sealHunt: {
     id: 'sealHunt',
     name: 'Seal Hunt',
-    description: 'When an enemy is Frozen, this hero gains ATK ▲ and SPD ▲. Once a round, up to 3 times a fight.',
+    description: 'When an enemy is Frozen, this hero gains ATK ▲ and SPD ▲.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Freeze' } },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1 },
     },
   },
   // Coil's Hooded: Landslide raises the hood, and the hood is a threat.
   hoodFlare: {
     id: 'hoodFlare',
     name: 'Hood Flare',
-    description: "When this hero's Defense rises, both active enemies lose ATK ▼. Once a round, up to 3 times a fight.",
+    description: "When this hero's Defense rises, both active enemies lose ATK ▼.",
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'attack', stages: -1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'attack', stages: -1 },
     },
   },
   // Vex's Vampyr: Dusk Blade opens the vein the next bite drinks from.

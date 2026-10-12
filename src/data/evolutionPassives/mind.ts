@@ -77,11 +77,11 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   hubris: {
     id: 'hubris',
     name: 'Hubris',
-    description: "When an enemy's stat rises, it loses DEF ▼ and WIS ▼. Once a round, up to 3 times a fight.",
+    description: "When an enemy's stat rises, it loses DEF ▼ and WIS ▼.",
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'enemy', eventFieldPositive: 'delta' },
-      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['defense', 'wisdom'], stages: -1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerSubject', stat: ['defense', 'wisdom'], stages: -1 },
     },
   },
   // Koan's Third Eye: a 45 pool Rests often, and every Rest is a sitting.
@@ -109,11 +109,11 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   clockworkMind: {
     id: 'clockworkMind',
     name: 'Clockwork Mind',
-    description: 'When this hero sets off Conduct, it gains ATK ▲ and DEF ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero sets off Conduct, it gains ATK ▲ and DEF ▲.',
     reactive: {
       hook: 'StatusDetonated',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], stages: 1 },
     },
   },
   // Lucius's Voidcaller: every bite drags a foe toward the half where Eclipse doubles.
@@ -165,11 +165,11 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   whiteCrane: {
     id: 'whiteCrane',
     name: 'White Crane',
-    description: 'When this hero lands an attack on a Bleeding foe, it gains ATK ▲ and SPD ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands an attack on a Bleeding foe, it gains ATK ▲ and SPD ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Bleed' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1 },
     },
   },
 };

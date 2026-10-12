@@ -5,22 +5,22 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   bury: {
     id: 'bury',
     name: 'Bury',
-    description: 'When this hero lands a Stone attack, its target loses SPD ▼. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands a Stone attack, its target loses SPD ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', stages: -1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', stages: -1 },
     },
   },
   // Sentinel's Talonguard: every guard move is weight Body Crush swings with.
   gatheringWeight: {
     id: 'gatheringWeight',
     name: 'Gathering Weight',
-    description: 'When this hero uses a move that deals no damage, it gains DEF ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero uses a move that deals no damage, it gains DEF ▲.',
     reactive: {
       hook: 'MoveUsed',
       condition: { relativeTo: 'self', eventFieldEquals: { damaging: 'false' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1 },
     },
   },
   // Sentinel's Gloomwatch: Ambush is flat Base Power, so it pays a hero with no Attack to speak of.
@@ -71,11 +71,11 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   desertBody: {
     id: 'desertBody',
     name: 'Desert Body',
-    description: 'When this hero lands a Stone attack, it gains DEF ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands a Stone attack, it gains DEF ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1 },
     },
   },
   // Dune's Duneshade: Undermine's Defense drop, paid on the way under.
@@ -93,11 +93,11 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   settlingStone: {
     id: 'settlingStone',
     name: 'Settling Stone',
-    description: 'At the end of each round, this hero gains DEF ▲. Up to 3 times a fight.',
+    description: 'At the end of each round, this hero gains DEF ▲.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1 },
     },
   },
   // Cairn's Barrow: Waystone lays the Shields, the Spirit line spends the Force.
@@ -128,11 +128,11 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   flyingButtress: {
     id: 'flyingButtress',
     name: 'Flying Buttress',
-    description: "When this hero's Defense rises, its partner gains DEF ▲ and WIS ▲. Once a round, up to 3 times a fight.",
+    description: "When this hero's Defense rises, its partner gains DEF ▲ and WIS ▲.",
     reactive: {
       hook: 'StatChanged',
       condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
-      effect: { kind: 'statDelta', target: 'ally', stat: ['defense', 'wisdom'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['defense', 'wisdom'], stages: 1 },
     },
   },
   // Petra's Magma: Scorch lights the fire, the Stone line keeps it at its hottest.

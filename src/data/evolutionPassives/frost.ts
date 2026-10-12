@@ -16,22 +16,22 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   coldIron: {
     id: 'coldIron',
     name: 'Cold Iron',
-    description: 'When this hero lands an attack on a Frozen foe, it gains DEF ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands an attack on a Frozen foe, it gains DEF ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Freeze' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', stages: 1 },
     },
   },
   // Rime's Snowbound.
   rollingSnow: {
     id: 'rollingSnow',
     name: 'Rolling Snow',
-    description: 'When this hero knocks out an enemy, it gains ATK ▲ and SPD ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero knocks out an enemy, it gains ATK ▲ and SPD ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1 },
     },
   },
   // Floe's Icebreaker: the Defense that freezes a foe through Pack Ice also plates the partner.
@@ -94,12 +94,12 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   matriarchsFury: {
     id: 'matriarchsFury',
     name: "Matriarch's Fury",
-    description: "When this hero's partner takes damage, both active allies gain ATK ▲. Once a round, up to 3 times a fight.",
+    description: "When this hero's partner takes damage, both active allies gain ATK ▲.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
-      alsoEffect: { kind: 'statDelta', target: 'ally', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: 'attack', stages: 1 },
     },
   },
   // Hush's Tundra Hunter: the frozen cannot find the owl. A spread is not aimed, and still lands.
@@ -113,11 +113,11 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   owlsGaze: {
     id: 'owlsGaze',
     name: "Owl's Gaze",
-    description: 'When this hero lands a magical attack, its target loses WIS ▼. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands a magical attack, its target loses WIS ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1 },
     },
   },
   // Flurry's Snow Spirit: whoever freezes is haunted, so Soul Rend reaches its partner too.

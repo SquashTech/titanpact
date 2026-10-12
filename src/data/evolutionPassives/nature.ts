@@ -38,11 +38,11 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   sporeRing: {
     id: 'sporeRing',
     name: 'Spore Ring',
-    description: 'When this hero grants Renew, whoever receives it gains ATK ▲ and INT ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero grants Renew, whoever receives it gains ATK ▲ and INT ▲.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], stages: 1 },
     },
   },
   // Morel's Corpselight: the Poison plants the mark, the grafted Spirit line spreads through it.
@@ -60,11 +60,11 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   petalStorm: {
     id: 'petalStorm',
     name: 'Petal Storm',
-    description: 'When this hero lands a Nature attack, its target loses WIS ▼. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands a Nature attack, its target loses WIS ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Nature' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1 },
     },
   },
   // Lotus's Moonpond: read off the tick, so a Renew pays on landing and twice more.
@@ -93,11 +93,11 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   ironsap: {
     id: 'ironsap',
     name: 'Ironsap',
-    description: 'When this hero gains Shield, it gains ATK ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero gains Shield, it gains ATK ▲.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Shield' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   // Hollowbark's Wraithwood: every blow it takes wakes something for Poltergeist to spread through.

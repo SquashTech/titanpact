@@ -192,25 +192,29 @@ function resolveEffect(
   eventTargetId: string | undefined,
   effect: PassiveEffect,
   context: TriggerContext,
-  moves?: Record<string, MoveDefinition>
-): { state: CombatState; events: CombatEvent[] } {
+  moves?: Record<string, MoveDefinition>,
+  /** Heroes this card has already affected this round (the round rule): passed over. */
+  skip?: ReadonlySet<string>
+): { state: CombatState; events: CombatEvent[]; touched: string[] } {
   if (effect.kind === 'setFieldEffect') {
-    if (!fieldEffectDefs[effect.fieldEffectId]) return { state, events: [] };
-    return setFieldEffect(state, round, effect.fieldEffectId);
+    if (!fieldEffectDefs[effect.fieldEffectId]) return { state, events: [], touched: [] };
+    return { ...setFieldEffect(state, round, effect.fieldEffectId), touched: [] };
   }
 
 
   // A group target resolves once per member in slot order, threading state through.
-  const aimed = resolveTargetIdsRolled(state, ownerId, subjectId, eventTargetId, effect.target);
+  const aimed = resolveTargetIdsRolled(state, ownerId, subjectId, eventTargetId, effect.target, skip);
   let working = aimed.state;
   const produced: CombatEvent[] = [];
+  const touched: string[] = [];
   for (const targetId of aimed.targetIds) {
     const target = working.combatants[targetId];
-    if (!target || target.fainted) continue;
+    if (!target || target.fainted || skip?.has(targetId)) continue;
     if (effect.kind === 'damage' && effect.onlyWithStatus !== undefined && !hasStatus(target, effect.onlyWithStatus)) continue;
     const resolved = resolveEffectOn(working, round, heroes, statusDefs, passiveDefs, ownerId, targetId, target, effect, context, working.activeFieldEffect ? fieldEffectDefs[working.activeFieldEffect.fieldEffectId] : undefined, moves);
     working = resolved.state;
     produced.push(...resolved.events);
+    if (resolved.events.length) touched.push(targetId);
   }
   // A broadside is spent by firing, whoever it reached — the magazine empties even into an empty field.
   if (effect.kind === 'damage' && effect.perHeldStatus !== undefined && hasStatus(working.combatants[ownerId], effect.perHeldStatus)) {
@@ -218,7 +222,7 @@ function resolveEffect(
     working = spent.state;
     produced.push(...spent.events);
   }
-  return { state: working, events: produced };
+  return { state: working, events: produced, touched };
 }
 
 function resolveTargetIds(
@@ -263,9 +267,12 @@ function resolveTargetIdsRolled(
   ownerId: string,
   subjectId: string | undefined,
   eventTargetId: string | undefined,
-  target: PassiveEffectTarget
+  target: PassiveEffectTarget,
+  /** The round rule: a random draw is made among the heroes this card has not yet affected this round. */
+  skip?: ReadonlySet<string>
 ): { state: CombatState; targetIds: string[] } {
-  const pool = resolveTargetIds(state, ownerId, subjectId, eventTargetId, target);
+  const all = resolveTargetIds(state, ownerId, subjectId, eventTargetId, target);
+  const pool = target === 'randomEnemy' && skip ? all.filter((id) => !skip.has(id)) : all;
   if (target !== 'randomEnemy' || pool.length === 0) return { state, targetIds: pool };
   const roll = nextInt(state.rngState, 0, pool.length);
   return { state: { ...state, rngState: roll.nextState }, targetIds: [pool[roll.value]] };
@@ -558,6 +565,11 @@ export function resolvePassiveReactions(
           }
 
           const limit = reactive.maxFiresPerFight;
+          // The round rule: a card affects each hero at most once a round. Read once before the firing,
+          // so a firing's two effects (and its stacks) all land; a spread still reaches every hero once.
+          const held = working.combatants[ownerId]?.passives[instance.passiveId];
+          const skip: ReadonlySet<string> = def.everyFiring || held?.touchedRound !== round ? new Set() : new Set(held.touchedIds ?? []);
+          const touched = new Set<string>();
           for (let i = 0; i < (reactive.oncePerFight ? 1 : instance.stacks); i++) {
             if (limit !== undefined && firesSoFar(working, ownerId, instance.passiveId) >= limit) break;
             if (reactive.chance !== undefined) {
@@ -565,21 +577,20 @@ export function resolvePassiveReactions(
               working = { ...working, rngState: roll.nextState };
               if (roll.value >= reactive.chance) continue;
             }
-            const held = working.combatants[ownerId]?.passives[instance.passiveId];
-            const braked = (effect: PassiveEffect) => effect.kind === 'statDelta' && effect.perFight !== undefined;
-            const stepAllowed = (effect: PassiveEffect) =>
-              effect.kind !== 'statDelta' || effect.perFight === undefined || (held?.steppedRound !== round && (held?.stepsThisFight ?? 0) < effect.perFight * instance.stacks);
-            let stepped = false;
             const fire = (effect: PassiveEffect) => {
-              if (!stepAllowed(effect)) return [];
-              const out = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, effect, context, moves);
+              const out = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, passiveDefs, ownerId, subjectId, eventTargetId, effect, context, moves, skip);
               working = out.state;
-              if (braked(effect) && out.events.length) stepped = true;
+              out.touched.forEach((id) => touched.add(id));
               return out.events;
             };
             const resolved = { events: fire(reactive.effect) };
             if (reactive.alsoEffect) resolved.events.push(...fire(reactive.alsoEffect));
-            if (stepped) working = updateInstance(working, ownerId, instance.passiveId, (h) => ({ steppedRound: round, stepsThisFight: (h.stepsThisFight ?? 0) + 1 }));
+            if (touched.size) {
+              working = updateInstance(working, ownerId, instance.passiveId, (h) => ({
+                touchedRound: round,
+                touchedIds: [...new Set([...(h.touchedRound === round ? h.touchedIds ?? [] : []), ...touched])],
+              }));
+            }
             // A no-op (a heal at full HP, a target already fainted) is not a trigger: nothing to log.
             if (resolved.events.length === 0) continue;
             if (limit !== undefined) working = updateInstance(working, ownerId, instance.passiveId, (held) => ({ firesThisFight: (held.firesThisFight ?? 0) + 1 }));

@@ -109,11 +109,11 @@ export const classPassives: Record<string, PassiveDefinition> = {
   berserker: {
     id: 'berserker',
     name: 'Frenzy',
-    description: 'Every hit this hero lands raises its ATK ▲ and INT ▲. Once a round, up to 2 times a fight.',
+    description: 'Every hit this hero lands raises its ATK ▲ and INT ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1, perFight: 2 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1 },
     },
   },
   warden: {
@@ -170,11 +170,11 @@ export const classPassives: Record<string, PassiveDefinition> = {
   sage: {
     id: 'sage',
     name: 'Deep Breath',
-    description: 'When this hero Rests, it gains INT ▲ and WIS ▲. Once a round, up to 5 times a fight.',
+    description: 'When this hero Rests, it gains INT ▲ and WIS ▲.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['intelligence', 'wisdom'], stages: 1, perFight: 5 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['intelligence', 'wisdom'], stages: 1 },
     },
   },
 };

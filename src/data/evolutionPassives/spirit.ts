@@ -55,21 +55,21 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   eldestFace: {
     id: 'eldestFace',
     name: 'Eldest Face',
-    description: "When this hero's partner lands an attack, this hero gains INT ▲. Once a round, up to 3 times a fight.",
+    description: "When this hero's partner lands an attack, this hero gains INT ▲.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'ally', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
   spiritPack: {
     id: 'spiritPack',
     name: 'Spirit Pack',
-    description: "At the end of each round, this hero's partner gains ATK ▲ and SPD ▲. Up to 3 times a fight.",
+    description: "At the end of each round, this hero's partner gains ATK ▲ and SPD ▲.",
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'speed'], stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'speed'], stages: 1 },
     },
   },
   // Keen's Harbinger: Last Rites costs 50, so a kill pays for the next one.
@@ -97,22 +97,22 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   soulChain: {
     id: 'soulChain',
     name: 'Soul Chain',
-    description: 'When this hero lands an attack on a Haunted foe, that foe loses WIS ▼. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands an attack on a Haunted foe, that foe loses WIS ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Haunt' },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1 },
     },
   },
   // Sorrow's Dirge: Torment marks the pair, Psionic Wave sings to both, and the song swells.
   mourningSong: {
     id: 'mourningSong',
     name: 'Mourning Song',
-    description: 'When this hero lands an attack on a Haunted foe, it gains INT ▲. Once a round, up to 3 times a fight.',
+    description: 'When this hero lands an attack on a Haunted foe, it gains INT ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Haunt' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1, perFight: 3 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
   // Dread's Ironfeather: Reinforce raises its Defense, and the wings close over the partner.

@@ -247,8 +247,6 @@ export type PassiveEffect =
       stat: StatKey | readonly StatKey[] | 'trigger';
       /** Steps, as a move's (docs/stat-stages.md). Exactly one of `stages` and `amount`. */
       stages?: number;
-      /** The brake (docs/stat-stages.md §6.3): at most one step a round from this card, and this many a fight (× its stacks). Set on every card on a repeating hook; a switch or a once-a-fight card has none. */
-      perFight?: number;
       /** FLAT, on statModifiers: a PassiveAmount read off live state (§6.4), or a number only with `permanent` — a run-long gain is what the hero brings. */
       amount?: number | PassiveAmount;
       permanent?: true;
@@ -317,6 +315,8 @@ export interface PassiveDefinition {
   /** `oncePerFight` caps the whole reaction at one firing per combat regardless of stacks (state.ts PassiveInstance.firedThisFight). `maxFiresPerFight` caps it at N firings per combat, stacks included (PassiveInstance.firesThisFight) — the brake on a reaction that banks a permanent stack each time it matches. `chance` (0–1) rolls the seeded rng per matched event, per stack; absent = always. `whileBenched` inverts the field rule: this reaction fires only while its owner is standing on the BENCH (Broadside loading a cannonball a round), where every other passive is silent. */
   /** `alsoEffect` is a second effect resolved after `effect` on the same firing — one trigger, two verbs (Funeral Pyre's HP and Mana). */
   reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; alsoEffect?: PassiveEffect; oncePerFight?: boolean; maxFiresPerFight?: number; chance?: number; whileBenched?: true; /** Also hears a StatChanged another passive made (Scald hearing Drag); off, a card hears moves alone. */ hearsPassives?: true };
+  /** The one exception to the round rule (a passive affects each hero at most once a round): every firing lands — Surging Intellect, whose verb is every Mana gained. */
+  everyFiring?: true;
   /** A second reaction on its own hook and condition, sharing the card's caps (Swell: a physical hit and a magical one pay different stats). */
   alsoReactive?: PassiveDefinition['reactive'];
   damageModifier?: PassiveDamageModifier;
