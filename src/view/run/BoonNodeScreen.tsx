@@ -7,7 +7,8 @@ import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import type { HeroDefinition, PassiveDefinition } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
-import { boonMoveCount, boonMoveType, chargeBoonMoveCount, pickBoonOffers } from '../../run/boons';
+import { boonMoveCount, boonMoveType, chargeBoonMoveCount, familyBoonMoveCount, familyBoonTag, pickBoonOffers } from '../../run/boons';
+import { moveTagLabel } from '../shared/statusFacts';
 import { grantEventPassive } from '../../run/events';
 import { entryPassiveCounts } from '../../run/entryStats';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -122,6 +123,17 @@ export function BoonNodeScreen({ run, onRunChange, onContinue, seed }: Props) {
     const type = boonMoveType(confirmed ?? undefined);
     const count = boonMoveCount(confirmed ?? undefined, entry, moves);
     const refills = chargeBoonMoveCount(confirmed ?? undefined, entry, moves);
+    const family = familyBoonMoveCount(confirmed ?? undefined, entry, moves);
+    const tag = familyBoonTag(confirmed ?? undefined);
+    if (family !== null && tag) {
+      const label = moveTagLabel(tag);
+      return (
+        <span className={`boon-fit-note${family === 0 ? ' is-dead' : ''}`}>
+          {family === 0 ? `no ${label}s` : `${family} ${label}${family === 1 ? '' : 's'}`}
+          {held > 0 ? ` · holds ×${held}` : ''}
+        </span>
+      );
+    }
     if (refills !== null) {
       return (
         <span className={`boon-fit-note${refills === 0 ? ' is-dead' : ''}`}>

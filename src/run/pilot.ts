@@ -204,7 +204,7 @@ function expectedHit(state: CombatState, casterId: string, move: MoveDefinition,
   const ctxField = fieldCtx(state);
   const ratio = resolveStatRatio(move.category, attackerHero, attacker, defenderHero, target, ctxField, move.offStatOverride);
   const modifiers = collectPassiveDamageModifiers(attacker, move, passives, target);
-  const forceBonus = resolveElementalForceBonus(attacker, move.type, statuses);
+  const forceBonus = resolveElementalForceBonus(attacker, move, statuses);
   const attackerHp = { currentHp: attacker.currentHp, maxHp: getMaxHp(attackerHero, attacker) };
   const basePowerMultiplier = resolveConditionalPowerMultiplier(
     move,
@@ -363,7 +363,7 @@ function basePowerGrantValue(
   for (const moveId of ctx.moveIdsFor(holderId)) {
     const move = moves[moveId];
     if (!move || !isDamaging(move)) continue;
-    if (!def.forceAllTypes && move.type !== def.forceType) continue;
+    if (!def.forceAllTypes && move.type !== def.forceType && !(def.forceTag && move.tags?.includes(def.forceTag))) continue;
     if (holder.currentMana < resolveManaCost(state, holderId, move, allCombatants)) continue;
     const spread = move.target === 'bothEnemies' || move.target === 'allOthers';
     let gain = 0;

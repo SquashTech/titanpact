@@ -42,18 +42,19 @@ export function resolveMultiplierTerm(
 /**
  * Elemental Force: summed magnitude of held statuses whose forceType matches the move's
  * type — a BasePower input, not a stat. `forceAllTypes` (Ambush) is the typeless member of
- * the same family and matches whatever the move is.
+ * the same family and matches whatever the move is; `forceTag` (Edge, Draw) matches a move
+ * carrying that tag, whatever its type.
  */
 export function resolveElementalForceBonus(
   attacker: Combatant,
-  moveType: string,
+  move: Pick<MoveDefinition, 'type' | 'tags'>,
   statusDefs: Record<string, StatusDefinition>
 ): number {
   let bonus = 0;
   for (const [statusId, instance] of Object.entries(attacker.statuses)) {
     const def = statusDefs[statusId];
     if (!def) continue;
-    if (def.forceAllTypes || def.forceType === moveType) bonus += instance.magnitude ?? 0;
+    if (def.forceAllTypes || def.forceType === move.type || (def.forceTag !== undefined && !!move.tags?.includes(def.forceTag))) bonus += instance.magnitude ?? 0;
   }
   return bonus;
 }

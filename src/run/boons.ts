@@ -3,9 +3,10 @@
 // verb the events already use — so this file owns only the question the catalog can't answer:
 // which passives this particular roster may be offered.
 
-import type { HeroDefinition, MoveDefinition, PassiveDefinition } from '../engine/content';
-import { boonPassives, chargeBoonPassives, fieldHeraldPassiveFor, typeDamagePassiveFor } from '../data/passives';
+import type { HeroDefinition, MoveDefinition, MoveTag, PassiveDefinition } from '../engine/content';
+import { boonPassives, chargeBoonPassives, familyBoonPassives, fieldHeraldPassiveFor, typeDamagePassiveFor } from '../data/passives';
 import { moves } from '../data/moves';
+import { statuses } from '../data/statuses';
 import type { RosterEntry } from './state';
 import { rosterEntryTypes } from './progression';
 
@@ -45,7 +46,26 @@ export function boonPool(roster: readonly RosterEntry[], heroLookup: Record<stri
     .filter(([type]) => owned.has(type))
     .map(([, id]) => id);
   const chargeLocked = Object.keys(chargeBoonPassives).filter((id) => roster.some((entry) => chargeBoonFits(chargeBoonPassives[id], entry)));
-  return [...Object.keys(boonPassives), ...typeLocked, ...chargeLocked];
+  const familyLocked = Object.keys(familyBoonPassives).filter((id) => roster.some((entry) => (familyBoonMoveCount(familyBoonPassives[id], entry) ?? 0) > 0));
+  return [...Object.keys(boonPassives), ...typeLocked, ...chargeLocked, ...familyLocked];
+}
+
+/** The move family a family-Force Boon powers (Whetstone: Slices), read off the status it grants; null for any other Boon. */
+export function familyBoonTag(passive: PassiveDefinition | undefined): MoveTag | null {
+  const effect = passive?.reactive?.effect;
+  if (effect?.kind !== 'applyStatus') return null;
+  return statuses[effect.statusId]?.forceTag ?? null;
+}
+
+/** How many of this hero's moves a family-Force Boon would power — Quiver counting as an Arrow; `null` for any other Boon. */
+export function familyBoonMoveCount(passive: PassiveDefinition | undefined, entry: RosterEntry, moveLookup: Record<string, MoveDefinition> = moves): number | null {
+  const tag = familyBoonTag(passive);
+  if (!tag) return null;
+  return entry.unlockedMoveIds.filter((id) => {
+    const move = moveLookup[id];
+    const rule = move?.metamorphic;
+    return !!move?.tags?.includes(tag) || (typeof rule === 'object' && rule.poolTag === tag);
+  }).length;
 }
 
 /**

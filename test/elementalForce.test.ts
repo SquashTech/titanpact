@@ -74,17 +74,17 @@ test('elementalForce: resolveElementalForceBonus only counts Force statuses matc
   const state = twoVTwoFixture(400);
   const withFire = withStatus(state, 'a1', 'FireForce', 20);
 
-  assert.strictEqual(resolveElementalForceBonus(withFire.combatants.a1, 'Fire', statuses), 20);
-  assert.strictEqual(resolveElementalForceBonus(withFire.combatants.a1, 'Water', statuses), 0);
+  assert.strictEqual(resolveElementalForceBonus(withFire.combatants.a1, { type: 'Fire' }, statuses), 20);
+  assert.strictEqual(resolveElementalForceBonus(withFire.combatants.a1, { type: 'Water' }, statuses), 0);
 });
 
 test('elementalForce: independent Force statuses for different types both apply to their own type only', () => {
   const state = twoVTwoFixture(401);
   const both = withStatus(withStatus(state, 'a1', 'FireForce', 20), 'a1', 'WaterForce', 15);
 
-  assert.strictEqual(resolveElementalForceBonus(both.combatants.a1, 'Fire', statuses), 20);
-  assert.strictEqual(resolveElementalForceBonus(both.combatants.a1, 'Water', statuses), 15);
-  assert.strictEqual(resolveElementalForceBonus(both.combatants.a1, 'Frost', statuses), 0);
+  assert.strictEqual(resolveElementalForceBonus(both.combatants.a1, { type: 'Fire' }, statuses), 20);
+  assert.strictEqual(resolveElementalForceBonus(both.combatants.a1, { type: 'Water' }, statuses), 15);
+  assert.strictEqual(resolveElementalForceBonus(both.combatants.a1, { type: 'Frost' }, statuses), 0);
 });
 
 // --- Stacking ---

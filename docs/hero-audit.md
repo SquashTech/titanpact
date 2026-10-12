@@ -383,7 +383,7 @@ Beast and Stone twice, Spirit three times across twelve grafts; spread so each t
 | Mordrax | Wildfire (Wildheart) | Fire (Beast) | Firebrand (Maul) | **Brushburn**: a hit on a Poisoned foe sets it Burning — Impale primes it (was Feral Rend) |
 | Mordrax | Ironbark | Iron (Stone) | Parry (Bastion) — Shield and ATK ▲, so Ironsap pays ▲▲ | Ironsap, kept |
 | Hollowbark | Rimewood (Wraithwood), rewire kept | Frost (Spirit) | Quick Freeze (Poltergeist) | **Numbing Rime**: an enemy that hits it loses SPD ▼ (was Whispering Boughs) |
-| Tixwick | Thresher (Reaper) | Mech (Iron) | Whirling Blades (Serrated Slice) | Reaping, kept |
+| Tixwick | Thresher (Reaper) | Mech (Iron) | Whirling Blades (Serrated Slice) | **Grindstone**: Edge 5 at each round end, 4 a fight (`docs/edge-and-aim.md`; was Reaping, deleted) |
 | Morel | Fairy Ring (Corpselight) | Arcane (Spirit) | Overload (Unquiet) | **Fairy Tithe**: Poisoning an enemy gives 10 Mana, past the pool — about 10 a round off Sporefall (was Graveglow) |
 
 **Tixwick is about slicing.** A **Slice** is a move tag (`MoveTag 'slice'`), not a type: every move
@@ -409,3 +409,9 @@ being an ordinary hit. Trials: Morel carries Overload, Tixwick Whirling Blades a
 
 To watch: Twin Scythes+ on Thousand Cuts is four hits, each carrying Ambush; the move tile's hit
 chip still reads the move's own count, not the holder's. Fairy Tithe + Sporefall is steady overflow.
+
+**Edge and Aim** (same day, per user direction, `docs/edge-and-aim.md`): a Force for a move
+family — Edge on every Slice, Aim on every Arrow, any type. **Hone** (Early Iron, Edge 20, 3
+Charges) in the pools of the seven heroes holding four or more Slices; **Take Aim** (Early Storm,
+Aim 20) in Squall's; Thresher's **Grindstone**; Restock adds Aim 10; the **Whetstone** and
+**Fletching** Boons, gated on the roster holding the family.

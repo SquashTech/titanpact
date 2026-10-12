@@ -17,7 +17,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import type { MoveKindGlyphKind } from './statIcons';
 import { STAT_FULL_LABELS } from './relicStacks';
-import { statusAmountText } from './statusFacts';
+import { moveTagLabel, statusAmountText } from './statusFacts';
 import { stageText } from './moveKind';
 import { BURDEN_SURPLUS, HERO_STAT_TOTAL } from '../../run/statBudget';
 
@@ -350,7 +350,7 @@ export function passiveFacts(def: PassiveDefinition): PassiveFact[] {
     }
   }
   if (def.extraHits) {
-    const family = def.extraHits.moveTag === 'slice' ? 'Slice' : def.extraHits.moveTag === 'arrow' ? 'Arrow' : 'tagged move';
+    const family = moveTagLabel(def.extraHits.moveTag);
     rows.push({ label: 'Hits', text: `Every ${family} strikes ${def.extraHits.hits === 1 ? 'an extra time' : `${def.extraHits.hits} extra times`}`, glyph: { kind: 'move', move: 'physical' } });
   }
   if (def.conditionalStatGrants?.requiresFastest) {

@@ -386,7 +386,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target, fieldEffectCtx, move.offStatOverride);
 
             const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attackerNow, move, passives, target);
-            const elementalForceBonus = resolveElementalForceBonus(attackerNow, move.type, statuses);
+            const elementalForceBonus = resolveElementalForceBonus(attackerNow, move, statuses);
             // maxHp read here, BEFORE applyHpDelta, so an execute never doubles against HP this hit removes.
             const basePowerMultiplier = resolveConditionalPowerMultiplier(
               move,

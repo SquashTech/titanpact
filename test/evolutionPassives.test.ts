@@ -481,3 +481,39 @@ test('nature: every move named for a cut is a Slice — the tag the player reads
   for (const id of ['cutthroat', 'thousandCuts', 'hamstring', 'runeslash', 'hoarfrostEdge']) assert.ok(moves[id].tags?.includes('slice'), id);
   assert.ok(signatureMoves.guillotine.tags?.includes('slice'));
 });
+
+// --- Edge and Aim (docs/edge-and-aim.md) ---
+
+test('edge: Edge powers every Slice whatever its type and nothing else; Aim powers Arrows; both stack with Force', () => {
+  const { resolveElementalForceBonus } = require('../src/engine/damage/damagePipeline') as typeof import('../src/engine/damage/damagePipeline');
+  let base = applyStatus(threeVThree(740), 1, 'a1', statuses.Edge, { magnitude: 20 }).state;
+  base = applyStatus(base, 1, 'a1', statuses.NatureForce, { magnitude: 10 }).state;
+  base = applyStatus(base, 1, 'a1', statuses.Aim, { magnitude: 5 }).state;
+  const a1 = base.combatants.a1;
+  assert.strictEqual(resolveElementalForceBonus(a1, moves.leafSlice, statuses), 30, 'Edge and Nature Force');
+  assert.strictEqual(resolveElementalForceBonus(a1, moves.shadowSlice, statuses), 20, 'Edge alone, off-type');
+  assert.strictEqual(resolveElementalForceBonus(a1, moves.vineLash, statuses), 10, 'no Slice, no Edge');
+  assert.strictEqual(resolveElementalForceBonus(a1, moves.stormArrow, statuses), 5, 'Aim on an Arrow');
+});
+
+test('edge: Hone banks Edge 20 and Take Aim banks Aim 20, each on three Charges; both survive a switch', () => {
+  const base = withMana(threeVThree(741), 'a1');
+  const honed = resolveRound(base, [{ kind: 'move', combatantId: 'a1', moveId: 'hone' } as Action], config).state;
+  assert.strictEqual(honed.combatants.a1.statuses.Edge?.magnitude, 20);
+  assert.strictEqual(moves.hone.chargesPerFight, 3);
+  const aimed = resolveRound(base, [{ kind: 'move', combatantId: 'a1', moveId: 'takeAim' } as Action], config).state;
+  assert.strictEqual(aimed.combatants.a1.statuses.Aim?.magnitude, 20);
+  assert.ok(!statuses.Edge.clearsOnSwitch && !statuses.Aim.clearsOnSwitch);
+});
+
+test('edge: Grindstone adds Edge 5 at each round end, four times a fight', () => {
+  let state = withPassive(threeVThree(742), 'a1', 'grindstone');
+  for (let round = 1; round <= 5; round++) state = resolveRound({ ...state, round }, [], config).state;
+  assert.strictEqual(state.combatants.a1.statuses.Edge?.magnitude, 20);
+});
+
+test("edge: Squall's Restock gives Aim 10 on a Rest", () => {
+  const base = withPassive(threeVThree(743), 'a1', 'retrievePlus');
+  const { state } = resolveRound(base, [{ kind: 'rest', combatantId: 'a1' } as Action], config);
+  assert.strictEqual(state.combatants.a1.statuses.Aim?.magnitude, 10);
+});

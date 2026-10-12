@@ -73,7 +73,7 @@ test('storm: the authored pool is exactly the fifteen designed moves plus the fo
     storm.map((m) => m.id).sort(),
     [
       'arcFlash', 'chainLightning', 'charge', 'electricBurst', 'ionCascade', 'ionicZap', 'ionize', 'jolt', 'overcharge', 'rideTheLightning', 'risingStatic',
-      'shockSlice', 'skyfall', 'staticCharge', 'stormLash', 'stormSurge', 'stunningBolt', 'tailwind', 'thunderbolt', 'thunderclap', 'zap',
+      'shockSlice', 'skyfall', 'staticCharge', 'stormLash', 'stormSurge', 'stunningBolt', 'tailwind', 'takeAim', 'thunderbolt', 'thunderclap', 'zap',
     ]
   );
 });

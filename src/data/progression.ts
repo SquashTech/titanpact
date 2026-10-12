@@ -212,6 +212,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     'pinDown','icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rimeCoat', 'rockToss', 'openingStrike', 'ironFist', 'frostWall', 'cogBop', 'snowball', 'heavyBlow', 'iceShatter', 'rubbleRush', 'momentumSwing', 'serratedSlice', 'titanicCrush', 'hoarfrostEdge'],
     // --- Storm ---
     stormRanger: [
+      'takeAim',
       'stormArrow',
       'ironArrow',
       'thunderclap',
@@ -412,6 +413,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Tixwick: Nature's blades, then the Bleed column the mantis cuts for — Shadow knives, Beast
     // claws, and Lacerate as the reliable opener Maul and Eviscerate need.
     tixwick: [
+      'hone',
       'pinDown',
       'ivySpike',
       'vineLash',
@@ -471,6 +473,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // kept as off-type telegraph — Venom Bite, Pounce, Howl, the two Bleed riders and Rending
     // Leap. Carapace's line is the mauler's half of the slate, so none of it sits here.
     widow: [
+      'hone',
       'lieInWait',
       'hamstring',
       'fadeStrike',
@@ -497,6 +500,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Claw is long-standing off-type coverage; Umbra Bolt is the in-type fix — Shadow has a whole
     // magical column and Nightshade's 65 Intelligence could reach none of it.
     nightshade: [
+      'hone',
     'weaken','fadeStrike', 'shadowstrike', 'cutthroat', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'thousandCuts', 'claw', 'umbraBolt', 'vineLash', 'ivySpike', 'iceShard', 'enfeeble', 'leafSlice', 'iceShatter', 'hamstring', 'smokeBomb', 'rendingLeap'],
     // --- Arcane ---
     runescribe: [
@@ -639,6 +643,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'seance',
     ],
     sorrow: [
+      'hone',
     'secondWind','lieInWait', 'backstab', 'fadeStrike', 'spookySlice', 'cutthroat', 'rend', 'soulOffering', 'wailingFlight', 'duskBlade', 'thousandCuts', 'iceShard', 'undertow', 'frostArmor', 'coldSnap', 'aquaSlice', 'ascendant', 'soulfire', 'hamstring'],
     // The magical line and the HP-priced cards a 230-HP body can afford. Provoke and Bodyguard are
     // the tank's off-type verbs; Fortify and Lie in Wait telegraph the grafts.
@@ -702,6 +707,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Shadow it always carried and Stone for the cannonballs. No Storm here — Stormrunner's line
     // is the whole of it.
     scallywag: [
+      'hone',
       'ironArrow',
       'sharpen',
       'ironFist',
@@ -985,6 +991,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Jinx: Shadow's knives, with the cat's pounce and Iron's pins as the off-types. Shadowstrike is Black Cat's grant.
     jinx: [
+      'hone',
       'pinDown',
       'hamstring', 'backstab', 'openingStrike', 'swiftBlow', 'claw', 'pounce',
       'shadowSlice', 'cutthroat', 'rend', 'smokeBomb', 'lacerate', 'rendArmor', 'maul',
@@ -1072,6 +1079,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'rampart', 'landslide', 'divineGrace', 'digIn', ],
     // Murk: Shadow's physical column with Stone's mud and Nature's moss as the off-types. Shadowstrike is Lurker's grant.
     murk: [
+      'hone',
       'toughenUp',
       'fadeStrike', 'backstab', 'mudBall', 'vineLash', 'pinDown',
       'knifeFan',
@@ -1842,7 +1850,7 @@ export const progressionTable: ProgressionTable = {
             unlocksMoveIds: ['whirlingBlades'],
             typeGraft: 'Mech',
             learnableMoveIds: evolutionLine('tixwick', 'Mech', { granted: ['whirlingBlades'] }),
-            grantsPassiveIds: ['reaping'],
+            grantsPassiveIds: ['grindstone'],
           },
           {
             id: 'tixwick-orchid',

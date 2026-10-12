@@ -112,6 +112,8 @@ export interface StatusDefinition {
   forceType?: TypeId;
   /** Ambush: a typeless Force — magnitude added to the BasePower of EVERY move the holder uses. Exclusive with forceType. */
   forceAllTypes?: boolean;
+  /** Edge and Draw (docs/edge-and-aim.md): a family Force — magnitude added to the BasePower of every move carrying this tag, whatever its type. Exclusive with forceType and forceAllTypes. */
+  forceTag?: MoveTag;
   /** Ambush: spent once the damage move that read it has resolved all of its hits, so a spread pays on every target and still costs one. */
   consumedOnDamage?: boolean;
   /** Raises the holder's DAMAGE moves by this many priority brackets while held (Poised; priority.ts actionPriority). Paired with consumedOnDamage, it is one early strike. */

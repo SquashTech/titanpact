@@ -3,7 +3,7 @@
 // do to it — each read off the definition fields the statusEngine runs on. Only what a field says
 // is here; a rule that lives in prose alone (Freeze halving Speed) stays in the description.
 
-import type { StatusDefinition } from '../../engine/content';
+import type { MoveTag, StatusDefinition } from '../../engine/content';
 import { statuses } from '../../data/statuses';
 
 /** What a rider ADDS, as the player reads it: its number (Shield 45). */
@@ -28,6 +28,11 @@ export interface StatusFact {
   /** The row's register word. */
   label: string;
   text: string;
+}
+
+/** A move family as the player reads it: a Slice, an Arrow. */
+export function moveTagLabel(tag: MoveTag): string {
+  return tag === 'slice' ? 'Slice' : tag === 'arrow' ? 'Arrow' : 'guard';
 }
 
 function typeList(types: readonly string[]): string {
@@ -86,6 +91,7 @@ export function statusFacts(def: StatusDefinition): StatusFact[] {
   if (def.passesOnFaint) rows.push({ label: 'Passes on', text: 'When this hero falls, it passes to the partner' });
   if (def.forceType) rows.push({ label: 'Base Power', text: `+magnitude on every ${def.forceType} move` });
   if (def.forceAllTypes) rows.push({ label: 'Base Power', text: `+magnitude on the next hit, any type${def.consumedOnDamage ? ' — then spent' : ''}` });
+  if (def.forceTag) rows.push({ label: 'Base Power', text: `+magnitude on every ${moveTagLabel(def.forceTag)}, any type` });
   rows.push({ label: 'Reapplied', text: stackingText(def) });
   if (def.clearsAtEndOfRound) rows.push({ label: 'Ends', text: 'When this round ends' });
   if (def.activeOnly) rows.push({ label: 'Benched', text: 'The clock pauses' });
@@ -112,6 +118,7 @@ export function statusFactsLine(def: StatusDefinition): string {
   if (def.passesOnFaint) parts.push('passes to the partner on a knockout');
   if (def.forceType) parts.push(`+Power on ${def.forceType} moves`);
   if (def.forceAllTypes) parts.push('+Power on the next hit');
+  if (def.forceTag) parts.push(`+Power on every ${moveTagLabel(def.forceTag)}`);
   // A control status carries its rule in prose alone (Freeze, Daze), so the sentence stands in.
   if (parts.length === 0 && def.description) return def.description;
   if (def.clearsAtEndOfRound) parts.push('ends with the round');

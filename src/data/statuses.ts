@@ -227,6 +227,33 @@ export const statuses: Record<string, StatusDefinition> = {
     description:
       'Adds its magnitude as flat Base Power to the next attack this hero lands, whatever the move type, then is spent. No clock — it waits until it is cashed. Cleared by switching, so it cannot be banked on the bench.',
   },
+  // The family Forces (docs/edge-and-aim.md): Elemental Force with the element swapped for a move tag.
+  Edge: {
+    id: 'Edge',
+    name: 'Edge',
+    shape: 'magnitude',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'additive',
+    clearsOnSwitch: false,
+    positive: true,
+    forceTag: 'slice',
+    pipeline: 'basePower',
+    description: 'Adds its magnitude as flat Base Power to every Slice this hero uses, whatever its type.',
+  },
+  Aim: {
+    id: 'Aim',
+    name: 'Aim',
+    shape: 'magnitude',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'additive',
+    clearsOnSwitch: false,
+    positive: true,
+    forceTag: 'arrow',
+    pipeline: 'basePower',
+    description: 'Adds its magnitude as flat Base Power to every Arrow this hero looses, whatever its type.',
+  },
   // The Titan's gaze (docs/titan-eyes.md §5): the mark a Regard needs. Duration 2 ticking at the
   // end of the round = the round the Gaze lands in and the whole of the next, so the telegraph is
   // on the board through one full command phase. Not consumed by the strike — two Eyes may

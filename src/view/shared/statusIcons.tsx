@@ -114,6 +114,23 @@ export const STATUS_PATHS: Record<string, ReactNode> = {
       <path d="M12 4.6v14.8L21.2 12Z" />
     </>
   ),
+  // A scythe blade, with the Force family's corner arrow: Edge sharpens every Slice.
+  Edge: (
+    <>
+      <path d="M2.5 3.6c7.4-.6 12.9 3.4 14 10.4-3-4.6-7.6-6.6-14-6.8Z" />
+      <path d="M15.2 12.6 6 21.6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M18.2 13.4 23.4 20h-3.2v3.4h-4V20H13Z" />
+    </>
+  ),
+  // A reticle, with the corner arrow: Aim powers every Arrow.
+  Aim: (
+    <>
+      <circle cx="10" cy="10" r="6.6" fill="none" stroke="currentColor" strokeWidth="2" />
+      <path d="M10 1.4v5M10 13.6v5M1.4 10h5M13.6 10h5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="10" cy="10" r="1.6" />
+      <path d="M18.2 13.4 23.4 20h-3.2v3.4h-4V20H13Z" />
+    </>
+  ),
   // Double chevron — the Force family's up-arrow said twice, for a hit that is loaded but unspent.
   Ambush: (
     <g fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
@@ -176,6 +193,8 @@ const STATUS_COLOR: Record<string, string> = {
   Poison: '#8bc34a',
   Haunt: '#7a5fc4',
   Ambush: '#a8577a',
+  Edge: '#c7ccd6',
+  Aim: '#c9a46a',
   Poised: '#b6d35a',
   Cannonball: '#8f8a80',
   Beheld: '#e0393f',

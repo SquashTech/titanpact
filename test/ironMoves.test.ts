@@ -234,7 +234,7 @@ test('iron: every damage row detonates Conduct for free, and the slate plants it
   const damage = ironMoves.filter((m) => m.kind === 'damage');
   const planters = ironMoves.filter((m) => firstStatusApplication(m)?.statusId === 'Conduct');
 
-  assert.strictEqual(ironMoves.length, 22, 'the authored slate is sixteen rows, the two Shield cards (docs/shield.md §3.5), the two 2026-09-15 additions, the Call’s Shrapnel and Iron Arrow (docs/charges.md)');
+  assert.strictEqual(ironMoves.length, 23, 'the authored slate is sixteen rows, the two Shield cards (docs/shield.md §3.5), the two 2026-09-15 additions, the Call’s Shrapnel, Iron Arrow (docs/charges.md) and Hone (docs/edge-and-aim.md)');
   assert.strictEqual(damage.length, 14, 'fourteen of them detonate Conduct for free');
   assert.strictEqual(planters.length, 0, 'and none of them plants it');
   assert.ok(statuses.Conduct.triggerTypes?.includes('Iron'));
@@ -278,9 +278,9 @@ test('iron: every priority row is a POSITIVE bracket, and the slate has no heal,
     assert.ok(!move.cleanses, `${move.id} cleanses`);
     assert.ok(!move.fieldEffectApplication, `${move.id} sets a field effect`);
   }
-  // Six riders in twenty rows, all named: the type still does not scatter statuses.
+  // Seven riders, all named: the type still does not scatter statuses.
   const riders = ironMoves.filter((m) => firstStatusApplication(m));
-  assert.deepStrictEqual(riders.map((m) => m.id).sort(), ['fortify', 'ironSkin', 'livingWall', 'parry', 'serratedSlice', 'shieldBash']);
+  assert.deepStrictEqual(riders.map((m) => m.id).sort(), ['fortify', 'hone', 'ironSkin', 'livingWall', 'parry', 'serratedSlice', 'shieldBash']);
   assert.strictEqual(firstStatusApplication(moves.ironSkin)?.statusId, 'Shield');
   assert.strictEqual(firstStatusApplication(moves.livingWall)?.statusId, 'Shield');
   assert.strictEqual(firstStatusApplication(moves.serratedSlice)?.statusId, 'Bleed');

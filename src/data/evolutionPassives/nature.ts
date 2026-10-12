@@ -111,12 +111,17 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'triggerSubject', stat: 'speed', stages: -1 },
     },
   },
-  // Tixwick's Reaper: Serrated Slice opens the wound, the scythe follows it in.
-  reaping: {
-    id: 'reaping',
-    name: 'Reaping',
-    description: 'This hero deals 30% more damage to a Bleeding foe.',
-    damageModifier: { requiresTargetStatuses: ['Bleed'], amount: 0.3 },
+  // Tixwick's Thresher: the harvester's blades grind keener every round they turn (docs/edge-and-aim.md).
+  grindstone: {
+    id: 'grindstone',
+    name: 'Grindstone',
+    description: 'At the end of each round, this hero gains Edge 5. Up to 4 times a fight.',
+    reactive: {
+      maxFiresPerFight: 4,
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Edge', magnitude: 5 },
+    },
   },
   // Morel's Deathcap: every Poison Grim Harvest reaps feeds the next.
   gravemould: {

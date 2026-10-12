@@ -141,3 +141,16 @@ test('boons: the field Heralds are type-locked on the field\'s flavour type, off
   // A Herald is not a move-count Boon: the fit readout has nothing to count, since any hero can carry the field.
   assert.strictEqual(boonMoveType(passives[fieldHeraldPassiveFor.Light!]), null);
 });
+
+test('boons: Whetstone and Fletching are offered only while somebody holds a Slice or an Arrow (docs/edge-and-aim.md)', () => {
+  const { familyBoonMoveCount } = require('../src/run/boons') as typeof import('../src/run/boons');
+  const tixwick = entry('tixwick');
+  const solace = entry('dawnwarden');
+  assert.ok(boonPool([tixwick], heroes).includes('whetstone'), 'Reed Slice is a Slice');
+  assert.ok(!boonPool([solace], heroes).includes('whetstone'));
+  assert.ok(!boonPool([tixwick], heroes).includes('fletching'), 'no Arrow on the roster');
+  assert.ok(boonPool([entry('stormRanger')], heroes).includes('fletching'), 'Quiver shoots Arrows');
+  assert.strictEqual(familyBoonMoveCount(passives.whetstone, tixwick), 1);
+  assert.strictEqual(familyBoonMoveCount(passives.whetstone, solace), 0);
+  assert.strictEqual(familyBoonMoveCount(passives.bloodthirst, tixwick), null);
+});

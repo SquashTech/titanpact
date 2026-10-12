@@ -150,7 +150,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
   const activeFieldName = context?.combat.activeFieldEffect ? fieldEffects[context.combat.activeFieldEffect.fieldEffectId]?.name ?? '' : '';
   const stab =
     (move.kind === 'damage' || move.kind === 'heal') && healCaster ? resolveStab(move.type, healCaster.types) > 1 : false;
-  const forceBonus = attacker ? resolveElementalForceBonus(attacker, move.type, statuses) : 0;
+  const forceBonus = attacker ? resolveElementalForceBonus(attacker, move, statuses) : 0;
   // conditionalManaCost needs the board, so only a fight in scope prices it; otherwise the ramp-only price.
   const liveCost = context
     ? resolveManaCost(context.combat, context.attackerId, move, allCombatants)

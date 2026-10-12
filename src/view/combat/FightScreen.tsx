@@ -2136,7 +2136,7 @@ export function FightScreen({
                         restoredCharges={restoredCharges.current[`${id}:${moveId}`] ?? 0}
                         cost={cost}
                         selected={isSelected}
-                        forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
+                        forceBonus={resolveElementalForceBonus(combatant, move, statuses)}
                         banked={combatant.damageTakenSinceLastTurn}
                         rolledBasePower={resolveCastBasePower(combat, id, move, combatant.moveBasePowerBonuses)}
                         selfHpCost={

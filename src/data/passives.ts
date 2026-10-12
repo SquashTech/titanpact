@@ -1913,7 +1913,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   retrievePlus: {
     id: 'retrievePlus',
     name: 'Retrieve+',
-    description: "When one of this hero's Arrows knocks out a foe, that Arrow gets 2 Charges back. Restock: when this hero Rests, every Arrow refills.",
+    description: "When one of this hero's Arrows knocks out a foe, that Arrow gets 2 Charges back. Restock: when this hero Rests, every Arrow refills and it gains Aim 10.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true, moveTag: 'arrow' },
@@ -1923,6 +1923,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
       effect: { kind: 'restoreCharge', target: 'self', amount: 'all', moveTag: 'arrow' },
+      alsoEffect: { kind: 'applyStatus', target: 'self', statusId: 'Aim', magnitude: 10 },
     },
   },
   thunderhead: {
@@ -2842,9 +2843,37 @@ export const chargeBoonPassives: Record<string, PassiveDefinition> = {
   },
 };
 
+/**
+ * Family Force Boons (docs/edge-and-aim.md): offered only while a roster hero holds a move of the
+ * family they power (src/run/boons.ts familyBoonFits). First-pass figures.
+ */
+export const familyBoonPassives: Record<string, PassiveDefinition> = {
+  whetstone: {
+    id: 'whetstone',
+    name: 'Whetstone',
+    description: 'When this hero enters the battlefield, it gains Edge 10.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Edge', magnitude: 10 },
+    },
+  },
+  fletching: {
+    id: 'fletching',
+    name: 'Fletching',
+    description: 'When this hero enters the battlefield, it gains Aim 10.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Aim', magnitude: 10 },
+    },
+  },
+};
+
 export const passives: Record<string, PassiveDefinition> = {
   ...fixturePassives,
   ...chargeBoonPassives,
+  ...familyBoonPassives,
   ...equipmentPassives,
   ...eventPassives,
   ...typeDamagePassives,
