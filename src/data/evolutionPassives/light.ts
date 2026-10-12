@@ -34,15 +34,26 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'heal', target: 'ally', amount: { kind: 'matchTriggerAmount', multiplier: 0.33 } },
     },
   },
-  // Carillon's Great Bell.
-  reverberation: {
-    id: 'reverberation',
-    name: 'Reverberation',
-    description: 'When this hero heals an ally, both active enemies lose SPD ▼.',
+  // Carillon's Great Bell: rings on The Bell Tolls' beat, so the heals grow all fight.
+  pealOfGrace: {
+    id: 'pealOfGrace',
+    name: 'Peal of Grace',
+    description: 'At the end of every third round, both allies gain Grace 10.',
     reactive: {
-      hook: 'Healed',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', stages: -1 },
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', everyNRounds: 3 },
+      effect: { kind: 'applyStatus', target: 'bothAllies', statusId: 'Grace', magnitude: 10 },
+    },
+  },
+  // Patch's Triage: walks in ready to pour Divine Grace.
+  fieldMedic: {
+    id: 'fieldMedic',
+    name: 'Field Medic',
+    description: 'When this hero enters the battlefield, it gains Grace 15.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Grace', magnitude: 15 },
     },
   },
   // Carillon's Knell: the Light hit plants the mark, the grafted Spirit line cashes it.

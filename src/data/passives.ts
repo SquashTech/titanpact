@@ -726,18 +726,6 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     },
   },
   // --- The Free Company (docs/constellation.md §11 phase 6) ---
-  nanites: {
-    id: 'nanites',
-    name: 'Nanites',
-    description: 'When this hero enters the battlefield, its partner gains Renew.',
-    // The partner-on-arrival shape (Arcane Reservoir's mana, Bodyguard's Defense) paying a HoT:
-    // the medic starts work on whoever it walks in beside, and a pivot out and back re-seeds it.
-    reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Renew' },
-    },
-  },
   bloodmeal: {
     id: 'bloodmeal',
     name: 'Bloodmeal',
@@ -2837,6 +2825,16 @@ export const familyBoonPassives: Record<string, PassiveDefinition> = {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Edge', magnitude: 10 },
+    },
+  },
+  votive: {
+    id: 'votive',
+    name: 'Votive',
+    description: 'When this hero enters the battlefield, it gains Grace 10.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Grace', magnitude: 10 },
     },
   },
   fletching: {

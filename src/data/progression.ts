@@ -342,6 +342,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // --- Nature ---
     wildOracle: [
+      'prayer',
       'fullBloom',
       'toxicSpores',
       'vineLash',
@@ -436,6 +437,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // --- Light ---
     dawnwarden: [
+      'prayer',
       'purify',
       'radiantBeam',
       'blind',
@@ -459,6 +461,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'dawnlight',
     ],
     aegis: [
+      'prayer',
     'secondWind','holySlice', 'blind', 'purify', 'bless', 'vigil', 'exalt', 'consecrate', 'benediction', 'divineGrace', 'reinforce', 'pistonPunch', 'vineLash', 'toughenUp', 'rockToss', 'radiantBeam', 'radiance', 'smite', 'solarFlare', 'judgment', 'hallow', 'sunlance', 'bodyguard'],
     // Light's magical attacks and the Daze riders, minus Solar Flare (Sunborne's grant). Jolt and
     // Stunning Bolt telegraph Storm, Wisp telegraphs Spirit; Thunderbolt is the Late off-type.
@@ -774,6 +777,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // with Light, Water and Arcane support as the off-type. Beacon's and Coolant's lines are the heal
     // columns proper, so they are not here.
     patch: [
+      'prayer',
       'batteryPack',
       'repairKit',
       'backfire',
@@ -908,6 +912,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Hart: Light's heal column, with Nature's growth as the off-type. Blinding Flash is White Hart's grant.
     hart: [
+      'prayer',
       'fullBloom',
       'hallow',
       'purify', 'bless', 'blind', 'vigil', 'refresh', 'regrowth',
@@ -917,6 +922,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Ashwing: Fire's magical column with Light's and Water's mending beside it. Immolate is Firebird's grant.
     ashwing: [
+      'prayer',
       'flashpoint',
       'setAlight',
       'sparkFlash', 'flareUp', 'stokeTheFlames', 'vigil', 'purify', 'refresh',
@@ -1018,6 +1024,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Selkie: Water's mending column, with Light's and Nature's healing beside it. High Tide is Tidewife's grant.
     selkie: [
+      'prayer',
       'fullBloom',
       'regrowth',
       'tideGuard', 'inkCloud', 'siphon', 'mend', 'purify', 'vigil',
@@ -1157,6 +1164,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // Mellow: Beast's rallying with Water's and Nature's mending and Stone's guard beside it. Reinforce is Gentle Giant's grant.
     mellow: [
+      'prayer',
       'refresh',
       'rally', 'claw', 'tideGuard', 'regrowth', 'toughenUp', 'provoke',
       'bodyguard', 'washAway', 'oasis', 'cleansingRain', 'bastion', 'wildBloom', 'packHunt',
@@ -2578,7 +2586,7 @@ export const progressionTable: ProgressionTable = {
             heroId: 'patch',
             name: 'Triage',
             unlocksMoveIds: ['divineGrace'],
-            grantsPassiveIds: ['nanites'],
+            grantsPassiveIds: ['fieldMedic'],
           },
           {
             id: 'patch-beacon',
@@ -2801,7 +2809,7 @@ export const progressionTable: ProgressionTable = {
             heroId: 'carillon',
             name: 'Great Bell',
             unlocksMoveIds: ['consecrate'],
-            grantsPassiveIds: ['reverberation'],
+            grantsPassiveIds: ['pealOfGrace'],
           },
           {
             id: 'carillon-bellfounder',

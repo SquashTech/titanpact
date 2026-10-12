@@ -154,3 +154,10 @@ test('boons: Whetstone and Fletching are offered only while somebody holds a Sli
   assert.strictEqual(familyBoonMoveCount(passives.whetstone, solace), 0);
   assert.strictEqual(familyBoonMoveCount(passives.bloodthirst, tixwick), null);
 });
+
+test('boons: Votive (Grace) is offered only while somebody holds a heal move', () => {
+  const { familyBoonMoveCount } = require('../src/run/boons') as typeof import('../src/run/boons');
+  assert.ok(boonPool([entry('dawnwarden')], heroes).includes('votive'), 'Mend is a heal');
+  assert.ok(!boonPool([entry('tixwick')], heroes).includes('votive'));
+  assert.strictEqual(familyBoonMoveCount(passives.votive, entry('dawnwarden')), 1);
+});

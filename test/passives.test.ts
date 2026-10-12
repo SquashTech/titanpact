@@ -606,7 +606,7 @@ test("passives: Nature's Purification spares a positive status — the partner k
 
 // --- The Free Company (docs/constellation.md §11 phase 6) ---
 
-test('passives: Nanites start the partner on Renew the round Patch arrives — the owner gets nothing', () => {
+test('passives: Hallowed Step starts the partner on Renew the round its holder arrives — the owner gets nothing', () => {
   const base = createFightState(
     365,
     [
@@ -619,11 +619,11 @@ test('passives: Nanites start the partner on Renew the round Patch arrives — t
       { combatantId: 'b2', heroId: 'tidecaller', side: 'B' },
     ]
   );
-  const { events } = resolveRound(withPassive(base, 'a3', 'nanites'), [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
+  const { events } = resolveRound(withPassive(base, 'a3', 'hallowedStep'), [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
   const renewed = events.filter((e) => e.type === 'StatusApplied' && e.statusId === 'Renew');
   assert.deepStrictEqual(
     renewed.map((e) => (e.type === 'StatusApplied' ? [e.combatantId, e.magnitude] : null)),
-    [['a2', (passives.nanites.reactive!.effect as { magnitude: number }).magnitude]],
+    [['a2', (passives.hallowedStep.reactive!.effect as { magnitude: number }).magnitude]],
     "the partner is put on Renew, and the owner is not — 'ally' aims sideways"
   );
 });

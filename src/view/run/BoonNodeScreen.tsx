@@ -126,7 +126,7 @@ export function BoonNodeScreen({ run, onRunChange, onContinue, seed }: Props) {
     const family = familyBoonMoveCount(confirmed ?? undefined, entry, moves);
     const tag = familyBoonTag(confirmed ?? undefined);
     if (family !== null && tag) {
-      const label = moveTagLabel(tag);
+      const label = tag === 'heal' ? 'heal move' : moveTagLabel(tag);
       return (
         <span className={`boon-fit-note${family === 0 ? ' is-dead' : ''}`}>
           {family === 0 ? `no ${label}s` : `${family} ${label}${family === 1 ? '' : 's'}`}

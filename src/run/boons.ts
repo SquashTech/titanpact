@@ -50,11 +50,12 @@ export function boonPool(roster: readonly RosterEntry[], heroLookup: Record<stri
   return [...Object.keys(boonPassives), ...typeLocked, ...chargeLocked, ...familyLocked];
 }
 
-/** The move family a family-Force Boon powers (Whetstone: Slices), read off the status it grants; null for any other Boon. */
-export function familyBoonTag(passive: PassiveDefinition | undefined): MoveTag | null {
+/** The family a family-Force Boon powers (Whetstone: Slices, Votive: heals), read off the status it grants; null for any other Boon. */
+export function familyBoonTag(passive: PassiveDefinition | undefined): MoveTag | 'heal' | null {
   const effect = passive?.reactive?.effect;
   if (effect?.kind !== 'applyStatus') return null;
-  return statuses[effect.statusId]?.forceTag ?? null;
+  const def = statuses[effect.statusId];
+  return def?.forceTag ?? (def?.forceHeal ? 'heal' : null);
 }
 
 /** How many of this hero's moves a family-Force Boon would power — Quiver counting as an Arrow; `null` for any other Boon. */
@@ -63,6 +64,7 @@ export function familyBoonMoveCount(passive: PassiveDefinition | undefined, entr
   if (!tag) return null;
   return entry.unlockedMoveIds.filter((id) => {
     const move = moveLookup[id];
+    if (tag === 'heal') return move?.kind === 'heal';
     const rule = move?.metamorphic;
     return !!move?.tags?.includes(tag) || (typeof rule === 'object' && rule.poolTag === tag);
   }).length;

@@ -63,3 +63,15 @@ Elemental Force sits before the damage multipliers (`resolveHealForceBonus`,
 `engine/heal/healPipeline.ts`). Persistent, kept through a switch. It never touches Renew (a timed
 share of max HP) or a passive's heal. The one source today is **Solace's Dawnlight**: entering the
 field gives Grace 10 (Dawnlight+ 20), up to 3 times a fight — Mend's 45 becomes 55 a stack.
+
+**More sources, same day, per user direction:**
+
+- **Prayer** — new Early Light buff, 20 mana, self: **Grace 20**, 3 Charges. In the pools of the eight
+  heroes with the most heal moves: Selkie, Solace, Patch, Argent, Sylva, Aegis, Ashwing, Mellow.
+- **Votive** — a Boon: on entering the field, Grace 10. Offered only while a roster hero holds a
+  heal move (`familyBoonMoveCount`, the Whetstone gate).
+- **Carillon's Great Bell**: **Peal of Grace** — every third round, both allies gain Grace 10, on
+  The Bell Tolls' beat (was Reverberation, deleted).
+- **Patch's Triage**: **Field Medic** — entering the field gives Grace 15 (was Nanites, deleted; it
+  was Argent's Hallowed Step under another name).
+- Held for later: Bless also giving its ally Grace 10.

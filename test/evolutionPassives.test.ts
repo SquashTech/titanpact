@@ -582,3 +582,19 @@ test('light: Gilded Mane takes 30% off a hit landing at full HP, and nothing onc
   const scratched = withHp(maned, 'a1', maned.combatants.a1.currentHp - 1);
   assert.strictEqual(lost(scratched), lost(withHp(base, 'a1', base.combatants.a1.currentHp - 1)));
 });
+
+test('light: Prayer banks Grace 20 on three Charges; Peal of Grace gives both allies Grace 10 every third round', () => {
+  const prayed = resolveRound(withMana(threeVThree(756), 'a1'), [{ kind: 'move', combatantId: 'a1', moveId: 'prayer' } as Action], config).state;
+  assert.strictEqual(prayed.combatants.a1.statuses.Grace?.magnitude, 20);
+  assert.strictEqual(moves.prayer.chargesPerFight, 3);
+  let state = withPassive(threeVThree(757), 'a1', 'pealOfGrace');
+  for (let round = 1; round <= 3; round++) state = resolveRound({ ...state, round }, [], config).state;
+  assert.strictEqual(state.combatants.a1.statuses.Grace?.magnitude, 10);
+  assert.strictEqual(state.combatants.a2.statuses.Grace?.magnitude, 10);
+});
+
+test('light: Field Medic arrives with Grace 15', () => {
+  const base = withPassive(threeVThree(758), 'a3', 'fieldMedic');
+  const { state } = resolveRound(base, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
+  assert.strictEqual(state.combatants.a3.statuses.Grace?.magnitude, 15);
+});

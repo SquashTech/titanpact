@@ -1737,6 +1737,20 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
   },
+  // Grace (docs/edge-and-aim.md §6): a turn spent now for bigger heals later. Charges bound the bank.
+  prayer: {
+    id: 'prayer',
+    name: 'Prayer',
+    tier: 'early',
+    type: 'Light',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Grace', magnitude: 20, target: 'self' },
+    manaCost: 20,
+    chargesPerFight: 3,
+    priority: 0,
+    target: 'self',
+  },
   bless: {
     id: 'bless',
     name: 'Bless',
