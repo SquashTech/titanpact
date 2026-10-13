@@ -3438,5 +3438,7 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
 - **Events** (same day, per user direction): the flavor line stays prose. Each option's sub-line
   heads with a gold keyword — **Learn**, **Gear**, **Recruit**, **Gamble**, **Curse** — and a price
   with **Cost** ("Cost: 20 gold · 10% HP from everyone"); a curse's block is one **Turns at Mastery
-  N** line. The readout's "Choose what to do, or walk on." and every "Hold a hero to review its
-  sheet." are cut, and Leave lost its "Walk on" sub-line.
+  N** line. The readout under the title asks nothing now: "Choose what to do", "Choose who learns
+  it", "Hold a hero to review its sheet" and the loot's "Take them, then place each one" are cut,
+  per user direction; it says only what just happened, why there is nothing to pick, or that a full
+  roster means someone leaves. Leave lost its "Walk on" sub-line.

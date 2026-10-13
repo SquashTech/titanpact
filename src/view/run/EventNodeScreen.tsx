@@ -338,7 +338,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
     return 'Learn';
   }
 
-  /** The ask, or what just happened. Never the flavor — that has its own line. */
+  /** What just happened, or why there is nothing to pick. Never the flavor — that has its own line. */
   function readout(): ReactNode {
     if (!outcome) return '';
     if (outcome.kind === 'recruit') {
@@ -346,8 +346,8 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
         const joined = run.roster.find((r) => r.rosterId === resolvedTo);
         return joined ? `${heroes[joined.heroId].name} joins the pact.` : '';
       }
-      if (arriving) return `${heroes[arriving.heroId].name} would join, but the roster is full. Choose who leaves — their gear goes with them.`;
-      return rolled && rolled.recruits.length > 0 ? 'Choose who joins.' : 'Nobody answers.';
+      if (arriving) return `${heroes[arriving.heroId].name} would join, but the roster is full. Whoever leaves takes their gear.`;
+      return rolled && rolled.recruits.length > 0 ? '' : 'Nobody answers.';
     }
     if (resolvedHero) {
       if (outcome.kind === 'learnMove' && offeredMove) return `${resolvedHero.name} learned ${offeredMove.name}.`;
@@ -356,14 +356,8 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
       if (outcome.kind === 'curse' && curse) return resolvedEntry?.curseTurned ? `${resolvedHero.name} Turns.` : `${resolvedHero.name} is bitten. At Mastery ${curse.turnAt}, it Turns.`;
       if (grantedPassive) return `${resolvedHero.name} learned ${grantedPassive.name}.`;
     }
-    if (outcome.kind === 'learnMove') {
-      return offeredMove ? 'Choose who learns it.' : 'Nothing here after all.';
-    }
-    if (outcome.kind === 'statShift') return 'Choose who makes the trade.';
-    if (outcome.kind === 'grantPassive') return 'Choose who learns it.';
-    if (outcome.kind === 'gamble') return 'Choose who takes the chance.';
-    if (outcome.kind === 'curse') return 'Choose who it takes.';
-    return `${lootItems.length} ${lootItems.length === 1 ? 'piece' : 'pieces'} of gear. Take them, then place each one.`;
+    if (outcome.kind === 'learnMove' && !offeredMove) return 'Nothing here after all.';
+    return '';
   }
 
   const heroPicking = outcome !== null && outcome.kind !== 'loot' && outcome.kind !== 'recruit';
