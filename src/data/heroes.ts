@@ -859,7 +859,7 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 220, attack: 95, defense: 50, intelligence: 20, wisdom: 45, speed: 70, manaPool: 50, mpRegen: 10 },
     moveIds: ['kata', 'sharpen'],
     unlock: 'starfall',
-    growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'A', manaPool: 'B' },
+    growthGrades: { hp: 'A', attack: 'A', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [4, 8, 12, 17, 21], midLevel: 9, lateLevel: 18, signatureLevel: 19 },
     signatureMoveId: 'drawCut',
     passiveIds: ['iaido'],

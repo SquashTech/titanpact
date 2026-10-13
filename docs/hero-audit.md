@@ -639,3 +639,9 @@ Aurum, on Ronin's exact stats and grades, ran 177 / 3.2. Throwaway A/B batches, 
 Measured with both in (4000 runs): Ronin 221 / 4.31 (still 1st by DPR, level with Hush 220), Rex 214 /
 3.55 and 0.97 KO a fight (3rd), full-clear 87.5% unmoved. Fight-only stages front-load Rex: his acts
 1–2 ratio rose 3.66 → 4.09 while acts 3+ held at 3.43. Both are in the top cluster now, not above it.
+
+**Ronin's Attack growth S → A** (2026-10-13, per user direction), and the freed point is NOT spent:
+his grades sum to **27**, the first line under `GRADE_BUDGET`. A hero whose kit dominates may be
+nerfed to an exception spot — an innate or a movepool can make up for a lower grade budget — never
+over it (`test/roster.test.ts` names each one). Measured (4000 runs): Ronin 208 DPR / ratio 4.11,
+3rd behind Hush 220 and Rex 214; full-clear 87.8%.
