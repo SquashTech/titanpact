@@ -40,6 +40,8 @@ export type NodeFactGlyph =
 
 export interface NodeFact {
   glyph: NodeFactGlyph;
+  /** What the node fields against you, drawn apart from what it pays. */
+  threat?: boolean;
   label: string;
   /** The figure. `null` is a lane this node does not pay; the dossier leaves the row out. */
   value: string | null;
@@ -48,12 +50,15 @@ export interface NodeFact {
 }
 
 export interface NodeDossier {
-  /** One line of lore. The figures say what it pays. */
-  about: string;
+  /** One line of lore, only where the node is vague without it; the figures say the rest. A
+   *  `[contract]` token prints the Contract's mark, so the line teaches the icon it names. */
+  about: string | null;
   facts: NodeFact[];
   /** Rarity odds for a node that hands out an item, already windowed to the act. Null where nothing drops. */
   odds: Record<EquipmentRarity, number> | null;
 }
+
+const RECRUITABLE: readonly MapNodeType[] = ['skirmish', 'elite', 'boss'];
 
 function range([min, max]: readonly [number, number]): string {
   return min === max ? `${min}` : `${min}–${max}`;
@@ -76,11 +81,12 @@ function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] 
   const xp = Math.round(encounterXpForAct(actNumber) * ENCOUNTER_XP_MULTIPLIER[encounterXpKind(type)]);
   const level = enemyLevelFor(type, actNumber);
   return [
-    { glyph: 'enemy', label: 'Enemies', value: `Lv ${level}`, note: type === 'boss' ? `Guardian Lv ${championLevel(level)}` : undefined },
+    { glyph: 'enemy', label: 'Enemies', threat: true, value: `Lv ${level}`, note: type === 'boss' ? `Guardian Lv ${championLevel(level)}` : undefined },
     { glyph: 'xp', label: 'XP', value: `${xp}` },
     { glyph: 'gold', label: 'Gold', value: gold[1] > 0 ? range(gold) : null },
     { glyph: 'item', label: 'Item', value: drop > 0 ? percent(drop) : null, note: drop > 0 && LOOT_SOURCE[type] === 'elite' ? 'rarer' : undefined },
     gemFact(type),
+    { glyph: 'contract', label: 'Recruit', value: RECRUITABLE.includes(type) ? '1' : null },
   ];
 }
 
@@ -105,20 +111,20 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
 
   switch (type) {
     case 'fight':
-      return { about: 'The Titan’s brood. None of them will ever join you.', facts: spawnFacts('fight', actNumber, actNumber), odds: odds('fight') };
+      return { about: null, facts: spawnFacts('fight', actNumber, actNumber), odds: odds('fight') };
     case 'battle':
-      return { about: 'The Titan’s brood. None of them will ever join you.', facts: spawnFacts('battle', actNumber, Math.max(2, actNumber)), odds: odds('battle') };
+      return { about: null, facts: spawnFacts('battle', actNumber, Math.max(2, actNumber)), odds: odds('battle') };
     case 'skirmish':
-      return { about: 'Rival heroes. Win, and one of them may join you.', facts: encounterFacts('skirmish', actNumber), odds: odds('skirmish') };
+      return { about: 'Rival heroes. Beat them, and spend a [contract] Contract to recruit one.', facts: encounterFacts('skirmish', actNumber), odds: odds('skirmish') };
     case 'elite':
       return {
-        about: 'Their finest. Harder to beat, and worth more for it.',
+        about: 'Their finest. Beat them, and a [contract] Contract recruits one, stronger than any hire.',
         facts: [...encounterFacts('elite', actNumber), { glyph: 'contract', label: 'Contract', value: percent(CONTRACT_DROP_CHANCE.elite ?? 0) }],
         odds: odds('elite'),
       };
     case 'boss':
       return {
-        about: 'Keeper of a seal ring. Win, and one may join you.',
+        about: null,
         facts: [...encounterFacts('boss', actNumber), { glyph: 'banner', label: 'Banner', value: '1 of 3', note: 'whole team' }],
         odds: odds('boss'),
       };
@@ -130,7 +136,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
       };
     case 'shop':
       return {
-        about: 'Hires, Gems, gear, and a hot meal for the whole party.',
+        about: null,
         facts: [
           { glyph: 'hero', label: 'Hire', value: `Lv ${guildHallLevel(actNumber)}`, note: '1 Contract' },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_BASE_PRICE}g`, note: 'more each time' },
@@ -141,7 +147,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
       };
     case 'muster':
       return {
-        about: 'One last night before the Titan. Spend what is left.',
+        about: null,
         facts: [
           { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g` },
           { glyph: 'anvil', label: 'Anvil', ...priceBand(ANVIL_PRICE_BY_TARGET, cycle) },
@@ -150,14 +156,14 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
         odds: null,
       };
     case 'equipmentReward':
-      return { about: 'A chest with three pieces inside. Take one.', facts: [{ glyph: 'item', label: 'Item', value: '1 of 3' }], odds: odds('cache') };
+      return { about: null, facts: [{ glyph: 'item', label: 'Item', value: '1 of 3' }], odds: odds('cache') };
     case 'scrollReward':
-      return { about: 'A cache of cut Gems.', facts: [{ glyph: 'scroll', label: 'Gems', value: `${GEM_CACHE_COUNT}`, note: gemNote(actNumber) }], odds: null };
+      return { about: null, facts: [{ glyph: 'scroll', label: 'Gems', value: `${GEM_CACHE_COUNT}`, note: gemNote(actNumber) }], odds: null };
     case 'scribeReward':
-      return { about: 'The Lapidary sets Gems for your heroes.', facts: [{ glyph: 'scroll', label: 'Gems', value: `${SCRIBE_GEMS}`, note: gemNote(actNumber) }], odds: null };
+      return { about: null, facts: [{ glyph: 'scroll', label: 'Gems', value: `${SCRIBE_GEMS}`, note: gemNote(actNumber) }], odds: null };
     case 'manaWellReward':
       return {
-        about: 'Drink deep. One hero’s Mana runs fuller from now on.',
+        about: null,
         facts: [
           { glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, note: 'one hero' },
           { glyph: 'mana', label: 'MP Regen', value: `+${MANA_WELL_REGEN}` },
@@ -166,7 +172,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
       };
     case 'forgeReward':
       return {
-        about: 'A smith’s fire, free for one piece of gear.',
+        about: null,
         facts: [
           { glyph: 'anvil', label: 'Lift', value: '1 piece', note: 'a tier up' },
           { glyph: 'enchant', label: 'Bind', value: '1 element', note: 'your pick' },
@@ -180,11 +186,11 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
         odds: null,
       };
     case 'restReward':
-      return { about: 'A fire and a night’s sleep. Everyone heals, and the fallen stand.', facts: [{ glyph: 'hp', label: 'Heal', value: 'Everyone' }], odds: null };
+      return { about: null, facts: [{ glyph: 'hp', label: 'Heal', value: 'Everyone' }], odds: null };
     case 'currencyReward':
-      return { about: 'Gold, there for the taking.', facts: [{ glyph: 'gold', label: 'Gold', value: range(purseRangeFor(actNumber)) }], odds: null };
+      return { about: null, facts: [{ glyph: 'gold', label: 'Gold', value: range(purseRangeFor(actNumber)) }], odds: null };
     case 'contractReward':
-      return { about: 'A signed contract, waiting for a new recruit.', facts: [{ glyph: 'contract', label: 'Contract', value: '+1' }], odds: null };
+      return { about: null, facts: [{ glyph: 'contract', label: 'Contract', value: '+1' }], odds: null };
     case 'passiveReward':
       return { about: 'A gift for one hero to carry.', facts: [{ glyph: 'passive', label: 'Boon', value: `1 of ${BOON_OFFER_COUNT}`, note: 'one hero' }], odds: null };
     case 'blessingReward':

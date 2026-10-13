@@ -1,11 +1,11 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import type { MapNode } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
 import { NODE_COLORS } from './mapNodes';
 import { nodeDossier, type NodeFactGlyph } from './nodeFacts';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
-import { ResourceGlyph } from '../shared/RunGlyph';
+import { RESOURCE_COLORS, ResourceGlyph } from '../shared/RunGlyph';
 import { StatGlyph } from '../shared/statIcons';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { BANNER } from '../shared/relicIcons';
@@ -34,6 +34,26 @@ const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
   anvil: <HubGlyph name="anvil" />,
   enchant: <SectionGlyph name="matchups" />,
   hidden: <NodeGlyph type="event" />,
+};
+
+/** Each reward in its own colour — the run's resource colours where it has one — so a card reads as loot, not a table. */
+const FACT_COLORS: Record<NodeFactGlyph, string> = {
+  gold: RESOURCE_COLORS.gold,
+  xp: RESOURCE_COLORS.xp,
+  scroll: RESOURCE_COLORS.scroll,
+  contract: RESOURCE_COLORS.contract,
+  mana: RESOURCE_COLORS.mpPotion,
+  hp: RESOURCE_COLORS.hpPotion,
+  item: '#f0a35a',
+  banner: '#e8c66a',
+  move: '#c9a6ff',
+  passive: '#c9a6ff',
+  class: '#c9a6ff',
+  hero: '#9bc9ff',
+  anvil: '#f0a35a',
+  enchant: '#7fd6ff',
+  enemy: '#ff7b6b',
+  hidden: '#b8bccb',
 };
 
 /**
@@ -69,25 +89,47 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
 }
 
 /**
- * The map's preview card (MapRoute): a line of lore, then what the node pays, large — the lit tile
- * under the card already carries its name and its picture. The roster's side of it is the footer's chips (nodeLens.tsx).
+ * The map's preview card (MapRoute): what the node pays, as loot — each reward a glowing mark and a
+ * large figure — with what it fields set apart above, and a line of lore only where the node is
+ * vague without it. The lit tile under the card already carries its name and its picture; the
+ * roster's side of it is the footer's chips (nodeLens.tsx).
  */
 export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
   const dossier = nodeDossier(node.type, run.actNumber, run.cycle);
   const color = NODE_COLORS[node.type];
+  const shown = dossier.facts.filter((fact) => fact.value !== null);
+  const threats = shown.filter((fact) => fact.threat);
+  const rewards = shown.filter((fact) => !fact.threat);
 
   return (
     <div className="node-dossier-panel" style={{ '--node-color': color } as CSSProperties}>
-      <p className="node-dossier-about">{dossier.about}</p>
+      {dossier.about && (
+        <p className="node-dossier-about">
+          {dossier.about.split('[contract]').map((part, i) => (
+            <Fragment key={i}>
+              {i > 0 && <ResourceGlyph kind="contract" className="node-dossier-about-glyph" />}
+              {part}
+            </Fragment>
+          ))}
+        </p>
+      )}
 
-      <div className="node-dossier-facts">
-        {dossier.facts.filter((fact) => fact.value !== null).map((fact) => (
-          <div key={fact.label} className="node-dossier-fact">
-            <span className="node-dossier-fact-glyph">{FACT_GLYPHS[fact.glyph]}</span>
-            <span className="node-dossier-fact-label">{fact.label}</span>
-            <span className="node-dossier-fact-value">
-              <strong>{fact.value ?? '—'}</strong>
-              {fact.note && <span className="node-dossier-fact-note">{fact.note}</span>}
+      {threats.map((fact) => (
+        <div key={fact.label} className="node-dossier-threat" style={{ '--reward-color': FACT_COLORS[fact.glyph] } as CSSProperties}>
+          <span className="node-dossier-threat-glyph">{FACT_GLYPHS[fact.glyph]}</span>
+          <strong>{fact.value}</strong>
+          {fact.note && <span className="node-dossier-threat-note">{fact.note}</span>}
+        </div>
+      ))}
+
+      <div className="node-dossier-rewards">
+        {rewards.map((fact) => (
+          <div key={fact.label} className="node-dossier-reward" style={{ '--reward-color': FACT_COLORS[fact.glyph] } as CSSProperties}>
+            <span className="node-dossier-reward-glyph">{FACT_GLYPHS[fact.glyph]}</span>
+            <span className="node-dossier-reward-text">
+              <strong className="node-dossier-reward-value">{fact.value}</strong>
+              <span className="node-dossier-reward-label">{fact.label}</span>
+              {fact.note && <span className="node-dossier-reward-note">{fact.note}</span>}
             </span>
           </div>
         ))}

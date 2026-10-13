@@ -18104,6 +18104,131 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
+/* The Contract's mark, set inside the line that says what it does. */
+.node-dossier-about-glyph {
+  display: inline-flex;
+  width: 15px;
+  height: 15px;
+  margin: 0 2px;
+  vertical-align: -3px;
+}
+
+.node-dossier-about-glyph svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* What the node fields against you: one line in its own red, apart from the loot. */
+.node-dossier-threat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--reward-color);
+}
+
+.node-dossier-threat-glyph {
+  display: flex;
+  width: 18px;
+  height: 18px;
+}
+
+.node-dossier-threat-glyph svg {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.node-dossier-threat strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.node-dossier-threat-note {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+/* The loot: no boxes. Each reward is its mark, lit in its own colour, and a large figure. */
+
+.node-dossier-reward-glyph {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--reward-color);
+}
+
+.node-dossier-reward-glyph svg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--reward-color) 70%, transparent));
+}
+
+.node-dossier-reward-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.node-dossier-reward-value {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  color: color-mix(in srgb, var(--reward-color) 25%, white);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--reward-color) 45%, transparent);
+}
+
+.node-dossier-reward-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--reward-color) 70%, var(--text-dim));
+}
+
+.node-dossier-reward-note {
+  font-size: 10px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* A row of columns, each a glowing mark over its figure, shared out evenly. */
+.node-dossier-rewards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 12px 6px;
+  padding: 4px 0 2px;
+}
+
+.node-dossier-reward {
+  flex: 0 1 31%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.node-dossier-reward-glyph::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--reward-color) 32%, transparent), transparent 70%);
+}
+
+
 /* --- The route, and walking it (2026-09-08, per user direction) -------------
    Losing the whole-act graph cost the map the one thing a graph gives away for free: the sense of
    MOVING along it. This is what gives that back, and it gives it back as an event rather than as a
@@ -33134,81 +33259,6 @@ button.evo-gift-card {
   background:
     linear-gradient(155deg, color-mix(in srgb, var(--node-color) 16%, transparent), transparent 46%),
     var(--surface-raised);
-}
-
-/* The figures as a three-column grid of tiles, the label over the figure: six read in two rows. */
-.node-dossier-facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.node-dossier-fact {
-  display: grid;
-  grid-template-columns: 20px 1fr;
-  grid-template-areas: 'glyph label' 'value value';
-  align-items: center;
-  column-gap: 6px;
-  row-gap: 3px;
-  padding: 7px 9px 8px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.28);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--node-color) 22%, transparent);
-}
-
-.node-dossier-fact-glyph {
-  grid-area: glyph;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  color: var(--node-color);
-}
-
-.node-dossier-fact-glyph svg {
-  width: 19px;
-  height: 19px;
-  margin: 0;
-}
-
-.node-dossier-fact-label {
-  grid-area: label;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-/* The figure large, its note on a line of its own under it. */
-.node-dossier-fact-value {
-  grid-area: value;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  min-width: 0;
-}
-
-.node-dossier-fact-value strong {
-  flex: none;
-  font-size: 25px;
-  font-weight: 900;
-  line-height: 1;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-
-.node-dossier-fact-note {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-dim);
 }
 
 /* The act's rarity odds as one bar: every tier in order, each as wide as its
