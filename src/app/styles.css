@@ -38365,16 +38365,39 @@ img.smithy-service-art {
   color: #6a4a2a;
 }
 
-/* The piece in hand, read whole. Holds its height empty, so the roster never jumps under a pick. */
+/* The piece in hand, read whole. A FIXED height, empty or full, so a pick never moves the roster;
+   the card is compacted to fit it — name and tier on one line, the grants under. */
 .counter-focus {
   display: flex;
   justify-content: center;
+  align-items: stretch;
   flex: none;
-  min-height: 78px;
+  height: 92px;
 }
 
 .counter-focus .equip-cache-card {
   width: 100%;
+  gap: 10px;
+  padding: 6px 12px;
+}
+
+.counter-focus .equip-cache-card-icon-badge {
+  width: 40px;
+  height: 40px;
+}
+
+.counter-focus .equip-cache-card-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  column-gap: 8px;
+  row-gap: 3px;
+}
+
+.counter-focus .equip-cache-card-stats {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  gap: 1px 7px;
 }
 
 .hall-counter-room .counter-roster {
