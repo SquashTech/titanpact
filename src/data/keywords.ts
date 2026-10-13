@@ -10,12 +10,12 @@ export interface TriggerKeywordDefinition {
 }
 
 export const triggerKeywords: Record<TriggerKeywordId, TriggerKeywordDefinition> = {
-  enter:    { id: 'enter',    name: 'Enter',     meaning: 'Each time this hero takes the field: leading, switching in, or stepping up for a fallen ally.' },
-  leave:    { id: 'leave',    name: 'Leave',     meaning: "Each time this hero switches out. Falling doesn't count." },
-  hit:      { id: 'hit',      name: 'On Hit',    meaning: 'Each time one of its moves damages a foe, once for every foe a spread move strikes.' },
-  struck:   { id: 'struck',   name: 'Struck',    meaning: "Each time a move's hit lands on this hero, even one a Shield soaks up. Burn, Poison and Bleed don't count." },
-  takedown: { id: 'takedown', name: 'Takedown',  meaning: "Each time one of its hits knocks a foe out." },
-  roundEnd: { id: 'roundEnd', name: 'Round End', meaning: 'At the end of every round this hero is on the field.' },
-  rest:     { id: 'rest',     name: 'Rest',      meaning: 'Each time this hero Rests.' },
-  healed:   { id: 'healed',   name: 'Healed',    meaning: "Each time a move heals this hero, its own drain included. Renew and passives don't count." },
+  enter:    { id: 'enter',    name: 'Enter',     meaning: 'When this hero takes the field.' },
+  leave:    { id: 'leave',    name: 'Leave',     meaning: 'When this hero switches out.' },
+  hit:      { id: 'hit',      name: 'On Hit',    meaning: 'When this hero hits a foe with a move.' },
+  struck:   { id: 'struck',   name: 'Struck',    meaning: 'When this hero is attacked.' },
+  takedown: { id: 'takedown', name: 'Takedown',  meaning: 'When this hero knocks out a foe.' },
+  roundEnd: { id: 'roundEnd', name: 'Round End', meaning: 'At the end of each round.' },
+  rest:     { id: 'rest',     name: 'Rest',      meaning: 'When this hero Rests.' },
+  healed:   { id: 'healed',   name: 'Healed',    meaning: 'When a move heals this hero.' },
 };

@@ -3391,7 +3391,7 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
 - **`{trigger}` and `{also}`** place a badge mid-sentence: `{trigger}` when the card leads with a rule
   that is not its trigger (Ironbound), `{also}` for a card's second reaction (Swell, Slumbering).
 - **The dossier explains it.** The WHEN row of a keyworded reaction is the badge and what it means
-  in full ("Each time a move's hit lands on this hero, even one a Shield soaks up…"), which is
+  in a short plain line ("When this hero is attacked."), which is
   where a new player learns the glyph; there is no tip for it.
 - Triggers under eight lines each (an enemy's Burn ticking, a stat rising, a field being set) stay
   sentences: a fifteenth glyph to learn costs more than the words it saves.

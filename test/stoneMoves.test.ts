@@ -218,6 +218,26 @@ test('stone: Rubble Rush bills its user a quarter of what it dealt', () => {
   assert.strictEqual(recoil.sourceCombatantId, recoil.targetCombatantId, 'source and target are both the caster');
 });
 
+test('stone: recoil is no hit — it fires neither On Hit nor Struck on its own user', () => {
+  const plain = withDeepPools(stoneFixture(403));
+  const a1 = plain.combatants.a1;
+  const armed: CombatState = {
+    ...plain,
+    combatants: {
+      ...plain.combatants,
+      // Sunder takes DEF off whatever it hit, so On Hit firing on recoil would land on a1 itself.
+      a1: { ...a1, passives: { ...a1.passives, sunder: { passiveId: 'sunder', stacks: 1 }, secondSkin: { passiveId: 'secondSkin', stacks: 1 } } },
+    },
+  };
+  const action = [{ kind: 'move' as const, combatantId: 'a1', moveId: 'rubbleRush', declaredTarget: 'b1' }];
+  const plainAfter = resolveRound(plain, action, config).state;
+  const armedAfter = resolveRound(armed, action, config).state;
+  const self = (s: CombatState) => stagesRecordOf(s, 'a1');
+  assert.strictEqual((stagesRecordOf(armedAfter, 'b1').defense ?? 0) - (stagesRecordOf(plainAfter, 'b1').defense ?? 0), -1, 'On Hit fires for the hit on the foe');
+  assert.strictEqual(self(armedAfter).defense ?? 0, self(plainAfter).defense ?? 0, 'On Hit does not fire on recoil');
+  assert.strictEqual(self(armedAfter).wisdom ?? 0, self(plainAfter).wisdom ?? 0, 'Struck does not fire on recoil');
+});
+
 test('stone: recoil scales the HP actually removed, not the rolled amount', () => {
   const state = withDeepPools(stoneFixture(402));
   const nearlyDead = {

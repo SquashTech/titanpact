@@ -75,8 +75,8 @@ function ordinal(n: number): string {
 
 /** What a badge means, in full — the dossier's trigger row. */
 export function keywordMeaning(keyword: PassiveKeyword): string {
-  const base = triggerKeywords[keyword.id].meaning;
-  const narrowed = keyword.moveType ? ` Only ${keyword.moveType} moves.` : keyword.category ? ` Only ${keyword.category} moves.` : '';
-  const cadence = keyword.everyNRounds ? ` Only every ${ordinal(keyword.everyNRounds)} round.` : '';
-  return `${base}${narrowed}${cadence}`;
+  const narrowed = keyword.moveType ?? keyword.category;
+  if (narrowed) return `When this hero hits a foe with a ${narrowed} move.`;
+  if (keyword.everyNRounds) return `At the end of every ${ordinal(keyword.everyNRounds)} round.`;
+  return triggerKeywords[keyword.id].meaning;
 }
