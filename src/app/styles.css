@@ -25009,43 +25009,19 @@ button.evo-gift-card {
   padding: 10px 14px 0;
 }
 
-.move-dossier-head {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 78px;
-  padding: 10px 92px 10px 14px;
-  background: linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.34), rgba(var(--move-type-rgb, 53, 59, 74), 0.08) 40%, transparent 70%);
-}
-
-.move-dossier-head .mana-gem {
-  width: 44px;
-  height: 44px;
-}
-
-.move-dossier-head .mana-gem-value {
-  font-size: 18px;
-}
-
-.move-dossier-head .move-type-code .element-glyph {
-  width: 22px;
-  height: 22px;
-}
-
-.move-dossier-titles {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.move-dossier-name {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  line-height: 1.1;
-  text-wrap: balance;
+/* The combat row, as a band across the top of the card rather than a box inside it: the same
+   gem, name, strip and stub, with the row's own frame, hover and press taken off. */
+.move-detail-card .move-dossier-row {
+  min-height: 56px;
+  padding-top: 0;
+  padding-bottom: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+  cursor: default;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.32), rgba(var(--move-type-rgb, 53, 59, 74), 0.08) 40%, transparent 70%);
 }
 
 /* The target clause stays whole; its figure is its separator. */
@@ -25069,45 +25045,13 @@ button.evo-gift-card {
   color: var(--text-dim);
 }
 
-.move-dossier-head .move-stub {
-  width: 80px;
-  gap: 3px;
-}
-
-.move-dossier-head .move-stub-glyph {
-  width: 18px;
-  height: 18px;
-}
-
-.move-dossier-head .move-stub.is-bare .move-stub-glyph {
-  width: 28px;
-  height: 28px;
-}
-
-.move-dossier-head .move-stub-value {
-  font-size: 34px;
-  font-weight: 900;
-}
-
-.move-dossier-head .move-stub-value.is-long {
-  font-size: 17px;
-}
-
-.move-dossier-head .move-stub-boost {
-  top: -4px;
-  right: -11px;
-  font-size: 11px;
-}
-
-.move-dossier-head .move-stub-hits {
-  font-size: 13px;
-}
-
-.move-stub-label {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+/* The learn and offer screens place the card; the card is the one box. */
+.offer-move-highlight:has(> .move-detail-card) {
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  animation: none;
 }
 
 .move-dossier-body {

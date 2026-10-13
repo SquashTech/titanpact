@@ -206,7 +206,6 @@ export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose, signa
               ✓
             </span>
             <span className="moveoffer-label">Continue</span>
-            <span className="moveoffer-sub">{moves[moveId].name} learned</span>
           </button>
         </div>
       </div>

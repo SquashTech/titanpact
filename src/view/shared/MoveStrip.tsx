@@ -637,15 +637,12 @@ export function MoveStub({
   value,
   boosted,
   title,
-  label,
 }: {
   move: MoveDefinition;
   /** The figure to print — live power, a rolled range, a resolved heal; omitted for a buff or debuff. */
   value?: string | number;
   boosted?: boolean;
   title?: string;
-  /** A word under the figure, for the dossier's enlarged stub. */
-  label?: string;
 }) {
   const kind = moveKindGlyph(move);
   const hits = move.hitCount ?? 1;
@@ -660,7 +657,6 @@ export function MoveStub({
           {hits > 1 && <span className="move-stub-hits">×{hits}</span>}
         </strong>
       )}
-      {label && <span className="move-stub-label">{label}</span>}
     </span>
   );
 }

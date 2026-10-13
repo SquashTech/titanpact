@@ -8,7 +8,7 @@ import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
-import { resolveStab, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
+import { resolveStab, resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { fieldHealMultiplier, resolveHealFor, resolveHealForceBonus, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveStatusMagnitudeFor, scaleStatusMagnitude } from '../../engine/status/statusMagnitude';
 import { hasStatReduction, resolveElementalForceBonus, VARIANCE_MAX, VARIANCE_MIN } from '../../engine/damage/damagePipeline';
@@ -21,13 +21,14 @@ import { fieldEffectFactsLine } from '../shared/fieldEffectFacts';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS, chargesLabel, restoresChargesText, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, chargesLabel, restoresChargesText, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderMagnitude, riderTargetLabel } from '../shared/MoveTile';
 import { stageText } from '../shared/moveKind';
 import { overlayHost } from '../shared/overlayHost';
 import { ChargePips } from '../shared/ChargePips';
 import { forecastDamage, koLabel } from './forecast';
 import { ForecastBite } from './ForecastBite';
-import { MoveStub, SeatArrow, TargetFigures } from '../shared/MoveStrip';
+import { MoveName, MoveStrip, MoveStub, SeatArrow, TargetFigures } from '../shared/MoveStrip';
+import { typeChart } from '../../data/typechart';
 
 /** The live fight a move is inspected inside. Optional: the hero sheet, level-up and recruit preview have no combat to forecast against. */
 export interface MoveDossierContext {
@@ -62,6 +63,13 @@ function forecastSeats(ctx: MoveDossierContext, ids: readonly string[]): (string
   const side = ctx.combat.combatants[ids[0]]?.side;
   if (!side) return [...ids];
   return ctx.combat.active[side].map((id) => (id && ids.includes(id) ? id : null));
+}
+
+/** The type matchup alone, for the row's seat arrow. */
+function seatMult(move: MoveDefinition, ctx: MoveDossierContext, defenderId: string): number {
+  const defender = ctx.combat.combatants[defenderId];
+  const hero = allCombatants[defender.heroId];
+  return hero ? resolveTypeMult(typeChart, move.type, effectiveTypes(hero, defender)) : 1;
 }
 
 // One enemy's seat: the bite is drawn out of the defender's own remaining track (docs/visual-language.md fixed-denominator idiom).
@@ -273,9 +281,6 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
         ? `${move.randomBasePower.min + forceBonus}–${move.randomBasePower.max + forceBonus}`
         : (liveBasePower ?? move.basePower ?? 0) + forceBonus
       : heal?.value;
-  const hasStats = Boolean((healTerms && healTerms.wisdomMult !== 1) || stab || livePriority !== 0 || (!free && manaAfter !== null && manaPool !== null));
-  const hasBody = hasPayload || forecastIds.length > 0 || hasStats;
-  const stubLabel = move.kind === 'damage' ? 'Power' : heal ? 'Heal' : moveKindLabel(move);
   const stubTitle =
     move.kind !== 'damage'
       ? undefined
@@ -288,28 +293,39 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
       {label && <div className="move-detail-label">{label}</div>}
 
       {/* The move row, enlarged: cost, type and name on the left, the payoff on the right. */}
-      <div className="move-dossier-head">
-        {!free && <ManaCost cost={liveCost} />}
-        <span className="move-type-code" title={move.type}>
-          <ElementGlyph type={move.type} />
-        </span>
-        <div className="move-dossier-titles">
-          <div className="move-dossier-name">{move.name}</div>
-          <div className="move-dossier-meta">
-            <span style={{ color: typeColor }}>{move.type}</span>
-            <span className="move-detail-sep">·</span>
-            <span>{move.kind === 'damage' ? PIPELINE_WORDS[move.category] : moveKindLabel(move)}</span>
-            <span className="move-dossier-target">
-              <TargetFigures target={move.target} small />
-              <span>{TARGET_MODE_LABELS[move.target]}</span>
-            </span>
-          </div>
+      {/* The combat row itself, drawn as a band of the card; everything under it explains it. */}
+      <div className="move-button has-stub move-dossier-row">
+        <div className="move-row-top">
+          {!free && <ManaCost cost={liveCost} />}
+          <span className="move-type-code" title={move.type}>
+            <ElementGlyph type={move.type} />
+          </span>
+          <MoveName text={move.name} />
+          <ChargePips move={move} combatant={attacker} />
+          <MoveStrip
+            move={move}
+            amountOf={(app) => riderMagnitude(move, app, healCaster)}
+            live={{
+              seats: context && move.kind === 'damage' ? forecastSeats(context, context.defenderIds).map((id) => (id ? seatMult(move, context, id) : null)) : undefined,
+              banked: attacker?.damageTakenSinceLastTurn,
+              cost: context ? liveCost : undefined,
+              power: attacker ? (liveBasePower ?? move.basePower) : undefined,
+            }}
+          />
         </div>
-        <MoveStub move={move} value={stubValue} boosted={forceBonus > 0} label={stubLabel} title={stubTitle} />
+        <MoveStub move={move} value={stubValue} boosted={forceBonus > 0} title={stubTitle} />
       </div>
 
-      {hasBody && (
       <div className="move-dossier-body">
+      <div className="move-dossier-meta">
+        <span style={{ color: typeColor }}>{move.type}</span>
+        <span className="move-detail-sep">·</span>
+        <span>{move.kind === 'damage' ? PIPELINE_WORDS[move.category] : moveKindLabel(move)}</span>
+        <span className="move-dossier-target">
+          <TargetFigures target={move.target} small />
+          <span>{TARGET_MODE_LABELS[move.target]}</span>
+        </span>
+      </div>
       {hasPayload && (
         <div className="move-detail-effects">
           {move.manaGrant != null && (
@@ -755,7 +771,6 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
         )}
       </div>
       </div>
-      )}
     </div>
   );
 }
