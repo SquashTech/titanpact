@@ -1181,12 +1181,12 @@ const innatePassives: Record<string, PassiveDefinition> = {
   nightmare: {
     id: 'nightmare',
     name: 'Nightmare',
-    description: 'At the end of each round, every Haunted enemy loses 10% of its max HP.',
+    description: 'At the end of each round, every Haunted enemy loses 6% of its max HP.',
     // Direct loss on the Clock's terms — no Shield, no chart — and only while Dread stands on the field.
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.1, onlyWithStatus: 'Haunt' },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.06, onlyWithStatus: 'Haunt' },
     },
   },
   rivet: {
@@ -1486,7 +1486,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
   foxfire: {
     id: 'foxfire',
     name: 'Foxfire',
-    description: "When this hero lands a Spirit attack, its target is set Burning, unless it already is.",
+    description: "When this hero lands a Spirit attack on a foe that isn't Burning, it is set Burning.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
@@ -1638,11 +1638,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   deathWail: {
     id: 'deathWail',
     name: 'Death Wail',
-    description: 'When this hero lands a Spirit attack, both active enemies lose ATK ▼ and INT ▼.',
+    description: 'When this hero lands a Spirit attack, its target loses ATK ▼ and INT ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], stages: -1 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], stages: -1 },
     },
   },
   lodestone: {
@@ -2094,26 +2094,17 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { viaStatusId: 'Haunt' } },
       effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount' } },
-    },
-  },
-  keeningShare: {
-    id: 'keeningShare',
-    name: 'Lament+',
-    description: "When this hero's attack spreads through a Haunt, its partner heals for half of what the echo dealt.",
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { viaStatusId: 'Haunt' } },
-      effect: { kind: 'heal', target: 'ally', amount: { kind: 'matchTriggerAmount', multiplier: 0.5 } },
+      alsoEffect: { kind: 'heal', target: 'ally', amount: { kind: 'matchTriggerAmount', multiplier: 0.5 } },
     },
   },
   nightTerror: {
     id: 'nightTerror',
     name: 'Nightmare+',
-    description: 'At the end of each round, every Haunted enemy loses 20% of its max HP.',
+    description: 'At the end of each round, every Haunted enemy loses 12% of its max HP.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.2, onlyWithStatus: 'Haunt' },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: 0.12, onlyWithStatus: 'Haunt' },
     },
   },
 
@@ -2460,7 +2451,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   kitsunebi: {
     id: 'kitsunebi',
     name: 'Foxfire+',
-    description: "When this hero lands a Spirit attack, both active enemies are set Burning, unless they already are.",
+    description: "When this hero lands a Spirit attack, every active enemy that isn't Burning is set Burning.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
@@ -2615,11 +2606,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   graveChorus: {
     id: 'graveChorus',
     name: 'Death Wail+',
-    description: 'When this hero lands a Spirit attack, both active enemies lose ATK ▼▼ and INT ▼▼.',
+    description: 'When this hero lands a Spirit attack, its target loses ATK ▼▼ and INT ▼▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Spirit' } },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: ['attack', 'intelligence'], stages: -2 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], stages: -2 },
     },
   },
   lodestorm: {

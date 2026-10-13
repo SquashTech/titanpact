@@ -427,13 +427,13 @@ test('lament: Sorrow heals for what its echo dealt — the partner a Haunt drags
   assert.strictEqual(strike(base).state.combatants.a1.currentHp, 20, 'nothing Haunted, no echo: nothing');
 });
 
-test('nightmare: at round end every Haunted active enemy loses a tenth of its max HP, direct — past a Shield, never an unhaunted one', () => {
+test('nightmare: at round end every Haunted active enemy loses 6% of its max HP, direct — past a Shield, never an unhaunted one', () => {
   let state = withPassive(twoVTwo(26, 'dread', 'valor', 'ironWarden', 'crag'), 'a1', 'nightmare');
   state = withStatus(state, 'b1', 'Haunt');
   state = withStatus(state, 'b1', 'Shield', 100);
   const b1Max = fixtureMaxHp('ironWarden');
   const r = resolveRound(state, restAll(state), config);
-  assert.strictEqual(r.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.1), 'a tenth, straight through');
+  assert.strictEqual(r.state.combatants.b1.currentHp, b1Max - Math.round(b1Max * 0.06), '6%, straight through');
   assert.strictEqual(statusMagnitude(r.state.combatants.b1, 'Shield'), 100, 'the Shield took none of it');
   assert.strictEqual(r.state.combatants.b2.currentHp, fixtureMaxHp('crag'), 'not Haunted, untouched');
 });
@@ -460,17 +460,16 @@ test('ancestral guidance: at each round end the partner gains Ambush 15, and Tot
   assert.strictEqual(statusMagnitude(r.state.combatants.a1, 'Ambush'), 0);
 });
 
-test('death wail: a Spirit hit takes 5 Attack and 5 Intelligence off BOTH active enemies; a non-Spirit hit takes nothing', () => {
+test('death wail: a Spirit hit takes ATK and INT off its target alone; a non-Spirit hit takes nothing', () => {
   const struck = (moveId: string) => {
     const state = withPassive(twoVTwo(29, 'keen', 'valor', 'ironWarden', 'crag'), 'a1', 'deathWail');
     const actions = [{ kind: 'move', combatantId: 'a1', moveId, declaredTarget: 'b1' } as Action, ...restAll(state).filter((a) => a.combatantId !== 'a1')];
     return resolveRound(state, actions, config).state;
   };
   const wailed = struck('wisp');
-  for (const id of ['b1', 'b2']) {
-    assert.strictEqual(wailed.combatants[id].statStages?.attack, -1, `${id} Attack`);
-    assert.strictEqual(wailed.combatants[id].statStages?.intelligence, -1, `${id} Intelligence`);
-  }
+  assert.strictEqual(wailed.combatants.b1.statStages?.attack, -1, 'b1 Attack');
+  assert.strictEqual(wailed.combatants.b1.statStages?.intelligence, -1, 'b1 Intelligence');
+  assert.strictEqual(wailed.combatants.b2.statStages?.attack, undefined, 'the partner is spared unless a Haunt carries the hit');
   const chilled = struck('rimeWind');
   assert.strictEqual(chilled.combatants.b2.statStages?.attack, undefined);
 });

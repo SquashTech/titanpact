@@ -22,7 +22,7 @@ const REWIRES = [
   'hollowbark-rimewood',
   'wildOracle-druid',
   'revenant-wraithblade',
-  'sorrow-dirge',
+  'sorrow-requiem',
   'nightshade-hemlock',
   'mindweaver-construct',
   'packAlpha-warhowl',

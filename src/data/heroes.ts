@@ -538,7 +538,7 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [5, 8, 11, 17, 21], midLevel: 10, lateLevel: 19, signatureLevel: 18 },
     signatureMoveId: 'dirgeOfAsh',
     passiveIds: ['lament'],
-    masteredPassiveIds: ['keening', 'keeningShare'],
+    masteredPassiveIds: ['keening'],
   },
   dread: {
     id: 'dread',

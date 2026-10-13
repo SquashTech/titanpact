@@ -684,3 +684,23 @@ test('arcane: Mana Font gives both allies 10 Mana, so Zenith fires Surging Intel
   assert.deepStrictEqual(granted, ['a1', 'a2']);
   assert.strictEqual(state.combatants.a1.statStages?.intelligence, 1);
 });
+
+// --- Spirit, second pass (docs/hero-audit.md) ---
+
+test('spirit: Shriek Dazes the first time it lands on each foe, never again on that foe', () => {
+  let state = withMana(withPassive(threeVThree(790), 'a1', 'shriek'), 'a1');
+  state = resolveRound(state, [cut('a1', 'singe', 'b1')], config).state;
+  const dazedFirst = (resolveRound(withMana(withPassive(threeVThree(790), 'a1', 'shriek'), 'a1'), [cut('a1', 'singe', 'b1')], config).events)
+    .some((e) => e.type === 'StatusApplied' && (e as { statusId: string }).statusId === 'Daze');
+  assert.ok(dazedFirst, 'the first hit Dazes');
+  const second = resolveRound({ ...state, round: 2 }, [cut('a1', 'singe', 'b1')], config).events;
+  assert.ok(!second.some((e) => e.type === 'StatusApplied' && (e as { statusId: string }).statusId === 'Daze'), 'b1 has heard it');
+  const other = resolveRound({ ...state, round: 2 }, [cut('a1', 'singe', 'b2')], config).events;
+  assert.ok(other.some((e) => e.type === 'StatusApplied' && (e as { statusId: string }).statusId === 'Daze'), 'b2 has not');
+});
+
+test('spirit: Mantling gives the partner Shield 15 when its holder is hit', () => {
+  const base = withPassive(threeVThree(791), 'a1', 'mantling');
+  const { state } = resolveRound(base, [cut('b1', heroes.ironWarden.moveIds[0], 'a1')], config);
+  assert.strictEqual(state.combatants.a2.statuses.Shield?.magnitude, 15);
+});

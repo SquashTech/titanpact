@@ -524,3 +524,25 @@ Grafts: Shadow, Arcane and Light three times each; spread so each appears once (
 To watch: Ringmaster's Center Ring (a Dazed enemy gives the partner Ambush 30) lost its Daze source
 with Blinding Flash; Trance's Sandman (50% Daze) and a partner's Dazes now feed it. The Mind Trial's
 Drift carries Permafrost.
+
+## Spirit, second pass (2026-10-12, per user direction)
+
+Measured (sim, base deck): Sorrow 162.6 DPR / ratio 2.85, Revenant 115.9 / 2.03, Dread 62.1 / 1.39
+with the lowest die% measured (6.2%); Kitsu, Totem and Keen unmeasured. The enemy AI never
+switches, so Haunt (cleared only by a switch) never leaves an AI foe — every per-Haunt payout pays
+every round.
+
+| Finding | Was | Now |
+|---|---|---|
+| **Nightmare** (Dread): with Omen, mastered, 40% of the enemy team's HP a round with no hits (the finale's Withering Gaze is 5%) | 10% / 20% | **6% / 12%** |
+| **Death Wail** (Keen): a free team-wide ▼ — both enemies at ▼5 by round 5 | both active enemies | **its target** (a Haunt carries it to the partner) |
+| **Foxfire** (Kitsu): the "unless it already is" text; the gate itself holds a foe at ~9% a round instead of 15% | — | reworded, gate kept: *on a foe that isn't Burning*; Foxfire+ and Spreading Flame likewise |
+| **Shriek** (Sorrow's Banshee, +0.49): a 30% Daze | chance | **the first attack on each foe Dazes it** (`oncePerTarget`) |
+| **Mantling** (Dread's Ironfeather, −0.49): fired only off Reinforce | Defense rises → Shield 30, 3 a fight | **taking damage → partner Shield 15** |
+| **Lament+** (Sorrow) | two cards | one card (`alsoEffect`) |
+
+Grafts: Mind three times, Nature, Frost and Shadow twice; spread so each appears once (Mech unused).
+**Revenant Soulbinder**: Arcane (Mind), Arcane Blast (Wicked Fear). **Revenant Drowned** (Undying):
+Water (Nature), Oasis (Wild Bloom). **Sorrow Gravestone** (Mourner): Stone (Frost), Fault Line (Icicle
+Thrust). **Sorrow Requiem** (Dirge): Light (Mind), rewire kept, Radiant Beam (Psionic Wave). **Keen
+Stormwail** (Shroud): Storm (Shadow), Thunderbolt (Eclipse). Every passive kept.

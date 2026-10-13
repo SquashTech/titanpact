@@ -345,7 +345,7 @@ test('mastered innate: the fight build fields the mastered cards at ten on eithe
   const byRoster = (rosterId: string) => state.combatants[Object.keys(state.combatants).find((k) => k.endsWith(rosterId))!];
   assert.ok('ironMountain' in byRoster('r1').passives && !('ironbound' in byRoster('r1').passives));
   assert.strictEqual(byRoster('r1').switchLocked, true, 'the mastered Burden still cannot switch');
-  assert.ok('keening' in byRoster('r2').passives && 'keeningShare' in byRoster('r2').passives && !('lament' in byRoster('r2').passives));
+  assert.ok('keening' in byRoster('r2').passives && !('lament' in byRoster('r2').passives));
   assert.ok('rallyingStandard' in byRoster('r3').passives && !('clarionCall' in byRoster('r3').passives));
   assert.strictEqual(masteryForAct(6), MASTERY_CAP, 'every hero-pool enemy in the finale fields its mastered innate');
 });

@@ -12,16 +12,16 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Haunt' },
     },
   },
-  // Sorrow's Banshee: on the roster's fastest blade, a flinch that usually lands before the foe moves.
+  // Sorrow's Banshee: the first scream each foe hears, certain and once — a Daze every round on the fastest blade would be a lock.
   shriek: {
     id: 'shriek',
     name: 'Shriek',
-    description: 'When this hero lands an attack, there is a 30% chance its target is Dazed.',
+    description: 'The first attack this hero lands on each foe Dazes it.',
     reactive: {
+      oncePerTarget: true,
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Daze' },
-      chance: 0.3,
     },
   },
   carrion: {
@@ -115,23 +115,22 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
-  // Dread's Ironfeather: Reinforce raises its Defense, and the wings close over the partner.
+  // Dread's Ironfeather: the tank takes the blow, and the wings close over the partner.
   mantling: {
     id: 'mantling',
     name: 'Mantling',
-    description: "When this hero's Defense rises, its partner gains Shield 30. Up to 3 times a fight.",
+    description: 'When this hero takes damage, its partner gains Shield 15.',
     reactive: {
-      hook: 'StatChanged',
-      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
-      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 30 },
-      maxFiresPerFight: 3,
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 15 },
     },
   },
   // Kitsu's Emberfox: Foxfire lights the one it hits, and the fire jumps to its partner.
   spreadingFlame: {
     id: 'spreadingFlame',
     name: 'Spreading Flame',
-    description: 'When this hero lands an attack on a Burning foe, both active enemies are set Burning, unless they already are.',
+    description: "When this hero lands an attack on a Burning foe, every active enemy that isn't Burning is set Burning.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Burn' },
