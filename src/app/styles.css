@@ -18230,12 +18230,6 @@ button.star-shop-bundle-face {
   overflow-y: auto;
 }
 
-/* The lit tile above and the plate below already name it: the sheet keeps only the kind line. */
-.map-preview-body .node-dossier-disc,
-.map-preview-body .node-dossier-name {
-  display: none;
-}
-
 /* The ledger's own panel chrome is the sheet's now. */
 .map-preview-body .node-dossier-panel {
   display: flex;
@@ -33190,75 +33184,6 @@ button.evo-gift-card {
     var(--surface-raised);
 }
 
-.node-dossier-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* .move-detail-disc, lit from the node colour rather than from a type's rgb. */
-.node-dossier-disc {
-  width: 52px;
-  height: 52px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: var(--node-color);
-  background: radial-gradient(
-    circle at 32% 28%,
-    color-mix(in srgb, var(--node-color) 34%, transparent),
-    color-mix(in srgb, var(--node-color) 10%, transparent)
-  );
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--node-color) 40%, transparent),
-    0 0 18px -6px var(--node-color);
-}
-
-.node-dossier-disc svg {
-  width: 31px;
-  height: 31px;
-}
-
-/* The tile's own pixel art in place of the glyph: bare, larger, crisp. */
-.node-dossier-disc.has-art {
-  width: 64px;
-  height: 64px;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-
-.node-dossier-disc.has-art img {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
-}
-
-.node-dossier-titles {
-  flex: 1;
-  min-width: 0;
-}
-
-.node-dossier-name {
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.2;
-}
-
-.node-dossier-line {
-  margin-top: 3px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
 .node-dossier-facts {
   display: flex;
   flex-direction: column;
@@ -41396,8 +41321,9 @@ img.smithy-service-art {
 }
 
 .node-dossier-about {
-  margin: 10px 2px 2px;
-  font-size: 12.5px;
+  margin: 0 2px 4px;
+  font-size: 13px;
+  font-style: italic;
   line-height: 1.45;
   color: var(--text);
 }
@@ -41615,31 +41541,6 @@ img.smithy-service-art {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-}
-
-.node-dossier-terms {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin: 10px 0 0;
-  padding: 8px 9px;
-  background: rgba(0, 0, 0, 0.25);
-  box-shadow: inset 0 0 0 1px #0b0a0e, inset 0 -1px 0 1px rgba(183, 138, 60, 0.35);
-}
-
-.node-dossier-term dt {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #e2b862;
-}
-
-.node-dossier-term dd {
-  margin: 2px 0 0;
-  font-size: 11.5px;
-  line-height: 1.4;
-  color: var(--text-dim);
 }
 
 /* -- A short screen (uiScale.ts's canvas-* classes). The console holds four moves at 780 with nothing

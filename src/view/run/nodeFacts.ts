@@ -1,26 +1,23 @@
 // What a map node PAYS, as figures rather than as a sentence (2026-09-11, per user direction):
-// the ledger the node dossier prints under a long press. Every number is read off the constant
-// the game rolls with, so the readout cannot say 25% where the roll says 60. Beside the ledger,
-// each node says in plain words what it does and defines the words it leans on (2026-09-28).
+// the ledger the map's preview sheet prints. Every number is read off the constant the game rolls
+// with, so the readout cannot say 25% where the roll says 60. Above it, one line of lore and no
+// more (2026-10-13, per user direction): the rules live in How to Play, not on the sheet.
 
 import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
-import { ENCHANT_FORCE_BY_RARITY, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
+import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
 import { goldRangeFor, purseRangeFor } from '../../run/runProgress';
-import { MASTERY_EVOLUTION } from '../../run/mastery';
-import { GEM_CACHE_COUNT, GEM_DROP, SCRIBE_GEMS, SHELF_GEM_COUNT, SHELF_GEM_PRICE_PER_POINT, gemPointsForAct } from '../../run/gems';
+import { GEM_CACHE_COUNT, GEM_DROP, SCRIBE_GEMS, SHELF_GEM_PRICE_PER_POINT, gemPointsForAct } from '../../run/gems';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { LEY_LINE_FORCE, MANA_WELL_AMOUNT, MANA_WELL_REGEN } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
 import { mentorXpFor } from '../../run/mentor';
-import { championLevel, enemyLevelFor, guildHallLevel, openerEscortTiersFor, spawnLeaderTierFor, type EncounterNodeKind } from '../../run/difficulty';
-import type { SpawnTier } from '../../data/titanspawn';
-import { ROSTER_CAP, SEAL_ACTS } from '../../run/state';
+import { championLevel, enemyLevelFor, guildHallLevel, openerEscortTiersFor, type EncounterNodeKind } from '../../run/difficulty';
+import { SEAL_ACTS } from '../../run/state';
 import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
 import { smithyPrice } from '../../run/cycles';
-import { CONTRACT_BASE_PRICE, CONTRACT_DROP_CHANCE, CONTRACT_PRICE_STEP } from '../../run/recruitment';
+import { CONTRACT_BASE_PRICE, CONTRACT_DROP_CHANCE } from '../../run/recruitment';
 import { MEND_PRICE_PER_HERO } from '../../run/wounds';
-import { TYPE_DAMAGE_BONUS } from '../../data/passives';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
 export type NodeFactGlyph =
@@ -47,23 +44,14 @@ export interface NodeFact {
   label: string;
   /** The figure. `null` is a lane this node does not pay; the dossier leaves the row out. */
   value: string | null;
-  /** Fine print beside the figure — who it goes to, what tier it rolls at. */
+  /** A few words beside the figure — who it goes to, how much. */
   note?: string;
 }
 
-/** A word the explanation leans on, defined where it is used. */
-export interface NodeTerm {
-  term: string;
-  text: string;
-}
-
 export interface NodeDossier {
-  /** The register line under the name: tier, lane, and whether the fight is recruitable. */
-  kind: string;
-  facts: NodeFact[];
-  /** What the node actually does, in plain words. */
+  /** One line of lore. The figures say what it pays. */
   about: string;
-  terms: NodeTerm[];
+  facts: NodeFact[];
   /** Rarity odds for a node that hands out an item, already windowed to the act. Null where nothing drops. */
   odds: Record<EquipmentRarity, number> | null;
 }
@@ -87,26 +75,15 @@ function priceBand(table: Record<EquipmentRarity, number>, cycle: number): strin
 function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] {
   const gold = goldRangeFor(type, actNumber);
   const drop = EQUIPMENT_DROP_CHANCE[type];
-  const xpKind = encounterXpKind(type);
-  const xp = Math.round(encounterXpForAct(actNumber) * ENCOUNTER_XP_MULTIPLIER[xpKind]);
+  const xp = Math.round(encounterXpForAct(actNumber) * ENCOUNTER_XP_MULTIPLIER[encounterXpKind(type)]);
   const level = enemyLevelFor(type, actNumber);
   return [
-    {
-      glyph: 'enemy',
-      label: 'Enemies',
-      value: `Lv ${level}`,
-      note: type === 'boss' ? `the Guardian Lv ${championLevel(level)}` : undefined,
-    },
-    { glyph: 'xp', label: 'XP', value: `${xp}`, note: xpKind === 'standard' ? undefined : `×${ENCOUNTER_XP_MULTIPLIER[xpKind]}` },
+    { glyph: 'enemy', label: 'Enemies', value: `Lv ${level}`, note: type === 'boss' ? `Guardian Lv ${championLevel(level)}` : undefined },
+    { glyph: 'xp', label: 'XP', value: `${xp}` },
     { glyph: 'gold', label: 'Gold', value: gold[1] > 0 ? range(gold) : null },
-    {
-      glyph: 'item',
-      label: 'Item',
-      value: drop > 0 ? percent(drop) : null,
-      note: drop > 0 && LOOT_SOURCE[type] === 'elite' ? 'one tier up' : undefined,
-    },
+    { glyph: 'item', label: 'Item', value: drop > 0 ? percent(drop) : null, note: drop > 0 && LOOT_SOURCE[type] === 'elite' ? 'rarer' : undefined },
     gemFact(type),
-    { glyph: 'recruit', label: 'Recruit', value: RECRUITABLE.includes(type) ? 'Contract' : null },
+    { glyph: 'recruit', label: 'Recruit', value: RECRUITABLE.includes(type) ? 'Yes' : null },
   ];
 }
 
@@ -114,75 +91,16 @@ function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] 
 function gemFact(type: EncounterNodeKind): NodeFact {
   const { chance, count } = GEM_DROP[type];
   if (chance <= 0 || count <= 0) return { glyph: 'scroll', label: 'Gems', value: null };
-  return { glyph: 'scroll', label: 'Gems', value: chance >= 1 ? `${count}` : percent(chance), note: chance >= 1 ? undefined : `${count} Gem` };
+  return { glyph: 'scroll', label: 'Gems', value: chance >= 1 ? `${count}` : percent(chance) };
 }
 
-const SPAWN_TIER_NAMES: Record<SpawnTier, string> = { early: 'Early', mid: 'Mid', late: 'Late' };
-
-/** What a Titanspawn tile fields, read off the opener's shape (run/spawn.ts mobEncounter): two bare Earlies in Act 1, a leader over the act's escorts after. */
-function spawnLine(actNumber: number): { value: string; note: string } {
-  const escorts = openerEscortTiersFor(actNumber);
-  if (actNumber <= 1) return { value: `${escorts.length} Titanspawn`, note: `both ${SPAWN_TIER_NAMES.early}` };
-  return {
-    value: `${escorts.length + 1} Titanspawn`,
-    note: `a ${SPAWN_TIER_NAMES[spawnLeaderTierFor(actNumber)]} over ${escorts.map((tier) => SPAWN_TIER_NAMES[tier]).join(', ')}`,
-  };
-}
-
-const FORCE_BY_TIER = Object.values(ENCHANT_FORCE_BY_RARITY);
-
-const TERMS = {
-  contract: {
-    term: 'Recruit Contract',
-    text: 'Every recruit costs one. Spent after a won Skirmish or Elite to sign a hero you beat — it joins finished: at its level, evolved, its kit chosen, wearing the piece it fought in — or at the Tavern to hire one raw. Found on the road and bought at the Guild Hall, dearer each time.',
-  },
-  mastery: {
-    term: 'Mastery',
-    text: `Ten pips a hero, one for every Gem it holds. The ${MASTERY_EVOLUTION}th opens its Evolution, a one-time choice of path; the 10th masters its innate passive into a stronger form. A hero at 10 takes no more Gems.`,
-  },
-  force: {
-    term: 'Elemental Force',
-    text: `Flat power added to every hit of a move of that element — per hit and per target, before the stat ratio and the type chart multiply it — so it counts for most on cheap moves. Enchanted gear carries ${Math.min(...FORCE_BY_TIER)}–${Math.max(...FORCE_BY_TIER)} by tier.`,
-  },
-  wounds: {
-    term: 'Wounds',
-    text: 'HP carries from fight to fight inside an act. A knocked-out hero is Down and sits out until a Rest, the Guild Hall mend, a Revive, or the act ends.',
-  },
-  sockets: {
-    term: 'Sockets',
-    text: 'Every hero wears three pieces. A piece is given the moment it is received and never comes off; a second of a family the hero already wears merges into it, a tier up.',
-  },
-  boon: {
-    term: 'Boon',
-    text: `A passive given to one hero for the run. Boons stack. A type's +${Math.round(TYPE_DAMAGE_BONUS * 100)}% damage Boon and its field Herald are only offered while your roster fields that type.`,
-  },
-  banner: {
-    term: 'Banner',
-    text: 'A team-wide stat grant, chosen 1 of 3 at each Guardian: Warcry (offense, Speed), Bulwark (defense, MP Regen) or Wellspring (HP, Mana, MP Regen). They stack across acts.',
-  },
-  class: {
-    term: 'Class',
-    text: 'The Academy schools one hero in a Class: a move or a passive in its own element, one per hero.',
-  },
-  blessing: {
-    term: 'Blessing',
-    text: 'The first time a Blessed hero would be knocked out, the blow is turned aside and the Blessing is used up. Until then it lasts from fight to fight. One a hero.',
-  },
-  moveCap: {
-    term: 'Four moves',
-    text: 'A hero holds four moves. Offered a fifth, it replaces one or declines — and a declined roll is spent.',
-  },
-} satisfies Record<string, NodeTerm>;
-
-/** A Titanspawn tile's lanes, its enemies as one row: how many, their level and their tiers. */
+/** A Titanspawn tile: how many, at what level. */
 function spawnFacts(type: 'fight' | 'battle', actNumber: number, shapeAct: number): NodeFact[] {
-  const spawn = spawnLine(shapeAct);
-  return encounterFacts(type, actNumber).map((fact) =>
-    fact.label === 'Enemies' ? { ...fact, value: spawn.value, note: `${fact.value} · ${spawn.note}` } : fact
-  );
+  const count = openerEscortTiersFor(shapeAct).length + (shapeAct <= 1 ? 0 : 1);
+  return encounterFacts(type, actNumber).map((fact) => (fact.label === 'Enemies' ? { ...fact, value: `${count} Titanspawn`, note: fact.value ?? undefined } : fact));
 }
 
-const SPAWN_ABOUT = 'The Titan’s brood, one line per type. Win and every hero on the roster gains the XP, fielded or not. Spawn never sign a contract.';
+const gemNote = (actNumber: number) => `+${gemPointsForAct(actNumber)} to a stat each`;
 
 export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): NodeDossier {
   const odds = (kind: EncounterNodeKind | 'standard' | 'cache') =>
@@ -190,224 +108,106 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
 
   switch (type) {
     case 'fight':
-      return {
-        kind: 'Not recruitable',
-        facts: spawnFacts('fight', actNumber, actNumber),
-        odds: odds('fight'),
-        about: SPAWN_ABOUT,
-        terms: [],
-      };
+      return { about: 'The Titan’s brood. None of them will ever join you.', facts: spawnFacts('fight', actNumber, actNumber), odds: odds('fight') };
     case 'battle':
-      return {
-        kind: 'Not recruitable',
-        facts: spawnFacts('battle', actNumber, Math.max(2, actNumber)),
-        odds: odds('battle'),
-        about: SPAWN_ABOUT,
-        terms: [],
-      };
+      return { about: 'The Titan’s brood. None of them will ever join you.', facts: spawnFacts('battle', actNumber, Math.max(2, actNumber)), odds: odds('battle') };
     case 'skirmish':
-      return {
-        kind: 'Encounter · Recruitable',
-        facts: encounterFacts('skirmish', actNumber),
-        odds: odds('skirmish'),
-        about: 'A band of heroes at your level. Beat them and you may spend a Recruit Contract on one of them. The typing on the tile is the typing you will face.',
-        terms: [TERMS.contract],
-      };
+      return { about: 'Heroes who would seal the pact themselves. Win, and one may join you.', facts: encounterFacts('skirmish', actNumber), odds: odds('skirmish') };
     case 'elite':
       return {
-        kind: 'Elite · Recruitable',
-        facts: [
-          ...encounterFacts('elite', actNumber),
-          { glyph: 'contract', label: 'Contract', value: `${Math.round((CONTRACT_DROP_CHANCE.elite ?? 0) * 100)}%`, note: 'in hand before you sign' },
-        ],
+        about: 'Their finest. Harder to beat, and worth more for it.',
+        facts: [...encounterFacts('elite', actNumber), { glyph: 'contract', label: 'Contract', value: percent(CONTRACT_DROP_CHANCE.elite ?? 0) }],
         odds: odds('elite'),
-        about: `A level over you, and it pays for it: ×${ENCOUNTER_XP_MULTIPLIER.elite} XP, an item rolled a tier up, and sometimes a Recruit Contract, paid before you choose whom to sign. Recruitable like a Skirmish, and its hero arrives stronger than any hire.`,
-        terms: [TERMS.contract],
       };
     case 'boss':
       return {
-        kind: 'Act boss',
-        facts: [
-          ...encounterFacts('boss', actNumber),
-          { glyph: 'banner', label: 'Banner', value: '1 of 3', note: 'team-wide' },
-        ],
+        about: 'The Guardian holds this ring of the seal. Bring it down.',
+        facts: [...encounterFacts('boss', actNumber), { glyph: 'banner', label: 'Banner', value: '1 of 3', note: 'whole team' }],
         odds: odds('boss'),
-        about: 'The act’s end: its champion stands over an escort. Beat it for a Banner. Closing the act mends the roster and stands knocked-out heroes back up.',
-        terms: [TERMS.banner],
       };
     case 'finale':
       return {
-        kind: 'The final battle',
-        facts: [
-          // The Eyes behind the Herald are not on the tile (docs/titan-eyes.md §10.4): the dossier says what is scouted.
-          { glyph: 'enemy', label: 'The Herald', value: `Lv ${enemyLevelFor('finale', actNumber)}`, note: `${SEAL_ACTS} Titanspawn with it` },
-          // Whoever arrives: the Vigil recruits nobody (2026-09-24), so the side is the roster the run kept.
-          { glyph: 'hero', label: 'Roster', value: `up to ${ROSTER_CAP} v ${SEAL_ACTS + 1}` },
-        ],
+        about: 'The Titan’s Herald, and what watches from behind it.',
+        facts: [{ glyph: 'enemy', label: 'The Herald', value: `Lv ${enemyLevelFor('finale', actNumber)}`, note: `${SEAL_ACTS} Titanspawn with it` }],
         odds: null,
-        about: 'The Herald leads one Late Titanspawn for every ring you locked, and nothing reaches it while any of its company stands. Nobody is recruited here: you arrive with the roster you kept.',
-        terms: [],
       };
     case 'shop':
       return {
-        kind: 'Landmark · Spend',
+        about: 'Hires, Gems, gear, and a hot meal for the whole party.',
         facts: [
-          { glyph: 'hero', label: 'Hire', value: '1 Contract', note: `Lv ${guildHallLevel(actNumber)}, raw` },
-          { glyph: 'contract', label: 'Contract', value: `${CONTRACT_BASE_PRICE}g`, note: `+${CONTRACT_PRICE_STEP}g each one bought this run` },
-          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g`, note: `${SHELF_GEM_COUNT} stats on the shelf` },
-          { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
-          { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
-          { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },
+          { glyph: 'hero', label: 'Hire', value: '1 Contract', note: `Lv ${guildHallLevel(actNumber)}` },
+          { glyph: 'contract', label: 'Contract', value: `${CONTRACT_BASE_PRICE}g`, note: 'more each time' },
+          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g` },
+          { glyph: 'hp', label: 'Meal', value: `${MEND_PRICE_PER_HERO}g`, note: 'per hero hurt' },
         ],
         odds: null,
-        about: 'Where gold is spent. The Tavern hires heroes for a Recruit Contract — raw: an act behind, unevolved, bare-socketed — and its bar sells Contracts, a call for a hero of the type you name, and the mend, which heals everyone, knocked-out heroes included. The Gem and Gear counters sell straight onto the hero you pick.',
-        terms: [TERMS.contract],
       };
     case 'muster':
       return {
-        kind: 'Landmark · The last stop',
+        about: 'One last night before the Titan. Spend what is left.',
         facts: [
-          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g`, note: `${SHELF_GEM_COUNT} stats on the counter` },
-          { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
-          { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
+          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g` },
+          { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: 'a tier up' },
+          { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'an element' },
         ],
         odds: null,
-        about: 'The last stop before the final battle: the Guild Hall with its Smithy and without its Tavern. Nobody joins now — spend the last gold on Gems, Gear and the gear already worn.',
-        terms: [],
       };
     case 'equipmentReward':
-      return {
-        kind: 'Reward · Gear',
-        facts: [{ glyph: 'item', label: 'Item', value: '1 of 3' }],
-        odds: odds('cache'),
-        about: 'A chest with three pieces in it: claim one and choose who wears it. Declining a piece is selling it.',
-        terms: [TERMS.sockets],
-      };
+      return { about: 'A chest with three pieces inside. Take one.', facts: [{ glyph: 'item', label: 'Item', value: '1 of 3' }], odds: odds('cache') };
     case 'scrollReward':
-      return {
-        kind: 'Reward · Growth',
-        facts: [{ glyph: 'scroll', label: 'Gems', value: `${GEM_CACHE_COUNT}`, note: `+${gemPointsForAct(actNumber)} points each · evolves at ${MASTERY_EVOLUTION}` }],
-        odds: null,
-        about: `${GEM_CACHE_COUNT} Gems of random stats. Each one you place raises that stat on a hero for the run and gives it a Mastery pip.`,
-        terms: [TERMS.mastery],
-      };
+      return { about: 'A cache of cut Gems.', facts: [{ glyph: 'scroll', label: 'Gems', value: `${GEM_CACHE_COUNT}`, note: gemNote(actNumber) }], odds: null };
+    case 'scribeReward':
+      return { about: 'The Lapidary sets Gems for your heroes.', facts: [{ glyph: 'scroll', label: 'Gems', value: `${SCRIBE_GEMS}`, note: gemNote(actNumber) }], odds: null };
     case 'manaWellReward':
       return {
-        kind: 'Reward · Growth',
+        about: 'Drink deep. One hero’s Mana runs fuller from now on.',
         facts: [
-          { glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, note: 'to 1 hero, permanent' },
-          { glyph: 'mana', label: 'MP Regen', value: `+${MANA_WELL_REGEN}`, note: 'every round, permanent' },
+          { glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, note: 'one hero' },
+          { glyph: 'mana', label: 'MP Regen', value: `+${MANA_WELL_REGEN}` },
         ],
         odds: null,
-        about: `One hero’s Mana pool grows by ${MANA_WELL_AMOUNT} and its MP Regen by ${MANA_WELL_REGEN} for the run. Levels barely grow a pool, so this is where a hero goes to cast its Late moves more than once.`,
-        terms: [],
       };
     case 'forgeReward':
       return {
-        kind: 'Reward · Gear',
+        about: 'A smith’s fire, free for one piece of gear.',
         facts: [
-          { glyph: 'anvil', label: 'Lift', value: '1 piece', note: 'a tier up, free — the act still caps it' },
-          { glyph: 'enchant', label: 'Bind', value: '1 element', note: 'yours to pick, replacing any' },
+          { glyph: 'anvil', label: 'Lift', value: '1 piece', note: 'a tier up' },
+          { glyph: 'enchant', label: 'Bind', value: '1 element', note: 'your pick' },
         ],
         odds: null,
-        about: 'The Smithy’s two works on one worn piece, free: lifted a tier where the act allows, and bound to the element you pick. Only a roster that wears nothing gets nothing here.',
-        terms: [],
       };
     case 'leyLineReward':
       return {
-        kind: 'Reward · Build',
-        facts: [{ glyph: 'enchant', label: 'Force', value: `+${LEY_LINE_FORCE}`, note: 'to 1 hero, its own element, permanent' }],
+        about: 'Raw power runs under the ground here. One hero draws on it.',
+        facts: [{ glyph: 'enchant', label: 'Force', value: `+${LEY_LINE_FORCE}`, note: 'one hero, its own element' }],
         odds: null,
-        about: `One hero draws +${LEY_LINE_FORCE} Elemental Force at its primary element for the run, on top of any from its gear. It pays on moves of that element only, so count them.`,
-        terms: [TERMS.force],
       };
     case 'restReward':
-      return {
-        kind: 'Reward · Recovery',
-        facts: [{ glyph: 'hp', label: 'Mend', value: 'whole roster', note: 'HP carries between fights' }],
-        odds: null,
-        about: 'Every hero heals to full and knocked-out heroes stand back up. Nothing to choose — it is worth exactly what your roster is missing.',
-        terms: [TERMS.wounds],
-      };
+      return { about: 'A fire and a night’s sleep. Everyone heals, and the fallen stand.', facts: [{ glyph: 'hp', label: 'Heal', value: 'Everyone' }], odds: null };
     case 'currencyReward':
-      return {
-        kind: 'Reward · Purse',
-        facts: [{ glyph: 'gold', label: 'Gold', value: range(purseRangeFor(actNumber)) }],
-        odds: null,
-        about: 'Gold, paid the moment you arrive. It is spent at the Guild Hall.',
-        terms: [],
-      };
+      return { about: 'Gold, there for the taking.', facts: [{ glyph: 'gold', label: 'Gold', value: range(purseRangeFor(actNumber)) }], odds: null };
     case 'contractReward':
-      return {
-        kind: 'Reward · Recruit',
-        facts: [{ glyph: 'contract', label: 'Recruit Contract', value: '+1' }],
-        odds: null,
-        about: 'A Recruit Contract, paid the moment you arrive. Every recruit costs one: a hero you beat in a Skirmish or Elite, or a hire at the Tavern.',
-        terms: [TERMS.contract],
-      };
+      return { about: 'A signed contract, waiting for a new recruit.', facts: [{ glyph: 'contract', label: 'Contract', value: '+1' }], odds: null };
     case 'passiveReward':
-      return {
-        kind: 'Reward · Build',
-        facts: [{ glyph: 'passive', label: 'Boon', value: `1 of ${BOON_OFFER_COUNT}`, note: 'to 1 hero, permanent' }],
-        odds: null,
-        about: `Pick one of ${BOON_OFFER_COUNT} passives, then the hero who keeps it.`,
-        terms: [TERMS.boon],
-      };
+      return { about: 'A gift for one hero to carry.', facts: [{ glyph: 'passive', label: 'Boon', value: `1 of ${BOON_OFFER_COUNT}`, note: 'one hero' }], odds: null };
     case 'blessingReward':
-      return {
-        kind: 'Reward · Rare',
-        facts: [{ glyph: 'hero', label: 'Blessing', value: '1 hero', note: 'not one already Blessed' }],
-        odds: null,
-        about: 'The Pactwarden blesses one hero: the first blow that would knock it out is turned aside. Rare — the only Blessings past the opening pair.',
-        terms: [TERMS.blessing],
-      };
-    case 'scribeReward':
-      return {
-        kind: 'Reward · Growth',
-        facts: [{ glyph: 'scroll', label: 'Gems', value: `${SCRIBE_GEMS}`, note: `+${gemPointsForAct(actNumber)} points each · evolves at ${MASTERY_EVOLUTION}` }],
-        odds: null,
-        about: `${SCRIBE_GEMS} Gems of random stats. Each one you place raises that stat on a hero for the run and gives it a Mastery pip.`,
-        terms: [TERMS.mastery],
-      };
+      return { about: 'The Pactwarden shields one hero from a fatal blow.', facts: [{ glyph: 'hero', label: 'Blessing', value: '1 hero' }], odds: null };
     case 'mentorReward':
       return {
-        kind: 'Reward · Growth',
-        facts: [{ glyph: 'xp', label: 'XP', value: `+${mentorXpFor(actNumber).toLocaleString()}`, note: 'to 1 hero' }],
+        about: 'An old veteran. He will teach one hero how to fight.',
+        facts: [{ glyph: 'xp', label: 'XP', value: `+${mentorXpFor(actNumber).toLocaleString()}`, note: 'one hero' }],
         odds: null,
-        about: 'Pick a hero, and it takes a lump of XP: levels, their stat rolls, and any move those levels reach. A hero further behind climbs more levels from the same XP.',
-        terms: [],
       };
     case 'academyReward':
-      return {
-        kind: 'Reward · Growth',
-        facts: [{ glyph: 'class', label: 'Class', value: '1 of 3', note: 'to 1 hero without one' }],
-        odds: null,
-        about: 'Pick a hero that has no Class yet, then one of three Classes: a move or a passive it keeps for the run, in its own element.',
-        terms: [TERMS.class, TERMS.moveCap],
-      };
+      return { about: 'The Academy trains one hero in a Class.', facts: [{ glyph: 'class', label: 'Class', value: '1 of 3', note: 'one hero' }], odds: null };
     case 'tutorReward':
-      return {
-        kind: 'Reward · Growth',
-        facts: [{ glyph: 'move', label: 'Move', value: '1', note: 'your pick — to 1 hero' }],
-        odds: null,
-        about: 'Pick a hero, then pick any move it can learn and does not already know, whatever its level. Late moves are listed first.',
-        terms: [TERMS.moveCap],
-      };
+      return { about: 'A master of every school. One hero learns any move it can.', facts: [{ glyph: 'move', label: 'Move', value: 'Your pick', note: 'one hero' }], odds: null };
     case 'event':
-      return {
-        kind: 'Reward · Unknown',
-        facts: [
-          { glyph: 'hidden', label: 'Offer', value: '1 of 4 kinds', note: 'revealed on arrival' },
-          { glyph: 'move', label: 'Kinds', value: 'Move · Passive · Gear · Stat trade' },
-        ],
-        odds: null,
-        about: 'Something on the road, unknown until you arrive: a move to teach, a passive, a pile of loot, or one stat traded for another.',
-        terms: [TERMS.moveCap, TERMS.sockets],
-      };
+      return { about: 'Something waits on the road ahead.', facts: [{ glyph: 'hidden', label: 'What', value: 'Unknown' }], odds: null };
   }
 }
 
-/** The ledger as one line, for an aria-label: `Skirmish — Gold 15–25, Item 60%, Recruit Contract`. */
+/** The ledger as one line, for an aria-label: `Skirmish — Gold 15–25, Item 60%, Recruit Yes`. */
 export function nodeFactsLine(name: string, type: MapNodeType, actNumber: number, cycle = 1): string {
   const parts = nodeDossier(type, actNumber, cycle)
     .facts.filter((fact) => fact.value !== null)

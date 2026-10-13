@@ -2,9 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MapNode } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
-import { NODE_COLORS, NODE_LABELS, NODE_NAMES } from './mapNodes';
-import { mapNodeArt, mapNodeIcon } from './mapNodeArt';
-import { landmarkStillArt } from './mapLandmarks';
+import { NODE_COLORS } from './mapNodes';
 import { nodeDossier, type NodeFactGlyph } from './nodeFacts';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { ResourceGlyph } from '../shared/RunGlyph';
@@ -74,30 +72,15 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
 }
 
 /**
- * A map node's ledger — what it pays, what it costs, what it fields — as figures in rows, never as
- * a sentence, with the node's colour on the stripe and the disc. The body of the map's preview
- * sheet (MapRoute), which raises it on a tile's first tap.
+ * The body of the map's preview sheet (MapRoute): a line of lore, then what the node pays as
+ * figures in rows, never as a sentence.
  */
 export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
   const dossier = nodeDossier(node.type, run.actNumber, run.cycle);
   const color = NODE_COLORS[node.type];
-  // The tile's own pixel art, so the panel reads as the tile opened up.
-  const art = landmarkStillArt(node.type) ?? mapNodeIcon(node.type) ?? mapNodeArt(node.type);
-  const label = NODE_LABELS[node.type];
-  const name = NODE_NAMES[node.type];
 
   return (
-    <div className="node-dossier-panel" style={{ borderTopColor: color, '--node-color': color } as CSSProperties}>
-      <div className="node-dossier-head">
-        <span className={`node-dossier-disc${art ? ' has-art' : ''}`}>
-          {art ? <img src={art} alt="" draggable={false} /> : <NodeGlyph type={node.type} />}
-        </span>
-        <div className="node-dossier-titles">
-          <div className="node-dossier-name">{label}</div>
-          <div className="node-dossier-line">{name === label ? dossier.kind : `${name} · ${dossier.kind}`}</div>
-        </div>
-      </div>
-
+    <div className="node-dossier-panel" style={{ '--node-color': color } as CSSProperties}>
       <p className="node-dossier-about">{dossier.about}</p>
 
       <div className="node-dossier-facts">
@@ -116,17 +99,6 @@ export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
       {dossier.odds && <RarityOdds odds={dossier.odds} />}
 
       <NodeRosterReadout type={node.type} run={run} />
-
-      {dossier.terms.length > 0 && (
-        <dl className="node-dossier-terms">
-          {dossier.terms.map((t) => (
-            <div key={t.term} className="node-dossier-term">
-              <dt>{t.term}</dt>
-              <dd>{t.text}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
     </div>
   );
 }
