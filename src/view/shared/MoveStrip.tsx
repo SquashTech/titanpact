@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { MoveDefinition, StatKey, StatusApplication } from '../../engine/content';
 import { statusApplicationsOf } from '../../engine/content';
 import { TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
@@ -225,6 +225,17 @@ function statDeltaTarget(move: MoveDefinition): TargetMode | null {
   return move.statDeltaTarget === move.target ? null : move.statDeltaTarget;
 }
 
+/** Stats that move by the same steps share one set of chevrons: ATK and INT ▲▲, not ATK ▲▲ INT ▲▲. */
+function stageGroups(deltas: readonly { stat: StatKey; stages: number }[]): { stats: StatKey[]; stages: number }[] {
+  const groups: { stats: StatKey[]; stages: number }[] = [];
+  for (const { stat, stages } of deltas) {
+    const group = groups.find((g) => g.stages === stages);
+    if (group) group.stats.push(stat);
+    else groups.push({ stats: [stat], stages });
+  }
+  return groups;
+}
+
 /** What a rider's magnitude reads, resolved for the caster by the caller (MoveTile riderMagnitude). */
 export type RiderAmount = (app: StatusApplication) => number | undefined;
 
@@ -258,13 +269,15 @@ function MoveRiderIcons({ move, amountOf }: { move: MoveDefinition; amountOf: Ri
           </span>
         );
       })}
-      {deltas.map(({ stat, stages }, i) => (
-        <span key={stat} className="move-rider" title={`${STAT_LABELS[stat]} ${chevrons(stages)}`}>
+      {stageGroups(deltas).map(({ stats, stages }, i, groups) => (
+        <span key={stats.join()} className="move-rider" title={stats.map((stat) => `${STAT_LABELS[stat]} ${chevrons(stages)}`).join(', ')}>
           {/* One roll gates the whole list, so the odds print once. */}
           {i === 0 && move.statDeltaChance != null && <span className="move-rider-odds">{pct(move.statDeltaChance)}</span>}
-          <StatGlyph stat={stat} className="move-rider-glyph" />
+          {stats.map((stat) => (
+            <StatGlyph key={stat} stat={stat} className="move-rider-glyph" />
+          ))}
           <span className={`move-rider-chevrons${stages > 0 ? ' is-up' : ' is-down'}`}>{chevrons(stages)}</span>
-          {i === deltas.length - 1 && deltaWhere && <TargetFigures target={deltaWhere} small />}
+          {i === groups.length - 1 && deltaWhere && <TargetFigures target={deltaWhere} small />}
         </span>
       ))}
     </>
@@ -619,6 +632,35 @@ export function MoveStub({
           {hits > 1 && <span className="move-stub-hits">×{hits}</span>}
         </strong>
       )}
+    </span>
+  );
+}
+
+// --- The name ---
+
+// 17px, 15px, 13.5px, then two lines at 13.5px.
+const NAME_FIT_STEPS = 3;
+
+/**
+ * The move's name, which steps its size down (styles.css `.is-fit-N`) rather than being cut off when
+ * the strip beside it is crowded, and wraps to two lines before it would ever be cut off.
+ */
+export function MoveName({ text, children }: { text: string; children?: ReactNode }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [fit, setFit] = useState({ text, step: 0 });
+  const step = fit.text === text ? fit.step : 0;
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (fit.text !== text) {
+      setFit({ text, step: 0 });
+      return;
+    }
+    if (el && el.scrollWidth > el.clientWidth + 0.5 && step < NAME_FIT_STEPS) setFit({ text, step: step + 1 });
+  });
+  return (
+    <span ref={ref} className={`move-name${step ? ` is-fit-${step}` : ''}`}>
+      {children}
+      {text}
     </span>
   );
 }

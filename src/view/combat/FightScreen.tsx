@@ -98,7 +98,7 @@ import { setMusicRate } from '../../audio/music';
 import { getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { MoveButtonReplica, TARGET_MODE_LABELS, healReadout, riderMagnitude, useLongPress } from '../shared/MoveTile';
-import { MoveStrip, MoveStub } from '../shared/MoveStrip';
+import { MoveName, MoveStrip, MoveStub } from '../shared/MoveStrip';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
@@ -184,10 +184,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
         <span className="move-type-code" title={move.type}>
           <ElementGlyph type={move.type} />
         </span>
-        <span className="move-name">
-          {faceOf && <span className="move-trick-tag">{faceOf.name}</span>}
-          {move.name}
-        </span>
+        <MoveName text={move.name}>{faceOf && <span className="move-trick-tag">{faceOf.name}</span>}</MoveName>
         <ChargePips move={move} combatant={chargeHolder} restored={restoredCharges} />
         <MoveStrip
           move={move}

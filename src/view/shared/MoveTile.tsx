@@ -16,7 +16,7 @@ import { ManaCost } from './ManaCost';
 import { ChargePips } from './ChargePips';
 import { playSfx } from '../../audio/sfx';
 import { statusAmountText } from './statusFacts';
-import { MovePriorityChip, MoveStrip, MoveStub, TARGET_MODE_LABELS } from './MoveStrip';
+import { MoveName, MovePriorityChip, MoveStrip, MoveStub, TARGET_MODE_LABELS } from './MoveStrip';
 
 // --- Hold-to-inspect gesture ---
 
@@ -498,7 +498,7 @@ export function MoveButtonReplica({
         <span className="move-type-code" title={move.type}>
           <ElementGlyph type={move.type} />
         </span>
-        <span className="move-name">{move.name}</span>
+        <MoveName text={move.name} />
         <ChargePips move={move} combatant={chargeHolder} />
         {tag}
         <MoveStrip move={move} amountOf={(app) => riderMagnitude(move, app, caster)} live={{ seats: matchups }} />

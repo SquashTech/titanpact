@@ -7773,6 +7773,26 @@ textarea,
   letter-spacing: 0.01em;
 }
 
+/* A name that would be cut off steps down (MoveName) before it ellipsizes. */
+.move-button.has-stub .move-name.is-fit-1 {
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.move-button.has-stub .move-name.is-fit-2,
+.move-button.has-stub .move-name.is-fit-3 {
+  font-size: 13.5px;
+  letter-spacing: 0;
+}
+
+.move-button.has-stub .move-name.is-fit-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  line-height: 1.05;
+}
+
 .move-button.has-stub .move-row-top .mana-gem {
   width: 30px;
   height: 30px;
