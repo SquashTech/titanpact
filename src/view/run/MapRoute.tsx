@@ -603,6 +603,21 @@ function measureTiles(tiles: readonly PreviewTile[]): Record<string, Box> {
   return boxes;
 }
 
+/** The top of the row as drawn, in canvas px: the highest tile, its name or its lead-on marks over it. */
+function measureRowTop(tiles: readonly PreviewTile[], boxes: Record<string, Box>): number {
+  let top = Math.min(...Object.values(boxes).map((b) => b.top));
+  for (const { el } of tiles) {
+    const choice = el.closest('.map-choice');
+    if (!choice) continue;
+    for (const part of Array.from(choice.children)) {
+      if (!part.childElementCount && !part.textContent?.trim()) continue;
+      const rect = part.getBoundingClientRect();
+      if (rect.height > 0) top = Math.min(top, canvasPoint(rect.left, rect.top).y);
+    }
+  }
+  return top;
+}
+
 /** An element of the screen around the route, in canvas px; null when it is not drawn. */
 function measureSelector(selector: string): Box | null {
   const el = document.querySelector(selector);
@@ -615,7 +630,7 @@ function measureSelector(selector: string): Box | null {
 
 /**
  * The map's preview: the tile being read lit, the rest of its row half-lit and still tappable, the
- * node's card centred between the header and the row, and the plate that goes centred between the
+ * node's card just above the row, and the plate that goes centred between the
  * row and the footer. The header and the footer stay lit — the footer's chips wear the node's mark
  * meanwhile (MapScreen) — and a tap anywhere else closes it.
  */
@@ -650,16 +665,16 @@ function MapPreview({
       const header = measureSelector('.map-header');
       setBoxes(measured);
       setFrame({ header, footer: measureSelector('.map-footer') });
-      // The card sits centred between the header and the row, and the row never moves: a card too
-      // tall for the room scrolls inside itself.
+      // The card sits just above the row, and the row never moves: a card too tall for the room
+      // under the header scrolls inside itself.
       const card = cardRef.current;
-      const rowTop = Math.min(...Object.values(measured).map((b) => b.top));
+      const rowTop = measureRowTop(tiles, measured);
       if (!card || !Number.isFinite(rowTop)) return;
       const ceiling = header ? header.top + header.height : 0;
       const room = Math.max(0, rowTop - ceiling - CARD_MARGIN * 2);
-      const height = card.scrollHeight;
+      const height = card.scrollHeight + card.offsetHeight - card.clientHeight;
       if (height > room + 1) setCardSeat({ top: ceiling + CARD_MARGIN, maxHeight: room });
-      else setCardSeat({ top: ceiling + CARD_MARGIN + (room - height) / 2 });
+      else setCardSeat({ top: rowTop - CARD_MARGIN - height });
     };
     measure();
     window.addEventListener('resize', measure);
