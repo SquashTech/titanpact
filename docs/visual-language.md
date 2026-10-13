@@ -3442,3 +3442,10 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   it", "Hold a hero to review its sheet" and the loot's "Take them, then place each one" are cut,
   per user direction; it says only what just happened, why there is nothing to pick, or that a full
   roster means someone leaves. Leave lost its "Walk on" sub-line.
+- **The Guild Hall** (same day, per user direction; `Keyed`, `src/view/shared/Keyed.tsx`, is the one
+  gold-word-and-colon head every screen shares): a hire's note reads "**Needs:** a Recruit Contract,
+  sold at the bar" or "**Roster full:** someone leaves to make room"; the Contract's confirm is
+  "**Spent on:** signing a beaten foe, or a hire here" and "**Next:** 60g" over its ledger; the Call
+  is one line; the Enchanter reads "**Bind:** +10 Base Power on one element's moves"; the Anvil says
+  nothing when it can strike (the tier pills say it) and, when it can't, "Can't go any higher",
+  "Epic from Act 3" or "A Unique can't be lifted".

@@ -58,6 +58,7 @@ import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
 import { PlateButton } from '../shared/PlateButton';
 import { PassiveText } from '../shared/PassiveText';
+import { Keyed } from '../shared/Keyed';
 
 interface Props {
   /** Rolled at node-select time (App.tsx) — see src/run/events.ts. */
@@ -142,15 +143,6 @@ function HeroOutcomeLine({ outcome }: { outcome: HeroOutcome }) {
 
 function percent(share: number): string {
   return `${Math.round(share * 100)}%`;
-}
-
-/** A gold keyword heading a line, as passives and moves read: `Cost: 20 gold`. */
-function Keyed({ word, children }: { word: string; children: ReactNode }) {
-  return (
-    <>
-      <span className="kw-badge">{word}</span> {children}
-    </>
-  );
 }
 
 function costLine(cost: EventCost | undefined): string | null {

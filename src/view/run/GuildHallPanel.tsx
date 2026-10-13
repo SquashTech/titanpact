@@ -35,6 +35,7 @@ import { GOOD_ART, HALL_ART, HallGood } from './guildHallArt';
 import { CONFIRM_PURCHASE_FROM } from '../shared/useArmedTap';
 import { GearCounter, GemCounter } from './HallCounters';
 import { ItemServicesSection } from './ItemServicesSection';
+import { Keyed } from '../shared/Keyed';
 
 export type GuildHallTab = 'tavern' | 'gems' | 'gear' | 'smithy';
 
@@ -223,7 +224,7 @@ export function GuildHallPanel({
                   />
                 ))
               ) : (
-                <span className="hall-poster is-note">No one is looking for work this visit.</span>
+                <span className="hall-poster is-note">No hires this visit.</span>
               )}
             </div>
           </div>
@@ -301,11 +302,11 @@ export function GuildHallPanel({
                   scale={statScaleFor(run)}
                   unowned
                   note={
-                    !affordable
-                      ? 'Hiring takes a Recruit Contract, and you hold none. The counter sells them.'
-                      : rosterFull
-                        ? `Roster is full (${ROSTER_CAP}/${ROSTER_CAP}) — you'll choose a hero to terminate next.`
-                        : undefined
+                    !affordable ? (
+                      <Keyed word="Needs">a Recruit Contract, sold at the bar</Keyed>
+                    ) : rosterFull ? (
+                      <Keyed word="Roster full">someone leaves to make room</Keyed>
+                    ) : undefined
                   }
                   action={{
                     label: `Recruit ${hero.name} — 1 Contract`,
@@ -329,7 +330,7 @@ export function GuildHallPanel({
                     <span className="move-info-name">Call</span>
                     <span className="move-info-kind">{TAVERN_CALL_PRICE}g</span>
                   </div>
-                  <div className="guild-hall-confirm-body">One hero of the type you name answers, and takes the last poster on the board.</div>
+                  <div className="guild-hall-confirm-body">One hero of the type you pick joins the board.</div>
                   <div className="tavern-call-types">
                     {TYPES.filter((type) => type !== 'Ancient').map((type) => {
                       const open = callTypes.includes(type);
@@ -370,7 +371,9 @@ export function GuildHallPanel({
                     <span className="move-info-kind">{contractCost}g</span>
                   </div>
                   <div className="guild-hall-confirm-body">
-                    Every recruit costs one: sign a hero you beat in a Skirmish or Elite, or hire one at this Tavern. The next one bought costs {contractCost + CONTRACT_PRICE_STEP}g.
+                    <Keyed word="Spent on">signing a beaten foe, or a hire here</Keyed>
+                    <br />
+                    <Keyed word="Next">{contractCost + CONTRACT_PRICE_STEP}g</Keyed>
                   </div>
                   <div className="guild-hall-confirm-ledger">
                     <span>

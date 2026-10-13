@@ -28,6 +28,7 @@ import { overlayHost } from '../shared/overlayHost';
 import { useArmedTap } from '../shared/useArmedTap';
 import type { SmithyWork } from './SmithyBeat';
 import { AnvilFigure } from './smithyArt';
+import { Keyed } from '../shared/Keyed';
 
 interface Props {
   run: RunState;
@@ -42,13 +43,13 @@ interface Props {
 
 /** Why the Anvil will not take this piece today — the sheet says it rather than greying a button. */
 function anvilRefusal(run: RunState, item: EquipmentDefinition): string {
-  if (item.familyId === undefined) return 'A Unique has no ladder to climb.';
+  if (item.familyId === undefined) return "A Unique can't be lifted.";
   const target = nextRarity(item.rarity);
-  if (target === null) return 'Nothing stands above Mythic.';
+  if (target === null) return "Can't go any higher.";
   for (let act = run.actNumber + 1; act <= TOTAL_ACTS; act++) {
-    if (actAllowsRarity(act, target)) return `${RARITY_LABELS[target]} is not forged until Act ${act}.`;
+    if (actAllowsRarity(act, target)) return `${RARITY_LABELS[target]} from Act ${act}.`;
   }
-  return `${RARITY_LABELS[target]} is not forged in this act.`;
+  return `No ${RARITY_LABELS[target]} this act.`;
 }
 
 /**
@@ -130,7 +131,7 @@ export function SmithyWorkSheet({ run, hero, entry, itemRef, item, onCommit, onC
             <header className="smithy-service-head">
               <AnvilFigure className="smithy-service-art" />
               <span className="smithy-service-title">The Anvil</span>
-              <span className="smithy-service-sub">{quote ? 'Lift it a tier. Same family, same binding.' : anvilRefusal(run, item)}</span>
+              {!quote && <span className="smithy-service-sub">{anvilRefusal(run, item)}</span>}
             </header>
             {quote && lifted && (
               <div className="smithy-lift">
@@ -173,8 +174,9 @@ export function SmithyWorkSheet({ run, hero, entry, itemRef, item, onCommit, onC
               <span className="smithy-service-art is-circle" aria-hidden="true" />
               <span className="smithy-service-title">The Enchanter</span>
               <span className="smithy-service-sub">
-                Bind an element: Force +{ENCHANT_FORCE_BY_RARITY[item.rarity]} to moves of that element.
-                {heldEnchant ? ' Rebinding overwrites.' : ''}
+                <Keyed word="Bind">
+                  +{ENCHANT_FORCE_BY_RARITY[item.rarity]} Base Power on one element's moves{heldEnchant ? ', replacing the current one' : ''}
+                </Keyed>
               </span>
             </header>
             <div className="smithy-elements">
