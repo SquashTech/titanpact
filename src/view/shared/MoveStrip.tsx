@@ -595,7 +595,8 @@ function reachWidth(target: TargetMode, seats: readonly (number | null)[] | null
 
 /**
  * The move row's strip: every clause as a glyph, then the riders and priority, then who it reaches —
- * the enemy seats on an attack in a fight, figures otherwise. Right-aligned against the stub, so
+ * the enemy seats on an attack in a fight, figures otherwise; a buff or debuff carries its figures
+ * in the stub instead (targetInStub). Right-aligned against the stub, so
  * the seats land in one column down the list and overflow clips from the left.
  */
 export function MoveStrip({ move, amountOf, live = {} }: { move: MoveDefinition; amountOf: RiderAmount; live?: MoveLiveFacts }) {
@@ -610,6 +611,7 @@ export function MoveStrip({ move, amountOf, live = {} }: { move: MoveDefinition;
         <MoveRiderIcons move={move} amountOf={amountOf} />
         <MovePriorityChip move={move} />
       </span>
+      {!targetInStub(move) && (
       <span className="move-reach-slot" style={{ width: reachWidth(target, seats) } as CSSProperties}>
       <span className="move-reach">
         {seats ? (
@@ -622,11 +624,17 @@ export function MoveStrip({ move, amountOf, live = {} }: { move: MoveDefinition;
         )}
       </span>
       </span>
+      )}
     </>
   );
 }
 
 // --- The stub ---
+
+/** A buff or debuff has no number, so its stub has room to say who it reaches; heals and attacks keep that in the strip. */
+export function targetInStub(move: MoveDefinition): boolean {
+  return move.kind === 'buff';
+}
 
 /**
  * The payoff, scored off the row's right end: the kind glyph over the number it delivers. A buff or
@@ -637,12 +645,15 @@ export function MoveStub({
   value,
   boosted,
   title,
+  target,
 }: {
   move: MoveDefinition;
   /** The figure to print — live power, a rolled range, a resolved heal; omitted for a buff or debuff. */
   value?: string | number;
   boosted?: boolean;
   title?: string;
+  /** Who it reaches, live where the board can change it; drawn under the glyph when targetInStub. */
+  target?: TargetMode;
 }) {
   const kind = moveKindGlyph(move);
   const hits = move.hitCount ?? 1;
@@ -657,6 +668,7 @@ export function MoveStub({
           {hits > 1 && <span className="move-stub-hits">×{hits}</span>}
         </strong>
       )}
+      {targetInStub(move) && <TargetFigures target={target ?? move.target} small />}
     </span>
   );
 }

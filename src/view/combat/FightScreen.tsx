@@ -204,6 +204,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
       </div>
       <MoveStub
         move={move}
+        target={liveTargetMode}
         value={move.kind === 'damage' ? (rolledBasePower ?? move.basePower ?? 0) + forceBonus : heal?.value}
         boosted={move.kind === 'damage' && boosted}
         title={

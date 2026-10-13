@@ -3342,7 +3342,11 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
   tritan vision, where the orange foe beside a gold caster it replaced measured ΔE 4 under
   deuteranopia, the same colour. A halo for the caster was tried and dropped, per user direction. The
   matchup arrows and the HP bar keep green and red: direction and doubling carry the arrows, length
-  carries the bar, so colour there only reinforces.
+  carries the bar, so colour there only reinforces. **A buff or debuff carries its figures in the
+  stub**, under the kind glyph (2026-10-13, per user direction, `targetInStub`): it has no number,
+  so the stub reads as the whole ticket — what it does and to whom — and the strip gets the room
+  back. Heals keep their figures in the strip (the stub already holds glyph and number), attacks
+  their seats; a rider aimed at a second target keeps its small figure in the strip.
 - **Riders are glyphs**: a status in its own icon and colour, a stat stage as the stat's glyph and
   its chevrons, priority as the Speed glyph and its sign. A rider landing somewhere other than the
   move's target carries small figures. **Every other clause is a glyph too** (same day, per user
