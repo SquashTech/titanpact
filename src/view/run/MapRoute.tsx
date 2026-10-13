@@ -38,6 +38,13 @@ const PATH_DRAW_MS = 420;
 const PATH_STAGGER_MS = 130;
 const LAND_MS = 340;
 
+/**
+ * Nodes a tap enters at once, with no preview (2026-10-13, per user direction): the gates and the
+ * Titanspawn fights. Each stands alone in its row, so there is no choice to read before it — a door
+ * is tapped to open.
+ */
+const ENTERED_ON_TAP: readonly MapNodeType[] = ['boss', 'finale', 'fight', 'battle'];
+
 function revealDurationMs(count: number): number {
   return Math.max(0, count - 1) * PATH_STAGGER_MS + PATH_DRAW_MS + LAND_MS;
 }
@@ -427,10 +434,10 @@ export function MapRoute({
     onSelectNode(nodeId);
   }
 
-  /** The first tap reads a tile, a tap on another switches to it, and a tap on the one read goes. */
+  /** The first tap reads a tile, a tap on another switches to it, and a tap on the one read goes. A door goes on the first. */
   function tap(nodeId: string) {
     if (openingId) return;
-    if (previewId === nodeId) {
+    if (previewId === nodeId || ENTERED_ON_TAP.includes(map.nodes[nodeId].type)) {
       go(nodeId);
       return;
     }

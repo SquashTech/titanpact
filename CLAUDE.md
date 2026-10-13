@@ -883,10 +883,12 @@ what's still unimplemented:
   direction — the map had become a scene of one row, so the space was free again): one short word
   under every tile (`NODE_LABELS`, `mapNodes.ts` — Fight, Elite, Scrolls, Items, Guardian…).
   **A tile's first tap PREVIEWS it** (2026-10-13, per user direction, replacing the long press):
-  the screen dims, the tile is lit and the rest of the row half-lit, and the node's ledger rises
-  as a sheet with Back and a plate that goes; a second tap on the lit tile also goes, a tap on
-  another switches, a tap on the dark is Back. A single tap no longer travels. The rail carries
-  the stops left before the Guardian as one figure against its mark. **2026-08-29:** the boss was
+  the tile lit and the rest of the row half-lit, its rewards as loot on a card centred above the
+  row, a plate that goes between the row and the footer, whose chips wear the node's mark; a
+  second tap on the lit tile also goes, a tap on another switches, a tap on the dark closes it.
+  **The doors are the exception** — the Guardian's gate, the Titan's and the Titanspawn fights
+  enter on one tap, each alone in its row. The rail carries the stops left before the Guardian as
+  one figure against its mark. **2026-08-29:** the boss was
   renamed Ancient → **Guardian**; "Ancient" is reserved for something later in a run and
   is otherwise only the locked TYPE, which is untouched. The map's encounter labels are
   now a two-word vocabulary — **Monsters** (not recruitable: `fight`, `battle`) and
