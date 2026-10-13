@@ -299,9 +299,10 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
             <span style={{ color: typeColor }}>{move.type}</span>
             <span className="move-detail-sep">·</span>
             <span>{move.kind === 'damage' ? PIPELINE_WORDS[move.category] : moveKindLabel(move)}</span>
-            <span className="move-detail-sep">·</span>
-            <TargetFigures target={move.target} small />
-            <span>{TARGET_MODE_LABELS[move.target]}</span>
+            <span className="move-dossier-target">
+              <TargetFigures target={move.target} small />
+              <span>{TARGET_MODE_LABELS[move.target]}</span>
+            </span>
           </div>
         </div>
         <MoveStub move={move} value={stubValue} boosted={forceBonus > 0} label={stubLabel} title={stubTitle} />

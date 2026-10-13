@@ -245,8 +245,9 @@ function MoveRiderIcons({ move, amountOf }: { move: MoveDefinition; amountOf: Ri
     <>
       {apps.map((app) => {
         const name = statuses[app.statusId]?.name ?? app.statusId;
-        const amount = amountOf(app) ?? app.duration;
-        const shown = amount == null ? null : app.magnitude != null ? statusAmountText(app.statusId, amount) : String(amount);
+        // A magnitude is part of what the rider does; a duration is detail for the dossier.
+        const amount = app.magnitude != null ? amountOf(app) : undefined;
+        const shown = amount == null ? null : statusAmountText(app.statusId, amount);
         const where = riderTarget(move, app.target);
         return (
           <span
@@ -569,6 +570,29 @@ function moveClauses(move: MoveDefinition, live: MoveLiveFacts): ReactNode[] {
   return out;
 }
 
+// Mirrors the CSS sizes below (.move-seat, .target-figures): a seat 20px, a figure 15px, a paired one 9px more.
+const SEAT_W = 20;
+const SEAT_GAP = 3;
+const FIGURE_W = 15;
+const PAIR_W = 24;
+const SMALL_FIGURE_W = 10;
+
+function reachWidth(target: TargetMode, seats: readonly (number | null)[] | null): number {
+  if (seats) return seats.length * SEAT_W + (seats.length - 1) * SEAT_GAP + (target === 'allOthers' ? SMALL_FIGURE_W + SEAT_GAP : 0);
+  switch (target) {
+    case 'bothEnemies':
+    case 'bothAllies':
+      return PAIR_W;
+    case 'allOthers':
+      return PAIR_W + 3 + FIGURE_W;
+    case 'randomEnemy':
+    case 'randomAlly':
+      return FIGURE_W + 5;
+    default:
+      return FIGURE_W;
+  }
+}
+
 /**
  * The move row's strip: every clause as a glyph, then the riders and priority, then who it reaches —
  * the enemy seats on an attack in a fight, figures otherwise. Right-aligned against the stub, so
@@ -577,7 +601,8 @@ function moveClauses(move: MoveDefinition, live: MoveLiveFacts): ReactNode[] {
 export function MoveStrip({ move, amountOf, live = {} }: { move: MoveDefinition; amountOf: RiderAmount; live?: MoveLiveFacts }) {
   const target = live.target ?? move.target;
   const seats = move.kind === 'damage' && aimsAtEnemies(target) && live.seats && live.seats.length > 0 ? live.seats : null;
-  // Who it reaches sits outside the clipping strip, so a crowded row can never cut it off.
+  // Who it reaches sits outside the clipping strip in a slot of stated width: WebKit mis-measured it
+  // from its contents on first layout and let it run under the stub.
   return (
     <>
       <span className="move-strip">
@@ -585,6 +610,7 @@ export function MoveStrip({ move, amountOf, live = {} }: { move: MoveDefinition;
         <MoveRiderIcons move={move} amountOf={amountOf} />
         <MovePriorityChip move={move} />
       </span>
+      <span className="move-reach-slot" style={{ width: reachWidth(target, seats) } as CSSProperties}>
       <span className="move-reach">
         {seats ? (
           <>
@@ -594,6 +620,7 @@ export function MoveStrip({ move, amountOf, live = {} }: { move: MoveDefinition;
         ) : (
           <TargetFigures target={target} />
         )}
+      </span>
       </span>
     </>
   );

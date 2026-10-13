@@ -151,6 +151,13 @@ export const STATUS_PATHS: Record<string, ReactNode> = {
       <path d="M3.4 20.2 12 11.6l8.6 8.6" />
     </g>
   ),
+  // A bullseye — "hit me". Rings without the crosshair's ticks, which the target gate wears.
+  Provoke: (
+    <>
+      <path fillRule="evenodd" d="M12 1.8a10.2 10.2 0 1 1 0 20.4 10.2 10.2 0 0 1 0-20.4Zm0 3a7.2 7.2 0 1 0 0 14.4 7.2 7.2 0 0 0 0-14.4Z" />
+      <circle cx="12" cy="12" r="3.6" />
+    </>
+  ),
 };
 
 // Bottom-right up-arrow every Force chip wears, so fifteen chips read as one family first.

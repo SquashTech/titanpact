@@ -7777,6 +7777,8 @@ textarea,
 }
 
 .move-button.has-stub .move-name {
+  /* A crowded strip clips before the name gives up its last third. */
+  min-width: 30%;
   font-size: 17px;
   letter-spacing: 0.01em;
 }
@@ -7903,10 +7905,21 @@ textarea,
   white-space: nowrap;
 }
 
-/* Never shrinks and never clips: the seats keep one column down the list. */
-.move-reach {
-  display: inline-flex;
+/* Never shrinks and never clips: the seats keep one column down the list. The slot's width is
+   stated inline (reachWidth), never measured, and the reach sits in it out of flow. */
+.move-reach-slot {
+  position: relative;
   flex: none;
+  align-self: stretch;
+  min-height: 16px;
+}
+
+.move-reach {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
   align-items: center;
   gap: 3px;
 }
@@ -7915,7 +7928,7 @@ textarea,
   display: none;
 }
 
-.move-strip:empty + .move-reach {
+.move-strip:empty + .move-reach-slot {
   margin-left: auto;
 }
 
@@ -7937,13 +7950,13 @@ textarea,
   position: relative;
   display: inline-flex;
   flex-shrink: 0;
-  gap: 4px;
+  gap: 3px;
   padding-bottom: 3px;
 }
 
 .move-seat {
   position: relative;
-  width: 22px;
+  width: 20px;
   height: 13px;
   display: inline-flex;
   align-items: center;
@@ -25031,6 +25044,15 @@ button.evo-gift-card {
   letter-spacing: 0.01em;
   line-height: 1.1;
   text-wrap: balance;
+}
+
+/* The target clause stays whole; its figure is its separator. */
+.move-dossier-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  white-space: nowrap;
 }
 
 .move-dossier-meta {

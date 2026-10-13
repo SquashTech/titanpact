@@ -313,7 +313,7 @@ function ClassCard({ cls, picked, dimmed, onPick, onRead }: CardProps) {
       </span>
       {/* Read-only: the card takes the press, so the replica is drawn and never pressed. */}
       <span className="class-card-verb">
-        {move && <MoveButtonReplica move={move} tag={move.typeFollowsUser ? "Hero's type" : undefined} />}
+        {move && <MoveButtonReplica move={move} />}
         {passive && <PassiveReadout passive={passive} />}
       </span>
     </div>
