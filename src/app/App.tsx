@@ -347,6 +347,13 @@ function whoScreensBehind(screen: Screen): number {
   return depth;
 }
 
+/** The items still to come in a who-screen chain, in order. */
+function whoQueue(screen: Screen): string[] {
+  const ids: string[] = [];
+  for (let cursor = screen; cursor.kind === 'itemWho'; cursor = cursor.next) ids.push(cursor.itemId);
+  return ids;
+}
+
 /** Payouts key on the MAP node type: `skirmish` and `battle` both flatten to a `fight` encounter but sit in opposite reward lanes. */
 type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
 
@@ -1663,7 +1670,7 @@ export function App() {
       )}
 
       {screen.kind === 'itemWho' && (
-        <ItemWhoScreen key={`${screen.itemId}:${whoScreensBehind(screen.next)}`} run={playerRun} itemId={screen.itemId} onRunChange={settlingRunChange(screen)} onDone={() => setScreen(screen.next)} />
+        <ItemWhoScreen key={`${screen.itemId}:${whoScreensBehind(screen.next)}`} run={playerRun} itemId={screen.itemId} upcoming={whoQueue(screen.next)} onRunChange={settlingRunChange(screen)} onDone={() => setScreen(screen.next)} />
       )}
 
 

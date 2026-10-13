@@ -1,168 +1,144 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
-import type { HeroDefinition } from '../../engine/content';
 import { itemSlotsFor } from '../../run/progression';
-import { absorbItem, itemReceiptFor, sellItem, type ItemReceipt } from '../../run/runProgress';
+import { absorbItem, sellItem, type ItemReceipt } from '../../run/runProgress';
 import { sellValueFor } from '../../run/shop';
 import type { RosterEntry, RunState } from '../../run/state';
-import { levelOf } from '../../run/growth';
-import { statScaleFor } from '../../run/statScale';
-import { ItemBox, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS, slotBoxes } from '../shared/EquipmentBox';
+import { RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
+import { useArmedTap } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
-import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { GearGood, GearSockets, Preview, useItemReceipts, type PreviewState } from './HallCounters';
 import { MergeBurst } from './MergeBurst';
 import { RosterPeek } from './RosterPeek';
 
 interface Props {
   run: RunState;
   itemId: string;
+  /** The pieces queued behind this one (a Loot Pile hands over several), shown dim in the row. */
+  upcoming?: readonly string[];
   onRunChange: (next: RunState) => void;
   onDone: () => void;
 }
 
 /**
- * Every item arrives here (docs/gear-absorption.md §2): the piece at the top, the roster below,
- * one tap seats it and it never comes off. A card reads what the tap would do — take it into a
- * free socket, or MERGE it into the family the hero already holds, a tier up — and a hero that
- * can do neither is greyed out. Sell is the one decline. The numbers stay on the piece's own
- * card; the roster cards show sockets, since the question is who, not how much.
+ * Every item that arrives off a fight or a Loot Pile lands here (docs/gear-absorption.md §2), laid
+ * out as the Guild Hall's Gear counter: the roster's builds above, the piece read whole below them.
+ * A hero tap seats it and it never comes off — into a free socket, or MERGED into the family the
+ * hero holds, a tier up; a hero that can do neither is greyed out. Sell is the one decline.
  */
-export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
+export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone }: Props) {
   const item = equipment[itemId];
-  const [assignedTo, setAssignedTo] = useState<string | null>(null);
-  const [outcome, setOutcome] = useState<{ kind: 'take' } | { kind: 'merge'; resultId: string } | { kind: 'sold'; gold: number } | null>(null);
+  const [outcome, setOutcome] = useState<{ rosterId: string; mergeId?: string } | { gold: number } | null>(null);
   const [burst, setBurst] = useState<string | null>(null);
-  const [inspecting, setInspecting] = useState(false);
-  const [confirmingSell, setConfirmingSell] = useState(false);
-  const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
+  const [inspecting, setInspecting] = useState<string | null>(null);
+  const [preview, setPreview] = useState<PreviewState | null>(null);
 
   useEffect(() => {
     playSfx('discovery');
   }, []);
 
-  const receipts = useMemo(() => {
-    const out = new Map<string, ItemReceipt>();
-    if (!item) return out;
-    for (const entry of run.roster) {
-      const hero = rosterHeroes[entry.heroId];
-      if (hero) out.set(entry.rosterId, itemReceiptFor(entry, item, hero, equipment));
-    }
-    return out;
-  }, [run.roster, item]);
+  const done = outcome !== null;
+  const receipts = useItemReceipts(run, done ? undefined : item);
+  const sellGold = item ? sellValueFor(item) : 0;
+  const sell = useArmedTap(() => {
+    if (!item || done) return;
+    playSfx('ui.confirm');
+    onRunChange(sellItem(run, itemId, equipment));
+    setOutcome({ gold: sellGold });
+  }, true);
 
   if (!item) return null;
 
-  const done = outcome !== null;
-  const sellGold = sellValueFor(item);
-  // The stage holds three rows of two-column cards OR a piece with three rows of grants, not both:
-  // past four heroes, or past three grants (a Crest, a Unique), the roster goes to three columns.
-  const grantCount =
-    Object.values(item.statGrants).filter(Boolean).length + (item.grantsStatusIds?.length ?? 0) + (item.grantsPassiveIds?.length ?? 0);
-  const columns = run.roster.length > 4 || grantCount > 3 ? 3 : 2;
-  const stacked = run.roster.length > columns;
-  const mergeResult = outcome?.kind === 'merge' ? equipment[outcome.resultId] : null;
+  const takenBy = outcome && 'rosterId' in outcome ? outcome.rosterId : null;
+  const mergeResult = outcome && 'mergeId' in outcome && outcome.mergeId ? equipment[outcome.mergeId] : null;
   // Once merged, the card is the piece the hero now wears, not the one that arrived.
   const shownItem = mergeResult ?? item;
 
-  function handleGive(rosterId: string) {
+  function handleGive(entry: RosterEntry) {
     if (done) return;
-    const receipt = receipts.get(rosterId);
+    const receipt = receipts.get(entry.rosterId);
     if (!receipt || receipt.kind === 'none') return;
-    onRunChange(absorbItem(run, rosterId, itemId, equipment, rosterHeroes));
-    setAssignedTo(rosterId);
+    onRunChange(absorbItem(run, entry.rosterId, itemId, equipment, rosterHeroes));
     if (receipt.kind === 'merge') {
       playSfx('discovery');
-      setOutcome({ kind: 'merge', resultId: receipt.resultId });
       setBurst(receipt.resultId);
+      setOutcome({ rosterId: entry.rosterId, mergeId: receipt.resultId });
     } else {
       playSfx('equip');
-      setOutcome({ kind: 'take' });
+      setOutcome({ rosterId: entry.rosterId });
     }
   }
 
-  function handleSell() {
-    if (done) return;
-    setConfirmingSell(false);
-    playSfx('ui.confirm');
-    onRunChange(sellItem(run, itemId, equipment));
-    setOutcome({ kind: 'sold', gold: sellGold });
-  }
-
-  // The title is the whole header: no readout, so its height never changes under the roster.
-  function title(): string {
-    if (outcome?.kind === 'sold') return `Sold for ${outcome.gold} gold`;
-    if (outcome?.kind === 'merge') return 'Merged';
-    if (outcome?.kind === 'take') return 'Absorbed';
-    return 'New Gear';
-  }
-
-  function ctaFor(receipt: ItemReceipt | undefined, isAssigned: boolean) {
-    if (isAssigned) return outcome?.kind === 'merge' && mergeResult ? RARITY_LABELS[mergeResult.rarity] : 'Taken';
+  function ctaFor(entry: RosterEntry, receipt: ItemReceipt | undefined): string {
+    if (takenBy === entry.rosterId) return mergeResult ? `${RARITY_LABELS[mergeResult.rarity]}!` : 'Taken';
+    if (done) return `${entry.equipment.length}/${itemSlotsFor(rosterHeroes[entry.heroId], entry)}`;
     if (!receipt || receipt.kind === 'none') return receipt?.reason === 'ceiling' ? 'At its peak' : 'Full';
     if (receipt.kind === 'merge') return `Merge → ${RARITY_LABELS[receipt.resultRarity]}`;
     return 'Take';
   }
 
-  return (
-    <div className="node-screen shrine-screen item-who-screen" style={{ '--node-rgb': RARITY_RGB_VARS[item.rarity] } as CSSProperties}>
-      <NodeSky />
+  // The title is the whole header: no readout, so its height never changes under the roster.
+  const title = !outcome ? 'New Gear' : 'gold' in outcome ? `Sold for ${outcome.gold} gold` : mergeResult ? 'Merged' : 'Absorbed';
 
+  return (
+    <div className="node-screen item-who-screen" style={{ '--node-rgb': RARITY_RGB_VARS[item.rarity] } as CSSProperties}>
+      <NodeSky />
       <RosterPeek run={run} />
 
-      <NodeHeader compact title={title()} />
+      <NodeHeader compact title={title} />
 
-      {/* The piece's name, tier and every grant spelled out: the header says only what kind of moment this is. */}
-      <div className="item-who-piece">
-        <EquipChoiceCard key={shownItem.id} item={shownItem} revealDelayMs={0} labelled onInspect={() => setInspecting(true)} />
-      </div>
-
-      {/* The wrapper is a size container: the cards read their portrait size off the height the
-          stage actually leaves them (styles.css), which varies with the phone and with the piece. */}
-      <div className="item-who-roster">
-        <HeroPickGrid count={run.roster.length} columns={columns} className={stacked ? 'is-stacked' : undefined} fill>
+      <div className="hall-counter-room is-gear is-who">
+        <HeroPickGrid count={run.roster.length} columns={run.roster.length > 4 ? 3 : 2} fill className="counter-roster">
           {run.roster.map((entry) => {
             const hero = rosterHeroes[entry.heroId];
             const receipt = receipts.get(entry.rosterId);
-            const isAssigned = assignedTo === entry.rosterId;
-            const blocked = !receipt || receipt.kind === 'none';
-            const mergeIndex = receipt?.kind === 'merge' ? entry.equipment.indexOf(receipt.heldItemId) : -1;
+            const open = !done && !!receipt && receipt.kind !== 'none';
+            const isTaker = takenBy === entry.rosterId;
+            const cta = ctaFor(entry, receipt);
             return (
               <HeroPickCard
                 key={entry.rosterId}
                 hero={hero}
                 entry={entry}
-                className={isAssigned ? 'is-blessed' : ''}
-                disabled={blocked || (done && !isAssigned)}
-                onActivate={() => handleGive(entry.rosterId)}
-                onPreview={() => setPreviewEntry({ hero, entry })}
-                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${ctaFor(receipt, isAssigned)}`}
-                detail={
-                  <span className="equip-slot-row item-who-sockets">
-                    {slotBoxes(entry.equipment, itemSlotsFor(hero, entry)).map((heldId, index) => (
-                      <ItemBox
-                        key={index}
-                        item={heldId ? (equipment[heldId] ?? null) : null}
-                        className={index === mergeIndex && !done ? 'target' : undefined}
-                        style={
-                          index === mergeIndex && receipt?.kind === 'merge' && !done
-                            ? ({ '--rarity-color': RARITY_COLOR_VARS[receipt.resultRarity] } as CSSProperties)
-                            : undefined
-                        }
-                      />
-                    ))}
-                  </span>
-                }
-                overlay={isAssigned ? <span className="blessing-flare" aria-hidden="true" /> : undefined}
-                ctaClassName={isAssigned ? 'is-done' : receipt?.kind === 'merge' ? 'is-accent is-merge' : blocked ? '' : 'is-accent'}
-                cta={ctaFor(receipt, isAssigned)}
+                disabled={!open && !isTaker}
+                className={[open ? 'is-offered' : '', isTaker ? 'is-blessed' : ''].filter(Boolean).join(' ') || undefined}
+                onActivate={open ? () => handleGive(entry) : () => setPreview({ hero, entry })}
+                onPreview={() => setPreview({ hero, entry })}
+                ariaLabel={`${hero.name} — ${cta}`}
+                ctaClassName={isTaker ? 'is-done' : receipt?.kind === 'merge' && open ? 'is-accent is-merge' : open ? 'is-accent' : undefined}
+                overlay={isTaker ? <span className="blessing-flare" aria-hidden="true" /> : undefined}
+                detail={<GearSockets hero={hero} entry={entry} receipt={receipt} open={open} />}
+                cta={cta}
               />
             );
           })}
         </HeroPickGrid>
+
+        <div className="counter-focus">
+          <EquipChoiceCard key={shownItem.id} item={shownItem} revealDelayMs={0} labelled onInspect={() => setInspecting(shownItem.id)} />
+        </div>
+
+        {/* A Loot Pile's haul: this piece lit, the ones still to come beside it. */}
+        {upcoming.length > 0 && (
+          <div className="counter-stock is-gear">
+            {[itemId, ...upcoming].map((id, i) => (
+              <GearGood
+                key={`${id}:${i}`}
+                itemId={id}
+                picked={i === 0}
+                isSold={i > 0}
+                soldNote="Next"
+                label={<span className="counter-good-tier" style={{ color: RARITY_COLOR_VARS[equipment[id].rarity] }}>{RARITY_LABELS[equipment[id].rarity]}</span>}
+                onPick={() => {}}
+                onInspect={() => setInspecting(id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {done ? (
@@ -170,51 +146,14 @@ export function ItemWhoScreen({ run, itemId, onRunChange, onDone }: Props) {
           Continue
         </button>
       ) : (
-        <button className="secondary-button item-who-sell" onClick={() => setConfirmingSell(true)}>
-          Sell for {sellGold} gold
+        <button ref={sell.ref} className={`secondary-button item-who-sell${sell.armed ? ' is-armed' : ''}`} onClick={sell.onClick}>
+          {sell.armed ? 'Tap again to sell' : `Sell for ${sellGold} gold`}
         </button>
       )}
 
-      {confirmingSell && !done && (
-        <div className="log-overlay" onClick={() => setConfirmingSell(false)}>
-          <div
-            className="log-panel sell-confirm-panel"
-            style={{ borderTopColor: RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-label={`Sell ${item.name}?`}
-          >
-            <div className="sell-confirm-title">
-              Sell <span style={{ color: RARITY_COLOR_VARS[item.rarity] }}>{item.name}</span>?
-            </div>
-            <p className="sell-confirm-note">It goes for {sellGold} gold, and no hero will wear it.</p>
-            <div className="sell-confirm-actions">
-              <button className="secondary-button" onClick={() => setConfirmingSell(false)}>
-                Keep it
-              </button>
-              <button className="resolve-button" onClick={handleSell}>
-                Sell
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}
-
-      {inspecting && <EquipInspectOverlay item={shownItem} onClose={() => setInspecting(false)} />}
-
-      {previewEntry && (
-        <HeroPreviewOverlay
-          hero={previewEntry.hero}
-          entry={previewEntry.entry}
-          equipmentLookup={equipment}
-          relicIds={run.relics}
-          gold={run.gold}
-          scale={statScaleFor(run)}
-          onClose={() => setPreviewEntry(null)}
-        />
-      )}
+      {inspecting && equipment[inspecting] && <EquipInspectOverlay item={equipment[inspecting]} onClose={() => setInspecting(null)} />}
+      {preview && <Preview run={run} preview={preview} onClose={() => setPreview(null)} />}
     </div>
   );
 }

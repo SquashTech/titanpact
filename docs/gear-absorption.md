@@ -55,6 +55,10 @@ so a Wisdom piece dropping on six physical attackers never has to eat a socket f
 NO hero can take the item at all, the screen is skipped and the item converts to gold on the
 spot; the victory overlay or cache reveal has already shown it, so nothing is hidden.
 
+**It is laid out as the Guild Hall's Gear counter** (2026-10-13, per user direction): the
+roster's sockets above, the piece read whole under them, Sell (two taps) at the foot. A Loot
+Pile's haul shows as a row of icons under the piece, the pieces still to come marked Next.
+
 **Where it fires.** After a fight, first in the post-fight chain behind the level report — the
 fight's own consequence, ahead of the Banner and everything under it. **Not on the Equipment
 Cache** (2026-10-13, per user direction): the opened chest is laid out as the Guild Hall's Gear
