@@ -14,8 +14,13 @@ import type { TitanpactType } from '../data/typechart';
 import type { Profile } from './profile';
 import type { RosterEntry, RunState } from './state';
 import { DEFAULT_GRADES } from './growth';
+import { shortTypes } from './deck';
+import { heroes } from '../data/heroes';
 
 export const FIRST_CYCLE = 1;
+
+/** The Cycle that opens only to an account owning three heroes of every type (docs/collection.md §2). */
+export const FULL_DECK_CYCLE = 5;
 
 /** The highest Cycle with rules; the picker opens nothing past it. */
 export const MAX_BUILT_CYCLE = 4;
@@ -124,8 +129,9 @@ export function smithyPrice(run: Pick<RunState, 'cycle'>, base: number): number 
  * The highest Cycle a profile may start a run on: a clear of N opens N+1, up to the last one
  * built. Until Cycle I is cleared this is Cycle I, and Play asks nothing.
  */
-export function openCycle(profile: Pick<Profile, 'cyclesCleared'>): number {
-  return Math.max(FIRST_CYCLE, Math.min(MAX_BUILT_CYCLE, profile.cyclesCleared + 1));
+export function openCycle(profile: Pick<Profile, 'cyclesCleared' | 'purchases'>): number {
+  const ceiling = shortTypes(heroes, profile.purchases).length > 0 ? Math.min(MAX_BUILT_CYCLE, FULL_DECK_CYCLE - 1) : MAX_BUILT_CYCLE;
+  return Math.max(FIRST_CYCLE, Math.min(ceiling, profile.cyclesCleared + 1));
 }
 
 /** A woken Guardian's escorts by act. A Location has two or three spawn lines and an escort never repeats one, so three is the ceiling. */

@@ -10,6 +10,7 @@
 import { totalStars, trialStars, type Profile } from './profile';
 import { heroes } from '../data/heroes';
 import { ownsHero, starfallLedgerId } from './recruitment';
+import { shortTypes } from './deck';
 import { GAUNTLET_ENTRY_PRICE } from './gauntlet';
 
 /**
@@ -33,6 +34,9 @@ export type StarShopCatalog = Record<string, StarShopOffer>;
 
 /** One blind draw of a hero the account does not own (docs/collection.md §4): the choice given up is the discount. */
 export const STARFALL_PRICE = 2;
+
+/** `HeroDefinition.unlock` for a hero the Starfall alone draws. */
+export const STARFALL_UNLOCK = 'starfall';
 
 /** Every star the profile has been paid: hero and companion stars, and clear bonuses. */
 export function starsEarned(profile: Profile): number {
@@ -109,11 +113,16 @@ export function buyOffer(profile: Profile, catalog: StarShopCatalog, offer: Star
   return { ...profile, purchases: [...profile.purchases, offer.id] };
 }
 
-/** The heroes a Starfall can draw: every one outside the base roster the account does not own, in catalog order. */
+/**
+ * The heroes a Starfall can draw, in catalog order: the Starfall's own heroes the account does not
+ * own (a bundle's come only in the bundle), and of those only the types it owns fewer than a deck
+ * row of, while any type is short.
+ */
 export function starfallPool(profile: Profile): string[] {
-  return Object.values(heroes)
-    .filter((hero) => hero.unlock && !owned(profile, hero.id))
-    .map((hero) => hero.id);
+  const unowned = Object.values(heroes).filter((hero) => hero.unlock === STARFALL_UNLOCK && !owned(profile, hero.id));
+  const short = shortTypes(heroes, profile.purchases);
+  const filling = unowned.filter((hero) => short.includes(hero.types[0]));
+  return (filling.length > 0 ? filling : unowned).map((hero) => hero.id);
 }
 
 export function canCallStarfall(profile: Profile, catalog: StarShopCatalog): boolean {

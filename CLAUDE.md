@@ -224,8 +224,11 @@ don't silently override it.
 > **The player builds the run's pools, not the designer**: a **Deck** of three heroes a type, 42
 > in all, **three equal slots — no starter and no recruit-only** (phase 5: `HeroDefinition.starter`,
 > Starter Packs and presets are deleted). **The draft draws one hero from each deck row and shows
-> four of those**, so the four span four types; all 42 feed the run, the Guild Hall included. The
-> base 42 are owned free and are the default deck. **A recruitable fight fields at
+> four of those**, so the four span four types; the whole deck feeds the run, the Guild Hall included. The
+> **base 28 — two a type, the easiest to read — are owned free and are the default deck** (2026-10-13,
+> per user direction; it was 42): a Starfall fills every type to three before it draws a fourth of
+> any, a third hero joins its row on its own, a bundle hero never falls, and Cycle V asks for three
+> of every type owned (`shortTypes`, `FULL_DECK_CYCLE`). **A recruitable fight fields at
 > least two deck heroes; the rest may be strangers** off the whole catalog, never offered a
 > contract. **Classic** names the base run mode. Stars turn renewable — a clear bonus by rung, an entry fee
 > on an Ascension attempt, heroes past the base got in bundles or by a no-duplicate blind draw,
@@ -452,8 +455,8 @@ don't silently override it.
   Iron, the Stormrunner graft her way back, Starfall-only since the **Free Company** bundle was deleted (2026-09-26), beside
   **Patch** (Mech, the Wisdom-85 medic drone on the repair column) and **Vex** (Beast, the
   Speed-110 vampire bat that feeds on Bleed, its Shadow turn a graft). **Skyshear** took Storm's third seat the same day: the slate's
-  magical column at Int 95 / Speed 100. The base is 42 again and `test/roster` pins three a
-  type over `heroPool(heroes)` with nothing bought. Every hero and place on any shelf can be
+  magical column at Int 95 / Speed 100. The base is 28 since 2026-10-13 (`docs/collection.md` §4)
+  and `test/roster` pins two a type over `heroPool(heroes)` with nothing bought. Every hero and place on any shelf can be
   examined before it is paid for. (Starter Packs, built the same day, were deleted 2026-09-26
   with the starter split — `docs/collection.md` §2.)
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon

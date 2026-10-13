@@ -10,7 +10,7 @@ import { progressionTable } from '../src/data/progression';
 import { TYPES } from '../src/data/typechart';
 import { createProfile, decodeProfile } from '../src/run/profile';
 import { generateStarterOptions, STARTER_OPTION_COUNT } from '../src/run/draft';
-import { heroPool, isRecruitable } from '../src/run/recruitment';
+import { heroPool, isRecruitable, starfallLedgerId } from '../src/run/recruitment';
 import { generateMap } from '../src/run/map';
 import { generateItinerary, locationForAct } from '../src/run/locations';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
@@ -33,45 +33,55 @@ import {
 } from '../src/run/deck';
 
 const TALL_GRASS = 'bundle.tallGrass';
+/** Four Fire heroes owned, so a row has a reserve to trade. */
+const FOUR_FIRE = [TALL_GRASS, starfallLedgerId('crimson')];
 
-test('deck: the default is the base roster, three a draftable type', () => {
+test('deck: the default is the base roster, two a draftable type, a row short of full', () => {
   const deck = defaultDeck(heroes);
   assert.strictEqual(Object.keys(deck).length, 14);
   assert.deepStrictEqual(draftableTypes(heroes).sort(), TYPES.filter((t) => t !== 'Ancient').sort());
   for (const [type, row] of Object.entries(deck)) {
-    assert.strictEqual(row.length, DECK_ROW_SIZE, `${type} holds ${row.length}`);
+    assert.strictEqual(row.length, DECK_ROW_SIZE - 1, `${type} holds ${row.length}`);
     for (const id of row) assert.strictEqual(heroes[id].types[0], type);
   }
   assert.deepStrictEqual(deckHeroIds(deck).sort(), Object.keys(heroPool(heroes)).sort(), 'the default deck is the base roster');
 });
 
 test('deck: a stored deck is made legal — unknown, unowned, mistyped and repeated ids dropped, short rows topped up', () => {
-  const deck = normalizeDeck({ Fire: ['crimson', 'crimson', 'noSuchHero', 'rime', 'drake'], Iron: 'junk' }, heroes, []);
-  assert.strictEqual(deck.Fire[0], 'crimson', 'a legal pick is kept');
-  assert.strictEqual(deck.Fire.length, DECK_ROW_SIZE);
+  const deck = normalizeDeck({ Fire: ['ashwing', 'ashwing', 'noSuchHero', 'rime', 'drake', 'crimson'], Iron: 'junk' }, heroes, []);
+  assert.strictEqual(deck.Fire[0], 'ashwing', 'a legal pick is kept');
+  assert.strictEqual(deck.Fire.length, DECK_ROW_SIZE - 1);
+  assert.ok(!deck.Fire.includes('crimson'), 'an unowned Starfall hero is not decked');
   assert.ok(!deck.Fire.includes('drake'), 'an unowned bundle hero is not decked');
   assert.ok(!deck.Fire.includes('rime'), 'a Frost hero cannot sit in the Fire row');
   assert.deepStrictEqual(deck.Iron, defaultDeck(heroes).Iron);
   assert.deepStrictEqual(normalizeDeck(null, heroes, []), defaultDeck(heroes));
 });
 
+test('deck: a third hero of a type joins its row on its own', () => {
+  const fell = [starfallLedgerId('crimson')];
+  assert.deepStrictEqual(normalizeDeck(defaultDeck(heroes), heroes, fell).Fire, [...defaultDeck(heroes).Fire, 'crimson']);
+  assert.deepStrictEqual(reserveOfType(normalizeDeck(defaultDeck(heroes), heroes, fell), heroes, fell, 'Fire'), []);
+});
+
 test('deck: an owned hero is traded into its own row only', () => {
   assert.deepStrictEqual(reserveOfType(defaultDeck(heroes), heroes, [], 'Fire'), [], 'the base game has no reserve');
-  const owned = normalizeDeck({}, heroes, [TALL_GRASS]);
-  assert.deepStrictEqual(reserveOfType(owned, heroes, [TALL_GRASS], 'Fire'), ['drake']);
-  const traded = swapIntoDeck(owned, heroes, [TALL_GRASS], 'drake', owned.Fire[2]);
+  const owned = normalizeDeck({}, heroes, FOUR_FIRE);
+  assert.deepStrictEqual(reserveOfType(owned, heroes, FOUR_FIRE, 'Fire'), ['drake']);
+  const traded = swapIntoDeck(owned, heroes, FOUR_FIRE, 'drake', owned.Fire[2]);
   assert.ok(traded.Fire.includes('drake'));
-  assert.throws(() => swapIntoDeck(owned, heroes, [TALL_GRASS], 'drake', owned.Iron[1]), DeckError, 'wrong row');
+  assert.throws(() => swapIntoDeck(owned, heroes, FOUR_FIRE, 'drake', owned.Iron[1]), DeckError, 'wrong row');
   assert.throws(() => swapIntoDeck(owned, heroes, [], 'drake', owned.Fire[2]), DeckError, 'not owned');
 });
 
 test('deck: the profile round-trips it, and a file without one opens on the default', () => {
-  const owned = normalizeDeck({}, heroes, [TALL_GRASS]);
-  const edited = { ...createProfile(), purchases: [TALL_GRASS], deck: { ...swapIntoDeck(owned, heroes, [TALL_GRASS], 'drake', owned.Fire[0]) } as Record<string, string[]> };
+  const owned = normalizeDeck({}, heroes, FOUR_FIRE);
+  const edited = { ...createProfile(), purchases: FOUR_FIRE, deck: { ...swapIntoDeck(owned, heroes, FOUR_FIRE, 'drake', owned.Fire[0]) } as Record<string, string[]> };
   const read = decodeProfile(JSON.parse(JSON.stringify(edited)));
   assert.deepStrictEqual(profileDeck(read, heroes), profileDeck(edited, heroes));
   assert.deepStrictEqual(decodeProfile({}).deck, {});
-  assert.deepStrictEqual(profileDeck(decodeProfile({ equippedPackId: 'secondString' }), heroes), defaultDeck(heroes), 'a pack from before decks is dropped');
+  const packed = decodeProfile({ equippedPackId: 'secondString' });
+  assert.deepStrictEqual(profileDeck(packed, heroes), normalizeDeck({}, heroes, packed.purchases), 'a pack from before decks is dropped');
 });
 
 test('deck: the draft draws one hero a row, four rows shown, and every decked hero can be drawn', () => {

@@ -36,7 +36,7 @@ interface Props {
 }
 
 /**
- * The deck alone (docs/collection.md §2): fourteen rows of three, two types a line, so the whole
+ * The deck alone (docs/collection.md §2): fourteen rows of up to three, two types a line, so the whole
  * of what a run can draw is on one screen. Tapping a hero opens its row's bench under it — the
  * heroes of that type the account owns and has not decked, to trade in, and the ones still to
  * get, to look at.
@@ -92,9 +92,13 @@ export function DeckView({ profile, deck, freshHeroIds, onAcknowledge, onChangeD
                     type="button"
                     className={`deck-hero${picked === id ? ' is-picked' : ''}${landed === id ? ' is-landed' : ''}`}
                     data-sfx="ui.pick"
-                    onClick={() => setPicked(picked === id ? null : id)}
+                    onClick={() => {
+                      if (freshHeroIds.includes(id)) onAcknowledge(id);
+                      setPicked(picked === id ? null : id);
+                    }}
                     aria-label={`${heroes[id].name} — swap or view`}
                   >
+                    {freshHeroIds.includes(id) && <span className="coll-card-new">New</span>}
                     <HeroPortrait heroId={id} className="deck-hero-portrait" />
                     <span className="deck-hero-name">{heroes[id].name}</span>
                   </button>

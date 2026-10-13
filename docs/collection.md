@@ -49,12 +49,15 @@ is deleted, and with it Starter Packs, presets and the Second String.
   deckRows(deck))` (`src/run/draft.ts`) draws fourteen — one a type — and shows four of them, so
   the four always span four types, which is what the old one-starter-a-type rule was protecting.
   The player picks two, as before. Every decked hero can open a run.
-- **All 42 feed the run.** The fork's contracts, the Guild Hall and the hero-pool enemy party
+- **The whole deck feeds the run.** The fork's contracts, the Guild Hall and the hero-pool enemy party
   read the whole deck. The Guild Hall offers any deck hero not on the roster — it used to offer
   only `starter: false` ones. An owned hero **left out of the deck is out of the run** entirely.
-- **The default deck is the base roster**, three a type.
-- **A slot may stay empty** only when the account owns fewer than three of a type. It cannot,
-  in the base game.
+- **The default deck is the base roster, two a type** (2026-10-13, per user direction; it was
+  three). A row's third slot stays empty until the account owns a third hero of the type, and
+  **that hero joins the row on its own** the moment it is owned (`normalizeDeck` tops a short row
+  up) — no screen, only the New tag. Past three, a hero lands in the reserve as before.
+- **A slot may stay empty** only when the account owns fewer than three of a type — which a new
+  account does in every row.
 - **A slot is filled by a hero of that slot's type** — its innate primary. A dual-typed hero
   goes under its primary.
 - **A new account gets no on-ramp** (decided): its first draft is as random as any other, and
@@ -102,6 +105,13 @@ before owning it.
   Flurry, Tempest, Nightshade, Zenith, Reverie and Bellows went out. Four of those eight are mixed lines
   and two are the complexity exceptions (a dual type, the Burden). A profile written before the swap
   keeps the eight free (`LEFT_BASE_2026_09_28`, a `grant.` ledger entry, `PROFILE_VERSION` 2).
+- **The base is 28, two a type, since 2026-10-13** (per user direction): the 28 easiest to read.
+  The fourteen that left are each type's most conditional kit — Crimson, Leviathan (the Burden),
+  Floe, Squall (Arrows and Charges), Sentinel, Sylva, Aegis, Widow (needs Bleed and Poison
+  both), Glyph, Lucius, Sorrow, Gallant, Clockwork and Coil (a dual type) — and are the
+  Starfall's now. No profile is grandfathered: progress is reset at a patch like this one.
+  **Why two**: a third hero a type is variance, and less variance is usually the stronger
+  roguelike deck — so the full deck is earned, and Cycle V asks for it (`cycles.md` §4).
 - **Everything past the base is got with stars** (phase 6, 2026-09-26, per user direction — no
   hero is sold singly):
   - **A bundle** — From the Tall Grass is the only one; the Free Company was deleted and its three
@@ -117,6 +127,12 @@ before owning it.
     - **It costs less than choosing.** `STARFALL_PRICE` = 2 against a bundle's 8 for three: the
       discount is what giving the choice up is paid.
     - It is not called a Contract — the Recruit Contract is an in-run item.
+    - **It fills the deck first** (2026-10-13, per user direction): while any type has fewer than
+      three owned, a Starfall draws only from those types (`shortTypes`, `starfallPool`) — so the
+      first fourteen falls are one a type. Once every row is full it is a blind draw over
+      everything left.
+    - **It never draws a bundle hero** (same day, per user direction): a hero whose `unlock` is a
+      bundle comes only in the bundle. A bundle still counts toward a type's three.
 - **Alignments** (PROPOSED, nothing built but a seat): a Starfall that draws from a curated few
   — the Constellation's Heroes page holds an empty section for them. Named Alignments because
   *Banner* is the Guardian's relic. **Direction, 2026-09-28** (per user direction, not built): themed

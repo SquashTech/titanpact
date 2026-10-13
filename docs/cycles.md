@@ -94,6 +94,10 @@ itself. Also a candidate: the Wardens stand with the player at the end.
 
 - **A Cycle opens by clearing the one before.** Losing a run returns to the title; a loss is never
   canon and the world does not move.
+- **Cycle V also asks for a full deck** (2026-10-13, per user direction): three heroes of every
+  type owned (`FULL_DECK_CYCLE`, `openCycle`). The base is two a type, and a thinner deck is the
+  lower-variance one, so the last Cycle is not played on it (`collection.md` §4). Built ahead of
+  Cycle V itself, which the picker still greys.
 - **Every unlocked Cycle stays selectable**, before the story ends and after. A player who has
   reached Cycle II's Permadeath can still take a breezy Cycle I run.
 - **After Cycle V is cleared**, the story is over and every Cycle stays playable — for the stars

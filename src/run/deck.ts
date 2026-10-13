@@ -11,7 +11,7 @@ export const DECK_ROW_SIZE = 3;
 /** A recruitable fight fields at least this many deck heroes; the rest may be strangers (§3). */
 export const DECK_HEROES_PER_FIGHT = 2;
 
-/** type → three hero ids. A row is short only when the account owns fewer of the type. */
+/** type → up to three hero ids. A row is short while the account owns fewer of the type. */
 export type Deck = Readonly<Record<TypeId, readonly string[]>>;
 
 type Catalog = Record<string, HeroDefinition>;
@@ -33,7 +33,13 @@ function ownedOfType(owned: Catalog, type: TypeId): string[] {
   return [...ofType.filter((h) => !h.unlock), ...ofType.filter((h) => h.unlock)].map((h) => h.id);
 }
 
-/** The deck a fresh account holds: the base roster, three a type. */
+/** The types the account owns fewer than a deck row of — what the Starfall fills first. */
+export function shortTypes(catalog: Catalog, purchases: readonly string[]): TypeId[] {
+  const owned = heroPool(catalog, purchases);
+  return draftableTypes(catalog).filter((type) => ownedOfType(owned, type).length < DECK_ROW_SIZE);
+}
+
+/** The deck a fresh account holds: the base roster, two a type. */
 export function defaultDeck(catalog: Catalog): Deck {
   return normalizeDeck({}, catalog, []);
 }

@@ -8,8 +8,8 @@ import { locationPool, unvisitedLocationIds } from '../src/run/locations';
 import { heroes } from '../src/data/heroes';
 import { guildHallOffers, guildHallOffersFor } from '../src/data/recruitment';
 import { heroPool, isRecruitable, starfallLedgerId } from '../src/run/recruitment';
-import { deckHeroIds, profileDeck } from '../src/run/deck';
-import { STARFALL_PRICE, buyOffer, bundleOwnedHeroIds, canBuy, canCallStarfall, isPurchased, offerHeld, offerPrice, starfall, starfallPool, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
+import { deckHeroIds, draftableTypes, profileDeck, shortTypes } from '../src/run/deck';
+import { STARFALL_PRICE, STARFALL_UNLOCK, buyOffer, bundleOwnedHeroIds, canBuy, canCallStarfall, isPurchased, offerHeld, offerPrice, starfall, starfallPool, starBalance, starsSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
 
 const pack: StarShopGrant = { kind: 'heroBundle', heroIds: ['nobody'] };
 
@@ -199,14 +199,15 @@ test('star shop: a single hero bought before singles were withdrawn is still own
   assert.strictEqual(starBalance(legacy, starShopCatalog), 5);
 });
 
-test('star shop: a Starfall draws only heroes not owned, costs its price, and stops when there are none', () => {
-  let profile = { ...createProfile(), bonusStars: 100 };
-  const outside = Object.values(heroes).filter((h) => h.unlock).length;
+test('star shop: a Starfall draws only its own heroes not owned, costs its price, and stops when there are none', () => {
+  let profile = { ...createProfile(), bonusStars: 200 };
+  const outside = Object.values(heroes).filter((h) => h.unlock === STARFALL_UNLOCK).length;
   const seen = new Set<string>();
   for (let i = 0; i < outside; i++) {
     const before = starBalance(profile, starShopCatalog);
     const result = starfall(profile, starShopCatalog, (i * 0.37) % 1);
     assert.ok(!seen.has(result.heroId), `${result.heroId} drawn twice`);
+    assert.strictEqual(heroes[result.heroId].unlock, STARFALL_UNLOCK, `${result.heroId} is a bundle hero`);
     seen.add(result.heroId);
     assert.ok(result.heroId in heroPool(heroes, result.profile.purchases));
     assert.strictEqual(starBalance(result.profile, starShopCatalog), before - STARFALL_PRICE);
@@ -216,8 +217,22 @@ test('star shop: a Starfall draws only heroes not owned, costs its price, and st
   assert.ok(!canCallStarfall(profile, starShopCatalog));
   assert.throws(() => starfall(profile, starShopCatalog, 0.5), StarShopError);
   assert.throws(() => starfall(createProfile(), starShopCatalog, 0.5), StarShopError, 'no stars');
-  // A drawn hero is in the deck's reserve, not the deck.
+  // A third hero of a type joins the deck on its own.
   const drawn = starfall({ ...createProfile(), bonusStars: 5 }, starShopCatalog, 0);
-  const deck = profileDeck(drawn.profile, heroes);
-  assert.ok(!deckHeroIds(deck).includes(drawn.heroId));
+  assert.ok(deckHeroIds(profileDeck(drawn.profile, heroes)).includes(drawn.heroId));
+});
+
+test('star shop: a Starfall fills every type to a deck row before it draws a fourth of any', () => {
+  let profile = { ...createProfile(), bonusStars: 200 };
+  const types = draftableTypes(heroes);
+  for (let i = 0; i < types.length; i++) {
+    const result = starfall(profile, starShopCatalog, (i * 0.61) % 1);
+    profile = result.profile;
+  }
+  assert.deepStrictEqual(shortTypes(heroes, profile.purchases), [], 'fourteen falls, one a type');
+  // With every row full, the pool is the whole of what is left.
+  assert.strictEqual(starfallPool(profile).length, Object.values(heroes).filter((h) => h.unlock === STARFALL_UNLOCK).length - types.length);
+  // A bundle fills its types, and the Starfall skips them while others are short.
+  const bundled = { ...createProfile(), purchases: ['bundle.tallGrass'] };
+  for (const id of starfallPool(bundled)) assert.ok(!['Fire', 'Water', 'Nature'].includes(heroes[id].types[0]), `${id} is of a full type`);
 });
