@@ -7989,7 +7989,7 @@ textarea,
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Who a non-attack reaches: one figure or two, orange for foes, blue for your side, the caster haloed. */
+/* Who a non-attack reaches: one figure or two, orange for foes, blue for your side and the caster. */
 .target-mark {
   display: inline-flex;
   align-items: center;
