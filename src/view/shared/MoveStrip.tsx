@@ -570,27 +570,32 @@ function moveClauses(move: MoveDefinition, live: MoveLiveFacts): ReactNode[] {
 }
 
 /**
- * The move row's strip: every clause as a glyph, then the riders, priority, and who it reaches —
+ * The move row's strip: every clause as a glyph, then the riders and priority, then who it reaches —
  * the enemy seats on an attack in a fight, figures otherwise. Right-aligned against the stub, so
  * the seats land in one column down the list and overflow clips from the left.
  */
 export function MoveStrip({ move, amountOf, live = {} }: { move: MoveDefinition; amountOf: RiderAmount; live?: MoveLiveFacts }) {
   const target = live.target ?? move.target;
   const seats = move.kind === 'damage' && aimsAtEnemies(target) && live.seats && live.seats.length > 0 ? live.seats : null;
+  // Who it reaches sits outside the clipping strip, so a crowded row can never cut it off.
   return (
-    <span className="move-strip">
-      {moveClauses(move, live)}
-      <MoveRiderIcons move={move} amountOf={amountOf} />
-      <MovePriorityChip move={move} />
-      {seats ? (
-        <>
-          {target === 'allOthers' && <Figures side="ally" count={1} small />}
-          <EnemySeats mults={seats} target={target} />
-        </>
-      ) : (
-        <TargetFigures target={target} />
-      )}
-    </span>
+    <>
+      <span className="move-strip">
+        {moveClauses(move, live)}
+        <MoveRiderIcons move={move} amountOf={amountOf} />
+        <MovePriorityChip move={move} />
+      </span>
+      <span className="move-reach">
+        {seats ? (
+          <>
+            {target === 'allOthers' && <Figures side="ally" count={1} small />}
+            <EnemySeats mults={seats} target={target} />
+          </>
+        ) : (
+          <TargetFigures target={target} />
+        )}
+      </span>
+    </>
   );
 }
 

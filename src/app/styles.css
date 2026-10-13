@@ -7761,6 +7761,12 @@ textarea,
   padding-right: 62px;
 }
 
+/* The fight sizes its rows from a fixed tray; a list that sizes rows to content (the draft, a tip) would
+   otherwise get rows only as tall as the gem. */
+.move-list .move-button.has-stub {
+  min-height: 50px;
+}
+
 /* One line: gem, type, name, then the strip pushed right against the stub. */
 .move-button.has-stub {
   justify-content: center;
@@ -7841,6 +7847,7 @@ textarea,
 }
 
 .move-stub-value {
+  position: relative;
   display: inline-flex;
   align-items: baseline;
   font-size: 18px;
@@ -7858,11 +7865,14 @@ textarea,
   letter-spacing: -0.03em;
 }
 
+/* Pinned to the number's corner rather than laid out beside it, so no engine can set it on the digits. */
 .move-stub-boost {
+  position: absolute;
+  top: -3px;
+  right: -8px;
   font-size: 8px;
-  margin-left: 1px;
+  line-height: 1;
   color: var(--buff);
-  align-self: flex-start;
 }
 
 .move-stub-hits {
@@ -7883,7 +7893,7 @@ textarea,
   align-items: center;
   justify-content: flex-end;
   gap: 7px;
-  max-width: 62%;
+  max-width: 46%;
   min-width: 0;
   margin-left: auto;
   overflow: hidden;
@@ -7891,6 +7901,22 @@ textarea,
   font-weight: 700;
   color: var(--text-dim);
   white-space: nowrap;
+}
+
+/* Never shrinks and never clips: the seats keep one column down the list. */
+.move-reach {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+}
+
+.move-strip:empty {
+  display: none;
+}
+
+.move-strip:empty + .move-reach {
+  margin-left: auto;
 }
 
 .move-strip .move-eff-priority {
