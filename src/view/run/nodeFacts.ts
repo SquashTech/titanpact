@@ -29,7 +29,6 @@ export type NodeFactGlyph =
   | 'contract'
   | 'item'
   | 'banner'
-  | 'recruit'
   | 'move'
   | 'passive'
   | 'class'
@@ -56,8 +55,6 @@ export interface NodeDossier {
   odds: Record<EquipmentRarity, number> | null;
 }
 
-const RECRUITABLE: readonly MapNodeType[] = ['skirmish', 'elite', 'boss'];
-
 function range([min, max]: readonly [number, number]): string {
   return min === max ? `${min}` : `${min}–${max}`;
 }
@@ -83,7 +80,6 @@ function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] 
     { glyph: 'gold', label: 'Gold', value: gold[1] > 0 ? range(gold) : null },
     { glyph: 'item', label: 'Item', value: drop > 0 ? percent(drop) : null, note: drop > 0 && LOOT_SOURCE[type] === 'elite' ? 'rarer' : undefined },
     gemFact(type),
-    { glyph: 'recruit', label: 'Recruit', value: RECRUITABLE.includes(type) ? 'Yes' : null },
   ];
 }
 
@@ -112,7 +108,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
     case 'battle':
       return { about: 'The Titan’s brood. None of them will ever join you.', facts: spawnFacts('battle', actNumber, Math.max(2, actNumber)), odds: odds('battle') };
     case 'skirmish':
-      return { about: 'Heroes who would seal the pact themselves. Win, and one may join you.', facts: encounterFacts('skirmish', actNumber), odds: odds('skirmish') };
+      return { about: 'Rival heroes. Win, and one of them may join you.', facts: encounterFacts('skirmish', actNumber), odds: odds('skirmish') };
     case 'elite':
       return {
         about: 'Their finest. Harder to beat, and worth more for it.',
@@ -121,7 +117,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
       };
     case 'boss':
       return {
-        about: 'The Guardian holds this ring of the seal. Bring it down.',
+        about: 'Keeper of a seal ring. Win, and one may join you.',
         facts: [...encounterFacts('boss', actNumber), { glyph: 'banner', label: 'Banner', value: '1 of 3', note: 'whole team' }],
         odds: odds('boss'),
       };
@@ -207,7 +203,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
   }
 }
 
-/** The ledger as one line, for an aria-label: `Skirmish — Gold 15–25, Item 60%, Recruit Yes`. */
+/** The ledger as one line, for an aria-label: `Skirmish — Gold 15–25, Item 60%`. */
 export function nodeFactsLine(name: string, type: MapNodeType, actNumber: number, cycle = 1): string {
   const parts = nodeDossier(type, actNumber, cycle)
     .facts.filter((fact) => fact.value !== null)

@@ -284,6 +284,11 @@ export function MapRoute({
   const [opening, setOpening] = useState<{ id: string; color: string; x: number; y: number } | null>(null);
   const openingId = opening?.id ?? null;
   const [previewId, setPreviewId] = useState<string | null>(null);
+  // How far the route is raised so the tile being read clears its sheet (MapPreview), on a short screen.
+  const [lift, setLift] = useState(0);
+  useEffect(() => {
+    if (!previewId) setLift(0);
+  }, [previewId]);
   const routeRef = useRef<HTMLDivElement>(null);
   const originRef = useRef<HTMLSpanElement>(null);
   const medallionRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -429,7 +434,7 @@ export function MapRoute({
   }
 
   return (
-    <div className={`map-route${revealing ? ' is-revealing' : ''}`} ref={routeRef}>
+    <div className={`map-route${revealing ? ' is-revealing' : ''}`} ref={routeRef} style={lift ? { transform: `translateY(${-lift}px)` } : undefined}>
       {segments.length > 0 && (
         <svg className="map-paths" aria-hidden="true">
           {segments.map((seg, i) => (
@@ -541,6 +546,8 @@ export function MapRoute({
             previewId={previewId}
             color={NODE_COLORS[map.nodes[previewId].type]}
             label={NODE_LABELS[map.nodes[previewId].type]}
+            lift={lift}
+            onLift={setLift}
             onTap={tap}
             onBack={() => setPreviewId(null)}
             onGo={() => go(previewId)}
@@ -574,8 +581,6 @@ interface Box {
 }
 
 const TILE_PAD = 6;
-/** The sheet keeps at least this much of the screen, rising over the row's foot if it must. */
-const SHEET_MIN = 250;
 
 /** Each tile's box in canvas px (the overlay lives inside the scaled shell). */
 function measureTiles(tiles: readonly PreviewTile[]): Record<string, Box> {
@@ -599,6 +604,8 @@ function MapPreview({
   previewId,
   color,
   label,
+  lift,
+  onLift,
   onTap,
   onBack,
   onGo,
@@ -608,30 +615,35 @@ function MapPreview({
   previewId: string;
   color: string;
   label: string;
+  lift: number;
+  onLift: (lift: number) => void;
   onTap: (id: string) => void;
   onBack: () => void;
   onGo: () => void;
   children: ReactNode;
 }) {
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
-  const [height, setHeight] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
   const maskId = useId();
   const tileKey = tiles.map((t) => t.id).join(',');
   useLayoutEffect(() => {
     const measure = () => {
-      setBoxes(measureTiles(tiles));
-      setHeight(rootRef.current?.clientHeight ?? 0);
+      const measured = measureTiles(tiles);
+      setBoxes(measured);
+      // The sheet never covers the tile it reads: where it would, the route rises by the overlap.
+      const lit = measured[previewId];
+      const root = rootRef.current;
+      const sheet = sheetRef.current;
+      if (!lit || !root || !sheet) return;
+      const over = lit.top + lit.height + 4 - (root.clientHeight - sheet.offsetHeight);
+      if (over > 1) onLift(lift + Math.ceil(over));
     };
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tileKey]);
-
-  // Under the row, so the tile being read stays in sight above its own ledger.
-  const rowFoot = Math.max(0, ...Object.values(boxes).map((b) => b.top + b.height));
-  const sheetTop = height > 0 ? Math.min(rowFoot + 10, height - SHEET_MIN) : undefined;
+  }, [tileKey, previewId, lift]);
 
   return (
     <div className="map-preview" ref={rootRef} onClick={onBack} style={{ '--node-color': color } as CSSProperties}>
@@ -660,7 +672,7 @@ function MapPreview({
           }}
         />
       ))}
-      <div className="map-preview-sheet" style={{ top: sheetTop }} onClick={(e) => e.stopPropagation()}>
+      <div className="map-preview-sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
         <div className="map-preview-body">{children}</div>
         <div className="map-preview-foot">
           <button type="button" className="map-preview-back" onClick={onBack}>

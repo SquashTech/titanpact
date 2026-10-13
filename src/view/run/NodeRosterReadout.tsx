@@ -5,24 +5,21 @@ import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
 import type { MapNodeType } from '../../run/map';
-import { MASTERY_CAP, MASTERY_EVOLUTION } from '../../run/mastery';
+import { MASTERY_CAP } from '../../run/mastery';
 import { MANA_WELL_AMOUNT, LEY_LINE_FORCE } from '../../run/runProgress';
 import { levelOf } from '../../run/growth';
-import { MOVE_CAP, rosterEntryTypes, formIdFor } from '../../run/progression';
+import { MOVE_CAP, formIdFor } from '../../run/progression';
 import { equipmentStatusGrants } from '../../run/statusGrants';
 import { rosterTypes } from '../../run/boons';
 import { tutorMovePool } from '../../run/tutor';
-import { mendPrice } from '../../run/wounds';
-import { enemyLevelFor, type EncounterNodeKind } from '../../run/difficulty';
 import type { RosterEntry, RunState } from '../../run/state';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { MasteryPips } from '../shared/MasteryPips';
 import { WoundBar, entryHp } from '../shared/WoundBar';
-import { EquipmentIcon, RARITY_COLOR_VARS } from '../shared/EquipmentBox';
+import { RARITY_COLOR_VARS } from '../shared/EquipmentBox';
 import { entryStatTotals } from '../shared/entryStatTotals';
-import { ResourceGlyph } from '../shared/RunGlyph';
 import { BlessingMark } from '../shared/BlessingMark';
 
 /** What of the roster a node's decision turns on. Null: nothing on the roster changes the answer. */
@@ -54,75 +51,54 @@ const LENS: Record<MapNodeType, Lens> = {
   event: null,
 };
 
-const ENCOUNTERS: Partial<Record<MapNodeType, EncounterNodeKind>> = {
-  fight: 'fight',
-  battle: 'battle',
-  skirmish: 'skirmish',
-  elite: 'elite',
-  boss: 'boss',
-  finale: 'finale',
-};
-
-function masteryNote(mastery: number): string {
-  if (mastery >= MASTERY_CAP) return 'Mastered';
-  if (mastery < MASTERY_EVOLUTION) return `${MASTERY_EVOLUTION - mastery} to Evolve`;
-  return `${MASTERY_CAP - mastery} to master`;
-}
-
 /** Force the hero already draws at its own element, off its gear and any Ley Line. */
 function forceAt(entry: RosterEntry, type: string): number {
   const id = `${type}Force`;
   return (entry.bonusStatusGrants[id] ?? 0) + (equipmentStatusGrants(entry.equipment, equipment)[id] ?? 0);
 }
 
-function Row({ hero, entry, children, dim = false }: { hero: HeroDefinition; entry: RosterEntry; children: ReactNode; dim?: boolean }) {
+function Cell({ hero, entry, children, dim = false }: { hero: HeroDefinition; entry: RosterEntry; children: ReactNode; dim?: boolean }) {
   return (
     <div
-      className={`node-roster-row${entry.down ? ' is-down' : ''}${dim ? ' is-dim' : ''}`}
+      className={`node-roster-cell${entry.down ? ' is-down' : ''}${dim ? ' is-dim' : ''}`}
       style={{ '--hero-color': getTypeColor(hero.types[0]) } as CSSProperties}
+      title={hero.name}
     >
-      <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="node-roster-portrait" />
-      <span className="node-roster-name">{hero.name}</span>
-      <span className="node-roster-readout">{children}</span>
+      <span className="node-roster-figure-wrap">
+        <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="node-roster-portrait" />
+        {entry.blessed && <BlessingMark className="node-roster-blessing" />}
+      </span>
+      <span className="node-roster-mark">{children}</span>
     </div>
   );
 }
 
+/** "50→90": what the node would make of a figure the hero holds now. */
+function Lift({ from, to }: { from: number; to: number }) {
+  return (
+    <span className="node-roster-lift">
+      {from}
+      <span className="node-roster-arrow">→</span>
+      <strong>{to}</strong>
+    </span>
+  );
+}
+
 /**
- * Under a node's ledger, the roster read through the one lens that node's decision turns on —
- * the pips a Scroll lands on, the pool a Well deepens, the sockets a Cache fills — so the choice
- * on the map is made with the facts in view rather than after the tap.
+ * Under a node's figures, the roster as one strip of portraits, each wearing the one mark that
+ * node's decision turns on — the pips a Gem lands on, the pool a Well deepens, the sockets a chest
+ * fills — so the choice on the map is made with the facts in view rather than after the tap.
  */
 export function NodeRosterReadout({ type, run }: { type: MapNodeType; run: RunState }) {
   const lens = LENS[type];
-  const entries = run.roster.map((entry) => ({ entry, hero: rosterHeroes[entry.heroId] })).filter((r) => r.hero);
-
-  const gold = (
-    <span className="node-roster-purse">
-      <ResourceGlyph kind="gold" /> {run.gold}
-    </span>
-  );
-
-  if (lens === null) {
-    return (
-      <div className="node-roster">
-        <div className="node-roster-head">
-          <span className="move-detail-eyebrow">Your purse</span>
-          {gold}
-        </div>
-      </div>
-    );
-  }
+  if (lens === null) return null;
 
   if (lens === 'types') {
-    const types = [...rosterTypes(run.roster, rosterHeroes)];
     return (
       <div className="node-roster">
-        <div className="node-roster-head">
-          <span className="move-detail-eyebrow">Type Boons on offer</span>
-        </div>
+        <span className="move-detail-eyebrow">Type Boons on offer</span>
         <div className="node-roster-types">
-          {types.map((t) => (
+          {[...rosterTypes(run.roster, rosterHeroes)].map((t) => (
             <TypeBadge key={t} type={t} />
           ))}
         </div>
@@ -130,45 +106,24 @@ export function NodeRosterReadout({ type, run }: { type: MapNodeType; run: RunSt
     );
   }
 
-  const encounter = ENCOUNTERS[type];
-  let head: ReactNode = null;
-  if (lens === 'level' && encounter) {
-    head = <span className="node-roster-aside">Enemies Lv {enemyLevelFor(encounter, run.actNumber)}</span>;
-  } else if (type === 'shop' || type === 'muster') {
-    const mend = mendPrice(run, (entry) => entryStatTotals(rosterHeroes[entry.heroId], entry, run.relics).hp);
-    const missing = run.roster.some((e) => e.down || e.wounds > 0);
-    head = (
-      <span className="node-roster-aside">
-        {missing ? `Mend ${mend}g · ` : ''}
-        {gold}
-      </span>
-    );
-  }
-
+  const entries = run.roster.map((entry) => ({ entry, hero: rosterHeroes[entry.heroId] })).filter((r) => r.hero);
   return (
-    <div className="node-roster">
-      <div className="node-roster-head">
-        <span className="move-detail-eyebrow">Your roster</span>
-        {head}
-      </div>
+    <div className="node-roster node-roster-strip">
       {entries.map(({ entry, hero }) => {
+        const key = entry.rosterId;
         switch (lens) {
           case 'mastery':
             return (
-              <Row key={entry.rosterId} hero={hero} entry={entry} dim={entry.mastery >= MASTERY_CAP}>
+              <Cell key={key} hero={hero} entry={entry} dim={entry.mastery >= MASTERY_CAP}>
                 <MasteryPips mastery={entry.mastery} className="node-roster-pips" />
-                <span className="node-roster-note">{masteryNote(entry.mastery)}</span>
-              </Row>
+              </Cell>
             );
           case 'mana': {
             const pool = entryStatTotals(hero, entry, run.relics).manaPool;
             return (
-              <Row key={entry.rosterId} hero={hero} entry={entry}>
-                <span className="node-roster-figure">
-                  {pool} <span className="node-roster-arrow">→</span> <strong>{pool + MANA_WELL_AMOUNT}</strong>
-                </span>
-                <span className="node-roster-note">max Mana</span>
-              </Row>
+              <Cell key={key} hero={hero} entry={entry}>
+                <Lift from={pool} to={pool + MANA_WELL_AMOUNT} />
+              </Cell>
             );
           }
           case 'force': {
@@ -176,61 +131,46 @@ export function NodeRosterReadout({ type, run }: { type: MapNodeType; run: RunSt
             const now = forceAt(entry, element);
             const count = entry.unlockedMoveIds.filter((id) => moves[id]?.type === element).length;
             return (
-              <Row key={entry.rosterId} hero={hero} entry={entry} dim={count === 0}>
-                <TypeBadge type={element} iconOnly />
-                <span className="node-roster-figure">
-                  {now} <span className="node-roster-arrow">→</span> <strong>{now + LEY_LINE_FORCE}</strong>
-                </span>
-                <span className="node-roster-note">
-                  {count} {count === 1 ? 'move' : 'moves'}
-                </span>
-              </Row>
+              <Cell key={key} hero={hero} entry={entry} dim={count === 0}>
+                <Lift from={now} to={now + LEY_LINE_FORCE} />
+              </Cell>
             );
           }
           case 'gear': {
             const worn = entry.equipment.map((id) => equipment[id]).filter(Boolean);
             return (
-              <Row key={entry.rosterId} hero={hero} entry={entry} dim={type === 'forgeReward' && worn.length === 0}>
+              <Cell key={key} hero={hero} entry={entry} dim={type === 'forgeReward' ? worn.length === 0 : worn.length >= 3}>
                 <span className="node-roster-gear">
                   {[0, 1, 2].map((i) => {
                     const item = worn[i];
                     return item ? (
-                      <span key={i} className="node-roster-socket is-filled" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties} title={item.name}>
-                        <EquipmentIcon item={item} className="node-roster-item" />
-                      </span>
+                      <span key={i} className="node-roster-socket is-filled" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties} />
                     ) : (
                       <span key={i} className="node-roster-socket" />
                     );
                   })}
                 </span>
-                <span className="node-roster-note">{3 - worn.length} free</span>
-              </Row>
+              </Cell>
             );
           }
           case 'moves': {
             const pool = tutorMovePool(progressionTable, moves, entry);
-            const held = entry.unlockedMoveIds.length;
             return (
-              <Row key={entry.rosterId} hero={hero} entry={entry} dim={pool.length === 0}>
-                <span className="node-roster-figure">
-                  <strong>{held}</strong>/{MOVE_CAP}
+              <Cell key={key} hero={hero} entry={entry} dim={pool.length === 0}>
+                <span className="node-roster-lift">
+                  <strong>{entry.unlockedMoveIds.length}</strong>/{MOVE_CAP}
                 </span>
-                <span className="node-roster-note">{pool.length === 0 ? 'nothing to roll' : held >= MOVE_CAP ? 'kit full' : 'has room'}</span>
-              </Row>
+              </Cell>
             );
           }
           case 'hp':
           case 'level': {
             const { hp, maxHp } = entryHp(hero, entry, run.relics);
             return (
-              <Row key={entry.rosterId} hero={hero} entry={entry}>
+              <Cell key={key} hero={hero} entry={entry}>
                 {lens === 'level' && <span className="node-roster-level">Lv {levelOf(entry)}</span>}
-                {rosterEntryTypes(hero, entry).map((t) => (
-                  <TypeBadge key={t} type={t} iconOnly />
-                ))}
-                {entry.blessed && <BlessingMark className="node-roster-blessing" />}
-                {entry.down ? <span className="node-roster-down">Down</span> : <WoundBar hp={hp} maxHp={maxHp} figure className="node-roster-hp" />}
-              </Row>
+                {!entry.down && <WoundBar hp={hp} maxHp={maxHp} className="node-roster-hp" />}
+              </Cell>
             );
           }
         }

@@ -18224,11 +18224,6 @@ button.star-shop-bundle-face {
   }
 }
 
-.map-preview-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-}
 
 /* The ledger's own panel chrome is the sheet's now. */
 .map-preview-body .node-dossier-panel {
@@ -33202,57 +33197,62 @@ button.evo-gift-card {
     var(--surface-raised);
 }
 
+/* The figures as a three-column grid of tiles, the label over the figure: six read in two rows. */
 .node-dossier-facts {
-  display: flex;
-  flex-direction: column;
-  margin-top: 10px;
-  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 8px;
 }
 
 .node-dossier-fact {
   display: grid;
-  grid-template-columns: 19px 1fr auto;
+  grid-template-columns: 15px 1fr;
+  grid-template-areas: 'glyph label' 'value value';
   align-items: center;
-  column-gap: 9px;
-  padding: 7px 0;
-}
-
-.node-dossier-fact + .node-dossier-fact {
-  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  column-gap: 6px;
+  row-gap: 1px;
+  padding: 4px 7px 5px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.24);
 }
 
 .node-dossier-fact-glyph {
+  grid-area: glyph;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 19px;
-  height: 19px;
+  width: 15px;
+  height: 15px;
   color: var(--node-color);
 }
 
 .node-dossier-fact-glyph svg {
-  width: 17px;
-  height: 17px;
+  width: 14px;
+  height: 14px;
   margin: 0;
 }
 
 .node-dossier-fact-label {
-  font-size: 12px;
+  grid-area: label;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-dim);
 }
 
 .node-dossier-fact-value {
+  grid-area: value;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
 }
 
 .node-dossier-fact-value strong {
-  font-size: 16px;
+  flex: none;
+  font-size: 15px;
   font-weight: 800;
   line-height: 1.15;
   color: var(--text);
@@ -33260,8 +33260,11 @@ button.evo-gift-card {
 }
 
 .node-dossier-fact-note {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 10px;
-  line-height: 1.3;
   color: var(--text-dim);
 }
 
@@ -33270,10 +33273,8 @@ button.evo-gift-card {
 .node-dossier-odds {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  margin-top: 2px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
+  gap: 5px;
+  margin-top: 8px;
 }
 
 .node-dossier-odds-bar {
@@ -41346,148 +41347,6 @@ img.smithy-service-art {
   color: var(--text);
 }
 
-.node-roster {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
-}
-
-.node-roster-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 2px;
-}
-
-.node-roster-aside,
-.node-roster-purse {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-dim);
-}
-
-.node-roster-purse {
-  color: #f2d690;
-}
-
-.node-roster-purse .resource-glyph,
-.node-roster-purse svg {
-  width: 13px;
-  height: 13px;
-}
-
-.node-roster-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 28px;
-  padding: 2px 6px 2px 2px;
-  background: rgba(0, 0, 0, 0.22);
-  box-shadow: inset 2px 0 0 var(--hero-color, var(--border));
-}
-
-.node-roster-row.is-dim {
-  opacity: 0.5;
-}
-
-.node-roster-row.is-down .node-roster-portrait {
-  filter: grayscale(1) brightness(0.55);
-}
-
-.node-roster-portrait {
-  flex: none;
-  width: 24px;
-  height: 24px;
-  image-rendering: pixelated;
-}
-
-.node-roster-name {
-  flex: 0 0 72px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.node-roster-readout {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
-.node-roster-readout .type-badge {
-  flex: none;
-  transform: scale(0.85);
-}
-
-.node-roster-pips.mastery-pips {
-  width: auto;
-  margin: 0;
-  gap: 2px;
-}
-
-.node-roster-note {
-  flex: none;
-  min-width: 58px;
-  text-align: right;
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-
-.node-roster-figure {
-  font-size: 12px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-
-.node-roster-figure strong {
-  color: var(--text);
-}
-
-.node-roster-arrow {
-  color: rgba(226, 184, 98, 0.8);
-}
-
-.node-roster-level {
-  flex: none;
-  margin-right: auto;
-  font-size: 11px;
-  font-weight: 800;
-  color: #f2d690;
-  font-variant-numeric: tabular-nums;
-}
-
-.node-roster-hp.wound-bar {
-  flex: 0 1 120px;
-}
-
-.node-roster-down {
-  flex: 0 1 120px;
-  text-align: center;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #ff9b95;
-}
-
 /* A roster hero's Blessing (BlessingMark.tsx): a small gold star wherever the hero is read off the
    map. The shape is the badge's; each seat below only places it. */
 .blessing-mark {
@@ -41531,28 +41390,126 @@ img.smithy-service-art {
   height: 9px;
 }
 
-.node-roster-gear {
+.node-roster {
   display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+/* One portrait a hero, its one mark under it — the map footer's party chips, read through the node. */
+.node-roster-strip {
+  flex-direction: row;
+  justify-content: center;
+  gap: 4px;
+}
+
+.node-roster-cell {
+  flex: 0 1 56px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 3px;
 }
 
-.node-roster-socket {
+.node-roster-cell.is-dim {
+  opacity: 0.45;
+}
+
+.node-roster-figure-wrap {
+  position: relative;
   display: flex;
+}
+
+.node-roster-portrait {
+  width: 34px;
+  height: 34px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.8));
+}
+
+.node-roster-cell.is-down .node-roster-portrait {
+  filter: grayscale(1) brightness(0.5);
+}
+
+.blessing-mark.node-roster-blessing {
+  position: absolute;
+  top: 0;
+  right: -3px;
+}
+
+.node-roster-mark {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
+  gap: 2px;
+  width: 100%;
+  min-height: 12px;
+}
+
+.node-roster-level {
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  color: #f2d690;
+  font-variant-numeric: tabular-nums;
+}
+
+.node-roster-hp.wound-bar {
+  width: 40px;
+}
+
+.node-roster-lift {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+.node-roster-lift strong {
+  color: var(--text);
+}
+
+.node-roster-arrow {
+  margin: 0 1px;
+  color: rgba(226, 184, 98, 0.8);
+}
+
+.node-roster-pips.mastery-pips {
+  width: auto;
+  margin: 0;
+  gap: 1px;
+}
+
+.node-roster-pips .mastery-pip {
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+}
+
+.node-roster-pips .mastery-pip.is-milestone {
+  width: 5px;
+  height: 5px;
+}
+
+.node-roster-gear {
+  display: flex;
+  gap: 2px;
+}
+
+.node-roster-socket {
+  width: 10px;
+  height: 10px;
   background: #0b0c10;
-  box-shadow: inset 0 0 0 1px #262a35;
+  box-shadow: inset 0 0 0 1px #3a3f4d;
 }
 
 .node-roster-socket.is-filled {
-  box-shadow: inset 0 0 0 1px var(--rarity-color), inset 0 -6px 8px -6px var(--rarity-color);
-}
-
-.node-roster-item {
-  width: 16px;
-  height: 16px;
+  background: color-mix(in srgb, var(--rarity-color) 55%, #0b0c10);
+  box-shadow: inset 0 0 0 1px var(--rarity-color);
 }
 
 .node-roster-types {

@@ -27,7 +27,6 @@ const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
       {BANNER}
     </svg>
   ),
-  recruit: <SectionGlyph name="heroes" />,
   move: <SectionGlyph name="moves" />,
   passive: <SectionGlyph name="passives" />,
   class: <HubGlyph name="hall" />,
@@ -50,7 +49,6 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
   const share = (rarity: EquipmentRarity) => Math.round((odds[rarity] / total) * 100);
   return (
     <div className="node-dossier-odds">
-      <div className="move-detail-eyebrow">Item tier odds</div>
       <div className="node-dossier-odds-bar" aria-hidden="true">
         {live.map((rarity) => (
           <span
