@@ -25,6 +25,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Burn: {
     id: 'Burn',
     name: 'Burn',
+    adjective: 'Burning',
     shape: 'duration',
     ticksAtEndOfRound: true,
     decay: 'none',
@@ -41,6 +42,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Bleed: {
     id: 'Bleed',
     name: 'Bleed',
+    adjective: 'Bleeding',
     shape: 'boolean',
     ticksAtEndOfRound: true,
     decay: 'none',
@@ -53,6 +55,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Freeze: {
     id: 'Freeze',
     name: 'Freeze',
+    adjective: 'Frozen',
     shape: 'boolean',
     ticksAtEndOfRound: false,
     decay: 'none',
@@ -66,6 +69,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Daze: {
     id: 'Daze',
     name: 'Daze',
+    adjective: 'Dazed',
     shape: 'boolean',
     ticksAtEndOfRound: false,
     decay: 'none',
@@ -97,6 +101,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Shield: {
     id: 'Shield',
     name: 'Shield',
+    adjective: 'Shielded',
     shape: 'magnitude',
     ticksAtEndOfRound: false,
     decay: 'none',
@@ -126,6 +131,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Renew: {
     id: 'Renew',
     name: 'Renew',
+    adjective: 'Renewing',
     shape: 'duration',
     ticksAtEndOfRound: true,
     decay: 'none',
@@ -141,6 +147,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Conduct: {
     id: 'Conduct',
     name: 'Conduct',
+    adjective: 'Conducting',
     shape: 'boolean',
     ticksAtEndOfRound: false,
     decay: 'none',
@@ -159,6 +166,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Poison: {
     id: 'Poison',
     name: 'Poison',
+    adjective: 'Poisoned',
     shape: 'timer',
     ticksAtEndOfRound: true,
     decay: 'none',
@@ -172,6 +180,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Haunt: {
     id: 'Haunt',
     name: 'Haunt',
+    adjective: 'Haunted',
     shape: 'boolean',
     ticksAtEndOfRound: false,
     decay: 'none',
@@ -201,6 +210,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Poised: {
     id: 'Poised',
     name: 'Poised',
+    adjective: 'Poised',
     shape: 'boolean',
     ticksAtEndOfRound: false,
     decay: 'none',
@@ -306,6 +316,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Beheld: {
     id: 'Beheld',
     name: 'Beheld',
+    adjective: 'Beheld',
     shape: 'duration',
     ticksAtEndOfRound: true,
     decay: 'none',
@@ -317,6 +328,7 @@ export const statuses: Record<string, StatusDefinition> = {
   Provoke: {
     id: 'Provoke',
     name: 'Provoke',
+    adjective: 'Provoking',
     shape: 'duration',
     // Duration 1 ticking at END of round = exactly the round it was cast in.
     ticksAtEndOfRound: true,

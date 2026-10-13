@@ -64,6 +64,8 @@ export type StatusRemovalReason = 'decay' | 'expired' | 'switch' | 'rest' | 'cle
 export interface StatusDefinition {
   id: StatusId;
   name: string;
+  /** What its holder is, for a condition read on a move ("vs Burning"); absent, the name stands. */
+  adjective?: string;
   shape: StatusShape;
   /** DoT/HoT/countdown tick point — locked to end of round (docs/conditions.md §7). */
   ticksAtEndOfRound: boolean;

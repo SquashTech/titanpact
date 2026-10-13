@@ -3411,4 +3411,8 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   The row keeps its own glyph; the rest stay sentences. **A conditional power row heads with its
   condition, not a keyword** (per user direction, the same day): "**vs Burn:** ×3 power", "**Last
   Charge:** ×1.5 power", "**Downpour:** ×2 power". An umbrella word ("Empowered" was tried) named
-  the payoff all 32 share and hid the condition, the half the player has to read.
+  the payoff all 32 share and hid the condition, the half the player has to read. A status condition
+  reads as what its holder is ("vs Burning", "vs Frozen", `StatusDefinition.adjective`), and **an
+  effect row carries a second line only to explain a status or a field it applies**, or to warn that
+  a buff or Shield would land nothing; rule notes ("read before the hit lands", "spent Charges stay
+  spent through a switch") were cut, per user direction, so Charges reads "**Charges:** 2".
