@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
@@ -9,6 +9,7 @@ import { MASTERY_CAP, MASTERY_EVOLUTION, canTakeMastery, crossesMastery } from '
 import { itemSlotsFor } from '../../run/progression';
 import { itemReceiptFor, type ItemReceipt } from '../../run/runProgress';
 import { shopItemPrice } from '../../run/shop';
+import type { EquipmentDefinition } from '../../run/equipment';
 import type { RosterEntry, RunState } from '../../run/state';
 import { statScaleFor } from '../../run/statScale';
 import { ItemBox, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS, slotBoxes } from '../shared/EquipmentBox';
@@ -54,12 +55,12 @@ function Price({ gold }: { gold: number }) {
   );
 }
 
-interface PreviewState {
+export interface PreviewState {
   hero: HeroDefinition;
   entry: RosterEntry;
 }
 
-function Preview({ run, preview, onClose }: { run: RunState; preview: PreviewState; onClose: () => void }) {
+export function Preview({ run, preview, onClose }: { run: RunState; preview: PreviewState; onClose: () => void }) {
   return (
     <HeroPreviewOverlay
       hero={preview.hero}
@@ -215,8 +216,20 @@ interface GearCounterProps {
   initialPick?: number;
 }
 
+interface GearGoodProps {
+  itemId: string;
+  picked: boolean;
+  isSold: boolean;
+  onPick: () => void;
+  onInspect: () => void;
+  /** What sits under the name: the price at the hall, the tier in the Cache. */
+  label?: ReactNode;
+  /** What a gone piece reads in place of the label. */
+  soldNote?: string;
+}
+
 /** A piece on the Gear counter: tap picks it, hold reads it whole. */
-function GearGood({ itemId, picked, isSold, onPick, onInspect }: { itemId: string; picked: boolean; isSold: boolean; onPick: () => void; onInspect: () => void }) {
+export function GearGood({ itemId, picked, isSold, onPick, onInspect, label, soldNote = 'Sold' }: GearGoodProps) {
   const item = equipment[itemId];
   const longPress = useLongPress(onInspect, isSold ? undefined : onPick);
   if (!item) return null;
@@ -234,10 +247,44 @@ function GearGood({ itemId, picked, isSold, onPick, onInspect }: { itemId: strin
       </span>
       <span className="counter-good-words">
         <span className="counter-good-name">{item.name}</span>
-        {isSold ? <span className="counter-good-price is-note">Sold</span> : <Price gold={shopItemPrice(item)} />}
+        {isSold ? <span className="counter-good-price is-note">{soldNote}</span> : (label ?? <Price gold={shopItemPrice(item)} />)}
       </span>
     </button>
   );
+}
+
+/** A hero's three sockets, the one a pick would fill or merge into lit in the colour it would come out. */
+export function GearSockets({ hero, entry, receipt, open }: { hero: HeroDefinition; entry: RosterEntry; receipt: ItemReceipt | undefined; open: boolean }) {
+  const mergeIndex = receipt?.kind === 'merge' ? entry.equipment.indexOf(receipt.heldItemId) : -1;
+  const freeIndex = receipt?.kind === 'take' ? entry.equipment.length : -1;
+  return (
+    <span className="equip-slot-row item-who-sockets">
+      {slotBoxes(entry.equipment, itemSlotsFor(hero, entry)).map((heldId, index) => {
+        const target = open && (index === mergeIndex || index === freeIndex);
+        return (
+          <ItemBox
+            key={index}
+            item={heldId ? (equipment[heldId] ?? null) : null}
+            className={target ? 'target' : undefined}
+            style={target && receipt?.kind === 'merge' ? ({ '--rarity-color': RARITY_COLOR_VARS[receipt.resultRarity] } as CSSProperties) : undefined}
+          />
+        );
+      })}
+    </span>
+  );
+}
+
+/** What every hero would do with the piece: take it, merge it, or nothing. */
+export function useItemReceipts(run: RunState, item: EquipmentDefinition | undefined) {
+  return useMemo(() => {
+    const out = new Map<string, ItemReceipt>();
+    if (!item) return out;
+    for (const entry of run.roster) {
+      const hero = rosterHeroes[entry.heroId];
+      if (hero) out.set(entry.rosterId, itemReceiptFor(entry, item, hero, equipment));
+    }
+    return out;
+  }, [run.roster, item]);
 }
 
 export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCounterProps) {
@@ -251,15 +298,7 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
   const item = pick !== null && !sold.includes(pick) ? equipment[itemIds[pick]] : undefined;
   const price = item ? shopItemPrice(item) : 0;
 
-  const receipts = useMemo(() => {
-    const out = new Map<string, ItemReceipt>();
-    if (!item) return out;
-    for (const entry of run.roster) {
-      const hero = rosterHeroes[entry.heroId];
-      if (hero) out.set(entry.rosterId, itemReceiptFor(entry, item, hero, equipment));
-    }
-    return out;
-  }, [run.roster, item]);
+  const receipts = useItemReceipts(run, item);
 
   useEffect(() => {
     if (!flare) return;
@@ -308,8 +347,6 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
           const receipt = receipts.get(entry.rosterId);
           const open = !!item && !!receipt && receipt.kind !== 'none' && run.gold >= price;
           const isArmed = armed === entry.rosterId;
-          const mergeIndex = receipt?.kind === 'merge' ? entry.equipment.indexOf(receipt.heldItemId) : -1;
-          const freeIndex = receipt?.kind === 'take' ? entry.equipment.length : -1;
           const cta = item ? ctaFor(receipt, isArmed) : `${entry.equipment.length}/${itemSlotsFor(hero, entry)}`;
           return (
             <HeroPickCard
@@ -323,25 +360,7 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
               ariaLabel={`${hero.name} — ${cta}`}
               ctaClassName={isArmed ? 'is-accent is-buy' : receipt?.kind === 'merge' && open ? 'is-accent is-merge' : open ? 'is-accent' : undefined}
               overlay={flare === entry.rosterId ? <span className="blessing-flare" aria-hidden="true" /> : undefined}
-              detail={
-                <span className="equip-slot-row item-who-sockets">
-                  {slotBoxes(entry.equipment, itemSlotsFor(hero, entry)).map((heldId, index) => {
-                    const target = open && (index === mergeIndex || index === freeIndex);
-                    return (
-                      <ItemBox
-                        key={index}
-                        item={heldId ? (equipment[heldId] ?? null) : null}
-                        className={target ? 'target' : undefined}
-                        style={
-                          target && receipt?.kind === 'merge'
-                            ? ({ '--rarity-color': RARITY_COLOR_VARS[receipt.resultRarity] } as CSSProperties)
-                            : undefined
-                        }
-                      />
-                    );
-                  })}
-                </span>
-              }
+              detail={<GearSockets hero={hero} entry={entry} receipt={receipt} open={open} />}
               cta={cta}
             />
           );

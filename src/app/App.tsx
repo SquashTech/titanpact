@@ -1627,7 +1627,6 @@ export function App() {
           run={playerRun}
           onRunChange={settlingRunChange(screen)}
           onContinue={() => handleNodeContinue(screen.nodeId)}
-          onClaimEquipment={(itemId) => handleClaimEquipment(screen.nodeId, itemId)}
           seed={screen.seed}
         />
       )}

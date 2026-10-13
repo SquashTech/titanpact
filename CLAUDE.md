@@ -118,8 +118,8 @@ don't silently override it.
 
 > **A fifth overhaul is BUILT, phases 1–2: `docs/gear-absorption.md`** (2026-09-15, per user
 > direction). **Gear is absorbed**: every item raises a who-screen the moment it arrives
-> (`ItemWhoScreen`, behind the level report after a fight, after the Cache pick, once per Loot
-> Pile item) and never comes off the hero it is given to; **three sockets for everyone**
+> (`ItemWhoScreen`, behind the level report after a fight, once per Loot
+> Pile item; the Cache seats its pick on its own screen since 2026-10-13) and never comes off the hero it is given to; **three sockets for everyone**
 > (`BASE_ITEM_SLOTS` = 3, `bonusItemSlots` and the Forge deleted); a same-family drop **merges
 > into the holder** one tier above the higher of the two, the held enchant surviving, the act
 > window not consulted (`mergeIntoHeld`); **Sell** is the who-screen's one decline, and a drop

@@ -56,8 +56,11 @@ NO hero can take the item at all, the screen is skipped and the item converts to
 spot; the victory overlay or cache reveal has already shown it, so nothing is hidden.
 
 **Where it fires.** After a fight, first in the post-fight chain behind the level report — the
-fight's own consequence, ahead of the Banner and everything under it. On the Equipment Cache,
-after the 1-of-3 pick. On a Loot Pile event, once per item, in sequence. Never from the Guild Hall
+fight's own consequence, ahead of the Banner and everything under it. **Not on the Equipment
+Cache** (2026-10-13, per user direction): the opened chest is laid out as the Guild Hall's Gear
+counter — the roster's sockets above, the three pieces below as icons, the one picked read whole
+between them — and a hero tap seats the piece there, so which piece and who are one screen; Sell
+stays the decline (`NodeRewardScreen.tsx` `CacheCounter`). On a Loot Pile event, once per item, in sequence. Never from the Guild Hall
 (§6). A contract hero arriving with a piece (§7) does not raise it — the piece is already on the
 hero.
 

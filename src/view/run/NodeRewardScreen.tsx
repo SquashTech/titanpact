@@ -6,19 +6,29 @@ import type { EquipmentDefinition } from '../../run/equipment';
 import { rarityWeightsFor } from '../../run/equipment';
 import { grantCurrencyReward, purseRangeFor, rollGoldRange } from '../../run/runProgress';
 import { grantContract } from '../../run/recruitment';
-import { NodeMotes, NODE_TINT_GOLD } from '../shared/NodeStage';
+import { NodeHeader, NodeMotes, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { seededRandom, withSeededRandom } from '../shared/seededRandom';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { useCoinCount } from '../shared/useCoinCount';
+import { rosterHeroes } from '../../data/content';
+import { equipment } from '../../data/equipment';
+import { itemSlotsFor } from '../../run/progression';
+import { absorbItem, sellItem, type ItemReceipt } from '../../run/runProgress';
+import { sellValueFor } from '../../run/shop';
+import type { RosterEntry } from '../../run/state';
+import { RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
+import { useArmedTap } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
+import { GearGood, GearSockets, Preview, useItemReceipts, type PreviewState } from './HallCounters';
 import { mapNodeIcon } from './mapNodeArt';
+import { MergeBurst } from './MergeBurst';
 import { RoadScene } from './RoadEncounter';
 import { RosterPeek } from './RosterPeek';
 import cacheOpen from '../../../art/cache/chest-open.png';
 
 import type { RewardNodeType } from '../../run/map';
-import { PlateButton } from '../shared/PlateButton';
 export type { RewardNodeType };
 
 /** The chest on the road (ms from mount): the map tile's chest drops in, rattles, bursts open. */
@@ -44,8 +54,6 @@ interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onContinue: () => void;
-  /** equipmentReward only: a claim hands straight off to the item gate (App.tsx), which seats or bags it. */
-  onClaimEquipment: (itemId: string) => void;
   /** Fixes what the purse or the chest holds, so a resumed run finds the same (docs/save-system.md D2). */
   seed: number;
 }
@@ -56,10 +64,10 @@ interface Props {
  * and swings open before offering its 3. The Gem nodes are not here: which hero takes a Gem IS
  * a decision (GemNodeScreen).
  */
-export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment, seed }: Props) {
+export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, seed }: Props) {
   if (nodeType === 'currencyReward') return <GoldOnTheRoad run={run} onRunChange={onRunChange} onContinue={onContinue} seed={seed} />;
   if (nodeType === 'contractReward') return <ContractOnTheRoad run={run} onRunChange={onRunChange} onContinue={onContinue} />;
-  return <EquipmentCache run={run} onClaimEquipment={onClaimEquipment} seed={seed} />;
+  return <EquipmentCache run={run} onRunChange={onRunChange} onContinue={onContinue} seed={seed} />;
 }
 
 /** Coins out of the pouch: x drift (px), peak height (px), delay (s). Golden-ratio spread, so no two land together. */
@@ -168,10 +176,8 @@ function ContractOnTheRoad({ run, onRunChange, onContinue }: Pick<Props, 'run' |
 }
 
 /** Chest on the road, then the three pieces. A tap on the road skips straight to them. */
-function EquipmentCache({ run, onClaimEquipment, seed }: Pick<Props, 'run' | 'onClaimEquipment' | 'seed'>) {
+function EquipmentCache({ run, onRunChange, onContinue, seed }: Pick<Props, 'run' | 'onRunChange' | 'onContinue' | 'seed'>) {
   const [choices] = useState<EquipmentDefinition[]>(() => withSeededRandom(seed, () => rollEquipmentDrops(3, rarityWeightsFor(run.actNumber, 'cache'))));
-  const [pickedItemId, setPickedItemId] = useState<string | null>(null);
-  const [inspectItemId, setInspectItemId] = useState<string | null>(null);
   const [phase, setPhase] = useState<'road' | 'flash' | 'burst' | 'open'>(() => (prefersReducedMotion() ? 'open' : 'road'));
 
   // One timer a phase, so a tap that skips ahead re-times everything after it.
@@ -216,53 +222,135 @@ function EquipmentCache({ run, onClaimEquipment, seed }: Pick<Props, 'run' | 'on
     );
   }
 
+  return <CacheCounter run={run} choices={choices} onRunChange={onRunChange} onContinue={onContinue} />;
+}
+
+type CacheOutcome = { itemId: string; rosterId: string; mergeId?: string } | { itemId: string; gold: number };
+
+/**
+ * The opened chest as the Guild Hall's Gear counter (HallCounters.tsx): the roster's builds above, the
+ * three pieces below, the one picked read whole between them. A hero tap seats it — the who-screen is
+ * this screen — and Sell is the one decline, as on the who-screen.
+ */
+function CacheCounter({ run, choices, onRunChange, onContinue }: { run: RunState; choices: EquipmentDefinition[] } & Pick<Props, 'onRunChange' | 'onContinue'>) {
+  const [pick, setPick] = useState<number | null>(null);
+  const [outcome, setOutcome] = useState<CacheOutcome | null>(null);
+  const [inspecting, setInspecting] = useState<EquipmentDefinition | null>(null);
+  const [burst, setBurst] = useState<string | null>(null);
+  const [preview, setPreview] = useState<PreviewState | null>(null);
+
+  const done = outcome !== null;
+  const item = pick !== null ? choices[pick] : undefined;
+  const receipts = useItemReceipts(run, done ? undefined : item);
+  const takenBy = outcome && 'rosterId' in outcome ? outcome.rosterId : null;
+  const shown = outcome && 'mergeId' in outcome && outcome.mergeId ? equipment[outcome.mergeId] : item;
+  const sellGold = item ? sellValueFor(item) : 0;
+  const sell = useArmedTap(() => {
+    if (!item || done) return;
+    playSfx('gold.coin');
+    onRunChange(sellItem(run, item.id, equipment));
+    setOutcome({ itemId: item.id, gold: sellGold });
+  }, true);
+
+  function handleHero(entry: RosterEntry) {
+    if (!item || done) return;
+    const receipt = receipts.get(entry.rosterId);
+    if (!receipt || receipt.kind === 'none') return;
+    onRunChange(absorbItem(run, entry.rosterId, item.id, equipment, rosterHeroes));
+    if (receipt.kind === 'merge') {
+      playSfx('discovery');
+      setBurst(receipt.resultId);
+      setOutcome({ itemId: item.id, rosterId: entry.rosterId, mergeId: receipt.resultId });
+    } else {
+      playSfx('equip');
+      setOutcome({ itemId: item.id, rosterId: entry.rosterId });
+    }
+  }
+
+  function ctaFor(entry: RosterEntry, receipt: ItemReceipt | undefined): string {
+    const hero = rosterHeroes[entry.heroId];
+    if (takenBy === entry.rosterId) return outcome && 'mergeId' in outcome && outcome.mergeId ? `${RARITY_LABELS[equipment[outcome.mergeId].rarity]}!` : 'Taken';
+    if (!item || done) return `${entry.equipment.length}/${itemSlotsFor(hero, entry)}`;
+    if (!receipt || receipt.kind === 'none') return receipt?.reason === 'ceiling' ? 'At its peak' : 'Full';
+    if (receipt.kind === 'merge') return `Merge → ${RARITY_LABELS[receipt.resultRarity]}`;
+    return 'Take';
+  }
+
+  const title = !outcome ? 'Choose One' : 'gold' in outcome ? `Sold for ${outcome.gold} gold` : outcome.mergeId ? 'Merged' : 'Absorbed';
+
   return (
-    <div className="node-screen rite-screen is-cache node-reward-screen" style={{ '--node-rgb': NODE_TINT_GOLD, '--rite-color': `rgb(${NODE_TINT_GOLD})` } as CSSProperties}>
+    <div className="node-screen cache-counter-screen" style={{ '--node-rgb': NODE_TINT_GOLD } as CSSProperties}>
       <span className="node-sky cache-ground" aria-hidden="true" />
-      <NodeMotes count={16} />
+      <NodeMotes count={12} />
       <RosterPeek run={run} />
 
-      {/* The chest the road just opened, still giving off its light; the three pieces rise out of it. */}
-      <header className="rite-head">
-        <span className="rite-place">
-          <span className="rite-pool" aria-hidden="true" />
-          <img src={cacheOpen} className="rite-place-art is-icon" alt="" draggable={false} />
-        </span>
-        <span className="rite-eyebrow">A Forgotten Chest</span>
-        <h2 className="rite-name">Choose One</h2>
-      </header>
+      <NodeHeader compact eyebrow="A Forgotten Chest" title={title} />
 
-      <div className="screen-scroll">
-        <div className="stage-centered">
-          <div className="equip-cache-list">
-            {choices.map((item, i) => (
-              <EquipChoiceCard
-                key={item.id}
-                item={item}
-                picked={pickedItemId === item.id}
-                onPick={() => setPickedItemId(pickedItemId === item.id ? null : item.id)}
-                onInspect={() => setInspectItemId(item.id)}
-                revealDelayMs={120 + i * 90}
+      <div className="hall-counter-room is-gear is-cache">
+        <HeroPickGrid count={run.roster.length} columns={run.roster.length > 4 ? 3 : 2} fill className="counter-roster">
+          {run.roster.map((entry) => {
+            const hero = rosterHeroes[entry.heroId];
+            const receipt = receipts.get(entry.rosterId);
+            const open = !!item && !done && !!receipt && receipt.kind !== 'none';
+            const cta = ctaFor(entry, receipt);
+            const isTaker = takenBy === entry.rosterId;
+            return (
+              <HeroPickCard
+                key={entry.rosterId}
+                hero={hero}
+                entry={entry}
+                disabled={(!!item && !open && !isTaker) || (done && !isTaker)}
+                className={[open ? 'is-offered' : '', isTaker ? 'is-blessed' : ''].filter(Boolean).join(' ') || undefined}
+                onActivate={open ? () => handleHero(entry) : () => setPreview({ hero, entry })}
+                onPreview={() => setPreview({ hero, entry })}
+                ariaLabel={`${hero.name} — ${cta}`}
+                ctaClassName={isTaker ? 'is-done' : receipt?.kind === 'merge' && open ? 'is-accent is-merge' : open ? 'is-accent' : undefined}
+                overlay={isTaker ? <span className="blessing-flare" aria-hidden="true" /> : undefined}
+                detail={<GearSockets hero={hero} entry={entry} receipt={receipt} open={open} />}
+                cta={cta}
               />
-            ))}
-          </div>
+            );
+          })}
+        </HeroPickGrid>
+
+        {/* The piece in hand, read whole, beside the three it was picked from. */}
+        <div className="counter-focus">
+          {shown && <EquipChoiceCard key={shown.id} item={shown} revealDelayMs={0} labelled onInspect={() => setInspecting(shown)} />}
+        </div>
+
+        <div className="counter-stock is-gear">
+          {choices.map((choice, i) => (
+            <GearGood
+              key={choice.id}
+              itemId={choice.id}
+              picked={pick === i}
+              isSold={done && outcome!.itemId !== choice.id}
+              soldNote="Left behind"
+              label={<span className="counter-good-tier" style={{ color: RARITY_COLOR_VARS[choice.rarity] }}>{RARITY_LABELS[choice.rarity]}</span>}
+              onPick={() => {
+                if (done) return;
+                playSfx('ui.pick');
+                setPick(pick === i ? null : i);
+              }}
+              onInspect={() => setInspecting(choice)}
+            />
+          ))}
         </div>
       </div>
 
-      <PlateButton
-        className="equip-cache-reveal-in"
-        style={{ animationDelay: `${120 + choices.length * 90}ms` } as CSSProperties}
-        disabled={!pickedItemId}
-        onClick={() => pickedItemId && onClaimEquipment(pickedItemId)}
-      >
-        {pickedItemId ? `Take — ${choices.find((i) => i.id === pickedItemId)?.name}` : 'Choose a piece'}
-      </PlateButton>
+      {done ? (
+        <button className="resolve-button" onClick={onContinue}>
+          Continue
+        </button>
+      ) : (
+        <button ref={sell.ref} className={`secondary-button cache-sell${sell.armed ? ' is-armed' : ''}`} disabled={!item} onClick={sell.onClick}>
+          {!item ? 'Choose a piece' : sell.armed ? 'Tap again to sell' : `Sell for ${sellGold} gold`}
+        </button>
+      )}
 
-      {inspectItemId &&
-        (() => {
-          const item = choices.find((i) => i.id === inspectItemId);
-          return item ? <EquipInspectOverlay item={item} onClose={() => setInspectItemId(null)} /> : null;
-        })()}
+      {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}
+      {inspecting && <EquipInspectOverlay item={inspecting} onClose={() => setInspecting(null)} />}
+      {preview && <Preview run={run} preview={preview} onClose={() => setPreview(null)} />}
     </div>
   );
 }

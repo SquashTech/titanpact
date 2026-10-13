@@ -38716,6 +38716,45 @@ img.smithy-service-art {
   animation: armed-pulse 0.9s ease-in-out infinite;
 }
 
+/* -- The Equipment Cache as a Gear counter (NodeRewardScreen.tsx): builds above, three pieces below. -- */
+.cache-counter-screen > .hall-counter-room {
+  position: relative;
+}
+
+/* Three pieces, not six: each gets the room for a bigger icon. */
+.hall-counter-room.is-cache .counter-good {
+  min-height: 104px;
+  padding-top: 6px;
+}
+
+.hall-counter-room.is-cache .counter-good-art,
+.hall-counter-room.is-cache .counter-good-art.is-piece .item-piece {
+  width: 56px;
+  height: 56px;
+}
+
+.hall-counter-room.is-cache .counter-good.is-gear .counter-good-name {
+  font-size: 12px;
+}
+
+.counter-good-tier {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  filter: brightness(0.7) saturate(1.3);
+}
+
+/* Sell stands where Continue will, as on the who-screen. */
+.cache-counter-screen > .cache-sell {
+  position: relative;
+  min-height: 68px;
+}
+
+.cache-counter-screen > .cache-sell.is-armed {
+  box-shadow: 0 0 0 2px #ffd88a, 0 0 12px rgba(255, 196, 92, 0.7);
+}
+
 /* -- The Tavern's notice board: 140x124 at 2x; posters pinned across it under its roof. -- */
 .hall-board {
   position: relative;
