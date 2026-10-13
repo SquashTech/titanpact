@@ -164,7 +164,7 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     title: 'Types',
     when: { minRound: 2 },
     pages: [
-      "Each enemy's name on a move shows how well it hits them. 2× deals double damage; 0.5× deals half.",
+      "The arrows under a move show how it hits each enemy, in the order they stand. Up is double, down is half; two arrows, four times or a quarter. One bar under both: it hits both.",
       "The icon before a move's name is its type. A move that shares a type with the hero using it deals 25% more.",
     ],
   },
@@ -189,7 +189,7 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     when: { enemyTypeOnField: 'Ancient' },
     pages: [
       'Every Guardian is Ancient. Ancient resists every type: every hit on it is halved.',
-      "A move strong against its other type only breaks even (1×); anything else hits it for half. The number beside its name on each move shows which.",
+      "A move strong against its other type only breaks even (1×); anything else hits it for half. The arrow under each move shows which.",
       'Ancient moves are resisted by nothing: every hit lands at full strength on every type.',
     ],
   },

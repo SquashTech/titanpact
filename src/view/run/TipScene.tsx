@@ -16,7 +16,6 @@ import { GuildHallPanel } from './GuildHallPanel';
 import { GearCounter, GemCounter } from './HallCounters';
 import { HallSigns } from './guildHallArt';
 import { CombatantCard } from '../combat/CombatantCard';
-import { formatMult, multClass } from '../combat/MoveDetailOverlay';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { MoveButtonReplica } from '../shared/MoveTile';
 import { ResourceGlyph } from '../shared/RunGlyph';
@@ -168,25 +167,17 @@ export function TipScene({ scene }: { scene: Scene }) {
             const authored = moves[id];
             if (!authored) return null;
             const move = moveForHero(authored, hero.hero);
-            const chips =
+            const seats =
               move.kind === 'damage' && foes.length > 0
-                ? foes.map(({ hero: h, combatant }) => {
-                    const mult = resolveTypeMult(typeChart, move.type, effectiveTypes(h, combatant));
-                    return (
-                      <span key={combatant.combatantId} className={`move-eff-chip ${multClass(mult)}`}>
-                        <span className="move-eff-name">{h.name}</span>
-                        <span className="move-eff-mult">{formatMult(mult)}</span>
-                      </span>
-                    );
-                  })
-                : null;
+                ? foes.map(({ hero: h, combatant }) => resolveTypeMult(typeChart, move.type, effectiveTypes(h, combatant)))
+                : undefined;
             const tag = scene.tags?.[id];
             return (
               <div key={id} className={`tip-scene-row${!focusRows || focusRows.includes(id) ? ' is-focus-row' : ''}`}>
                 <MoveButtonReplica
                   move={move}
                   caster={caster}
-                  lead={chips}
+                  matchups={seats}
                   tag={tag ? <span className="tip-scene-tag">{tag}</span> : undefined}
                 />
               </div>

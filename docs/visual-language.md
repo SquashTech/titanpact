@@ -3318,3 +3318,31 @@ That page is now labelled **Overview**, not Stats (same day, per user direction)
 the figure sits large in the Overview page's top-right corner beside Weak / Resists
 (`PowerReadout`, `StatBars.tsx`), with no "+N" — the draft stage and the Collection showcase say
 Power too. Same sum, same 550 rule; only the name and the seat changed.
+
+## Move row: stub and strip (2026-10-12)
+
+Per user direction, after three side-by-side comparison pages. The move row splits into zones,
+in the spirit of a Hearthstone card's cost / attack / health corners:
+
+- **The stub** (`MoveStub`, `MoveStrip.tsx`) is a tab scored off the row's right end, spanning
+  both lines and washed in the move's kind colour (physical, magical, heal, buff, debuff). It holds the
+  kind glyph over the number the move delivers: live Base Power (with the Force ▲ and a ×N for
+  multi-hit), a rolled range out of a fight, or the resolved heal. A buff or debuff has no number,
+  so its glyph takes the stub alone. This reverses the second pass's "the gem is the ONE object
+  inside the button": a row now holds two, one at each end, cost and payoff.
+- **The strip** replaces the worded second line. An attack leads with **the enemies' seats**: one
+  matchup arrow per enemy slot, left to right as they stand, each on a short lit bar. A move that
+  hits both draws one brighter bar under the pair, so the "Spread" chip is gone. A downed foe's
+  seat stays empty, so the other arrow never slides under the wrong enemy. Neutral is a dim dot.
+  Every other move leads with **the board**: four cells, enemies on top and your side below,
+  filled = always hit, hollow = pick one, gold = the caster at its own slot.
+- **Riders are glyphs**: a status in its own icon and colour, a stat stage as the stat's glyph and
+  its chevrons, priority as the Speed glyph and its sign. A rider landing somewhere other than the
+  move's target carries a small board. Rare clauses (retribution, rolls, partner and field
+  conditions) stay as words (`moveEffectSummary(…, { condensed: true })`).
+- **Matchup tiers, glow / fade**: ×2 and ×0.5 keep the HP green and red; ×4 is a brighter green
+  with a glow (`--eff-quad-super`) and ×0.25 a receding red (`--eff-quad-resist`), both drawn as
+  doubled arrows. The targeting cards' glow, the forecast and the eff chips use the same two.
+- The name went 13 → 15px and the gem 24 → 26px with the room the words gave back. The exact
+  multiplier is one tap later, on each enemy card in the targeting panel; a hold still opens the
+  dossier in words.

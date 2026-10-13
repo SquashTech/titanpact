@@ -30,6 +30,9 @@
   --hp-high: #4caf6a;
   --hp-mid: #d9a441;
   --hp-low: #d9534f;
+  /* The stacked matchup tiers: ×4 a brighter green, ×0.25 a red that recedes. */
+  --eff-quad-super: #7dffa0;
+  --eff-quad-resist: #a8474b;
   --mana: #4a90d9;
   /* Mana held ABOVE the pool (docs/mana.md "Overflow", Arcane's manaGrant).
      A brighter, cooler relative of --mana rather than a fourth unrelated hue:
@@ -4203,7 +4206,7 @@ textarea,
 }
 
 .combatant-card.eff-quad-super::after {
-  background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(76, 175, 106, 0.6) 0%, rgba(76, 175, 106, 0.24) 48%, rgba(76, 175, 106, 0) 78%);
+  background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(125, 255, 160, 0.55) 0%, rgba(125, 255, 160, 0.22) 48%, rgba(125, 255, 160, 0) 78%);
 }
 
 .combatant-card.eff-resist::after {
@@ -4211,7 +4214,7 @@ textarea,
 }
 
 .combatant-card.eff-quad-resist::after {
-  background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(217, 83, 79, 0.55) 0%, rgba(217, 83, 79, 0.22) 48%, rgba(217, 83, 79, 0) 78%);
+  background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(168, 71, 75, 0.5) 0%, rgba(168, 71, 75, 0.2) 48%, rgba(168, 71, 75, 0) 78%);
 }
 
 .combatant-card.selected {
@@ -7415,20 +7418,6 @@ textarea,
   transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
-/* The power readout is a right-aligned column in the list, not a chip that
-   floats wherever the text ends — see .move-power-empty below for the row that
-   has no number. Width is set by the widest real value (a three-digit power),
-   so nothing in the column can push the type code out of line. */
-.move-list .move-power {
-  min-width: 30px;
-  text-align: right;
-}
-
-.move-power-empty {
-  /* Reserves the column, draws nothing. */
-  visibility: hidden;
-}
-
 /* A list row rather than a tile. Padding drops on the vertical axis because
    the row's height now comes from the grid track, not from the button's own
    box — the 9.7px above existed to make the move panel's total height match
@@ -7752,65 +7741,289 @@ textarea,
   white-space: nowrap;
 }
 
-/* Damage moves: the live matchup against every enemy still standing. Two
- * entries in a doubles fight, which is what makes this affordable inline at
- * all — the same readout on a 4v4 roster screen would need a table. */
-.move-eff-row {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-  min-width: 0;
+/* ---------------------------------------------------------------------------
+ * The ticket stub and the strip (MoveStrip.tsx, docs/visual-language.md
+ * "Move row: stub and strip"). The payoff is scored off the row's right end;
+ * the second line says who it reaches and what it leaves, in glyphs.
+ * ------------------------------------------------------------------------- */
+.move-button.has-stub {
+  position: relative;
   overflow: hidden;
 }
 
-.move-eff-chip {
+.move-button.has-stub,
+.move-list .move-button.has-stub {
+  padding-right: 62px;
+}
+
+.move-button.has-stub .move-name {
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+
+.move-button.has-stub .move-row-top .mana-gem {
+  width: 26px;
+  height: 26px;
+}
+
+.move-button.has-stub .move-row-top .mana-gem-value {
+  font-size: 13px;
+}
+
+.move-button.has-stub .move-row-effect {
+  /* 26px gem + the top row's 6px gap: the strip starts under the name. */
+  padding-left: 32px;
+  min-height: 16px;
+}
+
+.move-stub {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--stub-color);
+  /* A groove scored down the row, then the kind's own wash. */
+  background: linear-gradient(180deg, rgba(var(--stub-rgb), 0.22), rgba(var(--stub-rgb), 0.08));
+  box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.55), inset 2px 0 0 rgba(255, 255, 255, 0.05);
+  transition: background var(--dur-mid) var(--ease-out);
+}
+
+.move-stub.stub-physical { --stub-color: var(--physical); --stub-rgb: 217, 114, 74; }
+.move-stub.stub-magical { --stub-color: var(--magical); --stub-rgb: 139, 127, 224; }
+.move-stub.stub-heal { --stub-color: var(--hp-high); --stub-rgb: 76, 175, 106; }
+.move-stub.stub-buff { --stub-color: var(--buff); --stub-rgb: 63, 184, 175; }
+.move-stub.stub-debuff { --stub-color: var(--hp-low); --stub-rgb: 217, 83, 79; }
+
+.move-stub .move-stub-glyph {
+  width: 13px;
+  height: 13px;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+}
+
+/* No number to stand over, so the glyph takes the stub alone. */
+.move-stub.is-bare .move-stub-glyph {
+  width: 20px;
+  height: 20px;
+}
+
+.move-stub-value {
   display: inline-flex;
   align-items: baseline;
-  gap: 3px;
-  min-width: 0;
-}
-
-.move-eff-name {
-  min-width: 0;
-  max-width: 82px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  opacity: 0.72;
-}
-
-/* The multiplier is the number being read; the name is only there to say
-   which enemy it belongs to. Weight and color both go on the numeral. */
-.move-eff-mult {
-  flex-shrink: 0;
+  font-size: 18px;
   font-weight: 800;
+  line-height: 1;
+  color: var(--text);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
 }
 
-.move-eff-chip.eff-neutral .move-eff-mult {
+/* A rolled range ("50–150") out of a fight. */
+.move-stub-value.is-long {
+  font-size: 12px;
+  letter-spacing: -0.03em;
+}
+
+.move-stub-boost {
+  font-size: 8px;
+  margin-left: 1px;
+  color: var(--buff);
+  align-self: flex-start;
+}
+
+.move-stub-hits {
+  font-size: 9px;
+  font-weight: 800;
+  margin-left: 1px;
   color: var(--text-dim);
 }
 
-.move-eff-chip.eff-super .move-eff-mult,
-.move-eff-chip.eff-quad-super .move-eff-mult {
-  color: var(--hp-high);
+.move-list .move-button.selected .move-stub {
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.25), rgba(224, 166, 60, 0.1));
 }
 
-.move-eff-chip.eff-resist .move-eff-mult,
-.move-eff-chip.eff-quad-resist .move-eff-mult {
+.move-strip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10px;
+}
+
+.move-strip .move-eff-priority {
+  align-items: center;
+}
+
+.move-strip .move-eff-priority .stat-glyph {
+  top: 0;
+  width: 12px;
+  height: 12px;
+}
+
+/* The enemies' seats, left to right as they stand. A seat is a short lit bar
+   under its arrow; a move that hits both draws one brighter bar under the pair. */
+.move-seats {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 4px;
+  padding-bottom: 3px;
+}
+
+.move-seat {
+  position: relative;
+  width: 22px;
+  height: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.move-seat::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: -3px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* A downed foe's seat keeps its place, so the other arrow stays under its own enemy. */
+.move-seat.is-empty::after {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.move-seats.is-spread::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.move-seats.is-spread .move-seat::after {
+  display: none;
+}
+
+.move-seats.is-random .move-seat::after {
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0 3px, transparent 3px 5px);
+}
+
+.move-seat-arrow {
+  display: inline-flex;
+  align-items: center;
+  color: var(--seat-color);
+}
+
+.move-seat-arrow svg {
+  width: 12px;
+  height: 12px;
+}
+
+.move-seat-arrow.is-double svg {
+  width: 9px;
+  margin: 0 -1.5px;
+}
+
+.move-seat-arrow.eff-super { --seat-color: var(--hp-high); }
+.move-seat-arrow.eff-resist { --seat-color: var(--hp-low); }
+.move-seat-arrow.eff-quad-super {
+  --seat-color: var(--eff-quad-super);
+  filter: drop-shadow(0 0 3px rgba(125, 255, 160, 0.8));
+}
+.move-seat-arrow.eff-quad-resist { --seat-color: var(--eff-quad-resist); }
+
+.move-seat-arrow.eff-neutral::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* The doubles board: enemies on top, your side below. Filled is always hit,
+   hollow is pick one, gold is the caster. */
+.target-board {
+  display: inline-grid;
+  grid-template-columns: 6px 6px;
+  grid-template-rows: 6px 6px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.target-board i {
+  border-radius: 1.5px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.target-board i.is-hit {
+  background: var(--text);
+}
+
+.target-board i.is-pick {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.2px var(--text);
+}
+
+.target-board.is-random i.is-pick {
+  box-shadow: inset 0 0 0 1.2px rgba(237, 239, 244, 0.5);
+}
+
+.target-board i.is-you {
+  background: var(--accent);
+}
+
+.target-board.is-small {
+  grid-template-columns: 4px 4px;
+  grid-template-rows: 4px 4px;
+  gap: 1px;
+  margin-left: 2px;
+}
+
+/* A status in its own glyph and colour, a stage as the stat's glyph and its chevrons. */
+.move-rider {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.move-rider .move-rider-glyph {
+  width: 13px;
+  height: 13px;
+  vertical-align: 0;
+}
+
+.move-rider-odds,
+.move-rider-amount {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.move-rider-chevrons {
+  font-size: 9px;
+  letter-spacing: -1px;
+}
+
+.move-rider-chevrons.is-up {
+  color: var(--buff);
+}
+
+.move-rider-chevrons.is-down {
   color: var(--hp-low);
-}
-
-/* 4x / 0.25x are the two tiers .eff-chip escalates with a filled tint. Here
-   the escalation is a glow on the numeral instead — same two-step hierarchy
-   (ordinary super/resist is colored, a stacked one shouts), without the fill
-   that would make it a box. */
-.move-eff-chip.eff-quad-super .move-eff-mult {
-  text-shadow: 0 0 7px rgba(76, 175, 106, 0.75);
-}
-
-.move-eff-chip.eff-quad-resist .move-eff-mult {
-  text-shadow: 0 0 7px rgba(217, 83, 79, 0.7);
 }
 
 /* A damage move that also lands a status — the one thing the matchup row
@@ -8057,9 +8270,7 @@ textarea,
    `position` rather than `transform`: a translate would resample the text.
    :has() rather than a blanket rule so Rest — whose row is a lone centred
    word with no object in it to align to — keeps its own centring. */
-.move-row-top:has(.mana-gem, .move-type-code) .move-name,
-.move-row-top:has(.mana-gem, .move-type-code) .move-power,
-.move-row-mid .move-power {
+.move-row-top:has(.mana-gem, .move-type-code) .move-name {
   position: relative;
   top: -1px;
 }
@@ -8158,61 +8369,6 @@ textarea,
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
 }
 
-/* Base Power is one of the two numbers a player is actually choosing
-   between (with mana cost) — sized and colored to stand out from the
-   surrounding dim 10px meta row instead of reading as just more meta text.
-   Bumped up now that removing the per-target effectiveness row (moved to
-   the targeting panel, CombatantCard's effBadge) freed vertical room. */
-/* Power sits flush against the Physical/Magical glyph, the pair pushed to the
-   row's end: the glyph is the unit, so the number needs no "BP" beside it. */
-.move-row-top .move-power-pair {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
-  margin-left: auto;
-}
-
-.move-row-top .move-power-pair .move-kind-badge {
-  margin-left: 0;
-}
-
-.move-power {
-  white-space: nowrap;
-  color: var(--accent);
-}
-
-.move-power strong {
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7), 0 0 6px rgba(0, 0, 0, 0.45);
-}
-
-.move-power.move-heal {
-  color: var(--hp-high);
-}
-
-/* Elemental Force's live "this move is currently boosted" cue — recolors the
-   BP number itself (already move.basePower + forceBonus) instead of adding
-   a separate "+10 Force" text chip next to it, so the boost reads at a
-   glance without extra words crowding the move-row-mid line. The "why" is
-   still available via the span's title attribute (long-press/hover). --buff
-   (teal, already the kind-buff category-badge color) rather than --hp-high —
-   that green is HEAL's identity color, and a boosted damage number sitting
-   right next to an actual heal number in the same row read as the same
-   thing at a glance. */
-.move-power.move-boosted {
-  color: var(--buff);
-}
-
-.move-boosted-arrow {
-  font-size: 8px;
-  margin-left: 1px;
-  vertical-align: super;
-}
-
 .eff-chip {
   font-size: 10px;
   font-weight: 700;
@@ -8242,18 +8398,18 @@ textarea,
 
 /* Dual-type stacking (CLAUDE.md: TypeMult multiplies across a defender's
    types) can push a matchup to 4× or floor it at 0.25× — a filled tint on
-   top of the plain super/resist text color, rather than a third hue, so
-   these read as "more of the same direction" instead of a new category. */
+   top of a brighter green or a receding red, so these read as "more of the
+   same direction" instead of a new category. */
 .eff-chip.eff-quad-super {
-  color: var(--hp-high);
-  background: rgba(76, 175, 106, 0.28);
-  box-shadow: 0 0 0 1px rgba(76, 175, 106, 0.5) inset;
+  color: var(--eff-quad-super);
+  background: rgba(125, 255, 160, 0.2);
+  box-shadow: 0 0 0 1px rgba(125, 255, 160, 0.5) inset;
 }
 
 .eff-chip.eff-quad-resist {
-  color: var(--hp-low);
-  background: rgba(217, 83, 79, 0.24);
-  box-shadow: 0 0 0 1px rgba(217, 83, 79, 0.5) inset;
+  color: var(--eff-quad-resist);
+  background: rgba(168, 71, 75, 0.22);
+  box-shadow: 0 0 0 1px rgba(168, 71, 75, 0.5) inset;
 }
 
 /* Effectiveness readout on a targeting-panel card (CombatantCard's
@@ -24986,22 +25142,21 @@ button.evo-gift-card {
   color: var(--text-dim);
 }
 
-.move-forecast-mult.eff-super,
-.move-forecast-mult.eff-quad-super {
+.move-forecast-mult.eff-super {
   color: var(--hp-high);
 }
 
-.move-forecast-mult.eff-resist,
-.move-forecast-mult.eff-quad-resist {
+.move-forecast-mult.eff-resist {
   color: var(--hp-low);
 }
 
 .move-forecast-mult.eff-quad-super {
-  text-shadow: 0 0 7px rgba(76, 175, 106, 0.75);
+  color: var(--eff-quad-super);
+  text-shadow: 0 0 7px rgba(125, 255, 160, 0.75);
 }
 
 .move-forecast-mult.eff-quad-resist {
-  text-shadow: 0 0 7px rgba(217, 83, 79, 0.7);
+  color: var(--eff-quad-resist);
 }
 
 .move-forecast-meter {
@@ -27060,11 +27215,6 @@ button.evo-gift-card {
   flex: 0 0 52%;
 }
 
-.tip-scene.focus-matchups .move-eff-chip {
-  margin-right: 6px;
-  padding: 0 4px;
-}
-
 .tip-scene > .field-effect-badge {
   position: static;
   align-self: center;
@@ -27095,7 +27245,6 @@ button.evo-gift-card {
 
 .tip-scene.focus-manaGem .is-focus-row .mana-gem,
 .tip-scene.focus-mpBar .tip-scene-hero .resource + .resource,
-.tip-scene.focus-kindBadge .is-focus-row .move-kind-badge,
 .tip-scene.focus-typeIcon .is-focus-row .move-type-code,
 .tip-scene.focus-heroTypes .tip-scene-hero .combatant-types,
 .tip-scene.focus-foeTypes .tip-scene-foes .combatant-types,
@@ -27129,7 +27278,8 @@ button.evo-gift-card {
 }
 
 /* Inside a move row, which clips: the ring is drawn inward instead. */
-.tip-scene.focus-matchups .is-focus-row .move-eff-chip,
+.tip-scene.focus-matchups .is-focus-row .move-seats,
+.tip-scene.focus-kindBadge .is-focus-row .move-stub,
 .tip-scene.focus-move .is-focus-row .move-button {
   border-radius: 4px;
   box-shadow: inset 0 0 0 2px var(--accent);
@@ -29519,9 +29669,9 @@ button.evo-gift-card {
   padding-bottom: 8px;
 }
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-name {
-  font-size: 15px;
+  font-size: 16px;
 }
-.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-power strong {
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-stub-value {
   font-size: 20px;
 }
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-type-code .element-glyph {
@@ -29641,9 +29791,9 @@ button.evo-gift-card {
   font-size: 13px;
 }
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-name {
-  font-size: 16px;
+  font-size: 17px;
 }
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-power strong {
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-stub-value {
   font-size: 21px;
 }
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-type-code .element-glyph {

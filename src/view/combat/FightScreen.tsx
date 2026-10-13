@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
+import { STAT_ORDER } from '../../engine/content';
 import { allCombatants } from '../../data/content';
 import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
@@ -86,7 +86,7 @@ import { HeroDetailOverlay } from './HeroDetailOverlay';
 import { SwitchInPanel, type SwitchOption } from './SwitchInPanel';
 import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
 import { FightResultOverlay } from './FightResultOverlay';
-import { MoveDetailOverlay, formatMult, multClass } from './MoveDetailOverlay';
+import { MoveDetailOverlay, multClass } from './MoveDetailOverlay';
 import { forecastMove } from './forecast';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
@@ -97,7 +97,8 @@ import { playBeatSfx } from '../../audio/beatSfx';
 import { setMusicRate } from '../../audio/music';
 import { getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
-import { MoveButtonReplica, MoveKindBadge, MoveTraitChips, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderTargetLabel, useLongPress } from '../shared/MoveTile';
+import { MoveButtonReplica, MovePriorityChip, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderMagnitude, useLongPress } from '../shared/MoveTile';
+import { EnemySeats, MoveRiderIcons, MoveStub, TargetBoard, aimsAtEnemies } from '../shared/MoveStrip';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
@@ -105,7 +106,6 @@ import { ChargePips } from '../shared/ChargePips';
 import { MoveKindGlyph } from '../shared/statIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_LABELS } from '../shared/StatBars';
-import { stageText } from '../shared/moveKind';
 import { HubGlyph } from '../shared/nodeIcons';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { useAmbientLocation } from '../shared/LocationContext';
@@ -118,13 +118,6 @@ import { ENDBRINGER_ID, EYE_IDS, isTitanEye } from '../../data/enemies';
 import type { LocationDefinition } from '../../data/locations';
 import type { Gem } from '../../run/gems';
 import { PlateButton } from '../shared/PlateButton';
-
-/** One enemy's live matchup for a move row, precomputed by FightScreen so MoveRow needs no combat state of its own. */
-interface MoveMatchup {
-  id: string;
-  name: string;
-  mult: number;
-}
 
 /** Every live figure is resolved by the caller (it holds the Combatant and the board); the row only renders. */
 interface MoveRowProps {
@@ -151,7 +144,10 @@ interface MoveRowProps {
   /** What the move will actually target (resolveTargetMode) — differs from `move.target` under conditionalTarget. */
   liveTargetMode: MoveDefinition['target'];
   caster: HealCaster;
-  matchups: readonly MoveMatchup[];
+  /** Each enemy seat's multiplier, left to right; null where the seat is empty. Empty for a move that is not an attack. */
+  seats: readonly (number | null)[];
+  /** The caster's own slot, for the target board's gold cell. */
+  youSlot: 0 | 1;
   /** The metamorphic move this row is this round's face of (Motley's Trick), for the tag over its name. */
   faceOf?: MoveDefinition;
   /** The holder, for the move's Charge pips. */
@@ -164,7 +160,7 @@ interface MoveRowProps {
 
 // Lifted out of the `.map()` because useLongPress is a hook. Unaffordable rows are
 // `.is-unaffordable` + aria-disabled rather than `disabled` so a hold still opens the dossier.
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, matchups, faceOf, chargeHolder, restoredCharges, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, seats, youSlot, faceOf, chargeHolder, restoredCharges, onSelect, onInspect }: MoveRowProps) {
   const usable = affordable && !gateUnmet;
   const spent = chargesLeft(chargeHolder, move) === 0;
   const longPress = useLongPress(onInspect, () => {
@@ -178,10 +174,11 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
   // A ramp that has actually accrued reads as boosted; the first cast, still at its authored figure, does not.
   const ramped = move.basePowerGainOnUse != null && rolledBasePower != null && rolledBasePower > (move.basePower ?? 0);
   const boosted = forceBonus > 0 || rolledHigh || ramped;
+  const summary = move.kind === 'damage' ? '' : moveEffectSummary(move, caster, { condensed: true });
 
   return (
     <button
-      className={`move-button${selected ? ' selected' : ''}${usable ? '' : ' is-unusable'}${affordable ? '' : ' is-unaffordable'}${spent ? ' is-spent' : ''}${faceOf ? ' is-trick-face' : ''}`}
+      className={`move-button has-stub${selected ? ' selected' : ''}${usable ? '' : ' is-unusable'}${affordable ? '' : ' is-unaffordable'}${spent ? ' is-spent' : ''}${faceOf ? ' is-trick-face' : ''}`}
       style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
       aria-disabled={!usable}
       {...longPress}
@@ -196,64 +193,19 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
           {move.name}
         </span>
         <ChargePips move={move} combatant={chargeHolder} restored={restoredCharges} />
-        <span className="move-power-pair">
-        {move.kind === 'damage' && (move.basePower ?? rolledBasePower) != null && (
-          <span
-            className={`move-power${boosted ? ' move-boosted' : ''}`}
-            title={
-              rolledBasePower != null && move.randomBasePower != null
-                ? `Rolled this round: ${rolledBasePower} of ${move.randomBasePower.min}-${move.randomBasePower.max}${forceBonus > 0 ? ` · Base Power bonus: +${forceBonus}` : ''}`
-                : move.basePowerGainOnUse != null
-                ? `Stacked to ${rolledBasePower ?? move.basePower} of ${move.basePowerGainOnUse.max} this fight${forceBonus > 0 ? ` · Base Power bonus: +${forceBonus}` : ''}`
-                : forceBonus > 0
-                  ? `Base Power bonus: +${forceBonus}`
-                  : undefined
-            }
-          >
-            <strong>{(rolledBasePower ?? move.basePower ?? 0) + forceBonus}</strong>
-            {boosted && <span className="move-boosted-arrow">▲</span>}
-          </span>
-        )}
-        {heal && (
-          <span className="move-power move-heal">
-            <strong>{heal.value}</strong>
-          </span>
-        )}
-        {/* Holds the power slot open so buff rows align with damage and heal rows. */}
-        {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
-        <MoveKindBadge move={move} />
-        </span>
       </div>
       {/* Always rendered, so a row's height never depends on its contents. */}
       <div className="move-row-effect">
         {move.kind === 'damage' ? (
-          <span className="move-eff-row">
-            {/* The matchups lead on a damage move so the two enemy names start at the same x on
-                every row; priority and spread fall in behind them with the riders. */}
-            {matchups.map(({ id, name, mult }) => (
-              <span key={id} className={`move-eff-chip ${multClass(mult)}`}>
-                <span className="move-eff-name">{name}</span>
-                <span className="move-eff-mult">{formatMult(mult)}</span>
-              </span>
-            ))}
-            <MoveTraitChips move={move} liveTargetMode={liveTargetMode} />
-            {statusApplicationsOf(move).map((app) => {
-              const where = riderTargetLabel(app);
-              return (
-                <span key={app.statusId} className="move-eff-status">
-                  {app.chance != null ? `${Math.round(app.chance * 100)}% ` : '+'}
-                  {app.statusId}
-                  {where ? ` (${where})` : ''}
-                </span>
-              );
-            })}
-            {move.statDeltas?.map(({ stat, stages }, i) => (
-              <span key={stat} className="move-eff-status">
-                {/* One roll gates the whole list, so the odds print once. */}
-                {move.statDeltaChance != null && i === 0 ? `${Math.round(move.statDeltaChance * 100)}% ` : ''}
-                {stageText(stat, stages)}
-              </span>
-            ))}
+          <span className="move-strip">
+            {aimsAtEnemies(liveTargetMode) ? (
+              <EnemySeats mults={seats} target={liveTargetMode} />
+            ) : (
+              <TargetBoard target={liveTargetMode} youSlot={youSlot} />
+            )}
+            {liveTargetMode === 'allOthers' && <TargetBoard target="allOthers" youSlot={youSlot} />}
+            <MovePriorityChip move={move} />
+            <MoveRiderIcons move={move} amountOf={(app) => riderMagnitude(move, app, caster)} youSlot={youSlot} />
             {move.clearsRaisedStages && <span className="move-eff-status">Clears raised stats</span>}
             {move.mpRegenGrant != null && (
               <span className="move-eff-status">
@@ -374,9 +326,11 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
             )}
           </span>
         ) : (
-          <span className="move-eff-row">
-            <MoveTraitChips move={move} liveTargetMode={liveTargetMode} />
-            <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>
+          <span className="move-strip">
+            <TargetBoard target={liveTargetMode} youSlot={youSlot} />
+            <MovePriorityChip move={move} />
+            <MoveRiderIcons move={move} amountOf={(app) => riderMagnitude(move, app, caster)} youSlot={youSlot} />
+            {summary && <span className="move-effect-text">{summary}</span>}
             {move.selfHpCost != null && <span className="move-eff-status">-{selfHpCost} HP</span>}
             {move.conditionalStatDeltas && (
               <span className={`move-eff-status${packBonusActive ? '' : ' move-eff-unmet'}`}>
@@ -388,6 +342,22 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
           </span>
         )}
       </div>
+      <MoveStub
+        move={move}
+        value={move.kind === 'damage' ? (rolledBasePower ?? move.basePower ?? 0) + forceBonus : heal?.value}
+        boosted={move.kind === 'damage' && boosted}
+        title={
+          move.kind !== 'damage'
+            ? undefined
+            : rolledBasePower != null && move.randomBasePower != null
+              ? `Rolled this round: ${rolledBasePower} of ${move.randomBasePower.min}-${move.randomBasePower.max}${forceBonus > 0 ? ` · Base Power bonus: +${forceBonus}` : ''}`
+              : move.basePowerGainOnUse != null
+                ? `Stacked to ${rolledBasePower ?? move.basePower} of ${move.basePowerGainOnUse.max} this fight${forceBonus > 0 ? ` · Base Power bonus: +${forceBonus}` : ''}`
+                : forceBonus > 0
+                  ? `Base Power bonus: +${forceBonus}`
+                  : undefined
+        }
+      />
     </button>
   );
 }
@@ -2165,15 +2135,14 @@ export function FightScreen({
                         liveTargetMode={resolveTargetMode(combat, move)}
                         caster={caster}
                         faceOf={trick}
-                        matchups={
+                        seats={
                           move.kind === 'damage'
-                            ? enemyActiveAlive.map((eid) => ({
-                                id: eid,
-                                name: allCombatants[combat.combatants[eid].heroId].name,
-                                mult: effectivenessAgainst(move, eid),
-                              }))
+                            ? combat.active[AI_SIDE].map((eid) =>
+                                eid && !combat.combatants[eid].fainted ? effectivenessAgainst(move, eid) : null
+                              )
                             : []
                         }
+                        youSlot={combat.active[PLAYER_SIDE][1] === id ? 1 : 0}
                         onSelect={() => handleMoveClick(id, move)}
                         onInspect={() => setMovePopup({ combatantId: id, move })}
                       />

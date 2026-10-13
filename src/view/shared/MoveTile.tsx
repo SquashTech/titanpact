@@ -16,6 +16,7 @@ import { ManaCost } from './ManaCost';
 import { ChargePips } from './ChargePips';
 import { playSfx } from '../../audio/sfx';
 import { statusAmountText } from './statusFacts';
+import { EnemySeats, MoveRiderIcons, MoveStub, TARGET_MODE_LABELS, TargetBoard, aimsAtEnemies } from './MoveStrip';
 
 // --- Hold-to-inspect gesture ---
 
@@ -144,74 +145,7 @@ export function chargesLabel(n: number): string {
   return `${n} Charge${n === 1 ? '' : 's'}`;
 }
 
-/** Canonical player-facing name per TargetMode; FightScreen's targeting copy reads this too. */
-export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
-  singleEnemy: 'Single Enemy',
-  bothEnemies: 'Both Enemies',
-  singleAlly: 'Single Ally',
-  bothAllies: 'Both Allies',
-  self: 'Self',
-  allOthers: 'All',
-  randomAlly: 'Random Ally',
-  randomEnemy: 'Random Enemy',
-};
-
-// Random modes are not spread: exactly one combatant is drawn.
-const SPREAD_TARGET_MODES: ReadonlySet<MoveDefinition['target']> = new Set(['bothEnemies', 'bothAllies', 'allOthers']);
-
-export function isSpreadTarget(target: MoveDefinition['target']): boolean {
-  return SPREAD_TARGET_MODES.has(target);
-}
-
-/**
- * Priority bracket and spread: these say whether and how the move lands, where rider chips say what
- * happens when it does. Placement is the caller's — a damage row puts the matchups first so the two
- * enemy names start at the same x on every row, and these fall in behind them. `liveTargetMode` is
- * the board's answer for a conditional target; omit outside combat.
- */
-export function MoveTraitChips({
-  move,
-  liveTargetMode,
-}: {
-  move: MoveDefinition;
-  liveTargetMode?: MoveDefinition['target'];
-}) {
-  const target = liveTargetMode ?? move.target;
-  // A randomPriority move's authored `priority` is dead; the row already carries a chip saying so.
-  const bracket = move.randomPriority?.length ? 0 : move.priority;
-  const hits = move.hitCount ?? 1;
-  if (!bracket && !isSpreadTarget(target) && hits === 1) return null;
-  return (
-    <>
-      {bracket !== 0 && (
-        <span
-          className={`move-eff-trait move-eff-priority${bracket > 0 ? ' is-fast' : ' is-slow'}`}
-          title={
-            bracket > 0
-              ? `Priority +${bracket} — resolves before every priority-0 move, whatever the Speed`
-              : `Priority ${bracket} — resolves after every priority-0 move, whatever the Speed`
-          }
-        >
-          <StatGlyph stat="speed" tone="inherit" />
-          {bracket > 0 ? `+${bracket}` : bracket}
-        </span>
-      )}
-      {isSpreadTarget(target) && (
-        <span className="move-eff-trait" title={`Spread — hits ${TARGET_MODE_LABELS[target]}, at no damage penalty`}>
-          ⇉ Spread
-        </span>
-      )}
-      {hits > 1 && (
-        <span
-          className="move-eff-trait"
-          title={`Hits ${hits} times — the shown Base Power is per hit, and every flat bonus (Ambush, Elemental Force) is counted on each`}
-        >
-          ×{hits} hits
-        </span>
-      )}
-    </>
-  );
-}
+export { TARGET_MODE_LABELS };
 
 /** Where a rider lands when not the move's own target; null for 'moveTarget' (the summary's trailing clause says it). */
 export function riderTargetLabel(app: StatusApplication): string | null {
@@ -226,7 +160,7 @@ export function riderTargetLabel(app: StatusApplication): string | null {
  * how a Burn 15 becomes a Burn 19 the moment the button is pressed. Without a caster the base
  * stands, which is the honest answer when there is nobody to scale it by.
  */
-function riderMagnitude(move: MoveDefinition, app: StatusApplication, caster?: HealCaster): number | undefined {
+export function riderMagnitude(move: MoveDefinition, app: StatusApplication, caster?: HealCaster): number | undefined {
   const def = statuses[app.statusId];
   if (!def || !caster) return app.magnitude;
   return resolveStatusMagnitudeFor(app.magnitude, def, app, move, { stats: caster.stats ?? {}, types: caster.types });
@@ -257,16 +191,22 @@ function statDeltaWhere(move: MoveDefinition): string {
  * as the CONDITION rather than the current answer, because this is printed on surfaces with no
  * fight in scope. Damage moves' per-target effectiveness line is built by FightScreen instead.
  */
-export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): string {
+export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster, opts?: { condensed?: boolean }): string {
+  // Condensed: the clauses a move row draws as its stub, seats, board and rider glyphs are left out.
+  const condensed = opts?.condensed === true;
   const parts: string[] = [];
 
   const heal = healReadout(move, caster);
-  if (heal) parts.push(`Restores ${heal.value} HP`);
+  if (heal && !condensed) parts.push(`Restores ${heal.value} HP`);
 
   // Leads: on Infuse/Empower/Conduit it IS the move. Overflow is the point (docs/mana.md "Overflow").
   if (move.manaGrant) parts.push(`Gives ${move.manaGrant} MP, past their max`);
 
-  if (move.statDeltas?.length) {
+  if (condensed && move.conditionalStatDeltas) {
+    parts.push(`×${move.conditionalStatDeltas.multiplier} beside a ${move.conditionalStatDeltas.requiresPartnerType} partner`);
+  }
+
+  if (move.statDeltas?.length && !condensed) {
     const deltas = move.statDeltas.map(({ stat, stages }) => stageText(stat, stages)).join(', ');
     const odds = move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : '';
     const pack = move.conditionalStatDeltas
@@ -373,7 +313,7 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   if (move.drainPercent) parts.push(`Heals ${Math.round(move.drainPercent * 100)}% of damage dealt`);
 
   // One clause per rider; the verb (Grants/Applies) is what separates a boon from a wound.
-  for (const app of statusApplicationsOf(move)) {
+  for (const app of condensed ? [] : statusApplicationsOf(move)) {
     const { statusId, duration, chance } = app;
     const amount = riderMagnitude(move, app, caster) ?? duration;
     const odds = chance != null ? `${Math.round(chance * 100)}% ` : '';
@@ -448,6 +388,8 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
       : 'Becomes a random move each round';
   }
 
+  if (condensed) return parts.join(' · ');
+
   // The row's height is reserved either way; say something rather than leave a gap.
   if (parts.length === 0) return TARGET_MODE_LABELS[move.target];
 
@@ -514,7 +456,7 @@ export function MoveButtonReplica({
   selected,
   unusable,
   tag,
-  lead,
+  matchups,
   caster,
   chargeHolder,
   free,
@@ -527,8 +469,8 @@ export function MoveButtonReplica({
   unusable?: boolean;
   /** Short chip in the top row, right of the name (the Tutor's "Known"). */
   tag?: ReactNode;
-  /** Matchup chips, as a fight's row leads with them (a tip's staged scene); they take the effect text's place. */
-  lead?: ReactNode;
+  /** Per-enemy multipliers in seat order, as a fight's row leads with them (a tip's staged scene). */
+  matchups?: readonly (number | null)[];
   /** So a heal shows what THIS hero restores — see healReadout. */
   caster?: HealCaster;
   /** The live holder, for spent Charge pips; omitted, a charged move's pips are drawn full. */
@@ -543,10 +485,17 @@ export function MoveButtonReplica({
   // Sounded on the committed tap rather than the press (uiSfx's pointerdown), since a press in a list may be a scroll.
   const longPress = useLongPress(onLongPress, onClick ? () => { playSfx('ui.move'); onClick(); } : undefined);
   const heal = healReadout(move, caster);
+  const value =
+    move.kind === 'damage'
+      ? move.randomBasePower
+        ? `${move.randomBasePower.min}–${move.randomBasePower.max}`
+        : move.basePower
+      : heal?.value;
+  const words = moveEffectSummary(move, caster, { condensed: true });
   return (
     <button
       type="button"
-      className={`move-button${selected ? ' selected' : ''}${unusable ? ' is-unusable' : ''}`}
+      className={`move-button has-stub${selected ? ' selected' : ''}${unusable ? ' is-unusable' : ''}`}
       style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
       data-sfx="none"
       {...longPress}
@@ -559,36 +508,40 @@ export function MoveButtonReplica({
         <span className="move-name">{move.name}</span>
         <ChargePips move={move} combatant={chargeHolder} />
         {tag}
-        <span className="move-power-pair">
-          {move.kind === 'damage' && move.basePower != null && (
-            <span className="move-power">
-              <strong>{move.basePower}</strong>
-            </span>
-          )}
-          {move.kind === 'damage' && move.randomBasePower && (
-            <span className="move-power">
-              <strong>
-                {move.randomBasePower.min}–{move.randomBasePower.max}
-              </strong>
-            </span>
-          )}
-          {heal && (
-            <span className="move-power move-heal">
-              <strong>{heal.value}</strong>
-            </span>
-          )}
-          {/* Holds the power column open so the badges don't rag between rows. */}
-          {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
-          <MoveKindBadge move={move} />
-        </span>
       </div>
       <div className="move-row-effect">
-        <span className="move-eff-row">
-          {lead}
-          <MoveTraitChips move={move} />
-          {!lead && <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>}
+        <span className="move-strip">
+          {matchups && aimsAtEnemies(move.target) ? (
+            <EnemySeats mults={matchups} target={move.target} />
+          ) : (
+            <TargetBoard target={move.target} />
+          )}
+          <MovePriorityChip move={move} />
+          <MoveRiderIcons move={move} amountOf={(app) => riderMagnitude(move, app, caster)} />
+          {words && <span className="move-effect-text">{words}</span>}
         </span>
       </div>
+      <MoveStub move={move} value={value ?? undefined} />
     </button>
+  );
+}
+
+/** The priority bracket as the Speed glyph and its sign; nothing at bracket 0. */
+export function MovePriorityChip({ move }: { move: MoveDefinition }) {
+  // A randomPriority move's authored `priority` is dead; its words say so.
+  const bracket = move.randomPriority?.length ? 0 : move.priority;
+  if (!bracket) return null;
+  return (
+    <span
+      className={`move-eff-trait move-eff-priority${bracket > 0 ? ' is-fast' : ' is-slow'}`}
+      title={
+        bracket > 0
+          ? `Priority +${bracket} — resolves before every priority-0 move, whatever the Speed`
+          : `Priority ${bracket} — resolves after every priority-0 move, whatever the Speed`
+      }
+    >
+      <StatGlyph stat="speed" tone="inherit" />
+      {bracket > 0 ? `+${bracket}` : bracket}
+    </span>
   );
 }
