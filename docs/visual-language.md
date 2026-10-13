@@ -3417,3 +3417,8 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   ("read before the hit lands", "spent Charges stay spent through a switch") were cut, per user
   direction, so Charges reads "**Charges:** 2"; so were the warnings that a buff or Shield would land
   short at the five-step limit or a full pool (reversing `docs/shield.md` §5's pre-press warning).
+- **The status and field dossiers follow** (same day, per user direction): their rows say what the
+  status or field does and only the ways a status ends early (rounds, Rest, switching). The
+  stacking, Cleanse, bench and switch-keeps rows are gone, as are a field's shared clock and
+  override rows (the pips above say the clock), and the authored sentence shows only when no row
+  says what it does (Freeze, Daze).

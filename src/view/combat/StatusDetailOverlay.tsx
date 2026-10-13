@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
 import type { StatusInstance } from '../../engine/state';
 import { statuses } from '../../data/statuses';
 import { StatusGlyph, statusColor, pipelineLabel, StatusPips } from '../shared/statusIcons';
-import { statusFacts } from '../shared/statusFacts';
+import { statusFacts, statusSaysItself } from '../shared/statusFacts';
 import { overlayHost } from '../shared/overlayHost';
 
 interface Props {
@@ -31,9 +31,9 @@ function magnitudeUnit(pipeline: string, shape: string): string {
  * The status dossier: what a hold on a status badge opens. The move dossier's three facets — the
  * disc and name in the status's colour with its pipeline under them; the live numbers (magnitude
  * with what it means, rounds left or the detonation clock); and the rules as ROWS — each round,
- * then, reapplied, switch, cleanse, and whatever the status does that a field says (a guard, a
+ * then, what ends it early, and whatever the status does that a field says (a guard, a
  * pull, a detonation, a spread, a Force) — read off the definition the statusEngine runs on. The
- * authored sentence stays as fine print for the rule no field carries (Freeze halving Speed).
+ * authored sentence shows only where no row says what it does (Freeze halving Speed).
  * Portalled into overlayHost(), never document.body — see overlayHost.ts.
  */
 export function StatusDetailOverlay({ instance, onClose }: Props) {
@@ -92,7 +92,7 @@ export function StatusDetailOverlay({ instance, onClose }: Props) {
           ))}
         </div>
 
-        {def.description && <div className="status-dossier-desc"><IconText text={def.description} /></div>}
+        {def.description && !statusSaysItself(def) && <div className="status-dossier-desc"><IconText text={def.description} /></div>}
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,

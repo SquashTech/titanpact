@@ -50,34 +50,17 @@ function tickText(def: StatusDefinition): string | null {
   return null;
 }
 
-function stackingText(def: StatusDefinition): string {
-  switch (def.stacking) {
-    case 'additive':
-      return def.pipeline === 'shield' ? "Adds to what is there, up to this hero's max HP" : 'Adds to what is there';
-    case 'takeHigher':
-      return 'Keeps the higher';
-    case 'additiveMagnitudeFixedDuration':
-      return 'Adds, the timer never resets';
-    case 'additiveRefreshDuration':
-      return 'Adds, and the timer tops back up';
-    case 'none':
-      if (def.timed) return `Starts it over from round 1${def.pipeline === 'dot' ? ` (${def.timed.tickPercents[0]}%)` : ''}`;
-      return def.shape === 'boolean' ? 'Already there — nothing' : 'Refreshes it';
-  }
-}
-
-export function statusFacts(def: StatusDefinition): StatusFact[] {
+/** What the status does — the rows a dossier leads with. Empty for a control status, whose rule lives in its sentence. */
+function effectFacts(def: StatusDefinition): StatusFact[] {
   const rows: StatusFact[] = [];
   const tick = tickText(def);
   if (tick) rows.push({ label: 'Each round', text: tick });
-  if (def.timed) rows.push({ label: 'Lasts', text: `${def.timed.tickPercents.length} rounds` });
   if (def.shape === 'magnitude' && def.decay === 'halve') rows.push({ label: 'Then', text: 'Halves' });
-  if (def.blocksIncomingMoves) rows.push({ label: 'Guard', text: 'Every enemy move aimed here turns away — an ally’s still lands' });
+  if (def.blocksIncomingMoves) rows.push({ label: 'Guard', text: 'Enemy moves aimed here turn away' });
   // The one thing a player has to learn once about a Shield: what goes through it (docs/shield.md §3.2).
   if (def.pipeline === 'shield') {
-    rows.push({ label: 'Absorbs', text: "A move's hit, before HP is touched" });
-    rows.push({ label: 'Goes through', text: "Burn, Bleed and Poison ticks, the Pact Clock, recoil, and a move's own HP cost" });
-    rows.push({ label: 'Ends', text: 'When a hit empties it' });
+    rows.push({ label: 'Absorbs', text: 'Hits, before HP' });
+    rows.push({ label: 'Goes through', text: 'Burn, Bleed, Poison and the Pact Clock' });
   }
   if (def.onShieldBroken) rows.push({ label: 'Broken', text: `The hit that breaks this hero's Shield ${def.onShieldBroken.statusId}s the striker — then spent` });
   if (def.redirectsSingleTargetEnemyMoves) rows.push({ label: 'Pull', text: 'Single-target enemy moves at either ally land here instead' });
@@ -93,12 +76,21 @@ export function statusFacts(def: StatusDefinition): StatusFact[] {
   if (def.forceAllTypes) rows.push({ label: 'Base Power', text: `+magnitude on the next hit, any type${def.consumedOnDamage ? ' — then spent' : ''}` });
   if (def.forceHeal) rows.push({ label: 'Heal Power', text: '+magnitude on every heal move, any type' });
   if (def.forceTag) rows.push({ label: 'Base Power', text: `+magnitude on every ${moveTagLabel(def.forceTag)}, any type` });
-  rows.push({ label: 'Reapplied', text: stackingText(def) });
+  return rows;
+}
+
+/** Whether the rows say what the status does; when they don't, the dossier shows its sentence. */
+export function statusSaysItself(def: StatusDefinition): boolean {
+  return effectFacts(def).length > 0;
+}
+
+/** The dossier's rows: what it does, then only the ways it ends early. */
+export function statusFacts(def: StatusDefinition): StatusFact[] {
+  const rows = effectFacts(def);
+  if (def.timed) rows.push({ label: 'Lasts', text: `${def.timed.tickPercents.length} rounds` });
   if (def.clearsAtEndOfRound) rows.push({ label: 'Ends', text: 'When this round ends' });
-  if (def.activeOnly) rows.push({ label: 'Benched', text: 'The clock pauses' });
   if (def.clearsOnRest) rows.push({ label: 'Rest', text: 'Puts it out' });
-  rows.push({ label: 'Switch', text: def.clearsOnSwitch ? 'Clears it' : 'Keeps it' });
-  rows.push({ label: 'Cleanse', text: def.positive ? 'Cannot touch it' : 'Removes it' });
+  if (def.clearsOnSwitch) rows.push({ label: 'Switch', text: 'Clears it' });
   return rows;
 }
 
@@ -109,7 +101,7 @@ export function statusFactsLine(def: StatusDefinition): string {
   if (tick) parts.push(tick.replace(/^Deals its magnitude$/, 'ticks its magnitude').replace(/^Heals its magnitude$/, 'heals its magnitude'));
   if (def.shape === 'magnitude' && def.decay === 'halve') parts.push('halves each round');
   if (def.blocksIncomingMoves) parts.push('turns enemy moves away');
-  if (def.pipeline === 'shield') parts.push('absorbs hits before HP', 'DoTs and the Clock go through', 'until broken', 'capped at max HP');
+  if (def.pipeline === 'shield') parts.push('absorbs hits before HP', 'Burn, Bleed, Poison and the Pact Clock go through');
   if (def.onShieldBroken) parts.push(`${def.onShieldBroken.statusId}s whoever breaks the Shield`);
   if (def.redirectsSingleTargetEnemyMoves) parts.push('pulls single-target enemy moves');
   if (def.triggerTypes && def.detonateBonusPercentMaxHp != null) {
@@ -125,7 +117,6 @@ export function statusFactsLine(def: StatusDefinition): string {
   if (parts.length === 0 && def.description) return def.description;
   if (def.clearsAtEndOfRound) parts.push('ends with the round');
   if (def.clearsOnRest) parts.push('Rest clears');
-  parts.push(def.clearsOnSwitch ? 'switch clears' : 'survives switching');
-  if (def.positive) parts.push('cleanse-proof');
+  if (def.clearsOnSwitch) parts.push('switch clears');
   return parts.join(' · ');
 }

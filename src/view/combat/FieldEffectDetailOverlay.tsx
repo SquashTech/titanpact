@@ -18,8 +18,8 @@ interface Props {
 /**
  * The Field Effect dossier: what a hold on the battlefield-divider plaque opens. Same chassis as
  * every other dossier — the disc and name in the field's element colour, the clock as a numbers
- * strip, and the rules as rows read off the definition's own flags plus the two every field
- * shares (the flat clock, the override rule). The sentence stays as fine print. Portalled into
+ * strip, and the rules as rows read off the definition's own flags; the sentence shows only for a
+ * field no row describes. Portalled into
  * overlayHost(), never document.body — see overlayHost.ts; the --field-effect-rgb the battlefield
  * sets does not reach here, so the colour is set inline.
  */
@@ -71,7 +71,7 @@ export function FieldEffectDetailOverlay({ active, onClose }: Props) {
           ))}
         </div>
 
-        {def.description && <div className="status-dossier-desc"><IconText text={def.description} /></div>}
+        {def.description && facts.length === 0 && <div className="status-dossier-desc"><IconText text={def.description} /></div>}
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,
