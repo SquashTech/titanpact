@@ -3368,7 +3368,16 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
   its damage band and the bite out of its HP bar; same type, priority and Mana left close it
   quietly. The card carries its own type rim and glow, so it reads the same wherever it is placed,
   and the tap overlay drops the stone frame for it, the one window in the UI kit that does. The
-  learn and offer screens drop their own panel around it, so the card is the one box.
+  learn and offer screens drop their own panel around it, so the card is the one box, and what the
+  card is ("Move learned", "New move") is the screen's heading above it, set in the move's own type
+  (`OfferMoveTitle`: its glyph, its colour running into white, rules fading out either side).
+- **The icons are taught by the words** (2026-10-13, per user direction): wherever a sentence names
+  something the row draws, the row's icon sits beside the word. The card's meta line wears the type
+  glyph and the kind glyph; its effect lines colour their chevrons and set the target's figure before
+  its name; passive sentences, status and field cards and the Reference run through `IconText`
+  (a status by its glyph and colour, ATK/DEF/INT/WIS/SPD by the stat glyph, chevrons coloured); and
+  the tips and How to Play print the matchup marks themselves with `[super]`, `[resist]` and
+  `[spread]`.
 - The exact multiplier is one tap later, on each enemy card in the targeting panel; a hold still opens the
   dossier in words.
 

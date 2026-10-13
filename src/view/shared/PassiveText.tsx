@@ -6,6 +6,7 @@ import { KeywordGlyph } from './keywordIcons';
 import { ElementGlyph } from './elementIcons';
 import { MoveKindGlyph } from './statIcons';
 import { getTypeColor } from '../combat/typeColors';
+import { IconText } from './IconText';
 
 function keywordsOf(passive: PassiveDefinition): { trigger?: PassiveKeyword; also?: PassiveKeyword } {
   return {
@@ -55,7 +56,7 @@ export function PassiveText({ passive }: { passive: PassiveDefinition }) {
       {parts.map((part, i) => {
         if (part === '{trigger}') return trigger ? <KeywordBadge key={i} keyword={trigger} /> : null;
         if (part === '{also}') return also ? <KeywordBadge key={i} keyword={also} /> : null;
-        return part ? <span key={i}>{part}</span> : null;
+        return part ? <span key={i}><IconText text={part} /></span> : null;
       })}
     </>
   );

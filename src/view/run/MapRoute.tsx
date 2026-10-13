@@ -259,6 +259,7 @@ export function MapRoute({
   guardianId,
   onSelectNode,
   renderDossier,
+  onPreviewChange,
   companion,
 }: {
   /** The companion, drawn walking beside wherever the party stands. */
@@ -278,16 +279,20 @@ export function MapRoute({
   onSelectNode: (nodeId: string) => void;
   /** The sheet a tile's first tap raises (NodeDossier); the second tap, or its plate, goes. */
   renderDossier: (node: MapNode) => ReactNode;
+  /** The tile being read, or null — the footer's party chips wear its mark while it is. */
+  onPreviewChange?: (node: MapNode | null) => void;
 }) {
   const [segments, setSegments] = useState<RouteSegment[]>([]);
   const [revealing, setRevealing] = useState(false);
   const [opening, setOpening] = useState<{ id: string; color: string; x: number; y: number } | null>(null);
   const openingId = opening?.id ?? null;
   const [previewId, setPreviewId] = useState<string | null>(null);
-  // How far the route is raised so the tile being read clears its sheet (MapPreview), on a short screen.
-  const [lift, setLift] = useState(0);
+  // How far the route drops so the row clears the card above it (MapPreview), on a short screen.
+  const [shift, setShift] = useState(0);
   useEffect(() => {
-    if (!previewId) setLift(0);
+    if (!previewId) setShift(0);
+    onPreviewChange?.(previewId ? map.nodes[previewId] ?? null : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previewId]);
   const routeRef = useRef<HTMLDivElement>(null);
   const originRef = useRef<HTMLSpanElement>(null);
@@ -434,7 +439,7 @@ export function MapRoute({
   }
 
   return (
-    <div className={`map-route${revealing ? ' is-revealing' : ''}`} ref={routeRef} style={lift ? { transform: `translateY(${-lift}px)` } : undefined}>
+    <div className={`map-route${revealing ? ' is-revealing' : ''}`} ref={routeRef} style={shift ? { transform: `translateY(${shift}px)` } : undefined}>
       {segments.length > 0 && (
         <svg className="map-paths" aria-hidden="true">
           {segments.map((seg, i) => (
@@ -546,8 +551,8 @@ export function MapRoute({
             previewId={previewId}
             color={NODE_COLORS[map.nodes[previewId].type]}
             label={NODE_LABELS[map.nodes[previewId].type]}
-            lift={lift}
-            onLift={setLift}
+            shift={shift}
+            onShift={setShift}
             onTap={tap}
             onBack={() => setPreviewId(null)}
             onGo={() => go(previewId)}
@@ -594,18 +599,29 @@ function measureTiles(tiles: readonly PreviewTile[]): Record<string, Box> {
   return boxes;
 }
 
+/** An element of the screen around the route, in canvas px; null when it is not drawn. */
+function measureSelector(selector: string): Box | null {
+  const el = document.querySelector(selector);
+  if (!el) return null;
+  const rect = el.getBoundingClientRect();
+  const a = canvasPoint(rect.left, rect.top);
+  const b = canvasPoint(rect.right, rect.bottom);
+  return { left: a.x, top: a.y, width: b.x - a.x, height: b.y - a.y };
+}
+
 /**
- * The map's preview: the screen dimmed, the tile being read lit through it and the rest of the row
- * half-lit and still tappable, and the node's ledger as a sheet at the foot with Back and the plate
- * that goes. A tap on the dimmed screen is Back.
+ * The map's preview: the tile being read lit, the rest of its row half-lit and still tappable, the
+ * node's card at the top under the header, and the plate that goes centred between the row and
+ * the footer. The header and the footer stay lit — the footer's chips wear the node's mark
+ * meanwhile (MapScreen) — and a tap anywhere else closes it.
  */
 function MapPreview({
   tiles,
   previewId,
   color,
   label,
-  lift,
-  onLift,
+  shift,
+  onShift,
   onTap,
   onBack,
   onGo,
@@ -615,42 +631,48 @@ function MapPreview({
   previewId: string;
   color: string;
   label: string;
-  lift: number;
-  onLift: (lift: number) => void;
+  shift: number;
+  onShift: (shift: number) => void;
   onTap: (id: string) => void;
   onBack: () => void;
   onGo: () => void;
   children: ReactNode;
 }) {
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
-  const rootRef = useRef<HTMLDivElement>(null);
-  const sheetRef = useRef<HTMLDivElement>(null);
+  const [frame, setFrame] = useState<{ header: Box | null; footer: Box | null }>({ header: null, footer: null });
+  const cardRef = useRef<HTMLDivElement>(null);
   const maskId = useId();
   const tileKey = tiles.map((t) => t.id).join(',');
   useLayoutEffect(() => {
     const measure = () => {
       const measured = measureTiles(tiles);
       setBoxes(measured);
-      // The sheet never covers the tile it reads: where it would, the route rises by the overlap.
-      const lit = measured[previewId];
-      const root = rootRef.current;
-      const sheet = sheetRef.current;
-      if (!lit || !root || !sheet) return;
-      const over = lit.top + lit.height + 4 - (root.clientHeight - sheet.offsetHeight);
-      if (over > 1) onLift(lift + Math.ceil(over));
+      setFrame({ header: measureSelector('.map-header'), footer: measureSelector('.map-footer') });
+      // The card never covers the row: where it would, the route drops by the overlap.
+      const card = cardRef.current;
+      const rowTop = Math.min(...Object.values(measured).map((b) => b.top));
+      if (!card || !Number.isFinite(rowTop)) return;
+      const over = card.offsetTop + card.offsetHeight + 6 - rowTop;
+      if (over > 1) onShift(shift + Math.ceil(over));
     };
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tileKey, previewId, lift]);
+  }, [tileKey, previewId, shift]);
+
+  const rowFoot = Math.max(0, ...Object.values(boxes).map((b) => b.top + b.height));
+  const lit = [frame.header, frame.footer].filter((b): b is Box => b !== null);
 
   return (
-    <div className="map-preview" ref={rootRef} onClick={onBack} style={{ '--node-color': color } as CSSProperties}>
+    <div className="map-preview" onClick={onBack} style={{ '--node-color': color } as CSSProperties}>
       <svg className="map-preview-scrim" aria-hidden="true">
         <defs>
           <mask id={maskId}>
             <rect x="0" y="0" width="100%" height="100%" fill="white" />
+            {lit.map((b, i) => (
+              <rect key={i} x={b.left} y={b.top} width={b.width} height={b.height} fill="black" />
+            ))}
             {Object.entries(boxes).map(([id, b]) => (
               <rect key={id} x={b.left} y={b.top} width={b.width} height={b.height} rx="12" fill={id === previewId ? 'black' : '#666'} />
             ))}
@@ -672,17 +694,21 @@ function MapPreview({
           }}
         />
       ))}
-      <div className="map-preview-sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
-        <div className="map-preview-body">{children}</div>
-        <div className="map-preview-foot">
-          <button type="button" className="map-preview-back" onClick={onBack}>
-            Back
-          </button>
-          <PlateButton tint={color} onClick={onGo} data-sfx="none" compact className="map-preview-go">
+      <div
+        className="map-preview-card"
+        ref={cardRef}
+        style={{ top: (frame.header ? frame.header.top + frame.header.height : 0) + 8 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+      {rowFoot > 0 && (
+        <div className="map-preview-go-seat" style={{ top: frame.footer ? (rowFoot + frame.footer.top) / 2 : rowFoot + 40 }} onClick={(e) => e.stopPropagation()}>
+          <PlateButton tint={color} onClick={onGo} data-sfx="none" className="map-preview-go">
             {label}
           </PlateButton>
         </div>
-      </div>
+      )}
     </div>
   );
 }

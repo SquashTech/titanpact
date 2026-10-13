@@ -48,7 +48,7 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
 /**
  * Checked at the top of every command phase; the first unseen one whose conditions all hold is
  * shown. A page may carry a staged picture (src/data/tipScenes.ts) with ONE thing ringed, so the
- * words name that thing — "the arrows under a move", never "the number".
+ * words name that thing — "a move's arrows", never "the number".
  */
 export const FIGHT_TIPS: readonly FightTip[] = [
   {
@@ -58,7 +58,7 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     pages: [
       'Each round, choose a move and a target for both heroes on the field. Then the round plays out in Speed order.',
       'A move costs the Mana in its gem, paid from the blue bar. Everyone regains some each round, and Rest recovers all of it.',
-      'The arrows under a move show how it hits each enemy: up is double, down is half. Tap a fighter to read it, and hold a move to read what it does.',
+      "A move's arrows show how it hits each enemy: [super] double, [resist] half. Tap a fighter to read it, and hold a move to read what it does.",
     ],
   },
 ];

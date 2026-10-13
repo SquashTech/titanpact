@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import { parseTipText, type Tip, type TipIconToken } from '../../run/tips';
 import { MoveKindGlyph } from '../shared/statIcons';
+import { EnemySeats, SeatArrow } from '../shared/MoveStrip';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { pageSpotlight, TIP_STAGING } from './tipStaging';
 import { TipPictureView } from './TipScene';
@@ -12,13 +13,19 @@ import { TIP_SCENES } from '../../data/tipScenes';
  * Which badge class an inline token wears — the move grid's own (`MoveKindBadge`), so the mark in
  * the sentence is literally the mark on the button the player is being sent to.
  */
-const TOKEN_BADGE_CLASS: Record<TipIconToken, string> = {
+const TOKEN_BADGE_CLASS: Partial<Record<TipIconToken, string>> = {
   physical: 'category-physical',
   magical: 'category-magical',
   heal: 'kind-heal',
   buff: 'kind-buff',
   debuff: 'kind-debuff',
 };
+
+/** A matchup token draws the move row's own mark: the seat arrow, or the bar joining both seats. */
+function MatchupToken({ token }: { token: TipIconToken }) {
+  if (token === 'spread') return <span className="tip-inline-seats"><EnemySeats mults={[1, 1]} target="bothEnemies" /></span>;
+  return <span className="tip-inline-arrow"><SeatArrow mult={token === 'super' ? 2 : 0.5} /></span>;
+}
 
 /** One page, with `[physical]`-style tokens swapped for the glyph they name. */
 export function TipText({ text }: { text: string }) {
@@ -28,9 +35,13 @@ export function TipText({ text }: { text: string }) {
         'block' in segment ? (
           <StageChart key={i} />
         ) : 'icon' in segment ? (
-          <span key={i} className={`category-badge move-kind-badge tip-inline-icon ${TOKEN_BADGE_CLASS[segment.icon]}`}>
-            <MoveKindGlyph kind={segment.icon} className="move-kind-glyph" />
-          </span>
+          segment.icon === 'super' || segment.icon === 'resist' || segment.icon === 'spread' ? (
+            <MatchupToken key={i} token={segment.icon} />
+          ) : (
+            <span key={i} className={`category-badge move-kind-badge tip-inline-icon ${TOKEN_BADGE_CLASS[segment.icon]}`}>
+              <MoveKindGlyph kind={segment.icon} className="move-kind-glyph" />
+            </span>
+          )
         ) : (
           <span key={i}>{segment.text}</span>
         )

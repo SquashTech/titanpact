@@ -11,7 +11,6 @@ import { SectionGlyph } from '../shared/sectionIcons';
 import { BANNER } from '../shared/relicIcons';
 import { RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import type { RunState } from '../../run/state';
-import { NodeRosterReadout } from './NodeRosterReadout';
 
 /** Every mark a ledger row can lead with, drawn from the glyph sets the rest of the run already uses. */
 const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
@@ -70,8 +69,8 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
 }
 
 /**
- * The body of the map's preview sheet (MapRoute): a line of lore, then what the node pays as
- * figures in rows, never as a sentence.
+ * The map's preview card (MapRoute): a line of lore, then what the node pays as figures, never as
+ * a sentence. The roster's side of it is the footer's chips (nodeLens.tsx).
  */
 export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
   const dossier = nodeDossier(node.type, run.actNumber, run.cycle);
@@ -95,8 +94,6 @@ export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
       </div>
 
       {dossier.odds && <RarityOdds odds={dossier.odds} />}
-
-      <NodeRosterReadout type={node.type} run={run} />
     </div>
   );
 }

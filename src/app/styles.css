@@ -18200,63 +18200,53 @@ button.star-shop-bundle-face {
     0 0 18px 2px color-mix(in srgb, var(--node-color) 55%, transparent);
 }
 
-.map-preview-sheet {
+
+/* The node's card, under the header. */
+.map-preview-card {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 12px 16px 14px;
+  left: 10px;
+  right: 10px;
+  padding: 10px 12px 12px;
+  border: 1px solid color-mix(in srgb, var(--node-color) 55%, transparent);
   border-top: 2px solid var(--node-color);
-  border-radius: 14px 14px 0 0;
+  border-radius: 12px;
   background:
     linear-gradient(170deg, color-mix(in srgb, var(--node-color) 14%, transparent), transparent 42%),
     var(--surface-raised);
-  box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.55);
-  animation: map-preview-sheet-in 220ms var(--ease-out) both;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+  animation: map-preview-card-in 200ms var(--ease-out) both;
 }
 
-@keyframes map-preview-sheet-in {
+@keyframes map-preview-card-in {
   from {
-    transform: translateY(24px);
+    transform: translateY(-14px);
     opacity: 0;
   }
 }
 
+/* The plate that goes, centred between the row and the footer: the screen's one press. */
+.map-preview-go-seat {
+  position: absolute;
+  left: 0;
+  right: 0;
+  translate: 0 -50%;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  animation: map-preview-card-in 200ms var(--ease-out) both;
+}
 
-/* The ledger's own panel chrome is the sheet's now. */
-.map-preview-body .node-dossier-panel {
+.plate-socket.map-preview-go {
+  width: 66%;
+  margin: 0;
+  pointer-events: auto;
+}
+
+.map-preview-card .node-dossier-panel {
   display: flex;
   flex-direction: column;
   gap: 8px;
   background: none;
-}
-
-.map-preview-foot {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  padding-top: 12px;
-}
-
-.map-preview-back {
-  flex: none;
-  padding: 10px 14px;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-dim);
-}
-
-/* Room either side for the plate's wing tips. */
-.plate-socket.map-preview-go {
-  flex: 1 1 auto;
-  width: auto;
-  margin: 0 26px 0 0;
 }
 
 /* --- The route, and walking it (2026-09-08, per user direction) -------------
@@ -25373,17 +25363,111 @@ button.evo-gift-card {
   height: 9px;
 }
 
-/* What the card above it is — "Move learned", "New move" — set as the screen's heading, so the
-   card itself opens on the move. */
+/* What the card under it is — "Move learned", "New move" — set as the screen's heading in the
+   move's own type (OfferMoveTitle): its glyph, its colour running into white across the word, and
+   thin rules of it fading out to either side. One sweep of light crosses it as it arrives. */
 .offer-move-title {
-  margin: 4px 0 2px;
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 6px 0 4px;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  text-align: center;
-  color: var(--text);
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+  line-height: 1;
+}
+
+.offer-move-title-rule {
+  flex: 1;
+  min-width: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--move-type-rgb, 224, 166, 60), 0.85));
+}
+
+.offer-move-title-rule:last-child {
+  background: linear-gradient(270deg, transparent, rgba(var(--move-type-rgb, 224, 166, 60), 0.85));
+}
+
+.offer-move-title .offer-move-title-glyph {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: rgb(var(--move-type-rgb, 224, 166, 60));
+  filter: drop-shadow(0 0 6px rgba(var(--move-type-rgb, 224, 166, 60), 0.75));
+}
+
+.offer-move-title-text {
+  flex: none;
+  /* The trailing letter-spacing would push the word off centre. */
+  margin-right: -0.24em;
+  color: transparent;
+  background:
+    linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.95) 48%, transparent 66%) -150% 0 / 60% 100% no-repeat,
+    linear-gradient(180deg, #fff 10%, rgb(var(--move-type-rgb, 224, 166, 60)) 120%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 10px rgba(var(--move-type-rgb, 224, 166, 60), 0.35));
+  animation: offer-move-title-sweep 1.3s var(--ease-out) 0.15s both;
+}
+
+@keyframes offer-move-title-sweep {
+  from {
+    background-position: -150% 0, 0 0;
+  }
+  to {
+    background-position: 250% 0, 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .offer-move-title-text {
+    animation: none;
+  }
+}
+
+/* A rules sentence with the row's icons beside their words (IconText). */
+.icon-text-term {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.icon-text-term .icon-text-glyph {
+  width: 1em;
+  height: 1em;
+  align-self: center;
+  flex: none;
+}
+
+.icon-text-chevrons.is-up {
+  color: var(--buff);
+}
+
+.icon-text-chevrons.is-down {
+  color: var(--hp-low);
+}
+
+/* The figure set before the target the effect line names. */
+.move-detail-effect-text .target-mark {
+  display: inline-flex;
+  margin: 0 3px 0 1px;
+  vertical-align: -1px;
+}
+
+/* A tip's matchup tokens: the row's own seat arrow, or the bar joining both seats. */
+.tip-inline-arrow,
+.tip-inline-seats {
+  display: inline-flex;
+  vertical-align: middle;
+  margin: 0 2px;
+}
+
+.tip-inline-arrow .move-seat-arrow svg {
+  width: 13px;
+  height: 13px;
 }
 
 .move-detail-head {
@@ -41390,77 +41474,46 @@ img.smithy-service-art {
   height: 9px;
 }
 
-.node-roster {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-top: 8px;
+/* What a map node turns on, worn by the footer's party chips while it is read (nodeLens.tsx):
+   each mark sits where the HP bar does, at its height, so the footer never moves. */
+.map-party-chip.is-dim {
+  opacity: 0.4;
 }
 
-/* One portrait a hero, its one mark under it — the map footer's party chips, read through the node. */
-.node-roster-strip {
-  flex-direction: row;
-  justify-content: center;
-  gap: 4px;
-}
-
-.node-roster-cell {
-  flex: 0 1 56px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-
-.node-roster-cell.is-dim {
-  opacity: 0.45;
-}
-
-.node-roster-figure-wrap {
-  position: relative;
-  display: flex;
-}
-
-.node-roster-portrait {
-  width: 34px;
-  height: 34px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.8));
-}
-
-.node-roster-cell.is-down .node-roster-portrait {
-  filter: grayscale(1) brightness(0.5);
-}
-
-.blessing-mark.node-roster-blessing {
+.map-party-badge {
   position: absolute;
+  left: 50%;
   top: 0;
-  right: -3px;
-}
-
-.node-roster-mark {
+  translate: -50% 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  width: 100%;
-  min-height: 12px;
 }
 
-.node-roster-level {
-  font-size: 10px;
+.node-lens-level {
+  padding: 0 3px;
+  white-space: nowrap;
+  border-radius: 3px;
+  background: rgba(6, 7, 10, 0.8);
+  font-size: 9px;
   font-weight: 800;
-  line-height: 1;
+  line-height: 12px;
   color: #f2d690;
   font-variant-numeric: tabular-nums;
 }
 
-.node-roster-hp.wound-bar {
-  width: 40px;
+.node-lens-types {
+  display: flex;
+  gap: 1px;
 }
 
-.node-roster-lift {
+.node-lens-types .type-badge {
+  transform: scale(0.8);
+}
+
+.node-lens-lift {
+  position: relative;
+  height: 6px;
+  display: flex;
+  align-items: center;
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
@@ -41469,53 +41522,50 @@ img.smithy-service-art {
   color: var(--text-dim);
 }
 
-.node-roster-lift strong {
+.node-lens-lift strong {
   color: var(--text);
 }
 
-.node-roster-arrow {
+.node-lens-arrow {
   margin: 0 1px;
   color: rgba(226, 184, 98, 0.8);
 }
 
-.node-roster-pips.mastery-pips {
+.node-lens-pips.mastery-pips {
+  position: relative;
   width: auto;
+  height: 6px;
   margin: 0;
   gap: 1px;
 }
 
-.node-roster-pips .mastery-pip {
-  width: 4px;
-  height: 4px;
+.node-lens-pips .mastery-pip {
+  width: 3px;
+  height: 5px;
   border-radius: 1px;
 }
 
-.node-roster-pips .mastery-pip.is-milestone {
-  width: 5px;
-  height: 5px;
+.node-lens-pips .mastery-pip.is-milestone {
+  width: 4px;
+  height: 6px;
 }
 
-.node-roster-gear {
+.node-lens-gear {
+  position: relative;
   display: flex;
   gap: 2px;
 }
 
-.node-roster-socket {
-  width: 10px;
-  height: 10px;
+.node-lens-socket {
+  width: 9px;
+  height: 7px;
   background: #0b0c10;
   box-shadow: inset 0 0 0 1px #3a3f4d;
 }
 
-.node-roster-socket.is-filled {
+.node-lens-socket.is-filled {
   background: color-mix(in srgb, var(--rarity-color) 55%, #0b0c10);
   box-shadow: inset 0 0 0 1px var(--rarity-color);
-}
-
-.node-roster-types {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
 }
 
 /* -- A short screen (uiScale.ts's canvas-* classes). The console holds four moves at 780 with nothing

@@ -37,7 +37,7 @@ export const HOW_TO_PLAY: readonly Tip[] = [
   section(
     'types',
     'Types',
-    'The arrows under a move show how it hits each enemy, in the order they stand. Up is double, down is half; two arrows, four times or a quarter. One bar under both: it hits both.',
+    "A move's arrows show how it hits each enemy, in the order they stand: [super] double, [resist] half, two arrows four times or a quarter. [spread] hits both.",
     "The icon before a move's name is its type. A move that shares a type with the hero using it deals 25% more."
   ),
   section(
@@ -85,7 +85,7 @@ export const HOW_TO_PLAY: readonly Tip[] = [
     'ancient',
     'Ancient',
     'Every Guardian is Ancient. Ancient resists every type: every hit on it is halved.',
-    "A move strong against its other type only breaks even (1×); anything else hits it for half. The arrow under each move shows which.",
+    "A move strong against its other type only breaks even (1×); anything else hits it for half. The [super] or [resist] on each move shows which.",
     'Ancient moves are resisted by nothing: every hit lands at full strength on every type.'
   ),
   section(

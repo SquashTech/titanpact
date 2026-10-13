@@ -28,6 +28,7 @@ import { ChargePips } from '../shared/ChargePips';
 import { forecastDamage, koLabel } from './forecast';
 import { ForecastBite } from './ForecastBite';
 import { MoveName, MoveStrip, MoveStub, SeatArrow, TargetFigures } from '../shared/MoveStrip';
+import { IconText } from '../shared/IconText';
 import { typeChart } from '../../data/typechart';
 import { moveKeywords, type MoveKeywordId } from '../../data/keywords';
 
@@ -119,14 +120,50 @@ function ForecastSeat({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mo
 }
 
 /** A payload the move carries beyond its damage — one glyph, one sentence. */
-function EffectRow({ glyph, keyword, head, text, note, color }: { glyph: ReactNode; keyword?: MoveKeywordId; head?: string; text: string; note?: string; color?: string }) {
+/** The claim with the row's own marks in it: chevrons in their colours, and the target's figure before its name. */
+function EffectClaim({ text, target }: { text: string; target?: MoveDefinition['target'] }) {
+  const label = target ? TARGET_MODE_LABELS[target].toLowerCase() : '';
+  const at = label ? text.toLowerCase().lastIndexOf(label) : -1;
+  if (at < 0 || !target) return <IconText text={text} glyphs={false} />;
+  return (
+    <>
+      <IconText text={text.slice(0, at)} glyphs={false} />
+      <TargetFigures target={target} small />
+      <span className="move-detail-effect-target">{text.slice(at)}</span>
+    </>
+  );
+}
+
+function EffectRow({
+  glyph,
+  keyword,
+  head,
+  text,
+  note,
+  color,
+  target,
+}: {
+  glyph: ReactNode;
+  keyword?: MoveKeywordId;
+  /** A condition as the row's gold head, in place of a keyword ("vs Burn", "Last Charge"). */
+  head?: string;
+  text: string;
+  note?: string;
+  color?: string;
+  /** Who the claim names, drawn as the row's figure before the words. */
+  target?: MoveDefinition['target'];
+}) {
   return (
     <div className="move-detail-effect-row" style={color ? ({ color } as CSSProperties) : undefined}>
       <span className="move-detail-effect-glyph">{glyph}</span>
       <span className="move-detail-effect-text">
         {(head ?? keyword) && <><span className="kw-badge">{head ?? moveKeywords[keyword!]}</span> </>}
-        {text}
-        {note && <span className="move-detail-effect-note">{note}</span>}
+        <EffectClaim text={text} target={target} />
+        {note && (
+          <span className="move-detail-effect-note">
+            <IconText text={note} />
+          </span>
+        )}
       </span>
     </div>
   );
@@ -336,17 +373,18 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
           {move.manaGrant != null && (
             <EffectRow
               glyph={<StatGlyph stat="manaPool" />}
-              text={`+${move.manaGrant} MP to ${TARGET_MODE_LABELS[move.target].toLowerCase()}, past the pool`}
+              text={`+${move.manaGrant} MP, past the pool, to ${TARGET_MODE_LABELS[move.target].toLowerCase()}`}
+              target={move.target}
             />
           )}
           {move.mpRegenGrant != null && (
-            <EffectRow glyph={<StatGlyph stat="mpRegen" />} text={`+${move.mpRegenGrant} ${STAT_LABELS.mpRegen} to ${TARGET_MODE_LABELS[move.target].toLowerCase()}`} />
+            <EffectRow glyph={<StatGlyph stat="mpRegen" />} text={`+${move.mpRegenGrant} ${STAT_LABELS.mpRegen} to ${TARGET_MODE_LABELS[move.target].toLowerCase()}`} target={move.target} />
           )}
           {move.clearsRaisedStages && (
-            <EffectRow glyph={<StatGlyph stat="attack" />} text={`Any raised stat on ${TARGET_MODE_LABELS[move.target].toLowerCase()} returns to normal first`} />
+            <EffectRow glyph={<StatGlyph stat="attack" />} text={`Any raised stat on ${TARGET_MODE_LABELS[move.target].toLowerCase()} returns to normal first`} target={move.target} />
           )}
           {move.doublesStages?.map((stat) => (
-            <EffectRow key={`doubles-${stat}`} glyph={<StatGlyph stat={stat} />} text={`Doubles ${STAT_LABELS[stat]} steps on ${TARGET_MODE_LABELS[move.target].toLowerCase()}`} note="▲▲ from none or below" />
+            <EffectRow key={`doubles-${stat}`} glyph={<StatGlyph stat={stat} />} text={`Doubles ${STAT_LABELS[stat]} steps on ${TARGET_MODE_LABELS[move.target].toLowerCase()}`} target={move.target} note="▲▲ from none or below" />
           ))}
           {/* Read before the cost is paid, which is why it is not `manaAfter`. */}
           {move.stagesPerManaHeld?.stats.map((stat) => (
@@ -681,6 +719,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
                 } ${def.name}${
                   liveMagnitude != null ? ` ${statusAmountText(app.statusId, liveMagnitude)}` : app.duration != null ? ` ${app.duration}` : ''
                 }${where ? ` — ${where}` : ''}`}
+                target={app.target === 'moveTarget' ? undefined : app.target}
                 note={[shieldHeldNote, statusFactsLine(def)].filter(Boolean).join(' — ')}
               />
             );
@@ -720,6 +759,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
                   ? TARGET_MODE_LABELS.self
                   : TARGET_MODE_LABELS[move.target]
               ).toLowerCase()}`}
+              target={move.statDeltaTarget === 'bothAllies' || move.statDeltaTarget === 'self' ? move.statDeltaTarget : move.target}
               note={
                 [
                   held,
@@ -785,6 +825,18 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
       </div>
       </div>
     </div>
+  );
+}
+
+/** What the card under it is — "Move learned", "New move" — set in the move's own type. */
+export function OfferMoveTitle({ type, children }: { type: string; children: ReactNode }) {
+  return (
+    <h2 className="offer-move-title" style={{ '--move-type-rgb': getTypeColorRgb(type) } as CSSProperties}>
+      <span className="offer-move-title-rule" aria-hidden="true" />
+      <ElementGlyph type={type} className="offer-move-title-glyph" />
+      <span className="offer-move-title-text">{children}</span>
+      <span className="offer-move-title-rule" aria-hidden="true" />
+    </h2>
   );
 }
 

@@ -33,7 +33,7 @@ import {
 import { freshRosterId } from '../../run/recruitment';
 import { grantMove, MOVE_CAP, replaceableMoveIds } from '../../run/progression';
 import { ROSTER_CAP, type RosterEntry, type RunState } from '../../run/state';
-import { MoveDetailCard } from '../combat/MoveDetailOverlay';
+import { MoveDetailCard, OfferMoveTitle } from '../combat/MoveDetailOverlay';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { healCasterForEntry } from '../shared/healCaster';
@@ -461,7 +461,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
               <p className="offer-hero-sub">
                 {rosterHeroes[swappingEntry.heroId].name} already knows {MOVE_CAP} moves — pick one to replace, or go back.
               </p>
-              <h2 className="offer-move-title">Offered by the event</h2>
+              <OfferMoveTitle type={offeredMove.type}>Offered by the event</OfferMoveTitle>
               <div className="offer-move-highlight" style={{ '--offer-rgb': getTypeColorRgb(offeredMove.type) } as CSSProperties}>
                 <MoveDetailCard move={offeredMove} caster={swappingCaster} />
               </div>
@@ -514,7 +514,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
           {/* --- learnMove: the offered move --- */}
           {arrived && outcome?.kind === 'learnMove' && offeredMove && (
             <div className="event-offer-move event-reveal-in">
-              <h2 className="offer-move-title">Offered by the event</h2>
+              <OfferMoveTitle type={offeredMove.type}>Offered by the event</OfferMoveTitle>
               <MoveDetailCard move={offeredMove} />
             </div>
           )}

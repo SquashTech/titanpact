@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { TYPES, typeChart } from '../../data/typechart';
 import { statuses } from '../../data/statuses';
+import { IconText } from './IconText';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
@@ -144,7 +145,7 @@ function PassiveReferenceRow({ def }: { def: PassiveDefinition }) {
             {def.name}
           </span>
         </div>
-        <div className="status-ref-desc">{def.description}</div>
+        <div className="status-ref-desc"><IconText text={def.description} /></div>
         <PassiveStatChips def={def} />
         {summary && <div className="status-ref-meta">{summary}</div>}
       </div>
@@ -169,7 +170,7 @@ function FieldEffectReferenceRow({ def }: { def: FieldEffectDefinition }) {
           </span>
           <span className="status-ref-pipeline">{type}</span>
         </div>
-        <div className="status-ref-desc">{def.description}</div>
+        <div className="status-ref-desc"><IconText text={def.description} /></div>
       </div>
     </div>
   );
@@ -192,7 +193,7 @@ function StatusReferenceRow({ def }: { def: StatusDefinition }) {
           {def.positive && <span className="status-ref-tag">Buff</span>}
           <span className="status-ref-pipeline">{pipelineLabel(def.pipeline)}</span>
         </div>
-        {def.description && <div className="status-ref-desc">{def.description}</div>}
+        {def.description && <div className="status-ref-desc"><IconText text={def.description} /></div>}
         <div className="status-ref-meta">{statusClearText(def)}</div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { IconText } from '../shared/IconText';
 import type { CSSProperties } from 'react';
 import type { StatusInstance } from '../../engine/state';
 import { statuses } from '../../data/statuses';
@@ -91,7 +92,7 @@ export function StatusDetailOverlay({ instance, onClose }: Props) {
           ))}
         </div>
 
-        {def.description && <div className="status-dossier-desc">{def.description}</div>}
+        {def.description && <div className="status-dossier-desc"><IconText text={def.description} /></div>}
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,

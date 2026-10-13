@@ -7,7 +7,7 @@ import { MOVE_CAP, replaceableMoveIds, formIdFor } from '../../run/progression';
 import { levelOf } from '../../run/growth';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { playSfx } from '../../audio/sfx';
-import { MoveDetailCard } from '../combat/MoveDetailOverlay';
+import { MoveDetailCard, OfferMoveTitle } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { MoveButtonReplica, useLongPress } from '../shared/MoveTile';
 import { HubGlyph } from '../shared/nodeIcons';
@@ -104,7 +104,7 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve, signa
         </div>
         <p className="offer-hero-eyebrow">{eyebrow}</p>
 
-        <h2 className="offer-move-title">New move</h2>
+        <OfferMoveTitle type={moves[moveId].type}>New move</OfferMoveTitle>
         <SignatureFrame on={signature} type={moves[moveId].type}>
           <MoveDetailCard move={moves[moveId]} caster={caster} terse />
         </SignatureFrame>
@@ -197,7 +197,7 @@ export function MoveLearnedOverlay({ run, entry, moveId, eyebrow, onClose, signa
         </div>
         <p className="offer-hero-eyebrow">{eyebrow}</p>
 
-        <h2 className="offer-move-title">Move learned</h2>
+        <OfferMoveTitle type={moves[moveId].type}>Move learned</OfferMoveTitle>
         <SignatureFrame on={signature} type={moves[moveId].type}>
           <MoveDetailCard move={moves[moveId]} caster={caster} terse />
         </SignatureFrame>

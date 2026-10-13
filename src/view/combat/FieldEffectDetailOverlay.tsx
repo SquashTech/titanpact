@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
+import { IconText } from '../shared/IconText';
 import type { ActiveFieldEffect } from '../../engine/state';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
 import { fieldEffects } from '../../data/fieldEffects';
@@ -70,7 +71,7 @@ export function FieldEffectDetailOverlay({ active, onClose }: Props) {
           ))}
         </div>
 
-        {def.description && <div className="status-dossier-desc">{def.description}</div>}
+        {def.description && <div className="status-dossier-desc"><IconText text={def.description} /></div>}
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,

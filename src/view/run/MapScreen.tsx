@@ -18,6 +18,7 @@ import { MapRoute } from './MapRoute';
 import { BannerShelf } from './BannerShelf';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { NodeDossier } from './NodeDossier';
+import { nodeLensMark } from './nodeLens';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { locationForAct } from '../../run/locations';
@@ -183,6 +184,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
   // The whole view: where the player stands, and what they may take from here.
   const choiceIds = reachableNodeIds(run);
   const scouted = scoutChoices(run, choiceIds, purchases);
+  const [reading, setReading] = useState<MapNodeType | null>(null);
   const currentRow = run.currentNodeId != null ? map.nodes[run.currentNodeId]?.row ?? 0 : -1;
   const originNode = run.currentNodeId != null ? map.nodes[run.currentNodeId] ?? null : null;
 
@@ -271,6 +273,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           guardianId={location.guardianFinalEnemyId}
           onSelectNode={onSelectNode}
           renderDossier={(node) => <NodeDossier node={node} run={run} />}
+          onPreviewChange={(node) => setReading(node?.type ?? null)}
           companion={
             // The companion walks the road beside the party, not in the footer the six fill.
             companionId && callMoveId ? (
@@ -303,10 +306,17 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
             {run.roster.map((entry) => {
               const hero = rosterHeroes[entry.heroId];
               const { hp, maxHp } = entryHp(hero, entry, run.relics);
+              // While a tile is read, the chip wears what that node turns on (nodeLens.tsx).
+              const lens = reading ? nodeLensMark(reading, entry, run) : null;
               return (
-                <span key={entry.rosterId} className={`map-party-chip${entry.down ? ' is-down' : ''}`} aria-label={entry.down ? `${hero.name}: down` : `${hero.name}: ${hp} of ${maxHp} HP`}>
+                <span
+                  key={entry.rosterId}
+                  className={`map-party-chip${entry.down ? ' is-down' : ''}${lens?.dim ? ' is-dim' : ''}`}
+                  aria-label={entry.down ? `${hero.name}: down` : `${hero.name}: ${hp} of ${maxHp} HP`}
+                >
                   <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="map-party-portrait" />
-                  <WoundBar hp={hp} maxHp={maxHp} />
+                  {lens?.badge && <span className="map-party-badge">{lens.badge}</span>}
+                  {lens?.bar ?? <WoundBar hp={hp} maxHp={maxHp} />}
                 </span>
               );
             })}
