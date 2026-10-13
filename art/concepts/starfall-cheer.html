@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Starfall Button</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 24px 16px; background: #05060d; color: #d6deff; font: 14px/1.4 system-ui, sans-serif; }
+  h1 { font-size: 18px; margin: 0 0 4px; text-align: center; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; max-width: 980px; margin: 18px auto 0; }
+  .col h2 { margin: 0 0 8px; font-size: 15px; text-align: center; color: #fff3d6; }
+  .scene { position: relative; height: 150px; margin-bottom: 10px; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse 70% 90% at 50% 0%, rgba(var(--type-rgb), .35), transparent 70%), linear-gradient(#0c1030, #03040b); }
+  .water { --type-rgb: 74, 144, 226; --type-color: #4a90e2; }
+  .light { --type-rgb: 246, 226, 140; --type-color: #f6e28c; }
+  .fire  { --type-rgb: 240, 110, 50; --type-color: #f06e32; }
+
+  button { font: inherit; cursor: pointer; width: 220px; padding: 12px 0; font-size: 22px; font-weight: 900; letter-spacing: .06em; border: 0; }
+  button:active { transform: scale(.95); }
+
+  /* A — Starlight: a night-sky pill, a gold rim, the hero's colour breathing around it. */
+  .a { position: relative; border-radius: 999px; color: #fff3d6; background: linear-gradient(180deg, #1d2452, #0a0d26);
+    box-shadow: inset 0 0 0 2px #ffd27a, inset 0 0 18px rgba(var(--type-rgb), .55), 0 0 22px rgba(var(--type-rgb), .7), 0 6px 12px rgba(0,0,0,.6);
+    text-shadow: 0 0 10px rgba(var(--type-rgb), .9), 0 2px 0 #000; animation: halo 2.4s ease-in-out infinite; }
+  .a::before, .a::after { content: '✦'; position: absolute; top: 50%; translate: 0 -50%; font-size: 14px; color: #ffd27a; }
+  .a::before { left: 22px; } .a::after { right: 22px; }
+  @keyframes halo { 50% { box-shadow: inset 0 0 0 2px #ffd27a, inset 0 0 22px rgba(var(--type-rgb), .8), 0 0 34px rgba(var(--type-rgb), 1), 0 6px 12px rgba(0,0,0,.6); } }
+
+  /* B — Type crystal: the face IS the hero's colour, a white rim, an outlined label. */
+  .b { border-radius: 14px; color: #fff;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--type-color) 55%, #fff), var(--type-color) 55%, color-mix(in srgb, var(--type-color) 70%, #000));
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.85), 0 0 20px rgba(var(--type-rgb), .7), 0 6px 0 color-mix(in srgb, var(--type-color) 45%, #000), 0 10px 14px rgba(0,0,0,.6);
+    text-shadow: -2px 0 #1a1030, 2px 0 #1a1030, 0 -2px #1a1030, 0 2px #1a1030, 0 3px 0 #1a1030; }
+
+  /* C — Gold bar: the classic gacha OK — polished gold, dark label, the hero's light behind it. */
+  .c { border-radius: 10px; color: #3a2006;
+    background: linear-gradient(180deg, #fff1b8, #ffd27a 45%, #e0a23c 55%, #c98c2c);
+    box-shadow: inset 0 0 0 2px #fff6d6, 0 0 0 2px #7a4a12, 0 0 26px rgba(var(--type-rgb), .8), 0 8px 14px rgba(0,0,0,.6);
+    text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+</style>
+</head>
+<body>
+<h1>Pick the Starfall's “Awesome!” button</h1>
+<div class="grid">
+  <div class="col"><h2>A · Starlight</h2>
+    <div class="scene water"><button class="a">Awesome!</button></div>
+    <div class="scene light"><button class="a">Awesome!</button></div>
+    <div class="scene fire"><button class="a">Awesome!</button></div>
+  </div>
+  <div class="col"><h2>B · Type crystal</h2>
+    <div class="scene water"><button class="b">Awesome!</button></div>
+    <div class="scene light"><button class="b">Awesome!</button></div>
+    <div class="scene fire"><button class="b">Awesome!</button></div>
+  </div>
+  <div class="col"><h2>C · Gold bar</h2>
+    <div class="scene water"><button class="c">Awesome!</button></div>
+    <div class="scene light"><button class="c">Awesome!</button></div>
+    <div class="scene fire"><button class="c">Awesome!</button></div>
+  </div>
+</div>
+</body>
+</html>
