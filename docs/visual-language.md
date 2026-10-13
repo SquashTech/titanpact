@@ -3397,6 +3397,9 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   sentences: a fifteenth glyph to learn costs more than the words it saves.
 - **Moves take the same treatment** (same day, per user direction). A move has no authored
   sentence; its words are the dossier's effect rows, and the most repeated properties head their
-  row with a gold keyword and a colon (`moveKeywords`): **Charges** (41 moves), **Empowered** (32,
-  ×N power under a condition), **Drain** (22), **Slice** (22), **Pivot** (12, switches out after),
-  **Crit** (11), **Cleanse** (8), **Recoil** (7). The row keeps its own glyph; the rest stay sentences.
+  row with a gold keyword and a colon (`moveKeywords`): **Charges** (41 moves), **Drain** (22),
+  **Slice** (22), **Pivot** (12, switches out after), **Crit** (11), **Cleanse** (8), **Recoil** (7).
+  The row keeps its own glyph; the rest stay sentences. **A conditional power row heads with its
+  condition, not a keyword** (per user direction, the same day): "**vs Burn:** ×3 power", "**Last
+  Charge:** ×1.5 power", "**Downpour:** ×2 power". An umbrella word ("Empowered" was tried) named
+  the payoff all 32 share and hid the condition, the half the player has to read.

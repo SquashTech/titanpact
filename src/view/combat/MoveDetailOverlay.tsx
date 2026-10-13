@@ -119,12 +119,12 @@ function ForecastSeat({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mo
 }
 
 /** A payload the move carries beyond its damage — one glyph, one sentence. */
-function EffectRow({ glyph, keyword, text, note, color }: { glyph: ReactNode; keyword?: MoveKeywordId; text: string; note?: string; color?: string }) {
+function EffectRow({ glyph, keyword, head, text, note, color }: { glyph: ReactNode; keyword?: MoveKeywordId; head?: string; text: string; note?: string; color?: string }) {
   return (
     <div className="move-detail-effect-row" style={color ? ({ color } as CSSProperties) : undefined}>
       <span className="move-detail-effect-glyph">{glyph}</span>
       <span className="move-detail-effect-text">
-        {keyword && <><span className="kw-badge">{moveKeywords[keyword]}</span> </>}
+        {(head ?? keyword) && <><span className="kw-badge">{head ?? moveKeywords[keyword!]}</span> </>}
         {text}
         {note && <span className="move-detail-effect-note">{note}</span>}
       </span>
@@ -389,32 +389,32 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
             <EffectRow
               glyph={<ElementGlyph type={conditionalFieldDef?.flavorType ?? 'Arcane'} />}
               color={getTypeColor(conditionalFieldDef?.flavorType ?? 'Arcane')}
-              keyword="empowered"
-              text={`×${move.conditionalPower.multiplier} while ${conditionalFieldDef?.name ?? conditionalFieldId} is up`}
+              head={conditionalFieldDef?.name ?? conditionalFieldId}
+              text={`×${move.conditionalPower.multiplier} power`}
               note={conditionalFieldLive ? 'up right now' : undefined}
             />
           )}
           {move.conditionalPower && conditionalHpBelow != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
-              keyword="empowered"
-              text={`×${move.conditionalPower.multiplier} vs a target below ${Math.round(conditionalHpBelow * 100)}% HP`}
+              head={`Target below ${Math.round(conditionalHpBelow * 100)}% HP`}
+              text={`×${move.conditionalPower.multiplier} power`}
               note={conditionalHpLive ? 'a target is under the line right now' : 'read before the hit lands'}
             />
           )}
           {move.conditionalPower && conditionalReduced && (
             <EffectRow
               glyph={<StatGlyph stat="intelligence" />}
-              keyword="empowered"
-              text={`×${move.conditionalPower.multiplier} vs a debuffed target`}
+              head="Debuffed target"
+              text={`×${move.conditionalPower.multiplier} power`}
               note={context ? (conditionalReducedLive ? 'a target is debuffed right now' : 'nothing is debuffed right now') : 'any in-fight reduction counts, however small'}
             />
           )}
           {move.conditionalPower && conditionalUserHpBelow != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
-              keyword="empowered"
-              text={`×${move.conditionalPower.multiplier} while you are below ${Math.round(conditionalUserHpBelow * 100)}% HP`}
+              head={`Below ${Math.round(conditionalUserHpBelow * 100)}% HP`}
+              text={`×${move.conditionalPower.multiplier} power`}
               note={conditionalUserHpLive ? 'under the line right now' : undefined}
             />
           )}
@@ -422,16 +422,16 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
             <EffectRow
               glyph={<ElementGlyph type={conditionalPartnerType} />}
               color={getTypeColor(conditionalPartnerType)}
-              keyword="empowered"
-              text={`×${move.conditionalPower.multiplier} while your partner is a ${conditionalPartnerType}`}
+              head={`${conditionalPartnerType} partner`}
+              text={`×${move.conditionalPower.multiplier} power`}
               note={conditionalPartnerLive ? 'your partner qualifies right now' : 'read off the active partner'}
             />
           )}
           {move.conditionalPower?.requiresLastCharge && (
             <EffectRow
               glyph={<ChargePips move={move} combatant={attacker} />}
-              keyword="empowered"
-              text={`×${move.conditionalPower.multiplier} on its last Charge`}
+              head="Last Charge"
+              text={`×${move.conditionalPower.multiplier} power`}
               note={attacker ? (chargesLeft(attacker, move) === 1 ? 'the next cast is the last' : undefined) : undefined}
             />
           )}
@@ -445,12 +445,8 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
             <EffectRow
               glyph={<StatusGlyph statusId={conditionalStatusId} />}
               color={statusColor(conditionalStatusId)}
-              keyword="empowered"
-              text={
-                move.conditionalPower.requiresUserStatus
-                  ? `×${move.conditionalPower.multiplier} while you have ${conditionalDef?.name ?? conditionalStatusId}`
-                  : `×${move.conditionalPower.multiplier} vs ${conditionalDef?.name ?? conditionalStatusId}`
-              }
+              head={`${move.conditionalPower.requiresUserStatus ? 'While' : 'vs'} ${conditionalDef?.name ?? conditionalStatusId}`}
+              text={`×${move.conditionalPower.multiplier} power`}
               note={move.conditionalPower.consumesStatus ? `spends the ${conditionalDef?.name ?? conditionalStatusId}` : undefined}
             />
           )}
