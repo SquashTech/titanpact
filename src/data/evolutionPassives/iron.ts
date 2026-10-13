@@ -5,7 +5,7 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   oathlight: {
     id: 'oathlight',
     name: 'Oathlight',
-    description: "When this hero takes damage, its partner heals 10% of its max HP.",
+    description: 'Partner heals 10% of its max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -15,7 +15,7 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   swornShield: {
     id: 'swornShield',
     name: 'Sworn Shield',
-    description: "When this hero lands an attack, its partner gains Shield 20.",
+    description: 'Partner gains Shield 20.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -25,7 +25,7 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   gallop: {
     id: 'gallop',
     name: 'Gallop',
-    description: "When this hero lands an attack, its target's partner loses DEF ▼.",
+    description: "The target's partner loses DEF ▼.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -36,7 +36,7 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   safeHarbour: {
     id: 'safeHarbour',
     name: 'Safe Harbour',
-    description: 'When this hero switches out, it heals 25% of its max HP.',
+    description: 'Heals 25% of its max HP.',
     reactive: {
       hook: 'SwitchedOut',
       condition: { relativeTo: 'self' },
@@ -56,7 +56,7 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   unseenCut: {
     id: 'unseenCut',
     name: 'Unseen Cut',
-    description: 'The first attack this hero lands on each foe leaves it Bleeding.',
+    description: 'The first on each foe leaves it Bleeding.',
     reactive: {
       oncePerTarget: true,
       hook: 'DamageDealt',
@@ -69,7 +69,7 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   ironFilings: {
     id: 'ironFilings',
     name: 'Iron Filings',
-    description: 'When this hero lands an Arcane attack, its target is left Conducting.',
+    description: 'Target is left Conducting.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Arcane' } },
@@ -110,7 +110,7 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   dreadCharge: {
     id: 'dreadCharge',
     name: 'Dread Charge',
-    description: 'When this hero enters the battlefield, both active enemies are Haunted.',
+    description: 'Both foes are Haunted.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -132,7 +132,7 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   rollingThunder: {
     id: 'rollingThunder',
     name: 'Cold Steel',
-    description: 'When this hero knocks out a foe, it gains ATK ▲ and SPD ▲.',
+    description: 'Gains ATK ▲ and SPD ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },

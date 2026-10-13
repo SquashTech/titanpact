@@ -5,7 +5,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   bury: {
     id: 'bury',
     name: 'Bury',
-    description: 'When this hero lands a Stone attack, its target loses SPD ▼.',
+    description: 'Target loses SPD ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
@@ -27,7 +27,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   nightVigil: {
     id: 'nightVigil',
     name: 'Night Vigil',
-    description: 'When this hero is hit while Provoking, it gains Ambush 20.',
+    description: 'While Provoking, gains Ambush 20.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', eventTargetHasStatus: 'Provoke' },
@@ -38,7 +38,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   runicWard: {
     id: 'runicWard',
     name: 'Runic Ward',
-    description: "When a hit lands on this hero's Shield, it gains Mana equal to what the Shield took, past its pool.",
+    description: 'If its Shield takes the hit, gains Mana equal to what the Shield took, past its pool.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', eventFieldPositive: 'absorbed' },
@@ -49,7 +49,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   leeward: {
     id: 'leeward',
     name: 'Leeward',
-    description: 'When this hero takes damage, its partner gains Shield 10.',
+    description: 'Partner gains Shield 10.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -60,7 +60,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   scaleEdges: {
     id: 'scaleEdges',
     name: 'Scale Edges',
-    description: 'When an enemy hits this hero, that enemy starts Bleeding.',
+    description: 'The striker starts Bleeding.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'enemy', subjectRole: 'source', targetsOwner: true },
@@ -71,7 +71,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   desertBody: {
     id: 'desertBody',
     name: 'Desert Body',
-    description: 'When this hero lands a Stone attack, it gains DEF ▲.',
+    description: 'Gains DEF ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },
@@ -89,7 +89,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   standingStone: {
     id: 'standingStone',
     name: 'Standing Stone',
-    description: 'When this hero enters the battlefield, it sets Bedrock.',
+    description: 'Sets Bedrock.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -111,7 +111,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   snowpack: {
     id: 'snowpack',
     name: 'Snowpack',
-    description: 'The first time this hero takes damage each fight, both active enemies are Frozen.',
+    description: 'Both foes are Frozen.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -134,7 +134,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   slagHeap: {
     id: 'slagHeap',
     name: 'Slag Heap',
-    description: 'When this hero lands a Stone attack on a Burning foe, it gains Stone Force 10 and Fire Force 10. Up to 3 times a fight.',
+    description: 'Against a Burning foe, it gains Stone Force 10 and Fire Force 10. Up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' }, eventTargetHasStatus: 'Burn' },
@@ -159,7 +159,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   mirageStep: {
     id: 'mirageStep',
     name: 'Mirage Step',
-    description: 'The first time this hero enters the battlefield each fight, it gains Barrier for the rest of the round.',
+    description: 'Gains Barrier for the rest of the round.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -182,7 +182,7 @@ export const stonePathPassives: Record<string, PassiveDefinition> = {
   deepRoots: {
     id: 'deepRoots',
     name: 'Deep Roots',
-    description: 'When this hero takes damage, it gains Renew.',
+    description: 'Gains Renew.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },

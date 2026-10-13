@@ -16,7 +16,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   coldIron: {
     id: 'coldIron',
     name: 'Cold Iron',
-    description: 'When this hero lands an attack on a Frozen foe, it gains DEF ▲.',
+    description: 'Against a Frozen foe, it gains DEF ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Freeze' },
@@ -27,7 +27,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   rollingSnow: {
     id: 'rollingSnow',
     name: 'Rolling Snow',
-    description: 'When this hero knocks out an enemy, it gains ATK ▲ and SPD ▲.',
+    description: 'Gains ATK ▲ and SPD ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -49,7 +49,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   coldFront: {
     id: 'coldFront',
     name: 'Cold Front',
-    description: 'When this hero enters the battlefield, a random enemy is Frozen.',
+    description: 'A random enemy is Frozen.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -60,7 +60,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   warmHearth: {
     id: 'warmHearth',
     name: 'Warm Hearth',
-    description: 'When this hero enters the battlefield, it is set Burning and gains ATK ▲▲.',
+    description: 'Sets itself Burning and gains ATK ▲▲.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -72,7 +72,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   snowfall: {
     id: 'snowfall',
     name: 'Snowfall',
-    description: 'When this hero Rests, a random enemy is Frozen.',
+    description: 'A random enemy is Frozen.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -83,7 +83,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   wintersWeight: {
     id: 'wintersWeight',
     name: "Winter's Weight",
-    description: 'When this hero enters the battlefield, it gains Frost Force 10.',
+    description: 'Gains Frost Force 10.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -113,7 +113,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   owlsGaze: {
     id: 'owlsGaze',
     name: "Owl's Gaze",
-    description: 'When this hero lands a magical attack, its target loses WIS ▼.',
+    description: 'Target loses WIS ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
@@ -135,7 +135,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   blackIce: {
     id: 'blackIce',
     name: 'Black Ice',
-    description: 'The first time each fight this hero lands a Water attack, its target is Frozen.',
+    description: 'Target is Frozen.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
@@ -158,7 +158,7 @@ export const frostPathPassives: Record<string, PassiveDefinition> = {
   polarLight: {
     id: 'polarLight',
     name: 'Polar Light',
-    description: "At the end of each round, this hero's partner is washed of one affliction.",
+    description: 'Partner is washed of one affliction.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },

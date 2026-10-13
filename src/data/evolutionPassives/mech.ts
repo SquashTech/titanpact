@@ -16,7 +16,7 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   blastDoor: {
     id: 'blastDoor',
     name: 'Blast Door',
-    description: "At the end of each round, this hero's partner gains Shield 20.",
+    description: 'Partner gains Shield 20.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
@@ -56,7 +56,7 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   recitation: {
     id: 'recitation',
     name: 'Recitation',
-    description: 'When this hero lands an Arcane attack, it gains 15 Mana, past its pool.',
+    description: 'Gains 15 Mana, past its pool.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Arcane' } },
@@ -77,7 +77,7 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   nectar: {
     id: 'nectar',
     name: 'Nectar',
-    description: 'When this hero lands an attack, it heals 5% of its max HP.',
+    description: 'Heals 5% of its max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -99,7 +99,7 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
   blowoffValve: {
     id: 'blowoffValve',
     name: 'Blowoff Valve',
-    description: 'At the end of each round, a random enemy is set Burning. Up to 3 times a fight.',
+    description: 'A random enemy is set Burning. Up to 3 times a fight.',
     reactive: {
       maxFiresPerFight: 3,
       hook: 'RoundEnded',

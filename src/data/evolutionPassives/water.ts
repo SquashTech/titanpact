@@ -5,7 +5,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   swell: {
     id: 'swell',
     name: 'Swell',
-    description: 'When this hero lands a physical move, it gains INT ▲. When it lands a magical move, it gains ATK ▲.',
+    description: 'Gains INT ▲. {also} Gains ATK ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'physical' } },
@@ -56,7 +56,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   stormDrinker: {
     id: 'stormDrinker',
     name: 'Storm Drinker',
-    description: 'Every Water attack this hero lands leaves its target Conducting.',
+    description: 'Leaves its target Conducting.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
@@ -67,7 +67,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   murk: {
     id: 'murk',
     name: 'Murk',
-    description: 'When this hero enters the battlefield, both active enemies lose INT ▼ and SPD ▼.',
+    description: 'Both foes lose INT ▼ and SPD ▼.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -78,7 +78,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   sharedDish: {
     id: 'sharedDish',
     name: 'Shared Dish',
-    description: 'When this hero is healed, Renew included, its partner gains ATK ▲ and INT ▲.',
+    description: 'Renew counts too. Partner gains ATK ▲ and INT ▲.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
@@ -94,7 +94,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   yokaiDish: {
     id: 'yokaiDish',
     name: 'Spilled Dish',
-    description: 'When this hero is healed, Renew included, a random enemy is Haunted.',
+    description: 'Renew counts too. A random enemy is Haunted.',
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self' },
@@ -110,7 +110,7 @@ export const waterPathPassives: Record<string, PassiveDefinition> = {
   snappingJaw: {
     id: 'snappingJaw',
     name: 'Snapping Jaw',
-    description: 'When this hero lands a Water attack, its target starts Bleeding.',
+    description: 'Target starts Bleeding.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },

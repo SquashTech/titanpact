@@ -5,7 +5,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   capacitor: {
     id: 'capacitor',
     name: 'Capacitor',
-    description: 'When this hero Rests, a random enemy starts Conducting.',
+    description: 'A random enemy starts Conducting.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -16,7 +16,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   apogee: {
     id: 'apogee',
     name: 'Apogee',
-    description: 'When this hero knocks an enemy out, it gains 75 Mana, past its pool.',
+    description: 'Gains 75 Mana, past its pool.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -27,7 +27,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   foreordained: {
     id: 'foreordained',
     name: 'Foreordained',
-    description: 'When this hero enters the battlefield, set Stasis Field.',
+    description: 'Set Stasis Field.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -37,7 +37,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   glitter: {
     id: 'glitter',
     name: 'Glitter',
-    description: 'At the end of each round, its partner gains SPD ▲.',
+    description: 'Partner gains SPD ▲.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
@@ -47,7 +47,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   mirage: {
     id: 'mirage',
     name: 'Mirage',
-    description: 'When this hero takes damage, both active enemies lose ATK ▼ and INT ▼.',
+    description: 'Both foes lose ATK ▼ and INT ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -68,7 +68,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   illumination: {
     id: 'illumination',
     name: 'Illumination',
-    description: 'The first time this hero enters the battlefield during combat, a random enemy is Dazed.',
+    description: 'A random enemy is Dazed.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -80,7 +80,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   bladeChannel: {
     id: 'bladeChannel',
     name: 'Blade Channel',
-    description: 'When this hero lands a hit, it gains 15 Mana, past its pool.',
+    description: 'Gains 15 Mana, past its pool.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -91,7 +91,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   stormrune: {
     id: 'stormrune',
     name: 'Stormrune',
-    description: 'The first Arcane attack this hero lands on each foe leaves it Conducting.',
+    description: 'The first on each foe leaves it Conducting.',
     reactive: {
       oncePerTarget: true,
       hook: 'DamageDealt',
@@ -113,7 +113,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   barbedLock: {
     id: 'barbedLock',
     name: 'Barbed Lock',
-    description: 'When this hero takes damage, both active enemies start Bleeding.',
+    description: 'Both foes start Bleeding.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -124,7 +124,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   blottedPage: {
     id: 'blottedPage',
     name: 'Blotted Page',
-    description: 'When this hero lands a hit, its target loses 20 Mana.',
+    description: 'Target loses 20 Mana.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -181,7 +181,7 @@ export const arcanePathPassives: Record<string, PassiveDefinition> = {
   vaultCurse: {
     id: 'vaultCurse',
     name: 'Vault Curse',
-    description: 'When this hero takes damage, a random enemy loses 5% of its max HP. Up to 4 times a fight.',
+    description: 'A random enemy loses 5% of its max HP. Up to 4 times a fight.',
     reactive: {
       maxFiresPerFight: 4,
       hook: 'DamageDealt',

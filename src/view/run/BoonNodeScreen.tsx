@@ -24,6 +24,7 @@ import { RosterPeek } from './RosterPeek';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
 import { PlateButton } from '../shared/PlateButton';
+import { PassiveText, passivePlainText } from '../shared/PassiveText';
 
 interface Props {
   run: RunState;
@@ -55,7 +56,7 @@ function BoonCard({
       role="button"
       tabIndex={0}
       aria-pressed={picked}
-      aria-label={`${passive.name}: ${passive.description}`}
+      aria-label={`${passive.name}: ${passivePlainText(passive)}`}
       data-sfx="none"
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && onPick) {
@@ -72,7 +73,7 @@ function BoonCard({
         <span className="verb-card-head">
           <span className="verb-card-name">{passive.name}</span>
         </span>
-        <span className="verb-card-desc is-full">{passive.description}</span>
+        <span className="verb-card-desc is-full"><PassiveText passive={passive} /></span>
       </span>
     </div>
   );

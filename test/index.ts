@@ -5,6 +5,7 @@ import './statuses.test';
 import './shield.test';
 import './heal.test';
 import './passives.test';
+import './keywords.test';
 import './tallGrass.test';
 import './charges.test';
 import './quiver.test';

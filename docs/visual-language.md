@@ -3371,3 +3371,26 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
   learn and offer screens drop their own panel around it, so the card is the one box.
 - The exact multiplier is one tap later, on each enemy card in the targeting panel; a hold still opens the
   dossier in words.
+
+## Trigger keywords (2026-10-13)
+
+Per user direction, after a side-by-side page (`docs/mockups/trigger-keywords.html`) chose glyph +
+word over a word alone or a glyph alone. A passive's trigger is a **badge** at the head of its
+sentence: glyph and word, gold, inline so the sentence wraps around it like a word. Eight
+keywords cover about 290 of the ~450 passive lines: **Enter, Leave, On Hit, Struck, Takedown,
+Round End, Rest, Healed** (`src/data/keywords.ts`).
+
+- **The badge is derived, never typed.** `passiveKeywordOf` (`src/run/keywords.ts`) reads it off the
+  passive's own hook and condition, so it cannot disagree with what the card does. The authored
+  sentence starts AFTER the trigger, and `test/keywords` fails any sentence that spells out a trigger
+  a badge stands for. No subject means this hero ("Gains DEF ▲"); anyone else is named.
+- **Marks ride on the badge**: a circled 1 for "the first time each fight", a circled N for every Nth
+  round. An On Hit narrowed to an element or a pipeline wears that element's glyph and colour and
+  says so ("On Fire Hit", "On Magical Hit").
+- **`{trigger}` and `{also}`** place a badge mid-sentence: `{trigger}` when the card leads with a rule
+  that is not its trigger (Ironbound), `{also}` for a card's second reaction (Swell, Slumbering).
+- **The dossier explains it.** The WHEN row of a keyworded reaction is the badge and what it means
+  in full ("Each time a move's hit lands on this hero, even one a Shield soaks up…"), which is
+  where a new player learns the glyph; there is no tip for it.
+- Triggers under eight lines each (an enemy's Burn ticking, a stat rising, a field being set) stay
+  sentences: a fifteenth glyph to learn costs more than the words it saves.

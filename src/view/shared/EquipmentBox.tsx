@@ -13,6 +13,7 @@ import { PassiveGlyph } from './passiveIcons';
 import { statuses } from '../../data/statuses';
 import { ElementGlyph } from './elementIcons';
 import { getTypeColor } from '../combat/typeColors';
+import { PassiveText, passivePlainText } from './PassiveText';
 
 interface EquipmentIconProps {
   item: EquipmentDefinition | null;
@@ -268,7 +269,7 @@ export function ItemEffectChips({ item, labelled }: { item: EquipmentDefinition;
         // Arcane Reservoir draws the same mana drop a +20 Mana grant would. The leading mark
         // is what separates "grants an effect" from "grants a stat" at a glance.
         return (
-          <span key={passiveId} className="item-chip is-effect" title={`${def.name} — ${def.description}`}>
+          <span key={passiveId} className="item-chip is-effect" title={`${def.name} — ${passivePlainText(def)}`}>
             <span className="item-chip-mark" aria-hidden="true">
               +
             </span>
@@ -330,7 +331,7 @@ export function EquipmentEffectList({ item }: { item: EquipmentDefinition | null
               <PassiveGlyph passiveId={passiveId} />{" "}
               {def.name}
             </span>
-            <span className="equip-spotlight-passive-desc">{def.description}</span>
+            <span className="equip-spotlight-passive-desc"><PassiveText passive={def} /></span>
           </div>
         );
       })}

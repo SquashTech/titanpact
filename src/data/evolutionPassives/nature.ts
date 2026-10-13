@@ -5,7 +5,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   brushburn: {
     id: 'brushburn',
     name: 'Brushburn',
-    description: 'When this hero hits a Poisoned foe, it is set Burning.',
+    description: 'Against a Poisoned foe, sets it Burning.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Poison' },
@@ -16,7 +16,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   petrified: {
     id: 'petrified',
     name: 'Petrified',
-    description: 'At the end of each round, this hero gains Shield 15.',
+    description: 'Gains Shield 15.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
@@ -27,7 +27,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   deadLeaf: {
     id: 'deadLeaf',
     name: 'Dead Leaf',
-    description: 'When this hero lands a Slice, its target is Haunted.',
+    description: 'A Slice leaves its target Haunted.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', moveTag: 'slice' },
@@ -60,7 +60,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   petalStorm: {
     id: 'petalStorm',
     name: 'Petal Storm',
-    description: 'When this hero lands a Nature attack, its target loses WIS ▼.',
+    description: 'Target loses WIS ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Nature' } },
@@ -82,7 +82,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   mossclaw: {
     id: 'mossclaw',
     name: 'Mossclaw',
-    description: 'When this hero lands a Beast attack, its partner gains Renew.',
+    description: 'Partner gains Renew.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Beast' } },
@@ -104,7 +104,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   numbingRime: {
     id: 'numbingRime',
     name: 'Numbing Rime',
-    description: 'When an enemy hits this hero, that enemy loses SPD ▼.',
+    description: 'The striker loses SPD ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'enemy', subjectRole: 'source', targetsOwner: true },
@@ -115,7 +115,7 @@ export const naturePathPassives: Record<string, PassiveDefinition> = {
   grindstone: {
     id: 'grindstone',
     name: 'Grindstone',
-    description: 'At the end of each round, this hero gains Edge 5. Up to 4 times a fight.',
+    description: 'Gains Edge 5. Up to 4 times a fight.',
     reactive: {
       maxFiresPerFight: 4,
       hook: 'RoundEnded',

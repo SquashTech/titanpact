@@ -29,6 +29,7 @@ import { MasteryPips } from '../shared/MasteryPips';
 import { MASTERY_EVOLUTION } from '../../run/mastery';
 import { EvolutionStar } from '../shared/EvolutionStar';
 import { useHasEvolutionStar } from '../shared/ProfileContext';
+import { PassiveText } from '../shared/PassiveText';
 
 interface Props {
   hero: HeroDefinition;
@@ -322,7 +323,7 @@ export function PassiveGrantRow({ passiveId, onRead }: { passiveId: string; onRe
       </span>
       <span className="evo-passive-text">
         <span className="evo-passive-name">{passive.name}</span>
-        <span className="evo-passive-desc">{passive.description}</span>
+        <span className="evo-passive-desc"><PassiveText passive={passive} /></span>
       </span>
     </button>
   );

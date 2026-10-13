@@ -16,7 +16,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   answeringBlade: {
     id: 'answeringBlade',
     name: 'Answering Blade',
-    description: 'When this hero takes a hit, it gains Ambush 15, up to 45.',
+    description: 'Gains Ambush 15, up to 45.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -27,7 +27,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   radiantVessel: {
     id: 'radiantVessel',
     name: 'Radiant Vessel',
-    description: 'When this hero lands a hit, its partner is healed a third of the damage dealt.',
+    description: 'Partner is healed a third of the damage dealt.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -38,7 +38,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   pealOfGrace: {
     id: 'pealOfGrace',
     name: 'Peal of Grace',
-    description: 'At the end of every third round, both allies gain Grace 10.',
+    description: 'Both allies gain Grace 10.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self', everyNRounds: 3 },
@@ -49,7 +49,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   fieldMedic: {
     id: 'fieldMedic',
     name: 'Field Medic',
-    description: 'When this hero enters the battlefield, it gains Grace 15.',
+    description: 'Gains Grace 15.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -60,7 +60,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   lastToll: {
     id: 'lastToll',
     name: 'Last Toll',
-    description: 'Every Light attack this hero lands leaves its target Haunted.',
+    description: 'Leaves its target Haunted.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
@@ -93,7 +93,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   kindledMane: {
     id: 'kindledMane',
     name: 'Kindled Mane',
-    description: 'Every Light attack this hero lands sets its target Burning.',
+    description: 'Sets the target Burning.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
@@ -104,7 +104,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   highNoon: {
     id: 'highNoon',
     name: 'High Noon',
-    description: 'Every Light attack this hero lands gives it ATK ▲.',
+    description: 'Gains ATK ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Light' } },
@@ -137,7 +137,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   chargedPlumes: {
     id: 'chargedPlumes',
     name: 'Charged Plumes',
-    description: 'When this hero enters the battlefield, both active enemies start Conducting.',
+    description: 'Both foes start Conducting.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -170,7 +170,7 @@ export const lightPathPassives: Record<string, PassiveDefinition> = {
   lionsShare: {
     id: 'lionsShare',
     name: "Lion's Share",
-    description: 'When this hero knocks an enemy out, both allies heal a quarter of their max HP and gain ATK ▲. Up to 3 times a fight.',
+    description: 'Both allies heal a quarter of their max HP and gain ATK ▲. Up to 3 times a fight.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },

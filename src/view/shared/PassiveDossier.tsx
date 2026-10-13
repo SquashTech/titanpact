@@ -9,6 +9,7 @@ import { PassiveGlyph, passiveColor, passiveStatGrants, passiveTint } from './pa
 import { passiveFacts, type PassiveFact } from './passiveFacts';
 import { getTypeColor } from '../combat/typeColors';
 import { overlayHost } from './overlayHost';
+import { KeywordBadge, keywordMeaning, PassiveText } from './PassiveText';
 
 function factGlyph(fact: PassiveFact): ReactNode {
   switch (fact.glyph.kind) {
@@ -37,6 +38,14 @@ export function PassiveFactRows({ passive }: { passive: PassiveDefinition }) {
     <div className="passive-detail-facts">
       {facts.map((fact, i) => {
         const rowColor = factColor(fact);
+        if (fact.keyword) {
+          return (
+            <div key={i} className="passive-detail-fact is-keyword">
+              <KeywordBadge keyword={fact.keyword} />
+              <span className="passive-detail-fact-text">{keywordMeaning(fact.keyword)}</span>
+            </div>
+          );
+        }
         return (
           <div key={i} className="passive-detail-fact" style={rowColor ? ({ '--fact-color': rowColor } as CSSProperties) : undefined}>
             <span className="passive-detail-fact-glyph">{factGlyph(fact)}</span>
@@ -86,7 +95,7 @@ export function PassiveDetailCard({ passive }: { passive: PassiveDefinition }) {
 
       <PassiveFactRows passive={passive} />
 
-      <div className="passive-detail-desc">{passive.description}</div>
+      <div className="passive-detail-desc"><PassiveText passive={passive} /></div>
     </div>
   );
 }

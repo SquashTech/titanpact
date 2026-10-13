@@ -7,6 +7,7 @@ import { getTypeAbbr, getTypeColor } from '../combat/typeColors';
 import { ElementGlyph } from './elementIcons';
 import { PassiveGlyph } from './passiveIcons';
 import { StatGlyph, STAT_LABELS } from './StatBars';
+import { passivePlainText } from './PassiveText';
 
 /**
  * One line of an equipment diff (src/run/equipCompare.ts) as a chip: `ATK 5→15`, a bare `+15` /
@@ -39,7 +40,7 @@ export function ChangeChip({ change }: { change: EquipChange }) {
     const def = passives[change.key];
     const name = def?.name ?? change.key;
     return (
-      <span className={`equip-chip is-effect ${tone}`} title={def?.description ?? name}>
+      <span className={`equip-chip is-effect ${tone}`} title={def ? passivePlainText(def) : name}>
         <span className="equip-chip-mark" aria-hidden="true">
           {change.delta > 0 ? '+' : '−'}
         </span>

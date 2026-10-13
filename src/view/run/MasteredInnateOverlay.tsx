@@ -12,6 +12,7 @@ import { formIdFor } from '../../run/progression';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
 import { PassiveGlyph } from '../shared/passiveIcons';
 import { overlayHost } from '../shared/overlayHost';
+import { PassiveText } from '../shared/PassiveText';
 
 interface Props {
   entry: RosterEntry;
@@ -72,7 +73,7 @@ export function MasteredInnateOverlay({ entry, turn = false, onClose }: Props) {
             </span>
             <span className="mastered-from-body">
               <span className="mastered-from-name">{before.name}</span>
-              <span className="mastered-from-desc">{before.description}</span>
+              <span className="mastered-from-desc"><PassiveText passive={before} /></span>
             </span>
           </div>
         )}

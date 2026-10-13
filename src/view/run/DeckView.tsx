@@ -16,6 +16,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { overlayHost } from '../shared/overlayHost';
 import { STARFALL_NAME } from './Starfall';
+import { PassiveText } from '../shared/PassiveText';
 
 const typeIndex = (type: TypeId) => TYPES.indexOf(type as (typeof TYPES)[number]);
 const TYPE_ORDER: TypeId[] = draftableTypes(heroes).sort((a, b) => typeIndex(a) - typeIndex(b));
@@ -192,7 +193,7 @@ function SwapRow({
         </div>
         {innate && (
           <div className="swap-row-innate">
-            <span className="swap-row-innate-name">{innate.name}</span> {innate.description}
+            <span className="swap-row-innate-name">{innate.name}</span> <PassiveText passive={innate} />
           </div>
         )}
         <div className="swap-row-stats">

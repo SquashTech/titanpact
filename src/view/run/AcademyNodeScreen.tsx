@@ -32,6 +32,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
 import { KeeperVoice, useKeeperLine } from './RoadEncounter';
+import { passivePlainText } from '../shared/PassiveText';
 
 interface Props {
   run: RunState;
@@ -287,7 +288,7 @@ function ClassCard({ cls, picked, dimmed, onPick, onRead }: CardProps) {
   const move = cls.grantsMoveId ? moves[cls.grantsMoveId] : null;
   const passive = cls.grantsPassiveId ? passives[cls.grantsPassiveId] : null;
   const longPress = useLongPress(onRead, onPick);
-  const summary = move ? moveEffectSummary(move) : passive?.description ?? '';
+  const summary = move ? moveEffectSummary(move) : passive ? passivePlainText(passive) : '';
   return (
     <div
       className={`verb-card class-card${picked ? ' is-picked' : ''}${dimmed ? ' is-dimmed' : ''}`}

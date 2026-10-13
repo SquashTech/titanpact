@@ -5,7 +5,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   grit: {
     id: 'grit',
     name: 'Grit',
-    description: 'Every Arrow this hero lands takes DEF ▼ off its target.',
+    description: 'An Arrow takes DEF ▼ off its target.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', moveTag: 'arrow' },
@@ -39,7 +39,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   anvilCrown: {
     id: 'anvilCrown',
     name: 'Anvil Crown',
-    description: 'When this hero takes damage, it gains INT ▲.',
+    description: 'Gains INT ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -61,7 +61,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   updraft: {
     id: 'updraft',
     name: 'Updraft',
-    description: "When this hero lands an attack, its partner's next attack goes at +1 priority.",
+    description: "Partner's next attack goes at +1 priority.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -83,7 +83,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   thunderstep: {
     id: 'thunderstep',
     name: 'Thunderstep',
-    description: 'When this hero enters the battlefield, its next attack goes at +1 priority.',
+    description: 'Its next attack goes at +1 priority.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -94,7 +94,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   brushfire: {
     id: 'brushfire',
     name: 'Brushfire',
-    description: 'When this hero switches out, every Burning enemy is Dazed.',
+    description: 'Every Burning enemy is Dazed.',
     reactive: {
       hook: 'SwitchedOut',
       condition: { relativeTo: 'self' },
@@ -162,7 +162,7 @@ export const stormPathPassives: Record<string, PassiveDefinition> = {
   sickleWind: {
     id: 'sickleWind',
     name: 'Sickle Wind',
-    description: 'When this hero enters the battlefield, a random enemy starts Bleeding.',
+    description: 'A random enemy starts Bleeding.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },

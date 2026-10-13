@@ -5,7 +5,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   festering: {
     id: 'festering',
     name: 'Festering',
-    description: 'When this hero hits a Poisoned foe, that foe gains Poison 10.',
+    description: 'Against a Poisoned foe, that foe gains Poison 10.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Poison' },
@@ -27,7 +27,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   halfSeen: {
     id: 'halfSeen',
     name: 'Half-Seen',
-    description: 'When this hero enters the battlefield, it becomes Poised.',
+    description: 'Becomes Poised.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -38,7 +38,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   misfortune: {
     id: 'misfortune',
     name: 'Misfortune',
-    description: 'When this hero lands a hit, every move its target holds costs 10 more Mana for the rest of the fight, up to 30.',
+    description: 'Every move its target holds costs 10 more Mana for the rest of the fight, up to 30.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -61,7 +61,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   stillWater: {
     id: 'stillWater',
     name: 'Still Water',
-    description: 'When this hero Rests, it gains Ambush 40.',
+    description: 'Gains Ambush 40.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -72,7 +72,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   heldUnder: {
     id: 'heldUnder',
     name: 'Held Under',
-    description: 'When this hero lands a hit, its target loses DEF ▼ and SPD ▼.',
+    description: 'Target loses DEF ▼ and SPD ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -105,7 +105,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   chitin: {
     id: 'chitin',
     name: 'Chitin',
-    description: 'When this hero enters the battlefield, it gains Shield 30 and ATK ▲.',
+    description: 'Gains Shield 30 and ATK ▲.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -141,7 +141,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   beckoningPaw: {
     id: 'beckoningPaw',
     name: 'Beckoning Paw',
-    description: 'When this hero lands a hit, there is a 20% chance both allies gain ▲ to every stat.',
+    description: '20% chance both allies gain ▲ to every stat.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -153,7 +153,7 @@ export const shadowPathPassives: Record<string, PassiveDefinition> = {
   rustcoat: {
     id: 'rustcoat',
     name: 'Rustcoat',
-    description: 'When this hero takes a hit, it gains Shield 10.',
+    description: 'Gains Shield 10.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },

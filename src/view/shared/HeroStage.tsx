@@ -18,6 +18,7 @@ import { useAmbientLocation } from './LocationContext';
 import { LocationAmbience } from './LocationSky';
 import { locationBackdrop } from './locationBackdrops';
 import { StarField } from './StarField';
+import { PassiveText } from './PassiveText';
 
 // The hero stage shared by the draft and the Recruit Contract claim: one hero at 144px in a sigil
 // with its stat sheet beside it (the dais), the kit as the fight's own move console under them, and
@@ -193,7 +194,7 @@ export function StageInnate({
           <span className="draft-innate-kind">{kind}</span>
           <span className="draft-innate-name">{passive.name}</span>
         </span>
-        <span className="draft-innate-desc">{passive.description}</span>
+        <span className="draft-innate-desc"><PassiveText passive={passive} /></span>
       </span>
     </button>
   );

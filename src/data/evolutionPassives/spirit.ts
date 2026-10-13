@@ -5,7 +5,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   graveHands: {
     id: 'graveHands',
     name: 'Grave Hands',
-    description: 'When this hero lands a physical attack, its target is Haunted.',
+    description: 'Target is Haunted.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'physical' } },
@@ -16,7 +16,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   shriek: {
     id: 'shriek',
     name: 'Shriek',
-    description: 'The first attack this hero lands on each foe Dazes it.',
+    description: 'The first on each foe Dazes it.',
     reactive: {
       oncePerTarget: true,
       hook: 'DamageDealt',
@@ -27,7 +27,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   carrion: {
     id: 'carrion',
     name: 'Carrion',
-    description: 'When this hero lands an attack on a Haunted foe, it heals 10% of its max HP.',
+    description: 'Against a Haunted foe, it heals 10% of its max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Haunt' },
@@ -45,7 +45,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   borrowedFace: {
     id: 'borrowedFace',
     name: 'Borrowed Face',
-    description: 'When this hero switches out, both active enemies are Haunted.',
+    description: 'Both foes are Haunted.',
     reactive: {
       hook: 'SwitchedOut',
       condition: { relativeTo: 'self' },
@@ -65,7 +65,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   spiritPack: {
     id: 'spiritPack',
     name: 'Spirit Pack',
-    description: "At the end of each round, this hero's partner gains ATK ▲ and SPD ▲.",
+    description: 'Partner gains ATK ▲ and SPD ▲.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
@@ -76,7 +76,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   deathKnell: {
     id: 'deathKnell',
     name: 'Death Knell',
-    description: 'When this hero knocks out a foe, it gains 50 Mana, past its pool.',
+    description: 'Gains 50 Mana, past its pool.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -97,7 +97,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   soulChain: {
     id: 'soulChain',
     name: 'Soul Chain',
-    description: 'When this hero lands an attack on a Haunted foe, that foe loses WIS ▼.',
+    description: 'Against a Haunted foe, that foe loses WIS ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Haunt' },
@@ -108,7 +108,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   mourningSong: {
     id: 'mourningSong',
     name: 'Mourning Song',
-    description: 'When this hero lands an attack on a Haunted foe, it gains INT ▲.',
+    description: 'Against a Haunted foe, it gains INT ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Haunt' },
@@ -119,7 +119,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   mantling: {
     id: 'mantling',
     name: 'Mantling',
-    description: 'When this hero takes damage, its partner gains Shield 15.',
+    description: 'Partner gains Shield 15.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -130,7 +130,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   spreadingFlame: {
     id: 'spreadingFlame',
     name: 'Spreading Flame',
-    description: "When this hero lands an attack on a Burning foe, every active enemy that isn't Burning is set Burning.",
+    description: "Against a Burning foe, every active enemy that isn't Burning is set Burning.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Burn' },
@@ -153,7 +153,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   nightveil: {
     id: 'nightveil',
     name: 'Nightveil',
-    description: 'When this hero enters the battlefield, it gains Barrier for the rest of the round. Twice a fight.',
+    description: 'Gains Barrier for the rest of the round. Twice a fight.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },

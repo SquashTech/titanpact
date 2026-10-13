@@ -20,6 +20,7 @@ import { STAT_FULL_LABELS } from './relicStacks';
 import { moveTagLabel, statusAmountText } from './statusFacts';
 import { stageText } from './moveKind';
 import { BURDEN_SURPLUS, HERO_STAT_TOTAL } from '../../run/statBudget';
+import { reactionKeywordOf, type PassiveKeyword } from '../../run/keywords';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
 export type PassiveFactGlyph =
@@ -35,6 +36,8 @@ export interface PassiveFact {
   glyph: PassiveFactGlyph;
   /** The row's own colour — a status's, an element's. Absent rows take the passive's. */
   color?: 'status' | 'element';
+  /** A trigger row that reads as a keyword: the view draws the badge and its meaning instead. */
+  keyword?: PassiveKeyword;
 }
 
 function statusName(statusId: string | undefined): string {
@@ -332,7 +335,8 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
 
 /** The rows one reaction carries: its trigger, its effect(s), and every qualifier on either. */
 function reactiveFacts(reactive: NonNullable<PassiveDefinition['reactive']>): PassiveFact[] {
-  const rows: PassiveFact[] = [triggerFact(reactive)];
+  const keyword = reactionKeywordOf(reactive);
+  const rows: PassiveFact[] = [keyword ? { ...triggerFact(reactive), keyword } : triggerFact(reactive)];
   if (reactive.whileBenched) rows.push({ label: 'Only', text: 'While this hero is on the bench', glyph: { kind: 'move', move: 'buff' } });
   if (reactive.chance !== undefined) rows.push({ label: 'Odds', text: `${Math.round(reactive.chance * 100)}% of the time`, glyph: { kind: 'move', move: 'debuff' } });
   rows.push(effectFact(reactive.effect, reactive.condition, reactive.hook));

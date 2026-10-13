@@ -15,7 +15,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   gorge: {
     id: 'gorge',
     name: 'Gorge',
-    description: 'When this hero knocks an enemy out, it heals half its max HP.',
+    description: 'Heals half its max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -26,7 +26,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   sealedScript: {
     id: 'sealedScript',
     name: 'Sealed Script',
-    description: "When this hero lands a hit, every move its target holds costs 5 more Mana for the rest of the fight, up to 20.",
+    description: 'Every move its target holds costs 5 more Mana for the rest of the fight, up to 20.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -36,7 +36,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   sleepwalk: {
     id: 'sleepwalk',
     name: 'Sleepwalk',
-    description: 'When this hero Rests, it heals a quarter of its max HP.',
+    description: 'Heals a quarter of its max HP.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -46,7 +46,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   stingingCells: {
     id: 'stingingCells',
     name: 'Stinging Cells',
-    description: 'When this hero takes damage, both active enemies gain Poison 5.',
+    description: 'Both foes gain Poison 5.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -56,7 +56,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   moonglow: {
     id: 'moonglow',
     name: 'Moonglow',
-    description: 'At the end of each round, its partner heals 5% of its max HP.',
+    description: 'Partner heals 5% of its max HP.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
@@ -67,7 +67,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   setup: {
     id: 'setup',
     name: 'Setup',
-    description: 'When this hero lands a hit, its partner gains Ambush 15.',
+    description: 'Partner gains Ambush 15.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -88,7 +88,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   stillness: {
     id: 'stillness',
     name: 'Stillness',
-    description: 'When this hero Rests, every affliction on it is washed away.',
+    description: 'Every affliction on it is washed away.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -98,7 +98,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   innerLight: {
     id: 'innerLight',
     name: 'Inner Light',
-    description: 'When this hero takes damage, it heals a quarter of what it lost.',
+    description: 'Heals a quarter of what it lost.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -120,7 +120,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   voidGnaw: {
     id: 'voidGnaw',
     name: 'Void Gnaw',
-    description: 'When this hero lands a hit, its target loses 8% of its max HP.',
+    description: 'Target loses 8% of its max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -142,7 +142,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   bellVeil: {
     id: 'bellVeil',
     name: 'Bell Veil',
-    description: 'When this hero lands a Water attack, its partner gains Shield 20.',
+    description: 'Partner gains Shield 20.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
@@ -153,7 +153,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   vanishingAct: {
     id: 'vanishingAct',
     name: 'Vanishing Act',
-    description: 'When this hero enters the battlefield, its partner gains Barrier for the rest of the round. Up to 2 times a fight.',
+    description: 'Partner gains Barrier for the rest of the round. Up to 2 times a fight.',
     reactive: {
       maxFiresPerFight: 2,
       hook: 'SwitchedIn',
@@ -165,7 +165,7 @@ export const mindPathPassives: Record<string, PassiveDefinition> = {
   whiteCrane: {
     id: 'whiteCrane',
     name: 'White Crane',
-    description: 'When this hero lands an attack on a Bleeding foe, it gains ATK ▲ and SPD ▲.',
+    description: 'Against a Bleeding foe, it gains ATK ▲ and SPD ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventTargetHasStatus: 'Bleed' },

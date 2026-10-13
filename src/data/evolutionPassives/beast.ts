@@ -5,7 +5,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   ironHide: {
     id: 'ironHide',
     name: 'Iron Hide',
-    description: 'When this hero takes damage, it gains Iron Force 10. Up to 3 times a fight.',
+    description: 'Gains Iron Force 10. Up to 3 times a fight.',
     reactive: {
       maxFiresPerFight: 3,
       hook: 'DamageDealt',
@@ -17,7 +17,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   greatBear: {
     id: 'greatBear',
     name: 'Great Bear',
-    description: 'When this hero lands a finishing blow, both allies gain ATK ▲.',
+    description: 'Both allies gain ATK ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
@@ -62,7 +62,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   closingCanopy: {
     id: 'closingCanopy',
     name: 'Closing Canopy',
-    description: 'When this hero switches out, both active enemies lose SPD ▼▼.',
+    description: 'Both foes lose SPD ▼▼.',
     reactive: {
       hook: 'SwitchedOut',
       condition: { relativeTo: 'self' },
@@ -83,7 +83,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   warmSpring: {
     id: 'warmSpring',
     name: 'Warm Spring',
-    description: 'When this hero Rests, it and its partner gain Renew.',
+    description: 'Both allies gain Renew.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
@@ -128,7 +128,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   hoodFlare: {
     id: 'hoodFlare',
     name: 'Hood Flare',
-    description: 'When this hero lands a Fire attack, its target loses ATK ▼.',
+    description: 'Target loses ATK ▼.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
@@ -146,7 +146,7 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
   flyingRubble: {
     id: 'flyingRubble',
     name: 'Flying Rubble',
-    description: 'When this hero lands a Stone attack, both active enemies lose 5% of their max HP.',
+    description: 'Both foes lose 5% of their max HP.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Stone' } },

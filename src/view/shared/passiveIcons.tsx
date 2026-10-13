@@ -11,6 +11,7 @@ import { SECTION_PATHS } from './sectionIcons';
 import { StatGlyph, STAT_COLORS, STAT_PATHS } from './statIcons';
 import { STAT_LABELS } from './StatBars';
 import { hexTint, STATUS_PATHS, statusColor } from './statusIcons';
+import { PassiveText } from './PassiveText';
 
 // Two marks the shared vocabularies don't already carry. Same contract as STATUS_PATHS:
 // 24x24, `currentColor` only, nothing finer than ~2 units.
@@ -212,7 +213,7 @@ export function PassiveReadout({
         {action}
       </div>
       {source && <div className="passive-readout-source">{source}</div>}
-      <div className="passive-readout-desc">{passive.description}</div>
+      <div className="passive-readout-desc"><PassiveText passive={passive} /></div>
       <PassiveStatChips def={passive} />
       {summary && <div className="passive-readout-meta">{summary}</div>}
     </div>

@@ -1,0 +1,165 @@
+<title>Trigger Keywords</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one column of findings, then a wide comparison grid (cards down, treatments across) that scrolls sideways on a phone. Single dark look, the game's own. */
+:root {
+  --bg: #0f1117; --panel: #1b1e27; --panel-alt: #242833; --border: #353b4a;
+  --text: #edeff4; --dim: #99a0af; --accent: #e0a63c;
+  --up: #3fb8af; --down: #e8554a; --poison: #8bc34a; --renew: #6fd08c; --mana: #7fd4ff;
+  --display: 'Pixelify Sans', 'Trebuchet MS', sans-serif;
+  --body: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', Consolas, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 32px 64px; display: flex; flex-direction: column; gap: 40px; }
+h1, h2 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0; letter-spacing: .02em; }
+h1 { font-size: 2rem; color: var(--accent); }
+h2 { font-size: 1.3rem; }
+p { margin: 0; max-width: 68ch; color: var(--dim); }
+p strong { color: var(--text); font-weight: 600; }
+section { display: flex; flex-direction: column; gap: 14px; }
+svg.g { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
+.g * { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* vocabulary table */
+.scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: .92rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-family: var(--mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); font-weight: 500; background: var(--panel); }
+tr:last-child td { border-bottom: 0; }
+td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; color: var(--accent); }
+td.kw { white-space: nowrap; font-weight: 600; color: var(--accent); }
+td.kw .g { margin-right: 6px; }
+td.was { color: var(--dim); }
+td.ref { color: var(--dim); font-size: .85rem; }
+
+/* comparison grid */
+.grid { display: grid; grid-template-columns: 150px repeat(4, minmax(190px, 1fr)); min-width: 940px; }
+.grid > div { padding: 12px; border-bottom: 1px solid var(--border); min-width: 0; }
+.colhead { font-family: var(--display); font-size: 1.05rem; color: var(--accent); background: var(--panel); position: sticky; top: env(safe-area-inset-top, 0px); }
+.colhead small { display: block; font-family: var(--body); font-size: .78rem; color: var(--dim); }
+.pname { font-family: var(--display); font-size: 1rem; color: var(--text); background: var(--panel); }
+.card { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; font-size: .9rem; line-height: 1.4; }
+.trig { color: var(--accent); font-weight: 600; white-space: nowrap; }
+.trig .g { margin-right: 3px; }
+.glyphonly { color: var(--accent); margin-right: 4px; }
+.up { color: var(--up); } .down { color: var(--down); } .psn { color: var(--poison); } .rnw { color: var(--renew); } .mna { color: var(--mana); }
+.wc { display: block; margin-top: 4px; font-family: var(--mono); font-size: .7rem; color: var(--dim); }
+.pip { display: inline-grid; place-items: center; width: 1.05em; height: 1.05em; border: 1.5px solid currentColor; border-radius: 50%; font-size: .68em; font-family: var(--mono); vertical-align: .05em; margin-right: 2px; }
+
+ol { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 10px; max-width: 72ch; color: var(--dim); }
+ol strong { color: var(--text); }
+</style>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="enter" viewBox="0 0 24 24"><path d="M14 4h5v16h-5"/><path d="M3 12h11"/><path d="M10 8l4 4-4 4"/></symbol>
+  <symbol id="leave" viewBox="0 0 24 24"><path d="M10 4H5v16h5"/><path d="M10 12h11"/><path d="M17 8l4 4-4 4"/></symbol>
+  <symbol id="hit" viewBox="0 0 24 24"><path d="M4 20L15 9"/><path d="M14 4l6 6"/><path d="M12 6l6 6"/><path d="M6 14l4 4"/></symbol>
+  <symbol id="struck" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M12 7l-2 4 3 2-2 4"/></symbol>
+  <symbol id="round" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 10 5 10 9s-10 4-10 9"/><path d="M17 3c0 5-10 5-10 9s10 4 10 9"/></symbol>
+  <symbol id="takedown" viewBox="0 0 24 24"><path d="M5 11a7 7 0 0 1 14 0v4h-3v4H8v-4H5z"/><path d="M9 11h.01M15 11h.01" stroke-width="3"/><path d="M11 19v-2M13 19v-2"/></symbol>
+  <symbol id="rest" viewBox="0 0 24 24"><path d="M4 10h6l-6 7h6"/><path d="M13 4h6l-6 7h6"/></symbol>
+  <symbol id="healed" viewBox="0 0 24 24"><path d="M12 20s-8-4.5-8-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.5-8 10-8 10z"/><path d="M12 9v6M9 12h6"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <h1>Trigger Keywords</h1>
+    <p>Of the 450 passive lines across innates, Evolution paths, Boons, Classes and gear, <strong>about 275 open with one of eight trigger clauses.</strong> Each is already a single <code>reactive.hook</code> in the data, so the keyword can be derived from the engine's own fields and can never drift from what the card does.</p>
+  </header>
+
+  <section>
+    <h2>The eight</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Keyword</th><th>Replaces</th><th>Hook</th><th style="text-align:right">Lines</th><th>Precedent</th></tr></thead>
+        <tbody>
+          <tr><td class="kw"><svg class="g"><use href="#enter"/></svg>Enter</td><td class="was">When this hero enters the battlefield</td><td class="ref">SwitchedIn</td><td class="n">64</td><td class="ref">MTG enters-the-battlefield, Hearthstone Battlecry, Pokémon "on switch-in" abilities</td></tr>
+          <tr><td class="kw"><svg class="g"><use href="#hit"/></svg>On Hit</td><td class="was">When this hero lands a hit / an attack / a Fire attack</td><td class="ref">DamageDealt, source</td><td class="n">52</td><td class="ref">Slay the Spire, Monster Train "on hit"</td></tr>
+          <tr><td class="kw"><svg class="g"><use href="#round"/></svg>Round End</td><td class="was">At the end of each round</td><td class="ref">RoundEnded</td><td class="n">37</td><td class="ref">Hearthstone "end of turn", Pokémon Leftovers timing</td></tr>
+          <tr><td class="kw"><svg class="g"><use href="#struck"/></svg>Struck</td><td class="was">When this hero takes damage / takes a hit</td><td class="ref">DamageDealt, target</td><td class="n">29</td><td class="ref">Hearthstone Enrage, Monster Train "Revenge"</td></tr>
+          <tr><td class="kw"><svg class="g"><use href="#takedown"/></svg>Takedown</td><td class="was">lands a finishing blow / knocks out a foe / knocks an enemy out</td><td class="ref">DamageDealt, finishingBlow</td><td class="n">14</td><td class="ref">Pokémon Moxie, MTG "whenever a creature dies"</td></tr>
+          <tr><td class="kw"><svg class="g"><use href="#rest"/></svg>Rest</td><td class="was">When this hero Rests</td><td class="ref">Rested</td><td class="n">12</td><td class="ref">Already a game verb; only the glyph is new</td></tr>
+          <tr><td class="kw"><svg class="g"><use href="#leave"/></svg>Leave</td><td class="was">When this hero switches out</td><td class="ref">SwitchedOut</td><td class="n">11</td><td class="ref">Pokémon Regenerator, Hearthstone Deathrattle</td></tr>
+          <tr><td class="kw"><svg class="g"><use href="#healed"/></svg>Healed</td><td class="was">When this hero is healed</td><td class="ref">Healed</td><td class="n">7</td><td class="ref">Hearthstone "whenever healed"</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Two modifiers ride on any keyword instead of becoming keywords of their own: <strong><span class="pip">1</span>Once</strong> for "the first time … each fight" (11 lines), and a round count for "every third round". No subject means <strong>this hero</strong>; anyone else is named ("Partner", "Foes").</p>
+  </section>
+
+  <section>
+    <h2>Side by side</h2>
+    <p>Eight real passives in four treatments. Word counts are the line as printed.</p>
+    <div class="scroll">
+      <div class="grid">
+        <div class="colhead">Passive</div>
+        <div class="colhead">A · Today<small>the authored sentence</small></div>
+        <div class="colhead">B · Keyword<small>bold word, no glyph</small></div>
+        <div class="colhead">C · Glyph + keyword<small>word teaches the glyph</small></div>
+        <div class="colhead">D · Glyph only<small>long-press to name it</small></div>
+
+        <div class="pname">Rallying Standard</div>
+        <div><div class="card">When this hero enters the battlefield, its partner gains <span class="up">ATK ▲</span> and <span class="up">INT ▲</span>.<span class="wc">14 words</span></div></div>
+        <div><div class="card"><span class="trig">Enter:</span> partner gains <span class="up">ATK ▲ INT ▲</span>.<span class="wc">6 words</span></div></div>
+        <div><div class="card"><span class="trig"><svg class="g"><use href="#enter"/></svg>Enter</span> Partner gains <span class="up">ATK ▲ INT ▲</span>.<span class="wc">5 words + glyph</span></div></div>
+        <div><div class="card"><svg class="g glyphonly"><use href="#enter"/></svg>Partner gains <span class="up">ATK ▲ INT ▲</span>.<span class="wc">4 words + glyph</span></div></div>
+
+        <div class="pname">Second Skin</div>
+        <div><div class="card">When this hero takes damage, it gains <span class="up">DEF ▲</span> and <span class="up">WIS ▲</span>.<span class="wc">11 words</span></div></div>
+        <div><div class="card"><span class="trig">Struck:</span> gains <span class="up">DEF ▲ WIS ▲</span>.<span class="wc">4 words</span></div></div>
+        <div><div class="card"><span class="trig"><svg class="g"><use href="#struck"/></svg>Struck</span> Gains <span class="up">DEF ▲ WIS ▲</span>.<span class="wc">4 words + glyph</span></div></div>
+        <div><div class="card"><svg class="g glyphonly"><use href="#struck"/></svg>Gains <span class="up">DEF ▲ WIS ▲</span>.<span class="wc">3 words + glyph</span></div></div>
+
+        <div class="pname">Impale</div>
+        <div><div class="card">When this hero lands an attack, its target suffers <span class="psn">Poison 5</span>.<span class="wc">11 words</span></div></div>
+        <div><div class="card"><span class="trig">On Hit:</span> target suffers <span class="psn">Poison 5</span>.<span class="wc">6 words</span></div></div>
+        <div><div class="card"><span class="trig"><svg class="g"><use href="#hit"/></svg>On Hit</span> Target suffers <span class="psn">Poison 5</span>.<span class="wc">6 words + glyph</span></div></div>
+        <div><div class="card"><svg class="g glyphonly"><use href="#hit"/></svg>Target suffers <span class="psn">Poison 5</span>.<span class="wc">4 words + glyph</span></div></div>
+
+        <div class="pname">Grief</div>
+        <div><div class="card">The first time this hero takes damage each fight, it gains <span class="rnw">Renew</span>.<span class="wc">13 words</span></div></div>
+        <div><div class="card"><span class="trig">Once · Struck:</span> gains <span class="rnw">Renew</span>.<span class="wc">4 words</span></div></div>
+        <div><div class="card"><span class="trig"><span class="pip">1</span><svg class="g"><use href="#struck"/></svg>Struck</span> Gains <span class="rnw">Renew</span>.<span class="wc">3 words + glyphs</span></div></div>
+        <div><div class="card"><span class="glyphonly"><span class="pip">1</span><svg class="g"><use href="#struck"/></svg></span>Gains <span class="rnw">Renew</span>.<span class="wc">2 words + glyphs</span></div></div>
+
+        <div class="pname">Ink</div>
+        <div><div class="card">When this hero switches out, both active enemies lose <span class="down">ATK ▼</span> and <span class="down">INT ▼</span>.<span class="wc">14 words</span></div></div>
+        <div><div class="card"><span class="trig">Leave:</span> foes lose <span class="down">ATK ▼ INT ▼</span>.<span class="wc">6 words</span></div></div>
+        <div><div class="card"><span class="trig"><svg class="g"><use href="#leave"/></svg>Leave</span> Foes lose <span class="down">ATK ▼ INT ▼</span>.<span class="wc">5 words + glyph</span></div></div>
+        <div><div class="card"><svg class="g glyphonly"><use href="#leave"/></svg>Foes lose <span class="down">ATK ▼ INT ▼</span>.<span class="wc">4 words + glyph</span></div></div>
+
+        <div class="pname">Feast</div>
+        <div><div class="card">When this hero lands a finishing blow, it heals a third of its max HP.<span class="wc">14 words</span></div></div>
+        <div><div class="card"><span class="trig">Takedown:</span> heals a third of max HP.<span class="wc">7 words</span></div></div>
+        <div><div class="card"><span class="trig"><svg class="g"><use href="#takedown"/></svg>Takedown</span> Heals ⅓ max HP.<span class="wc">5 words + glyph</span></div></div>
+        <div><div class="card"><svg class="g glyphonly"><use href="#takedown"/></svg>Heals ⅓ max HP.<span class="wc">4 words + glyph</span></div></div>
+
+        <div class="pname">Slumber</div>
+        <div><div class="card">When this hero Rests, it gains Ambush 45.<span class="wc">8 words</span></div></div>
+        <div><div class="card"><span class="trig">Rest:</span> gains Ambush 45.<span class="wc">4 words</span></div></div>
+        <div><div class="card"><span class="trig"><svg class="g"><use href="#rest"/></svg>Rest</span> Gains Ambush 45.<span class="wc">4 words + glyph</span></div></div>
+        <div><div class="card"><svg class="g glyphonly"><use href="#rest"/></svg>Gains Ambush 45.<span class="wc">3 words + glyph</span></div></div>
+
+        <div class="pname">The Bell Tolls</div>
+        <div><div class="card">At the end of every third round, set Sanctuary and fully restore this hero's <span class="mna">Mana</span>.<span class="wc">15 words</span></div></div>
+        <div><div class="card"><span class="trig">Every 3rd Round End:</span> set Sanctuary, refill <span class="mna">Mana</span>.<span class="wc">8 words</span></div></div>
+        <div><div class="card"><span class="trig"><span class="pip">3</span><svg class="g"><use href="#round"/></svg>Round End</span> Set Sanctuary, refill <span class="mna">Mana</span>.<span class="wc">6 words + glyphs</span></div></div>
+        <div><div class="card"><span class="glyphonly"><span class="pip">3</span><svg class="g"><use href="#round"/></svg></span>Set Sanctuary, refill <span class="mna">Mana</span>.<span class="wc">4 words + glyphs</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Questions this raises</h2>
+    <ol>
+      <li><strong>"Lands a hit" and "lands an attack" are the same data.</strong> Both read <code>DamageDealt</code> with the hero as source. The same goes for "finishing blow" and "knocks out a foe", "takes a hit" and "takes damage", and "foe" and "enemy". A keyword would fold these together, which is a cleanup on its own merits.</li>
+      <li><strong>Where does a new player learn the glyph?</strong> The tips are down to three, so a glyph can't be taught there. C keeps the word beside the glyph everywhere, so it teaches itself. D needs a long-press, which is a screen the player has to think to open.</li>
+      <li><strong>Should the effect half drop its subject too?</strong> B–D drop "it" and "this hero" ("Gains DEF ▲"), which only works if the rule is that no subject means this hero. That rule would show up in every line, so it needs to hold everywhere.</li>
+      <li><strong>Who writes the line?</strong> The trigger can be drawn from the hook, with the author writing only the effect half and a test checking the two match. The alternative is hand-editing 275 descriptions, which will drift again.</li>
+      <li><strong>The long tail stays prose.</strong> "When an enemy takes Burn damage", "When this hero's Defense rises" and others under 8 lines each are better spelled out than given a fifteenth glyph to learn.</li>
+    </ol>
+  </section>
+</div>

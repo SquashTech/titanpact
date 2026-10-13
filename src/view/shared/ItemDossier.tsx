@@ -14,6 +14,7 @@ import { PassiveGlyph, PassiveStatChips, passiveColor, passiveEffectSummary } fr
 import { ResourceGlyph } from './RunGlyph';
 import { getTypeColor } from '../combat/typeColors';
 import { overlayHost } from './overlayHost';
+import { PassiveText } from './PassiveText';
 
 /** The family noun, or what stands in for one on an item outside the ladder. */
 function familyLabel(item: EquipmentDefinition): string {
@@ -94,7 +95,7 @@ export function ItemDetailCard({ item }: { item: EquipmentDefinition }) {
                 </span>
                 <span className="move-detail-effect-text">
                   {def.name}
-                  <span className="move-detail-effect-note">{def.description}</span>
+                  <span className="move-detail-effect-note"><PassiveText passive={def} /></span>
                   <PassiveStatChips def={def} />
                   {summary && <span className="move-detail-effect-note item-detail-passive-meta">{summary}</span>}
                 </span>

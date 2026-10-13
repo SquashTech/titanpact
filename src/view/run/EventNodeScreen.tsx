@@ -57,6 +57,7 @@ import { RosterPeek } from './RosterPeek';
 import { levelOf } from '../../run/growth';
 import { statScaleFor } from '../../run/statScale';
 import { PlateButton } from '../shared/PlateButton';
+import { PassiveText } from '../shared/PassiveText';
 
 interface Props {
   /** Rolled at node-select time (App.tsx) — see src/run/events.ts. */
@@ -391,7 +392,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
                 <PassiveGlyph passiveId={grantedPassive.id} />
                 {grantedPassive.name}
               </span>
-              <p className="event-passive-desc">{grantedPassive.description}</p>
+              <p className="event-passive-desc"><PassiveText passive={grantedPassive} /></p>
             </div>
           )}
           {arrived && outcome?.kind === 'gamble' && (

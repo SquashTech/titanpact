@@ -5,7 +5,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   rekindle: {
     id: 'rekindle',
     name: 'Rekindle',
-    description: "Every Fire attack this hero lands sets its target Burning, unless it already is.",
+    description: 'Sets the target Burning, unless it already is.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
@@ -16,7 +16,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   emberVeil: {
     id: 'emberVeil',
     name: 'Ember Veil',
-    description: 'When this hero lands a Fire attack, its target is Haunted.',
+    description: 'Target is Haunted.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
@@ -34,7 +34,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   hexfume: {
     id: 'hexfume',
     name: 'Hexfume',
-    description: 'When this hero enters the battlefield, both active enemies gain Poison 10.',
+    description: 'Both foes gain Poison 10.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -56,7 +56,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   risingFlame: {
     id: 'risingFlame',
     name: 'Rising Flame',
-    description: 'When this hero enters the battlefield, it gains Fire Force 15. Up to 3 times a fight.',
+    description: 'Gains Fire Force 15. Up to 3 times a fight.',
     reactive: {
       maxFiresPerFight: 3,
       hook: 'SwitchedIn',
@@ -68,7 +68,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   dawnfire: {
     id: 'dawnfire',
     name: 'Dawnfire',
-    description: "While Sanctuary is up, this hero's Fire attacks heal its partner for a third of the damage dealt.",
+    description: 'While Sanctuary is up, heals its partner for a third of the damage dealt.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' }, requiresFieldEffect: 'sanctuary' },
@@ -91,7 +91,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   curtainCall: {
     id: 'curtainCall',
     name: 'Curtain Call',
-    description: "When this hero switches out, its partner heals 15% of its max HP.",
+    description: 'Partner heals 15% of its max HP.',
     reactive: {
       hook: 'SwitchedOut',
       condition: { relativeTo: 'self' },
@@ -102,7 +102,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   footlights: {
     id: 'footlights',
     name: 'Footlights',
-    description: 'When this hero enters the battlefield, it gains Light Force 15. Up to 3 times a fight.',
+    description: 'Gains Light Force 15. Up to 3 times a fight.',
     reactive: {
       maxFiresPerFight: 3,
       hook: 'SwitchedIn',
@@ -133,7 +133,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   wingwake: {
     id: 'wingwake',
     name: 'Wingwake',
-    description: 'When this hero enters the battlefield, its next attack goes at +1 priority and gains Ambush 20.',
+    description: 'Its next attack goes at +1 priority and gains Ambush 20.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -145,7 +145,7 @@ export const firePathPassives: Record<string, PassiveDefinition> = {
   spotlight: {
     id: 'spotlight',
     name: 'Spotlight',
-    description: 'When this hero enters the battlefield, its partner gains Ambush 20. Up to 3 times a fight.',
+    description: 'Partner gains Ambush 20. Up to 3 times a fight.',
     reactive: {
       maxFiresPerFight: 3,
       hook: 'SwitchedIn',

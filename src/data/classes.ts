@@ -109,7 +109,7 @@ export const classPassives: Record<string, PassiveDefinition> = {
   berserker: {
     id: 'berserker',
     name: 'Frenzy',
-    description: 'Every hit this hero lands raises its ATK ▲ and INT ▲.',
+    description: 'Gains ATK ▲ and INT ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
@@ -119,7 +119,7 @@ export const classPassives: Record<string, PassiveDefinition> = {
   warden: {
     id: 'warden',
     name: 'Stalwart',
-    description: 'When this hero enters the battlefield, it gains DEF ▲ and WIS ▲.',
+    description: 'Gains DEF ▲ and WIS ▲.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -129,7 +129,7 @@ export const classPassives: Record<string, PassiveDefinition> = {
   monk: {
     id: 'monk',
     name: 'Inner Focus',
-    description: 'Every hit this hero takes restores 10 Mana.',
+    description: 'Restores 10 Mana.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
@@ -149,7 +149,7 @@ export const classPassives: Record<string, PassiveDefinition> = {
   cleric: {
     id: 'cleric',
     name: 'Succor',
-    description: "Every hit this hero lands mends its partner (15 healing power, scaled by this hero's Wisdom).",
+    description: "Mends its partner (15 healing power, scaled by this hero's Wisdom).",
     // On-hit rather than round-end, so it is not Patch's Upkeep; a spread hit mends twice.
     reactive: {
       hook: 'DamageDealt',
@@ -160,7 +160,7 @@ export const classPassives: Record<string, PassiveDefinition> = {
   warlock: {
     id: 'warlock',
     name: 'Siphon',
-    description: 'Every magical hit this hero lands restores 10 Mana.',
+    description: 'Restores 10 Mana.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
@@ -170,7 +170,7 @@ export const classPassives: Record<string, PassiveDefinition> = {
   sage: {
     id: 'sage',
     name: 'Deep Breath',
-    description: 'When this hero Rests, it gains INT ▲ and WIS ▲.',
+    description: 'Gains INT ▲ and WIS ▲.',
     reactive: {
       hook: 'Rested',
       condition: { relativeTo: 'self' },
