@@ -46,7 +46,21 @@ export function modesOpenDue(profile: Pick<Profile, 'runsCompleted' | 'cyclesCle
  * mark the player is about to go looking for, so a tip can print the glyph the move buttons wear.
  * Opaque NAMES here; the view maps them onto glyphs, so the run tier stays free of the view tier.
  */
-export const TIP_ICON_TOKENS = ['physical', 'magical', 'heal', 'buff', 'debuff', 'super', 'resist', 'spread'] as const;
+export const TIP_ICON_TOKENS = [
+  'physical',
+  'magical',
+  'heal',
+  'buff',
+  'debuff',
+  'super',
+  'resist',
+  'single',
+  'spread',
+  'random',
+  'self',
+  'ally',
+  'foe',
+] as const;
 
 export type TipIconToken = (typeof TIP_ICON_TOKENS)[number];
 

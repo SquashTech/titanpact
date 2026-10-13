@@ -37,8 +37,15 @@ export const HOW_TO_PLAY: readonly Tip[] = [
   section(
     'types',
     'Types',
-    "A move's arrows show how it hits each enemy, in the order they stand: [super] double, [resist] half, two arrows four times or a quarter. [spread] hits both.",
+    "The arrows under a move's number show how it hits each enemy, in the order they stand: [super] double, [resist] half, two arrows four times or a quarter.",
     "The icon before a move's name is its type. A move that shares a type with the hero using it deals 25% more."
+  ),
+  section(
+    'targets',
+    'Who a Move Hits',
+    'The bars under the arrows show who an attack hits. [single] One enemy, the one you pick. [spread] Both enemies. [random] One enemy, at random.',
+    'Figures show who a move or an effect reaches: [self] the hero using it, [ally] your side, [foe] an enemy. A figure in front of an effect says who gets it.',
+    'A move that hits everyone also shows [ally]: it hits your partner too.'
   ),
   section(
     'kinds',

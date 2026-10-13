@@ -7,8 +7,10 @@
 //   - `SCREEN_TIPS` keys are the ids App.tsx asks for (`SCREEN_TIP_IDS` in run/tips.ts); a
 //     test fails if either side has an id the other does not.
 //   - `FIGHT_TIPS` are checked at the top of every command phase. Order is priority order.
-//   - A page may print a move-kind icon inline: `[physical]`, `[magical]`, `[heal]`, `[buff]`,
-//     `[debuff]`. A misspelt token prints literally and fails `test/tips.test.ts`.
+//   - A page may print a move row's own mark inline: the kinds `[physical]`, `[magical]`, `[heal]`,
+//     `[buff]`, `[debuff]`; the arrows `[super]`, `[resist]`; the seats' bars `[single]`, `[spread]`,
+//     `[random]`; the figures `[self]`, `[ally]`, `[foe]`. A misspelt token prints literally and
+//     fails `test/tips.test.ts`.
 
 import type { InstallPlatform } from '../run/installHint';
 import type { FightTip, ModesOpenPage, ScreenTipId, Tip } from '../run/tips';
@@ -58,7 +60,7 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     pages: [
       'Each round, choose a move and a target for both heroes on the field. Then the round plays out in Speed order.',
       'A move costs the Mana in its gem, paid from the blue bar. Everyone regains some each round, and Rest recovers all of it.',
-      "A move's arrows show how it hits each enemy: [super] double, [resist] half. Tap a fighter to read it, and hold a move to read what it does.",
+      "The arrows under a move's number show how it hits each enemy: [super] double, [resist] half. [single] hits one enemy, [spread] hits both. Hold a move to read what it does.",
     ],
   },
 ];

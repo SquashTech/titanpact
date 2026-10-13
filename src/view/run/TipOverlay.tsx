@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import { parseTipText, type Tip, type TipIconToken } from '../../run/tips';
 import { MoveKindGlyph } from '../shared/statIcons';
-import { EnemySeats, SeatArrow } from '../shared/MoveStrip';
+import type { MoveDefinition } from '../../engine/content';
+import { EnemySeats, SeatArrow, TargetFigures } from '../shared/MoveStrip';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { pageSpotlight, TIP_STAGING } from './tipStaging';
 import { TipPictureView } from './TipScene';
@@ -21,10 +22,22 @@ const TOKEN_BADGE_CLASS: Partial<Record<TipIconToken, string>> = {
   debuff: 'kind-debuff',
 };
 
-/** A matchup token draws the move row's own mark: the seat arrow, or the bar joining both seats. */
-function MatchupToken({ token }: { token: TipIconToken }) {
-  if (token === 'spread') return <span className="tip-inline-seats"><EnemySeats mults={[1, 1]} target="bothEnemies" /></span>;
+const SEAT_TOKENS: Partial<Record<TipIconToken, MoveDefinition['target']>> = { single: 'singleEnemy', spread: 'bothEnemies', random: 'randomEnemy' };
+const FIGURE_TOKENS: Partial<Record<TipIconToken, MoveDefinition['target']>> = { self: 'self', ally: 'singleAlly', foe: 'singleEnemy' };
+
+/** A token that draws the move row's own mark: a seat arrow, the seats' bars, or a target figure. */
+function RowMarkToken({ token }: { token: TipIconToken }) {
+  const seats = SEAT_TOKENS[token];
+  if (seats) return <span className="tip-inline-seats"><EnemySeats mults={[1, 1]} target={seats} /></span>;
+  const figure = FIGURE_TOKENS[token];
+  if (figure) return <span className="tip-inline-figure"><TargetFigures target={figure} small /></span>;
   return <span className="tip-inline-arrow"><SeatArrow mult={token === 'super' ? 2 : 0.5} /></span>;
+}
+
+type KindToken = 'physical' | 'magical' | 'heal' | 'buff' | 'debuff';
+
+function isKindToken(token: TipIconToken): token is KindToken {
+  return token in TOKEN_BADGE_CLASS;
 }
 
 /** One page, with `[physical]`-style tokens swapped for the glyph they name. */
@@ -35,12 +48,12 @@ export function TipText({ text }: { text: string }) {
         'block' in segment ? (
           <StageChart key={i} />
         ) : 'icon' in segment ? (
-          segment.icon === 'super' || segment.icon === 'resist' || segment.icon === 'spread' ? (
-            <MatchupToken key={i} token={segment.icon} />
-          ) : (
+          isKindToken(segment.icon) ? (
             <span key={i} className={`category-badge move-kind-badge tip-inline-icon ${TOKEN_BADGE_CLASS[segment.icon]}`}>
               <MoveKindGlyph kind={segment.icon} className="move-kind-glyph" />
             </span>
+          ) : (
+            <RowMarkToken key={i} token={segment.icon} />
           )
         ) : (
           <span key={i}>{segment.text}</span>

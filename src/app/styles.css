@@ -7776,6 +7776,11 @@ textarea,
   min-height: 50px;
 }
 
+/* The seats under the number need the room a fight's fixed tray already gives them. */
+.move-list .move-button.has-stub:has(.move-stub.has-seats) {
+  min-height: 58px;
+}
+
 /* One line: gem, type, name, then the strip pushed right against the stub. */
 .move-button.has-stub {
   justify-content: center;
@@ -25513,6 +25518,30 @@ button.evo-gift-card {
   margin: 0 2px;
 }
 
+.tip-inline-figure {
+  display: inline-flex;
+  vertical-align: middle;
+  margin: 0 1px;
+}
+
+/* On parchment the seats' light bars and the white caster vanish, so they are inked instead. */
+.tip-inline-seats .move-seat::after,
+.tip-inline-seats .move-seats.is-spread::after {
+  background: rgba(60, 36, 16, 0.75);
+}
+
+.tip-inline-seats .move-seats.is-random .move-seat::after {
+  background: repeating-linear-gradient(90deg, rgba(60, 36, 16, 0.75) 0 3px, transparent 3px 5px);
+}
+
+.tip-inline-seats .move-seat-arrow.eff-neutral::after {
+  background: rgba(60, 36, 16, 0.6);
+}
+
+.tip-inline-figure .target-figures.is-self {
+  color: #3c2410;
+}
+
 .tip-inline-arrow .move-seat-arrow svg {
   width: 13px;
   height: 13px;
@@ -27937,7 +27966,17 @@ button.evo-gift-card {
 }
 
 /* Inside a move row, which clips: the ring is drawn inward instead. */
-.tip-scene.focus-matchups .is-focus-row .move-seats,
+/* Drawn just outside the seats, so the ring never sits on the bars it is pointing at. */
+.tip-scene.focus-matchups .is-focus-row .move-seats {
+  border-radius: 4px;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  background-color: rgba(224, 166, 60, 0.14);
+}
+
+.tip-scene.focus-reach .is-focus-row .move-rider .target-figures,
+.tip-scene.focus-reach .is-focus-row .move-reach,
+.tip-scene.focus-reach .is-focus-row .move-stub .target-figures,
 .tip-scene.focus-kindBadge .is-focus-row .move-stub,
 .tip-scene.focus-move .is-focus-row .move-button {
   border-radius: 4px;

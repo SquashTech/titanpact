@@ -26,6 +26,7 @@ export type TipSceneFocus =
   | 'heroTypes'
   | 'foeTypes'
   | 'matchups'
+  | 'reach'
   | 'move'
   | 'foe'
   | 'stageMarks'
@@ -117,11 +118,19 @@ const MANA_SCENE: TipScene = { hero: { heroId: 'cinderKnight', mana: 0.6 }, hero
 
 const MATCHUP_SCENE: TipScene = { ...TYPES_CAST, moves: ['ember'], focus: ['matchups'], expect: { ember: [2, 0.5] } };
 
+/** One target, both, and one at random, against the same pair. */
+const TARGETS_SCENE: TipScene = {
+  ...TYPES_CAST,
+  moves: ['ember', 'firestorm', 'jackpot'],
+  focus: ['matchups'],
+  expect: { ember: [2, 0.5], firestorm: [2, 0.5] },
+};
+
 const SWITCH_SCENE: TipScene = { hero: { heroId: 'cinderKnight' }, bar: true, focus: ['switch'] };
 
 /** Per tip or How to Play section, per page: the picture above the words, or null for none. */
 export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>> = {
-  'fight.basics': [null, MANA_SCENE, MATCHUP_SCENE],
+  'fight.basics': [null, MANA_SCENE, { ...TARGETS_SCENE, moves: ['ember', 'firestorm'] }],
   bench: [null, null, SWITCH_SCENE],
   'howto.combat': [null, { foes: [{ heroId: 'wildOracle' }], hero: { heroId: 'cinderKnight' }, moves: ['singe'], focus: ['foe', 'move'] }],
   'howto.mana': [MANA_SCENE, { hero: { heroId: 'cinderKnight', mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],
@@ -134,6 +143,11 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
       tags: { singe: '+25%' },
       focus: ['typeIcon', 'heroTypes'],
     },
+  ],
+  'howto.targets': [
+    TARGETS_SCENE,
+    { ...TYPES_CAST, moves: ['ironFist', 'tideGuard'], focus: ['reach'] },
+    { ...TYPES_CAST, moves: ['snowBlast'], focus: ['reach'] },
   ],
   'howto.kinds': [
     { hero: { heroId: 'cinderKnight' }, moves: KINDS_MOVES, focus: ['kindBadge'], focusMoves: ['singe', 'ember'] },
