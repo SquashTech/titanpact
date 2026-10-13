@@ -18088,6 +18088,47 @@ button.star-shop-bundle-face {
     var(--surface-raised);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
   animation: map-preview-card-in 200ms var(--ease-out) both;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.map-preview-card::-webkit-scrollbar {
+  display: none;
+}
+
+/* Too tall for the room above the row: each reward's mark beside its figure rather than over it. */
+.map-preview-card.is-tight {
+  padding-block: 8px;
+}
+
+.map-preview-card.is-tight .node-dossier-panel {
+  gap: 6px;
+}
+
+.map-preview-card.is-tight .node-dossier-rewards {
+  gap: 10px 4px;
+  padding: 2px 0 0;
+}
+
+.map-preview-card.is-tight .node-dossier-reward {
+  flex-direction: row;
+  justify-content: center;
+  gap: 7px;
+  text-align: left;
+}
+
+.map-preview-card.is-tight .node-dossier-reward-glyph {
+  width: 22px;
+  height: 22px;
+}
+
+.map-preview-card.is-tight .node-dossier-reward-text {
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.map-preview-card.is-tight .node-dossier-reward-value {
+  font-size: 18px;
 }
 
 @keyframes map-preview-card-in {

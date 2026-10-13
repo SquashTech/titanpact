@@ -294,10 +294,7 @@ export function MapRoute({
   const [opening, setOpening] = useState<{ id: string; color: string; x: number; y: number } | null>(null);
   const openingId = opening?.id ?? null;
   const [previewId, setPreviewId] = useState<string | null>(null);
-  // How far the route drops so the row clears the card above it (MapPreview), on a short screen.
-  const [shift, setShift] = useState(0);
   useEffect(() => {
-    if (!previewId) setShift(0);
     onPreviewChange?.(previewId ? map.nodes[previewId] ?? null : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previewId]);
@@ -446,7 +443,7 @@ export function MapRoute({
   }
 
   return (
-    <div className={`map-route${revealing ? ' is-revealing' : ''}`} ref={routeRef} style={shift ? { transform: `translateY(${shift}px)` } : undefined}>
+    <div className={`map-route${revealing ? ' is-revealing' : ''}`} ref={routeRef}>
       {segments.length > 0 && (
         <svg className="map-paths" aria-hidden="true">
           {segments.map((seg, i) => (
@@ -558,8 +555,6 @@ export function MapRoute({
             previewId={previewId}
             color={NODE_COLORS[map.nodes[previewId].type]}
             label={NODE_LABELS[map.nodes[previewId].type]}
-            shift={shift}
-            onShift={setShift}
             onTap={tap}
             onBack={() => setPreviewId(null)}
             onGo={() => go(previewId)}
@@ -629,8 +624,6 @@ function MapPreview({
   previewId,
   color,
   label,
-  shift,
-  onShift,
   onTap,
   onBack,
   onGo,
@@ -640,8 +633,6 @@ function MapPreview({
   previewId: string;
   color: string;
   label: string;
-  shift: number;
-  onShift: (shift: number) => void;
   onTap: (id: string) => void;
   onBack: () => void;
   onGo: () => void;
@@ -650,7 +641,9 @@ function MapPreview({
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
   const [frame, setFrame] = useState<{ header: Box | null; footer: Box | null }>({ header: null, footer: null });
   const cardRef = useRef<HTMLDivElement>(null);
-  const [cardTop, setCardTop] = useState<number | null>(null);
+  const [cardSeat, setCardSeat] = useState<{ top: number; maxHeight?: number } | null>(null);
+  // Sticky for the row, so switching between two tiles never flips the card's layout under the finger.
+  const [tight, setTight] = useState(false);
   const maskId = useId();
   const tileKey = tiles.map((t) => t.id).join(',');
   useLayoutEffect(() => {
@@ -659,20 +652,23 @@ function MapPreview({
       const header = measureSelector('.map-header');
       setBoxes(measured);
       setFrame({ header, footer: measureSelector('.map-footer') });
-      // The card sits centred between the header and the row; where it cannot fit, the route drops by the shortfall.
+      // The card sits centred between the header and the row, and the row never moves: a card too
+      // tall for the room goes compact, then scrolls inside itself.
       const card = cardRef.current;
       const rowTop = Math.min(...Object.values(measured).map((b) => b.top));
       if (!card || !Number.isFinite(rowTop)) return;
       const ceiling = header ? header.top + header.height : 0;
-      const room = rowTop - ceiling - CARD_MARGIN * 2;
-      if (card.offsetHeight > room + 1) onShift(shift + Math.ceil(card.offsetHeight - room));
-      else setCardTop(ceiling + CARD_MARGIN + (room - card.offsetHeight) / 2);
+      const room = Math.max(0, rowTop - ceiling - CARD_MARGIN * 2);
+      const height = card.scrollHeight;
+      if (height > room + 1 && !tight) setTight(true);
+      else if (height > room + 1) setCardSeat({ top: ceiling + CARD_MARGIN, maxHeight: room });
+      else setCardSeat({ top: ceiling + CARD_MARGIN + (room - height) / 2 });
     };
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tileKey, previewId, shift]);
+  }, [tileKey, previewId, tight]);
 
   const rowFoot = Math.max(0, ...Object.values(boxes).map((b) => b.top + b.height));
   const lit = [frame.header, frame.footer].filter((b): b is Box => b !== null);
@@ -708,9 +704,12 @@ function MapPreview({
         />
       ))}
       <div
-        className="map-preview-card"
+        className={`map-preview-card${tight ? ' is-tight' : ''}`}
         ref={cardRef}
-        style={{ top: cardTop ?? (frame.header ? frame.header.top + frame.header.height : 0) + CARD_MARGIN }}
+        style={{
+          top: cardSeat?.top ?? (frame.header ? frame.header.top + frame.header.height : 0) + CARD_MARGIN,
+          maxHeight: cardSeat?.maxHeight,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
