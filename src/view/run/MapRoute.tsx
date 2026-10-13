@@ -642,8 +642,6 @@ function MapPreview({
   const [frame, setFrame] = useState<{ header: Box | null; footer: Box | null }>({ header: null, footer: null });
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardSeat, setCardSeat] = useState<{ top: number; maxHeight?: number } | null>(null);
-  // Sticky for the row, so switching between two tiles never flips the card's layout under the finger.
-  const [tight, setTight] = useState(false);
   const maskId = useId();
   const tileKey = tiles.map((t) => t.id).join(',');
   useLayoutEffect(() => {
@@ -653,22 +651,21 @@ function MapPreview({
       setBoxes(measured);
       setFrame({ header, footer: measureSelector('.map-footer') });
       // The card sits centred between the header and the row, and the row never moves: a card too
-      // tall for the room goes compact, then scrolls inside itself.
+      // tall for the room scrolls inside itself.
       const card = cardRef.current;
       const rowTop = Math.min(...Object.values(measured).map((b) => b.top));
       if (!card || !Number.isFinite(rowTop)) return;
       const ceiling = header ? header.top + header.height : 0;
       const room = Math.max(0, rowTop - ceiling - CARD_MARGIN * 2);
       const height = card.scrollHeight;
-      if (height > room + 1 && !tight) setTight(true);
-      else if (height > room + 1) setCardSeat({ top: ceiling + CARD_MARGIN, maxHeight: room });
+      if (height > room + 1) setCardSeat({ top: ceiling + CARD_MARGIN, maxHeight: room });
       else setCardSeat({ top: ceiling + CARD_MARGIN + (room - height) / 2 });
     };
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tileKey, previewId, tight]);
+  }, [tileKey, previewId]);
 
   const rowFoot = Math.max(0, ...Object.values(boxes).map((b) => b.top + b.height));
   const lit = [frame.header, frame.footer].filter((b): b is Box => b !== null);
@@ -704,7 +701,7 @@ function MapPreview({
         />
       ))}
       <div
-        className={`map-preview-card${tight ? ' is-tight' : ''}`}
+        className="map-preview-card"
         ref={cardRef}
         style={{
           top: cardSeat?.top ?? (frame.header ? frame.header.top + frame.header.height : 0) + CARD_MARGIN,

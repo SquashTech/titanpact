@@ -1,4 +1,4 @@
-import { Fragment, type CSSProperties, type ReactNode } from 'react';
+import { type CSSProperties, type ReactNode } from 'react';
 import type { MapNode } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
@@ -90,9 +90,8 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
 }
 
 /**
- * The map's preview card (MapRoute): what the node pays, as loot — each reward a glowing mark and a
- * large figure — with what it fields set apart above, and a line of lore only where the node is
- * vague without it. The lit tile under the card already carries its name and its picture; the
+ * The map's preview card (MapRoute): what the node pays, as loot — each reward a glowing mark beside
+ * its figure — with what it fields set apart above, and a line only on the few nodes that need one. The lit tile under the card already carries its name and its picture; the
  * roster's side of it is the footer's chips (nodeLens.tsx).
  */
 export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
@@ -104,16 +103,7 @@ export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
 
   return (
     <div className="node-dossier-panel" style={{ '--node-color': color } as CSSProperties}>
-      {dossier.about && (
-        <p className="node-dossier-about">
-          {dossier.about.split('[contract]').map((part, i) => (
-            <Fragment key={i}>
-              {i > 0 && <ResourceGlyph kind="contract" className="node-dossier-about-glyph" />}
-              {part}
-            </Fragment>
-          ))}
-        </p>
-      )}
+      {dossier.about && <p className="node-dossier-about">{dossier.about}</p>}
 
       {threats.map((fact) => (
         <div key={fact.label} className="node-dossier-threat" style={{ '--reward-color': FACT_COLORS[fact.glyph] } as CSSProperties}>

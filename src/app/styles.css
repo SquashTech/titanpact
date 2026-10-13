@@ -18084,7 +18084,7 @@ button.star-shop-bundle-face {
   position: absolute;
   left: 10px;
   right: 10px;
-  padding: 10px 12px 12px;
+  padding: 8px 12px;
   border: 1px solid color-mix(in srgb, var(--node-color) 55%, transparent);
   border-top: 2px solid var(--node-color);
   border-radius: 12px;
@@ -18099,41 +18099,6 @@ button.star-shop-bundle-face {
 
 .map-preview-card::-webkit-scrollbar {
   display: none;
-}
-
-/* Too tall for the room above the row: each reward's mark beside its figure rather than over it. */
-.map-preview-card.is-tight {
-  padding-block: 8px;
-}
-
-.map-preview-card.is-tight .node-dossier-panel {
-  gap: 6px;
-}
-
-.map-preview-card.is-tight .node-dossier-rewards {
-  gap: 10px 4px;
-  padding: 2px 0 0;
-}
-
-.map-preview-card.is-tight .node-dossier-reward {
-  flex-direction: row;
-  justify-content: center;
-  gap: 7px;
-  text-align: left;
-}
-
-.map-preview-card.is-tight .node-dossier-reward-glyph {
-  width: 22px;
-  height: 22px;
-}
-
-.map-preview-card.is-tight .node-dossier-reward-text {
-  align-items: flex-start;
-  gap: 2px;
-}
-
-.map-preview-card.is-tight .node-dossier-reward-value {
-  font-size: 18px;
 }
 
 @keyframes map-preview-card-in {
@@ -18164,7 +18129,7 @@ button.star-shop-bundle-face {
 .map-preview-card .node-dossier-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   background: none;
 }
 
@@ -18172,20 +18137,6 @@ button.star-shop-bundle-face {
   margin: 0;
   font-size: 13px;
   color: var(--text-dim);
-}
-
-/* The Contract's mark, set inside the line that says what it does. */
-.node-dossier-about-glyph {
-  display: inline-flex;
-  width: 15px;
-  height: 15px;
-  margin: 0 2px;
-  vertical-align: -3px;
-}
-
-.node-dossier-about-glyph svg {
-  width: 100%;
-  height: 100%;
 }
 
 /* What the node fields against you: one line in its own red, apart from the loot. */
@@ -18219,13 +18170,13 @@ button.star-shop-bundle-face {
   color: var(--text-dim);
 }
 
-/* The loot: no boxes. Each reward is its mark, lit in its own colour, and a large figure. */
+/* The loot: no boxes. Each reward is its mark, lit in its own colour, beside a large figure. */
 
 .node-dossier-reward-glyph {
   position: relative;
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -18243,13 +18194,13 @@ button.star-shop-bundle-face {
 .node-dossier-reward-text {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 3px;
+  align-items: flex-start;
+  gap: 2px;
   min-width: 0;
 }
 
 .node-dossier-reward-value {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 900;
   line-height: 1;
   color: color-mix(in srgb, var(--reward-color) 25%, white);
@@ -18275,22 +18226,22 @@ button.star-shop-bundle-face {
   white-space: nowrap;
 }
 
-/* A row of columns, each a glowing mark over its figure, shared out evenly. */
+/* Three to a row, each a glowing mark beside its figure, shared out evenly. */
 .node-dossier-rewards {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
-  gap: 12px 6px;
-  padding: 4px 0 2px;
+  gap: 10px 4px;
+  padding: 2px 0 0;
 }
 
 .node-dossier-reward {
   flex: 0 1 31%;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
-  text-align: center;
+  gap: 7px;
+  text-align: left;
 }
 
 .node-dossier-reward-glyph::before {

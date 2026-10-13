@@ -52,8 +52,7 @@ export interface NodeFact {
 }
 
 export interface NodeDossier {
-  /** One line of lore, only where the node is vague without it; the figures say the rest. A
-   *  `[contract]` token prints the Contract's mark, so the line teaches the icon it names. */
+  /** One line, kept only where the figures cannot say what the node does or what it means. */
   about: string | null;
   facts: NodeFact[];
   /** Rarity odds for a node that hands out an item, already windowed to the act. Null where nothing drops. */
@@ -117,10 +116,10 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
     case 'battle':
       return { about: null, facts: spawnFacts('battle', actNumber, Math.max(2, actNumber)), odds: odds('battle') };
     case 'skirmish':
-      return { about: 'Rival heroes. Beat them, and spend a [contract] Contract to recruit one.', facts: encounterFacts('skirmish', actNumber), odds: odds('skirmish') };
+      return { about: null, facts: encounterFacts('skirmish', actNumber), odds: odds('skirmish') };
     case 'elite':
       return {
-        about: 'Their finest. Beat them, and a [contract] Contract recruits one, stronger than any hire.',
+        about: null,
         facts: [...encounterFacts('elite', actNumber), { glyph: 'contract', label: 'Contract', value: percent(CONTRACT_DROP_CHANCE.elite ?? 0) }],
         odds: odds('elite'),
       };
@@ -183,7 +182,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
       };
     case 'leyLineReward':
       return {
-        about: 'Raw power runs under the ground here.',
+        about: null,
         facts: [{ glyph: 'enchant', label: 'Force', value: `+${LEY_LINE_FORCE}`, who: 'one', note: 'its own element' }],
         odds: null,
       };
@@ -194,21 +193,21 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
     case 'contractReward':
       return { about: null, facts: [{ glyph: 'contract', label: 'Contract', value: '+1' }], odds: null };
     case 'passiveReward':
-      return { about: 'A gift to carry.', facts: [{ glyph: 'passive', label: 'Boon', value: `1 of ${BOON_OFFER_COUNT}`, who: 'one' }], odds: null };
+      return { about: null, facts: [{ glyph: 'passive', label: 'Boon', value: `1 of ${BOON_OFFER_COUNT}`, who: 'one' }], odds: null };
     case 'blessingReward':
       return { about: 'The Pactwarden shields a hero from a fatal blow.', facts: [{ glyph: 'hero', label: 'Blessing', value: '1', who: 'one' }], odds: null };
     case 'mentorReward':
       return {
-        about: 'An old veteran.',
+        about: null,
         facts: [{ glyph: 'xp', label: 'XP', value: `+${mentorXpFor(actNumber).toLocaleString()}`, who: 'one' }],
         odds: null,
       };
     case 'academyReward':
       return { about: null, facts: [{ glyph: 'class', label: 'Class', value: '1 of 3', who: 'one' }], odds: null };
     case 'tutorReward':
-      return { about: 'A master of every school.', facts: [{ glyph: 'move', label: 'Move', value: 'Your pick', who: 'one' }], odds: null };
+      return { about: null, facts: [{ glyph: 'move', label: 'Move', value: 'Your pick', who: 'one' }], odds: null };
     case 'event':
-      return { about: 'Something waits on the road ahead.', facts: [{ glyph: 'hidden', label: 'What', value: 'Unknown' }], odds: null };
+      return { about: null, facts: [{ glyph: 'hidden', label: 'What', value: 'Unknown' }], odds: null };
   }
 }
 
