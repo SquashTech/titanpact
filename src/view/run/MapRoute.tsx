@@ -586,6 +586,8 @@ interface Box {
 }
 
 const TILE_PAD = 6;
+/** The least gap the preview card keeps from the header above it and the row below it. */
+const CARD_MARGIN = 8;
 
 /** Each tile's box in canvas px (the overlay lives inside the scaled shell). */
 function measureTiles(tiles: readonly PreviewTile[]): Record<string, Box> {
@@ -611,8 +613,8 @@ function measureSelector(selector: string): Box | null {
 
 /**
  * The map's preview: the tile being read lit, the rest of its row half-lit and still tappable, the
- * node's card at the top under the header, and the plate that goes centred between the row and
- * the footer. The header and the footer stay lit — the footer's chips wear the node's mark
+ * node's card centred between the header and the row, and the plate that goes centred between the
+ * row and the footer. The header and the footer stay lit — the footer's chips wear the node's mark
  * meanwhile (MapScreen) — and a tap anywhere else closes it.
  */
 function MapPreview({
@@ -641,19 +643,23 @@ function MapPreview({
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
   const [frame, setFrame] = useState<{ header: Box | null; footer: Box | null }>({ header: null, footer: null });
   const cardRef = useRef<HTMLDivElement>(null);
+  const [cardTop, setCardTop] = useState<number | null>(null);
   const maskId = useId();
   const tileKey = tiles.map((t) => t.id).join(',');
   useLayoutEffect(() => {
     const measure = () => {
       const measured = measureTiles(tiles);
+      const header = measureSelector('.map-header');
       setBoxes(measured);
-      setFrame({ header: measureSelector('.map-header'), footer: measureSelector('.map-footer') });
-      // The card never covers the row: where it would, the route drops by the overlap.
+      setFrame({ header, footer: measureSelector('.map-footer') });
+      // The card sits centred between the header and the row; where it cannot fit, the route drops by the shortfall.
       const card = cardRef.current;
       const rowTop = Math.min(...Object.values(measured).map((b) => b.top));
       if (!card || !Number.isFinite(rowTop)) return;
-      const over = card.offsetTop + card.offsetHeight + 6 - rowTop;
-      if (over > 1) onShift(shift + Math.ceil(over));
+      const ceiling = header ? header.top + header.height : 0;
+      const room = rowTop - ceiling - CARD_MARGIN * 2;
+      if (card.offsetHeight > room + 1) onShift(shift + Math.ceil(card.offsetHeight - room));
+      else setCardTop(ceiling + CARD_MARGIN + (room - card.offsetHeight) / 2);
     };
     measure();
     window.addEventListener('resize', measure);
@@ -697,7 +703,7 @@ function MapPreview({
       <div
         className="map-preview-card"
         ref={cardRef}
-        style={{ top: (frame.header ? frame.header.top + frame.header.height : 0) + 8 }}
+        style={{ top: cardTop ?? (frame.header ? frame.header.top + frame.header.height : 0) + CARD_MARGIN }}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

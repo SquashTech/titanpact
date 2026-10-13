@@ -18105,63 +18105,10 @@ button.star-shop-bundle-face {
   background: none;
 }
 
-/* The card's head: the node's name large in its colour, its lore under it, its art big and
-   unframed on the right. */
-.node-dossier-hero {
-  display: flex;
-  flex-direction: row-reverse;
-  align-items: center;
-  gap: 12px;
-}
-
-.node-dossier-art {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 118px;
-  height: 118px;
-  margin: -6px -6px -6px 0;
-  color: var(--node-color);
-}
-
-.node-dossier-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--node-color) 55%, transparent)) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.7));
-}
-
-.node-dossier-art svg {
-  width: 60%;
-  height: 60%;
-}
-
-.node-dossier-heading {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.node-dossier-title {
-  font-size: 27px;
-  font-weight: 900;
-  line-height: 1.05;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--node-color) 55%, white);
-}
-
 .node-dossier-panel .node-dossier-about {
   margin: 0;
-  font-size: 13.5px;
-}
-
-.node-dossier-panel .node-dossier-fact-value strong {
-  font-size: 19px;
+  font-size: 13px;
+  color: var(--text-dim);
 }
 
 /* --- The route, and walking it (2026-09-08, per user direction) -------------
@@ -33199,21 +33146,22 @@ button.evo-gift-card {
 /* The figures as a three-column grid of tiles, the label over the figure: six read in two rows. */
 .node-dossier-facts {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 5px;
-  margin-top: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 6px;
+  margin-top: 10px;
 }
 
 .node-dossier-fact {
   display: grid;
-  grid-template-columns: 15px 1fr;
+  grid-template-columns: 20px 1fr;
   grid-template-areas: 'glyph label' 'value value';
   align-items: center;
   column-gap: 6px;
-  row-gap: 1px;
-  padding: 4px 7px 5px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.24);
+  row-gap: 3px;
+  padding: 7px 9px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--node-color) 22%, transparent);
 }
 
 .node-dossier-fact-glyph {
@@ -33221,14 +33169,14 @@ button.evo-gift-card {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 15px;
-  height: 15px;
+  width: 20px;
+  height: 20px;
   color: var(--node-color);
 }
 
 .node-dossier-fact-glyph svg {
-  width: 14px;
-  height: 14px;
+  width: 19px;
+  height: 19px;
   margin: 0;
 }
 
@@ -33241,29 +33189,32 @@ button.evo-gift-card {
   color: var(--text-dim);
 }
 
+/* The figure large, its note on a line of its own under it. */
 .node-dossier-fact-value {
   grid-area: value;
   display: flex;
-  align-items: baseline;
-  gap: 5px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   min-width: 0;
 }
 
 .node-dossier-fact-value strong {
   flex: none;
-  font-size: 15px;
-  font-weight: 800;
-  line-height: 1.15;
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
 .node-dossier-fact-note {
-  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--text-dim);
 }
 

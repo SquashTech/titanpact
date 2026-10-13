@@ -63,9 +63,10 @@ function percent(chance: number): string {
   return `${Math.round(chance * 100)}%`;
 }
 
-function priceBand(table: Record<EquipmentRarity, number>, cycle: number): string {
+/** A Smithy price band as a figure and its note: the cheapest work large, the dearest beside it. */
+function priceBand(table: Record<EquipmentRarity, number>, cycle: number): { value: string; note: string } {
   const prices = RARITY_ORDER.map((r) => smithyPrice({ cycle }, table[r])).filter((p) => p > 0);
-  return `${Math.min(...prices)}–${Math.max(...prices)}g`;
+  return { value: `${Math.min(...prices)}g`, note: `to ${Math.max(...prices)}g` };
 }
 
 /** The lanes every fight is compared on, in one order, so Elite and Skirmish read as two columns of one table. */
@@ -90,10 +91,10 @@ function gemFact(type: EncounterNodeKind): NodeFact {
   return { glyph: 'scroll', label: 'Gems', value: chance >= 1 ? `${count}` : percent(chance) };
 }
 
-/** A Titanspawn tile: how many, at what level. */
+/** A Titanspawn tile: its level, and how many. */
 function spawnFacts(type: 'fight' | 'battle', actNumber: number, shapeAct: number): NodeFact[] {
   const count = openerEscortTiersFor(shapeAct).length + (shapeAct <= 1 ? 0 : 1);
-  return encounterFacts(type, actNumber).map((fact) => (fact.label === 'Enemies' ? { ...fact, value: `${count} Titanspawn`, note: fact.value ?? undefined } : fact));
+  return encounterFacts(type, actNumber).map((fact) => (fact.label === 'Enemies' ? { ...fact, note: `× ${count}` } : fact));
 }
 
 const gemNote = (actNumber: number) => `+${gemPointsForAct(actNumber)} to a stat each`;
@@ -131,7 +132,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
       return {
         about: 'Hires, Gems, gear, and a hot meal for the whole party.',
         facts: [
-          { glyph: 'hero', label: 'Hire', value: '1 Contract', note: `Lv ${guildHallLevel(actNumber)}` },
+          { glyph: 'hero', label: 'Hire', value: `Lv ${guildHallLevel(actNumber)}`, note: '1 Contract' },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_BASE_PRICE}g`, note: 'more each time' },
           { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g` },
           { glyph: 'hp', label: 'Meal', value: `${MEND_PRICE_PER_HERO}g`, note: 'per hero hurt' },
@@ -143,8 +144,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
         about: 'One last night before the Titan. Spend what is left.',
         facts: [
           { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g` },
-          { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: 'a tier up' },
-          { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'an element' },
+          { glyph: 'anvil', label: 'Anvil', ...priceBand(ANVIL_PRICE_BY_TARGET, cycle) },
+          { glyph: 'enchant', label: 'Enchanter', ...priceBand(ENCHANT_PRICE_BY_RARITY, cycle) },
         ],
         odds: null,
       };
