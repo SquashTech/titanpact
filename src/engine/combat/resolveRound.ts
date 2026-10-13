@@ -434,9 +434,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             // The hit is computed in full, THEN taken from a Shield (docs/shield.md §4): the event's
             // formula terms describe the roll, `amount` what reached HP, `absorbed` the difference.
             const hpBefore = working.combatants[targetId].currentHp;
+            // Shieldbreaker: a 'hit' given no status defs finds no Shield, so it lands straight on HP.
+            const pierces = Object.values(attackerNow.passives).some((p) => passives[p.passiveId]?.piercesShield);
             const hpResult = applyHpDelta(working, round, targetId, -rolledAmount, maxHp, {
               source: 'hit',
-              statusDefs: statuses,
+              statusDefs: pierces ? undefined : statuses,
               sourceCombatantId: action.combatantId,
             });
             const amount = rolledAmount - hpResult.absorbed - hpResult.prevented;
@@ -552,7 +554,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
               // The burst rides the hit, so a Shield takes it too (docs/shield.md §3.2); the beat carries what it took.
               const bonusHpResult = applyHpDelta(working, round, targetId, -triggered.bonusDamage, maxHp, {
                 source: 'hit',
-                statusDefs: statuses,
+                statusDefs: pierces ? undefined : statuses,
                 sourceCombatantId: action.combatantId,
               });
               events.push(
@@ -585,6 +587,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         if (!retribution && hitsResolved > 0) {
           for (const def of Object.values(statuses)) {
             if (!def.consumedOnDamage || !hasStatus(working.combatants[action.combatantId], def.id)) continue;
+            if (def.priorityBonusTag && !move.tags?.includes(def.priorityBonusTag)) continue;
             const spent = consumeStatus(working, round, action.combatantId, def.id);
             working = spent.state;
             events.push(...spent.events);

@@ -1237,20 +1237,14 @@ const innatePassives: Record<string, PassiveDefinition> = {
     id: 'broadside',
     name: 'Broadside',
     description: 'On the bench, this hero loads a cannonball each round (up to 4). On entering the battlefield, it fires them all: each deals 5% of max HP to both enemies.',
-    // Two reactions in one card would be two cards; the load is this one, the firing is broadsideFire,
-    // and Scallywag holds both. The Cannonball status is the magazine (data/statuses.ts).
+    // The load from the bench and the firing on entry, one card; the Cannonball status is the magazine (data/statuses.ts).
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Cannonball', magnitude: 1, maxMagnitude: BROADSIDE_MAGAZINE },
       whileBenched: true,
     },
-  },
-  broadsideFire: {
-    id: 'broadsideFire',
-    name: 'Broadside',
-    description: 'Fires every loaded cannonball on the way in: 5% of max HP to both enemies per ball, direct.',
-    reactive: {
+    alsoReactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: BROADSIDE_SHOT, perHeldStatus: 'Cannonball' },
@@ -1417,11 +1411,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   iaido: {
     id: 'iaido',
     name: 'Iaido',
-    description: 'When this hero enters the battlefield, its next attack goes at +1 priority.',
+    description: 'When this hero enters the battlefield, its next Slice goes at +1 priority.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'DrawnBlade' },
     },
   },
   chestBeat: {
@@ -2151,6 +2145,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Cannonball', magnitude: 2, maxMagnitude: BROADSIDE_MAGAZINE_MASTERED },
       whileBenched: true,
     },
+    alsoReactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'damage', target: 'activeEnemies', percentMaxHp: BROADSIDE_SHOT, perHeldStatus: 'Cannonball' },
+    },
   },
 
   // --- Mech ---
@@ -2395,21 +2394,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   iaijutsu: {
     id: 'iaijutsu',
     name: 'Iaido+',
-    description: 'When this hero enters the battlefield, its next attack goes at +1 priority and gains Ambush 30.',
+    description: 'When this hero enters the battlefield, its next Slice goes at +1 priority, and it gains Ambush 30.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Poised' },
-    },
-  },
-  iaijutsuEdge: {
-    id: 'iaijutsuEdge',
-    name: 'Iaido+',
-    description: 'When this hero enters the battlefield, it gains Ambush 30.',
-    reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 30 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'DrawnBlade' },
+      alsoEffect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 30 },
     },
   },
   thunderchest: {
@@ -2616,21 +2606,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   lodestorm: {
     id: 'lodestorm',
     name: 'Lodestone+',
-    description: 'When this hero enters the battlefield, both active enemies are left Conducting and lose 15 Defense.',
+    description: 'When this hero enters the battlefield, both active enemies are left Conducting and lose DEF ▼.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Conduct' },
-    },
-  },
-  lodestormPull: {
-    id: 'lodestormPull',
-    name: 'Lodestone+',
-    description: 'When this hero enters the battlefield, both active enemies lose DEF ▼.',
-    reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'defense', stages: -1 },
+      alsoEffect: { kind: 'statDelta', target: 'activeEnemies', stat: 'defense', stages: -1 },
     },
   },
   calculus: {

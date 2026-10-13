@@ -252,6 +252,11 @@ function resolveTargetIds(
       return subjectId ? [subjectId] : [];
     case 'triggerTarget':
       return eventTargetId ? [eventTargetId] : [];
+    case 'triggerTargetPartner': {
+      const side = eventTargetId ? state.combatants[eventTargetId]?.side : undefined;
+      const partner = side ? state.active[side].find((id): id is string => id !== null && id !== eventTargetId) : undefined;
+      return partner && !state.combatants[partner]?.fainted ? [partner] : [];
+    }
     case 'activeEnemies':
     case 'randomEnemy': {
       const ownerSide = state.combatants[ownerId]?.side;

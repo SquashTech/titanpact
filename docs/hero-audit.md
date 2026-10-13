@@ -546,3 +546,30 @@ Grafts: Mind three times, Nature, Frost and Shadow twice; spread so each appears
 Water (Nature), Oasis (Wild Bloom). **Sorrow Gravestone** (Mourner): Stone (Frost), Fault Line (Icicle
 Thrust). **Sorrow Requiem** (Dirge): Light (Mind), rewire kept, Radiant Beam (Psionic Wave). **Keen
 Stormwail** (Shroud): Storm (Shadow), Thunderbolt (Eclipse). Every passive kept.
+
+## Iron, second pass (2026-10-12, per user direction)
+
+Measured (sim, base deck): Gallant 184.6 DPR / ratio 3.42 (4th of 47 by DPR), Valor 138.0 / 3.04,
+Warden 127.5 / 2.52; Scallywag, Ronin and Ferra unmeasured. Gallant's Breach (DEF ▼ a hit, ×3.5 on a
+focused foe by round 5) is one axis, kept as identity; the weak paths were fixed instead.
+
+**Ronin is the Iron slicer** (per user direction, Tixwick's sibling). **Kata** replaces Heavy Blow in
+his kit (Heavy Blow joins his pool): a `permanent`, never-replaced move that each round becomes one of
+the eight elemental Slices — Reed, Aqua, Shock, Leaf, Holy, Shadow, Spooky, Serrated — from every
+tier, and never locks (Quiver locks). Engine: `MetamorphicRule.faceIds` and `anyTier`. **Iaido** puts
+him **Drawn Blade**: his next *Slice* goes at +1 priority (`StatusDefinition.priorityBonusTag`; only a
+Slice spends it); Iaido+ adds Ambush 30 on the same card. **Hone** joins his pool. **Shinobi** grants
+Shadow Slice (Rend); **Unseen Cut** Bleeds the first foe each attack lands on, once each
+(`oncePerTarget`, was 30%). **Winter Edge** (Raijin): Frost (Storm), Hoarfrost Edge (Shock Slice),
+Rolling Thunder renamed **Cold Steel**.
+
+| Hero | Change |
+|---|---|
+| Gallant | **Gallop** (Destrier, −0.52): the struck foe's partner loses DEF ▼ (was SPD ▲ to itself), a new target `triggerTargetPartner`. **Dullahan** (Oathbound): Spirit (Light), Spooky Slice (Consecrate), **Dread Charge** — entering Haunts both enemies (Vow of Arms, which needed heals, deleted). |
+| Warden | **Rootbreaker** (Sunderer, −0.55): Nature (Mech), Verdant Lash (Cog Slam); **Shieldbreaker** — its hits go straight through Shield (`piercesShield`), +30% to a Shielded foe (was +50% only to a Shielded foe). **Rampart** (Lodestar): Stone (Light), Rampart (Benediction), Oathlight kept. |
+| Valor | **Forgeheart** (Galvanize): Fire (Storm), Molten Lash (Storm Lash), **Rallying Flame** — setting a foe Burning gives the partner Ambush 25 (was Rallying Spark, on Conduct). |
+| Scallywag | **Safe Harbour**: heals 25% on switching out (was 10% a round from the bench — no bench passives). Broadside and Broadside+ are one card each (`alsoReactive`). |
+| Ferra | **Polarity** (Electromagnet): Arcane (Storm), Overload (Chain Lightning), Induction kept. **Lodestone+** one card, DEF ▼ (its text still read "lose 15 Defense"). |
+
+Grafts spread so each type appears once (Mind unused); Scallywag's Stormrunner keeps Storm as the
+graft the roster names as her way back. The Iron Trial's Ronin is Kensei with Kata.

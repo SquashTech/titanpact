@@ -63,7 +63,11 @@ function actionPriority(
   const actor = state.combatants[cast.combatantId];
   const statusBonus =
     move.kind === 'damage' && actor
-      ? Object.keys(actor.statuses).reduce((sum, id) => sum + (statusDefs[id]?.priorityBonus ?? 0), 0)
+      ? Object.keys(actor.statuses).reduce((sum, id) => {
+          const def = statusDefs[id];
+          if (def?.priorityBonusTag && !move.tags?.includes(def.priorityBonusTag)) return sum;
+          return sum + (def?.priorityBonus ?? 0);
+        }, 0)
       : 0;
   // A Charge rider (Windshear): a tagged move's bracket, by the Charges it holds as the cast begins.
   const chargeBonus = actor ? chargeRidersOn(actor, move, passiveDefs).reduce((sum, r) => sum + (r.priorityBonus ?? 0), 0) : 0;

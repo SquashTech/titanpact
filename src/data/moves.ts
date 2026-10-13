@@ -893,6 +893,20 @@ export const moves: Record<string, MoveDefinition> = {
   },
   // Quiver (docs/archers.md): the archers' shared opener. Never cast as itself — each round it shows one
   // Arrow from the whole family, of the tiers the archer has opened, and the first one cast is locked in.
+  // Kata (Ronin, docs/hero-audit.md Iron): never cast as itself — each round it shows one of the eight
+  // elemental Slices, from every tier, and it never locks: a new form every round.
+  kata: {
+    id: 'kata',
+    name: 'Kata',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'buff',
+    manaCost: 0,
+    priority: 0,
+    target: 'self',
+    metamorphic: { poolTag: 'slice', faceIds: ['reedSlice', 'aquaSlice', 'shockSlice', 'leafSlice', 'holySlice', 'shadowSlice', 'spookySlice', 'serratedSlice'], anyTier: true },
+    permanent: true,
+  },
   quiver: {
     id: 'quiver',
     name: 'Quiver',

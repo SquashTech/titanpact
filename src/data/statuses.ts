@@ -212,6 +212,22 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'none',
     description: 'The next attack this hero makes goes at +1 priority, then it is spent. No clock — it waits until it is used. Cleared by switching.',
   },
+  // Ronin's Iaido: Poised for a Slice alone — it lifts and is spent only by a move tagged 'slice'.
+  DrawnBlade: {
+    id: 'DrawnBlade',
+    name: 'Drawn Blade',
+    shape: 'boolean',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'none',
+    clearsOnSwitch: true,
+    positive: true,
+    consumedOnDamage: true,
+    priorityBonus: 1,
+    priorityBonusTag: 'slice',
+    pipeline: 'none',
+    description: 'The next Slice this hero makes goes at +1 priority, then it is spent. Cleared by switching.',
+  },
   Ambush: {
     id: 'Ambush',
     name: 'Ambush',

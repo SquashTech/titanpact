@@ -120,6 +120,8 @@ export interface StatusDefinition {
   consumedOnDamage?: boolean;
   /** Raises the holder's DAMAGE moves by this many priority brackets while held (Poised; priority.ts actionPriority). Paired with consumedOnDamage, it is one early strike. */
   priorityBonus?: number;
+  /** Narrows `priorityBonus` (and its consumedOnDamage spend) to moves carrying this tag (Drawn Blade: a Slice). */
+  priorityBonusTag?: MoveTag;
   /**
    * Ice Shell (docs/shield.md §3.5): held beside a Shield, this status lands its rider on the
    * striker whose hit BREAKS the holder's Shield, then is consumed. Never fires on any other
@@ -231,13 +233,14 @@ export type PassiveAmount =
  * is the only way a source-role passive (Static Tide) reaches the hero it just hit.
  * 'ally' is the owner's ACTIVE partner and never the owner (Nature's Purification); it
  * resolves to nothing when the owner is alone on the field. 'bothAllies' is the owner and that
- * partner (Lion's Share).
+ * partner (Lion's Share). 'triggerTargetPartner' is the active partner of the event's target-role
+ * combatant (Gallop: the foe beside the one struck).
  * 'activeEnemies' = every living ACTIVE enemy of the owner, resolved once per member, and
  * 'randomEnemy' is one of them drawn at resolution — the only passive target that costs RNG,
  * and it draws nothing unless a passive actually asks for it. Never the bench: an entry
  * passive must not tax uncommitted heroes.
  */
-export type PassiveEffectTarget = 'self' | 'ally' | 'bothAllies' | 'triggerSubject' | 'triggerTarget' | 'activeEnemies' | 'randomEnemy';
+export type PassiveEffectTarget = 'self' | 'ally' | 'bothAllies' | 'triggerSubject' | 'triggerTarget' | 'triggerTargetPartner' | 'activeEnemies' | 'randomEnemy';
 
 /** The reactive effect primitives. */
 export type PassiveEffect =
@@ -341,6 +344,8 @@ export interface PassiveDefinition {
   chargeRider?: { moveTag: MoveTag; when: 'last' | 'full'; priorityBonus?: number; statusId?: StatusId };
   /** Twin Scythes+ (Tixwick): the holder's damaging moves carrying `moveTag` strike `hits` more times, as a `hitCount` would (state.ts hitCountFor). */
   extraHits?: { moveTag: MoveTag; hits: number };
+  /** Shieldbreaker: the holder's hits go straight to HP, past any Shield (resolveRound). */
+  piercesShield?: true;
   /** A second reaction on its own hook and condition, sharing the card's caps (Swell: a physical hit and a magical one pay different stats). */
   alsoReactive?: PassiveDefinition['reactive'];
   damageModifier?: PassiveDamageModifier;
@@ -420,6 +425,7 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.refusesAfflictions !== undefined ||
     passive.chargeRider !== undefined ||
     passive.extraHits !== undefined ||
+    passive.piercesShield !== undefined ||
     passive.enduresOnce !== undefined ||
     passive.cannotSwitchOut !== undefined ||
     passive.sideRefusesStatuses !== undefined ||
@@ -497,6 +503,10 @@ export type MoveTag = 'arrow' | 'guard' | 'slice';
 export interface MetamorphicRule {
   poolTag: MoveTag;
   locksOnCast?: true;
+  /** Faces only from these ids (Kata: the eight elemental Slices), each still carrying `poolTag`. */
+  faceIds?: readonly string[];
+  /** Faces from every tier, whatever the holder has opened (Kata: the whole set from the first fight). */
+  anyTier?: true;
 }
 
 export interface MoveDefinition {

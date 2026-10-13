@@ -704,3 +704,64 @@ test('spirit: Mantling gives the partner Shield 15 when its holder is hit', () =
   const { state } = resolveRound(base, [cut('b1', heroes.ironWarden.moveIds[0], 'a1')], config);
   assert.strictEqual(state.combatants.a2.statuses.Shield?.magnitude, 15);
 });
+
+// --- Iron, second pass (docs/hero-audit.md) ---
+
+test('iron: Kata shows one of the eight elemental Slices every round, from every tier, and never locks', () => {
+  const { kitForRound } = require('../src/run/metamorphic') as typeof import('../src/run/metamorphic');
+  const eight = moves.kata.metamorphic && typeof moves.kata.metamorphic === 'object' ? moves.kata.metamorphic.faceIds! : [];
+  assert.strictEqual(eight.length, 8);
+  let state = createFightState(
+    792,
+    [
+      { combatantId: 'a1', heroId: 'ronin', side: 'A' },
+      { combatantId: 'a2', heroId: 'valor', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'crag', side: 'B' },
+    ]
+  );
+  state = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, openTiers: ['early'] } } };
+  const seen = new Set<string>();
+  for (let round = 1; round <= 12; round++) {
+    const face = kitForRound({ ...state, round }, 'a1', heroes.ronin.moveIds, moves, passives)[0];
+    assert.ok(eight.includes(face), `${face} is an elemental Slice`);
+    seen.add(face);
+  }
+  assert.ok(seen.size > 2, 'the form changes round to round');
+  assert.ok([...seen].some((id) => moves[id].tier === 'mid'), 'Mid faces show before Mid is open');
+});
+
+test('iron: Drawn Blade lifts only a Slice, and only a Slice spends it', () => {
+  const { effectivePriority: prio } = require('../src/engine/combat/priority') as typeof import('../src/engine/combat/priority');
+  let state = withMana(threeVThree(793), 'a1');
+  state = applyStatus(state, 1, 'a1', statuses.DrawnBlade, {}).state;
+  const slice = cut('a1', 'leafSlice', 'b1');
+  const blunt = cut('a1', 'singe', 'b1');
+  const lifted = prio(state, slice, moves, undefined, statuses, passives);
+  const plain = prio(state, blunt, moves, undefined, statuses, passives);
+  assert.strictEqual(lifted, moves.leafSlice.priority + 1);
+  assert.strictEqual(plain, moves.singe.priority);
+  const afterBlunt = resolveRound(state, [blunt], config).state;
+  assert.ok(hasStatus(afterBlunt.combatants.a1, 'DrawnBlade'), 'a non-Slice leaves it');
+  const afterSlice = resolveRound(state, [slice], config).state;
+  assert.ok(!hasStatus(afterSlice.combatants.a1, 'DrawnBlade'), 'the Slice spends it');
+});
+
+test('iron: Shieldbreaker cuts straight through Shield; Gallop drops the struck foe\'s partner; Safe Harbour heals on the way out', () => {
+  let shielded = withMana(threeVThree(794), 'a1');
+  shielded = applyStatus(shielded, 1, 'b1', statuses.Shield, { magnitude: 500 }).state;
+  const broke = resolveRound(withPassive(shielded, 'a1', 'shieldbreaker'), [cut('a1', 'heavyBlow', 'b1')], config).state;
+  assert.ok(broke.combatants.b1.currentHp < shielded.combatants.b1.currentHp, 'HP was hit');
+  assert.strictEqual(broke.combatants.b1.statuses.Shield?.magnitude, 500, 'the Shield took nothing');
+
+  const trampled = resolveRound(withMana(withPassive(threeVThree(795), 'a1', 'gallop'), 'a1'), [cut('a1', 'heavyBlow', 'b1')], config).state;
+  assert.strictEqual(trampled.combatants.b2.statStages?.defense, -1);
+  assert.strictEqual(trampled.combatants.b1.statStages?.defense, undefined);
+
+  let harbour = withPassive(threeVThree(796), 'a1', 'safeHarbour');
+  harbour = withHp(harbour, 'a1', 20);
+  const out = resolveRound(harbour, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config).state;
+  assert.ok(out.combatants.a1.currentHp > 20, 'healed as it left');
+});

@@ -583,7 +583,7 @@ export const trials: Record<string, TrialDefinition> = {
     type: 'Iron',
     name: 'The Charged Line',
     line: 'Ferra charges the field. Every blade on the line answers it.',
-    gameplan: 'Ferra leaves both foes Conducting on entry and on every Arcane hit; the line swings Metallic Blade and Overcharge free while a foe carries it, behind Warden’s Shields.',
+    gameplan: 'Ferra leaves both foes Conducting on entry and on every Arcane hit; the line swings Metallic Blade free while a foe carries it, and Ronin cuts in whatever form the round gives, behind Warden’s Shields.',
     cover: 'Ferra’s Arcane Blast hits Storm and Mech alike; Valor’s Stoneheart and Warden’s Body Blow are Stone into Storm; Scallywag’s Aqua Slice is Water into Mech.',
     leads: ['ferra', 'ronin'],
     team: {
@@ -597,8 +597,8 @@ export const trials: Record<string, TrialDefinition> = {
         },
         {
           heroId: 'ronin',
-          pathId: 'ronin-raijin',
-          moveIds: ['drawCut', 'shockSlice', 'overcharge', 'sharpen'],
+          pathId: 'ronin-kensei',
+          moveIds: ['drawCut', 'kata', 'onslaught', 'sharpen'],
           itemIds: ['sword.mythic', 'boots.mythic', 'dagger.mythic'],
         },
         {

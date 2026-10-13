@@ -71,6 +71,8 @@ function targetWord(target: PassiveEffectTarget, condition: PassiveTriggerCondit
       return 'its partner';
     case 'bothAllies':
       return 'both allies';
+    case 'triggerTargetPartner':
+      return "the target's partner";
     case 'triggerSubject':
       return condition.relativeTo === 'self' ? 'this hero' : condition.relativeTo === 'ally' ? 'that partner' : 'that enemy';
     case 'triggerTarget':

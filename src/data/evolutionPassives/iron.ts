@@ -25,23 +25,22 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   gallop: {
     id: 'gallop',
     name: 'Gallop',
-    description: 'When this hero lands an attack, it gains SPD ▲.',
+    description: "When this hero lands an attack, its target's partner loses DEF ▼.",
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1 },
+      effect: { kind: 'statDelta', target: 'triggerTargetPartner', stat: 'defense', stages: -1 },
     },
   },
-  // Scallywag's Seawise: the bench is where Broadside loads, and now where the crew mends too.
+  // Scallywag's Seawise: putting into harbour mends the crew — on the switch, not from the bench (no bench passives).
   safeHarbour: {
     id: 'safeHarbour',
     name: 'Safe Harbour',
-    description: 'On the bench, this hero heals 10% of its max HP each round.',
+    description: 'When this hero switches out, it heals 25% of its max HP.',
     reactive: {
-      hook: 'RoundEnded',
+      hook: 'SwitchedOut',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.1 } },
-      whileBenched: true,
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.25 } },
     },
   },
   readyStance: {
@@ -57,12 +56,12 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
   unseenCut: {
     id: 'unseenCut',
     name: 'Unseen Cut',
-    description: 'When this hero lands an attack, there is a 30% chance its target starts Bleeding.',
+    description: 'The first attack this hero lands on each foe leaves it Bleeding.',
     reactive: {
+      oncePerTarget: true,
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source' },
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Bleed' },
-      chance: 0.3,
     },
   },
   // Ferra's Magnetar. Arcane, not Iron: an Iron hit's reactions run before its own detonation, so an
@@ -88,33 +87,34 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', stages: 1 },
     },
   },
-  // Warden's Sunderer: the wall built to open other walls.
+  // Warden's Rootbreaker: the wall built to open other walls — a Shield is no wall to it.
   shieldbreaker: {
     id: 'shieldbreaker',
     name: 'Shieldbreaker',
-    description: 'Deals 50% bonus damage to a Shielded foe.',
-    damageModifier: { requiresTargetStatuses: ['Shield'], amount: 0.5 },
+    description: "This hero's attacks go straight through Shield, and deal 30% more damage to a Shielded foe.",
+    piercesShield: true,
+    damageModifier: { requiresTargetStatuses: ['Shield'], amount: 0.3 },
   },
-  // Valor's Galvanize: Storm Lash marks, Iron Fist sets it off, and the partner charges in behind.
-  rallyingSpark: {
-    id: 'rallyingSpark',
-    name: 'Rallying Spark',
-    description: 'When this hero sets off a Conduct mark, its partner gains Ambush 25.',
+  // Valor's Forgeheart: Molten Lash lights the foe, and the partner charges in behind the flame.
+  rallyingFlame: {
+    id: 'rallyingFlame',
+    name: 'Rallying Flame',
+    description: 'When this hero sets a foe Burning, its partner gains Ambush 25.',
     reactive: {
-      hook: 'StatusDetonated',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Burn' } },
       effect: { kind: 'applyStatus', target: 'ally', statusId: 'Ambush', magnitude: 25 },
     },
   },
-  // Gallant's Oathbound: the knight who mends rides harder for it.
-  vowOfArms: {
-    id: 'vowOfArms',
-    name: 'Vow of Arms',
-    description: 'When this hero heals, it gains ATK ▲ and SPD ▲.',
+  // Gallant's Dullahan: the headless rider arrives, and both foes are marked for it.
+  dreadCharge: {
+    id: 'dreadCharge',
+    name: 'Dread Charge',
+    description: 'When this hero enters the battlefield, both active enemies are Haunted.',
     reactive: {
-      hook: 'Healed',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1 },
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Haunt' },
     },
   },
   // Scallywag's Stormrunner: every mark it blows loads a gun for Broadside. 4 is Broadside's magazine.
@@ -128,10 +128,10 @@ export const ironPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'self', statusId: 'Cannonball', magnitude: 1, maxMagnitude: 4 },
     },
   },
-  // Ronin's Raijin: each bolt that fells one comes down faster and harder on the next.
+  // Ronin's Winter Edge: each cut that fells one comes down faster and harder on the next.
   rollingThunder: {
     id: 'rollingThunder',
-    name: 'Rolling Thunder',
+    name: 'Cold Steel',
     description: 'When this hero knocks out a foe, it gains ATK ▲ and SPD ▲.',
     reactive: {
       hook: 'DamageDealt',

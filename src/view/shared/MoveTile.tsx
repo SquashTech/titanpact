@@ -377,9 +377,11 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
 
   // A metamorphic move is never cast as itself: say what it turns into, not who it targets.
   if (move.metamorphic) {
-    return typeof move.metamorphic === 'object'
-      ? `Shows one ${move.metamorphic.poolTag === 'arrow' ? 'Arrow' : 'move'} a round; the first one cast stays for the fight`
-      : 'Becomes a random move each round';
+    if (typeof move.metamorphic !== 'object') return 'Becomes a random move each round';
+    const family = move.metamorphic.poolTag === 'arrow' ? 'Arrow' : move.metamorphic.poolTag === 'slice' ? 'Slice' : 'move';
+    return move.metamorphic.locksOnCast
+      ? `Shows one ${family} a round; the first one cast stays for the fight`
+      : `Becomes a random ${family} each round`;
   }
 
   // The row's height is reserved either way; say something rather than leave a gap.

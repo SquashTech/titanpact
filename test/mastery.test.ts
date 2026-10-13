@@ -328,7 +328,7 @@ test('mastered innate: the tenth pip REPLACES the innate in the fight build — 
   assert.strictEqual(currentInnateOf(hero, { mastery: MASTERY_CAP })?.id, 'forgeheart');
   assert.strictEqual(currentInnateOf(hero, undefined)?.id, 'kindling', 'a definition read without an entry is the born card');
   // A two-card upgrade arrives whole; Scallywag's keeps Broadside's firing card.
-  assert.deepStrictEqual([...innatePassiveIdsFor(heroes.scallywag, { mastery: MASTERY_CAP })!], ['grandBroadside', 'broadsideFire']);
+  assert.deepStrictEqual([...innatePassiveIdsFor(heroes.scallywag, { mastery: MASTERY_CAP })!], ['grandBroadside']);
   // A definition with none (a spawn) keeps its Mark at ten.
   assert.deepStrictEqual(innatePassiveIdsFor(rosterHeroes.cubling, { mastery: MASTERY_CAP }), rosterHeroes.cubling.passiveIds);
 });

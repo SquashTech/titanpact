@@ -58,7 +58,8 @@ export function kitForRound(
       const open = combatant?.openTiers;
       pool = pool.filter((faceId) => {
         const face = moves[faceId];
-        return !!face?.tags?.includes(rule.poolTag) && (!open || open.includes(face.tier ?? 'early'));
+        if (rule.faceIds && !rule.faceIds.includes(faceId)) return false;
+        return !!face?.tags?.includes(rule.poolTag) && (rule.anyTier || !open || open.includes(face.tier ?? 'early'));
       });
     }
     return resolveMetamorphicFaces(state, combatantId, pool, faceCount);

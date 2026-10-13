@@ -477,7 +477,7 @@ test('death wail: a Spirit hit takes ATK and INT off its target alone; a non-Spi
 // --- Broadside: the one bench-side reaction ---
 
 test('broadside: a cannonball loads each round on the bench (never on the field, capped at the magazine), and every one fires on the way in, direct, then the magazine is empty', () => {
-  const holder = (s: CombatState) => withPassive(withPassive(s, 'a3', 'broadside'), 'a3', 'broadsideFire');
+  const holder = (s: CombatState) => withPassive(s, 'a3', 'broadside');
   let state = holder(fixture(31));
   assert.strictEqual(state.bench.A[0], 'a3', 'benched from the start');
   for (let i = 0; i < BROADSIDE_MAGAZINE + 2; i++) state = resolveRound(state, restAll(state), config).state;

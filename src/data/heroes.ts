@@ -605,8 +605,8 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'A', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [5, 8, 12, 17, 21], midLevel: 9, lateLevel: 18, signatureLevel: 22 },
     signatureMoveId: 'broadside',
-    passiveIds: ['broadside', 'broadsideFire'],
-    masteredPassiveIds: ['grandBroadside', 'broadsideFire'],
+    passiveIds: ['broadside'],
+    masteredPassiveIds: ['grandBroadside'],
   },
 
   // --- Mech ---
@@ -857,13 +857,13 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Ronin',
     types: ['Iron'],
     baseStats: { hp: 210, attack: 105, defense: 50, intelligence: 20, wisdom: 45, speed: 70, manaPool: 50, mpRegen: 10 },
-    moveIds: ['heavyBlow', 'sharpen'],
+    moveIds: ['kata', 'sharpen'],
     unlock: 'starfall',
     growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'A', manaPool: 'B' },
     schedule: { offerLevels: [4, 8, 12, 17, 21], midLevel: 9, lateLevel: 18, signatureLevel: 19 },
     signatureMoveId: 'drawCut',
     passiveIds: ['iaido'],
-    masteredPassiveIds: ['iaijutsu', 'iaijutsuEdge'],
+    masteredPassiveIds: ['iaijutsu'],
   },
   // The gorilla: Beast's mid-speed bruiser, arriving with a chest-beat that takes the fight out of both foes.
   kong: {
@@ -1180,7 +1180,7 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [5, 9, 11, 17, 21], midLevel: 10, lateLevel: 20, signatureLevel: 19 },
     signatureMoveId: 'ferrousCrush',
     passiveIds: ['lodestone'],
-    masteredPassiveIds: ['lodestorm', 'lodestormPull'],
+    masteredPassiveIds: ['lodestorm'],
   },
   // The calculating engine: Mech's slow magical caster, working the far side out a little more with every move it watches.
   abacus: {
