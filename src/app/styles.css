@@ -12971,9 +12971,9 @@ button.star-shop-bundle-face {
   font-weight: 400;
 }
 
-.detail-modifier-floor {
-  font-weight: 500;
-  opacity: 0.8;
+/* A stat that can't go any further, marked without words: the chip's rim lights in its own colour. */
+.detail-modifier-chip.stat-held {
+  border-color: currentColor;
 }
 
 /* Same capsule treatment as the combat HP/MP bars (.bar-fill) — a hero's

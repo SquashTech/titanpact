@@ -3454,3 +3454,8 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   figure for one hero (the Mentor's XP, the Mana Well, the Ley Line, a Boon, a Class, a Move, a
   Blessing), two for the whole team (the Banner) — in place of the "one hero" / "whole team" notes,
   and the lore lines that only restated a figure lost that half (the Academy's went entirely).
+- **Hero sheets** (same day, per user direction) were mostly built of pieces already passed — passives,
+  move rows, item readouts. What changed: a held buff or debuff chip lost its "· can't go any
+  lower/higher" words for a wordless mark (its rim lights in its own colour); an Evolution path card
+  labels its parts **Becomes**, **Passive** and **Move**; a mastered innate's source reads "Mastered
+  innate"; the Class badge lost its "Hold to view details" tooltip.

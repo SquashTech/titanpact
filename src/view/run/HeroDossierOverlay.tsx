@@ -9,7 +9,7 @@ import { gradesFor } from '../../run/growth';
 import { pathTypes, type EvolutionPath } from '../../run/progression';
 import { pathTint } from '../shared/pathTint';
 import { scheduleFor, signatureLevelFor } from '../../run/progression';
-import { MASTERY_EVOLUTION, MASTERY_INNATE } from '../../run/mastery';
+import { MASTERY_EVOLUTION } from '../../run/mastery';
 import type { LevelSchedule } from '../../engine/content';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -120,7 +120,7 @@ function EvolutionPathCard({
 
       {path.typeGraft && (
         <>
-          <div className="evo-path-label">Type graft — becomes</div>
+          <div className="evo-path-label">Becomes</div>
           <div className="evo-path-types">
             {types.map((t) => (
               <TypeBadge key={t} type={t} />
@@ -143,7 +143,7 @@ function EvolutionPathCard({
 
       {granted.length > 0 && (
         <>
-          <div className="evo-path-label">Granted on choosing</div>
+          <div className="evo-path-label">Move</div>
           <MoveList moveIds={granted} caster={pathCaster} onInspect={onInspect} />
         </>
       )}
@@ -343,7 +343,7 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
               {innate && (
                 <PassiveReadout
                   passive={showMastered && mastered ? mastered : innate}
-                  source={showMastered && mastered ? `Innate, mastered at Mastery ${MASTERY_INNATE}` : 'Innate'}
+                  source={showMastered && mastered ? 'Mastered innate' : 'Innate'}
                   action={
                     mastered && (
                       <button

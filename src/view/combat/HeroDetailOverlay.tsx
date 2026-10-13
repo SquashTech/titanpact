@@ -194,7 +194,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
                   </span>
                 ))}
                 {heroClass && (
-                  <span className="evolution-badge class-badge" {...classLongPress} title="Hold to view details">
+                  <span className="evolution-badge class-badge" {...classLongPress}>
                     <HubGlyph name="hall" /> {heroClass.name}
                   </span>
                 )}
@@ -247,8 +247,6 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
                           className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${heldAtFloor(stat) || heldAtCeiling(stat) ? ' stat-held' : ''}`}
                         >
                           <StatGlyph stat={stat} tone="inherit" /> {stageOf(stat) !== 0 ? stageText(stat, stageOf(stat)) : STAT_LABELS[stat]}{flatOf(stat) !== 0 ? ` ${fmtMod(flatOf(stat))}` : ''}
-                          {heldAtFloor(stat) && <span className="detail-modifier-floor"> · can't go any lower</span>}
-                          {heldAtCeiling(stat) && <span className="detail-modifier-floor"> · can't go any higher</span>}
                         </span>
                       );
                     })}
