@@ -138,8 +138,13 @@ the stake back.
 ## 7. The title: three doors
 
 The Play page carries three doors: **Seal the Pact** (the press that has always been there — the
-Cycle picker sits behind it), **The Trials**, **The Gauntlet**. On a new account the two smaller
-doors stand locked, each with a padlock; a tap says what opens it. Collection and Constellation stay
+Cycle picker sits behind it), **The Trials**, **The Gauntlet**. The Trials and the Gauntlet are
+pages either side of the Pact, reached by a swipe or by a **door** in the bottom corner: the page's
+emblem over its name (2026-10-13, per user direction, replacing a text rail and edge chevrons that
+sat between the press and the hub's Play; the A-against-D comparison is
+`docs/mockups/title-mode-nav.html`). **A mode not yet opened has no door and no page** (same day,
+per user direction, replacing locked doors with a padlock and a "win a run" note): a new account
+sees the Pact alone, and a door appears with the win that opens it. Collection and Constellation stay
 shared, outside the doors. The teambuilder's own title becomes **The Trials** in every player-facing
 string; `constructed` stays the code name.
 

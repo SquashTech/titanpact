@@ -21,7 +21,7 @@ import type { Profile } from '../../run/profile';
 import { isConstructedOpen } from '../../run/constructed';
 import { isGauntletOpen } from '../../run/gauntlet';
 import recordsArt from '../../../art/ui/records.png';
-import { ModeArrows, ModeLight, ModeRail, ModeStage, PactButton, TITLE_MODES, type TitleMode } from './TitleModes';
+import { ModeDoors, ModeLight, ModeStage, PactButton, TITLE_MODES, type TitleMode } from './TitleModes';
 
 interface Props {
   /** Lifetime figures and hero stars. Re-read by App whenever this screen is entered. */
@@ -94,9 +94,6 @@ const MOTES = Array.from({ length: MOTE_COUNT }, (_, i) => {
 const SWIPE_MIN_PX = 48;
 const SWIPE_SLOPE = 1.4;
 
-/** How long a locked door's note floats before it goes. */
-const LOCKED_NOTE_MS = 2200;
-
 export function TitleScreen({
   profile,
   onRefreshProfile,
@@ -143,32 +140,24 @@ export function TitleScreen({
   const [mode, setMode] = useState<TitleMode>('pact');
   /** Which way the mode page slid in: +1 from the right, -1 from the left. */
   const [modeSlide, setModeSlide] = useState(0);
-  /** A locked door's note, keyed so a second tap restarts its float. */
-  const [lockedNote, setLockedNote] = useState<{ text: string; key: number } | null>(null);
   const swipe = useRef<{ x: number; y: number; id: number } | null>(null);
   /** Set when a drag turned the page, so the click that ends it does not also press what it ended on. */
   const swiped = useRef(false);
 
-  useEffect(() => {
-    if (!lockedNote) return;
-    const id = window.setTimeout(() => setLockedNote(null), LOCKED_NOTE_MS);
-    return () => window.clearTimeout(id);
-  }, [lockedNote]);
+  /** A mode's page does not exist for the player until the win that opens it. */
+  function modeOpen(m: TitleMode): boolean {
+    return m === 'trials' ? isConstructedOpen(profile) : m === 'gauntlet' ? isGauntletOpen(profile) : true;
+  }
 
   function selectMode(next: TitleMode) {
-    if (next === mode || launching) return;
+    if (next === mode || launching || !modeOpen(next)) return;
     setModeSlide(Math.sign(TITLE_MODES.indexOf(next) - TITLE_MODES.indexOf(mode)));
     setMode(next);
-    setLockedNote(null);
   }
 
   function stepMode(delta: number) {
     const next = TITLE_MODES[TITLE_MODES.indexOf(mode) + delta];
     if (next) selectMode(next);
-  }
-
-  function showLocked(text: string) {
-    setLockedNote({ text, key: Date.now() });
   }
 
   /** Pages turn only on the bare title — never under a sheet or a menu standing over it. */
@@ -356,30 +345,22 @@ export function TitleScreen({
             {saveNotice} Tap to dismiss.
           </button>
         )}
-        {/* The mode rail floats at the foot of the stack; this holds its place, so the seal does not move. */}
-        <span className="title-mode-rail-seat" aria-hidden="true" />
+        {/* The mode doors stand in the corners of this band; it holds their height, so the seal does not move. */}
+        <span className="title-mode-door-seat" aria-hidden="true" />
       </div>
 
-      {/* The other two doors (docs/gauntlet.md §7) are pages either side of this one. */}
+      {/* The other two doors (docs/gauntlet.md §7) are pages either side of this one, there once they open. */}
       {mode !== 'pact' && <ModeLight mode={mode} />}
       {mode !== 'pact' && (
         <ModeStage
           mode={mode}
           profile={profile}
-          open={mode === 'trials' ? isConstructedOpen(profile) : isGauntletOpen(profile)}
           disabled={launching}
           direction={modeSlide}
           onOpen={mode === 'trials' ? () => onOpenConstructed() : onOpenGauntlet}
-          onLocked={() => showLocked(mode === 'trials' ? 'Win a run to open the Trials.' : 'Win a run to open the Gauntlet.')}
         />
       )}
-      <ModeArrows mode={mode} onSelect={selectMode} />
-      <ModeRail mode={mode} onSelect={selectMode} />
-      {lockedNote && (
-        <div key={lockedNote.key} className="title-locked-toast" role="status">
-          {lockedNote.text}
-        </div>
-      )}
+      <ModeDoors mode={mode} isOpen={modeOpen} onSelect={selectMode} />
 
       {/* Records, Reference and Options are corner glyphs: a ledger, a lookup and a dial, not places. */}
       <button

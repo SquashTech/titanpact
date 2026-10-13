@@ -1,5 +1,5 @@
 // The title's three doors as three pages (docs/gauntlet.md §7): Seal the Pact is the title itself,
-// the Trials and the Gauntlet each a stage of their own a swipe or an arrow away.
+// the Trials and the Gauntlet each a stage of their own a swipe or a door away, once opened.
 
 import { useEffect, useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
@@ -14,20 +14,11 @@ export type TitleMode = 'trials' | 'pact' | 'gauntlet';
 /** Left to right: the Pact in the middle, so either swipe from the title finds a mode. */
 export const TITLE_MODES: readonly TitleMode[] = ['trials', 'pact', 'gauntlet'];
 
-export const TITLE_MODE_LABELS: Record<TitleMode, string> = {
+const TITLE_MODE_LABELS: Record<TitleMode, string> = {
   trials: 'Trials',
   pact: 'Pact',
   gauntlet: 'Gauntlet',
 };
-
-function LockGlyph() {
-  return (
-    <svg className="title-cta-lock" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="5" y="11" width="14" height="10" rx="2" />
-      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-    </svg>
-  );
-}
 
 /**
  * The one press each page is built around. The bezel and the specular sweep are separate
@@ -37,20 +28,16 @@ function LockGlyph() {
  *
  * It carries no colour of its own: the metal is a set of custom properties declared on an
  * ancestor — `.title-screen`'s tone for the Pact, each mode stage's own for the other two.
- * Locked, it still takes the press, so the tap can say what opens it.
  */
-export function PactButton({ label, disabled, locked = false, onClick }: { label: string; disabled: boolean; locked?: boolean; onClick: () => void }) {
+export function PactButton({ label, disabled, onClick }: { label: string; disabled: boolean; onClick: () => void }) {
   return (
-    <div className={`title-cta-socket${locked ? ' is-locked' : ''}`}>
+    <div className="title-cta-socket">
       <span className="title-cta-wing-tip is-left" aria-hidden="true" />
       <span className="title-cta-wing-tip is-right" aria-hidden="true" />
       <span className="title-cta-frame" aria-hidden="true" />
-      <button className="resolve-button title-cta" onClick={onClick} disabled={disabled} aria-label={locked ? `${label}, locked` : undefined}>
+      <button className="resolve-button title-cta" onClick={onClick} disabled={disabled}>
         <span className="title-cta-sheen" aria-hidden="true" />
-        <span className="title-cta-label">
-          {locked && <LockGlyph />}
-          {label}
-        </span>
+        <span className="title-cta-label">{label}</span>
       </button>
     </div>
   );
@@ -211,24 +198,20 @@ export function ModeLight({ mode }: { mode: Exclude<TitleMode, 'pact'> }) {
 export function ModeStage({
   mode,
   profile,
-  open,
   disabled,
   direction,
   onOpen,
-  onLocked,
 }: {
   mode: Exclude<TitleMode, 'pact'>;
   profile: Profile;
-  open: boolean;
   disabled: boolean;
   /** +1 slid in from the right, -1 from the left. */
   direction: number;
   onOpen: () => void;
-  onLocked: () => void;
 }) {
   const copy = MODE_COPY[mode];
   return (
-    <div key={mode} className={`title-mode-stage is-${mode} ${copy.tone}${open ? '' : ' is-shut'}`} style={{ '--slide': direction } as CSSProperties}>
+    <div key={mode} className={`title-mode-stage is-${mode} ${copy.tone}`} style={{ '--slide': direction } as CSSProperties}>
       {mode === 'trials' ? <TrialsScene profile={profile} /> : <GauntletScene profile={profile} />}
       <div className="title-mode-mark">
         <span className="title-mode-the">The</span>
@@ -238,48 +221,63 @@ export function ModeStage({
         <span className="title-mode-line">{copy.line}</span>
       </div>
       <div className="title-buttons">
-        <PactButton label={copy.cta} disabled={disabled} locked={!open} onClick={open ? onOpen : onLocked} />
-        <span className="title-mode-rail-seat" aria-hidden="true" />
+        <PactButton label={copy.cta} disabled={disabled} onClick={onOpen} />
+        <span className="title-mode-door-seat" aria-hidden="true" />
       </div>
     </div>
   );
 }
 
-/** The three pages named along the foot of the stack; the lit one is where the player stands. */
-export function ModeRail({ mode, onSelect }: { mode: TitleMode; onSelect: (mode: TitleMode) => void }) {
+/** Each page's mark, small: the Trials' six-seat sigil, the Pact's seal, the Gauntlet's crossed blades. */
+export function ModeEmblem({ mode }: { mode: TitleMode }) {
+  if (mode === 'trials') {
+    return (
+      <svg className="mode-emblem" viewBox="-24 -24 48 48" aria-hidden="true">
+        <circle r="15" fill="none" stroke="currentColor" strokeWidth="2.2" />
+        {Array.from({ length: 6 }, (_, i) => {
+          const a = (i * Math.PI) / 3 - Math.PI / 2;
+          return <circle key={i} cx={Math.cos(a) * 15} cy={Math.sin(a) * 15} r="3.2" fill="currentColor" />;
+        })}
+        <path d="M0 -8 L7 4 L-7 4 Z" fill="none" stroke="currentColor" strokeWidth="2" />
+      </svg>
+    );
+  }
+  if (mode === 'gauntlet') {
+    return (
+      <svg className="mode-emblem" viewBox="10 0 100 76" aria-hidden="true">
+        <path d="M18 8 L22 4 L84 66 L80 70 Z" fill="currentColor" opacity="0.8" />
+        <path d="M102 8 L98 4 L36 66 L40 70 Z" fill="currentColor" opacity="0.8" />
+        <path d="M60 18 L82 26 V44 Q82 61 60 72 Q38 61 38 44 V26 Z" fill="currentColor" />
+        <path d="M60 30 L66 44 L60 56 L54 44 Z" fill="#1a0806" />
+      </svg>
+    );
+  }
   return (
-    <nav className="title-mode-rail" aria-label="Modes">
-      {TITLE_MODES.map((m) => (
-        <button key={m} type="button" className={`title-mode-rail-item${m === mode ? ' is-active' : ''}`} aria-current={m === mode ? 'page' : undefined} onClick={() => onSelect(m)}>
-          <span className="title-mode-rail-dot" aria-hidden="true" />
-          {TITLE_MODE_LABELS[m]}
-        </button>
-      ))}
-    </nav>
+    <svg className="mode-emblem" viewBox="-24 -24 48 48" aria-hidden="true">
+      <circle r="17" fill="none" stroke="currentColor" strokeWidth="2" />
+      <circle r="11" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.7" />
+      <path d="M0 -17 L4 -4 L17 0 L4 4 L0 17 L-4 4 L-17 0 L-4 -4 Z" fill="currentColor" />
+    </svg>
   );
 }
 
-/** Edge chevrons to the neighbouring pages, named under the arrow. */
-export function ModeArrows({ mode, onSelect }: { mode: TitleMode; onSelect: (mode: TitleMode) => void }) {
+/** The neighbouring pages as doors in the bottom corners, each its emblem over its name; a mode not yet opened has none. */
+export function ModeDoors({ mode, isOpen, onSelect }: { mode: TitleMode; isOpen: (m: TitleMode) => boolean; onSelect: (mode: TitleMode) => void }) {
   const i = TITLE_MODES.indexOf(mode);
-  const prev = TITLE_MODES[i - 1];
-  const next = TITLE_MODES[i + 1];
+  const doors = [
+    { side: 'left', mode: TITLE_MODES[i - 1] },
+    { side: 'right', mode: TITLE_MODES[i + 1] },
+  ].filter((d): d is { side: string; mode: TitleMode } => d.mode !== undefined && isOpen(d.mode));
   return (
     <>
-      {prev && (
-        <button type="button" className="title-mode-arrow is-left" aria-label={TITLE_MODE_LABELS[prev]} onClick={() => onSelect(prev)}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M15 5l-7 7 7 7" />
-          </svg>
+      {doors.map(({ side, mode: m }) => (
+        <button key={m} type="button" className={`title-mode-door is-${side} is-${m}`} onClick={() => onSelect(m)}>
+          <span className="title-mode-door-medal">
+            <ModeEmblem mode={m} />
+          </span>
+          <span className="title-mode-door-name">{TITLE_MODE_LABELS[m]}</span>
         </button>
-      )}
-      {next && (
-        <button type="button" className="title-mode-arrow is-right" aria-label={TITLE_MODE_LABELS[next]} onClick={() => onSelect(next)}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      )}
+      ))}
     </>
   );
 }

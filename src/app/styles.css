@@ -46182,161 +46182,11 @@ img.smithy-service-art {
   pointer-events: none;
 }
 
-/* Holds the rail's place at the foot of every page's stack, so a page turn moves nothing. */
-.title-mode-rail-seat {
+/* Holds the doors' height at the foot of every page's stack, so a page turn moves nothing. */
+.title-mode-door-seat {
   display: block;
   flex: none;
   height: 30px;
-}
-
-.title-mode-rail {
-  position: absolute;
-  left: 44px;
-  right: 44px;
-  bottom: calc(var(--hub-nav-h) + 24px);
-  z-index: 4;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  animation: title-icon-row-fade 0.7s ease 0.6s both;
-}
-
-.title-mode-rail-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 8px;
-  border: 0;
-  background: none;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: rgba(232, 212, 166, 0.45);
-  text-shadow: 0 1px 3px #000;
-  transition: color var(--dur-mid) var(--ease-out);
-}
-
-.title-mode-rail-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.6;
-  transition: transform var(--dur-mid) var(--ease-spring), box-shadow var(--dur-mid) var(--ease-out);
-}
-
-.title-mode-rail-item.is-active {
-  color: #f3dfae;
-}
-
-.title-mode-rail-item.is-active .title-mode-rail-dot {
-  opacity: 1;
-  transform: scale(1.35);
-  box-shadow: 0 0 8px rgba(240, 188, 95, 0.9);
-}
-
-.title-screen.is-mode-trials .title-mode-rail-item.is-active {
-  color: #d6e4f4;
-}
-
-.title-screen.is-mode-trials .title-mode-rail-item.is-active .title-mode-rail-dot {
-  box-shadow: 0 0 8px rgba(150, 196, 240, 0.9);
-}
-
-.title-screen.is-mode-gauntlet .title-mode-rail-item.is-active {
-  color: #ffc9a8;
-}
-
-.title-screen.is-mode-gauntlet .title-mode-rail-item.is-active .title-mode-rail-dot {
-  box-shadow: 0 0 8px rgba(240, 96, 60, 0.9);
-}
-
-/* Either side of the rail, where the thumb already is. */
-.title-mode-arrow {
-  position: absolute;
-  bottom: calc(var(--hub-nav-h) + 24px - 7px);
-  z-index: 4;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: rgba(243, 223, 174, 0.7);
-  filter: drop-shadow(0 0 6px rgba(240, 188, 95, 0.45)) drop-shadow(0 2px 2px #000);
-  animation: title-icon-row-fade 0.7s ease 0.8s both;
-}
-
-.title-mode-arrow.is-left {
-  left: 4px;
-}
-
-.title-mode-arrow.is-right {
-  right: 4px;
-}
-
-.title-mode-arrow svg {
-  animation: title-mode-arrow-nudge 2.6s ease-in-out infinite;
-}
-
-.title-mode-arrow.is-left svg {
-  --nudge: -4px;
-}
-
-.title-mode-arrow.is-right svg {
-  --nudge: 4px;
-}
-
-@keyframes title-mode-arrow-nudge {
-  0%,
-  70%,
-  100% {
-    transform: translateX(0);
-  }
-  80% {
-    transform: translateX(var(--nudge));
-  }
-}
-
-/* A locked door says what opens it, floating over the page rather than pushing it. */
-.title-locked-toast {
-  position: absolute;
-  left: 50%;
-  top: 40%;
-  z-index: 6;
-  padding: 10px 16px;
-  border: 1px solid rgba(224, 166, 60, 0.45);
-  border-radius: var(--radius-sm);
-  background: rgba(10, 13, 18, 0.94);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6);
-  font-size: 12.5px;
-  font-weight: 700;
-  line-height: 1.4;
-  white-space: nowrap;
-  color: #f3dfae;
-  pointer-events: none;
-  animation: title-locked-toast 2.2s var(--ease-out) both;
-}
-
-@keyframes title-locked-toast {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, 8px) scale(0.96);
-  }
-  10%,
-  80% {
-    opacity: 1;
-    transform: translate(-50%, 0) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -6px) scale(1);
-  }
 }
 
 /* --- A mode page ----------------------------------------------------------- */
@@ -46455,28 +46305,11 @@ img.smithy-service-art {
   text-shadow: 0 1px 3px #000;
 }
 
-/* Locked: the plate cools to unlit metal and carries a padlock; it still takes the tap. */
-.title-cta-label {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.title-cta-lock {
-  flex: none;
-}
-
 /* The modes' presses run longer than "Seal the Pact"; a step down keeps them on one line. */
 .title-mode-stage .title-cta {
   font-size: 18px;
   letter-spacing: 0.1em;
   white-space: nowrap;
-}
-
-.title-cta-socket.is-locked {
-  animation: none;
-  filter: grayscale(0.85) brightness(0.62) drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55));
 }
 
 /* Steel: the Trials, cold and polished, a hall of proving. */
@@ -49957,4 +49790,65 @@ img.smithy-service-art {
 
 .moveoffer-confirm:disabled .moveoffer-sub {
   color: var(--text-dim);
+}
+
+/* --- The mode doors: a neighbouring page's emblem over its name, in the bottom corners --- */
+.title-mode-door {
+  --door-rgb: 240, 188, 95;
+  position: absolute;
+  bottom: calc(var(--hub-nav-h) + 6px);
+  z-index: 4;
+  width: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgb(var(--door-rgb));
+  animation: title-icon-row-fade 0.7s ease 0.8s both;
+}
+
+.title-mode-door.is-trials {
+  --door-rgb: 150, 196, 240;
+}
+
+.title-mode-door.is-gauntlet {
+  --door-rgb: 240, 110, 70;
+}
+
+.title-mode-door .mode-emblem {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.title-mode-door.is-left {
+  left: 4px;
+}
+
+.title-mode-door.is-right {
+  right: 4px;
+}
+
+.title-mode-door-medal {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, rgba(var(--door-rgb), 0.22), rgba(8, 10, 14, 0.92) 70%);
+  box-shadow: inset 0 0 0 1.5px rgba(var(--door-rgb), 0.55), 0 0 14px rgba(var(--door-rgb), 0.28), 0 3px 8px rgba(0, 0, 0, 0.7);
+  filter: drop-shadow(0 0 4px rgba(var(--door-rgb), 0.5));
+}
+
+.title-mode-door-name {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  padding-left: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px #000;
 }
