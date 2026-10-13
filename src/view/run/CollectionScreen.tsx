@@ -25,8 +25,9 @@ interface Props {
   onChangeDeck: (deck: Deck) => void;
   /** Spends stars on the bundle a locked hero comes in (run/starShop.ts buyOffer). */
   onBuy: (offer: StarShopOffer) => void;
-  /** A hero fallen this session: tagged New until the Collection has been seen. */
-  freshHeroId: string | null;
+  /** Heroes fallen this session, each tagged New until it is tapped. */
+  freshHeroIds: readonly string[];
+  onAcknowledge: (heroId: string) => void;
 }
 
 type View = 'deck' | 'all';
@@ -68,7 +69,7 @@ interface Drag {
  * Swap light the other side of the section to be tapped. A held card lifts off the page and is
  * dropped on the hero it trades places with.
  */
-export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroId }: Props) {
+export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroIds, onAcknowledge }: Props) {
   const deck = profileDeck(profile, heroes);
   const balance = starBalance(profile, starShopCatalog);
   const [view, setView] = useState<View>('deck');
@@ -157,6 +158,7 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroId }: 
     }
     // Sounded here, not on the press: the press may be the start of a scroll or a hold.
     playSfx('ui.pick');
+    if (freshHeroIds.includes(heroId)) onAcknowledge(heroId);
     if (swapping) {
       if (counterparts(swapping).includes(heroId)) return swap(swapping, heroId);
       setSwapping(null);
@@ -350,7 +352,7 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroId }: 
           <span className="coll-card-light" aria-hidden="true" />
           <HeroPortrait heroId={heroId} className="coll-card-portrait" />
           <span className="coll-card-name">{heroes[heroId].name}</span>
-          {heroId === freshHeroId && <span className="coll-card-new">New</span>}
+          {freshHeroIds.includes(heroId) && <span className="coll-card-new">New</span>}
           {state === 'locked' ? (
             <span className="coll-card-price">{price === undefined ? STARFALL_NAME : `★ ${price}`}</span>
           ) : (
@@ -402,7 +404,7 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroId }: 
       <HubSubtabs tabs={views} active={view} onSelect={setView} />
 
       {view === 'deck' ? (
-        <DeckView profile={profile} deck={deck} freshHeroId={freshHeroId} onChangeDeck={onChangeDeck} onPeekHero={setDossierHeroId} />
+        <DeckView profile={profile} deck={deck} freshHeroIds={freshHeroIds} onAcknowledge={onAcknowledge} onChangeDeck={onChangeDeck} onPeekHero={setDossierHeroId} />
       ) : (
         <div className="collection-frame">
           <div

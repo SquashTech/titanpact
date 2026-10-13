@@ -29,7 +29,8 @@ export function bundleOf(heroId: string): StarShopOffer | undefined {
 interface Props {
   profile: Profile;
   deck: Deck;
-  freshHeroId: string | null;
+  freshHeroIds: readonly string[];
+  onAcknowledge: (heroId: string) => void;
   onChangeDeck: (deck: Deck) => void;
   onPeekHero: (heroId: string) => void;
 }
@@ -40,7 +41,7 @@ interface Props {
  * heroes of that type the account owns and has not decked, to trade in, and the ones still to
  * get, to look at.
  */
-export function DeckView({ profile, deck, freshHeroId, onChangeDeck, onPeekHero }: Props) {
+export function DeckView({ profile, deck, freshHeroIds, onAcknowledge, onChangeDeck, onPeekHero }: Props) {
   const [picked, setPicked] = useState<string | null>(null);
   const [landed, setLanded] = useState<string | null>(null);
 
@@ -57,6 +58,7 @@ export function DeckView({ profile, deck, freshHeroId, onChangeDeck, onPeekHero 
 
   function trade(inId: string) {
     if (!picked) return;
+    onAcknowledge(inId);
     onChangeDeck(swapIntoDeck(deck, heroes, profile.purchases, inId, picked));
     playSfx('ui.commit');
     setLanded(inId);
@@ -78,7 +80,7 @@ export function DeckView({ profile, deck, freshHeroId, onChangeDeck, onPeekHero 
                 </span>
                 <span className="deck-row-name">{type}</span>
                 {spare > 0 && (
-                  <span className={`deck-row-spare${freshHeroId && reserve.includes(freshHeroId) ? ' is-fresh' : ''}`} title={`${spare} more to choose from`}>
+                  <span className={`deck-row-spare${reserve.some((id) => freshHeroIds.includes(id)) ? ' is-fresh' : ''}`} title={`${spare} more to choose from`}>
                     +{spare}
                   </span>
                 )}
@@ -122,7 +124,11 @@ export function DeckView({ profile, deck, freshHeroId, onChangeDeck, onPeekHero 
             <div className="deck-sheet-label">{bench.length > 0 ? 'Swap in' : `No other ${pickedType} hero to swap in`}</div>
             <div className="deck-sheet-list">
               {bench.map((id) => (
-                <SwapRow key={id} heroId={id} against={pickedHero.id} fresh={id === freshHeroId} onInfo={() => onPeekHero(id)} onSwap={() => trade(id)} />
+                <SwapRow key={id} heroId={id} against={pickedHero.id} fresh={freshHeroIds.includes(id)}
+                  onInfo={() => {
+                    onAcknowledge(id);
+                    onPeekHero(id);
+                  }} onSwap={() => trade(id)} />
               ))}
               {unowned.map((hero) => {
                 const offer = bundleOf(hero.id);

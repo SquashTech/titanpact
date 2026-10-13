@@ -128,7 +128,8 @@ export function TitleScreen({
   const [tab, setTab] = useState<HubTab>('play');
   /** Which way the page slid in: +1 from the left, -1 from the right. */
   const [slide, setSlide] = useState(0);
-  const [freshHeroId, setFreshHeroId] = useState<string | null>(null);
+  /** Heroes fallen this session the player has not yet tapped in the Collection. */
+  const [freshHeroIds, setFreshHeroIds] = useState<readonly string[]>([]);
   const [collectionSeen, setCollectionSeen] = useState(true);
   const [showReference, setShowReference] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
@@ -453,7 +454,13 @@ export function TitleScreen({
 
       {tab === 'collection' && (
         <div className="hub-slot" style={{ '--slide': slide } as CSSProperties}>
-          <CollectionScreen profile={profile} onChangeDeck={onChangeDeck} onBuy={onBuyOffer} freshHeroId={freshHeroId} />
+          <CollectionScreen
+            profile={profile}
+            onChangeDeck={onChangeDeck}
+            onBuy={onBuyOffer}
+            freshHeroIds={freshHeroIds}
+            onAcknowledge={(heroId) => setFreshHeroIds((ids) => ids.filter((id) => id !== heroId))}
+          />
         </div>
       )}
       {tab === 'constellation' && (
@@ -462,9 +469,9 @@ export function TitleScreen({
             profile={profile}
             onBuy={onBuyOffer}
             onStarfall={onStarfall}
-            freshHeroId={freshHeroId}
+            freshHeroId={freshHeroIds[freshHeroIds.length - 1] ?? null}
             onHeroFallen={(heroId) => {
-              setFreshHeroId(heroId);
+              setFreshHeroIds((ids) => [...ids.filter((id) => id !== heroId), heroId]);
               setCollectionSeen(false);
             }}
           />
