@@ -6,9 +6,7 @@ import { STARFALL_PRICE } from '../../run/starShop';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { HeroDossierOverlay } from './HeroDossierOverlay';
 import { HubGlyph } from '../shared/nodeIcons';
-import { TypeBadge } from '../shared/TypeBadge';
 import { TypeWheel, WHEEL_STEP_DEG, wheelRestDeg } from '../shared/TypeWheel';
 import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
@@ -31,6 +29,19 @@ function skyStars(count: number): { x: number; y: number; r: number; delay: numb
 const SKY = skyStars(90);
 const STREAKS = Array.from({ length: 28 }, (_, i) => ({ angle: (i * 137.51) % 360, delay: (i * 0.071) % 0.6, len: 30 + ((i * 53) % 40) }));
 const EMBERS = 22;
+
+/** The burst at the reveal: up out of the light, then fluttering down. Fixed, so every draw throws the same. */
+const CONFETTI = Array.from({ length: 60 }, (_, i) => ({
+  x: ((i * 97) % 360) - 180,
+  peak: 120 + ((i * 53) % 150),
+  drop: 260 + ((i * 71) % 220),
+  spin: ((i * 211) % 720) - 360,
+  delay: (i % 11) * 0.025,
+  tint: i % 3,
+  shape: i % 4 === 0 ? 'star' : i % 2 ? 'strip' : 'chip',
+}));
+/** Glints drifting down the sky once the hero stands. */
+const GLINTS = Array.from({ length: 14 }, (_, i) => ({ x: (i * 37) % 100, delay: (i * 0.53) % 6, dur: 5 + ((i * 13) % 4) }));
 
 /** Beat boundaries in ms from the tap. */
 const BEATS = {
@@ -60,16 +71,17 @@ interface ScreenProps {
   heroId: string;
   /** The balance the stars were spent from, before the draw. */
   balanceBefore: number;
+  /** The hero took an empty seat in its deck row on arrival. */
+  joinsDeck: boolean;
   onClose: () => void;
 }
 
-export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) {
+export function StarfallScreen({ heroId, balanceBefore, joinsDeck, onClose }: ScreenProps) {
   const hero = heroes[heroId];
   const type = hero?.types[0];
   const [phase, setPhase] = useState<Phase>('gather');
   const [launched, setLaunched] = useState(0);
   const [settled, setSettled] = useState(false);
-  const [showDossier, setShowDossier] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
   const timers = useRef<number[]>([]);
   const frame = useRef(0);
@@ -118,7 +130,8 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
         }
         if (t < 1) frame.current = requestAnimationFrame(tick);
         else {
-          setPhase('lock');
+          // Frames stop while the page is hidden and the timers do not, so the spin can end after the reveal.
+          setPhase((current) => (ORDER.indexOf(current) < ORDER.indexOf('lock') ? 'lock' : current));
           playSfx('star.lock');
         }
       };
@@ -233,6 +246,21 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
         <div className="summon-hero">
           <HeroPortrait heroId={hero.id} className="summon-hero-figure" />
         </div>
+
+        <span className="summon-confetti" aria-hidden="true">
+          {CONFETTI.map((c, i) => (
+            <span
+              key={i}
+              className={`is-${c.shape} is-tint-${c.tint}`}
+              style={{ '--x': `${c.x}px`, '--peak': `${-c.peak}px`, '--drop': `${c.drop}px`, '--spin': `${c.spin}deg`, '--d': `${c.delay}s` } as CSSProperties}
+            />
+          ))}
+        </span>
+        <span className="summon-glints" aria-hidden="true">
+          {GLINTS.map((g, i) => (
+            <span key={i} style={{ left: `${g.x}%`, '--d': `${g.delay}s`, '--dur': `${g.dur}s` } as CSSProperties} />
+          ))}
+        </span>
       </div>
 
       {locked && !past('reveal') && (
@@ -243,7 +271,7 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
 
       <div className="summon-plate">
         <div className="summon-ribbon">
-          <span>New hero</span>
+          <span>New hero!</span>
         </div>
         <h2 className="summon-name" aria-label={hero.name}>
           {Array.from(hero.name).map((ch, i) => (
@@ -254,23 +282,19 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
         </h2>
         <div className="summon-types">
           {hero.types.map((t) => (
-            <TypeBadge key={t} type={t} />
+            <span key={t} className="summon-type" style={{ '--chip-rgb': getTypeColorRgb(t) } as CSSProperties}>
+              <ElementGlyph type={t} />
+              {t}
+            </span>
           ))}
         </div>
-        <div className="summon-oath">falls into your Collection</div>
-        <div className="summon-actions">
-          <button type="button" className="resolve-button is-secondary" disabled={!settled} onClick={() => setShowDossier(true)}>
-            Info
-          </button>
-          <button type="button" className="resolve-button" disabled={!settled} onClick={onClose}>
-            Done
-          </button>
-        </div>
+        <div className="summon-oath">{joinsDeck ? 'joins your deck!' : 'joins your Collection!'}</div>
+        <button type="button" className="summon-cheer" data-sfx="ui.commit" disabled={!settled} onClick={onClose}>
+          Awesome!
+        </button>
       </div>
 
       {!settled && <span className="summon-skip">Tap to skip</span>}
-      {/* Inside the portal, so the dossier stands over the scene rather than under it. */}
-      {showDossier && <HeroDossierOverlay hero={hero} onClose={() => setShowDossier(false)} />}
     </div>,
     overlayHost()
   );
