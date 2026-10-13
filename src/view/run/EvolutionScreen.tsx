@@ -328,8 +328,10 @@ export function PassiveGrantRow({ passiveId, onRead }: { passiveId: string; onRe
   );
 }
 
-/** A horizontal drag this long across the stage steps to the neighbouring form. */
+/** A horizontal drag this long anywhere on the showcase steps to the neighbouring form. */
 const SHOWCASE_SWIPE_PX = 44;
+/** Past this the drag is a swipe, not a tap: the finger takes the page and the press under it is dropped. */
+const SHOWCASE_SLOP_PX = 10;
 
 /**
  * One form at full size, and where the choice is spent (2026-09-29, per user direction, replacing
@@ -362,7 +364,9 @@ function PathShowcase({
 }) {
   const [readingMoveId, setReadingMoveId] = useState<string | null>(null);
   const [readingPassiveId, setReadingPassiveId] = useState<string | null>(null);
-  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const showRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ id: number; x: number; y: number; swiping: boolean } | null>(null);
+  const [enterFrom, setEnterFrom] = useState<-1 | 0 | 1>(0);
   const path = paths[index];
   const tint = pathTint(hero, path);
   const types = pathTypes(hero, path);
@@ -373,19 +377,44 @@ function PathShowcase({
   const swapEntries = path.swapsOffense ? (Object.entries(offenseSwapDelta(hero, entry)) as [StatKey, number][]) : [];
   const poolMoves = (path.learnableMoveIds ?? []).filter((id) => moves[id]);
   const traded = tradedType(hero, path);
-  const step = (delta: number) => onIndex((index + delta + paths.length) % paths.length);
+  const step = (delta: 1 | -1) => {
+    setEnterFrom(delta);
+    onIndex((index + delta + paths.length) % paths.length);
+  };
+  const setDragX = (dx: number) => showRef.current?.style.setProperty('--swipe-dx', `${dx}px`);
+  const endDrag = (commitX?: number) => {
+    const d = drag.current;
+    drag.current = null;
+    setDragX(0);
+    showRef.current?.classList.remove('is-swiping');
+    if (d?.swiping && commitX !== undefined && Math.abs(commitX - d.x) >= SHOWCASE_SWIPE_PX) step(commitX < d.x ? 1 : -1);
+  };
 
   return (
-    <div className="evo-show is-floating" style={pathTintStyle(hero, path)}>
-      <div
-        className="evo-show-hero"
-        onPointerDown={(e) => setDragFrom(e.clientX)}
-        onPointerUp={(e) => {
-          if (dragFrom !== null && Math.abs(e.clientX - dragFrom) >= SHOWCASE_SWIPE_PX) step(e.clientX < dragFrom ? 1 : -1);
-          setDragFrom(null);
-        }}
-        onPointerCancel={() => setDragFrom(null)}
-      >
+    <div
+      ref={showRef}
+      className="evo-show is-floating"
+      style={pathTintStyle(hero, path)}
+      onPointerDown={(e) => {
+        if (e.button === 0 && !readingMoveId && !readingPassiveId) drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, swiping: false };
+      }}
+      onPointerMove={(e) => {
+        const d = drag.current;
+        if (!d || d.id !== e.pointerId) return;
+        const dx = e.clientX - d.x;
+        if (!d.swiping) {
+          if (Math.abs(dx) < SHOWCASE_SLOP_PX || Math.abs(dx) < Math.abs(e.clientY - d.y)) return;
+          d.swiping = true;
+          // Captured, the release lands on the showcase, so the card the finger started on is never clicked.
+          e.currentTarget.setPointerCapture(e.pointerId);
+          e.currentTarget.classList.add('is-swiping');
+        }
+        setDragX(dx * 0.55);
+      }}
+      onPointerUp={(e) => endDrag(e.clientX)}
+      onPointerCancel={() => endDrag()}
+    >
+      <div className="evo-show-hero" key={`hero-${path.id}`} data-enter={enterFrom}>
         <span className="evo-show-stage">
           <span className="evo-show-rays" aria-hidden="true" />
           <span className="evo-show-aura" aria-hidden="true" />
@@ -405,7 +434,7 @@ function PathShowcase({
       </div>
 
       {/* Keyed on the path so paging replays the gifts' entrance. */}
-      <div className="evo-show-body" key={path.id}>
+      <div className="evo-show-body" key={`body-${path.id}`} data-enter={enterFrom}>
         <ol className="evo-gifts">
           {swapEntries.length > 0 && (
             <li className="evo-gift is-rewire" style={{ '--i': 0 } as CSSProperties}>

@@ -376,6 +376,8 @@ button:not(:disabled):active {
      ignores border-radius, so it flashes a rectangle behind every rounded
      button, and on a full-bleed console facet it flashes the whole row. */
   -webkit-tap-highlight-color: transparent;
+  /* No word left alone on a last line. A line that wraps by a word is drawn smaller instead (app/snugText.ts). */
+  text-wrap: pretty;
 }
 
 /* Sprites are the other half of it: without this a hold on a hero portrait
@@ -21083,6 +21085,21 @@ button.star-shop-bundle-face {
   min-height: 26px;
 }
 
+/* The Banner is the act's trophy: its call is the largest heading a reward node raises, struck in gold. */
+.is-banner-hall .node-header:not(.is-compact) .node-title {
+  font-size: 31px;
+  color: #f6dc96;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55), 0 0 18px rgba(var(--node-rgb), 0.6);
+}
+
+.is-banner-hall .node-header:not(.is-compact) .node-title-glow {
+  opacity: 0.8;
+}
+
+.is-banner-hall .node-header:not(.is-compact) {
+  margin-bottom: 6px;
+}
+
 /* The readout: what the screen is asking for, or what just happened. Unboxed
    — it replaces bordered strips that were rendered permanently just to
    reserve their own height — but the height is still reserved, so nothing
@@ -23042,7 +23059,46 @@ button.star-shop-bundle-face {
   grid-template-columns: var(--evo-stage, 140px) minmax(0, 1fr);
   align-items: center;
   column-gap: 10px;
+}
+
+/* Swiping anywhere on the showcase pages the forms: the hero and the gifts follow the finger, and the next form slides in from the side it was pulled from. */
+.evo-show {
   touch-action: pan-y;
+}
+
+.evo-show-hero,
+.evo-show-body {
+  translate: var(--swipe-dx, 0px) 0;
+  transition: translate 0.22s var(--ease-out);
+}
+
+.evo-show.is-swiping .evo-show-hero,
+.evo-show.is-swiping .evo-show-body {
+  transition: none;
+}
+
+.evo-show-hero[data-enter='1'],
+.evo-show-body[data-enter='1'] {
+  animation: evo-show-page-next 0.26s var(--ease-out);
+}
+
+.evo-show-hero[data-enter='-1'],
+.evo-show-body[data-enter='-1'] {
+  animation: evo-show-page-prev 0.26s var(--ease-out);
+}
+
+@keyframes evo-show-page-next {
+  from {
+    opacity: 0;
+    transform: translateX(36px);
+  }
+}
+
+@keyframes evo-show-page-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-36px);
+  }
 }
 
 .evo-show-stage {
@@ -29598,6 +29654,15 @@ button.evo-gift-card {
   to {
     rotate: 360deg;
   }
+}
+
+/* Under the spinning sheen iOS paints the filtered facets over the numeral whatever its z-index: the cut loses its filter here and the numeral takes a layer of its own. */
+.signature-frame .mana-gem-cut {
+  filter: none;
+}
+
+.signature-frame .mana-gem-value {
+  will-change: transform;
 }
 
 .offer-move-highlight.is-signature {
@@ -39513,6 +39578,25 @@ img.smithy-service-art {
   text-shadow: 0 2px 0 #1a0f07;
   opacity: 1;
   filter: grayscale(0.9) brightness(0.55);
+}
+
+/* Declining is the way back, not a second commit: a quiet outline beside the gilt plank, as Back to paths is beside Evolve. */
+.moveoffer-decline,
+.moveoffer-decline:not(:disabled):hover {
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-image: none;
+  border-radius: var(--radius-md);
+  background: rgba(10, 9, 8, 0.55);
+  color: var(--text-dim);
+  text-shadow: none;
+  filter: none;
+  image-rendering: auto;
+}
+
+.moveoffer-decline:not(:disabled):hover {
+  border-color: var(--border-strong);
+  color: var(--text);
 }
 
 /* -- The Roster, second look: not a plank but an alcove cut into the stone and rimmed in gold, dark

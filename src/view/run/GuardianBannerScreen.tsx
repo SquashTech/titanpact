@@ -25,6 +25,9 @@ const BANNER_CLOTH: Record<string, string> = {
 };
 const clothStyle = (relicId: string) => ({ '--relic-color': BANNER_CLOTH[bannerArtId(relicId)] ?? relicColor(relicId) }) as CSSProperties;
 
+/** "Banner of the Warcry" → "Warcry": the button already says Raise, and the full name ran to two lines. */
+const standardName = (name: string) => name.replace(/^Banner of the /, '');
+
 interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
@@ -58,22 +61,18 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
   }
 
   return (
-    <div className="node-screen node-reward-screen" style={{ '--node-rgb': NODE_TINT_GOLD } as CSSProperties}>
+    <div className="node-screen node-reward-screen is-banner-hall" style={{ '--node-rgb': NODE_TINT_GOLD } as CSSProperties}>
       <NodeSky />
       <RosterPeek run={run} />
 
       <NodeHeader
-        compact
+        compact={!!claimedRelic}
         eyebrow={claimedRelic ? 'Banner Raised' : 'The Guardian Falls'}
         title={claimedRelic ? stackedRelicName(claimedRelic, claimedCount) : 'Raise a Banner'}
         glyph={claimedRelic ? undefined : <RelicKindGlyph form="banner" />}
         readoutKey={claimedRelic ? 'raised' : 'offer'}
         readoutLive={!!claimedRelic}
-        readout={
-          claimedRelic
-            ? 'Raised for the acts ahead.'
-            : 'Each standard benefits the whole roster.'
-        }
+        readout={claimedRelic ? 'Raised for the acts ahead.' : undefined}
       />
 
       <div className="screen-scroll">
@@ -117,7 +116,7 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
           disabled={!pickedRelicId}
           onClick={() => pickedRelicId && handleClaim(pickedRelicId)}
         >
-          {pickedRelic ? `Raise the ${pickedRelic.name}` : 'Choose a banner'}
+          {pickedRelic ? `Raise the ${standardName(pickedRelic.name)}` : 'Choose a banner'}
         </PlateButton>
       ) : (
         <PlateButton
