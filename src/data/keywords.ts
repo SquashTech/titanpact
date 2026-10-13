@@ -19,3 +19,18 @@ export const triggerKeywords: Record<TriggerKeywordId, TriggerKeywordDefinition>
   rest:     { id: 'rest',     name: 'Rest',      meaning: 'When this hero Rests.' },
   healed:   { id: 'healed',   name: 'Healed',    meaning: 'When a move heals this hero.' },
 };
+
+// Move keywords: the properties the move dossier's effect rows repeat most, each a gold word
+// heading its row. Rarer properties stay sentences.
+export type MoveKeywordId = 'charges' | 'empowered' | 'drain' | 'slice' | 'pivot' | 'crit' | 'cleanse' | 'recoil';
+
+export const moveKeywords: Record<MoveKeywordId, string> = {
+  charges:   'Charges',
+  empowered: 'Empowered',
+  drain:     'Drain',
+  slice:     'Slice',
+  pivot:     'Pivot',
+  crit:      'Crit',
+  cleanse:   'Cleanse',
+  recoil:    'Recoil',
+};

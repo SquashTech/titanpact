@@ -29,6 +29,7 @@ import { forecastDamage, koLabel } from './forecast';
 import { ForecastBite } from './ForecastBite';
 import { MoveName, MoveStrip, MoveStub, SeatArrow, TargetFigures } from '../shared/MoveStrip';
 import { typeChart } from '../../data/typechart';
+import { moveKeywords, type MoveKeywordId } from '../../data/keywords';
 
 /** The live fight a move is inspected inside. Optional: the hero sheet, level-up and recruit preview have no combat to forecast against. */
 export interface MoveDossierContext {
@@ -118,11 +119,12 @@ function ForecastSeat({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mo
 }
 
 /** A payload the move carries beyond its damage — one glyph, one sentence. */
-function EffectRow({ glyph, text, note, color }: { glyph: ReactNode; text: string; note?: string; color?: string }) {
+function EffectRow({ glyph, keyword, text, note, color }: { glyph: ReactNode; keyword?: MoveKeywordId; text: string; note?: string; color?: string }) {
   return (
     <div className="move-detail-effect-row" style={color ? ({ color } as CSSProperties) : undefined}>
       <span className="move-detail-effect-glyph">{glyph}</span>
       <span className="move-detail-effect-text">
+        {keyword && <><span className="kw-badge">{moveKeywords[keyword]}</span> </>}
         {text}
         {note && <span className="move-detail-effect-note">{note}</span>}
       </span>
@@ -384,28 +386,32 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
             <EffectRow
               glyph={<ElementGlyph type={conditionalFieldDef?.flavorType ?? 'Arcane'} />}
               color={getTypeColor(conditionalFieldDef?.flavorType ?? 'Arcane')}
-              text={`×${move.conditionalPower.multiplier} power while ${conditionalFieldDef?.name ?? conditionalFieldId} is up`}
+              keyword="empowered"
+              text={`×${move.conditionalPower.multiplier} while ${conditionalFieldDef?.name ?? conditionalFieldId} is up`}
               note={conditionalFieldLive ? 'up right now' : undefined}
             />
           )}
           {move.conditionalPower && conditionalHpBelow != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
-              text={`×${move.conditionalPower.multiplier} power vs a target below ${Math.round(conditionalHpBelow * 100)}% HP`}
+              keyword="empowered"
+              text={`×${move.conditionalPower.multiplier} vs a target below ${Math.round(conditionalHpBelow * 100)}% HP`}
               note={conditionalHpLive ? 'a target is under the line right now' : 'read before the hit lands'}
             />
           )}
           {move.conditionalPower && conditionalReduced && (
             <EffectRow
               glyph={<StatGlyph stat="intelligence" />}
-              text={`×${move.conditionalPower.multiplier} power vs a target whose stats have been lowered`}
+              keyword="empowered"
+              text={`×${move.conditionalPower.multiplier} vs a debuffed target`}
               note={context ? (conditionalReducedLive ? 'a target is debuffed right now' : 'nothing is debuffed right now') : 'any in-fight reduction counts, however small'}
             />
           )}
           {move.conditionalPower && conditionalUserHpBelow != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
-              text={`×${move.conditionalPower.multiplier} power while you are below ${Math.round(conditionalUserHpBelow * 100)}% HP`}
+              keyword="empowered"
+              text={`×${move.conditionalPower.multiplier} while you are below ${Math.round(conditionalUserHpBelow * 100)}% HP`}
               note={conditionalUserHpLive ? 'under the line right now' : undefined}
             />
           )}
@@ -413,14 +419,16 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
             <EffectRow
               glyph={<ElementGlyph type={conditionalPartnerType} />}
               color={getTypeColor(conditionalPartnerType)}
-              text={`×${move.conditionalPower.multiplier} power while your partner is a ${conditionalPartnerType}`}
+              keyword="empowered"
+              text={`×${move.conditionalPower.multiplier} while your partner is a ${conditionalPartnerType}`}
               note={conditionalPartnerLive ? 'your partner qualifies right now' : 'read off the active partner'}
             />
           )}
           {move.conditionalPower?.requiresLastCharge && (
             <EffectRow
               glyph={<ChargePips move={move} combatant={attacker} />}
-              text={`×${move.conditionalPower.multiplier} power on its last Charge`}
+              keyword="empowered"
+              text={`×${move.conditionalPower.multiplier} on its last Charge`}
               note={attacker ? (chargesLeft(attacker, move) === 1 ? 'the next cast is the last' : undefined) : undefined}
             />
           )}
@@ -434,10 +442,11 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
             <EffectRow
               glyph={<StatusGlyph statusId={conditionalStatusId} />}
               color={statusColor(conditionalStatusId)}
+              keyword="empowered"
               text={
                 move.conditionalPower.requiresUserStatus
-                  ? `×${move.conditionalPower.multiplier} power while you have ${conditionalDef?.name ?? conditionalStatusId}`
-                  : `×${move.conditionalPower.multiplier} power vs ${conditionalDef?.name ?? conditionalStatusId}`
+                  ? `×${move.conditionalPower.multiplier} while you have ${conditionalDef?.name ?? conditionalStatusId}`
+                  : `×${move.conditionalPower.multiplier} vs ${conditionalDef?.name ?? conditionalStatusId}`
               }
               note={move.conditionalPower.consumesStatus ? `spends the ${conditionalDef?.name ?? conditionalStatusId}` : undefined}
             />
@@ -465,14 +474,15 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
           {move.critChance != null && (
             <EffectRow
               glyph={<MoveKindGlyph kind={move.kind === 'damage' ? move.category : 'buff'} />}
-              text={`${Math.round(move.critChance * 100)}% crit chance · 1.5×`}
+              keyword="crit"
+              text={`${Math.round(move.critChance * 100)}% chance, 1.5× damage`}
             />
           )}
           {move.drainPercent != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
-              text={`Heals ${Math.round(move.drainPercent * 100)}% of damage dealt`}
-              note="unscaled by Wisdom or type"
+              keyword="drain"
+              text={`Heals ${Math.round(move.drainPercent * 100)}% of the damage dealt`}
             />
           )}
           {move.offStatOverride && (
@@ -504,8 +514,9 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
           {move.recoilPercent != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
-              text={`Costs ${Math.round(move.recoilPercent * 100)}% of damage dealt as recoil`}
-              note="no floor — can KO the caster"
+              keyword="recoil"
+              text={`Loses ${Math.round(move.recoilPercent * 100)}% of the damage dealt`}
+              note="can knock out the user"
             />
           )}
           {move.selfHpCost != null && (
@@ -526,10 +537,11 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
           {move.cleanses && (
             <EffectRow
               glyph={<MoveKindGlyph kind="buff" />}
+              keyword="cleanse"
               text={
                 move.cleanseCount != null
-                  ? `Cleanses ${move.cleanseCount} negative ${move.cleanseCount === 1 ? 'status' : 'statuses'} at random`
-                  : 'Cleanses every negative status'
+                  ? `${move.cleanseCount} negative ${move.cleanseCount === 1 ? 'status' : 'statuses'} at random`
+                  : 'Every negative status'
               }
             />
           )}
@@ -555,7 +567,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
             />
           )}
           {move.tags?.includes('slice') && (
-            <EffectRow glyph={<MoveKindGlyph kind="physical" />} text="A Slice" note="a cutting move, of any type — some passives work only with Slices" />
+            <EffectRow glyph={<MoveKindGlyph kind="physical" />} keyword="slice" text="A cutting move, of any type" note="some passives work only with Slices" />
           )}
           {move.restoresCharges && (
             <EffectRow glyph={<MoveKindGlyph kind="buff" />} text={restoresChargesText(move.restoresCharges)} note="never past a move's own count" />
@@ -563,7 +575,8 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
           {move.chargesPerFight != null && (
             <EffectRow
               glyph={<ChargePips move={move} combatant={attacker} />}
-              text={`${chargesLabel(move.chargesPerFight)} a fight`}
+              keyword="charges"
+              text={`${move.chargesPerFight} a fight`}
               note={
                 attacker
                   ? `${chargesLeft(attacker, move) ? chargesLabel(chargesLeft(attacker, move)!) : 'None'} left · spent Charges stay spent through a switch`
@@ -613,8 +626,9 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
           {move.switchesUserOut && (
             <EffectRow
               glyph={<MoveKindGlyph kind="buff" />}
-              text="Then switch out"
-              note="payload first, then the bench · refused once locked in at 2 KOs"
+              keyword="pivot"
+              text="Switches out after the move"
+              note="not once switching is locked"
             />
           )}
           {fieldDef && (

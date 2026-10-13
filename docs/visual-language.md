@@ -3395,3 +3395,8 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   where a new player learns the glyph; there is no tip for it.
 - Triggers under eight lines each (an enemy's Burn ticking, a stat rising, a field being set) stay
   sentences: a fifteenth glyph to learn costs more than the words it saves.
+- **Moves take the same treatment** (same day, per user direction). A move has no authored
+  sentence; its words are the dossier's effect rows, and the most repeated properties head their
+  row with a gold keyword and a colon (`moveKeywords`): **Charges** (41 moves), **Empowered** (32,
+  ×N power under a condition), **Drain** (22), **Slice** (22), **Pivot** (12, switches out after),
+  **Crit** (11), **Cleanse** (8), **Recoil** (7). The row keeps its own glyph; the rest stay sentences.
