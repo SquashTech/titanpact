@@ -7,6 +7,7 @@ import { nodeDossier, type NodeFactGlyph } from './nodeFacts';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { RESOURCE_COLORS, ResourceGlyph } from '../shared/RunGlyph';
 import { StatGlyph } from '../shared/statIcons';
+import { TargetFigures } from '../shared/MoveStrip';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { BANNER } from '../shared/relicIcons';
 import { RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
@@ -128,7 +129,10 @@ export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
             <span className="node-dossier-reward-glyph">{FACT_GLYPHS[fact.glyph]}</span>
             <span className="node-dossier-reward-text">
               <strong className="node-dossier-reward-value">{fact.value}</strong>
-              <span className="node-dossier-reward-label">{fact.label}</span>
+              <span className="node-dossier-reward-label">
+                {fact.label}
+                {fact.who && <TargetFigures target={fact.who === 'team' ? 'bothAllies' : 'singleAlly'} small />}
+              </span>
               {fact.note && <span className="node-dossier-reward-note">{fact.note}</span>}
             </span>
           </div>

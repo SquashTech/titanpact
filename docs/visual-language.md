@@ -3449,3 +3449,8 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   is one line; the Enchanter reads "**Bind:** +10 Base Power on one element's moves"; the Anvil says
   nothing when it can strike (the tier pills say it) and, when it can't, "Can't go any higher",
   "Epic from Act 3" or "A Unique can't be lifted".
+- **Map node cards** (same day, per user direction) were already loot: a lit mark, a big figure and
+  its label. Who a reward goes to is now the move strip's ally figures beside the label — one blue
+  figure for one hero (the Mentor's XP, the Mana Well, the Ley Line, a Boon, a Class, a Move, a
+  Blessing), two for the whole team (the Banner) — in place of the "one hero" / "whole team" notes,
+  and the lore lines that only restated a figure lost that half (the Academy's went entirely).

@@ -45,8 +45,10 @@ export interface NodeFact {
   label: string;
   /** The figure. `null` is a lane this node does not pay; the dossier leaves the row out. */
   value: string | null;
-  /** A few words beside the figure — who it goes to, how much. */
+  /** A few words beside the figure — how much, or on what. */
   note?: string;
+  /** Who it goes to, drawn as the move strip's ally figures: one hero, or the whole team. */
+  who?: 'one' | 'team';
 }
 
 export interface NodeDossier {
@@ -125,7 +127,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
     case 'boss':
       return {
         about: null,
-        facts: [...encounterFacts('boss', actNumber), { glyph: 'banner', label: 'Banner', value: '1 of 3', note: 'whole team' }],
+        facts: [...encounterFacts('boss', actNumber), { glyph: 'banner', label: 'Banner', value: '1 of 3', who: 'team' }],
         odds: odds('boss'),
       };
     case 'finale':
@@ -165,8 +167,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
       return {
         about: null,
         facts: [
-          { glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, note: 'one hero' },
-          { glyph: 'mana', label: 'MP Regen', value: `+${MANA_WELL_REGEN}` },
+          { glyph: 'mana', label: 'Max Mana', value: `+${MANA_WELL_AMOUNT}`, who: 'one' },
+          { glyph: 'mana', label: 'MP Regen', value: `+${MANA_WELL_REGEN}`, who: 'one' },
         ],
         odds: null,
       };
@@ -181,8 +183,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
       };
     case 'leyLineReward':
       return {
-        about: 'Raw power runs under the ground here. One hero draws on it.',
-        facts: [{ glyph: 'enchant', label: 'Force', value: `+${LEY_LINE_FORCE}`, note: 'one hero, its own element' }],
+        about: 'Raw power runs under the ground here.',
+        facts: [{ glyph: 'enchant', label: 'Force', value: `+${LEY_LINE_FORCE}`, who: 'one', note: 'its own element' }],
         odds: null,
       };
     case 'restReward':
@@ -192,19 +194,19 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
     case 'contractReward':
       return { about: null, facts: [{ glyph: 'contract', label: 'Contract', value: '+1' }], odds: null };
     case 'passiveReward':
-      return { about: 'A gift for one hero to carry.', facts: [{ glyph: 'passive', label: 'Boon', value: `1 of ${BOON_OFFER_COUNT}`, note: 'one hero' }], odds: null };
+      return { about: 'A gift to carry.', facts: [{ glyph: 'passive', label: 'Boon', value: `1 of ${BOON_OFFER_COUNT}`, who: 'one' }], odds: null };
     case 'blessingReward':
-      return { about: 'The Pactwarden shields one hero from a fatal blow.', facts: [{ glyph: 'hero', label: 'Blessing', value: '1 hero' }], odds: null };
+      return { about: 'The Pactwarden shields a hero from a fatal blow.', facts: [{ glyph: 'hero', label: 'Blessing', value: '1', who: 'one' }], odds: null };
     case 'mentorReward':
       return {
-        about: 'An old veteran. He will teach one hero how to fight.',
-        facts: [{ glyph: 'xp', label: 'XP', value: `+${mentorXpFor(actNumber).toLocaleString()}`, note: 'one hero' }],
+        about: 'An old veteran.',
+        facts: [{ glyph: 'xp', label: 'XP', value: `+${mentorXpFor(actNumber).toLocaleString()}`, who: 'one' }],
         odds: null,
       };
     case 'academyReward':
-      return { about: 'The Academy trains one hero in a Class.', facts: [{ glyph: 'class', label: 'Class', value: '1 of 3', note: 'one hero' }], odds: null };
+      return { about: null, facts: [{ glyph: 'class', label: 'Class', value: '1 of 3', who: 'one' }], odds: null };
     case 'tutorReward':
-      return { about: 'A master of every school. One hero learns any move it can.', facts: [{ glyph: 'move', label: 'Move', value: 'Your pick', note: 'one hero' }], odds: null };
+      return { about: 'A master of every school.', facts: [{ glyph: 'move', label: 'Move', value: 'Your pick', who: 'one' }], odds: null };
     case 'event':
       return { about: 'Something waits on the road ahead.', facts: [{ glyph: 'hidden', label: 'What', value: 'Unknown' }], odds: null };
   }
@@ -214,6 +216,9 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
 export function nodeFactsLine(name: string, type: MapNodeType, actNumber: number, cycle = 1): string {
   const parts = nodeDossier(type, actNumber, cycle)
     .facts.filter((fact) => fact.value !== null)
-    .map((fact) => `${fact.label} ${fact.value}${fact.note ? ` (${fact.note})` : ''}`);
+    .map((fact) => {
+      const asides = [fact.who === 'one' ? 'one hero' : fact.who === 'team' ? 'whole team' : '', fact.note ?? ''].filter(Boolean);
+      return `${fact.label} ${fact.value}${asides.length ? ` (${asides.join(', ')})` : ''}`;
+    });
   return `${name} — ${parts.join(', ')}`;
 }
