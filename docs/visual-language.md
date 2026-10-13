@@ -3338,7 +3338,8 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
   2×2 board that read as noise): one head-and-shoulders figure or two, orange for foes
   (`--target-foe`), blue for your side (`--target-ally`), a ? for random. Orange and blue because
   the figures have no shape cue for side, and that pair survives every common colour blindness;
-  the caster is a plain blue figure (a halo was tried and dropped, per user direction). The
+  the caster is a gold figure, so Self and Single Ally read apart (a halo was tried and dropped,
+  per user direction). The
   matchup arrows and the HP bar keep green and red: direction and doubling carry the arrows, length
   carries the bar, so colour there only reinforces.
 - **Riders are glyphs**: a status in its own icon and colour, a stat stage as the stat's glyph and

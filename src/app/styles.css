@@ -7989,7 +7989,7 @@ textarea,
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Who a non-attack reaches: one figure or two, orange for foes, blue for your side and the caster. */
+/* Who a non-attack reaches: one figure or two, orange for foes, blue for your side, gold for the caster. */
 .target-mark {
   display: inline-flex;
   align-items: center;
@@ -8016,7 +8016,7 @@ textarea,
 
 .target-figures.is-foe { color: var(--target-foe); }
 .target-figures.is-ally { color: var(--target-ally); }
-.target-figures.is-self { color: var(--target-ally); }
+.target-figures.is-self { color: var(--accent); }
 
 .target-figures.is-small .strip-glyph {
   width: 10px;

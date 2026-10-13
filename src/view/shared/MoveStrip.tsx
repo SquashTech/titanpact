@@ -170,7 +170,7 @@ function Figures({ side, count, random, small }: { side: Side; count: 1 | 2; ran
   );
 }
 
-/** Who a move reaches, as figures: one or two, orange for foes, blue for your side and the caster. */
+/** Who a move reaches, as figures: one or two, orange for foes, blue for your side, gold for the caster. */
 export function TargetFigures({ target, small }: { target: TargetMode; small?: boolean }) {
   const label = TARGET_MODE_LABELS[target];
   const body = ((): ReactNode => {
