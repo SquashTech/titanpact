@@ -7,8 +7,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
 import type { FieldEffectDefinition, PassiveDefinition, StatusDefinition } from '../../engine/content';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
-import { ElementGlyph } from './elementIcons';
-import { fieldEffectIconArt } from './iconArt';
+import { FieldGlyph } from './fieldIcons';
 import { TypeBadge } from './TypeBadge';
 import { StatusGlyph, statusColor, statusTint, statusClearText, pipelineLabel } from './statusIcons';
 import { EquipmentCatalog, HowToPlay, TypeDial } from './referencePages';
@@ -156,12 +155,10 @@ function PassiveReferenceRow({ def }: { def: PassiveDefinition }) {
 function FieldEffectReferenceRow({ def }: { def: FieldEffectDefinition }) {
   const type = def.flavorType ?? 'Arcane';
   const color = getTypeColor(type);
-  const iconSrc = fieldEffectIconArt[def.id];
-
   return (
     <div className="status-ref-row" style={{ '--plate-color': color } as CSSProperties}>
       <span className="status-ref-icon" style={{ color, background: `rgba(${getTypeColorRgb(type)}, 0.16)` }}>
-        {iconSrc ? <img src={iconSrc} alt="" draggable={false} /> : <ElementGlyph type={type} />}
+        <FieldGlyph fieldEffectId={def.id} />
       </span>
       <div className="status-ref-body">
         <div className="status-ref-head">

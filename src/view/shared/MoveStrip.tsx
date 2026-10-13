@@ -4,6 +4,7 @@ import { statusApplicationsOf } from '../../engine/content';
 import { TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { statuses } from '../../data/statuses';
 import { fieldEffects } from '../../data/fieldEffects';
+import { FieldGlyph } from './fieldIcons';
 import { getTypeColor } from '../combat/typeColors';
 import { ElementGlyph } from './elementIcons';
 import { StatGlyph, MoveKindGlyph } from './statIcons';
@@ -330,7 +331,7 @@ function Field({ id }: { id: string }) {
   const type = fieldEffects[id as keyof typeof fieldEffects]?.flavorType;
   return (
     <span className="move-clause-field" style={{ color: type ? getTypeColor(type) : undefined } as CSSProperties}>
-      {type ? <ElementGlyph type={type} className="move-clause-glyph" /> : <Glyph name="sparkle" />}
+      <FieldGlyph fieldEffectId={id} className="move-clause-glyph" />
     </span>
   );
 }

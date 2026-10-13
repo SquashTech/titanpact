@@ -5,8 +5,7 @@ import type { ActiveFieldEffect } from '../../engine/state';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
 import { fieldEffects } from '../../data/fieldEffects';
 import { getTypeColor } from './typeColors';
-import { ElementGlyph } from '../shared/elementIcons';
-import { fieldEffectIconArt } from '../shared/iconArt';
+import { FieldGlyph } from '../shared/fieldIcons';
 import { fieldEffectFacts } from '../shared/fieldEffectFacts';
 import { overlayHost } from '../shared/overlayHost';
 
@@ -28,7 +27,6 @@ export function FieldEffectDetailOverlay({ active, onClose }: Props) {
   if (!def) return null;
   const type = def.flavorType ?? 'Arcane';
   const color = getTypeColor(type);
-  const iconSrc = fieldEffectIconArt[active.fieldEffectId];
   const facts = fieldEffectFacts(def);
 
   function closeAndStop(e: { stopPropagation: () => void }) {
@@ -41,7 +39,7 @@ export function FieldEffectDetailOverlay({ active, onClose }: Props) {
       <div className="detail-panel field-dossier-panel" style={{ borderTopColor: color, '--field-color': color } as CSSProperties} onClick={closeAndStop}>
         <div className="move-detail-head">
           <span className="field-dossier-disc">
-            {iconSrc ? <img src={iconSrc} alt="" draggable={false} /> : <ElementGlyph type={type} />}
+            <FieldGlyph fieldEffectId={active.fieldEffectId} />
           </span>
           <div className="move-detail-titles">
             <div className="move-detail-name" style={{ color }}>

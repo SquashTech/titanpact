@@ -51,9 +51,11 @@ currently all reach for the same emoji and collide. See the picks.
 
 ## Picks
 
-Extracted to `art/icons/<set>/<name>.png` at the native 32 × 32 with alpha intact. **Only the
-Field Effect set is still in use** (`src/view/shared/iconArt.ts`, drawn by
-`FieldEffectDetailOverlay`). The move-kind, status and Force sets were extracted, wired, then
+Extracted to `art/icons/<set>/<name>.png` at the native 32 × 32 with alpha intact. **None is in
+use any more.** The Field Effect set was the last, and was replaced by vector on 2026-10-13, per
+user direction (`FieldGlyph`, `src/view/shared/fieldIcons.tsx`: each field a small scene on one
+shared ground line, so it never reads as its bare type glyph); its PNGs and `iconArt.ts` are
+deleted, and the table below is history. The move-kind, status and Force sets were extracted, wired, then
 replaced by vector (see "Where this pack does NOT apply"); their PNGs are still in
 `art/icons/move-kind/`, `status/` and `force/`, and nothing imports them. Two things from those
 picks are worth keeping: the move-kind picks were chosen from the 16px-survivor list (below), and
@@ -125,7 +127,7 @@ chasing exact multiples.
 
 ## What was wired in
 
-`src/view/shared/iconArt.ts` now holds one map (Field Effects). Every status, type and item has
+Nothing from the pack is wired in now (the Field Effect map in `iconArt.ts` went with its PNGs). Every status, type and item has
 a drawn glyph, so no surface mixes icon and emoji. `StatusGlyph` in `statusIcons.tsx` is the
 single place a status glyph is drawn (shoulder badge, `StatusDetailOverlay`, `HeroDetailOverlay`,
 `ReferenceOverlay`); `EquipmentIcon` is the same single point for gear, and `MoveKindBadge` for

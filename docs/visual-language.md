@@ -3422,3 +3422,9 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   stacking, Cleanse, bench and switch-keeps rows are gone, as are a field's shared clock and
   override rows (the pips above say the clock), and the authored sentence shows only when no row
   says what it does (Freeze, Daze).
+- **Every Field Effect has its own glyph** (same day, per user direction, after a side-by-side page,
+  `docs/mockups/field-icons.html`): a small scene on one shared ground line (`FieldGlyph`) — three
+  flames, a rain cloud, a half-risen sun, sprouts, a moon, coursed stone, an eye. It replaced five
+  pack PNGs that were all the same green cycle arrows and a type-glyph fallback for the other four,
+  which made a move's "Sets Downpour" draw the same picture as a Water move. It is drawn in the field
+  dossier, the Reference, and every move row and strip clause that names a field.

@@ -14,6 +14,7 @@ import { resolveStatusMagnitudeFor, scaleStatusMagnitude } from '../../engine/st
 import { resolveElementalForceBonus, VARIANCE_MAX, VARIANCE_MIN } from '../../engine/damage/damagePipeline';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
+import { FieldGlyph } from '../shared/fieldIcons';
 import { StatGlyph, MoveKindGlyph } from '../shared/statIcons';
 import { StatusGlyph, statusColor } from '../shared/statusIcons';
 import { statusAmountText, statusFactsLine } from '../shared/statusFacts';
@@ -376,7 +377,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
           ))}
           {move.conditionalTarget && (
             <EffectRow
-              glyph={<ElementGlyph type={conditionalTargetField?.flavorType ?? 'Arcane'} />}
+              glyph={<FieldGlyph fieldEffectId={move.conditionalTarget.requiresFieldEffect} />}
               color={getTypeColor(conditionalTargetField?.flavorType ?? 'Arcane')}
               text={`Hits ${TARGET_MODE_LABELS[move.conditionalTarget.target].toLowerCase()} while ${
                 conditionalTargetField?.name ?? move.conditionalTarget.requiresFieldEffect
@@ -393,7 +394,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
           )}
           {move.conditionalPower && conditionalFieldId && (
             <EffectRow
-              glyph={<ElementGlyph type={conditionalFieldDef?.flavorType ?? 'Arcane'} />}
+              glyph={<FieldGlyph fieldEffectId={conditionalFieldId} />}
               color={getTypeColor(conditionalFieldDef?.flavorType ?? 'Arcane')}
               head={conditionalFieldDef?.name ?? conditionalFieldId}
               text={`×${move.conditionalPower.multiplier} power`}
@@ -586,7 +587,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
           )}
           {fieldDef && (
             <EffectRow
-              glyph={<ElementGlyph type={fieldDef.flavorType ?? 'Arcane'} />}
+              glyph={<FieldGlyph fieldEffectId={fieldDef.id} />}
               color={getTypeColor(fieldDef.flavorType ?? 'Arcane')}
               text={`Field: ${fieldDef.name}`}
               note={fieldEffectFactsLine(fieldDef)}
