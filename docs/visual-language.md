@@ -3354,7 +3354,7 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
   aimed at a second target keeps its small figure in the strip.
 - **Riders are glyphs**: a status in its own icon and colour, a stat stage as the stat's glyph and
   its chevrons, priority as the Speed glyph and its sign. A rider landing somewhere other than the
-  move's target carries small figures. **Every other clause is a glyph too** (same day, per user
+  move's target carries small figures, leading it — who, then what (2026-10-13, per user direction). **Every other clause is a glyph too** (same day, per user
   direction): ×2 and the field's type glyph on a ground line, a die for anything random, a burst for
   crit and detonation, a crosshair for a target gate, hearts for drain / recoil / HP costs, and so
   on (`moveClauses`, `MoveStrip.tsx`). Each glyph's words live in its title and the hold dossier; a

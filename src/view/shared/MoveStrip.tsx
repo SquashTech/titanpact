@@ -257,22 +257,23 @@ function MoveRiderIcons({ move, amountOf }: { move: MoveDefinition; amountOf: Ri
             style={{ color: statusColor(app.statusId) } as CSSProperties}
             title={`${app.chance != null ? `${pct(app.chance)} ` : ''}${name}${shown ? ` ${shown}` : ''}${where ? ` (${TARGET_MODE_LABELS[where]})` : ''}`}
           >
+            {where && <TargetFigures target={where} small />}
             {app.chance != null && <span className="move-rider-odds">{pct(app.chance)}</span>}
             <StatusGlyph statusId={app.statusId} className="move-rider-glyph" />
             {shown && <span className="move-rider-amount">{shown}</span>}
-            {where && <TargetFigures target={where} small />}
           </span>
         );
       })}
-      {stageGroups(deltas).map(({ stats, stages }, i, groups) => (
+      {stageGroups(deltas).map(({ stats, stages }, i) => (
         <span key={stats.join()} className="move-rider" title={stats.map((stat) => `${STAT_LABELS[stat]} ${chevrons(stages)}`).join(', ')}>
+          {/* Who first, then what: the figure leads every group it covers. */}
+          {i === 0 && deltaWhere && <TargetFigures target={deltaWhere} small />}
           {/* One roll gates the whole list, so the odds print once. */}
           {i === 0 && move.statDeltaChance != null && <span className="move-rider-odds">{pct(move.statDeltaChance)}</span>}
           {stats.map((stat) => (
             <StatGlyph key={stat} stat={stat} className="move-rider-glyph" />
           ))}
           <span className={`move-rider-chevrons${stages > 0 ? ' is-up' : ' is-down'}`}>{chevrons(stages)}</span>
-          {i === groups.length - 1 && deltaWhere && <TargetFigures target={deltaWhere} small />}
         </span>
       ))}
     </>
