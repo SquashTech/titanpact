@@ -68,7 +68,7 @@ not show.
 
 | Cut | Now carried by |
 | --- | --- |
-| `draft`, `map`, `fork`, `banner`, `academy`, `locationChoice` | the screens: the draft's *Choose N more* confirm, labelled map tiles and their hold-to-read dossier, the pick screens' own layout |
+| `draft`, `map`, `fork`, `banner`, `academy`, `locationChoice` | the screens: the draft's *Choose N more* confirm, labelled map tiles and the preview a tap raises, the pick screens' own layout |
 | `run` | the seal's four rings, and How to Play |
 | `blessing` | the gold star, and the *Blessing breaks* beat when it is spent |
 | `wounds` | the bars on the map's party chips; a downed hero stands out of the light (greyed, no pool of light), and the fight result says *Knocked-out heroes stay down until a Rest, the Guild Hall, a Revive, or the next act* whenever one is down (not in a permadeath Cycle, where the Fallen beat speaks instead) |
@@ -164,6 +164,4 @@ first run. Cut to three on 2026-10-13 (§3).
 - **A first run is the real Act 1.** A new player meets the same Act 1 wall a veteran does
   (measured 58–68% cleared under the sim's pilots). Whether that needs a first-run softening is
   for playtest.
-- **Hold-to-read** is the one hidden gesture left, taught only by the Combat card's last page.
-  If players miss the map's dossier, map tiles could open it on tap instead.
 - **Veterans** on an existing profile see the three tips once (`bench` is a new id). Deliberate.

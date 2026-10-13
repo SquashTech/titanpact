@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
-import { useLongPress } from '../shared/MoveTile';
 import { playSfx, type SfxId } from '../../audio/sfx';
 import { NODE_COLORS, NODE_LABELS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
@@ -16,6 +15,7 @@ import type { TypeId } from '../../engine/content';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { handOffFlood } from '../shared/EntranceFlood';
 import { allCombatants } from '../../data/content';
+import { PlateButton } from '../shared/PlateButton';
 
 /**
  * The route out of where the player is standing (2026-09-08, per user direction): the node just
@@ -149,8 +149,9 @@ function ChoiceMedallion({
   guardianId,
   opening,
   hint,
-  onSelect,
-  onPreview,
+  previewed,
+  dimmed,
+  onTap,
   measureRef,
 }: {
   map: RunMap;
@@ -166,12 +167,14 @@ function ChoiceMedallion({
   landDelayMs: number;
   /** Tapped and opening: the gate or the stone playing its beat before the fight (OPENING). */
   opening: boolean;
-  onSelect: () => void;
-  onPreview: () => void;
+  /** Lit under the preview sheet; a second tap on it goes. */
+  previewed: boolean;
+  /** Another tile in the row is being previewed. */
+  dimmed: boolean;
+  onTap: () => void;
   measureRef: (el: HTMLButtonElement | null) => void;
 }) {
   const leadOns = showLeadOn ? leadOnTypes(map, node.id) : [];
-  const press = useLongPress(onPreview, onSelect);
   // The enemy typing stays ON the tile (docs/titanspawn-overhaul.md §4) — a rule held in the head
   // does not survive the map being a scene — but as a plaque under the helm, not cut into it.
   const scoutedFace = scouted && scouted.length > 0 ? scouted : null;
@@ -185,7 +188,7 @@ function ChoiceMedallion({
   const art = landmark || tile ? undefined : mapNodeArt(node.type);
   return (
     <div
-      className={`map-choice tier-${NODE_TIERS[node.type]}${landmark ? ` has-${landmark}` : ''}`}
+      className={`map-choice tier-${NODE_TIERS[node.type]}${landmark ? ` has-${landmark}` : ''}${previewed ? ' is-previewed' : ''}${dimmed ? ' is-dimmed' : ''}`}
       data-node-type={node.type}
       style={{ '--land-delay': `${landDelayMs}ms`, '--node-color': NODE_COLORS[node.type] } as CSSProperties}
     >
@@ -213,7 +216,7 @@ function ChoiceMedallion({
         ref={measureRef}
         aria-label={scoutedFace ? `${label}. Enemies: ${scoutedFace.join(', ')}` : label}
         data-sfx="none"
-        {...press}
+        onClick={onTap}
       >
         <span className="map-medallion-glow" aria-hidden="true" />
         <span className="map-choice-burst" aria-hidden="true" />
@@ -255,7 +258,7 @@ export function MapRoute({
   actNumber,
   guardianId,
   onSelectNode,
-  onPreviewNode,
+  renderDossier,
   companion,
 }: {
   /** The companion, drawn walking beside wherever the party stands. */
@@ -273,12 +276,14 @@ export function MapRoute({
   /** The act the map belongs to — the ledger's drop odds and hire level are per act. */
   actNumber: number;
   onSelectNode: (nodeId: string) => void;
-  onPreviewNode: (node: MapNode) => void;
+  /** The sheet a tile's first tap raises (NodeDossier); the second tap, or its plate, goes. */
+  renderDossier: (node: MapNode) => ReactNode;
 }) {
   const [segments, setSegments] = useState<RouteSegment[]>([]);
   const [revealing, setRevealing] = useState(false);
   const [opening, setOpening] = useState<{ id: string; color: string; x: number; y: number } | null>(null);
   const openingId = opening?.id ?? null;
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const routeRef = useRef<HTMLDivElement>(null);
   const originRef = useRef<HTMLSpanElement>(null);
   const medallionRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -286,6 +291,8 @@ export function MapRoute({
   const finished = useRef(false);
 
   const choiceKey = choiceIds.join(',');
+  // A new row is a new question.
+  useEffect(() => setPreviewId(null), [choiceKey]);
   const showLeadOn = leadOnsDiffer(map, choiceIds);
   // Gated on the node kind, not just on being row 0: act 6 opens on the Vigil, and an omen
   // over a muster would be naming enemies that are not there — nor does a camp sit before it.
@@ -384,6 +391,43 @@ export function MapRoute({
     };
   }, [revealKey, choiceKey]);
 
+  /** Travel there: the landmark's opening beat first, where it has one. */
+  function go(nodeId: string) {
+    if (openingId) return;
+    setPreviewId(null);
+    playSfx('map.select');
+    const kind = landmarkKind(map.nodes[nodeId].type);
+    const beat = kind && OPENING[kind];
+    if (beat && !prefersReducedMotion()) {
+      playSfx(beat.sfx);
+      // The flood pours out of the landmark, wherever it stands on the screen: the gate's
+      // doorway, the stone's eye.
+      const box = medallionRefs.current.get(nodeId)?.getBoundingClientRect();
+      const at = box ? canvasPoint(box.x + box.width / 2, box.y + box.height * (kind === 'stone' ? 0.3 : 0.55)) : { x: 0, y: 0 };
+      const flood = { color: kind === 'gate' ? gateWardenColor(guardianId) : TITAN_LIGHT, x: at.x, y: at.y };
+      setOpening({ id: nodeId, ...flood });
+      timers.current.push(
+        window.setTimeout(() => {
+          handOffFlood(flood);
+          onSelectNode(nodeId);
+        }, beat.ms)
+      );
+      return;
+    }
+    onSelectNode(nodeId);
+  }
+
+  /** The first tap reads a tile, a tap on another switches to it, and a tap on the one read goes. */
+  function tap(nodeId: string) {
+    if (openingId) return;
+    if (previewId === nodeId) {
+      go(nodeId);
+      return;
+    }
+    playSfx('ui.select');
+    setPreviewId(nodeId);
+  }
+
   return (
     <div className={`map-route${revealing ? ' is-revealing' : ''}`} ref={routeRef}>
       {segments.length > 0 && (
@@ -425,33 +469,9 @@ export function MapRoute({
             landDelayMs={i * PATH_STAGGER_MS + PATH_DRAW_MS}
             opening={openingId === nodeId}
             hint={actNumber === 1 && !originNode && choiceIds.length === 1 ? 'Tap to begin' : undefined}
-            onSelect={() => {
-              if (openingId) return;
-              // Played here rather than via data-sfx, which fires on POINTERDOWN — the same press that
-              // starts a long-press preview. Committing to a path should not sound when you are only
-              // asking what it is.
-              playSfx('map.select');
-              const kind = landmarkKind(map.nodes[nodeId].type);
-              const beat = kind && OPENING[kind];
-              if (beat && !prefersReducedMotion()) {
-                playSfx(beat.sfx);
-                // The flood pours out of the landmark, wherever it stands on the screen: the gate's
-                // doorway, the stone's eye.
-                const box = medallionRefs.current.get(nodeId)?.getBoundingClientRect();
-                const at = box ? canvasPoint(box.x + box.width / 2, box.y + box.height * (kind === 'stone' ? 0.3 : 0.55)) : { x: 0, y: 0 };
-                const flood = { color: kind === 'gate' ? gateWardenColor(guardianId) : TITAN_LIGHT, x: at.x, y: at.y };
-                setOpening({ id: nodeId, ...flood });
-                timers.current.push(
-                  window.setTimeout(() => {
-                    handOffFlood(flood);
-                    onSelectNode(nodeId);
-                  }, beat.ms)
-                );
-                return;
-              }
-              onSelectNode(nodeId);
-            }}
-            onPreview={() => onPreviewNode(map.nodes[nodeId])}
+            previewed={previewId === nodeId}
+            dimmed={previewId !== null && previewId !== nodeId}
+            onTap={() => tap(nodeId)}
             measureRef={(el) => {
               if (el) medallionRefs.current.set(nodeId, el);
               else medallionRefs.current.delete(nodeId);
@@ -510,6 +530,26 @@ export function MapRoute({
           overlayHost()
         )}
 
+      {previewId &&
+        map.nodes[previewId] &&
+        createPortal(
+          <MapPreview
+            tiles={choiceIds.flatMap((id) => {
+              const el = medallionRefs.current.get(id);
+              return el ? [{ id, el }] : [];
+            })}
+            previewId={previewId}
+            color={NODE_COLORS[map.nodes[previewId].type]}
+            label={NODE_LABELS[map.nodes[previewId].type]}
+            onTap={tap}
+            onBack={() => setPreviewId(null)}
+            onGo={() => go(previewId)}
+          >
+            {renderDossier(map.nodes[previewId])}
+          </MapPreview>,
+          overlayHost()
+        )}
+
       {/* Plain div, so uiSfx's delegated listener leaves it alone (it only catches real controls). */}
       {revealing && <div className="map-reveal-skip" onClick={skip} />}
     </div>
@@ -519,4 +559,118 @@ export function MapRoute({
 function gateWardenColor(guardianId: string | null): string {
   const type = guardianId ? allCombatants[guardianId]?.types[0] : undefined;
   return type ? getTypeColor(type) : '#e0a63c';
+}
+
+interface PreviewTile {
+  id: string;
+  el: HTMLElement;
+}
+
+interface Box {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+const TILE_PAD = 6;
+/** The sheet keeps at least this much of the screen, rising over the row's foot if it must. */
+const SHEET_MIN = 250;
+
+/** Each tile's box in canvas px (the overlay lives inside the scaled shell). */
+function measureTiles(tiles: readonly PreviewTile[]): Record<string, Box> {
+  const boxes: Record<string, Box> = {};
+  for (const { id, el } of tiles) {
+    const rect = el.getBoundingClientRect();
+    const a = canvasPoint(rect.left, rect.top);
+    const b = canvasPoint(rect.right, rect.bottom);
+    boxes[id] = { left: a.x - TILE_PAD, top: a.y - TILE_PAD, width: b.x - a.x + TILE_PAD * 2, height: b.y - a.y + TILE_PAD * 2 };
+  }
+  return boxes;
+}
+
+/**
+ * The map's preview: the screen dimmed, the tile being read lit through it and the rest of the row
+ * half-lit and still tappable, and the node's ledger as a sheet at the foot with Back and the plate
+ * that goes. A tap on the dimmed screen is Back.
+ */
+function MapPreview({
+  tiles,
+  previewId,
+  color,
+  label,
+  onTap,
+  onBack,
+  onGo,
+  children,
+}: {
+  tiles: readonly PreviewTile[];
+  previewId: string;
+  color: string;
+  label: string;
+  onTap: (id: string) => void;
+  onBack: () => void;
+  onGo: () => void;
+  children: ReactNode;
+}) {
+  const [boxes, setBoxes] = useState<Record<string, Box>>({});
+  const [height, setHeight] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const maskId = useId();
+  const tileKey = tiles.map((t) => t.id).join(',');
+  useLayoutEffect(() => {
+    const measure = () => {
+      setBoxes(measureTiles(tiles));
+      setHeight(rootRef.current?.clientHeight ?? 0);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tileKey]);
+
+  // Under the row, so the tile being read stays in sight above its own ledger.
+  const rowFoot = Math.max(0, ...Object.values(boxes).map((b) => b.top + b.height));
+  const sheetTop = height > 0 ? Math.min(rowFoot + 10, height - SHEET_MIN) : undefined;
+
+  return (
+    <div className="map-preview" ref={rootRef} onClick={onBack} style={{ '--node-color': color } as CSSProperties}>
+      <svg className="map-preview-scrim" aria-hidden="true">
+        <defs>
+          <mask id={maskId}>
+            <rect x="0" y="0" width="100%" height="100%" fill="white" />
+            {Object.entries(boxes).map(([id, b]) => (
+              <rect key={id} x={b.left} y={b.top} width={b.width} height={b.height} rx="12" fill={id === previewId ? 'black' : '#666'} />
+            ))}
+          </mask>
+        </defs>
+        <rect x="0" y="0" width="100%" height="100%" className="map-preview-scrim-fill" mask={`url(#${maskId})`} />
+      </svg>
+      {Object.entries(boxes).map(([id, b]) => (
+        <button
+          key={id}
+          type="button"
+          className={`map-preview-hit${id === previewId ? ' is-lit' : ''}`}
+          style={{ left: b.left, top: b.top, width: b.width, height: b.height }}
+          aria-label={id === previewId ? `Go: ${label}` : 'Read this one'}
+          data-sfx="none"
+          onClick={(e) => {
+            e.stopPropagation();
+            onTap(id);
+          }}
+        />
+      ))}
+      <div className="map-preview-sheet" style={{ top: sheetTop }} onClick={(e) => e.stopPropagation()}>
+        <div className="map-preview-body">{children}</div>
+        <div className="map-preview-foot">
+          <button type="button" className="map-preview-back" onClick={onBack}>
+            Back
+          </button>
+          <PlateButton tint={color} onClick={onGo} data-sfx="none" compact className="map-preview-go">
+            {label}
+          </PlateButton>
+        </div>
+      </div>
+    </div>
+  );
 }

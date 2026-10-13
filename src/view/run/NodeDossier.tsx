@@ -1,4 +1,3 @@
-import { createPortal } from 'react-dom';
 import type { CSSProperties, ReactNode } from 'react';
 import type { MapNode } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
@@ -13,7 +12,6 @@ import { StatGlyph } from '../shared/statIcons';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { BANNER } from '../shared/relicIcons';
 import { RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
-import { overlayHost } from '../shared/overlayHost';
 import type { RunState } from '../../run/state';
 import { NodeRosterReadout } from './NodeRosterReadout';
 
@@ -76,13 +74,11 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
 }
 
 /**
- * What a hold on a map node opens: the node's ledger — what it pays, what it costs, what it
- * fields — as figures in rows, never as a sentence. Sits on the same `.detail-overlay` /
- * `.detail-panel` chassis as the move dossier, with the node's colour on the stripe and the disc,
- * so the tile the player is still holding down reads as having opened rather than as a panel
- * about it. Portalled into overlayHost(), never document.body — see overlayHost.ts.
+ * A map node's ledger — what it pays, what it costs, what it fields — as figures in rows, never as
+ * a sentence, with the node's colour on the stripe and the disc. The body of the map's preview
+ * sheet (MapRoute), which raises it on a tile's first tap.
  */
-export function NodeDossierOverlay({ node, run, onClose }: { node: MapNode; run: RunState; onClose: () => void }) {
+export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
   const dossier = nodeDossier(node.type, run.actNumber, run.cycle);
   const color = NODE_COLORS[node.type];
   // The tile's own pixel art, so the panel reads as the tile opened up.
@@ -90,57 +86,47 @@ export function NodeDossierOverlay({ node, run, onClose }: { node: MapNode; run:
   const label = NODE_LABELS[node.type];
   const name = NODE_NAMES[node.type];
 
-  function closeAndStop(e: { stopPropagation: () => void }) {
-    e.stopPropagation();
-    onClose();
-  }
-
-  return createPortal(
-    <div className="detail-overlay" onClick={closeAndStop}>
-      <div className="detail-panel node-dossier-panel" style={{ borderTopColor: color, '--node-color': color } as CSSProperties} onClick={closeAndStop}>
-        <div className="node-dossier-head">
-          <span className={`node-dossier-disc${art ? ' has-art' : ''}`}>
-            {art ? <img src={art} alt="" draggable={false} /> : <NodeGlyph type={node.type} />}
-          </span>
-          <div className="node-dossier-titles">
-            <div className="node-dossier-name">{label}</div>
-            <div className="node-dossier-line">{name === label ? dossier.kind : `${name} · ${dossier.kind}`}</div>
-          </div>
+  return (
+    <div className="node-dossier-panel" style={{ borderTopColor: color, '--node-color': color } as CSSProperties}>
+      <div className="node-dossier-head">
+        <span className={`node-dossier-disc${art ? ' has-art' : ''}`}>
+          {art ? <img src={art} alt="" draggable={false} /> : <NodeGlyph type={node.type} />}
+        </span>
+        <div className="node-dossier-titles">
+          <div className="node-dossier-name">{label}</div>
+          <div className="node-dossier-line">{name === label ? dossier.kind : `${name} · ${dossier.kind}`}</div>
         </div>
+      </div>
 
-        <p className="node-dossier-about">{dossier.about}</p>
+      <p className="node-dossier-about">{dossier.about}</p>
 
-        <div className="node-dossier-facts">
-          {dossier.facts.filter((fact) => fact.value !== null).map((fact) => (
-            <div key={fact.label} className="node-dossier-fact">
-              <span className="node-dossier-fact-glyph">{FACT_GLYPHS[fact.glyph]}</span>
-              <span className="node-dossier-fact-label">{fact.label}</span>
-              <span className="node-dossier-fact-value">
-                <strong>{fact.value ?? '—'}</strong>
-                {fact.note && <span className="node-dossier-fact-note">{fact.note}</span>}
-              </span>
+      <div className="node-dossier-facts">
+        {dossier.facts.filter((fact) => fact.value !== null).map((fact) => (
+          <div key={fact.label} className="node-dossier-fact">
+            <span className="node-dossier-fact-glyph">{FACT_GLYPHS[fact.glyph]}</span>
+            <span className="node-dossier-fact-label">{fact.label}</span>
+            <span className="node-dossier-fact-value">
+              <strong>{fact.value ?? '—'}</strong>
+              {fact.note && <span className="node-dossier-fact-note">{fact.note}</span>}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {dossier.odds && <RarityOdds odds={dossier.odds} />}
+
+      <NodeRosterReadout type={node.type} run={run} />
+
+      {dossier.terms.length > 0 && (
+        <dl className="node-dossier-terms">
+          {dossier.terms.map((t) => (
+            <div key={t.term} className="node-dossier-term">
+              <dt>{t.term}</dt>
+              <dd>{t.text}</dd>
             </div>
           ))}
-        </div>
-
-        {dossier.odds && <RarityOdds odds={dossier.odds} />}
-
-        <NodeRosterReadout type={node.type} run={run} />
-
-        {dossier.terms.length > 0 && (
-          <dl className="node-dossier-terms">
-            {dossier.terms.map((t) => (
-              <div key={t.term} className="node-dossier-term">
-                <dt>{t.term}</dt>
-                <dd>{t.text}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-
-        <div className="detail-close-hint">Tap anywhere to close</div>
-      </div>
-    </div>,
-    overlayHost()
+        </dl>
+      )}
+    </div>
   );
 }

@@ -111,8 +111,16 @@ choice leads to, drawn only when the options on the row differ (`leadOnTypes`, `
 derived from `nextIds`). The **progress rail** (`railTypeFor`, `ProgressRail`) keeps the act's
 shape: a dot for a row that only pays out, the node's own glyph and colour for one that does not,
 a mixed row wearing its **hardest** option so the rail never under-promises. Tiles carry a glyph,
-a colour and **one short word** (`NODE_LABELS`, `mapNodes.ts`; labels came back 2026-10-02), and a
-long press reads any node out in full. `generateMap`, `reachableNodeIds`, `advanceToNode` and the
+a colour and **one short word** (`NODE_LABELS`, `mapNodes.ts`; labels came back 2026-10-02). **A
+tile's first tap previews it** (2026-10-13, per user direction, replacing the long press, which was
+the map's one hidden gesture and left a single tap as an irreversible commit): the screen dims, the
+tile is lit and the rest of the row half-lit and still tappable, and the node's ledger
+(`NodeDossier`) rises as a sheet under the row with Back and a plate in the node's colour. A second
+tap on the lit tile goes too, so a player who knows the map double-taps through; a tap on another
+tile switches, so Elite against Skirmish is compared tap by tap; a tap on the dark is Back. Every
+tile previews, a row of one included — one rule for what a tap does (`MapPreview`, `MapRoute.tsx`).
+The rail sets **the stops left before the Guardian** as one small figure against its mark
+(`ProgressRail`), hidden once the Guardian is next. `generateMap`, `reachableNodeIds`, `advanceToNode` and the
 save format did not change: the act still HAS its shape; the player is walked through it.
 
 **Edges.** Each node connects to 1–2 nodes in the next row within a small column window, with a

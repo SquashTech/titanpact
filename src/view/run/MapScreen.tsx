@@ -5,7 +5,7 @@ import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
 import { equipment } from '../../data/equipment';
-import type { MapNode, MapNodeType, RunMap } from '../../run/map';
+import type { MapNodeType, RunMap } from '../../run/map';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
@@ -17,7 +17,7 @@ import { WoundBar, entryHp } from '../shared/WoundBar';
 import { MapRoute } from './MapRoute';
 import { BannerShelf } from './BannerShelf';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
-import { NodeDossierOverlay } from './NodeDossierOverlay';
+import { NodeDossier } from './NodeDossier';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { locationForAct } from '../../run/locations';
@@ -104,8 +104,11 @@ function railTypeFor(map: RunMap, row: number): MapNodeType {
  * under-promises: the Elite-or-Battle row wears the Elite.
  */
 function ProgressRail({ map, currentRow }: { map: RunMap; currentRow: number }) {
+  // Rows still to walk before the last one, set against the last mark: how long the act is, in one figure.
+  const lastRow = map.rows.length - 1;
+  const stops = lastRow - currentRow - 1;
   return (
-    <div className="map-rail" aria-label={`Row ${currentRow + 1} of ${map.rows.length}`}>
+    <div className="map-rail" aria-label={stops > 0 ? `${stops} ${stops === 1 ? 'stop' : 'stops'} to the Guardian` : 'The Guardian is next'}>
       {map.rows.map((_, row) => {
         const type = railTypeFor(map, row);
         const tier = NODE_TIERS[type];
@@ -113,7 +116,7 @@ function ProgressRail({ map, currentRow }: { map: RunMap; currentRow: number }) 
         if (tier === 'reward') {
           return <span key={row} className={`map-rail-pip ${state}`} aria-hidden="true" />;
         }
-        return (
+        const mark = (
           <span
             key={row}
             className={`map-rail-mark tier-${tier} ${state}`}
@@ -123,6 +126,13 @@ function ProgressRail({ map, currentRow }: { map: RunMap; currentRow: number }) 
             <NodeGlyph type={type} className="map-rail-glyph" />
           </span>
         );
+        if (row !== lastRow || stops <= 0) return mark;
+        return [
+          mark,
+          <span key="count" className="map-rail-count" style={{ '--node-color': NODE_COLORS[type] } as CSSProperties} aria-hidden="true">
+            {stops}
+          </span>,
+        ];
       })}
     </div>
   );
@@ -164,7 +174,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
   const [showMenu, setShowMenu] = useState(false);
   // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
   const [confirmingQuit, setConfirmingQuit] = useState(false);
-  const [previewNode, setPreviewNode] = useState<MapNode | null>(null);
   const { purchases } = useProfile();
   const map = run.map;
   if (!map) return null;
@@ -261,7 +270,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           actNumber={run.actNumber}
           guardianId={location.guardianFinalEnemyId}
           onSelectNode={onSelectNode}
-          onPreviewNode={setPreviewNode}
+          renderDossier={(node) => <NodeDossier node={node} run={run} />}
           companion={
             // The companion walks the road beside the party, not in the footer the six fill.
             companionId && callMoveId ? (
@@ -356,7 +365,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
 
       {rosterOpen && <RosterManagementScreen run={run} onClose={() => setRosterOpen(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
-      {previewNode && <NodeDossierOverlay node={previewNode} run={run} onClose={() => setPreviewNode(null)} />}
       {companionOpen && <CompanionDossier run={run} onClose={() => setCompanionOpen(false)} />}
     </div>
   );

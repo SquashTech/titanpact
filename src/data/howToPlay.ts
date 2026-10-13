@@ -18,8 +18,8 @@ export const HOW_TO_PLAY: readonly Tip[] = [
   section(
     'map',
     'The Map',
-    'Tap one of the places ahead to go there. Hold any place to read what happens there.',
-    'The track across the top shows the way to the Guardian.',
+    'Tap one of the places ahead to read what happens there. Tap it again, or press its button, to go.',
+    'The track across the top shows the way to the Guardian, and the number beside it how many stops are left before it.',
     'At the fork, an Elite is a level above a Skirmish, always drops an item, and pays more XP.'
   ),
   section(
