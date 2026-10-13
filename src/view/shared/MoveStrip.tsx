@@ -40,6 +40,13 @@ const chevrons = (stages: number) => (stages > 0 ? '▲' : '▼').repeat(Math.ab
 
 const PATHS = {
   figure: <path d="M12 2.4a4.7 4.7 0 1 1 0 9.4 4.7 4.7 0 0 1 0-9.4ZM3 22c.6-5.5 4.2-8.7 9-8.7s8.4 3.2 9 8.7Z" />,
+  // The caster: the same figure, a touch lower, under a halo — "you" by shape, not by colour.
+  self: (
+    <>
+      <path d="M12 6a4.2 4.2 0 1 1 0 8.4A4.2 4.2 0 0 1 12 6ZM3.6 23c.6-4.9 4-7.8 8.4-7.8s7.8 2.9 8.4 7.8Z" />
+      <ellipse cx="12" cy="2.6" rx="5.2" ry="1.7" fill="none" stroke="currentColor" strokeWidth="1.9" />
+    </>
+  ),
   die: (
     <path
       fillRule="evenodd"
@@ -163,14 +170,14 @@ type Side = 'foe' | 'ally' | 'self';
 function Figures({ side, count, random, small }: { side: Side; count: 1 | 2; random?: boolean; small?: boolean }) {
   return (
     <span className={`target-figures is-${side}${count === 2 ? ' is-pair' : ''}${small ? ' is-small' : ''}`}>
-      <Glyph name="figure" />
+      <Glyph name={side === 'self' ? 'self' : 'figure'} />
       {count === 2 && <Glyph name="figure" />}
       {random && <span className="target-figures-random">?</span>}
     </span>
   );
 }
 
-/** Who a move reaches, as figures: one or two, red for foes, blue for your side, gold for the caster. */
+/** Who a move reaches, as figures: one or two, orange for foes, blue for your side, the caster haloed. */
 export function TargetFigures({ target, small }: { target: TargetMode; small?: boolean }) {
   const label = TARGET_MODE_LABELS[target];
   const body = ((): ReactNode => {

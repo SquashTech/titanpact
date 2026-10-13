@@ -3335,8 +3335,12 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
   hits both draws one brighter bar under the pair, so the "Spread" chip is gone. A downed foe's
   seat stays empty, so the other arrow never slides under the wrong enemy. Neutral is a dim dot.
   Every other move ends in **figures** (revised the same day, per user direction, replacing a
-  2×2 board that read as noise): one head-and-shoulders figure or two, red for foes
-  (`--target-foe`), blue for your side (`--target-ally`), gold for the caster, a ? for random.
+  2×2 board that read as noise): one head-and-shoulders figure or two, orange for foes
+  (`--target-foe`), blue for your side (`--target-ally`), a ? for random. Orange and blue because
+  the figures have no shape cue for side, and that pair survives every common colour blindness;
+  the caster is a blue figure under a halo, "you" by shape rather than by a third colour. The
+  matchup arrows and the HP bar keep green and red: direction and doubling carry the arrows, length
+  carries the bar, so colour there only reinforces.
 - **Riders are glyphs**: a status in its own icon and colour, a stat stage as the stat's glyph and
   its chevrons, priority as the Speed glyph and its sign. A rider landing somewhere other than the
   move's target carries small figures. **Every other clause is a glyph too** (same day, per user
