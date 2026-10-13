@@ -280,7 +280,8 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster, opt
     parts.push(`Hits ${TARGET_MODE_LABELS[move.conditionalTarget.target].toLowerCase()} while ${field} is up`);
   }
 
-  if (move.randomBasePower) {
+  // Condensed rows print the range in the stub.
+  if (move.randomBasePower && !condensed) {
     parts.push(`Base Power rolls ${move.randomBasePower.min}-${move.randomBasePower.max} each round`);
   }
 
