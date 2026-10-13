@@ -39168,10 +39168,14 @@ img.smithy-service-art {
   margin-right: 0;
 }
 
+/* No padding-right here: a hover or press must not undo the stub's reserved room (.has-stub),
+   or the strip slides under the stub the moment a row is touched. */
 .move-list .move-button,
 .move-list .move-button:hover:not(.is-unusable),
 .move-list .move-button:not(.is-unusable):active {
-  padding: 0 8px 0 10px;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 10px;
   border: 8px solid transparent;
   border-image: url('../../art/ui/slot.png') 4 / 8px round;
   background-clip: padding-box;
@@ -39180,6 +39184,7 @@ img.smithy-service-art {
 }
 
 .move-list .move-button {
+  padding-right: 8px;
   background:
     linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.26), rgba(var(--move-type-rgb, 53, 59, 74), 0.06) 32%, transparent 62%),
     #111319;
@@ -40149,7 +40154,10 @@ img.smithy-service-art {
 .move-list .move-button:not(.is-unusable):active {
   border-width: 4px;
   border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
-  padding: 0 8px 0 10px;
+  /* No padding-right: it would undo the stub's reserved room on hover and press (.has-stub). */
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 10px;
 }
 
 .move-list .move-button.selected,
