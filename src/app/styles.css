@@ -33,9 +33,11 @@
   /* The stacked matchup tiers: ×4 a brighter green, ×0.25 a red that recedes. */
   --eff-quad-super: #7dffa0;
   --eff-quad-resist: #a8474b;
-  /* Who a move reaches: orange for a foe, blue for your side — the pair that survives every common colour blindness. */
-  --target-foe: #f08a3c;
+  /* Who a move reaches: red for a foe, blue for your side, white for the caster. Every pair stays
+     apart under each common colour blindness (docs/visual-language.md "Move row: stub and strip"). */
+  --target-foe: #e8554a;
   --target-ally: #5aa8f2;
+  --target-self: #f4f6fa;
   --mana: #4a90d9;
   /* Mana held ABOVE the pool (docs/mana.md "Overflow", Arcane's manaGrant).
      A brighter, cooler relative of --mana rather than a fourth unrelated hue:
@@ -8030,7 +8032,7 @@ textarea,
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Who a non-attack reaches: one figure or two, orange for foes, blue for your side, gold for the caster. */
+/* Who a non-attack reaches: one figure or two, red for foes, blue for your side, white for the caster. */
 .target-mark {
   display: inline-flex;
   align-items: center;
@@ -8057,7 +8059,7 @@ textarea,
 
 .target-figures.is-foe { color: var(--target-foe); }
 .target-figures.is-ally { color: var(--target-ally); }
-.target-figures.is-self { color: var(--accent); }
+.target-figures.is-self { color: var(--target-self); }
 
 .target-figures.is-small .strip-glyph {
   width: 10px;
