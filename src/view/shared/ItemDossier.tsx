@@ -10,7 +10,8 @@ import { STAT_LABELS } from './StatBars';
 import { StatGlyph } from './statIcons';
 import { ElementGlyph } from './elementIcons';
 import { EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS, enchantTypeOf, fmtGrant } from './EquipmentBox';
-import { PassiveGlyph, PassiveStatChips, passiveColor, passiveEffectSummary } from './passiveIcons';
+import { PassiveGlyph, PassiveStatChips, passiveColor } from './passiveIcons';
+import { statusGrantText } from './statusFacts';
 import { ResourceGlyph } from './RunGlyph';
 import { getTypeColor } from '../combat/typeColors';
 import { overlayHost } from './overlayHost';
@@ -87,7 +88,6 @@ export function ItemDetailCard({ item }: { item: EquipmentDefinition }) {
         <div className="move-detail-effects item-detail-effects">
           {grantedPassives.map((def) => {
             const color = passiveColor(def.id);
-            const summary = passiveEffectSummary(def);
             return (
               <div key={def.id} className="move-detail-effect-row item-detail-passive" style={{ color } as CSSProperties}>
                 <span className="move-detail-effect-glyph">
@@ -97,7 +97,6 @@ export function ItemDetailCard({ item }: { item: EquipmentDefinition }) {
                   {def.name}
                   <span className="move-detail-effect-note"><PassiveText passive={def} /></span>
                   <PassiveStatChips def={def} />
-                  {summary && <span className="move-detail-effect-note item-detail-passive-meta">{summary}</span>}
                 </span>
               </div>
             );
@@ -109,7 +108,7 @@ export function ItemDetailCard({ item }: { item: EquipmentDefinition }) {
                 <span className="move-detail-effect-glyph">{def.forceType ? <ElementGlyph type={def.forceType} /> : null}</span>
                 <span className="move-detail-effect-text">
                   {def.name} +{magnitude}
-                  <span className="move-detail-effect-note">{def.description}</span>
+                  <span className="move-detail-effect-note">{statusGrantText(def, magnitude)}</span>
                 </span>
               </div>
             );

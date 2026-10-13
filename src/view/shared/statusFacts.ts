@@ -30,6 +30,16 @@ export interface StatusFact {
   text: string;
 }
 
+/** What an item's granted Force-style status adds, at its own magnitude: `+10 Base Power on every Fire move`. */
+export function statusGrantText(def: StatusDefinition, magnitude: number | undefined): string {
+  const n = magnitude != null ? `+${magnitude} ` : '';
+  if (def.forceType) return `${n}Base Power on every ${def.forceType} move`;
+  if (def.forceTag) return `${n}Base Power on every ${moveTagLabel(def.forceTag)}`;
+  if (def.forceHeal) return `${n}Heal Power on every heal`;
+  if (def.forceAllTypes) return `${n}Base Power on the next hit`;
+  return def.description ?? '';
+}
+
 /** A move family as the player reads it: a Slice, an Arrow. */
 export function moveTagLabel(tag: MoveTag): string {
   return tag === 'slice' ? 'Slice' : tag === 'arrow' ? 'Arrow' : 'guard';

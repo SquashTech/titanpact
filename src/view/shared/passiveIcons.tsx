@@ -147,18 +147,6 @@ export function passiveStatGrants(def: PassiveDefinition): [StatKey, number][] {
   return [...flat, ...conditional].filter(([, amount]) => amount !== 0);
 }
 
-/**
- * The one line `description` doesn't already carry. Every damage-modifier passive spells its own
- * bonus out in prose, so that case is a CHIP (below) rather than a second sentence saying the same
- * thing; what prose leaves out is that a conditional grant reads the ACTIVE slots only.
- */
-export function passiveEffectSummary(def: PassiveDefinition): string | undefined {
-  const statusId = def.conditionalStatGrants?.requiresEnemyStatus;
-  if (!statusId) return undefined;
-  const name = statuses[statusId]?.name ?? statusId;
-  return `Only an enemy on the field counts — a benched ${name} carrier does nothing.`;
-}
-
 /** Grant chips, in the same `.detail-modifier-chip` vocabulary the hero sheet uses for a stat mod. */
 export function PassiveStatChips({ def }: { def: PassiveDefinition }) {
   const grants = passiveStatGrants(def);
@@ -201,7 +189,6 @@ export function PassiveReadout({
   action?: ReactNode;
 }) {
   const color = passiveColor(passive.id);
-  const summary = passiveEffectSummary(passive);
   return (
     <div className="passive-readout" style={{ '--passive-color': color, '--passive-tint': passiveTint(passive.id, 0.12) } as CSSProperties}>
       <div className="passive-readout-head">
@@ -215,7 +202,6 @@ export function PassiveReadout({
       {source && <div className="passive-readout-source">{source}</div>}
       <div className="passive-readout-desc"><PassiveText passive={passive} /></div>
       <PassiveStatChips def={passive} />
-      {summary && <div className="passive-readout-meta">{summary}</div>}
     </div>
   );
 }

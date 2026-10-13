@@ -155,7 +155,7 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
     // The Bow's. Unconditional because PassiveDamageModifier is evaluated against { moveType }
     // alone — there is no damage-CATEGORY condition, so "bonus with physical moves" is unsayable.
     // 10% is half the typed passives' 20%, which is what buys the loss of the type restriction.
-    description: 'Deals 10% bonus damage.',
+    description: '+10% damage.',
     damageModifier: { amount: 0.1 },
   },
   overchannel: {
@@ -261,7 +261,7 @@ const typeDamagePassives: Record<string, PassiveDefinition> = Object.fromEntries
     {
       id,
       name,
-      description: `Deals ${Math.round(TYPE_DAMAGE_BONUS * 100)}% bonus damage with ${type}-type moves.`,
+      description: `+${Math.round(TYPE_DAMAGE_BONUS * 100)}% damage on ${type} moves.`,
       damageModifier: { eventFieldEquals: { moveType: type }, amount: TYPE_DAMAGE_BONUS },
     } satisfies PassiveDefinition,
   ])

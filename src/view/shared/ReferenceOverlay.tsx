@@ -11,7 +11,8 @@ import { FieldGlyph } from './fieldIcons';
 import { TypeBadge } from './TypeBadge';
 import { StatusGlyph, statusColor, statusTint, statusClearText, pipelineLabel } from './statusIcons';
 import { EquipmentCatalog, HowToPlay, TypeDial } from './referencePages';
-import { PassiveGlyph, passiveColor, passiveTint, passiveEffectSummary, PassiveStatChips } from './passiveIcons';
+import { PassiveGlyph, passiveColor, passiveTint, PassiveStatChips } from './passiveIcons';
+import { PassiveText } from './PassiveText';
 
 interface Props {
   onClose: () => void;
@@ -130,8 +131,6 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
 
 function PassiveReferenceRow({ def }: { def: PassiveDefinition }) {
   const color = passiveColor(def.id);
-  const summary = passiveEffectSummary(def);
-
   return (
     <div className="status-ref-row" style={{ '--plate-color': color } as CSSProperties}>
       {/* `color` too: the glyph is a currentColor path. */}
@@ -144,9 +143,8 @@ function PassiveReferenceRow({ def }: { def: PassiveDefinition }) {
             {def.name}
           </span>
         </div>
-        <div className="status-ref-desc"><IconText text={def.description} /></div>
+        <div className="status-ref-desc"><PassiveText passive={def} /></div>
         <PassiveStatChips def={def} />
-        {summary && <div className="status-ref-meta">{summary}</div>}
       </div>
     </div>
   );

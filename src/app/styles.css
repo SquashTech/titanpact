@@ -12817,13 +12817,6 @@ button.star-shop-bundle-face {
   line-height: 1.45;
 }
 
-.passive-readout-meta {
-  font-size: 10px;
-  font-style: italic;
-  line-height: 1.4;
-  color: var(--text-dim);
-}
-
 .detail-stat-grid {
   display: grid;
   grid-template-columns: 1.4fr 0.8fr 0.8fr 0.8fr;
@@ -33385,10 +33378,6 @@ button.evo-gift-card {
   color: var(--text);
 }
 
-.item-detail-passive-meta {
-  font-style: italic;
-}
-
 /* The reward pick's inspect (EquipInspectOverlay): the same card on the .log-panel chassis, with
    the tier stripe so it still reads as the same thing opening. */
 .equip-inspect-panel {
@@ -42396,8 +42385,7 @@ img.smithy-service-art {
   flex: none;
 }
 
-/* The innate's chips and summary restate its description; on this page the sentence alone is read. */
-.is-showcase-page .passive-readout-meta,
+/* The innate's chips restate its description; on this page the sentence alone is read. */
 .is-showcase-page .passive-readout .detail-modifier-list {
   display: none;
 }

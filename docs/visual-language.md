@@ -3429,3 +3429,9 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   which made a move's "Sets Downpour" draw the same picture as a Water move. It is drawn in the field
   dossier, the Reference, every move row and strip clause that names a field, and at the head of the
   fight's field plaque (reversing the plaque's "no glyph" of 2026-09-24, per user direction).
+- **Items and Banners** (same day, per user direction): an item's passives already wear their
+  trigger keyword, being the same passives. A granted Force reads "**Fire Force +15** · +15 Base Power
+  on every Fire move" in place of the status's whole sentence; the bonus-damage passives read "+20%
+  damage on Fire moves"; the "a benched carrier does nothing" note under a conditional passive is
+  cut. Banners carry no prose to key: the pick is the standard and its stat glyphs. The Reference's
+  passive list now renders through `PassiveText`, which it had missed.

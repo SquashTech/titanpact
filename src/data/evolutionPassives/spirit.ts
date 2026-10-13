@@ -38,7 +38,7 @@ export const spiritPathPassives: Record<string, PassiveDefinition> = {
   oldFire: {
     id: 'oldFire',
     name: 'Old Fire',
-    description: 'Deals 30% bonus damage to a Burning foe.',
+    description: '+30% damage vs Burning foes.',
     damageModifier: { requiresTargetStatuses: ['Burn'], amount: 0.3 },
   },
   // Kitsu's Trickster: the decoy left behind binds the pair, for the partner's Spirit and Mind hits to spread.

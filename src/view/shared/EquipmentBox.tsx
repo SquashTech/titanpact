@@ -14,6 +14,7 @@ import { statuses } from '../../data/statuses';
 import { ElementGlyph } from './elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 import { PassiveText, passivePlainText } from './PassiveText';
+import { statusGrantText } from './statusFacts';
 
 interface EquipmentIconProps {
   item: EquipmentDefinition | null;
@@ -343,7 +344,7 @@ export function EquipmentEffectList({ item }: { item: EquipmentDefinition | null
             <span className="equip-spotlight-passive-name">
               {def.name} +{magnitude}
             </span>
-            <span className="equip-spotlight-passive-desc">{def.description}</span>
+            <span className="equip-spotlight-passive-desc">{statusGrantText(def, magnitude)}</span>
           </div>
         );
       })}
