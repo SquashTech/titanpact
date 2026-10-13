@@ -25190,10 +25190,6 @@ button.evo-gift-card {
     0 18px 40px rgba(0, 0, 0, 0.55);
 }
 
-.move-detail-card > .move-detail-label {
-  padding: 10px 14px 0;
-}
-
 /* The combat row, as a band across the top of the card rather than a box inside it: the same
    gem, name, strip and stub, with the row's own frame, hover and press taken off. */
 .move-detail-card .move-dossier-row {
@@ -25229,6 +25225,26 @@ button.evo-gift-card {
   text-transform: uppercase;
   color: var(--text-dim);
 }
+
+/* A word with the icon the row draws for it. */
+.move-dossier-term {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.move-dossier-term > svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+
+.move-dossier-kind.is-physical > svg { color: var(--physical); }
+.move-dossier-kind.is-magical > svg { color: var(--magical); }
+.move-dossier-kind.is-heal > svg { color: var(--hp-high); }
+.move-dossier-kind.is-buff > svg { color: var(--buff); }
+.move-dossier-kind.is-debuff > svg { color: var(--hp-low); }
 
 /* The learn and offer screens place the card; the card is the one box. */
 .offer-move-highlight:has(> .move-detail-card) {
@@ -25362,13 +25378,17 @@ button.evo-gift-card {
   height: 9px;
 }
 
-/* LevelUpScreen's replace offer names the slot being inspected. */
-.move-detail-label {
-  font-size: 10px;
+/* What the card above it is — "Move learned", "New move" — set as the screen's heading, so the
+   card itself opens on the move. */
+.offer-move-title {
+  margin: 4px 0 2px;
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  text-align: center;
+  color: var(--text);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
 }
 
 .move-detail-head {
@@ -30135,8 +30155,7 @@ button.evo-gift-card {
   font-size: 18px;
 }
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-hero-eyebrow,
-.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-swap-arrow,
-.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-label {
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-swap-arrow {
   font-size: 11px;
 }
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .offer-move-highlight {
@@ -30198,8 +30217,7 @@ button.evo-gift-card {
   font-size: 20px;
 }
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-hero-eyebrow,
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-swap-arrow,
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-label {
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-swap-arrow {
   font-size: 12px;
 }
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .offer-move-highlight {

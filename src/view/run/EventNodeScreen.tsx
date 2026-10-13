@@ -461,12 +461,9 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
               <p className="offer-hero-sub">
                 {rosterHeroes[swappingEntry.heroId].name} already knows {MOVE_CAP} moves — pick one to replace, or go back.
               </p>
+              <h2 className="offer-move-title">Offered by the event</h2>
               <div className="offer-move-highlight" style={{ '--offer-rgb': getTypeColorRgb(offeredMove.type) } as CSSProperties}>
-                <MoveDetailCard
-                  move={offeredMove}
-                  label="Offered by the event"
-                  caster={swappingCaster}
-                />
+                <MoveDetailCard move={offeredMove} caster={swappingCaster} />
               </div>
               <div className="offer-swap-arrow" aria-hidden="true">
                 ↓ replaces one of
@@ -517,7 +514,8 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
           {/* --- learnMove: the offered move --- */}
           {arrived && outcome?.kind === 'learnMove' && offeredMove && (
             <div className="event-offer-move event-reveal-in">
-              <MoveDetailCard move={offeredMove} label="Offered by the event" />
+              <h2 className="offer-move-title">Offered by the event</h2>
+              <MoveDetailCard move={offeredMove} />
             </div>
           )}
 

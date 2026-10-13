@@ -134,8 +134,6 @@ function EffectRow({ glyph, keyword, text, note, color }: { glyph: ReactNode; ke
 
 interface CardProps {
   move: MoveDefinition;
-  /** Optional eyebrow above the name — LevelUpScreen's replace offer says which slot is being inspected. */
-  label?: string;
   context?: MoveDossierContext;
   /** Who is casting, for screens with a hero but no live fight. A `context` supersedes it. Without either, a heal falls back to its authored HealPower. */
   caster?: HealCaster;
@@ -146,7 +144,7 @@ interface CardProps {
 }
 
 /** The move dossier: a live damage band, the priority bracket, and the mana left after casting. */
-export function MoveDetailCard({ move: authored, label, context, caster, terse, free }: CardProps) {
+export function MoveDetailCard({ move: authored, context, caster, terse, free }: CardProps) {
   const attacker = context ? context.combat.combatants[context.attackerId] : undefined;
   const attackerHero = attacker ? allCombatants[attacker.heroId] : undefined;
   // A Class move wears its holder's type (state.ts): the live attacker's, else the caster's.
@@ -292,9 +290,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
 
   return (
     <div className={`move-detail-card${terse ? ' is-terse' : ''}`} style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}>
-      {label && <div className="move-detail-label">{label}</div>}
 
-      {/* The move row, enlarged: cost, type and name on the left, the payoff on the right. */}
       {/* The combat row itself, drawn as a band of the card; everything under it explains it. */}
       <div className="move-button has-stub move-dossier-row">
         <div className="move-row-top">
@@ -320,9 +316,16 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
 
       <div className="move-dossier-body">
       <div className="move-dossier-meta">
-        <span style={{ color: typeColor }}>{move.type}</span>
+        {/* Each word beside the icon the row draws for it, so the row's icons are learned here. */}
+        <span className="move-dossier-term" style={{ color: typeColor }}>
+          <ElementGlyph type={move.type} />
+          {move.type}
+        </span>
         <span className="move-detail-sep">·</span>
-        <span>{move.kind === 'damage' ? PIPELINE_WORDS[move.category] : moveKindLabel(move)}</span>
+        <span className={`move-dossier-term move-dossier-kind is-${kindGlyph}`}>
+          <MoveKindGlyph kind={kindGlyph} />
+          {move.kind === 'damage' ? PIPELINE_WORDS[move.category] : moveKindLabel(move)}
+        </span>
         <span className="move-dossier-target">
           <TargetFigures target={move.target} small />
           <span>{TARGET_MODE_LABELS[move.target]}</span>
