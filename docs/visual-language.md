@@ -3375,8 +3375,9 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
 ## Trigger keywords (2026-10-13)
 
 Per user direction, after a side-by-side page (`docs/mockups/trigger-keywords.html`) chose glyph +
-word over a word alone or a glyph alone. A passive's trigger is a **badge** at the head of its
-sentence: glyph and word, gold, inline so the sentence wraps around it like a word. Eight
+word over a word alone or a glyph alone. A passive's trigger heads its sentence as glyph and
+word in gold, then a colon: plain coloured text, no box (a bordered badge was tried the same day
+and dropped, per user direction, for its spacing against the sentence). Eight
 keywords cover about 290 of the ~450 passive lines: **Enter, Leave, On Hit, Struck, Takedown,
 Round End, Rest, Healed** (`src/data/keywords.ts`).
 

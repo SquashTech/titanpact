@@ -51,11 +51,11 @@ export function PassiveText({ passive }: { passive: PassiveDefinition }) {
   const placed = parts.includes('{trigger}');
   return (
     <>
-      {trigger && !placed && <KeywordBadge keyword={trigger} />}
+      {trigger && !placed && <><KeywordBadge keyword={trigger} /> </>}
       {parts.map((part, i) => {
         if (part === '{trigger}') return trigger ? <KeywordBadge key={i} keyword={trigger} /> : null;
         if (part === '{also}') return also ? <KeywordBadge key={i} keyword={also} /> : null;
-        return part ? <span key={i}>{part.trim()}</span> : null;
+        return part ? <span key={i}>{part}</span> : null;
       })}
     </>
   );
