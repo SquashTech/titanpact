@@ -10,7 +10,7 @@ import { ElementGlyph } from './elementIcons';
 import { fieldEffectIconArt } from './iconArt';
 import { TypeBadge } from './TypeBadge';
 import { StatusGlyph, statusColor, statusTint, statusClearText, pipelineLabel } from './statusIcons';
-import { EquipmentCatalog, TypeDial } from './referencePages';
+import { EquipmentCatalog, HowToPlay, TypeDial } from './referencePages';
 import { PassiveGlyph, passiveColor, passiveTint, passiveEffectSummary, PassiveStatChips } from './passiveIcons';
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
   initialTab?: Tab;
 }
 
-type Tab = 'types' | 'statuses' | 'passives' | 'fields' | 'equipment';
+type Tab = 'howto' | 'types' | 'statuses' | 'passives' | 'fields' | 'equipment';
 
 /** The fields a hero can set. Withering Gaze is the Titan's, met first in the finale, and is kept for it. */
 const REFERENCE_FIELD_EFFECTS = Object.values(fieldEffects).filter((def) => def.id !== 'witheringGaze');
@@ -33,7 +33,7 @@ function formatCell(mult: number): string {
   return mult === 1 ? '–' : `${mult}`;
 }
 
-/** Player-facing rules reference: the type dial over the authored chart, the status, passive, Field Effect and equipment catalogs. */
+/** Player-facing rules reference: How to Play, the type dial over the authored chart, the status, passive, Field Effect and equipment catalogs. */
 export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
@@ -47,6 +47,9 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
           </button>
         </div>
         <div className="reference-tabs">
+          <button className={`reference-tab${tab === 'howto' ? ' reference-tab-active' : ''}`} onClick={() => setTab('howto')}>
+            How to Play
+          </button>
           <button className={`reference-tab${tab === 'types' ? ' reference-tab-active' : ''}`} onClick={() => setTab('types')}>
             Types
           </button>
@@ -63,7 +66,11 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
             Equipment
           </button>
         </div>
-        {tab === 'types' ? (
+        {tab === 'howto' ? (
+          <div className="status-reference-scroll">
+            <HowToPlay />
+          </div>
+        ) : tab === 'types' ? (
           <div className="status-reference-scroll">
             <TypeDial />
             <div className="type-chart-scroll">

@@ -1,6 +1,7 @@
-// The staged pictures tips show (docs/tutorial.md "Scenes"): which heroes, which moves, which
-// part is ringed. Words stay in tips.ts; the view draws these with the fight's own components
-// (src/view/run/TipScene.tsx), so a picture can never disagree with the screen it explains.
+// The staged pictures tips and the How to Play page show (docs/tutorial.md "Scenes"): which
+// heroes, which moves, which part is ringed. Words stay in tips.ts and howToPlay.ts; the view draws
+// them with the fight's own components (src/view/run/TipScene.tsx), so a picture can never disagree
+// with the screen it explains.
 // test/tips.test.ts checks every id here and every multiplier a scene promises.
 
 import type { StatKey } from '../engine/content';
@@ -111,9 +112,42 @@ const ANCIENT_CAST = {
 /** The same three heroes at every counter, so the pages read as one visit. */
 const HALL_ROSTER = ['cinderKnight', 'wildOracle', 'leviathan'] as const;
 
-/** Per tip, per page: the picture above the words, or null for none. */
+/** Cinder over two moves, part-way down the blue bar. */
+const MANA_SCENE: TipScene = { hero: { heroId: 'cinderKnight', mana: 0.6 }, heroFigure: true, moves: ['singe', 'kindle'], focus: ['manaGem', 'mpBar'] };
+
+const MATCHUP_SCENE: TipScene = { ...TYPES_CAST, moves: ['ember'], focus: ['matchups'], expect: { ember: [2, 0.5] } };
+
+const SWITCH_SCENE: TipScene = { hero: { heroId: 'cinderKnight' }, bar: true, focus: ['switch'] };
+
+/** Per tip or How to Play section, per page: the picture above the words, or null for none. */
 export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>> = {
-  shop: [
+  'fight.basics': [null, MANA_SCENE, MATCHUP_SCENE],
+  bench: [null, null, SWITCH_SCENE],
+  'howto.combat': [null, { foes: [{ heroId: 'wildOracle' }], hero: { heroId: 'cinderKnight' }, moves: ['singe'], focus: ['foe', 'move'] }],
+  'howto.mana': [MANA_SCENE, { hero: { heroId: 'cinderKnight', mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],
+  'howto.types': [
+    MATCHUP_SCENE,
+    {
+      hero: { heroId: 'cinderKnight' },
+      heroFigure: true,
+      moves: ['singe', 'rockToss'],
+      tags: { singe: '+25%' },
+      focus: ['typeIcon', 'heroTypes'],
+    },
+  ],
+  'howto.kinds': [
+    { hero: { heroId: 'cinderKnight' }, moves: KINDS_MOVES, focus: ['kindBadge'], focusMoves: ['singe', 'ember'] },
+    { hero: { heroId: 'cinderKnight' }, moves: KINDS_MOVES, focus: ['kindBadge'], focusMoves: ['kindle', 'weaken'] },
+  ],
+  'howto.stages': [{ hero: { heroId: 'cinderKnight', stages: { attack: 2, speed: -1 } }, heroFigure: true, focus: ['stageMarks'] }],
+  'howto.bench': [null, null, SWITCH_SCENE],
+  'howto.bag': [{ hero: { heroId: 'cinderKnight' }, bar: true, focus: ['bag'] }],
+  'howto.field': [{ hero: { heroId: 'cinderKnight' }, field: 'scorchedLand', focus: ['field'] }],
+  'howto.ancient': [
+    { ...ANCIENT_CAST, moves: [], focus: ['foeTypes'] },
+    { ...ANCIENT_CAST, focus: ['matchups'], expect: { siphon: [1], jolt: [0.5] } },
+  ],
+  'howto.guildHall': [
     {
       hall: 'tavern',
       roster: [{ heroId: HALL_ROSTER[0] }, { heroId: HALL_ROSTER[1], wounded: 0.4 }, { heroId: HALL_ROSTER[2] }],
@@ -150,38 +184,4 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
       focus: ['stock', 'heroCards'],
     },
   ],
-  'fight.basics': [
-    null,
-    { hero: { heroId: 'cinderKnight', mana: 0.6 }, heroFigure: true, moves: ['singe', 'kindle'], focus: ['manaGem', 'mpBar'] },
-    { foes: [{ heroId: 'wildOracle' }], hero: { heroId: 'cinderKnight' }, moves: ['singe'], focus: ['foe', 'move'] },
-  ],
-  'fight.stages': [
-    { hero: { heroId: 'cinderKnight', stages: { attack: 2, speed: -1 } }, heroFigure: true, focus: ['stageMarks'] },
-    null,
-    null,
-  ],
-  'fight.switching': [{ hero: { heroId: 'cinderKnight' }, bar: true, focus: ['switch'] }, null, null],
-  'fight.types': [
-    { ...TYPES_CAST, moves: ['ember'], focus: ['matchups'], expect: { ember: [2, 0.5] } },
-    {
-      hero: { heroId: 'cinderKnight' },
-      heroFigure: true,
-      moves: ['singe', 'rockToss'],
-      tags: { singe: '+25%' },
-      focus: ['typeIcon', 'heroTypes'],
-    },
-  ],
-  'fight.attacks': [
-    { hero: { heroId: 'cinderKnight' }, moves: KINDS_MOVES, focus: ['kindBadge'], focusMoves: ['singe', 'ember'] },
-    { hero: { heroId: 'cinderKnight' }, moves: KINDS_MOVES, focus: ['kindBadge'], focusMoves: ['kindle', 'weaken'] },
-  ],
-  'fight.rest': [{ hero: { heroId: 'cinderKnight', mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],
-  'fight.ancient': [
-    { ...ANCIENT_CAST, moves: [], focus: ['foeTypes'] },
-    { ...ANCIENT_CAST, focus: ['matchups'], expect: { siphon: [1], jolt: [0.5] } },
-    null,
-  ],
-  'fight.bag': [{ hero: { heroId: 'cinderKnight' }, bar: true, focus: ['bag'] }],
-  'fight.field': [{ hero: { heroId: 'cinderKnight' }, field: 'scorchedLand', focus: ['field'] }],
 };
-

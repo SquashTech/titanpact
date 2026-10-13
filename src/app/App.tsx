@@ -67,7 +67,7 @@ import { isWarden, recordWardens, wardensFromRun } from '../run/wardens';
 import { FallenScreen } from '../view/run/FallenScreen';
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
-import { WoundsError, anyWounded, buyMend, mendPrice, recordWounds, mendRoster } from '../run/wounds';
+import { WoundsError, buyMend, mendPrice, recordWounds, mendRoster } from '../run/wounds';
 import { entryHp } from '../view/shared/WoundBar';
 import { enemies, finaleEnemies, ENDBRINGER_ID, MANTICORE_ID, titanEyes, EYE_PHASES } from '../data/enemies';
 import { relics } from '../data/relics';
@@ -145,7 +145,6 @@ import { playSfx } from '../audio/sfx';
 import { hasTrack } from '../audio/tracks';
 import { openingSquad } from '../run/squad';
 import {
-  reachableNodeIds,
   advanceToNode,
   advanceToNextAct,
   grantCurrencyReward,
@@ -365,63 +364,9 @@ function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): Eq
 /** The map, behind the level-up gate if anyone can afford one and the player has not banked the pool. */
 
 
-/**
- * The first-time tips the current screen is the first meeting with, in priority order
- * (docs/tutorial.md); `firstUnseenTip` picks the first one the profile has not seen. Every id is
- * one-shot account-wide, so nothing repeats — and a tip whose moment a run never reached simply
- * waits for the run that does.
- *
- * `fight` is deliberately absent — mid-fight tips are FightScreen's, and one here would stack a
- * second card on top of one of them. So are the cinematic beats (the cold open, the Herald, the
- * Titan's fall), which explain themselves.
- */
-function screenTipIds(screen: Screen, run: RunState): readonly ScreenTipId[] {
-  switch (screen.kind) {
-    case 'draft':
-      return ['draft'];
-    case 'pactSeal':
-      // The run's goal, on the seal it names: the opening one, every ring open.
-      return ['run'];
-    case 'map': {
-      // The map tip waits for the first real choice: the act's opener is the only node on offer,
-      // so "choose where to go next" would name a choice that is not there. A map after a fight is
-      // where HP carrying over is first visible; the fork, the first time an Elite or Skirmish is
-      // one step away.
-      const reachable = reachableNodeIds(run);
-      const ids: ScreenTipId[] = reachable.length > 1 ? ['map'] : [];
-      // The opening pair's Blessing, on the first map it can be seen from.
-      if (run.roster.some((entry) => entry.blessed)) ids.unshift('blessing');
-      if (anyWounded(run)) ids.push('wounds');
-      const ahead = reachable.map((id) => run.map?.nodes[id]?.type);
-      if (ahead.includes('elite') || ahead.includes('skirmish')) ids.push('fork');
-      return ids;
-    }
-    case 'itemWho':
-      return ['item'];
-    case 'fallen':
-      return ['fallen'];
-    case 'mentorNode':
-      return []; // the screen's own line says it (2026-09-24, per user direction)
-    case 'forge':
-      return []; // the screen's own line says it (2026-09-24, per user direction)
-    case 'scrolls':
-      // A bought Scroll is the Guild Hall's, whose own tip has already named it.
-      if (screen.bought) return [];
-      // The Scribe or the Cache, whichever comes first, says how Scrolls work.
-      return ['scribe'];
-    case 'shop':
-      return ['shop'];
-    case 'recruit':
-      return ['recruit'];
-    case 'guardianBanner':
-      return ['banner'];
-    case 'academyNode':
-      return ['academy'];
-    case 'locationChoice':
-      return ['locationChoice'];
-    default:
-      return [];
-  }
+/** The first-time tips this screen can raise (docs/tutorial.md). The fight's are FightScreen's. */
+function screenTipIds(screen: Screen): readonly ScreenTipId[] {
+  return screen.kind === 'itemWho' ? ['item'] : [];
 }
 
 export function App() {
@@ -1827,7 +1772,7 @@ export function App() {
       )}
       {(() => {
         if (recruitFanfare) return null;
-        const tip = firstUnseenTip(SCREEN_TIPS, screenTipIds(screen, playerRun), profile.seenTipIds);
+        const tip = firstUnseenTip(SCREEN_TIPS, screenTipIds(screen), profile.seenTipIds);
         if (!tip) return null;
         return <TipOverlay key={tip.id} tip={tip} onDone={() => markTipSeen(tip.id)} />;
       })()}

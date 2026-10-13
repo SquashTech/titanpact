@@ -529,7 +529,7 @@ export function TitleScreen({
       {showRecords && (
         <RecordsScreen profile={profile} onEraseAllData={onEraseAllData} onClose={() => setShowRecords(false)} />
       )}
-      {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
+      {showReference && <ReferenceOverlay initialTab="howto" onClose={() => setShowReference(false)} />}
       {/* Same markup as the map's and FightScreen's Options panel, without the run rows. */}
       {showOptions && (
         <div className="log-overlay" onClick={() => setShowOptions(false)}>

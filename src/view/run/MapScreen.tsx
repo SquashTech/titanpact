@@ -295,7 +295,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
               const hero = rosterHeroes[entry.heroId];
               const { hp, maxHp } = entryHp(hero, entry, run.relics);
               return (
-                <span key={entry.rosterId} className="map-party-chip" aria-label={`${hero.name}: ${hp} of ${maxHp} HP`}>
+                <span key={entry.rosterId} className={`map-party-chip${entry.down ? ' is-down' : ''}`} aria-label={entry.down ? `${hero.name}: down` : `${hero.name}: ${hp} of ${maxHp} HP`}>
                   <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="map-party-portrait" />
                   <WoundBar hp={hp} maxHp={maxHp} />
                 </span>

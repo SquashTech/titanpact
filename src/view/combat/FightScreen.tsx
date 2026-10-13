@@ -75,7 +75,7 @@ import { woundedHp, woundsFrom } from '../../run/wounds';
 import { entryHp } from '../shared/WoundBar';
 import { levelOf } from '../../run/growth';
 import { pickAiAction, type AiContext } from '../../run/ai';
-import { isGathering } from '../../run/cycles';
+import { isGathering, isPermadeath } from '../../run/cycles';
 import { pilotActions } from '../../run/pilot';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
@@ -92,7 +92,7 @@ import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, beatDwellMs, KO_HOLD_MS, type Beat, type BeatRider } from './buildBeats';
 import { openingBeat } from './openingBeats';
-import { AUTO_PLAY_STEP_MS, readAutoPlayMode, writeAutoPlayMode, type AutoPlayMode } from './autoPlay';
+import { AUTO_PLAY_CAST_MS, AUTO_PLAY_STEP_MS, readAutoPlayMode, writeAutoPlayMode, type AutoPlayMode } from './autoPlay';
 import { playBeatSfx } from '../../audio/beatSfx';
 import { setMusicRate } from '../../audio/music';
 import { getTypeColorRgb } from './typeColors';
@@ -829,21 +829,7 @@ export function FightScreen({
     // true again the moment playback ends and a tip would land on top of the victory panel.
     if (winner !== null) return null;
     if (!tips || !canAct || actionStep !== 0 || Object.keys(pending).length > 0) return null;
-    const ctx: FightTipContext = {
-      round: combat.round,
-      nodeType: tips.nodeType,
-      anyOutOfMana: playerActiveAlive.some(
-        (id) => !hasAffordableMoveInFight(combat, id, kitOf(id), moves, allCombatants)
-      ),
-      benchSize: playerBench.length,
-      enemyTypesOnField: enemyActiveAlive.flatMap((id) => {
-        const combatant = combat.combatants[id];
-        return [...(allCombatants[combatant.heroId]?.types ?? []), ...combatant.grantedTypes];
-      }),
-      fieldEffectActive: combat.activeFieldEffect != null,
-      companionIntends,
-      statStaged: [...playerActiveAlive, ...enemyActiveAlive].some((id) => Object.values(combat.combatants[id].statStages ?? {}).some((n) => n !== 0)),
-    };
+    const ctx: FightTipContext = { round: combat.round, nodeType: tips.nodeType };
     return matchFightTip(FIGHT_TIPS, ctx, tips.seenIds);
   })();
 
@@ -1402,7 +1388,8 @@ export function FightScreen({
   function startAutoPlay(mode: Exclude<AutoPlayMode, 'off'>) {
     if (autoPlayTimer.current !== null) clearTimeout(autoPlayTimer.current);
     const shown = shownBeat.current;
-    const wait = AUTO_PLAY_STEP_MS[mode] + (shown ? beatDwellMs(shown, mode === 'fast' ? 0.35 : 1) : 0);
+    const cast = shown?.events.some((e) => e.type === 'MoveUsed') ? AUTO_PLAY_CAST_MS[mode] : 0;
+    const wait = AUTO_PLAY_STEP_MS[mode] + cast + (shown ? beatDwellMs(shown, mode === 'fast' ? 0.35 : 1) : 0);
     const timer = window.setTimeout(() => {
       if (!handleAdvance()) {
         stopAutoAdvance();
@@ -2357,14 +2344,15 @@ export function FightScreen({
           contractReward={contractReward}
           gemReward={gemReward}
           hpAfter={hpAfter}
+          downStays={!isPermadeath(playerRun)}
           mvp={mvp}
           onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables, mvp)}
         />
       )}
 
       {fightTip && tips && <TipOverlay key={fightTip.id} tip={fightTip} onDone={() => tips.onSeen(fightTip.id)} />}
-      {pickingLeads && tips && !tips.seenIds.includes('squad') && (
-        <TipOverlay key="squad" tip={SCREEN_TIPS.squad} onDone={() => tips.onSeen('squad')} />
+      {pickingLeads && tips && !tips.seenIds.includes('bench') && (
+        <TipOverlay key="bench" tip={SCREEN_TIPS.bench} onDone={() => tips.onSeen('bench')} />
       )}
     </>
   );

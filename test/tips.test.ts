@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { FIGHT_TIPS, LORE_LINES, SCREEN_TIPS } from '../src/data/tips';
+import { HOW_TO_PLAY } from '../src/data/howToPlay';
 import {
   firstUnseenTip,
   LORE_TIP_ID,
@@ -25,20 +26,12 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
 
 const allTips: Tip[] = [...Object.values(SCREEN_TIPS), ...FIGHT_TIPS];
+/** Every block of player-facing rules text: the tips, and the How to Play page's sections. */
+const allText: Tip[] = [...allTips, ...HOW_TO_PLAY];
 
 /** A quiet round-1 command phase in an opener — the baseline each case moves one field off. */
 function ctx(overrides: Partial<FightTipContext> = {}): FightTipContext {
-  return {
-    round: 1,
-    nodeType: 'fight',
-    anyOutOfMana: false,
-    benchSize: 0,
-    enemyTypesOnField: [],
-    fieldEffectActive: false,
-    companionIntends: false,
-    statStaged: false,
-    ...overrides,
-  };
+  return { round: 1, nodeType: 'fight', ...overrides };
 }
 
 // --- Content ---
@@ -48,8 +41,8 @@ test('tips: every id App can ask for has a tip, and every screen tip is one App 
   for (const [key, tip] of Object.entries(SCREEN_TIPS)) assert.strictEqual(tip.id, key, `${key} is keyed under its own id`);
 });
 
-test('tips: ids are unique across screen tips, fight tips and the lore card', () => {
-  const ids = [...allTips.map((tip) => tip.id), LORE_TIP_ID];
+test('tips: ids are unique across screen tips, fight tips, How to Play and the lore card', () => {
+  const ids = [...allText.map((tip) => tip.id), LORE_TIP_ID];
   assert.strictEqual(new Set(ids).size, ids.length);
 });
 
@@ -62,13 +55,13 @@ test('tips: brief — at most three pages, each a couple of sentences', () => {
 });
 
 test('tips: informational, not in-universe — no tip speaks as "we"', () => {
-  for (const tip of allTips) {
+  for (const tip of allText) {
     for (const page of tip.pages) assert.ok(!/\b(we|us|our)\b/i.test(page), `${tip.id}: "${page}"`);
   }
 });
 
 test('tips: every inline icon token is one the view can draw', () => {
-  for (const tip of allTips) {
+  for (const tip of allText) {
     for (const page of tip.pages) assert.deepStrictEqual(unknownIconTokens(page), [], `${tip.id}: "${page}"`);
   }
   assert.deepStrictEqual(parseTipText('a [physical] b [nope]'), [{ text: 'a ' }, { icon: 'physical' }, { text: ' b [nope]' }]);
@@ -87,42 +80,15 @@ test('tips: the lore card is the four lines, the last the draft\'s verb', () => 
 // --- Mechanism ---
 
 test('tips: firstUnseenTip walks the candidates in order and skips the seen', () => {
-  assert.strictEqual(firstUnseenTip(SCREEN_TIPS, ['map', 'wounds', 'fork'], [])?.id, 'map');
-  assert.strictEqual(firstUnseenTip(SCREEN_TIPS, ['map', 'wounds', 'fork'], ['map'])?.id, 'wounds');
-  assert.strictEqual(firstUnseenTip(SCREEN_TIPS, ['map', 'wounds', 'fork'], ['map', 'wounds', 'fork']), null);
+  assert.strictEqual(firstUnseenTip(SCREEN_TIPS, ['bench', 'item'], [])?.id, 'bench');
+  assert.strictEqual(firstUnseenTip(SCREEN_TIPS, ['bench', 'item'], ['bench'])?.id, 'item');
+  assert.strictEqual(firstUnseenTip(SCREEN_TIPS, ['bench', 'item'], ['bench', 'item']), null);
   assert.strictEqual(firstUnseenTip(SCREEN_TIPS, ['noSuchTip'], []), null, 'an id with no content is skipped, not thrown on');
 });
 
-test('tips: the first command phase of the first fight is the basics, whatever else holds', () => {
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ anyOutOfMana: true, benchSize: 2 }), [])?.id, 'fight.basics');
-});
-
-test('tips: each fight tip waits for its own moment', () => {
-  const seenBasics = ['fight.basics'];
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ statStaged: true }), seenBasics)?.id, 'fight.stages', 'the first raised or lowered stat');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx(), seenBasics), null, 'round 1, nothing new');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ round: 2 }), seenBasics)?.id, 'fight.types');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ round: 2 }), [...seenBasics, 'fight.types'])?.id, 'fight.attacks', 'physical vs magical, the phase after types');
-  const past = ['fight.basics', 'fight.types', 'fight.attacks', 'fight.bag'];
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ round: 4, anyOutOfMana: true }), past)?.id, 'fight.rest');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'boss' }), past)?.id, 'fight.pactClock', 'the first Guardian warns of the clock');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'skirmish' }), seenBasics)?.id, 'fight.skirmish');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'elite' }), seenBasics)?.id, 'fight.skirmish');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ enemyTypesOnField: ['Beast', 'Ancient'] }), past)?.id, 'fight.ancient');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ benchSize: 1 }), past)?.id, 'fight.switching', 'the first fight with a bench');
-  assert.strictEqual(
-    matchFightTip(FIGHT_TIPS, ctx({ nodeType: 'skirmish', benchSize: 1 }), seenBasics)?.id,
-    'fight.skirmish',
-    'the Skirmish card first; switching waits a round'
-  );
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ fieldEffectActive: true }), past)?.id, 'fight.field');
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ companionIntends: true }), seenBasics)?.id, 'fight.companion', 'the first fight with a companion');
-});
-
-test('tips: a seen fight tip never shows again', () => {
-  const seen = FIGHT_TIPS.map((tip) => tip.id);
-  const everything = ctx({ round: 40, nodeType: 'boss', anyOutOfMana: true, benchSize: 3, enemyTypesOnField: ['Ancient'], fieldEffectActive: true, companionIntends: true, statStaged: true });
-  assert.strictEqual(matchFightTip(FIGHT_TIPS, everything, seen), null);
+test('tips: the first command phase of the first fight is the basics, and nothing follows it', () => {
+  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx(), [])?.id, 'fight.basics');
+  assert.strictEqual(matchFightTip(FIGHT_TIPS, ctx({ round: 40, nodeType: 'boss' }), ['fight.basics']), null);
 });
 
 // --- Scenes ---
@@ -133,7 +99,7 @@ const hallPages = allPictures.filter((p) => isHallScene(p.scene)) as { id: strin
 
 test('tips: every scene belongs to a tip page that exists', () => {
   for (const [id, pages] of Object.entries(TIP_SCENES)) {
-    const tip = allTips.find((t) => t.id === id);
+    const tip = allText.find((t) => t.id === id);
     assert.ok(tip, `${id} is a tip`);
     assert.ok(pages.length <= tip.pages.length, `${id}: ${pages.length} scenes for ${tip.pages.length} pages`);
   }
@@ -187,14 +153,14 @@ test('tips: a scene shows the matchups its words promise', () => {
 });
 
 test('tips: the Kinds of Move scene holds one of each kind, and the STAB scene one move on-type and one off', () => {
-  const kinds = TIP_SCENES['fight.attacks'][0] as TipScene;
+  const kinds = TIP_SCENES['howto.kinds'][0] as TipScene;
   const kit = (kinds.moves ?? []).map((id) => moves[id]);
   assert.ok(kit.some((m) => m.kind === 'damage' && m.category === 'physical'), 'a physical move');
   assert.ok(kit.some((m) => m.kind === 'damage' && m.category === 'magical'), 'a magical move');
   const deltas = kit.filter((m) => m.kind === 'buff').flatMap((m) => (m.statDeltas ?? []).map((d) => ({ d, m })));
   assert.ok(deltas.some(({ d, m }) => d.stages > 0 && m.target === 'self'), 'a buff');
   assert.ok(deltas.some(({ d, m }) => d.stages < 0 && m.target === 'singleEnemy'), 'a debuff');
-  const stab = TIP_SCENES['fight.types'][1] as TipScene;
+  const stab = TIP_SCENES['howto.types'][1] as TipScene;
   const types = allCombatants[stab.hero.heroId].types as readonly string[];
   const onType = (stab.moves ?? []).map((id) => types.includes(moves[id].type));
   assert.deepStrictEqual(onType, [true, false]);
@@ -205,10 +171,10 @@ test('tips: the Kinds of Move scene holds one of each kind, and the STAB scene o
 test('tips: seen ids are account-wide, idempotent, resettable, and survive a round trip', () => {
   let profile = createProfile();
   assert.deepStrictEqual(profile.seenTipIds, []);
-  profile = recordTipSeen(recordTipSeen(profile, 'map'), 'map');
+  profile = recordTipSeen(recordTipSeen(profile, 'bench'), 'bench');
   profile = recordTipSeen(profile, LORE_TIP_ID);
-  assert.deepStrictEqual(profile.seenTipIds, ['map', LORE_TIP_ID]);
-  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile))).seenTipIds, ['map', LORE_TIP_ID]);
+  assert.deepStrictEqual(profile.seenTipIds, ['bench', LORE_TIP_ID]);
+  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile))).seenTipIds, ['bench', LORE_TIP_ID]);
   assert.deepStrictEqual(resetTips(profile).seenTipIds, []);
 });
 

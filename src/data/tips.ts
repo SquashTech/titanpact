@@ -29,91 +29,26 @@ function tip(id: string, title: string, ...pages: string[]): Tip {
 }
 
 export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
-  draft: tip('draft', 'Starting Heroes', 'Pick two heroes from the bottom row to start the run. More will join along the way.'),
-  run: tip(
-    'run',
-    'The Journey',
-    "Defeat the four Guardians to lock the four rings of the Titan's Seal.",
-    'If all your heroes fall, the journey is over.'
-  ),
-  map: tip(
-    'map',
-    'The Map',
-    'Tap one of the options ahead. Hold a node to see what happens there.',
-    'The track across the top shows the way to the Guardian.'
-  ),
-  blessing: tip(
-    'blessing',
-    'Blessings',
-    'Your two starting heroes are Blessed. A gold star marks a Blessed hero.',
-    'The first time a Blessed hero would be knocked out, the blow is turned aside and the Blessing is used up. Until then, it lasts from fight to fight.'
-  ),
-  wounds: tip(
-    'wounds',
-    'Wounds',
-    'HP carries over from fight to fight within an act. Mana refills between fights.',
-    'A knocked-out hero cannot battle. They can rise again by healing at a Rest site or Guild Hall, using a Revive, or by making it to the next Act.'
-  ),
-  fork: tip(
-    'fork',
-    'Elite or Skirmish',
-    'The Elite on the left is a level higher, always drops an item, and pays more XP.'
-  ),
-  squad: tip(
-    'squad',
-    'Pick Your Leads',
-    'The enemy sends out its leads first. Tap two heroes to answer them. The rest wait on the bench.',
-    'A green arrow means that hero has the type advantage over the enemy above it. A red arrow means the enemy has it.'
+  bench: tip(
+    'bench',
+    'Your Bench',
+    'The enemy sends out its leads first. Tap two heroes to answer them. The rest wait on the bench, regaining Mana every round.',
+    'A green arrow means that hero has the type advantage over the enemy above it. A red arrow means the enemy has it.',
+    "Switch swaps in a benched hero before anyone moves, using that hero's turn. Once half your side is knocked out, you can't switch anymore."
   ),
   item: tip(
     'item',
     'Items',
-    "Choose which hero gets this item. They will keep it for the whole journey.",
+    'Choose which hero gets this item. They will keep it for the whole journey.',
     'Each hero holds three. Giving a hero a second item of the same kind merges them into a stronger one.',
     'You can sell it for gold if nobody wants it.'
-  ),
-  fallen: tip(
-    'fallen',
-    'Permadeath',
-    'Spend a Revive to keep any fallen heroes. Otherwise, they are gone forever.'
-  ),
-  scribe: tip(
-    'scribe',
-    'Gems',
-    'Tap a hero to set the Gem in it. The stat it raises is theirs for the run.',
-    'Every Gem is also a Mastery pip. At 5, a hero Evolves into a new form. At 10, their innate powers will grow.'
-  ),
-  shop: tip(
-    'shop',
-    'Guild Hall',
-    'The Tavern hires heroes for a Recruit Contract. Its bar sells Contracts, a fresh shelf of faces, and a meal that heals your whole roster.',
-    'The Gem counter sells single Gems. Pick one, then the hero to set it in.',
-    'The Gear counter sells items. Pick one, then the hero to wear it. A second of the same kind merges into a stronger one.'
-  ),
-  recruit: tip(
-    'recruit',
-    'Recruit Contract',
-    'Spend a contract to add a defeated enemy to your roster. It joins at its level, with its moves and its item.',
-    'Your roster holds six. Past that, you must choose a hero to leave the party.'
-  ),
-  banner: tip('banner', 'Banner', 'Choose one Banner. It boosts your whole team for the rest of the run. Banners stack.'),
-  academy: tip(
-    'academy',
-    'Academy',
-    'Classes teach heroes powerful new abilities or moves within their type. Each hero can learn only one.',
-    'Choose a Class first, then a hero to learn it. A dimmed hero below already has a Class.'
-  ),
-  locationChoice: tip(
-    'locationChoice',
-    'Next Act',
-    'Choose where the next act takes place. Each place is home to different types of Titanspawn and Heroes.'
   ),
 };
 
 /**
  * Checked at the top of every command phase; the first unseen one whose conditions all hold is
  * shown. A page may carry a staged picture (src/data/tipScenes.ts) with ONE thing ringed, so the
- * words name that thing — "each enemy's name on a move", never "the number".
+ * words name that thing — "the arrows under a move", never "the number".
  */
 export const FIGHT_TIPS: readonly FightTip[] = [
   {
@@ -123,96 +58,8 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     pages: [
       'Each round, choose a move and a target for both heroes on the field. Then the round plays out in Speed order.',
       'A move costs the Mana in its gem, paid from the blue bar. Everyone regains some each round, and Rest recovers all of it.',
-      'Tap a fighter to read about it. Hold down on a move to read what it does.',
+      'The arrows under a move show how it hits each enemy: up is double, down is half. Tap a fighter to read it, and hold a move to read what it does.',
     ],
-  },
-  {
-    id: 'fight.stages',
-    title: 'Raised and Lowered',
-    when: { statStaged: true },
-    pages: ['An arrow beside a stat means it was raised or lowered in this fight. Arrows stay through a switch.', '[stages]', 'A passive works on its own, and affects each hero at most once a round.'],
-  },
-  {
-    id: 'fight.companion',
-    title: 'Your Companion',
-    when: { companionIntends: true },
-    pages: [
-      'When your companion is about to act, it wears a ! and takes a place in the turn order. Tap it to read the move.',
-      "It acts on its own, once a fight. It costs no Mana, needs no target, and takes no hero's turn.",
-    ],
-  },
-  {
-    id: 'fight.skirmish',
-    title: 'Skirmish',
-    when: { nodeTypes: ['skirmish', 'elite'] },
-    pages: [
-      'Skirmishes are fights against other heroes who would rather seal the pact themselves. If you win, you can use a Contract to recruit one to your party.',
-    ],
-  },
-  {
-    id: 'fight.switching',
-    title: 'Switching',
-    when: { benchHeld: true },
-    pages: [
-      "Switch swaps a hero on the field for one waiting on your bench. The swap happens before anyone moves, and uses that hero's turn.",
-      "Switch out a hero that is hurt, out of Mana, or weak to the enemy's types. Benched heroes regain Mana every round, so it comes back ready.",
-      "Once half your side has been knocked out, you can't switch anymore.",
-    ],
-  },
-  {
-    id: 'fight.types',
-    title: 'Types',
-    when: { minRound: 2 },
-    pages: [
-      "The arrows under a move show how it hits each enemy, in the order they stand. Up is double, down is half; two arrows, four times or a quarter. One bar under both: it hits both.",
-      "The icon before a move's name is its type. A move that shares a type with the hero using it deals 25% more.",
-    ],
-  },
-  {
-    id: 'fight.attacks',
-    title: 'Kinds of Move',
-    when: { minRound: 2 },
-    pages: [
-      '[physical] Physical moves use Attack against Defense. [magical] Magical moves use Intelligence against Wisdom.',
-      "[buff] Buffs raise a stat for the rest of the fight. [debuff] Debuffs lower an enemy's.",
-    ],
-  },
-  {
-    id: 'fight.rest',
-    title: 'Rest',
-    when: { outOfMana: true },
-    pages: ["Out of Mana. Rest skips the hero's turn but refills all of its Mana."],
-  },
-  {
-    id: 'fight.ancient',
-    title: 'Ancient',
-    when: { enemyTypeOnField: 'Ancient' },
-    pages: [
-      'Every Guardian is Ancient. Ancient resists every type: every hit on it is halved.',
-      "A move strong against its other type only breaks even (1×); anything else hits it for half. The arrow under each move shows which.",
-      'Ancient moves are resisted by nothing: every hit lands at full strength on every type.',
-    ],
-  },
-  {
-    id: 'fight.pactClock',
-    title: 'One Last Thing',
-    when: { nodeTypes: ['boss'] },
-    pages: [
-      'Fights cannot last forever. From round 30 the Pact Clock strikes: everyone on the field loses a growing share of max HP every round.',
-      'The side that is ahead still wins. Only a stall loses — so press the Guardian, and end it.',
-    ],
-  },
-  {
-    id: 'fight.bag',
-    title: 'Bag',
-    when: { minRound: 3 },
-    pages: ["The Bag holds your potions. Drinking one doesn't use a turn."],
-  },
-  {
-    id: 'fight.field',
-    title: 'Field Effect',
-    when: { fieldEffectActive: true },
-    pages: ['A Field Effect is up. It changes the rules for everyone until its pips run out. Tap it to read it.'],
   },
 ];
 

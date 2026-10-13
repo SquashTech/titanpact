@@ -8,8 +8,14 @@ const STORAGE_KEY = 'titanpact.autoplay';
 
 /** Pause between auto-advanced beats. `auto` is a reading pace; `fast` is for a player who already knows what a round says. */
 export const AUTO_PLAY_STEP_MS: Record<Exclude<AutoPlayMode, 'off'>, number> = {
-  auto: 500,
+  auto: 550,
   fast: 120,
+};
+
+/** Added to a beat that casts a move: the cast is what a round is about, so it holds longest. */
+export const AUTO_PLAY_CAST_MS: Record<Exclude<AutoPlayMode, 'off'>, number> = {
+  auto: 350,
+  fast: 0,
 };
 
 export function readAutoPlayMode(): AutoPlayMode {

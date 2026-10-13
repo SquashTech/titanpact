@@ -6,7 +6,6 @@
 // it is, once. Which ones have been shown is PROFILE state (`Profile.seenTipIds`), not run state, so
 // a tip read in a run that was wiped is not read again in the next one.
 
-import type { TypeId } from '../engine/content';
 import type { MapNodeType } from './map';
 
 export interface Tip {
@@ -74,31 +73,11 @@ export function unknownIconTokens(text: string): string[] {
  * the list it produces, so the content can be checked against it: an id renamed on one side and not
  * the other is a tip that silently never plays (`test/tips.test.ts`).
  */
-export const SCREEN_TIP_IDS = [
-  'draft',
-  'run',
-  'map',
-  'wounds',
-  'blessing',
-  'fork',
-  'squad',
-  'item',
-  'fallen',
-  'scribe',
-  'shop',
-  'recruit',
-  'banner',
-  'academy',
-  'locationChoice',
-] as const;
+export const SCREEN_TIP_IDS = ['bench', 'item'] as const;
 
 export type ScreenTipId = (typeof SCREEN_TIP_IDS)[number];
 
-/**
- * The first candidate the player has not seen, or null. Candidates are in priority order — a
- * screen can be the first meeting with more than one thing (the map after a fight is both "HP
- * carries over" and, one row on, "Elite or Skirmish"), and each lands on its own visit.
- */
+/** The first candidate the player has not seen, or null. Candidates are in priority order; each lands on its own visit. */
 export function firstUnseenTip(
   tips: Readonly<Record<string, Tip>>,
   candidateIds: readonly string[],
@@ -123,18 +102,6 @@ export interface FightTipCondition {
   minRound?: number;
   /** Only at these map nodes. */
   nodeTypes?: readonly MapNodeType[];
-  /** A player active hero can pay for no move at all — the moment Rest exists for. */
-  outOfMana?: boolean;
-  /** The player has someone on the bench. */
-  benchHeld?: boolean;
-  /** An enemy of this type is standing on the field. */
-  enemyTypeOnField?: TypeId;
-  /** A Field Effect is up. */
-  fieldEffectActive?: boolean;
-  /** The companion acts this round — its ! is up (docs/companion-call.md §12). */
-  companionIntends?: boolean;
-  /** A stat on the field has been raised or lowered, either side (docs/stat-stages.md). */
-  statStaged?: boolean;
 }
 
 export interface FightTip extends Tip {
@@ -145,30 +112,15 @@ export interface FightTip extends Tip {
 export interface FightTipContext {
   round: number;
   nodeType: MapNodeType;
-  anyOutOfMana: boolean;
-  benchSize: number;
-  enemyTypesOnField: readonly TypeId[];
-  fieldEffectActive: boolean;
-  companionIntends: boolean;
-  statStaged: boolean;
 }
 
 function fightTipMatches(when: FightTipCondition, ctx: FightTipContext): boolean {
   if (when.minRound !== undefined && ctx.round < when.minRound) return false;
   if (when.nodeTypes !== undefined && !when.nodeTypes.includes(ctx.nodeType)) return false;
-  if (when.outOfMana !== undefined && ctx.anyOutOfMana !== when.outOfMana) return false;
-  if (when.benchHeld !== undefined && ctx.benchSize > 0 !== when.benchHeld) return false;
-  if (when.enemyTypeOnField !== undefined && !ctx.enemyTypesOnField.includes(when.enemyTypeOnField)) return false;
-  if (when.fieldEffectActive !== undefined && ctx.fieldEffectActive !== when.fieldEffectActive) return false;
-  if (when.companionIntends !== undefined && ctx.companionIntends !== when.companionIntends) return false;
-  if (when.statStaged !== undefined && ctx.statStaged !== when.statStaged) return false;
   return true;
 }
 
-/**
- * The first unseen fight tip whose conditions hold. List order is priority order, so the basics
- * on round 1 win over a standing condition that happens to be true at the same moment.
- */
+/** The first unseen fight tip whose conditions hold. List order is priority order. */
 export function matchFightTip(tips: readonly FightTip[], ctx: FightTipContext, seenIds: readonly string[]): FightTip | null {
   return tips.find((tip) => !seenIds.includes(tip.id) && fightTipMatches(tip.when, ctx)) ?? null;
 }

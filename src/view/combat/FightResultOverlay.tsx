@@ -79,6 +79,8 @@ export interface FightResultProps {
    * outside a run) and no bar is drawn.
    */
   hpAfter?: ReadonlyMap<string, { hp: number; maxHp: number }>;
+  /** A hero knocked out stays down until it is mended (run/wounds.ts); off when a fall is for good, which the Fallen beat says. */
+  downStays?: boolean;
   /** The fight's MVP (run/mvp.ts) and the bonus XP it takes. Null when nobody qualified. */
   mvp?: MvpPick | null;
   onContinue: () => void;
@@ -108,6 +110,7 @@ export function FightResultOverlay({
   contractReward = false,
   gemReward = NO_GEMS,
   hpAfter,
+  downStays = false,
   mvp = null,
   onContinue,
 }: FightResultProps) {
@@ -219,6 +222,9 @@ export function FightResultOverlay({
                 />
               ))}
             </div>
+            {downStays && roster.some((entry) => (hpAfter?.get(entry.rosterId)?.hp ?? 1) <= 0) && (
+              <p className="fight-result-down-note">Knocked-out heroes stay down until a Rest, the Guild Hall, a Revive, or the next act.</p>
+            )}
             <div className="fight-result-captions">
               {/* The number itself, as the bars start: XP is what a fight pays, and the level is what
                   the cube makes of it per hero. */}
@@ -352,7 +358,7 @@ function PartyMember({ entry, index, xp, fielded, filling, landed, hpAfter }: Me
 
   return (
     <div
-      className={`fight-result-hero${fielded ? '' : ' is-reserve'}${capped ? ' is-capped' : ''}${landed || capped ? ' is-done' : ''}`}
+      className={`fight-result-hero${fielded ? '' : ' is-reserve'}${hpAfter && hpAfter.hp <= 0 ? ' is-down' : ''}${capped ? ' is-capped' : ''}${landed || capped ? ' is-done' : ''}`}
       style={
         {
           '--plate-color': getTypeColor(definition.types[0]),

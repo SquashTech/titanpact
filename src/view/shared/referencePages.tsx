@@ -10,8 +10,12 @@ import { TypeBadge } from './TypeBadge';
 import { TypeWheel } from './TypeWheel';
 import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from './EquipmentBox';
 import { ItemDetailOverlay } from './ItemDossier';
+import { HOW_TO_PLAY } from '../../data/howToPlay';
+import { TIP_SCENES } from '../../data/tipScenes';
+import { TipText } from '../run/TipOverlay';
+import { TipPictureView } from '../run/TipScene';
 
-// Reference pages that are more than a table: the type dial and the equipment catalog.
+// Reference pages that are more than a table: How to Play, the type dial and the equipment catalog.
 
 /** The dial's box, px: the reference panel's inner width on the narrowest phone. */
 const CHART_WHEEL = 300;
@@ -150,5 +154,44 @@ export function EquipmentCatalog() {
       ))}
       <ItemDetailOverlay item={inspectItemId ? equipment[inspectItemId] : null} onClose={() => setInspectItemId(null)} />
     </>
+  );
+}
+
+/** The rules in full (src/data/howToPlay.ts): every section a head, one open at a time, pictures over the words they show. */
+export function HowToPlay() {
+  const [openId, setOpenId] = useState<string | null>(null);
+  return (
+    <div className="howto">
+      {HOW_TO_PLAY.map((section) => {
+        const open = section.id === openId;
+        const scenes = TIP_SCENES[section.id] ?? [];
+        return (
+          <section key={section.id} className={`howto-section${open ? ' is-open' : ''}`}>
+            <button type="button" className="howto-head" aria-expanded={open} data-sfx="ui.select" onClick={() => setOpenId(open ? null : section.id)}>
+              {section.title}
+            </button>
+            {open && (
+              <div className="howto-body">
+                {section.pages.map((page, i) => {
+                  const scene = scenes[i];
+                  return (
+                    <div key={i} className="howto-page">
+                      {scene && (
+                        <div className="tip-scene-frame">
+                          <TipPictureView scene={scene} />
+                        </div>
+                      )}
+                      <p className="howto-text">
+                        <TipText text={page} />
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        );
+      })}
+    </div>
   );
 }

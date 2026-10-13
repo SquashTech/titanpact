@@ -21,7 +21,7 @@ const TOKEN_BADGE_CLASS: Record<TipIconToken, string> = {
 };
 
 /** One page, with `[physical]`-style tokens swapped for the glyph they name. */
-function TipText({ text }: { text: string }) {
+export function TipText({ text }: { text: string }) {
   return (
     <>
       {parseTipText(text).map((segment, i) =>

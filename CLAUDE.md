@@ -380,8 +380,8 @@ don't silently override it.
   loadout), `Combatant.statStages`; no caster scaling; stages survive a switch; drawn as pips,
   never a number. Still the stat pipeline: a stage multiplies the stat, which still outputs only
   the ratio. **A passive affects each hero at most once a round** (2026-10-11, per user
-  direction, replacing §6.3's per-card brake and its fight caps): a game rule, explained once in a
-  tip and never printed on a card; a spread reaches each hero once; the five-step limit is the only
+  direction, replacing §6.3's per-card brake and its fight caps): a game rule, learned by watching
+  (2026-10-13, per user direction; How to Play states it) and never printed on a card; a spread reaches each hero once; the five-step limit is the only
   ceiling; a mastered innate moves two steps a firing; no card is exempt (Surging Intellect was, until 2026-10-12). **Every other stat modifier is a flat additive integer, a multiple of 5 or 10** — no
   other % term touches a stat. Loadout grants (equipment, Banners, Evolution, Class) stay exactly
   authored; until `docs/stat-stages.md` §6.3 lands, a passive's delta, a derived grant and MP Regen
@@ -966,9 +966,10 @@ what's still unimplemented:
 - The first run on an account (2026-09-24, per user direction, replacing the scripted
   Valor-narrated Act 1 of 2026-09-05, deleted whole): **an ordinary run, nothing staged** —
   no forced pact, no curated map or fights. It adds information only: a **lore card** (four
-  lines, one a tap, ahead of the first draft) and **first-time tips** — the first time a
-  mechanic appears, a brief, out-of-universe card says what it is, **once per account**
-  (`Profile.seenTipIds`). Tips are video-game information, never a hero speaking and never
+  lines, one a tap, ahead of the first draft) and **three first-time tips**, **once per account**
+  (`Profile.seenTipIds`) — the first fight, the first fight with a bench, the first item
+  (2026-10-13, per user direction, cut from 27: everything else is the screen's job, and the
+  rules in full are the Reference's **How to Play**). Tips are video-game information, never a hero speaking and never
   "we". Content `src/data/tips.ts`, mechanism `src/run/tips.ts`, reset from the Dev menu
   (`docs/tutorial.md`).
 - Field Effects (2026-08-21 sign-off): resolves the former "weather subsystem" open

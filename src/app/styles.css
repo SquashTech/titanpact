@@ -9852,8 +9852,64 @@ textarea,
 }
 
 /* Five tabs: sized to their labels, or "Equipment" is the one that ellipsises. */
+/* Six tabs, two rows of three: one row truncated every label on a phone. */
+.reference-tabs {
+  flex-wrap: wrap;
+}
+
 .reference-tab {
-  flex: 1 1 auto;
+  flex: 1 1 30%;
+}
+
+/* How to Play: a head a section, one open at a time. */
+.howto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.howto-section {
+  border-radius: var(--radius-sm);
+  box-shadow: var(--hairline), var(--elev-1);
+}
+
+.howto-head {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.howto-section.is-open .howto-head {
+  color: #e8c66a;
+}
+
+.howto-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 0 10px;
+}
+
+.howto-text {
+  margin: 0;
+  padding: 0 10px;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.howto-page .tip-scene-frame {
+  margin: 0 0 6px;
+  padding: 8px 0;
+  overflow: hidden;
 }
 
 /* The one rule every row on a tab shares, said once above them (the Fields tab's clock). */
@@ -31719,6 +31775,17 @@ button.evo-gift-card {
   box-shadow: none;
 }
 
+.fight-result-hero.is-down .fight-result-portrait {
+  filter: grayscale(1) brightness(0.5);
+}
+
+.fight-result-down-note {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 10px;
+  color: #ff9b95;
+}
+
 .fight-result-reserve-tag {
   position: absolute;
   top: -2px;
@@ -39867,6 +39934,15 @@ img.smithy-service-art {
 .map-party-chip .wound-bar {
   position: relative;
   width: 40px;
+}
+
+/* Down until mended: the hero stands out of the light. */
+.map-party-chip.is-down::before {
+  opacity: 0;
+}
+
+.map-party-chip.is-down .map-party-portrait {
+  filter: grayscale(1) brightness(0.5) drop-shadow(0 1px 0 rgba(0, 0, 0, 0.8));
 }
 
 .map-party-chip .wound-bar-track {

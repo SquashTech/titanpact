@@ -1,11 +1,15 @@
 # tutorial.md — First-Time Tips
 
 > Module of the Titanpact `/docs` suite. Companion to `lore.md` (whose premise the lore card
-> states in four lines) and `run-loop.md` (whose every beat is a tip's occasion).
+> states in four lines) and `run-loop.md`.
 >
 > Decided 2026-09-24, per user direction, **replacing the scripted first run** of 2026-09-05
 > (Valor-narrated, Valor + Fang forced, a one-node-per-row Act 1 with curated fights, pinned
 > payouts and three locks — turned off 2026-09-10 and now deleted whole).
+>
+> **Cut to three tips 2026-10-13, per user direction** (§3): the number of interruptions was the
+> problem, and most cards explained a screen that already said it. Everything they said moved to
+> the Reference's **How to Play** page (§5), a backstop for the player who goes looking.
 
 ## 1. What it is
 
@@ -15,21 +19,25 @@ branches, the fights are drawn, the payouts roll — exactly as every later run 
 What a first run adds is information, not structure:
 
 - **The lore card** — four lines, one a tap, ahead of the first draft on an account.
-- **First-time tips** — the first time the player meets a mechanic (a screen, a node, a
-  situation inside a fight), a short card says what it is and what to do with it. **Once per
-  account**, never again.
+- **Three first-time tips** — the first fight, the first fight with a bench, the first item.
+  **Once per account**, never again.
+
+Everything else is taught by the screen it happens on: a label, a button that names what it does,
+a quiet mark for a state that lasts, and a line at the moment a state changes. The test for a new
+tip is whether the player cannot make the decision in front of them without it. The audience is
+mostly experienced players, who get the gist fast; the inquisitive minority has How to Play.
 
 **Voice.** Tips are plain game-UI text — *video-gamey information*, brief and to the point. Nobody
 is speaking: no portrait, no name, no "we", no in-world framing (`test/tips.test.ts` fails on
-"we / us / our" in a tip). One or two sentences a page, at most three pages, 180 characters a
-page. The lore card is the one place the game speaks as a legend.
+"we / us / our" in a tip or a How to Play section). One or two sentences a page, at most three
+pages, 180 characters a page. The lore card is the one place the game speaks as a legend.
 
 ## 2. The lore card
 
 ```
 A Titan cannot be killed.
-It can only be put to sleep for 1,000 years.
-Our time is up.
+Sealed, it sleeps for one year.
+The year is up.
 We must seal the pact.
 ```
 
@@ -46,103 +54,59 @@ Content is `src/data/tips.ts`; mechanism is `src/run/tips.ts`; the card is
 `src/view/run/TipOverlay.tsx` (centred, dims without blurring so the thing named stays readable,
 swallows input until dismissed).
 
-### Screen tips
+| Id | Fires on | Says |
+| --- | --- | --- |
+| `fight.basics` (**Combat**) | the first command phase of the first fight | orders and Speed order; the Mana gem, the MP bar and Rest; the matchup arrows under a move, tap a fighter, hold a move |
+| `bench` (**Your Bench**) | the lead pick of the first fight with three or more heroes (FightScreen) | two leads, the rest benched and regaining Mana; the matchup arrows on the pick; Switch costs that hero's turn; no switching once half the side is down |
+| `item` (**Items**) | the first item who-screen (App.tsx `screenTipIds`) | kept for the run; three sockets; a second of a family merges; sell |
 
-App.tsx maps the current screen to candidate ids (`screenTipIds`), in priority order, and shows
-the first the profile has not seen (`firstUnseenTip`). One card at a time; a screen that is the
-first meeting with two things shows the second on its next visit.
+`bench` merges the old `squad` and `fight.switching` cards so the bench is explained once, at the
+decision it governs. Its third page draws the command bar's Switch key, which the lead pick does
+not show.
 
-| Id | Fires on |
+### What replaced the rest (2026-10-13)
+
+| Cut | Now carried by |
 | --- | --- |
-| `draft` | the draft (spotlights the starter rail, `TIP_STAGING` in TipOverlay) |
-| `run` | the act's arrival screen ("The Journey", the card sat low so the place stays in view) |
-| `map` | the map, once there is a choice to make — not at an act's opener, the only node on offer |
-| `blessing` | the first map a Blessed hero can be seen from (ahead of `map`) |
-| `wounds` | the map, once any hero is hurt (HP carries across an act; Mana does not) |
-| `fork` | the map, once an Elite or Skirmish is one step away |
-| `squad` | lead pick — tap two heroes (skipped while the roster is two) |
-| `item` | the item who-screen (sockets, merge, sell) |
-| `fallen` | Permadeath's Fallen beat (Ascension 1) |
-| `scribe` | the first Scribe or Scroll Cache screen, whichever comes first (a bought Scroll gets none — the Guild Hall's tip named it) |
-| `shop` | the Guild Hall |
-| `recruit` | the Recruit Contract claim (roster cap, termination) |
-| `banner` | the Guardian's Banner |
-| `academy` | the first Academy (a Class) |
-| `locationChoice` | the act-2+ location pick |
+| `draft`, `map`, `fork`, `banner`, `academy`, `locationChoice` | the screens: the draft's *Choose N more* confirm, labelled map tiles and their hold-to-read dossier, the pick screens' own layout |
+| `run` | the seal's four rings, and How to Play |
+| `blessing` | the gold star, and the *Blessing breaks* beat when it is spent |
+| `wounds` | the bars on the map's party chips; a downed hero stands out of the light (greyed, no pool of light), and the fight result says *Knocked-out heroes stay down until a Rest, the Guild Hall, a Revive, or the next act* whenever one is down (not in a permadeath Cycle, where the Fallen beat speaks instead) |
+| `fallen` | the Cycle picker's line and the Fallen screen's own words |
+| `scribe` | the Mastery pips, whose 5th and 10th are drawn as milestones |
+| `shop`, `recruit`, `fight.skirmish` | the Guild Hall's labelled counters, the recruit screen's contract pips and *Sign* / *Swap in* buttons, the Skirmish dossier |
+| `fight.types`, `fight.attacks` | the Combat card's third page; the move card on hold |
+| `fight.stages` | the arrows themselves — **the once-a-round passive rule is learned by watching** (2026-10-13, per user direction) |
+| `fight.rest`, `fight.bag`, `fight.field` | the Rest row, the Bag sheet, the field plaque (tap to read) |
+| `fight.companion` | the ! on its figure and its seat on the order track; its sheet on tap |
+| `fight.ancient` | the matchup arrows, which already show ½ and 1× |
+| `fight.pactClock` | the pact warning band and the *pact comes due* beat |
 
-None fires over a fight (FightScreen owns those) or over a cinematic (the cold open, the Herald,
-the Titan's fall), and none over a recruit's fanfare.
+None fires over a cinematic, a recruit's fanfare or any reward screen.
 
-None fires on the level-up report, the equipment cache, a Boon, the Mana Well, a Rest, an Event,
-the Mentor, the Tutor, the Forge, the Ley Line or the companion's join beat (2026-09-24–27, per
-user direction): each screen says what it is, and levelling is a thing players already know.
-
-### Fight tips
-
-Checked at the top of every command phase — never between two orders — against a
-`FightTipContext` FightScreen derives from live state. List order is priority order.
-
-| Id | When |
-| --- | --- |
-| `fight.basics` | the first command phase of the first fight: orders and turn order, the Mana gem on each move and the MP bar, reading fighters and moves |
-| `fight.skirmish` | the first Skirmish or Elite: other heroes who would seal the pact themselves, and a Contract recruits one after a win |
-| `fight.switching` | the first fight with a bench: what Switch does and when to use it, bench Mana, lock-in |
-| `fight.types` | round 2+: the multiplier beside each enemy's name, the type icon and STAB |
-| `fight.attacks` | the next phase, "Kinds of Move": physical vs magical, then buff vs debuff (with the move-kind glyphs inline) |
-| `fight.rest` | a player hero can afford nothing |
-| `fight.ancient` | an Ancient on the field (every Guardian): it resists everything, what breaks even, Ancient moves are never resisted |
-| `fight.pactClock` | "One Last Thing", the first Guardian fight: the Pact Clock from round 30, and that only a stall loses |
-| `fight.bag` | round 3+: potions are a free action |
-| `fight.field` | a Field Effect is up |
-
-The Guardian's own tip and the Locked In tip are gone (2026-09-26, per user direction): the
-Ancient tip is the Guardian's, and lock-in is the Switching tip's last page.
-
-### Scenes (fight tips and the Guild Hall)
+### Scenes
 
 **A fight tip shows a staged picture, never a spotlight on the live board** (2026-10-10, per user
-direction). A live board rarely holds the example a page needs — a 2× and a ½× on the same move,
-a kit with all four kinds of move — so each page that needs one carries a **scene**
-(`src/data/tipScenes.ts`, pure data: which heroes, which moves, what is ringed) drawn by
-`src/view/run/TipScene.tsx` with the fight's OWN components (`CombatantCard`, `MoveButtonReplica`,
-the command bar's classes). It is not a screenshot: it cannot go stale when the fight's UI changes,
-it is crisp at every scale, and the multipliers it shows are computed from the chart.
-`test/tips.test.ts` checks every id a scene names and every multiplier it promises (`expect`), and
-that the Kinds of Move kit holds one of each kind — so a chart or move change that would make a
-picture lie fails the build instead.
+direction). A live board rarely holds the example a page needs — a 2× and a ½× on the same move —
+so a page that needs one carries a **scene** (`src/data/tipScenes.ts`, pure data: which heroes,
+which moves, what is ringed) drawn by `src/view/run/TipScene.tsx` with the fight's OWN components
+(`CombatantCard`, `MoveButtonReplica`, the command bar's classes). It cannot go stale when the
+fight's UI changes, and the multipliers it shows are computed from the chart.
+`test/tips.test.ts` checks every id a scene names and every multiplier it promises (`expect`).
 
 | Tip | Page | Scene |
 | --- | --- | --- |
 | `fight.basics` | 2 | Cinder at 30/50 MP over two moves; the gems and the MP bar ringed |
-| `fight.basics` | 3 | a foe and a move; the fighter and the row ringed |
-| `fight.stages` | 1 | Cinder at Atk ▲▲, Spd ▼; the marks ringed |
-| `fight.switching`, `fight.bag` | 1 | the command bar; Switch / Bag ringed |
-| `fight.types` | 1 | Crimson's Ember against Sylva (2×) and Leviathan (0.5×); the chips ringed |
-| `fight.types` | 2 | Cinder with Singe (Fire, tagged +25%) and Rock Toss; the type icons ringed |
-| `fight.attacks` | 1, 2 | Singe, Ember, Kindle, Weaken; the physical and magical, then buff and debuff, badges ringed |
-| `fight.rest` | 1 | Cinder at 0 MP over the Rest row |
-| `fight.ancient` | 1, 2 | the Dragon (Fire/Ancient); its types, then Siphon 1× and Jolt 0.5× |
-| `fight.field` | 1 | the Scorched Land plaque |
-| `shop` | 1 | the Tavern: two hire posters and the bar (Contract, New Faces, Party Heal) ringed |
-| `shop` | 2 | the Gem counter, +5 Atk picked: two heroes take it, Sylva Evolves |
-| `shop` | 3 | the Gear counter, a Sword picked: Cinder merges it, Sylva takes it, Leviathan is full |
-
-The Guild Hall's pictures are the hall's own panels (`GuildHallPanel`, `GemCounter`,
-`GearCounter` with an `initialPick`) on a made-up visit. The other screen tips keep their
-spotlights (2026-10-10, per user direction: they are quicker and simpler as they are).
-
-A page without a scene is words only. A scene's tip dims the screen behind it fully and sits in the
-middle.
+| `fight.basics` | 3 | Crimson's Ember against Sylva (2×) and Leviathan (0.5×); the arrows ringed |
+| `bench` | 3 | the command bar; Switch ringed |
 
 ### Staging (screen tips)
 
-Every screen tip that names something on screen points at it
-(`src/view/run/tipStaging.ts`, per page; the map's tiles carry `data-node-type` and the Guild
-Hall's tabs `data-tab` so a page can name one of them):
-the named elements are cut out of a darker scrim and ringed, and the card moves to whichever band
-— middle, top, bottom — hides least of them. A selector that matches nothing lights nothing and
-the card sits in the middle. So a page names ONE specific thing ("the number beside each enemy's
-name", "the gem at the left of each move"), never a vague one ("the number on a move").
+A screen tip that names something on screen points at it (`src/view/run/tipStaging.ts`, per
+page): the named elements are cut out of a darker scrim and ringed, and the card moves to
+whichever band hides least of them. A selector that matches nothing lights nothing and the card
+sits in the middle. `bench` lights the lead grid and its arrows; `item` the hero cards, the
+sockets, then Sell.
 
 Fights outside a run (Quick Battle, the sandbox) show none: they pass no `tips` prop.
 
@@ -156,40 +120,50 @@ its old `tutorialDone` is dropped.
 The **Dev menu's Reset Tips** (`resetTips`) clears the list, lore card included, so everything
 shows again on its next occasion.
 
-`RunState` carries nothing. The scripted run's `tutorial` and `tutorialSeenBeatIds` are gone; a
-save still holding them decodes (the fields are ignored), so no `SAVE_VERSION` bump.
+`RunState` carries nothing.
 
-## 5. Adding a tip
+## 5. How to Play
+
+The Reference's first tab (`src/view/shared/ReferenceOverlay.tsx`, the page `HowToPlay` in
+`referencePages.tsx`), opened from the title's Reference glyph on that tab, and from the map and
+the fight's Options on Types as before. Content is `src/data/howToPlay.ts`: one `Tip`-shaped
+section a mechanic (`howto.*` ids), a paragraph a page, the same voice and inline tokens as the
+tips. Sections are heads, one open at a time; a section's pictures are its `TIP_SCENES` entry, so
+every scene the cut tips drew lives on here, still checked by the test.
+
+It is as comprehensive as it likes to be — the rules the tips used to carry, plus what no tip
+ever said (levels, Cycles). Nothing raises it; a player has to go and open it, which is the point.
+
+## 6. Adding a tip
+
+Don't, unless §1's test holds: the player cannot make the decision in front of them without it.
+A rule worth knowing but not needed at a decision is a How to Play section.
 
 1. Write it in `src/data/tips.ts` — a screen tip under `SCREEN_TIPS`, a fight tip in
-   `FIGHT_TIPS` at the priority it deserves. A fight tip's picture goes in `TIP_SCENES`
-   (`src/data/tipScenes.ts`); a screen tip's spotlight in `TIP_STAGING`.
+   `FIGHT_TIPS` at the priority it deserves. A picture goes in `TIP_SCENES`; a screen tip's
+   spotlight in `TIP_STAGING`.
 2. A screen tip's id goes in `SCREEN_TIP_IDS` (`src/run/tips.ts`) and in `screenTipIds`
    (App.tsx); the test fails if content and list disagree. A fight tip needing a new signal adds
    a field to `FightTipCondition` and `FightTipContext` and derives it in FightScreen.
 3. Check the rule it states against the code — a tip that is wrong is worse than none.
 
-## 6. What was deleted, and why
+## 7. What was deleted, and why
 
 The scripted run taught through staging: forced starters, a curated corridor, curated
 encounters propped up with flat stat grants so a fight would survive its own dialogue, pinned
 gold so Valor's shopping advice held, a forced Recruit (Flurry, the physical/magical lesson) and a
-forced field slot. Every one of those drifted each time a system moved underneath it (the Forge,
-the Scribe, the third reward row, the Titanspawn rewrite) and the script was off from 2026-09-10
-because of it. Tips key on **mechanics**, not on a staged act, so a system that moves changes one
-card's text rather than a corridor.
+forced field slot. Every one of those drifted each time a system moved underneath it and the
+script was off from 2026-09-10 because of it. Tips key on **mechanics**, not on a staged act.
 
-Gone with it: `src/run/tutorial.ts`, `src/data/tutorial.ts`, `TutorialOverlay` and every scripted
-lever on the screens; `generateEncounter`'s `forcedHeroIds` and `statGrants` stay as test levers.
+The 27-card tip set of 2026-09-24 – 10-12 (fifteen screen tips, twelve fight tips) went the other
+way: a card on nearly every first meeting, which stacked into a wall of interruptions across the
+first run. Cut to three on 2026-10-13 (§3).
 
-## 7. Open questions
+## 8. Open questions
 
-- **A first run is the real Act 1.** The curated act guaranteed a survivable opener; now a new
-  player meets the same Act 1 wall a veteran does (measured 58–68% cleared under the sim's
-  pilots). Whether that needs a first-run softening is for playtest.
-- **Clusters.** The first won fight can raise three cards in a row (item, then the map's
-  choice and wounds). Each is short; if it reads as a wall, the lower-priority one can wait
-  for the next occasion.
-- **An opt-out.** There is no player-facing "turn tips off" setting yet — only the Dev reset.
-- **Veterans** on an existing profile see every tip once. Deliberate for playtest; a veteran
-  heuristic (skip on a profile with a clear) is a one-line change in `decodeProfile` if wanted.
+- **A first run is the real Act 1.** A new player meets the same Act 1 wall a veteran does
+  (measured 58–68% cleared under the sim's pilots). Whether that needs a first-run softening is
+  for playtest.
+- **Hold-to-read** is the one hidden gesture left, taught only by the Combat card's last page.
+  If players miss the map's dossier, map tiles could open it on tap instead.
+- **Veterans** on an existing profile see the three tips once (`bench` is a new id). Deliberate.
