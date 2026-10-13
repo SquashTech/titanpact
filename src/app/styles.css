@@ -18249,6 +18249,65 @@ button.star-shop-bundle-face {
   background: none;
 }
 
+/* The card's head: the node's name large in its colour, its lore under it, its art big and
+   unframed on the right. */
+.node-dossier-hero {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 12px;
+}
+
+.node-dossier-art {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 118px;
+  height: 118px;
+  margin: -6px -6px -6px 0;
+  color: var(--node-color);
+}
+
+.node-dossier-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--node-color) 55%, transparent)) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.7));
+}
+
+.node-dossier-art svg {
+  width: 60%;
+  height: 60%;
+}
+
+.node-dossier-heading {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.node-dossier-title {
+  font-size: 27px;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--node-color) 55%, white);
+}
+
+.node-dossier-panel .node-dossier-about {
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.node-dossier-panel .node-dossier-fact-value strong {
+  font-size: 19px;
+}
+
 /* --- The route, and walking it (2026-09-08, per user direction) -------------
    Losing the whole-act graph cost the map the one thing a graph gives away for free: the sense of
    MOVING along it. This is what gives that back, and it gives it back as an event rather than as a

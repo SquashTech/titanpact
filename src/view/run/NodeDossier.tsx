@@ -2,7 +2,10 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MapNode } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
-import { NODE_COLORS } from './mapNodes';
+import type { MapNodeType } from '../../run/map';
+import { NODE_COLORS, NODE_LABELS, NODE_NAMES } from './mapNodes';
+import { mapNodeArt, mapNodeIcon } from './mapNodeArt';
+import { landmarkStillArt } from './mapLandmarks';
 import { nodeDossier, type NodeFactGlyph } from './nodeFacts';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { ResourceGlyph } from '../shared/RunGlyph';
@@ -69,16 +72,27 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
 }
 
 /**
- * The map's preview card (MapRoute): a line of lore, then what the node pays as figures, never as
- * a sentence. The roster's side of it is the footer's chips (nodeLens.tsx).
+ * The map's preview card (MapRoute): the node's name large in its colour with its art beside it,
+ * a line of lore, then what the node pays as figures, never as a sentence. The roster's side of it is the footer's chips (nodeLens.tsx).
  */
+/** A fight is named by what it is to the player (Elite, Skirmish); every other node by its place. */
+const FIGHT_NODES: readonly MapNodeType[] = ['fight', 'battle', 'skirmish', 'elite', 'boss'];
+
 export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
   const dossier = nodeDossier(node.type, run.actNumber, run.cycle);
   const color = NODE_COLORS[node.type];
+  const art = landmarkStillArt(node.type) ?? mapNodeArt(node.type) ?? mapNodeIcon(node.type);
+  const title = FIGHT_NODES.includes(node.type) ? NODE_LABELS[node.type] : NODE_NAMES[node.type];
 
   return (
     <div className="node-dossier-panel" style={{ '--node-color': color } as CSSProperties}>
-      <p className="node-dossier-about">{dossier.about}</p>
+      <div className="node-dossier-hero">
+        <span className="node-dossier-art">{art ? <img src={art} alt="" draggable={false} /> : <NodeGlyph type={node.type} />}</span>
+        <div className="node-dossier-heading">
+          <div className="node-dossier-title">{title}</div>
+          <p className="node-dossier-about">{dossier.about}</p>
+        </div>
+      </div>
 
       <div className="node-dossier-facts">
         {dossier.facts.filter((fact) => fact.value !== null).map((fact) => (
