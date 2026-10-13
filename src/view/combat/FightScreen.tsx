@@ -97,6 +97,7 @@ import { playBeatSfx } from '../../audio/beatSfx';
 import { setMusicRate } from '../../audio/music';
 import { getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
+import { FieldGlyph } from '../shared/fieldIcons';
 import { MoveButtonReplica, TARGET_MODE_LABELS, healReadout, riderMagnitude, useLongPress } from '../shared/MoveTile';
 import { MoveName, MoveStrip, MoveStub } from '../shared/MoveStrip';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
@@ -1614,13 +1615,14 @@ export function FightScreen({
 
         {/* The field, at the foot of the arena (2026-09-24): the horizon carries the Pact warning and the order's words. */}
         {combat.activeFieldEffect && (
-          /* Keyed by effect id so an override remounts and replays the arrival. No glyph: the plaque keeps the horizon's small type register. */
+          /* Keyed by effect id so an override remounts and replays the arrival. */
           <span
             key={combat.activeFieldEffect.fieldEffectId}
             className="field-effect-badge"
             title={`${fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description ?? ''} — tap for details`}
             {...fieldEffectPress}
           >
+            <FieldGlyph fieldEffectId={combat.activeFieldEffect.fieldEffectId} className="field-effect-glyph" />
             <span className="field-effect-name">
               {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId}
             </span>

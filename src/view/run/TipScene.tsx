@@ -20,6 +20,7 @@ import { getTypeColorRgb } from '../combat/typeColors';
 import { MoveButtonReplica } from '../shared/MoveTile';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { Coin } from '../shared/Coin';
+import { FieldGlyph } from '../shared/fieldIcons';
 
 /** A scene's fighters are full-strength level-5 heroes unless the scene says otherwise. */
 const SCENE_LEVEL = 5;
@@ -138,6 +139,7 @@ export function TipScene({ scene }: { scene: Scene }) {
           className="field-effect-badge"
           style={{ '--field-effect-rgb': getTypeColorRgb(fieldEffects[scene.field].flavorType ?? 'Arcane') } as CSSProperties}
         >
+          <FieldGlyph fieldEffectId={scene.field} className="field-effect-glyph" />
           <span className="field-effect-name">{fieldEffects[scene.field].name}</span>
           <span className="field-effect-pips">
             {Array.from({ length: FIELD_EFFECT_DURATION_ROUNDS }, (_, i) => (

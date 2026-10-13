@@ -3427,4 +3427,5 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   flames, a rain cloud, a half-risen sun, sprouts, a moon, coursed stone, an eye. It replaced five
   pack PNGs that were all the same green cycle arrows and a type-glyph fallback for the other four,
   which made a move's "Sets Downpour" draw the same picture as a Water move. It is drawn in the field
-  dossier, the Reference, and every move row and strip clause that names a field.
+  dossier, the Reference, every move row and strip clause that names a field, and at the head of the
+  fight's field plaque (reversing the plaque's "no glyph" of 2026-09-24, per user direction).

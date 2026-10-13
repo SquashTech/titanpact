@@ -1020,6 +1020,13 @@ textarea,
   animation: field-effect-plaque-arrive 0.45s var(--ease-spring) both;
 }
 
+.field-effect-glyph {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+}
+
 .field-effect-name {
   min-width: 0;
   font-size: 9px;
