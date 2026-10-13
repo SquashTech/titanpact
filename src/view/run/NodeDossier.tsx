@@ -81,7 +81,8 @@ const FIGHT_NODES: readonly MapNodeType[] = ['fight', 'battle', 'skirmish', 'eli
 export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
   const dossier = nodeDossier(node.type, run.actNumber, run.cycle);
   const color = NODE_COLORS[node.type];
-  const art = landmarkStillArt(node.type) ?? mapNodeArt(node.type) ?? mapNodeIcon(node.type);
+  // The tile's own picture, in the order the tile picks it (MapRoute), so the card is the tile opened up.
+  const art = landmarkStillArt(node.type) ?? mapNodeIcon(node.type) ?? mapNodeArt(node.type);
   const title = FIGHT_NODES.includes(node.type) ? NODE_LABELS[node.type] : NODE_NAMES[node.type];
 
   return (
