@@ -112,7 +112,7 @@ test('passives: matchesTrigger also requires every eventFieldEquals key to match
 
 // --- Sanguine: reactive, off an enemy's Bleed tick ---
 
-test('passives: Sanguine heals its owner by the enemy Bleed tick amount', () => {
+test('passives: Sanguine heals its owner by twice the enemy Bleed tick', () => {
   const state = twoVTwoFixture(300);
   const hurt = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentHp: 10 } } };
   const withGrant = withPassive(hurt, 'a1', 'sanguine');
@@ -123,9 +123,9 @@ test('passives: Sanguine heals its owner by the enemy Bleed tick amount', () => 
 
   const { state: next, events } = resolveRound(bleeding, [], config);
 
-  assert.strictEqual(next.combatants.a1.currentHp, 10 + expectedTick);
+  assert.strictEqual(next.combatants.a1.currentHp, 10 + expectedTick * 2);
   assert.strictEqual(next.combatants.b1.currentHp, maxHp - expectedTick);
-  assert.ok(events.some((e) => e.type === 'HpChanged' && e.combatantId === 'a1' && e.newHp === 10 + expectedTick));
+  assert.ok(events.some((e) => e.type === 'HpChanged' && e.combatantId === 'a1' && e.newHp === 10 + expectedTick * 2));
 });
 
 test('passives: Sanguine does not fire off an ally taking Bleed damage', () => {
@@ -138,7 +138,7 @@ test('passives: Sanguine does not fire off an ally taking Bleed damage', () => {
   assert.strictEqual(next.combatants.a1.currentHp, 10); // untouched
 });
 
-test('passives: two stacks of Sanguine heal twice per enemy Bleed tick', () => {
+test('passives: two stacks of Sanguine heal twice over per enemy Bleed tick', () => {
   const state = twoVTwoFixture(302);
   const hurt = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentHp: 10 } } };
   const withGrant = withPassive(hurt, 'a1', 'sanguine', 2);
@@ -148,7 +148,7 @@ test('passives: two stacks of Sanguine heal twice per enemy Bleed tick', () => {
   const expectedTick = Math.ceil(maxHp * 0.06);
 
   const { state: next } = resolveRound(bleeding, [], config);
-  assert.strictEqual(next.combatants.a1.currentHp, 10 + expectedTick * 2);
+  assert.strictEqual(next.combatants.a1.currentHp, 10 + expectedTick * 4);
 });
 
 // --- Reactions fire from the field only, and only when they do something ---
@@ -1184,15 +1184,15 @@ test("passives: Widow's Kiss reads a Bleed IT applied and Poisons the same targe
   assert.strictEqual(next.combatants.b1.statuses.Poison?.magnitude, 10);
 });
 
-test('passives: Constrict pays a STAT to the hero its magical hit landed on, and reads the category', () => {
+test('passives: Constrict takes WIS off the hero its magical hit landed on, and reads the category', () => {
   const magical = withPassive(deepFixture(802, ['coil', 'aegis'], ['crag', 'sentinel']), 'a1', 'constrict');
   const { state: slowed } = resolveRound(
     magical,
     [{ kind: 'move', combatantId: 'a1', moveId: 'psiBolt', declaredTarget: 'b1' } as Action],
     config
   );
-  assert.strictEqual(slowed.combatants.b1.statStages?.speed, -1);
-  assert.strictEqual(slowed.combatants.b2.statStages?.speed ?? 0, 0);
+  assert.strictEqual(slowed.combatants.b1.statStages?.wisdom, -1);
+  assert.strictEqual(slowed.combatants.b2.statStages?.wisdom ?? 0, 0);
 
   const physical = withPassive(deepFixture(803, ['coil', 'aegis'], ['crag', 'sentinel']), 'a1', 'constrict');
   const { state: untouched } = resolveRound(
@@ -1200,7 +1200,7 @@ test('passives: Constrict pays a STAT to the hero its magical hit landed on, and
     [{ kind: 'move', combatantId: 'a1', moveId: 'rally' } as Action],
     config
   );
-  assert.strictEqual(untouched.combatants.b1.statModifiers.speed ?? 0, 0, 'a non-damaging Beast buff plants nothing');
+  assert.strictEqual(untouched.combatants.b1.statStages?.wisdom ?? 0, 0, 'a non-damaging Beast buff plants nothing');
 });
 
 test('passives: Sentry Provokes Warden on arrival, and the redirect covers the round it arrived in', () => {

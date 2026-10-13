@@ -204,6 +204,12 @@ function triggerFact(def: NonNullable<PassiveDefinition['reactive']>): PassiveFa
       };
     case 'ManaGained':
       return { label: 'When', text: `${who} gains Mana — regen, a grant or a Rest`, glyph: { kind: 'stat', stat: 'manaPool' } };
+    case 'HpChanged':
+      return {
+        label: 'When',
+        text: condition.crossesHpBelow !== undefined ? `${who} drops below ${condition.crossesHpBelow === 0.5 ? 'half' : `${Math.round(condition.crossesHpBelow * 100)}% of`} its HP` : `${whose} HP changes`,
+        glyph: { kind: 'stat', stat: 'hp' },
+      };
     case 'ManaGranted':
       return { label: 'When', text: `${who} gains Mana from a move or a passive`, glyph: { kind: 'stat', stat: 'manaPool' } };
     case 'MoveUsed':

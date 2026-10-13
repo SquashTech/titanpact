@@ -592,3 +592,22 @@ Grafts: Water, Fire and Stone twice; spread so each appears once (Iron unused �
 gives the partner Shield 15 (Steam Curtain read Boiler's Burns; deleted). **Bellows Ghost Ship**
 (Bulkhead): Spirit (Stone), Soul Offering (Bodyguard), Blast Door kept. **Bellows Smokestack**
 (Overpressure): Shadow (Fire), rewire kept, Umbral Wave (Firestorm), Blowoff Valve kept.
+
+## Beast, second pass (2026-10-12, per user direction) — the last type
+
+Measured (sim, base deck): **Fang 190.4 DPR (3rd of 47), ratio 3.56 — the highest measured**; Ursa 177.1
+(path spread ±0.05, the tightest); Coil 124.8 (Mesmer +0.47 … Basilisk −0.36). Vex, Kong, Mellow
+unmeasured; the user flags Vex as historically weak.
+
+| Hero | Change |
+|---|---|
+| Fang | **Pack Hunter** (per user direction): *when an enemy drops below half its HP, ATK ▲ INT ▲* (Pack Hunter+ ▲▲ and its partner ATK ▲, one card) — it paid off every partner swing, ▲5 by round 5 for nothing. Engine: an `HpChanged` hook with `crossesHpBelow`, and a hit's HpChanged now reaches the reaction pass. **Ironhide** (Stonehide): Iron (Stone), Metallic Blade (Spire Claw), **Iron Hide** (Iron Force on a hit, 3 a fight). |
+| Vex | **Help** (per user direction): the kit's Claw (20% Bleed) becomes **Gash** (certain Bleed; Claw to the pool), so Sanguine fires from the first fight; **Sanguine** heals twice the Bleed tick (the round rule lets it fire once a round however many foes bleed), **Sanguine+** three times and ATK ▲, one card (its text read "10 Attack"). **Sonar** (Wraithwing): Mech (Spirit), Cog Slam (Spooky Slice), **Echo** — applying Bleed also takes DEF ▼ (Grave Mark's Haunt had no Spirit or Mind hits behind it). |
+| Ursa | **Feast+**: heals to full and ATK ▲▲, one card (its text read "20 Attack"). **Ursa Major** (Timberback): Arcane (Nature), Wardblade (Wild Bloom), **Great Bear** — a knockout gives both allies ATK ▲ (Well Fed read Wild Bloom's Renew). |
+| Coil | **Constrict** (Basilisk, −0.36): WIS ▼ a magical hit (was SPD ▼ — Speed orders turns only). **Quetzal** (Basilisk): Storm (Nature), Electric Burst (Corrode). **Spitfire** (Hooded): Fire (Stone), Firestorm (Landslide), **Hood Flare** — a Fire hit takes ATK ▼ (it read Landslide's Defense rise). |
+| Kong | **Hanuman** (Canopy King): Light (Nature), Holy Slice (Rootbind), Closing Canopy kept. |
+
+Grafts: Nature four times, Stone three, Spirit twice; spread so each appears once (Mind unused —
+Coil carries it). Kept: Kong's Stonefist, Mellow's Meadow, Fang's Warhowl.
+
+**The second pass is complete for all fourteen draftable types.**

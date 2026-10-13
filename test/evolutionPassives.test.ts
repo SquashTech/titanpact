@@ -788,3 +788,21 @@ test('mech: Recitation pays 15 Mana for an Arcane hit; Rime Plating shields the 
   const shielded = resolveRound(withMana(withPassive(threeVThree(799), 'a1', 'rimePlating'), 'a1'), [{ kind: 'move', combatantId: 'a1', moveId: 'ironSkin' } as Action], config).state;
   assert.strictEqual(shielded.combatants.a2.statuses.Shield?.magnitude, 15);
 });
+
+// --- Beast, second pass (docs/hero-audit.md) ---
+
+test('beast: Pack Hunter fires when an enemy drops below half its HP — not on a hit that leaves it above, nor on one already below', () => {
+  const struck = (startHp: number) => {
+    let base = withMana(withPassive(threeVThree(800), 'a1', 'packHunter'), 'a2');
+    base = withHp(base, 'b1', startHp);
+    return resolveRound(base, [cut('a2', 'splash', 'b1')], config).state;
+  };
+  const max = threeVThree(800).combatants.b1.currentHp;
+  const crossing = struck(Math.ceil(max * 0.5) + 1);
+  assert.ok(crossing.combatants.b1.currentHp < max * 0.5, 'the hit took it under half');
+  assert.strictEqual(crossing.combatants.a1.statStages?.attack, 1);
+  assert.strictEqual(crossing.combatants.a1.statStages?.intelligence, 1);
+  assert.strictEqual(struck(max).combatants.a1.statStages?.attack, undefined, 'still above half');
+  assert.strictEqual(struck(Math.floor(max * 0.4)).combatants.a1.statStages?.attack, undefined, 'already below');
+  assert.deepStrictEqual(heroes.vex.moveIds, ['gash', 'howl'], "Vex opens with a certain Bleed, so Sanguine fires from the first fight");
+});

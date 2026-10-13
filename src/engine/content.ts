@@ -176,7 +176,8 @@ export type PassiveId = string;
 /** 'RoundStarted' is RoundEnded's mirror, read before the round's first action (Cinder's Ironclad plate). 'FieldEffectSet' a field taking the board, by any setter; both are about nobody, so each active owner is its own subject, and `fieldEffectId` is what eventFieldEquals reads. */
 /** 'ManaGained' reads every way mana arrives — a grant (move or passive), the round's regen, a Rest — never a potion; its subject is the receiver and `manaGained` what landed (Zenith). */
 /** 'ManaGranted' hears a grant alone — a move's or a passive's, never regen or a Rest (Surging Intellect). */
-export type PassiveHook = 'ManaGranted' | 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured' | 'ManaGained' | 'RoundStarted' | 'FieldEffectSet' | 'MoveGuarded' | 'ConsumableUsed' | 'StatusRemoved';
+/** 'HpChanged' reads a hero's HP moving; pair it with `crossesHpBelow` (Pack Hunter). */
+export type PassiveHook = 'HpChanged' | 'ManaGranted' | 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'StatusDetonated' | 'SwitchedIn' | 'SwitchedOut' | 'StatChanged' | 'RoundEnded' | 'Rested' | 'MoveUsed' | 'Endured' | 'ManaGained' | 'RoundStarted' | 'FieldEffectSet' | 'MoveGuarded' | 'ConsumableUsed' | 'StatusRemoved';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';
@@ -196,6 +197,8 @@ export interface PassiveTriggerCondition {
   everyNRounds?: number;
   /** Fires only at the end of every Nth consecutive round the OWNER has stood on the field (Crescendo); a switch restarts the count (Combatant.firstActionRound). */
   everyNRoundsOnField?: number;
+  /** HpChanged only: fires when the subject goes from at-or-above this share of its max HP to below it (Pack Hunter: 0.5). */
+  crossesHpBelow?: number;
   /** DamageDealt only: the hit knocked its target out (DamageDealtEvent.finishing). Rex's and Ursa's finishing blows. */
   finishingBlow?: true;
   /** The event's target-role combatant holds this status when the reaction is read (after the hit has landed). */

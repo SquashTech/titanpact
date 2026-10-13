@@ -295,8 +295,8 @@ test('hunger and ghostlight: out of the box — Lucius drains a fifth of a Mind 
   assert.deepStrictEqual(collectPassiveDamageModifiers(revenant, moves.psiBolt, passives, haunted), [], 'only a Spirit move');
 });
 
-test('maxFiresPerFight: Bedrock Hide banks Stone Force on the first three hits taken and never a fourth', () => {
-  let state = withPassive(twoVTwo(23, 'ironWarden', 'valor', 'lucius', 'crag'), 'a1', 'bedrockHide');
+test('maxFiresPerFight: Iron Hide banks Iron Force on the first three hits taken and never a fourth', () => {
+  let state = withPassive(twoVTwo(23, 'ironWarden', 'valor', 'lucius', 'crag'), 'a1', 'ironHide');
   const fullHp = state.combatants.a1.currentHp;
   for (let round = 0; round < 4; round++) {
     state = withField(withField(state, 'a1', { currentHp: fullHp }), 'b1', { currentMana: 200 });
@@ -304,8 +304,8 @@ test('maxFiresPerFight: Bedrock Hide banks Stone Force on the first three hits t
     assert.ok(r.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'a1'), 'the hit landed');
     state = r.state;
   }
-  assert.strictEqual(statusMagnitude(state.combatants.a1, 'StoneForce'), 30);
-  assert.strictEqual(state.combatants.a1.passives.bedrockHide.firesThisFight, 3);
+  assert.strictEqual(statusMagnitude(state.combatants.a1, 'IronForce'), 30);
+  assert.strictEqual(state.combatants.a1.passives.ironHide.firesThisFight, 3);
 });
 
 // --- The third wave: finishing blows, a run-permanent gain, a target-status read, percent-of-max damage ---

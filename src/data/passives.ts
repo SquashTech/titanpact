@@ -12,11 +12,12 @@ const fixturePassives: Record<string, PassiveDefinition> = {
   sanguine: {
     id: 'sanguine',
     name: 'Sanguine',
-    description: 'When an enemy takes Bleed damage, this hero heals for the same amount.',
+    description: 'When an enemy takes Bleed damage, this hero heals for twice that amount.',
+    // Once a round (the round rule) however many foes bleed, so the one firing pays double.
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Bleed', kind: 'damage' } },
-      effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount' } },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount', multiplier: 2 } },
     },
   },
 };
@@ -640,13 +641,13 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   constrict: {
     id: 'constrict',
     name: 'Constrict',
-    description: 'When this hero lands a magical attack, its target loses SPD ▼.',
-    // A source-role reaction paying a stat debuff. Coil's slate is
-    // magical end to end, so every cast tightens; Psionic Wave reaching both foes slows both.
+    description: 'When this hero lands a magical attack, its target loses WIS ▼.',
+    // Coil's slate is magical end to end, so every cast loosens the next; Coil never raises its own
+    // Intelligence, so this is one axis of the ratio, not Folio's two.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
-      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', stages: -1 },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'wisdom', stages: -1 },
     },
   },
   // --- The third-of-each-type six (2026-09-17) ---
@@ -1253,11 +1254,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   packHunter: {
     id: 'packHunter',
     name: 'Pack Hunter',
-    description: "When this hero's partner lands an attack, this hero gains ATK ▲ and INT ▲.",
-    // Both columns, so Warhowl's rewire keeps it live.
+    description: 'When an enemy drops below half its HP, this hero gains ATK ▲ and INT ▲.',
+    // The pack smells blood (2026-10-12, per user direction): a wounded foe, not every partner swing. Both columns, so Warhowl's rewire keeps it live.
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'ally', subjectRole: 'source' },
+      hook: 'HpChanged',
+      condition: { relativeTo: 'enemy', crossesHpBelow: 0.5 },
       effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1 },
     },
   },
@@ -2195,41 +2196,23 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   alphasCall: {
     id: 'alphasCall',
     name: 'Pack Hunter+',
-    description: "When this hero's partner lands an attack, this hero gains ATK ▲▲ and INT ▲▲, and the partner ATK ▲.",
+    description: 'When an enemy drops below half its HP, this hero gains ATK ▲▲ and INT ▲▲, and its partner ATK ▲.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'ally', subjectRole: 'source' },
+      hook: 'HpChanged',
+      condition: { relativeTo: 'enemy', crossesHpBelow: 0.5 },
       effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 2 },
-    },
-  },
-  alphasCallFollow: {
-    id: 'alphasCallFollow',
-    name: 'Pack Hunter+',
-    description: "When this hero's partner lands an attack, the partner gains ATK ▲.",
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'ally', subjectRole: 'source' },
-      effect: { kind: 'statDelta', target: 'ally', stat: 'attack', stages: 1 },
+      alsoEffect: { kind: 'statDelta', target: 'ally', stat: 'attack', stages: 1 },
     },
   },
   glut: {
     id: 'glut',
     name: 'Feast+',
-    description: 'When this hero lands a finishing blow, it heals to full and gains 20 Attack.',
+    description: 'When this hero lands a finishing blow, it heals to full and gains ATK ▲▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
       effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 1 } },
-    },
-  },
-  glutRage: {
-    id: 'glutRage',
-    name: 'Feast+',
-    description: 'When this hero lands a finishing blow, it gains ATK ▲.',
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
+      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 2 },
     },
   },
   petrifyingStare: {
@@ -2245,21 +2228,12 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   hemophage: {
     id: 'hemophage',
     name: 'Sanguine+',
-    description: 'When an enemy takes Bleed damage, this hero heals for 1.5× that amount and gains 10 Attack.',
+    description: 'When an enemy takes Bleed damage, this hero heals for three times that amount and gains ATK ▲.',
     reactive: {
       hook: 'StatusTicked',
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Bleed', kind: 'damage' } },
-      effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount', multiplier: 1.5 } },
-    },
-  },
-  hemophageFrenzy: {
-    id: 'hemophageFrenzy',
-    name: 'Sanguine+',
-    description: 'When an enemy takes Bleed damage, this hero gains ATK ▲.',
-    reactive: {
-      hook: 'StatusTicked',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Bleed', kind: 'damage' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount', multiplier: 3 } },
+      alsoEffect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   // --- From the Tall Grass (2026-09-26) ---

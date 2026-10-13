@@ -536,7 +536,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             const endured = hpResult.events.filter((e) => e.type === 'Endured');
             // A Shield this hit emptied is read too (Shell Shards).
             const broken = hpResult.events.filter((e) => e.type === 'StatusRemoved' && e.reason === 'broken');
-            const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent, ...endured, ...broken], heroes, statuses, passives, fieldEffects, moves);
+            // The HP move itself is read too (Pack Hunter: a foe dropping below half).
+            const hpMoved = hpResult.events.filter((e) => e.type === 'HpChanged');
+            const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent, ...endured, ...broken, ...hpMoved], heroes, statuses, passives, fieldEffects, moves);
             working = damageReactions.state;
             events.push(...damageReactions.events);
 

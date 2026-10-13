@@ -397,12 +397,12 @@ test('progression: choosing Stonehide at the move cap leaves the loadout untouch
   run = atEvolutionRung(run, 'packAlpha');
   assert.strictEqual(run.roster[0].unlockedMoveIds.length, 4);
 
-  const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-stonehide');
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-ironhide');
   assert.deepStrictEqual(next.roster[0].unlockedMoveIds, run.roster[0].unlockedMoveIds);
-  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Stone');
+  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Iron');
 
   // The overflow the caller is about to offer is spent here, so declining it does not requeue the move.
-  const path = progressionTable.evolutions.packAlpha[0].paths.find((p) => p.id === 'packAlpha-stonehide')!;
+  const path = progressionTable.evolutions.packAlpha[0].paths.find((p) => p.id === 'packAlpha-ironhide')!;
   for (const moveId of path.unlocksMoveIds) assert.ok(next.roster[0].offeredMoveIds.includes(moveId));
 });
 

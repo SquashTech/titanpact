@@ -112,6 +112,7 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
     case 'MoveGuarded':
     case 'ConsumableUsed':
     case 'StatusRemoved':
+    case 'HpChanged':
       return event.combatantId;
     case 'ManaGranted':
       return event.targetCombatantId;
@@ -598,6 +599,11 @@ export function resolvePassiveReactions(
             const foes = working.active[owner.side === 'A' ? 'B' : 'A'];
             const held = reactive.condition.anyEnemyHasStatus;
             if (!foes.some((id) => !!id && !working.combatants[id]?.fainted && hasStatus(working.combatants[id], held))) continue;
+          }
+          if (reactive.condition.crossesHpBelow !== undefined) {
+            if (event.type !== 'HpChanged') continue;
+            const line = reactive.condition.crossesHpBelow * event.maxHp;
+            if (!(event.previousHp >= line && event.newHp < line)) continue;
           }
           if (reactive.condition.everyNRoundsOnField !== undefined) {
             const onField = round - (owner.firstActionRound ?? 1) + 1;

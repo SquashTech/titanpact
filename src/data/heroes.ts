@@ -680,7 +680,7 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [5, 8, 12, 17, 21], midLevel: 9, lateLevel: 18, signatureLevel: 15 },
     signatureMoveId: 'packCall',
     passiveIds: ['packHunter'],
-    masteredPassiveIds: ['alphasCall', 'alphasCallFollow'],
+    masteredPassiveIds: ['alphasCall'],
   },
   ursa: {
     id: 'ursa',
@@ -694,7 +694,7 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [6, 8, 11, 19, 25], midLevel: 11, lateLevel: 21, signatureLevel: 24 },
     signatureMoveId: 'overbear',
     passiveIds: ['feast'],
-    masteredPassiveIds: ['glut', 'glutRage'],
+    masteredPassiveIds: ['glut'],
   },
   coil: {
     id: 'coil',
@@ -715,13 +715,13 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Vex',
     types: ['Beast'],
     baseStats: { hp: 170, attack: 90, defense: 35, intelligence: 30, wisdom: 45, speed: 110, manaPool: 70, mpRegen: 10 },
-    moveIds: ['claw', 'howl'],
+    moveIds: ['gash', 'howl'],
     unlock: 'starfall',
     growthGrades: { hp: 'B', attack: 'S', defense: 'C', intelligence: 'F', wisdom: 'B', speed: 'S', manaPool: 'A' },
     schedule: { offerLevels: [5, 8, 12, 18, 21], midLevel: 9, lateLevel: 19, signatureLevel: 19 },
     signatureMoveId: 'exsanguinate',
     passiveIds: ['sanguine'],
-    masteredPassiveIds: ['hemophage', 'hemophageFrenzy'],
+    masteredPassiveIds: ['hemophage'],
   },
 
   // --- Added 2026-09-27/28, per user direction; `unlock` marks the Starfall-only ones ---

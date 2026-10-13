@@ -1,26 +1,27 @@
 import type { PassiveDefinition } from '../../engine/content';
 
 export const beastPathPassives: Record<string, PassiveDefinition> = {
-  // Fang's Stonehide: Force is typed Base Power, so what it takes comes back only on a Stone swing.
-  bedrockHide: {
-    id: 'bedrockHide',
-    name: 'Bedrock Hide',
-    description: 'When this hero takes damage, it gains Stone Force 10. Up to 3 times a fight.',
+  // Fang's Ironhide: Force is typed Base Power, so what it takes comes back only on an Iron swing.
+  ironHide: {
+    id: 'ironHide',
+    name: 'Iron Hide',
+    description: 'When this hero takes damage, it gains Iron Force 10. Up to 3 times a fight.',
     reactive: {
       maxFiresPerFight: 3,
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'StoneForce', magnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'IronForce', magnitude: 10 },
     },
   },
-  wellFed: {
-    id: 'wellFed',
-    name: 'Well Fed',
-    description: 'When this hero gains Renew, it gains ATK ▲.',
+  // Ursa's Ursa Major: the great bear's kill lifts the whole sky.
+  greatBear: {
+    id: 'greatBear',
+    name: 'Great Bear',
+    description: 'When this hero lands a finishing blow, both allies gain ATK ▲.',
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
+      effect: { kind: 'statDelta', target: 'bothAllies', stat: 'attack', stages: 1 },
     },
   },
   // Coil's Mesmer: StatChanged carries no source, so a partner's Lull arms it too. Serpent's Eye
@@ -36,14 +37,15 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
       maxFiresPerFight: 3,
     },
   },
-  graveMark: {
-    id: 'graveMark',
-    name: 'Grave Mark',
-    description: 'When this hero applies Bleed, that target is also Haunted.',
+  // Vex's Sonar: the echo finds the gap the wound opened.
+  echo: {
+    id: 'echo',
+    name: 'Echo',
+    description: 'When this hero applies Bleed, that target also loses DEF ▼.',
     reactive: {
       hook: 'StatusApplied',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Bleed' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Haunt' },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', stages: -1 },
     },
   },
   troopLeader: {
@@ -122,15 +124,15 @@ export const beastPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], stages: 1 },
     },
   },
-  // Coil's Hooded: Landslide raises the hood, and the hood is a threat.
+  // Coil's Spitfire: the venom burns, and what it burns cannot strike back as hard.
   hoodFlare: {
     id: 'hoodFlare',
     name: 'Hood Flare',
-    description: "When this hero's Defense rises, both active enemies lose ATK ▼.",
+    description: 'When this hero lands a Fire attack, its target loses ATK ▼.',
     reactive: {
-      hook: 'StatChanged',
-      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'attack', stages: -1 },
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'attack', stages: -1 },
     },
   },
   // Vex's Vampyr: Dusk Blade opens the vein the next bite drinks from.
