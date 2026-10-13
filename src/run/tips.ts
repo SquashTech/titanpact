@@ -7,6 +7,9 @@
 // a tip read in a run that was wiped is not read again in the next one.
 
 import type { MapNodeType } from './map';
+import type { Profile } from './profile';
+import { isConstructedOpen } from './constructed';
+import { isGauntletOpen } from './gauntlet';
 
 export interface Tip {
   id: string;
@@ -18,6 +21,23 @@ export interface Tip {
 
 /** The lore card's id in `seenTipIds`: the four lines ahead of the first draft, once an account. */
 export const LORE_TIP_ID = 'lore';
+
+// --- The modes opening ---
+
+/** The beat on the title that opens the Trials and the Gauntlet, once an account (docs/tutorial.md). */
+export const MODES_OPEN_TIP_ID = 'modes.open';
+
+/** One window of the beat: a mode, its name, and what it is. */
+export interface ModesOpenPage {
+  mode: 'trials' | 'gauntlet';
+  word: string;
+  line: string;
+}
+
+/** Owed on the first title after the win that opens both modes, until it has played. */
+export function modesOpenDue(profile: Pick<Profile, 'runsCompleted' | 'cyclesCleared' | 'seenTipIds'>): boolean {
+  return isConstructedOpen(profile) && isGauntletOpen(profile) && !profile.seenTipIds.includes(MODES_OPEN_TIP_ID);
+}
 
 // --- Inline icons ---
 

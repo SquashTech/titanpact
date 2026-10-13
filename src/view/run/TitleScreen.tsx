@@ -22,6 +22,8 @@ import { isConstructedOpen } from '../../run/constructed';
 import { isGauntletOpen } from '../../run/gauntlet';
 import recordsArt from '../../../art/ui/records.png';
 import { ModeDoors, ModeLight, ModeStage, PactButton, TITLE_MODES, type TitleMode } from './TitleModes';
+import { ModesOpenBeat, type ModesBeatStage } from './ModesOpenBeat';
+import { MODES_OPEN_TIP_ID, modesOpenDue } from '../../run/tips';
 
 interface Props {
   /** Lifetime figures and hero stars. Re-read by App whenever this screen is entered. */
@@ -48,6 +50,8 @@ interface Props {
   openCycle: number;
   /** Records a seen-once beat (the Chronicle weave) in the profile. */
   onSeeTip: (id: string) => void;
+  /** The launch screen is down and no card stands over the title, so a beat may play. */
+  beatReady: boolean;
   /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
   onResetTips: () => void;
   /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +50 stars to test the Constellation and the stakes. */
@@ -108,6 +112,7 @@ export function TitleScreen({
   onStartRun,
   openCycle,
   onSeeTip,
+  beatReady,
   onResetTips,
   onGrantDevStars,
   onQuickBattle,
@@ -160,8 +165,14 @@ export function TitleScreen({
     if (next) selectMode(next);
   }
 
-  /** Pages turn only on the bare title — never under a sheet or a menu standing over it. */
-  const pagesTurn = tab === 'play' && !confirmingNewRun && !pickingCycle && !showRecords && !showReference && !showOptions && !showLocations && !showDev;
+  const bareTitle = tab === 'play' && !confirmingNewRun && !pickingCycle && !showRecords && !showReference && !showOptions && !showLocations && !showDev;
+
+  // Once started it plays to the end; it starts only on the bare Pact page.
+  const [beatStage, setBeatStage] = useState<ModesBeatStage | null>(null);
+  const beatOn = beatStage !== null || (beatReady && bareTitle && mode === 'pact' && !launching && modesOpenDue(profile));
+
+  /** Pages turn only on the bare title — never under a sheet, a menu or a beat standing over it. */
+  const pagesTurn = bareTitle && !beatOn;
 
   function handlePointerDown(e: ReactPointerEvent) {
     swiped.current = false;
@@ -360,7 +371,16 @@ export function TitleScreen({
           onOpen={mode === 'trials' ? () => onOpenConstructed() : onOpenGauntlet}
         />
       )}
-      <ModeDoors mode={mode} isOpen={modeOpen} onSelect={selectMode} />
+      <ModeDoors mode={mode} isOpen={modeOpen} onSelect={selectMode} beat={beatOn ? (beatStage ?? { doors: 'held' }) : null} />
+      {beatOn && (
+        <ModesOpenBeat
+          onStage={setBeatStage}
+          onDone={() => {
+            onSeeTip(MODES_OPEN_TIP_ID);
+            setBeatStage(null);
+          }}
+        />
+      )}
 
       {/* Records, Reference and Options are corner glyphs: a ledger, a lookup and a dial, not places. */}
       <button

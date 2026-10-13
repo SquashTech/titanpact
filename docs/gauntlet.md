@@ -144,7 +144,8 @@ emblem over its name (2026-10-13, per user direction, replacing a text rail and 
 sat between the press and the hub's Play; the A-against-D comparison is
 `docs/mockups/title-mode-nav.html`). **A mode not yet opened has no door and no page** (same day,
 per user direction, replacing locked doors with a padlock and a "win a run" note): a new account
-sees the Pact alone, and a door appears with the win that opens it. Collection and Constellation stay
+sees the Pact alone, and a door appears with the win that opens it, announced once by the
+modes-open beat (`docs/tutorial.md` "The modes opening"). Collection and Constellation stay
 shared, outside the doors. The teambuilder's own title becomes **The Trials** in every player-facing
 string; `constructed` stays the code name.
 

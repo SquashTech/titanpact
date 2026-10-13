@@ -1289,6 +1289,7 @@ export function App() {
           onStartRun={handleStartNewRun}
           openCycle={openCycle(profile)}
           onSeeTip={markTipSeen}
+          beatReady={launchDone && !(installPlatform && !profile.seenTipIds.includes(INSTALL_TIP_ID))}
           onResetTips={handleResetTips}
           onGrantDevStars={handleGrantDevStars}
           onQuickBattle={handleQuickBattle}

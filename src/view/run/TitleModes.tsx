@@ -8,6 +8,7 @@ import { LOSSES_TO_END, WINS_TO_CLEAR } from '../../run/gauntlet';
 import type { Profile } from '../../run/profile';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { getTypeColorRgb } from '../combat/typeColors';
+import type { ModesBeatStage } from './ModesOpenBeat';
 
 export type TitleMode = 'trials' | 'pact' | 'gauntlet';
 
@@ -186,7 +187,7 @@ function GauntletScene({ profile }: { profile: Profile }) {
 
 const MODE_COPY: Record<Exclude<TitleMode, 'pact'>, { word: string; line: string; cta: string; tone: string }> = {
   trials: { word: 'Trials', line: 'Build any six. Prove them in the Trials.', cta: 'Enter the Trials', tone: 'is-steel' },
-  gauntlet: { word: 'Gauntlet', line: `Fifteen rolled. Draft six. ${WINS_TO_CLEAR} wins before ${LOSSES_TO_END} losses.`, cta: 'Run the Gauntlet', tone: 'is-ember' },
+  gauntlet: { word: 'Gauntlet', line: `Draft six, one of three at a time. ${WINS_TO_CLEAR} wins before ${LOSSES_TO_END} losses.`, cta: 'Run the Gauntlet', tone: 'is-ember' },
 };
 
 /** The light a mode page is lit in — below the ridge, like the Pact's backlight. */
@@ -261,17 +262,33 @@ export function ModeEmblem({ mode }: { mode: TitleMode }) {
   );
 }
 
-/** The neighbouring pages as doors in the bottom corners, each its emblem over its name; a mode not yet opened has none. */
-export function ModeDoors({ mode, isOpen, onSelect }: { mode: TitleMode; isOpen: (m: TitleMode) => boolean; onSelect: (mode: TitleMode) => void }) {
+/**
+ * The neighbouring pages as doors in the bottom corners, each its emblem over its name; a mode not
+ * yet opened has none. Under the modes-open beat they wait, arrive, then light one at a time.
+ */
+export function ModeDoors({
+  mode,
+  isOpen,
+  onSelect,
+  beat = null,
+}: {
+  mode: TitleMode;
+  isOpen: (m: TitleMode) => boolean;
+  onSelect: (mode: TitleMode) => void;
+  beat?: ModesBeatStage | null;
+}) {
+  if (beat?.doors === 'held') return null;
   const i = TITLE_MODES.indexOf(mode);
   const doors = [
     { side: 'left', mode: TITLE_MODES[i - 1] },
     { side: 'right', mode: TITLE_MODES[i + 1] },
   ].filter((d): d is { side: string; mode: TitleMode } => d.mode !== undefined && isOpen(d.mode));
+  const beatClass = (m: TitleMode) =>
+    !beat ? '' : beat.doors === 'arriving' ? ' is-beat is-arriving' : beat.lit === m ? ' is-beat is-lit' : beat.lit ? ' is-beat is-dim' : ' is-beat';
   return (
     <>
       {doors.map(({ side, mode: m }) => (
-        <button key={m} type="button" className={`title-mode-door is-${side} is-${m}`} onClick={() => onSelect(m)}>
+        <button key={m} type="button" className={`title-mode-door is-${side} is-${m}${beatClass(m)}`} onClick={() => onSelect(m)}>
           <span className="title-mode-door-medal">
             <ModeEmblem mode={m} />
           </span>

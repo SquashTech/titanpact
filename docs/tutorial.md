@@ -110,6 +110,27 @@ sockets, then Sell.
 
 Fights outside a run (Quick Battle, the sandbox) show none: they pass no `tips` prop.
 
+### The modes opening (2026-10-13, per user direction)
+
+The one beat outside a run. **The first title after the win that opens the Trials and the Gauntlet**
+(`modesOpenDue`, id `modes.open`) plays it once, on the bare Pact page, after the launch screen and
+the install card. It is the moment the state changes, so it is the one place the two doors are
+explained; the doors themselves stay quiet (`docs/gauntlet.md` §7).
+
+1. The title dims (everything but the doors, hub bar included) under **Two New Ways to Play**.
+2. The doors arrive in their corners, Trials then Gauntlet, each with a ring and `star.reveal`.
+3. One stone window a mode: its emblem and wordmark, a **screenshot of that mode's own screen** (the
+   Trials teambuilder with six built, the Gauntlet draft at four of six), cut off at the bottom so it
+   reads as a window onto more, and two sentences. That mode's door pulses below it; the other dims.
+4. *Got it* sinks the window, lifts the dim, and the doors are pressable.
+
+A tap skips the arrival. Copy is `MODES_OPEN_CAPTION` / `MODES_OPEN_PAGES` in `src/data/tips.ts`;
+the beat is `src/view/run/ModesOpenBeat.tsx`. **The pictures are stills** (`art/ui/modes/*.webp`,
+708×600 at 2x, captured from the real screens), not staged live renders like the fight scenes: the
+teambuilder and the draft are whole screens with saves behind them, too heavy to mount as a
+picture. The cost is that they go stale when either screen changes, and are re-captured by hand.
+An account already past its first clear when this shipped sees the beat once on its next launch.
+
 ## 4. State
 
 `Profile.seenTipIds` — account-wide, not per run, so a tip read in a run that was wiped is not

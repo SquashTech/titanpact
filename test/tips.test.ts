@@ -1,11 +1,13 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { FIGHT_TIPS, LORE_LINES, SCREEN_TIPS } from '../src/data/tips';
+import { FIGHT_TIPS, LORE_LINES, MODES_OPEN_PAGES, SCREEN_TIPS } from '../src/data/tips';
 import { HOW_TO_PLAY } from '../src/data/howToPlay';
 import {
   firstUnseenTip,
   LORE_TIP_ID,
   matchFightTip,
+  MODES_OPEN_TIP_ID,
+  modesOpenDue,
   parseTipText,
   SCREEN_TIP_IDS,
   unknownIconTokens,
@@ -42,7 +44,7 @@ test('tips: every id App can ask for has a tip, and every screen tip is one App 
 });
 
 test('tips: ids are unique across screen tips, fight tips, How to Play and the lore card', () => {
-  const ids = [...allText.map((tip) => tip.id), LORE_TIP_ID];
+  const ids = [...allText.map((tip) => tip.id), LORE_TIP_ID, MODES_OPEN_TIP_ID];
   assert.strictEqual(new Set(ids).size, ids.length);
 });
 
@@ -181,4 +183,14 @@ test('tips: seen ids are account-wide, idempotent, resettable, and survive a rou
 test('tips: a profile from before the tips shows every one, whatever its tutorial flag said', () => {
   const legacy = { version: 1, runsStarted: 4, runsCompleted: 1, tutorialDone: true };
   assert.deepStrictEqual(decodeProfile(legacy).seenTipIds, []);
+});
+
+test('tips: the modes-open beat is owed from the win that opens both modes until it plays, a window a mode', () => {
+  const fresh = createProfile();
+  assert.strictEqual(modesOpenDue(fresh), false);
+  const won = { ...fresh, runsCompleted: 1, cyclesCleared: 1 };
+  assert.strictEqual(modesOpenDue(won), true);
+  assert.strictEqual(modesOpenDue(recordTipSeen(won, MODES_OPEN_TIP_ID)), false);
+  assert.deepStrictEqual(MODES_OPEN_PAGES.map((p) => p.mode), ['trials', 'gauntlet']);
+  for (const page of MODES_OPEN_PAGES) assert.ok(page.line.split(/(?<=\.)\s/).length <= 2, `${page.mode} is two sentences at most`);
 });
