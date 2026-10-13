@@ -645,3 +645,19 @@ his grades sum to **27**, the first line under `GRADE_BUDGET`. A hero whose kit 
 nerfed to an exception spot — an innate or a movepool can make up for a lower grade budget — never
 over it (`test/roster.test.ts` names each one). Measured (4000 runs): Ronin 208 DPR / ratio 4.11,
 3rd behind Hush 220 and Rex 214; full-clear 87.8%.
+
+**Over the budget too** (2026-10-13, per user direction). A grade step is ~0.3 points a level, ~7 by
+level 24, so it only reaches the late game and only mends a stat-shaped weakness. Three heroes go to
+**30**, Motley to **33**:
+
+| Hero | Grades | Why |
+|---|---|---|
+| Marrow | HP D → B | Int 95 on HP 190: ratio 2.67 in acts 1–2, 1.59 after, 15.1% late deaths (median ~11.8%) |
+| Petra | Atk A → S, Int A → S | an 80/80 mixed line growing each half as fast; ratio 2.55 → 1.68 |
+| Reverie | Atk A → S, Int A → S | mixed on a 53/55 base, where growth is most of the line; DPR 117, ratio 1.95 |
+| Motley | all five combat stats B → A | its Trick rolls physical, magical, heal and Shield faces alike, so the five grow alike (the metamorphic test pins it) — +5, the largest; DPR 82, ratio 1.70 |
+
+Tempest, the fourth mixed attacker, stays at 28: S/S already, paid for elsewhere, and fine (136 DPR).
+Left alone on purpose: the heroes weak from the first fight (Mellow, Totem, Sentinel, Cairn, Sylva,
+Hollowbark — a kit question), Dread (Nightmare is percent damage, which grades do not reach), and the
+supports the sim undercounts. Igloo (Def A → S, 29) was proposed and not taken. Not yet measured.

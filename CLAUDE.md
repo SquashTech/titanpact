@@ -520,9 +520,11 @@ don't silently override it.
   per-hero grant. **Every hero's grades sum to exactly `GRADE_BUDGET` = 28** (an average of B):
   a SECOND budget, enforced by test beside the 550 one, because the 550 rule alone stops being
   sufficient the moment a low base with S-grades can outrun a high base with F-grades.
-  **Named exceptions sit UNDER it, never over** (2026-10-13, per user direction): a hero whose kit
-  dominates may be nerfed to an exception spot, since an innate or a movepool can make up for a
-  lower grade budget — Ronin at 27, pinned by name in `test/roster.test.ts`.
+  **Named exceptions sit off it either way** (2026-10-13, per user direction), each pinned by name
+  in `test/roster.test.ts`: UNDER for a kit that dominates, since an innate or a movepool can make
+  up for a lower grade budget (Ronin 27); OVER for a hero that falls off late or splits its growth
+  across both offensive stats (Marrow, Petra, Reverie at 30; Motley at 33, its five kept alike). A grade only reaches the late
+  game, so it is never the answer to a kit that is weak from the first fight.
   **Base and growth are independent axes and that is the point** — low base + high growth is a
   late bloomer, high base + low growth is front-loaded. **All 36 heroes are authored**
   (2026-09-10); the budget and the no-placeholder rule are pinned in `test/roster.test.ts`,

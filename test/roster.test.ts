@@ -38,16 +38,16 @@ test('roster: every seven-stat line sums to 550 — a Burden hero to 550 + the s
   assert.deepStrictEqual(offRegen, [], 'MP Regen is not a stat-total axis — every hero carries 10');
 });
 
-// A hero whose kit dominates may sit UNDER the grade budget (docs/hero-audit.md), never over it.
-const underBudget: Record<string, number> = { ronin: 27 };
+// Off the grade budget by name (docs/hero-audit.md): under it for a dominant kit, over it for a
+// hero that falls off late or splits its growth across both offensive stats.
+const gradeExceptions: Record<string, number> = { ronin: 27, marrow: 30, slate: 30, mindweaver: 30, motley: 33 };
 
 /** The second budget. The 550 alone stops saying a hero is fairly costed the moment growth exists. */
-test('roster: every growth-grade line sums to 28, save the named few nerfed under it, and no hero is still on the placeholder', () => {
+test('roster: every growth-grade line sums to 28, save the named exceptions, and no hero is still on the placeholder', () => {
   const offBudget = Object.values(heroes)
     .map((hero) => ({ id: hero.id, spent: gradeBudgetOf(gradesFor(hero)) }))
-    .filter((row) => row.spent !== (underBudget[row.id] ?? GRADE_BUDGET))
+    .filter((row) => row.spent !== (gradeExceptions[row.id] ?? GRADE_BUDGET))
     .map((row) => `${row.id}=${row.spent}`);
-  assert.ok(Object.values(underBudget).every((spent) => spent < GRADE_BUDGET), 'an exception is a nerf, never a buff');
   assert.deepStrictEqual(
     offBudget,
     [],
@@ -70,7 +70,7 @@ test('roster: every growth-grade line sums to 28, save the named few nerfed unde
  * more growth than the roster.
  */
 test('roster: the grade budget buys every hero the same expected growth', () => {
-  const perLevel = Object.values(heroes).filter((hero) => !underBudget[hero.id]).map((hero) => {
+  const perLevel = Object.values(heroes).filter((hero) => !gradeExceptions[hero.id]).map((hero) => {
     const grades = gradesFor(hero);
     const stats: readonly GrowthStatKey[] = GROWTH_STATS;
     const total = stats.reduce((sum, stat) => sum + gradeExpectedPoints(grades[stat]), 0);
