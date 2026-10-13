@@ -49,6 +49,8 @@ export interface RosterEntry {
   bonusPassiveGrants: readonly PassiveId[];
   /** Permanent grants from map-node rewards and event stat shifts. */
   bonusStatGrants: Partial<Record<StatKey, number>>;
+  /** The part of bonusStatGrants a `permanent` passive banked (Tyrant's Due), kept apart so a run-long cap can count it. */
+  permanentPassiveGains?: Partial<Record<StatKey, number>>;
   /**
    * Magnitude-shape statuses the hero itself carries into every fight — the Ley Line's Elemental
    * Force (runProgress.ts grantLeyLine), summed with its gear's at build (statusGrants.ts). Kept

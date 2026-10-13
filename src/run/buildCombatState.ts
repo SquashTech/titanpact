@@ -87,6 +87,7 @@ function placeEntry(
     ...(refusalOf(passiveCounts, passiveDefs, 'refusesAfflictions') ? { refusesAfflictions: refusalOf(passiveCounts, passiveDefs, 'refusesAfflictions') } : {}),
     ...(sideImmunitiesOf(passiveCounts, passiveDefs) ? { sideStatusImmunities: sideImmunitiesOf(passiveCounts, passiveDefs) } : {}),
     ...(entry.blessed ? { blessed: true } : {}),
+    ...(entry.permanentPassiveGains ? { permanentStatPrior: entry.permanentPassiveGains } : {}),
     ...(turnedCurse(entry) ? { typeOverride: turnedCurse(entry)!.types } : {}),
     ...(formPathId ? { formPathId } : {}),
     ...quiverStamp(entry, hero),

@@ -445,6 +445,12 @@ function resolveEffectOn(
             ? Math.round(getEffectiveStat(heroes[target.heroId], target, effect.amount.stat) * (effect.amount.multiplier ?? 1))
             : resolveAmount(effect.amount, context);
       if (amount === 0) return { state, events: [] };
+      // A capped permanent gain lands only what room the run has left (Tyrant's Due).
+      if (effect.permanent && effect.permanentCap !== undefined) {
+        const room = Math.min(...stats.map((stat) => effect.permanentCap! - (target.permanentStatPrior?.[stat] ?? 0) - (target.permanentStatGains?.[stat] ?? 0)));
+        if (room <= 0) return { state, events: [] };
+        if (room < amount) return resolveEffectOn(state, round, heroes, statusDefs, passiveDefs, ownerId, targetId, target, { ...effect, amount: room }, context, fieldEffect, moves);
+      }
       // An amount read off a STAGE change (Neuroplastic answering a drop) is itself in steps.
       if (typeof effect.amount !== 'number' && effect.amount.kind === 'matchTriggerAmount' && context.stages === true) {
         let stages = target.statStages ?? {};

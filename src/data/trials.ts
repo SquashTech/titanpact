@@ -644,7 +644,7 @@ export const trials: Record<string, TrialDefinition> = {
       slots: [
         {
           heroId: 'steamColossus',
-          pathId: 'steamColossus-bulkhead',
+          pathId: 'steamColossus-ghostShip',
           moveIds: ['boilerBlow', 'thunderclap', 'onslaught', 'cogSlam'],
           itemIds: ['greataxe.mythic', 'plate.mythic', 'shield.mythic'],
           // Onslaught is 80 against a pool of 70.

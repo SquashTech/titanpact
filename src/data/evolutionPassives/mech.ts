@@ -52,14 +52,15 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
     description: 'Deals 50% more damage to an enemy that is both Burned and Poisoned.',
     damageModifier: { requiresTargetStatuses: ['Burn', 'Poison'], amount: 0.5 },
   },
+  // Abacus's Arithmancer: the sum pays for the next — Mana, not a second ratio on top of Tally's.
   recitation: {
     id: 'recitation',
     name: 'Recitation',
-    description: 'When this hero lands a magical attack, both active enemies lose WIS ▼.',
+    description: 'When this hero lands an Arcane attack, it gains 15 Mana, past its pool.',
     reactive: {
       hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
-      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'wisdom', stages: -1 },
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Arcane' } },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 15 } },
     },
   },
   // Whirr's Gyre: the refund is uncapped like every mana grant, which is how a 65 pool reaches Overdrive.
@@ -83,15 +84,15 @@ export const mechPathPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'heal', target: 'self', amount: { kind: 'percentMaxHp', value: 0.05 } },
     },
   },
-  // Clockwork's Hydraulics: Boiler's fires meet the water lines, and the steam is armour.
-  steamCurtain: {
-    id: 'steamCurtain',
-    name: 'Steam Curtain',
-    description: 'When an enemy takes Burn damage, this hero gains Shield for the same amount.',
+  // Clockwork's Cryogenics: the coolant lines frost over whatever it shields.
+  rimePlating: {
+    id: 'rimePlating',
+    name: 'Rime Plating',
+    description: 'When this hero gains Shield, its partner gains Shield 15.',
     reactive: {
-      hook: 'StatusTicked',
-      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: { kind: 'matchTriggerAmount' } },
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Shield' } },
+      effect: { kind: 'applyStatus', target: 'ally', statusId: 'Shield', magnitude: 15 },
     },
   },
   // Bellows' Overpressure: Ironbound never leaves, so the valve blows where it stands.

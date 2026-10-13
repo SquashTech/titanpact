@@ -2494,13 +2494,13 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['combustion'],
           },
           {
-            id: 'forgewright-hydraulics',
+            id: 'forgewright-cryogenics',
             heroId: 'forgewright',
-            name: 'Hydraulics',
-            unlocksMoveIds: ['oasis'],
-            typeGraft: 'Water',
-            learnableMoveIds: evolutionLine('forgewright', 'Water', { granted: ['oasis'] }),
-            grantsPassiveIds: ['steamCurtain'],
+            name: 'Cryogenics',
+            unlocksMoveIds: ['iceShell'],
+            typeGraft: 'Frost',
+            learnableMoveIds: evolutionLine('forgewright', 'Frost', { granted: ['iceShell'] }),
+            grantsPassiveIds: ['rimePlating'],
           },
           {
             id: 'forgewright-furnace',
@@ -2515,7 +2515,7 @@ export const progressionTable: ProgressionTable = {
       },
     ],
     // A dual hero (docs/evolution-simplification.md §6.1): Redline keeps Mech/Iron and takes a Late
-    // Iron move; Bulkhead and Overpressure each trade the Iron away.
+    // Iron move; Ghost Ship and Smokestack each trade the Iron away.
     steamColossus: [
       {
         paths: [
@@ -2527,22 +2527,22 @@ export const progressionTable: ProgressionTable = {
             grantsPassiveIds: ['runawayPressure'],
           },
           {
-            id: 'steamColossus-bulkhead',
+            id: 'steamColossus-ghostShip',
             heroId: 'steamColossus',
-            name: 'Bulkhead',
-            unlocksMoveIds: ['bodyguard'],
-            typeGraft: 'Stone',
-            learnableMoveIds: evolutionLine('steamColossus', 'Stone', { granted: ['bodyguard'] }),
+            name: 'Ghost Ship',
+            unlocksMoveIds: ['soulOffering'],
+            typeGraft: 'Spirit',
+            learnableMoveIds: evolutionLine('steamColossus', 'Spirit', { granted: ['soulOffering'] }),
             grantsPassiveIds: ['blastDoor'],
           },
           {
-            id: 'steamColossus-overpressure',
+            id: 'steamColossus-smokestack',
             heroId: 'steamColossus',
-            name: 'Overpressure',
+            name: 'Smokestack',
             swapsOffense: true,
-            unlocksMoveIds: ['firestorm'],
-            typeGraft: 'Fire',
-            learnableMoveIds: evolutionLine('steamColossus', 'Fire', { swapped: true, granted: ['firestorm'] }),
+            unlocksMoveIds: ['umbralWave'],
+            typeGraft: 'Shadow',
+            learnableMoveIds: evolutionLine('steamColossus', 'Shadow', { swapped: true, granted: ['umbralWave'] }),
             grantsPassiveIds: ['blowoffValve'],
           },
         ],
@@ -2571,9 +2571,9 @@ export const progressionTable: ProgressionTable = {
             id: 'rex-fossil',
             heroId: 'rex',
             name: 'Fossil',
-            unlocksMoveIds: ['retribution'],
+            unlocksMoveIds: ['boulderSlam'],
             typeGraft: 'Stone',
-            learnableMoveIds: evolutionLine('rex', 'Stone', { granted: ['retribution'] }),
+            learnableMoveIds: evolutionLine('rex', 'Stone', { granted: ['boulderSlam'] }),
             grantsPassiveIds: ['unearthed'],
           },
         ],

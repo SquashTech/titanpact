@@ -161,10 +161,12 @@ export function recordPermanentStatGains(run: RunState, state: CombatState, side
       const gain = gains.get(entry.rosterId);
       if (!gain) return entry;
       const bonusStatGrants = { ...entry.bonusStatGrants };
+      const permanentPassiveGains = { ...entry.permanentPassiveGains };
       for (const [stat, amount] of Object.entries(gain)) {
         bonusStatGrants[stat as StatKey] = (bonusStatGrants[stat as StatKey] ?? 0) + (amount ?? 0);
+        permanentPassiveGains[stat as StatKey] = (permanentPassiveGains[stat as StatKey] ?? 0) + (amount ?? 0);
       }
-      return { ...entry, bonusStatGrants };
+      return { ...entry, bonusStatGrants, permanentPassiveGains };
     }),
   };
 }

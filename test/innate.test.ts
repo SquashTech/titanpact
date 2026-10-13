@@ -249,19 +249,16 @@ test('neuroplastic: a statDelta read off the event — Reverie gains exactly the
   assert.strictEqual(gained, -(drop as { delta: number }).delta, 'that many steps, as landed');
 });
 
-test('boiler: chance — at chance 1 every Mech hit Burns the authored percent, scaled by nothing; at chance 0 never', () => {
-  const always = { ...passives, boiler: { ...passives.boiler, reactive: { ...passives.boiler.reactive!, chance: 1 } } };
-  const never = { ...passives, boiler: { ...passives.boiler, reactive: { ...passives.boiler.reactive!, chance: 0 } } };
-  const base = withPassive(twoVTwo(16, 'forgewright', 'valor', 'ironWarden', 'crag'), 'a1', 'boiler');
-  const cast: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'pistonPunch', declaredTarget: 'b1' }, ...restAll(base).filter((a) => a.combatantId !== 'a1')];
-  const hit = resolveRound(base, cast, { ...config, passives: always });
-  const burn = hit.events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Burn' && e.combatantId === 'b1');
-  assert.ok(burn && burn.type === 'StatusApplied', 'Burned');
-  // A Burn is a percent of max HP (docs/blessings-and-statuses.md §3): the scaledBy Boiler carried is gone.
-  assert.strictEqual(burn.magnitude, (passives.boiler.reactive!.effect as { magnitude: number }).magnitude);
-  const miss = resolveRound(base, cast, { ...config, passives: never });
-  assert.ok(!miss.events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Burn'), 'chance 0 never fires');
-  assert.ok(passives.boiler.reactive?.chance === 0.3, 'the shipped odds');
+test('wind-up: every second round Clockwork stands on the field, ATK ▲ and DEF ▲; a switch restarts the count', () => {
+  let state = withPassive(twoVTwo(16, 'forgewright', 'valor', 'ironWarden', 'crag'), 'a1', 'windUp');
+  state = resolveRound(state, restAll(state), config).state;
+  assert.strictEqual(state.combatants.a1.statStages?.attack, undefined, 'one round is not enough');
+  state = resolveRound({ ...state, round: 2 }, restAll(state), config).state;
+  assert.strictEqual(state.combatants.a1.statStages?.attack, 1);
+  assert.strictEqual(state.combatants.a1.statStages?.defense, 1);
+  state = resolveRound({ ...state, round: 3 }, restAll(state), config).state;
+  state = resolveRound({ ...state, round: 4 }, restAll(state), config).state;
+  assert.strictEqual(state.combatants.a1.statStages?.attack, 2, 'wound again at round four');
 });
 
 test('lethal bite: a damage modifier gated on the target — doubles against Bleed AND Poison, nothing against one, and unfired with no target', () => {

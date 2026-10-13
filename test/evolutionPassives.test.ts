@@ -765,3 +765,26 @@ test('iron: Shieldbreaker cuts straight through Shield; Gallop drops the struck 
   const out = resolveRound(harbour, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config).state;
   assert.ok(out.combatants.a1.currentHp > 20, 'healed as it left');
 });
+
+// --- Mech, second pass (docs/hero-audit.md) ---
+
+test("mech: Tyrant's Due banks 10 Attack a fight up to 50 a run — a run already at 45 takes only 5, at 50 nothing", () => {
+  const kill = (prior: number) => {
+    let base = withMana(withPassive(threeVThree(797), 'a1', 'tyrantsDue'), 'a1');
+    base = withHp(base, 'b1', 1);
+    base = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, permanentStatPrior: { attack: prior } } } };
+    return resolveRound(base, [cut('a1', 'heavyBlow', 'b1')], config).state.combatants.a1.permanentStatGains?.attack;
+  };
+  assert.strictEqual(kill(0), 10);
+  assert.strictEqual(kill(45), 5);
+  assert.strictEqual(kill(50), undefined);
+});
+
+test('mech: Recitation pays 15 Mana for an Arcane hit; Rime Plating shields the partner when its holder gains Shield', () => {
+  const plain = withMana(threeVThree(798), 'a1');
+  const blast = [cut('a1', 'magicBolt', 'b1')];
+  const with15 = resolveRound(withPassive(plain, 'a1', 'recitation'), blast, config).state.combatants.a1.currentMana;
+  assert.strictEqual(with15 - resolveRound(plain, blast, config).state.combatants.a1.currentMana, 15);
+  const shielded = resolveRound(withMana(withPassive(threeVThree(799), 'a1', 'rimePlating'), 'a1'), [{ kind: 'move', combatantId: 'a1', moveId: 'ironSkin' } as Action], config).state;
+  assert.strictEqual(shielded.combatants.a2.statuses.Shield?.magnitude, 15);
+});

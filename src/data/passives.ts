@@ -1199,27 +1199,27 @@ const innatePassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'ally', stat: 'defense', stages: 1 },
     },
   },
-  boiler: {
-    id: 'boiler',
-    name: 'Boiler',
-    description: 'Mech attacks from this hero have a 30% chance to set their target Burning.',
+  // Clockwork's: a slow tank that grows on a clock, reset by a switch.
+  windUp: {
+    id: 'windUp',
+    name: 'Wind-Up',
+    description: 'At the end of every second round this hero stands on the field, it gains ATK ▲ and DEF ▲.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Mech' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn' },
-      chance: 0.3,
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', everyNRoundsOnField: 2 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], stages: 1 },
     },
   },
   tyrantsDue: {
     id: 'tyrantsDue',
     name: "Tyrant's Due",
-    description: 'Once per fight, when this hero lands a finishing blow, it gains 10 Attack for the rest of the run.',
+    description: 'Once per fight, when this hero lands a finishing blow, it gains 10 Attack for the rest of the run, up to 50.',
     // The one innate that outlives the fight: banked on Combatant.permanentStatGains and written onto
-    // the roster by recordPermanentStatGains. Capped at one a fight, so a run of kills is +10 a fight.
+    // the roster by recordPermanentStatGains. Once a fight, and +50 a run at most (2026-10-12, per user direction).
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10, permanent: true },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10, permanent: true, permanentCap: 50 },
       oncePerFight: true,
     },
   },
@@ -2153,15 +2153,14 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   },
 
   // --- Mech ---
-  // Boiler's own card, mastered: the 30% roll becomes every hit, and the Burn doubles.
-  boilingPoint: {
-    id: 'boilingPoint',
-    name: 'Boiler+',
-    description: "Every Mech attack this hero lands sets its target Burning, unless it already is.",
+  windUpPlus: {
+    id: 'windUpPlus',
+    name: 'Wind-Up+',
+    description: 'At the end of every second round this hero stands on the field, it gains ATK ▲▲ and DEF ▲▲.',
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Mech' } },
-      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Burn', onlyIfAbsent: true },
+      hook: 'RoundEnded',
+      condition: { relativeTo: 'self', everyNRoundsOnField: 2 },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], stages: 2 },
     },
   },
   // The Burden mastered: the cost stays (it is priced in the 610), and the hero that cannot
@@ -2176,28 +2175,19 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self' },
       effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], stages: 1 },
+      alsoEffect: { kind: 'loseMana', target: 'self', amount: 15 },
     },
   },
   // The mastered Burden is still a Burden: the vent rides beside Iron Mountain under one name.
-  ironMountainPressure: {
-    id: 'ironMountainPressure',
-    name: 'Ironbound+',
-    description: "At the end of each round on the field, this hero's boiler vents 15 Mana.",
-    reactive: {
-      hook: 'RoundEnded',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'loseMana', target: 'self', amount: 15 },
-    },
-  },
   apexTyrant: {
     id: 'apexTyrant',
     name: "Tyrant's Due+",
-    description: 'When this hero lands a finishing blow, it gains 10 Attack for the rest of the run.',
-    // Tyrant's Due without its once-a-fight cap: every kill is banked (recordPermanentStatGains).
+    description: 'When this hero lands a finishing blow, it gains 10 Attack for the rest of the run, up to 100.',
+    // Tyrant's Due without its once-a-fight cap: every kill is banked, up to +100 a run.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10, permanent: true },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10, permanent: true, permanentCap: 100 },
     },
   },
 

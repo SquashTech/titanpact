@@ -620,8 +620,8 @@ export const heroes: Record<string, HeroDefinition> = {
     growthGrades: { hp: 'B', attack: 'S', defense: 'A', intelligence: 'A', wisdom: 'C', speed: 'B', manaPool: 'E' },
     schedule: { offerLevels: [5, 8, 11, 17, 21], midLevel: 10, lateLevel: 20, signatureLevel: 18 },
     signatureMoveId: 'overwind',
-    passiveIds: ['boiler'],
-    masteredPassiveIds: ['boilingPoint'],
+    passiveIds: ['windUp'],
+    masteredPassiveIds: ['windUpPlus'],
   },
   steamColossus: {
     id: 'steamColossus',
@@ -635,7 +635,7 @@ export const heroes: Record<string, HeroDefinition> = {
     schedule: { offerLevels: [6, 10, 13, 19, 24], midLevel: 13, lateLevel: 22, signatureLevel: 22 },
     signatureMoveId: 'boilerBlow',
     passiveIds: ['ironbound'],
-    masteredPassiveIds: ['ironMountain', 'ironMountainPressure'],
+    masteredPassiveIds: ['ironMountain'],
   },
   rex: {
     id: 'rex',

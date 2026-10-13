@@ -93,6 +93,8 @@ export interface Combatant {
   refusesAfflictions?: PassiveId;
   /** Stat gains a `permanent` passive statDelta banked this fight, for the roster to keep (run/runProgress.ts recordPermanentStatGains). */
   permanentStatGains?: Partial<Record<StatKey, number>>;
+  /** What permanent passive gains this roster hero banked in earlier fights, seeded at fight build (RosterEntry.permanentPassiveGains) — the base a `permanentCap` counts from. */
+  permanentStatPrior?: Partial<Record<StatKey, number>>;
   fainted: boolean;
   /**
    * Came into the fight already down (Squad.downIds): no knockout of this fight's, so it counts

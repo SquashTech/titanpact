@@ -26,7 +26,7 @@ const REWIRES = [
   'nightshade-hemlock',
   'mindweaver-construct',
   'packAlpha-warhowl',
-  'steamColossus-overpressure',
+  'steamColossus-smokestack',
 ];
 
 function pathsOf(heroId: string): EvolutionPath[] {

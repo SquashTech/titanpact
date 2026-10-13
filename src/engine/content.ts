@@ -271,6 +271,8 @@ export type PassiveEffect =
       /** FLAT, on statModifiers: a PassiveAmount read off live state (§6.4), or a number only with `permanent` — a run-long gain is what the hero brings. */
       amount?: number | PassiveAmount;
       permanent?: true;
+      /** With `permanent`: the most this card banks across a whole run, per stat (Tyrant's Due); read against Combatant.permanentStatPrior. */
+      permanentCap?: number;
       /** Rises past the ×4 fight ceiling — Stampede's Speed alone, by name (CLAUDE.md). */
       uncapped?: true;
     }

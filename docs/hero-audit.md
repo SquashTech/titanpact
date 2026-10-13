@@ -573,3 +573,22 @@ Rolling Thunder renamed **Cold Steel**.
 
 Grafts spread so each type appears once (Mind unused); Scallywag's Stormrunner keeps Storm as the
 graft the roster names as her way back. The Iron Trial's Ronin is Kensei with Kata.
+
+## Mech, second pass (2026-10-12, per user direction)
+
+Measured (sim, base deck): **Rex 224.8 DPR, 1st of 47, 1.15 KO a fight (the most)**; Clockwork 98.1;
+Patch 48.0 (the sim undercounts supports — not acted on). Bellows, Abacus, Whirr unmeasured.
+
+| Finding | Was | Now |
+|---|---|---|
+| **Tyrant's Due** (Rex): +10 Attack for the run on a once-a-fight knockout, uncapped — ~+130 over a run, more than his base 100; mastered on every knockout | uncapped | **up to +50 a run** (Tyrant's Due+ **+100**): `statDelta.permanentCap`, read against `Combatant.permanentStatPrior`, seeded from `RosterEntry.permanentPassiveGains` |
+| **Recitation** (Abacus's Arithmancer): WIS ▼ on both foes a magical hit beside Tally's INT ▲ a round — Folio's double ratio, ×12 by round 5, on both | both enemies WIS ▼ | **an Arcane hit gives 15 Mana**, past the pool |
+| **Fossil** (Rex, −0.58, the weakest Mech path): Retribution's 50% of damage taken on Defense 55 | Retribution | **Boulder Slam** (Stone Late, 100 / 70) |
+| **Boiler** (Clockwork) — the user disliked it | 30% Burn on a Mech hit | **Wind-Up**: every second round on the field, ATK ▲ DEF ▲ (Wind-Up+ ▲▲); a switch restarts the count |
+| **Ironbound+** (Bellows) | two cards | one card |
+
+Grafts: Water, Fire and Stone twice; spread so each appears once (Iron unused — Bellows carries it).
+**Clockwork Cryogenics** (Hydraulics): Frost (Water), Ice Shell (Oasis), **Rime Plating** — gaining Shield
+gives the partner Shield 15 (Steam Curtain read Boiler's Burns; deleted). **Bellows Ghost Ship**
+(Bulkhead): Spirit (Stone), Soul Offering (Bodyguard), Blast Door kept. **Bellows Smokestack**
+(Overpressure): Shadow (Fire), rewire kept, Umbral Wave (Firestorm), Blowoff Valve kept.
