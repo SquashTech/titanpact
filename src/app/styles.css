@@ -33,6 +33,9 @@
   /* The stacked matchup tiers: ×4 a brighter green, ×0.25 a red that recedes. */
   --eff-quad-super: #7dffa0;
   --eff-quad-resist: #a8474b;
+  /* Who a move reaches: a foe, or your own side. */
+  --target-foe: #e07a6f;
+  --target-ally: #6fc7d9;
   --mana: #4a90d9;
   /* Mana held ABOVE the pool (docs/mana.md "Overflow", Arcane's manaGrant).
      A brighter, cooler relative of --mana rather than a fourth unrelated hue:
@@ -7756,24 +7759,27 @@ textarea,
   padding-right: 62px;
 }
 
+/* One line: gem, type, name, then the strip pushed right against the stub. */
+.move-button.has-stub {
+  justify-content: center;
+}
+
+.move-button.has-stub .move-row-top {
+  gap: 7px;
+}
+
 .move-button.has-stub .move-name {
-  font-size: 15px;
+  font-size: 17px;
   letter-spacing: 0.01em;
 }
 
 .move-button.has-stub .move-row-top .mana-gem {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
 }
 
 .move-button.has-stub .move-row-top .mana-gem-value {
-  font-size: 13px;
-}
-
-.move-button.has-stub .move-row-effect {
-  /* 26px gem + the top row's 6px gap: the strip starts under the name. */
-  padding-left: 32px;
-  min-height: 16px;
+  font-size: 14px;
 }
 
 .move-stub {
@@ -7848,17 +7854,27 @@ textarea,
   background: linear-gradient(180deg, rgba(224, 166, 60, 0.25), rgba(224, 166, 60, 0.1));
 }
 
+/* Right-aligned and capped, so a crowded strip clips from its left and the seats keep their column. */
 .move-strip {
   display: flex;
+  flex: 0 1 auto;
   align-items: center;
-  gap: 9px;
+  justify-content: flex-end;
+  gap: 7px;
+  max-width: 62%;
   min-width: 0;
+  margin-left: auto;
   overflow: hidden;
   font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
 
 .move-strip .move-eff-priority {
   align-items: center;
+  flex-shrink: 0;
+  font-weight: 700;
 }
 
 .move-strip .move-eff-priority .stat-glyph {
@@ -7953,43 +7969,118 @@ textarea,
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* The doubles board: enemies on top, your side below. Filled is always hit,
-   hollow is pick one, gold is the caster. */
-.target-board {
-  display: inline-grid;
-  grid-template-columns: 6px 6px;
-  grid-template-rows: 6px 6px;
-  gap: 2px;
+/* Who a non-attack reaches: one figure or two, red for foes, blue for your side, gold for the caster. */
+.target-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   flex-shrink: 0;
 }
 
-.target-board i {
-  border-radius: 1.5px;
-  background: rgba(255, 255, 255, 0.08);
+.target-figures {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.target-board i.is-hit {
-  background: var(--text);
+.target-figures .strip-glyph {
+  width: 15px;
+  height: 15px;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
 }
 
-.target-board i.is-pick {
-  background: transparent;
-  box-shadow: inset 0 0 0 1.2px var(--text);
+.target-figures.is-pair .strip-glyph + .strip-glyph {
+  margin-left: -6px;
 }
 
-.target-board.is-random i.is-pick {
-  box-shadow: inset 0 0 0 1.2px rgba(237, 239, 244, 0.5);
+.target-figures.is-foe { color: var(--target-foe); }
+.target-figures.is-ally { color: var(--target-ally); }
+.target-figures.is-self { color: var(--accent); }
+
+.target-figures.is-small .strip-glyph {
+  width: 10px;
+  height: 10px;
 }
 
-.target-board i.is-you {
-  background: var(--accent);
+.target-figures.is-small.is-pair .strip-glyph + .strip-glyph {
+  margin-left: -4px;
 }
 
-.target-board.is-small {
-  grid-template-columns: 4px 4px;
-  grid-template-rows: 4px 4px;
+.target-figures-random {
+  position: absolute;
+  top: -4px;
+  right: -5px;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+/* Everything else a move does, one glyph each; the words live in its title and the dossier. */
+.move-clause {
+  display: inline-flex;
+  align-items: center;
   gap: 1px;
-  margin-left: 2px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.move-clause .strip-glyph,
+.move-clause .move-clause-glyph {
+  width: 13px;
+  height: 13px;
+  vertical-align: 0;
+}
+
+.move-clause.is-unmet {
+  opacity: 0.45;
+}
+
+.move-clause.is-good { color: var(--hp-high); }
+.move-clause.is-bad { color: var(--hp-low); }
+
+.move-clause-status,
+.move-clause-field,
+.move-clause-partner {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* A field is its type's glyph standing on ground. */
+.move-clause-field {
+  padding-bottom: 1px;
+  box-shadow: inset 0 -2px 0 currentColor;
+}
+
+.move-clause-pip {
+  width: 6px;
+  height: 6px;
+  margin: 0 1px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 3px rgba(224, 166, 60, 0.6);
+}
+
+.move-clause-struck {
+  position: relative;
+  font-size: 10px;
+}
+
+.move-clause-struck::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 50%;
+  height: 1.5px;
+  background: currentColor;
+  transform: rotate(-35deg);
+}
+
+.move-clause-word {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 /* A status in its own glyph and colour, a stage as the stat's glyph and its chevrons. */

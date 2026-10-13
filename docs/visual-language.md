@@ -3334,15 +3334,21 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
   matchup arrow per enemy slot, left to right as they stand, each on a short lit bar. A move that
   hits both draws one brighter bar under the pair, so the "Spread" chip is gone. A downed foe's
   seat stays empty, so the other arrow never slides under the wrong enemy. Neutral is a dim dot.
-  Every other move leads with **the board**: four cells, enemies on top and your side below,
-  filled = always hit, hollow = pick one, gold = the caster at its own slot.
+  Every other move ends in **figures** (revised the same day, per user direction, replacing a
+  2×2 board that read as noise): one head-and-shoulders figure or two, red for foes
+  (`--target-foe`), blue for your side (`--target-ally`), gold for the caster, a ? for random.
 - **Riders are glyphs**: a status in its own icon and colour, a stat stage as the stat's glyph and
   its chevrons, priority as the Speed glyph and its sign. A rider landing somewhere other than the
-  move's target carries a small board. Rare clauses (retribution, rolls, partner and field
-  conditions) stay as words (`moveEffectSummary(…, { condensed: true })`).
+  move's target carries small figures. **Every other clause is a glyph too** (same day, per user
+  direction): ×2 and the field's type glyph on a ground line, a die for anything random, a burst for
+  crit and detonation, a crosshair for a target gate, hearts for drain / recoil / HP costs, and so
+  on (`moveClauses`, `MoveStrip.tsx`). Each glyph's words live in its title and the hold dossier; a
+  fight dims one whose condition is unmet.
+- **One line** (same day, per user direction): gem, type, name, then the strip right-aligned against
+  the stub, capped at 62% of the row so a crowded strip clips from its left and the seats keep one
+  column down the list. The name is 17px and the gem 30px, centred on the row.
 - **Matchup tiers, glow / fade**: ×2 and ×0.5 keep the HP green and red; ×4 is a brighter green
   with a glow (`--eff-quad-super`) and ×0.25 a receding red (`--eff-quad-resist`), both drawn as
   doubled arrows. The targeting cards' glow, the forecast and the eff chips use the same two.
-- The name went 13 → 15px and the gem 24 → 26px with the room the words gave back. The exact
-  multiplier is one tap later, on each enemy card in the targeting panel; a hold still opens the
+- The exact multiplier is one tap later, on each enemy card in the targeting panel; a hold still opens the
   dossier in words.

@@ -97,15 +97,14 @@ import { playBeatSfx } from '../../audio/beatSfx';
 import { setMusicRate } from '../../audio/music';
 import { getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
-import { MoveButtonReplica, MovePriorityChip, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderMagnitude, useLongPress } from '../shared/MoveTile';
-import { EnemySeats, MoveRiderIcons, MoveStub, TargetBoard, aimsAtEnemies } from '../shared/MoveStrip';
+import { MoveButtonReplica, TARGET_MODE_LABELS, healReadout, riderMagnitude, useLongPress } from '../shared/MoveTile';
+import { MoveStrip, MoveStub } from '../shared/MoveStrip';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
 import { ChargePips } from '../shared/ChargePips';
 import { MoveKindGlyph } from '../shared/statIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { STAT_LABELS } from '../shared/StatBars';
 import { HubGlyph } from '../shared/nodeIcons';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { useAmbientLocation } from '../shared/LocationContext';
@@ -146,8 +145,6 @@ interface MoveRowProps {
   caster: HealCaster;
   /** Each enemy seat's multiplier, left to right; null where the seat is empty. Empty for a move that is not an attack. */
   seats: readonly (number | null)[];
-  /** The caster's own slot, for the target board's gold cell. */
-  youSlot: 0 | 1;
   /** The metamorphic move this row is this round's face of (Motley's Trick), for the tag over its name. */
   faceOf?: MoveDefinition;
   /** The holder, for the move's Charge pips. */
@@ -160,7 +157,7 @@ interface MoveRowProps {
 
 // Lifted out of the `.map()` because useLongPress is a hook. Unaffordable rows are
 // `.is-unaffordable` + aria-disabled rather than `disabled` so a hold still opens the dossier.
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, seats, youSlot, faceOf, chargeHolder, restoredCharges, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, seats, faceOf, chargeHolder, restoredCharges, onSelect, onInspect }: MoveRowProps) {
   const usable = affordable && !gateUnmet;
   const spent = chargesLeft(chargeHolder, move) === 0;
   const longPress = useLongPress(onInspect, () => {
@@ -174,7 +171,6 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
   // A ramp that has actually accrued reads as boosted; the first cast, still at its authored figure, does not.
   const ramped = move.basePowerGainOnUse != null && rolledBasePower != null && rolledBasePower > (move.basePower ?? 0);
   const boosted = forceBonus > 0 || rolledHigh || ramped;
-  const summary = move.kind === 'damage' ? '' : moveEffectSummary(move, caster, { condensed: true });
 
   return (
     <button
@@ -193,154 +189,21 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
           {move.name}
         </span>
         <ChargePips move={move} combatant={chargeHolder} restored={restoredCharges} />
-      </div>
-      {/* Always rendered, so a row's height never depends on its contents. */}
-      <div className="move-row-effect">
-        {move.kind === 'damage' ? (
-          <span className="move-strip">
-            {aimsAtEnemies(liveTargetMode) ? (
-              <EnemySeats mults={seats} target={liveTargetMode} />
-            ) : (
-              <TargetBoard target={liveTargetMode} youSlot={youSlot} />
-            )}
-            {liveTargetMode === 'allOthers' && <TargetBoard target="allOthers" youSlot={youSlot} />}
-            <MovePriorityChip move={move} />
-            <MoveRiderIcons move={move} amountOf={(app) => riderMagnitude(move, app, caster)} youSlot={youSlot} />
-            {move.clearsRaisedStages && <span className="move-eff-status">Clears raised stats</span>}
-            {move.mpRegenGrant != null && (
-              <span className="move-eff-status">
-                +{move.mpRegenGrant} {STAT_LABELS.mpRegen}
-              </span>
-            )}
-            {move.conditionalPower && (
-              <span
-                className={`move-eff-status${
-                  (move.conditionalPower.requiresUserStatus ||
-                    move.conditionalPower.requiresFieldEffect ||
-                    move.conditionalPower.requiresPartnerType ||
-                    move.conditionalPower.requiresLastCharge ||
-                    move.conditionalPower.requiresUserHpBelow != null) &&
-                  !userConditionMet
-                    ? ' move-eff-unmet'
-                    : ''
-                }`}
-              >
-                ×{move.conditionalPower.multiplier}{' '}
-                {move.conditionalPower.requiresLastCharge
-                  ? 'on its last Charge'
-                  : move.conditionalPower.requiresPartnerType
-                  ? `with a ${move.conditionalPower.requiresPartnerType} partner`
-                  : move.conditionalPower.requiresFieldEffect
-                  ? `under ${fieldEffects[move.conditionalPower.requiresFieldEffect]?.name ?? move.conditionalPower.requiresFieldEffect}`
-                  : move.conditionalPower.requiresUserHpBelow != null
-                    ? `while you are under ${Math.round(move.conditionalPower.requiresUserHpBelow * 100)}% HP`
-                    : move.conditionalPower.requiresTargetHpBelow != null
-                      ? `under ${Math.round(move.conditionalPower.requiresTargetHpBelow * 100)}% HP`
-                      : move.conditionalPower.requiresTargetStatReduction
-                        ? 'vs a debuffed foe'
-                      : move.conditionalPower.requiresUserStatus
-                        ? `with ${move.conditionalPower.requiresUserStatus}`
-                        : `vs ${move.conditionalPower.requiresTargetStatus}`}
-                {move.conditionalPower.consumesStatus && !move.conditionalPower.requiresFieldEffect ? ' (spent)' : ''}
-              </span>
-            )}
-            {move.randomBasePower && (
-              <span className="move-eff-status">
-                Rolls {move.randomBasePower.min}-{move.randomBasePower.max}
-              </span>
-            )}
-            {move.randomPriority?.length && (
-              <span className="move-eff-status">
-                Priority {[...move.randomPriority].sort((a, b) => a - b).map((p) => (p >= 0 ? `+${p}` : `${p}`)).join('/')} random
-              </span>
-            )}
-            {move.randomStatDeltas && (
-              <span className="move-eff-status">
-                {'▲'.repeat(move.randomStatDeltas.stages)}{' '}
-                {move.randomStatDeltas.count === 1 ? 'random stat' : `${move.randomStatDeltas.count} random stats`}
-                {move.statDeltaTarget === 'self' ? ' (Self)' : ''}
-              </span>
-            )}
-            {move.randomStatusApplication?.length && (
-              <span className="move-eff-status">
-                1 of {move.randomStatusApplication.map((app) => app.statusId).join('/')}
-              </span>
-            )}
-            {move.detonatesStatus && <span className="move-eff-status">Detonates {move.detonatesStatus}</span>}
-            {move.requiresTargetStatus && (
-              <span className={`move-eff-status${gateUnmet ? ' move-eff-unmet' : ''}`}>
-                {gateUnmet ? `Needs ${move.requiresTargetStatus}` : `${move.requiresTargetStatus} only`}
-              </span>
-            )}
-            {move.drainPercent != null && <span className="move-eff-status">Drain {Math.round(move.drainPercent * 100)}%</span>}
-            {move.offStatOverride != null && (
-              <span className="move-eff-status">Uses {STAT_LABELS[move.offStatOverride]}</span>
-            )}
-            {move.retributionPercent != null && (
-              <span className={`move-eff-status${banked > 0 ? '' : ' move-eff-unmet'}`}>
-                {Math.round(banked * move.retributionPercent)} dmg banked
-              </span>
-            )}
-            {move.recoilPercent != null && <span className="move-eff-status">Recoil {Math.round(move.recoilPercent * 100)}%</span>}
-            {move.selfHpCost != null && <span className="move-eff-status">-{selfHpCost} HP</span>}
-            {move.manaDiscountOnUse != null && (
-              <span className="move-eff-status">Next {Math.max(0, cost - move.manaDiscountOnUse)} MP</span>
-            )}
-            {move.basePowerGainOnUse && (
-              <span className="move-eff-status">
-                Next{' '}
-                {Math.min(
-                  move.basePowerGainOnUse.max,
-                  (rolledBasePower ?? move.basePower ?? 0) + move.basePowerGainOnUse.amount
-                )}{' '}
-                power
-              </span>
-            )}
-            {move.conditionalPriority && (
-              <span className="move-eff-status">
-                {move.conditionalPriority.bonus >= 0 ? '+' : ''}
-                {move.conditionalPriority.bonus} priority vs {move.conditionalPriority.requiresTargetStatus}
-              </span>
-            )}
-            {move.conditionalManaCost && (
-              <span className="move-eff-status">
-                {move.conditionalManaCost.requiresPartnerType ? (
-                  <>
-                    {move.conditionalManaCost.manaCost} MP with a {move.conditionalManaCost.requiresPartnerType} partner
-                  </>
-                ) : (
-                  <>
-                    {move.conditionalManaCost.manaCost} MP vs{' '}
-                    {move.conditionalManaCost.requiresAllEnemiesStatus
-                      ? `2× ${move.conditionalManaCost.requiresAllEnemiesStatus}`
-                      : `1× ${move.conditionalManaCost.requiresAnyEnemyStatus}`}
-                  </>
-                )}
-              </span>
-            )}
-            {move.conditionalTarget && (
-              <span className={`move-eff-status${liveTargetMode === move.conditionalTarget.target ? '' : ' move-eff-unmet'}`}>
-                {TARGET_MODE_LABELS[move.conditionalTarget.target]} under{' '}
-                {fieldEffects[move.conditionalTarget.requiresFieldEffect]?.name ?? move.conditionalTarget.requiresFieldEffect}
-              </span>
-            )}
-          </span>
-        ) : (
-          <span className="move-strip">
-            <TargetBoard target={liveTargetMode} youSlot={youSlot} />
-            <MovePriorityChip move={move} />
-            <MoveRiderIcons move={move} amountOf={(app) => riderMagnitude(move, app, caster)} youSlot={youSlot} />
-            {summary && <span className="move-effect-text">{summary}</span>}
-            {move.selfHpCost != null && <span className="move-eff-status">-{selfHpCost} HP</span>}
-            {move.conditionalStatDeltas && (
-              <span className={`move-eff-status${packBonusActive ? '' : ' move-eff-unmet'}`}>
-                {packBonusActive
-                  ? `×${move.conditionalStatDeltas.multiplier} now`
-                  : `Needs a ${move.conditionalStatDeltas.requiresPartnerType} partner`}
-              </span>
-            )}
-          </span>
-        )}
+        <MoveStrip
+          move={move}
+          amountOf={(app) => riderMagnitude(move, app, caster)}
+          live={{
+            target: liveTargetMode,
+            seats,
+            gateUnmet,
+            userConditionMet,
+            packBonusActive,
+            banked,
+            selfHpCost: move.selfHpCost != null ? selfHpCost : undefined,
+            cost,
+            power: rolledBasePower ?? move.basePower,
+          }}
+        />
       </div>
       <MoveStub
         move={move}
@@ -2142,7 +2005,6 @@ export function FightScreen({
                               )
                             : []
                         }
-                        youSlot={combat.active[PLAYER_SIDE][1] === id ? 1 : 0}
                         onSelect={() => handleMoveClick(id, move)}
                         onInspect={() => setMovePopup({ combatantId: id, move })}
                       />
