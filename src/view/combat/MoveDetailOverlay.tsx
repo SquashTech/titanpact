@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition, StatKey } from '../../engine/content';
 import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { applyStageDelta, statDeltaLandsOnCasterSide, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveManaCost, moveForHero, moveForPrimaryType, statusMagnitude } from '../../engine/state';
+import { effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxMana, effectiveBasePower, hasStatus, resolveManaCost, moveForHero, moveForPrimaryType } from '../../engine/state';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -603,28 +603,6 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
                 : healCaster
                   ? resolveStatusMagnitudeFor(app.magnitude, def, app, move, { stats: healCaster.stats ?? {}, types: healCaster.types })
                   : app.magnitude;
-            // A Shield into a hero whose pool is at, or near, its max HP lands short — say so before the press (docs/shield.md §5).
-            const shieldHeldNote = (() => {
-              if (def.pipeline !== 'shield' || !context || liveMagnitude == null) return undefined;
-              const side = context.combat.combatants[context.attackerId]?.side ?? 'A';
-              const receivers =
-                app.target === 'self' || move.target === 'self'
-                  ? [context.attackerId]
-                  : app.target === 'bothAllies' || move.target === 'bothAllies'
-                    ? context.combat.active[side].filter((id): id is string => id !== null)
-                    : context.defenderIds;
-              const parts = receivers
-                .map((id) => {
-                  const holder = context.combat.combatants[id];
-                  if (!holder || holder.fainted) return null;
-                  const hero = allCombatants[holder.heroId];
-                  const room = getMaxHp(hero, holder) - statusMagnitude(holder, def.id);
-                  if (room >= liveMagnitude) return null;
-                  return room <= 0 ? `${hero.name}'s Shield can't go any higher — lands nothing` : `${hero.name}'s Shield can't go much higher — lands ${room}`;
-                })
-                .filter(Boolean);
-              return parts.length ? parts.join('; ') : undefined;
-            })();
             return (
               <EffectRow
                 key={app.statusId}
@@ -636,36 +614,11 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
                   liveMagnitude != null ? ` ${statusAmountText(app.statusId, liveMagnitude)}` : app.duration != null ? ` ${app.duration}` : ''
                 }${where ? ` — ${where}` : ''}`}
                 target={app.target === 'moveTarget' ? undefined : app.target}
-                note={[shieldHeldNote, statusFactsLine(def)].filter(Boolean).join(' — ')}
+                note={statusFactsLine(def)}
               />
             );
           })}
-          {move.statDeltas?.map(({ stat, stages }) => {
-            // A change into a hero already at, or near, ±5 lands short — say so before the press (docs/stat-stages.md).
-            const held = (() => {
-              if (stages === 0 || !context) return undefined;
-              const ownSide = statDeltaLandsOnCasterSide(move);
-              const receivers = ownSide
-                ? move.statDeltaTarget === 'self' || move.target === 'self'
-                  ? [context.attackerId]
-                  : context.combat.active[context.combat.combatants[context.attackerId]?.side ?? 'A'].filter((id): id is string => id !== null)
-                : context.defenderIds;
-              const edge = stages > 0 ? 'higher' : 'lower';
-              const parts = receivers
-                .map((id) => {
-                  const d = context.combat.combatants[id];
-                  if (!d || d.fainted) return null;
-                  const { landed, capped } = applyStageDelta(d, stat, stages);
-                  if (!capped) return null;
-                  const who = allCombatants[d.heroId]?.name ?? id;
-                  return landed === 0
-                    ? `${who}'s ${STAT_LABELS[stat]} can't go any ${edge} — lands nothing`
-                    : `${who}'s ${STAT_LABELS[stat]} can't go much ${edge} — lands ${stageText(stat, landed)}`;
-                })
-                .filter(Boolean);
-              return parts.length ? parts.join('; ') : undefined;
-            })();
-            return (
+          {move.statDeltas?.map(({ stat, stages }) => (
             <EffectRow
               key={stat}
               glyph={<StatGlyph stat={stat} />}
@@ -676,10 +629,8 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
                   : TARGET_MODE_LABELS[move.target]
               ).toLowerCase()}`}
               target={move.statDeltaTarget === 'bothAllies' || move.statDeltaTarget === 'self' ? move.statDeltaTarget : move.target}
-              note={held}
             />
-            );
-          })}
+          ))}
         </div>
       )}
 

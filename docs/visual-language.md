@@ -3413,6 +3413,7 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   Charge:** ×1.5 power", "**Downpour:** ×2 power". An umbrella word ("Empowered" was tried) named
   the payoff all 32 share and hid the condition, the half the player has to read. A status condition
   reads as what its holder is ("vs Burning", "vs Frozen", `StatusDefinition.adjective`), and **an
-  effect row carries a second line only to explain a status or a field it applies**, or to warn that
-  a buff or Shield would land nothing; rule notes ("read before the hit lands", "spent Charges stay
-  spent through a switch") were cut, per user direction, so Charges reads "**Charges:** 2".
+  effect row carries a second line only to explain a status or a field it applies**. Rule notes
+  ("read before the hit lands", "spent Charges stay spent through a switch") were cut, per user
+  direction, so Charges reads "**Charges:** 2"; so were the warnings that a buff or Shield would land
+  short at the five-step limit or a full pool (reversing `docs/shield.md` §5's pre-press warning).
