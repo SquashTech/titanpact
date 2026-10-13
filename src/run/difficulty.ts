@@ -136,8 +136,15 @@ export const NO_SCALING: ActScaling = { level: 1, mastery: 0 };
  */
 export const GUILD_HALL_ACT_LAG = 1;
 
+/**
+ * Act 1 has no act behind it, so its hire is ONE FIGHT behind instead — par after the opener. The
+ * named exception to "a contract never trails a hire": Act 1's contracts sit under it.
+ */
+export const GUILD_HALL_FIRST_ACT_FIGHTS = 1;
+
 export function guildHallLevel(actNumber: number): number {
   const act = clampAct(actNumber);
+  if (act === 1) return levelAfterEncounters(GUILD_HALL_FIRST_ACT_FIGHTS);
   const behind = levelAfterEncounters(Math.max(0, act - GUILD_HALL_ACT_LAG) * ENCOUNTERS_PER_ACT);
   // `clampAct` has no upper bound and the +1 can reach past the cap on its own.
   return Math.min(MAX_LEVEL, behind + 1);

@@ -27,7 +27,7 @@ export const GOOD_ART = {
   mp: mpArt,
   revive: reviveArt,
   contract: contractArt,
-  reroll: bellArt,
+  call: bellArt,
   mend: stewArt,
 } as const;
 

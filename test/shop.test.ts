@@ -4,7 +4,7 @@ import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { guildHallOffers } from '../src/data/recruitment';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
-import { rollGuildHallOffers, rerollGuildHallOffers, tavernRerollCost, TavernRerollError, ANVIL_PRICE_BY_TARGET, EQUIPMENT_PRICE_BY_RARITY, EQUIPMENT_SELL_SHARE, sellValueFor, SHOP_ITEM_COUNT, shopItemPrice, buyShopItem, ShopItemError } from '../src/run/shop';
+import { rollGuildHallOffers, callForType, callableTypes, TAVERN_CALL_PRICE, TavernCallError, ANVIL_PRICE_BY_TARGET, EQUIPMENT_PRICE_BY_RARITY, EQUIPMENT_SELL_SHARE, sellValueFor, SHOP_ITEM_COUNT, shopItemPrice, buyShopItem, ShopItemError } from '../src/run/shop';
 import { RARITY_ORDER } from '../src/run/equipment';
 
 function seedRoster(heroIds: string[], gold = 0) {
@@ -26,7 +26,7 @@ test('shop: sellValueFor pays the sell share of the tier\'s value, rising with t
   assert.strictEqual(sellValueFor(equipment['sword.common']), Math.floor(EQUIPMENT_PRICE_BY_RARITY.common * EQUIPMENT_SELL_SHARE));
 });
 
-test('shop: the gear shelf holds SHOP_ITEM_COUNT real items, the Vigil included, and a Tavern reroll keeps them', () => {
+test('shop: the gear shelf holds SHOP_ITEM_COUNT real items, the Vigil included, and a Tavern call keeps them', () => {
   const run = seedRoster(['ironWarden'], 1000);
   for (const muster of [false, true]) {
     const offers = rollGuildHallOffers(run, guildHallOffers, muster);
@@ -34,7 +34,7 @@ test('shop: the gear shelf holds SHOP_ITEM_COUNT real items, the Vigil included,
     assert.ok(offers.itemIds.every((id) => equipment[id]));
   }
   const offers = rollGuildHallOffers(run, guildHallOffers);
-  assert.deepStrictEqual(rerollGuildHallOffers(run, guildHallOffers, offers, 0).offers.itemIds, offers.itemIds);
+  assert.deepStrictEqual(callForType(run, guildHallOffers, offers, callableTypes(run, guildHallOffers, offers)[0]).offers.itemIds, offers.itemIds);
 });
 
 test('shop: a shelf piece costs its price, and never sells back for as much', () => {
@@ -64,36 +64,41 @@ test('shop: rollGuildHallOffers never offers duplicate heroes', () => {
   assert.strictEqual(new Set(offers.heroOfferIds).size, offers.heroOfferIds.length);
 });
 
-// --- The Tavern's reroll ---
+// --- The Tavern's call ---
 
-test('shop: a Tavern reroll charges its price and each one a visit costs more', () => {
-  const run = seedRoster([], 100);
-  const offers = rollGuildHallOffers(run, guildHallOffers);
-  const first = rerollGuildHallOffers(run, guildHallOffers, offers, 0);
-  assert.strictEqual(first.run.gold, 100 - tavernRerollCost(0));
-  assert.ok(tavernRerollCost(1) > tavernRerollCost(0));
-  assert.throws(() => rerollGuildHallOffers(seedRoster([], tavernRerollCost(0) - 1), guildHallOffers, offers, 0), TavernRerollError);
-});
+const heroTypeOf = (offerId: string) => heroes[guildHallOffers.find((o) => o.id === offerId)!.heroId].types[0];
 
-test('shop: a Tavern reroll keeps the shelf size and shows new faces, never a roster hero', () => {
-  const run = seedRoster(['ironWarden'], 1000);
+test('shop: a call charges its price and puts a hero of the named type on the last poster, the board keeping its size', () => {
+  const run = seedRoster(['ironWarden'], 100);
   for (let i = 0; i < 20; i++) {
     const offers = rollGuildHallOffers(run, guildHallOffers);
-    const next = rerollGuildHallOffers(run, guildHallOffers, offers, 0).offers;
-    assert.strictEqual(next.heroOfferIds.length, offers.heroOfferIds.length);
-    assert.strictEqual(new Set(next.heroOfferIds).size, next.heroOfferIds.length);
-    assert.ok(next.heroOfferIds.every((id) => !offers.heroOfferIds.includes(id)), 'a deep pool rerolls into new faces');
-    assert.ok(!next.heroOfferIds.some((id) => guildHallOffers.find((o) => o.id === id)?.heroId === 'ironWarden'));
+    const type = callableTypes(run, guildHallOffers, offers)[i % 5];
+    const called = callForType(run, guildHallOffers, offers, type);
+    assert.strictEqual(called.run.gold, 100 - TAVERN_CALL_PRICE);
+    assert.strictEqual(called.offers.heroOfferIds.length, offers.heroOfferIds.length);
+    assert.strictEqual(called.offers.heroOfferIds[offers.heroOfferIds.length - 1], called.offerId, 'the last poster');
+    assert.deepStrictEqual(called.offers.heroOfferIds.slice(0, -1), offers.heroOfferIds.slice(0, -1), 'the rest stay up');
+    assert.strictEqual(heroTypeOf(called.offerId), type);
+    assert.ok(!offers.heroOfferIds.includes(called.offerId), 'never a face already on the board');
+    assert.notStrictEqual(guildHallOffers.find((o) => o.id === called.offerId)!.heroId, 'ironWarden', 'never a roster hero');
   }
+  assert.throws(() => callForType(seedRoster([], TAVERN_CALL_PRICE - 1), guildHallOffers, rollGuildHallOffers(run, guildHallOffers), 'Fire'), TavernCallError);
 });
 
-test('shop: a Tavern reroll over a thin pool tops up from the faces just shown', () => {
-  const pool = guildHallOffers.slice(0, 3);
-  const run = seedRoster([], 1000);
-  const offers = { heroOfferIds: pool.slice(0, 2).map((o) => o.id), itemIds: [], gems: [] };
-  const next = rerollGuildHallOffers(run, pool, offers, 0).offers;
-  assert.strictEqual(next.heroOfferIds.length, 2);
-  assert.ok(next.heroOfferIds.includes(pool[2].id));
+test('shop: a type nobody is left to answer cannot be called', () => {
+  const run = seedRoster([], 100);
+  const pool = guildHallOffers.filter((o) => heroes[o.heroId].types[0] === 'Fire').slice(0, 1);
+  const offers = { heroOfferIds: [pool[0].id], itemIds: [], gems: [] };
+  assert.deepStrictEqual(callableTypes(run, pool, offers), [], 'the one Fire hero is already posted');
+  assert.throws(() => callForType(run, pool, offers, 'Fire'), TavernCallError);
+});
+
+test('shop: a call to an empty board posts the hero rather than replacing a hired one', () => {
+  const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
+  const run = seedRoster(['ironWarden'], 100);
+  const offers = { heroOfferIds: [offer.id], itemIds: [], gems: [] };
+  const called = callForType(run, guildHallOffers, offers, 'Fire');
+  assert.deepStrictEqual(called.offers.heroOfferIds, [offer.id, called.offerId]);
 });
 
 // --- No gold printer (docs/equipment.md §5) ---

@@ -3,7 +3,7 @@ import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { guildHallOffers } from '../src/data/recruitment';
-import { GUILD_HALL_ACT_LAG, enemyLevelFor, guildHallLevel } from '../src/run/difficulty';
+import { GUILD_HALL_ACT_LAG, GUILD_HALL_FIRST_ACT_FIGHTS, enemyLevelFor, guildHallLevel } from '../src/run/difficulty';
 import { MOVE_CAP, scheduleEntriesBelow } from '../src/run/progression';
 import { MASTERY_CAP, MASTERY_EVOLUTION, guildHallMastery, masteryForAct } from '../src/run/mastery';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters, levelOf, xpForLevel } from '../src/run/growth';
@@ -82,9 +82,10 @@ test('recruitment: a hire arrives ONE ACT behind the roster', () => {
       level < levelAfterEncounters(act * ENCOUNTERS_PER_ACT),
       `act ${act}: a hire at ${level} is not underlevelled at all`
     );
+    // Act 1 has no act behind it: its hire is a fight behind instead.
     assert.strictEqual(
       level,
-      levelAfterEncounters(Math.max(0, act - GUILD_HALL_ACT_LAG) * ENCOUNTERS_PER_ACT) + 1,
+      act === 1 ? levelAfterEncounters(GUILD_HALL_FIRST_ACT_FIGHTS) : levelAfterEncounters((act - GUILD_HALL_ACT_LAG) * ENCOUNTERS_PER_ACT) + 1,
       `act ${act}: the hire level must track the curve, not a table beside it`
     );
   }
@@ -365,8 +366,10 @@ test('recruitment: the LEVEL axis points the right way — a contract hero outra
   // §6's fourth axis. It ran BACKWARDS once — an act-5 contract hero arrived at level 10 where a
   // hire arrived at 24 — because the enemy table was fitted to a 10-level cap. Both read off the
   // same curve now (docs/enemy-levels.md §4): a Skirmish enemy sits AT the fork's par, a hire a
-  // whole act behind, so a Skirmish contract never trails a hire and an Elite's outranks it.
-  for (let act = 1; act <= 4; act++) {
+  // whole act behind, so a Skirmish contract never trails a hire and an Elite's outranks it. Act 1
+  // is the named exception: its hire is a fight behind, not an act, and outranks its contracts.
+  assert.ok(guildHallLevel(1) > enemyLevelFor('elite', 1), 'the Act 1 exception still holds — or retire it');
+  for (let act = 2; act <= 4; act++) {
     for (const kind of ['skirmish', 'elite'] as const) {
       const outranks = kind === 'elite' ? enemyLevelFor(kind, act) > guildHallLevel(act) : enemyLevelFor(kind, act) >= guildHallLevel(act);
       assert.ok(

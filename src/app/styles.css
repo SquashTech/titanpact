@@ -15343,6 +15343,51 @@ button.star-shop-bundle-face {
   color: var(--accent);
 }
 
+/* The Tavern's call: every draftable type, one a tile, a type nobody is left to answer dark. */
+.tavern-call-types {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.tavern-call-type {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 54px;
+  padding: 4px 2px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(var(--type-rgb), 0.2), rgba(var(--type-rgb), 0.05)), var(--surface-sunken);
+  border: 1px solid color-mix(in srgb, var(--type-color) 40%, var(--border));
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.tavern-call-type:not(:disabled):active {
+  transform: scale(0.94);
+}
+
+.tavern-call-type:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.tavern-call-glyph {
+  width: 22px;
+  height: 22px;
+  color: var(--type-color);
+}
+
+.tavern-call-name {
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
 /* Primary bottom-docked CTA, shared by every "commit this choice and move on"
    button in the run loop. A dark forged plate lit by the room's own hue rather
    than a gold slab: it inherits `--node-rgb` from the screen root, so the same

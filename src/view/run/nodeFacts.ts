@@ -260,7 +260,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
           { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },
         ],
         odds: null,
-        about: 'Where gold is spent. The Tavern hires heroes for a Recruit Contract — raw: an act behind, unevolved, bare-socketed — and its bar sells Contracts, a fresh shelf of faces and the mend, which heals everyone, knocked-out heroes included. The Gem and Gear counters sell straight onto the hero you pick.',
+        about: 'Where gold is spent. The Tavern hires heroes for a Recruit Contract — raw: an act behind, unevolved, bare-socketed — and its bar sells Contracts, a call for a hero of the type you name, and the mend, which heals everyone, knocked-out heroes included. The Gem and Gear counters sell straight onto the hero you pick.',
         terms: [TERMS.contract],
       };
     case 'muster':

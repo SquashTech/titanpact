@@ -646,9 +646,11 @@ don't silently override it.
   it — is absorbed on the contract hero, the fifth finished axis against a hire's bare sockets.
   The LEVEL axis points the right way: a contract hero arrives at its NODE's enemy level
   (2026-09-15, `docs/enemy-levels.md` §4 — the Skirmish's is the player's par, 5/10/15/20/25,
-  the Elite's a step over) against a hire's 2/9/15/20/25, so an Elite's contract outranks a hire
-  and a Skirmish's never trails one. `test/recruitment.test.ts` carries the assertion that
-  catches it inverting again.
+  the Elite's a step over) against a hire's 5/9/15/20, so an Elite's contract outranks a hire
+  and a Skirmish's never trails one — **except in Act 1** (2026-10-12, per user direction): Act 1
+  has no act behind it, so its hire is a FIGHT behind (`GUILD_HALL_FIRST_ACT_FIGHTS`, level 5) and
+  outranks the Act 1 contracts at 3/4. `test/recruitment.test.ts` carries the assertion that
+  catches it inverting again, and pins the exception.
 - **Roster hard cap = 6, and EVERY fight fields the whole roster** (2026-09-17, per user
   direction, FOR PLAYTEST — `STANDARD_SQUAD_SIZE` = `ROSTER_CAP`, `src/run/squad.ts`; it was
   bring-6-pick-4). There is no pick, only **leads**: against a fully scouted

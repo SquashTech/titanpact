@@ -328,8 +328,14 @@ moves while the roster held four. So the owed entries that would land as RECEIPT
 `MOVE_CAP`, no question asked) are learned when the hire is made, rolled seeded so the sheet
 inspected is the hero signed (`withReceipts`, `guildRecruit.ts`); an entry that would ask —
 replace-or-decline at the cap — stays owed. No decision moved off the player. Measured: Act 2 hires
-hold 3–4 moves, Acts 3–4 a full four. **Act 1's hire is unchanged** — at level 2 it has reached no
-entry, so it still holds two.
+hold 3–4 moves, Acts 3–4 a full four.
+
+**Act 1's hire is a fight behind, not an act** (same day, per user direction). At level 2 it had
+reached no schedule entry and arrived a two-move hero four levels under the roster. It now arrives
+at par after the opener (`GUILD_HALL_FIRST_ACT_FIGHTS` = 1, level 5), where 46 of 84 heroes have
+reached their first offer and take it as a receipt. **The named cost:** it outranks Act 1's
+contracts (Skirmish 3, Elite 4), so in Act 1 a hire beats a claim on level and a claim keeps only
+the piece it fought in. Acts 2–4 are unchanged.
 
 It is the opposite half of a **contract** hero, which arrives **finished** and **armed** — the
 enemy you beat, entire: its Evolution chosen, the Mastery its act bought, every schedule entry

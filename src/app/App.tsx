@@ -5,7 +5,7 @@ import { useReloadOnNewBuild } from './useReloadOnNewBuild';
 import { clearSave, flushSave, persistStorage, readResume, readSave, readSaveFromMirror, saveHealth, writeSave, type SaveHealth, type SaveRead } from './saveStorage';
 import { eraseAllData, readProfile, updateProfile } from './profileStorage';
 import { usePlaytime } from './usePlaytime';
-import type { StatKey } from '../engine/content';
+import type { StatKey, TypeId } from '../engine/content';
 import { saveSummary, type SaveCheckpoint, type SavedRun } from '../run/save';
 import { isResumable, resumeTarget, type CombatSnapshot, type ResumePayload, type RunScreen, type ScrollProgress } from '../run/resume';
 import {
@@ -108,7 +108,7 @@ import { guildHallOffersFor } from '../data/recruitment';
 import { MASTERY_CAP, MasteryError, anyMasteryEligible } from '../run/mastery';
 import { GEM_CACHE_COUNT, SCRIBE_GEMS, buyShelfGem, canBuyShelfGem, placeGem, rollGemDrop, rollGems, type Gem } from '../run/gems';
 import type { MvpPick } from '../run/mvp';
-import { ShopItemError, TavernRerollError, buyShopItem, rerollGuildHallOffers, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
+import { ShopItemError, TavernCallError, buyShopItem, callForType, callableTypes, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
 import { generateMap, type MapNodeType, type RewardNodeType } from '../run/map';
@@ -843,7 +843,7 @@ export function App() {
         nodeId,
         offers: rollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool), node.type === 'muster'),
         gemsBought: [],
-        rerolls: 0,
+        called: false,
         itemsBought: [],
       });
     } else if (node.type === 'manaWellReward') {
@@ -1075,20 +1075,21 @@ export function App() {
     setPlayerRun(next);
   }
 
-  /** The Tavern's reroll (run/shop.ts): a fresh shelf of hires, dearer each time a visit. */
-  function handleRerollTavern() {
-    // The Vigil has no hires to reroll.
-    if (screen.kind !== 'shop' || playerRun.map?.nodes[screen.nodeId]?.type === 'muster') return;
-    let rolled: ReturnType<typeof rerollGuildHallOffers>;
+  /** The Tavern's call (run/shop.ts): word sent for a type, once a visit; the offer id of who answered, or null. */
+  function handleCallTavern(type: TypeId): string | null {
+    // The Vigil has no Tavern to call from.
+    if (screen.kind !== 'shop' || screen.called || playerRun.map?.nodes[screen.nodeId]?.type === 'muster') return null;
+    let called: ReturnType<typeof callForType>;
     try {
-      rolled = rerollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool), screen.offers, screen.rerolls);
+      called = callForType(playerRun, guildHallOffersFor(recruitPool), screen.offers, type);
     } catch (err) {
-      if (!(err instanceof TavernRerollError)) throw err;
-      return;
+      if (!(err instanceof TavernCallError)) throw err;
+      return null;
     }
     playSfx('gold.coin');
-    setPlayerRun(rolled.run);
-    setScreen({ ...screen, offers: rolled.offers, rerolls: screen.rerolls + 1 });
+    setPlayerRun(called.run);
+    setScreen({ ...screen, offers: called.offers, called: true });
+    return called.offerId;
   }
 
   /** The Gem counter: the Gem is paid for and set on the hero picked, in one tap. The caller raises what the pip opened. */
@@ -1617,12 +1618,13 @@ export function App() {
           run={playerRun}
           offers={screen.offers}
           gemsBought={screen.gemsBought}
-          rerolls={screen.rerolls}
+          called={screen.called}
+          callTypes={callableTypes(playerRun, guildHallOffersFor(recruitPool), screen.offers)}
           itemsBought={screen.itemsBought}
           onRunChange={setPlayerRun}
           onBuyGem={handleBuyShelfGem}
           onBuyItem={handleBuyGuildItem}
-          onReroll={handleRerollTavern}
+          onCall={handleCallTavern}
           onBuyMend={handleBuyGuildMend}
           onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}

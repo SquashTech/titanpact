@@ -297,6 +297,11 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
 
   return (
     <div className="hall-counter-room is-gear">
+      {/* The piece in hand, read whole, at the top: it is only read, so the heroes it is bought onto sit low, by the stock. */}
+      <div className="counter-focus">
+        {item && <EquipChoiceCard key={item.id} item={item} revealDelayMs={0} labelled onInspect={() => setInspecting(item.id)} />}
+      </div>
+
       <HeroPickGrid count={run.roster.length} columns={3} fill className="counter-roster">
         {run.roster.map((entry) => {
           const hero = rosterHeroes[entry.heroId];
@@ -342,11 +347,6 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
           );
         })}
       </HeroPickGrid>
-
-      {/* The piece in hand, read whole: name, tier and every grant spelled out. */}
-      <div className="counter-focus">
-        {item && <EquipChoiceCard key={item.id} item={item} revealDelayMs={0} labelled onInspect={() => setInspecting(item.id)} />}
-      </div>
 
       <div className="counter-stock is-gear">
         {itemIds.map((id, i) => (

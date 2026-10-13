@@ -4,7 +4,7 @@ import { heroes } from '../../data/heroes';
 import { rosterHeroes } from '../../data/content';
 import { guildHallOffersFor } from '../../data/recruitment';
 import { ResourceGlyph } from '../shared/RunGlyph';
-import type { HeroDefinition } from '../../engine/content';
+import type { HeroDefinition, TypeId } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
@@ -19,9 +19,11 @@ import {
   RecruitmentError,
   type GuildHallOffer,
 } from '../../run/recruitment';
-import { tavernRerollCost, type GuildHallOffers } from '../../run/shop';
+import { TAVERN_CALL_PRICE, type GuildHallOffers } from '../../run/shop';
+import { TYPES } from '../../data/typechart';
+import { ElementGlyph } from '../shared/elementIcons';
 import { statScaleFor } from '../../run/statScale';
-import { getTypeColor } from '../combat/typeColors';
+import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { formIdFor } from '../../run/progression';
@@ -69,8 +71,10 @@ interface Props {
   tab: GuildHallTab;
   /** Shelf Gems sold this visit (offers.gems indices). */
   gemsBought: readonly number[];
-  /** Tavern rerolls this visit; the next one costs tavernRerollCost(rerolls). */
-  rerolls: number;
+  /** Whether the Tavern's call has been made this visit — once a visit. */
+  called: boolean;
+  /** The types a call can be sent for right now (run/shop.ts callableTypes). */
+  callTypes: readonly TypeId[];
   /** Gear-counter slots sold this visit (offers.itemIds indices). */
   itemsBought: readonly number[];
   onRunChange: (next: RunState) => void;
@@ -80,8 +84,8 @@ interface Props {
   onGemPlaced: (rosterId: string, landed: RunState, fromMastery: number) => void;
   /** Hands off to App.tsx, which charges the gold and seats the piece on the hero; the landed run, or null. */
   onBuyItem: (slot: number, rosterId: string) => RunState | null;
-  /** Hands off to App.tsx, which charges the gold and swaps the shelf on the screen (run/shop.ts rerollGuildHallOffers). */
-  onReroll: () => void;
+  /** Hands off to App.tsx, which charges the gold and posts who answered (run/shop.ts callForType); their offer id, or null. */
+  onCall: (type: TypeId) => string | null;
   /** The whole roster made whole for what is missing (run/wounds.ts mendPrice). */
   onBuyMend: () => void;
   /** Recruiting at a full roster hands off to App.tsx's RosterReplaceScreen gate. */
@@ -131,13 +135,14 @@ export function GuildHallPanel({
   run,
   offers,
   gemsBought,
-  rerolls,
+  called,
+  callTypes,
   itemsBought,
   onRunChange,
   onBuyGem,
   onGemPlaced,
   onBuyItem,
-  onReroll,
+  onCall,
   onBuyMend,
   onRequestRosterReplace,
   onOverlayChange,
@@ -145,6 +150,7 @@ export function GuildHallPanel({
 }: Props) {
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
   const [confirmingContract, setConfirmingContract] = useState(false);
+  const [calling, setCalling] = useState(false);
   /** The hero the joining cinematic is running for. The roster-full path fires it from App instead. */
   const [fanfareHeroId, setFanfareHeroId] = useState<string | null>(null);
 
@@ -159,10 +165,10 @@ export function GuildHallPanel({
   const contractCost = contractPrice(run);
   const canBuyContract = run.gold >= contractCost;
   const canHire = run.recruitContracts > 0;
-  const rerollCost = tavernRerollCost(rerolls);
+  const canCall = !called && run.gold >= TAVERN_CALL_PRICE && callTypes.length > 0;
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
-  const overlayOpen = !!previewOffer || confirmingContract || !!fanfareHeroId;
+  const overlayOpen = !!previewOffer || confirmingContract || calling || !!fanfareHeroId;
   useEffect(() => {
     onOverlayChange?.(overlayOpen);
   }, [overlayOpen, onOverlayChange]);
@@ -178,6 +184,13 @@ export function GuildHallPanel({
     } catch (err) {
       if (!(err instanceof RecruitmentError) && !(err instanceof RosterFullError)) throw err;
     }
+  }
+
+  /** Word sent; whoever answers steps straight onto the stage. */
+  function handleCall(type: TypeId) {
+    setCalling(false);
+    const answered = onCall(type);
+    if (answered) setPreviewOfferId(answered);
   }
 
   function handleBuyContract() {
@@ -229,12 +242,12 @@ export function GuildHallPanel({
                 onClick={() => setConfirmingContract(true)}
               />
               <HallGood
-                art={GOOD_ART.reroll}
-                name="New Faces"
-                price={rerollCost}
-                disabled={run.gold < rerollCost || offers.heroOfferIds.length === 0}
-                confirm={rerollCost >= CONFIRM_PURCHASE_FROM}
-                onClick={onReroll}
+                art={GOOD_ART.call}
+                name="Call"
+                price={called ? 'Answered' : TAVERN_CALL_PRICE}
+                soldOut={called}
+                disabled={!canCall}
+                onClick={() => setCalling(true)}
               />
               <HallGood
                 art={GOOD_ART.mend}
@@ -306,6 +319,44 @@ export function GuildHallPanel({
                 />
               );
             })()}
+
+          {/* Word sent for a type: the picker is the confirm. Every type is shown, and one nobody is left to answer is dark. */}
+          {calling && (
+            <div className="log-overlay" onClick={() => setCalling(false)}>
+              <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>
+                <div className="move-info-panel">
+                  <div className="move-info-head">
+                    <span className="move-info-name">Call</span>
+                    <span className="move-info-kind">{TAVERN_CALL_PRICE}g</span>
+                  </div>
+                  <div className="guild-hall-confirm-body">One hero of the type you name answers, and takes the last poster on the board.</div>
+                  <div className="tavern-call-types">
+                    {TYPES.filter((type) => type !== 'Ancient').map((type) => {
+                      const open = callTypes.includes(type);
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          className="tavern-call-type"
+                          style={{ '--type-color': getTypeColor(type), '--type-rgb': getTypeColorRgb(type) } as CSSProperties}
+                          disabled={!open}
+                          onClick={() => handleCall(type)}
+                        >
+                          <ElementGlyph type={type} className="tavern-call-glyph" />
+                          <span className="tavern-call-name">{type}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="detail-action">
+                  <button className="detail-action-cancel" onClick={() => setCalling(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* The one purchase with nothing to open first, so it gets its own confirm. */}
           {confirmingContract && (

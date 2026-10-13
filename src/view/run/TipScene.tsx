@@ -77,13 +77,14 @@ function HallScene({ scene }: { scene: TipHallScene }) {
             offers={{ heroOfferIds: (scene.hires ?? []).map((id) => `guild-${id}`), itemIds: [], gems: [] }}
             tab="tavern"
             gemsBought={[]}
-            rerolls={0}
+            called={false}
+            callTypes={[]}
             itemsBought={[]}
             onRunChange={noop}
             onBuyGem={() => null}
             onGemPlaced={noop}
             onBuyItem={() => null}
-            onReroll={noop}
+            onCall={() => null}
             onBuyMend={noop}
             onRequestRosterReplace={noop}
           />

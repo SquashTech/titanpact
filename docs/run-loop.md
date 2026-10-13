@@ -71,7 +71,7 @@ only way to a move AHEAD of its schedule. `SPLICED_ROW`, `LAST_MENTOR_ACT`.
 
 **The Guild Hall's three counters (2026-10-08, per user direction; replacing the Shop / Tavern /
 Smithy split of 2026-09-24):** **Tavern** (the hire board — each hire one Recruit Contract — and the
-bar: the Contract for gold, the reroll and the party mend), **Gems** and **Gear**. **The flasks
+bar: the Contract for gold, the call and the party mend), **Gems** and **Gear**. **The flasks
 came off the bar 2026-10-08** (per user direction): potions and the Revive were never a good or
 exciting use of gold, so neither is sold anywhere — they are found. It opens on the Tavern. The Smithy came off the every-act hall:
 an Anvil and an Enchanter over every worn piece every act was a freedom that made a visit homework.
@@ -89,10 +89,15 @@ row is always laid out, so the cards never grow under the tap.
 **The Vigil trades the Tavern for the Smithy**: Gems, Gear, and the Anvil and Enchanter over worn
 gear — nobody joins for the finale, and with no bar no mend is sold there.
 Cycle III's "the Smithy ×1.5" (`smithyPrice`) now prices only the Vigil's Smithy.
-**The reroll** is the Tavern's one lever on WHO shows up: a fresh shelf for
-`TAVERN_REROLL_BASE_COST` = 10g, +`TAVERN_REROLL_STEP` = 10 each time a visit
-(`rerollGuildHallOffers`), never a roster hero and never a face just turned away while the pool can
-spare one. Untuned, and the sim never rerolls.
+**The call** (2026-10-12, per user direction, replacing the reroll — another random shelf of raw,
+act-behind hires was a buy nobody made) is the Tavern's one lever on WHO shows up: name a TYPE, and
+one of the run's pool of that innate type — not on the roster, not already posted, which one rolled —
+takes the board's last poster (`callForType`, `TAVERN_CALL_PRICE` = 25g, **once a visit**). The
+type is aimed and the hero is not, so a call fills a hole in the chart without assembling a comp;
+the answer still costs a Contract and still arrives raw and an act behind. Whoever answers steps
+straight onto the stage. **The second-order question:** the pool is the player's deck, three a
+type, so a call is one of three heroes the player chose — deck building is what makes it strong,
+and that is to be watched in play. Untuned, and the sim never calls.
 
 **The Blacksmith — deleted 2026-09-15** (`docs/gear-absorption.md` §6). From act 3 the funnel was
 a pick of Guild Hall or Blacksmith (item slots, the Anvil, the Enchanter). With gear absorbed the

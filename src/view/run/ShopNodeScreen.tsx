@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
+import type { TypeId } from '../../engine/content';
 import type { GuildHallOffers } from '../../run/shop';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
@@ -20,14 +21,16 @@ interface Props {
   offers: GuildHallOffers;
   /** Shelf Gems sold this visit (offers.gems indices), carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the who screen. */
   gemsBought: readonly number[];
-  /** Tavern rerolls this visit (run/shop.ts tavernRerollCost). */
-  rerolls: number;
+  /** Whether the Tavern's call has been made this visit (run/shop.ts callForType). */
+  called: boolean;
+  /** The types a call can be sent for (run/shop.ts callableTypes). */
+  callTypes: readonly TypeId[];
   /** Gear-counter slots sold this visit. */
   itemsBought: readonly number[];
   onRunChange: (next: RunState) => void;
   onBuyGem: (slot: number, rosterId: string) => RunState | null;
   onBuyItem: (slot: number, rosterId: string) => RunState | null;
-  onReroll: () => void;
+  onCall: (type: TypeId) => string | null;
   onBuyMend: () => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
@@ -46,12 +49,13 @@ export function ShopNodeScreen({
   run,
   offers,
   gemsBought,
-  rerolls,
+  called,
+  callTypes,
   itemsBought,
   onRunChange,
   onBuyGem,
   onBuyItem,
-  onReroll,
+  onCall,
   onBuyMend,
   onRequestRosterReplace,
   onContinue,
@@ -114,13 +118,14 @@ export function ShopNodeScreen({
           run={run}
           offers={offers}
           gemsBought={gemsBought}
-          rerolls={rerolls}
+          called={called}
+          callTypes={callTypes}
           itemsBought={itemsBought}
           onRunChange={onRunChange}
           onBuyGem={onBuyGem}
           onGemPlaced={(rosterId, landed, fromMastery) => flow.raise(rosterId, landed, fromMastery)}
           onBuyItem={onBuyItem}
-          onReroll={onReroll}
+          onCall={onCall}
           onBuyMend={onBuyMend}
           onRequestRosterReplace={onRequestRosterReplace}
           onOverlayChange={setOverlayOpen}

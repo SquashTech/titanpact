@@ -10,6 +10,9 @@ import { rarityWeightsFor, type EquipmentDefinition, type EquipmentRarity } from
 import { rollEquipmentDrops } from '../data/equipment';
 import type { GuildHallOffer } from './recruitment';
 import { rollShelfGems, type Gem } from './gems';
+import { heroes } from '../data/heroes';
+import { TYPES } from '../data/typechart';
+import type { TypeId } from '../engine/content';
 
 /** What a tier is worth in gold: the Shop's shelf price (`shopItemPrice`) and the base `sellValueFor` reads. Untuned. */
 export const EQUIPMENT_PRICE_BY_RARITY: Record<EquipmentRarity, number> = {
@@ -111,37 +114,40 @@ export function rollGuildHallOffers(
   return { heroOfferIds: sample(availableHeroes, hires).map((o) => o.id), itemIds, gems };
 }
 
-/** The Tavern's first reroll a visit; each one after costs `TAVERN_REROLL_STEP` more. Untuned. */
-export const TAVERN_REROLL_BASE_COST = 10;
-export const TAVERN_REROLL_STEP = 10;
+/** The Tavern's call: gold to send word for a TYPE, once a visit. Untuned. */
+export const TAVERN_CALL_PRICE = 25;
 
-export function tavernRerollCost(rerollsThisVisit: number): number {
-  return TAVERN_REROLL_BASE_COST + TAVERN_REROLL_STEP * rerollsThisVisit;
+export class TavernCallError extends Error {}
+
+/** Who would answer a call for `type`: the pool's heroes of that innate type, neither on the roster nor on the board. */
+function answering(run: RunState, heroPool: readonly GuildHallOffer[], offers: GuildHallOffers, type: TypeId): GuildHallOffer[] {
+  const rosterHeroIds = new Set(run.roster.map((r) => r.heroId));
+  return heroPool.filter((o) => heroes[o.heroId]?.types[0] === type && !rosterHeroIds.has(o.heroId) && !offers.heroOfferIds.includes(o.id));
 }
 
-export class TavernRerollError extends Error {}
+/** The types a call can be sent for, in chart order: somebody of that type is still out there. */
+export function callableTypes(run: RunState, heroPool: readonly GuildHallOffer[], offers: GuildHallOffers): TypeId[] {
+  return TYPES.filter((type) => answering(run, heroPool, offers, type).length > 0);
+}
 
 /**
- * A fresh Tavern shelf for gold, as many heroes as the visit first rolled. Heroes on the roster
- * never come back, and the ones just turned away don't either while the pool can spare them — a
- * reroll that hands back the same face is gold for nothing.
+ * Word sent for a type: one hero of it —
+ * which one is not the player's to say — takes the last poster on the board, or a seat on an
+ * empty one. The type is aimed, the hero is not, so the call fills a gap and never a comp.
  */
-export function rerollGuildHallOffers(
+export function callForType(
   run: RunState,
   heroPool: readonly GuildHallOffer[],
   offers: GuildHallOffers,
-  rerollsThisVisit: number
-): { run: RunState; offers: GuildHallOffers } {
-  const cost = tavernRerollCost(rerollsThisVisit);
-  if (run.gold < cost) throw new TavernRerollError(`A reroll costs ${cost}g; ${run.gold}g held.`);
+  type: TypeId,
+  random: () => number = Math.random
+): { run: RunState; offers: GuildHallOffers; offerId: string } {
+  if (run.gold < TAVERN_CALL_PRICE) throw new TavernCallError(`A call costs ${TAVERN_CALL_PRICE}g; ${run.gold}g held.`);
+  const pool = answering(run, heroPool, offers, type);
+  if (pool.length === 0) throw new TavernCallError(`Nobody of ${type} is left to answer.`);
+  const called = pool[Math.floor(random() * pool.length)];
   const rosterHeroIds = new Set(run.roster.map((r) => r.heroId));
-  const shown = new Set(offers.heroOfferIds);
-  const available = heroPool.filter((o) => !rosterHeroIds.has(o.heroId));
-  const fresh = available.filter((o) => !shown.has(o.id));
-  const count = offers.heroOfferIds.length;
-  const picked = sample(fresh, count);
-  // A pool too thin to fill the shelf with new faces tops up from the ones just shown.
-  if (picked.length < count) picked.push(...sample(available.filter((o) => shown.has(o.id)), count - picked.length));
-  return { run: { ...run, gold: run.gold - cost }, offers: { ...offers, heroOfferIds: picked.map((o) => o.id) } };
+  const posted = offers.heroOfferIds.filter((id) => !rosterHeroIds.has(heroPool.find((o) => o.id === id)?.heroId ?? ''));
+  const heroOfferIds = posted.length > 0 ? offers.heroOfferIds.map((id) => (id === posted[posted.length - 1] ? called.id : id)) : [...offers.heroOfferIds, called.id];
+  return { run: { ...run, gold: run.gold - TAVERN_CALL_PRICE }, offers: { ...offers, heroOfferIds }, offerId: called.id };
 }
-
