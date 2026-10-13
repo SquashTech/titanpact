@@ -322,6 +322,15 @@ earned and nothing else — **no Evolution, no Mastery, its own authored two mov
 entry still owed** (`guildHallEntry`). Every decision about what it becomes is the player's, and
 that is what its contract buys.
 
+**Receipts are paid on signing** (2026-10-12, per user direction). Working the backlog off one
+entry a fight meant a hire met the act's Guardian — the very next fight — with its two starting
+moves while the roster held four. So the owed entries that would land as RECEIPTS (below
+`MOVE_CAP`, no question asked) are learned when the hire is made, rolled seeded so the sheet
+inspected is the hero signed (`withReceipts`, `guildRecruit.ts`); an entry that would ask —
+replace-or-decline at the cap — stays owed. No decision moved off the player. Measured: Act 2 hires
+hold 3–4 moves, Acts 3–4 a full four. **Act 1's hire is unchanged** — at level 2 it has reached no
+entry, so it still holds two.
+
 It is the opposite half of a **contract** hero, which arrives **finished** and **armed** — the
 enemy you beat, entire: its Evolution chosen, the Mastery its act bought, every schedule entry
 below its level taken, and the piece it fought in (`rollFittingGear`). You save the walk on a

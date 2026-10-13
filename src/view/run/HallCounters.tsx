@@ -156,13 +156,12 @@ export function GemCounter({ run, gems, sold, onBuy, onPlaced, initialPick }: Ge
               ctaClassName={isArmed ? 'is-accent is-buy' : gem && open && (evolves || masters) ? 'is-accent' : gem && open ? 'is-accent' : undefined}
               detail={
                 <span className="gem-card-detail">
-                  {gem && (
-                    <span className="gem-card-stat">
-                      <span className="gem-card-label">{statName}</span>
-                      <span className="gem-card-value">{now}</span>
-                      {open && <span className="gem-card-gain">+{gemAmount(gem)}</span>}
-                    </span>
-                  )}
+                  {/* Always laid out, so a pick fills the row in rather than growing every card. */}
+                  <span className={`gem-card-stat${gem ? '' : ' is-empty'}`} aria-hidden={!gem}>
+                    <span className="gem-card-label">{gem ? statName : 'HP'}</span>
+                    <span className="gem-card-value">{gem ? now : 0}</span>
+                    {open && <span className="gem-card-gain">+{gemAmount(gem!)}</span>}
+                  </span>
                   <MasteryPips mastery={entry.mastery} gain={open ? 1 : 0} />
                 </span>
               }
@@ -188,7 +187,7 @@ export function GemCounter({ run, gems, sold, onBuy, onPlaced, initialPick }: Ge
               }}
             >
               <span className="counter-good-art">
-                <GemIcon stat={g.stat} size={30} large={g.points >= 10} live={pick === i} />
+                <GemIcon stat={g.stat} size={40} large={g.points >= 10} live={pick === i} />
               </span>
               <span className="counter-good-words">
                 <span className="counter-good-name">

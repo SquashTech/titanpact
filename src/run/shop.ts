@@ -70,7 +70,7 @@ export interface GuildHallOffers {
 }
 
 /** The Gear counter's stock a visit, on the act's standard drop curve. */
-export const SHOP_ITEM_COUNT = 6;
+export const SHOP_ITEM_COUNT = 4;
 
 /** First pass: the tier's value, so a shelf piece costs twice what it would sell for. */
 export function shopItemPrice(item: EquipmentDefinition): number {

@@ -254,7 +254,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
         facts: [
           { glyph: 'hero', label: 'Hire', value: '1 Contract', note: `Lv ${guildHallLevel(actNumber)}, raw` },
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_BASE_PRICE}g`, note: `+${CONTRACT_PRICE_STEP}g each one bought this run` },
-          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g`, note: `${SHELF_GEM_COUNT} stats on the shelf, one of each` },
+          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g`, note: `${SHELF_GEM_COUNT} stats on the shelf` },
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
           { glyph: 'hp', label: 'Mend', value: `${MEND_PRICE_PER_HERO}g`, note: 'a hero’s worth of missing HP' },
@@ -267,7 +267,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
       return {
         kind: 'Landmark · The last stop',
         facts: [
-          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g`, note: `${SHELF_GEM_COUNT} on the counter, every stat` },
+          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g`, note: `${SHELF_GEM_COUNT} stats on the counter` },
           { glyph: 'anvil', label: 'Anvil', value: priceBand(ANVIL_PRICE_BY_TARGET, cycle), note: '+1 tier' },
           { glyph: 'enchant', label: 'Enchanter', value: priceBand(ENCHANT_PRICE_BY_RARITY, cycle), note: 'one element' },
         ],

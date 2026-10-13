@@ -79,9 +79,13 @@ The Gem and Gear counters each show the whole roster under the stock — **every
 at the Gems, every hero's three sockets at the Gear** — so the decision is made on the counter and
 not on the Roster screen. **Pick a piece, then the hero: it is bought straight onto that hero**
 (armed first at `CONFIRM_PURCHASE_FROM` and over), with no who-screen after; a Gem whose pip opens
-an Evolution or masters the innate raises it over the hall (`HallCounters.tsx`). The stock grew
-with the room: **`SHELF_GEM_COUNT` = 9 — every stat once and two seconds**, and
-**`SHOP_ITEM_COUNT` = 6** pieces on the act's standard curve at `EQUIPMENT_PRICE_BY_RARITY`.
+an Evolution or masters the innate raises it over the hall (`HallCounters.tsx`). **The stock was
+cut 2026-10-12** (per user direction — nine Gems and six pieces read as a shopping list, not a
+choice): **`SHELF_GEM_COUNT` = 5, five different stats, so a visit is missing two**, and
+**`SHOP_ITEM_COUNT` = 4** pieces on the act's standard curve at `EQUIPMENT_PRICE_BY_RARITY`, each
+counter's stock one row, the roster above it drawn at the item who-screen's 96px figure (the Gear
+counter's shrinks to fit the piece in hand). A Gem pick fills the stat row in on every card; the
+row is always laid out, so the cards never grow under the tap.
 **The Vigil trades the Tavern for the Smithy**: Gems, Gear, and the Anvil and Enchanter over worn
 gear — nobody joins for the finale, and with no bar no mend is sold there.
 Cycle III's "the Smithy ×1.5" (`smithyPrice`) now prices only the Vigil's Smithy.

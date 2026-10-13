@@ -1,6 +1,8 @@
 // What a Guild Hall hire arrives as: **RAW** (docs/growth-overhaul.md §6). The act's hire level
-// with the growth its levels earned, and nothing else — rank 1, no Evolution, its authored
-// starting kit. The player builds it.
+// with the growth its levels earned, no Evolution, and its kit filled to MOVE_CAP from the
+// schedule entries its level has reached — those would land as receipts, so nothing the player
+// would have decided is decided for them. An entry that would ask (replace-or-decline at the cap)
+// stays owed. The player builds the rest.
 //
 // That is the whole of the flat-value / decaying-runway split, and since 2026-09-10 it is true on
 // three axes instead of one. A CONTRACT hero is the enemy you beat, entire: act level, the rank
@@ -14,6 +16,8 @@
 // player inspects is the hero they pay for.
 
 import { heroes } from '../data/heroes';
+import { moves } from '../data/moves';
+import { progressionTable } from '../data/progression';
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import { guildHallLevel } from './difficulty';
 import { guildHallMastery } from './mastery';
@@ -21,6 +25,7 @@ import { levelUpEntry } from './growth';
 import type { GuildHallOffer } from './recruitment';
 import type { RosterEntry, RunState } from './state';
 import { createRosterEntry } from './state';
+import { MOVE_CAP, levelMovePool, pendingScheduleEntry } from './progression';
 
 /** FNV-1a over everything that must not shift between inspecting an offer and paying for it. */
 function offerSeed(offer: GuildHallOffer, actNumber: number, locationId: string): number {
@@ -47,5 +52,22 @@ export function guildHallEntry(run: RunState, offer: GuildHallOffer, rosterId: s
     state = nextState;
     return value;
   };
-  return levelUpEntry(base, heroes[offer.heroId], level - 1, random).entry;
+  return withReceipts(levelUpEntry(base, heroes[offer.heroId], level - 1, random).entry, random);
+}
+
+/** The owed entries that would land without a question, learned now, so a hire is not a two-move hero on its first fight. */
+function withReceipts(entry: RosterEntry, random: () => number): RosterEntry {
+  const hero = heroes[entry.heroId];
+  let next = entry;
+  while (next.unlockedMoveIds.length < MOVE_CAP && pendingScheduleEntry(hero, next)) {
+    const pool = levelMovePool(progressionTable, moves, hero, next);
+    const moveId = pool.length > 0 ? pool[Math.floor(random() * pool.length)] : null;
+    next = {
+      ...next,
+      scheduleTaken: next.scheduleTaken + 1,
+      unlockedMoveIds: moveId ? [...next.unlockedMoveIds, moveId] : next.unlockedMoveIds,
+      offeredMoveIds: moveId ? [...next.offeredMoveIds, moveId] : next.offeredMoveIds,
+    };
+  }
+  return next;
 }

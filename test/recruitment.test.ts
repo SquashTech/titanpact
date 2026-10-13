@@ -4,7 +4,7 @@ import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { guildHallOffers } from '../src/data/recruitment';
 import { GUILD_HALL_ACT_LAG, enemyLevelFor, guildHallLevel } from '../src/run/difficulty';
-import { scheduleEntriesBelow } from '../src/run/progression';
+import { MOVE_CAP, scheduleEntriesBelow } from '../src/run/progression';
 import { MASTERY_CAP, MASTERY_EVOLUTION, guildHallMastery, masteryForAct } from '../src/run/mastery';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters, levelOf, xpForLevel } from '../src/run/growth';
 import { guildHallEntry } from '../src/run/guildRecruit';
@@ -93,10 +93,10 @@ test('recruitment: a hire arrives ONE ACT behind the roster', () => {
   assert.strictEqual(guildHallLevel(0), guildHallLevel(1));
 });
 
-test('recruitment: a hire arrives RAW — rank 1, no Evolution, its own starting kit', () => {
-  // The flat-value / decaying-runway line, on three axes instead of one (docs/growth-overhaul.md
-  // §6). A hire is unbuilt: every decision about what it becomes is still the player's, which is
-  // the whole of what 50 gold buys against a Contract's finished hero.
+test('recruitment: a hire arrives RAW — no Evolution, its kit filled only by what needed no decision', () => {
+  // The flat-value / decaying-runway line (docs/growth-overhaul.md §6). A hire is unbuilt: every
+  // decision about what it becomes is still the player's. The entries its level reached that would
+  // have landed as receipts below MOVE_CAP are learned on signing; one that would ask stays owed.
   for (const act of [1, 3, 5]) {
     const run = { ...seedRoster(['cinderKnight'], 100), actNumber: act };
     const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
@@ -104,14 +104,14 @@ test('recruitment: a hire arrives RAW — rank 1, no Evolution, its own starting
 
     assert.strictEqual(levelOf(entry), guildHallLevel(act));
     assert.deepStrictEqual(entry.chosenPathIds, [], `act ${act}: a hire must not arrive evolved`);
-    assert.strictEqual(entry.scheduleTaken, 0, `act ${act}: a hire must arrive with its schedule un-crossed`);
-    assert.deepStrictEqual(
-      [...entry.unlockedMoveIds],
-      [...offer.startingMoveIds],
-      `act ${act}: a hire's kit is its authored starting kit, nothing more`
-    );
-    assert.deepStrictEqual(entry.offeredMoveIds, [], `act ${act}: and its whole Scroll pool is untouched`);
+    const reached = scheduleEntriesBelow(heroes.ironWarden, guildHallLevel(act));
+    const receipts = Math.min(reached, MOVE_CAP - offer.startingMoveIds.length);
+    assert.strictEqual(entry.scheduleTaken, receipts, `act ${act}: the receipts taken, the questions still owed`);
+    assert.deepStrictEqual([...entry.unlockedMoveIds.slice(0, offer.startingMoveIds.length)], [...offer.startingMoveIds], `act ${act}: the authored kit kept`);
+    assert.strictEqual(entry.unlockedMoveIds.length, offer.startingMoveIds.length + receipts, `act ${act}`);
+    assert.deepStrictEqual([...entry.offeredMoveIds], entry.unlockedMoveIds.slice(offer.startingMoveIds.length), `act ${act}: only what it learned is spent`);
   }
+  assert.ok(guildHallEntry({ ...seedRoster(['cinderKnight'], 100), actNumber: 3 }, guildHallOffers.find((o) => o.heroId === 'ironWarden')!, 'x').unlockedMoveIds.length === MOVE_CAP, 'an Act 3 hire meets its Guardian with a full kit');
 });
 
 test('recruitment: RAW is unbuilt, not hollow — a hire has the growth its levels earned', () => {
@@ -329,13 +329,13 @@ test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW —
   assert.deepStrictEqual(claimed.chosenPathIds, ['ironWarden-bulwark']);
   assert.deepStrictEqual(hired.chosenPathIds, []);
 
-  // Axis 2 — Schedule. Every entry below its level taken, or none: the hire is owed them all.
+  // Axis 2 — Schedule. Every entry below its level taken, or only the receipts: the hire still owes the questions.
   assert.strictEqual(claimed.scheduleTaken, scheduleEntriesBelow(heroes.ironWarden, 16));
-  assert.strictEqual(hired.scheduleTaken, 0);
+  assert.ok(hired.scheduleTaken < scheduleEntriesBelow(heroes.ironWarden, levelOf(hired)), 'a hire arrives owing an offer');
 
-  // Axis 3 — Kit. Picked by the game, or the hero's own authored three.
+  // Axis 3 — Kit. Picked by the game, or filled to the cap and no further.
   assert.ok(claimed.unlockedMoveIds.length > offer.startingMoveIds.length);
-  assert.deepStrictEqual([...hired.unlockedMoveIds], [...offer.startingMoveIds]);
+  assert.strictEqual(hired.unlockedMoveIds.length, MOVE_CAP);
 
   // Axis 5 — Gear (docs/gear-absorption.md §7). A contract arrives wearing what it fought in; a hire arrives bare.
   const armed = { ...beaten, equipment: ['spear.rare'] };

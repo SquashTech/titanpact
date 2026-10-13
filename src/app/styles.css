@@ -17456,6 +17456,10 @@ button.star-shop-bundle-face {
   font-size: 13px;
 }
 
+.gem-card-stat.is-empty {
+  visibility: hidden;
+}
+
 .gem-card-label {
   font-size: 10px;
   letter-spacing: 0.06em;
@@ -38221,20 +38225,24 @@ img.smithy-service-art {
   padding: 2px 0 4px;
 }
 
+/* One row: the whole stock read at a glance. */
 .counter-stock {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 5px;
   flex: none;
 }
 
 .counter-good {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 3px;
   min-width: 0;
-  min-height: 46px;
-  padding: 0 2px;
+  min-height: 92px;
+  padding: 4px 1px 2px;
   border-style: solid;
   border-width: 6px;
   border-image: url('../../art/guild/panel-parch.png') 12 fill / 6px stretch;
@@ -38261,43 +38269,49 @@ img.smithy-service-art {
   display: grid;
   place-items: center;
   flex: none;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
 }
 
 .counter-good-art.is-piece .item-piece {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
 }
 
 .counter-good-words {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  width: 100%;
   min-width: 0;
   line-height: 1.1;
+  text-align: center;
 }
 
 .counter-good-name {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 800;
   overflow-wrap: anywhere;
 }
 
 .counter-good.is-gear .counter-good-name {
   color: color-mix(in srgb, var(--rarity-color) 55%, #3a2412);
-  font-size: 9.5px;
+  font-size: 11px;
 }
 
 .counter-good-price {
   display: flex;
   align-items: center;
   gap: 2px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
 }
 
 .counter-good-price .run-glyph {
-  --iconset-glyph-size: 11px;
+  --iconset-glyph-size: 12px;
 }
 
 .counter-good-price.is-note {
@@ -38323,21 +38337,47 @@ img.smithy-service-art {
   min-height: 0;
 }
 
-/* Three columns over the stock: the figure at its 48px source, so the name, the pips or all three
-   sockets in a row, and the CTA all fit two rows of heroes. */
+/* Three columns over a one-row stock: the figure at 2x, as the item who-screen draws it. */
 .counter-roster.pick-cols-3 {
-  --pick-portrait: 48px;
-  --pick-name-size: 12px;
+  --pick-portrait: 96px;
+  --pick-name-size: 13px;
   --pick-card-min: 0px;
 }
 
+/* The figure gives way first, as on the Gem screen: the name, the sockets and the CTA always show. */
+.counter-roster .pick-card {
+  min-height: 0;
+}
+
+.counter-roster .pick-card > * {
+  flex-shrink: 0;
+}
+
+.counter-roster .pick-card > .pick-figure {
+  flex: 0 1 calc(var(--pick-portrait) * 1.02);
+  height: auto;
+  min-height: 0;
+  padding-bottom: calc(var(--pick-portrait) * 0.06);
+}
+
+.counter-roster .pick-figure .pick-portrait {
+  width: auto;
+  height: min(var(--pick-portrait), 100%);
+  aspect-ratio: 1;
+}
+
+.counter-roster .pick-card {
+  gap: 1px;
+  padding: 5px 4px 5px;
+}
+
 .counter-roster .pick-cta {
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.02em;
 }
 
 .counter-roster .item-box {
-  --item-box-size: 30px;
+  --item-box-size: 32px;
 }
 
 .counter-roster .item-who-sockets {

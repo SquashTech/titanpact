@@ -58,15 +58,15 @@ export function rollGemDrop(nodeKind: EncounterNodeKind, actNumber: number, rand
 }
 
 /** The Guild Hall's Gem counter: single Gems, their stats shown, each sold once a visit. */
-export const SHELF_GEM_COUNT = 9;
+export const SHELF_GEM_COUNT = 5;
 
-/** The counter's stock: every stat once, so no visit is missing one, and the rest a second of distinct stats. */
+/** The counter's stock: distinct stats, so a visit is missing some and which ones is part of the choice. */
 export function rollShelfGems(actNumber: number, random: () => number = Math.random): Gem[] {
   const points = gemPointsForAct(actNumber);
-  const extras = [...GEM_ORDER];
-  const picked: Gem[] = GEM_ORDER.map((stat) => ({ stat, points }));
-  while (picked.length < SHELF_GEM_COUNT && extras.length > 0) {
-    picked.push({ stat: extras.splice(Math.floor(random() * extras.length), 1)[0], points });
+  const stats = [...GEM_ORDER];
+  const picked: Gem[] = [];
+  while (picked.length < SHELF_GEM_COUNT && stats.length > 0) {
+    picked.push({ stat: stats.splice(Math.floor(random() * stats.length), 1)[0], points });
   }
   return sortGems(picked);
 }

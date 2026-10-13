@@ -626,8 +626,10 @@ don't silently override it.
   have flat value* — is now true on **three axes**, where it used to be true on level alone.
   A **contract** hero (it IS the enemy you beat) arrives with its Evolution already
   chosen, every schedule entry below its level taken, and a kit the game picked. A **Guild hire**
-  arrives unevolved, its whole schedule still owed, holding its authored two moves — and
-  works the backlog off one entry a fight. You save the walk on a contract, and in exchange you
+  arrives unevolved, and **its kit filled to `MOVE_CAP` from the entries its level reached that
+  would have landed as receipts** (2026-10-12, per user direction — a hire met the act's Guardian
+  holding two moves; `guildRecruit.ts withReceipts`); an entry that would ask (replace-or-decline)
+  stays owed and is worked off one a fight. You save the walk on a contract, and in exchange you
   authored none of it.
   **RAW is unbuilt, not hollow** — a hire still gets the growth its levels earned, or it would be
   ~120 points behind a roster hero of the same level and simply a waste of gold.
