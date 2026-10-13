@@ -1214,14 +1214,11 @@ const innatePassives: Record<string, PassiveDefinition> = {
   tyrantsDue: {
     id: 'tyrantsDue',
     name: "Tyrant's Due",
-    description: 'Once per fight, when this hero lands a finishing blow, it gains 10 Attack for the rest of the run, up to 50.',
-    // The one innate that outlives the fight: banked on Combatant.permanentStatGains and written onto
-    // the roster by recordPermanentStatGains. Once a fight, and +50 a run at most (2026-10-12, per user direction).
+    description: 'When this hero lands a finishing blow, it gains ATK ▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10, permanent: true, permanentCap: 50 },
-      oncePerFight: true,
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 1 },
     },
   },
   feast: {
@@ -2183,12 +2180,11 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   apexTyrant: {
     id: 'apexTyrant',
     name: "Tyrant's Due+",
-    description: 'When this hero lands a finishing blow, it gains 10 Attack for the rest of the run, up to 100.',
-    // Tyrant's Due without its once-a-fight cap: every kill is banked, up to +100 a run.
+    description: 'When this hero lands a finishing blow, it gains ATK ▲▲.',
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10, permanent: true, permanentCap: 100 },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', stages: 2 },
     },
   },
 

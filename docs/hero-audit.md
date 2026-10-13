@@ -611,3 +611,31 @@ Grafts: Nature four times, Stone three, Spirit twice; spread so each appears onc
 Coil carries it). Kept: Kong's Stonefist, Mellow's Meadow, Fang's Warhowl.
 
 **The second pass is complete for all fourteen draftable types.**
+
+## Full-roster sim follow-up (2026-10-12, per user direction)
+
+The sim now drafts all 84 (`SIM_ALL_HEROES=1`, 4000 runs, skilled pilot). Ronin (229 DPR, ratio 4.69,
+the highest) and Rex (230 DPR, 1.11 KO a fight, the most) were the outliers against a median of ~137;
+Aurum, on Ronin's exact stats and grades, ran 177 / 3.2. Throwaway A/B batches, one lever each:
+
+| Lever | Ronin | Rex |
+|---|---|---|
+| none (baseline) | 229 / 4.69 | 230 / 3.49 |
+| Kata locks on its first face | 234 / 4.77 | — |
+| Kata walks the opened tiers | 224 / 4.48 | — |
+| Kata replaced by Heavy Blow | 225 / 4.41 | — |
+| Iaido gives no priority | 222 / 4.22 | — |
+| Sharpen replaced by Hone | 233 / 4.69 | — |
+| Tyrant's Due gives nothing | — | **192 / 2.98** |
+| Speed growth S → A | — | 232 / 3.48 |
+
+- **Rex: Tyrant's Due is fight-only now** — a finishing blow gives ATK ▲ for the fight, every kill
+  (Tyrant's Due+ ▲▲). Moxie, not a bank: the +50 run-long Attack was the whole outlier, and made Rex
+  a starter whose payoff arrived by Act 2 and stopped growing. The `permanent` statDelta verb has no
+  card now; the tests keep it alive on a test-only one.
+- **Ronin: Attack 105 → 95, HP 210 → 220.** No one card was his edge — each kit lever moved him by
+  under 7 DPR — so the body comes down, which shrinks every piece together.
+
+Measured with both in (4000 runs): Ronin 221 / 4.31 (still 1st by DPR, level with Hush 220), Rex 214 /
+3.55 and 0.97 KO a fight (3rd), full-clear 87.5% unmoved. Fight-only stages front-load Rex: his acts
+1–2 ratio rose 3.66 → 4.09 while acts 3+ held at 3.43. Both are in the top cluster now, not above it.

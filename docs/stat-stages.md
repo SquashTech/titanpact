@@ -6,7 +6,8 @@
 > §6.2 statement moves re-authored as suggested (Break Will's clear is `clearsRaisedStages`), and
 > **the passive brake (§6.3) built**: every passive stat effect is a stage (119), the 100 on a repeating hook
 > braked, and the derived grants decided (§6.4). **Flat now: Surging Intellect, Stampede (under the
-> 9999 hard ceiling) and Tyrant's Due's run-long gain, by decision.** Not measured.
+> 9999 hard ceiling) and Tyrant's Due's run-long gain, by decision** (Tyrant's Due went to a stage,
+> fight-only, 2026-10-12, `docs/hero-audit.md`). Not measured.
 > Every buff and debuff a fight hands out becomes a **stage**: a stat moves **up to five steps
 > either way**, each step a fixed multiplier on what the hero brought to the fight. This
 > **supersedes `docs/stat-scaling.md`** (caster-scaled flat deltas and the −½ … ×4 band) and
@@ -624,8 +625,8 @@ repeating hook with no `oncePerFight` or `maxFiresPerFight` (§6.3).
 | Tempering | DamageDealt | self | DEF +10 | DEF ▲ | **repeats — cap risk** |
 | Thornrot | StatusApplied (source) | self | ATK/SPD +10 | ATK/SPD ▲ | **repeats — cap risk** |
 | Troop Leader | MoveUsed | ally | ATK/SPD +10 | ATK/SPD ▲ | **repeats — cap risk** |
-| Tyrant's Due | DamageDealt (source) | self | ATK +10 | ATK ▲ | once a fight; permanent |
-| Tyrant's Due+ | DamageDealt (source) | self | ATK +10 | ATK ▲ | permanent; **repeats — cap risk** |
+| Tyrant's Due | DamageDealt (source) | self | ATK +10 | ATK ▲ | fight-only since 2026-10-12 (it was permanent) |
+| Tyrant's Due+ | DamageDealt (source) | self | ATK +10 | ATK ▲▲ | fight-only since 2026-10-12 |
 | Unbothered | DamageDealt (source) | triggerSubject | ATK/INT -5 | ATK/INT ▼ | **repeats — cap risk** |
 | Unbothered+ | DamageDealt (source) | triggerSubject | ATK/INT -10 | ATK/INT ▼ | **repeats — cap risk** |
 | Undermine | DamageDealt (source) | trigger target | DEF -10 | DEF ▼ | **repeats — cap risk** |

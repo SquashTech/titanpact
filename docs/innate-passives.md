@@ -250,7 +250,7 @@ pair. Rows re-authored in §7c show the current card. The innates of the From th
 | Scallywag | Iron | **Broadside** | On the bench, loads a cannonball a round (up to `BROADSIDE_MAGAZINE` = 4); on entering, fires them all — `BROADSIDE_SHOT` = 5% of max HP to both enemies per ball, direct. The ONLY reaction that fires from the bench. | new · `whileBenched`, `maxMagnitude`, `perHeldStatus` | Plunder (Corsair) |
 | Clockwork | Mech | **Boiler** | Mech attacks have a 30% chance to Burn 10, scaled by its Intelligence — the first passive magnitude that scales. | new · `chance`, `scaledBy` | Combustion (Runaway) |
 | Bellows | Mech/Iron | **Ironbound** *(Burden)* | Cannot switch out voluntarily; vents 15 Mana at every round end on the field. Stat Total 610. | vocab | Runaway Pressure / Superheat |
-| Rex | Mech | **Tyrant's Due** | Once a fight, a finishing blow grants 10 Attack for the rest of the RUN (`permanentStatGains` → `RosterEntry.bonusStatGrants`). The one innate that outlives the fight. | new · `finishingBlow`, `permanent` | Rampant (Tyrant) |
+| Rex | Mech | **Tyrant's Due** | A finishing blow grants ATK ▲ for the fight (2026-10-12, per user direction; it was once a fight, +10 Attack for the rest of the RUN — `docs/hero-audit.md`). | new · `finishingBlow`, `permanent` | Rampant (Tyrant) |
 | Patch | Mech | **Upkeep** | At the end of each round, its partner heals 12 healing power, scaled by this hero's Wisdom. | new (§7c) | Nanites (Triage) |
 | Fang | Beast | **Pack Hunter** | Whenever this hero's partner lands an attack, this hero gains 5 Attack. | new | Bloodthirsty (Bloodhunt) |
 | Ursa | Beast | **Feast** | A finishing blow heals a third of its max HP. | new · `percentMaxHp` amount | Thick Hide (Grizzly) |

@@ -218,7 +218,7 @@ build and hero sheet goes through it, so the swap is total: the born card is gon
 
 **The authoring rule** (pinned in `test/mastery.test.ts`): the same trigger, **the innate's own name with a +** (Kindling → *Kindling+*; 2026-09-28, per user direction —
 the upgrade is the same verb, and a new name read as a new card), in no pool, and **every flat figure at least doubled** — or the reach widened (one enemy → both, self →
-the pair), a cap taken off (Apex Tyrant keeps Tyrant's Due's 10 and loses once-a-fight), or a roll
+the pair), a cap taken off, or a roll
 made certain (Boiling Point). Where one reaction cannot carry the upgrade it is two cards,
 Broadside's shape, read as one innate by its first. A Burden stays a Burden: Iron Mountain still
 cannot switch, and now grows for staying.
@@ -268,7 +268,7 @@ mastered card. The table is the first 45 heroes; the rest author theirs in `src/
 | Scallywag | Broadside (1 ball a round, 4 max) | **Grand Broadside** — 2 a round, 6 max |
 | Clockwork | Boiler (Mech hit: 30% Burn 10, scaled) | **Boiling Point** — always Burn 20, scaled |
 | Bellows | Ironbound (cannot switch) — Burden | **Iron Mountain** — cannot switch; +10 Atk/Def a round |
-| Rex | Tyrant's Due (once a fight, kill: +10 Atk for the run) | **Apex Tyrant** — every kill |
+| Rex | Tyrant's Due (kill: ATK ▲ for the fight; it banked +10 Atk for the run until 2026-10-12) | **Tyrant's Due+** — ATK ▲▲ |
 | Patch | Field Repair (heal: cleanse 1) | **Refit** — heal: cleanse all, Shield 30 |
 | Fang | Pack Hunter (partner hits: +5 Atk) | **Alpha's Call** — partner hits: both +10 Atk |
 | Ursa | Feast (kill: heal 50%) | **Glut** — kill: heal to full, +20 Atk |

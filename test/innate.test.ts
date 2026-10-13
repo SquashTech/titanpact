@@ -20,6 +20,7 @@ import { tickPactClock } from '../src/engine/combat/pactClock';
 import { applyHpDelta } from '../src/engine/combat/faintHandling';
 import { canSwitchOut, hasStatus, statusMagnitude } from '../src/engine/state';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
+import type { PassiveDefinition } from '../src/engine/content';
 import type { Action } from '../src/engine/combat/actions';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { createRosterEntry, createRunState } from '../src/run/state';
@@ -310,12 +311,38 @@ test('maxFiresPerFight: Iron Hide banks Iron Force on the first three hits taken
 
 // --- The third wave: finishing blows, a run-permanent gain, a target-status read, percent-of-max damage ---
 
-test("tyrant's due: a finishing blow banks +10 Attack for the run, once a fight, and a won fight writes it onto the roster", () => {
-  let state = withPassive(twoVTwo(21, 'rex', 'valor', 'ironWarden', 'crag'), 'a1', 'tyrantsDue');
+test("tyrant's due: every finishing blow gives ATK ▲ for the fight, and banks nothing for the run", () => {
+  let state = withPassive(twoVTwo(24, 'rex', 'valor', 'ironWarden', 'crag'), 'a1', 'tyrantsDue');
+  state = withField(state, 'b1', { currentHp: 1 });
+  const kill = (s: CombatState, target: string) =>
+    resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'steamVent', declaredTarget: target }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], config);
+  const r1 = kill(state, 'b1');
+  assert.strictEqual(r1.state.combatants.a1.statStages?.attack, 1);
+  assert.strictEqual(r1.state.combatants.a1.permanentStatGains, undefined);
+  const r2 = kill(withField(r1.state, 'b2', { currentHp: 1 }), 'b2');
+  assert.strictEqual(r2.state.combatants.a1.statStages?.attack, 2, 'a second kill, a second step');
+  const standing = kill(withPassive(twoVTwo(25, 'rex', 'valor', 'ironWarden', 'crag'), 'a1', 'tyrantsDue'), 'b1');
+  assert.strictEqual(standing.state.combatants.a1.statStages?.attack, undefined, 'a hit that does not finish');
+});
+
+test('a permanent gain: a finishing blow banks +10 Attack for the run, once a fight, and a won fight writes it onto the roster', () => {
+  const banker: PassiveDefinition = {
+    id: 'banker',
+    name: 'Banker',
+    description: '',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10, permanent: true, permanentCap: 50 },
+      oncePerFight: true,
+    },
+  };
+  const banking = { ...config, passives: { ...passives, banker } };
+  let state = withPassive(twoVTwo(21, 'rex', 'valor', 'ironWarden', 'crag'), 'a1', 'banker');
   state = withField(state, 'b1', { currentHp: 1 });
   state = withField(state, 'b2', { currentHp: 1 });
   const kill = (s: CombatState, target: string) =>
-    resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'steamVent', declaredTarget: target }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], config);
+    resolveRound(s, [{ kind: 'move', combatantId: 'a1', moveId: 'steamVent', declaredTarget: target }, ...restAll(s).filter((a) => a.combatantId !== 'a1')], banking);
   const r1 = kill(state, 'b1');
   const hit = r1.events.find((e) => e.type === 'DamageDealt' && e.sourceCombatantId === 'a1');
   assert.ok(hit && hit.type === 'DamageDealt' && hit.finishing === true, 'the hit is flagged as the finishing blow');
@@ -326,7 +353,7 @@ test("tyrant's due: a finishing blow banks +10 Attack for the run, once a fight,
   assert.strictEqual(r2.state.combatants.a1.statModifiers.attack, 10);
   assert.deepStrictEqual(r2.state.combatants.a1.permanentStatGains, { attack: 10 });
   // A hit that does not finish never fires it.
-  const fresh = withPassive(twoVTwo(22, 'rex', 'valor', 'ironWarden', 'crag'), 'a1', 'tyrantsDue');
+  const fresh = withPassive(twoVTwo(22, 'rex', 'valor', 'ironWarden', 'crag'), 'a1', 'banker');
   const r3 = kill(fresh, 'b1');
   assert.strictEqual(r3.state.combatants.a1.statModifiers.attack, undefined);
 

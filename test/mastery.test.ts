@@ -283,16 +283,10 @@ test('mastered innate: every hero authors one — new cards, named as the innate
 });
 
 test('mastered innate: a SIZABLE buff — every flat figure at least doubled, or the reach widened and the cap or the roll taken off', () => {
-  // Apex Tyrant keeps Tyrant's Due's 10 and loses its once-a-fight cap instead (every kill banks).
-  const exempt = new Set(['apexTyrant']);
   let compared = 0;
   for (const hero of Object.values(heroes)) {
     const innate = innatePassiveOf(hero)!;
     const mastered = masteredInnateOf(hero)!;
-    if (exempt.has(mastered.id)) {
-      assert.ok(innate.reactive?.oncePerFight && !mastered.reactive?.oncePerFight, `${mastered.id} was exempt for losing a cap it no longer loses`);
-      continue;
-    }
     // A cost mastered into a gain (Slumbering): the figure would read the size of the cost.
     if (mastered.id === 'leviathanWakes') continue;
     const before = flatFigure(innate);

@@ -856,7 +856,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'ronin',
     name: 'Ronin',
     types: ['Iron'],
-    baseStats: { hp: 210, attack: 105, defense: 50, intelligence: 20, wisdom: 45, speed: 70, manaPool: 50, mpRegen: 10 },
+    baseStats: { hp: 220, attack: 95, defense: 50, intelligence: 20, wisdom: 45, speed: 70, manaPool: 50, mpRegen: 10 },
     moveIds: ['kata', 'sharpen'],
     unlock: 'starfall',
     growthGrades: { hp: 'A', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'A', manaPool: 'B' },

@@ -22,6 +22,7 @@ import { hasStatus } from '../src/engine/state';
 import { applyStatus, selectableTargets } from '../src/engine/combat/statusEngine';
 import { getEffectiveStat, getMaxMana } from '../src/engine/state';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
+import type { PassiveDefinition } from '../src/engine/content';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
@@ -768,12 +769,23 @@ test('iron: Shieldbreaker cuts straight through Shield; Gallop drops the struck 
 
 // --- Mech, second pass (docs/hero-audit.md) ---
 
-test("mech: Tyrant's Due banks 10 Attack a fight up to 50 a run — a run already at 45 takes only 5, at 50 nothing", () => {
+test('a capped permanent gain banks 10 Attack up to 50 a run — a run already at 45 takes only 5, at 50 nothing', () => {
+  const banker: PassiveDefinition = {
+    id: 'banker',
+    name: 'Banker',
+    description: '',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', finishingBlow: true },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10, permanent: true, permanentCap: 50 },
+    },
+  };
+  const banking = { ...config, passives: { ...passives, banker } };
   const kill = (prior: number) => {
-    let base = withMana(withPassive(threeVThree(797), 'a1', 'tyrantsDue'), 'a1');
+    let base = withMana(withPassive(threeVThree(797), 'a1', 'banker'), 'a1');
     base = withHp(base, 'b1', 1);
     base = { ...base, combatants: { ...base.combatants, a1: { ...base.combatants.a1, permanentStatPrior: { attack: prior } } } };
-    return resolveRound(base, [cut('a1', 'heavyBlow', 'b1')], config).state.combatants.a1.permanentStatGains?.attack;
+    return resolveRound(base, [cut('a1', 'heavyBlow', 'b1')], banking).state.combatants.a1.permanentStatGains?.attack;
   };
   assert.strictEqual(kill(0), 10);
   assert.strictEqual(kill(45), 5);
