@@ -503,7 +503,7 @@ export function MoveButtonReplica({
         {tag}
         <MoveStrip move={move} amountOf={(app) => riderMagnitude(move, app, caster)} live={{ seats: matchups }} />
       </div>
-      <MoveStub move={move} value={value ?? undefined} />
+      <MoveStub move={move} value={value ?? undefined} seats={matchups} />
     </button>
   );
 }

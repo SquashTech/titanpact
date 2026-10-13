@@ -3330,11 +3330,16 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
   multi-hit), a rolled range out of a fight, or the resolved heal. A buff or debuff has no number,
   so its glyph takes the stub alone. This reverses the second pass's "the gem is the ONE object
   inside the button": a row now holds two, one at each end, cost and payoff.
-- **The strip** replaces the worded second line. An attack leads with **the enemies' seats**: one
-  matchup arrow per enemy slot, left to right as they stand, each on a short lit bar. A move that
-  hits both draws one brighter bar under the pair, so the "Spread" chip is gone. A downed foe's
-  seat stays empty, so the other arrow never slides under the wrong enemy. Neutral is a dim dot.
-  Every other move ends in **figures** (revised the same day, per user direction, replacing a
+- **The enemies' seats sit in the stub, under the number** (2026-10-13, per user direction, after a
+  side-by-side against under-the-name; they used to end the strip): one matchup arrow per enemy
+  slot, left to right as they stand, each on a short lit bar. In the strip a lowered-stat rider's
+  red ▼ sat beside them and read as a resisted matchup; under the number they sit on the figure the
+  matchup multiplies. A move that hits both draws one brighter bar under the pair, so the "Spread"
+  chip is gone, and **the seats are an attack's whole reach in a fight**: it draws no target figure,
+  except the small partner figure of a move that hits everyone. A downed foe's seat stays empty, so
+  the other arrow never slides under the wrong enemy. Neutral is a dim dot. Out of a fight there
+  are no seats, and an attack ends the strip in figures like any other move.
+- **The strip** replaces the worded second line. Every move without seats ends in **figures** (revised the same day, per user direction, replacing a
   2×2 board that read as noise): one head-and-shoulders figure or two, red for foes
   (`--target-foe`), blue for your side (`--target-ally`), white for the caster (`--target-self`), a ?
   for random. The figures have no shape cue for side, so colour carries it alone and was measured
@@ -3345,8 +3350,8 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
   carries the bar, so colour there only reinforces. **A buff or debuff carries its figures in the
   stub**, under the kind glyph (2026-10-13, per user direction, `targetInStub`): it has no number,
   so the stub reads as the whole ticket — what it does and to whom — and the strip gets the room
-  back. Heals keep their figures in the strip (the stub already holds glyph and number), attacks
-  their seats; a rider aimed at a second target keeps its small figure in the strip.
+  back. Heals keep their figures in the strip (the stub already holds glyph and number); a rider
+  aimed at a second target keeps its small figure in the strip.
 - **Riders are glyphs**: a status in its own icon and colour, a stat stage as the stat's glyph and
   its chevrons, priority as the Speed glyph and its sign. A rider landing somewhere other than the
   move's target carries small figures. **Every other clause is a glyph too** (same day, per user
@@ -3355,8 +3360,7 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
   on (`moveClauses`, `MoveStrip.tsx`). Each glyph's words live in its title and the hold dossier; a
   fight dims one whose condition is unmet.
 - **One line** (same day, per user direction): gem, type, name, then the strip right-aligned against
-  the stub, capped at 62% of the row so a crowded strip clips from its left and the seats keep one
-  column down the list. The name is 17px and the gem 30px, centred on the row.
+  the stub, capped at 62% of the row so a crowded strip clips from its left. The name is 17px and the gem 30px, centred on the row.
 - **Matchup tiers, glow / fade**: ×2 and ×0.5 keep the HP green and red; ×4 is a brighter green
   with a glow (`--eff-quad-super`) and ×0.25 a receding red (`--eff-quad-resist`), both drawn as
   doubled arrows. The targeting cards' glow, the forecast and the eff chips use the same two.

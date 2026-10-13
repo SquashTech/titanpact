@@ -7861,6 +7861,30 @@ textarea,
   margin-top: 1px;
 }
 
+/* The enemy seats under the number: the matchup sits on the figure it multiplies. */
+.move-stub.has-seats {
+  gap: 1px;
+}
+
+.move-stub.has-seats .move-stub-glyph {
+  width: 11px;
+  height: 11px;
+}
+
+.move-stub.has-seats .move-seats {
+  margin-top: 2px;
+}
+
+.move-stub.has-seats .move-seat {
+  width: 19px;
+  height: 11px;
+}
+
+.move-stub.has-seats .move-seat-arrow svg {
+  width: 11px;
+  height: 11px;
+}
+
 .move-stub .target-figures.is-small .strip-glyph {
   width: 12px;
   height: 12px;
@@ -7910,7 +7934,7 @@ textarea,
   background: linear-gradient(180deg, rgba(224, 166, 60, 0.25), rgba(224, 166, 60, 0.1));
 }
 
-/* Right-aligned and capped, so a crowded strip clips from its left and the seats keep their column. */
+/* Right-aligned and capped, so a crowded strip clips from its left and the figures keep their column. */
 .move-strip {
   display: flex;
   flex: 0 1 auto;
@@ -7927,7 +7951,7 @@ textarea,
   white-space: nowrap;
 }
 
-/* Never shrinks and never clips: the seats keep one column down the list. The slot's width is
+/* Never shrinks and never clips: the figures keep one column down the list. The slot's width is
    stated inline (reachWidth), never measured, and the reach sits in it out of flow. */
 .move-reach-slot {
   position: relative;

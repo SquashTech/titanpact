@@ -571,15 +571,13 @@ function moveClauses(move: MoveDefinition, live: MoveLiveFacts): ReactNode[] {
   return out;
 }
 
-// Mirrors the CSS sizes below (.move-seat, .target-figures): a seat 20px, a figure 15px, a paired one 9px more.
-const SEAT_W = 20;
-const SEAT_GAP = 3;
+// Mirrors the CSS sizes below (.target-figures): a figure 15px, a paired one 9px more.
 const FIGURE_W = 15;
 const PAIR_W = 24;
 const SMALL_FIGURE_W = 10;
 
 function reachWidth(target: TargetMode, seats: readonly (number | null)[] | null): number {
-  if (seats) return seats.length * SEAT_W + (seats.length - 1) * SEAT_GAP + (target === 'allOthers' ? SMALL_FIGURE_W + SEAT_GAP : 0);
+  if (seats) return SMALL_FIGURE_W;
   switch (target) {
     case 'bothEnemies':
     case 'bothAllies':
@@ -594,15 +592,21 @@ function reachWidth(target: TargetMode, seats: readonly (number | null)[] | null
   }
 }
 
+/** The seats an attack draws under its number in a fight; null out of one, or for a move not aimed at the enemy row. */
+export function stubSeats(move: MoveDefinition, target: TargetMode, seats: readonly (number | null)[] | undefined): readonly (number | null)[] | null {
+  return move.kind === 'damage' && aimsAtEnemies(target) && seats && seats.length > 0 ? seats : null;
+}
+
 /**
- * The move row's strip: every clause as a glyph, then the riders and priority, then who it reaches —
- * the enemy seats on an attack in a fight, figures otherwise; a buff or debuff carries its figures
- * in the stub instead (targetInStub). Right-aligned against the stub, so
- * the seats land in one column down the list and overflow clips from the left.
+ * The move row's strip: every clause as a glyph, then the riders and priority, then who it reaches as
+ * figures. An attack in a fight says who it reaches with the seats under its number, so it draws no
+ * figure here except the partner a hit-everyone move also strikes; a buff or debuff carries its
+ * figures in the stub (targetInStub). Right-aligned against the stub; overflow clips from the left.
  */
 export function MoveStrip({ move, amountOf, live = {} }: { move: MoveDefinition; amountOf: RiderAmount; live?: MoveLiveFacts }) {
   const target = live.target ?? move.target;
-  const seats = move.kind === 'damage' && aimsAtEnemies(target) && live.seats && live.seats.length > 0 ? live.seats : null;
+  const seats = stubSeats(move, target, live.seats);
+  const reach = !targetInStub(move) && (!seats || target === 'allOthers');
   // Who it reaches sits outside the clipping strip in a slot of stated width: WebKit mis-measured it
   // from its contents on first layout and let it run under the stub.
   return (
@@ -612,17 +616,10 @@ export function MoveStrip({ move, amountOf, live = {} }: { move: MoveDefinition;
         <MoveRiderIcons move={move} amountOf={amountOf} />
         <MovePriorityChip move={move} />
       </span>
-      {!targetInStub(move) && (
+      {reach && (
       <span className="move-reach-slot" style={{ width: reachWidth(target, seats) } as CSSProperties}>
       <span className="move-reach">
-        {seats ? (
-          <>
-            {target === 'allOthers' && <Figures side="ally" count={1} small />}
-            <EnemySeats mults={seats} target={target} />
-          </>
-        ) : (
-          <TargetFigures target={target} />
-        )}
+        {seats ? <Figures side="ally" count={1} small /> : <TargetFigures target={target} />}
       </span>
       </span>
       )}
@@ -638,7 +635,8 @@ export function targetInStub(move: MoveDefinition): boolean {
 }
 
 /**
- * The payoff, scored off the row's right end: the kind glyph over the number it delivers. A buff or
+ * The payoff, scored off the row's right end: the kind glyph over the number it delivers, and in a
+ * fight the enemy seats under it, the matchup being what that number is multiplied by. A buff or
  * debuff has no number, so it shows its glyph alone.
  */
 export function MoveStub({
@@ -647,6 +645,7 @@ export function MoveStub({
   boosted,
   title,
   target,
+  seats,
 }: {
   move: MoveDefinition;
   /** The figure to print — live power, a rolled range, a resolved heal; omitted for a buff or debuff. */
@@ -655,12 +654,16 @@ export function MoveStub({
   title?: string;
   /** Who it reaches, live where the board can change it; drawn under the glyph when targetInStub. */
   target?: TargetMode;
+  /** Each enemy seat's multiplier, left to right; drawn only on an attack aimed at the enemy row. */
+  seats?: readonly (number | null)[];
 }) {
   const kind = moveKindGlyph(move);
   const hits = move.hitCount ?? 1;
   const long = value != null && String(value).length > 3;
+  const reach = target ?? move.target;
+  const matchups = stubSeats(move, reach, seats);
   return (
-    <span className={`move-stub stub-${kind}${value == null ? ' is-bare' : ''}`} title={title}>
+    <span className={`move-stub stub-${kind}${value == null ? ' is-bare' : ''}${matchups ? ' has-seats' : ''}`} title={title}>
       <MoveKindGlyph kind={kind} className="move-stub-glyph" />
       {value != null && (
         <strong className={`move-stub-value${long ? ' is-long' : ''}${boosted ? ' is-boosted' : ''}`}>
@@ -669,7 +672,8 @@ export function MoveStub({
           {hits > 1 && <span className="move-stub-hits">×{hits}</span>}
         </strong>
       )}
-      {targetInStub(move) && <TargetFigures target={target ?? move.target} small />}
+      {matchups && <EnemySeats mults={matchups} target={reach} />}
+      {targetInStub(move) && <TargetFigures target={reach} small />}
     </span>
   );
 }

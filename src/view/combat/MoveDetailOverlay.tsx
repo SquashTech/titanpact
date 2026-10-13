@@ -287,6 +287,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
   );
 
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
+  const seats = context && move.kind === 'damage' ? forecastSeats(context, context.defenderIds).map((id) => (id ? seatMult(move, context, id) : null)) : undefined;
   const stubValue =
     move.kind === 'damage'
       ? move.randomBasePower
@@ -316,14 +317,14 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
             move={move}
             amountOf={(app) => riderMagnitude(move, app, healCaster)}
             live={{
-              seats: context && move.kind === 'damage' ? forecastSeats(context, context.defenderIds).map((id) => (id ? seatMult(move, context, id) : null)) : undefined,
+              seats,
               banked: attacker?.damageTakenSinceLastTurn,
               cost: context ? liveCost : undefined,
               power: attacker ? (liveBasePower ?? move.basePower) : undefined,
             }}
           />
         </div>
-        <MoveStub move={move} value={stubValue} boosted={forceBonus > 0} title={stubTitle} />
+        <MoveStub move={move} value={stubValue} boosted={forceBonus > 0} title={stubTitle} seats={seats} />
       </div>
 
       <div className="move-dossier-body">

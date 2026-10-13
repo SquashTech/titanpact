@@ -206,6 +206,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
       <MoveStub
         move={move}
         target={liveTargetMode}
+        seats={seats}
         value={move.kind === 'damage' ? (rolledBasePower ?? move.basePower ?? 0) + forceBonus : heal?.value}
         boosted={move.kind === 'damage' && boosted}
         title={
