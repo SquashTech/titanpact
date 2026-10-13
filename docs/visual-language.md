@@ -3435,3 +3435,8 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   damage on Fire moves"; the "a benched carrier does nothing" note under a conditional passive is
   cut. Banners carry no prose to key: the pick is the standard and its stat glyphs. The Reference's
   passive list now renders through `PassiveText`, which it had missed.
+- **Events** (same day, per user direction): the flavor line stays prose. Each option's sub-line
+  heads with a gold keyword — **Learn**, **Gear**, **Recruit**, **Gamble**, **Curse** — and a price
+  with **Cost** ("Cost: 20 gold · 10% HP from everyone"); a curse's block is one **Turns at Mastery
+  N** line. The readout's "Choose what to do, or walk on." and every "Hold a hero to review its
+  sheet." are cut, and Leave lost its "Walk on" sub-line.

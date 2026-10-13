@@ -144,11 +144,20 @@ function percent(share: number): string {
   return `${Math.round(share * 100)}%`;
 }
 
+/** A gold keyword heading a line, as passives and moves read: `Cost: 20 gold`. */
+function Keyed({ word, children }: { word: string; children: ReactNode }) {
+  return (
+    <>
+      <span className="kw-badge">{word}</span> {children}
+    </>
+  );
+}
+
 function costLine(cost: EventCost | undefined): string | null {
   if (!cost) return null;
   const parts: string[] = [];
-  if (cost.gold) parts.push(`Costs ${cost.gold} gold`);
-  if (cost.woundAll) parts.push(`Everyone loses ${percent(cost.woundAll)} HP`);
+  if (cost.gold) parts.push(`${cost.gold} gold`);
+  if (cost.woundAll) parts.push(`${percent(cost.woundAll)} HP from everyone`);
   return parts.length > 0 ? parts.join(' · ') : null;
 }
 
@@ -156,21 +165,23 @@ function costLine(cost: EventCost | undefined): string | null {
 function optionSummary(outcome: ResolvableOutcome, rolled: Rolled): ReactNode {
   switch (outcome.kind) {
     case 'learnMove':
-      return rolled.moveId ? `Learn ${moves[rolled.moveId].name}` : 'Nothing here after all';
+      return rolled.moveId ? <Keyed word="Learn">{moves[rolled.moveId].name}</Keyed> : 'Nothing here after all';
     case 'statShift':
       return <ShiftChips deltas={outcome.deltas} className="event-option-chips" />;
     case 'grantPassive':
-      return `Learn ${passives[outcome.passiveId].name}`;
+      return <Keyed word="Learn">{passives[outcome.passiveId].name}</Keyed>;
     case 'loot':
-      return `${rolled.loot.length} ${rolled.loot.length === 1 ? 'piece' : 'pieces'} of gear`;
+      return <Keyed word="Gear">{rolled.loot.length}</Keyed>;
     case 'recruit':
-      return rolled.recruits.length > 0
-        ? `${rolled.recruits.map((entry) => heroes[entry.heroId].name).join(' or ')} joins`
-        : 'Nobody answers';
+      return rolled.recruits.length > 0 ? (
+        <Keyed word="Recruit">{rolled.recruits.map((entry) => heroes[entry.heroId].name).join(' or ')}</Keyed>
+      ) : (
+        'Nobody answers'
+      );
     case 'gamble':
-      return `${percent(outcome.chance)} chance`;
+      return <Keyed word="Gamble">{percent(outcome.chance)}</Keyed>;
     case 'curse':
-      return `A curse: at Mastery ${curses[outcome.curseId].turnAt}, the ${curses[outcome.curseId].name}`;
+      return <Keyed word="Curse">{`${curses[outcome.curseId].name}, at Mastery ${curses[outcome.curseId].turnAt}`}</Keyed>;
   }
 }
 
@@ -329,14 +340,14 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
 
   /** The ask, or what just happened. Never the flavor — that has its own line. */
   function readout(): ReactNode {
-    if (!outcome) return 'Choose what to do, or walk on.';
+    if (!outcome) return '';
     if (outcome.kind === 'recruit') {
       if (resolvedTo) {
         const joined = run.roster.find((r) => r.rosterId === resolvedTo);
         return joined ? `${heroes[joined.heroId].name} joins the pact.` : '';
       }
       if (arriving) return `${heroes[arriving.heroId].name} would join, but the roster is full. Choose who leaves — their gear goes with them.`;
-      return rolled && rolled.recruits.length > 0 ? 'Choose who joins. Hold a hero to review its sheet.' : 'Nobody answers.';
+      return rolled && rolled.recruits.length > 0 ? 'Choose who joins.' : 'Nobody answers.';
     }
     if (resolvedHero) {
       if (outcome.kind === 'learnMove' && offeredMove) return `${resolvedHero.name} learned ${offeredMove.name}.`;
@@ -346,12 +357,12 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
       if (grantedPassive) return `${resolvedHero.name} learned ${grantedPassive.name}.`;
     }
     if (outcome.kind === 'learnMove') {
-      return offeredMove ? 'Choose who learns it. Hold a hero to review its sheet.' : 'Nothing here after all.';
+      return offeredMove ? 'Choose who learns it.' : 'Nothing here after all.';
     }
-    if (outcome.kind === 'statShift') return 'Choose who makes the trade. Hold a hero to review its sheet.';
-    if (outcome.kind === 'grantPassive') return 'Choose who learns it. Hold a hero to review its sheet.';
-    if (outcome.kind === 'gamble') return 'Choose who takes the chance. Hold a hero to review its sheet.';
-    if (outcome.kind === 'curse') return 'Choose who it takes. Hold a hero to review its sheet.';
+    if (outcome.kind === 'statShift') return 'Choose who makes the trade.';
+    if (outcome.kind === 'grantPassive') return 'Choose who learns it.';
+    if (outcome.kind === 'gamble') return 'Choose who takes the chance.';
+    if (outcome.kind === 'curse') return 'Choose who it takes.';
     return `${lootItems.length} ${lootItems.length === 1 ? 'piece' : 'pieces'} of gear. Take them, then place each one.`;
   }
 
@@ -410,15 +421,18 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
           {arrived && curse && (
             <div className="node-item-effects event-transform event-reveal-in">
               <p className="event-transform-line">
-                The bite marks the hero. At <strong>Mastery {curse.turnAt}</strong> it Turns — at once, if it is already there:
-              </p>
-              <p className="event-transform-line">
-                Pure {curse.types.join(' / ')}, a {Object.values(curse.baseStats).reduce((a, b) => a + b, 0)}-stat body, {offeredMove?.name}, and{' '}
-                <strong>{passives[curse.passiveIds[0]]?.name}</strong> in place of its own innate.
+                <Keyed word={`Turns at Mastery ${curse.turnAt}`}>
+                  Pure {curse.types.join(' / ')}, a {Object.values(curse.baseStats).reduce((a, b) => a + b, 0)}-stat body, {offeredMove?.name}, and{' '}
+                  <strong>{passives[curse.passiveIds[0]]?.name}</strong> in place of its innate. At once if already there.
+                </Keyed>
               </p>
             </div>
           )}
-          {arrived && cost && !resolvedTo && <p className="event-cost-line event-reveal-in">{cost}</p>}
+          {arrived && cost && !resolvedTo && (
+            <p className="event-cost-line event-reveal-in">
+              <Keyed word="Cost">{cost}</Keyed>
+            </p>
+          )}
         </NodeHeader>
       )}
 
@@ -440,13 +454,16 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
                   >
                     <span className="moveoffer-label">{option.label}</span>
                     <span className="moveoffer-sub">{optionSummary(option.outcome, rolls[index])}</span>
-                    {optionCost && <span className="moveoffer-sub event-option-cost">{affordable ? optionCost : `${optionCost} — not enough`}</span>}
+                    {optionCost && (
+                      <span className="moveoffer-sub event-option-cost">
+                        <Keyed word="Cost">{affordable ? optionCost : `${optionCost} — not enough`}</Keyed>
+                      </span>
+                    )}
                   </button>
                 );
               })}
               <button className="moveoffer-button moveoffer-decline event-option" onClick={onContinue}>
                 <span className="moveoffer-label">Leave</span>
-                <span className="moveoffer-sub">Walk on</span>
               </button>
             </div>
           </div>
