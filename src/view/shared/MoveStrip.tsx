@@ -121,7 +121,7 @@ function tierOf(mult: number): Tier {
 const UP = 'M12 4 21 14h-6v6H9v-6H3Z';
 const DOWN = 'M12 20 3 10h6V4h6v6h6Z';
 
-function SeatArrow({ mult }: { mult: number }) {
+export function SeatArrow({ mult }: { mult: number }) {
   const tier = tierOf(mult);
   if (tier === 'neutral') return <span className="move-seat-arrow eff-neutral" />;
   const one = (
@@ -610,12 +610,15 @@ export function MoveStub({
   value,
   boosted,
   title,
+  label,
 }: {
   move: MoveDefinition;
   /** The figure to print — live power, a rolled range, a resolved heal; omitted for a buff or debuff. */
   value?: string | number;
   boosted?: boolean;
   title?: string;
+  /** A word under the figure, for the dossier's enlarged stub. */
+  label?: string;
 }) {
   const kind = moveKindGlyph(move);
   const hits = move.hitCount ?? 1;
@@ -630,6 +633,7 @@ export function MoveStub({
           {hits > 1 && <span className="move-stub-hits">×{hits}</span>}
         </strong>
       )}
+      {label && <span className="move-stub-label">{label}</span>}
     </span>
   );
 }

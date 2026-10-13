@@ -21,12 +21,13 @@ import { fieldEffectFactsLine } from '../shared/fieldEffectFacts';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS, chargesLabel, restoresChargesText, grantsRatherThanInflicts, healReadout, MoveKindBadge, moveKindGlyph, moveKindLabel, riderTargetLabel } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, chargesLabel, restoresChargesText, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel } from '../shared/MoveTile';
 import { stageText } from '../shared/moveKind';
 import { overlayHost } from '../shared/overlayHost';
 import { ChargePips } from '../shared/ChargePips';
 import { forecastDamage, koLabel } from './forecast';
 import { ForecastBite } from './ForecastBite';
+import { MoveStub, SeatArrow, TargetFigures } from '../shared/MoveStrip';
 
 /** The live fight a move is inspected inside. Optional: the hero sheet, level-up and recruit preview have no combat to forecast against. */
 export interface MoveDossierContext {
@@ -56,8 +57,15 @@ export function formatMult(mult: number): string {
   return `${Math.round(mult * 100) / 100}×`;
 }
 
-// One enemy's line: the bite is drawn out of the defender's own remaining track (docs/visual-language.md fixed-denominator idiom).
-function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: MoveDossierContext; defenderId: string }) {
+/** The defenders laid into their side's two slots, so the forecast reads left and right as the arena does. */
+function forecastSeats(ctx: MoveDossierContext, ids: readonly string[]): (string | null)[] {
+  const side = ctx.combat.combatants[ids[0]]?.side;
+  if (!side) return [...ids];
+  return ctx.combat.active[side].map((id) => (id && ids.includes(id) ? id : null));
+}
+
+// One enemy's seat: the bite is drawn out of the defender's own remaining track (docs/visual-language.md fixed-denominator idiom).
+function ForecastSeat({ move, ctx, defenderId }: { move: MoveDefinition; ctx: MoveDossierContext; defenderId: string }) {
   const defender = ctx.combat.combatants[defenderId];
   const hero = allCombatants[defender.heroId];
   if (!hero) return null;
@@ -68,29 +76,34 @@ function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mov
   const ko = koLabel(koChance);
 
   return (
-    <div className="move-forecast-row">
-      <HeroPortrait heroId={defender.heroId} pathId={defender.formPathId} className="move-forecast-portrait" seed={defenderId} />
-      <div className="move-forecast-body">
-      <div className="move-forecast-who">
-        <span className="move-forecast-name">{hero.name}</span>
-        {effectiveTypes(hero, defender).map((t) => (
-          <span key={t} className="move-forecast-type" style={{ color: getTypeColor(t) }} title={t}>
-            <ElementGlyph type={t} />
+    <div className="move-dossier-seat">
+      <div className="move-dossier-seat-who">
+        <HeroPortrait heroId={defender.heroId} pathId={defender.formPathId} className="move-dossier-seat-portrait" seed={defenderId} />
+        <div className="move-dossier-seat-id">
+          <span className="move-forecast-name">{hero.name}</span>
+          <span className="move-dossier-seat-types">
+            {effectiveTypes(hero, defender).map((t) => (
+              <span key={t} className="move-forecast-type" style={{ color: getTypeColor(t) }} title={t}>
+                <ElementGlyph type={t} />
+              </span>
+            ))}
           </span>
-        ))}
-        <span className={`move-forecast-mult ${multClass(typeMult)}`}>{formatMult(typeMult)}</span>
-      </div>
-      <div className="move-forecast-meter">
-        <div className={`move-forecast-track ${hpTier(hpFraction)}`}>
-          <div className="move-forecast-hp" style={{ width: `${hpFraction * 100}%` }} />
-          <ForecastBite hpFraction={hpFraction} minFraction={minFraction} maxFraction={maxFraction} />
         </div>
+        <span className="move-dossier-seat-mult">
+          <SeatArrow mult={typeMult} />
+          <span className={`move-forecast-mult ${multClass(typeMult)}`}>{formatMult(typeMult)}</span>
+        </span>
+      </div>
+      <div className="move-dossier-seat-damage">
         <span className="move-forecast-numbers">
           {min === max ? min : `${min}–${max}`}
           <span className="move-forecast-of"> / {defender.currentHp}</span>
         </span>
         {ko && <span className={`move-forecast-ko ${ko === 'KO' ? 'is-sure' : 'is-maybe'}`}>{ko}</span>}
       </div>
+      <div className={`move-forecast-track ${hpTier(hpFraction)}`}>
+        <div className="move-forecast-hp" style={{ width: `${hpFraction * 100}%` }} />
+        <ForecastBite hpFraction={hpFraction} minFraction={minFraction} maxFraction={maxFraction} />
       </div>
     </div>
   );
@@ -120,12 +133,10 @@ interface CardProps {
   terse?: boolean;
   /** Cast by the companion's Call (docs/companion-call.md §3.1): it costs no mana, so no price and no mana left is shown. */
   free?: boolean;
-  /** Head laid out as the combat move row — mana, type, name, power at the right — with the power off the stats strip. For the learn-move offer. */
-  rowHead?: boolean;
 }
 
 /** The move dossier: a live damage band, the priority bracket, and the mana left after casting. */
-export function MoveDetailCard({ move: authored, label, context, caster, terse, free, rowHead }: CardProps) {
+export function MoveDetailCard({ move: authored, label, context, caster, terse, free }: CardProps) {
   const attacker = context ? context.combat.combatants[context.attackerId] : undefined;
   const attackerHero = attacker ? allCombatants[attacker.heroId] : undefined;
   // A Class move wears its holder's type (state.ts): the live attacker's, else the caster's.
@@ -256,129 +267,48 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
   );
 
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
-  const detailLine = (
-    <div className="move-detail-line">
-      <span style={{ color: typeColor }}>{move.type}</span>
-      <span className="move-detail-sep">·</span>
-      <span>{move.kind === 'damage' ? PIPELINE_WORDS[move.category] : moveKindLabel(move)}</span>
-      <span className="move-detail-sep">·</span>
-      <span>{TARGET_MODE_LABELS[move.target]}</span>
-    </div>
-  );
+  const stubValue =
+    move.kind === 'damage'
+      ? move.randomBasePower
+        ? `${move.randomBasePower.min + forceBonus}–${move.randomBasePower.max + forceBonus}`
+        : (liveBasePower ?? move.basePower ?? 0) + forceBonus
+      : heal?.value;
+  const hasStats = Boolean((healTerms && healTerms.wisdomMult !== 1) || stab || livePriority !== 0 || (!free && manaAfter !== null && manaPool !== null));
+  const hasBody = hasPayload || forecastIds.length > 0 || hasStats;
+  const stubLabel = move.kind === 'damage' ? 'Power' : heal ? 'Heal' : moveKindLabel(move);
+  const stubTitle =
+    move.kind !== 'damage'
+      ? undefined
+      : [move.hitCount ? `Base Power on each of ${move.hitCount} hits` : 'Base Power', forceBonus > 0 ? `+${forceBonus} from Elemental Force` : '']
+          .filter(Boolean)
+          .join(' · ');
 
   return (
     <div className={`move-detail-card${terse ? ' is-terse' : ''}`} style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}>
       {label && <div className="move-detail-label">{label}</div>}
 
-      <div className={`move-detail-head${rowHead ? ' is-row' : ''}`}>
-        {rowHead && !free && <ManaCost cost={liveCost} />}
-        <span className="move-detail-disc" style={{ color: typeColor }}>
+      {/* The move row, enlarged: cost, type and name on the left, the payoff on the right. */}
+      <div className="move-dossier-head">
+        {!free && <ManaCost cost={liveCost} />}
+        <span className="move-type-code" title={move.type}>
           <ElementGlyph type={move.type} />
         </span>
-        <div className="move-detail-titles">
-          <div
-            className="move-detail-name"
-            // The row head shrinks the name to fit its longest word, which is the part that cannot wrap.
-            style={rowHead ? ({ '--word-len': Math.max(...move.name.split(' ').map((w) => w.length)) } as CSSProperties) : undefined}
-          >
-            {move.name}
+        <div className="move-dossier-titles">
+          <div className="move-dossier-name">{move.name}</div>
+          <div className="move-dossier-meta">
+            <span style={{ color: typeColor }}>{move.type}</span>
+            <span className="move-detail-sep">·</span>
+            <span>{move.kind === 'damage' ? PIPELINE_WORDS[move.category] : moveKindLabel(move)}</span>
+            <span className="move-detail-sep">·</span>
+            <TargetFigures target={move.target} small />
+            <span>{TARGET_MODE_LABELS[move.target]}</span>
           </div>
-          {!rowHead && detailLine}
         </div>
-        {!rowHead && !free && <ManaCost cost={liveCost} />}
-        {rowHead && (
-          <span
-            className={`move-detail-row-power${heal ? ' is-heal' : ''}`}
-            title={move.kind !== 'damage' ? undefined : move.hitCount ? `Base Power on each of ${move.hitCount} hits` : 'Base Power'}
-          >
-            {(move.kind === 'damage' || heal) && (
-              <strong>
-                {heal
-                  ? heal.value
-                  : move.randomBasePower
-                    ? `${move.randomBasePower.min + forceBonus}–${move.randomBasePower.max + forceBonus}`
-                    : (move.basePower ?? 0) + forceBonus}
-              </strong>
-            )}
-            {move.hitCount ? <span className="move-detail-unit">×{move.hitCount}</span> : null}
-            <MoveKindBadge move={move} />
-          </span>
-        )}
-      </div>
-      {rowHead && detailLine}
-
-      <div className="move-detail-stats">
-        {!rowHead && move.kind === 'damage' && move.basePower != null && (
-          <span
-            className="move-detail-stat move-detail-stat-power"
-            // The Base Power shown is PER HIT, so a multi-hit move has to say so here — the
-            // number alone reads as the whole swing and would understate it threefold.
-            title={move.hitCount ? `${move.basePower + forceBonus} Base Power on each of ${move.hitCount} hits` : 'Base Power'}
-          >
-            <MoveKindGlyph kind={kindGlyph} />
-            <strong>{move.basePower + forceBonus}</strong>
-            {move.hitCount ? <span className="move-detail-unit">×{move.hitCount}</span> : null}
-            {forceBonus > 0 && <span className="move-detail-boost">▲{forceBonus}</span>}
-          </span>
-        )}
-        {!rowHead && move.kind === 'damage' && move.randomBasePower && (
-          <span className="move-detail-stat move-detail-stat-power" title="Base Power is rolled each round and shown on the button before you commit">
-            <MoveKindGlyph kind={kindGlyph} />
-            <strong>
-              {move.randomBasePower.min + forceBonus}–{move.randomBasePower.max + forceBonus}
-            </strong>
-            {forceBonus > 0 && <span className="move-detail-boost">▲{forceBonus}</span>}
-          </span>
-        )}
-        {!rowHead && heal && (
-          <span
-            className="move-detail-stat move-detail-stat-heal"
-            title={
-              healTerms
-                ? `${healTerms.healPower} HealPower × ${healTerms.wisdomMult.toFixed(2)} Wisdom${healTerms.stab > 1 ? ' × 1.25 same type' : ''}${healTerms.fieldMult !== 1 ? ` × ${healTerms.fieldMult} ${activeFieldName}` : ''}`
-                : undefined
-            }
-          >
-            <StatGlyph stat="hp" tone="inherit" />
-            <strong>{heal.value}</strong>
-            <span className="move-detail-unit">{heal.resolved ? 'HP' : 'HEAL'}</span>
-          </span>
-        )}
-        {/* Hidden at exactly 1.00 — a caster on the reference Wisdom has no story to tell. */}
-        {healTerms && healTerms.wisdomMult !== 1 && (
-          <span className="move-detail-stat move-detail-stat-wis" title="Wisdom scales healing: ±1% per point off 50">
-            <StatGlyph stat="wisdom" tone="inherit" />
-            <strong>×{healTerms.wisdomMult.toFixed(2)}</strong>
-            <span className="move-detail-unit">WIS</span>
-          </span>
-        )}
-        {stab && (
-          <span className="move-detail-stat move-detail-stat-stab" title="Same-Type Attack Bonus">
-            <ElementGlyph type={move.type} />
-            <strong>×1.25</strong>
-            <span className="move-detail-unit">same type</span>
-          </span>
-        )}
-        {/* The LIVE bracket (conditionalPriority folded in), so a base-0 move can appear here. */}
-        {livePriority !== 0 && (
-          <span className={`move-detail-stat move-detail-stat-priority${livePriority > 0 ? ' is-fast' : ' is-slow'}`}>
-            <StatGlyph stat="speed" tone="inherit" />
-            <strong>
-              {livePriority > 0 ? '+' : ''}
-              {livePriority}
-            </strong>
-            <span className="move-detail-unit">{livePriority > 0 ? 'Strikes first' : 'Strikes last'}</span>
-          </span>
-        )}
-        {!free && manaAfter !== null && manaPool !== null && (
-          <span className="move-detail-stat move-detail-stat-mana">
-            <StatGlyph stat="manaPool" tone="inherit" />
-            <strong>{Math.max(0, manaAfter)}</strong>
-            <span className="move-detail-unit">/ {manaPool} MP left</span>
-          </span>
-        )}
+        <MoveStub move={move} value={stubValue} boosted={forceBonus > 0} label={stubLabel} title={stubTitle} />
       </div>
 
+      {hasBody && (
+      <div className="move-dossier-body">
       {hasPayload && (
         <div className="move-detail-effects">
           {move.manaGrant != null && (
@@ -393,52 +323,6 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
           {move.clearsRaisedStages && (
             <EffectRow glyph={<StatGlyph stat="attack" />} text={`Any raised stat on ${TARGET_MODE_LABELS[move.target].toLowerCase()} returns to normal first`} />
           )}
-          {move.statDeltas?.map(({ stat, stages }) => {
-            // A change into a hero already at, or near, ±5 lands short — say so before the press (docs/stat-stages.md).
-            const held = (() => {
-              if (stages === 0 || !context) return undefined;
-              const ownSide = statDeltaLandsOnCasterSide(move);
-              const receivers = ownSide
-                ? move.statDeltaTarget === 'self' || move.target === 'self'
-                  ? [context.attackerId]
-                  : context.combat.active[context.combat.combatants[context.attackerId]?.side ?? 'A'].filter((id): id is string => id !== null)
-                : context.defenderIds;
-              const edge = stages > 0 ? 'higher' : 'lower';
-              const parts = receivers
-                .map((id) => {
-                  const d = context.combat.combatants[id];
-                  if (!d || d.fainted) return null;
-                  const { landed, capped } = applyStageDelta(d, stat, stages);
-                  if (!capped) return null;
-                  const who = allCombatants[d.heroId]?.name ?? id;
-                  return landed === 0
-                    ? `${who}'s ${STAT_LABELS[stat]} can't go any ${edge} — lands nothing`
-                    : `${who}'s ${STAT_LABELS[stat]} can't go much ${edge} — lands ${stageText(stat, landed)}`;
-                })
-                .filter(Boolean);
-              return parts.length ? parts.join('; ') : undefined;
-            })();
-            return (
-            <EffectRow
-              key={stat}
-              glyph={<StatGlyph stat={stat} />}
-              text={`${move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : ''}${stageText(stat, stages)} to ${(move.statDeltaTarget === 'bothAllies'
-                ? TARGET_MODE_LABELS.bothAllies
-                : move.statDeltaTarget === 'self'
-                  ? TARGET_MODE_LABELS.self
-                  : TARGET_MODE_LABELS[move.target]
-              ).toLowerCase()}`}
-              note={
-                [
-                  held,
-                  move.statDeltaChance != null ? 'rolled per target' : undefined,
-                ]
-                  .filter(Boolean)
-                  .join(' — ') || undefined
-              }
-            />
-            );
-          })}
           {move.doublesStages?.map((stat) => (
             <EffectRow key={`doubles-${stat}`} glyph={<StatGlyph stat={stat} />} text={`Doubles ${STAT_LABELS[stat]} steps on ${TARGET_MODE_LABELS[move.target].toLowerCase()}`} note="▲▲ from none or below" />
           ))}
@@ -471,52 +355,6 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
               }
             />
           )}
-          {statusRiders.map(({ app, def }) => {
-            const where = riderTargetLabel(app);
-            // The number the caster would actually land, the way liveBasePower and liveCost read.
-            // A hero sheet has no Combatant but does have the same two inputs the formula wants.
-            const liveMagnitude =
-              attacker && attackerHero
-                ? scaleStatusMagnitude(app.magnitude, def, app, move, attackerHero, attacker, statCtx)
-                : healCaster
-                  ? resolveStatusMagnitudeFor(app.magnitude, def, app, move, { stats: healCaster.stats ?? {}, types: healCaster.types })
-                  : app.magnitude;
-            // A Shield into a hero whose pool is at, or near, its max HP lands short — say so before the press (docs/shield.md §5).
-            const shieldHeldNote = (() => {
-              if (def.pipeline !== 'shield' || !context || liveMagnitude == null) return undefined;
-              const side = context.combat.combatants[context.attackerId]?.side ?? 'A';
-              const receivers =
-                app.target === 'self' || move.target === 'self'
-                  ? [context.attackerId]
-                  : app.target === 'bothAllies' || move.target === 'bothAllies'
-                    ? context.combat.active[side].filter((id): id is string => id !== null)
-                    : context.defenderIds;
-              const parts = receivers
-                .map((id) => {
-                  const holder = context.combat.combatants[id];
-                  if (!holder || holder.fainted) return null;
-                  const hero = allCombatants[holder.heroId];
-                  const room = getMaxHp(hero, holder) - statusMagnitude(holder, def.id);
-                  if (room >= liveMagnitude) return null;
-                  return room <= 0 ? `${hero.name}'s Shield can't go any higher — lands nothing` : `${hero.name}'s Shield can't go much higher — lands ${room}`;
-                })
-                .filter(Boolean);
-              return parts.length ? parts.join('; ') : undefined;
-            })();
-            return (
-              <EffectRow
-                key={app.statusId}
-                glyph={<StatusGlyph statusId={app.statusId} />}
-                color={statusColor(app.statusId)}
-                text={`${app.chance != null ? `${Math.round(app.chance * 100)}% ` : ''}${
-                  grantsRatherThanInflicts(app) ? 'Grants' : 'Applies'
-                } ${def.name}${
-                  liveMagnitude != null ? ` ${statusAmountText(app.statusId, liveMagnitude)}` : app.duration != null ? ` ${app.duration}` : ''
-                }${where ? ` — ${where}` : ''}`}
-                note={[shieldHeldNote, statusFactsLine(def)].filter(Boolean).join(' — ')}
-              />
-            );
-          })}
           {/* The gate reads first: it is the only effect that can make the move unpressable. */}
           {move.requiresTargetStatus && (
             <EffectRow
@@ -770,19 +608,152 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse, 
               note={fieldEffectFactsLine(fieldDef)}
             />
           )}
+          {/* Riders last, as the row's strip draws them: closest to who the move reaches. */}
+          {statusRiders.map(({ app, def }) => {
+            const where = riderTargetLabel(app);
+            // The number the caster would actually land, the way liveBasePower and liveCost read.
+            // A hero sheet has no Combatant but does have the same two inputs the formula wants.
+            const liveMagnitude =
+              attacker && attackerHero
+                ? scaleStatusMagnitude(app.magnitude, def, app, move, attackerHero, attacker, statCtx)
+                : healCaster
+                  ? resolveStatusMagnitudeFor(app.magnitude, def, app, move, { stats: healCaster.stats ?? {}, types: healCaster.types })
+                  : app.magnitude;
+            // A Shield into a hero whose pool is at, or near, its max HP lands short — say so before the press (docs/shield.md §5).
+            const shieldHeldNote = (() => {
+              if (def.pipeline !== 'shield' || !context || liveMagnitude == null) return undefined;
+              const side = context.combat.combatants[context.attackerId]?.side ?? 'A';
+              const receivers =
+                app.target === 'self' || move.target === 'self'
+                  ? [context.attackerId]
+                  : app.target === 'bothAllies' || move.target === 'bothAllies'
+                    ? context.combat.active[side].filter((id): id is string => id !== null)
+                    : context.defenderIds;
+              const parts = receivers
+                .map((id) => {
+                  const holder = context.combat.combatants[id];
+                  if (!holder || holder.fainted) return null;
+                  const hero = allCombatants[holder.heroId];
+                  const room = getMaxHp(hero, holder) - statusMagnitude(holder, def.id);
+                  if (room >= liveMagnitude) return null;
+                  return room <= 0 ? `${hero.name}'s Shield can't go any higher — lands nothing` : `${hero.name}'s Shield can't go much higher — lands ${room}`;
+                })
+                .filter(Boolean);
+              return parts.length ? parts.join('; ') : undefined;
+            })();
+            return (
+              <EffectRow
+                key={app.statusId}
+                glyph={<StatusGlyph statusId={app.statusId} />}
+                color={statusColor(app.statusId)}
+                text={`${app.chance != null ? `${Math.round(app.chance * 100)}% ` : ''}${
+                  grantsRatherThanInflicts(app) ? 'Grants' : 'Applies'
+                } ${def.name}${
+                  liveMagnitude != null ? ` ${statusAmountText(app.statusId, liveMagnitude)}` : app.duration != null ? ` ${app.duration}` : ''
+                }${where ? ` — ${where}` : ''}`}
+                note={[shieldHeldNote, statusFactsLine(def)].filter(Boolean).join(' — ')}
+              />
+            );
+          })}
+          {move.statDeltas?.map(({ stat, stages }) => {
+            // A change into a hero already at, or near, ±5 lands short — say so before the press (docs/stat-stages.md).
+            const held = (() => {
+              if (stages === 0 || !context) return undefined;
+              const ownSide = statDeltaLandsOnCasterSide(move);
+              const receivers = ownSide
+                ? move.statDeltaTarget === 'self' || move.target === 'self'
+                  ? [context.attackerId]
+                  : context.combat.active[context.combat.combatants[context.attackerId]?.side ?? 'A'].filter((id): id is string => id !== null)
+                : context.defenderIds;
+              const edge = stages > 0 ? 'higher' : 'lower';
+              const parts = receivers
+                .map((id) => {
+                  const d = context.combat.combatants[id];
+                  if (!d || d.fainted) return null;
+                  const { landed, capped } = applyStageDelta(d, stat, stages);
+                  if (!capped) return null;
+                  const who = allCombatants[d.heroId]?.name ?? id;
+                  return landed === 0
+                    ? `${who}'s ${STAT_LABELS[stat]} can't go any ${edge} — lands nothing`
+                    : `${who}'s ${STAT_LABELS[stat]} can't go much ${edge} — lands ${stageText(stat, landed)}`;
+                })
+                .filter(Boolean);
+              return parts.length ? parts.join('; ') : undefined;
+            })();
+            return (
+            <EffectRow
+              key={stat}
+              glyph={<StatGlyph stat={stat} />}
+              text={`${move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : ''}${stageText(stat, stages)} to ${(move.statDeltaTarget === 'bothAllies'
+                ? TARGET_MODE_LABELS.bothAllies
+                : move.statDeltaTarget === 'self'
+                  ? TARGET_MODE_LABELS.self
+                  : TARGET_MODE_LABELS[move.target]
+              ).toLowerCase()}`}
+              note={
+                [
+                  held,
+                  move.statDeltaChance != null ? 'rolled per target' : undefined,
+                ]
+                  .filter(Boolean)
+                  .join(' — ') || undefined
+              }
+            />
+            );
+          })}
         </div>
       )}
 
       {forecastIds.length > 0 && context && (
-        <div className="move-detail-forecast">
-          <div className="move-detail-eyebrow">Forecast</div>
-          {forecastIds.map((id) => (
-            <ForecastRow key={id} move={move} ctx={context} defenderId={id} />
-          ))}
+        <div className="move-dossier-forecast">
+          {/* The two enemy seats, left and right as they stand; a downed foe's seat stays empty. */}
+          <div className="move-dossier-seats">
+            {forecastSeats(context, forecastIds).map((id, i) =>
+              id ? <ForecastSeat key={id} move={move} ctx={context} defenderId={id} /> : <div key={`empty-${i}`} className="move-dossier-seat is-empty" />
+            )}
+          </div>
           <div className="move-detail-footnote">
             Variance {VARIANCE_MIN}–{VARIANCE_MAX} · crit ×1.5{move.critChance != null ? ` at ${Math.round(move.critChance * 100)}%` : ''}
           </div>
         </div>
+      )}
+
+      <div className="move-detail-stats">
+        {/* Hidden at exactly 1.00 — a caster on the reference Wisdom has no story to tell. */}
+        {healTerms && healTerms.wisdomMult !== 1 && (
+          <span className="move-detail-stat move-detail-stat-wis" title="Wisdom scales healing: ±1% per point off 50">
+            <StatGlyph stat="wisdom" tone="inherit" />
+            <strong>×{healTerms.wisdomMult.toFixed(2)}</strong>
+            <span className="move-detail-unit">WIS</span>
+          </span>
+        )}
+        {stab && (
+          <span className="move-detail-stat move-detail-stat-stab" title="Same-Type Attack Bonus">
+            <ElementGlyph type={move.type} />
+            <strong>×1.25</strong>
+            <span className="move-detail-unit">same type</span>
+          </span>
+        )}
+        {/* The LIVE bracket (conditionalPriority folded in), so a base-0 move can appear here. */}
+        {livePriority !== 0 && (
+          <span className={`move-detail-stat move-detail-stat-priority${livePriority > 0 ? ' is-fast' : ' is-slow'}`}>
+            <StatGlyph stat="speed" tone="inherit" />
+            <strong>
+              {livePriority > 0 ? '+' : ''}
+              {livePriority}
+            </strong>
+            <span className="move-detail-unit">{livePriority > 0 ? 'Strikes first' : 'Strikes last'}</span>
+          </span>
+        )}
+        {!free && manaAfter !== null && manaPool !== null && (
+          <span className="move-detail-stat move-detail-stat-mana">
+            <StatGlyph stat="manaPool" tone="inherit" />
+            <strong>{Math.max(0, manaAfter)}</strong>
+            <span className="move-detail-unit">/ {manaPool} MP left</span>
+          </span>
+        )}
+      </div>
+      </div>
       )}
     </div>
   );

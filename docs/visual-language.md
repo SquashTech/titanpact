@@ -3355,5 +3355,12 @@ in the spirit of a Hearthstone card's cost / attack / health corners:
 - **Matchup tiers, glow / fade**: ×2 and ×0.5 keep the HP green and red; ×4 is a brighter green
   with a glow (`--eff-quad-super`) and ×0.25 a receding red (`--eff-quad-resist`), both drawn as
   doubled arrows. The targeting cards' glow, the forecast and the eff chips use the same two.
+- **The dossier is the row, enlarged** (same day, per user direction, `MoveDetailCard`): the head is
+  the move row at about 1.5× (gem, type, name, and the stub with its figure and a word under it),
+  the effect lines open the strip one icon at a time in its order, riders last, each glyph in a dark
+  well; the forecast is the two enemy seats, left and right as they stand, each with its arrow,
+  its damage band and the bite out of its HP bar; same type, priority and Mana left close it
+  quietly. The card carries its own type rim and glow, so it reads the same wherever it is placed,
+  and the tap overlay drops the stone frame for it, the one window in the UI kit that does.
 - The exact multiplier is one tap later, on each enemy card in the targeting panel; a hold still opens the
   dossier in words.

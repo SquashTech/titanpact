@@ -465,7 +465,6 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
                   move={offeredMove}
                   label="Offered by the event"
                   caster={swappingCaster}
-                  rowHead
                 />
               </div>
               <div className="offer-swap-arrow" aria-hidden="true">
@@ -517,7 +516,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
           {/* --- learnMove: the offered move --- */}
           {arrived && outcome?.kind === 'learnMove' && offeredMove && (
             <div className="event-offer-move event-reveal-in">
-              <MoveDetailCard move={offeredMove} label="Offered by the event" rowHead />
+              <MoveDetailCard move={offeredMove} label="Offered by the event" />
             </div>
           )}
 

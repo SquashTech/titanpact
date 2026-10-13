@@ -24912,10 +24912,252 @@ button.evo-gift-card {
     var(--surface-raised);
 }
 
+/* ---------------------------------------------------------------------------
+ * The move dossier (MoveDetailCard, docs/visual-language.md "Move row: stub and
+ * strip"): the move row enlarged, lit by its type. The card carries its own
+ * frame and glow, so it reads the same in the tap overlay, a move offer, the
+ * hero sheet and the Academy; the overlay's panel drops the stone frame for it.
+ * ------------------------------------------------------------------------- */
+.detail-panel.move-detail-panel {
+  border: none;
+  border-image: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 22px 6px 6px;
+  image-rendering: auto;
+}
+
 .move-detail-card {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #22252e, #15171d);
+  box-shadow:
+    0 0 0 1px rgba(var(--move-type-rgb, 53, 59, 74), 0.65),
+    0 0 34px -6px rgba(var(--move-type-rgb, 53, 59, 74), 0.6),
+    0 18px 40px rgba(0, 0, 0, 0.55);
+}
+
+.move-detail-card > .move-detail-label {
+  padding: 10px 14px 0;
+}
+
+.move-dossier-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 78px;
+  padding: 10px 92px 10px 14px;
+  background: linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.34), rgba(var(--move-type-rgb, 53, 59, 74), 0.08) 40%, transparent 70%);
+}
+
+.move-dossier-head .mana-gem {
+  width: 44px;
+  height: 44px;
+}
+
+.move-dossier-head .mana-gem-value {
+  font-size: 18px;
+}
+
+.move-dossier-head .move-type-code .element-glyph {
+  width: 22px;
+  height: 22px;
+}
+
+.move-dossier-titles {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.move-dossier-name {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.move-dossier-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.move-dossier-head .move-stub {
+  width: 80px;
+  gap: 3px;
+}
+
+.move-dossier-head .move-stub-glyph {
+  width: 18px;
+  height: 18px;
+}
+
+.move-dossier-head .move-stub.is-bare .move-stub-glyph {
+  width: 28px;
+  height: 28px;
+}
+
+.move-dossier-head .move-stub-value {
+  font-size: 34px;
+  font-weight: 900;
+}
+
+.move-dossier-head .move-stub-value.is-long {
+  font-size: 17px;
+}
+
+.move-dossier-head .move-stub-boost {
+  top: -4px;
+  right: -11px;
+  font-size: 11px;
+}
+
+.move-dossier-head .move-stub-hits {
+  font-size: 13px;
+}
+
+.move-stub-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.move-dossier-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+
+/* The forecast as the two enemy seats, left and right as they stand. */
+.move-dossier-forecast {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.move-dossier-seats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.move-dossier-seat {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px 13px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.32);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.move-dossier-seat::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.move-dossier-seat.is-empty {
+  min-height: 96px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.move-dossier-seat.is-empty::after {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.move-dossier-seat-who {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.move-dossier-seat-portrait {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  margin-left: -6px;
+  image-rendering: pixelated;
+}
+
+.move-dossier-seat-id {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.move-dossier-seat-id .move-forecast-name {
+  font-size: 12px;
+}
+
+.move-dossier-seat-types {
+  display: flex;
+  gap: 3px;
+}
+
+.move-dossier-seat-mult {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.move-dossier-seat-mult .move-seat-arrow svg {
+  width: 15px;
+  height: 15px;
+}
+
+.move-dossier-seat-mult .move-seat-arrow.is-double svg {
+  width: 11px;
+}
+
+.move-dossier-seat-mult .move-forecast-mult {
+  font-size: 10px;
+}
+
+.move-dossier-seat-damage {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.move-dossier-seat-damage .move-forecast-numbers {
+  font-size: 17px;
+}
+
+.move-dossier-seat .move-forecast-track {
+  flex: none;
+  height: 9px;
 }
 
 /* LevelUpScreen's replace offer names the slot being inspected. */
@@ -24961,79 +25203,14 @@ button.evo-gift-card {
   height: 31px;
 }
 
-/* The learn-move head, read in the combat row's order: mana, type, name, then
-   power and its Physical/Magical glyph at the right edge. */
-.move-detail-head.is-row {
-  gap: 8px;
-}
 
-.move-detail-head.is-row .move-detail-titles {
-  container-type: inline-size;
-}
 
-/* At most the step's size, and never wider than the column for the longest word (--word-len, set
-   inline), which is the part that cannot wrap: 0.62em is this face's widest average bold glyph. */
-.move-detail-head.is-row .move-detail-name {
-  font-size: min(var(--row-name-size, 18px), calc(100cqi / (var(--word-len, 8) * 0.62)));
-}
 
-/* Type · category · target, out from beside the name onto its own line. */
-.move-detail-head.is-row + .move-detail-line {
-  margin-top: 6px;
-}
 
-.move-detail-head.is-row .mana-gem {
-  width: 34px;
-  height: 34px;
-}
 
-.move-detail-head.is-row .mana-gem-value {
-  font-size: 15px;
-}
 
-.move-detail-head.is-row .move-detail-disc {
-  width: 38px;
-  height: 38px;
-}
 
-.move-detail-head.is-row .move-detail-disc svg {
-  width: 23px;
-  height: 23px;
-}
 
-.move-detail-row-power {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  color: var(--accent);
-}
-
-.move-detail-row-power.is-heal {
-  color: var(--hp-high);
-}
-
-.move-detail-row-power strong {
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7), 0 0 8px rgba(0, 0, 0, 0.4);
-}
-
-/* The combat row's own kind badge, chromeless, so its colour matches the rows beneath. */
-.move-detail-row-power .move-kind-badge {
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: none;
-  line-height: 1;
-}
-
-.move-detail-row-power .move-kind-badge .move-kind-glyph {
-  width: 20px;
-  height: 20px;
-}
 
 .move-detail-titles {
   flex: 1;
@@ -25078,7 +25255,7 @@ button.evo-gift-card {
   align-items: center;
   gap: 7px 16px;
   padding-top: 10px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* A buff at priority 0 has no figure to strip, and an empty strip drew a second rule. */
@@ -25107,24 +25284,7 @@ button.evo-gift-card {
   font-variant-numeric: tabular-nums;
 }
 
-/* Base Power, the move's headline figure: the glyph is its unit, so the number
-   goes large and gold beside it with nothing between them. */
-.move-detail-stat-power {
-  gap: 4px;
-  color: var(--accent);
-}
 
-.move-detail-stat-power svg {
-  width: 20px;
-  height: 20px;
-}
-
-.move-detail-stat-power strong {
-  font-size: 24px;
-  line-height: 1;
-  color: var(--accent);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7), 0 0 8px rgba(0, 0, 0, 0.4);
-}
 
 .move-detail-unit {
   font-size: 10px;
@@ -25144,10 +25304,6 @@ button.evo-gift-card {
   font-size: 11px;
 }
 
-.move-detail-stat-heal,
-.move-detail-stat-heal strong {
-  color: var(--hp-high);
-}
 
 /* The glyph goes gold with the numeral, unlike BP's, because here the glyph is
    the *reason*: STAB exists because the move's element and the caster's match,
@@ -25193,18 +25349,17 @@ button.evo-gift-card {
    payload's own colour. A status row wears the status's glyph and colour, the
    identical pair the badge on the battlefield figure will wear when it lands,
    so the player is shown the thing they are about to see. */
+/* The strip, opened up: each icon in a dark well with its words beside it, in the strip's order. */
 .move-detail-effects {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
+  gap: 10px;
 }
 
 .move-detail-effect-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
 }
 
 .move-detail-effect-glyph {
@@ -25212,18 +25367,21 @@ button.evo-gift-card {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 19px;
-  height: 19px;
-  margin-top: 1px;
+  width: 34px;
+  height: 30px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.32);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .move-detail-effect-glyph svg {
-  width: 19px;
-  height: 19px;
+  width: 17px;
+  height: 17px;
 }
 
 .move-detail-effect-text {
   min-width: 0;
+  align-self: center;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.35;
@@ -25250,14 +25408,6 @@ button.evo-gift-card {
 .move-detail-card.is-terse .move-detail-effects {
   gap: 5px;
 }
-.move-detail-forecast {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-}
-
 /* Section mark in the horizon's own register (9px/800/0.14em) — the one the
    Field Effect plaque and the draft's eyebrows already use. */
 .move-detail-eyebrow {
@@ -25268,36 +25418,8 @@ button.evo-gift-card {
   color: var(--text-dim);
 }
 
-.move-forecast-row {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
 
-.move-forecast-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
 
-.move-forecast-who {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-}
-
-/* Native 48px. The sources are 48x48 and the only other honest size is 24
-   (docs/visual-language.md defect 1) — which is what this drew at first, and it
-   made the enemy a thumbnail in a readout whose entire subject is that enemy. */
-.move-forecast-portrait {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  image-rendering: pixelated;
-}
 
 .move-forecast-type {
   flex-shrink: 0;
@@ -25352,11 +25474,6 @@ button.evo-gift-card {
   color: var(--eff-quad-resist);
 }
 
-.move-forecast-meter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 /* The bite, drawn out of the defender's own remaining track.
 
@@ -29826,10 +29943,6 @@ button.evo-gift-card {
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-name {
   font-size: 21px;
 }
-.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-head.is-row .move-detail-name {
-  --row-name-size: 20px;
-  font-size: min(var(--row-name-size), calc(100cqi / (var(--word-len, 8) * 0.62)));
-}
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-line {
   font-size: 12px;
 }
@@ -29838,27 +29951,6 @@ button.evo-gift-card {
 }
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-stat strong {
   font-size: 19px;
-}
-.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-stat-power strong {
-  font-size: 27px;
-}
-.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-stat-power svg {
-  width: 22px;
-  height: 22px;
-}
-.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-head.is-row .mana-gem {
-  width: 38px;
-  height: 38px;
-}
-.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-head.is-row .mana-gem-value {
-  font-size: 16px;
-}
-.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-row-power strong {
-  font-size: 29px;
-}
-.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-row-power .move-kind-badge .move-kind-glyph {
-  width: 22px;
-  height: 22px;
 }
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-detail-unit {
   font-size: 11px;
@@ -29919,20 +30011,8 @@ button.evo-gift-card {
   width: 35px;
   height: 35px;
 }
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-head.is-row .move-detail-disc {
-  width: 40px;
-  height: 40px;
-}
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-head.is-row .move-detail-disc svg {
-  width: 24px;
-  height: 24px;
-}
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-name {
   font-size: 23px;
-}
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-head.is-row .move-detail-name {
-  --row-name-size: 21px;
-  font-size: min(var(--row-name-size), calc(100cqi / (var(--word-len, 8) * 0.62)));
 }
 /* Held at step 1's 12px: at 13 "Fire · Physical · Single Enemy" wraps beside the disc and the
    line it costs is more than the point it buys. */
@@ -29948,27 +30028,6 @@ button.evo-gift-card {
 }
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat strong {
   font-size: 21px;
-}
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat-power strong {
-  font-size: 30px;
-}
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-stat-power svg {
-  width: 24px;
-  height: 24px;
-}
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-head.is-row .mana-gem {
-  width: 42px;
-  height: 42px;
-}
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-head.is-row .mana-gem-value {
-  font-size: 18px;
-}
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-row-power strong {
-  font-size: 32px;
-}
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-row-power .move-kind-badge .move-kind-glyph {
-  width: 24px;
-  height: 24px;
 }
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-detail-unit {
   font-size: 12px;
