@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { PassiveDefinition } from '../../engine/content';
 import { statuses } from '../../data/statuses';
 import { passiveKeywordOf, reactionKeywordOf, type PassiveKeyword } from '../../run/keywords';
+import { BURDEN_SURPLUS, HERO_STAT_TOTAL } from '../../run/statBudget';
 import { STAT_LABELS } from './StatBars';
 import { StatGlyph } from './statIcons';
 import { StatusGlyph, statusColor } from './statusIcons';
@@ -21,6 +22,17 @@ function landedMagnitude(node: unknown, statusId: string): number | undefined {
   if (o.kind === 'applyStatus' && o.statusId === statusId && typeof o.magnitude === 'number') return o.magnitude;
   for (const value of Object.values(o)) {
     const found = landedMagnitude(value, statusId);
+    if (found !== undefined) return found;
+  }
+  return undefined;
+}
+
+function landedDuration(node: unknown, statusId: string): number | undefined {
+  if (!node || typeof node !== 'object') return undefined;
+  const o = node as Record<string, unknown>;
+  if (o.kind === 'applyStatus' && o.statusId === statusId && typeof o.duration === 'number') return o.duration;
+  for (const value of Object.values(o)) {
+    const found = landedDuration(value, statusId);
     if (found !== undefined) return found;
   }
   return undefined;
@@ -51,7 +63,8 @@ function glossary(passive: PassiveDefinition): GlossEntry[] {
   const keyword = (k: PassiveKeyword | undefined, slot: string, fallback: number) => {
     if (!k) return;
     const at = text.indexOf(slot);
-    entries.push({ at: at < 0 ? fallback : at, key: slot, term: <KeywordBadge keyword={k} />, meaning: keywordMeaning(k) });
+    const meaning = `${keywordMeaning(k)}${k.once ? ' Once a fight.' : ''}`;
+    entries.push({ at: at < 0 ? fallback : at, key: slot, term: <KeywordBadge keyword={k} />, meaning });
   };
   keyword(passiveKeywordOf(passive), '{trigger}', -1);
   keyword(passive.alsoReactive ? reactionKeywordOf(passive.alsoReactive) : undefined, '{also}', text.length);
@@ -59,8 +72,14 @@ function glossary(passive: PassiveDefinition): GlossEntry[] {
   const named = statusMentions(text);
   const unnamed = appliedStatusIds(passive).filter((id) => !named.some((m) => m.statusId === id));
   for (const { statusId, at } of [...named, ...unnamed.map((statusId) => ({ statusId, at: text.length + 1 }))]) {
-    const meaning = statusMeaning(statusId, landedMagnitude(passive, statusId));
-    if (!meaning) continue;
+    const rule = statusMeaning(statusId, landedMagnitude(passive, statusId));
+    if (!rule) continue;
+    const rounds = landedDuration(passive, statusId);
+    const meaning = !rounds
+      ? rule
+      : /^Counts down/.test(rule)
+        ? rule.replace(/^Counts down/, `Counts down from ${rounds}`)
+        : `${rule} · ${rounds} ${rounds === 1 ? 'round' : 'rounds'}`;
     entries.push({
       at,
       key: statusId,
@@ -72,6 +91,14 @@ function glossary(passive: PassiveDefinition): GlossEntry[] {
         </span>
       ),
       meaning,
+    });
+  }
+  if (passive.burden) {
+    entries.push({
+      at: text.length + 2,
+      key: 'burden',
+      term: <span className="passive-gloss-term">Burden</span>,
+      meaning: `Its stats run ${HERO_STAT_TOTAL + BURDEN_SURPLUS} where others run ${HERO_STAT_TOTAL}, in return for carrying this.`,
     });
   }
   return entries.sort((a, b) => a.at - b.at);
