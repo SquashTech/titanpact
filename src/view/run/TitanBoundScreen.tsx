@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
-import { locations } from '../../data/locations';
+import { FINALE_LOCATION_ID, locations } from '../../data/locations';
 import { SEAL_ACTS, type RunState } from '../../run/state';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { SealArt } from '../shared/SealArt';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { NODE_TINT_GOLD } from '../shared/NodeStage';
-import { TitanColossus } from './titanArt';
+import { locationBackdrop } from '../shared/locationBackdrops';
+import { PAINTED_EYES } from './TitanRiseScreen';
 import { PlateButton } from '../shared/PlateButton';
 
 interface Props {
@@ -63,6 +64,7 @@ export function TitanBoundScreen({ run, onContinue }: Props) {
   done.current = onContinue;
   const timers = useRef<number[]>([]);
   const seals = [...run.brokenSeals].sort((a, b) => a.actNumber - b.actNumber);
+  const painting = locationBackdrop(FINALE_LOCATION_ID);
   const names = run.roster.map((entry) => rosterHeroes[entry.heroId]?.name ?? entry.heroId).join('  ·  ');
 
   const skip = () => {
@@ -136,11 +138,12 @@ export function TitanBoundScreen({ run, onContinue }: Props) {
             })}
           </div>
 
-          {/* The same head TitanRiseScreen brought up, eyes wide (the title's own open lens),
-              going out and going down. */}
-          <div className="titan-bound-head" aria-hidden="true">
-            <span className="titan-rise-skull" />
-            <TitanColossus />
+          {/* The Titan as TitanRiseScreen left it, eyes blown wide, going out and going down. */}
+          <div className="titan-rise-painting titan-bound-painting" aria-hidden="true">
+            {painting && <img src={painting} alt="" draggable={false} />}
+            {PAINTED_EYES.map((eye, i) => (
+              <span key={i} className="titan-rise-gaze" style={{ left: `${eye.x * 100}%`, top: `${eye.y * 100}%` }} />
+            ))}
           </div>
           <span className="titan-bound-flash" aria-hidden="true" />
         </div>

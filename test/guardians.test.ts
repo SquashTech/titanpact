@@ -110,7 +110,7 @@ test('guardians: the Skeleton King is the lowest-HP champion, and that IS the fi
   }
 });
 
-test('guardians: every champion and the Endbringer have a figure, a Guardian is drawn in its mortal hue alone, and the unsealed twin is the same figure', () => {
+test('guardians: every champion has a figure and the Herald none (it is pixel art, the Titan’s own), a Guardian is drawn in its mortal hue alone, and the unsealed twin is the same figure', () => {
   const ancient = getTypeColor('Ancient');
   for (const id of CHAMPION_IDS) {
     for (const pose of ['idle', 'attack', 'hurt'] as const) {
@@ -122,7 +122,7 @@ test('guardians: every champion and the Endbringer have a figure, a Guardian is 
       assert.strictEqual(guardianMarkup(unsealedIdFor(id), pose, 't'), markup, `${id}'s unsealed twin is drawn differently`);
     }
   }
-  assert.ok(guardianMarkup(ENDBRINGER_ID, 'idle', 't').includes(ancient), 'the Endbringer is not drawn in the Ancient hue');
-  assert.ok(isGuardianFigure(ENDBRINGER_ID) && isGuardianFigure(unsealedIdFor(KRAKEN_ID)));
+  assert.ok(!isGuardianFigure(ENDBRINGER_ID) && guardianMarkup(ENDBRINGER_ID, 'idle', 't') === '', 'the Herald is drawn as a geometric figure');
+  assert.ok(isGuardianFigure(unsealedIdFor(KRAKEN_ID)));
   assert.strictEqual(guardianMarkup('valor', 'idle', 't'), '', 'a hero is never drawn as a Guardian');
 });

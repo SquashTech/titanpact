@@ -40,8 +40,11 @@ export const L = (d: string, s: string, w = 1.5, extra = '') => `<path d="${d}" 
 export const G = (t: string, inner: string) => `<g transform="${t}">${inner}</g>`;
 
 /** The eye's fill: gold burning to the mythic red (LoreScreen's). Defined once per figure. */
+/** The Titan's light, as the Threshold paints its eyes. */
+export const TITAN_EYE = '#f247dc';
+
 export const EYE_GRADIENT = (id: string) =>
-  `<defs><radialGradient id="${id}" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="#f6dc96"/><stop offset=".42" stop-color="#e9a24e"/><stop offset=".78" stop-color="#e0393f"/><stop offset="1" stop-color="#6e1a20"/></radialGradient></defs>`;
+  `<defs><radialGradient id="${id}" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="#ffd6f6"/><stop offset=".42" stop-color="#f247dc"/><stop offset=".78" stop-color="#b02a9e"/><stop offset="1" stop-color="#4a1048"/></radialGradient></defs>`;
 
 /** The Titan's eye: vertical slit pupil, horizontal lids. `uid` keeps clip paths unique across every figure on a screen. */
 export function makeEye(uid: string, gradientId: string): Eye {
@@ -50,7 +53,7 @@ export function makeEye(uid: string, gradientId: string): Eye {
     const id = `${uid}c${n++}`;
     const k = state === 'narrow' ? 0.3 : state === 'wide' ? 1.0 : state === 'stare' ? 0.52 : 0.72;
     const rr = state === 'wide' ? r * 1.08 : r;
-    const halo = state === 'wide' ? C(x, y, rr * 1.9, '#e0393f', 'opacity=".28" class="halo"') : state === 'stare' ? C(x, y, rr * 1.7, '#e0393f', 'opacity=".14"') : '';
+    const halo = state === 'wide' ? C(x, y, rr * 1.9, TITAN_EYE, 'opacity=".28" class="halo"') : state === 'stare' ? C(x, y, rr * 1.7, TITAN_EYE, 'opacity=".14"') : '';
     return `<defs><clipPath id="${id}"><ellipse cx="${x}" cy="${y}" rx="${rr}" ry="${rr * k}"/></clipPath></defs>${halo}
   <g clip-path="url(#${id})">${C(x, y, rr, `url(#${gradientId})`)}${E(x, y, rr * 0.2, rr * 0.95, '#07050a')}</g>
   ${E(x, y, rr, rr * k, 'none', `stroke="#07050a" stroke-width="${Math.max(0.6, r * 0.09)}" opacity=".55"`)}`;

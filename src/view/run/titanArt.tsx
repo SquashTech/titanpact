@@ -44,30 +44,30 @@ export function TitanColossus() {
       aria-hidden="true"
     >
       <defs>
-        {/* Lifted stop for stop from `.titan-eye-globe` (LoreScreen): pale gold at the
-            centre out through the mythic red to almost nothing at the rim, so the light reads
+        {/* Lifted stop for stop from `.titan-eye-globe` (LoreScreen): pale pink at the
+            centre out through the Titan's magenta to almost nothing at the rim, so the light reads
             as coming from inside the eye rather than the eye being a painted disc. */}
         <radialGradient id="titan-iris" cx="50%" cy="50%" r="52%">
-          <stop offset="0%" stopColor="#f6c070" />
-          <stop offset="22%" stopColor="#e8604a" />
-          <stop offset="50%" stopColor="#c8303a" />
-          <stop offset="78%" stopColor="#601018" />
-          <stop offset="100%" stopColor="#1e060a" />
+          <stop offset="0%" stopColor="#ffc8f4" />
+          <stop offset="22%" stopColor="#f06ad8" />
+          <stop offset="50%" stopColor="#c8329e" />
+          <stop offset="78%" stopColor="#5a1250" />
+          <stop offset="100%" stopColor="#1a0618" />
         </radialGradient>
-        {/* The pale-gold core, split off the iris so it can travel with the pupil: the light
+        {/* The pale core, split off the iris so it can travel with the pupil: the light
             follows the gaze, which is most of what makes the eye look rather than slide. */}
         <radialGradient id="titan-hotspot" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff3d2" stopOpacity="1" />
-          <stop offset="38%" stopColor="#f0b060" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#e0393f" stopOpacity="0" />
+          <stop offset="0%" stopColor="#fff0fb" stopOpacity="1" />
+          <stop offset="38%" stopColor="#f8a0e8" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="#f247dc" stopOpacity="0" />
         </radialGradient>
         <clipPath id="titan-lid">
           <path d={LENS} />
         </clipPath>
         <radialGradient id="titan-glare" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#e0393f" stopOpacity="0.46" />
-          <stop offset="42%" stopColor="#e0393f" stopOpacity="0.13" />
-          <stop offset="100%" stopColor="#e0393f" stopOpacity="0" />
+          <stop offset="0%" stopColor="#f247dc" stopOpacity="0.46" />
+          <stop offset="42%" stopColor="#f247dc" stopOpacity="0.13" />
+          <stop offset="100%" stopColor="#f247dc" stopOpacity="0" />
         </radialGradient>
       </defs>
 
@@ -82,7 +82,7 @@ export function TitanColossus() {
         />
 
         {/* The same eye LoreScreen opens on: a lens that tapers to points at both
-            corners, lit from inside by pale gold burning out through the run's mythic red,
+            corners, lit from inside, pale at the centre burning out through the Titan's magenta,
             with a vertical slit contracted to a hairline and a halo that bleeds past the lids.
             ┄
             Slanted DOWN toward the middle: the same pair with the tilt reversed reads as

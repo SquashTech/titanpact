@@ -219,7 +219,7 @@ const STATUS_COLOR: Record<string, string> = {
   Crescendo: '#b98cf0',
   Poised: '#b6d35a',
   Cannonball: '#8f8a80',
-  Beheld: '#e0393f',
+  Beheld: '#f247dc',
 };
 
 export function statusColor(statusId: string): string {

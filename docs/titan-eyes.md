@@ -295,3 +295,29 @@ shown. The fight is untouched; every change is presentation.
 
 Still to come: a Threshold track (the act has no music — the designer is writing one), and the
 title's Titan keeping its eyes shut after a clear until the next Cycle opens.
+
+## 12. The Titan's own look (2026-10-14, per user direction)
+
+The ask: the Herald's standard-bearer read as odd, and the Threshold's screens did not land as hard
+as its arrival painting (the Titan standing in a fogged valley, two magenta eyes). Chosen from a
+side-by-side (`art/concepts/herald/compare.html`):
+
+- **The split.** What the Titan *turned* (Titanspawn, Guardians) stays in the geometric figures.
+  The Titan's *own* pieces take the painting's language: pixel art, fog greys, near-black, and its
+  magenta as the only colour.
+- **The Herald** is "The Slit" (PixelLab Pixflux, seed 8, flat / lineless / low detail): a tall
+  faceless figure, jointed arms too long, robes going to smoke, its head split by one magenta seam.
+  `art/heroes/titan/herald.png`; its attack frame blazes and widens the seam, its damaged frame
+  closes it (recoloured from the idle, not generated). The banner, the horn and the shackles are
+  gone. In a fight it stands at 112px, over the 96px frame, with a thin magenta rim.
+- **The march is "Out of the fog"** (`HeraldScreen`): the arrival painting under a wall of fog that
+  clears from the top down to leave the Herald already standing there, close and black until its
+  seam lights; its company darkens into shape in the fog behind it. Nothing walks. The name and
+  Stand are all the copy.
+- **The Titan's eye is magenta everywhere** — `TITAN_EYE` (`figurePrimitives.ts`) for every drawn
+  Titan eye, the Guardians' and the spawn's included; `--titan-rgb` for its light in CSS, apart
+  from the Mythic tier colour the Titan screens used to borrow; the title's lens, the map's gate,
+  Beheld, the hide arena (fog greys, magenta veins).
+- **The rise** pushes into the Threshold painting onto its Titan's head until the painted eyes
+  fill the frame and ignite; **the binding's collapse** starts on that close-up, the eyes blown
+  wide, then out as it sinks into the fog. The seal stays the pact's gold.

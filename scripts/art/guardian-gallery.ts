@@ -5,7 +5,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { CHAMPION_IDS, ENDBRINGER_ID, enemies } from '../../src/data/enemies';
+import { CHAMPION_IDS, enemies } from '../../src/data/enemies';
 import { guardianMarkup, GUARDIAN_VIEW_BOX, type GuardianPose } from '../../src/view/shared/guardianFigures';
 import { getTypeColor } from '../../src/view/combat/typeColors';
 
@@ -67,15 +67,10 @@ const html = `<!doctype html>
     </div>
     <div class="rules">
       <div><b>One eye.</b> The Titan's, half-lidded, the one thing on the body that is not type-coloured.</div>
-      <div><b>Every Guardian breaks the frame.</b> The Endbringer breaks it on every edge.</div>
-      <div><b>The Endbringer is the Titan's herald</b>, in Ancient's colour: the Titan's eye rides its banner, and the five broken seals are threaded on its pole.</div>
+      <div><b>Every Guardian breaks the frame.</b></div>
     </div>
   </header>
   ${CHAMPION_IDS.map(line).join('')}
-  <div class="line end" id="end">
-    <div class="rail"><div class="type"><span class="swatch" style="background:${getTypeColor('Ancient')}"></span>${enemies[ENDBRINGER_ID].name}</div><div class="excel">Ancient</div><div class="home">the Threshold · the Titan's herald</div></div>
-    <div class="tiers">${card(ENDBRINGER_ID, 'The Herald')}</div>
-  </div>
 </div>
 `;
 

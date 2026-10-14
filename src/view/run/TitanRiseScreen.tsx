@@ -1,21 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { ENDBRINGER_ID } from '../../data/enemies';
+import { FINALE_LOCATION_ID } from '../../data/locations';
+import { locationBackdrop } from '../shared/locationBackdrops';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { prefersReducedMotion } from '../shared/reducedMotion';
-import { TitanColossus, TitanRidge } from './titanArt';
 
 interface Props {
   onDone: () => void;
 }
 
-/** The Herald, alone in the dark: the banner sags, the eye on it goes out, and it comes apart (ms). */
+/** The Herald, alone in the dark: its seam goes out, and it comes apart (ms). */
 const FALL_MS = 2000;
-/** Black, and the ground going. The ember below is the only light (ms). */
-const STIR_MS = 900;
-/** The head climbing in from under the frame, the rumble climbing with it (ms). */
+/** The Threshold coming up out of the black, fogged, the Titan standing in it (ms). */
+const STIR_MS = 1100;
+/** The push: into the valley, onto the head, the ground going harder the closer it gets (ms). */
 const RISE_MS = 3400;
-/** It stops. One jolt as the weight lands, and the lids open (ms). */
+/** Its eyes ignite (ms). */
 const SETTLE_MS = 2600;
 /** Down to black, so the field cuts back in from nothing (ms). */
 const FADE_MS = 600;
@@ -28,21 +29,25 @@ const DONE_AT = FADE_AT + FADE_MS;
 
 type RisePhase = 'fall' | 'stir' | 'rise' | 'settle' | 'fade';
 
+/** The painted Titan's eyes, as fractions of the Threshold's arrival painting (196x344). */
+export const PAINTED_EYES = [
+  { x: 103 / 196, y: 64.5 / 344 },
+  { x: 112 / 196, y: 64.5 / 344 },
+] as const;
+
 /**
- * The Herald falls — its banner sagging, the eye on it going out — and the far end of the leash stands up (docs/titan-eyes.md
- * §10 — played over the field by FightScreen on the first Eye's arrival, before its reveal beat).
- * The title screen's own figure — the brow, the two eyes, and the ridge with the four pactbearers
- * on it for scale — climbs into the frame from below, which is the title's picture becoming true.
- * The eyes stay shut on the way up and OPEN at the top: a Titan does not come through a breach
- * five-sixths open (docs/lore.md §7), it looks through it, and what it looks with is the next
- * thing on the field. Until 2026-09-18 this played at the fifth seal with the lids cracked to a
- * slit; the rise moved to the fall it answers.
+ * The Herald falls, and the far end of the leash stands up (docs/titan-eyes.md §10, §12 — played
+ * over the field by FightScreen on the first Eye's arrival, before its reveal beat). The Herald goes
+ * dark on the black; then the Threshold's own painting comes up out of it, the Titan standing in the
+ * valley as the player first saw it on arrival, and the frame pushes in onto its head until its eyes
+ * fill the screen and ignite. What it looks with is the next thing on the field.
  */
 export function TitanRiseScreen({ onDone }: Props) {
   const [phase, setPhase] = useState<RisePhase>('fall');
   // Through a ref, because the parent rebuilds `onDone` on its own renders.
   const done = useRef(onDone);
   done.current = onDone;
+  const painting = locationBackdrop(FINALE_LOCATION_ID);
 
   useEffect(() => {
     if (prefersReducedMotion()) {
@@ -61,9 +66,8 @@ export function TitanRiseScreen({ onDone }: Props) {
       }, RISE_AT),
       window.setTimeout(() => {
         setPhase('settle');
-        // The weight landing, then the lids: the impact is the seal's, the grind is the eye's.
         playSfx('seal.shatter');
-        window.setTimeout(() => playSfx('titan.gaze'), 700);
+        window.setTimeout(() => playSfx('titan.gaze'), 300);
       }, SETTLE_AT),
       window.setTimeout(() => setPhase('fade'), FADE_AT),
       window.setTimeout(() => done.current(), DONE_AT),
@@ -79,42 +83,19 @@ export function TitanRiseScreen({ onDone }: Props) {
       </div>
 
       <div className="titan-rise-shake">
-        <span className="titan-rise-ember" aria-hidden="true" />
-
-        <div className="titan-dust" aria-hidden="true">
-          {/* The wake's motes, in the wake's spread: grit shaken loose, drifting UP. */}
-          {Array.from({ length: 18 }, (_, i) => {
-            const across = (i * 61.8) % 100;
-            const down = (i * 38.2) % 100;
-            return (
-              <span
-                key={i}
-                className="titan-mote"
-                style={{
-                  left: `${across}%`,
-                  top: `${46 + down * 0.5}%`,
-                  animationDelay: `${(down * 0.026) % 2.4}s`,
-                  animationDuration: `${2.6 + across * 0.02}s`,
-                }}
-              />
-            );
-          })}
+        {/* The painting at its own aspect, so the eyes can be placed in its pixels. */}
+        <div className="titan-rise-painting" aria-hidden="true">
+          {painting && <img src={painting} alt="" draggable={false} />}
+          {PAINTED_EYES.map((eye, i) => (
+            <span key={i} className="titan-rise-gaze" style={{ left: `${eye.x * 100}%`, top: `${eye.y * 100}%` }} />
+          ))}
         </div>
-
-        {/* The head: the title's brow-and-eyes over a skull that runs off the bottom, so the
-            figure is a solid silhouette against the ember rather than a brow floating over it. */}
-        <div className="titan-rise-head" aria-hidden="true">
-          <span className="titan-rise-skull" />
-          <TitanColossus />
-        </div>
-
-        <TitanRidge />
+        <span className="titan-rise-fog" aria-hidden="true" />
       </div>
 
       <div className="titan-rise-caption">
         <div className="titan-rise-eyebrow">The Herald has fallen</div>
         <h2 className="titan-rise-title">The Titan rises</h2>
-        <p className="titan-rise-line">The seal is shut, but it can still look. It is looking at you.</p>
       </div>
 
       <div className="titan-wake-blackout" aria-hidden="true" />

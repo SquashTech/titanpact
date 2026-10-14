@@ -15,16 +15,15 @@
 //
 // Pure — no React, no DOM — so scripts/art/guardian-gallery.ts can write the review page from it.
 
-import { CHAMPION_IDS, ENDBRINGER_ID, LEFT_EYE_ID, RIGHT_EYE_ID, enemies, unsealedIdFor } from '../../data/enemies';
+import { CHAMPION_IDS, LEFT_EYE_ID, RIGHT_EYE_ID, enemies, unsealedIdFor } from '../../data/enemies';
 import { getTypeColor } from '../combat/typeColors';
-import { C, D, E, EYE_GRADIENT, G, L, P, R, makeEye, pal, sparks, ticks, type Eye, type EyeState, type FigurePose, type Pal } from './figurePrimitives';
+import { C, D, E, EYE_GRADIENT, G, L, P, R, TITAN_EYE, makeEye, pal, sparks, ticks, type Eye, type EyeState, type FigurePose, type Pal } from './figurePrimitives';
 
 /** `closed` is the Eyes' alone: a knocked-out Eye stays on the field with its lid shut (FightScreen). Every other figure reads it as idle. */
 export type GuardianPose = FigurePose | 'closed';
 
 type Draw = (p: Pal, pose: GuardianPose, eye: Eye) => string;
 
-const ANCIENT = pal(getTypeColor('Ancient'));
 /** Near-black; the Shadow spawn's ink, so Yugzulach is the same dark as its brood. */
 const INK = '#1a1822';
 
@@ -286,47 +285,13 @@ function lens(x: number, y: number, hw: number, hh: number, tilt: number, state:
   if (state === 'closed') {
     // The lids meet: a dark seam, and the lid's edge lit faintly above it so the shape still reads on the hide.
     const lid = `M${-hw} 0 Q0 ${-hh * 0.42} ${hw} 0`;
-    return G(`translate(${x} ${y}) rotate(${tilt})`, D(`M${-hw} 0 Q0 ${-hh * 0.42} ${hw} 0 Q0 ${hh * 0.42} ${-hw} 0 Z`, '#3a1a1e', 'opacity=".9"') + L(lid, '#8a4a44', 1.6, 'opacity=".8"') + D(path, '#07050a') + L(path, '#e0393f', 0.8, 'opacity=".5"'));
+    return G(`translate(${x} ${y}) rotate(${tilt})`, D(`M${-hw} 0 Q0 ${-hh * 0.42} ${hw} 0 Q0 ${hh * 0.42} ${-hw} 0 Z`, '#3a1a36', 'opacity=".9"') + L(lid, '#8a4478', 1.6, 'opacity=".8"') + D(path, '#07050a') + L(path, TITAN_EYE, 0.8, 'opacity=".5"'));
   }
-  const halo = C(0, 0, hw * 1.25, '#e0393f', `opacity="${state === 'wide' ? 0.26 : 0.1}" class="halo"`);
+  const halo = C(0, 0, hw * 1.25, TITAN_EYE, `opacity="${state === 'wide' ? 0.26 : 0.1}" class="halo"`);
   return G(
     `translate(${x} ${y}) rotate(${tilt})`,
     `<defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs>${halo}<g clip-path="url(#${id})">${E(0, 0, hw, hh * 1.1, `url(#${gradientId})`)}${E(0, 0, hw * 0.16, hh, '#07050a')}</g>${L(path, '#07050a', 1.2, 'opacity=".6"')}`
   );
-}
-
-/**
- * The Endbringer: the Titan's HERALD, not the Titan. A gaunt hooded bearer with no legs under
- * the hem, a standard taller than the frame in the leading hand and a horn in the trailing one.
- * The pennant carries the Titan's eye — the title screen's lens (titanArt.tsx) — which is how
- * the Titan looks out of its herald; the hood is empty. Four broken seals are
- * threaded on the pole under the pennant, one an act. An attack raises the horn and sounds it, and the
- * eye on the banner opens wide; a hit sags the banner.
- */
-function endbringer(p: Pal, po: GuardianPose, uid: string, gradientId: string): string {
-  const state: EyeState = po === 'hurt' ? 'narrow' : po === 'attack' ? 'wide' : 'stare';
-  const sag = po === 'hurt' ? 8 : 0;
-  const hornUp = po === 'attack' ? -76 : po === 'hurt' ? 12 : 0;
-  const veil = (path: string) => D(path, p.c) + D(path, p.d, 'opacity=".35"');
-  // A broken seal: two-thirds of a ring, open where it was struck.
-  const shackle = (x: number, y: number) => {
-    const arc = `M${x - 4},${y - 2} A4.5,3.4 0 1 0 ${x + 4},${y - 2}`;
-    return L(arc, '#07050a', 3.2) + L(arc, p.ll, 1.6);
-  };
-  const horn = G(`rotate(${hornUp} 36 54)`, L('M36,54 C24,60 12,56 6,44', p.dd, 5) + L('M36,54 C24,60 12,56 6,44', p.l, 1.4, 'opacity=".5"') + P('2,46 10,42 8,50', p.dd) + C(36, 54, 3, p.d));
-  const sound = po === 'attack' ? [10, 18, 26].map((r) => L(`M${40 - r},${8 - r * 0.4} a${r},${r} 0 0 0 0,${r * 0.8}`, p.ll, 1.4, 'opacity=".7"')).join('') : '';
-  return E(50, 89, 30, 3, p.dd, 'opacity=".5"')
-    // The hem, ragged, and the body rising off it: taller and thinner than anything else on the field.
-    + veil('M30,88 L34,62 C34,40 40,26 50,14 C60,26 66,40 66,62 L70,88 L64,82 L58,88 L52,82 L46,88 L40,82 Z')
-    + D('M42,30 C42,14 58,14 58,30 L56,44 L44,44 Z', '#07050a') + P('44,16 50,-6 56,16', p.d) + P('46,18 50,2 54,18', p.dd)
-    // The horn in the trailing hand.
-    + L('M40,48 C36,50 34,52 36,54', p.d, 4) + horn + sound
-    // The standard: pole, crossbar, the pennant streaming back with the Titan's eye on it.
-    + L('M62,50 C70,50 78,52 82,52', p.d, 4) + C(82, 52, 3, p.dd)
-    + L('M84,88 L84,-56', p.dd, 3) + L('M84,88 L84,-56', p.l, 1, 'opacity=".4"') + P('80,-56 84,-68 88,-56', p.ll) + L('M60,-18 L84,-18', p.dd, 3)
-    + D(`M84,-18 L22,${-10 + sag} L28,${2 + sag} L14,${12 + sag} L24,${20 + sag} L84,26 Z`, p.d) + D(`M84,-14 L30,${-6 + sag} L36,${2 + sag} L24,${11 + sag} L32,${18 + sag} L84,22 Z`, p.c, 'opacity=".5"')
-    + lens(52, 4 + sag / 2, 15, 6.5, -4, state, uid, gradientId)
-    + [32, 38, 44, 50].map((y, i) => shackle(84 + (i % 2 ? 1.5 : -1.5), y)).join('');
 }
 
 /**
@@ -344,7 +309,7 @@ function titanEye(side: 'left' | 'right', po: GuardianPose, uid: string, gradien
     ? [-30, -10, 10, 30].map((a) => G(`rotate(${a} 50 46)`, L('M50,4 L50,-14', '#f6dc96', 1.6, 'opacity=".8"'))).join('')
     : '';
   const shadow = E(50, 89, 40, 3, '#07050a', 'opacity=".5"');
-  const outer = po !== 'closed' ? C(50, 46, 46, '#e0393f', 'opacity=".08" class="halo"') : '';
+  const outer = po !== 'closed' ? C(50, 46, 46, TITAN_EYE, 'opacity=".08" class="halo"') : '';
   return shadow + outer + rays + lens(50, 46, 44, 20, tilt, state, uid, gradientId);
 }
 
@@ -367,7 +332,7 @@ function figureFor(heroId: string): Figure | undefined {
 const EYE_SIDE: Record<string, 'left' | 'right'> = { [LEFT_EYE_ID]: 'left', [RIGHT_EYE_ID]: 'right' };
 
 export function isGuardianFigure(heroId: string): boolean {
-  return heroId === ENDBRINGER_ID || heroId in EYE_SIDE || figureFor(heroId) !== undefined;
+  return heroId in EYE_SIDE || figureFor(heroId) !== undefined;
 }
 
 /** The figure's inner markup: body under the pose transform, impact ticks on a hurt. Facing right, ground y=88. Empty for an id this module does not draw. */
@@ -376,9 +341,6 @@ export function guardianMarkup(heroId: string, pose: GuardianPose, uid: string):
   if (pose === 'closed' && !(heroId in EYE_SIDE)) pose = 'idle';
   const t = pose === 'attack' ? 'translate(4 0) rotate(4 50 88)' : pose === 'hurt' ? 'translate(-5 0) rotate(-4 50 88) translate(50 88) scale(1.05 .94) translate(-50 -88)' : '';
   const hit = pose === 'hurt' ? ticks(84, 44) : '';
-  if (heroId === ENDBRINGER_ID) {
-    return `${EYE_GRADIENT(gradientId)}${G(t, endbringer(ANCIENT, pose as FigurePose, uid, gradientId))}${hit}`;
-  }
   if (heroId in EYE_SIDE) {
     // An eye does not lean or recoil like a body; the pose is in the lid and the pupil alone.
     return `${EYE_GRADIENT(gradientId)}${titanEye(EYE_SIDE[heroId], pose, uid, gradientId)}${hit}`;

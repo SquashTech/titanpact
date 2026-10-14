@@ -82,6 +82,7 @@ import ferraArt from '../../../art/heroes/unlocks/ferra.png';
 import abacusArt from '../../../art/heroes/unlocks/abacus.png';
 import whirrArt from '../../../art/heroes/unlocks/whirr.png';
 import mellowArt from '../../../art/heroes/unlocks/mellow.png';
+import heraldArt from '../../../art/heroes/titan/herald.png';
 
 /** Portraits keyed by hero id (heroes.ts order). A missing entry renders text-only; a Titanspawn or Guardian id never reaches this — HeroPortrait draws it. */
 export const heroArt: Partial<Record<string, string>> = {
@@ -183,10 +184,12 @@ export const heroArt: Partial<Record<string, string>> = {
   vex: vexArt,
   kong: kongArt,
   mellow: mellowArt,
+  // --- The Titan's own (pixel, as the Threshold paints it; what it turned stays geometric) ---
+  endbringer: heraldArt,
 };
 
-// The Guardians and the Endbringer are not here either: guardianFigures.ts draws them, sealed and
-// unsealed, from one figure each. Their retired sprites are under art/archive/guardians/.
+// The Guardians are not here either: guardianFigures.ts draws them, sealed and unsealed, from one
+// figure each. Their retired sprites are under art/archive/guardians/.
 
 /** The frames a hero has beyond its idle one. Both optional and independent. */
 export interface HeroPoses {

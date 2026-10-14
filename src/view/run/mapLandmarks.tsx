@@ -27,7 +27,7 @@ import titanGateLeafRightArt from '../../../art/map-nodes/landmarks/titanGateLea
 // greater gate sealed with the Titan's own eye.
 
 /** The Titan's own red: the light behind the finale gate's doors and in the opening stone's eye. */
-export const TITAN_LIGHT = '#e0393f';
+export const TITAN_LIGHT = '#f247dc';
 
 export type LandmarkKind = 'stone' | 'npc' | 'building' | 'gate' | 'titanGate';
 

@@ -6,7 +6,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { isWardenCombatant } from '../../run/wardens';
-import { isTitanEye } from '../../data/enemies';
+import { ENDBRINGER_ID, isTitanEye } from '../../data/enemies';
 import { STAT_ORDER, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
 import { STAT_LABELS } from '../shared/moveKind';
 import { shieldHeld } from '../../engine/status/shield';
@@ -473,7 +473,7 @@ export function CombatantCard({
           heroId={hero.id}
           pathId={combatant.formPathId}
           seed={combatant.combatantId}
-          className="combatant-portrait"
+          className={hero.id === ENDBRINGER_ID ? 'combatant-portrait is-herald' : 'combatant-portrait'}
           pose={pose}
         />
         {fx && <TypeFx key={fx.key} type={fx.type} kind={fx.kind} count={fx.count} />}

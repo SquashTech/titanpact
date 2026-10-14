@@ -37,11 +37,15 @@ don't silently override it.
 > exist and render, the factions are deleted, `LocationDefinition.spawnTypes` is the mob layer's
 > hard filter, `fight`/`battle` and the Guardian's escorts draw spawn by act tier
 > (`SPAWN_TIER_BY_ACT`), and every spawn — escorts included — levels to its node
-> (`docs/enemy-levels.md`, 2026-09-15, which retired the monsters track). **The Guardians and the
-> Endbringer are drawn in the same geometry** (2026-09-16, `guardianFigures.ts`, §2 "Guardian
+> (`docs/enemy-levels.md`, 2026-09-15, which retired the monsters track). **The Guardians are
+> drawn in the spawn's geometry** (2026-09-16, `guardianFigures.ts`, §2 "Guardian
 > art"): the mortal type's tones and one Titan eye, nothing Ancient-coloured on the body (a
-> worn seal ring and a second wrong-placed eye were both tried and removed); the Endbringer is the Titan's **Herald**
-> (a standard-bearer, the eye on the banner — never the Titan); the Leviathan is renamed
+> worn seal ring and a second wrong-placed eye were both tried and removed). **What the Titan
+> turned is geometric; the Titan's own pieces are pixel art in the Threshold painting's fog and
+> magenta** (2026-10-14, per user direction, `docs/titan-eyes.md` §12): the Endbringer is the
+> Titan's **Herald**, an eldritch faceless figure split by one magenta seam
+> (`art/heroes/titan/`) — never the Titan, and no longer a standard-bearer — and **the Titan's
+> eye is magenta everywhere** (`TITAN_EYE`, `--titan-rgb`); the Leviathan is renamed
 > **Kraken**, the Lava Beast **Dragon** and the Goblin Lord **Manticore**.
 > **Phases 3–5 are IN too:** the fork is Elite-or-Skirmish with the enemy typing previewed on the
 > tile from a draw seeded off the map (`src/run/encounters.ts`), the Pact Clock takes the field

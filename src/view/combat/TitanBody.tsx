@@ -49,9 +49,9 @@ export const TitanBody = memo(function TitanBody() {
     <svg className="titan-body" viewBox="0 0 400 400" preserveAspectRatio="none" aria-hidden="true">
       <defs>
         <linearGradient id="titan-hide" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#12150d" />
-          <stop offset="0.5" stopColor="#2a3020" />
-          <stop offset="1" stopColor="#0d100a" />
+          <stop offset="0" stopColor="#0e1017" />
+          <stop offset="0.5" stopColor="#2b323a" />
+          <stop offset="1" stopColor="#0e1017" />
         </linearGradient>
         {/* The mass curving away on every side: dark at the edges, lit where it faces us. */}
         <radialGradient id="titan-round" cx="50%" cy="50%" r="58%">
@@ -63,9 +63,9 @@ export const TitanBody = memo(function TitanBody() {
           <feGaussianBlur stdDeviation="3" />
         </filter>
         <radialGradient id="titan-ember" cx="50%" cy="52%" r="60%">
-          <stop offset="0" stopColor="#e0393f" stopOpacity="0.22" />
-          <stop offset="0.55" stopColor="#e0393f" stopOpacity="0.06" />
-          <stop offset="1" stopColor="#e0393f" stopOpacity="0" />
+          <stop offset="0" stopColor="#f247dc" stopOpacity="0.22" />
+          <stop offset="0.55" stopColor="#f247dc" stopOpacity="0.06" />
+          <stop offset="1" stopColor="#f247dc" stopOpacity="0" />
         </radialGradient>
         <linearGradient id="titan-brow" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#07050a" stopOpacity="0.95" />
@@ -83,7 +83,7 @@ export const TitanBody = memo(function TitanBody() {
           <path key={`f${r}`} d={arc((r + SEAM_RADII[i + 1]) / 2)} stroke="#07050a" strokeWidth="1.4" opacity="0.35" strokeDasharray="90 40 160 70" />
         ))}
         {SEAM_RADII.map((r) => (
-          <path key={`l${r}`} d={arc(r)} stroke="#8a9c5e" strokeWidth="1.2" opacity="0.22" transform="translate(0 -3)" />
+          <path key={`l${r}`} d={arc(r)} stroke="#5c6b69" strokeWidth="1.2" opacity="0.22" transform="translate(0 -3)" />
         ))}
         {SEAM_RADII.map((r) => (
           <path key={`s${r}`} d={arc(r)} stroke="#07050a" strokeWidth="4" opacity="0.7" />
@@ -96,19 +96,19 @@ export const TitanBody = memo(function TitanBody() {
       {/* The ember veins, pulsing: a blurred glow under a thin bright line. */}
       <g className="titan-body-veins" fill="none" strokeLinecap="round" strokeLinejoin="round">
         {VEINS.map((d, i) => (
-          <path key={`b${i}`} d={d} stroke="#e0393f" strokeWidth="5" opacity="0.45" filter="url(#titan-vein-glow)" />
+          <path key={`b${i}`} d={d} stroke="#f247dc" strokeWidth="5" opacity="0.45" filter="url(#titan-vein-glow)" />
         ))}
         {VEINS.map((d, i) => (
-          <path key={i} d={d} stroke="#e0393f" strokeWidth="1.6" opacity="0.7" />
+          <path key={i} d={d} stroke="#f247dc" strokeWidth="1.6" opacity="0.7" />
         ))}
         {VEINS.map((d, i) => (
-          <path key={`g${i}`} d={d} stroke="#f6dc96" strokeWidth="0.6" opacity="0.5" />
+          <path key={`g${i}`} d={d} stroke="#ffd6f6" strokeWidth="0.6" opacity="0.5" />
         ))}
       </g>
 
       {/* The brow: the ridge the Eyes open under, furrowed — lowest at the centre. */}
       <path d="M-10,-10 L410,-10 L410,52 C 330,50 250,66 200,84 C 150,66 70,50 -10,52 Z" fill="url(#titan-brow)" />
-      <path d="M-10,52 C 70,50 150,66 200,84 C 250,66 330,50 410,52" fill="none" stroke="#8a9c5e" strokeWidth="1.4" opacity="0.3" />
+      <path d="M-10,52 C 70,50 150,66 200,84 C 250,66 330,50 410,52" fill="none" stroke="#5c6b69" strokeWidth="1.4" opacity="0.3" />
     </svg>
   );
 });

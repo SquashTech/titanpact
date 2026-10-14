@@ -155,9 +155,10 @@ both were wrong in kind). **Endbringer is not its name.** It is what the wardens
 came through the breach, and the word outlived everyone who knew what it referred to. The
 Titan has no name, and never takes the field.
 
-The Herald is the Titan's hand and its voice: it walks ahead of the thing it announces and
-carries the thing's eye on its banner (`titanspawn-overhaul.md` §2 "Guardian art" — the
-standard-bearer, the five broken seals threaded on its pole). It is mono-**Ancient**: it
+The Herald is the Titan's hand and its voice: it stands ahead of the thing it announces, a
+tall faceless thing split by one seam of the Titan's magenta light — the Titan looking out of it
+(2026-10-14, per user direction, `titan-eyes.md` §12; it was a standard-bearer with the eye on
+its banner until then). It is mono-**Ancient**: it
 resists everything and is super-effective against nothing, the correct silhouette for the
 one piece of the Titan that stands where it can be struck. It stands at the front of its fight
 from the first round, and what walks behind it is what the five lands turned — one Late
