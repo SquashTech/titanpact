@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { classes } from '../../data/classes';
@@ -15,6 +15,8 @@ import { statScaleFor } from '../../run/statScale';
 import { evolutionName } from './evolutionName';
 import { VictoryCard } from './VictoryCard';
 import { victoryStars } from './victoryStars';
+import { renderCardImage, saveCardImage } from './saveCardImage';
+import { cycleOf } from '../../run/cycles';
 
 interface Props {
   outcome: 'win' | 'loss';
@@ -33,6 +35,41 @@ function actLabel(actNumber: number): string {
   return ACT_ROMAN[actNumber - 1] ?? String(actNumber);
 }
 
+type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
+
+const SAVE_LABELS: Record<SaveState, string> = { idle: 'Save Image', saving: 'Saving…', saved: 'Saved', failed: "Couldn't save" };
+
+/** The card's picture, rendered once it has settled so the share sheet can open on the tap itself. */
+function useCardImage(enabled: boolean) {
+  const ref = useRef<HTMLDivElement>(null);
+  const pending = useRef<Promise<Blob> | null>(null);
+  const [state, setState] = useState<SaveState>('idle');
+
+  useEffect(() => {
+    if (!enabled) return;
+    const t = window.setTimeout(() => {
+      if (ref.current && !pending.current) pending.current = renderCardImage(ref.current);
+    }, 900);
+    return () => window.clearTimeout(t);
+  }, [enabled]);
+
+  const save = async (fileName: string) => {
+    if (!ref.current) return;
+    setState('saving');
+    try {
+      pending.current ??= renderCardImage(ref.current);
+      const result = await saveCardImage(await pending.current, fileName);
+      setState(result === 'cancelled' ? 'idle' : 'saved');
+    } catch {
+      pending.current = null;
+      setState('failed');
+    }
+    window.setTimeout(() => setState((s) => (s === 'saving' ? s : 'idle')), 2200);
+  };
+
+  return { ref, state, save };
+}
+
 /**
  * The end of a run. A clear is one framed card — the Cycle beaten, the team in the forms it
  * finished in, the road, what it paid — made to be screenshotted, with the ways out below its
@@ -43,6 +80,7 @@ function actLabel(actNumber: number): string {
 export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, onNewRun, onReturnToTitle }: Props) {
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const inspect = (entry: RosterEntry) => setInspecting({ hero: rosterHeroes[entry.heroId], entry });
+  const card = useCardImage(outcome === 'win');
 
   const preview = inspecting && (
     <HeroPreviewOverlay
@@ -61,12 +99,22 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
       <div className="result-overlay run-summary-overlay result-win">
         <span className="champion-rays run-summary-rays" aria-hidden="true" />
         <div className="run-summary-victory">
-          <VictoryCard run={run} profileAfter={profileAfter} stars={victoryStars(run, profileBefore, profileAfter)} onInspect={inspect} />
+          <VictoryCard ref={card.ref} run={run} profileAfter={profileAfter} stars={victoryStars(run, profileBefore, profileAfter)} onInspect={inspect} />
           <div className="run-summary-victory-buttons">
             <PlateButton onClick={onNewRun}>Start a New Run</PlateButton>
-            <button type="button" className="secondary-button" onClick={onReturnToTitle}>
-              Return to Title
-            </button>
+            <div className="run-summary-victory-row">
+              <button
+                type="button"
+                className="secondary-button"
+                disabled={card.state === 'saving'}
+                onClick={() => card.save(`titanpact-cycle-${cycleOf(run.cycle).numeral}-${new Date().toISOString().slice(0, 10)}.png`)}
+              >
+                {SAVE_LABELS[card.state]}
+              </button>
+              <button type="button" className="secondary-button" onClick={onReturnToTitle}>
+                Return to Title
+              </button>
+            </div>
           </div>
         </div>
         {preview}

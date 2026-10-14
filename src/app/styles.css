@@ -35690,13 +35690,10 @@ button.evo-gift-card {
 }
 
 .vcard-hero-name {
-  max-width: 100%;
-  overflow: hidden;
   font-size: 13px;
   font-weight: 800;
   line-height: 1.15;
   white-space: nowrap;
-  text-overflow: ellipsis;
   color: #fff;
   text-shadow: 0 0 10px rgba(var(--pact-rgb), 0.7);
 }
@@ -35812,6 +35809,15 @@ button.evo-gift-card {
   align-items: stretch;
   gap: 8px;
   width: 100%;
+}
+
+.run-summary-victory-row {
+  display: flex;
+  gap: 8px;
+}
+
+.run-summary-victory-row > button {
+  flex: 1 1 0;
 }
 
 /* ── On the Titan (TitanBody.tsx, docs/titan-eyes.md) ─────────────────────

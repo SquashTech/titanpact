@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, Ref } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { locations } from '../../data/locations';
 import { companionHeroId } from '../../run/companion';
@@ -18,12 +18,13 @@ interface Props {
   profileAfter: Profile;
   stars: VictoryStars;
   onInspect: (entry: RosterEntry) => void;
+  ref?: Ref<HTMLDivElement>;
 }
 
 const DATE = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 
 /** A cleared run as one framed picture to keep: the Cycle beaten, the team, where it went, what it paid. */
-export function VictoryCard({ run, profileAfter, stars, onInspect }: Props) {
+export function VictoryCard({ run, profileAfter, stars, onInspect, ref }: Props) {
   const cycle = cycleOf(run.cycle);
   const record = profileAfter.runHistory[0];
   const route = run.locationIds.slice(0, SEAL_ACTS).map((id) => locations[id]?.name).filter(Boolean);
@@ -32,7 +33,7 @@ export function VictoryCard({ run, profileAfter, stars, onInspect }: Props) {
   const facts = [record?.durationMs != null ? formatPlaytime(record.durationMs) : null, record ? DATE.format(record.endedAt) : null].filter(Boolean);
 
   return (
-    <div className={`vcard star-cycle-${run.cycle}`}>
+    <div className={`vcard star-cycle-${run.cycle}`} ref={ref}>
       <span className="vcard-rays" aria-hidden="true" />
       <div className="vcard-mark">TITANPACT</div>
 
