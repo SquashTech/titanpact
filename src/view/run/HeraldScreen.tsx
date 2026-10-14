@@ -112,10 +112,6 @@ export function HeraldScreen({ company, onContinue }: Props) {
       <div className="herald-caption">
         <div className="herald-eyebrow">The Titan's Herald</div>
         <h2 className="herald-title">{herald?.name ?? 'Endbringer'}</h2>
-        <p className="herald-line">
-          The Titan's hand and its voice. The eye on its banner is not its own. What the lands you crossed
-          turned walks behind it.
-        </p>
         <PlateButton
           className="herald-continue"
           onClick={(event) => {

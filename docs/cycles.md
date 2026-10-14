@@ -198,7 +198,7 @@ who sealed it stayed to guard the seals. / Now the Titan holds them. / We must s
 - **A Warden from a hero the player later stops owning or decking** — it should not matter, since
   the snapshot is a record; confirm.
 - **Clear payouts by Cycle** — Ascension's A1 paid 6.
-- **Cycle V's fight and epilogue** — its own document.
+- **Cycle V's fight and epilogue** — its own document: `cycle-five.md` (2026-10-14), whose §10 holds the open questions.
 - **Rows III–IV** (§3) are a first pass; each is a measurement before it is a decision.
 
 ## 10. Invariants this reverses
