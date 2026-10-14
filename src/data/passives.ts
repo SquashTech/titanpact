@@ -441,7 +441,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   bloodthirsty: {
     id: 'bloodthirsty',
     name: 'Bloodthirsty',
-    description: 'This hero has +20 Attack and +20 Speed while an enemy is Bleeding.',
+    description: 'This hero has +20 Attack and +20 Speed while an enemy on the field is Bleeding.',
     // A live conditional grant, not a reactive statDelta: it switches off when the Bleeder
     // switches out, faints, is cleansed or expires. Reads ACTIVE enemies only.
     conditionalStatGrants: {
@@ -717,7 +717,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   chargedAir: {
     id: 'chargedAir',
     name: 'Charged Air',
-    description: 'This hero has +20 Intelligence and +20 Speed while an enemy is Conducting.',
+    description: 'This hero has +20 Intelligence and +20 Speed while an enemy on the field is Conducting.',
     // Bloodthirsty's shape on Conduct: Skyshear plants the mark (Jolt, Ionize, Stunning Bolt,
     // Thunderbolt, Stoop) and is a bigger, faster caster for as long as it holds. A live grant,
     // so it switches off when the marked foe is detonated, switches out or faints.
@@ -1295,7 +1295,7 @@ const innatePassives: Record<string, PassiveDefinition> = {
     // Boiler Pressure (2026-09-29, per user direction): the lock alone cost nothing — a tank the
     // whole roster fields never wants to leave. The drain lands after regen, so it nets −5 a round
     // before a cast, and with no bench to cycle to, the answer is a Rest: a turn the colossus stands still.
-    description: 'This hero cannot switch. {trigger} Its boiler vents 15 Mana.',
+    description: 'This hero cannot switch, not even by a move that would switch it out. {trigger} Its boiler vents 15 Mana.',
     cannotSwitchOut: true,
     burden: true,
     reactive: {
@@ -1995,13 +1995,13 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   blackWidowBleed: {
     id: 'blackWidowBleed',
     name: 'Lethal Bite+',
-    description: 'Deals 50% more damage to a Bleeding enemy, and 50% more again to a Poisoned one — 2.25× to an enemy that is both.',
+    description: 'Deals 50% more damage to a Bleeding enemy.',
     damageModifier: { requiresTargetStatuses: ['Bleed'], amount: 0.5 },
   },
   blackWidowPoison: {
     id: 'blackWidowPoison',
-    name: 'Lethal Bite+',
-    description: 'Deals 50% more damage to a Poisoned enemy.',
+    name: 'Venom Bite',
+    description: 'Deals 50% more damage to a Poisoned enemy. With Lethal Bite+, 2.25× to an enemy that is both.',
     damageModifier: { requiresTargetStatuses: ['Poison'], amount: 0.5 },
   },
   lichsDraught: {
@@ -2166,7 +2166,7 @@ const masteredInnatePassives: Record<string, PassiveDefinition> = {
   ironMountain: {
     id: 'ironMountain',
     name: 'Ironbound+',
-    description: 'This hero cannot switch. {trigger} Gains ATK ▲ and DEF ▲, and its boiler vents 15 Mana.',
+    description: 'This hero cannot switch, not even by a move that would switch it out. {trigger} Gains ATK ▲ and DEF ▲, and its boiler vents 15 Mana.',
     cannotSwitchOut: true,
     burden: true,
     reactive: {
