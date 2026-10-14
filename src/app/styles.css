@@ -10159,31 +10159,6 @@ textarea,
   color: var(--text-dim);
 }
 
-/* Sits on the card the star was just earned by. Selected through .pick-card so
-   it outweighs `.pick-card > * { position: relative }`, which would otherwise
-   drop it into the flow and push the sprite down. */
-.pick-card > .run-summary-card-star {
-  position: absolute;
-  top: 4px;
-  right: 5px;
-  z-index: 1;
-  font-size: 12px;
-  color: var(--accent);
-  text-shadow: 0 0 8px rgba(224, 166, 60, 0.75);
-  animation: run-summary-star-land 0.5s var(--ease-spring) 0.35s both;
-}
-
-@keyframes run-summary-star-land {
-  from {
-    opacity: 0;
-    transform: scale(2.4) rotate(-25deg);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-  }
-}
-
 .run-summary-records {
   display: flex;
   flex-wrap: wrap;
@@ -10198,11 +10173,6 @@ textarea,
   background: var(--well);
   font-size: 10.5px;
   color: var(--text);
-}
-
-.run-summary-record-chip.is-star {
-  border-color: rgba(224, 166, 60, 0.5);
-  color: var(--accent);
 }
 
 /* Pinned to the bottom of the scrolling panel: a six-hero roster pushes the
@@ -35172,16 +35142,317 @@ button.evo-gift-card {
   animation: champion-plate-in 0.6s var(--ease-out) 1.3s backwards;
 }
 
+/* A champion's star, lit over it on its beat, in the colour of the Cycle it was earned on. */
+.champion-star,
+.champion-star-note,
+.champion-cell-star,
+.champion-flyer {
+  --star-rgb: 244, 241, 234;
+}
+
+.champion-star .star-cycle-2,
+.champion-star-note.star-cycle-2,
+.champion-cell-star.star-cycle-2,
+.champion-flyer.star-cycle-2 {
+  --star-rgb: 208, 138, 74;
+}
+
+.champion-star .star-cycle-3,
+.champion-star-note.star-cycle-3,
+.champion-cell-star.star-cycle-3,
+.champion-flyer.star-cycle-3 {
+  --star-rgb: 159, 182, 210;
+}
+
+.champion-star .star-cycle-4,
+.champion-star-note.star-cycle-4,
+.champion-cell-star.star-cycle-4,
+.champion-flyer.star-cycle-4 {
+  --star-rgb: 224, 166, 60;
+}
+
+.champion-star .star-cycle-5,
+.champion-star-note.star-cycle-5,
+.champion-cell-star.star-cycle-5,
+.champion-flyer.star-cycle-5 {
+  --star-rgb: 255, 236, 120;
+}
+
+.champion-star {
+  position: absolute;
+  left: 50%;
+  top: -46px;
+  width: 64px;
+  height: 64px;
+  margin-left: -32px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.champion-star-glyph {
+  grid-area: 1 / 1;
+  font-size: 46px;
+  line-height: 1;
+  color: rgb(var(--star-rgb));
+  text-shadow: 0 0 10px rgba(var(--star-rgb), 0.9), 0 0 26px rgba(var(--star-rgb), 0.6), 0 2px 0 rgba(0, 0, 0, 0.5);
+  animation: champion-star-light 0.7s cubic-bezier(0.2, 1.6, 0.4, 1) 1s backwards, champion-star-float 2.4s ease-in-out 1.7s infinite;
+}
+
+.champion-star.is-raised .champion-star-glyph:not(.is-old) {
+  animation: champion-star-turn 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) 1.6s backwards, champion-star-float 2.4s ease-in-out 2.1s infinite;
+}
+
+.champion-star-glyph.is-old {
+  animation: champion-star-old 0.9s ease-out 1s both;
+}
+
+.champion-star-glyph.star-cycle-5 {
+  color: #fff3a6;
+  text-shadow: 0 0 8px #ff8a5c, 0 0 18px #6be38a, 0 0 30px #5cc8ff, 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.champion-star-burst {
+  grid-area: 1 / 1;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(var(--star-rgb), 0.5) 30%, transparent 62%),
+    repeating-conic-gradient(rgba(var(--star-rgb), 0.85) 0deg 4deg, transparent 4deg 30deg);
+  -webkit-mask-image: radial-gradient(circle, #000 30%, transparent 70%);
+  mask-image: radial-gradient(circle, #000 30%, transparent 70%);
+  opacity: 0;
+  animation: champion-star-burst 0.9s ease-out 1s both;
+}
+
+.champion-star.is-raised .champion-star-burst {
+  animation: champion-star-burst 0.9s ease-out 1s both, champion-star-burst 0.9s ease-out 1.6s both;
+}
+
+@keyframes champion-star-light {
+  0% {
+    opacity: 0;
+    scale: 2.6;
+    rotate: -120deg;
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+    rotate: 0deg;
+  }
+}
+
+@keyframes champion-star-turn {
+  0% {
+    opacity: 0;
+    scale: 1.8;
+  }
+}
+
+@keyframes champion-star-old {
+  0% {
+    opacity: 0;
+    scale: 2.6;
+  }
+  35%,
+  60% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+@keyframes champion-star-float {
+  50% {
+    translate: 0 -4px;
+  }
+}
+
+@keyframes champion-star-burst {
+  0% {
+    opacity: 1;
+    scale: 0.3;
+    rotate: 0deg;
+  }
+  100% {
+    opacity: 0;
+    scale: 3.2;
+    rotate: 40deg;
+  }
+}
+
+.champion-star-note {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(var(--star-rgb));
+  text-shadow: 0 0 10px rgba(var(--star-rgb), 0.6);
+  animation: champion-plate-in 0.5s var(--ease-out) 1.25s backwards;
+}
+
+/* The hall: each starred hero's star at its shoulder, flaring as it gives a star to the count. */
+.champion-cell-star {
+  position: absolute;
+  top: 2px;
+  right: calc(50% - 50px);
+  font-size: 18px;
+  line-height: 1;
+  color: rgb(var(--star-rgb));
+  text-shadow: 0 0 6px rgba(var(--star-rgb), 0.8);
+  opacity: 0.5;
+  transition: color 0.3s ease, opacity 0.3s ease;
+  animation: champion-plate-in 0.5s var(--ease-out) calc(var(--enter) + 0.4s) backwards;
+}
+
+.champion-cell-star.is-lit {
+  opacity: 1;
+  animation: champion-cell-star-flare 0.6s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+@keyframes champion-cell-star-flare {
+  0% {
+    scale: 2.2;
+    text-shadow: 0 0 18px rgba(var(--star-rgb), 1), 0 0 30px rgba(255, 255, 255, 0.8);
+  }
+}
+
+.champion-flyer {
+  position: absolute;
+  z-index: 3;
+  width: 0;
+  height: 0;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  line-height: 0;
+  color: rgb(var(--star-rgb));
+  text-shadow: 0 0 10px rgba(var(--star-rgb), 1), 0 0 22px rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+  animation: champion-fly 0.48s cubic-bezier(0.5, 0, 0.75, 0.4) forwards;
+}
+
+@keyframes champion-fly {
+  0% {
+    translate: 0 0;
+    scale: 1.4;
+  }
+  40% {
+    scale: 1.7;
+  }
+  100% {
+    translate: var(--dx) var(--dy);
+    scale: 0.7;
+  }
+}
+
+/* The balance the run paid into, counting as the stars land. */
+.champion-tally {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 76px;
+  animation: champion-plate-in 0.6s var(--ease-out) 1.1s backwards;
+}
+
+.champion-tally-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(40, 30, 14, 0.85), rgba(16, 12, 6, 0.9));
+  box-shadow: inset 0 0 0 1px rgba(var(--gold), 0.55), 0 0 18px rgba(var(--gold), 0.2);
+  animation: champion-tally-bump 0.32s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.champion-tally-glyph {
+  font-size: 22px;
+  color: rgb(var(--gold));
+  text-shadow: 0 0 10px rgba(var(--gold), 0.8);
+}
+
+.champion-tally-number {
+  min-width: 2ch;
+  font-size: 28px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #fff6dc;
+  text-shadow: 0 0 12px rgba(var(--gold), 0.6);
+}
+
+@keyframes champion-tally-bump {
+  0% {
+    scale: 1.18;
+  }
+}
+
+.champion-tally.is-settled .champion-tally-count {
+  box-shadow: inset 0 0 0 1px rgba(var(--gold), 0.9), 0 0 30px rgba(var(--gold), 0.55);
+}
+
+.champion-tally-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 18px;
+  min-height: 22px;
+}
+
+.champion-tally-chip {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(232, 212, 166, 0.9);
+  animation: champion-plate-in 0.4s var(--ease-out) backwards;
+}
+
+.champion-tally-chip b {
+  color: rgb(var(--gold));
+}
+
+.champion-tally-burst {
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  width: 160px;
+  height: 160px;
+  margin: -80px 0 0 -80px;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(255, 246, 220, 0.7), rgba(var(--gold), 0.3) 30%, transparent 60%),
+    repeating-conic-gradient(rgba(var(--gold), 0.7) 0deg 3deg, transparent 3deg 24deg);
+  -webkit-mask-image: radial-gradient(circle, #000 25%, transparent 70%);
+  mask-image: radial-gradient(circle, #000 25%, transparent 70%);
+  animation: champion-star-burst 1.1s ease-out both;
+}
+
+.champion-screen.is-hall .champion-line {
+  animation-delay: 0.2s;
+}
+
+.champion-screen.is-hall .champion-continue {
+  animation-delay: 0.45s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .champion-rays,
   .champion-mote,
-  .champion-halo {
+  .champion-halo,
+  .champion-star-glyph {
     animation: none;
   }
 }
 
-/* A cleared run in the hall's gold rather than a won fight's green: the same rays the champion's
-   hall turns under, the headline lettered in the pact's gold, the finishing roster rising in. */
+/* A cleared run in the hall's gold rather than a won fight's green, under the same rays the champion's hall turns under. */
 .run-summary-overlay.result-win {
   --pact-rgb: 224, 166, 60;
   overflow: hidden;
@@ -35192,51 +35463,347 @@ button.evo-gift-card {
   top: 24%;
 }
 
-.run-summary-overlay.result-win .result-glow {
-  background: radial-gradient(circle, rgba(224, 166, 60, 0.3), transparent 70%);
+/* ── The victory card (VictoryCard.tsx): a cleared run as one framed picture to keep. ── */
+.vcard {
+  --gold: 224, 166, 60;
+  --cycle-rgb: 244, 241, 234;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 362px;
+  padding: 16px 16px 12px;
+  overflow: hidden;
+  border-radius: 16px;
+  text-align: center;
+  background:
+    radial-gradient(ellipse 90% 40% at 50% 26%, rgba(var(--gold), 0.16), transparent 70%),
+    linear-gradient(180deg, #15110a, #0a0806);
+  box-shadow:
+    inset 0 0 0 2px rgba(var(--gold), 0.9),
+    inset 0 0 0 5px #0a0806,
+    inset 0 0 0 6px rgba(var(--gold), 0.45),
+    0 18px 40px rgba(0, 0, 0, 0.6);
 }
 
-.run-summary-kicker {
-  margin-bottom: -6px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.3em;
+/* The medallion takes the colour of the Cycle's stars: white, bronze, silver, gold, then pale fire. */
+.vcard.star-cycle-2 {
+  --cycle-rgb: 208, 138, 74;
+}
+
+.vcard.star-cycle-3 {
+  --cycle-rgb: 159, 182, 210;
+}
+
+.vcard.star-cycle-4 {
+  --cycle-rgb: 224, 166, 60;
+}
+
+.vcard.star-cycle-5 {
+  --cycle-rgb: 255, 236, 120;
+}
+
+.vcard::before,
+.vcard::after {
+  content: '◆';
+  position: absolute;
+  top: 2px;
+  font-size: 12px;
+  color: rgb(var(--gold));
+  text-shadow: 0 0 8px rgba(var(--gold), 0.8);
+}
+
+.vcard::before {
+  left: 6px;
+}
+
+.vcard::after {
+  right: 6px;
+}
+
+.vcard-rays {
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 22%;
+  width: 760px;
+  height: 760px;
+  margin: -380px 0 0 -380px;
+  background: repeating-conic-gradient(from 0deg, rgba(var(--gold), 0.1) 0deg 6deg, transparent 6deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.5) 24%, transparent 50%);
+  mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.5) 24%, transparent 50%);
+  pointer-events: none;
+}
+
+.vcard-mark {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.34em;
+  background: linear-gradient(180deg, #eef1e6 0%, #d9c48a 40%, #9c7a32 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.vcard-cycle {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 2px;
+}
+
+.vcard-cycle-numeral {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(var(--cycle-rgb), 0.9), 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.vcard-cycle-numeral::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  z-index: -1;
+  rotate: 45deg;
+  border: 2px solid rgb(var(--cycle-rgb));
+  background: radial-gradient(circle, rgba(var(--cycle-rgb), 0.45), rgba(var(--cycle-rgb), 0.12));
+  box-shadow: 0 0 16px rgba(var(--cycle-rgb), 0.6), inset 0 0 8px rgba(var(--cycle-rgb), 0.5);
+}
+
+.vcard-cycle-words {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.vcard-cycle-cleared {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgb(224, 166, 60);
-  text-shadow: 0 0 10px rgba(224, 166, 60, 0.5);
+  color: color-mix(in srgb, rgb(var(--cycle-rgb)) 70%, #fff);
+  text-shadow: 0 0 12px rgba(var(--cycle-rgb), 0.55);
 }
 
-.run-summary-overlay.result-win h2 {
+.vcard-cycle-name {
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 600;
+  color: rgba(232, 212, 166, 0.75);
+}
+
+.vcard .vcard-title {
+  margin: 2px 0 0;
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1.05;
   background: linear-gradient(180deg, #fff6dc 10%, #f3c877 50%, #b9822a 92%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   text-shadow: none;
-  filter: drop-shadow(0 2px 0 rgba(26, 15, 7, 0.9)) drop-shadow(0 0 16px rgba(224, 166, 60, 0.4));
+  filter: drop-shadow(0 2px 0 rgba(26, 15, 7, 0.9)) drop-shadow(0 0 16px rgba(var(--gold), 0.45));
 }
 
-.run-summary-overlay.result-win .pick-card {
-  animation: champion-figure-rise 0.6s cubic-bezier(0.2, 1, 0.3, 1) backwards;
+.vcard-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  color: rgb(var(--gold));
 }
 
-.run-summary-overlay.result-win .pick-card:nth-child(2) {
-  animation-delay: 0.08s;
+.vcard-rule span {
+  width: 70px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--gold), 0.85));
 }
 
-.run-summary-overlay.result-win .pick-card:nth-child(3) {
-  animation-delay: 0.16s;
+.vcard-rule span:last-child {
+  background: linear-gradient(270deg, transparent, rgba(var(--gold), 0.85));
 }
 
-.run-summary-overlay.result-win .pick-card:nth-child(4) {
-  animation-delay: 0.24s;
+.vcard-team {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
 }
 
-.run-summary-overlay.result-win .pick-card:nth-child(5) {
-  animation-delay: 0.32s;
+.vcard-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  padding: 4px 2px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(var(--pact-rgb), 0.32), rgba(var(--pact-rgb), 0.06) 70%);
+  box-shadow: inset 0 0 0 1px rgba(var(--pact-rgb), 0.6);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }
 
-.run-summary-overlay.result-win .pick-card:nth-child(6) {
-  animation-delay: 0.4s;
+.vcard-hero-light {
+  position: absolute;
+  left: 50%;
+  top: 54px;
+  width: 90px;
+  height: 18px;
+  margin-left: -45px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 236, 200, 0.4), rgba(var(--pact-rgb), 0.35) 40%, transparent 72%);
+}
+
+.vcard-hero-figure {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  image-rendering: pixelated;
+}
+
+.vcard-hero-star {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 15px;
+}
+
+.vcard-hero-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(var(--pact-rgb), 0.7);
+}
+
+.vcard-hero-form {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: color-mix(in srgb, rgb(var(--pact-rgb)) 60%, #fff);
+}
+
+.vcard-hero-types {
+  display: flex;
+  gap: 3px;
+  margin-top: 2px;
+  scale: 0.8;
+}
+
+.vcard-hero-level {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.vcard-route {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 0;
+  max-width: 100%;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(232, 212, 166, 0.72);
+}
+
+.vcard-route-stop + .vcard-route-stop::before {
+  content: '›';
+  margin: 0 6px;
+  color: rgba(var(--gold), 0.8);
+}
+
+.vcard-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding-top: 8px;
+  border-top: 1px solid rgba(var(--gold), 0.25);
+}
+
+.vcard-companion {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--pact-rgb), 0.45), transparent 70%);
+}
+
+.vcard-companion-figure {
+  width: 30px;
+  height: 30px;
+}
+
+.vcard-stars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(var(--gold), 0.14);
+  box-shadow: inset 0 0 0 1px rgba(var(--gold), 0.55);
+  font-size: 15px;
+  font-weight: 900;
+  color: #fff6dc;
+}
+
+.vcard-stars-glyph {
+  color: rgb(var(--gold));
+  text-shadow: 0 0 8px rgba(var(--gold), 0.8);
+}
+
+.vcard-facts {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+/* The summary under a cleared run: the card, and the two ways out beneath its frame. */
+.run-summary-victory {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 362px;
+  max-height: 100%;
+  overflow-y: auto;
+  animation: champion-plate-in 0.6s var(--ease-out) backwards;
+}
+
+.run-summary-victory-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
 }
 
 /* ── On the Titan (TitanBody.tsx, docs/titan-eyes.md) ─────────────────────

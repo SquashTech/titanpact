@@ -57,6 +57,7 @@ import { ConstructedScreen } from '../view/run/ConstructedScreen';
 import { GauntletScreen } from '../view/run/GauntletScreen';
 import { ChampionScreen } from '../view/run/ChampionScreen';
 import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
+import { victoryStars } from '../view/run/victoryStars';
 import { heroes } from '../data/heroes';
 import { moves } from '../data/moves';
 import { allCombatants, rosterHeroes } from '../data/content';
@@ -371,6 +372,25 @@ function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): Eq
 /** The map, behind the level-up gate if anyone can afford one and the player has not banked the pool. */
 
 
+/** What a finished run hands the profile: the champion's hall previews it, the summary records it. */
+function runEndOf(run: RunState, outcome: RunEnd['outcome']): RunEnd {
+  return {
+    outcome,
+    actReached: run.actNumber,
+    // The finale has no Location of its own (locationForAct falls back to Act 1's); the history reads the act instead.
+    locationId: run.actNumber <= SEAL_ACTS ? run.locationIds[run.actNumber - 1] ?? null : null,
+    encountersWon: run.encountersWon,
+    cycle: run.cycle,
+    roster: run.roster.map((entry) => ({
+      heroId: entry.heroId,
+      level: levelOf(entry),
+      evolutionPathId: currentEvolutionPathId(entry),
+      ...(turnedCurse(entry) ? { curseId: turnedCurse(entry)!.id } : {}),
+    })),
+    companionType: run.companion?.type ?? null,
+  };
+}
+
 /** The first-time tips this screen can raise (docs/tutorial.md). The fight's are FightScreen's. */
 function screenTipIds(screen: Screen): readonly ScreenTipId[] {
   return screen.kind === 'itemWho' ? ['item'] : [];
@@ -432,6 +452,13 @@ export function App() {
 
   /** The profile either side of the finished run, so the summary can show what the run added. */
   const [runOutcome, setRunOutcome] = useState<{ before: Profile; after: Profile } | null>(null);
+  // The same record the summary writes, read ahead so the hall can light what it will add.
+  const championStars = useMemo(() => {
+    if (screen.kind !== 'champions') return null;
+    const before = readProfile();
+    return victoryStars(playerRun, before, recordRunEnded(before, runEndOf(playerRun, 'win'), Date.now()));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen.kind]);
 
   /** The joining cinematic for the one recruit path that resolves here: terminating a hero to make room. */
   const [recruitFanfare, setRecruitFanfare] = useState<{ heroId: string; source: 'contract' | 'guild' | 'event' } | null>(null);
@@ -549,21 +576,7 @@ export function App() {
     clearSave();
     setSaveSlot({ save: null, staleReason: null });
     const now = Date.now();
-    const end: RunEnd = {
-      outcome: screen.kind === 'runComplete' ? 'win' : 'loss',
-      actReached: playerRun.actNumber,
-      // The finale has no Location of its own (locationForAct falls back to Act 1's); the history reads the act instead.
-      locationId: playerRun.actNumber <= SEAL_ACTS ? playerRun.locationIds[playerRun.actNumber - 1] ?? null : null,
-      encountersWon: playerRun.encountersWon,
-      cycle: playerRun.cycle,
-      roster: playerRun.roster.map((entry) => ({
-        heroId: entry.heroId,
-        level: levelOf(entry),
-        evolutionPathId: currentEvolutionPathId(entry),
-        ...(turnedCurse(entry) ? { curseId: turnedCurse(entry)!.id } : {}),
-      })),
-      companionType: playerRun.companion?.type ?? null,
-    };
+    const end = runEndOf(playerRun, screen.kind === 'runComplete' ? 'win' : 'loss');
     const before = readProfile();
     // The first Cycle I win is the account's Wardens, forever (run/wardens.ts).
     const band = end.outcome === 'win' && playerRun.cycle === FIRST_CYCLE ? wardensFromRun(playerRun, heroes) : [];
@@ -1744,7 +1757,7 @@ export function App() {
         <AcademyNodeScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} seed={screen.seed} />
       )}
 
-      {screen.kind === 'champions' && <ChampionScreen run={playerRun} onContinue={() => setScreen({ kind: 'runComplete' })} />}
+      {screen.kind === 'champions' && <ChampionScreen run={playerRun} stars={championStars} onContinue={() => setScreen({ kind: 'runComplete' })} />}
 
       {/* `runOutcome` is set in the layout effect above, so it is already there on the first paint. */}
       {(screen.kind === 'runComplete' || screen.kind === 'runFailed') && runOutcome && (

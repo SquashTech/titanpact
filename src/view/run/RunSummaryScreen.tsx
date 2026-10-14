@@ -2,20 +2,19 @@ import { useState } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { classes } from '../../data/classes';
-import { locations } from '../../data/locations';
 import { chosenClass } from '../../run/classes';
 import { locationForAct } from '../../run/locations';
-import { companionStarId, companionTypeOf, hasCompanionStar, hasEvolutionStar, starCycleOf, type Profile } from '../../run/profile';
-import { starCycleClass } from '../shared/ProfileContext';
-import { currentEvolutionPathId } from '../../run/progression';
+import { type Profile } from '../../run/profile';
 import type { HeroDefinition } from '../../engine/content';
 import { SEAL_ACTS, type RosterEntry, type RunState } from '../../run/state';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
+import { PlateButton } from '../shared/PlateButton';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { levelOf } from '../../run/growth';
-import { cycleOf } from '../../run/cycles';
 import { statScaleFor } from '../../run/statScale';
 import { evolutionName } from './evolutionName';
+import { VictoryCard } from './VictoryCard';
+import { victoryStars } from './victoryStars';
 
 interface Props {
   outcome: 'win' | 'loss';
@@ -35,74 +34,76 @@ function actLabel(actNumber: number): string {
 }
 
 /**
- * The end of a run, which used to be a heading and a button. What it came to, in the order it
- * matters: how far it got (one sentence, the act and the place), what it became (the roster that
- * finished it, each hero still openable), and what it added to the profile — the last being the
- * only reason to press start again. No ledger: the figures it used to carry (gold, fights won,
- * Banners) were the run's bookkeeping, not its story (2026-09-16, per user direction).
+ * The end of a run. A clear is one framed card — the Cycle beaten, the team in the forms it
+ * finished in, the road, what it paid — made to be screenshotted, with the ways out below its
+ * frame. A loss says how far it got and who fell, and what it added to the profile. No ledger:
+ * gold, fights won and Banners were the run's bookkeeping, not its story (2026-09-16, per user
+ * direction).
  */
 export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, onNewRun, onReturnToTitle }: Props) {
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
+  const inspect = (entry: RosterEntry) => setInspecting({ hero: rosterHeroes[entry.heroId], entry });
 
-  const won = outcome === 'win';
+  const preview = inspecting && (
+    <HeroPreviewOverlay
+      hero={inspecting.hero}
+      entry={inspecting.entry}
+      equipmentLookup={equipment}
+      relicIds={run.relics}
+      gold={run.gold}
+      scale={statScaleFor(run)}
+      onClose={() => setInspecting(null)}
+    />
+  );
+
+  if (outcome === 'win') {
+    return (
+      <div className="result-overlay run-summary-overlay result-win">
+        <span className="champion-rays run-summary-rays" aria-hidden="true" />
+        <div className="run-summary-victory">
+          <VictoryCard run={run} profileAfter={profileAfter} stars={victoryStars(run, profileBefore, profileAfter)} onInspect={inspect} />
+          <div className="run-summary-victory-buttons">
+            <PlateButton onClick={onNewRun}>Start a New Run</PlateButton>
+            <button type="button" className="secondary-button" onClick={onReturnToTitle}>
+              Return to Title
+            </button>
+          </div>
+        </div>
+        {preview}
+      </div>
+    );
+  }
+
   const place = run.locationIds.length > 0 ? locationForAct(run.locationIds, run.actNumber) : null;
-
-  // Diffed rather than passed in, so the screen cannot disagree with what was actually recorded:
-  // a hero's star is NEW when the form it finished in is in the profile after and not before, and
-  // RAISED when it was held and this Cycle coloured it higher (docs/cycles.md §5).
-  const starCycle = (profile: Profile, entry: RosterEntry): number => {
-    const type = companionTypeOf(entry.heroId);
-    if (type) return starCycleOf(profile, companionStarId(type), hasCompanionStar(profile, type));
-    const pathId = currentEvolutionPathId(entry);
-    return pathId === null ? 0 : starCycleOf(profile, pathId, hasEvolutionStar(profile, entry.heroId, pathId));
-  };
-  const starsAwarded = run.roster.filter((entry) => starCycle(profileAfter, entry) > starCycle(profileBefore, entry));
   const newFurthestAct = profileAfter.furthestAct > profileBefore.furthestAct;
-  // The Cycle's clear bonus, read off the ledger rather than the table, for the same reason.
-  const clearBonus = profileAfter.bonusStars - profileBefore.bonusStars;
-  const cycle = cycleOf(run.cycle);
-  const hasRecords = starsAwarded.length > 0 || newFurthestAct || clearBonus > 0;
 
   return (
-    <div className={`result-overlay run-summary-overlay ${won ? 'result-win' : 'result-loss'}`}>
-      {/* A cleared run stays under the champion's hall's gold light, so the two read as one beat. */}
-      {won && <span className="champion-rays run-summary-rays" aria-hidden="true" />}
+    <div className="result-overlay run-summary-overlay result-loss">
       <div className="result-panel run-summary-panel">
         <div className="result-glow" aria-hidden="true" />
 
-        {won && <div className="run-summary-kicker">Victory · Cycle {cycle.numeral}</div>}
-        <h2>{won ? 'Run Cleared' : 'Run Failed'}</h2>
+        <h2>Run Failed</h2>
         <p className="run-summary-where">
-          {won
-            ? `All ${SEAL_ACTS} Guardians have fallen, the Herald with them, and the Titan's Eyes have closed.`
-            : run.actNumber > SEAL_ACTS
-              ? `Your squad fell at the last pact${place ? ` · ${place.name}` : ''}.`
-              : `Your squad fell in Act ${actLabel(run.actNumber)} of ${actLabel(SEAL_ACTS)}${place ? ` · ${place.name}` : ''}.`}
+          {run.actNumber > SEAL_ACTS
+            ? `Your squad fell at the last pact${place ? ` · ${place.name}` : ''}.`
+            : `Your squad fell in Act ${actLabel(run.actNumber)} of ${actLabel(SEAL_ACTS)}${place ? ` · ${place.name}` : ''}.`}
         </p>
 
         {run.roster.length > 0 && (
           <>
-            <div className="run-summary-section-title">{won ? 'The team that finished' : 'Your final squad'}</div>
+            <div className="run-summary-section-title">Your final squad</div>
             <HeroPickGrid count={run.roster.length}>
               {run.roster.map((entry) => {
                 const hero = rosterHeroes[entry.heroId];
                 const heroClass = chosenClass(classes, entry);
-                const earnedStar = starsAwarded.some((e) => e.rosterId === entry.rosterId);
                 return (
                   <HeroPickCard
                     key={entry.rosterId}
                     hero={hero}
                     entry={entry}
-                    onActivate={() => setInspecting({ hero, entry })}
-                    onPreview={() => setInspecting({ hero, entry })}
+                    onActivate={() => inspect(entry)}
+                    onPreview={() => inspect(entry)}
                     ariaLabel={`${hero.name}, level ${levelOf(entry)} — view sheet`}
-                    overlay={
-                      earnedStar ? (
-                        <span className="run-summary-card-star" aria-hidden="true">
-                          ★
-                        </span>
-                      ) : undefined
-                    }
                     /* What this hero became, falling back to its Class; the card badges the level itself. */
                     cta={evolutionName(entry) ?? (heroClass ? heroClass.name.replace('Class - ', '') : null)}
                   />
@@ -112,25 +113,13 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
           </>
         )}
 
-        {hasRecords && (
+        {newFurthestAct && (
           <>
             <div className="run-summary-section-title">Records</div>
             <div className="run-summary-records">
-              {starsAwarded.map((entry) => (
-                <span key={entry.rosterId} className="run-summary-record-chip is-star">
-                  <span className={`evo-star is-earned${starCycleClass(starCycle(profileAfter, entry))}`}>★</span> {rosterHeroes[entry.heroId].name} · {companionTypeOf(entry.heroId) ? 'Companion' : evolutionName(entry)}
-                </span>
-              ))}
-              {clearBonus > 0 && (
-                <span className="run-summary-record-chip is-star">
-                  ★ +{clearBonus} · Cycle {cycle.numeral} clear
-                </span>
-              )}
-              {newFurthestAct && (
-                <span className="run-summary-record-chip">
-                  Furthest act — {profileAfter.furthestAct > SEAL_ACTS ? 'Finale' : actLabel(profileAfter.furthestAct)}
-                </span>
-              )}
+              <span className="run-summary-record-chip">
+                Furthest act — {profileAfter.furthestAct > SEAL_ACTS ? 'Finale' : actLabel(profileAfter.furthestAct)}
+              </span>
             </div>
           </>
         )}
@@ -138,24 +127,12 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
         {/* Stacked, not the shared row: two full sentences side by side on a phone are two cramped targets.
             `.result-buttons button:last-child` still makes the second one read as secondary. */}
         <div className="result-buttons run-summary-buttons">
-          <button onClick={onNewRun}>
-            Start a New Run
-          </button>
+          <button onClick={onNewRun}>Start a New Run</button>
           <button onClick={onReturnToTitle}>Return to Title</button>
         </div>
       </div>
 
-      {inspecting && (
-        <HeroPreviewOverlay
-          hero={inspecting.hero}
-          entry={inspecting.entry}
-          equipmentLookup={equipment}
-          relicIds={run.relics}
-          gold={run.gold}
-          scale={statScaleFor(run)}
-          onClose={() => setInspecting(null)}
-        />
-      )}
+      {preview}
     </div>
   );
 }

@@ -67,6 +67,7 @@ export type SfxId =
   | 'star.lock'
   | 'star.charge'
   | 'star.reveal'
+  | 'star.earn'
   // Combat
   | 'cast'
   | 'cast.Fire'
@@ -798,6 +799,21 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 784, detune: 8, gain: 0.16, attack: 0.01, decay: 1.9, delay: 0.27 },
       { wave: 'sine', freq: 1568, detune: 14, gain: 0.07, attack: 0.02, decay: 1.8, delay: 0.3 },
       { wave: 'noise', gain: 0.08, attack: 0.3, decay: 1.2, delay: 0.2, filter: { type: 'highpass', freq: 5200 } },
+    ],
+  },
+
+  /** A champion's star lighting over it (ChampionScreen): a struck glass bell, a sparkle climbing off it, and a low bloom under both. */
+  'star.earn': {
+    gain: 0.46,
+    jitter: 0.004,
+    voices: [
+      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.08, filter: { type: 'bandpass', freq: 5200, q: 4 } },
+      { wave: 'sine', freq: 196, freqEnd: 147, gain: 0.24, attack: 0.004, decay: 0.8 },
+      { wave: 'triangle', freq: 784, detune: 5, gain: 0.2, attack: 0.003, decay: 1.3 },
+      { wave: 'sine', freq: 1175, gain: 0.14, attack: 0.003, decay: 1.4, delay: 0.06 },
+      { wave: 'sine', freq: 1568, gain: 0.12, attack: 0.003, decay: 1.2, delay: 0.12 },
+      { wave: 'sine', freq: 2349, detune: 12, gain: 0.08, attack: 0.003, decay: 1.0, delay: 0.18 },
+      { wave: 'noise', gain: 0.07, attack: 0.15, decay: 0.9, delay: 0.1, filter: { type: 'highpass', freq: 6000 } },
     ],
   },
 
