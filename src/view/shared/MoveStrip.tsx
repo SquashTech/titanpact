@@ -98,7 +98,7 @@ const PATHS = {
   ),
 } as const;
 
-function Glyph({ name, className }: { name: keyof typeof PATHS; className?: string }) {
+export function Glyph({ name, className }: { name: keyof typeof PATHS; className?: string }) {
   return (
     <svg className={`strip-glyph${className ? ` ${className}` : ''}`} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
       {PATHS[name]}

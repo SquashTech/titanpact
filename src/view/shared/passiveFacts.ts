@@ -17,7 +17,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import type { MoveKindGlyphKind } from './statIcons';
 import { STAT_FULL_LABELS } from './relicStacks';
-import { moveTagLabel, statusAmountText } from './statusFacts';
+import { moveTagLabel, statusAmountText, statusFactsLine, statusGrantText } from './statusFacts';
 import { stageText } from './moveKind';
 import { BURDEN_SURPLUS, HERO_STAT_TOTAL } from '../../run/statBudget';
 import { reactionKeywordOf, type PassiveKeyword } from '../../run/keywords';
@@ -36,8 +36,18 @@ export interface PassiveFact {
   glyph: PassiveFactGlyph;
   /** The row's own colour — a status's, an element's. Absent rows take the passive's. */
   color?: 'status' | 'element';
+  /** What the row's status does, under its claim. */
+  note?: string;
   /** A trigger row that reads as a keyword: the view draws the badge and its meaning instead. */
   keyword?: PassiveKeyword;
+}
+
+// A Force reads at the magnitude the passive lands; anything else by its rule.
+function statusNote(statusId: string, magnitude: number | undefined): string | undefined {
+  const def = statuses[statusId];
+  if (!def) return undefined;
+  const force = def.forceType || def.forceTag || def.forceHeal || def.forceAllTypes;
+  return (force ? statusGrantText(def, magnitude) : statusFactsLine(def)) || undefined;
 }
 
 function statusName(statusId: string | undefined): string {
@@ -247,6 +257,7 @@ function effectFact(effect: PassiveEffect, condition: PassiveTriggerCondition, h
         text: `${statusName(effect.statusId)}${magnitude} on ${targetWord(effect.target, condition, hook)}${duration}${scaled}`,
         glyph: { kind: 'status', statusId: effect.statusId },
         color: 'status',
+        note: statusNote(effect.statusId, typeof effect.magnitude === 'number' ? effect.magnitude : undefined),
       };
     }
     case 'statDelta': {

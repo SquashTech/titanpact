@@ -22,13 +22,13 @@ import { fieldEffectFactsLine } from '../shared/fieldEffectFacts';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS, restoresChargesText, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderMagnitude, riderTargetLabel } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, moveEffectSummary, restoresChargesText, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderMagnitude, riderTargetLabel } from '../shared/MoveTile';
 import { stageText } from '../shared/moveKind';
 import { overlayHost } from '../shared/overlayHost';
 import { ChargePips } from '../shared/ChargePips';
 import { forecastDamage, koLabel } from './forecast';
 import { ForecastBite } from './ForecastBite';
-import { MoveName, MoveStrip, MoveStub, SeatArrow, TargetFigures } from '../shared/MoveStrip';
+import { Glyph, MoveName, MoveStrip, MoveStub, SeatArrow, TargetFigures } from '../shared/MoveStrip';
 import { IconText } from '../shared/IconText';
 import { typeChart } from '../../data/typechart';
 import { moveKeywords, type MoveKeywordId } from '../../data/keywords';
@@ -255,6 +255,12 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
   const conditionalTargetField = move.conditionalTarget ? fieldEffects[move.conditionalTarget.requiresFieldEffect] : undefined;
   const hasPayload = Boolean(
     move.statDeltas?.length ||
+    move.randomStatDeltas ||
+    move.randomStatusApplication?.length ||
+    move.randomPriority?.length ||
+    move.manaCostAll ||
+    move.firstTurnOnly ||
+    move.metamorphic ||
     move.mpRegenGrant != null ||
     move.clearsRaisedStages ||
       move.doublesStages ||
@@ -286,6 +292,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
       move.selfHpCost
   );
 
+  const deltaTarget = move.statDeltaTarget === 'bothAllies' || move.statDeltaTarget === 'self' ? move.statDeltaTarget : move.target;
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
   const seats = context && move.kind === 'damage' ? forecastSeats(context, context.defenderIds).map((id) => (id ? seatMult(move, context, id) : null)) : undefined;
   const stubValue =
@@ -633,6 +640,32 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
               target={move.statDeltaTarget === 'bothAllies' || move.statDeltaTarget === 'self' ? move.statDeltaTarget : move.target}
             />
           ))}
+          {move.randomStatDeltas && (
+            <EffectRow
+              glyph={<Glyph name="die" />}
+              text={`${'▲'.repeat(move.randomStatDeltas.stages)} to ${
+                move.randomStatDeltas.count === 1 ? 'a random stat' : `${move.randomStatDeltas.count} random stats`
+              } on ${TARGET_MODE_LABELS[deltaTarget].toLowerCase()}${deltaTarget === 'bothAllies' ? ', each rolled apart' : ''}`}
+              target={deltaTarget}
+            />
+          )}
+          {move.randomStatusApplication?.length ? (
+            <EffectRow
+              glyph={<Glyph name="die" />}
+              text={`Applies one at random: ${move.randomStatusApplication.map((app) => statuses[app.statusId]?.name ?? app.statusId).join(', ')}`}
+            />
+          ) : null}
+          {move.randomPriority?.length ? (
+            <EffectRow
+              glyph={<StatGlyph stat="speed" />}
+              text={`Priority ${[...move.randomPriority].sort((a, b) => a - b).map((p) => (p > 0 ? `+${p}` : `${p}`)).join(' or ')}, rolled when the round is ordered`}
+            />
+          ) : null}
+          {move.manaCostAll && <EffectRow glyph={<StatGlyph stat="manaPool" />} text={`Spends all your Mana, at least ${move.manaCost}`} />}
+          {move.firstTurnOnly && <EffectRow glyph={<MoveKindGlyph kind="buff" />} text="Only on this hero's first turn out" />}
+          {move.metamorphic && (
+            <EffectRow glyph={<Glyph name="die" />} text={moveEffectSummary(move)} />
+          )}
         </div>
       )}
 

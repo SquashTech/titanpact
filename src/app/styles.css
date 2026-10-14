@@ -33744,6 +33744,14 @@ button.evo-gift-card {
   color: var(--text);
 }
 
+.passive-detail-fact-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
 .passive-detail-desc {
   padding-top: 8px;
   border-top: 1px solid var(--border);

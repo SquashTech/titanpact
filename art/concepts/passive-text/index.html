@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Passive Text Options</title>
+<style>
+:root {
+  --bg: #0f1117; --panel: #1b1e27; --panel-alt: #242833; --border: #353b4a;
+  --text: #edeff4; --text-dim: #99a0af; --accent: #e0a63c;
+  --atk: #d9534f; --int: #c356d0; --def: #8a94a8; --wis: #7fd6e0; --spd: #e8d16a;
+  --up: #5fd38a; --down: #ff6b6b; --grace: #f2cf6b; --beast: #d98a3a;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px 16px 60px; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+h2 { font-size: 15px; margin: 40px 0 14px; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 22px; align-items: start; }
+.opt-label { font-size: 13px; font-weight: 800; margin-bottom: 8px; }
+.opt-label span { color: var(--text-dim); font-weight: 600; }
+svg.g { width: 1.05em; height: 1.05em; vertical-align: -0.17em; fill: currentColor; }
+
+/* --- inline text samples ---------------------------------------------- */
+.innate { background: linear-gradient(165deg, #2a1a1d, #1d1418 70%); border: 1px solid #4a2a2c; border-radius: 6px; padding: 10px 12px; }
+.innate .head { font-size: 11px; font-weight: 800; letter-spacing: .1em; color: var(--text-dim); }
+.innate .head b { color: #e86a5c; font-size: 15px; letter-spacing: 0; margin-left: 6px; }
+.innate p { margin: 6px 0 0; font-size: 14px; line-height: 1.5; }
+.innate + .innate { margin-top: 8px; }
+.chev-up { color: var(--up); font-weight: 900; }
+.chev-down { color: var(--down); font-weight: 900; }
+.kw { color: var(--accent); font-weight: 800; }
+
+/* A: today */
+.a .term { white-space: nowrap; }
+.a .term svg { margin-right: .2em; }
+/* B: words in their colour */
+.b .w { font-weight: 800; white-space: nowrap; }
+/* C: one pill, glyph + chevron */
+.c .pill { display: inline-flex; gap: .45em; align-items: center; padding: 0 .45em; border-radius: 999px; background: rgba(95,211,138,.12); box-shadow: inset 0 0 0 1px rgba(95,211,138,.35); white-space: nowrap; line-height: 1.45; }
+.c .pill.down { background: rgba(255,107,107,.12); box-shadow: inset 0 0 0 1px rgba(255,107,107,.35); }
+.c .pill > span { display: inline-flex; align-items: center; gap: .05em; }
+/* D: one pill, words + one chevron */
+.d .pill { display: inline-flex; align-items: center; gap: .3em; padding: 0 .5em; border-radius: 4px; background: rgba(95,211,138,.12); box-shadow: inset 0 0 0 1px rgba(95,211,138,.35); white-space: nowrap; font-weight: 800; line-height: 1.45; }
+.d .pill.down { background: rgba(255,107,107,.12); box-shadow: inset 0 0 0 1px rgba(255,107,107,.35); }
+.d .amp { color: var(--text-dim); font-weight: 600; }
+/* E: tags, word + chevron each, no glyph */
+.e .tag { display: inline-block; padding: 0 .35em; margin: 0 .05em; border-radius: 3px; font-weight: 800; font-size: .92em; line-height: 1.5; white-space: nowrap; background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--c); }
+
+/* --- windows ------------------------------------------------------------- */
+.scrim { background: #07080b; padding: 26px 14px; border-radius: 8px; }
+.stone { border: 20px solid transparent; border-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABR0lEQVR4nM2XsQrCMBCGO1soLkUE0UUQVydB5w4Orrq4uDq4u7g7+Dr1eXyRygUOzvZ6aZqLcfjBmrb/1+uf9JKkg6yKqaRt4HZ/qsoK8H6djcrH1hwfTxdVcR4NABjAwfWmqIrdwYj+tgnMuGs4jy8AHLjuZ+a4fkNOaNIFkPMQM4Dl0pKYAQgJfVJaKi3BU2NFoWKL5aoJgKVEADhJQxQAPJwAfOc53JcCIIQTQDbMe0kVIB9NneUMgEH0ARhP5v0B6rOAA0ADavRXFZAA6CrZmgFQyAyI0xBPiFaBLhmwBc8rAy4VCBJCzQrAf8EWIunpvdeB0LMgyCv4GUCX4HmvA1E/x1wGNDri3q8gREvGAnCCCzQlNqUps2loa8PrbTptyaUWnvNoANBNA7fZsEnaJ3AeqbQxwemiJc5DzIBWS46yZiCWPtcl0aIkyiGhAAAAAElFTkSuQmCC') 10 fill / 20px round; image-rendering: pixelated; box-shadow: 0 10px 24px rgba(0,0,0,.6); padding: 2px; }
+.inner { background: linear-gradient(165deg, var(--panel-alt), var(--panel) 72%); padding: 12px; }
+.disc { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--grace); background: radial-gradient(circle at 32% 28%, rgba(242,207,107,.34), rgba(242,207,107,.1)); box-shadow: inset 0 0 0 1px rgba(242,207,107,.4), 0 0 18px -6px var(--grace); flex-shrink: 0; }
+.disc svg { width: 28px; height: 28px; fill: currentColor; }
+.name { font-size: 19px; font-weight: 800; color: var(--grace); }
+.row { display: grid; grid-template-columns: 19px 44px 1fr; gap: 9px; padding: 7px 0; font-size: 13px; font-weight: 700; align-items: start; }
+.row + .row { border-top: 1px solid rgba(53,59,74,.55); }
+.row .lbl { font-size: 11px; font-weight: 800; letter-spacing: .08em; color: var(--text-dim); padding-top: 2px; }
+.row .ic { color: var(--grace); }
+.row .ic svg { width: 17px; height: 17px; fill: currentColor; }
+.row .kwrow { grid-column: 1 / 3; color: var(--accent); font-weight: 800; font-size: 12px; white-space: nowrap; }
+.note { display: block; font-size: 11.5px; font-weight: 600; color: var(--text-dim); margin-top: 2px; }
+.close { text-align: center; font-size: 11px; color: var(--text-dim); margin-top: 10px; }
+
+/* W1 today */
+.w1 .head { display: flex; align-items: center; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.w1 .desc { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px; font-size: 12px; color: var(--text-dim); }
+
+/* W2 banner head: the passive's colour as a header band, rows in a sunk well, a glossary foot */
+.w2 .inner { padding: 0; overflow: hidden; }
+.w2 .band { position: relative; display: flex; align-items: center; gap: 12px; padding: 14px 14px 12px; background: linear-gradient(100deg, rgba(242,207,107,.26), rgba(242,207,107,.04) 70%), linear-gradient(165deg, #2c2a24, #1b1e27); border-bottom: 1px solid rgba(242,207,107,.45); }
+.w2 .band::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, transparent, var(--grace), transparent); }
+.w2 .kind { font-size: 10px; font-weight: 800; letter-spacing: .14em; color: rgba(242,207,107,.75); }
+.w2 .well { margin: 12px; padding: 2px 10px; border-radius: 6px; background: rgba(0,0,0,.28); box-shadow: inset 0 1px 3px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.04); }
+.w2 .gloss { margin: 0 12px 12px; padding: 9px 10px; border-left: 3px solid var(--grace); background: rgba(242,207,107,.07); font-size: 12px; line-height: 1.4; color: var(--text); }
+.w2 .gloss b { color: var(--grace); }
+.w2 .close { margin: 0 0 10px; }
+
+/* W3 medallion: the disc set into the top edge, the name centred under it, a gilt rule */
+.w3 .stone { margin-top: 30px; }
+.w3 .inner { position: relative; padding: 40px 14px 12px; text-align: center; background: radial-gradient(ellipse at 50% 0%, rgba(242,207,107,.18), transparent 60%), linear-gradient(165deg, var(--panel-alt), var(--panel) 72%); }
+.w3 .disc { position: absolute; left: 50%; top: -48px; transform: translateX(-50%); width: 64px; height: 64px; background: radial-gradient(circle at 32% 28%, #4a3f22, #1c1810); box-shadow: 0 0 0 3px #8a6a2a, 0 0 0 5px #2a2110, 0 0 22px -2px rgba(242,207,107,.7); }
+.w3 .disc svg { width: 32px; height: 32px; }
+.w3 .name { font-size: 21px; }
+.w3 .rule { height: 9px; margin: 8px auto 6px; width: 70%; background: linear-gradient(90deg, transparent, #8a6a2a 20%, var(--grace) 50%, #8a6a2a 80%, transparent); mask: linear-gradient(#000 0 0) center / 100% 1px no-repeat, radial-gradient(circle, #000 3.5px, transparent 4px) center / 9px 9px no-repeat; -webkit-mask: linear-gradient(#000 0 0) center / 100% 1px no-repeat, radial-gradient(circle, #000 3.5px, transparent 4px) center / 9px 9px no-repeat; }
+.w3 .sentence { font-size: 15px; font-weight: 700; line-height: 1.45; margin: 4px 4px 12px; }
+.w3 .gloss { text-align: left; display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; padding: 10px; border-radius: 6px; background: rgba(0,0,0,.3); box-shadow: inset 0 0 0 1px rgba(242,207,107,.18); font-size: 12px; line-height: 1.4; }
+.w3 .gloss .ic { color: var(--grace); } .w3 .gloss .ic svg { width: 20px; height: 20px; fill: currentColor; }
+.w3 .gloss b { color: var(--grace); }
+
+/* W4 sentence-first: the sentence big, the rows gone; terms underlined, their meaning below */
+.w4 .head { display: flex; align-items: center; gap: 12px; }
+.w4 .disc { width: 44px; height: 44px; }
+.w4 .disc svg { width: 24px; height: 24px; }
+.w4 .sentence { margin: 12px 0; padding: 12px; border-radius: 6px; background: linear-gradient(90deg, rgba(242,207,107,.1), transparent); border-left: 3px solid var(--grace); font-size: 15px; font-weight: 700; line-height: 1.5; }
+.w4 .term { color: var(--grace); text-decoration: underline dotted rgba(242,207,107,.6); text-underline-offset: 3px; }
+.w4 .gloss { font-size: 12px; line-height: 1.45; color: var(--text-dim); display: grid; grid-template-columns: 18px 1fr; gap: 8px; }
+.w4 .gloss .ic { color: var(--grace); } .w4 .gloss .ic svg { width: 16px; height: 16px; fill: currentColor; }
+.w4 .gloss b { color: var(--text); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <g id="atk"><g transform="rotate(45 12 12)"><path d="M12 1.4 14.5 6v8.4h-5V6Z"/><path d="M5.6 15.6h12.8v2.3H5.6Z"/><path d="M10.6 19.1h2.8v2.2h-2.8Z"/><circle cx="12" cy="22" r="1.5"/></g></g>
+    <g id="int"><path d="M12 1c.8 6.6 4.4 10.2 11 11-6.6.8-10.2 4.4-11 11-.8-6.6-4.4-10.2-11-11 6.6-.8 10.2-4.4 11-11Z"/></g>
+    <g id="spd"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.8 5 10.8 12l-7 7"/><path d="M13.2 5l7 7-7 7"/></g></g>
+    <g id="grace"><path d="M9 3h5v6h6v5h-6v6H9v-6H3V9h6Z"/></g>
+    <g id="enter"><path d="M3 4h9v3H6v10h6v3H3Z M11 8l5 4-5 4v-2.5H8v-3h3Z" /></g>
+  </defs>
+</svg>
+
+<h1>Passive text — pick one of each</h1>
+<div style="color:var(--text-dim);font-size:13px">Two choices: how a stat raise reads inside a sentence, and how the passive window is dressed.</div>
+
+<h2>1 · Stat raises inside a sentence</h2>
+<div class="grid">
+
+  <div class="a">
+    <div class="opt-label">A <span>— today</span></div>
+    <div class="innate"><div class="head">INNATE <b>Pack Hunter</b></div>
+      <p>When an enemy drops below half its HP, this hero gains <span class="term" style="color:var(--atk)"><svg class="g" viewBox="0 0 24 24"><use href="#atk"/></svg><span style="color:var(--text)">ATK</span></span> <span class="chev-up">▲</span> and <span class="term" style="color:var(--int)"><svg class="g" viewBox="0 0 24 24"><use href="#int"/></svg><span style="color:var(--text)">INT</span></span> <span class="chev-up">▲</span>.</p></div>
+    <div class="innate"><div class="head">CLASS <b>Deep Breath</b></div>
+      <p><span class="kw">Rest:</span> Gains <span style="color:var(--int)"><svg class="g" viewBox="0 0 24 24"><use href="#int"/></svg></span> INT <span class="chev-up">▲</span> and <span style="color:var(--wis)">◠</span> WIS <span class="chev-up">▲</span>.</p></div>
+  </div>
+
+  <div class="b">
+    <div class="opt-label">B <span>— words in their stat colour, no glyphs</span></div>
+    <div class="innate"><div class="head">INNATE <b>Pack Hunter</b></div>
+      <p>When an enemy drops below half its HP, this hero gains <span class="w" style="color:var(--atk)">ATK<span class="chev-up">▲</span></span> and <span class="w" style="color:var(--int)">INT<span class="chev-up">▲</span></span>.</p></div>
+    <div class="innate"><div class="head">CLASS <b>Deep Breath</b></div>
+      <p><span class="kw">Rest:</span> Gains <span class="w" style="color:var(--int)">INT<span class="chev-up">▲</span></span> and <span class="w" style="color:var(--wis)">WIS<span class="chev-up">▲</span></span>.</p></div>
+  </div>
+
+  <div class="c">
+    <div class="opt-label">C <span>— one pill, glyphs and chevrons only</span></div>
+    <div class="innate"><div class="head">INNATE <b>Pack Hunter</b></div>
+      <p>When an enemy drops below half its HP, this hero gains <span class="pill"><span style="color:var(--atk)"><svg class="g" viewBox="0 0 24 24"><use href="#atk"/></svg><span class="chev-up">▲</span></span><span style="color:var(--int)"><svg class="g" viewBox="0 0 24 24"><use href="#int"/></svg><span class="chev-up">▲</span></span></span></p></div>
+    <div class="innate"><div class="head">CLASS <b>Deep Breath</b></div>
+      <p><span class="kw">Rest:</span> Gains <span class="pill"><span style="color:var(--int)"><svg class="g" viewBox="0 0 24 24"><use href="#int"/></svg><span class="chev-up">▲</span></span><span style="color:var(--wis)">◠<span class="chev-up">▲</span></span></span></p></div>
+  </div>
+
+  <div class="d">
+    <div class="opt-label">D <span>— one pill, the words and one chevron</span></div>
+    <div class="innate"><div class="head">INNATE <b>Pack Hunter</b></div>
+      <p>When an enemy drops below half its HP, this hero gains <span class="pill"><span style="color:var(--atk)">ATK</span><span class="amp">&amp;</span><span style="color:var(--int)">INT</span><span class="chev-up">▲</span></span></p></div>
+    <div class="innate"><div class="head">CLASS <b>Deep Breath</b></div>
+      <p><span class="kw">Rest:</span> Gains <span class="pill"><span style="color:var(--int)">INT</span><span class="amp">&amp;</span><span style="color:var(--wis)">WIS</span><span class="chev-up">▲</span></span></p></div>
+  </div>
+
+  <div class="e">
+    <div class="opt-label">E <span>— a tinted tag per stat, no glyphs</span></div>
+    <div class="innate"><div class="head">INNATE <b>Pack Hunter</b></div>
+      <p>When an enemy drops below half its HP, this hero gains <span class="tag" style="--c:var(--atk)">ATK ▲</span> <span class="tag" style="--c:var(--int)">INT ▲</span></p></div>
+    <div class="innate"><div class="head">CLASS <b>Deep Breath</b></div>
+      <p><span class="kw">Rest:</span> Gains <span class="tag" style="--c:var(--int)">INT ▲</span> <span class="tag" style="--c:var(--wis)">WIS ▲</span></p></div>
+  </div>
+
+</div>
+
+<h2>2 · The passive window</h2>
+<div class="grid">
+
+  <div class="w1">
+    <div class="opt-label">1 <span>— today</span></div>
+    <div class="scrim"><div class="stone"><div class="inner">
+      <div class="head"><span class="disc"><svg viewBox="0 0 24 24"><use href="#grace"/></svg></span><span class="name">Field Medic</span></div>
+      <div class="row"><span class="kwrow">⇥ Enter</span><span>When this hero takes the field.</span></div>
+      <div class="row"><span class="ic"><svg viewBox="0 0 24 24"><use href="#grace"/></svg></span><span class="lbl">THEN</span><span>Grace 15 on this hero</span></div>
+      <div class="desc"><span class="kw">⇥ Enter:</span> Gains Grace 15.</div>
+      <div class="close">Tap anywhere to close</div>
+    </div></div></div>
+  </div>
+
+  <div class="w2">
+    <div class="opt-label">2 <span>— header band, rows in a sunk well, glossary foot</span></div>
+    <div class="scrim"><div class="stone"><div class="inner">
+      <div class="band"><span class="disc"><svg viewBox="0 0 24 24"><use href="#grace"/></svg></span><div><div class="kind">EVOLUTION PASSIVE</div><div class="name">Field Medic</div></div></div>
+      <div class="well">
+        <div class="row"><span class="kwrow">⇥ Enter</span><span>When this hero takes the field</span></div>
+        <div class="row"><span class="ic"><svg viewBox="0 0 24 24"><use href="#grace"/></svg></span><span class="lbl">THEN</span><span>Grace 15 on this hero</span></div>
+      </div>
+      <div class="gloss"><b>Grace</b> — +15 Heal Power on every heal this hero casts, whatever its type. Lasts the fight.</div>
+      <div class="close">Tap anywhere to close</div>
+    </div></div></div>
+  </div>
+
+  <div class="w3">
+    <div class="opt-label">3 <span>— medallion on the top edge, one sentence, glossary card</span></div>
+    <div class="scrim"><div class="stone"><div class="inner">
+      <span class="disc"><svg viewBox="0 0 24 24"><use href="#grace"/></svg></span>
+      <div class="name">Field Medic</div>
+      <div class="rule"></div>
+      <div class="sentence"><span class="kw">⇥ Enter:</span> gains <span style="color:var(--grace)">Grace 15</span>.</div>
+      <div class="gloss"><span class="ic"><svg viewBox="0 0 24 24"><use href="#grace"/></svg></span><span><b>Grace</b> — +15 Heal Power on every heal this hero casts, whatever its type. Lasts the fight.</span></div>
+      <div class="close">Tap anywhere to close</div>
+    </div></div></div>
+  </div>
+
+  <div class="w4">
+    <div class="opt-label">4 <span>— sentence-first, rows dropped, terms glossed under it</span></div>
+    <div class="scrim"><div class="stone"><div class="inner">
+      <div class="head"><span class="disc"><svg viewBox="0 0 24 24"><use href="#grace"/></svg></span><span class="name">Field Medic</span></div>
+      <div class="sentence"><span class="kw">⇥ Enter:</span> gains <span class="term">Grace 15</span>.</div>
+      <div class="gloss"><span class="ic"><svg viewBox="0 0 24 24"><use href="#grace"/></svg></span><span><b>Grace</b> · +15 Heal Power on every heal this hero casts, whatever its type. Lasts the fight.</span></div>
+      <div class="gloss" style="margin-top:6px"><span class="ic" style="color:var(--accent)">⇥</span><span><b>Enter</b> · when this hero takes the field — the fight's start, or a switch in.</span></div>
+      <div class="close">Tap anywhere to close</div>
+    </div></div></div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -50,7 +50,10 @@ export function PassiveFactRows({ passive }: { passive: PassiveDefinition }) {
           <div key={i} className="passive-detail-fact" style={rowColor ? ({ '--fact-color': rowColor } as CSSProperties) : undefined}>
             <span className="passive-detail-fact-glyph">{factGlyph(fact)}</span>
             <span className="passive-detail-fact-label">{fact.label}</span>
-            <span className="passive-detail-fact-text">{fact.text}</span>
+            <span className="passive-detail-fact-text">
+              {fact.text}
+              {fact.note && <span className="passive-detail-fact-note">{fact.note}</span>}
+            </span>
           </div>
         );
       })}
