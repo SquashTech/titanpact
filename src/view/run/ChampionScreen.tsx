@@ -302,7 +302,7 @@ export function ChampionScreen({ run, stars, onContinue }: Props) {
       {done && (
         <div className="champion-hall" ref={tally.hallRef}>
           <div className="champion-hall-head">
-            <div className="champion-kicker">Cycle {cycleOf(run.cycle).numeral} · The Titan is bound</div>
+            <div className="champion-kicker">Cycle {cycleOf(run.cycle).numeral} · The Titan is sealed</div>
             <h2 className="champion-title">Heroes of the Land</h2>
             <div className="champion-rule" aria-hidden="true">
               <span />◆<span />
