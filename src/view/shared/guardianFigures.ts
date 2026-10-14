@@ -299,8 +299,8 @@ function lens(x: number, y: number, hw: number, hh: number, tilt: number, state:
  * The Endbringer: the Titan's HERALD, not the Titan. A gaunt hooded bearer with no legs under
  * the hem, a standard taller than the frame in the leading hand and a horn in the trailing one.
  * The pennant carries the Titan's eye — the title screen's lens (titanArt.tsx) — which is how
- * the Titan looks out of its herald; the hood is empty. The five broken seals are
- * threaded on the pole under the pennant: what it came out through. An attack raises the horn and sounds it, and the
+ * the Titan looks out of its herald; the hood is empty. Four broken seals are
+ * threaded on the pole under the pennant, one an act. An attack raises the horn and sounds it, and the
  * eye on the banner opens wide; a hit sags the banner.
  */
 function endbringer(p: Pal, po: GuardianPose, uid: string, gradientId: string): string {
@@ -326,8 +326,7 @@ function endbringer(p: Pal, po: GuardianPose, uid: string, gradientId: string): 
     + L('M84,88 L84,-56', p.dd, 3) + L('M84,88 L84,-56', p.l, 1, 'opacity=".4"') + P('80,-56 84,-68 88,-56', p.ll) + L('M60,-18 L84,-18', p.dd, 3)
     + D(`M84,-18 L22,${-10 + sag} L28,${2 + sag} L14,${12 + sag} L24,${20 + sag} L84,26 Z`, p.d) + D(`M84,-14 L30,${-6 + sag} L36,${2 + sag} L24,${11 + sag} L32,${18 + sag} L84,22 Z`, p.c, 'opacity=".5"')
     + lens(52, 4 + sag / 2, 15, 6.5, -4, state, uid, gradientId)
-    // The five broken seals, threaded on the pole under the pennant: what it came out through.
-    + [30, 35, 40, 45, 50].map((y, i) => shackle(84 + (i % 2 ? 1.5 : -1.5), y)).join('');
+    + [32, 38, 44, 50].map((y, i) => shackle(84 + (i % 2 ? 1.5 : -1.5), y)).join('');
 }
 
 /**

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { playSfx } from '../../audio/sfx';
+import { ENDBRINGER_ID } from '../../data/enemies';
+import { HeroPortrait } from '../shared/HeroPortrait';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { TitanColossus, TitanRidge } from './titanArt';
 
@@ -7,6 +9,8 @@ interface Props {
   onDone: () => void;
 }
 
+/** The Herald, alone in the dark: the banner sags, the eye on it goes out, and it comes apart (ms). */
+const FALL_MS = 2000;
 /** Black, and the ground going. The ember below is the only light (ms). */
 const STIR_MS = 900;
 /** The head climbing in from under the frame, the rumble climbing with it (ms). */
@@ -16,15 +20,16 @@ const SETTLE_MS = 2600;
 /** Down to black, so the field cuts back in from nothing (ms). */
 const FADE_MS = 600;
 
-const RISE_AT = STIR_MS;
+const STIR_AT = FALL_MS;
+const RISE_AT = STIR_AT + STIR_MS;
 const SETTLE_AT = RISE_AT + RISE_MS;
 const FADE_AT = SETTLE_AT + SETTLE_MS;
 const DONE_AT = FADE_AT + FADE_MS;
 
-type RisePhase = 'stir' | 'rise' | 'settle' | 'fade';
+type RisePhase = 'fall' | 'stir' | 'rise' | 'settle' | 'fade';
 
 /**
- * The Herald has fallen, mid-fight, and the far end of the leash stands up (docs/titan-eyes.md
+ * The Herald falls — its banner sagging, the eye on it going out — and the far end of the leash stands up (docs/titan-eyes.md
  * §10 — played over the field by FightScreen on the first Eye's arrival, before its reveal beat).
  * The title screen's own figure — the brow, the two eyes, and the ridge with the four pactbearers
  * on it for scale — climbs into the frame from below, which is the title's picture becoming true.
@@ -34,7 +39,7 @@ type RisePhase = 'stir' | 'rise' | 'settle' | 'fade';
  * slit; the rise moved to the fall it answers.
  */
 export function TitanRiseScreen({ onDone }: Props) {
-  const [phase, setPhase] = useState<RisePhase>('stir');
+  const [phase, setPhase] = useState<RisePhase>('fall');
   // Through a ref, because the parent rebuilds `onDone` on its own renders.
   const done = useRef(onDone);
   done.current = onDone;
@@ -44,8 +49,12 @@ export function TitanRiseScreen({ onDone }: Props) {
       done.current();
       return;
     }
-    playSfx('titan.stir');
+    playSfx('map.threat', { pitch: 0.42 });
     const timers = [
+      window.setTimeout(() => {
+        setPhase('stir');
+        playSfx('titan.stir');
+      }, STIR_AT),
       window.setTimeout(() => {
         setPhase('rise');
         playSfx('titan.stir');
@@ -65,6 +74,10 @@ export function TitanRiseScreen({ onDone }: Props) {
   return (
     // Tap-anywhere skips, as the cold open does; there is nothing on this screen to label.
     <div className={`titan-rise is-${phase}`} onClick={onDone}>
+      <div className="titan-rise-herald" aria-hidden="true">
+        <HeroPortrait heroId={ENDBRINGER_ID} className="titan-rise-herald-figure" pose="hurt" />
+      </div>
+
       <div className="titan-rise-shake">
         <span className="titan-rise-ember" aria-hidden="true" />
 

@@ -9,6 +9,7 @@ import { effectiveTypes } from '../../engine/state';
 import type { CombatState, Side } from '../../engine/state';
 import type { HeroDefinition } from '../../engine/content';
 import type { LocationDefinition } from '../../data/locations';
+import { ENDBRINGER_ID } from '../../data/enemies';
 import type { Beat, BeatRosterEntry } from './buildBeats';
 import { getTypeTextColor } from './typeColors';
 
@@ -49,7 +50,7 @@ export function openingBeat(
     // No lead line above the VS: the Location's name sat there and read as a combatant —
     // "Wild's Edge VS Goblin Warrior". The arena already says where this is.
     bannerRoster: roster.length > 0 ? roster : [{ name: 'The enemy', colors: [] }],
-    bannerTag: 'Battle begins',
+    bannerTag: state.active[enemySide].some((id) => id !== null && state.combatants[id]?.heroId === ENDBRINGER_ID) ? 'The last fight' : 'Battle begins',
     // No bannerFocusKind, and no accent when placeless: the beat then lands in the console's
     // own gold, which is already the "nobody is commanding" color of the resolving state.
     ...(location ? { bannerAccent: `rgb(${location.tintRgb})` } : null),

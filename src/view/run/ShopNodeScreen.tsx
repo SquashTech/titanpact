@@ -110,7 +110,7 @@ export function ShopNodeScreen({
 
       {/* The Smithy's own forge is its sign: six benches fit under the anvil only once the hall's is off the top. */}
       {tab !== 'smithy' && (
-        <NodeHeader compact eyebrow="Welcome to" title="The Guild Hall" />
+        <NodeHeader compact eyebrow={muster ? 'Before the Threshold' : 'Welcome to'} title={muster ? 'The Vigil' : 'The Guild Hall'} />
       )}
 
       <div className="screen-scroll">

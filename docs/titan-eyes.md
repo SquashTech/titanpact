@@ -272,3 +272,26 @@ kit, gear and Act 4 level changes, `enemy-levels.md`):
 | Both | 85.5% / 50% | 48.5% / 19% | 77.5 / 26.9% |
 
 The company's gear is the lever; the re-fit's numbers are the next notch if play still finds it soft.
+
+## 11. The ending sequence (2026-10-14, per user direction)
+
+The ask: the finale's introduction and its close read as thin, and the Titan being sealed was not
+shown. The fight is untouched; every change is presentation.
+
+- **The march** (`HeraldScreen`): the Herald walks in, sounds its horn (its attack pose, the eye
+  on the banner wide), and the company the fight fields rises behind it one at a time along the
+  horizon, each over the name of the land it was turned in. The run's route, shown rather than
+  told. The fight then opens on **"The last fight"** in place of "Battle begins".
+- **The Herald falls** (`TitanRiseScreen`, a first phase): alone on the black, hit, banner
+  sagging, going dark and down, before the head rises. The trigger is unchanged (the first Eye's
+  arrival; the ward means the Herald is always the last of its side to fall).
+- **The sealing** (`TitanBoundScreen`): after the head goes down, the seal turns in and every ring
+  the run locked comes back in act order — its Guardian struck into its socket in its Location's
+  light, on the diagonal the Pact Seal put it on, its sigil re-lit — then the roster's names are
+  written round the rim, then the lock. A tap goes straight to the end (it was the one cinematic
+  that could not be skipped).
+- **The hall's line** counts the seals the run never stood in instead of saying "two".
+- **The Vigil** says so on its header; the Herald's banner carries four shackles, not five.
+
+Still to come: a Threshold track (the act has no music — the designer is writing one), and the
+title's Titan keeping its eyes shut after a clear until the next Cycle opens.

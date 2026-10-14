@@ -10,6 +10,7 @@ import { rosterHeroes } from '../../data/content';
 import { levelOf } from '../../run/growth';
 import { rosterEntryTypes, formIdFor } from '../../run/progression';
 import { cycleOf } from '../../run/cycles';
+import { unbrokenSealLocationIds } from '../../run/locations';
 import type { RunState } from '../../run/state';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -78,6 +79,13 @@ function topStar(earned: readonly EarnedStar[] | undefined): EarnedStar | null {
 }
 
 const CYCLE_NUMERALS = ['I', 'II', 'III', 'IV', 'V'];
+
+/** The seals the run never stood in held through the year on their own. */
+function heldLine(held: number): string {
+  if (held <= 0) return 'The world is still here.';
+  const count = ['one', 'two', 'three', 'four', 'five'][held - 1] ?? String(held);
+  return `The other ${count} held; the world is still here.`;
+}
 
 type TallyStep =
   | { kind: 'hero'; rosterId: string; add: number }
@@ -376,7 +384,7 @@ export function ChampionScreen({ run, stars, onContinue }: Props) {
 
           {tally.settled && (
             <>
-              <p className="champion-line">Their names are kept where the seals are. The last two held; the world is still here.</p>
+              <p className="champion-line">Their names are kept where the seals are. {heldLine(unbrokenSealLocationIds(run.locationIds).length)}</p>
               <PlateButton
                 className="champion-continue"
                 onClick={(event) => {

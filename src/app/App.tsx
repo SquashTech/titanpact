@@ -74,7 +74,7 @@ import { enemies, finaleEnemies, ENDBRINGER_ID, MANTICORE_ID, titanEyes, EYE_PHA
 import { relics } from '../data/relics';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
-import { HeraldScreen } from '../view/run/HeraldScreen';
+import { HeraldScreen, type HeraldCompanion } from '../view/run/HeraldScreen';
 import { CompanionAwakensScreen } from '../view/run/CompanionAwakensScreen';
 import { TitanBoundScreen } from '../view/run/TitanBoundScreen';
 import { PactForging } from '../view/run/PactForging';
@@ -346,6 +346,19 @@ function whoScreensBehind(screen: Screen): number {
   let depth = 0;
   for (let cursor = screen; cursor.kind === 'itemWho'; cursor = cursor.next) depth += 1;
   return depth;
+}
+
+/** What walks behind the Herald, in seal order: the finale's spawn ahead of the Herald in its roster, each over its seal's land. */
+function heraldCompany(screen: Screen, brokenSeals: RunState['brokenSeals']): HeraldCompanion[] {
+  let cursor: Screen = screen;
+  while (cursor.kind !== 'fight' && 'next' in cursor) cursor = cursor.next;
+  if (cursor.kind !== 'fight') return [];
+  const roster = cursor.encounter.run.roster;
+  const heraldAt = roster.findIndex((entry) => entry.heroId === ENDBRINGER_ID);
+  const spawn = heraldAt < 0 ? [] : roster.slice(0, heraldAt);
+  const seals = [...brokenSeals].sort((a, b) => a.actNumber - b.actNumber);
+  const aligned = seals.length === spawn.length;
+  return spawn.map((entry, i) => ({ heroId: entry.heroId, placeName: aligned ? (locations[seals[i].locationId]?.name ?? null) : null }));
 }
 
 /** The items still to come in a who-screen chain, in order. */
@@ -1490,11 +1503,11 @@ export function App() {
         <LocationChoiceScreen run={playerRun} candidateIds={screen.candidateIds} onChoose={handleLocationChosen} />
       )}
 
-      {screen.kind === 'herald' && <HeraldScreen onContinue={() => setScreen(screen.next)} />}
+      {screen.kind === 'herald' && <HeraldScreen company={heraldCompany(screen.next, playerRun.brokenSeals)} onContinue={() => setScreen(screen.next)} />}
 
       {screen.kind === 'companionAwakens' && <CompanionAwakensScreen heroId={screen.heroId} onContinue={() => setScreen(screen.next)} />}
 
-      {screen.kind === 'titanBound' && <TitanBoundScreen onContinue={() => setScreen(screen.next)} />}
+      {screen.kind === 'titanBound' && <TitanBoundScreen run={playerRun} onContinue={() => setScreen(screen.next)} />}
 
       {screen.kind === 'actIntro' && (
         <ActIntroScreen

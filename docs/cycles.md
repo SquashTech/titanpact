@@ -181,13 +181,20 @@ who sealed it stayed to guard the seals. / Now the Titan holds them. / We must s
 - Stars are coloured by the Cycle they were earned on. **No star entry fee**; clears pay stars;
   cosmetics and skins are the eventual sink.
 - Achievements grant stars, separately.
+- **Cycle V's direction** (2026-10-14, per user direction): **the Wardens are its keys.** No seal
+  holds, so a Guardian beaten does not lock a ring — it **frees** the Warden the Titan has held
+  beside it since Cycle II, and the Wardens freed stand with the player at the end (the Slay the
+  Spire keys before the Heart). The Titan is fought **in body parts, the Feet, then the Hands, then
+  the Eyes**. A multi-phase fight is the length increase Cycle IV turned down for its Guardians;
+  the run's one true ending is where length is wanted. The numbers, the Wardens' mechanism in the
+  fight and the epilogue go in Cycle V's own document.
 
 ## 9. Open — DO NOT silently resolve
 
 - **Whether the Warden leads** its beast's fight or comes in from reserve.
-- **Everything in Cycle V** — the Wardens' fate, the fight, the epilogue — is decided when the
-  Cycles before it are built. The one candidate on record: the Titan fought in body parts, **the
-  Feet, then the Hands, then the Eyes**, for scale on a small screen.
+- **The rest of Cycle V** — the shape is decided (§8: the Wardens are freed as keys, the Titan is
+  fought as the Feet, the Hands, then the Eyes); how a freed Warden acts in the fight, each part's
+  kit and numbers, and the epilogue are not.
 - **A Warden from a hero the player later stops owning or decking** — it should not matter, since
   the snapshot is a record; confirm.
 - **Clear payouts by Cycle** — Ascension's A1 paid 6.
