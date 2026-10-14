@@ -27925,9 +27925,16 @@ button.evo-gift-card {
   background-color: rgba(224, 166, 60, 0.14);
 }
 
+/* A figure is too small to ring inset: padded inside the ring, on a dark backing so the white caster still reads. */
 .tip-scene.focus-reach .is-focus-row .move-rider .target-figures,
-.tip-scene.focus-reach .is-focus-row .move-reach,
-.tip-scene.focus-reach .is-focus-row .move-stub .target-figures,
+.tip-scene.focus-reach .is-focus-row .move-reach .target-figures,
+.tip-scene.focus-reach .is-focus-row .move-stub .target-figures {
+  padding: 3px;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+  background-color: rgba(0, 0, 0, 0.55);
+}
+
 .tip-scene.focus-kindBadge .is-focus-row .move-stub,
 .tip-scene.focus-move .is-focus-row .move-button {
   border-radius: 4px;
