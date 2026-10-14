@@ -144,12 +144,14 @@ export function SeatArrow({ mult }: { mult: number }) {
  * foe), which keeps its place so the other arrow never slides under the wrong enemy. A move that
  * hits both draws one bar under the pair.
  */
-export function EnemySeats({ mults, target }: { mults: readonly (number | null)[]; target: TargetMode }) {
+export function EnemySeats({ mults, target }: { mults: readonly (number | null)[] | 'blank'; target: TargetMode }) {
   const mode = target === 'bothEnemies' || target === 'allOthers' ? ' is-spread' : target === 'randomEnemy' ? ' is-random' : '';
+  // Out of a fight there is no matchup to show, only the lines that say single or spread.
+  const blank = mults === 'blank';
   return (
-    <span className={`move-seats${mode}`} title={TARGET_MODE_LABELS[target]}>
-      {mults.map((mult, i) => (
-        <span key={i} className={`move-seat${mult == null ? ' is-empty' : ''}`} title={mult == null ? undefined : `${Math.round(mult * 100) / 100}×`}>
+    <span className={`move-seats${mode}${blank ? ' is-blank' : ''}`} title={TARGET_MODE_LABELS[target]}>
+      {(blank ? [null, null] : mults).map((mult, i) => (
+        <span key={i} className={`move-seat${mult == null && !blank ? ' is-empty' : ''}`} title={mult == null ? undefined : `${Math.round(mult * 100) / 100}×`}>
           {mult != null && <SeatArrow mult={mult} />}
         </span>
       ))}
@@ -577,7 +579,7 @@ const FIGURE_W = 15;
 const PAIR_W = 24;
 const SMALL_FIGURE_W = 10;
 
-function reachWidth(target: TargetMode, seats: readonly (number | null)[] | null): number {
+function reachWidth(target: TargetMode, seats: readonly (number | null)[] | 'blank' | null): number {
   if (seats) return SMALL_FIGURE_W;
   switch (target) {
     case 'bothEnemies':
@@ -593,9 +595,14 @@ function reachWidth(target: TargetMode, seats: readonly (number | null)[] | null
   }
 }
 
-/** The seats an attack draws under its number in a fight; null out of one, or for a move not aimed at the enemy row. */
-export function stubSeats(move: MoveDefinition, target: TargetMode, seats: readonly (number | null)[] | undefined): readonly (number | null)[] | null {
-  return move.kind === 'damage' && aimsAtEnemies(target) && seats && seats.length > 0 ? seats : null;
+/** The seats an attack draws under its number: arrows in a fight, bare lines out of one; null for a move not aimed at the enemy row. */
+export function stubSeats(
+  move: MoveDefinition,
+  target: TargetMode,
+  seats: readonly (number | null)[] | undefined
+): readonly (number | null)[] | 'blank' | null {
+  if (move.kind !== 'damage' || !aimsAtEnemies(target)) return null;
+  return seats && seats.length > 0 ? seats : 'blank';
 }
 
 /**
@@ -604,10 +611,21 @@ export function stubSeats(move: MoveDefinition, target: TargetMode, seats: reado
  * figure here except the partner a hit-everyone move also strikes; a buff or debuff carries its
  * figures in the stub (targetInStub). Right-aligned against the stub; overflow clips from the left.
  */
-export function MoveStrip({ move, amountOf, live = {} }: { move: MoveDefinition; amountOf: RiderAmount; live?: MoveLiveFacts }) {
+export function MoveStrip({
+  move,
+  amountOf,
+  live = {},
+  hideReach,
+}: {
+  move: MoveDefinition;
+  amountOf: RiderAmount;
+  live?: MoveLiveFacts;
+  /** Drawn where the words beside it already name the target (the dossier). */
+  hideReach?: boolean;
+}) {
   const target = live.target ?? move.target;
   const seats = stubSeats(move, target, live.seats);
-  const reach = !targetInStub(move) && (!seats || target === 'allOthers');
+  const reach = !hideReach && !targetInStub(move) && (!seats || target === 'allOthers');
   // Who it reaches sits outside the clipping strip in a slot of stated width: WebKit mis-measured it
   // from its contents on first layout and let it run under the stub.
   return (
@@ -647,6 +665,7 @@ export function MoveStub({
   title,
   target,
   seats,
+  hideReach,
 }: {
   move: MoveDefinition;
   /** The figure to print — live power, a rolled range, a resolved heal; omitted for a buff or debuff. */
@@ -657,6 +676,8 @@ export function MoveStub({
   target?: TargetMode;
   /** Each enemy seat's multiplier, left to right; drawn only on an attack aimed at the enemy row. */
   seats?: readonly (number | null)[];
+  /** Drawn where the words beside it already name the target (the dossier). */
+  hideReach?: boolean;
 }) {
   const kind = moveKindGlyph(move);
   const hits = move.hitCount ?? 1;
@@ -674,7 +695,7 @@ export function MoveStub({
         </strong>
       )}
       {matchups && <EnemySeats mults={matchups} target={reach} />}
-      {targetInStub(move) && <TargetFigures target={reach} small />}
+      {targetInStub(move) && !hideReach && <TargetFigures target={reach} small />}
     </span>
   );
 }

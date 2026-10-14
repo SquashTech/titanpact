@@ -1596,6 +1596,29 @@ export function FightScreen({
 
         <div className="battlefield-divider">
           <span className="battlefield-vs">VS</span>
+          {/* The field, on the horizon between the two sides. */}
+          {combat.activeFieldEffect && (
+            /* Keyed by effect id so an override remounts and replays the arrival. */
+            <span
+              key={combat.activeFieldEffect.fieldEffectId}
+              className="field-effect-badge"
+              title={`${fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description ?? ''} — tap for details`}
+              {...fieldEffectPress}
+            >
+              <FieldGlyph fieldEffectId={combat.activeFieldEffect.fieldEffectId} className="field-effect-glyph" />
+              <span className="field-effect-name">
+                {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId}
+              </span>
+              <span className="field-effect-pips" aria-label={`${combat.activeFieldEffect.roundsRemaining} rounds remaining`}>
+                {Array.from({ length: FIELD_EFFECT_DURATION_ROUNDS }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`field-effect-pip${i < combat.activeFieldEffect!.roundsRemaining ? '' : ' spent'}`}
+                  />
+                ))}
+              </span>
+            </span>
+          )}
         </div>
         {inspectingFieldEffect && combat.activeFieldEffect && (
           <FieldEffectDetailOverlay active={combat.activeFieldEffect} onClose={() => setInspectingFieldEffect(false)} />
@@ -1615,29 +1638,6 @@ export function FightScreen({
           )}
         </div>
 
-        {/* The field, at the foot of the arena (2026-09-24): the horizon carries the Pact warning and the order's words. */}
-        {combat.activeFieldEffect && (
-          /* Keyed by effect id so an override remounts and replays the arrival. */
-          <span
-            key={combat.activeFieldEffect.fieldEffectId}
-            className="field-effect-badge"
-            title={`${fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description ?? ''} — tap for details`}
-            {...fieldEffectPress}
-          >
-            <FieldGlyph fieldEffectId={combat.activeFieldEffect.fieldEffectId} className="field-effect-glyph" />
-            <span className="field-effect-name">
-              {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId}
-            </span>
-            <span className="field-effect-pips" aria-label={`${combat.activeFieldEffect.roundsRemaining} rounds remaining`}>
-              {Array.from({ length: FIELD_EFFECT_DURATION_ROUNDS }, (_, i) => (
-                <span
-                  key={i}
-                  className={`field-effect-pip${i < combat.activeFieldEffect!.roundsRemaining ? '' : ' spent'}`}
-                />
-              ))}
-            </span>
-          </span>
-        )}
 
         {/* Menu, in the sky's far corner (2026-09-17, per user direction): consulted, not played, so
             it left the console's bottom row to the Bag and stands where a pause key stands. Off the

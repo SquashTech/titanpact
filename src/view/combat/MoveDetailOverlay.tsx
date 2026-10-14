@@ -293,6 +293,9 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
   );
 
   const deltaTarget = move.statDeltaTarget === 'bothAllies' || move.statDeltaTarget === 'self' ? move.statDeltaTarget : move.target;
+  // The meta row names the move's target; a row names a side only where it lands somewhere else.
+  const elsewhere = (where: MoveDefinition['target']) => (where === move.target ? '' : ` to ${TARGET_MODE_LABELS[where].toLowerCase()}`);
+  const deltaElsewhere = elsewhere(deltaTarget);
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
   const seats = context && move.kind === 'damage' ? forecastSeats(context, context.defenderIds).map((id) => (id ? seatMult(move, context, id) : null)) : undefined;
   const stubValue =
@@ -322,6 +325,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
           <ChargePips move={move} combatant={attacker} />
           <MoveStrip
             move={move}
+            hideReach
             amountOf={(app) => riderMagnitude(move, app, healCaster)}
             live={{
               seats,
@@ -331,7 +335,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
             }}
           />
         </div>
-        <MoveStub move={move} value={stubValue} boosted={forceBonus > 0} title={stubTitle} seats={seats} />
+        <MoveStub move={move} value={stubValue} boosted={forceBonus > 0} title={stubTitle} seats={seats} hideReach />
       </div>
 
       <div className="move-dossier-body">
@@ -356,18 +360,17 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
           {move.manaGrant != null && (
             <EffectRow
               glyph={<StatGlyph stat="manaPool" />}
-              text={`+${move.manaGrant} MP, past the pool, to ${TARGET_MODE_LABELS[move.target].toLowerCase()}`}
-              target={move.target}
+              text={`+${move.manaGrant} MP, past the pool`}
             />
           )}
           {move.mpRegenGrant != null && (
-            <EffectRow glyph={<StatGlyph stat="mpRegen" />} text={`+${move.mpRegenGrant} ${STAT_LABELS.mpRegen} to ${TARGET_MODE_LABELS[move.target].toLowerCase()}`} target={move.target} />
+            <EffectRow glyph={<StatGlyph stat="mpRegen" />} text={`+${move.mpRegenGrant} ${STAT_LABELS.mpRegen}`} />
           )}
           {move.clearsRaisedStages && (
-            <EffectRow glyph={<StatGlyph stat="attack" />} text={`Any raised stat on ${TARGET_MODE_LABELS[move.target].toLowerCase()} returns to normal first`} target={move.target} />
+            <EffectRow glyph={<StatGlyph stat="attack" />} text="Any raised stat returns to normal first" />
           )}
           {move.doublesStages?.map((stat) => (
-            <EffectRow key={`doubles-${stat}`} glyph={<StatGlyph stat={stat} />} text={`Doubles ${STAT_LABELS[stat]} steps on ${TARGET_MODE_LABELS[move.target].toLowerCase()}`} target={move.target} />
+            <EffectRow key={`doubles-${stat}`} glyph={<StatGlyph stat={stat} />} text={`Doubles ${STAT_LABELS[stat]} steps`} />
           ))}
           {/* Read before the cost is paid, which is why it is not `manaAfter`. */}
           {move.stagesPerManaHeld?.stats.map((stat) => (
@@ -377,7 +380,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
               text={
                 attacker
                   ? Math.floor(attacker.currentMana / move.stagesPerManaHeld!.per) > 0
-                    ? `${stageText(stat, Math.min(move.stagesPerManaHeld!.max, Math.floor(attacker.currentMana / move.stagesPerManaHeld!.per)))} on ${TARGET_MODE_LABELS[move.target].toLowerCase()}`
+                    ? stageText(stat, Math.min(move.stagesPerManaHeld!.max, Math.floor(attacker.currentMana / move.stagesPerManaHeld!.per)))
                     : `No ${STAT_LABELS[stat]} step below ${move.stagesPerManaHeld!.per} Mana`
                   : `${STAT_LABELS[stat]} ▲ per ${move.stagesPerManaHeld!.per} Mana held, up to ${'▲'.repeat(move.stagesPerManaHeld!.max)}`
               }
@@ -581,9 +584,13 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
           {move.conditionalManaCost && (
             <EffectRow
               glyph={<StatGlyph stat="manaPool" />}
-              text={`${move.conditionalManaCost.manaCost} mana while ${
-                move.conditionalManaCost.requiresAllEnemiesStatus ? 'both foes are' : 'a foe is'
-              } ${freeDef?.adjective ?? freeDef?.name ?? freeGate}`}
+              text={
+                move.conditionalManaCost.requiresPartnerType
+                  ? `${move.conditionalManaCost.manaCost} mana beside a ${move.conditionalManaCost.requiresPartnerType} partner`
+                  : `${move.conditionalManaCost.manaCost} mana while ${
+                      move.conditionalManaCost.requiresAllEnemiesStatus ? 'both foes are' : 'a foe is'
+                    } ${freeDef?.adjective ?? freeDef?.name ?? freeGate}`
+              }
             />
           )}
           {move.switchesUserOut && (
@@ -603,7 +610,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
           )}
           {/* Riders last, as the row's strip draws them: closest to who the move reaches. */}
           {statusRiders.map(({ app, def }) => {
-            const where = riderTargetLabel(app);
+            const where = app.target === move.target ? null : riderTargetLabel(app);
             // The number the caster would actually land, the way liveBasePower and liveCost read.
             // A hero sheet has no Combatant but does have the same two inputs the formula wants.
             const liveMagnitude =
@@ -622,7 +629,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
                 } ${def.name}${
                   liveMagnitude != null ? ` ${statusAmountText(app.statusId, liveMagnitude)}` : app.duration != null ? ` ${app.duration}` : ''
                 }${where ? ` — ${where}` : ''}`}
-                target={app.target === 'moveTarget' ? undefined : app.target}
+                target={app.target === 'moveTarget' || app.target === move.target ? undefined : app.target}
                 note={statusFactsLine(def)}
               />
             );
@@ -631,13 +638,8 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
             <EffectRow
               key={stat}
               glyph={<StatGlyph stat={stat} />}
-              text={`${move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : ''}${stageText(stat, stages)} to ${(move.statDeltaTarget === 'bothAllies'
-                ? TARGET_MODE_LABELS.bothAllies
-                : move.statDeltaTarget === 'self'
-                  ? TARGET_MODE_LABELS.self
-                  : TARGET_MODE_LABELS[move.target]
-              ).toLowerCase()}`}
-              target={move.statDeltaTarget === 'bothAllies' || move.statDeltaTarget === 'self' ? move.statDeltaTarget : move.target}
+              text={`${move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : ''}${stageText(stat, stages)}${deltaElsewhere}`}
+              target={deltaElsewhere ? deltaTarget : undefined}
             />
           ))}
           {move.randomStatDeltas && (
@@ -645,8 +647,8 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
               glyph={<Glyph name="die" />}
               text={`${'▲'.repeat(move.randomStatDeltas.stages)} to ${
                 move.randomStatDeltas.count === 1 ? 'a random stat' : `${move.randomStatDeltas.count} random stats`
-              } on ${TARGET_MODE_LABELS[deltaTarget].toLowerCase()}${deltaTarget === 'bothAllies' ? ', each rolled apart' : ''}`}
-              target={deltaTarget}
+              }${deltaElsewhere}${deltaTarget === 'bothAllies' ? ', each rolled apart' : ''}`}
+              target={deltaElsewhere ? deltaTarget : undefined}
             />
           )}
           {move.randomStatusApplication?.length ? (

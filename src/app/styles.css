@@ -981,19 +981,16 @@ textarea,
  * behind it. Centred rather than corner-pinned because a Field Effect is
  * global — it belongs to the whole field, and symmetry is how that reads.
  *
- * MOVED TO THE FOOT OF THE ARENA (2026-09-24, per user direction): the
- * horizon's centre is the order track's now (.order-track), and a plaque
- * beside four sprites on one 20px band would have crowded both. Still centred
- * — the field is still global — in the bottom padding the arena keeps for a
- * wrapped ally status row, which it shares only when one wraps. Out of flow,
- * so mounting it can never shove the battlefield around. Tap OR hold opens the
- * detail card (FightScreen's fieldEffectPress). */
-.battlefield > .field-effect-badge,
+ * Back on the horizon (2026-10-14, per user direction): at the foot it collided
+ * with the ally status row, and the order track has since moved to the top.
+ * Out of flow, so mounting it can never shove the battlefield around. Tap OR
+ * hold opens the detail card (FightScreen's fieldEffectPress). */
+.battlefield-divider > .field-effect-badge,
 .tip-scene > .field-effect-badge {
   position: absolute;
   left: 50%;
-  bottom: 8px;
-  transform: translate(-50%, 0);
+  top: 50%;
+  transform: translate(-50%, -50%);
   z-index: 2;
   display: flex;
   align-items: center;
@@ -1068,7 +1065,7 @@ textarea,
 @keyframes field-effect-plaque-arrive {
   0% {
     opacity: 0;
-    transform: translate(-50%, 0) scale(0.82);
+    transform: translate(-50%, -50%) scale(0.82);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.12),
       0 0 0 0 rgba(var(--field-effect-rgb, 195, 86, 208), 0.6);
@@ -1081,7 +1078,7 @@ textarea,
   }
   100% {
     opacity: 1;
-    transform: translate(-50%, 0) scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
@@ -1141,6 +1138,10 @@ textarea,
   height: 140%;
   background: linear-gradient(100deg, transparent, rgba(var(--field-effect-rgb, 195, 86, 208), 0.28), transparent);
   transform: rotate(12deg);
+}
+
+.battlefield.field-effect-active .battlefield-vs {
+  opacity: 0;
 }
 
 .battlefield.field-effect-active::before {
@@ -7882,12 +7883,33 @@ textarea,
 
 .move-stub.has-seats .move-seat {
   width: 19px;
-  height: 11px;
+  height: 9px;
+}
+
+.move-stub.has-seats .move-seats {
+  padding-bottom: 2px;
+}
+
+.move-stub.has-seats .move-seat::after {
+  bottom: -2px;
 }
 
 .move-stub.has-seats .move-seat-arrow svg {
-  width: 11px;
-  height: 11px;
+  width: 10px;
+  height: 10px;
+}
+
+.move-stub.has-seats .move-seat-arrow.is-double svg {
+  width: 8px;
+}
+
+/* Out of a fight: no arrows, only the lines that say one foe or both. */
+.move-stub.has-seats .move-seats.is-blank {
+  margin-top: 3px;
+}
+
+.move-stub.has-seats .move-seats.is-blank .move-seat {
+  height: 0;
 }
 
 /* A four-move list on a short screen leaves the stub too short for three lines: the kind glyph
@@ -30306,7 +30328,7 @@ button.evo-gift-card {
   padding-top: 8px;
   padding-bottom: 8px;
 }
-.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-name {
+.moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-name:not([class*='is-fit-']) {
   font-size: 16px;
 }
 .moveoffer-overlay[data-fit='1'] > .moveoffer-panel .move-stub-value {
@@ -30394,7 +30416,7 @@ button.evo-gift-card {
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-row-top .mana-gem-value {
   font-size: 13px;
 }
-.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-name {
+.moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-name:not([class*='is-fit-']) {
   font-size: 17px;
 }
 .moveoffer-overlay[data-fit='2'] > .moveoffer-panel .move-stub-value {
@@ -42287,12 +42309,6 @@ img.smithy-service-art {
 .app-shell.canvas-short .battlefield-divider {
   min-height: var(--divider-h);
   margin: calc(var(--divider-pull) * -1) 0;
-}
-
-.app-shell.canvas-short .battlefield > .field-effect-badge {
-  top: calc(var(--bf-pad-top) + var(--figure-h) - var(--divider-pull) + var(--divider-h) / 2);
-  bottom: auto;
-  translate: 0 -50%;
 }
 
 .app-shell.canvas-short .console-crest {
