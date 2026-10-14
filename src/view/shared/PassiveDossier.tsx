@@ -1,112 +1,130 @@
 import { createPortal } from 'react-dom';
 import type { CSSProperties, ReactNode } from 'react';
 import type { PassiveDefinition } from '../../engine/content';
+import { statuses } from '../../data/statuses';
+import { passiveKeywordOf, reactionKeywordOf, type PassiveKeyword } from '../../run/keywords';
 import { STAT_LABELS } from './StatBars';
-import { MoveKindGlyph, StatGlyph } from './statIcons';
-import { ElementGlyph } from './elementIcons';
+import { StatGlyph } from './statIcons';
 import { StatusGlyph, statusColor } from './statusIcons';
 import { PassiveGlyph, passiveColor, passiveStatGrants, passiveTint } from './passiveIcons';
-import { passiveFacts, type PassiveFact } from './passiveFacts';
-import { getTypeColor } from '../combat/typeColors';
+import { statusFactsLine, statusGrantText } from './statusFacts';
+import { statusMentions } from './IconText';
 import { overlayHost } from './overlayHost';
 import { KeywordBadge, keywordMeaning, PassiveText } from './PassiveText';
 
-function factGlyph(fact: PassiveFact): ReactNode {
-  switch (fact.glyph.kind) {
-    case 'status':
-      return <StatusGlyph statusId={fact.glyph.statusId} />;
-    case 'stat':
-      return <StatGlyph stat={fact.glyph.stat} />;
-    case 'element':
-      return <ElementGlyph type={fact.glyph.type} />;
-    case 'move':
-      return <MoveKindGlyph kind={fact.glyph.move} />;
-  }
-}
+type GlossEntry = { at: number; key: string; term: ReactNode; meaning: string; color?: string };
 
-function factColor(fact: PassiveFact): string | undefined {
-  if (fact.color === 'status' && fact.glyph.kind === 'status') return statusColor(fact.glyph.statusId);
-  if (fact.color === 'element' && fact.glyph.kind === 'element') return getTypeColor(fact.glyph.type);
+// The magnitude the passive lands a status at, wherever in the definition the effect sits.
+function landedMagnitude(node: unknown, statusId: string): number | undefined {
+  if (!node || typeof node !== 'object') return undefined;
+  const o = node as Record<string, unknown>;
+  if (o.kind === 'applyStatus' && o.statusId === statusId && typeof o.magnitude === 'number') return o.magnitude;
+  for (const value of Object.values(o)) {
+    const found = landedMagnitude(value, statusId);
+    if (found !== undefined) return found;
+  }
   return undefined;
 }
 
-/** The rule as rows — When / Then / Limit / Damage / While. Nothing when the passive yields no facts. */
-export function PassiveFactRows({ passive }: { passive: PassiveDefinition }) {
-  const facts = passiveFacts(passive);
-  if (facts.length === 0) return null;
-  return (
-    <div className="passive-detail-facts">
-      {facts.map((fact, i) => {
-        const rowColor = factColor(fact);
-        if (fact.keyword) {
-          return (
-            <div key={i} className="passive-detail-fact is-keyword">
-              <KeywordBadge keyword={fact.keyword} />
-              <span className="passive-detail-fact-text">{keywordMeaning(fact.keyword)}</span>
-            </div>
-          );
-        }
-        return (
-          <div key={i} className="passive-detail-fact" style={rowColor ? ({ '--fact-color': rowColor } as CSSProperties) : undefined}>
-            <span className="passive-detail-fact-glyph">{factGlyph(fact)}</span>
-            <span className="passive-detail-fact-label">{fact.label}</span>
-            <span className="passive-detail-fact-text">
-              {fact.text}
-              {fact.note && <span className="passive-detail-fact-note">{fact.note}</span>}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
+function appliedStatusIds(node: unknown, out: string[] = []): string[] {
+  if (!node || typeof node !== 'object') return out;
+  const o = node as Record<string, unknown>;
+  if (o.kind === 'applyStatus' && typeof o.statusId === 'string' && !out.includes(o.statusId)) out.push(o.statusId);
+  for (const value of Object.values(o)) appliedStatusIds(value, out);
+  return out;
+}
+
+const capitalize = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+
+// A Force reads at the magnitude the passive lands; anything else by its rule.
+function statusMeaning(statusId: string, magnitude: number | undefined): string {
+  const def = statuses[statusId];
+  if (!def) return '';
+  const force = def.forceType || def.forceTag || def.forceHeal || def.forceAllTypes;
+  return capitalize(force ? statusGrantText(def, magnitude) : statusFactsLine(def));
+}
+
+/** Every term the sentence uses, explained in the order the sentence reads them: the trigger first. */
+function glossary(passive: PassiveDefinition): GlossEntry[] {
+  const text = passive.description;
+  const entries: GlossEntry[] = [];
+  const keyword = (k: PassiveKeyword | undefined, slot: string, fallback: number) => {
+    if (!k) return;
+    const at = text.indexOf(slot);
+    entries.push({ at: at < 0 ? fallback : at, key: slot, term: <KeywordBadge keyword={k} />, meaning: keywordMeaning(k) });
+  };
+  keyword(passiveKeywordOf(passive), '{trigger}', -1);
+  keyword(passive.alsoReactive ? reactionKeywordOf(passive.alsoReactive) : undefined, '{also}', text.length);
+
+  const named = statusMentions(text);
+  const unnamed = appliedStatusIds(passive).filter((id) => !named.some((m) => m.statusId === id));
+  for (const { statusId, at } of [...named, ...unnamed.map((statusId) => ({ statusId, at: text.length + 1 }))]) {
+    const meaning = statusMeaning(statusId, landedMagnitude(passive, statusId));
+    if (!meaning) continue;
+    entries.push({
+      at,
+      key: statusId,
+      color: statusColor(statusId),
+      term: (
+        <span className="passive-gloss-term">
+          <StatusGlyph statusId={statusId} />
+          {statuses[statusId]?.name ?? statusId}
+        </span>
+      ),
+      meaning,
+    });
+  }
+  return entries.sort((a, b) => a.at - b.at);
 }
 
 /**
  * The passive dossier: what a tap on any passive chip opens — the hero sheets, a Class's passive,
- * an Evolution path's. Same three facets as the move dossier: who it is (tinted disc, name in its
- * own colour, its kind), the numbers (every flat or conditional grant as a figure, in the move
- * card's strip), and the rule as ROWS — When / Then / Limit / Damage / While — each read off the
- * fields the passiveEngine matches on rather than off the sentence. The authored description
- * stays under them as fine print, since it is the one line that can carry a nuance the rows
- * cannot. It replaced `PassiveInfoPanel`, a grey box holding the sentence and a chip.
+ * an Evolution path's. Its glyph in a medallion, the name under it, the sentence, and every term
+ * the sentence leans on explained beneath it in reading order.
  */
 export function PassiveDetailCard({ passive }: { passive: PassiveDefinition }) {
   const color = passiveColor(passive.id);
   const grants = passiveStatGrants(passive);
+  const gloss = glossary(passive);
   return (
-    <div className="passive-detail-card" style={{ '--passive-color': color, '--passive-tint': passiveTint(passive.id, 0.16) } as CSSProperties}>
-      <div className="move-detail-head">
-        <span className="passive-detail-disc">
-          <PassiveGlyph passiveId={passive.id} />
-        </span>
-        <div className="move-detail-titles">
-          <div className="move-detail-name" style={{ color }}>
-            {passive.name}
-          </div>
+    <div className="passive-detail-card" style={{ '--passive-color': color, '--passive-tint': passiveTint(passive.id, 0.18) } as CSSProperties}>
+      <span className="passive-detail-medal">
+        <PassiveGlyph passiveId={passive.id} />
+      </span>
+      <div className="passive-detail-name">{passive.name}</div>
+      <div className="passive-detail-rule" aria-hidden="true" />
+
+      {grants.length > 0 && (
+        <div className="move-detail-stats passive-detail-grants">
+          {grants.map(([stat, amount]) => (
+            <span key={stat} className={`move-detail-stat${amount < 0 ? ' is-loss' : ''}`}>
+              <StatGlyph stat={stat} />
+              <strong>{amount > 0 ? `+${amount}` : amount}</strong>
+              <span className="move-detail-unit">{STAT_LABELS[stat]}</span>
+            </span>
+          ))}
         </div>
-      </div>
+      )}
 
-      <div className="move-detail-stats">
-        {grants.map(([stat, amount]) => (
-          <span key={stat} className={`move-detail-stat${amount < 0 ? ' is-loss' : ''}`}>
-            <StatGlyph stat={stat} />
-            <strong>{amount > 0 ? `+${amount}` : amount}</strong>
-            <span className="move-detail-unit">{STAT_LABELS[stat]}</span>
-          </span>
-        ))}
-      </div>
+      <div className="passive-detail-sentence"><PassiveText passive={passive} /></div>
 
-      <PassiveFactRows passive={passive} />
-
-      <div className="passive-detail-desc"><PassiveText passive={passive} /></div>
+      {gloss.length > 0 && (
+        <div className="passive-gloss">
+          {gloss.map((entry) => (
+            <div key={entry.key} className="passive-gloss-row" style={entry.color ? ({ '--gloss-color': entry.color } as CSSProperties) : undefined}>
+              {entry.term}
+              <span className="passive-gloss-meaning">{entry.meaning}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 /**
- * The passive dossier on the `.detail-overlay` / `.detail-panel` chassis — the passive's colour on
- * the stripe and the wash, "tap anywhere to close". Portalled into overlayHost(), never
- * document.body — see overlayHost.ts.
+ * The passive dossier on the `.detail-overlay` / `.detail-panel` chassis, "tap anywhere to close".
+ * Portalled into overlayHost(), never document.body — see overlayHost.ts.
  */
 export function PassiveDetailOverlay({ passive, onClose }: { passive: PassiveDefinition | null; onClose: () => void }) {
   if (!passive) return null;
@@ -119,7 +137,7 @@ export function PassiveDetailOverlay({ passive, onClose }: { passive: PassiveDef
 
   return createPortal(
     <div className="detail-overlay" onClick={closeAndStop}>
-      <div className="detail-panel passive-detail-panel" style={{ borderTopColor: color, '--passive-color': color } as CSSProperties} onClick={closeAndStop}>
+      <div className="detail-panel passive-detail-panel" style={{ '--passive-color': color } as CSSProperties} onClick={closeAndStop}>
         <PassiveDetailCard passive={passive} />
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>

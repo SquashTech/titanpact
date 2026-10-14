@@ -162,7 +162,7 @@ function EffectRow({
         <EffectClaim text={text} target={target} />
         {note && (
           <span className="move-detail-effect-note">
-            <IconText text={note} />
+            <IconText text={note} tags={false} />
           </span>
         )}
       </span>

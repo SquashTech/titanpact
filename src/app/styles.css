@@ -33645,119 +33645,144 @@ button.evo-gift-card {
 }
 
 /* --- The passive dossier (PassiveDossier.tsx) -------------------------- */
-/* What a tap on a passive chip opens — the hero sheets, a Class's passive, an
-   Evolution path's. The move dossier's three facets: tinted disc and coloured
-   name, the grants as a numbers strip, and the rule as ROWS (When / Then /
-   Limit / Damage / While) read off the fields the passiveEngine matches on.
-   The authored sentence stays as fine print under the rows. It replaced the
-   grey .move-info-panel box (2026-09-11, per user direction). */
+/* What a tap on a passive chip opens: the glyph in a gilt medallion, the name
+   under it, the sentence, and every term the sentence leans on explained in a
+   card below it, in reading order. In a framed popup the medallion sits on
+   the frame's top edge. */
 .passive-detail-panel {
   gap: 0;
-  border-top-width: 3px;
-  background:
-    linear-gradient(155deg, color-mix(in srgb, var(--passive-color) 16%, transparent), transparent 46%),
-    var(--surface-raised);
+}
+
+.detail-panel:has(> .passive-detail-card),
+.log-panel:has(> .passive-detail-card) {
+  overflow: visible;
+  margin-top: 36px;
 }
 
 .passive-detail-card {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 4px;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 0%, var(--passive-tint), transparent 62%);
 }
 
-/* .move-detail-disc in the passive's own colour — the same disc the chip that opened it wears. */
-.passive-detail-disc {
-  width: 52px;
-  height: 52px;
+.passive-detail-medal {
+  width: 64px;
+  height: 64px;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   border-radius: 50%;
   color: var(--passive-color);
-  background: radial-gradient(
-    circle at 32% 28%,
-    color-mix(in srgb, var(--passive-color) 34%, transparent),
-    color-mix(in srgb, var(--passive-color) 10%, transparent)
-  );
+  background: radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--passive-color) 30%, #2a2416), #15120c);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--passive-color) 40%, transparent),
-    0 0 18px -6px var(--passive-color);
+    0 0 0 3px #8a6a2a,
+    0 0 0 5px #2a2110,
+    0 0 22px -2px color-mix(in srgb, var(--passive-color) 70%, transparent);
 }
 
-.passive-detail-disc .status-glyph {
-  width: 30px;
-  height: 30px;
+.detail-panel:has(> .passive-detail-card) .passive-detail-medal,
+.log-panel:has(> .passive-detail-card) .passive-detail-medal {
+  margin-top: -56px;
 }
 
-.passive-detail-facts {
-  display: flex;
-  flex-direction: column;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
+.passive-detail-medal .status-glyph,
+.passive-detail-medal svg {
+  width: 32px;
+  height: 32px;
 }
 
-/* Register word left, the rule right, the payload's own colour on the mark:
-   a status row wears the status's glyph and colour, the pair the badge on
-   the battlefield will wear when it lands. */
-.passive-detail-fact {
-  display: grid;
-  /* The register column fits WHEN / THEN / LIMIT at 44px and lets DAMAGE stretch it. */
-  grid-template-columns: 19px minmax(44px, auto) 1fr;
-  align-items: start;
-  column-gap: 9px;
-  padding: 6px 0;
-  color: var(--fact-color, var(--passive-color));
-}
-
-.passive-detail-fact + .passive-detail-fact {
-  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
-}
-
-.passive-detail-fact-glyph {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 19px;
-  height: 19px;
-}
-
-.passive-detail-fact-glyph svg {
-  width: 17px;
-  height: 17px;
-}
-
-.passive-detail-fact-label {
-  padding-top: 2px;
-  font-size: 11px;
+.passive-detail-name {
+  font-size: 21px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-dim);
+  line-height: 1.15;
+  color: var(--passive-color);
 }
 
-.passive-detail-fact-text {
-  min-width: 0;
-  font-size: 13px;
+/* A gilt hairline with a bead at its centre. */
+.passive-detail-rule {
+  width: 70%;
+  height: 9px;
+  background: linear-gradient(90deg, transparent, #8a6a2a 20%, var(--accent) 50%, #8a6a2a 80%, transparent);
+  -webkit-mask:
+    linear-gradient(#000 0 0) center / 100% 1px no-repeat,
+    radial-gradient(circle, #000 3.5px, transparent 4px) center / 9px 9px no-repeat;
+  mask:
+    linear-gradient(#000 0 0) center / 100% 1px no-repeat,
+    radial-gradient(circle, #000 3.5px, transparent 4px) center / 9px 9px no-repeat;
+}
+
+.passive-detail-grants {
+  justify-content: center;
+}
+
+.passive-detail-sentence {
+  margin: 2px 4px 4px;
+  font-size: 15px;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.5;
   color: var(--text);
 }
 
-.passive-detail-fact-note {
-  display: block;
-  margin-top: 2px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-dim);
+.passive-gloss {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px;
+  border-radius: 6px;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
-.passive-detail-desc {
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  font-size: 12px;
-  line-height: 1.45;
+.passive-gloss-row {
+  color: var(--text);
+}
+
+.passive-gloss-row .kw-badge::after,
+.passive-gloss-term::after {
+  content: ' —';
   color: var(--text-dim);
+  font-weight: 600;
+}
+
+.passive-gloss-term {
+  color: var(--gloss-color, var(--accent));
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.passive-gloss-term .status-glyph {
+  display: inline-block;
+  width: 1.05em;
+  height: 1.05em;
+  margin-right: 0.2em;
+  vertical-align: -0.18em;
+}
+
+.passive-gloss-meaning {
+  margin-left: 0.3em;
+  font-weight: 600;
+}
+
+/* A stat and its stage inside a sentence: one tag in the stat's colour (IconText.tsx). */
+.stat-tag {
+  display: inline-block;
+  padding: 0 0.35em;
+  margin: 0 0.05em;
+  border-radius: 3px;
+  font-size: 0.92em;
+  font-weight: 800;
+  line-height: 1.45;
+  white-space: nowrap;
+  color: var(--tag-color);
+  background: color-mix(in srgb, var(--tag-color) 18%, transparent);
 }
 
 /* --- Trigger keywords (PassiveText.tsx) -------------------------------- */
@@ -33795,25 +33820,6 @@ button.evo-gift-card {
   font-size: 0.72em;
   line-height: 1;
   vertical-align: 0.12em;
-}
-
-/* The dossier's WHEN row, for a keyword: the badge in the glyph and label
-   columns, what it means in the rule column. */
-.passive-detail-fact.is-keyword {
-  grid-template-columns: auto 1fr;
-  align-items: baseline;
-}
-
-.passive-detail-fact.is-keyword .kw-badge {
-  font-size: 12px;
-}
-
-.passive-detail-fact.is-keyword .kw-badge::after {
-  content: none;
-}
-
-.passive-detail-fact.is-keyword .passive-detail-fact-text {
-  font-weight: 600;
 }
 
 /* --- The Banner dossier (BannerDossierOverlay.tsx) --------------------- */
