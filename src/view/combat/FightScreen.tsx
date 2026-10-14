@@ -43,6 +43,7 @@ import { BagPanel, type BagTarget } from './BagPanel';
 import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
 import { OrderTrack, type OrderTrackEntry } from './OrderTrack';
 import { Coin } from '../shared/Coin';
+import { ConsoleGlyph } from './consoleGlyphs';
 import { companionActions, previewOrder } from '../../engine/combat/priority';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
@@ -158,15 +159,6 @@ interface MoveRowProps {
 
 // Lifted out of the `.map()` because useLongPress is a hook. Unaffordable rows are
 // `.is-unaffordable` + aria-disabled rather than `disabled` so a hold still opens the dossier.
-/** Play, or fast-forward as two touching arrows (the ⏵⏵ characters set them a font's width apart). */
-function PlaybackGlyph({ fast }: { fast: boolean }) {
-  return (
-    <svg className="bottom-action-playback-glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-      {fast ? <path d="M2 5v14l10-7Zm10 0v14l10-7Z" /> : <path d="M6 4v16l13-8Z" />}
-    </svg>
-  );
-}
-
 function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, seats, faceOf, chargeHolder, restoredCharges, onSelect, onInspect }: MoveRowProps) {
   const usable = affordable && !gateUnmet;
   const spent = chargesLeft(chargeHolder, move) === 0;
@@ -2030,7 +2022,7 @@ export function FightScreen({
               onClick={() => toggleAutoMode('auto')}
             >
               <span className="bottom-action-glyph" aria-hidden="true">
-                <PlaybackGlyph fast={false} />
+                <ConsoleGlyph kind="play" />
               </span>
               Auto
             </button>
@@ -2040,7 +2032,7 @@ export function FightScreen({
               onClick={() => toggleAutoMode('fast')}
             >
               <span className="bottom-action-glyph" aria-hidden="true">
-                <PlaybackGlyph fast />
+                <ConsoleGlyph kind="fast" />
               </span>
               Fast
             </button>
@@ -2058,7 +2050,7 @@ export function FightScreen({
             onClick={() => (showingTargetPanel ? setSelecting(null) : setActionStep(stepIndex - 1))}
           >
             <span className="bottom-action-glyph" aria-hidden="true">
-              ←
+              <ConsoleGlyph kind="back" />
             </span>
             Back
           </button>

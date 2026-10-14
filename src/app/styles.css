@@ -39615,8 +39615,8 @@ img.smithy-service-art {
   z-index: 1;
 }
 
-/* The play and fast-forward marks, drawn so the two arrows of Fast sit together. */
-.bottom-action-playback-glyph {
+/* The keys drawn rather than set in a font (consoleGlyphs.tsx). */
+.bottom-action-drawn-glyph {
   width: 15px;
   height: 15px;
 }

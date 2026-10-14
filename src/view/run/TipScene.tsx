@@ -1,4 +1,5 @@
 import { createCombatant, effectiveTypes, getMaxHp, getMaxMana, moveForHero, type Combatant, type Side } from '../../engine/state';
+import { ConsoleGlyph } from '../combat/consoleGlyphs';
 import type { CSSProperties } from 'react';
 import type { HeroDefinition } from '../../engine/content';
 import { resolveTypeMult } from '../../engine/damage/typeMult';
@@ -192,7 +193,7 @@ export function TipScene({ scene }: { scene: Scene }) {
       {scene.bar && (
         <div className="bottom-bar tip-scene-bar">
           <span className="bottom-action bottom-action-primary bottom-action-back">
-            <span className="bottom-action-glyph">←</span>
+            <span className="bottom-action-glyph"><ConsoleGlyph kind="back" /></span>
             Back
           </span>
           <span className="bottom-action bottom-action-primary bottom-action-switch">
