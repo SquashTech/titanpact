@@ -244,7 +244,7 @@ function MoveRiderIcons({ move, amountOf }: { move: MoveDefinition; amountOf: Ri
   const deltaWhere = statDeltaTarget(move);
   return (
     <>
-      {apps.map((app) => {
+      {apps.map((app, i) => {
         const name = statuses[app.statusId]?.name ?? app.statusId;
         // A magnitude is part of what the rider does; a duration is detail for the dossier.
         const amount = app.magnitude != null ? amountOf(app) : undefined;
@@ -252,7 +252,7 @@ function MoveRiderIcons({ move, amountOf }: { move: MoveDefinition; amountOf: Ri
         const where = riderTarget(move, app.target);
         return (
           <span
-            key={app.statusId}
+            key={`${app.statusId}-${i}`}
             className="move-rider"
             style={{ color: statusColor(app.statusId) } as CSSProperties}
             title={`${app.chance != null ? `${pct(app.chance)} ` : ''}${name}${shown ? ` ${shown}` : ''}${where ? ` (${TARGET_MODE_LABELS[where]})` : ''}`}

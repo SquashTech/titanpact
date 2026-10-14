@@ -3156,7 +3156,8 @@ materials, each with one meaning, so the rule above survives the change of mater
 |---|---|---|
 | Stone with a gold inlay | a window — a place the game shows you something | `.detail-panel`, `.log-panel`, `.result-panel`, the console's flagstones, ledge and move slots |
 | Chamfered metal plate | a **decision** — committing to a pick, or a ceremony's way on — struck in the colour of what is chosen | `PlateButton` (`.plate-socket`), a move offer's Learn |
-| Wooden plank | something you press that belongs to a place, or a way on after a node is done; **gilt** is the screen's one way forward, or a key being held | `.resolve-button` (gilt), `.secondary-button`, close buttons, the console keys, the Guild Hall |
+| Wooden plank | something you press that belongs to a place, or a way on after a node is done; **gilt** is the screen's one way forward | `.resolve-button` (gilt), `.secondary-button`, close buttons, the Guild Hall |
+| Medallion | a fight's console key: a round coin in the key's own colour over its name, gold while held | Back, Switch, Rest, Bag, Auto, Fast |
 | Parchment | a note for the player | `.tip-box`, the Guild Hall's tags and posters |
 
 **Plate or plank** (2026-10-09, per user direction — the gilt plank on every Confirm read as
@@ -3166,7 +3167,7 @@ Terminate (red), the forced replacement in a fight (compact), the post-fight Con
 while the bars fill, then gold or red), and the beats of the finale and the champion's hall.
 Its colour is the thing chosen — the Location's tint, the Class's colour, the move's type, the
 Banner's cloth — or the screen's `--node-rgb`. A plain Continue after a node is done, the Guild
-Hall's counters, the console keys and every way out stay planks; Evolve keeps its own button.
+Hall's counters and every way out stay planks; Evolve keeps its own button.
 
 A frame paints over its rule's existing padding rather than adding to it, so no
 screen grows. The Guild Hall keeps its own wood: it is a place, not a window.
@@ -3245,8 +3246,12 @@ two gold inlays, a stud at each screen edge, with the command crest set into it 
 sockets are wells in the beam and the commander's name is lettered on its flat face. The
 old thin ledge plus a crest row spent 64px on a seam and a header that read as two
 unrelated strips; the beam is both at 38, and the move slots take the difference back as
-a 5px gap (four slots edge to edge read as crammed). The keys' plank is sliced at 5px
-rather than 7, so Switch and the Bag's count fit. The **Roster** is the whole screen now
+a 5px gap (four slots edge to edge read as crammed). **The console keys are medallions**
+(2026-10-13, per user direction, from a side-by-side of slots, cut corners, slants and pills: the
+planks no longer sat with the stone): a 34px coin in the key's colour over its name, in a recessed
+tray under a thin ledge so the flagstones end at a stone's edge, the tray held to the planks' height
+so a four-move list still fits. A lone key (Back while targeting, Take the Field) is the same coin
+stretched to a gold-ringed pill. The **Roster** is the whole screen now
 that nothing on it is managed: two across, each hero standing at 2x in an alcove of its
 own colour (level plaque, the level's bar along the floor), its three sockets in a column
 beside it, name, form, HP and Mastery below. The **node dossier** explains itself: a
