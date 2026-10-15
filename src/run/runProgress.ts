@@ -218,11 +218,13 @@ export function grantLeyLine(run: RunState, rosterId: string, heroes: Record<str
 export type ItemReceipt =
   | { kind: 'take' }
   | { kind: 'merge'; heldItemId: string; resultId: string; resultRarity: EquipmentRarity }
-  | { kind: 'none'; reason: 'full' | 'ceiling' };
+  | { kind: 'replace' }
+  | { kind: 'none'; reason: 'ceiling' };
 
 /**
  * A free socket takes the item; the holder of its family merges it (mergeIntoHeld); a hero with
- * three full sockets and no family match, or holding the family at Mythic, cannot receive it.
+ * three full sockets and no family match overwrites one, the old piece lost for nothing; a hero
+ * holding the family at Mythic cannot receive it.
  * Read the hero's sockets, not the roster's — the roster-wide question is `anyoneCanReceive`.
  */
 export function itemReceiptFor(
@@ -239,7 +241,7 @@ export function itemReceiptFor(
     if (!result) return { kind: 'none', reason: 'ceiling' };
     return { kind: 'merge', heldItemId: held!.id, resultId: result.id, resultRarity: result.rarity };
   }
-  return entry.equipment.length < itemSlotsFor(hero, entry) ? { kind: 'take' } : { kind: 'none', reason: 'full' };
+  return entry.equipment.length < itemSlotsFor(hero, entry) ? { kind: 'take' } : { kind: 'replace' };
 }
 
 /** Whether the who-screen has anyone to offer; when nobody, the item converts to gold (sellItem) and no screen is raised. */
@@ -256,16 +258,17 @@ export function anyoneCanReceive(
 }
 
 /**
- * The item is absorbed by `rosterId`: seated in a free socket, or merged into the family it
- * already holds. Irreversible — nothing ever comes off a hero. Throws where the card would have
- * been disabled.
+ * The item is absorbed by `rosterId`: seated in a free socket, merged into the family it already
+ * holds, or written over the socket at `replaceIndex` when all three are full. Throws where the
+ * card would have been disabled, or on a full hero with no socket named.
  */
 export function absorbItem(
   run: RunState,
   rosterId: string,
   itemId: string,
   equipmentLookup: Record<string, EquipmentDefinition>,
-  heroLookup: Record<string, HeroDefinition>
+  heroLookup: Record<string, HeroDefinition>,
+  replaceIndex?: number
 ): RunState {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
@@ -275,12 +278,17 @@ export function absorbItem(
   if (!hero) throw new RunProgressError(`Unknown hero ${entry.heroId}`);
   const receipt = itemReceiptFor(entry, item, hero, equipmentLookup);
   if (receipt.kind === 'none') {
-    throw new RunProgressError(receipt.reason === 'full' ? `${rosterId} has no free socket` : `${rosterId} already holds ${item.name} at its ceiling`);
+    throw new RunProgressError(`${rosterId} already holds ${item.name} at its ceiling`);
+  }
+  if (receipt.kind === 'replace' && (replaceIndex === undefined || !entry.equipment[replaceIndex])) {
+    throw new RunProgressError(`${rosterId} is full: name the socket to overwrite`);
   }
   const nextLoadout =
     receipt.kind === 'take'
       ? equipItem(entry.equipment, itemId)
-      : equipItem(entry.equipment, receipt.resultId, entry.equipment.indexOf(receipt.heldItemId));
+      : receipt.kind === 'replace'
+        ? equipItem(entry.equipment, itemId, replaceIndex)
+        : equipItem(entry.equipment, receipt.resultId, entry.equipment.indexOf(receipt.heldItemId));
   return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? { ...r, equipment: nextLoadout } : r)) };
 }
 

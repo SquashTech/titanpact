@@ -29,7 +29,7 @@ interface Props {
   itemsBought: readonly number[];
   onRunChange: (next: RunState) => void;
   onBuyGem: (slot: number, rosterId: string) => RunState | null;
-  onBuyItem: (slot: number, rosterId: string) => RunState | null;
+  onBuyItem: (slot: number, rosterId: string, replaceIndex?: number) => RunState | null;
   onCall: (type: TypeId) => string | null;
   onBuyMend: () => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;

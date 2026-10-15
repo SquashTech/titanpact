@@ -110,11 +110,15 @@ test('runProgress: absorbItem seats an item in a free socket, and it is on the h
   assert.strictEqual(next.gold, 0, 'nothing is sold on a take');
 });
 
-test('runProgress: a hero with three full sockets and no family match cannot receive', () => {
+test('runProgress: a hero with three full sockets and no family match overwrites the socket it names, for nothing', () => {
   const run = gearedRun('cinderKnight', ['sword.common', 'staff.common', 'bow.common']);
-  assert.deepStrictEqual(itemReceiptFor(run.roster[0], equipment['spear.rare'], heroes.cinderKnight, equipment), { kind: 'none', reason: 'full' });
-  assert.throws(() => absorbItem(run, 'cinderKnight', 'spear.rare', equipment, heroes), RunProgressError);
-  assert.strictEqual(anyoneCanReceive(run, equipment['spear.rare'], equipment, heroes), false);
+  assert.deepStrictEqual(itemReceiptFor(run.roster[0], equipment['spear.rare'], heroes.cinderKnight, equipment), { kind: 'replace' });
+  assert.strictEqual(anyoneCanReceive(run, equipment['spear.rare'], equipment, heroes), true);
+  assert.throws(() => absorbItem(run, 'cinderKnight', 'spear.rare', equipment, heroes), RunProgressError, 'a full hero must name the socket');
+  assert.throws(() => absorbItem(run, 'cinderKnight', 'spear.rare', equipment, heroes, 3), RunProgressError);
+  const next = absorbItem(run, 'cinderKnight', 'spear.rare', equipment, heroes, 1);
+  assert.deepStrictEqual(next.roster[0].equipment, ['sword.common', 'spear.rare', 'bow.common']);
+  assert.strictEqual(next.gold, run.gold, 'the lost piece pays nothing');
 });
 
 test('runProgress: a same-family drop MERGES into the holder — one tier above the higher of the two, sockets untouched', () => {

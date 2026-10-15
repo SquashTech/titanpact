@@ -210,8 +210,8 @@ interface GearCounterProps {
   run: RunState;
   itemIds: readonly string[];
   sold: readonly number[];
-  /** Pays for the piece and seats it on the hero (a free socket, or a merge); the landed run, or null. */
-  onBuy: (slot: number, rosterId: string) => RunState | null;
+  /** Pays for the piece and seats it on the hero (a free socket, a merge, or over `replaceIndex`); the landed run, or null. */
+  onBuy: (slot: number, rosterId: string, replaceIndex?: number) => RunState | null;
   /** A stock slot picked on arrival, as GemCounter's. */
   initialPick?: number;
 }
@@ -260,7 +260,7 @@ export function GearSockets({ hero, entry, receipt, open }: { hero: HeroDefiniti
   return (
     <span className="equip-slot-row item-who-sockets">
       {slotBoxes(entry.equipment, itemSlotsFor(hero, entry)).map((heldId, index) => {
-        const target = open && (index === mergeIndex || index === freeIndex);
+        const target = open && (receipt?.kind === 'replace' || index === mergeIndex || index === freeIndex);
         return (
           <ItemBox
             key={index}
@@ -274,7 +274,47 @@ export function GearSockets({ hero, entry, receipt, open }: { hero: HeroDefiniti
   );
 }
 
-/** What every hero would do with the piece: take it, merge it, or nothing. */
+/** A full hero's three pieces, one tapped to be written over. The piece is lost, so the confirm names it. */
+export function ReplaceSheet({ entry, confirmSuffix, onReplace, onClose }: { entry: RosterEntry; confirmSuffix?: string; onReplace: (index: number) => void; onClose: () => void }) {
+  const [chosen, setChosen] = useState<number | null>(null);
+  const chosenItem = chosen !== null ? equipment[entry.equipment[chosen]] : undefined;
+  return (
+    <div className="log-overlay" onClick={onClose}>
+      <div className="log-panel move-popup-panel replace-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="replace-sheet-title">Replace which?</div>
+        <div className="replace-sheet-pieces">
+          {entry.equipment.map((heldId, index) => {
+            const held = equipment[heldId];
+            if (!held) return null;
+            return (
+              <button
+                key={index}
+                type="button"
+                className={`replace-sheet-piece${chosen === index ? ' is-chosen' : ''}`}
+                style={{ '--rarity-color': RARITY_COLOR_VARS[held.rarity] } as CSSProperties}
+                onClick={() => {
+                  playSfx('ui.pick');
+                  setChosen(index);
+                }}
+              >
+                <span className="item-box filled">
+                  <ItemPiece item={held} />
+                </span>
+                <span className="replace-sheet-name">{held.name}</span>
+                <span className="replace-sheet-tier">{RARITY_LABELS[held.rarity]}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button className="resolve-button replace-sheet-confirm" disabled={chosen === null} onClick={() => chosen !== null && onReplace(chosen)}>
+          {chosenItem ? `Lose ${chosenItem.name}${confirmSuffix ?? ''}` : 'Lose a piece'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** What every hero would do with the piece: take it, merge it, write over one, or nothing. */
 export function useItemReceipts(run: RunState, item: EquipmentDefinition | undefined) {
   return useMemo(() => {
     const out = new Map<string, ItemReceipt>();
@@ -294,6 +334,7 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
   const [burst, setBurst] = useState<string | null>(null);
   const [flare, setFlare] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
+  const [replacing, setReplacing] = useState<RosterEntry | null>(null);
 
   const item = pick !== null && !sold.includes(pick) ? equipment[itemIds[pick]] : undefined;
   const price = item ? shopItemPrice(item) : 0;
@@ -306,15 +347,21 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
     return () => window.clearTimeout(timer);
   }, [flare]);
 
-  function handleHero(entry: RosterEntry) {
+  function handleHero(entry: RosterEntry, replaceIndex?: number) {
     if (pick === null || !item) return;
     const receipt = receipts.get(entry.rosterId);
     if (!receipt || receipt.kind === 'none' || run.gold < price) return;
-    if (price >= CONFIRM_PURCHASE_FROM && armed !== entry.rosterId) {
+    // Overwriting is confirmed on its own sheet, which also stands in for the dear-purchase arming.
+    if (receipt.kind === 'replace' && replaceIndex === undefined) {
+      setReplacing(entry);
+      return;
+    }
+    if (receipt.kind !== 'replace' && price >= CONFIRM_PURCHASE_FROM && armed !== entry.rosterId) {
       setArmed(entry.rosterId);
       return;
     }
-    if (!onBuy(pick, entry.rosterId)) return;
+    setReplacing(null);
+    if (!onBuy(pick, entry.rosterId, replaceIndex)) return;
     playSfx('gold.coin');
     if (receipt.kind === 'merge') {
       playSfx('discovery');
@@ -331,6 +378,7 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
     if (run.gold < price) return 'Need gold';
     if (isArmed) return `Buy · ${price}g`;
     if (receipt.kind === 'merge') return `Merge → ${RARITY_LABELS[receipt.resultRarity]}`;
+    if (receipt.kind === 'replace') return 'Replace';
     return 'Take';
   }
 
@@ -389,6 +437,9 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
           {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}
           {inspecting && equipment[inspecting] && <EquipInspectOverlay item={equipment[inspecting]} onClose={() => setInspecting(null)} />}
           {preview && <Preview run={run} preview={preview} onClose={() => setPreview(null)} />}
+          {replacing && (
+            <ReplaceSheet entry={replacing} confirmSuffix={` · ${price}g`} onReplace={(index) => handleHero(replacing, index)} onClose={() => setReplacing(null)} />
+          )}
         </>,
         overlayHost()
       )}

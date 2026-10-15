@@ -22,7 +22,7 @@ import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { SellPress } from '../shared/SellPress';
 import { useArmedTap } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
-import { GearGood, GearSockets, Preview, useItemReceipts, type PreviewState } from './HallCounters';
+import { GearGood, GearSockets, Preview, ReplaceSheet, useItemReceipts, type PreviewState } from './HallCounters';
 import { mapNodeIcon } from './mapNodeArt';
 import { MergeBurst } from './MergeBurst';
 import { RoadScene } from './RoadEncounter';
@@ -239,6 +239,7 @@ function CacheCounter({ run, choices, onRunChange, onContinue }: { run: RunState
   const [inspecting, setInspecting] = useState<EquipmentDefinition | null>(null);
   const [burst, setBurst] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
+  const [replacing, setReplacing] = useState<RosterEntry | null>(null);
 
   const done = outcome !== null;
   const item = pick !== null ? choices[pick] : undefined;
@@ -253,11 +254,16 @@ function CacheCounter({ run, choices, onRunChange, onContinue }: { run: RunState
     setOutcome({ itemId: item.id, gold: sellGold });
   }, true);
 
-  function handleHero(entry: RosterEntry) {
+  function handleHero(entry: RosterEntry, replaceIndex?: number) {
     if (!item || done) return;
     const receipt = receipts.get(entry.rosterId);
     if (!receipt || receipt.kind === 'none') return;
-    onRunChange(absorbItem(run, entry.rosterId, item.id, equipment, rosterHeroes));
+    if (receipt.kind === 'replace' && replaceIndex === undefined) {
+      setReplacing(entry);
+      return;
+    }
+    setReplacing(null);
+    onRunChange(absorbItem(run, entry.rosterId, item.id, equipment, rosterHeroes, replaceIndex));
     if (receipt.kind === 'merge') {
       playSfx('discovery');
       setBurst(receipt.resultId);
@@ -274,6 +280,7 @@ function CacheCounter({ run, choices, onRunChange, onContinue }: { run: RunState
     if (!item || done) return `${entry.equipment.length}/${itemSlotsFor(hero, entry)}`;
     if (!receipt || receipt.kind === 'none') return receipt?.reason === 'ceiling' ? 'At its peak' : 'Full';
     if (receipt.kind === 'merge') return `Merge → ${RARITY_LABELS[receipt.resultRarity]}`;
+    if (receipt.kind === 'replace') return 'Replace';
     return 'Take';
   }
 
@@ -358,6 +365,7 @@ function CacheCounter({ run, choices, onRunChange, onContinue }: { run: RunState
       {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}
       {inspecting && <EquipInspectOverlay item={inspecting} onClose={() => setInspecting(null)} />}
       {preview && <Preview run={run} preview={preview} onClose={() => setPreview(null)} />}
+      {replacing && <ReplaceSheet entry={replacing} onReplace={(index) => handleHero(replacing, index)} onClose={() => setReplacing(null)} />}
     </div>
   );
 }

@@ -172,7 +172,8 @@ export function bestReceiver(
     const hero = heroes[entry.heroId];
     if (!hero) continue;
     const receipt = itemReceiptFor(entry, item, hero, equipment);
-    if (receipt.kind === 'none') continue;
+    // The pilot never overwrites a worn piece, so a full roster sells what it cannot merge.
+    if (receipt.kind === 'none' || receipt.kind === 'replace') continue;
     const gain =
       receipt.kind === 'take'
         ? itemValueFor(entry, item)

@@ -12,7 +12,7 @@ import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { SellPress } from '../shared/SellPress';
 import { useArmedTap } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
-import { GearGood, GearSockets, Preview, useItemReceipts, type PreviewState } from './HallCounters';
+import { GearGood, GearSockets, Preview, ReplaceSheet, useItemReceipts, type PreviewState } from './HallCounters';
 import { MergeBurst } from './MergeBurst';
 import { RosterPeek } from './RosterPeek';
 
@@ -28,8 +28,8 @@ interface Props {
 /**
  * Every item that arrives off a fight or a Loot Pile lands here (docs/gear-absorption.md §2), laid
  * out as the Guild Hall's Gear counter: the roster's builds above, the piece read whole below them.
- * A hero tap seats it and it never comes off — into a free socket, or MERGED into the family the
- * hero holds, a tier up; a hero that can do neither is greyed out. Sell is the one decline.
+ * A hero tap seats it — into a free socket, MERGED into the family the hero holds a tier up, or over
+ * a piece a full hero picks to lose. Sell is the one decline.
  */
 export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone }: Props) {
   const item = equipment[itemId];
@@ -37,6 +37,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone 
   const [burst, setBurst] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
+  const [replacing, setReplacing] = useState<RosterEntry | null>(null);
 
   useEffect(() => {
     playSfx('discovery');
@@ -59,11 +60,16 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone 
   // Once merged, the card is the piece the hero now wears, not the one that arrived.
   const shownItem = mergeResult ?? item;
 
-  function handleGive(entry: RosterEntry) {
+  function handleGive(entry: RosterEntry, replaceIndex?: number) {
     if (done) return;
     const receipt = receipts.get(entry.rosterId);
     if (!receipt || receipt.kind === 'none') return;
-    onRunChange(absorbItem(run, entry.rosterId, itemId, equipment, rosterHeroes));
+    if (receipt.kind === 'replace' && replaceIndex === undefined) {
+      setReplacing(entry);
+      return;
+    }
+    setReplacing(null);
+    onRunChange(absorbItem(run, entry.rosterId, itemId, equipment, rosterHeroes, replaceIndex));
     if (receipt.kind === 'merge') {
       playSfx('discovery');
       setBurst(receipt.resultId);
@@ -79,6 +85,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone 
     if (done) return `${entry.equipment.length}/${itemSlotsFor(rosterHeroes[entry.heroId], entry)}`;
     if (!receipt || receipt.kind === 'none') return receipt?.reason === 'ceiling' ? 'At its peak' : 'Full';
     if (receipt.kind === 'merge') return `Merge → ${RARITY_LABELS[receipt.resultRarity]}`;
+    if (receipt.kind === 'replace') return 'Replace';
     return 'Take';
   }
 
@@ -153,6 +160,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone 
       {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}
       {inspecting && equipment[inspecting] && <EquipInspectOverlay item={equipment[inspecting]} onClose={() => setInspecting(null)} />}
       {preview && <Preview run={run} preview={preview} onClose={() => setPreview(null)} />}
+      {replacing && <ReplaceSheet entry={replacing} onReplace={(index) => handleGive(replacing, index)} onClose={() => setReplacing(null)} />}
     </div>
   );
 }

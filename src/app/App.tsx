@@ -1089,13 +1089,13 @@ export function App() {
   }
 
   /** The Gear counter: the piece is paid for and absorbed by the hero picked, in one tap. */
-  function handleBuyGuildItem(slot: number, rosterId: string): RunState | null {
+  function handleBuyGuildItem(slot: number, rosterId: string, replaceIndex?: number): RunState | null {
     if (screen.kind !== 'shop' || screen.itemsBought.includes(slot)) return null;
     const item = equipment[screen.offers.itemIds[slot]];
     if (!item) return null;
     let next: RunState;
     try {
-      next = absorbItem(buyShopItem(playerRun, item), rosterId, item.id, equipment, rosterHeroes);
+      next = absorbItem(buyShopItem(playerRun, item), rosterId, item.id, equipment, rosterHeroes, replaceIndex);
     } catch (err) {
       if (!(err instanceof ShopItemError) && !(err instanceof RunProgressError)) throw err;
       return null;

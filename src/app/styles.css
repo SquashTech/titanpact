@@ -33566,6 +33566,61 @@ button.evo-gift-card {
   border-top-width: 3px;
 }
 
+/* A full hero's overwrite (ReplaceSheet in HallCounters.tsx): its three pieces as rows, one picked,
+   and a confirm that names the piece about to be lost. */
+.replace-sheet {
+  gap: 10px;
+}
+
+.replace-sheet-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  text-align: center;
+  color: var(--text-strong, #f3ead2);
+}
+
+.replace-sheet-pieces {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.replace-sheet-piece {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 6px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+  text-align: left;
+}
+
+.replace-sheet-piece .item-box {
+  width: 44px;
+  height: 44px;
+  pointer-events: none;
+}
+
+.replace-sheet-piece.is-chosen {
+  border-color: #e0574a;
+  background: rgba(224, 87, 74, 0.14);
+}
+
+.replace-sheet-name {
+  font-size: 14px;
+}
+
+.replace-sheet-tier {
+  font-size: 12px;
+  color: var(--rarity-color);
+}
+
+.replace-sheet-confirm:disabled {
+  opacity: 0.45;
+}
+
 /* --- The Guild Hall's buy sheet (EquipBuyOverlay.tsx, 2026-09-11) ----------
    The item dossier on the dossier chassis, then two facets under it on the
    same scored hairlines: the merges buying it would open, and the price as a

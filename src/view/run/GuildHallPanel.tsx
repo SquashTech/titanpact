@@ -84,7 +84,7 @@ interface Props {
   /** What a bought Gem's pip opened, raised by the host (masteryFlow.ts). */
   onGemPlaced: (rosterId: string, landed: RunState, fromMastery: number) => void;
   /** Hands off to App.tsx, which charges the gold and seats the piece on the hero; the landed run, or null. */
-  onBuyItem: (slot: number, rosterId: string) => RunState | null;
+  onBuyItem: (slot: number, rosterId: string, replaceIndex?: number) => RunState | null;
   /** Hands off to App.tsx, which charges the gold and posts who answered (run/shop.ts callForType); their offer id, or null. */
   onCall: (type: TypeId) => string | null;
   /** The whole roster made whole for what is missing (run/wounds.ts mendPrice). */

@@ -2,6 +2,15 @@
 
 > **STATUS: DECIDED 2026-09-15 (per user direction); BUILT IN FULL the same day (§8).** The
 > supply figures in §5 are measured; every other number is a first pass.
+>
+> **REVISED 2026-10-15 (per user direction): a full hero may OVERWRITE a socket.** A hero holding
+> three pieces with no family match for the new one is offered **Replace** on every who-screen and
+> at the Gear counter: tap it, pick which of its three to lose on a sheet whose confirm names the
+> piece, and the new item takes that socket. The old piece is destroyed — no gold, no bag, no
+> re-queue — so the cascade §0 was written against cannot come back: nothing displaced ever looks
+> for a new home. Three pieces locked for the whole run read as needlessly restrictive. A hero
+> holding the family at Mythic still cannot receive it (two of a family is still forbidden). The
+> sim pilot never overwrites (`scripts/sim/policy.ts`), so measured supply is unchanged.
 
 ---
 
@@ -30,6 +39,8 @@ reads as more screens and is fewer.
 ## 1. The rule this reduces to
 
 **An item is absorbed by the hero it is given to, the moment it is received, and never comes off.**
+(Since 2026-10-15 it can be *destroyed* by a newer piece written over its socket — see the status
+note. It still never moves, and never comes back.)
 
 Everything below follows. A hero has three sockets, always; an item fills one for the run; there
 is nothing to swap, nothing to carry, nothing to sell later. The only question an item ever asks is

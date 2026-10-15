@@ -696,7 +696,9 @@ don't silently override it.
   more (the Forge and `bonusItemSlots` are deleted). **An item is given to a hero the moment it
   is received and never comes off** — the who-screen (`ItemWhoScreen`) is the one screen gear
   ever gets, with take / merge / sell as its verbs; there is no bag, no swap, no move, no later
-  sale, and the Roster screen only reads. Permanence is what makes an item matter; supply is
+  sale, and the Roster screen only reads. **A full hero may overwrite a socket** (2026-10-15, per
+  user direction, `docs/gear-absorption.md`): **Replace** on the who-screen and the Gear counter,
+  the lost piece named on the confirm and destroyed for nothing — it never moves, so nothing cascades. Permanence is what makes an item matter; supply is
   the balance number. **No hero holds two of one family**: the second one MERGES (`mergeIntoHeld`
   — a tier above the higher of the two, the held enchant surviving, the act window not
   consulted; Mythic and a Unique cannot). Capacity is decided in one place, `itemSlotsFor`.

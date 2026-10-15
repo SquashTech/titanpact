@@ -136,7 +136,7 @@ test('tips: every hero, hire, Gem and item a Guild Hall scene draws exists', () 
   }
 });
 
-test('tips: the Gear counter scene shows a merge, a take and a full hero', () => {
+test('tips: the Gear counter scene shows a merge, a take and a full hero replacing', () => {
   const gear = hallPages.find((p) => p.scene.hall === 'gear')!.scene;
   const item = equipment[gear.items![gear.pick!]];
   const kinds = gear.roster.map((h, i) => {
@@ -144,7 +144,7 @@ test('tips: the Gear counter scene shows a merge, a take and a full hero', () =>
     entry.equipment = [...(h.items ?? [])];
     return itemReceiptFor(entry, item, allCombatants[h.heroId], equipment).kind;
   });
-  assert.deepStrictEqual(kinds, ['merge', 'take', 'none']);
+  assert.deepStrictEqual(kinds, ['merge', 'take', 'replace']);
 });
 
 test('tips: a scene shows the matchups its words promise', () => {

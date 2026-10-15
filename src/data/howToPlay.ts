@@ -122,8 +122,9 @@ export const HOW_TO_PLAY: readonly Tip[] = [
   section(
     'items',
     'Items',
-    'An item goes to a hero the moment it arrives, and stays with them for the whole journey.',
+    'An item goes to a hero the moment it arrives.',
     'Each hero holds three. Giving a hero a second item of the same kind merges them into a stronger one.',
+    'A hero holding three can replace one with the new item. The old one is lost, with nothing back for it.',
     'You can sell an item for gold if nobody wants it.'
   ),
   section(

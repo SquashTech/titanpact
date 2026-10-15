@@ -44,9 +44,9 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
   item: tip(
     'item',
     'Items',
-    'Choose which hero gets this item. They will keep it for the whole journey.',
+    'Choose which hero gets this item.',
     'Each hero holds three. Giving a hero a second item of the same kind merges them into a stronger one.',
-    'You can sell it for gold if nobody wants it.'
+    'A hero holding three can replace one, and the old item is lost. Or sell this one for gold.'
   ),
 };
 
