@@ -202,3 +202,22 @@ than quietly broken:
   that way. Whether anything more is wanted is open.
 - **What the player character wants.** Deliberately unspecified. "Pactbearer" is a role,
   not a person, and the heroes are where the characterisation budget goes.
+
+## The fall (2026-10-14, per user direction)
+
+**The Titan fell from the sky, and the fall starts Cycle I.** There is no age before it: the
+Cycles begin, almost at random, the day something came down out of the stars onto the land
+where the Threshold is. Decided beside it (per user direction): the title becomes a night sky
+(the seal read as a constellation, as the Constellation draws the heroes), and the first run on
+an account opens on a beat that stays on the title — everything else fades, a shape crosses the
+stars (drawn only by the stars it puts out) and falls to the land below — under one in-world
+line, first pass: *"One day, pure calamity fell upon our land."*
+
+What it reverses, still to rewrite:
+- §2's wardens decayed into Guardians "after an age of holding the seal" — the fall has no age
+  before it.
+- The first-run lore card (`LORE_LINES`, `src/data/tips.ts`): *Sealed, it sleeps for one year. /
+  The year is up.* reads as a later Cycle's, not Cycle I's.
+- The Endbringer's name origin (`cycles.md` §7) — the people who watched it fall can name it.
+
+Open: whether the Starfall (heroes arriving as falling stars) is meant to rhyme with the fall.

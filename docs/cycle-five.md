@@ -12,6 +12,11 @@
 
 ---
 
+> **2026-10-14, per user direction: the whole Titan fight is in space.** The Titan fell from the
+> sky (`lore.md` "The fall"), and Cycle V fights it among the stars. This reopens the setting of
+> §4 and §6, which assumed the Threshold; whether the Feet, Hands and Eyes survive as the phases in
+> space, and how the band gets there, are open (§10).
+
 ## 0. What Cycle V has to do
 
 Cycles I–IV each tighten the same story: the Titan rises, the band seals it, it sleeps a year.
