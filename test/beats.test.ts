@@ -60,8 +60,9 @@ test('beats: a move is two taps — the declaration, then everything it did', ()
     { type: 'StatChanged', round: 1, combatantId: 'a1', stat: 'attack', delta: 15, newValue: 15 },
   ]);
   assert.strictEqual(beats.length, 2);
-  assert.deepStrictEqual(beats[0].bannerMove, { moveId: 'ironFist', casterId: 'a1', enemy: false }, 'the declaration keeps its own beat, drawn as the move bar');
+  assert.deepStrictEqual(beats[0].bannerMove, { moveId: 'ironFist', casterId: 'a1', enemy: false, targetIds: ['b1'] }, 'the declaration keeps its own beat, drawn as the move bar');
   assert.strictEqual(beats[1].bannerFocus, '120 damage');
+  assert.deepStrictEqual(beats[1].actionMove, beats[0].bannerMove, 'the move stays up while its result lands');
   assert.deepStrictEqual(
     beats[1].bannerRiders?.map((r) => [r.source, r.who, r.text]),
     [

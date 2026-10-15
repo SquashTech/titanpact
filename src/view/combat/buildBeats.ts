@@ -82,6 +82,16 @@ export interface BeatRosterEntry {
   colors: readonly string[];
 }
 
+/** A declared move as the console draws it, against its live caster. `calledType`: the companion's act, free, cast at the type it resolves as. */
+export interface BeatMove {
+  moveId: string;
+  casterId: string;
+  enemy: boolean;
+  calledType?: TypeId;
+  /** Who it was aimed at, as declared. */
+  targetIds: readonly string[];
+}
+
 export interface BeatFlavor {
   /** Small line above the headline: who is acting, or who is being hit. */
   bannerLead?: string;
@@ -123,8 +133,9 @@ export interface BeatFlavor {
    * the caster's name in its side's colour — a move is read by the same object that offers it,
    * not explained in new words. FightScreen resolves the bar against the live caster.
    */
-  /** `calledType`: the companion's act, free, cast at the type it resolves as. */
-  bannerMove?: { moveId: string; casterId: string; enemy: boolean; calledType?: TypeId };
+  bannerMove?: BeatMove;
+  /** The declared move this beat goes on narrating — stamped wherever `strikeCombatantId` is, so the console keeps the move up while its result lands. */
+  actionMove?: BeatMove;
   /**
    * Everything else the action did, beside the headline (a rider status, the passives that answered
    * it, recoil) — one small chip each, so the whole outcome of a move is one beat rather than a tap
@@ -422,6 +433,7 @@ export function buildBeats(
   // Who declared the move currently being narrated, held until an event that
   // can't belong to it comes through (ACTION_EVENTS below).
   let striker: string | undefined;
+  let strikerAction: BeatMove | undefined;
   // The move being narrated, and who has already had its landing animated. A
   // move animates ONCE per target — on its first payload beat against them, so a
   // rider status behind a hit doesn't light the figure twice — except that every
@@ -440,7 +452,7 @@ export function buildBeats(
   const meta = new Map<Beat, BeatMeta>();
 
   function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], flavor: BeatFlavor = {}, about: Omit<BeatMeta, 'group'> = {}) {
-    const beat: Beat = { events: [...carry, ...applied], banner, popups, strikeCombatantId: striker, ...flavor };
+    const beat: Beat = { events: [...carry, ...applied], banner, popups, strikeCombatantId: striker, actionMove: striker ? strikerAction : undefined, ...flavor };
     beats.push(beat);
     meta.set(beat, { group, ...about });
     carry = [];
@@ -720,6 +732,7 @@ export function buildBeats(
         const clause = targetClause(e.targetCombatantIds, e.combatantId, name);
         const cost = manaSpent ?? move.manaCost;
         const lead = name(e.combatantId);
+        strikerAction = { moveId: e.moveId, casterId: e.combatantId, enemy: !!actorSide && actorSide !== playerSide, targetIds: e.targetCombatantIds, ...(call ? { calledType: call.moveType } : {}) };
         push(
           applied,
           `${actorName} uses ${move.name}${clause}`,
@@ -736,7 +749,7 @@ export function buildBeats(
               cost,
               ...(call ? { called: true as const } : {}),
             },
-            bannerMove: { moveId: e.moveId, casterId: e.combatantId, enemy: !!actorSide && actorSide !== playerSide, ...(call ? { calledType: call.moveType } : {}) },
+            bannerMove: strikerAction,
           },
           { declares: true }
         );

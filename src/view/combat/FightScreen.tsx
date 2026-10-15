@@ -42,6 +42,7 @@ import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumableKind, type Consumabl
 import { BagPanel, type BagTarget } from './BagPanel';
 import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
 import { OrderTrack, type OrderTrackEntry } from './OrderTrack';
+import { EnemyPips } from './EnemyPips';
 import { Coin } from '../shared/Coin';
 import { ConsoleGlyph } from './consoleGlyphs';
 import { companionActions, previewOrder } from '../../engine/combat/priority';
@@ -261,20 +262,19 @@ function riderTone(className: string | undefined): string {
 }
 
 /**
- * A declaration: the caster's sprite and name in its side's colour, and the move as the bar the
- * player presses to cast it — so a move is recognised by the object that offers it.
+ * The move being narrated: the caster's sprite and name in its side's colour beside the move as the
+ * bar the player presses to cast it — so a move is recognised by the object that offers it. It
+ * stays up across every beat of the action, so its result is read under the move that caused it.
  */
-function DeclaredMove({
-  lead,
-  sub,
+function ActionStrip({
+  name,
   enemy,
   combatant,
   move,
   caster,
   free,
 }: {
-  lead: string;
-  sub?: string;
+  name: string;
   enemy: boolean;
   combatant: Combatant;
   move: MoveDefinition;
@@ -284,14 +284,31 @@ function DeclaredMove({
 }) {
   return (
     <div className={`combat-banner-declare${enemy ? ' is-enemy' : ' is-ally'}`}>
-      <div className="combat-banner-declare-head">
-        <HeroPortrait heroId={combatant.heroId} pathId={combatant.formPathId} className="combat-banner-declare-portrait" />
-        <span className="combat-banner-declare-name">{lead}</span>
+      <HeroPortrait heroId={combatant.heroId} pathId={combatant.formPathId} className="combat-banner-declare-portrait" />
+      <div className="combat-banner-declare-body">
+        <span className="combat-banner-declare-name">{name}</span>
+        <div className="combat-banner-declare-move">
+          <MoveButtonReplica move={move} caster={caster} chargeHolder={combatant} free={free} />
+        </div>
       </div>
-      <div className="combat-banner-declare-move">
-        <MoveButtonReplica move={move} caster={caster} chargeHolder={combatant} free={free} />
-      </div>
-      {sub && <span className="combat-banner-sub">{sub}</span>}
+    </div>
+  );
+}
+
+/** The declaration beat's lower half: who the move is aimed at, before anything lands. */
+function DeclaredTargets({ targets }: { targets: readonly { id: string; name: string; combatant: Combatant; enemy: boolean }[] }) {
+  if (targets.length === 0) return null;
+  return (
+    <div className="combat-banner-aim">
+      <span className="combat-banner-aim-mark" aria-hidden="true">
+        ▸
+      </span>
+      {targets.map((t, i) => (
+        <span key={t.id} className={`combat-banner-aim-target${t.enemy ? ' is-enemy' : ' is-ally'}`} style={{ animationDelay: `${0.08 + 0.06 * i}s` }}>
+          <HeroPortrait heroId={t.combatant.heroId} pathId={t.combatant.formPathId} className="combat-banner-aim-portrait" />
+          <span className="combat-banner-aim-name">{t.name}</span>
+        </span>
+      ))}
     </div>
   );
 }
@@ -846,6 +863,8 @@ export function FightScreen({
   const canAct = !resolving && openReplacementSlots.length === 0 && playerActiveAlive.length > 0 && friendWait === null;
   /** The VS card is up: it takes a tap and nothing else — no hold, no latched key. */
   const awaitingEngagementTap = resolving && beat?.engagement === true;
+  /** The move the console is narrating, held over every beat of its action. */
+  const bannerAction = resolving && beat?.actionMove && combat.combatants[beat.actionMove.casterId] ? beat.actionMove : null;
   /** A scene is playing over the field (buildBeats `cinematic`): playback waits on its own done, and its own tap skips it. */
   const awaitingCinematic = resolving && beat?.cinematic !== undefined;
   const stepIndex = canAct ? Math.min(actionStep, playerActiveAlive.length - 1) : 0;
@@ -1693,6 +1712,7 @@ export function FightScreen({
 
         {/* The round's order, across the top of the arena (OrderTrack; styles.css .order-track). */}
         <OrderTrack entries={orderTrack} onInspect={resolving ? undefined : sayOrder} />
+        <EnemyPips combat={combat} side={AI_SIDE} />
 
         {/* What a tapped sprite says, for a moment, on the horizon — the band the Pact warning takes when it is due. */}
         {fieldNote && !resolving && (
@@ -1821,23 +1841,32 @@ export function FightScreen({
         {resolving && beat && (
           /* The beat's color sits on the OUTER element: the inner one remounts every beat, and a remounting background cannot cross-fade. */
           <div
-            className={`combat-banner${beat.bannerFocusKind ? ` banner-kind-${beat.bannerFocusKind}` : ''}`}
+            className={`combat-banner${beat.bannerFocusKind ? ` banner-kind-${beat.bannerFocusKind}` : ''}${bannerAction ? ' has-action' : ''}`}
             style={beat.bannerAccent ? ({ '--banner-accent': beat.bannerAccent } as CSSProperties) : undefined}
           >
+            {bannerAction && (
+              /* Keyed on the action, not the beat: it arrives with the declaration and holds while the result lands. */
+              <ActionStrip
+                key={`${bannerAction.casterId}:${bannerAction.moveId}`}
+                name={allCombatants[combat.combatants[bannerAction.casterId].heroId]?.name ?? ''}
+                enemy={bannerAction.enemy}
+                combatant={combat.combatants[bannerAction.casterId]}
+                move={bannerAction.calledType ? { ...moves[bannerAction.moveId], type: bannerAction.calledType } : moves[bannerAction.moveId]}
+                caster={healCasterOf(bannerAction.casterId)}
+                free={bannerAction.calledType !== undefined}
+              />
+            )}
             <div className="combat-banner-current" key={beatSeq}>
-              {beat.bannerMove && combat.combatants[beat.bannerMove.casterId] ? (
-                <DeclaredMove
-                  lead={beat.bannerLead ?? ''}
-                  sub={beat.bannerSub}
-                  enemy={beat.bannerMove.enemy}
-                  combatant={combat.combatants[beat.bannerMove.casterId]}
-                  move={
-                    beat.bannerMove.calledType
-                      ? { ...moves[beat.bannerMove.moveId], type: beat.bannerMove.calledType }
-                      : moves[beat.bannerMove.moveId]
-                  }
-                  caster={healCasterOf(beat.bannerMove.casterId)}
-                  free={beat.bannerMove.calledType !== undefined}
+              {beat.bannerMove ? (
+                <DeclaredTargets
+                  targets={beat.bannerMove.targetIds
+                    .filter((id) => id !== beat.bannerMove!.casterId && combat.combatants[id])
+                    .map((id) => ({
+                      id,
+                      name: allCombatants[combat.combatants[id].heroId]?.name ?? id,
+                      combatant: combat.combatants[id],
+                      enemy: combat.combatants[id].side !== PLAYER_SIDE,
+                    }))}
                 />
               ) : (
               <>
