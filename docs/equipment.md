@@ -5,6 +5,12 @@
 > merging is `mergeIntoHeld` on the who-screen (any tier, the held enchant surviving, no act
 > window); every hero has three sockets; the Anvil and Enchanter are the Guild Hall's Smithy.
 > §1–§4 and §6 stand as written; §5 and §8–§11 are trimmed to what is still true.
+>
+> **Revised 2026-10-15 (per user direction): an Awakening is MYTHIC-ONLY.** On every Epic it left
+> most heroes holding several item passives by a run's end, which was too much; Epic and Legendary
+> are now plain stats (70 / 90, the whole budget) and the effect floor is Mythic's alone, so the
+> passive is what a Mythic adds. §2 and §3 are updated; the 2026-09-06 reason for the floor — a
+> bigger number alone is imperceptible — now applies to Mythic only, and is the thing to watch.
 
 The item system, reworked 2026-09-07 per user direction. Supersedes the catalog design in
 `progression.md` "Items (per-hero)"; the act-scaled drop curve in that document is unchanged.
@@ -49,10 +55,7 @@ another type a waste.
 ## 2. Families
 
 Each family is a stat signature plus one signature passive, its **Awakening**, which comes
-online at Epic. Below Epic a family is stats only — a plain, legible Common is what an Act-1
-item should be (`EFFECT_FLOOR_MIN_RARITY`).
-
-Every Awakening is **flat** — one magnitude, the same at Epic, Legendary and Mythic (§3).
+online at Mythic (2026-10-15). Below Mythic a family is stats only (`EFFECT_FLOOR_MIN_RARITY`).
 
 | # | Family | Stats | Awakening | Magnitude | Fires on |
 |---|---|---|---|---|---|
@@ -128,15 +131,15 @@ the family buys the effect. With `RARITY_BUDGET` unchanged:
 |---|---|---|---|
 | Common | 30 | 30 | — |
 | Rare | 50 | 50 | — |
-| Epic | 70 | 50 | 20 |
-| Legendary | 90 | 70 | 20 |
+| Epic | 70 | 70 | — |
+| Legendary | 90 | 90 | — |
 | Mythic | 110 | 90 | 20 |
 
-Stats run 30 / 50 / 50 / 70 / 90 — monotone, and every tier spends its budget exactly. The one
-flat step is Rare -> Epic, which is the step that gains the Awakening: the player is not being
-shorted, they are being handed the thing the item is named for.
+Stats run 30 / 50 / 70 / 90 / 90 (since 2026-10-15) — monotone, and every tier spends its budget
+exactly. The one flat step is Legendary -> Mythic, which is the step that gains the Awakening: the
+player is not being shorted, they are being handed the thing the item is named for.
 
-**The effect floor is a flat `EFFECT_FLOOR` of 20 points from Epic up**, not a share: a share
+**The effect floor is a flat `EFFECT_FLOOR` of 20 points at Mythic**, not a share: a share
 requires the effect column to grow every tier, which a flat Awakening by definition does not.
 (CLAUDE.md's rarity-budget invariant still names the old ⅓ share, `EFFECT_FLOOR_SHARE`.) Flat
 Awakenings also kept `grantsPassiveIds` a plain string array — no per-item passive magnitude.

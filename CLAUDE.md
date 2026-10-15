@@ -764,9 +764,11 @@ don't silently override it.
   granted passives (`RARITY_BUDGET`, `src/run/equipment.ts`; enforced by `test/equipment.test.ts`).
   Not every stat costs 1 — a point buys 3 HP (`HP_PER_POINT`, the measured break-even), MP Regen is
   3× (`STAT_POINT_VALUE`); Force is 2 a magnitude.
-  **From Epic up an item must spend at least `EFFECT_FLOOR` = 20 points on effects** — a passive
-  or a Force, never stats alone; flat rather than a share (2026-09-07), since 20 is exactly one
-  Awakening. The floor is what keeps a bigger item from being merely a bigger number.
+  **A Mythic must spend at least `EFFECT_FLOOR` = 20 points on effects** — a passive or a Force,
+  never stats alone; flat rather than a share (2026-09-07), since 20 is exactly one Awakening.
+  **A family Awakens at Mythic only** (2026-10-15, per user direction, `docs/equipment.md`; it was
+  Epic up): an Awakening on every Epic gave most heroes several item passives by a run's end, so
+  Epic and Legendary are plain stats (70 / 90) and the passive is what makes a Mythic.
   **Drop odds scale by act**: Legendary/Mythic cannot appear in Act 1, Common cannot appear
   in Act 5, elites roll one tier ahead (`rarityWeightsFor`, `docs/progression.md`).
   **Drop odds by node** (2026-09-15, measured, `docs/gear-absorption.md` §5): the opener always,

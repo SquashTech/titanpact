@@ -78,16 +78,15 @@ test('equipment: a tier upgrade never lowers a number — the monotonicity rule'
   }
 });
 
-test('equipment: a family Awakens at Epic and the Awakening is flat from there up', () => {
+test('equipment: a family Awakens at Mythic only, and every tier below is stats alone', () => {
   for (const familyId of EQUIPMENT_FAMILIES) {
     const byRarity = RARITY_ORDER.map((rarity) => equipment[equipmentIdFor(familyId, rarity)]);
     assert.strictEqual(byRarity[0].grantsPassiveIds, undefined, `${familyId} Common should be stats alone`);
     assert.strictEqual(byRarity[1].grantsPassiveIds, undefined, `${familyId} Rare should be stats alone`);
-    const awakening = byRarity[2].grantsPassiveIds;
-    assert.ok(awakening && awakening.length === 1, `${familyId} Epic should grant exactly one Awakening`);
-    // Flat: the tier buys stats, the family buys the effect. Identical at Epic, Legendary, Mythic.
-    assert.deepStrictEqual(byRarity[3].grantsPassiveIds, awakening);
-    assert.deepStrictEqual(byRarity[4].grantsPassiveIds, awakening);
+    assert.strictEqual(byRarity[2].grantsPassiveIds, undefined, `${familyId} Epic should be stats alone`);
+    assert.strictEqual(byRarity[3].grantsPassiveIds, undefined, `${familyId} Legendary should be stats alone`);
+    const awakening = byRarity[4].grantsPassiveIds;
+    assert.ok(awakening && awakening.length === 1, `${familyId} Mythic should grant exactly one Awakening`);
   }
 });
 
@@ -125,7 +124,7 @@ test('equipment: a negative grant refunds budget, funding an above-curve stat li
   assert.deepStrictEqual(equipmentBudgetProblems(cleaver, PASSIVE_ITEM_COST), []);
 });
 
-test('equipment: an Epic or better may not be stats alone', () => {
+test('equipment: a Mythic may not be stats alone', () => {
   // The effect floor (2026-09-06). A big number is not the same as an interesting item, and the
   // budget pass would otherwise have produced +110 Attack Mythics.
   const plainMythic = { id: 'x', name: 'X', rarity: 'mythic' as const, statGrants: { attack: 110 } };
@@ -140,11 +139,11 @@ test('equipment: an Epic or better may not be stats alone', () => {
     grantsStatusIds: [{ statusId: 'FireForce', magnitude: 5 }],
   };
   assert.ok(equipmentBudgetProblems(tokenEffect, PASSIVE_ITEM_COST).some((p) => p.includes('effects')));
-  // Below Epic there is no floor at all: a plain Common is what an Act-1 item should be.
+  // Below Mythic there is no floor at all: a Common or a Legendary is plain stats.
   assert.deepStrictEqual(equipmentBudgetProblems(equipment['sword.common'], PASSIVE_ITEM_COST), []);
 });
 
-test('equipment: every Epic and better in the catalog clears the effect floor', () => {
+test('equipment: every Mythic in the catalog clears the effect floor', () => {
   for (const item of catalog) {
     if (RARITY_ORDER.indexOf(item.rarity) < RARITY_ORDER.indexOf(EFFECT_FLOOR_MIN_RARITY)) continue;
     const spend = equipmentEffectSpend(item, PASSIVE_ITEM_COST);

@@ -28,26 +28,26 @@ import {
 // --- 1. The families ---
 
 /**
- * Stat points a tier spends, leaving room for the flat 20-point Awakening from Epic up
- * (docs/equipment.md §3). Monotone by construction, so an Anvil upgrade never lowers a number.
+ * Stat points a tier spends: the whole budget below Mythic, and room for the flat 20-point
+ * Awakening at Mythic (docs/equipment.md §3). Monotone, so an Anvil upgrade never lowers a number.
  */
 const STAT_POINTS_BY_RARITY: Record<EquipmentRarity, number> = {
   common: 30,
   rare: 50,
-  epic: 50,
-  legendary: 70,
+  epic: 70,
+  legendary: 90,
   mythic: 90,
 };
 
-/** From this tier up a family grants its Awakening — the moment the item becomes what it is named for. */
-const AWAKENING_RARITY: EquipmentRarity = 'epic';
+/** The one tier a family grants its Awakening — the moment the item becomes what it is named for. */
+const AWAKENING_RARITY: EquipmentRarity = 'mythic';
 
 interface FamilyDefinition {
   /** The item's whole name. An enchanted variant prefixes the enchant; nothing names the tier. */
   noun: string;
   /** Stats the family grants, splitting STAT_POINTS_BY_RARITY evenly. Overridden below where an even split cannot land on multiples of 5. */
   stats: readonly StatKey[];
-  /** Granted from AWAKENING_RARITY up. Flat — the same magnitude at Epic, Legendary and Mythic. */
+  /** Granted at AWAKENING_RARITY. */
   awakening: string;
 }
 
@@ -81,15 +81,15 @@ const STAT_OVERRIDES: Partial<Record<EquipmentFamilyId, Record<EquipmentRarity, 
   ring: {
     common: { manaPool: 15, mpRegen: 5 },
     rare: { manaPool: 35, mpRegen: 5 },
-    epic: { manaPool: 35, mpRegen: 5 },
-    legendary: { manaPool: 40, mpRegen: 10 },
+    epic: { manaPool: 55, mpRegen: 5 },
+    legendary: { manaPool: 60, mpRegen: 10 },
     mythic: { manaPool: 60, mpRegen: 10 },
   },
   crest: {
     common: { attack: 5, defense: 5, intelligence: 5, wisdom: 5, speed: 5, hp: 15 },
     rare: { attack: 10, defense: 10, intelligence: 10, wisdom: 10, speed: 10 },
-    epic: { attack: 10, defense: 10, intelligence: 10, wisdom: 10, speed: 10 },
-    legendary: { attack: 10, defense: 10, intelligence: 10, wisdom: 10, speed: 10, hp: 60 },
+    epic: { attack: 10, defense: 10, intelligence: 10, wisdom: 10, speed: 10, hp: 60 },
+    legendary: { attack: 15, defense: 15, intelligence: 15, wisdom: 15, speed: 15, hp: 45 },
     mythic: { attack: 15, defense: 15, intelligence: 15, wisdom: 15, speed: 15, hp: 45 },
   },
 };

@@ -213,15 +213,14 @@ export const FORCE_POINT_VALUE = 2;
  * From this tier up, an item must carry a granted passive or an Elemental Force worth at least
  * `EFFECT_FLOOR` points (2026-09-06, per user direction). The complaint the budget pass answers
  * is that items feel imperceptible, and a bigger number alone does not fix that — a +110 Attack
- * Mythic is still a stat stick. Below Epic there is no floor: a plain, legible Common is what an
- * Act-1 item should be.
+ * Mythic is still a stat stick. Since 2026-10-15 (per user direction) the floor is Mythic's alone:
+ * an Awakening on every Epic left most heroes holding several passives by the run's end, so Epic
+ * and Legendary are plain stats and an effect is what makes a Mythic.
  *
- * FLAT rather than a share of the budget (2026-09-07, per user direction). A share requires the
- * effect column to grow every tier, and an Awakening is flat by design — the tier buys stats,
- * the family buys the effect (docs/equipment.md §3). 20 is exactly one Awakening, so the floor
- * reads as "an Epic or better owes at least one effect" rather than as an arithmetic hurdle.
+ * FLAT rather than a share of the budget (2026-09-07, per user direction). 20 is exactly one
+ * Awakening, so the floor reads as "a Mythic owes at least one effect".
  */
-export const EFFECT_FLOOR_MIN_RARITY: EquipmentRarity = 'epic';
+export const EFFECT_FLOOR_MIN_RARITY: EquipmentRarity = 'mythic';
 export const EFFECT_FLOOR = 20;
 
 /** A negative grant refunds its full value — a downside can fund a spike. Nothing caps how much of a tier drawbacks may pay for (open question, docs/progression.md). */
@@ -281,12 +280,12 @@ export function equipmentEffectSpend(item: EquipmentDefinition, passiveCosts: Re
   return cost;
 }
 
-/** Epic and above owe an effect; everything below is free to be plain. */
+/** A Mythic owes an effect; everything below is free to be plain. */
 function owesAnEffect(rarity: EquipmentRarity): boolean {
   return RARITY_ORDER.indexOf(rarity) >= RARITY_ORDER.indexOf(EFFECT_FLOOR_MIN_RARITY);
 }
 
-/** [] for a valid item: flat grants are multiples of 5, the tier's budget is spent exactly, and Epic+ clears the effect floor. */
+/** [] for a valid item: flat grants are multiples of 5, the tier's budget is spent exactly, and a Mythic clears the effect floor. */
 export function equipmentBudgetProblems(
   item: EquipmentDefinition,
   passiveCosts: Readonly<Record<string, number>>

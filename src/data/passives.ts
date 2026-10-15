@@ -2817,8 +2817,8 @@ export const boonPassives: Record<string, PassiveDefinition> = { ...equipmentPas
  */
 /**
  * What a granted passive costs an item's rarity budget. FLAT at AWAKENING_COST for every entry
- * (2026-09-07, per user direction): a family's Awakening is the same at Epic, Legendary and
- * Mythic, so there is no per-tier magnitude to price and no reason for one passive to cost more
+ * (2026-09-07, per user direction): a family's Awakening has one magnitude (Mythic only since
+ * 2026-10-15), so there is no per-tier magnitude to price and no reason for one passive to cost more
  * than another *as an item component*. It replaced a 30/50 spread.
  *
  * The magnitudes themselves were set under that old spread — Vengeful Emblem was priced at 50 and
