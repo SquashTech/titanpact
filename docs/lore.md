@@ -220,8 +220,8 @@ giant head-first down the sky (`art/title/fallingTitan.png`), every star in its 
 staying out, an impact flash, a plume, an ember still glowing in the valley. The lore crawls over
 the scene a tap at a time, from the moment the fall begins (per user direction: a story told after
 the fact, short horror sentences, the newest line rising and the older ones receding into the sky):
-*One day, pure calamity fell upon our land.* / *It spread into everything it touched.* / *Beasts
-turned on their keepers. Rivers ran black. The dead stood back up.* / *Heroes from every walk of
+*One day, pure calamity fell upon our land.* / *It spread into everything it touched.* / *Rivers
+ran black, and crops turned to rot.* / *Heroes from every walk of
 life rose to face it.* / *Not all of them came home.* / *This is the story of how they sealed the
 Titan.* (`LORE_LINES`). Later Cycles keep their own cards on `LoreScreen`.
 

@@ -23,7 +23,7 @@ import type { FightTip, ModesOpenPage, ScreenTipId, Tip } from '../run/tips';
 export const LORE_LINES: readonly string[] = [
   'One day, pure calamity fell upon our land.',
   'It spread into everything it touched.',
-  'Beasts turned on their keepers. Rivers ran black. The dead stood back up.',
+  'Rivers ran black, and crops turned to rot.',
   'Heroes from every walk of life rose to face it.',
   'Not all of them came home.',
   'This is the story of how they sealed the Titan.',
