@@ -558,9 +558,10 @@ export function MapRoute({
             onTap={tap}
             onBack={() => setPreviewId(null)}
             onGo={() => go(previewId)}
-          >
-            {renderDossier(map.nodes[previewId])}
-          </MapPreview>,
+            pages={choiceIds
+              .filter((id) => map.nodes[id] && !ENTERED_ON_TAP.includes(map.nodes[id].type))
+              .map((id) => ({ id, content: renderDossier(map.nodes[id]) }))}
+          />,
           overlayHost()
         )}
 
@@ -642,7 +643,7 @@ function MapPreview({
   onTap,
   onBack,
   onGo,
-  children,
+  pages,
 }: {
   tiles: readonly PreviewTile[];
   previewId: string;
@@ -651,7 +652,8 @@ function MapPreview({
   onTap: (id: string) => void;
   onBack: () => void;
   onGo: () => void;
-  children: ReactNode;
+  /** Every readable tile's sheet in the row, stacked so the card is the tallest and holds still between taps. */
+  pages: readonly { id: string; content: ReactNode }[];
 }) {
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
   const [frame, setFrame] = useState<{ header: Box | null; footer: Box | null }>({ header: null, footer: null });
@@ -724,7 +726,13 @@ function MapPreview({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {children}
+        <div className="map-preview-stack">
+          {pages.map((page) => (
+            <div key={page.id} className={`map-preview-page${page.id === previewId ? '' : ' is-hidden'}`} aria-hidden={page.id !== previewId}>
+              {page.content}
+            </div>
+          ))}
+        </div>
       </div>
       {rowFoot > 0 && (
         <div className="map-preview-go-seat" style={{ top: frame.footer ? (rowFoot + frame.footer.top) / 2 : rowFoot + 40 }} onClick={(e) => e.stopPropagation()}>
