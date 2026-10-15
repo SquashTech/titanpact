@@ -21,7 +21,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   contractReward: 'Recruit Contract',
   manaWellReward: 'Mana Well',
   forgeReward: 'Forge',
-  leyLineReward: 'Ley Line',
+  leyLineReward: 'Attunement',
   restReward: 'Rest',
   mentorReward: 'Mentor',
   tutorReward: 'Tutor',
@@ -49,7 +49,7 @@ export const NODE_LABELS: Record<MapNodeType, string> = {
   contractReward: 'Contract',
   manaWellReward: 'Mana Well',
   forgeReward: 'Forge',
-  leyLineReward: 'Ley Line',
+  leyLineReward: 'Attune',
   restReward: 'Rest',
   mentorReward: 'Mentor',
   tutorReward: 'Tutor',
@@ -87,7 +87,7 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   restReward: 'var(--hp-high)',
   // The Guild Hall's hearth amber: the Forge is the Smithy's Anvil, out on the road and free.
   forgeReward: '#ec9640',
-  // Ember red, the Force chip's family colour (statusIcons FORCE): the Ley Line grants that chip.
+  // Ember red, the Force chip's family colour (statusIcons FORCE): Attunement grants that chip.
   leyLineReward: '#e8643c',
   // Forge orange: the only node that hands out a permanent SLOT rather than a thing to put in one.
   mentorReward: 'var(--buff)',

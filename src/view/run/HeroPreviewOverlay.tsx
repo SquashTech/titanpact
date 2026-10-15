@@ -108,7 +108,7 @@ function passiveRows(
 }
 
 /**
- * The Ley Line's Force: not a stat, so the bars cannot carry it and nothing else on the sheet says
+ * Attunement's Force: not a stat, so the bars cannot carry it and nothing else on the sheet says
  * it is there — the one survivor of the old where-the-numbers-came-from ledger.
  */
 function ForceSourceRow({ label, grants }: { label: string; grants: RosterEntry['bonusStatusGrants'] }) {
@@ -247,7 +247,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
               </div>
               {/* Totals only, no "+N" against base: the room is the passives'. */}
               <StatBars baseStats={hero.baseStats} totals={previewStats} grades={entryGradesFor(hero, entry)} scale={scale} />
-              <ForceSourceRow label="Ley Line" grants={entry.bonusStatusGrants} />
+              <ForceSourceRow label="Attunement" grants={entry.bonusStatusGrants} />
               {rows.length > 0 && (
                 <>
                   <div className="tab-subhead">Passives</div>

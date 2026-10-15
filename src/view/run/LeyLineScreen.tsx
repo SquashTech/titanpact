@@ -16,7 +16,7 @@ import { NodeMotes } from '../shared/NodeStage';
 import { StatusGlyph } from '../shared/statusIcons';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
-import shardArt from '../../../art/map-nodes/icons/leyLineReward.png';
+import attuneArt from '../../../art/map-nodes/icons/leyLineReward.png';
 
 interface Props {
   run: RunState;
@@ -24,7 +24,7 @@ interface Props {
   onContinue: () => void;
 }
 
-/** The ember shard's light: the Ley Line tile's own colour (mapNodes NODE_COLORS). */
+/** The Attunement tile's own colour (mapNodes NODE_COLORS). */
 const LEY_RGB = '232, 100, 60';
 
 /** How many of the hero's moves hit at its own element — what the Force is added to. */
@@ -33,11 +33,11 @@ function movesAtElement(entry: RosterEntry, element: string): number {
 }
 
 /**
- * The Ley Line (docs/run-loop.md "The Forge and the Ley Line", 2026-09-17, per user direction):
+ * Attunement, the Ley Line node (docs/run-loop.md "The Forge and the Ley Line", 2026-09-17, per user direction):
  * one hero draws LEY_LINE_FORCE of Elemental Force at its own element, for the run — the
- * Enchanter's binding, free, and on the hero rather than a piece. Staged as a rite at the woken
- * stone: what it gives on one card, and every hero's card saying the Force it would hold at its
- * element and how many of its moves that Force is added to — a second Ley Line and an enchant of
+ * Enchanter's binding, free, and on the hero rather than a piece. Staged as a rite:
+ * what it gives on one card, and every hero's card saying the Force it would hold at its
+ * element and how many of its moves that Force is added to — a second Attunement and an enchant of
  * the same type all sum onto one figure, and a hero with none of its element's moves gains nothing.
  */
 export function LeyLineScreen({ run, onRunChange, onContinue }: Props) {
@@ -77,7 +77,7 @@ export function LeyLineScreen({ run, onRunChange, onContinue }: Props) {
                 <StatusGlyph statusId={statusId} />
               </span>
             </span>
-            <span className="rite-eyebrow">The Line Answers</span>
+            <span className="rite-eyebrow">Attuned</span>
             <h2 className="rite-name">{hero.name}</h2>
             <span className="rite-reveal-name">{element} Force</span>
             <div className="rite-reveal-verb well-ledger">
@@ -113,19 +113,19 @@ export function LeyLineScreen({ run, onRunChange, onContinue }: Props) {
       <header className="rite-head">
         <span className="rite-place">
           <span className="rite-pool" aria-hidden="true" />
-          <img src={shardArt} className="rite-place-art is-icon" alt="" draggable={false} />
+          <img src={attuneArt} className="rite-place-art is-icon" alt="" draggable={false} />
         </span>
-        <span className="rite-eyebrow">Power Under the Ground</span>
-        <h2 className="rite-name">The Ley Line</h2>
+        <span className="rite-eyebrow">The Hero's Own Element</span>
+        <h2 className="rite-name">Attunement</h2>
       </header>
 
       <div className="verb-card is-static is-picked ley-gift">
         <span className="verb-card-socket" aria-hidden="true">
-          <img src={shardArt} className="verb-card-glyph is-icon" alt="" draggable={false} />
+          <img src={attuneArt} className="verb-card-glyph is-icon" alt="" draggable={false} />
         </span>
         <span className="verb-card-body">
           <span className="verb-card-head">
-            <span className="verb-card-name">Draw the Line</span>
+            <span className="verb-card-name">Attune</span>
             <span className="verb-card-kind">One hero</span>
           </span>
           <span className="verb-card-verb">
@@ -149,7 +149,7 @@ export function LeyLineScreen({ run, onRunChange, onContinue }: Props) {
               entry={entry}
               onActivate={() => handleGrant(entry)}
               onPreview={() => setPreviewEntry({ hero, entry })}
-              ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${held} ${type} Force from the land, ${count} ${type} moves, draw ${LEY_LINE_FORCE} more`}
+              ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${held} ${type} Force attuned, ${count} ${type} moves, attune for ${LEY_LINE_FORCE} more`}
               detail={
                 <span className={`ley-fit${count === 0 ? ' is-dead' : ''}`}>
                   {count === 0 ? `no ${type} moves` : `${count} ${type} move${count === 1 ? '' : 's'}`}

@@ -159,7 +159,7 @@ two reds a shade apart on the act's one real difficulty choice, and was reverted
 | `scrollReward` ("Scroll Cache") | `ScrollNodeScreen` — **`SCROLL_CACHE_COUNT` = 3 Mastery pips** in any split. Weight 20. See "Mastery Scrolls" below. |
 | `scribeReward` ("Scribe") | `ScrollNodeScreen` — pick TWO heroes, **2 pips each** (`SCRIBE_PICKS`, `SCRIBE_PIPS_EACH`). Not in `REWARD_WEIGHTS`: a forced row every act (§1). |
 | `forgeReward` ("Forge") | The Smithy's Anvil AND Enchanter, free, once. See "The Forge and the Ley Line". Weight 25. |
-| `leyLineReward` ("Ley Line") | Pick a hero: +`LEY_LINE_FORCE` = 10 Force at its innate primary, for the run. See "The Forge and the Ley Line". Weight 25. |
+| `leyLineReward` ("Attunement") | Pick a hero: +`LEY_LINE_FORCE` = 10 Force at its innate primary, for the run. See "The Forge and the Ley Line". Weight 25. |
 | `manaWellReward` ("Mana Well") | Pick a hero: +`MANA_WELL_AMOUNT` = 40 max Mana and +`MANA_WELL_REGEN` = 5 MP Regen, for the run. See "The Mana Well". Weight 20. |
 | `restReward` ("Rest") | The whole roster made whole, the downed stood up. See "Wounds". Weight 30. |
 | `passiveReward` ("Boon") | Pick 1 of 3 passives, then the hero it settles on. See "Boons". Weight 22. |
@@ -280,6 +280,11 @@ Late casts and so under-values it; watch it in playtest rather than the sim.
 **2026-09-17, per user direction.** The Smithy's two verbs — the Anvil's lift and the Enchanter's
 binding — each given a free seat on the map. Seven reward types filling nine seats an act meant
 every act showed nearly every node; nine types into nine seats makes a reward row a draw again.
+
+**Renamed 2026-10-15, per user direction: the Ley Line is shown as Attunement** (tile word *Attune*,
+the element-up icon). The ember shard read as a second gem beside the Gem Cache, and *Attune* names
+the consequence — the hero's own element hits harder — where *Ley Line* named a place. Ids
+(`leyLineReward`, `LEY_LINE_FORCE`) are unchanged.
 
 **The Forge** (`forgeReward`, `ForgeNodeScreen`, `forgeItem`): the roster as benches
 (`SmithyBenches`); tap a worn piece, pick an element, and it comes off the anvil **a tier up AND

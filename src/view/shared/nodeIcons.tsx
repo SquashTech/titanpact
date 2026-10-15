@@ -148,7 +148,7 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   manaWellReward: STAT_PATHS.manaPool,
   // The Smithy's anvil, back on a tile (it was the Forge node's before item slots went): one free lift.
   forgeReward: ANVIL,
-  // A ley line: a single bolt of power rising through the ground, the Force chip's arrow said large.
+  // Attunement: a bolt of power rising, the Force chip's arrow said large.
   leyLineReward: (
     <>
       <path d="M13.6 1.6 5.2 13.2h5.2L9.2 22.4l9.6-12.6h-5.4Z" />
