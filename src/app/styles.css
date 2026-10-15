@@ -20341,11 +20341,21 @@ button.star-shop-bundle-face {
 
 .title-logo.is-top {
   position: absolute;
-  top: 74px;
+  top: 68px;
   left: 0;
   right: 0;
   z-index: 2;
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  /* The pixel wordmark (TitleLogo.tsx) brings its own fill; the text logo's gradient and bloom are off. */
+  background: none;
+  filter: none;
+  animation: none;
+}
+
+.title-wordmark {
+  display: block;
+  filter: drop-shadow(0 0 12px rgba(224, 166, 60, 0.22));
 }
 
 .title-logo-glow {

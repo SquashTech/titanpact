@@ -11,6 +11,7 @@ import { starBalance, type StarShopOffer } from '../../run/starShop';
 import { TitanRidge } from './titanArt';
 import titlePainting from '../../../art/title/fogBanks.png';
 import { NightSky } from './NightSky';
+import { TitleLogo } from './TitleLogo';
 import { SealArt } from '../shared/SealArt';
 import { HubGlyph } from '../shared/nodeIcons';
 import { FIRST_CYCLE } from '../../run/cycles';
@@ -323,10 +324,7 @@ export function TitleScreen({
       </div>
 
       <div className="title-logo is-top">
-        <span className="title-logo-glow" aria-hidden="true">
-          TITANPACT
-        </span>
-        TITANPACT
+        <TitleLogo />
       </div>
 
       {/* Mounted only while launching, so mounting starts them. The flash
