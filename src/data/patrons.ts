@@ -278,7 +278,6 @@ export const patrons: Record<string, PatronDefinition> = {
     id: 'swordsman',
     title: 'The Swordsman',
     name: 'Ren',
-    epithet: "He has never had to draw the same blade twice.",
     hasStudent: true,
     rungs: [
       [{ kind: 'item', familyId: 'sword' }],
@@ -287,13 +286,18 @@ export const patrons: Record<string, PatronDefinition> = {
       [{ kind: 'liftItem', familyId: 'sword' }, { kind: 'move', moveId: 'galeSever' }],
       [{ kind: 'unique', familyId: 'sword', uniqueId: 'moonfang' }],
     ],
-    lines: ['Hold it like you mean to keep it.', 'Again. Slower. Now faster.', 'A blade remembers every hand.'],
+    lines: [
+      "You hold that like a broom. Here. Try this.",
+      "Better. Your feet still argue with your hands.",
+      "Stop watching the blade. Watch the cut.",
+      "I had a student who swung like that once. They sing about her now.",
+      "Take it. I am done carrying it.",
+    ],
   },
   archmage: {
     id: 'archmage',
     title: 'The Archmage',
     name: 'Ysolde',
-    epithet: "She keeps the stars in a ledger, and the stars owe her.",
     hasStudent: true,
     rungs: [
       [{ kind: 'item', familyId: 'staff' }],
@@ -302,13 +306,18 @@ export const patrons: Record<string, PatronDefinition> = {
       [{ kind: 'liftItem', familyId: 'staff' }, { kind: 'move', moveId: 'prismBurst' }],
       [{ kind: 'unique', familyId: 'staff', uniqueId: 'astralStaff' }],
     ],
-    lines: ['Listen to the hum under everything.', 'Power is patience, spent all at once.', 'The stars keep better notes than I do.'],
+    lines: [
+      "Oh, a spark. Faint, but I can work with faint.",
+      "Again, and mean it this time. The stars can tell.",
+      "Drink deep. Mana is only rude when you hoard it.",
+      "You have started to hum. Do you hear it yet?",
+      "My staff has waited a century for hands like yours.",
+    ],
   },
   huntress: {
     id: 'huntress',
     title: 'The Huntress',
     name: 'Sable',
-    epithet: "She has not missed since she was nine years old.",
     hasStudent: true,
     rungs: [
       [{ kind: 'item', familyId: 'bow' }],
@@ -317,13 +326,18 @@ export const patrons: Record<string, PatronDefinition> = {
       [{ kind: 'liftItem', familyId: 'bow' }, { kind: 'move', moveId: 'arrowStorm' }],
       [{ kind: 'unique', familyId: 'bow', uniqueId: 'windpiercer' }],
     ],
-    lines: ['Breathe out. Then let go.', 'The wind tells you where it will be.', 'Never chase. Wait.'],
+    lines: [
+      "Shh. You will scare it off. ...Fine. Take the bow.",
+      "Do not chase it. Let it walk into the arrow.",
+      "Close one eye. No, the other one.",
+      "That makes two of us who do not miss. Do not get cocky.",
+      "Windpiercer. It was my mother’s. Do not make me regret this.",
+    ],
   },
   priest: {
     id: 'priest',
     title: 'The Priest',
     name: 'Osric',
-    epithet: "He blesses the living, the dying, and the merely stubborn.",
     hasStudent: true,
     rungs: [
       [{ kind: 'passive', passiveId: 'benediction' }],
@@ -332,13 +346,18 @@ export const patrons: Record<string, PatronDefinition> = {
       [{ kind: 'move', moveId: 'absolution' }],
       [{ kind: 'passive', passiveId: 'martyrsGrace' }],
     ],
-    lines: ['Mercy is a weapon too.', 'Kneel, if your knees allow it.', 'The light asks little. Give it that.'],
+    lines: [
+      "You look like you have been bleeding a while. Come here.",
+      "Hold out your hands. Light is heavier than it looks.",
+      "Wear this. It has been prayed over more than I have.",
+      "Forgive them first, then heal them. The order matters.",
+      "When you falter, and you will, your friends will not fall with you.",
+    ],
   },
   hexwright: {
     id: 'hexwright',
     title: 'The Hexwright',
     name: 'Morwen',
-    epithet: "She remembers every slight, and every name that went with it.",
     hasStudent: true,
     rungs: [
       [{ kind: 'passive', passiveId: 'evilEye' }],
@@ -347,13 +366,18 @@ export const patrons: Record<string, PatronDefinition> = {
       [{ kind: 'move', moveId: 'malediction' }],
       [{ kind: 'passive', passiveId: 'grandHex' }],
     ],
-    lines: ['Every curse is a kind of promise.', 'Look them in the eye. Then keep looking.', 'Spite is a craft. Learn it properly.'],
+    lines: [
+      "You have enemies? Lovely. Let us give them bad dreams.",
+      "Say their name while you do it. It stings more.",
+      "Weakness is a door. I only show you where the hinges are.",
+      "Make them slow. Make them sorry. Mostly sorry.",
+      "Every curse I know, all at once. Try not to enjoy it. You will.",
+    ],
   },
   forgemistress: {
     id: 'forgemistress',
     title: 'The Forgemistress',
     name: 'Brann',
-    epithet: "Her anvil is older than the seal it helped to forge.",
     hasStudent: false,
     rungs: [
       [{ kind: 'forge' }],
@@ -362,13 +386,18 @@ export const patrons: Record<string, PatronDefinition> = {
       [{ kind: 'fittedItem', tiersAhead: 1 }],
       [{ kind: 'uniqueChoice', uniqueIds: ['hearthguard', 'emberheart', 'stridersMark'] }],
     ],
-    lines: ['Steel remembers the hammer.', 'Hold still. This will be warm.', 'Bring me something worth fixing.'],
+    lines: [
+      "That is not a weapon, that is an apology. Hand it over.",
+      "Hold still. I am measuring your arm, not your soul.",
+      "Back again? Good. Steel likes a second heating.",
+      "This one is ahead of its time. So are you, barely.",
+      "Pick one. I made all three for someone worth it.",
+    ],
   },
   headmaster: {
     id: 'headmaster',
     title: 'The Headmaster',
     name: 'Aldous',
-    epithet: "He has failed every student exactly once. On purpose.",
     hasStudent: false,
     rungs: [
       [{ kind: 'class', count: 3 }],
@@ -377,6 +406,12 @@ export const patrons: Record<string, PatronDefinition> = {
       [{ kind: 'class', count: 3 }],
       [{ kind: 'masterClass', classIds: ['warlord', 'bastion', 'strategist'] }],
     ],
-    lines: ['Every hero is a student of something.', 'Sit. The lesson is already underway.', 'I have taught kings. You will do.'],
+    lines: [
+      "Name? Never mind. You will earn one. Sit.",
+      "Adequate. I do not say that often. Write it down.",
+      "Today you choose your own lesson. Choose badly and I will know.",
+      "Your classmates are struggling. You are not. Interesting.",
+      "One last examination. Pass it, and I have nothing left to teach you.",
+    ],
   },
 };

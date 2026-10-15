@@ -1,5 +1,5 @@
 import { nextRungFacts, patronColor, patronOfNode, PatronFigure, TrustPips } from './patronView';
-import { studentOf, trustOf } from '../../run/patrons';
+import { CAPSTONE_TRUST, studentOf, trustOf } from '../../run/patrons';
 import { formIdFor } from '../../run/progression';
 import { rosterHeroes } from '../../data/content';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -124,7 +124,7 @@ export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
           <span className="patron-dossier-words">
             <span className="patron-dossier-title">{patron.title}</span>
             <strong className="patron-dossier-name">{patron.name}</strong>
-            <span className="patron-dossier-epithet">{patron.epithet}</span>
+            <span className="patron-dossier-line">“{patron.lines[Math.min(trustOf(run, patron.id), CAPSTONE_TRUST - 1)]}”</span>
             <span className="patron-dossier-trust">
               <TrustPips trust={trustOf(run, patron.id)} />
               {student && (

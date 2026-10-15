@@ -111,6 +111,7 @@ test('patrons: a lift takes the piece a tier up inside the act window; the Uniqu
 test('patrons: content — five rungs each, every id real, nothing leaks into another pool', () => {
   for (const patron of Object.values(patrons)) {
     assert.strictEqual(patron.rungs.length, 5, patron.id);
+    assert.strictEqual(patron.lines.length, 5, `${patron.id} says one line at each rung`);
     for (const step of patron.rungs.flat()) {
       if (step.kind === 'item' || step.kind === 'liftItem') assert.ok(equipment[patronItemId(step.familyId, 1)], `${patron.id}: ${step.familyId}`);
       if (step.kind === 'unique') assert.ok(patronUniques[step.uniqueId] && equipment[step.uniqueId], `${patron.id}: ${step.uniqueId}`);

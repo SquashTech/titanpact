@@ -40,7 +40,7 @@ import { EquipChoiceCard } from './EquipChoiceCard';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { ItemWhoScreen } from './ItemWhoScreen';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
-import { KeeperVoice, useKeeperLine } from './RoadEncounter';
+import { KeeperVoice } from './RoadEncounter';
 import { RosterPeek } from './RosterPeek';
 import { PatronFigure, TrustPips, patronColor, stepFact } from './patronView';
 
@@ -66,7 +66,7 @@ interface Props {
 export function PatronNodeScreen({ run, patronId, rung, stepsDone, seed, onStep, onContinue }: Props) {
   const patron = patrons[patronId];
   const [greeted, setGreeted] = useState(stepsDone > 0);
-  const voice = useKeeperLine(patron.lines);
+  const voice = patron.lines[rung - 1];
   const steps = patron.rungs[rung - 1];
   const color = patronColor(patronId);
   const style = { '--node-rgb': '216, 180, 106', '--rite-color': color } as CSSProperties;

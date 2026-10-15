@@ -158,8 +158,11 @@ Shielded; **Strategist**, a move — a priority swap, or a reset of an ally's st
   `uniqueChoice` (one of three Uniques, then the who-screen for anyone).
 - **Art** (2026-10-15): each patron is a 48px PixelLab figure (`art/npc/patron-<id>.png`, hero recipe, one roll each), drawn on its map tile, in its
   screen's header and on the capstone card; its mark is the fallback. Each Unique has a 32px icon
-  (`art/equipment/<id>.png`), and each patron an authored `epithet` — one line under its name in the
-  map preview, which leads with the person: figure, name large, title, epithet, Trust and student.
+  (`art/equipment/<id>.png`).
+- **A patron speaks, one line a rung** (`PatronDefinition.lines`, per user direction: show, don't
+  tell — an epithet *about* them was tried and replaced the same day). Five lines, the relationship in
+  their own voice from first meeting to farewell; the map preview leads with the person — figure, name
+  large, title, the line for the meeting ahead, Trust and student — and the patron's screen opens on it.
 - **The sim** takes the patron it trusts most at every seat and the capstone before the last
   Guardian. Measured once, directional: 8 seats a run, nothing stranded.
 
@@ -226,6 +229,13 @@ Shielded; **Strategist**, a move — a priority swap, or a reset of an ally's st
   that patron as a hero — Slay the Spire's character unlocks — which keeps them unrecruitable inside a
   run. Each one is a whole hero to author (line, grades, schedule, innate, three paths with art,
   signature), so it would be a few chosen patrons, not all.
+- **Dialogue options that change the reward** (raised 2026-10-15, per user direction, not designed):
+  the player answers a patron, and the answer bends what the rung pays — the way a player chooses how
+  they like to deal with each NPC. Tensions to settle first: it is a second decision at every meeting
+  (the rung is free today), so it should replace a choice rather than add one — e.g. the answer picks
+  between two versions of the rung ("Teach me to strike" / "Teach me to guard"); whether answers carry
+  across meetings (a patron remembering how you treated them, Persona's confidants) or reset; and
+  whether a capstone can differ by the path of answers that reached it.
 - **Deferred until played:** a Tavern *Letter of Introduction* (Hades' Keepsake) and joint meetings
   for two patrons at Trust 3 (Hades' Duo boons).
 - **The sim pilot** needs a Trust policy — focus or spread — and what it measures is directional.
