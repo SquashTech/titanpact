@@ -19,6 +19,7 @@ import { sellValueFor } from '../../run/shop';
 import type { RosterEntry } from '../../run/state';
 import { RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
+import { SellPress } from '../shared/SellPress';
 import { useArmedTap } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { GearGood, GearSockets, Preview, useItemReceipts, type PreviewState } from './HallCounters';
@@ -343,9 +344,15 @@ function CacheCounter({ run, choices, onRunChange, onContinue }: { run: RunState
           Continue
         </button>
       ) : (
-        <button ref={sell.ref} className={`secondary-button cache-sell${sell.armed ? ' is-armed' : ''}`} disabled={!item} onClick={sell.onClick}>
-          {!item ? 'Choose a piece' : sell.armed ? 'Tap again to sell' : `Sell for ${sellGold} gold`}
-        </button>
+        <SellPress
+          gold={item ? sellGold : undefined}
+          purse={run.gold}
+          armed={sell.armed}
+          buttonRef={sell.ref}
+          onClick={sell.onClick}
+          emptyLabel="Choose a piece"
+          className="cache-sell"
+        />
       )}
 
       {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}
