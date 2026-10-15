@@ -21,6 +21,8 @@ import { sideDefeated, type CombatState, type Side } from '../src/engine/state';
 import type { Action } from '../src/engine/combat/actions';
 import {
   applyVersusReplacements,
+  buildsMatch,
+  messageKey,
   placeVersusLeads,
   replacementsOwed,
   SIDES,
@@ -122,4 +124,18 @@ test('versus: replacements land A’s first whichever order the picks arrived in
   const two = applyVersusReplacements(emptied, { B: picks.B, A: picks.A }, defs).state;
   assert.strictEqual(stateHash(one), stateHash(two));
   assert.strictEqual(one.active.A[0], picks.A[0]);
+});
+
+test('versus: a resent message has the key of the first, and each round’s messages have their own', () => {
+  assert.strictEqual(messageKey({ kind: 'pick', n: 2, index: 1 }), messageKey({ kind: 'pick', n: 2, index: 0 }));
+  assert.notStrictEqual(messageKey({ kind: 'pick', n: 2, index: 1 }), messageKey({ kind: 'pick', n: 3, index: 1 }));
+  assert.notStrictEqual(messageKey({ kind: 'commands', round: 4, actions: [] }), messageKey({ kind: 'commands', round: 5, actions: [] }));
+  assert.notStrictEqual(messageKey({ kind: 'commands', round: 4, actions: [] }), messageKey({ kind: 'hash', round: 4, hash: 1 }));
+});
+
+test('versus: two builds open a room only on the same content, and on the same SHA unless one is a dev build', () => {
+  assert.ok(buildsMatch({ stamp: 1, build: 'abc' }, { stamp: 1, build: 'abc' }));
+  assert.ok(!buildsMatch({ stamp: 1, build: 'abc' }, { stamp: 1, build: 'def' }));
+  assert.ok(buildsMatch({ stamp: 1, build: 'dev' }, { stamp: 1, build: 'def' }));
+  assert.ok(!buildsMatch({ stamp: 1, build: 'dev' }, { stamp: 2, build: 'dev' }));
 });

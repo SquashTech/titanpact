@@ -80,7 +80,8 @@ import { levelOf } from '../../run/growth';
 import { pickAiAction, type AiContext } from '../../run/ai';
 import { isGathering, isPermadeath } from '../../run/cycles';
 import { pilotActions } from '../../run/pilot';
-import { applyVersusReplacements, otherSide, placeVersusLeads, replacementsOwed, SIDES as VERSUS_SIDES, stateHash, versusActions } from '../../run/versus';
+import { applyVersusReplacements, otherSide, placeVersusLeads, replacementsOwed, SIDES as VERSUS_SIDES, stateHash, versusActions, VERSUS_CLOCK } from '../../run/versus';
+import { TurnClock, useTurnClock } from '../versus/TurnClock';
 import type { VersusChannel } from '../versus/versusChannel';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
@@ -721,8 +722,8 @@ export function FightScreen({
   const [playbackOrder, setPlaybackOrder] = useState<{ order: RoundOrderEntry[]; reversedSpeed: boolean; begun: string[]; ended: boolean } | null>(null);
   /** Only a React key: consecutive beats can carry identical text, and the headline must remount to replay its arrival. */
   const [beatSeq, setBeatSeq] = useState(0);
-  /** Per figure, every popup the beat on screen plays there, in order (CombatantCard staggers them). */
   const [intentOn] = useState(readEnemyIntent);
+  /** Per figure, every popup the beat on screen plays there, in order (CombatantCard staggers them). */
   const [popups, setPopups] = useState<Record<string, Popup[]>>({});
   /** Per figure, the element last declared against it. Not cleared per beat: the effect times itself out, so a quick tap never cuts it short. */
   const [figureFx, setFigureFx] = useState<Record<string, FigureFx>>({});
@@ -1188,10 +1189,7 @@ export function FightScreen({
 
   function handleForcedReplacement(slot: 0 | 1, benchedCombatantId: string) {
     if (versus) {
-      const picks = [...replacementPicks, benchedCombatantId];
-      setReplacementPicks(picks);
-      setReplacementPick(null);
-      if (picks.length >= versusOwed.mine) versus.channel.send({ kind: 'replace', round: combat.round, ids: picks });
+      sendReplacements([...replacementPicks, benchedCombatantId]);
       return;
     }
     const result = applyForcedReplacement(combat, combat.round, PLAYER_SIDE, slot, benchedCombatantId, statuses);
@@ -1228,9 +1226,7 @@ export function FightScreen({
    */
   function handleConfirmLeads() {
     if (versus) {
-      versus.channel.send({ kind: 'leads', ids: effectiveLeadPicks });
-      setSentLeads(effectiveLeadPicks);
-      setLeadPicks([]);
+      sendLeads(effectiveLeadPicks);
       return;
     }
     const placed = placeLeads(combat, PLAYER_SIDE, effectiveLeadPicks);
@@ -1272,6 +1268,10 @@ export function FightScreen({
     moveIdsFor: (combatantId) => {
       const roster = combat.combatants[combatantId].side === AI_SIDE ? aiRun.roster : playerRun.roster;
       const entry = entryFor(roster, combatantId);
+      return entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : allCombatants[combat.combatants[combatantId].heroId].moveIds;
+    },
+  };
+
   /** The enemy's actions against the board as it stands — seeded, so the round resolves exactly what the intent preview shows. */
   function planAiActions(): Action[] {
     return aiPilot
@@ -1282,10 +1282,6 @@ export function FightScreen({
   const showIntent = intentOn && !versus && !resolving && !winner && !pickingLeads;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const aimed = useMemo(() => (showIntent ? aimedAt(combat, planAiActions(), moves, PLAYER_SIDE) : {}), [showIntent, combat]);
-
-      return entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : allCombatants[combat.combatants[combatantId].heroId].moveIds;
-    },
-  };
 
   function effectivenessAgainst(move: MoveDefinition, defenderId: string): number {
     const defender = combat.combatants[defenderId];
@@ -1316,22 +1312,74 @@ export function FightScreen({
     });
   }
 
+  function actionOf(id: string, p: PendingAction): Action {
+    if (p.kind === 'switch') return { kind: 'switch', combatantId: id, benchedCombatantId: p.benchedCombatantId! };
+    if (p.kind === 'rest') return { kind: 'rest', combatantId: id };
+    return {
+      kind: 'move',
+      combatantId: id,
+      moveId: p.moveId!,
+      declaredTarget: p.declaredTarget,
+      switchToCombatantId: p.switchToCombatantId,
+    };
+  }
+
+  function sendCommands(actions: Action[]) {
+    versus!.channel.send({ kind: 'commands', round: combat.round, actions });
+    setSentCommands({ round: combat.round, actions });
+    setSelecting(null);
+    setPivoting(null);
+    setSwitchOpen(false);
+  }
+
+  function sendLeads(ids: string[]) {
+    versus!.channel.send({ kind: 'leads', ids });
+    setSentLeads(ids);
+    setLeadPicks([]);
+  }
+
+  function sendReplacements(picks: string[]) {
+    setReplacementPicks(picks);
+    setReplacementPick(null);
+    if (picks.length >= versusOwed.mine) versus!.channel.send({ kind: 'replace', round: combat.round, ids: picks });
+  }
+
+  // Time ran out (docs/versus.md §3): this side's client submits for it. Orders already given stand;
+  // the pilot fills the rest. A pick takes the first that is open.
+  function handleClockExpired() {
+    if (!versus) return;
+    if (leadsPending) {
+      if (!sentLeads) sendLeads(leadsReady ? effectiveLeadPicks : playerBench.slice(0, LEAD_COUNT));
+    } else if (openReplacementSlots.length > 0) {
+      sendReplacements([...replacementPicks, ...replacementBench.slice(0, versusOwed.mine - replacementPicks.length)]);
+    } else if (canAct) {
+      const piloted = pilotActions(combat, PLAYER_SIDE, pilotContext, { switching: true });
+      sendCommands(
+        playerActiveAlive.map((id) =>
+          isPendingComplete(pending[id]) ? actionOf(id, pending[id]) : piloted.find((a) => a.combatantId === id) ?? { kind: 'rest', combatantId: id }
+        )
+      );
+    }
+  }
+
+  const clockKey: string | null = !versus?.channel.timed || winner
+    ? null
+    : leadsPending
+      ? sentLeads
+        ? null
+        : 'leads'
+      : openReplacementSlots.length > 0 && !resolving
+        ? `replace:${combat.round}`
+        : canAct
+          ? `command:${combat.round}`
+          : null;
+  const clockSeconds = clockKey?.startsWith('command') ? VERSUS_CLOCK.command : VERSUS_CLOCK.pick;
+  const clockLeft = useTurnClock(clockKey, clockSeconds, !!versus && !versus.channel.friendHere(), handleClockExpired);
+
   function resolveRoundWith(pendingMap: Record<string, PendingAction>) {
-    const playerActions: Action[] = playerActiveAlive.map((id) => {
-      const p = pendingMap[id];
-      if (p.kind === 'switch') return { kind: 'switch', combatantId: id, benchedCombatantId: p.benchedCombatantId! };
-      if (p.kind === 'rest') return { kind: 'rest', combatantId: id };
-      return {
-        kind: 'move',
-        combatantId: id,
-        moveId: p.moveId!,
-        declaredTarget: p.declaredTarget,
-        switchToCombatantId: p.switchToCombatantId,
-      };
-    });
+    const playerActions: Action[] = playerActiveAlive.map((id) => actionOf(id, pendingMap[id]));
     if (versus) {
-      versus.channel.send({ kind: 'commands', round: combat.round, actions: playerActions });
-      setSentCommands({ round: combat.round, actions: playerActions });
+      sendCommands(playerActions);
       return;
     }
     const aiActions = planAiActions();
@@ -1617,6 +1665,7 @@ export function FightScreen({
           summoning={(resolving && !!beat?.summonCombatantIds?.includes(id)) || summonedIds.includes(id)}
           fx={figureFx[id]}
           warded={wardOn(combat, id, passives)}
+          aimedBy={aimed[id]?.map((aimer) => combat.combatants[aimer])}
         />
       );
     }
@@ -1665,7 +1714,6 @@ export function FightScreen({
   }
 
   return (
-          aimedBy={aimed[id]?.map((aimer) => combat.combatants[aimer])}
     <>
       <EntranceFlood />
       {/* Full-screen tap-to-advance catcher; sits below the log overlay's z-index.
@@ -1692,6 +1740,9 @@ export function FightScreen({
       <div
         className={`battlefield${combat.activeFieldEffect ? ' field-effect-active' : ''}${
           resolving && beat?.dramaticEntrance ? ' dramatic-entrance' : ''
+        }${
+          /* Two copies of each shake, alternated per beat, so a second big hit straight after the first replays it. */
+          resolving && beat?.impact ? ` impact-${beat.impact} impact-${beatSeq % 2 ? 'a' : 'b'}` : ''
         }${onTheTitan ? ' on-the-titan' : ''}${
           location && !onTheTitan && locationBackdrop(location.id, 'battle') ? ' has-painted-arena' : ''
         }`}
@@ -1717,6 +1768,7 @@ export function FightScreen({
         {location && !onTheTitan && <ArenaLocation location={location} />}
         {/* Keyed on beatSeq so the one-shot animation replays per reveal. */}
         {resolving && beat?.dramaticEntrance && <div key={beatSeq} className="dramatic-entrance-veil" aria-hidden="true" />}
+        {resolving && beat?.impact === 'massive' && <div key={`impact-${beatSeq}`} className="impact-flash" aria-hidden="true" />}
         {/* The field turning (styles.css .field-effect-surge): the one-shot wash on the beat that sets it, replayed per set since an override is a new field. */}
         {resolving && beat?.events.some((e) => e.type === 'FieldEffectSet') && (
           <div key={`field-${beatSeq}`} className="field-effect-surge" aria-hidden="true" />
@@ -1740,9 +1792,6 @@ export function FightScreen({
             role="status"
           >
             <span className="pact-warning-mark" aria-hidden="true" />
-        }${
-          /* Two copies of each shake, alternated per beat, so a second big hit straight after the first replays it. */
-          resolving && beat?.impact ? ` impact-${beat.impact} impact-${beatSeq % 2 ? 'a' : 'b'}` : ''
             <span className="pact-warning-text">
               {pactRound >= DEFAULT_PACT_CLOCK.startRound
                 ? `The pact is due — ${Math.round(pactFractionFor(pactRound, DEFAULT_PACT_CLOCK) * 100)}% HP from everyone on the field this round`
@@ -1768,7 +1817,6 @@ export function FightScreen({
           </div>
         ) : (
           <div className="team-row enemy">
-        {resolving && beat?.impact === 'massive' && <div key={`impact-${beatSeq}`} className="impact-flash" aria-hidden="true" />}
             {renderActiveSlot(AI_SIDE, 0)}
             {renderActiveSlot(AI_SIDE, 1)}
           </div>
@@ -1839,6 +1887,7 @@ export function FightScreen({
       </div>
 
       <div className="action-area" style={consoleStyle}>
+        <TurnClock left={clockLeft} total={clockSeconds} className="vs-fight-clock" />
         <div className="console-embers" aria-hidden="true">
           {CONSOLE_EMBERS.map((e, i) => (
             <span

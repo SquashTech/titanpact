@@ -98,12 +98,35 @@ export function contentStamp(heroIds: readonly string[], moveIds: readonly strin
   return stateHash([[...heroIds].sort(), [...moveIds].sort()]);
 }
 
+/** Seconds on a player's own clock (§3): a command phase, and every pick (draft, preview, leads, replacement). */
+export const VERSUS_CLOCK = { command: 60, pick: 30 } as const;
+
+/** Two builds must match before a room opens; a dev build has no SHA and is judged on content alone. */
+export function buildsMatch(a: { stamp: number; build: string }, b: { stamp: number; build: string }): boolean {
+  if (a.stamp !== b.stamp) return false;
+  return a.build === 'dev' || b.build === 'dev' || a.build === b.build;
+}
+
 export type VersusMessage =
-  | { kind: 'hello'; owned: string[]; stamp: number }
-  | { kind: 'seed'; seed: number; owned: string[]; stamp: number }
+  | { kind: 'hello'; owned: string[]; stamp: number; build: string }
+  | { kind: 'seed'; seed: number; owned: string[]; stamp: number; build: string }
   | { kind: 'pick'; n: number; index: number }
   | { kind: 'leads'; ids: string[] }
   | { kind: 'commands'; round: number; actions: Action[] }
   | { kind: 'replace'; round: number; ids: string[] }
   | { kind: 'hash'; round: number; hash: number }
   | { kind: 'leave' };
+
+/** A message's identity: every message is sent again on reconnect (§2.1), and the first of each key is the one kept. */
+export function messageKey(message: VersusMessage): string {
+  switch (message.kind) {
+    case 'pick':
+      return `pick:${message.n}`;
+    case 'commands':
+    case 'replace':
+    case 'hash':
+      return `${message.kind}:${message.round}`;
+    default:
+      return message.kind;
+  }
+}

@@ -263,7 +263,15 @@ code exchanged in place of the twelve picks.
    its log, equal hashes every round. Reached from the Gauntlet's entry (*Play a friend*) and the
    Dev menu. Played end to end in two tabs: thirteen rounds, both boards equal to the last HP.
    **Potions are held back** until a drink is synced (§3.4): a versus side holds none.
-2. **Online — PLANNED (2026-10-15).** In build order, each piece testable before the next:
+2. **Online — IN (2026-10-15), except the two-phone test.** `src/view/versus/versusRelay.ts` is the
+   wire (`@supabase/realtime-js` pinned at 2.117.2), `versusChannel.ts` the shared core (first of
+   each `messageKey` kept, the whole outbox resent on the friend's arrival and on rejoin) and the
+   two-tab wire, `TurnClock.tsx` the clock. *Play a friend* and the Dev menu's *Versus (online)* use
+   the relay; *Versus (two tabs)* stays untimed. Played over Supabase in two tabs: a room claimed
+   and joined, a draft pick, both lead picks and a command phase each run out and submitted for the
+   idle side, and a 25-round match ended on equal boards. **Not yet seen:** the *friend's connection
+   dropped* notice, a resend after a real drop, and two phones (piece 7). The build order it
+   followed:
    1. *Supabase setup (yours, a few clicks)*: confirm Realtime is on for the project and that public
       Broadcast and Presence channels are allowed for the anon key. Nothing else in the dashboard.
    2. *Delivery*: the inbox keeps the first message of each key (§2.1) and `VersusChannel` gains a

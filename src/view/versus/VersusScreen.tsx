@@ -7,31 +7,42 @@ import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
 import { locations } from '../../data/locations';
 import { constructedContent } from '../../data/trials';
+import type { Side } from '../../engine/state';
 import { constructedSide, TEAM_SIZE, type TeamSlot } from '../../run/constructed';
 import type { GauntletContent } from '../../run/gauntlet';
 import { arenaLocationIds } from '../../run/locations';
-import { contentStamp, GUEST_SIDE, HOST_SIDE, otherSide, versusDraft, versusPool, type VersusMessage } from '../../run/versus';
+import { buildsMatch, contentStamp, GUEST_SIDE, HOST_SIDE, otherSide, VERSUS_CLOCK, versusDraft, versusPool, type VersusMessage } from '../../run/versus';
 import { FightScreen } from '../combat/FightScreen';
 import { LocationProvider } from '../shared/LocationContext';
 import { PlateButton } from '../shared/PlateButton';
 import { Back, DraftView, Header, HeroSheet, Strip } from '../run/GauntletScreen';
-import { newRoomCode, normaliseRoomCode, openVersusChannel, type VersusChannel } from './versusChannel';
+import { newRoomCode, normaliseRoomCode, openTabChannel, type VersusChannel } from './versusChannel';
+import { openRelayChannel } from './versusRelay';
+import { TurnClock, useTurnClock } from './TurnClock';
 import './versus.css';
 
 const content: GauntletContent = { ...constructedContent, typeChart };
-const STAMP = contentStamp(Object.keys(heroes), Object.keys(moves));
+const ME = { stamp: contentStamp(Object.keys(heroes), Object.keys(moves)), build: __BUILD_SHA__ };
 const HELLO_EVERY_MS = 800;
+/** How long a guest looks for the host before saying there is no such room. */
+const FIND_ROOM_MS = 8000;
+/** Codes a host tries before giving up on finding an empty room. */
+const CLAIM_TRIES = 5;
+const DIFFERENT_BUILD = 'Your friend is on a different version of the game. Both of you reload it and try again.';
 
 interface Props {
   /** This player's owned heroes; the draft deals from both players' together. */
   owned: string[];
+  /** Two tabs of one browser (the Dev menu), in place of the relay. */
+  local?: boolean;
   onClose: () => void;
 }
 
 type Room =
   | { kind: 'lobby'; error?: string }
+  | { kind: 'claiming'; tries: number }
   | { kind: 'hosting' }
-  | { kind: 'joining' }
+  | { kind: 'joining'; since: number }
   | { kind: 'match'; seed: number; pool: string[] }
   | { kind: 'over'; line: string };
 
@@ -40,63 +51,88 @@ type Stage = 'draft' | 'preview' | 'fight' | 'result';
 const findSeed = (inbox: readonly VersusMessage[]) => inbox.find((m): m is Extract<VersusMessage, { kind: 'seed' }> => m.kind === 'seed');
 const findHello = (inbox: readonly VersusMessage[]) => inbox.find((m): m is Extract<VersusMessage, { kind: 'hello' }> => m.kind === 'hello');
 
-export function VersusScreen({ owned, onClose }: Props) {
+export function VersusScreen({ owned, local = false, onClose }: Props) {
   const [channel, setChannel] = useState<VersusChannel | null>(null);
   const [room, setRoom] = useState<Room>({ kind: 'lobby' });
   const [codeInput, setCodeInput] = useState('');
   const [tick, setTick] = useState(0);
   const hostSeed = useRef<number | null>(null);
 
+  const open = (code: string, side: Side) => (local ? openTabChannel(code, side) : openRelayChannel(code, side));
+
   useEffect(() => (channel ? channel.subscribe(() => setTick((n) => n + 1)) : undefined), [channel]);
   useEffect(() => () => channel?.close(), [channel]);
 
-  // The handshake: the guest says hello until a seed comes back; the host answers every hello with the one seed.
+  function fail(error: string) {
+    channel?.close();
+    setChannel(null);
+    setRoom({ kind: 'lobby', error });
+  }
+
   useEffect(() => {
     if (!channel) return;
     const inbox = channel.inbox();
-    if (inbox.some((m) => m.kind === 'leave') && room.kind !== 'over') {
+    if (inbox.some((m) => m.kind === 'leave') && room.kind !== 'over' && room.kind !== 'match') {
       setRoom({ kind: 'over', line: 'Your friend left the room.' });
       return;
     }
-    if (room.kind === 'hosting') {
+    if (channel.status() === 'error' && room.kind !== 'match') return fail('Could not reach the server. Check the connection and try again.');
+    const presence = channel.presence();
+
+    if (room.kind === 'claiming') {
+      // A code someone is already in is rolled again (§2.2).
+      if (!presence) return;
+      if (presence.A <= 1 && presence.B === 0) return setRoom({ kind: 'hosting' });
+      channel.close();
+      if (room.tries + 1 >= CLAIM_TRIES) return fail('Could not find a free room. Try again.');
+      setChannel(open(newRoomCode(), HOST_SIDE));
+      setRoom({ kind: 'claiming', tries: room.tries + 1 });
+    } else if (room.kind === 'hosting') {
       const hello = findHello(inbox);
       if (!hello) return;
-      if (hello.stamp !== STAMP) return setRoom({ kind: 'lobby', error: 'Your friend is on a different version of the game.' });
+      if (!buildsMatch(ME, hello)) return fail(DIFFERENT_BUILD);
       hostSeed.current ??= Math.floor(Math.random() * 0x100000000);
-      channel.send({ kind: 'seed', seed: hostSeed.current, owned, stamp: STAMP });
+      channel.send({ kind: 'seed', seed: hostSeed.current, owned, ...ME });
       setRoom({ kind: 'match', seed: hostSeed.current, pool: versusPool(owned, hello.owned) });
     } else if (room.kind === 'joining') {
+      if (presence && presence.B > 1) return fail('That room already has two players.');
+      if (presence && presence.A === 0 && Date.now() - room.since > FIND_ROOM_MS) return fail('No room with that code.');
       const seed = findSeed(inbox);
       if (!seed) return;
-      if (seed.stamp !== STAMP) return setRoom({ kind: 'lobby', error: 'Your friend is on a different version of the game.' });
+      if (!buildsMatch(ME, seed)) return fail(DIFFERENT_BUILD);
       setRoom({ kind: 'match', seed: seed.seed, pool: versusPool(seed.owned, owned) });
     }
   }, [tick, channel, room.kind]);
 
+  // The guest says hello until a seed comes back; the same beat re-checks whether the room is there.
   useEffect(() => {
     if (!channel || room.kind !== 'joining') return;
-    const hello = () => channel.send({ kind: 'hello', owned, stamp: STAMP });
+    const hello = () => {
+      channel.send({ kind: 'hello', owned, ...ME });
+      setTick((n) => n + 1);
+    };
     hello();
     const timer = window.setInterval(hello, HELLO_EVERY_MS);
     return () => window.clearInterval(timer);
   }, [channel, room.kind]);
 
   function host() {
-    const code = newRoomCode();
-    setChannel(openVersusChannel(code, HOST_SIDE));
-    setRoom({ kind: 'hosting' });
+    setChannel(open(newRoomCode(), HOST_SIDE));
+    setRoom(local ? { kind: 'hosting' } : { kind: 'claiming', tries: 0 });
   }
 
   function join() {
     const code = normaliseRoomCode(codeInput);
     if (code.length < 4) return;
-    setChannel(openVersusChannel(code, GUEST_SIDE));
-    setRoom({ kind: 'joining' });
+    setChannel(open(code, GUEST_SIDE));
+    setRoom({ kind: 'joining', since: Date.now() });
   }
 
   function leave() {
     channel?.send({ kind: 'leave' });
-    channel?.close();
+    // A beat for the leave to go out before the socket closes.
+    const closing = channel;
+    window.setTimeout(() => closing?.close(), 500);
     onClose();
   }
 
@@ -133,6 +169,7 @@ export function VersusScreen({ owned, onClose }: Props) {
             </div>
           </>
         )}
+        {room.kind === 'claiming' && <p className="gx-entry-copy">Opening a room…</p>}
         {room.kind === 'hosting' && channel && (
           <>
             <p className="gx-entry-copy">Give your friend this code.</p>
@@ -169,6 +206,7 @@ function Match({ channel, seed, pool, onLeave }: { channel: VersusChannel; seed:
   const theirsDone = theirPicks.length >= TEAM_SIZE;
   const theirs = useMemo(() => (theirsDone ? versusDraft(content, pool, seed, otherSide(mySide), theirPicks.slice(0, TEAM_SIZE)) : null), [theirsDone, tick]);
   const left = channel.inbox().some((m) => m.kind === 'leave');
+  const dropped = channel.timed && !channel.friendHere() && stage !== 'result';
 
   const arena = useMemo(() => {
     const ids = arenaLocationIds();
@@ -183,8 +221,15 @@ function Match({ channel, seed, pool, onLeave }: { channel: VersusChannel; seed:
     channel.send({ kind: 'pick', n: picks.length, index });
     const next = [...picks, index];
     setPicks(next);
+    setReading(null);
     if (next.length >= TEAM_SIZE) setStage('preview');
   }
+
+  // The draft and the preview run on the pick clock (§3); a pick that runs out takes the first offer.
+  const clockKey = !channel.timed ? null : stage === 'draft' ? `draft:${picks.length}` : stage === 'preview' && theirs ? 'preview' : null;
+  const clockLeft = useTurnClock(clockKey, VERSUS_CLOCK.pick, dropped, () => (stage === 'draft' ? draft(0) : setStage('fight')));
+
+  const droppedNote = dropped && <div className="vs-dropped">Your friend’s connection dropped. Waiting for them…</div>;
 
   if (left && stage !== 'result') {
     return (
@@ -219,6 +264,7 @@ function Match({ channel, seed, pool, onLeave }: { channel: VersusChannel; seed:
           onExitToTitle={onLeave}
           exitLabel="Concede the match"
         />
+        {droppedNote}
         {desync !== null && <div className="vs-desync">{`Out of step with your friend after round ${desync}.`}</div>}
       </LocationProvider>
     );
@@ -226,6 +272,8 @@ function Match({ channel, seed, pool, onLeave }: { channel: VersusChannel; seed:
 
   return (
     <div className="node-screen cx-screen gx-screen">
+      <TurnClock left={reading ? null : clockLeft} total={VERSUS_CLOCK.pick} className="vs-screen-clock" />
+      {droppedNote}
       {reading ? (
         <HeroSheet slot={reading} stars={null} onBack={() => setReading(null)} />
       ) : stage === 'draft' ? (

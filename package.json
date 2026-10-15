@@ -26,6 +26,7 @@
     "vite": "^8.2.1"
   },
   "dependencies": {
+    "@supabase/realtime-js": "2.117.2",
     "modern-screenshot": "4.7.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"

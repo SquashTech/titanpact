@@ -89,7 +89,7 @@ export type RunScreen =
   /** The Gauntlet (docs/gauntlet.md). Its run lives on the profile; `result` is a run that just ended, said once. */
   | { kind: 'gauntlet'; result?: GauntletResult | null; notice?: string | null }
   /** Versus (docs/versus.md): the room, the draft and the fight live on the screen, never saved. */
-  | { kind: 'versus' }
+  | { kind: 'versus'; local?: boolean }
   /** `aiPilot`: run/pilot.ts flies the opponent (run/gauntlet.ts gauntletAiPilot), else Classic's AI. */
   | { kind: 'gauntletFight'; player: Encounter; ai: Encounter; locationId?: string | null; aiPilot: boolean }
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */

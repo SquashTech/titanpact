@@ -1352,7 +1352,7 @@ export function App() {
           onOpenTrials={() => setScreen({ kind: 'trialsDev' })}
           onOpenConstructed={(unlockAll) => setScreen({ kind: 'constructed', unlockAll })}
           onOpenGauntlet={handleOpenGauntlet}
-          onOpenVersus={() => setScreen({ kind: 'versus' })}
+          onOpenVersus={(local) => setScreen({ kind: 'versus', local })}
           onVisitLocation={handleVisitLocation}
           onStartLevel4TestRun={handleStartLevel4TestRun}
           onStartAcademyTestRun={handleStartAcademyTestRun}
@@ -1482,7 +1482,7 @@ export function App() {
         />
       )}
 
-      {screen.kind === 'versus' && <VersusScreen owned={Object.keys(heroPool(heroes, profile.purchases))} onClose={() => setScreen({ kind: 'title' })} />}
+      {screen.kind === 'versus' && <VersusScreen owned={Object.keys(heroPool(heroes, profile.purchases))} local={screen.local} onClose={() => setScreen({ kind: 'title' })} />}
 
       {screen.kind === 'trialsFight' && (
         <FightScreen

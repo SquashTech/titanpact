@@ -85,3 +85,67 @@
   font-size: 11px;
   opacity: 0.85;
 }
+
+.vs-clock {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  pointer-events: none;
+}
+
+.vs-clock circle {
+  fill: none;
+  stroke-width: 3;
+}
+
+.vs-clock-track {
+  stroke: rgba(255, 255, 255, 0.12);
+}
+
+.vs-clock-fill {
+  stroke: #f7d98b;
+  transition: stroke-dashoffset 0.2s linear;
+}
+
+.vs-clock.is-urgent .vs-clock-fill {
+  stroke: #ff9c8a;
+}
+
+.vs-clock-number {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #ffe0d8;
+}
+
+.vs-screen-clock {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 40;
+}
+
+.vs-fight-clock {
+  position: absolute;
+  top: 6px;
+  right: 12px;
+  z-index: 40;
+}
+
+.vs-dropped {
+  position: absolute;
+  top: 48px;
+  left: 16px;
+  right: 16px;
+  z-index: 50;
+  padding: 8px 12px;
+  text-align: center;
+  color: #f3e9d2;
+  background: rgba(20, 20, 30, 0.88);
+  border: 1px solid rgba(255, 220, 160, 0.3);
+  border-radius: 6px;
+  pointer-events: none;
+}
