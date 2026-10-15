@@ -6,6 +6,7 @@ import { createRosterEntry } from '../../run/state';
 import { STARTER_PICK_COUNT } from '../../run/draft';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColorRgb } from '../combat/typeColors';
+import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { PlateButton } from '../shared/PlateButton';
 import { PactForging } from './PactForging';
@@ -142,6 +143,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
           disabled={!featuredChosen && pactFull}
           onClick={() => toggle(featuredId)}
         >
+          <ElementGlyph type={featured.types[0]} className="draft-choose-glyph" />
           {featuredChosen ? `✦ ${featured.name} is bound` : pactFull ? 'Pact is full' : `Choose ${featured.name}`}
         </button>
       </div>
