@@ -217,11 +217,13 @@ line, first pass: *"One day, pure calamity fell upon our land."*
 field of stars, the fog-bank painting masked in as the land); the first press on an account fades the
 title to that sky (`.is-falling`) and `TitanFallScreen` takes over on the same picture — a black
 giant head-first down the sky (`art/title/fallingTitan.png`), every star in its wake going out and
-staying out, an impact flash, a plume, an ember still glowing in the valley — then the lore card:
-*One day, pure calamity fell upon our land.* / *Heroes of every walk of life rose to meet it, and
-faced an evil no one had ever seen.* / *This is the story of how they sealed the Titan.* (`LORE_LINES`,
-per user direction: a story told after the fact). Later
-Cycles keep their own cards on `LoreScreen`.
+staying out, an impact flash, a plume, an ember still glowing in the valley. The lore crawls over
+the scene a tap at a time, from the moment the fall begins (per user direction: a story told after
+the fact, short horror sentences, the newest line rising and the older ones receding into the sky):
+*One day, pure calamity fell upon our land.* / *It spread into everything it touched.* / *Beasts
+turned on their keepers. Rivers ran black. The dead stood back up.* / *Heroes from every walk of
+life rose to face it.* / *Not all of them came home.* / *This is the story of how they sealed the
+Titan.* (`LORE_LINES`). Later Cycles keep their own cards on `LoreScreen`.
 
 What it reverses, still to rewrite:
 - §2's wardens decayed into Guardians "after an age of holding the seal" — the fall has no age

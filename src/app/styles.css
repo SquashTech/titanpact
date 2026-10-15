@@ -51037,7 +51037,7 @@ img.smithy-service-art {
   filter: blur(6px);
 }
 
-.title-fall.is-landed .title-fall-body {
+.title-fall.is-impact .title-fall-body {
   visibility: hidden;
 }
 
@@ -51085,7 +51085,7 @@ img.smithy-service-art {
   filter: blur(8px);
 }
 
-.title-fall.is-landed .title-fall-plume {
+.title-fall.is-impact .title-fall-plume {
   animation: title-fall-plume 3.2s cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
 
@@ -51113,7 +51113,7 @@ img.smithy-service-art {
   filter: blur(2px);
 }
 
-.title-fall.is-landed .title-fall-ember {
+.title-fall.is-impact .title-fall-ember {
   opacity: 1;
   animation: title-fall-ember 3.6s ease-in-out 0.6s infinite;
 }
@@ -51128,13 +51128,42 @@ img.smithy-service-art {
   }
 }
 
-.title-fall-line {
+/* The lore, crawling over the scene a tap at a time: the newest line at the foot of the block, the
+   older ones tipped back into the sky and fading, a nod to a title crawl without the scroll. */
+.title-fall-crawl {
   position: absolute;
   z-index: 2;
-  left: 28px;
-  right: 28px;
-  top: 34%;
+  left: 22px;
+  right: 22px;
+  top: 6%;
+  height: 38%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 14px;
+  transform: perspective(520px) rotateX(14deg);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+.title-fall-line {
+  margin: 0;
   max-width: none;
+  font-size: 20px;
+  transform-origin: 50% 100%;
+  transform: scale(calc(1 - var(--back) * 0.08));
+  opacity: calc(1 - var(--back) * 0.38);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+  transition:
+    transform 0.6s ease,
+    opacity 0.6s ease;
+  animation: title-fall-line-in 0.9s ease-out both;
+}
+
+@keyframes title-fall-line-in {
+  from {
+    opacity: 0;
+  }
 }
 
 /* The title on an account's first press: everything but the sky and the land goes. */

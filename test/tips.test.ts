@@ -73,7 +73,10 @@ test('tips: every inline icon token is one the view can draw', () => {
 test('tips: the lore card tells the fall as a story already over', () => {
   assert.deepStrictEqual(LORE_LINES, [
     'One day, pure calamity fell upon our land.',
-    'Heroes of every walk of life rose to meet it, and faced an evil no one had ever seen.',
+    'It spread into everything it touched.',
+    'Beasts turned on their keepers. Rivers ran black. The dead stood back up.',
+    'Heroes from every walk of life rose to face it.',
+    'Not all of them came home.',
     'This is the story of how they sealed the Titan.',
   ]);
 });

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { NIGHT_STARS, NightSky } from './NightSky';
@@ -14,12 +14,9 @@ interface Props {
 const HOLD_MS = 1300;
 /** The fall, from past the top edge to the land, accelerating (ms). */
 const FALL_MS = 3000;
-/** After the impact, before the first line (ms). */
-const SETTLE_MS = 1600;
 
 const FALL_AT = HOLD_MS;
 const IMPACT_AT = FALL_AT + FALL_MS;
-const LINE_AT = IMPACT_AT + SETTLE_MS;
 
 /** Where it enters and where it lands, in percent of the sky's box. */
 const START = { x: 92, y: -14 };
@@ -28,23 +25,26 @@ const IMPACT = { x: 36, y: 80 };
 const WAKE_PX = 26;
 /** Keyframes the eased path is sampled into: progress is the square of time, so it accelerates. */
 const PATH_STEPS = 24;
+/** How many earlier lines stay up, receding, behind the newest. */
+const CRAWL_DEPTH = 2;
 
-type FallPhase = 'hold' | 'fall' | 'impact' | 'line';
+type FallPhase = 'hold' | 'fall' | 'impact';
 
 /**
  * The first run on an account (docs/lore.md "The fall"): the title with everything on it faded away,
  * then the Titan falls head-first across the sky — a black shape, the stars it passes going out and
- * staying out — and comes down on the land. The line comes up out of the dust, a tap a line, and the last goes on to the draft.
+ * staying out — and comes down on the land. The lore crawls over it a tap at a time, the newest line
+ * rising from below and the older ones receding into the sky; the tap after the last goes to the
+ * draft. The scene plays on its own under the words, so a tap never skips it.
  */
 export function TitanFallScreen({ lines, onDone }: Props) {
   const still = prefersReducedMotion();
-  const [phase, setPhase] = useState<FallPhase>(still ? 'line' : 'hold');
-  const [step, setStep] = useState(0);
-  const [skipped, setSkipped] = useState(still);
+  const [phase, setPhase] = useState<FallPhase>(still ? 'impact' : 'hold');
+  // -1 is the sky before any words; the first line comes up with the fall.
+  const [step, setStep] = useState(still ? 0 : -1);
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLSpanElement>(null);
-  const timers = useRef<number[]>([]);
 
   useLayoutEffect(() => {
     const rect = rootRef.current?.getBoundingClientRect();
@@ -71,9 +71,10 @@ export function TitanFallScreen({ lines, onDone }: Props) {
   useEffect(() => {
     if (still || !box) return;
     playSfx('titan.stir', { gain: 0.7 });
-    timers.current = [
+    const timers = [
       window.setTimeout(() => {
         setPhase('fall');
+        setStep((i) => Math.max(i, 0));
         playSfx('entrance.dread');
       }, FALL_AT),
       window.setTimeout(() => {
@@ -81,7 +82,6 @@ export function TitanFallScreen({ lines, onDone }: Props) {
         playSfx('seal.shatter');
         window.setTimeout(() => playSfx('titan.stir'), 250);
       }, IMPACT_AT),
-      window.setTimeout(() => setPhase('line'), LINE_AT),
     ];
     const body = bodyRef.current;
     if (body) {
@@ -94,20 +94,10 @@ export function TitanFallScreen({ lines, onDone }: Props) {
       });
       body.animate(frames, { duration: FALL_MS, delay: FALL_AT, fill: 'both', easing: 'linear' });
     }
-    return () => timers.current.forEach(window.clearTimeout);
+    return () => timers.forEach(window.clearTimeout);
   }, [still, box]);
 
-  // A skipped fall still leaves its wake dark: every doomed star out at once.
-  const wake = useMemo(() => (skipped ? new Map([...outAt.keys()].map((i) => [i, 0])) : outAt), [skipped, outAt]);
-
   function advance() {
-    if (phase !== 'line') {
-      timers.current.forEach(window.clearTimeout);
-      setSkipped(true);
-      bodyRef.current?.getAnimations().forEach((a) => a.finish());
-      setPhase('line');
-      return;
-    }
     if (step >= lines.length - 1) {
       playSfx('ui.confirm');
       onDone();
@@ -117,12 +107,9 @@ export function TitanFallScreen({ lines, onDone }: Props) {
     setStep((i) => i + 1);
   }
 
-  const index = Math.min(step, lines.length - 1);
-  const landed = phase === 'impact' || phase === 'line';
-
   return (
-    <div ref={rootRef} className={`title-screen title-fall is-${phase}${landed ? ' is-landed' : ''}`} onClick={advance} role="dialog" aria-live="polite">
-      <NightSky outAt={wake} />
+    <div ref={rootRef} className={`title-screen title-fall is-${phase}`} onClick={advance} role="dialog" aria-live="polite">
+      <NightSky outAt={still ? undefined : outAt} />
       <img className="title-painting" src={titlePainting} alt="" draggable={false} />
 
       <div className="title-fall-shake" aria-hidden="true">
@@ -135,11 +122,21 @@ export function TitanFallScreen({ lines, onDone }: Props) {
         <span className="title-fall-ember" style={{ left: `${IMPACT.x}%`, top: `${IMPACT.y}%` }} />
       </div>
 
-      {phase === 'line' && (
-        <p key={index} className={`lore-line title-fall-line${index === lines.length - 1 && lines.length > 1 ? ' is-last' : ''}`}>
-          {lines[index]}
-        </p>
-      )}
+      <div className="title-fall-crawl">
+        {lines.map((line, i) => {
+          const back = step - i;
+          if (back < 0 || back > CRAWL_DEPTH) return null;
+          return (
+            <p
+              key={i}
+              className={`lore-line title-fall-line${i === lines.length - 1 ? ' is-last' : ''}${back === 0 ? ' is-current' : ''}`}
+              style={{ '--back': back } as CSSProperties}
+            >
+              {line}
+            </p>
+          );
+        })}
+      </div>
     </div>
   );
 }
