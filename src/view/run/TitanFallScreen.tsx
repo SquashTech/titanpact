@@ -20,7 +20,7 @@ const IMPACT_AT = FALL_AT + FALL_MS;
 
 /** Where it enters and where it lands, in percent of the sky's box. */
 const START = { x: 92, y: -14 };
-const IMPACT = { x: 36, y: 80 };
+const IMPACT = { x: 36, y: 71 };
 /** How wide a wake it cuts through the stars, px. */
 const WAKE_PX = 26;
 /** Keyframes the eased path is sampled into: progress is the square of time, so it accelerates. */
@@ -109,10 +109,10 @@ export function TitanFallScreen({ lines, onDone }: Props) {
 
   return (
     <div ref={rootRef} className={`title-screen title-fall is-${phase}`} onClick={advance} role="dialog" aria-live="polite">
-      <NightSky outAt={still ? undefined : outAt} />
-      <img className="title-painting" src={titlePainting} alt="" draggable={false} />
-
+      {/* The sky, the fall and the land as one shaking world; the land is drawn last, so the Titan
+          goes down behind the near hills and the impact lights them from behind. */}
       <div className="title-fall-shake" aria-hidden="true">
+        <NightSky outAt={still ? undefined : outAt} />
         <span ref={bodyRef} className="title-fall-body">
           <span className="title-fall-trail" />
           <span className="title-fall-figure" style={{ backgroundImage: `url(${fallingTitan})` }} />
@@ -120,8 +120,11 @@ export function TitanFallScreen({ lines, onDone }: Props) {
         <span className="title-fall-flash" style={{ left: `${IMPACT.x}%`, top: `${IMPACT.y}%` }} />
         <span className="title-fall-plume" style={{ left: `${IMPACT.x}%`, top: `${IMPACT.y}%` }} />
         <span className="title-fall-ember" style={{ left: `${IMPACT.x}%`, top: `${IMPACT.y}%` }} />
+        <img className="title-painting" src={titlePainting} alt="" draggable={false} />
       </div>
 
+      {/* A veil under the words, so the stars behind them don't read as punctuation. */}
+      <span className={`title-fall-veil${step >= 0 ? ' is-up' : ''}`} aria-hidden="true" />
       <div className="title-fall-crawl">
         {lines.map((line, i) => {
           const back = step - i;

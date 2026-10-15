@@ -18150,6 +18150,19 @@ button.star-shop-bundle-face {
   pointer-events: auto;
 }
 
+/* The row's sheets share one cell, so the card is sized to the tallest and holds still between taps. */
+.map-preview-stack {
+  display: grid;
+}
+
+.map-preview-page {
+  grid-area: 1 / 1;
+}
+
+.map-preview-page.is-hidden {
+  visibility: hidden;
+}
+
 .map-preview-card .node-dossier-panel {
   display: flex;
   flex-direction: column;
@@ -51009,8 +51022,26 @@ img.smithy-service-art {
 .title-fall-shake {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 0;
+  overflow: hidden;
   pointer-events: none;
+}
+
+.title-fall-veil {
+  position: absolute;
+  z-index: 1;
+  left: -10%;
+  right: -10%;
+  top: 2%;
+  height: 46%;
+  opacity: 0;
+  background: radial-gradient(ellipse 66% 56% at 50% 58%, rgba(3, 4, 10, 0.94), rgba(3, 4, 10, 0.7) 55%, transparent 82%);
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+}
+
+.title-fall-veil.is-up {
+  opacity: 1;
 }
 
 .title-fall.is-impact .title-fall-shake {
@@ -51113,14 +51144,13 @@ img.smithy-service-art {
   }
 }
 
-/* What is down there, still lit. */
+/* What is down there, still lit: a glow coming up from behind the hills it went down behind. */
 .title-fall-ember {
-  width: 90px;
-  height: 26px;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(255, 214, 246, 0.7), rgba(var(--titan-rgb), 0.45) 35%, transparent 70%);
-  filter: blur(2px);
+  width: 240px;
+  height: 130px;
+  transform: translate(-50%, -82%);
+  background: radial-gradient(ellipse 50% 100% at 50% 100%, rgba(255, 214, 246, 0.8), rgba(var(--titan-rgb), 0.5) 34%, transparent 74%);
+  filter: blur(3px);
 }
 
 .title-fall.is-impact .title-fall-ember {
