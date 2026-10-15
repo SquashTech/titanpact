@@ -10,6 +10,7 @@ import { starShopCatalog } from '../../data/starShop';
 import { starBalance, type StarShopOffer } from '../../run/starShop';
 import { TitanRidge } from './titanArt';
 import titlePainting from '../../../art/title/fogBanks.png';
+import { NightSky } from './NightSky';
 import { SealArt } from '../shared/SealArt';
 import { HubGlyph } from '../shared/nodeIcons';
 import { FIRST_CYCLE } from '../../run/cycles';
@@ -47,6 +48,8 @@ interface Props {
   onContinueRun: () => void;
   /** Start a run on the given Cycle (run/cycles.ts). */
   onStartRun: (cycle: number) => void;
+  /** The account has never started a run: the press fades the title to its sky for the fall (TitanFallScreen). */
+  firstFall?: boolean;
   /** The highest Cycle the profile may start on; Cycle I until a run has been cleared. */
   openCycle: number;
   /** Records a seen-once beat (the Chronicle weave) in the profile. */
@@ -80,6 +83,8 @@ const MOTE_COUNT = 26;
 
 /** Hold before handing off to the draft. Matched to `ui.launch` in sounds.ts — change either and re-check both. */
 const LAUNCH_ANIM_MS = 620;
+/** The title fading to its sky ahead of the first fall (styles.css title-fall-away). */
+const FALL_AWAY_MS = 1000;
 
 // Golden-angle scatter: stable across renders, no seed to store. Slow and long-lived — these
 // are drifting ash, not sparks; anything under ~12s reads as energy rather than as decay.
@@ -111,6 +116,7 @@ export function TitleScreen({
   saveNotice = null,
   onContinueRun,
   onStartRun,
+  firstFall = false,
   openCycle,
   onSeeTip,
   beatReady,
@@ -139,6 +145,7 @@ export function TitleScreen({
   const [showLocations, setShowLocations] = useState(false);
   const [showDev, setShowDev] = useState(false);
   const [launching, setLaunching] = useState(false);
+  const [falling, setFalling] = useState(false);
   const [confirmingNewRun, setConfirmingNewRun] = useState(false);
   // The weave is chosen as the tapestry opens and held, since marking it seen re-renders the profile.
   const [pickingCycle, setPickingCycle] = useState<{ weave?: number } | null>(null);
@@ -228,6 +235,12 @@ export function TitleScreen({
       setPickingCycle({ weave });
       return;
     }
+    if (firstFall) {
+      if (falling) return;
+      setFalling(true);
+      window.setTimeout(() => onStartRun(FIRST_CYCLE), FALL_AWAY_MS);
+      return;
+    }
     launch(() => onStartRun(FIRST_CYCLE));
   }
 
@@ -254,7 +267,7 @@ export function TitleScreen({
 
   return (
     <div
-      className={`title-screen is-${tone} is-mode-${mode}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}`}
+      className={`title-screen is-${tone} is-mode-${mode}${launching ? ' is-launching' : ''}${falling ? ' is-falling' : ''}${tab !== 'play' ? ' is-away' : ''}`}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerCancel={() => (swipe.current = null)}
@@ -268,13 +281,8 @@ export function TitleScreen({
       {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
           back is instant, and display: contents keeps them in the screen's own flex and stacking. */}
       <div className="title-play">
+      <NightSky />
       <img className="title-painting" src={titlePainting} alt="" draggable={false} />
-      <div className="title-fog" aria-hidden="true">
-        <span className="title-fog-band title-fog-a" />
-        <span className="title-fog-band title-fog-b" />
-        <span className="title-fog-band title-fog-c" />
-        <span className="title-fog-band title-fog-d" />
-      </div>
 
       <div className="title-motes" aria-hidden="true">
         {MOTES.map((m, i) => (

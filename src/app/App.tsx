@@ -121,6 +121,7 @@ import { InstallOverlay } from '../view/run/InstallOverlay';
 import { currentInstallPlatform } from './installPrompt';
 import { INSTALL_TIP_ID } from '../run/installHint';
 import { LoreScreen } from '../view/run/LoreScreen';
+import { TitanFallScreen } from '../view/run/TitanFallScreen';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
 import {
@@ -1313,6 +1314,7 @@ export function App() {
           }
           onContinueRun={handleContinueRun}
           onStartRun={handleStartNewRun}
+          firstFall={!profile.seenTipIds.includes(LORE_TIP_ID)}
           openCycle={openCycle(profile)}
           onSeeTip={markTipSeen}
           beatReady={launchDone && !(installPlatform && !profile.seenTipIds.includes(INSTALL_TIP_ID))}
@@ -1479,7 +1481,17 @@ export function App() {
         />
       )}
 
-      {screen.kind === 'lore' && (
+      {screen.kind === 'lore' && screen.tipId === LORE_TIP_ID && (
+        <TitanFallScreen
+          lines={screen.lines}
+          onDone={() => {
+            markTipSeen(screen.tipId);
+            setScreen(screen.next);
+          }}
+        />
+      )}
+
+      {screen.kind === 'lore' && screen.tipId !== LORE_TIP_ID && (
         <LoreScreen
           lines={screen.lines}
           onDone={() => {

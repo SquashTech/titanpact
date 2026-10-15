@@ -19279,8 +19279,8 @@ button.star-shop-bundle-face {
   isolation: isolate;
   cursor: pointer;
   background:
-    radial-gradient(ellipse 120% 46% at 50% 104%, rgba(86, 168, 148, 0.12), transparent 72%),
-    linear-gradient(180deg, #0a0c12, #090d10 52%, #060809);
+    radial-gradient(ellipse 120% 50% at 50% 108%, rgba(40, 52, 70, 0.55), transparent 70%),
+    linear-gradient(180deg, #03040a 0%, #070a16 45%, #0c1220 100%);
   animation: launch-in 0.4s ease-out both;
 }
 
@@ -19482,11 +19482,10 @@ button.star-shop-bundle-face {
    Six layers, all CSS and SVG, no raster art (see memory: juice here is CSS,
    not sprites). Back to front: the layered-gradient ground plus the faint
    tactical grid .battlefield also carries, so the title reads as the same
-   world; the backlight the figure is a hole in (.title-backlight); the bound
-   Titan's eyes (.title-titan, authored in titanArt.tsx); three slow blurred
-   fog bands drifting at different speeds and in opposite directions
-   (.title-fog-*), which is what makes the stillness feel like held breath
-   rather than a static image; a cold ash field rising and swaying
+   world; the night sky the Titan fell out of (.night-sky, NightSky.tsx) with
+   the land it fell onto masked in along the bottom (.title-painting), the
+   stars twinkling out of step so the stillness feels like held breath rather
+   than a static image; a cold ash field rising and swaying
    (.title-motes/.title-mote, positions and timings authored in
    TitleScreen.tsx via a golden-angle sequence rather than Math.random); the
    foreground ridge and the four pactbearers on it (.title-ridge), the only
@@ -19527,13 +19526,12 @@ button.star-shop-bundle-face {
     repeating-linear-gradient(90deg, rgba(190, 220, 235, 0.018) 0px, rgba(190, 220, 235, 0.018) 1px, transparent 1px, transparent 24px),
     radial-gradient(ellipse 78% 44% at 50% 30%, rgba(122, 150, 168, 0.15), transparent 68%),
     radial-gradient(ellipse 120% 46% at 50% 104%, rgba(86, 168, 148, 0.16), transparent 72%),
-    radial-gradient(ellipse 90% 60% at 50% -12%, rgba(112, 127, 122, 0.16), transparent 70%),
-    linear-gradient(180deg, #0e1017, #0b0e12 52%, #060809);
+    radial-gradient(ellipse 120% 50% at 50% 108%, rgba(40, 52, 70, 0.55), transparent 70%),
+    linear-gradient(180deg, #03040a 0%, #070a16 45%, #0c1220 100%);
 }
 
-/* The fog banks the whole title stands in (art/title/fogBanks.png): the Threshold's palette with
-   nothing in it, dimmed so the seal and the gold stay the lit things. The drifting bands below
-   move over it. */
+/* The land under the night (art/title/fogBanks.png): only its lowest bands, the rest masked into
+   the sky, dimmed so the seal and the gold stay the lit things. Where the fall comes down. */
 .title-painting {
   position: absolute;
   inset: 0;
@@ -19542,74 +19540,66 @@ button.star-shop-bundle-face {
   height: 100%;
   object-fit: cover;
   image-rendering: pixelated;
-  filter: brightness(0.5);
+  filter: brightness(0.42);
+  -webkit-mask-image: linear-gradient(180deg, transparent 58%, #000 76%);
+  mask-image: linear-gradient(180deg, transparent 58%, #000 76%);
   pointer-events: none;
 }
 
-/* Drifting fog. Each band is a wide soft ellipse translated well past both
-   edges of its travel, so the seam where the animation restarts is always
-   off-screen — a fog bank that visibly snaps back is worse than no fog. The
-   opposed directions and prime-ish durations keep the three from ever
-   settling into a shared beat. */
-.title-fog {
+/* The night the title stands under (NightSky.tsx): a fixed field of stars, a faint band across
+   it, twinkling out of step. A star in the fall's wake goes out at its own moment and stays out. */
+.night-sky {
   position: absolute;
-  inset: -12% -30%;
+  inset: 0;
   z-index: 0;
-  pointer-events: none;
   overflow: hidden;
+  pointer-events: none;
 }
 
-.title-fog-band {
+.night-sky-band {
   position: absolute;
-  left: 0;
-  width: 100%;
-  border-radius: 50%;
-  filter: blur(26px);
-}
-
-.title-fog-a {
+  left: -30%;
+  right: -30%;
   top: 8%;
-  height: 34%;
-  background: radial-gradient(ellipse 46% 50% at 50% 50%, rgba(112, 127, 122, 0.4), transparent 70%);
-  animation: title-fog-drift-right 61s linear infinite;
-}
-
-.title-fog-b {
-  top: 44%;
-  height: 40%;
-  background: radial-gradient(ellipse 40% 50% at 50% 50%, rgba(92, 107, 105, 0.36), transparent 72%);
-  animation: title-fog-drift-left 83s linear infinite;
-}
-
-.title-fog-c {
-  bottom: -6%;
   height: 46%;
-  background: radial-gradient(ellipse 60% 46% at 50% 60%, rgba(92, 107, 105, 0.48), transparent 68%);
-  animation: title-fog-drift-right 107s linear infinite;
+  transform: rotate(-24deg);
+  background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(150, 170, 220, 0.2), rgba(120, 110, 190, 0.06) 45%, transparent 72%);
+  filter: blur(14px);
 }
 
-.title-fog-d {
-  top: 26%;
-  height: 30%;
-  background: radial-gradient(ellipse 52% 50% at 50% 50%, rgba(112, 127, 122, 0.26), transparent 70%);
-  animation: title-fog-drift-left 131s linear infinite;
+.night-star {
+  position: absolute;
+  border-radius: 50%;
+  background: #e8eefc;
+  opacity: var(--o);
+  box-shadow: 0 0 3px rgba(220, 230, 255, 0.55);
+  animation: night-twinkle var(--period) ease-in-out var(--phase) infinite;
 }
 
-@keyframes title-fog-drift-right {
-  from {
-    transform: translateX(-22%);
+.night-star.is-bright {
+  box-shadow: 0 0 6px 1px rgba(220, 230, 255, 0.8);
+}
+
+.night-star.is-doomed {
+  animation:
+    night-twinkle var(--period) ease-in-out var(--phase) infinite,
+    night-star-out 0.35s ease-in var(--out-at) forwards;
+}
+
+@keyframes night-twinkle {
+  0%,
+  100% {
+    opacity: var(--o);
   }
+  50% {
+    opacity: calc(var(--o) * 0.35);
+  }
+}
+
+@keyframes night-star-out {
   to {
-    transform: translateX(22%);
-  }
-}
-
-@keyframes title-fog-drift-left {
-  from {
-    transform: translateX(20%);
-  }
-  to {
-    transform: translateX(-20%);
+    opacity: 0;
+    box-shadow: none;
   }
 }
 
@@ -19628,7 +19618,7 @@ button.star-shop-bundle-face {
   inset: -60px;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.15;
+  opacity: 0.07;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
   animation: title-grain-jitter 0.9s steps(8, end) infinite;
 }
@@ -50996,4 +50986,166 @@ img.smithy-service-art {
 .title-mode-door.is-dim {
   opacity: 0.4;
   filter: grayscale(0.5);
+}
+
+/* --- The fall (TitanFallScreen) ----------------------------------------------
+   The first run on an account: the title's own sky and land with nothing on
+   them, something dark crossing the stars and putting them out, and the impact
+   on the land: a flash, a plume that stays, an ember that keeps glowing. */
+.title-fall {
+  cursor: pointer;
+}
+
+.title-fall-shake {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.title-fall.is-impact .title-fall-shake {
+  animation: titan-rumble-hit 1.75s cubic-bezier(0.2, 0, 0.3, 1) both;
+}
+
+/* The Titan, a black shape head-first down the path (art/title/fallingTitan.png), a wake of
+   smoke trailing off its feet. Placed, turned and scaled by the screen (Element.animate). */
+.title-fall-body {
+  position: absolute;
+  left: 92%;
+  top: -14%;
+  width: 96px;
+  height: 144px;
+}
+
+/* Pure black whatever the sprite's own greys, with a hairline of the Titan's light round it. */
+.title-fall-figure {
+  position: absolute;
+  inset: 0;
+  background: center / contain no-repeat;
+  image-rendering: pixelated;
+  filter: brightness(0) drop-shadow(0 0 1px rgba(var(--titan-rgb), 0.9)) drop-shadow(0 0 8px rgba(var(--titan-rgb), 0.35));
+}
+
+.title-fall-trail {
+  position: absolute;
+  left: 50%;
+  top: 78%;
+  width: 26px;
+  height: 300px;
+  transform: translateX(-50%);
+  background: linear-gradient(to bottom, rgba(6, 8, 14, 0.9), rgba(var(--titan-rgb), 0.14) 35%, rgba(6, 8, 14, 0));
+  filter: blur(6px);
+}
+
+.title-fall.is-landed .title-fall-body {
+  visibility: hidden;
+}
+
+.title-fall-flash,
+.title-fall-plume,
+.title-fall-ember {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.title-fall-flash {
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgba(255, 214, 246, 0.9) 30%, rgba(var(--titan-rgb), 0.5) 55%, transparent 72%);
+}
+
+.title-fall.is-impact .title-fall-flash {
+  animation: title-fall-flash 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) both;
+}
+
+@keyframes title-fall-flash {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(48);
+  }
+}
+
+/* The dust it threw up, rising off the land and staying. */
+.title-fall-plume {
+  width: 150px;
+  height: 340px;
+  transform: translate(-50%, -100%) scaleY(0);
+  transform-origin: 50% 100%;
+  background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(var(--titan-rgb), 0.16), rgba(40, 44, 58, 0.55) 40%, transparent 72%);
+  filter: blur(8px);
+}
+
+.title-fall.is-landed .title-fall-plume {
+  animation: title-fall-plume 3.2s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@keyframes title-fall-plume {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%) scaleY(0.05) scaleX(0.5);
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.85;
+    transform: translate(-50%, -100%) scaleY(1) scaleX(1);
+  }
+}
+
+/* What is down there, still lit. */
+.title-fall-ember {
+  width: 90px;
+  height: 26px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 214, 246, 0.7), rgba(var(--titan-rgb), 0.45) 35%, transparent 70%);
+  filter: blur(2px);
+}
+
+.title-fall.is-landed .title-fall-ember {
+  opacity: 1;
+  animation: title-fall-ember 3.6s ease-in-out 0.6s infinite;
+}
+
+@keyframes title-fall-ember {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.title-fall-line {
+  position: absolute;
+  z-index: 2;
+  left: 28px;
+  right: 28px;
+  top: 34%;
+  max-width: none;
+}
+
+/* The title on an account's first press: everything but the sky and the land goes. */
+.title-screen.is-falling > :not(.title-play),
+.title-screen.is-falling .title-play > :not(.night-sky):not(.title-painting) {
+  animation: title-fall-away 1s ease-in both !important;
+  pointer-events: none !important;
+}
+
+@keyframes title-fall-away {
+  to {
+    opacity: 0;
+  }
 }

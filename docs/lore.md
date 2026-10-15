@@ -213,11 +213,17 @@ an account opens on a beat that stays on the title — everything else fades, a 
 stars (drawn only by the stars it puts out) and falls to the land below — under one in-world
 line, first pass: *"One day, pure calamity fell upon our land."*
 
+**Built (same day):** the title and the loading screen stand under the night (`NightSky.tsx`, a fixed
+field of stars, the fog-bank painting masked in as the land); the first press on an account fades the
+title to that sky (`.is-falling`) and `TitanFallScreen` takes over on the same picture — a black
+giant head-first down the sky (`art/title/fallingTitan.png`), every star in its wake going out and
+staying out, an impact flash, a plume, an ember still glowing in the valley — then the lore card:
+*One day, pure calamity fell upon our land.* / *We must seal the pact.* (`LORE_LINES`). Later
+Cycles keep their own cards on `LoreScreen`.
+
 What it reverses, still to rewrite:
 - §2's wardens decayed into Guardians "after an age of holding the seal" — the fall has no age
   before it.
-- The first-run lore card (`LORE_LINES`, `src/data/tips.ts`): *Sealed, it sleeps for one year. /
-  The year is up.* reads as a later Cycle's, not Cycle I's.
 - The Endbringer's name origin (`cycles.md` §7) — the people who watched it fall can name it.
 
 Open: whether the Starfall (heroes arriving as falling stars) is meant to rhyme with the fall.

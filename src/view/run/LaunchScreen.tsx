@@ -3,6 +3,7 @@ import { SealArt } from '../shared/SealArt';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { TitanRidge } from './titanArt';
 import titlePainting from '../../../art/title/fogBanks.png';
+import { NightSky } from './NightSky';
 import { launchArtUrls, preloadImages } from '../shared/preload';
 
 interface Props {
@@ -28,7 +29,7 @@ type LaunchPhase = 'rise' | 'wake' | 'reveal';
 /**
  * The cold launch (2026-09-25, per user direction, replacing the Tap to begin gate): a loading
  * screen that plays on its own. The pact's seal — the title's own, type wheel and all — spins up
- * in the title's fog banks, then it fades off the title, which has been mounted underneath for the
+ * under the title's night sky, then it fades off the title, which has been mounted underneath for the
  * last beat so the picture is already there when this goes. It waits for the webfonts too, so
  * the title never lands in a fallback face, and for the first act's paintings (shared/preload.ts).
  *
@@ -76,13 +77,8 @@ export function LaunchScreen({ onReveal, onDone }: Props) {
   return (
     // Tap-anywhere skips, as the cinematics do; there is nothing on this screen to label.
     <div className={`launch-screen is-${phase}`} onClick={() => skip.current()} aria-busy={phase !== 'reveal'}>
+      <NightSky />
       <img className="title-painting" src={titlePainting} alt="" draggable={false} />
-      <div className="title-fog" aria-hidden="true">
-        <span className="title-fog-band title-fog-a" />
-        <span className="title-fog-band title-fog-b" />
-        <span className="title-fog-band title-fog-c" />
-        <span className="title-fog-band title-fog-d" />
-      </div>
 
       <TitanRidge />
       <span className="launch-vignette" aria-hidden="true" />

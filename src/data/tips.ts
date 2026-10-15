@@ -16,15 +16,11 @@ import type { InstallPlatform } from '../run/installHint';
 import type { FightTip, ModesOpenPage, ScreenTipId, Tip } from '../run/tips';
 
 /**
- * The one piece of lore, ahead of the first draft on an account: one line a tap. Everything else
- * the run says about itself it says in its own beats (the cold open, the arrival, the seal).
+ * The one piece of lore, ahead of the first draft on an account, under the fall (TitanFallScreen,
+ * docs/lore.md "The fall"): one line a tap. Everything else the run says about itself it says in its
+ * own beats (the arrival, the seal).
  */
-export const LORE_LINES: readonly string[] = [
-  'A Titan cannot be killed.',
-  'Sealed, it sleeps for one year.',
-  'The year is up.',
-  'We must seal the pact.',
-];
+export const LORE_LINES: readonly string[] = ['One day, pure calamity fell upon our land.', 'We must seal the pact.'];
 
 function tip(id: string, title: string, ...pages: string[]): Tip {
   return { id, title, pages };

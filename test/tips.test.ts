@@ -70,13 +70,8 @@ test('tips: every inline icon token is one the view can draw', () => {
   assert.deepStrictEqual(parseTipText('[stages]'), [{ block: 'stages' }], 'the stage chart is a block token');
 });
 
-test('tips: the lore card is the four lines, the last the draft\'s verb', () => {
-  assert.deepStrictEqual(LORE_LINES, [
-    'A Titan cannot be killed.',
-    'Sealed, it sleeps for one year.',
-    'The year is up.',
-    'We must seal the pact.',
-  ]);
+test('tips: the lore card is the fall\'s line, the last the draft\'s verb', () => {
+  assert.deepStrictEqual(LORE_LINES, ['One day, pure calamity fell upon our land.', 'We must seal the pact.']);
 });
 
 // --- Mechanism ---
