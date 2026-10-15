@@ -41352,7 +41352,7 @@ img.smithy-service-art {
 }
 
 /* -- The draft in the kit. The pact's two sockets are the map's own medallion rim (stone, a gold
-   band), a bound hero standing in its light; Choose is a plank, gilt once spoken for; on the rail
+   band), a bound hero standing in its light; Choose carries a third, lit once spoken for; on the rail
    the candidate on stage wears the reticle's corners and a bound one sits in a gold-lipped slot. -- */
 .draft-socket {
   width: 48px;
@@ -41377,26 +41377,64 @@ img.smithy-service-art {
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 8px rgba(var(--type-rgb), 0.6));
 }
 
+/* Choose is a dark bar carrying an empty socket, the pact's own; binding lights it as a filled one. */
 .draft-choose,
 .draft-choose.chosen {
-  min-height: 46px;
-  padding: 0 18px;
-  border: 14px solid transparent;
-  border-image: url('../../art/ui/plank.png') 7 fill / 14px round;
+  position: relative;
+  min-height: 40px;
+  margin-left: 22px;
+  padding: 0 24px 0 34px;
+  border: 0;
+  border-top: 1px solid rgba(var(--pact-rgb), 0.7);
+  border-bottom: 1px solid rgba(var(--pact-rgb), 0.7);
   border-radius: 0;
-  background: none;
+  background:
+    linear-gradient(90deg, rgba(var(--pact-rgb), 0.35), rgba(var(--pact-rgb), 0.08) 70%, transparent),
+    rgba(10, 12, 18, 0.85);
   color: #eadbbf;
-  text-shadow: 0 2px 0 #1a0f07;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 #000;
   box-shadow: none;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
+}
+
+.draft-choose::before {
+  content: '◆';
+  position: absolute;
+  top: 50%;
+  left: -24px;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-top: -24px;
+  background: url('../../art/ui/medallion.png') 0 0 / 48px 48px no-repeat;
+  color: rgba(var(--pact-rgb), 0.85);
+  font-size: 14px;
+  text-shadow: 0 0 8px rgba(var(--pact-rgb), 0.9);
   image-rendering: pixelated;
 }
 
 .draft-choose.chosen {
-  border-image-source: url('../../art/ui/plank-gilt.png');
+  border-color: rgba(224, 166, 60, 0.9);
+  background:
+    linear-gradient(90deg, rgba(224, 166, 60, 0.5), rgba(224, 166, 60, 0.12) 75%, transparent),
+    rgba(20, 14, 6, 0.85);
   color: #fff3d6;
-  text-shadow: 0 2px 0 #1a0f07, 0 0 10px rgba(224, 166, 60, 0.55);
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(224, 166, 60, 0.4));
+  text-shadow: 0 2px 0 #000, 0 0 10px rgba(224, 166, 60, 0.7);
+}
+
+.draft-choose.chosen::before {
+  content: '✦';
+  background:
+    radial-gradient(circle, rgba(var(--pact-rgb), 0.85), rgba(var(--pact-rgb), 0.2) 45%, transparent 47%),
+    url('../../art/ui/medallion.png') 0 0 / 48px 48px no-repeat;
+  color: #fff3d6;
+  font-size: 18px;
+  filter: drop-shadow(0 0 8px rgba(var(--pact-rgb), 0.8));
 }
 
 .draft-choose:disabled {
