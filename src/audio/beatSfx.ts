@@ -117,6 +117,8 @@ export function playBeatSfx(beat: Beat): void {
       playSfx(id, damageVoicing(lead.amount + (lead.absorbed ?? 0), lead.typeMult));
       // Layered, not substituted: a crit is the same attack landing harder.
       if (lead.isCrit) playSfx('hit.crit', { gain: 1 });
+      // The arena shaking (buildBeats impactOf) has the ground's own voice under the blow.
+      if (beat.impact) playSfx('hit.quake', beat.impact === 'massive' ? { gain: 1, delay: 0.04 } : { gain: 0.6, pitch: 1.25, delay: 0.04 });
       // A Shield taking the hit rings over it; a Shield emptied by it shatters instead.
       if (lead.absorbed) {
         const broken = beat.events.some((e) => e.type === 'StatusRemoved' && e.reason === 'broken');

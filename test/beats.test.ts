@@ -123,3 +123,12 @@ test('beats: a passive answering a switch-in rides on the switch', () => {
   assert.deepStrictEqual(beats[0].summonCombatantIds, ['b1', 'b2']);
   assert.strictEqual(beats[0].bannerRiders?.length, 1);
 });
+
+test('beats: a blow shakes the arena by the share of one figure it takes, never for recoil', () => {
+  const blow = (amount: number, maxHp = 200) => beatsOf([...declared, hit('b1', amount), { type: 'HpChanged', round: 1, combatantId: 'b1', previousHp: maxHp, newHp: Math.max(0, maxHp - amount), maxHp }]);
+  assert.strictEqual(blow(90)[1].impact, undefined);
+  assert.strictEqual(blow(100)[1].impact, 'heavy');
+  assert.strictEqual(blow(160)[1].impact, 'massive');
+  const recoil = beatsOf([...declared, { ...hit('a1', 200), recoil: { damageDealt: 200, percent: 100 } }, { type: 'HpChanged', round: 1, combatantId: 'a1', previousHp: 200, newHp: 0, maxHp: 200 }]);
+  assert.ok(recoil.every((b) => b.impact === undefined), 'a hero paying its own price shakes nothing');
+});

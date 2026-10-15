@@ -111,6 +111,7 @@ const NOTES: Partial<Record<SfxId, string>> = {
   'hit.physical': 'Attack vs Defense',
   'hit.magical': 'Intelligence vs Wisdom',
   'hit.crit': 'layered on top of the base hit',
+  'hit.quake': 'under a blow that shakes the arena',
   heal: 'Healed beat',
   buff: 'StatChanged, positive',
   debuff: 'StatChanged, negative',

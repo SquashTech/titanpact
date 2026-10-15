@@ -88,6 +88,7 @@ export type SfxId =
   | 'hit.physical'
   | 'hit.magical'
   | 'hit.crit'
+  | 'hit.quake'
   | 'shield.absorb'
   | 'shield.break'
   | 'heal'
@@ -1180,6 +1181,17 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'square', freq: 1250, freqEnd: 380, gain: 0.2, attack: 0.001, decay: 0.09, filter: { type: 'lowpass', freq: 4200, freqEnd: 1200, q: 1 } },
       { wave: 'noise', gain: 0.42, attack: 0.001, decay: 0.1, delay: 0.035, filter: { type: 'highpass', freq: 1500 } },
       { wave: 'sine', freq: 96, freqEnd: 44, gain: 0.5, attack: 0.002, decay: 0.28, delay: 0.02 },
+    ],
+  },
+
+  /** Layered under a blow that shakes the arena (beatSfx): a sub drop, and the boards rattling as it settles. */
+  'hit.quake': {
+    gain: 0.5,
+    jitter: 0.03,
+    voices: [
+      { wave: 'sine', freq: 70, freqEnd: 32, gain: 0.6, attack: 0.003, hold: 0.05, decay: 0.55 },
+      { wave: 'noise', gain: 0.45, attack: 0.002, decay: 0.4, filter: { type: 'lowpass', freq: 600, freqEnd: 90, q: 1 } },
+      { wave: 'noise', gain: 0.14, attack: 0.03, decay: 0.32, delay: 0.06, filter: { type: 'bandpass', freq: 1800, freqEnd: 700, q: 3 } },
     ],
   },
 

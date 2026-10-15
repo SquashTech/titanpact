@@ -151,6 +151,8 @@ interface Props {
   warded?: PassiveId | null;
   /** What the move being targeted would do to THIS hero (forecast.ts) — drawn on its HP bar and beside the effectiveness chip. */
   forecast?: MoveForecast | null;
+  /** The enemies whose move this round would land on THIS hero (enemyIntent.ts), worn over the figure's head. */
+  aimedBy?: readonly Combatant[];
 }
 
 const BLESSING_STAR = 'M6 0 L7.3 4.7 L12 6 L7.3 7.3 L6 12 L4.7 7.3 L0 6 L4.7 4.7 Z';
@@ -332,6 +334,7 @@ export function CombatantCard({
   summoning,
   warded,
   forecast,
+  aimedBy,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const shown = (popups ?? []).slice(0, MAX_POPUPS_PER_FIGURE);
@@ -476,6 +479,15 @@ export function CombatantCard({
           className={hero.id === ENDBRINGER_ID ? 'combatant-portrait is-herald' : 'combatant-portrait'}
           pose={pose}
         />
+        {aimedBy && aimedBy.length > 0 && !combatant.fainted && (
+          <span className="aim-mark" aria-label={`Targeted by ${aimedBy.length > 1 ? 'both enemies' : 'an enemy'}`}>
+            {aimedBy.map((c) => (
+              <span key={c.combatantId} className="aim-mark-foe">
+                <HeroPortrait heroId={c.heroId} pathId={c.formPathId} className="aim-mark-portrait" />
+              </span>
+            ))}
+          </span>
+        )}
         {fx && <TypeFx key={fx.key} type={fx.type} kind={fx.kind} count={fx.count} />}
         {shown.filter((p) => p.className === 'popup-blessed').map((p) => <BlessingBreak key={p.key} />)}
       </div>

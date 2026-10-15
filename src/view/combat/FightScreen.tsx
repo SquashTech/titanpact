@@ -43,6 +43,7 @@ import { BagPanel, type BagTarget } from './BagPanel';
 import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
 import { OrderTrack, type OrderTrackEntry } from './OrderTrack';
 import { EnemyPips } from './EnemyPips';
+import { aimedAt, readEnemyIntent } from './enemyIntent';
 import { Coin } from '../shared/Coin';
 import { ConsoleGlyph } from './consoleGlyphs';
 import { companionActions, previewOrder } from '../../engine/combat/priority';
@@ -721,6 +722,7 @@ export function FightScreen({
   /** Only a React key: consecutive beats can carry identical text, and the headline must remount to replay its arrival. */
   const [beatSeq, setBeatSeq] = useState(0);
   /** Per figure, every popup the beat on screen plays there, in order (CombatantCard staggers them). */
+  const [intentOn] = useState(readEnemyIntent);
   const [popups, setPopups] = useState<Record<string, Popup[]>>({});
   /** Per figure, the element last declared against it. Not cleared per beat: the effect times itself out, so a quick tap never cuts it short. */
   const [figureFx, setFigureFx] = useState<Record<string, FigureFx>>({});
@@ -1270,6 +1272,17 @@ export function FightScreen({
     moveIdsFor: (combatantId) => {
       const roster = combat.combatants[combatantId].side === AI_SIDE ? aiRun.roster : playerRun.roster;
       const entry = entryFor(roster, combatantId);
+  /** The enemy's actions against the board as it stands — seeded, so the round resolves exactly what the intent preview shows. */
+  function planAiActions(): Action[] {
+    return aiPilot
+      ? pilotActions(combat, AI_SIDE, pilotContext, { switching: true })
+      : enemyActiveAlive.map((id) => pickAiAction(combat, id, { ...aiContext, random: derivedRandom(combat, id, 'ai') }));
+  }
+
+  const showIntent = intentOn && !versus && !resolving && !winner && !pickingLeads;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const aimed = useMemo(() => (showIntent ? aimedAt(combat, planAiActions(), moves, PLAYER_SIDE) : {}), [showIntent, combat]);
+
       return entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : allCombatants[combat.combatants[combatantId].heroId].moveIds;
     },
   };
@@ -1321,9 +1334,7 @@ export function FightScreen({
       setSentCommands({ round: combat.round, actions: playerActions });
       return;
     }
-    const aiActions: Action[] = aiPilot
-      ? pilotActions(combat, AI_SIDE, pilotContext, { switching: true })
-      : enemyActiveAlive.map((id) => pickAiAction(combat, id, { ...aiContext, random: derivedRandom(combat, id, 'ai') }));
+    const aiActions = planAiActions();
 
     const result = resolveRound(combat, [...playerActions, ...aiActions], config);
     let nextState = result.state;
@@ -1654,6 +1665,7 @@ export function FightScreen({
   }
 
   return (
+          aimedBy={aimed[id]?.map((aimer) => combat.combatants[aimer])}
     <>
       <EntranceFlood />
       {/* Full-screen tap-to-advance catcher; sits below the log overlay's z-index.
@@ -1728,6 +1740,9 @@ export function FightScreen({
             role="status"
           >
             <span className="pact-warning-mark" aria-hidden="true" />
+        }${
+          /* Two copies of each shake, alternated per beat, so a second big hit straight after the first replays it. */
+          resolving && beat?.impact ? ` impact-${beat.impact} impact-${beatSeq % 2 ? 'a' : 'b'}` : ''
             <span className="pact-warning-text">
               {pactRound >= DEFAULT_PACT_CLOCK.startRound
                 ? `The pact is due — ${Math.round(pactFractionFor(pactRound, DEFAULT_PACT_CLOCK) * 100)}% HP from everyone on the field this round`
@@ -1753,6 +1768,7 @@ export function FightScreen({
           </div>
         ) : (
           <div className="team-row enemy">
+        {resolving && beat?.impact === 'massive' && <div key={`impact-${beatSeq}`} className="impact-flash" aria-hidden="true" />}
             {renderActiveSlot(AI_SIDE, 0)}
             {renderActiveSlot(AI_SIDE, 1)}
           </div>

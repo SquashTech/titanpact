@@ -150,6 +150,8 @@ export interface BeatFlavor {
   bannerMeta?: string;
   /** Extra class for the bannerMeta span. */
   bannerMetaClass?: string;
+  /** How hard this beat lands on one figure (impactOf): the arena shakes for it, harder for 'massive'. */
+  impact?: Impact;
   /** A dramatic entrance (entrances.ts): FightScreen veils and shakes, beatSfx plays the horn, music drops rate. One flag so a future entrance opts in by id alone. */
   dramaticEntrance?: true;
   /** A scene played over the field before the arrival it announces (entrances.ts cinematicEntranceFor): FightScreen holds playback until it is done. Carries no events. */
@@ -182,6 +184,31 @@ export interface BeatFlavor {
    * by the type and wearing its glyph, for a target on the caster's own side.
    */
   fx?: readonly BeatFx[];
+}
+
+export type Impact = 'heavy' | 'massive';
+
+/** Share of one figure's max HP a single beat's blows must take for the arena to shake, and to shake hard. */
+export const HEAVY_IMPACT_SHARE = 0.5;
+export const MASSIVE_IMPACT_SHARE = 0.8;
+
+/** The heaviest share of one target's max HP the beat's blows took, Shield included; recoil and self-costs never shake anything. */
+export function impactOf(events: readonly CombatEvent[]): Impact | undefined {
+  const taken = new Map<string, number>();
+  const maxHp = new Map<string, number>();
+  for (const e of events) {
+    if (e.type === 'DamageDealt' && !e.recoil && !e.selfCost && !e.retribution) {
+      taken.set(e.targetCombatantId, (taken.get(e.targetCombatantId) ?? 0) + e.amount + (e.absorbed ?? 0));
+    } else if (e.type === 'HpChanged') {
+      maxHp.set(e.combatantId, e.maxHp);
+    }
+  }
+  let share = 0;
+  for (const [id, amount] of taken) {
+    const max = maxHp.get(id);
+    if (max) share = Math.max(share, amount / max);
+  }
+  return share >= MASSIVE_IMPACT_SHARE ? 'massive' : share >= HEAVY_IMPACT_SHARE ? 'heavy' : undefined;
 }
 
 /** What the cast strip calls the move's kind: the damage pipeline it swings on, or what a non-damage move does. */
@@ -1551,7 +1578,10 @@ export function buildBeats(
     beats[beats.length - 1].events.push(...carry);
   }
 
-  return fold(beats);
+  return fold(beats).map((beat) => {
+    const impact = impactOf(beat.events);
+    return impact ? { ...beat, impact } : beat;
+  });
 
   /**
    * One tap per consequence became, late in a run, a dozen taps a round — a hit, the status it

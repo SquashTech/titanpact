@@ -27,6 +27,7 @@ import recordsArt from '../../../art/ui/records.png';
 import { ModeDoors, ModeLight, ModeStage, PactButton, TITLE_MODES, type TitleMode } from './TitleModes';
 import { ModesOpenBeat, type ModesBeatStage } from './ModesOpenBeat';
 import { MODES_OPEN_TIP_ID, modesOpenDue } from '../../run/tips';
+import { readEnemyIntent, writeEnemyIntent } from '../combat/enemyIntent';
 
 interface Props {
   /** Lifetime figures and hero stars. Re-read by App whenever this screen is entered. */
@@ -147,6 +148,7 @@ export function TitleScreen({
   const [showOptions, setShowOptions] = useState(false);
   const [showLocations, setShowLocations] = useState(false);
   const [showDev, setShowDev] = useState(false);
+  const [intentOn, setIntentOn] = useState(readEnemyIntent);
   const [launching, setLaunching] = useState(false);
   const [falling, setFalling] = useState(false);
   const [confirmingNewRun, setConfirmingNewRun] = useState(false);
@@ -448,6 +450,15 @@ export function TitleScreen({
             </button>
             <button className="title-dev-item" onClick={() => runDev(onStartLevel4TestRun)}>
               🧪 Test: Lv4 Squad
+            </button>
+            <button
+              className="title-dev-item"
+              onClick={() => {
+                writeEnemyIntent(!intentOn);
+                setIntentOn(!intentOn);
+              }}
+            >
+              🧪 Enemy intent: {intentOn ? 'on' : 'off'}
             </button>
             <button className="title-dev-item" onClick={() => runDev(onStartStatusTestFight)}>
               🧪 Test: Status FX
