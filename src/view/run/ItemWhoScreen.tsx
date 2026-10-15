@@ -33,7 +33,7 @@ interface Props {
  */
 export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone }: Props) {
   const item = equipment[itemId];
-  const [outcome, setOutcome] = useState<{ rosterId: string; mergeId?: string } | { gold: number } | null>(null);
+  const [outcome, setOutcome] = useState<{ rosterId: string; mergeId?: string; replaced?: boolean } | { gold: number } | null>(null);
   const [burst, setBurst] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
@@ -76,7 +76,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone 
       setOutcome({ rosterId: entry.rosterId, mergeId: receipt.resultId });
     } else {
       playSfx('equip');
-      setOutcome({ rosterId: entry.rosterId });
+      setOutcome({ rosterId: entry.rosterId, replaced: receipt.kind === 'replace' });
     }
   }
 
@@ -90,7 +90,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone 
   }
 
   // The title is the whole header: no readout, so its height never changes under the roster.
-  const title = !outcome ? 'New Gear' : 'gold' in outcome ? `Sold for ${outcome.gold} gold` : mergeResult ? 'Merged' : 'Absorbed';
+  const title = !outcome ? 'New Gear' : 'gold' in outcome ? `Sold for ${outcome.gold} gold` : mergeResult ? 'Merged' : outcome.replaced ? 'Replaced' : 'Absorbed';
 
   return (
     <div className="node-screen item-who-screen" style={{ '--node-rgb': RARITY_RGB_VARS[item.rarity] } as CSSProperties}>

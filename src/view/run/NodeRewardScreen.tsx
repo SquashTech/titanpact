@@ -226,7 +226,7 @@ function EquipmentCache({ run, onRunChange, onContinue, seed }: Pick<Props, 'run
   return <CacheCounter run={run} choices={choices} onRunChange={onRunChange} onContinue={onContinue} />;
 }
 
-type CacheOutcome = { itemId: string; rosterId: string; mergeId?: string } | { itemId: string; gold: number };
+type CacheOutcome = { itemId: string; rosterId: string; mergeId?: string; replaced?: boolean } | { itemId: string; gold: number };
 
 /**
  * The opened chest as the Guild Hall's Gear counter (HallCounters.tsx): the roster's builds above, the
@@ -270,7 +270,7 @@ function CacheCounter({ run, choices, onRunChange, onContinue }: { run: RunState
       setOutcome({ itemId: item.id, rosterId: entry.rosterId, mergeId: receipt.resultId });
     } else {
       playSfx('equip');
-      setOutcome({ itemId: item.id, rosterId: entry.rosterId });
+      setOutcome({ itemId: item.id, rosterId: entry.rosterId, replaced: receipt.kind === 'replace' });
     }
   }
 
@@ -284,7 +284,7 @@ function CacheCounter({ run, choices, onRunChange, onContinue }: { run: RunState
     return 'Take';
   }
 
-  const title = !outcome ? 'Choose One' : 'gold' in outcome ? `Sold for ${outcome.gold} gold` : outcome.mergeId ? 'Merged' : 'Absorbed';
+  const title = !outcome ? 'Choose One' : 'gold' in outcome ? `Sold for ${outcome.gold} gold` : outcome.mergeId ? 'Merged' : outcome.replaced ? 'Replaced' : 'Absorbed';
 
   return (
     <div className="node-screen cache-counter-screen" style={{ '--node-rgb': NODE_TINT_GOLD } as CSSProperties}>
