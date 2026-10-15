@@ -32429,24 +32429,24 @@ button.evo-gift-card {
   }
 }
 
-/* Stat gains: the level report's cells, a tap away (FightResultOverlay StatGainsSheet). A plain
-   plank, not gilt — Continue is the way forward. */
+/* Stat gains: the level report's cells, a tap away (FightResultOverlay StatGainsSheet). A stone
+   bar, not lit — Continue is the way forward. */
 .fight-result-gains-button {
   margin-top: 2px;
-  padding: 0 6px;
+  padding: 9px 16px;
   font: inherit;
   font-size: 11px;
   font-weight: 800;
   line-height: 14px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #eadbbf;
-  text-shadow: 0 2px 0 #1a0f07;
-  border: 10px solid transparent;
-  border-image: url('../../art/ui/plank.png') 5 fill / 10px round;
+  color: #cfc3ad;
+  text-shadow: 0 2px 0 #000;
+  border: 0;
+  border-top: 1px solid rgba(150, 140, 125, 0.55);
+  border-bottom: 1px solid rgba(150, 140, 125, 0.55);
   border-radius: 0;
-  background: none;
-  image-rendering: pixelated;
+  background: rgba(10, 12, 18, 0.85);
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
@@ -34473,8 +34473,8 @@ button.evo-gift-card {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 10px 2px 0;
-  padding: 6px 16px 6px 8px;
+  margin: 0 2px;
+  padding: 4px 16px 4px 8px;
   border: 0;
   /* The six's plate, laid flat: its colour from the left, slanting off to the right. */
   background: linear-gradient(100deg, rgba(var(--hero-rgb), 0.38), rgba(var(--hero-rgb), 0.08) 45%, transparent 80%),
@@ -34485,11 +34485,18 @@ button.evo-gift-card {
   cursor: pointer;
 }
 
-.roster-companion-portrait {
+.roster-companion-seat {
+  display: block;
+  flex: none;
   width: 64px;
   height: 64px;
-  margin: -6px -6px -6px -4px;
-  flex: none;
+  margin: -10px -6px -10px -4px;
+}
+
+.roster-companion-portrait {
+  display: block;
+  width: 64px;
+  height: 64px;
 }
 
 .roster-companion-ident,
@@ -38054,26 +38061,29 @@ button.evo-gift-card {
 }
 
 .coll-tray-button {
-  padding: 0 2px;
+  padding: 9px 12px;
   font: inherit;
   font-size: 11px;
   font-weight: 800;
   line-height: 14px;
   letter-spacing: 0.04em;
-  color: #eadbbf;
-  text-shadow: 0 2px 0 #1a0f07;
-  border: 10px solid transparent;
-  border-image: url('../../art/ui/plank.png') 5 fill / 10px round;
+  color: #cfc3ad;
+  text-shadow: 0 2px 0 #000;
+  border: 0;
+  border-top: 1px solid rgba(150, 140, 125, 0.55);
+  border-bottom: 1px solid rgba(150, 140, 125, 0.55);
   border-radius: 0;
-  background: none;
-  image-rendering: pixelated;
+  background: rgba(10, 12, 18, 0.85);
   cursor: pointer;
 }
 
 .coll-tray-button.is-primary {
-  border-image-source: url('../../art/ui/plank-gilt.png');
+  border-color: rgba(224, 166, 60, 0.85);
+  background:
+    linear-gradient(90deg, rgba(224, 166, 60, 0.1), rgba(224, 166, 60, 0.38) 50%, rgba(224, 166, 60, 0.1)),
+    rgba(10, 12, 18, 0.9);
   color: #fff3d6;
-  text-shadow: 0 2px 0 #1a0f07, 0 0 8px rgba(224, 166, 60, 0.7);
+  text-shadow: 0 2px 0 #000, 0 0 8px rgba(224, 166, 60, 0.7);
 }
 
 .coll-tray-button:active:not(:disabled) {
@@ -38081,7 +38091,8 @@ button.evo-gift-card {
 }
 
 .coll-tray-button:disabled {
-  border-image-source: url('../../art/ui/plank.png');
+  border-color: rgba(150, 140, 125, 0.45);
+  background: rgba(10, 12, 18, 0.9);
   color: #a69a88;
   filter: grayscale(0.9) brightness(0.6);
   cursor: default;
@@ -40530,32 +40541,35 @@ img.smithy-service-art {
 }
 
 .options-item {
-  padding: 0 4px;
-  border: 14px solid transparent;
-  border-image: url('../../art/ui/plank.png') 7 fill / 14px round;
+  padding: 0 18px;
+  border: 0;
+  border-top: 1px solid rgba(150, 140, 125, 0.5);
+  border-bottom: 1px solid rgba(150, 140, 125, 0.5);
   border-radius: 0;
-  background: none;
+  background: rgba(10, 12, 18, 0.85);
   box-shadow: none;
   color: #eadbbf;
-  text-shadow: 0 2px 0 #1a0f07;
+  text-shadow: 0 2px 0 #000;
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
-  image-rendering: pixelated;
 }
 
 .options-item:hover {
+  border-color: rgba(150, 140, 125, 0.8);
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5)) brightness(1.12);
 }
 
 .options-item-danger {
-  border-color: transparent;
-  background: none;
+  border-color: rgba(217, 83, 79, 0.5);
+  background: rgba(10, 12, 18, 0.85);
   color: #ff9d8f;
 }
 
-/* Armed: the second tap fires, so the plank burns red at its edges. */
+/* Armed: the second tap fires, so the bar burns red. */
 .options-item-danger.armed {
-  border-color: transparent;
-  background: none;
+  border-color: rgba(217, 83, 79, 0.95);
+  background:
+    linear-gradient(90deg, rgba(217, 83, 79, 0.15), rgba(217, 83, 79, 0.45) 50%, rgba(217, 83, 79, 0.15)),
+    rgba(10, 12, 18, 0.9);
   color: #fff0ec;
   box-shadow: none;
   filter: drop-shadow(0 0 3px rgba(217, 83, 79, 0.95)) drop-shadow(0 0 10px rgba(217, 83, 79, 0.6));
@@ -40691,8 +40705,7 @@ img.smithy-service-art {
 }
 
 /* -- The map's HUD in the kit. The top bar is a stone lintel hung from the screen's edge with the
-   resources carved into it and two small planks at its ends; the Roster is a long plank the party
-   stands on, gilt and glowing when something on it wants opening. -- */
+   resources carved into it and two small stone tiles at its ends. -- */
 .map-header::before {
   content: '';
   position: absolute;
@@ -40708,14 +40721,15 @@ img.smithy-service-art {
 
 .map-header-button {
   opacity: 1;
-  background: url('../../art/ui/plank-square.png') 0 0 / 30px 30px no-repeat;
+  border: 1px solid rgba(150, 140, 125, 0.55);
   border-radius: 0;
+  background: rgba(10, 12, 18, 0.85);
   color: #eadbbf;
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.55));
-  image-rendering: pixelated;
 }
 
 .map-header-button:hover {
+  border-color: rgba(150, 140, 125, 0.85);
   color: #fff3d6;
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.55)) brightness(1.15);
 }
@@ -40735,14 +40749,8 @@ img.smithy-service-art {
 .map-footer-button:hover,
 .map-footer-button.has-unopened,
 .map-footer-button.has-unopened:hover {
-  border: 14px solid transparent;
-  border-image: url('../../art/ui/plank.png') 7 fill / 14px round;
   border-radius: 0;
-  background: none;
   box-shadow: none;
-  padding: 0 4px 0 0;
-  color: #eadbbf;
-  text-shadow: 0 2px 0 #1a0f07;
   image-rendering: pixelated;
 }
 
@@ -40756,14 +40764,11 @@ img.smithy-service-art {
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6)) brightness(1.1);
 }
 
-/* The party stands on the plank: portraits rise out of the board rather than sitting in it. */
 .map-footer-party {
   align-self: flex-end;
-  margin-top: -12px;
 }
 
 .map-footer-button.has-unopened {
-  border-image-source: url('../../art/ui/plank-gilt.png');
   color: #fff3d6;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px var(--btn-color));
 }
@@ -40844,20 +40849,18 @@ img.smithy-service-art {
     0 0 10px color-mix(in srgb, var(--stat-color) 40%, transparent);
 }
 
-/* The corner glyph (the roster peek, and anything beside it): a square plank at any size. */
+/* The corner glyph (the roster peek, and anything beside it): a dark stone tile at any size. */
 .corner-glyph-button {
-  border: 8px solid transparent;
-  border-image: url('../../art/ui/plank-square.png') 4 fill / 8px round;
+  border: 1px solid rgba(150, 140, 125, 0.55);
   border-radius: 0;
-  background: none;
+  background: rgba(10, 12, 18, 0.85);
   box-shadow: none;
   color: #eadbbf;
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
-  image-rendering: pixelated;
 }
 
 .corner-glyph-button:hover {
-  border-color: transparent;
+  border-color: rgba(150, 140, 125, 0.85);
   box-shadow: none;
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55)) brightness(1.12);
 }
@@ -40907,8 +40910,7 @@ img.smithy-service-art {
 
 /* -- A node's headline card: the signature's rounded card without its spinning frame, lit from the
    top in the offered move's type (--offer-rgb, set inline; gold where nothing sets it). The
-   either/or under it is a pair of planks — Confirm gilt with a green label, so committing still
-   reads apart from a gold Continue. -- */
+   either/or under it is the plate struck in the move's type beside a stone bar to decline. -- */
 .offer-move-highlight:not(.is-signature) {
   border-color: rgba(var(--offer-rgb, 224, 166, 60), 0.55);
   background:
@@ -40918,20 +40920,21 @@ img.smithy-service-art {
 
 .moveoffer-button,
 .moveoffer-button:not(:disabled):hover {
-  padding: 0 4px;
-  border: 14px solid transparent;
-  border-image: url('../../art/ui/plank.png') 7 fill / 14px round;
+  padding: 10px 18px;
+  border: 0;
+  border-top: 1px solid rgba(150, 140, 125, 0.55);
+  border-bottom: 1px solid rgba(150, 140, 125, 0.55);
   border-radius: 0;
-  background: none;
+  background: rgba(10, 12, 18, 0.85);
   box-shadow: none;
   color: #eadbbf;
-  text-shadow: 0 2px 0 #1a0f07;
+  text-shadow: 0 2px 0 #000;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
-  image-rendering: pixelated;
 }
 
 .moveoffer-button:not(:disabled):hover {
   transform: none;
+  border-color: rgba(150, 140, 125, 0.85);
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) brightness(1.1);
 }
 
@@ -40944,44 +40947,14 @@ img.smithy-service-art {
   color: #fff3d6;
 }
 
-.moveoffer-confirm,
-.moveoffer-confirm:not(:disabled):hover {
-  border-image-source: url('../../art/ui/plank-gilt.png');
-  color: #9ff5c2;
-  text-shadow: 0 2px 0 #06200f, 0 0 10px rgba(95, 207, 143, 0.6);
-}
-
-.moveoffer-confirm {
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(95, 207, 143, 0.45));
-}
-
-.moveoffer-confirm:disabled {
-  border-color: transparent;
-  border-image-source: url('../../art/ui/plank.png');
-  background: none;
-  color: #a69a88;
-  text-shadow: 0 2px 0 #1a0f07;
-  opacity: 1;
-  filter: grayscale(0.9) brightness(0.55);
-}
-
-/* Declining is the way back, not a second commit: a quiet outline beside the gilt plank, as Back to paths is beside Evolve. */
+/* Declining is the way back, not a second commit: the stone bar, quieter than the bar it sits beside. */
 .moveoffer-decline,
 .moveoffer-decline:not(:disabled):hover {
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-image: none;
-  border-radius: var(--radius-md);
-  background: rgba(10, 9, 8, 0.55);
-  color: var(--text-dim);
-  text-shadow: none;
-  filter: none;
-  image-rendering: auto;
+  color: #b8ad99;
 }
 
 .moveoffer-decline:not(:disabled):hover {
-  border-color: var(--border-strong);
-  color: var(--text);
+  color: #eadbbf;
 }
 
 /* -- The Roster, second look: not a plank but an alcove cut into the stone and rimmed in gold, dark
@@ -42349,16 +42322,20 @@ img.smithy-service-art {
 .roster-sheet-mount .item-box {
   --item-box-size: 32px;
   border: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: none;
   box-shadow: none;
 }
 
+/* An empty socket is the piece's own cut, sunk: the same size and bevel, dark. */
 .roster-sheet-mount .item-box.empty::before {
-  inset: 11px;
-  border-radius: 50%;
+  inset: 3px;
+  border: 0;
+  border-radius: 0;
   -webkit-mask: none;
   mask: none;
-  opacity: 0.3;
+  opacity: 1;
+  clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.35)), rgba(var(--hero-rgb, 120, 128, 142), 0.25);
 }
 
 .roster-sheet-mount .item-box .item-piece {
@@ -46063,8 +46040,8 @@ img.smithy-service-art {
 
 /* --- Event choices (EventNodeScreen, docs/wild-innates-and-events.md §3.1) ----------------- */
 
-/* A `choice` event's options and its Leave: full-width planks, stacked, each a title and what it
-   holds — the same plank as a move offer's either/or, laid out as a list. */
+/* A `choice` event's options and its Leave: full-width bars, stacked, each a title and what it
+   holds — the same bar as a move offer's either/or, laid out as a list. */
 .event-options {
   display: flex;
   flex-direction: column;
@@ -50766,7 +50743,7 @@ img.smithy-service-art {
   animation: champion-plate-in 0.6s var(--ease-out) 1.3s backwards, plate-pulse 3.6s ease-in-out 1.9s infinite;
 }
 
-/* A move offer either/or: Learn is struck in the offered move type, Decline is an outline. */
+/* A move offer either/or: Learn is struck in the offered move type, Decline is a stone bar. */
 .moveoffer-confirm,
 .moveoffer-confirm:not(:disabled):hover {
   --plate-color: rgb(var(--offer-rgb, 95, 207, 143));
@@ -50797,7 +50774,9 @@ img.smithy-service-art {
 }
 
 /* Waiting on a pick, the plate is unlit: its chamfer and a faint rim in the move's colour, dark inside, so it reads as the press that lights up rather than a grey third button. */
-.moveoffer-panel .moveoffer-confirm:disabled {
+.moveoffer-panel .moveoffer-confirm:disabled,
+.moveoffer-actions .moveoffer-confirm:disabled {
+  opacity: 1;
   clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
   border: 0;
   /* The two short layers redraw the rim along the chamfers, which the clip cuts off the inset shadow. */

@@ -1,7 +1,7 @@
 import { companionCallMoveId, companionHeroId } from '../../run/companion';
 import { CompanionDossier } from '../combat/CompanionFigure';
 import { moves } from '../../data/moves';
-import { useState, type CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import { classes } from '../../data/classes';
@@ -89,7 +89,7 @@ export function RosterManagementScreen({ run, onClose }: Props) {
             onClick={() => setCompanionOpen(true)}
             aria-label={`${rosterHeroes[companionId].name}, travelling with you — view its Call`}
           >
-            <HeroPortrait heroId={companionId} className="roster-companion-portrait" />
+            <CenteredFigure heroId={companionId} />
             <span className="roster-companion-ident">
               <span className="roster-companion-kicker">Companion</span>
               <span className="roster-companion-name">{rosterHeroes[companionId].name}</span>
@@ -122,6 +122,31 @@ export function RosterManagementScreen({ run, onClose }: Props) {
       <ItemDetailOverlay item={viewedItemId ? (equipment[viewedItemId] ?? null) : null} onClose={() => setViewedItemId(null)} />
       {companionOpen && <CompanionDossier run={run} onClose={() => setCompanionOpen(false)} />}
     </div>
+  );
+}
+
+/**
+ * The companion's figure, centred in its seat by what it draws: a spawn stands on the floor of its
+ * frame and an Early one fills little of it, so the frame's middle is not the figure's.
+ */
+function CenteredFigure({ heroId }: { heroId: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [lift, setLift] = useState(0);
+  useLayoutEffect(() => {
+    const seat = ref.current;
+    const figure = seat?.firstElementChild;
+    if (!seat || !figure) return;
+    const parts = Array.from(figure.children).filter((part) => part.tagName.toLowerCase() !== 'defs');
+    if (parts.length === 0) return;
+    const box = seat.getBoundingClientRect();
+    const rects = parts.map((part) => part.getBoundingClientRect());
+    const middle = (Math.min(...rects.map((r) => r.top)) + Math.max(...rects.map((r) => r.bottom))) / 2;
+    if (box.height > 0) setLift(((middle - (box.top + box.height / 2)) / box.height) * 100);
+  }, [heroId]);
+  return (
+    <span ref={ref} className="roster-companion-seat" style={{ translate: `0 ${-lift}%` }}>
+      <HeroPortrait heroId={heroId} className="roster-companion-portrait" />
+    </span>
   );
 }
 

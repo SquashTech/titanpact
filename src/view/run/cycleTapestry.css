@@ -294,16 +294,21 @@
 .tp-begin {
   display: block;
   width: 100%;
-  padding: 0 2px;
+  padding: 10px 12px;
   font: inherit;
   font-size: 13px;
   font-weight: 800;
   line-height: 18px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: #fff3d6;
-  text-shadow: 0 2px 0 #1a0f07, 0 0 8px rgba(224, 166, 60, 0.7);
-  border: 10px solid transparent;
-  border-image: url('../../../art/ui/plank-gilt.png') 5 fill / 10px round;
-  background: none;
-  image-rendering: pixelated;
+  text-shadow: 0 2px 0 #000, 0 0 8px rgba(224, 166, 60, 0.7);
+  border: 0;
+  border-top: 1px solid rgba(224, 166, 60, 0.85);
+  border-bottom: 1px solid rgba(224, 166, 60, 0.85);
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, rgba(224, 166, 60, 0.1), rgba(224, 166, 60, 0.38) 50%, rgba(224, 166, 60, 0.1)),
+    rgba(10, 12, 18, 0.9);
+  filter: drop-shadow(0 0 10px rgba(224, 166, 60, 0.3));
 }
