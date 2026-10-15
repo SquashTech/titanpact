@@ -70,8 +70,6 @@ export function RoadScene({
   onClick: () => void;
   children: ReactNode;
 }) {
-  const location = useAmbientLocation();
-  const scene = location ? locationBackdrop(location.id, 'arrival') : undefined;
   return (
     <button
       type="button"
@@ -80,13 +78,24 @@ export function RoadScene({
       data-sfx="none"
       aria-label={label}
     >
+      <RoadBackdrop />
+      {children}
+    </button>
+  );
+}
+
+/** The road's painting, shade and lights on their own, for a screen that stands on the road but keeps its own controls. */
+export function RoadBackdrop() {
+  const location = useAmbientLocation();
+  const scene = location ? locationBackdrop(location.id, 'arrival') : undefined;
+  return (
+    <>
       {scene ? <img src={scene} className="road-encounter-scene" alt="" draggable={false} /> : <NodeSky />}
       {scene && location && <LocationMotes kind={location.ambience} density={0.5} />}
       <span className="road-encounter-shade" aria-hidden="true" />
       {/* Over the shade: a light source is not darkened with the ground it stands on. */}
       {scene && location && <SceneLights lights={LOCATION_LIGHTS[location.id]} className="is-cover" />}
-      {children}
-    </button>
+    </>
   );
 }
 
