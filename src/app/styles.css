@@ -33929,6 +33929,31 @@ button.evo-gift-card {
   filter: drop-shadow(0 0 10px currentColor);
 }
 
+.patron-art {
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+/* In the header, the Mentor's own size and breath (.keeper-art). */
+.patron-figure .patron-art {
+  width: 96px;
+  height: 96px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  transform-origin: center bottom;
+  animation: hero-idle-breath 3.4s ease-in-out infinite;
+}
+
+.patron-capstone-card .patron-figure .patron-art {
+  width: 72px;
+  height: 72px;
+}
+
+.map-medallion-patron.patron-art {
+  width: 72%;
+  height: 72%;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+}
+
 .patron-head-trust {
   margin-top: 6px;
 }

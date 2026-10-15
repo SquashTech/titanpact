@@ -1,4 +1,4 @@
-import { PatronGlyph, TrustPips } from './patronView';
+import { PatronFigure, TrustPips } from './patronView';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
@@ -263,7 +263,7 @@ function ChoiceMedallion({
         )}
         {!art && !tile && !landmark && scoutedFace && <ElementPie types={scoutedFace} className="map-medallion-pie" />}
         {!art && !tile && !landmark && !scoutedFace && !patron && <NodeGlyph type={node.type} className="map-medallion-glyph" />}
-        {patron && <PatronGlyph patronId={patron.id} className="map-medallion-glyph" />}
+        {patron && <PatronFigure patronId={patron.id} className="map-medallion-patron" />}
         {patron && <TrustPips trust={patron.trust} className="map-medallion-trust" />}
         {!art && !tile && !landmark && scoutedFace && node.type === 'elite' && (
           <span className="map-medallion-crown" aria-hidden="true">

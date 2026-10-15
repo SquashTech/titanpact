@@ -45,6 +45,24 @@ export function patronColor(patronId: string): string {
   return PATRON_COLORS[patronId] ?? 'var(--buff)';
 }
 
+/** Each patron's figure (art/npc/patron-<id>.png), 48px. */
+const PATRON_ART: Record<string, string> = Object.fromEntries(
+  Object.entries(import.meta.glob<string>('../../../art/npc/patron-*.png', { eager: true, query: '?url', import: 'default' })).map(([path, url]) => [
+    path.slice(path.lastIndexOf('/patron-') + '/patron-'.length, -'.png'.length),
+    url,
+  ])
+);
+
+export function patronArt(patronId: string): string | undefined {
+  return PATRON_ART[patronId];
+}
+
+/** The patron as drawn: its figure, or its mark until it has one. */
+export function PatronFigure({ patronId, className }: { patronId: string; className?: string }) {
+  const art = PATRON_ART[patronId];
+  return art ? <img src={art} className={`patron-art${className ? ` ${className}` : ''}`} alt="" draggable={false} /> : <PatronGlyph patronId={patronId} className={className} />;
+}
+
 export function PatronGlyph({ patronId, className }: { patronId: string; className?: string }) {
   return (
     <svg className={`node-glyph${className ? ` ${className}` : ''}`} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">

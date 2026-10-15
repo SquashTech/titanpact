@@ -42,7 +42,7 @@ import { ItemWhoScreen } from './ItemWhoScreen';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { KeeperVoice, useKeeperLine } from './RoadEncounter';
 import { RosterPeek } from './RosterPeek';
-import { PatronGlyph, TrustPips, patronColor, stepFact } from './patronView';
+import { PatronFigure, TrustPips, patronColor, stepFact } from './patronView';
 
 interface Props {
   run: RunState;
@@ -76,7 +76,7 @@ export function PatronNodeScreen({ run, patronId, rung, stepsDone, seed, onStep,
       <span className="keeper-figure">
         <span className="rite-pool" aria-hidden="true" />
         <span className="patron-figure" style={{ color }}>
-          <PatronGlyph patronId={patronId} />
+          <PatronFigure patronId={patronId} />
         </span>
       </span>
       <span className="keeper-words">
@@ -473,7 +473,7 @@ export function PatronCapstoneScreen({ run, candidates, onChoose }: { run: RunSt
               }}
             >
               <span className="patron-figure" style={{ color: patronColor(id) }}>
-                <PatronGlyph patronId={id} />
+                <PatronFigure patronId={id} />
               </span>
               <span className="patron-capstone-title">{patron.title}</span>
               <strong>{fact.value}</strong>

@@ -156,8 +156,8 @@ Shielded; **Strategist**, a move — a priority swap, or a reset of an ally's st
   day). The Forgemistress added three rung verbs: `forge` (the Forge node's screen, free), `fittedItem`
   (a hero picked, then a piece rolled to fit them — the contract roll, `rollFittingGear`) and
   `uniqueChoice` (one of three Uniques, then the who-screen for anyone).
-- **Art is placeholder**: every patron is drawn as a mark (a sword, a staff, a bow, a hammer…) on the
-  tile and in its screen's header. Each wants a real NPC figure, and each new Unique an icon.
+- **Art** (2026-10-15): each patron is a 48px PixelLab figure (`art/npc/patron-<id>.png`, hero recipe, one roll each), drawn on its map tile, in its
+  screen's header and on the capstone card; its mark is the fallback. The seven Uniques still want icons.
 - **The sim** takes the patron it trusts most at every seat and the capstone before the last
   Guardian. Measured once, directional: 8 seats a run, nothing stranded.
 
