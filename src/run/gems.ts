@@ -36,7 +36,7 @@ export function gemAmount(gem: Gem): number {
 /** The Lapidary's forced row: this many Gems, every act. */
 export const SCRIBE_GEMS = 3;
 /** The Gem Cache, a reward-row seat. */
-export const GEM_CACHE_COUNT = 4;
+export const GEM_CACHE_COUNT = 3;
 
 /**
  * A won fight's Gem drop: `count` Gems at `chance`. The Elite and the Guardian always pay; the

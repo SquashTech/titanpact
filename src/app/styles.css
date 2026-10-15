@@ -17416,6 +17416,19 @@ button.star-shop-bundle-face {
   bottom: 214px;
 }
 
+/* The Gem Cache on the road: the Gems pop out over the stone, where the purse's count rises. */
+.road-gem-cache-gifts {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 324px;
+  pointer-events: none;
+}
+
+.road-gem-cache-gifts .road-gem-gift-grant {
+  font-size: 14px;
+}
+
 @keyframes road-lapidary-speak {
   from {
     opacity: 0;
@@ -34109,30 +34122,20 @@ button.evo-gift-card {
   height: 30px;
 }
 
-/* ===========================================================================
- * THE COMPANION (CompanionScreen.tsx, docs/titanspawn-overhaul.md §5)
- * ---------------------------------------------------------------------------
- * Three beats on one stage: the join (a small creature hops and chirps at you
- * — the cute IS the price, so it gets to be cute), the tier-step (the same
- * creature, bigger), and the loss (the Titan's eyes open behind it and it goes
- * back). The figure is the spawn's own generated glyph at 3x the battlefield's
- * scale, so an Early reads small on purpose and a Late fills the stage.
- * ======================================================================== */
-.companion-stage {
-  position: relative;
-  z-index: 1;
-  flex: none;
+/* The companion met on the road (CompanionScreen.tsx): it hops up out of the painting, chirping,
+   and settles. The spawn's own figure at 3x the battlefield's, so an Early reads small on purpose. */
+.road-companion-figure {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 220px;
-  margin: 6px 0 0;
+  filter: none;
 }
 
-.companion-platform {
+.road-companion-figure::before {
+  content: '';
   position: absolute;
   left: 50%;
-  bottom: 18px;
+  bottom: -10px;
   width: 170px;
   height: 34px;
   transform: translateX(-50%);
@@ -34140,25 +34143,21 @@ button.evo-gift-card {
   background: radial-gradient(ellipse at 50% 50%, rgba(var(--node-rgb), 0.34), rgba(var(--node-rgb), 0.08) 55%, transparent 72%);
 }
 
-.companion-figure {
+.road-companion-hop {
   position: relative;
   display: block;
-  margin-bottom: 26px;
   transform-origin: 50% 100%;
 }
 
-.companion-portrait {
+.road-companion-portrait {
   display: block;
   width: 144px;
   height: 144px;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
 }
 
-/* One hop per beat: up, a lean to the side it is facing, and a squash on the
-   landing. Restarted by remounting the figure on each hop (the key), so every
-   hop is a full hop and the last one is followed by stillness rather than a loop
-   that never lets the creature finish saying hello. */
-.companion-screen.is-dancing .companion-figure {
+/* One hop per beat: up, a lean, a squash on the landing. Restarted by remounting on each hop. */
+.road-encounter.is-dancing .road-companion-hop {
   animation: companion-hop 0.52s cubic-bezier(0.3, 0, 0.2, 1) both;
 }
 
@@ -34180,39 +34179,22 @@ button.evo-gift-card {
   }
 }
 
-/* The join and the tier-step arrive the way a recruit does. */
-.companion-screen.is-join .companion-figure,
-.companion-screen.is-grown .companion-figure {
-  animation-delay: 0s;
-}
-
-.companion-plate {
-  position: relative;
-  z-index: 1;
+.road-encounter-name.road-companion-name {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 4px;
+  gap: 8px;
 }
 
-.companion-name {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: #fff;
-  text-shadow: 0 0 14px rgba(var(--node-rgb), 0.7);
-}
-
-.companion-types {
-  display: flex;
-  gap: 4px;
+.road-companion-call {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-dim);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .companion-screen .companion-figure {
+  .road-encounter.is-dancing .road-companion-hop {
     animation: none;
-    opacity: 1;
   }
 }
 

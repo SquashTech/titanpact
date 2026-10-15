@@ -4,14 +4,13 @@ import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { companionCallMoveId } from '../../run/companion';
 import type { RunState } from '../../run/state';
-import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { TypeBadge } from '../shared/TypeBadge';
 import { prefersReducedMotion } from '../shared/reducedMotion';
+import { RoadScene } from './RoadEncounter';
 
 import type { CompanionBeat } from '../../run/companion';
-import { PlateButton } from '../shared/PlateButton';
 export type { CompanionBeat };
 
 interface Props {
@@ -24,26 +23,23 @@ interface Props {
 const HOP_MS = 520;
 const HOPS = 5;
 
-function copyFor(beat: CompanionBeat, callName: string | null): { eyebrow: string; title: string; readout: string; button: string } {
+function copyFor(beat: CompanionBeat, callName: string | null): { line: string; call: string } {
   const named = (id: string) => rosterHeroes[id]?.name ?? id;
   switch (beat.kind) {
     case 'join':
       return {
-        eyebrow: 'Something small stirs',
-        title: `The friendly ${named(beat.heroId)} wants to accompany you!`,
-        readout: `Once a fight, a hero can spend its turn to call on it${callName ? ` — ${callName}` : ''}.`,
-        button: `Welcome, ${named(beat.heroId)}`,
+        line: `The friendly ${named(beat.heroId)} wants to accompany you!`,
+        call: callName ? `Once a fight, it joins in on its own: ${callName}.` : 'Once a fight, it joins in on its own.',
       };
     case 'grown':
       return {
-        eyebrow: 'The leak grows',
-        title: `${named(beat.fromHeroId)} has grown into ${named(beat.toHeroId)}!`,
-        readout: callName ? `Same creature, next body. Its Call is now ${callName}.` : 'Same creature, next body.',
-        button: 'Onward',
+        line: `${named(beat.fromHeroId)} has grown into ${named(beat.toHeroId)}!`,
+        call: callName ? `Same creature, next body. Now it casts ${callName}.` : 'Same creature, next body.',
       };
   }
 }
 
+/** The companion met on the road: it hops up out of the painting, chirping, and the tap walks on with it. */
 export function CompanionScreen({ run, beat, onContinue }: Props) {
   const heroId = beat.kind === 'grown' ? beat.toHeroId : beat.heroId;
   const hero = rosterHeroes[heroId];
@@ -54,8 +50,7 @@ export function CompanionScreen({ run, beat, onContinue }: Props) {
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    // The dance: a few hops on a fixed beat, each one a chirp a little higher than the last, then
-    // it settles and waits — a creature that has finished saying hello.
+    // A few hops on a fixed beat, each chirp a little higher, then it settles: a creature that has finished saying hello.
     playSfx('companion.chirp');
     const timers = Array.from({ length: HOPS - 1 }, (_, i) =>
       window.setTimeout(() => {
@@ -68,38 +63,36 @@ export function CompanionScreen({ run, beat, onContinue }: Props) {
   }, []);
 
   if (!hero) return null;
-  const type = hero.types[0];
-  const settled = hop >= HOPS - 1;
+  const settled = prefersReducedMotion() || hop >= HOPS - 1;
+
+  function walkOn() {
+    playSfx('ui.confirm');
+    onContinue();
+  }
 
   return (
-    <div
-      className={`node-screen companion-screen is-${beat.kind}${!settled ? ' is-dancing' : ''}`}
-      style={{ '--node-rgb': getTypeColorRgb(type), '--type-color': getTypeColor(type) } as CSSProperties}
+    <RoadScene
+      className={`is-companion${!settled ? ' is-dancing' : ''}`}
+      label={`${hero.name}: ${copy.line} ${copy.call}`}
+      onClick={walkOn}
     >
-      <NodeSky />
-
-      <NodeHeader eyebrow={copy.eyebrow} title={copy.title} readout={copy.readout} readoutLive />
-
-      <div className="companion-stage" aria-hidden="true">
-        <span className="companion-platform" />
-        {/* Keyed on the hop so the hop animation restarts on each beat; the pose flips with it. */}
-        <span key={hop} className="companion-figure">
-          <HeroPortrait heroId={heroId} className="companion-portrait" pose={!settled && hop % 2 === 1 ? 'attack' : 'idle'} />
+      <span className="road-encounter-figure road-companion-figure" style={{ '--node-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties} aria-hidden="true">
+        {/* Keyed on the hop so each hop restarts; the pose flips with it. */}
+        <span key={hop} className="road-companion-hop">
+          <HeroPortrait heroId={heroId} className="road-companion-portrait" pose={!settled && hop % 2 === 1 ? 'attack' : 'idle'} />
         </span>
-      </div>
-
-      <div className="companion-plate">
-        <span className="companion-name">{hero.name}</span>
-        <span className="companion-types">
+      </span>
+      <span className="road-encounter-speech is-open" aria-hidden="true">
+        <span className="road-encounter-name road-companion-name">
+          {hero.name}
           {hero.types.map((t) => (
             <TypeBadge key={t} type={t} />
           ))}
         </span>
-      </div>
-
-      <div className="node-spacer" />
-
-      <PlateButton onClick={onContinue}>{copy.button}</PlateButton>
-    </div>
+        <span className="road-encounter-line">{copy.line}</span>
+        <span className="road-companion-call">{copy.call}</span>
+        {settled && <span className="road-encounter-more" />}
+      </span>
+    </RoadScene>
   );
 }

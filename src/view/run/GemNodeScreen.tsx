@@ -20,7 +20,7 @@ import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { MasteredInnateOverlay } from './MasteredInnateOverlay';
 import { RosterPeek } from './RosterPeek';
 import { useRoadGreeting } from './RoadEncounter';
-import { LapidaryOnTheRoad } from './LapidaryOnTheRoad';
+import { GemCacheOnTheRoad, LapidaryOnTheRoad } from './LapidaryOnTheRoad';
 import { SCRIBE_LINES } from '../../data/roadLines';
 import { useMasteryFlow } from './masteryFlow';
 
@@ -47,8 +47,11 @@ const BURST_MS = 700;
  * Evolution or the mastered innate a pip opens (masteryFlow.ts).
  */
 export function GemNodeScreen(props: Props) {
-  // The Lapidary hands the Gems over on the road first; a visit resumed part-way skips straight on.
-  const [line, dismiss] = useRoadGreeting(props.run, SCRIBE_LINES, props.plan.source === 'scribe' && !props.progress);
+  // The Gems are handed over on the road first — by the Lapidary, or out of the Cache; a visit
+  // resumed part-way skips straight on.
+  const onRoad = (props.plan.source === 'scribe' || props.plan.source === 'cache') && !props.progress;
+  const [line, dismiss] = useRoadGreeting(props.run, SCRIBE_LINES, onRoad);
+  if (line && props.plan.source === 'cache') return <GemCacheOnTheRoad gems={props.plan.gems} onDone={dismiss} />;
   if (line) return <LapidaryOnTheRoad line={line} gems={props.plan.gems} onDone={dismiss} />;
   return <GemPlacement {...props} />;
 }
