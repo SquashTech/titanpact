@@ -13315,7 +13315,7 @@ button.star-shop-bundle-face {
   min-height: 0;
   padding: 14px 12px;
   font-size: 15px;
-  border-radius: var(--radius-md);
+  border-radius: 0;
 }
 
 /* Why the button is inert, or what confirming will additionally cost — the
@@ -31646,7 +31646,7 @@ button.evo-gift-card {
   font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border-radius: var(--radius-sm);
+  border-radius: 0;
 }
 
 /* The level, beside the name rather than inside it. Its own small plate, in the hero's colour, so
@@ -39543,30 +39543,6 @@ img.smithy-service-art {
   font-size: 16px;
 }
 
-/* The Continue that takes Sell's place: the same bar, lit in the screen's colour rather than gold. */
-.item-who-screen > .resolve-button,
-.cache-counter-screen > .resolve-button,
-.item-who-screen > .resolve-button:hover:not(:disabled),
-.cache-counter-screen > .resolve-button:hover:not(:disabled) {
-  min-height: 68px;
-  padding: 0 20px;
-  border: 0;
-  border-top: 1px solid rgba(var(--cta-rgb), 0.85);
-  border-bottom: 1px solid rgba(var(--cta-rgb), 0.85);
-  border-image: none;
-  background:
-    linear-gradient(90deg, rgba(var(--cta-rgb), 0.1), rgba(var(--cta-rgb), 0.38) 50%, rgba(var(--cta-rgb), 0.1)),
-    rgba(10, 12, 18, 0.9);
-  color: #fff3d6;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-shadow: 0 2px 0 #000, 0 0 10px rgba(var(--cta-rgb), 0.7);
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 10px rgba(var(--cta-rgb), 0.3));
-  image-rendering: auto;
-}
-
 /* -- The Tavern's notice board: 140x124 at 2x; posters pinned across it under its roof. -- */
 .hall-board {
   position: relative;
@@ -40015,10 +39991,11 @@ img.smithy-service-art {
 
 /* ==========================================================================
    The UI kit (art/ui): the game's shared chrome in the Guild Hall's pixel idiom.
-   Stone and gold frames a window, a wooden plank is something you press (gilt
-   for the screen's one way forward), and parchment carries a note to the player.
-   All three are 9-slice border-images drawn at 2x; a frame paints over the
-   rule's own padding so no screen grows.
+   Stone and gold frames a window, a dark ruled bar is something you press (lit in
+   the screen's colour for the way forward, stone for the way back), and parchment
+   carries a note to the player. Frames and parchment are 9-slice border-images
+   drawn at 2x; a frame paints over the rule's own padding so no screen grows.
+   Wood stays only where it is a place's furniture: the Guild Hall and the Smithy.
    ========================================================================== */
 
 .detail-panel,
@@ -40044,31 +40021,36 @@ img.smithy-service-art {
   padding: 10px 4px 4px;
 }
 
+/* The way forward: a dark bar lit in the screen's colour, ruled above and below. */
 .resolve-button,
 .result-panel .result-buttons button {
-  border: 14px solid transparent;
-  border-image: url('../../art/ui/plank-gilt.png') 7 fill / 14px round;
+  padding: 0 20px;
+  border: 0;
+  border-top: 1px solid rgba(var(--cta-rgb), 0.85);
+  border-bottom: 1px solid rgba(var(--cta-rgb), 0.85);
+  border-image: none;
   border-radius: 0;
-  background: none;
+  background:
+    linear-gradient(90deg, rgba(var(--cta-rgb), 0.1), rgba(var(--cta-rgb), 0.38) 50%, rgba(var(--cta-rgb), 0.1)),
+    rgba(10, 12, 18, 0.9);
   box-shadow: none;
-  color: color-mix(in srgb, rgb(var(--cta-rgb)) 38%, #fff3d6);
-  text-shadow: 0 2px 0 #1a0f07, 0 0 10px rgba(var(--cta-rgb), 0.55);
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
-  image-rendering: pixelated;
-}
-
-.resolve-button {
-  padding: 6px 4px;
+  color: #fff3d6;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 #000, 0 0 10px rgba(var(--cta-rgb), 0.7);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 10px rgba(var(--cta-rgb), 0.3));
 }
 
 .result-panel .result-buttons button {
-  padding: 2px 10px;
+  padding: 0 10px;
 }
 
 .resolve-button:hover:not(:disabled),
 .result-panel .result-buttons button:hover:not(:last-child) {
   box-shadow: none;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 8px rgba(var(--cta-rgb), 0.55)) brightness(1.08);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 12px rgba(var(--cta-rgb), 0.5)) brightness(1.08);
 }
 
 .resolve-button:not(:disabled):active,
@@ -40076,41 +40058,49 @@ img.smithy-service-art {
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55)) brightness(0.85);
 }
 
-/* Waiting on the player: the same plank, its colour gone out of it. Still a solid
-   object, never see-through (the backdrop crossing a label reads as a fault). */
+/* Waiting on the player: the same bar, its colour gone out of it. Still solid, never
+   see-through (the backdrop crossing a label reads as a fault). */
 .resolve-button:disabled {
-  border-image-source: url('../../art/ui/plank.png');
-  background: none;
+  border-color: rgba(150, 140, 125, 0.5);
+  background:
+    linear-gradient(90deg, rgba(150, 140, 125, 0.1), rgba(150, 140, 125, 0.3) 50%, rgba(150, 140, 125, 0.1)),
+    #0c0e14;
   color: #a69a88;
-  text-shadow: 0 2px 0 #1a0f07;
+  text-shadow: 0 2px 0 #000;
   filter: grayscale(0.9) brightness(0.55) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
 }
 
-/* Plain planks: dismissing a sheet, a secondary way out, and Quit. */
+/* The way back — dismissing a sheet, a secondary way out, and Quit: the same bar gone to stone. */
 .resolve-button.roster-close-button,
 .resolve-button.sheet-close-button,
 .secondary-button,
 .result-panel .result-buttons button:last-child {
-  border: 14px solid transparent;
-  border-image: url('../../art/ui/plank.png') 7 fill / 14px round;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-top: 1px solid rgba(150, 140, 125, 0.45);
+  border-bottom: 1px solid rgba(150, 140, 125, 0.45);
+  border-image: none;
   border-radius: 0;
-  background: none;
+  background: rgba(10, 12, 18, 0.85);
   box-shadow: none;
-  color: #eadbbf;
-  text-shadow: 0 2px 0 #1a0f07;
+  color: #b8ad99;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 #000;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
-  image-rendering: pixelated;
 }
 
-.secondary-button {
-  padding: 0 4px;
-}
-
-.secondary-button:hover {
-  border-color: transparent;
-  color: #fff3d6;
+.secondary-button:hover:not(:disabled),
+.resolve-button.roster-close-button:hover,
+.resolve-button.sheet-close-button:hover,
+.result-panel .result-buttons button:last-child:hover {
+  border-color: rgba(150, 140, 125, 0.75);
+  color: #eadbbf;
   box-shadow: none;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) brightness(1.1);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
 }
 
 .secondary-button:disabled {
@@ -42351,8 +42341,8 @@ img.smithy-service-art {
 }
 
 .roster-sheet .resolve-button.roster-close-button {
-  min-height: 0;
-  padding: 4px;
+  min-height: 44px;
+  padding: 0 20px;
 }
 
 /* -- The node dossier reads further (NodeDossierOverlay): what the node does in plain words under
@@ -46332,7 +46322,7 @@ img.smithy-service-art {
 /* ---------------------------------------------------------------------------------------------
    Constructed — the teambuilder (view/run/ConstructedScreen.tsx, docs/constructed.md §9).
    Built from the kit tiles: the stone frame for a team or a card, slot / slot-lit for anything
-   chosen, planks for verbs (.secondary-button, .resolve-button).
+   chosen, the kit bars for verbs (.secondary-button, .resolve-button).
    --------------------------------------------------------------------------------------------- */
 .cx-screen {
   height: 100%;
