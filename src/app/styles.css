@@ -33954,6 +33954,109 @@ button.evo-gift-card {
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
 }
 
+/* The map's preview of a patron (NodeDossier is-patron): a person before a ledger — the figure in
+   its own light, the name large enough to remember, the title over it, one line about them. */
+.node-dossier-panel.is-patron {
+  border-top: 3px solid var(--node-color);
+  padding-top: 14px;
+}
+
+.patron-dossier-head {
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.patron-dossier-figure {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+}
+
+.patron-dossier-pool {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--node-color) 45%, transparent) 0%, transparent 70%);
+}
+
+.patron-dossier-figure .patron-art {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  transform-origin: center bottom;
+  animation: hero-idle-breath 3.4s ease-in-out infinite;
+}
+
+.patron-dossier-figure .node-glyph {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  color: var(--node-color);
+}
+
+.patron-dossier-words {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.patron-dossier-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--node-color);
+}
+
+.patron-dossier-name {
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 1;
+  color: #fff6e0;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--node-color) 70%, transparent), 0 2px 0 rgba(0, 0, 0, 0.6);
+}
+
+.patron-dossier-epithet {
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.3;
+  opacity: 0.85;
+}
+
+.patron-dossier-trust {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  --rite-color: var(--node-color);
+}
+
+.patron-dossier-student {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.patron-dossier-student-portrait {
+  width: 22px;
+  height: 22px;
+}
+
+/* The patron's own screen leads with the name too. */
+.patron-head .rite-name.patron-name {
+  font-size: 38px;
+  line-height: 1;
+}
+
 .patron-head-trust {
   margin-top: 6px;
 }
@@ -34038,6 +34141,19 @@ button.evo-gift-card {
 
 .patron-capstone-card strong {
   color: var(--rite-color);
+}
+
+.patron-capstone-title {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.patron-capstone-card .patron-capstone-name {
+  display: block;
+  font-size: 26px;
+  line-height: 1.05;
+  color: #fff6e0;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--rite-color) 70%, transparent);
 }
 
 /* --- The Guild Hall's buy sheet (EquipBuyOverlay.tsx, 2026-09-11) ----------

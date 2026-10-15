@@ -35,6 +35,8 @@ export interface PatronDefinition {
   title: string;
   /** The person, said in the voice line. */
   name: string;
+  /** One line about them, under the name: what a player remembers them by. */
+  epithet: string;
   /** A patron with a student pays every rung after the first to the hero who took the first. */
   hasStudent: boolean;
   /** Rungs 1–5, index 0 = rung 1. */

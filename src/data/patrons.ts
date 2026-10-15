@@ -278,6 +278,7 @@ export const patrons: Record<string, PatronDefinition> = {
     id: 'swordsman',
     title: 'The Swordsman',
     name: 'Ren',
+    epithet: "He has never had to draw the same blade twice.",
     hasStudent: true,
     rungs: [
       [{ kind: 'item', familyId: 'sword' }],
@@ -292,6 +293,7 @@ export const patrons: Record<string, PatronDefinition> = {
     id: 'archmage',
     title: 'The Archmage',
     name: 'Ysolde',
+    epithet: "She keeps the stars in a ledger, and the stars owe her.",
     hasStudent: true,
     rungs: [
       [{ kind: 'item', familyId: 'staff' }],
@@ -306,6 +308,7 @@ export const patrons: Record<string, PatronDefinition> = {
     id: 'huntress',
     title: 'The Huntress',
     name: 'Sable',
+    epithet: "She has not missed since she was nine years old.",
     hasStudent: true,
     rungs: [
       [{ kind: 'item', familyId: 'bow' }],
@@ -320,6 +323,7 @@ export const patrons: Record<string, PatronDefinition> = {
     id: 'priest',
     title: 'The Priest',
     name: 'Osric',
+    epithet: "He blesses the living, the dying, and the merely stubborn.",
     hasStudent: true,
     rungs: [
       [{ kind: 'passive', passiveId: 'benediction' }],
@@ -334,6 +338,7 @@ export const patrons: Record<string, PatronDefinition> = {
     id: 'hexwright',
     title: 'The Hexwright',
     name: 'Morwen',
+    epithet: "She remembers every slight, and every name that went with it.",
     hasStudent: true,
     rungs: [
       [{ kind: 'passive', passiveId: 'evilEye' }],
@@ -348,6 +353,7 @@ export const patrons: Record<string, PatronDefinition> = {
     id: 'forgemistress',
     title: 'The Forgemistress',
     name: 'Brann',
+    epithet: "Her anvil is older than the seal it helped to forge.",
     hasStudent: false,
     rungs: [
       [{ kind: 'forge' }],
@@ -362,6 +368,7 @@ export const patrons: Record<string, PatronDefinition> = {
     id: 'headmaster',
     title: 'The Headmaster',
     name: 'Aldous',
+    epithet: "He has failed every student exactly once. On purpose.",
     hasStudent: false,
     rungs: [
       [{ kind: 'class', count: 3 }],

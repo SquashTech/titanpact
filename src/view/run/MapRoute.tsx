@@ -154,6 +154,8 @@ interface RouteSegment {
 export interface PatronTile {
   id: string;
   title: string;
+  /** The go plate: the person, by name. */
+  name: string;
   /** The label under the tile: the title without its article. */
   short: string;
   color: string;
@@ -579,7 +581,7 @@ export function MapRoute({
             })}
             previewId={previewId}
             color={patronFor?.(map.nodes[previewId])?.color ?? NODE_COLORS[map.nodes[previewId].type]}
-            label={patronFor?.(map.nodes[previewId])?.title ?? NODE_LABELS[map.nodes[previewId].type]}
+            label={patronFor?.(map.nodes[previewId])?.name ?? NODE_LABELS[map.nodes[previewId].type]}
             onTap={tap}
             onBack={() => setPreviewId(null)}
             onGo={() => go(previewId)}

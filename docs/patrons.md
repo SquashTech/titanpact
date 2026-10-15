@@ -157,7 +157,9 @@ Shielded; **Strategist**, a move — a priority swap, or a reset of an ally's st
   (a hero picked, then a piece rolled to fit them — the contract roll, `rollFittingGear`) and
   `uniqueChoice` (one of three Uniques, then the who-screen for anyone).
 - **Art** (2026-10-15): each patron is a 48px PixelLab figure (`art/npc/patron-<id>.png`, hero recipe, one roll each), drawn on its map tile, in its
-  screen's header and on the capstone card; its mark is the fallback. The seven Uniques still want icons.
+  screen's header and on the capstone card; its mark is the fallback. Each Unique has a 32px icon
+  (`art/equipment/<id>.png`), and each patron an authored `epithet` — one line under its name in the
+  map preview, which leads with the person: figure, name large, title, epithet, Trust and student.
 - **The sim** takes the patron it trusts most at every seat and the capstone before the last
   Guardian. Measured once, directional: 8 seats a run, nothing stranded.
 

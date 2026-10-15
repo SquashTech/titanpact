@@ -1,4 +1,8 @@
-import { nextRungFacts, patronColor, patronOfNode } from './patronView';
+import { nextRungFacts, patronColor, patronOfNode, PatronFigure, TrustPips } from './patronView';
+import { studentOf, trustOf } from '../../run/patrons';
+import { formIdFor } from '../../run/progression';
+import { rosterHeroes } from '../../data/content';
+import { HeroPortrait } from '../shared/HeroPortrait';
 import { type CSSProperties, type ReactNode } from 'react';
 import type { MapNode } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
@@ -98,16 +102,43 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
 export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
   const patron = patronOfNode(run, node);
   const dossier = patron
-    ? { about: `${patron.name}, ${patron.title.replace(/^The /, 'the ')}.`, facts: nextRungFacts(run, patron), odds: null }
+    ? { about: null, facts: nextRungFacts(run, patron), odds: null }
     : nodeDossier(node.type, run.actNumber, run.cycle);
   const color = patron ? patronColor(patron.id) : NODE_COLORS[node.type];
   const shown = dossier.facts.filter((fact) => fact.value !== null);
   const threats = shown.filter((fact) => fact.threat);
   const rewards = shown.filter((fact) => !fact.threat);
 
+  const studentId = patron?.hasStudent ? studentOf(run, patron.id) : null;
+  const student = studentId ? run.roster.find((r) => r.rosterId === studentId) : null;
+
   return (
-    <div className="node-dossier-panel" style={{ '--node-color': color } as CSSProperties}>
-      {dossier.about && <p className="node-dossier-about">{dossier.about}</p>}
+    <div className={`node-dossier-panel${patron ? ' is-patron' : ''}`} style={{ '--node-color': color } as CSSProperties}>
+      {/* A patron is a person: the figure, the name large enough to remember, what they are and one line about them. */}
+      {patron ? (
+        <div className="patron-dossier-head">
+          <span className="patron-dossier-figure">
+            <span className="patron-dossier-pool" aria-hidden="true" />
+            <PatronFigure patronId={patron.id} />
+          </span>
+          <span className="patron-dossier-words">
+            <span className="patron-dossier-title">{patron.title}</span>
+            <strong className="patron-dossier-name">{patron.name}</strong>
+            <span className="patron-dossier-epithet">{patron.epithet}</span>
+            <span className="patron-dossier-trust">
+              <TrustPips trust={trustOf(run, patron.id)} />
+              {student && (
+                <span className="patron-dossier-student">
+                  <HeroPortrait heroId={student.heroId} pathId={formIdFor(student)} className="patron-dossier-student-portrait" />
+                  {rosterHeroes[student.heroId].name}
+                </span>
+              )}
+            </span>
+          </span>
+        </div>
+      ) : (
+        dossier.about && <p className="node-dossier-about">{dossier.about}</p>
+      )}
 
       {threats.map((fact) => (
         <div key={fact.label} className="node-dossier-threat" style={{ '--reward-color': FACT_COLORS[fact.glyph] } as CSSProperties}>

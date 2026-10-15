@@ -80,8 +80,8 @@ export function PatronNodeScreen({ run, patronId, rung, stepsDone, seed, onStep,
         </span>
       </span>
       <span className="keeper-words">
-        <span className="rite-eyebrow">{rung === CAPSTONE_TRUST ? 'Before the Last Seal' : 'By the Roadside'}</span>
-        <h2 className="rite-name">{patron.title}</h2>
+        <span className="rite-eyebrow">{rung === CAPSTONE_TRUST ? `${patron.title}, before the Last Seal` : patron.title}</span>
+        <h2 className="rite-name patron-name">{patron.name}</h2>
         <KeeperVoice line={voice} />
         <TrustPips trust={rung} className="patron-head-trust" />
       </span>
@@ -475,7 +475,9 @@ export function PatronCapstoneScreen({ run, candidates, onChoose }: { run: RunSt
               <span className="patron-figure" style={{ color: patronColor(id) }}>
                 <PatronFigure patronId={id} />
               </span>
-              <span className="patron-capstone-title">{patron.title}</span>
+              <span className="patron-capstone-title">
+                <strong className="patron-capstone-name">{patron.name}</strong> {patron.title}
+              </span>
               <strong>{fact.value}</strong>
               <span>{fact.label}</span>
             </button>
