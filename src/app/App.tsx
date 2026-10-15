@@ -55,6 +55,7 @@ import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { TrialsDevScreen } from '../view/run/TrialsDevScreen';
 import { ConstructedScreen } from '../view/run/ConstructedScreen';
 import { GauntletScreen } from '../view/run/GauntletScreen';
+import { VersusScreen } from '../view/versus/VersusScreen';
 import { ChampionScreen } from '../view/run/ChampionScreen';
 import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { victoryStars } from '../view/run/victoryStars';
@@ -202,6 +203,7 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'constructedFight',
   'gauntlet',
   'gauntletFight',
+  'versus',
   'statusTestFight',
   'champions',
   'runComplete',
@@ -1268,7 +1270,7 @@ export function App() {
   // A location with no authored track fades to silence rather than carrying the previous act's music.
   // The title is the exception — it is placeless, so it names its own track (audio/tracks.ts) — and
   // the Trials' and the Gauntlet's menus carry it on, since they are reached from it.
-  const titleTrack = screen.kind === 'title' || screen.kind === 'constructed' || screen.kind === 'gauntlet';
+  const titleTrack = screen.kind === 'title' || screen.kind === 'constructed' || screen.kind === 'gauntlet' || screen.kind === 'versus';
   // The draft, the pact forged at its end (the resumed `blessing` screen) and the seal that opens the run carry the starter track.
   const starterTrack = screen.kind === 'draft' || screen.kind === 'blessing' || (screen.kind === 'pactSeal' && playerRun.brokenSeals.length === 0);
   const trackId = titleTrack ? 'titleScreen' : starterTrack ? 'starterScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
@@ -1325,6 +1327,7 @@ export function App() {
           onOpenTrials={() => setScreen({ kind: 'trialsDev' })}
           onOpenConstructed={(unlockAll) => setScreen({ kind: 'constructed', unlockAll })}
           onOpenGauntlet={handleOpenGauntlet}
+          onOpenVersus={() => setScreen({ kind: 'versus' })}
           onVisitLocation={handleVisitLocation}
           onStartLevel4TestRun={handleStartLevel4TestRun}
           onStartAcademyTestRun={handleStartAcademyTestRun}
@@ -1423,6 +1426,7 @@ export function App() {
           notice={screen.notice ?? null}
           opponent={gauntletOpponentTeam}
           onEnter={handleEnterGauntlet}
+          onVersus={() => setScreen({ kind: 'versus' })}
           onDraft={(offerIndex) =>
             setProfile(
               updateProfile((current) =>
@@ -1452,6 +1456,8 @@ export function App() {
           exitLabel="Concede the fight"
         />
       )}
+
+      {screen.kind === 'versus' && <VersusScreen owned={Object.keys(heroPool(heroes, profile.purchases))} onClose={() => setScreen({ kind: 'title' })} />}
 
       {screen.kind === 'trialsFight' && (
         <FightScreen

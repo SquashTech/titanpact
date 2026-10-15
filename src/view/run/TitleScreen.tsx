@@ -68,6 +68,7 @@ interface Props {
   onOpenConstructed: (unlockAll?: boolean) => void;
   /** The Gauntlet (docs/gauntlet.md), offered from the same win as the Trials. */
   onOpenGauntlet: () => void;
+  onOpenVersus: () => void;
   /** Opens the chosen Location directly with a random party — App.tsx createLocationVisitRun. */
   onVisitLocation: (locationId: string) => void;
   /** TEMPORARY DEV/TEST — App.tsx createLevel4TestRun. Remove with its Dev-menu row. */
@@ -128,6 +129,7 @@ export function TitleScreen({
   onOpenTrials,
   onOpenConstructed,
   onOpenGauntlet,
+  onOpenVersus,
   onVisitLocation,
   onStartLevel4TestRun,
   onStartAcademyTestRun,
@@ -431,6 +433,9 @@ export function TitleScreen({
             </button>
             <button className="title-dev-item" onClick={() => runDev(() => onOpenConstructed(true))}>
               🧪 Constructed: every hero
+            </button>
+            <button className="title-dev-item" onClick={() => runDev(onOpenVersus)}>
+              Versus (two tabs)
             </button>
             <button className="title-dev-item" onClick={() => runDev(() => setShowLocations(true))}>
               Visit Location

@@ -205,10 +205,14 @@ code exchanged in place of the twelve picks.
 
 ## 9. Implementation, in order
 
-1. **Two tabs, no server.** Versus over `BroadcastChannel` between two browser tabs on one machine:
-   the seeded twin draft (§1), team preview and blind leads, commit-then-reveal, the per-round hash.
-   Proves lockstep and the screen with nothing deployed. `test/` gains a determinism test: one log
-   replayed twice, equal hashes.
+1. **Two tabs, no server — IN (2026-10-15).** Versus over `BroadcastChannel` between two browser
+   tabs on one machine: the seeded twin draft (§1), team preview and blind leads, commit-then-reveal,
+   simultaneous replacements, the per-round hash. `src/run/versus.ts` holds the rules,
+   `src/view/versus/` the room and its wire, and `FightScreen` takes `versus` (its side is a prop, so
+   the guest is side B on the host's board). `test/versus.test.ts` replays a pilot-flown match from
+   its log, equal hashes every round. Reached from the Gauntlet's entry (*Play a friend*) and the
+   Dev menu. Played end to end in two tabs: thirteen rounds, both boards equal to the last HP.
+   **Potions are held back** until a drink is synced (§3.4): a versus side holds none.
 2. **The relay and room codes** (§2), the build hash, the turn timer, and the door into it.
 3. **Reconnect and abandonment** (§4).
 

@@ -40,6 +40,8 @@ interface Props {
   notice: string | null;
   opponent: TeamSlot[] | null;
   onEnter: () => void;
+  /** Versus opens with the Gauntlet (docs/versus.md §1). */
+  onVersus?: () => void;
   onDraft: (offerIndex: number) => void;
   onFight: () => void;
   onRetire: () => void;
@@ -48,7 +50,7 @@ interface Props {
 }
 
 /** Seated in the footer beside the primary press, where the thumb already is. */
-function Back({ label, onClick }: { label: string; onClick: () => void }) {
+export function Back({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button type="button" className="secondary-button gx-footer-back" aria-label={label} onClick={onClick}>
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -58,7 +60,7 @@ function Back({ label, onClick }: { label: string; onClick: () => void }) {
   );
 }
 
-function Header({ title, side }: { title: string; side?: React.ReactNode }) {
+export function Header({ title, side }: { title: string; side?: React.ReactNode }) {
   return (
     <div className="cx-header">
       <span aria-hidden="true" />
@@ -76,7 +78,10 @@ function StarGlyph({ filled }: { filled: boolean }) {
   );
 }
 
-const starred = (stars: Props['stars'], slot: TeamSlot) => !!slot.pathId && (stars[slot.heroId]?.includes(slot.pathId) ?? false);
+/** Null stars: a board that pays none (versus), so nothing on it is marked. */
+type Stars = Props['stars'] | null;
+
+const starred = (stars: Stars, slot: TeamSlot) => !stars || (!!slot.pathId && (stars[slot.heroId]?.includes(slot.pathId) ?? false));
 
 /** Five win pips and two loss pips — the record is the run's whole state. */
 function Record({ wins, losses }: { wins: number; losses: number }) {
@@ -98,7 +103,7 @@ function Record({ wins, losses }: { wins: number; losses: number }) {
 
 // --- One hero, read whole ---
 
-function HeroSheet({ slot, stars, action, onBack }: { slot: TeamSlot; stars: Props['stars']; action?: React.ReactNode; onBack: () => void }) {
+export function HeroSheet({ slot, stars, action, onBack }: { slot: TeamSlot; stars: Stars; action?: React.ReactNode; onBack: () => void }) {
   const [inspect, setInspect] = useState<MoveDefinition | null>(null);
   const hero = heroes[slot.heroId];
   const entry = useMemo(() => slotEntry(constructedContent, slot), [slot]);
@@ -129,10 +134,12 @@ function HeroSheet({ slot, stars, action, onBack }: { slot: TeamSlot; stars: Pro
             {innate && <PassiveReadout passive={innate} />}
           </div>
         </div>
-        <div className={`gx-star-line${held ? ' is-held' : ''}`}>
-          <StarGlyph filled={held} />
-          {held ? 'Already starred' : 'Clear the Gauntlet with this hero to star this path'}
-        </div>
+        {stars && (
+          <div className={`gx-star-line${held ? ' is-held' : ''}`}>
+            <StarGlyph filled={held} />
+            {held ? 'Already starred' : 'Clear the Gauntlet with this hero to star this path'}
+          </div>
+        )}
         <div className="cx-stats">
           {STAT_ORDER.filter((s) => s !== 'mpRegen').map((stat) => (
             <span key={stat} className="cx-stat">
@@ -160,7 +167,7 @@ function HeroSheet({ slot, stars, action, onBack }: { slot: TeamSlot; stars: Pro
 
 // --- The draft ---
 
-function OfferCard({ slot, stars, onOpen }: { slot: TeamSlot; stars: Props['stars']; onOpen: () => void }) {
+function OfferCard({ slot, stars, onOpen }: { slot: TeamSlot; stars: Stars; onOpen: () => void }) {
   const hero = heroes[slot.heroId];
   const path = constructedPath(constructedContent.table, slot.heroId, slot.pathId);
   const held = starred(stars, slot);
@@ -207,7 +214,7 @@ function Seats({ team, onOpen }: { team: readonly TeamSlot[]; onOpen: (i: number
   );
 }
 
-function DraftView({ run, stars, onDraft, onClose }: { run: GauntletRun; stars: Props['stars']; onDraft: (offerIndex: number) => void; onClose: () => void }) {
+export function DraftView({ run, stars, onDraft, onClose }: { run: Pick<GauntletRun, 'team' | 'offer'>; stars: Stars; onDraft: (offerIndex: number) => void; onClose: () => void }) {
   const [reading, setReading] = useState<{ from: 'offer' | 'team'; index: number } | null>(null);
 
   if (reading) {
@@ -255,7 +262,7 @@ function DraftView({ run, stars, onDraft, onClose }: { run: GauntletRun; stars: 
 
 // --- Between fights ---
 
-function Strip({ slots, onOpen }: { slots: readonly TeamSlot[]; onOpen: (i: number) => void }) {
+export function Strip({ slots, onOpen }: { slots: readonly TeamSlot[]; onOpen: (i: number) => void }) {
   return (
     <span className="cx-team-strip">
       {slots.map((s, i) => (
@@ -351,7 +358,7 @@ function ResultView({ result, onDone }: { result: GauntletResult; onDone: () => 
   );
 }
 
-function EntryView({ freeEntry, balance, entered, clears, onEnter, onClose }: Pick<Props, 'freeEntry' | 'balance' | 'entered' | 'clears' | 'onEnter' | 'onClose'>) {
+function EntryView({ freeEntry, balance, entered, clears, onEnter, onVersus, onClose }: Pick<Props, 'freeEntry' | 'balance' | 'entered' | 'clears' | 'onEnter' | 'onVersus' | 'onClose'>) {
   const affordable = freeEntry || balance >= GAUNTLET_ENTRY_PRICE;
   return (
     <>
@@ -367,8 +374,13 @@ function EntryView({ freeEntry, balance, entered, clears, onEnter, onClose }: Pi
           </div>
         )}
       </div>
-      <div className="gx-footer">
+      <div className={`gx-footer${onVersus ? ' is-three' : ''}`}>
         <Back label="Back to the title" onClick={onClose} />
+        {onVersus && (
+          <button type="button" className="secondary-button" onClick={onVersus}>
+            Play a friend
+          </button>
+        )}
         <PlateButton disabled={!affordable} onClick={onEnter}>
           {freeEntry ? 'Enter — free today' : `Enter — ${GAUNTLET_ENTRY_PRICE} ★`}
         </PlateButton>

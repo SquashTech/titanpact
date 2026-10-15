@@ -1,0 +1,57 @@
+.vs-lobby {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.vs-join {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.vs-code-input {
+  width: 7.5em;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 22px;
+  letter-spacing: 0.3em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--text, #f3e9d2);
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(255, 220, 160, 0.35);
+  border-radius: 6px;
+}
+
+.vs-code {
+  font-size: 44px;
+  letter-spacing: 0.35em;
+  padding-left: 0.35em;
+  color: #f7d98b;
+}
+
+.vs-error {
+  color: #ff9c8a;
+  text-align: center;
+}
+
+.vs-waiting {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.vs-desync {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  z-index: 50;
+  padding: 8px 12px;
+  text-align: center;
+  color: #ffe0d8;
+  background: rgba(120, 20, 20, 0.85);
+  border-radius: 6px;
+  pointer-events: none;
+}

@@ -78,6 +78,8 @@ import { levelOf } from '../../run/growth';
 import { pickAiAction, type AiContext } from '../../run/ai';
 import { isGathering, isPermadeath } from '../../run/cycles';
 import { pilotActions } from '../../run/pilot';
+import { applyVersusReplacements, otherSide, placeVersusLeads, replacementsOwed, SIDES as VERSUS_SIDES, stateHash, versusActions } from '../../run/versus';
+import type { VersusChannel } from '../versus/versusChannel';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
 import { relicTeamStatusGrants } from '../../run/statusGrants';
@@ -311,9 +313,6 @@ function BannerRiders({ riders }: { riders: readonly BeatRider[] }) {
     </span>
   );
 }
-
-const PLAYER_SIDE: Side = 'A';
-const AI_SIDE: Side = 'B';
 
 /**
  * How much of a Location's authored weather the arena carries. Lower than any other surface:
@@ -557,6 +556,15 @@ interface Props {
   cinematicWin?: boolean;
   /** The Trials' enemy (docs/constructed.md §8): run/pilot.ts flies the AI side in place of run/ai.ts. */
   aiPilot?: boolean;
+  /** A friend flies the other side (docs/versus.md): `playerRun` is this client's side, `aiRun` theirs. */
+  versus?: VersusFight;
+}
+
+export interface VersusFight {
+  channel: VersusChannel;
+  seed: number;
+  /** The two clients disagree on the board after a round: a bug, said once. */
+  onDesync?: (round: number) => void;
 }
 
 export function FightScreen({
@@ -580,6 +588,7 @@ export function FightScreen({
   tips,
   cinematicWin = false,
   aiPilot = false,
+  versus,
   mvpRules,
   initialSnapshot,
   onCommandPhase,
@@ -587,6 +596,9 @@ export function FightScreen({
 }: Props) {
   /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
   const location = useAmbientLocation();
+  // A versus guest is side B: its own six sit on the bottom of its screen, on the same board the host resolves.
+  const PLAYER_SIDE: Side = versus?.channel.side ?? 'A';
+  const AI_SIDE: Side = otherSide(PLAYER_SIDE);
   // The Threshold's two fights (docs/titan-eyes.md): the Herald walks on the Titan's hide, the Eyes open in it — the arena is the Titan whatever the Location says.
   const onTheTitan = aiRun.roster.some((entry) => entry.heroId === ENDBRINGER_ID || EYE_IDS.includes(entry.heroId));
 
@@ -608,6 +620,11 @@ export function FightScreen({
   }
 
   function buildInitialState(seed: number): CombatState {
+    // Both clients must build one board: the sides in A, B order, neither carrying a run's grants.
+    if (versus) {
+      const sides = { [PLAYER_SIDE]: { squad: playerSquad, roster: playerRun.roster }, [AI_SIDE]: { squad: aiSquad, roster: aiRun.roster } };
+      return buildCombatState(seed, allCombatants, equipment, VERSUS_SIDES.map((side) => ({ side, ...sides[side] })), passives);
+    }
     return buildCombatState(
       seed,
       allCombatants,
@@ -630,7 +647,7 @@ export function FightScreen({
   }
 
   // A resumed fight has no opening: its board is the snapshot, and the intro already played.
-  const [opening] = useState(() => (initialSnapshot ? null : openBattle(Math.floor(Math.random() * 2 ** 31))));
+  const [opening] = useState(() => (initialSnapshot ? null : openBattle(versus ? versus.seed : Math.floor(Math.random() * 2 ** 31))));
   const [combat, setCombat] = useState<CombatState>(() => initialSnapshot?.state ?? opening!.start);
   /** Empty at open: the opening events reach the log through the intro's beats as they reveal, like any round's. */
   const [log, setLog] = useState<LogLine[]>([]);
@@ -655,6 +672,15 @@ export function FightScreen({
   /** A run fight opens with the player's slots empty (run/squad.ts openingSquad): the leads are picked once the enemy's are on the field. */
   const [leadsPending, setLeadsPending] = useState(() => initialSnapshot?.leadsPending ?? playerSquad.activeIds.every((id) => id === null));
   const [leadPicks, setLeadPicks] = useState<string[]>([]);
+  /**
+   * Versus (docs/versus.md §3): what this side has sent and is waiting on the other side for —
+   * its leads, a round's commands, or the replacements a round's knockouts owe. Applied only once
+   * both sides' are in, in A-then-B order, so the two boards never part.
+   */
+  const [sentLeads, setSentLeads] = useState<string[] | null>(null);
+  const [sentCommands, setSentCommands] = useState<{ round: number; actions: Action[] } | null>(null);
+  const [replacementPicks, setReplacementPicks] = useState<string[]>([]);
+  const [inboxTick, setInboxTick] = useState(0);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   /** Second stage of a switchesUserOut declaration: target chosen, now picking who comes in. Commits a move, not a switch. */
@@ -725,7 +751,9 @@ export function FightScreen({
   useEffect(() => {
     if (!opening) return;
     startBeatPlayback(opening.start, opening.events, opening.final, [
-      openingBeat(opening.start, allCombatants, AI_SIDE, location),
+      versus
+        ? { ...openingBeat(opening.start, allCombatants, AI_SIDE, location), bannerRoster: [{ name: 'Your friend', colors: [] }] }
+        : openingBeat(opening.start, allCombatants, AI_SIDE, location),
     ]);
   }, []);
 
@@ -789,14 +817,33 @@ export function FightScreen({
 
   // A player slot fainted and needs a bench replacement before the next round can be declared.
   // Not while the leads are still to be picked: both slots are empty then, and that is the lead pick's to fill.
+  // Versus picks its replacements without landing them: the slots still owed, and the bench not yet chosen from.
+  const versusOwed = versus && !leadsPending && !resolving ? { mine: replacementsOwed(combat, PLAYER_SIDE), theirs: replacementsOwed(combat, AI_SIDE) } : { mine: 0, theirs: 0 };
+  const replacementBench = versus ? playerBench.filter((id) => !replacementPicks.includes(id)) : playerBench;
   const openReplacementSlots = leadsPending
     ? []
-    : ([0, 1] as const).filter((slot) => combat.active[PLAYER_SIDE][slot] === null && playerBench.length > 0);
-  const pickingLeads = leadsPending && !resolving;
+    : versus
+      ? ([0, 1] as const).filter((slot) => combat.active[PLAYER_SIDE][slot] === null).slice(0, Math.max(0, versusOwed.mine - replacementPicks.length))
+      : ([0, 1] as const).filter((slot) => combat.active[PLAYER_SIDE][slot] === null && playerBench.length > 0);
+  const pickingLeads = leadsPending && !resolving && !sentLeads;
   const effectiveLeadPicks = playerBench.length <= LEAD_COUNT ? playerBench : leadPicks.filter((id) => playerBench.includes(id));
   const leadsReady = playerBench.length > 0 && effectiveLeadPicks.length === Math.min(LEAD_COUNT, playerBench.length);
 
-  const canAct = !resolving && openReplacementSlots.length === 0 && playerActiveAlive.length > 0;
+  /** What this side waits on the friend for, said where the console would be; null when it is this side's move. */
+  const friendWait: string | null =
+    !versus || resolving || openReplacementSlots.length > 0
+      ? null
+      : leadsPending
+        ? sentLeads
+          ? 'Waiting for your friend to take the field…'
+          : null
+        : versusOwed.mine + versusOwed.theirs > 0
+          ? 'Waiting for your friend to choose a replacement…'
+          : sentCommands?.round === combat.round
+            ? 'Waiting for your friend’s orders…'
+            : null;
+
+  const canAct = !resolving && openReplacementSlots.length === 0 && playerActiveAlive.length > 0 && friendWait === null;
   /** The VS card is up: it takes a tap and nothing else — no hold, no latched key. */
   const awaitingEngagementTap = resolving && beat?.engagement === true;
   /** A scene is playing over the field (buildBeats `cinematic`): playback waits on its own done, and its own tap skips it. */
@@ -850,11 +897,14 @@ export function FightScreen({
 
   // What is left in the Bag this fight, usable while commanding: the potions on an active hero,
   // the Revive on a fallen one (engine/combat/consumables.ts).
-  const flaskPurse: Record<FightConsumableKind, number> = {
-    hpPotion: playerRun.consumables.hpPotion - usedConsumables.hpPotion,
-    mpPotion: playerRun.consumables.mpPotion - usedConsumables.mpPotion,
-    revive: playerRun.consumables.revive - usedConsumables.revive,
-  };
+  // Versus holds no potions until a drink is synced between the two boards (docs/versus.md §3).
+  const flaskPurse: Record<FightConsumableKind, number> = versus
+    ? { hpPotion: 0, mpPotion: 0, revive: 0 }
+    : {
+        hpPotion: playerRun.consumables.hpPotion - usedConsumables.hpPotion,
+        mpPotion: playerRun.consumables.mpPotion - usedConsumables.mpPotion,
+        revive: playerRun.consumables.revive - usedConsumables.revive,
+      };
   const maxHpOf = (id: string) => getMaxHp(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
   const maxManaOf = (id: string) => getMaxMana(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
   const flaskRefusal = (id: string, kind: FightConsumableKind) => consumableRefusal(combat, id, kind, maxHpOf, maxManaOf);
@@ -1116,6 +1166,13 @@ export function FightScreen({
   }
 
   function handleForcedReplacement(slot: 0 | 1, benchedCombatantId: string) {
+    if (versus) {
+      const picks = [...replacementPicks, benchedCombatantId];
+      setReplacementPicks(picks);
+      setReplacementPick(null);
+      if (picks.length >= versusOwed.mine) versus.channel.send({ kind: 'replace', round: combat.round, ids: picks });
+      return;
+    }
     const result = applyForcedReplacement(combat, combat.round, PLAYER_SIDE, slot, benchedCombatantId, statuses);
     // A replacement is still an arrival — same entry hook a declared switch runs, applied here because forced replacement resolves outside a round.
     const entry = resolvePassiveReactions(result.state, combat.round, result.events, allCombatants, statuses, passives, fieldEffects);
@@ -1149,6 +1206,12 @@ export function FightScreen({
    * did, then the first command phase. Nothing between — the pick was the beat.
    */
   function handleConfirmLeads() {
+    if (versus) {
+      versus.channel.send({ kind: 'leads', ids: effectiveLeadPicks });
+      setSentLeads(effectiveLeadPicks);
+      setLeadPicks([]);
+      return;
+    }
     const placed = placeLeads(combat, PLAYER_SIDE, effectiveLeadPicks);
     const entry = resolveBattleStartEntries(placed, combat.round, allCombatants, statuses, passives, fieldEffects, [PLAYER_SIDE]);
     setLeadsPending(false);
@@ -1234,6 +1297,11 @@ export function FightScreen({
         switchToCombatantId: p.switchToCombatantId,
       };
     });
+    if (versus) {
+      versus.channel.send({ kind: 'commands', round: combat.round, actions: playerActions });
+      setSentCommands({ round: combat.round, actions: playerActions });
+      return;
+    }
     const aiActions: Action[] = aiPilot
       ? pilotActions(combat, AI_SIDE, pilotContext, { switching: true })
       : enemyActiveAlive.map((id) => pickAiAction(combat, id, { ...aiContext, random: derivedRandom(combat, id, 'ai') }));
@@ -1258,6 +1326,67 @@ export function FightScreen({
 
     startBeatPlayback(combat, events, nextState);
   }
+
+  useEffect(() => (versus ? versus.channel.subscribe(() => setInboxTick((n) => n + 1)) : undefined), [versus]);
+
+  /** Our hash for each round resolved, and the rounds already compared against the friend's. */
+  const versusHashes = useRef<{ mine: Map<number, number>; checked: Set<number>; parted: boolean }>({ mine: new Map(), checked: new Set(), parted: false });
+
+  // The lockstep: whatever both sides have now sent is applied, A's choices before B's on both screens.
+  useEffect(() => {
+    if (!versus) return;
+    const inbox = versus.channel.inbox();
+    const hashes = versusHashes.current;
+    for (const msg of inbox) {
+      if (msg.kind !== 'hash' || hashes.checked.has(msg.round) || !hashes.mine.has(msg.round)) continue;
+      hashes.checked.add(msg.round);
+      if (hashes.mine.get(msg.round) !== msg.hash && !hashes.parted) {
+        hashes.parted = true;
+        versus.onDesync?.(msg.round);
+      }
+    }
+    if (resolving) return;
+    const defs = { heroes: allCombatants, moves, statuses, passives, fieldEffects };
+    const bySide = <T,>(mine: T, theirs: T) => ({ [PLAYER_SIDE]: mine, [AI_SIDE]: theirs }) as Record<Side, T>;
+
+    if (leadsPending) {
+      const theirs = inbox.find((m) => m.kind === 'leads');
+      if (!sentLeads || theirs?.kind !== 'leads') return;
+      const led = placeVersusLeads(combat, bySide(sentLeads, theirs.ids), defs);
+      setLeadsPending(false);
+      setSentLeads(null);
+      summon([...sentLeads, ...theirs.ids]);
+      playSfx('switchIn');
+      startBeatPlayback(led.placed, led.events, led.state);
+      return;
+    }
+    if (winner) return;
+
+    if (versusOwed.mine + versusOwed.theirs > 0) {
+      if (replacementPicks.length < versusOwed.mine) return;
+      const theirs = inbox.find((m) => m.kind === 'replace' && m.round === combat.round);
+      if (versusOwed.theirs > 0 && theirs?.kind !== 'replace') return;
+      const theirIds = theirs?.kind === 'replace' ? theirs.ids : [];
+      const replaced = applyVersusReplacements(combat, bySide(replacementPicks, theirIds), defs);
+      setCombat(replaced.state);
+      mvpTally.current = tallyMvpEvents(mvpTally.current, replaced.events, replaced.state, PLAYER_SIDE, statuses);
+      appendLog(formatEvents(replaced.events, allCombatants, replaced.state.combatants, moves));
+      setReplacementPicks([]);
+      summon([...replacementPicks, ...theirIds]);
+      return;
+    }
+
+    if (sentCommands?.round !== combat.round) return;
+    const theirs = inbox.find((m) => m.kind === 'commands' && m.round === combat.round);
+    if (theirs?.kind !== 'commands') return;
+    const result = resolveRound(combat, versusActions(bySide(sentCommands.actions, theirs.actions)), config);
+    const hash = stateHash(result.state);
+    hashes.mine.set(combat.round, hash);
+    versus.channel.send({ kind: 'hash', round: combat.round, hash });
+    setSentCommands(null);
+    startBeatPlayback(combat, result.events, result.state);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inboxTick, combat, resolving, leadsPending, sentLeads, sentCommands, replacementPicks]);
 
   // Loads the resolved round's beats and reveals the first; `finalState` is applied verbatim once
   // the queue empties, so playback can never drift from the authoritative result.
@@ -1490,7 +1619,7 @@ export function FightScreen({
         </div>
       );
     }
-    if (side === PLAYER_SIDE && bench.length > 0 && !resolving) {
+    if (side === PLAYER_SIDE && bench.length > 0 && !resolving && openReplacementSlots.length > 0) {
       return (
         <div className="combatant-card empty-slot" key={`empty-${side}-${slot}`}>
           <span className="fainted-tag">KO</span>
@@ -1793,8 +1922,8 @@ export function FightScreen({
                 </div>
                 {/* The finale benches four: at 2x the figures could not share the row, so past two
                     candidates the cards go to 1x and the row stays one row. */}
-                <div className={`bench-row${playerBench.length > 2 ? ' is-crowded' : ''}`}>
-                  {playerBench.map((benchId) => {
+                <div className={`bench-row${replacementBench.length > 2 ? ' is-crowded' : ''}`}>
+                  {replacementBench.map((benchId) => {
                     const benchCombatant = combat.combatants[benchId];
                     const benchHero = allCombatants[benchCombatant.heroId];
                     return (
@@ -1824,8 +1953,16 @@ export function FightScreen({
               </div>
             );
           })()}
+        {friendWait && (
+          <div className="action-panel target-panel">
+            <div className="target-panel-header">
+              <span className="target-panel-title">{friendWait}</span>
+            </div>
+          </div>
+        )}
         {!resolving &&
           openReplacementSlots.length === 0 &&
+          friendWait === null &&
           playerActiveAlive.length > 0 &&
           (() => {
             const id = actingId!;

@@ -87,6 +87,7 @@ import './evolutionPassives.test';
 import './mvp.test';
 import './constructed.test';
 import './gauntlet.test';
+import './versus.test';
 import { run } from './harness';
 
 run();
