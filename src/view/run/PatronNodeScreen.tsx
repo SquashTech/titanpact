@@ -12,6 +12,7 @@ import { levelOf } from '../../run/growth';
 import { MOVE_CAP, formIdFor, grantMove } from '../../run/progression';
 import {
   CAPSTONE_TRUST,
+  fittedRarity,
   forgeUnique,
   heldFamilyIndex,
   liftHeldItem,
@@ -30,6 +31,11 @@ import { NodeMotes } from '../shared/NodeStage';
 import { PassiveReadout } from '../shared/passiveIcons';
 import { PlateButton } from '../shared/PlateButton';
 import { AcademyNodeScreen } from './AcademyNodeScreen';
+import { ForgeNodeScreen } from './ForgeNodeScreen';
+import { rollFittingGear } from '../../data/equipment';
+import { RARITY_ORDER, type EquipmentRarity } from '../../run/equipment';
+import { rosterEntryTypes } from '../../run/progression';
+import { seededRandom } from '../shared/seededRandom';
 import { EquipChoiceCard } from './EquipChoiceCard';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { ItemWhoScreen } from './ItemWhoScreen';
@@ -153,6 +159,8 @@ function PatronStepView({ run, patronId, step, seed, keeper, style, onDone }: St
   const [landed, setLanded] = useState<RunState | null>(null);
   const [reveal, setReveal] = useState<{ rosterId: string; what: 'item' | 'move' | 'passive'; id: string } | null>(null);
   const [overflow, setOverflow] = useState<string | null>(null);
+  const [fitted, setFitted] = useState<{ rosterId: string; itemId: string } | null>(null);
+  const [chosenUnique, setChosenUnique] = useState<string | null>(null);
   const markStudent = (r: RunState, rosterId: string) => (patron.hasStudent && !studentOf(r, patronId) ? setStudent(r, patronId, rosterId) : r);
   // A move or passive for a student who already has one asks nothing: it is taught on arrival.
   const autoTeach = !!student && (step.kind === 'move' || step.kind === 'passive');
@@ -211,6 +219,74 @@ function PatronStepView({ run, patronId, step, seed, keeper, style, onDone }: St
         >
           Continue
         </button>
+      </div>
+    );
+  }
+
+  if (step.kind === 'forge') {
+    return <ForgeNodeScreen run={landed ?? run} onRunChange={setLanded} onContinue={() => onDone(landed ?? run)} />;
+  }
+
+  // A fitted piece: the hero first, then the piece rolled for them, through the who-screen.
+  if (step.kind === 'fittedItem') {
+    if (fitted) {
+      return (
+        <ItemWhoScreen
+          run={landed ?? run}
+          itemId={fitted.itemId}
+          title={patron.title}
+          onlyRosterIds={[fitted.rosterId]}
+          onRunChange={setLanded}
+          onDone={() => onDone(landed ?? run)}
+        />
+      );
+    }
+    return (
+      <WhoLearns
+        run={run}
+        step={step}
+        only={null}
+        style={style}
+        keeper={keeper}
+        onPick={(rosterId) => {
+          const entry = run.roster.find((r) => r.rosterId === rosterId)!;
+          const hero = rosterHeroes[entry.heroId];
+          const rarity = fittedRarity(run.actNumber, step.tiersAhead);
+          const weights = Object.fromEntries(RARITY_ORDER.map((r) => [r, r === rarity ? 1 : 0])) as Record<EquipmentRarity, number>;
+          const item = rollFittingGear(hero.baseStats, rosterEntryTypes(hero, entry), weights, seededRandom(seed));
+          if (item) setFitted({ rosterId, itemId: item.id });
+          else onDone(run);
+        }}
+      />
+    );
+  }
+
+  // One of the patron's Uniques, then the who-screen for anyone.
+  if (step.kind === 'uniqueChoice') {
+    if (chosenUnique) {
+      return <ItemWhoScreen run={landed ?? run} itemId={chosenUnique} title={patron.title} onRunChange={setLanded} onDone={() => onDone(landed ?? run)} />;
+    }
+    return (
+      <div className="node-screen rite-screen patron-screen" style={style}>
+        <span className="node-sky" aria-hidden="true" />
+        <NodeMotes count={12} />
+        <RosterPeek run={run} />
+        {keeper}
+        <div className="patron-uniques">
+          {step.uniqueIds.map((id) => (
+            <button
+              key={id}
+              type="button"
+              className="patron-unique"
+              onClick={() => {
+                playSfx('ui.pick');
+                setChosenUnique(id);
+              }}
+            >
+              <EquipChoiceCard item={equipment[id]} revealDelayMs={0} labelled onInspect={() => {}} />
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
@@ -309,7 +385,7 @@ function WhoLearns({
               ariaLabel={`${hero.name}, level ${levelOf(entry)}`}
               detail={typed ? <span className="tutor-fit">{typed.name}</span> : undefined}
               ctaClassName="is-accent"
-              cta={open ? (only ? 'Student' : 'Teach') : 'Not the student'}
+              cta={open ? (step.kind === 'fittedItem' ? 'Fit' : 'Teach') : 'Not the student'}
             />
           );
         })}

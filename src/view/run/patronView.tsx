@@ -4,10 +4,11 @@ import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import { patrons } from '../../data/patrons';
 import { PATRON_ROWS, type MapNode } from '../../run/map';
-import { CAPSTONE_TRUST, patronAtSeat, patronItemId, seatIndexFor, trustOf, type PatronDefinition, type PatronStep } from '../../run/patrons';
+import { CAPSTONE_TRUST, fittedRarity, patronAtSeat, patronItemId, seatIndexFor, trustOf, type PatronDefinition, type PatronStep } from '../../run/patrons';
 import type { RunState } from '../../run/state';
 import { RARITY_LABELS } from '../shared/EquipmentBox';
 import { EQUIP_FORM_PATHS } from '../shared/equipmentIcons';
+import { STAT_PATHS } from '../shared/statIcons';
 import type { NodeFact } from './nodeFacts';
 
 /** The mortarboard the Academy wore (nodeIcons academyReward). */
@@ -24,12 +25,20 @@ const PATRON_PATHS: Record<string, ReactNode> = {
   swordsman: EQUIP_FORM_PATHS.sword,
   archmage: EQUIP_FORM_PATHS.staff,
   headmaster: MORTARBOARD,
+  huntress: EQUIP_FORM_PATHS.bow,
+  priest: STAT_PATHS.wisdom,
+  hexwright: EQUIP_FORM_PATHS.sigil,
+  forgemistress: EQUIP_FORM_PATHS.hammer,
 };
 
 export const PATRON_COLORS: Record<string, string> = {
   swordsman: '#c7ccd6',
   archmage: '#9a7cff',
   headmaster: '#b8c95a',
+  huntress: '#7fbf6a',
+  priest: '#ffe08a',
+  hexwright: '#c46adf',
+  forgemistress: '#ff8a2a',
 };
 
 export function patronColor(patronId: string): string {
@@ -82,6 +91,12 @@ export function stepFact(step: PatronStep, actNumber: number): NodeFact {
       return { glyph: 'class', label: 'Class', value: step.pick ? `Pick of ${step.count}` : `1 of ${step.count}`, who: 'one' };
     case 'masterClass':
       return { glyph: 'class', label: 'Master Class', value: `1 of ${step.classIds.length}`, who: 'one' };
+    case 'forge':
+      return { glyph: 'anvil', label: 'Forge', value: 'Lift + bind', who: 'one' };
+    case 'fittedItem':
+      return { glyph: 'item', label: 'Fitted piece', value: RARITY_LABELS[fittedRarity(actNumber, step.tiersAhead)], who: 'one' };
+    case 'uniqueChoice':
+      return { glyph: 'item', label: 'Unique', value: `1 of ${step.uniqueIds.length}`, who: 'one' };
   }
 }
 

@@ -33832,6 +33832,20 @@ button.evo-gift-card {
   opacity: 0.75;
 }
 
+.patron-uniques {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px 16px 0;
+}
+
+.patron-unique {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
 .patron-capstone-list {
   display: flex;
   flex-direction: column;

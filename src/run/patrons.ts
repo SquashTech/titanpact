@@ -21,7 +21,13 @@ export type PatronStep =
   /** A Class for a hero without one: `count` offered, rolled, or the whole list when `pick`. */
   | { kind: 'class'; count: number; pick?: boolean }
   /** A Master Class, replacing a Class a hero holds: one of `classIds`. */
-  | { kind: 'masterClass'; classIds: readonly string[] };
+  | { kind: 'masterClass'; classIds: readonly string[] }
+  /** The Forge's lift and bind, free, on one worn piece (runProgress.ts forgeItem). */
+  | { kind: 'forge' }
+  /** A piece rolled to fit a hero the player picks, `tiersAhead` past the act's patron tier and inside its window. */
+  | { kind: 'fittedItem'; tiersAhead: number }
+  /** One of these Uniques, to any hero. */
+  | { kind: 'uniqueChoice'; uniqueIds: readonly string[] };
 
 export interface PatronDefinition {
   id: string;
@@ -192,6 +198,17 @@ export function capstoneCandidates(run: Pick<RunState, 'patrons'>, patrons: Reco
 export function patronItemId(familyId: EquipmentFamilyId, actNumber: number): string {
   const rarity = PATRON_ITEM_RARITY_BY_ACT[Math.min(Math.max(actNumber, 1), PATRON_ITEM_RARITY_BY_ACT.length) - 1];
   return equipmentIdFor(familyId, rarity);
+}
+
+/** The tier a `fittedItem` step rolls at: the act's patron tier, `tiersAhead` further, never past the act's window. */
+export function fittedRarity(actNumber: number, tiersAhead: number): EquipmentRarity {
+  let rarity = PATRON_ITEM_RARITY_BY_ACT[Math.min(Math.max(actNumber, 1), PATRON_ITEM_RARITY_BY_ACT.length) - 1];
+  for (let i = 0; i < tiersAhead; i++) {
+    const up = nextRarity(rarity);
+    if (!up || !actAllowsRarity(actNumber, up)) break;
+    rarity = up;
+  }
+  return rarity;
 }
 
 /** The socket holding the family on `rosterId`, or -1. */

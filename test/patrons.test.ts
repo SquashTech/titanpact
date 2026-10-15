@@ -9,6 +9,7 @@ import { rollClassOffers } from '../src/run/classes';
 import { generateMap, PATRON_ROWS } from '../src/run/map';
 import {
   capstoneCandidates,
+  fittedRarity,
   createPatronState,
   drawSeatOffers,
   forgeUnique,
@@ -116,6 +117,7 @@ test('patrons: content — five rungs each, every id real, nothing leaks into an
       if (step.kind === 'move') assert.ok(patronMoves[step.moveId], `${patron.id}: ${step.moveId}`);
       if (step.kind === 'passive') assert.ok(patronPassives[step.passiveId], `${patron.id}: ${step.passiveId}`);
       if (step.kind === 'masterClass') for (const id of step.classIds) assert.ok(classes[id]?.master, `${patron.id}: ${id}`);
+      if (step.kind === 'uniqueChoice') for (const id of step.uniqueIds) assert.ok(patronUniques[id] && equipment[id], `${patron.id}: ${id}`);
     }
   }
   for (const id of Object.keys(patronUniques)) assert.ok(!UNIQUE_EQUIPMENT.some((u) => u.id === id), `${id} is a Guardian drop`);
@@ -127,4 +129,12 @@ test('patrons: content — five rungs each, every id real, nothing leaks into an
   let i = 0;
   const rng = () => ((i = (i * 9301 + 49297) % 233280) / 233280);
   for (let n = 0; n < 200; n++) assert.ok(rollClassOffers(classes, rng, 5).every((c) => !c.master));
+});
+
+test('patrons: seven of them, and a fitted piece never passes the act window', () => {
+  assert.deepStrictEqual(Object.keys(patrons).sort(), ['archmage', 'forgemistress', 'headmaster', 'hexwright', 'huntress', 'priest', 'swordsman']);
+  assert.strictEqual(fittedRarity(1, 0), 'rare');
+  assert.strictEqual(fittedRarity(1, 1), 'epic');
+  assert.strictEqual(fittedRarity(1, 3), 'epic', 'Act 1 stops at Epic');
+  assert.strictEqual(fittedRarity(4, 1), 'mythic');
 });

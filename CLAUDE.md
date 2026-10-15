@@ -319,8 +319,8 @@ don't silently override it.
 > **The AI is the escalation**: Classic's AI until three wins, the Trials' pilot after — measured 22% clear
 > at the skilled sim pilot.
 
-> **Patrons are PHASE 1 BUILT: `docs/patrons.md`** (2026-10-13, per user direction; built 2026-10-15 — the
-> Swordsman, the Archmage and the Headmaster; the Mentor and the Tutor roll in the reward rows). The Mentor's
+> **Patrons are BUILT: `docs/patrons.md`** (2026-10-13, per user direction; built 2026-10-15 — all
+> seven, placeholder art; the Mentor and the Tutor roll in the reward rows). The Mentor's
 > and the Academy's rows become **patron seats**, pick 1 of 2; every NPC is a patron with a **Trust**
 > ladder of five rungs, its odds rising with Trust. The first seat's pick is **promised** three more
 > hidden appearances; Trust tops at 4 on the road, and **one capstone a run** (rung 5) lands right

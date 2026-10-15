@@ -28,8 +28,11 @@ import { GEM_CACHE_COUNT, SCRIBE_GEMS, buyShelfGem, canBuyShelfGem, placeGem, ro
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, SEAL_ACTS, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { patrons } from '../../src/data/patrons';
+import { rollFittingGear } from '../../src/data/equipment';
+import { RARITY_ORDER, type EquipmentRarity } from '../../src/run/equipment';
+import { rosterEntryTypes } from '../../src/run/progression';
 import { PATRON_ROWS } from '../../src/run/map';
-import { capstoneCandidates, forgeUnique, heldFamilyIndex, liftHeldItem, meetPatron, patronAtSeat, patronItemId, seatIndexFor, setStudent, studentOf, trustOf, type PatronStep } from '../../src/run/patrons';
+import { capstoneCandidates, fittedRarity, forgeUnique, heldFamilyIndex, liftHeldItem, meetPatron, patronAtSeat, patronItemId, seatIndexFor, setStudent, studentOf, trustOf, type PatronStep } from '../../src/run/patrons';
 import { blessOpeningPair, canBless, grantBlessing } from '../../src/run/blessings';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
@@ -980,6 +983,19 @@ function resolvePatronStep(run: RunState, patronId: string, step: PatronStep, rn
       const replaceId = picked.grantsMoveId ? policy.replacementTarget(target, picked.grantsMoveId, run.roster) : undefined;
       return grantClass(run, classes, target.rosterId, picked.id, replaceId ?? undefined);
     }
+    case 'forge':
+      return resolveForge(run);
+    case 'fittedItem': {
+      const target = policy.passiveTarget(run.roster);
+      if (!target) return run;
+      const hero = rosterHeroes[target.heroId];
+      const rarity = fittedRarity(run.actNumber, step.tiersAhead);
+      const weights = Object.fromEntries(RARITY_ORDER.map((r) => [r, r === rarity ? 1 : 0])) as Record<EquipmentRarity, number>;
+      const item = rollFittingGear(hero.baseStats, rosterEntryTypes(hero, target), weights, rng);
+      return item ? resolveDrop(run, item.id, record, run.actNumber, 'node') : run;
+    }
+    case 'uniqueChoice':
+      return resolveDrop(run, pick(rng, step.uniqueIds), record, run.actNumber, 'node');
   }
 }
 

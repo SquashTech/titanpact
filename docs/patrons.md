@@ -152,14 +152,31 @@ Shielded; **Strategist**, a move — a priority swap, or a reset of an ally's st
   lift or a Unique in place, a move or passive taught straight to the student (no tap when there is
   nothing to choose), a Class through the Academy's own screen with the patron's header. A resumed
   save picks up at the step it stood on (`RunScreen.patronNode.stepsDone`).
-- **Three patrons**: the Swordsman, the Archmage and the Headmaster. The Priest, the Huntress, the
-  Hexwright and the Forgemistress are phase 2 — each is content only.
+- **All seven patrons** (the Huntress, the Priest, the Hexwright and the Forgemistress joined the same
+  day). The Forgemistress added three rung verbs: `forge` (the Forge node's screen, free), `fittedItem`
+  (a hero picked, then a piece rolled to fit them — the contract roll, `rollFittingGear`) and
+  `uniqueChoice` (one of three Uniques, then the who-screen for anyone).
+- **Art is placeholder**: every patron is drawn as a mark (a sword, a staff, a bow, a hammer…) on the
+  tile and in its screen's header. Each wants a real NPC figure, and each new Unique an icon.
 - **The sim** takes the patron it trusts most at every seat and the capstone before the last
   Guardian. Measured once, directional: 8 seats a run, nothing stranded.
 
 ### First-pass values, chosen to ship — every one is the designer's to move
 
-- **Names**: Ren (Swordsman), Ysolde (Archmage), Aldous (Headmaster).
+- **Names**: Ren (Swordsman), Ysolde (Archmage), Aldous (Headmaster), Sable (Huntress), Osric
+  (Priest), Morwen (Hexwright), Brann (Forgemistress).
+- **The Huntress**: Bow → Hunter's Arrow (55, 15 mana, 4 Charges) → Keen Eye (on entering, Aim 15) →
+  the Bow a tier up and Arrow Storm (both foes, 45, 20, 3 Charges) → Windpiercer (Atk 50, Wis 40, Aim 10).
+- **The Priest**: Benediction (on entering, Grace 15) → Blessed Light (heal 45, 35 mana) → a Robe →
+  Absolution (heal both 30, cleanses one, 45) → Martyr's Grace (the first time each fight the student
+  drops under half, both allies are mended, 40 healing power). The capstone was proposed as "when the
+  student falls"; a knockout is not a hook the engine offers, so it fires at half HP instead.
+- **The Hexwright**: Evil Eye (on entering, both foes INT ▼) → Hex Bolt (55, ATK ▼, 35) → Curse of
+  Frailty (on entering, both foes DEF ▼ WIS ▼) → Malediction (both foes 45, SPD ▼, 45) → Grand Hex
+  (on entering, both foes ATK ▼ INT ▼ SPD ▼). Each hex moves one step: a repeating card may not move two.
+- **The Forgemistress** (no student): a Forge → a fitted piece at the act's tier → a Forge → a fitted
+  piece a tier ahead (inside the act window) → Hearthguard (HP 90, Def 60, Warden's Vigil), Emberheart
+  (Mana 60, MP Regen 10, Attunement) or Strider's Mark (Spd 60, Atk 15, Int 15, Quickening).
 - `TRUST_WEIGHT` = 2 (a patron's draw weight is 1 + 2 × Trust); `PATRON_ITEM_RARITY_BY_ACT` = Rare /
   Epic / Legendary / Legendary. A lift stays inside the act's rarity window, as the Anvil does.
 - **Moves**: Crescent Cut (Slice, 70, 40 mana), Gale Sever (Slice, both foes, 55, 50), Arcane Lance
