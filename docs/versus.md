@@ -61,21 +61,59 @@ draft. Nothing in the fight layer changes between the two.
 
 ## 2. Transport
 
-A room needs a meeting point even with no matchmaking. Two options, both free at friend scale:
+A room needs a meeting point even with no matchmaking.
 
-| | WebRTC peer-to-peer (PeerJS broker) | A small relay (Cloudflare Durable Object / PartyKit) |
-|---|---|---|
-| Server we run | none | ~100 lines |
-| Fails on | strict NATs, some mobile carriers | nothing common |
-| Reconnect | re-handshake | the relay holds the log |
+**Hosting is already done.** Every push to `main` builds `dist-view` and deploys it to GitHub Pages
+(`.github/workflows/deploy.yml`), and the page is an installable PWA whose service worker fetches
+the HTML network-first, so a phone with signal is on the latest build after a reload. Versus needs
+no new host. Two friends open the same Pages URL.
 
-**Proposed: the relay.** Mobile networks are where WebRTC falls over most, and a relay that keeps
-the room's log makes reconnect (§4) a replay instead of a protocol. The game also has to be
-**hosted** somewhere both phones can open, which it is not today; a static host serves the build and
-the relay sits beside it.
+**The relay: Supabase Realtime, on the project telemetry already posts to** (`src/app/telemetry.ts`).
+Its Broadcast channels pass messages between the clients in a topic and its Presence says who is in
+it. No server code, no new account, no deploy step: a room is the topic `versus:<code>`.
 
-**The handshake carries the build hash.** Two builds with different content will desync on the
-first deal, so a mismatch refuses the room ("your friend is on a different version").
+| | Supabase Realtime (proposed) | WebRTC (PeerJS broker) | Own relay (Cloudflare Durable Object / PartyKit) |
+|---|---|---|---|
+| New account or deploy | none | none | Cloudflare account, a Worker deploy |
+| Server code we keep | none | none | ~100 lines |
+| Fails on | nothing common | strict NATs, some mobile carriers | nothing common |
+| Holds the log | no (§2.1) | no | yes |
+| Free tier | ~200 concurrent connections, ~2M messages a month (third-party figures, to confirm on the dashboard) | free broker, best effort | generous |
+
+At about 80 messages a match (twelve picks, two leads, then two commands and two hashes a round),
+the free tier holds thousands of matches a month. **One thing to watch:** a free Supabase project
+**pauses after a week with no API requests**. Telemetry's posts keep it awake while anyone plays a
+run. A week of nobody playing would put versus to sleep until the project is resumed from the
+dashboard.
+
+### 2.1 Delivery: resend everything, dedupe on arrival
+
+Broadcast has no history: a message sent while the other phone's socket is reconnecting is gone,
+and a lost `commands` hangs the match. So **every message is idempotent by its key** (`pick` by
+`n`, `commands` / `replace` / `hash` by round, `leads` and `seed` once), the receiver keeps the
+first of each key, and **each client re-sends its whole outgoing log** when the friend appears in
+Presence and when its own channel resubscribes. A whole match's log is a few kilobytes, so
+resending it is cheaper than acknowledging it. The same resend is most of reconnect (§4): the
+friend who dropped gets everything it missed the moment it is back.
+
+### 2.2 The room code
+
+Four letters from a sixteen-letter alphabet with no lookalikes (`newRoomCode`), as in step 1. The
+host checks Presence before claiming a code and rolls again if anyone is in it; a third client to
+join a room of two is told the room is full. A code is said across a table or pasted into a chat,
+so there is no link to share in step 2; a `?room=CODE` link is a cheap later add.
+
+### 2.3 The build check
+
+**The handshake carries the build** (`__BUILD_SHA__`, stamped from `GITHUB_SHA` at deploy), beside
+the content stamp step 1 sends. Two different builds can desync even with the same content (an
+engine change), so in production the SHA must match, and a mismatch tells both players to reload
+the game. On a dev build the SHA is `dev` and the content stamp decides alone.
+
+### 2.4 Two tabs stay
+
+The `BroadcastChannel` wire stays as the Dev menu's *Versus (two tabs)*: the same `VersusChannel`
+with the relay swapped out, so the whole match can still be tested offline on one machine.
 
 ### Messages
 
@@ -100,9 +138,11 @@ Each of these is a moment where one side used to know something before the other
 1. **The draft never waits.** Your six offers depend only on your own picks, so you draft at your
    own pace; a `pick` is sent as it is made, and the screen waits only at the end, until the other
    six is in. Your friend's picks stay hidden until team preview.
-2. **Lead pick becomes blind and simultaneous.** Today the enemy's two take the field and the player
-   picks against them. In versus both see both sixes at team preview, pick hidden, and are revealed
-   together (VGC's team preview). `placeLeads` is called once per side, the same as now.
+2. **The leads are hidden, the team is not** (2026-10-15, per user direction). Today the enemy's two
+   take the field and the player picks against them. In versus the friend's whole six stand along
+   the top of the field through the lead pick, each tappable for its dossier, and only their two
+   leads are hidden until both sides have taken the field (VGC's team preview). `placeLeads` is
+   called once per side, the same as now.
 3. **Commands are commit-then-reveal.** Each side's `Action[]` is sent when locked in; the screen
    shows *waiting* until the other side's arrives; then both clients call `resolveRound` with the
    two sets in the same order. Neither client sees the other's commands before its own are sent.
@@ -121,9 +161,17 @@ Each of these is a moment where one side used to know something before the other
 
 - **Proposed 60 seconds a command phase, 30 for a draft pick, a lead pick or a replacement**, shown
   as a quiet draining ring, no number until the last ten seconds.
+- **Each clock is the player's own and starts when that player can act**: when its own playback
+  of the round has finished, not when the friend's did. One player watching beats slowly costs the
+  other nothing, because the slow watcher's clock has not started yet. Nothing about a clock goes
+  over the wire, only what it submitted.
 - **At zero, your own client submits for you.** A command phase uses the Gauntlet's pilot
-  (`pilotActions`), not a Rest, because a timed-out turn should still be a turn. A draft pick takes
-  the first of the three, a replacement the first candidate.
+  (`pilotActions`) for this side's heroes, not a Rest, because a timed-out turn should still be a
+  turn. Orders already given that phase are kept; the pilot fills only the heroes still to be
+  ordered. A draft pick takes the first of the three, a lead pick the first two, a replacement the
+  first candidate.
+- **The draft has a clock too**, so a match cannot stall at preview while one player reads.
+- **Two tabs runs without a clock** (`timer: false` on the channel), so a test can sit on a screen.
 - The timer is honest, not secure. A friend who edits their client to have no timer has bigger
   problems than the timer.
 
@@ -137,9 +185,11 @@ Each of these is a moment where one side used to know something before the other
   differing between V8 (Android, desktop) and JavaScriptCore (iOS). Integer-rounded damage makes
   this rare, not impossible. The first fix to try is routing every transcendental call through one
   function both engines agree on.
-- **Reconnect is a replay.** The relay holds the log; a dropped player rejoins with the code and
-  replays seed, pool, picks and every committed action to the current round. The screen skips
-  straight to the end of the replay, no animation.
+- **Reconnect is a replay.** Supabase holds no log (§2.1), but both clients do: each keeps the
+  match's log locally (sessionStorage), and a dropped socket is answered by the resend. A *reload*
+  loses the screen, so step 3 restores the match from that stored log and replays seed, pool,
+  picks and every committed action to the current round. The screen skips straight to the end of
+  the replay, no animation.
 - **Abandonment.** Ninety seconds of absence offers the other player *claim the win* or *keep
   waiting*.
 
@@ -198,8 +248,8 @@ code exchanged in place of the twelve picks.
   it is how a friend shows you a hero you have not got.
 - **Spectating**: a third client that only reads the log. Free with lockstep; no demand yet.
 - **Timer length**: 60 s is Showdown's ballpark; play decides.
-- **Hosting**: where the build lives (static host) and who pays for the relay at any scale above
-  friends.
+- **The relay past friends**: Supabase's free tier carries thousands of matches a month (§2). Past
+  that it is the Pro plan, or the own-relay row of §2's table. Nothing to decide until then.
 
 ---
 
@@ -213,8 +263,27 @@ code exchanged in place of the twelve picks.
    its log, equal hashes every round. Reached from the Gauntlet's entry (*Play a friend*) and the
    Dev menu. Played end to end in two tabs: thirteen rounds, both boards equal to the last HP.
    **Potions are held back** until a drink is synced (§3.4): a versus side holds none.
-2. **The relay and room codes** (§2), the build hash, the turn timer, and the door into it.
-3. **Reconnect and abandonment** (§4).
+2. **Online — PLANNED (2026-10-15).** In build order, each piece testable before the next:
+   1. *Supabase setup (yours, a few clicks)*: confirm Realtime is on for the project and that public
+      Broadcast and Presence channels are allowed for the anon key. Nothing else in the dashboard.
+   2. *Delivery*: the inbox keeps the first message of each key (§2.1) and `VersusChannel` gains a
+      `resendAll` the wire calls itself. Built and tested on the two-tab wire first, by dropping
+      messages on purpose.
+   3. *The relay wire*: `openRelayChannel(code, side)` beside `openVersusChannel`, on
+      `@supabase/realtime-js` alone (not the whole Supabase client), with the project URL and anon
+      key telemetry already ships. Presence for *friend here / friend gone*; resend on join and on
+      resubscribe.
+   4. *The room*: Host checks Presence before claiming a code (§2.2), a room of two refuses a third,
+      the handshake compares `__BUILD_SHA__` (§2.3). The lobby's two buttons stay as they are; the
+      relay is the default and two tabs moves to the Dev menu only.
+   5. *The timer* (§3): one `useTurnClock(seconds, onExpire)` hook, the ring on the console and the
+      draft, pilot fill on a command phase, first-candidate on the rest. Off on the two-tab wire.
+   6. *Friend gone*: Presence leave shows *Your friend's connection dropped* over the board and
+      pauses this side's clock. Claiming the win after ninety seconds is step 3's.
+   7. *On two phones*: push, open the Pages URL on two devices on different networks (one on mobile
+      data), and play a match. This is the test that settles the iOS-versus-Android hash (§4).
+3. **Reconnect and abandonment** (§4): the match log in sessionStorage, restore after a reload,
+   claim the win after ninety seconds gone.
 
 Each step is playable on its own: step 1 already lets two people on one desk play a match.
 

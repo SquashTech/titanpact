@@ -1718,10 +1718,25 @@ export function FightScreen({
           </div>
         )}
 
-        <div className="team-row enemy">
-          {renderActiveSlot(AI_SIDE, 0)}
-          {renderActiveSlot(AI_SIDE, 1)}
-        </div>
+        {versus && leadsPending ? (
+          // Team preview (docs/versus.md §3.2): the friend's six are in view; only their two leads stay hidden until both are in.
+          <div className="team-row enemy vs-their-six">
+            {combat.bench[AI_SIDE].map((id) => {
+              const hero = allCombatants[combat.combatants[id].heroId];
+              return (
+                <button key={id} type="button" className="vs-their-hero" onClick={() => setInspecting(id)} aria-label={hero.name}>
+                  <HeroPortrait heroId={hero.id} pathId={combat.combatants[id].formPathId} className="vs-their-portrait" />
+                  <span className="vs-their-name">{hero.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="team-row enemy">
+            {renderActiveSlot(AI_SIDE, 0)}
+            {renderActiveSlot(AI_SIDE, 1)}
+          </div>
+        )}
 
         <div className="battlefield-divider">
           <span className="battlefield-vs">VS</span>
