@@ -34473,14 +34473,13 @@ button.evo-gift-card {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 4px 2px 0;
-  padding: 2px 12px 2px 4px;
-  border: 4px solid transparent;
-  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
-  background:
-    radial-gradient(ellipse 40px 30px at 24px 70%, rgba(var(--hero-rgb), 0.28), transparent 75%) padding-box,
-    linear-gradient(180deg, #121419, #0f1116) padding-box;
-  image-rendering: pixelated;
+  margin: 10px 2px 0;
+  padding: 6px 16px 6px 8px;
+  border: 0;
+  /* The six's plate, laid flat: its colour from the left, slanting off to the right. */
+  background: linear-gradient(100deg, rgba(var(--hero-rgb), 0.38), rgba(var(--hero-rgb), 0.08) 45%, transparent 80%),
+    rgba(10, 11, 18, 0.82);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
   color: inherit;
   text-align: left;
   cursor: pointer;
@@ -34489,7 +34488,7 @@ button.evo-gift-card {
 .roster-companion-portrait {
   width: 64px;
   height: 64px;
-  margin: -20px -8px -4px -4px;
+  margin: -6px -6px -6px -4px;
   flex: none;
 }
 
@@ -42064,12 +42063,22 @@ img.smithy-service-art {
 }
 
 /* -- The Roster is the whole screen (RosterManagementScreen). Nothing on it is managed any more, so
-   the sheet is given every pixel to read by: six carved cards, two across, each hero standing at 2x
-   in a lit alcove of its own colour with its level on a plaque, the level's bar along the floor,
-   then its name and form, its HP, its Mastery and its three sockets. -- */
-.roster-sheet-overlay {
+   the sheet is given every pixel to read by: no window, the night sky the title stands under, and
+   six heroes two across, each stepping up out of a slanted plate in its own colour with its level
+   and types at its feet, then its name, HP and Mastery, and its three sockets riding the plate's
+   edge. -- */
+.log-overlay.roster-sheet-overlay {
   padding: 0;
   align-items: stretch;
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1px 1px at 72% 9%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 38% 6%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 88% 30%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1px 1px at 55% 22%, rgba(255, 255, 255, 0.35), transparent),
+    linear-gradient(180deg, #1b1f3a, #0d0f1c 45%, #07080d);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .log-panel.roster-sheet {
@@ -42079,8 +42088,11 @@ img.smithy-service-art {
   max-width: none;
   height: 100%;
   max-height: none;
-  border-width: 16px;
-  border-image-width: 20px;
+  padding: 14px 12px 12px;
+  border: 0;
+  border-image: none;
+  background: none;
+  box-shadow: none;
   overflow: hidden;
 }
 
@@ -42088,14 +42100,16 @@ img.smithy-service-art {
   flex: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 4px 10px;
-  font-size: 13px;
+  justify-content: center;
+  padding: 0 4px 8px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #e2b862;
   text-shadow: 0 1px 0 #0b0a0e;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, transparent, #b78a3c 20%, #e2b862 50%, #b78a3c 80%, transparent) 1;
 }
 
 .roster-sheet-grid {
@@ -42106,10 +42120,10 @@ img.smithy-service-art {
   /* Never shorter than its card, never taller than a third of the sheet (the height six heroes
      fill it at): a short roster leaves the floor empty rather than stretching two cards the
      height of the screen, and a short screen scrolls rather than squeezing sockets into names. */
-  grid-auto-rows: minmax(min-content, calc((100% - 12px) / 3));
+  grid-auto-rows: minmax(min-content, calc((100% - 40px) / 3));
   align-content: start;
-  gap: 6px;
-  padding: 6px 2px 2px;
+  gap: 20px 8px;
+  padding: 22px 2px 2px;
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -42119,24 +42133,34 @@ img.smithy-service-art {
 }
 
 .roster-sheet-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 3px;
   min-height: 0;
-  padding: 3px;
-  border: 4px solid transparent;
-  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
-  background: linear-gradient(180deg, #121419, #0f1116) padding-box;
-  image-rendering: pixelated;
+  padding: 0 4px 4px;
+}
+
+/* The plate: its top edge slants up to the right, and the hero stands taller than it. */
+.roster-sheet-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(160deg, rgba(var(--hero-rgb, 120, 128, 142), 0.42), rgba(var(--hero-rgb, 120, 128, 142), 0.1) 45%, transparent 75%),
+    rgba(10, 11, 18, 0.82);
+  clip-path: polygon(0 22px, 100% 0, 100% 100%, 0 100%);
 }
 
 .roster-sheet-top {
+  position: relative;
   flex: 1 0 auto;
   display: flex;
   gap: 4px;
 }
 
 .roster-sheet-foot {
+  position: relative;
   flex: none;
   display: flex;
   flex-direction: column;
@@ -42149,8 +42173,8 @@ img.smithy-service-art {
   cursor: pointer;
 }
 
-/* The hero's own recess: dark stone, its domain's light rising off the floor, a warm pool where
-   it stands. The figure is anchored to the floor, so a short card trims headroom, never feet. */
+/* The hero's own ground: a shadow where it stands, and nothing to hold it in. The figure is
+   anchored to the floor, so it overflows upward past the plate rather than being cut. */
 .roster-sheet-alcove {
   position: relative;
   flex: 1 1 auto;
@@ -42159,13 +42183,7 @@ img.smithy-service-art {
   padding: 0;
   border: 0;
   cursor: pointer;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse 70% 22% at 50% 88%, rgba(255, 200, 120, 0.3), rgba(255, 170, 90, 0.08) 60%, transparent 75%),
-    radial-gradient(ellipse 90% 80% at 50% 100%, rgba(var(--hero-rgb, 120, 128, 142), 0.34), transparent 70%),
-    linear-gradient(180deg, #08090d, #11131a);
-  box-shadow: inset 0 0 0 1px #0b0a0e, inset 0 3px 0 rgba(var(--hero-rgb, 120, 128, 142), 0.85),
-    inset 0 10px 14px -8px rgba(0, 0, 0, 0.9);
+  background: radial-gradient(ellipse 55% 14% at 50% 94%, rgba(0, 0, 0, 0.6), transparent 75%);
   transition: filter var(--dur-mid) var(--ease-out);
 }
 
@@ -42176,9 +42194,9 @@ img.smithy-service-art {
 .roster-sheet-figure {
   position: absolute;
   left: 50%;
-  bottom: 4px;
-  width: 96px;
-  height: 96px;
+  bottom: 2px;
+  width: 112px;
+  height: 112px;
   translate: -50% 0;
   image-rendering: pixelated;
   filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.8));
@@ -42186,19 +42204,17 @@ img.smithy-service-art {
 
 .roster-sheet-level {
   position: absolute;
-  top: 7px;
-  left: 6px;
+  bottom: 6px;
+  left: 2px;
   display: flex;
   align-items: baseline;
   gap: 2px;
-  padding: 1px 5px;
-  background: rgba(8, 9, 13, 0.82);
-  box-shadow: inset 0 0 0 1px #0b0a0e, inset 0 -1px 0 1px rgba(183, 138, 60, 0.55);
   color: #f2d690;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 0 #000, 0 0 6px #000;
 }
 
 .roster-sheet-level small {
@@ -42209,8 +42225,8 @@ img.smithy-service-art {
 
 .roster-sheet-types {
   position: absolute;
-  top: 7px;
-  right: 6px;
+  bottom: 6px;
+  right: 2px;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -42251,8 +42267,8 @@ img.smithy-service-art {
   filter: grayscale(1) brightness(0.5);
 }
 
-.roster-sheet-card.is-down .roster-sheet-alcove {
-  background: linear-gradient(180deg, #08090d, #0e0f13);
+.roster-sheet-card.is-down::before {
+  background: rgba(10, 11, 18, 0.82);
 }
 
 .roster-sheet-ident {
@@ -42314,18 +42330,35 @@ img.smithy-service-art {
   padding: 0 2px;
 }
 
-/* The three sockets stand in a column beside the alcove, the rig at the hero's side. */
-.roster-sheet-mount {
+/* The three sockets stand free in a column beside the hero, on the plate's edge. */
+.equip-mount.roster-sheet-mount {
   flex: none;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 2px;
-  padding: 0 3px;
+  padding: 4px 3px 0;
+  background: none;
+  box-shadow: none;
+}
+
+.equip-mount.roster-sheet-mount::before {
+  display: none;
 }
 
 .roster-sheet-mount .item-box {
   --item-box-size: 32px;
+  border: 0;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: none;
+}
+
+.roster-sheet-mount .item-box.empty::before {
+  inset: 11px;
+  border-radius: 50%;
+  -webkit-mask: none;
+  mask: none;
+  opacity: 0.3;
 }
 
 .roster-sheet-mount .item-box .item-piece {
@@ -42335,14 +42368,23 @@ img.smithy-service-art {
   height: auto;
 }
 
-.roster-sheet .roster-close-button {
-  flex: none;
-  margin: 8px 0 0;
-}
-
+/* Close: a word between two gilt rules, in thumb reach. */
 .roster-sheet .resolve-button.roster-close-button {
-  min-height: 44px;
-  padding: 0 20px;
+  flex: none;
+  width: 60%;
+  min-height: 0;
+  margin: 10px auto 2px;
+  padding: 10px;
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, transparent, #b78a3c 25%, #b78a3c 75%, transparent) 1;
+  background: none;
+  filter: none;
+  color: #e2b862;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-shadow: 0 1px 0 #000;
 }
 
 /* -- The node dossier reads further (NodeDossierOverlay): what the node does in plain words under
@@ -42385,8 +42427,8 @@ img.smithy-service-art {
 
 .roster-sheet-blessing {
   position: absolute;
-  right: 7px;
-  bottom: 10px;
+  left: 4px;
+  top: 28px;
 }
 
 .squad-slot-level:has(.squad-slot-blessing) {

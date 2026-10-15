@@ -59,9 +59,6 @@ export function RosterManagementScreen({ run, onClose }: Props) {
       <div className="log-panel roster-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="log-panel-header roster-sheet-header">
           <span>Roster</span>
-          <button className="log-close-button" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
         </div>
 
         <div className="roster-sheet-grid">
@@ -104,8 +101,7 @@ export function RosterManagementScreen({ run, onClose }: Props) {
           </button>
         )}
 
-        {/* Outside the grid, pinned to the bottom and in thumb reach; the header ✕ is where every
-            other overlay puts it, but on a 780px page it is the corner furthest from the hand. */}
+        {/* The sheet's one way out, pinned to the bottom in thumb reach. */}
         <button className="resolve-button roster-close-button" onClick={onClose}>
           Close
         </button>
