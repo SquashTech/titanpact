@@ -33753,6 +33753,118 @@ button.evo-gift-card {
   opacity: 0.45;
 }
 
+/* Patrons (PatronNodeScreen.tsx, patronView.tsx): Trust as five quiet pips, a patron's mark in its
+   own colour, and the rung it pays as loot under the greeting. */
+.patron-trust {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.patron-trust-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--rite-color, var(--node-color, #d8b46a)) 70%, transparent);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.patron-trust-pip.is-filled {
+  background: var(--rite-color, var(--node-color, #d8b46a));
+  box-shadow: 0 0 6px color-mix(in srgb, var(--rite-color, var(--node-color, #d8b46a)) 60%, transparent);
+}
+
+.map-medallion-trust {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  transform: translateX(-50%);
+}
+
+.patron-figure {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+}
+
+.patron-figure .node-glyph {
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 0 10px currentColor);
+}
+
+.patron-head-trust {
+  margin-top: 6px;
+}
+
+.patron-rung {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 18px 16px 0;
+}
+
+.patron-rung-step {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--rite-color) 45%, transparent);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.patron-rung-step strong {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--rite-color);
+}
+
+.patron-forge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 16px 0;
+}
+
+.patron-forge-note {
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.patron-capstone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 16px 0;
+}
+
+.patron-capstone-card {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  grid-template-rows: auto auto auto;
+  column-gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--rite-color) 55%, transparent);
+  background: rgba(0, 0, 0, 0.35);
+  color: inherit;
+  text-align: left;
+}
+
+.patron-capstone-card .patron-figure {
+  grid-row: 1 / 4;
+}
+
+.patron-capstone-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+
+.patron-capstone-card strong {
+  color: var(--rite-color);
+}
+
 /* --- The Guild Hall's buy sheet (EquipBuyOverlay.tsx, 2026-09-11) ----------
    The item dossier on the dossier chassis, then two facets under it on the
    same scored hairlines: the merges buying it would open, and the price as a

@@ -1,5 +1,6 @@
 // Stone's authored movepool: offStatOverride, retributionPercent, recoilPercent, statDeltaTarget, Provoke. Mechanics, not numbers.
 
+import { patronMoves } from '../src/data/patrons';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState, landedDelta, withFullPools, stagesOf, stagesRecordOf } from './fixtures';
@@ -444,6 +445,8 @@ test('stone: no move is unreachable that was not already known to be', () => {
   for (const pool of Object.values(progressionTable.moveTiers)) for (const id of pool) reachable.add(id);
   // A class move is reached through its Class alone (src/data/classes.ts); a signature through its hero's tenth pip alone (src/data/signatures.ts).
   for (const id of Object.keys(classMoves)) reachable.add(id);
+  // A patron move is reached through its patron's rung alone (src/data/patrons.ts).
+  for (const id of Object.keys(patronMoves)) reachable.add(id);
   for (const id of Object.keys(signatureMoves)) reachable.add(id);
   // An Evolution path reaches moves two ways: granted outright, or added to the level-up pool.
   for (const nodes of Object.values(progressionTable.evolutions)) {

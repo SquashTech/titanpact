@@ -1,4 +1,4 @@
-import { type CSSProperties, useState } from 'react';
+import { type CSSProperties, type ReactNode, useState } from 'react';
 import { playSfx } from '../../audio/sfx';
 import academyArt from '../../../art/map-nodes/landmarks/academy.png';
 import { seededRandom } from '../shared/seededRandom';
@@ -40,6 +40,12 @@ interface Props {
   onContinue: () => void;
   /** Fixes the screen's roll, so a resumed run is offered the same (docs/save-system.md D2). */
   seed: number;
+  /** How many Classes are laid out (the Headmaster's third meeting offers five). */
+  offerCount?: number;
+  /** The Headmaster's capstone: these Master Classes, each REPLACING a Class a hero holds. */
+  masterClassIds?: readonly string[];
+  /** A patron's header in the Academy's place (PatronNodeScreen). */
+  keeper?: ReactNode;
 }
 
 /** The Academy's laurel (mapNodes NODE_COLORS academyReward). */
@@ -59,9 +65,10 @@ const KIND_COLORS: Record<ClassKind, string> = {
  * step earlier, from the heroes to the Classes, where nothing has been granted yet. A Class is a
  * VERB — a move or a passive — never a stat line, one a hero for the run. Non-bankable.
  */
-export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props) {
-  /** Rolled once, on mount: three from the whole catalog. */
-  const [offers] = useState(() => rollClassOffers(classes, seededRandom(seed)));
+export function AcademyNodeScreen({ run, onRunChange, onContinue, seed, offerCount, masterClassIds, keeper }: Props) {
+  const master = !!masterClassIds;
+  /** Rolled once, on mount: three from the whole catalog (or the Master Classes, laid out whole). */
+  const [offers] = useState(() => (masterClassIds ? masterClassIds.map((id) => classes[id]) : rollClassOffers(classes, seededRandom(seed), offerCount)));
   const [pickedClassId, setPickedClassId] = useState<string | null>(null);
   /** The Class carried to the hero step. */
   const [teachingId, setTeachingId] = useState<string | null>(null);
@@ -74,7 +81,8 @@ export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props)
 
   const overflowEntry = overflow ? (run.roster.find((r) => r.rosterId === overflow.rosterId) ?? null) : null;
   const learnedEntry = learned ? (run.roster.find((r) => r.rosterId === learned.rosterId) ?? null) : null;
-  const anyEligible = anyClassAvailable(run.roster);
+  const canLearn = (entry: RosterEntry) => (master ? entry.classId !== null : entry.classId === null);
+  const anyEligible = master ? run.roster.some(canLearn) : anyClassAvailable(run.roster);
   const picked = pickedClassId ? offers.find((c) => c.id === pickedClassId) ?? null : null;
   const teaching = teachingId ? classes[teachingId] : null;
 
@@ -86,7 +94,7 @@ export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props)
   }
 
   function teach(entry: RosterEntry) {
-    if (!teaching || entry.classId !== null) return;
+    if (!teaching || !canLearn(entry)) return;
     // The kit is full: the class move is the same replace-or-decline an Evolution's grant makes,
     // and declining still takes the Class — the hero just holds the verb it cannot fit.
     if (classMoveOverflows(teaching, entry)) setOverflow({ rosterId: entry.rosterId, classId: teaching.id });
@@ -133,7 +141,7 @@ export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props)
         <HeroPickGrid count={run.roster.length} fill>
           {run.roster.map((entry) => {
             const hero = rosterHeroes[entry.heroId];
-            const open = entry.classId === null;
+            const open = canLearn(entry);
             const held = entry.classId ? classes[entry.classId] : null;
             // A class move wears its holder's type: shown at the type it would have on this hero.
             const typed = authored ? moveForPrimaryType(authored, hero.types[0]) : null;
@@ -145,7 +153,7 @@ export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props)
                 disabled={!open}
                 onActivate={() => teach(entry)}
                 onPreview={() => setPreviewing({ hero, entry })}
-                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${open ? `learns ${teaching.name}` : `already a ${held?.name}`}`}
+                ariaLabel={`${hero.name}, level ${levelOf(entry)} — ${open ? `learns ${teaching.name}` : held ? `already a ${held.name}` : 'needs a Class first'}`}
                 detail={
                   open && typed ? (
                     <span className="tutor-fit" style={{ color: getTypeColor(typed.type) }}>
@@ -154,7 +162,7 @@ export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props)
                   ) : undefined
                 }
                 ctaClassName="is-accent"
-                cta={open ? 'Teach' : held ? `Is a ${held.name}` : 'Has a Class'}
+                cta={open ? (master && held ? `${held.name} → ${teaching.name}` : 'Teach') : held ? `Is a ${held.name}` : 'No Class'}
               />
             );
           })}
@@ -181,6 +189,7 @@ export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props)
       <NodeMotes count={14} />
       <RosterPeek run={run} />
 
+      {keeper ?? (
       <header className="keeper-head">
         <span className="keeper-figure">
           <span className="rite-pool" aria-hidden="true" />
@@ -200,6 +209,7 @@ export function AcademyNodeScreen({ run, onRunChange, onContinue, seed }: Props)
           )}
         </span>
       </header>
+      )}
 
       {anyEligible ? (
         <>

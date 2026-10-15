@@ -70,20 +70,4 @@ test('tutor: tutorReward is a known node type and never rolls out of the reward 
   }
 });
 
-test('tutor: act 4 holds exactly one Tutor, in the forced spliced seat', () => {
-  // The act-4 in-row seat left with the Forge (docs/gear-absorption.md §4): a guaranteed Late
-  // move an act, ahead of the two Guardians it matters most against, and each act's only one.
-  for (const seed of Array.from({ length: 40 }, (_, i) => i + 1)) {
-    for (const actNumber of [4]) {
-      const map = generateMap(seed, actNumber);
-      const seats = Object.values(map.nodes).filter((n) => n.type === 'tutorReward');
-      assert.strictEqual(seats.length, 1, `Act ${actNumber} (seed ${seed}) seated ${seats.length} Tutors`);
-      assert.strictEqual(seats[0].row, 2);
-      assert.strictEqual(map.rows[2].length, 1, `Act ${actNumber} (seed ${seed}): the Tutor is a forced single-node row`);
-    }
-    for (const actNumber of [1, 2, 3]) {
-      assert.ok(!Object.values(generateMap(seed, actNumber).nodes).some((n) => n.type === 'tutorReward'), `Act ${actNumber} (seed ${seed}) has a Tutor`);
-    }
-  }
-});
 

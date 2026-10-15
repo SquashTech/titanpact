@@ -88,6 +88,7 @@ import './mvp.test';
 import './constructed.test';
 import './gauntlet.test';
 import './versus.test';
+import './patrons.test';
 import { run } from './harness';
 
 run();

@@ -26,7 +26,10 @@ import type { CombatEvent } from '../../src/engine/events';
 import type { CombatState } from '../../src/engine/state';
 import { GEM_CACHE_COUNT, SCRIBE_GEMS, buyShelfGem, canBuyShelfGem, placeGem, rollGemDrop, rollGems, type Gem } from '../../src/run/gems';
 
-import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
+import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, SEAL_ACTS, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
+import { patrons } from '../../src/data/patrons';
+import { PATRON_ROWS } from '../../src/run/map';
+import { capstoneCandidates, forgeUnique, heldFamilyIndex, liftHeldItem, meetPatron, patronAtSeat, patronItemId, seatIndexFor, setStudent, studentOf, trustOf, type PatronStep } from '../../src/run/patrons';
 import { blessOpeningPair, canBless, grantBlessing } from '../../src/run/blessings';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
@@ -126,7 +129,7 @@ const UPGRADE_REWARD_XP = 2;
 // --- Records the aggregator consumes ---
 
 export interface ChoiceEvent {
-  bucket: 'banner' | 'boon' | 'evolution' | 'class' | 'draft' | 'node' | 'location' | 'event';
+  bucket: 'banner' | 'boon' | 'evolution' | 'class' | 'draft' | 'node' | 'location' | 'event' | 'patron';
   offered: string[];
   /** Usually one; the draft takes two of its four. */
   picked: string[];
@@ -257,9 +260,9 @@ function entryOf(run: RunState, rosterId: string): RosterEntry {
  * hero with no Class yet, since the screen offers only those and an offer nobody can take is
  * wasted. Random across the offer rather than greedy so the lift table lights up for all nine.
  */
-function resolveAcademy(run: RunState, rng: Rng, choices: ChoiceEvent[]): RunState {
+function resolveAcademy(run: RunState, rng: Rng, choices: ChoiceEvent[], count?: number): RunState {
   const target = policy.passiveTarget(run.roster.filter((entry) => entry.classId === null));
-  const offered = rollClassOffers(classes, rng);
+  const offered = rollClassOffers(classes, rng, count);
   if (!target || offered.length === 0) return run;
   const picked = pick(rng, offered);
   choices.push({ bucket: 'class', offered: offered.map((c) => c.id), picked: [picked.id], encountersWonAtChoice: run.encountersWon });
@@ -400,7 +403,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     record.actReached = Math.max(record.actReached, run.actNumber);
     const reachable = reachableNodeIds(run);
     if (reachable.length === 0) break;
-    const nodeId = pick(rng, reachable);
+    const nodeId = patronFocus(run, reachable) ?? pick(rng, reachable);
     const node = run.map!.nodes[nodeId];
     // The walk takes a reachable node UNIFORMLY AT RANDOM, so the row is already the
     // randomized experiment every other lift table reads — recording it costs nothing and
@@ -414,6 +417,16 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
     for (const entry of run.roster) {
       record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, levelOf(entry));
+    }
+
+    if (node.type === 'boss' && run.actNumber === SEAL_ACTS) {
+      const owed = capstoneCandidates(run, patrons);
+      if (owed.length > 0) run = resolvePatronMeeting(run, owed[0], null, rng, record);
+    }
+    if (node.type === 'patronSeat') {
+      const seat = seatIndexFor(run.actNumber, node.row, PATRON_ROWS);
+      const patronId = seat === null ? null : patronAtSeat(run, seat, node.col);
+      if (patronId) run = resolvePatronMeeting(run, patronId, seat, rng, record);
     }
 
     if (isEncounterNode(node.type)) {
@@ -903,6 +916,70 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     }
     default:
       return run;
+  }
+}
+
+/** A focused pilot (docs/patrons.md): at a patron seat it takes the patron it trusts most; anywhere else, no say. */
+function patronFocus(run: RunState, reachable: readonly string[]): string | null {
+  const seats = reachable.filter((id) => run.map!.nodes[id].type === 'patronSeat');
+  if (seats.length === 0) return null;
+  const trustAt = (id: string) => {
+    const node = run.map!.nodes[id];
+    const seat = seatIndexFor(run.actNumber, node.row, PATRON_ROWS);
+    const patronId = seat === null ? null : patronAtSeat(run, seat, node.col);
+    return patronId ? trustOf(run, patronId) : -1;
+  };
+  return [...seats].sort((a, b) => trustAt(b) - trustAt(a))[0];
+}
+
+/** One meeting, every step paid the way the screen pays it: the student first, else the hero the step suits best. */
+function resolvePatronMeeting(run: RunState, patronId: string, seat: number | null, rng: Rng, record: RunRecord): RunState {
+  const met = meetPatron(run, patronId, seat);
+  let next = met.run;
+  const patron = patrons[patronId];
+  record.choices.push({ bucket: 'patron', offered: [patronId], picked: [`${patronId}:${met.rung}`], encountersWonAtChoice: run.encountersWon });
+  for (const step of patron.rungs[met.rung - 1]) next = resolvePatronStep(next, patronId, step, rng, record);
+  return next;
+}
+
+function resolvePatronStep(run: RunState, patronId: string, step: PatronStep, rng: Rng, record: RunRecord): RunState {
+  const patron = patrons[patronId];
+  const student = patron.hasStudent ? studentOf(run, patronId) : null;
+  const claim = (r: RunState, rosterId: string) => (patron.hasStudent && !studentOf(r, patronId) ? setStudent(r, patronId, rosterId) : r);
+  const giveItem = (itemId: string): RunState => {
+    const item = equipment[itemId];
+    const roster = student ? run.roster.filter((e) => e.rosterId === student) : run.roster;
+    const target = policy.bestReceiver(roster, item);
+    if (!target || target.receipt.kind === 'replace') return run;
+    return claim(absorbItem(run, target.rosterId, itemId, equipment, rosterHeroes), target.rosterId);
+  };
+  switch (step.kind) {
+    case 'item':
+      return giveItem(patronItemId(step.familyId, run.actNumber));
+    case 'liftItem':
+      return student && heldFamilyIndex(run, student, step.familyId) >= 0 ? liftHeldItem(run, student, step.familyId, equipment) : giveItem(patronItemId(step.familyId, run.actNumber));
+    case 'unique':
+      return student && heldFamilyIndex(run, student, step.familyId) >= 0 ? forgeUnique(run, student, step.familyId, step.uniqueId) : giveItem(step.uniqueId);
+    case 'move': {
+      const target = student ? run.roster.find((e) => e.rosterId === student)! : policy.passiveTarget(run.roster);
+      if (!target || target.unlockedMoveIds.includes(step.moveId)) return target ? claim(run, target.rosterId) : run;
+      if (target.unlockedMoveIds.length < MOVE_CAP) return claim(grantMove(run, target.rosterId, step.moveId), target.rosterId);
+      const replaceId = policy.replacementTarget(target, step.moveId, run.roster);
+      return claim(replaceId ? grantMove(run, target.rosterId, step.moveId, replaceId) : run, target.rosterId);
+    }
+    case 'passive': {
+      const target = student ? run.roster.find((e) => e.rosterId === student)! : policy.passiveTarget(run.roster);
+      return target ? claim(grantEventPassive(run, target.rosterId, step.passiveId, passives), target.rosterId) : run;
+    }
+    case 'class':
+      return resolveAcademy(run, rng, record.choices, step.count);
+    case 'masterClass': {
+      const target = policy.passiveTarget(run.roster.filter((entry) => entry.classId !== null));
+      if (!target) return run;
+      const picked = classes[pick(rng, step.classIds)];
+      const replaceId = picked.grantsMoveId ? policy.replacementTarget(target, picked.grantsMoveId, run.roster) : undefined;
+      return grantClass(run, classes, target.rosterId, picked.id, replaceId ?? undefined);
+    }
   }
 }
 

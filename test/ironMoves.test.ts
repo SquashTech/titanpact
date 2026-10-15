@@ -1,5 +1,6 @@
 // Iron slate: conditionalManaCost.requiresAnyEnemyStatus, the permanent Attack ramp, Conduct detonation with zero planting. Hand-off findings: docs/authoring-moves.md §10.
 
+import { patronMoves } from '../src/data/patrons';
 import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
@@ -230,7 +231,7 @@ test('iron: Reinforce pays BOTH allies, including the caster', () => {
 
 test('iron: every damage row detonates Conduct for free, and the slate plants it zero times', () => {
   // Quiver wears Iron but is never cast as itself (docs/archers.md): not a slate row.
-  const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron' && !signatureMoves[m.id] && !classMoves[m.id] && !m.metamorphic);
+  const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron' && !signatureMoves[m.id] && !classMoves[m.id] && !patronMoves[m.id] && !m.metamorphic);
   const damage = ironMoves.filter((m) => m.kind === 'damage');
   const planters = ironMoves.filter((m) => firstStatusApplication(m)?.statusId === 'Conduct');
 
@@ -263,7 +264,7 @@ test('iron: an Iron hit on a marked foe is worth 15% max HP more than the same h
 // --- What the slate does NOT have ---
 
 test('iron: every priority row is a POSITIVE bracket, and the slate has no heal, cleanse or field effect', () => {
-  const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron' && !signatureMoves[m.id] && !classMoves[m.id]);
+  const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron' && !signatureMoves[m.id] && !classMoves[m.id] && !patronMoves[m.id]);
   const bracketed = ironMoves.filter((m) => m.priority !== 0);
   // Two rows now, not one: Opening Strike traded 30 BP for 25 and a bracket (2026-09-10), which is
   // a deliberate jab rather than a slip. What the type must never do is swing SLOW — so the

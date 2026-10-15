@@ -1,6 +1,7 @@
 // Map events (src/data/events.ts, src/run/events.ts) plus the engine hook the first event passive
 // needed: PassiveHook 'SwitchedIn' and the 'activeEnemies' group target (passiveEngine.ts).
 
+import { patronMoves } from '../src/data/patrons';
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -133,7 +134,7 @@ test("events: Fruit Slicer's pool is exactly the Slice moves, and Wildcard's is 
     'the Slice filter let a non-Slice move through'
   );
   assert.ok(slicePool.length < Object.keys(moves).length);
-  const owned = Object.keys(moves).filter((id) => signatureMoves[id] || classMoves[id] || moves[id].metamorphic);
+  const owned = Object.keys(moves).filter((id) => signatureMoves[id] || classMoves[id] || patronMoves[id] || moves[id].metamorphic);
   assert.strictEqual(movePoolFor(undefined, moves).length, Object.keys(moves).length - owned.length);
 });
 

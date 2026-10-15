@@ -9,6 +9,7 @@
 
 import type { StatKey, StatLine, TypeId } from '../engine/content';
 import type { EquipmentDefinition, EquipmentFamilyId, EnchantmentId } from '../run/equipment';
+import { patronUniques } from './patrons';
 import {
   ENCHANTMENTS,
   ENCHANTMENT_IDS,
@@ -201,7 +202,7 @@ function enchantedVariants(item: EquipmentDefinition): Record<string, EquipmentD
 }
 
 const enchanted: Record<string, EquipmentDefinition> = {};
-for (const item of [...Object.values(baseEquipment), ...Object.values(uniqueEquipment)]) {
+for (const item of [...Object.values(baseEquipment), ...Object.values(uniqueEquipment), ...Object.values(patronUniques)]) {
   Object.assign(enchanted, enchantedVariants(item));
 }
 
@@ -211,6 +212,8 @@ for (const item of [...Object.values(baseEquipment), ...Object.values(uniqueEqui
 export const equipment: Record<string, EquipmentDefinition> = {
   ...baseEquipment,
   ...uniqueEquipment,
+  // A patron's capstone (data/patrons.ts): in the lookup, never in a drop.
+  ...patronUniques,
   ...enchanted,
 };
 

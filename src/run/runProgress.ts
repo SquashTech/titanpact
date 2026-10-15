@@ -1,6 +1,9 @@
 // Map-node progression (docs/run-loop.md): moving across a RunMap and
 // resolving what each node type grants. Pure RunState transforms.
 
+import { patrons } from '../data/patrons';
+import { PATRON_ROWS } from './map';
+import { seatIndexFor, withSeatOffers } from './patrons';
 import type { HeroDefinition, StatKey, StatusId } from '../engine/content';
 import { SEAL_ACTS, type BrokenSeal, type RunState, type RosterEntry } from './state';
 import { FINALE_LOCATION_ID } from '../data/locations';
@@ -32,11 +35,24 @@ export function advanceToNode(run: RunState, nodeId: string): RunState {
   if (!reachableNodeIds(run).includes(nodeId)) {
     throw new RunProgressError(`${nodeId} is not reachable from the current node`);
   }
-  return {
+  return withReachableSeatOffers({
     ...run,
     currentNodeId: nodeId,
     visitedNodeIds: run.visitedNodeIds.includes(nodeId) ? run.visitedNodeIds : [...run.visitedNodeIds, nodeId],
-  };
+  });
+}
+
+/** A patron seat's two patrons are drawn the moment it comes into reach, off the Trust held then (run/patrons.ts). */
+export function withReachableSeatOffers(run: RunState): RunState {
+  if (!run.map) return run;
+  let next = run;
+  for (const id of reachableNodeIds(run)) {
+    const node = run.map.nodes[id];
+    if (node?.type !== 'patronSeat') continue;
+    const seat = seatIndexFor(run.actNumber, node.row, PATRON_ROWS);
+    if (seat !== null) next = withSeatOffers(next, seat, patrons);
+  }
+  return next;
 }
 
 /**

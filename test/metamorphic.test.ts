@@ -1,6 +1,7 @@
 // Motley's Trick (docs/wild-innates-and-events.md §1): a metamorphic, permanent move swapped each
 // round for a face rolled from the whole catalog, and the hero re-based around it.
 
+import { patronMoves } from '../src/data/patrons';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -74,7 +75,7 @@ test("motley's trick: in no event pool, and no face is ever another Trick, a sig
   assert.ok(!pool.has('motleysTrick'));
   for (const id of Object.keys(signatureMoves)) assert.ok(!pool.has(id), `signature ${id} can be a face`);
   for (const id of Object.keys(classMoves)) assert.ok(!pool.has(id), `class move ${id} can be a face`);
-  const owned = Object.keys(moves).filter((id) => signatureMoves[id] || classMoves[id] || moves[id].metamorphic).length;
+  const owned = Object.keys(moves).filter((id) => signatureMoves[id] || classMoves[id] || patronMoves[id] || moves[id].metamorphic).length;
   assert.strictEqual(pool.size, Object.keys(moves).length - owned, 'the pool is the catalog less what belongs to somebody, not a list');
 });
 

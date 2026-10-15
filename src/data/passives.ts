@@ -3,6 +3,7 @@
 
 import type { PassiveDefinition } from '../engine/content';
 import { classPassives } from './classes';
+import { patronPassives } from './patrons';
 import { pathPassives } from './evolutionPassives';
 import { TYPES, type TitanpactType } from './typechart';
 import { fieldEffects } from './fieldEffects';
@@ -2790,6 +2791,7 @@ export const passives: Record<string, PassiveDefinition> = {
   ...evolutionPassives,
   ...pathPassives,
   ...classPassives,
+  ...patronPassives,
   ...innatePassives,
   ...masteredInnatePassives,
   ...titansMarkPassives,

@@ -40,6 +40,7 @@ const LENS: Record<MapNodeType, Lens> = {
   mentorReward: 'level',
   tutorReward: 'moves',
   academyReward: 'moves',
+  patronSeat: null,
   currencyReward: null,
   contractReward: null,
   event: null,

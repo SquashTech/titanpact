@@ -1,3 +1,4 @@
+import { PatronGlyph, TrustPips } from './patronView';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
@@ -149,6 +150,16 @@ interface RouteSegment {
  * the sigil in the destination's own colour, small and unlit. Above, because the map has always
  * run bottom-up toward the Guardian: further along the path is higher up the screen.
  */
+/** What a patron seat tile shows. */
+export interface PatronTile {
+  id: string;
+  title: string;
+  /** The label under the tile: the title without its article. */
+  short: string;
+  color: string;
+  trust: number;
+}
+
 function ChoiceMedallion({
   map,
   node,
@@ -163,9 +174,12 @@ function ChoiceMedallion({
   dimmed,
   onTap,
   measureRef,
+  patron,
 }: {
   map: RunMap;
   node: MapNode;
+  /** The patron a seat tile holds (patronView.tsx), with its Trust: the tile wears its mark and title. */
+  patron?: PatronTile | null;
   /** A word under the tile when nothing else says it is the thing to tap: the run's first node. */
   hint?: string;
   /** The act's Guardian, drawn as the Guardian node's face. */
@@ -188,7 +202,7 @@ function ChoiceMedallion({
   // The enemy typing stays ON the tile (docs/titanspawn-overhaul.md §4) — a rule held in the head
   // does not survive the map being a scene — but as a plaque under the helm, not cut into it.
   const scoutedFace = scouted && scouted.length > 0 ? scouted : null;
-  const label = nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber);
+  const label = patron ? patron.title : nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber);
   // The pixel medallion wears the node's own emblem — helm or crowned helm on the fork — and a
   // scouted typing hangs under it as a plaque, rather than being cut into the face.
   const landmark = landmarkKind(node.type);
@@ -200,7 +214,7 @@ function ChoiceMedallion({
     <div
       className={`map-choice tier-${NODE_TIERS[node.type]}${landmark ? ` has-${landmark}` : ''}${previewed ? ' is-previewed' : ''}${dimmed ? ' is-dimmed' : ''}`}
       data-node-type={node.type}
-      style={{ '--land-delay': `${landDelayMs}ms`, '--node-color': NODE_COLORS[node.type] } as CSSProperties}
+      style={{ '--land-delay': `${landDelayMs}ms`, '--node-color': patron ? patron.color : NODE_COLORS[node.type] } as CSSProperties}
     >
       <span className="map-choice-ahead" aria-hidden="true">
         {leadOns.map((type) => (
@@ -212,7 +226,7 @@ function ChoiceMedallion({
       {/* Above the tile: the route lines arrive from below. The two gates go unlabelled — the door says it. */}
       {!tile && landmark !== 'gate' && landmark !== 'titanGate' && (
         <span className="map-choice-label" aria-hidden="true">
-          {NODE_LABELS[node.type]}
+          {patron ? patron.short : NODE_LABELS[node.type]}
         </span>
       )}
       {hint && !opening && (
@@ -248,7 +262,9 @@ function ChoiceMedallion({
           </span>
         )}
         {!art && !tile && !landmark && scoutedFace && <ElementPie types={scoutedFace} className="map-medallion-pie" />}
-        {!art && !tile && !landmark && !scoutedFace && <NodeGlyph type={node.type} className="map-medallion-glyph" />}
+        {!art && !tile && !landmark && !scoutedFace && !patron && <NodeGlyph type={node.type} className="map-medallion-glyph" />}
+        {patron && <PatronGlyph patronId={patron.id} className="map-medallion-glyph" />}
+        {patron && <TrustPips trust={patron.trust} className="map-medallion-trust" />}
         {!art && !tile && !landmark && scoutedFace && node.type === 'elite' && (
           <span className="map-medallion-crown" aria-hidden="true">
             <HubGlyph name="crown" />
@@ -271,7 +287,10 @@ export function MapRoute({
   renderDossier,
   onPreviewChange,
   companion,
+  patronFor,
 }: {
+  /** The patron a seat tile holds, or null (MapScreen reads it off the run). */
+  patronFor?: (node: MapNode) => PatronTile | null;
   /** The companion, drawn walking beside wherever the party stands. */
   companion?: ReactNode;
   map: RunMap;
@@ -491,6 +510,7 @@ export function MapRoute({
             previewed={previewId === nodeId}
             dimmed={previewId !== null && previewId !== nodeId}
             onTap={() => tap(nodeId)}
+            patron={patronFor?.(map.nodes[nodeId])}
             measureRef={(el) => {
               if (el) medallionRefs.current.set(nodeId, el);
               else medallionRefs.current.delete(nodeId);
@@ -558,8 +578,8 @@ export function MapRoute({
               return el ? [{ id, el }] : [];
             })}
             previewId={previewId}
-            color={NODE_COLORS[map.nodes[previewId].type]}
-            label={NODE_LABELS[map.nodes[previewId].type]}
+            color={patronFor?.(map.nodes[previewId])?.color ?? NODE_COLORS[map.nodes[previewId].type]}
+            label={patronFor?.(map.nodes[previewId])?.title ?? NODE_LABELS[map.nodes[previewId].type]}
             onTap={tap}
             onBack={() => setPreviewId(null)}
             onGo={() => go(previewId)}

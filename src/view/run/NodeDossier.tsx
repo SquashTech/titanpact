@@ -1,3 +1,4 @@
+import { nextRungFacts, patronColor, patronOfNode } from './patronView';
 import { type CSSProperties, type ReactNode } from 'react';
 import type { MapNode } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
@@ -95,8 +96,11 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
  * roster's side of it is the footer's chips (nodeLens.tsx).
  */
 export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
-  const dossier = nodeDossier(node.type, run.actNumber, run.cycle);
-  const color = NODE_COLORS[node.type];
+  const patron = patronOfNode(run, node);
+  const dossier = patron
+    ? { about: `${patron.name}, ${patron.title.replace(/^The /, 'the ')}.`, facts: nextRungFacts(run, patron), odds: null }
+    : nodeDossier(node.type, run.actNumber, run.cycle);
+  const color = patron ? patronColor(patron.id) : NODE_COLORS[node.type];
   const shown = dossier.facts.filter((fact) => fact.value !== null);
   const threats = shown.filter((fact) => fact.threat);
   const rewards = shown.filter((fact) => !fact.threat);

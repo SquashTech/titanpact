@@ -5,6 +5,8 @@
 // grant reaches the run. A resume onto a settled screen goes past it (`resumeTarget`), since the
 // screen's own record of having granted died with the page and it would offer the grant again.
 
+import { patrons } from '../data/patrons';
+import { CAPSTONE_TRUST } from './patrons';
 import type { CombatState, Side } from '../engine/state';
 import type { ConsumableKind, ConsumablePurse } from './consumables';
 import { CONSUMABLE_KINDS } from './consumables';
@@ -117,6 +119,14 @@ export type RunScreen =
   | { kind: 'tutorNode'; nodeId: string; seed: number; settled?: boolean }
   /** The Academy (docs/academy.md): pick a hero, and it learns a Class. `seed` fixes the three offered. */
   | { kind: 'academyNode'; nodeId: string; seed: number; settled?: boolean }
+  /**
+   * A patron meeting (run/patrons.ts): the Trust it raised is already on the run, so `rung` is what it
+   * pays and `stepsDone` how much of it has landed. `nodeId` is the seat, or null for the capstone,
+   * which goes on to `next` (the last Guardian's fight).
+   */
+  | { kind: 'patronNode'; nodeId: string | null; patronId: string; rung: number; seed: number; stepsDone?: number; next: RunScreen }
+  /** Two patrons owed their capstone: which one comes. */
+  | { kind: 'patronCapstone'; candidates: readonly string[]; next: RunScreen }
   /** Which event this node is gets rolled ONCE at node-select time; `seed` fixes what its options hold. */
   | { kind: 'event'; nodeId: string; eventId: string; seed: number; settled?: boolean }
   /** What the fight just did to the roster. `taken` is who has already taken a schedule entry this report. */
@@ -182,6 +192,8 @@ const RESUMABLE: ReadonlySet<RunScreenKind> = new Set<RunScreenKind>([
   'mentorNode',
   'tutorNode',
   'academyNode',
+  'patronNode',
+  'patronCapstone',
   'event',
   'levelUp',
   'companion',
@@ -411,6 +423,23 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
     case 'herald':
     case 'titanBound':
       return { kind, next: next() };
+    case 'patronNode': {
+      if (typeof raw.patronId !== 'string' || !(raw.patronId in patrons)) reject('patronNode.patronId is unknown');
+      const node = raw.nodeId === null ? null : nodeId(raw.nodeId, ctx, 'patronNode.nodeId');
+      return {
+        kind,
+        nodeId: node,
+        patronId: raw.patronId,
+        rung: Math.min(int(raw.rung, 'patronNode.rung', 1), CAPSTONE_TRUST),
+        seed: int(raw.seed, 'patronNode.seed'),
+        stepsDone: raw.stepsDone === undefined ? 0 : int(raw.stepsDone, 'patronNode.stepsDone', 0),
+        next: node === null ? next() : { kind: 'map' },
+      };
+    }
+    case 'patronCapstone': {
+      if (!Array.isArray(raw.candidates) || !raw.candidates.every((id) => typeof id === 'string' && id in patrons)) reject('patronCapstone.candidates is unknown');
+      return { kind, candidates: [...(raw.candidates as string[])], next: next() };
+    }
     case 'companionAwakens':
       return { kind, heroId: heroId(raw.heroId, ctx, 'companionAwakens.heroId'), next: next() };
     case 'fight': {

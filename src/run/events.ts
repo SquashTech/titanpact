@@ -2,6 +2,7 @@
 // Selection is called once at node-select time, never inside a component
 // (a component-local roll rerolls on every remount — see shop.ts).
 
+import { patronMoves } from '../data/patrons';
 import type { HeroDefinition, MoveDefinition, PassiveId, StatKey } from '../engine/content';
 import {
   DEFAULT_EVENT_WEIGHT,
@@ -69,7 +70,7 @@ export function movePoolFor(filter: MovePoolFilter | undefined, moves: Record<st
   const needle = filter?.nameIncludes?.toLowerCase();
   return Object.values(moves)
     .filter((move) => {
-      if (signatureMoves[move.id] || classMoves[move.id] || move.metamorphic) return false;
+      if (signatureMoves[move.id] || classMoves[move.id] || patronMoves[move.id] || move.metamorphic) return false;
       if (needle && !move.name.toLowerCase().includes(needle)) return false;
       if (filter?.types && !filter.types.includes(move.type)) return false;
       if (filter?.kinds && !filter.kinds.includes(move.kind)) return false;

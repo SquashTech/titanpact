@@ -3,6 +3,7 @@
 // command phase reads — so the engine resolves a plain move and never learns the Trick exists:
 // the face's type, price, priority, targeting and riders are simply the face's.
 
+import { patronMoves } from '../data/patrons';
 import type { MoveDefinition, PassiveDefinition, PassiveId } from '../engine/content';
 import { resolveMetamorphicFaces, type CombatState } from '../engine/state';
 import { signatureMoves } from '../data/signatures';
@@ -19,7 +20,7 @@ export function metamorphicPool(moves: Record<string, MoveDefinition>): readonly
   const cached = poolCache.get(moves);
   if (cached) return cached;
   const pool = Object.values(moves)
-    .filter((move) => !move.metamorphic && !signatureMoves[move.id] && !classMoves[move.id])
+    .filter((move) => !move.metamorphic && !signatureMoves[move.id] && !classMoves[move.id] && !patronMoves[move.id])
     .map((move) => move.id)
     .sort();
   poolCache.set(moves, pool);

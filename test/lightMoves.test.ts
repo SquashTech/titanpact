@@ -1,5 +1,6 @@
 // Light's authored movepool: conditionalPower.requiresFieldEffect, and Daze as flinch. Mechanics, not numbers.
 
+import { patronMoves } from '../src/data/patrons';
 import { firstStatusApplication, statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
@@ -286,6 +287,7 @@ test('light: every authored Light move has a holder', () => {
   for (const pool of Object.values(progressionTable.moveTiers)) for (const id of pool) reachable.add(id);
   // A class move is reached through its Class alone (src/data/classes.ts).
   for (const id of Object.keys(classMoves)) reachable.add(id);
+  for (const id of Object.keys(patronMoves)) reachable.add(id);
   // An Evolution path reaches moves two ways: granted outright, or added to the level-up pool.
   for (const nodes of Object.values(progressionTable.evolutions)) {
     for (const node of nodes) {

@@ -23,6 +23,8 @@ export interface ClassDefinition {
   grantsMoveId?: string;
   /** In the passive catalog under the same id (data/passives.ts folds classPassives in). */
   grantsPassiveId?: PassiveId;
+  /** A Master Class: the Headmaster's capstone alone (docs/patrons.md), never in an ordinary roll. */
+  master?: boolean;
 }
 
 export const CLASS_KINDS: readonly ClassKind[] = ['offensive', 'defensive', 'utility'];
@@ -45,10 +47,10 @@ export function isValidClassDefinition(cls: ClassDefinition): boolean {
  * direction — it was one per kind, which read as a category the screen then had to label). `rng`
  * in [0, 1). `kind` stays on the schema as authoring intent; the roll no longer reads it.
  */
-export function rollClassOffers(classes: Record<string, ClassDefinition>, rng: () => number): ClassDefinition[] {
-  const pool = Object.values(classes);
+export function rollClassOffers(classes: Record<string, ClassDefinition>, rng: () => number, count = CRUCIBLE_OFFER_COUNT): ClassDefinition[] {
+  const pool = Object.values(classes).filter((cls) => !cls.master);
   const picked: ClassDefinition[] = [];
-  while (picked.length < Math.min(CRUCIBLE_OFFER_COUNT, pool.length)) {
+  while (picked.length < Math.min(count, pool.length)) {
     picked.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
   }
   return picked;

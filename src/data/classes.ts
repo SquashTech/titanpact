@@ -90,6 +90,22 @@ export const classMoves: Record<string, MoveDefinition> = {
     priority: 1,
     target: 'self',
   },
+  // The Bastion's Master Class move (docs/patrons.md): Intercept with its guard raised twice.
+  bulwark: {
+    id: 'bulwark',
+    name: 'Bulwark',
+    type: 'Iron',
+    typeFollowsUser: true,
+    category: 'physical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Provoke', duration: 1, target: 'self' },
+    statDeltas: [{ stat: 'defense', stages: 2 }],
+    statDeltaTarget: 'self',
+    manaCost: 35,
+    chargesPerFight: 5,
+    priority: 1,
+    target: 'self',
+  },
   vanish: {
     id: 'vanish',
     name: 'Vanish',
@@ -165,6 +181,27 @@ export const classPassives: Record<string, PassiveDefinition> = {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
       effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
+    },
+  },
+  // The Master Classes' passives (docs/patrons.md): Frenzy and Wayfinder, mastered.
+  warlord: {
+    id: 'warlord',
+    name: 'Warlust',
+    description: 'Gains ATK ▲, INT ▲ and SPD ▲.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence', 'speed'], stages: 1 },
+    },
+  },
+  strategist: {
+    id: 'strategist',
+    name: 'Grand Design',
+    description: 'When a partner enters the battlefield beside this hero, that partner gains 40 Mana.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'ally' },
+      effect: { kind: 'manaGrant', target: 'triggerSubject', amount: { kind: 'flat', value: 40 } },
     },
   },
   sage: {
@@ -266,5 +303,27 @@ export const classes: Record<string, ClassDefinition> = {
     name: 'Bard',
     kind: 'utility',
     grantsPassiveId: 'herald',
+  },
+  // --- Master Classes: the Headmaster's capstone, never rolled at an ordinary meeting ---
+  warlord: {
+    id: 'warlord',
+    name: 'Warlord',
+    kind: 'offensive',
+    grantsPassiveId: 'warlord',
+    master: true,
+  },
+  bastion: {
+    id: 'bastion',
+    name: 'Bastion',
+    kind: 'defensive',
+    grantsMoveId: 'bulwark',
+    master: true,
+  },
+  strategist: {
+    id: 'strategist',
+    name: 'Strategist',
+    kind: 'utility',
+    grantsPassiveId: 'strategist',
+    master: true,
   },
 };

@@ -1,3 +1,5 @@
+import { patronColor, patronOfNode } from './patronView';
+import { trustOf } from '../../run/patrons';
 import { companionCallMoveId, companionHeroId } from '../../run/companion';
 import { CompanionDossier } from '../combat/CompanionFigure';
 import { useState, type CSSProperties } from 'react';
@@ -273,6 +275,12 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           guardianId={location.guardianFinalEnemyId}
           onSelectNode={onSelectNode}
           renderDossier={(node) => <NodeDossier node={node} run={run} />}
+          patronFor={(node) => {
+            const patron = patronOfNode(run, node);
+            return patron
+              ? { id: patron.id, title: patron.title, short: patron.title.replace(/^The /, ''), color: patronColor(patron.id), trust: trustOf(run, patron.id) }
+              : null;
+          }}
           onPreviewChange={(node) => setReading(node?.type ?? null)}
           companion={
             // The companion walks the road beside the party, not in the footer the six fill.

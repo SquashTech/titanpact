@@ -25,6 +25,7 @@
 
 import type { MoveDefinition, StatKey } from '../engine/content';
 import { classMoves } from './classes';
+import { patronMoves } from './patrons';
 import { signatureMoves } from './signatures';
 
 // The reel Mech's random-stat moves draw from, and the set Overdrive grants at
@@ -4693,6 +4694,8 @@ export const moves: Record<string, MoveDefinition> = {
   },
   // The Class moves (classes.ts): untiered, in no hero's pool — a Class is their only source.
   ...classMoves,
+  // The patron moves (patrons.ts): untiered, in no pool — a patron is their only source.
+  ...patronMoves,
   // The signature moves (signatures.ts): untiered, in no pool — the hero's own signatureLevel is their only source.
   ...signatureMoves,
 };

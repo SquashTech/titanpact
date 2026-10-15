@@ -1,5 +1,6 @@
 // Shadow slate: conditionalPower.requiresTargetHpBelow (the first numeric damage condition), and Ambush — the typeless Force the type is built around. Hand-off findings: docs/authoring-moves.md §10.
 
+import { patronMoves } from '../src/data/patrons';
 import { firstStatusApplication, statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
@@ -267,7 +268,7 @@ test('shadow: every Ambush grant in the game is self-targeted and carries a magn
 
 test('shadow: the slate is sixteen moves plus the three 2026-09-15 additions and the Call’s two, and every status and condition it names exists', () => {
   // The type's authored slate — a class move wears a type for flavour and is not a row of it.
-  const shadow = Object.values(moves).filter((m) => m.type === 'Shadow' && !signatureMoves[m.id] && !classMoves[m.id]);
+  const shadow = Object.values(moves).filter((m) => m.type === 'Shadow' && !signatureMoves[m.id] && !classMoves[m.id] && !patronMoves[m.id]);
   assert.strictEqual(shadow.length, 21);
   for (const move of shadow) {
     for (const app of statusApplicationsOf(move)) {
@@ -348,7 +349,7 @@ test('shadow: Dusk Blade is the only guaranteed Bleed, and Bleed is the type fla
 
 test('shadow: Shadowstrike is the slate only bracket play — everything else resolves at priority 0', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Shadow' || signatureMoves[move.id] || classMoves[move.id]) continue;
+    if (move.type !== 'Shadow' || signatureMoves[move.id] || classMoves[move.id] || patronMoves[move.id]) continue;
     assert.strictEqual(move.priority, move.id === 'shadowstrike' ? 1 : 0, `${move.id} has an unexpected priority bracket`);
   }
 });
@@ -392,6 +393,7 @@ test('shadow: every authored Shadow move has a holder', () => {
   for (const pool of Object.values(progressionTable.moveTiers)) for (const id of pool) reachable.add(id);
   // A class move is reached through its Class alone (src/data/classes.ts).
   for (const id of Object.keys(classMoves)) reachable.add(id);
+  for (const id of Object.keys(patronMoves)) reachable.add(id);
   // An Evolution path reaches moves two ways: granted outright, or added to the level-up pool.
   for (const nodes of Object.values(progressionTable.evolutions)) {
     for (const node of nodes) {

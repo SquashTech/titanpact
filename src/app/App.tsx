@@ -31,6 +31,9 @@ import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { BoonNodeScreen } from '../view/run/BoonNodeScreen';
 import { TutorNodeScreen } from '../view/run/TutorNodeScreen';
 import { MentorNodeScreen } from '../view/run/MentorNodeScreen';
+import { PatronCapstoneScreen, PatronNodeScreen } from '../view/run/PatronNodeScreen';
+import { patrons } from '../data/patrons';
+import { capstoneCandidates, meetPatron, patronAtSeat, seatIndexFor } from '../run/patrons';
 import { NodeRewardScreen } from '../view/run/NodeRewardScreen';
 import { ItemWhoScreen } from '../view/run/ItemWhoScreen';
 import { clearGuildHallTab } from '../view/run/guildHallTabMemory';
@@ -113,7 +116,7 @@ import type { MvpPick } from '../run/mvp';
 import { ShopItemError, TavernCallError, buyShopItem, callForType, callableTypes, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
-import { generateMap, type MapNodeType, type RewardNodeType } from '../run/map';
+import { generateMap, PATRON_ROWS, type MapNodeType, type RewardNodeType } from '../run/map';
 import { firstUnseenTip, LORE_TIP_ID, type ScreenTipId } from '../run/tips';
 import { LORE_LINES, SCREEN_TIPS } from '../data/tips';
 import { TipOverlay } from '../view/run/TipOverlay';
@@ -849,6 +852,16 @@ export function App() {
       setScreen({ kind: 'tutorNode', nodeId, seed: randomSeed() });
     } else if (node.type === 'academyReward') {
       setScreen({ kind: 'academyNode', nodeId, seed: randomSeed() });
+    } else if (node.type === 'patronSeat') {
+      const seat = seatIndexFor(playerRun.actNumber, node.row, PATRON_ROWS);
+      const patronId = seat === null ? null : patronAtSeat(playerRun, seat, node.col);
+      if (!patronId) {
+        handleNodeContinue(nodeId);
+        return;
+      }
+      const met = meetPatron(playerRun, patronId, seat);
+      setPlayerRun(met.run);
+      setScreen({ kind: 'patronNode', nodeId, patronId, rung: met.rung, seed: randomSeed(), stepsDone: 0, next: { kind: 'map' } });
     } else if (node.type === 'event') {
       const rolled = rollRunEvent(runEvents, playerRun.actNumber, location.id);
       // Nothing eligible skips the node rather than stranding the player on an empty screen.
@@ -889,7 +902,19 @@ export function App() {
       setProfile(updateProfile((current) => recordSpawnAscended(current, waking.type)));
     }
     const afterHerald: Screen = wakingHeroId ? { kind: 'companionAwakens', heroId: wakingHeroId, next: fight } : fight;
+    if (mapNodeType === 'boss' && playerRun.actNumber === SEAL_ACTS) {
+      // The capstone (docs/patrons.md): a patron at Trust 4 comes as the last seal's gate opens.
+      const owed = capstoneCandidates(playerRun, patrons);
+      if (owed.length > 1) return setScreen({ kind: 'patronCapstone', candidates: owed, next: fight });
+      if (owed.length === 1) return startCapstone(owed[0], fight);
+    }
     setScreen(mapNodeType === 'finale' ? { kind: 'herald', next: afterHerald } : fight);
+  }
+
+  function startCapstone(patronId: string, next: Screen) {
+    const met = meetPatron(playerRun, patronId, null);
+    setPlayerRun(met.run);
+    setScreen({ kind: 'patronNode', nodeId: null, patronId, rung: met.rung, seed: randomSeed(), stepsDone: 0, next });
   }
 
   function handleFightResolved(
@@ -1783,6 +1808,24 @@ export function App() {
       {screen.kind === 'guardianBanner' && (
         <GuardianBannerScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => setScreen(screen.next)} />
       )}
+
+      {screen.kind === 'patronNode' && (
+        <PatronNodeScreen
+          key={`${screen.patronId}:${screen.rung}`}
+          run={playerRun}
+          patronId={screen.patronId}
+          rung={screen.rung}
+          stepsDone={screen.stepsDone ?? 0}
+          seed={screen.seed}
+          onStep={(next, stepsDone) => {
+            setPlayerRun(next);
+            setScreen((at) => (at === screen ? { ...screen, stepsDone } : at));
+          }}
+          onContinue={() => (screen.nodeId ? handleNodeContinue(screen.nodeId) : setScreen(screen.next))}
+        />
+      )}
+
+      {screen.kind === 'patronCapstone' && <PatronCapstoneScreen run={playerRun} candidates={screen.candidates} onChoose={(id) => startCapstone(id, screen.next)} />}
 
       {screen.kind === 'academyNode' && (
         <AcademyNodeScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} seed={screen.seed} />

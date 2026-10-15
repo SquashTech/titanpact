@@ -30,6 +30,8 @@ export const MAP_NODE_TYPES = [
   'tutorReward',
   'scribeReward',
   'academyReward',
+  // A patron seat (run/patrons.ts, docs/patrons.md): one patron a tile, two tiles a seat.
+  'patronSeat',
   'event',
   // Act 6 only (docs/run-loop.md §4). `muster` is the Vigil, `finale` the Herald and, behind it
   // in the same fight, the Titan's Eyes (docs/titan-eyes.md §10).
@@ -57,23 +59,15 @@ export interface RunMap {
   bossNodeId: string;
 }
 
-// row 0 fight, 1/3/7 pick-1-of-3 rewards, 2 the spliced seat, 4 the Scribe, 5 elite-or-skirmish,
-// 6 the Academy, 8 the funnel, 9 boss. Three fights an act since 2026-09-14 (per user direction): the
+// row 0 fight, 1/3/7 pick-1-of-3 rewards, 2 and 6 patron seats, 4 the Scribe, 5 elite-or-skirmish,
+// 8 the funnel, 9 boss. Three fights an act since 2026-09-14 (per user direction): the
 // un-forked Skirmish row came out to shorten the run without cutting an act, so the fork is the
 // act's one Skirmish and every act carries the spliced row — the shape is the same in all four. The
 // Scribe row joined the same day (docs/mastery.md §3), ahead of the fork so the Evolution it buys
 // is in hand for the previewed Elite and the Guardian.
-const ROW_WIDTHS = [1, 3, 1, 3, 1, 2, 1, 3, 1, 1] as const;
+const ROW_WIDTHS = [1, 3, 2, 3, 1, 2, 2, 3, 1, 1] as const;
 
-/**
- * Forced single-node row between the act's first two reward rows. Acts 1-3 it is the Mentor
- * (`mentorReward`, docs/growth-overhaul.md §11) — the ONLY place one appears, since it is absent
- * from REWARD_WEIGHTS — sitting ahead of the fork so the move is in hand for the act's first
- * recruitable fight. Acts 4 and 5 are a forced Tutor: a guaranteed Late move an act, ahead of
- * the two Guardians it matters most against. Act 4's used to be the Forge (2026-09-11), deleted
- * with item slots (docs/gear-absorption.md §4), and the Tutor that took its place used to be
- * seated inside one of act 4's reward rows.
- */
+/** The first patron seat, between the act's first two reward rows — the Mentor's row until 2026-10-15. */
 const SPLICED_ROW = 2;
 
 /**
@@ -87,18 +81,23 @@ const SCRIBE_ROW = 4;
 
 const ELITE_ROW = 5;
 
-/**
- * The Academy (2026-10-09, per user direction, docs/academy.md): a forced row every act right after
- * the fork — pick one hero, and it learns a Class. It was the Crucible, a beat behind each Guardian;
- * on the road it lands with half the act left to use it. Absent from REWARD_WEIGHTS.
- */
+/** The second patron seat, right after the fork — the Academy's row until 2026-10-15. */
 const ACADEMY_ROW = 6;
 
 const LAST_MENTOR_ACT = 3;
 
-/** What the spliced row holds: the Mentor through LAST_MENTOR_ACT, the Tutor after. */
-function splicedRowType(actNumber: number): MapNodeType {
-  return actNumber <= LAST_MENTOR_ACT ? 'mentorReward' : 'tutorReward';
+/**
+ * The patron seats (docs/patrons.md, 2026-10-15): the rows the Mentor and the Academy held, two
+ * tiles each, a patron on each. Every tile above links to both, so no path loses a patron.
+ */
+export const PATRON_ROWS: readonly number[] = [SPLICED_ROW, ACADEMY_ROW];
+
+/** The Mentor and the Tutor left their forced seat for the reward rows: the Mentor through LAST_MENTOR_ACT, the Tutor after. */
+const MENTOR_WEIGHT = 25;
+const TUTOR_WEIGHT = 25;
+
+export function rewardWeightsFor(actNumber: number): readonly [MapNodeType, number][] {
+  return [...REWARD_WEIGHTS, actNumber <= LAST_MENTOR_ACT ? ['mentorReward', MENTOR_WEIGHT] : ['tutorReward', TUTOR_WEIGHT]];
 }
 
 /** Every act's rows are the same width: the funnel is one Guild Hall, forced (docs/gear-absorption.md §6). */
@@ -107,7 +106,7 @@ function rowWidthsFor(actNumber: number): number[] {
   return [...ROW_WIDTHS];
 }
 
-/** Reward-row pool. `mentorReward` and `tutorReward` are deliberately absent — each has its own forced seat. Weights are a first-pass balance. */
+/** Reward-row pool, before the act's Mentor or Tutor joins it (rewardWeightsFor). Weights are a first-pass balance. */
 export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // The Equipment Cache: the deliberate gear faucet, where the player picks a family (docs/
   // gear-absorption.md §5). 40 + the Forge's 38 since 2026-09-15 — the Forge's seat came to the
@@ -217,14 +216,13 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
   const eliteRow = ELITE_ROW;
 
   function isRewardRow(row: number): boolean {
-    return row !== 0 && row !== SPLICED_ROW && row !== SCRIBE_ROW && row !== eliteRow && row !== ACADEMY_ROW && row !== funnelRow && row !== bossRow;
+    return row !== 0 && !PATRON_ROWS.includes(row) && row !== SCRIBE_ROW && row !== eliteRow && row !== funnelRow && row !== bossRow;
   }
 
   function fixedNodeType(row: number, col: number): MapNodeType {
     if (row === 0) return 'fight';
-    if (row === SPLICED_ROW) return splicedRowType(actNumber);
+    if (PATRON_ROWS.includes(row)) return 'patronSeat';
     if (row === SCRIBE_ROW) return 'scribeReward';
-    if (row === ACADEMY_ROW) return 'academyReward';
     // Elite-or-Skirmish since 2026-09-13 — both hero pool, both recruitable, and the two
     // preview their typing on the tile (run/encounters.ts guarantees they differ in a type).
     if (row === eliteRow) return col === 0 ? 'elite' : 'skirmish';
@@ -243,7 +241,7 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     const rewardRow = isRewardRow(row);
     let rewardTypes: MapNodeType[] = [];
     if (rewardRow) {
-      const picked = pickWeightedDistinct(rng, REWARD_WEIGHTS, rowWidths[row]);
+      const picked = pickWeightedDistinct(rng, rewardWeightsFor(actNumber), rowWidths[row]);
       rewardTypes = picked.values;
       rng = picked.nextState;
     }
@@ -271,7 +269,7 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     // be read. It does not survive the map becoming a scene: with only the row in front of you
     // visible, a reward two steps back quietly closing an encounter is a rule the player is asked
     // to hold in their head rather than see. The choice is now simply always there.
-    if ((row + 1 === funnelRow || row + 1 === eliteRow) && to.length > 1) {
+    if ((row + 1 === funnelRow || row + 1 === eliteRow || PATRON_ROWS.includes(row + 1) || PATRON_ROWS.includes(row)) && to.length > 1) {
       for (const fromId of from) nodes[fromId].nextIds = [...to];
       continue;
     }

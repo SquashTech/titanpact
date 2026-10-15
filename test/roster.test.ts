@@ -170,6 +170,9 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   const { boonPassives, chargeBoonPassives, familyBoonPassives, fieldHeraldPassiveFor, typeDamagePassiveFor } = require('../src/data/passives') as typeof import('../src/data/passives');
 
   const granted = new Set<string>(Object.keys(classes));
+  // A patron's rungs (src/data/patrons.ts).
+  const { patrons } = require('../src/data/patrons') as typeof import('../src/data/patrons');
+  for (const patron of Object.values(patrons)) for (const rung of patron.rungs) for (const step of rung) if (step.kind === 'passive') granted.add(step.passiveId);
   // The Boon node (src/run/boons.ts) hands out both halves of its pool.
   for (const id of Object.keys(boonPassives)) granted.add(id);
   for (const id of Object.values(typeDamagePassiveFor)) granted.add(id);

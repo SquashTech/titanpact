@@ -1,6 +1,6 @@
 # Patrons
 
-**Decided 2026-10-13, revised 2026-10-15, per user direction. Not built.** The Mentor's seat and the
+**Decided 2026-10-13, revised 2026-10-15, per user direction. Phase 1 BUILT 2026-10-15** (see "Built"). The Mentor's seat and the
 Academy's seat stop being forced single tiles and become **patron seats**: two patrons offered, one
 taken. Every patron has a **Trust** ladder, and Trust is how its rewards grow over a run. A player who
 commits to one patron early is promised its capstone; a player who spreads gets a strong run without
@@ -132,6 +132,46 @@ Shielded; **Strategist**, a move — a priority swap, or a reset of an ally's st
 | 3 | Another Forge |
 | 4 | A piece rolled to fit, a tier ahead of the act |
 | 5 | One of three Forgemistress Uniques, for any hero |
+
+## Built (phase 1, 2026-10-15)
+
+- **Engine**: `src/run/patrons.ts` — Trust, students, the Promise, the seat draw and the rung verbs;
+  `RunState.patrons` (optional, so a pre-patron save starts from no Trust; `decodePatrons`, save.ts).
+- **Map**: rows 2 and 6 are two `patronSeat` tiles (`PATRON_ROWS`, run/map.ts). Every tile above links
+  to both, and both link to every tile after — a patron picked never closes a reward the next row
+  would have offered (the reason the fork links fully). A seat's two patrons are drawn the moment it
+  comes into reach (`withReachableSeatOffers`, run/runProgress.ts), off the Trust held then, and
+  kept, so the seat in front of you never re-rolls under it.
+- **The Mentor and the Tutor** roll in the reward rows (`rewardWeightsFor`): the Mentor acts 1–3, the
+  Tutor act 4, each at weight 25. The Academy node no longer generates; its screen and the Mentor's
+  forced seat survive only for a save that still holds one.
+- **The capstone** is a beat on entering the Act 4 Guardian's gate (App.tsx `handleEnterFight`), not a
+  map row: one patron at Trust 4 comes straight in; two raise `PatronCapstoneScreen` first.
+- **The screen** (`PatronNodeScreen`): the patron greets and says what the rung pays, then pays it a
+  step at a time — the item who-screen restricted to the student (its taker becomes the student), a
+  lift or a Unique in place, a move or passive taught straight to the student (no tap when there is
+  nothing to choose), a Class through the Academy's own screen with the patron's header. A resumed
+  save picks up at the step it stood on (`RunScreen.patronNode.stepsDone`).
+- **Three patrons**: the Swordsman, the Archmage and the Headmaster. The Priest, the Huntress, the
+  Hexwright and the Forgemistress are phase 2 — each is content only.
+- **The sim** takes the patron it trusts most at every seat and the capstone before the last
+  Guardian. Measured once, directional: 8 seats a run, nothing stranded.
+
+### First-pass values, chosen to ship — every one is the designer's to move
+
+- **Names**: Ren (Swordsman), Ysolde (Archmage), Aldous (Headmaster).
+- `TRUST_WEIGHT` = 2 (a patron's draw weight is 1 + 2 × Trust); `PATRON_ITEM_RARITY_BY_ACT` = Rare /
+  Epic / Legendary / Legendary. A lift stays inside the act's rarity window, as the Anvil does.
+- **Moves**: Crescent Cut (Slice, 70, 40 mana), Gale Sever (Slice, both foes, 55, 50), Arcane Lance
+  (70, 40), Prism Burst (both foes, 55, 50) — all wear the holder's type.
+- **Passives**: Honed (on entering, Edge 15), Starwell (on entering, 25 Mana).
+- **Uniques** (Mythic 110): Moonfang (Atk 60, Spd 30, Edge 10), Astral Staff (Int 60, Mana 30,
+  Overchannel). A Unique keeps the enchant of the piece it replaces.
+- **Master Classes**: Warlord (Warlust — on a hit, ATK ▲ INT ▲ SPD ▲; a repeating card may move one
+  step a firing, so it widens rather than doubles), Bastion (Bulwark — Provoke and DEF ▲▲, 5 Charges;
+  Wisdom off-Mind is a pinned decision, so it guards Defense alone), Strategist (Grand Design — a
+  partner entering beside it gains 40 Mana).
+- **A student who left the roster**: the next rung goes to whoever takes it, who becomes the student.
 
 ## What it reverses
 

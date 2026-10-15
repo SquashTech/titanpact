@@ -2,6 +2,7 @@
 // move wears its holder's primary type, STAB guaranteed) and `chargesPerFight` (a guaranteed
 // lockout spent after its Charges, so it is never a permanent lock).
 
+import { patronMoves } from '../src/data/patrons';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState, withFullPools } from './fixtures';
@@ -50,7 +51,7 @@ test('class moves: every class move follows its user\'s type, and no authored sl
     if (cls.grantsMoveId) assert.strictEqual(moves[cls.grantsMoveId].typeFollowsUser, true, `${cls.grantsMoveId} should wear its holder\'s type`);
   }
   for (const move of Object.values(moves)) {
-    if (!classMoves[move.id]) assert.strictEqual(move.typeFollowsUser, undefined, `${move.id} is not a class move`);
+    if (!classMoves[move.id] && !patronMoves[move.id]) assert.strictEqual(move.typeFollowsUser, undefined, `${move.id} is not a class or patron move`);
   }
 });
 

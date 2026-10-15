@@ -23,6 +23,12 @@ interface Props {
   upcoming?: readonly string[];
   onRunChange: (next: RunState) => void;
   onDone: () => void;
+  /** Only these heroes may take it — a patron's student (PatronNodeScreen). */
+  onlyRosterIds?: readonly string[];
+  /** Applied to the run as the piece is taken, before it is handed back: a patron records its student. */
+  afterTake?: (run: RunState, rosterId: string) => RunState;
+  /** A patron's piece, or a gift: the title before anything is chosen. */
+  title?: string;
 }
 
 /**
@@ -31,7 +37,7 @@ interface Props {
  * A hero tap seats it — into a free socket, MERGED into the family the hero holds a tier up, or over
  * a piece a full hero picks to lose. Sell is the one decline.
  */
-export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone }: Props) {
+export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone, onlyRosterIds, afterTake, title: arrivalTitle }: Props) {
   const item = equipment[itemId];
   const [outcome, setOutcome] = useState<{ rosterId: string; mergeId?: string; replaced?: boolean } | { gold: number } | null>(null);
   const [burst, setBurst] = useState<string | null>(null);
@@ -69,7 +75,8 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone 
       return;
     }
     setReplacing(null);
-    onRunChange(absorbItem(run, entry.rosterId, itemId, equipment, rosterHeroes, replaceIndex));
+    const taken = absorbItem(run, entry.rosterId, itemId, equipment, rosterHeroes, replaceIndex);
+    onRunChange(afterTake ? afterTake(taken, entry.rosterId) : taken);
     if (receipt.kind === 'merge') {
       playSfx('discovery');
       setBurst(receipt.resultId);
@@ -90,7 +97,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone 
   }
 
   // The title is the whole header: no readout, so its height never changes under the roster.
-  const title = !outcome ? 'New Gear' : 'gold' in outcome ? `Sold for ${outcome.gold} gold` : mergeResult ? 'Merged' : outcome.replaced ? 'Replaced' : 'Absorbed';
+  const title = !outcome ? (arrivalTitle ?? 'New Gear') : 'gold' in outcome ? `Sold for ${outcome.gold} gold` : mergeResult ? 'Merged' : outcome.replaced ? 'Replaced' : 'Absorbed';
 
   return (
     <div className="node-screen item-who-screen" style={{ '--node-rgb': RARITY_RGB_VARS[item.rarity] } as CSSProperties}>
@@ -104,7 +111,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone 
           {run.roster.map((entry) => {
             const hero = rosterHeroes[entry.heroId];
             const receipt = receipts.get(entry.rosterId);
-            const open = !done && !!receipt && receipt.kind !== 'none';
+            const open = !done && !!receipt && receipt.kind !== 'none' && (!onlyRosterIds || onlyRosterIds.includes(entry.rosterId));
             const isTaker = takenBy === entry.rosterId;
             const cta = ctaFor(entry, receipt);
             return (

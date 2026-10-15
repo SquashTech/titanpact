@@ -1,5 +1,6 @@
 // Arcane slate: manaGrant / overflow, conditionalTarget, stagesPerManaHeld. Hand-off findings: docs/authoring-moves.md §10.
 
+import { patronMoves } from '../src/data/patrons';
 import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
@@ -309,7 +310,7 @@ test('arcane: overflow counts toward the steps — the Font of Power into Arcane
 // --- The slate as a whole ---
 
 test('arcane: the slate is twenty-two moves, and every field effect and status it names exists', () => {
-  const slate = Object.values(moves).filter((m) => m.type === 'Arcane' && !signatureMoves[m.id] && !classMoves[m.id]);
+  const slate = Object.values(moves).filter((m) => m.type === 'Arcane' && !signatureMoves[m.id] && !classMoves[m.id] && !patronMoves[m.id]);
   // Seventeen since 2026-09-09: Barrier joined the slate as the roster's only guard. It is Arcane
   // because shaped mana is the domain a wall of nothing draws on, not because Arcane needed a
   // sixteenth-plus move — Reverie holds it off-type. Nineteen since 2026-09-15 (Resonant Bolt, Twin Cast).

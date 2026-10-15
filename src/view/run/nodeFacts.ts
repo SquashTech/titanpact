@@ -202,6 +202,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
         facts: [{ glyph: 'xp', label: 'XP', value: `+${mentorXpFor(actNumber).toLocaleString()}`, who: 'one' }],
         odds: null,
       };
+    case 'patronSeat':
+      return { about: null, facts: [], odds: null };
     case 'academyReward':
       return { about: null, facts: [{ glyph: 'class', label: 'Class', value: '1 of 3', who: 'one' }], odds: null };
     case 'tutorReward':

@@ -167,6 +167,13 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   // One large cut gem: the Lapidary sets Gems, and the Guild Hall shelf sells the same glyph (RunGlyph RESOURCE_PATHS scroll).
   scribeReward: GEM,
   // A mortarboard and its tassel: the Academy schools a hero in a Class.
+  // A laurel crown: a patron's tile draws its own mark (patronView.tsx); this is the fallback.
+  patronSeat: (
+    <>
+      <path d="M12 20.6c-4.6 0-8.2-3.6-8.2-8.8 0-1.4.3-2.8.8-4l1.9.8a8.6 8.6 0 0 0-.6 3.2c0 4 2.7 6.7 6.1 6.7s6.1-2.7 6.1-6.7c0-1.1-.2-2.2-.6-3.2l1.9-.8c.5 1.2.8 2.6.8 4 0 5.2-3.6 8.8-8.2 8.8Z" />
+      <circle cx="12" cy="6" r="2.6" />
+    </>
+  ),
   academyReward: (
     <>
       <path d="M12 3.2 23 8.4l-11 5.2L1 8.4Z" />

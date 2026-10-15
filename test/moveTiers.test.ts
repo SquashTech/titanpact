@@ -7,6 +7,7 @@
 // column — a slate silently losing its tiers would otherwise look exactly like the pre-gate
 // behaviour.
 
+import { patronMoves } from '../src/data/patrons';
 import * as assert from 'assert';
 import { test } from './harness';
 import { moves } from '../src/data/moves';
@@ -89,7 +90,7 @@ test('move tiers: every move of a tiered slate carries a tier, and no other type
     // A class move wears a type for flavour and no tier: it is in no pool (test/classes.test.ts).
     // A signature likewise: its only source is the tenth Mastery pip (test/mastery.test.ts).
     // A metamorphic move (Motley's Trick) is never cast as itself and is in no pool either.
-    if (classMoves[move.id] || signatureMoves[move.id] || move.metamorphic) continue;
+    if (classMoves[move.id] || patronMoves[move.id] || signatureMoves[move.id] || move.metamorphic) continue;
     if (TIERED_TYPES.includes(move.type)) {
       assert.ok(move.tier, `${move.id} (${move.type}) has no tier`);
     } else {

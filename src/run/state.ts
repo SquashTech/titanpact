@@ -1,6 +1,7 @@
 // Run-tier state (docs/architecture.md "State shapes (three tiers)"). Combat
 // state is built FROM this (buildCombatState.ts) and never writes back.
 
+import { createPatronState, type PatronState } from './patrons';
 import type { CompanionState } from './companion';
 import type { PassiveId, StatKey, StatusId, TypeId } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
@@ -175,6 +176,8 @@ export interface RunState {
   deck: readonly string[] | null;
   /** Last fight's MVP (run/mvp.ts) — the no-repeat rule reads it. Null before the first win. */
   lastMvpRosterId: string | null;
+  /** Trust, students, the Promise and each seat's offer (run/patrons.ts). Absent on a run that never met one. */
+  patrons?: PatronState;
 }
 
 export function createRunState(gold = 0, recruitContracts = 1, cycle = 1): RunState {
@@ -197,6 +200,7 @@ export function createRunState(gold = 0, recruitContracts = 1, cycle = 1): RunSt
     cycle,
     deck: null,
     lastMvpRosterId: null,
+    patrons: createPatronState(),
   };
 }
 

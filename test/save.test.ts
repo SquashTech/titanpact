@@ -192,3 +192,24 @@ test('save: the run keeps the deck it was sealed with, an old file reads as none
   const pruned = decodeSave(old, index);
   assert.deepStrictEqual(pruned.ok && pruned.save.run.deck, ['valor']);
 });
+
+test('save: patron Trust, students, the Promise and the seat offers survive a round trip; an old file starts from none', () => {
+  const run: RunState = {
+    ...sampleRun(),
+    patrons: {
+      trust: { swordsman: 2, headmaster: 1 },
+      students: { swordsman: sampleRun().roster[0].rosterId },
+      promise: { patronId: 'swordsman', seats: [2, 4, 7] },
+      offers: { 0: ['swordsman', 'archmage'], 1: ['headmaster', 'swordsman'] },
+      taken: { 0: 'swordsman', 1: 'headmaster' },
+    },
+  };
+  const result = roundTrip(run);
+  assert.ok(result.ok, result.ok ? '' : result.reason);
+  assert.deepStrictEqual(result.save.run.patrons, run.patrons);
+  const old: any = JSON.parse(JSON.stringify(encodeSave(sampleRun(), 'map')));
+  delete old.run.patrons;
+  const decoded = decodeSave(old, index);
+  assert.ok(decoded.ok);
+  assert.deepStrictEqual(decoded.save.run.patrons, { trust: {}, students: {}, promise: null, offers: {}, taken: {} });
+});

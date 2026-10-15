@@ -35,6 +35,7 @@ export type ScreenKind =
   | 'tutorReward'
   | 'scribeReward'
   | 'academyReward'
+  | 'patronSeat'
   | 'blacksmith'
   | 'event'
   | 'shop'
@@ -86,6 +87,8 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   scribeReward: 8,
   // Pick a hero, then one of three verbs to read: the old Crucible's price.
   academyReward: 20,
+  // The greeting, then a rung's one or two steps: the Academy's price, a step more.
+  patronSeat: 25,
   blacksmith: 30,
   event: 15,
   shop: 45,

@@ -11,6 +11,8 @@
 // player has no way to see that it happened. A refused save says so once and costs
 // one run; a silently broken one poisons every fight after it.
 
+import { patrons } from '../data/patrons';
+import { CAPSTONE_TRUST, SEAT_COUNT, createPatronState, type PatronState } from './patrons';
 import type { GrowthStatKey, PassiveId, StatKey, StatusId, TypeId } from '../engine/content';
 import { STAT_ORDER } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
@@ -530,7 +532,26 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     cycle,
     deck,
     lastMvpRosterId: typeof value.lastMvpRosterId === 'string' ? value.lastMvpRosterId : null,
+    patrons: decodePatrons(value.patrons),
   };
+}
+
+/** Lenient: a run saved before patrons, or a patron this build no longer ships, just starts from no Trust. */
+function decodePatrons(value: unknown): PatronState {
+  const state = createPatronState();
+  if (!isObject(value)) return state;
+  const known = (id: unknown): id is string => typeof id === 'string' && id in patrons;
+  if (isObject(value.trust)) for (const [id, t] of Object.entries(value.trust)) if (known(id) && isInt(t, 0, CAPSTONE_TRUST)) state.trust[id] = t;
+  if (isObject(value.students)) for (const [id, r] of Object.entries(value.students)) if (known(id) && typeof r === 'string') state.students[id] = r;
+  const promise = value.promise;
+  if (isObject(promise) && known(promise.patronId) && Array.isArray(promise.seats) && promise.seats.every((n) => isInt(n, 0, SEAT_COUNT - 1))) {
+    state.promise = { patronId: promise.patronId, seats: [...(promise.seats as number[])] };
+  }
+  if (isObject(value.offers)) {
+    for (const [seat, ids] of Object.entries(value.offers)) if (Array.isArray(ids) && ids.every(known)) state.offers[Number(seat)] = [...ids];
+  }
+  if (isObject(value.taken)) for (const [seat, id] of Object.entries(value.taken)) if (known(id)) state.taken[Number(seat)] = id;
+  return state;
 }
 
 /**
