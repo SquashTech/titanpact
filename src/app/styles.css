@@ -40506,7 +40506,7 @@ img.smithy-service-art {
 }
 
 /* The way forward: a dark bar lit in the screen's colour, ruled above and below. */
-.resolve-button,
+.resolve-button:where(:not(.title-cta)),
 .result-panel .result-buttons button {
   padding: 0 20px;
   border: 0;
@@ -40531,13 +40531,13 @@ img.smithy-service-art {
   padding: 0 10px;
 }
 
-.resolve-button:hover:not(:disabled),
+.resolve-button:where(:not(.title-cta)):hover:not(:disabled),
 .result-panel .result-buttons button:hover:not(:last-child) {
   box-shadow: none;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 12px rgba(var(--cta-rgb), 0.5)) brightness(1.08);
 }
 
-.resolve-button:not(:disabled):active,
+.resolve-button:where(:not(.title-cta)):not(:disabled):active,
 .result-panel .result-buttons button:active {
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55)) brightness(0.85);
 }

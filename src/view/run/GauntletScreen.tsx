@@ -374,13 +374,13 @@ function EntryView({ freeEntry, balance, entered, clears, onEnter, onVersus, onC
           </div>
         )}
       </div>
-      <div className={`gx-footer${onVersus ? ' is-three' : ''}`}>
+      {onVersus && (
+        <button type="button" className="gx-friend-button" onClick={onVersus}>
+          Play a Friend
+        </button>
+      )}
+      <div className="gx-footer">
         <Back label="Back to the title" onClick={onClose} />
-        {onVersus && (
-          <button type="button" className="secondary-button" onClick={onVersus}>
-            Play a friend
-          </button>
-        )}
         <PlateButton disabled={!affordable} onClick={onEnter}>
           {freeEntry ? 'Enter — free today' : `Enter — ${GAUNTLET_ENTRY_PRICE} ★`}
         </PlateButton>

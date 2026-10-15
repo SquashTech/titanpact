@@ -149,3 +149,28 @@
   border-radius: 6px;
   pointer-events: none;
 }
+
+/* The Gauntlet's way into versus: a lined row above the footer, as the title's Start a New Run. */
+.gx-friend-button {
+  flex-shrink: 0;
+  margin: 0 16px 12px;
+  padding: 12px 14px;
+  border: 0;
+  border-top: 1px solid rgba(224, 166, 60, 0.35);
+  border-bottom: 1px solid rgba(224, 166, 60, 0.35);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #e8d4a6;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px #000;
+  cursor: pointer;
+}
+
+.gx-friend-button:hover {
+  color: #fff3d6;
+  border-color: rgba(224, 166, 60, 0.7);
+}
