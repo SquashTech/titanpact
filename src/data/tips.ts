@@ -18,9 +18,13 @@ import type { FightTip, ModesOpenPage, ScreenTipId, Tip } from '../run/tips';
 /**
  * The one piece of lore, ahead of the first draft on an account, under the fall (TitanFallScreen,
  * docs/lore.md "The fall"): one line a tap. Everything else the run says about itself it says in its
- * own beats (the arrival, the seal).
+ * own beats (the arrival, the seal). Told as a story already over: the run is the telling.
  */
-export const LORE_LINES: readonly string[] = ['One day, pure calamity fell upon our land.', 'We must seal the pact.'];
+export const LORE_LINES: readonly string[] = [
+  'One day, pure calamity fell upon our land.',
+  'Heroes of every walk of life rose to meet it, and faced an evil no one had ever seen.',
+  'This is the story of how they sealed the Titan.',
+];
 
 function tip(id: string, title: string, ...pages: string[]): Tip {
   return { id, title, pages };

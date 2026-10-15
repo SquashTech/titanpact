@@ -218,7 +218,9 @@ field of stars, the fog-bank painting masked in as the land); the first press on
 title to that sky (`.is-falling`) and `TitanFallScreen` takes over on the same picture — a black
 giant head-first down the sky (`art/title/fallingTitan.png`), every star in its wake going out and
 staying out, an impact flash, a plume, an ember still glowing in the valley — then the lore card:
-*One day, pure calamity fell upon our land.* / *We must seal the pact.* (`LORE_LINES`). Later
+*One day, pure calamity fell upon our land.* / *Heroes of every walk of life rose to meet it, and
+faced an evil no one had ever seen.* / *This is the story of how they sealed the Titan.* (`LORE_LINES`,
+per user direction: a story told after the fact). Later
 Cycles keep their own cards on `LoreScreen`.
 
 What it reverses, still to rewrite:
