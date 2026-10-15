@@ -45,6 +45,9 @@ const LAND_MS = 340;
  */
 const ENTERED_ON_TAP: readonly MapNodeType[] = ['boss', 'finale', 'fight', 'battle'];
 
+/** A row of one is entered on one tap too (2026-10-15, per user direction), except the keepers' seats, which become NPC encounters. */
+const PREVIEWED_WHEN_ALONE: readonly MapNodeType[] = ['mentorReward', 'tutorReward', 'academyReward'];
+
 function revealDurationMs(count: number): number {
   return Math.max(0, count - 1) * PATH_STAGGER_MS + PATH_DRAW_MS + LAND_MS;
 }
@@ -434,7 +437,9 @@ export function MapRoute({
   /** The first tap reads a tile, a tap on another switches to it, and a tap on the one read goes. A door goes on the first. */
   function tap(nodeId: string) {
     if (openingId) return;
-    if (previewId === nodeId || ENTERED_ON_TAP.includes(map.nodes[nodeId].type)) {
+    const type = map.nodes[nodeId].type;
+    const alone = choiceIds.length === 1 && !PREVIEWED_WHEN_ALONE.includes(type);
+    if (previewId === nodeId || alone || ENTERED_ON_TAP.includes(type)) {
       go(nodeId);
       return;
     }
