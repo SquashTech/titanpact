@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { SealArt } from '../shared/SealArt';
 import { prefersReducedMotion } from '../shared/reducedMotion';
-import { TitanColossus, TitanRidge } from './titanArt';
+import { TitanRidge } from './titanArt';
+import titlePainting from '../../../art/title/fogBanks.png';
 import { launchArtUrls, preloadImages } from '../shared/preload';
 
 interface Props {
@@ -11,9 +12,9 @@ interface Props {
   onDone: () => void;
 }
 
-/** The Titan climbing into the frame behind the spinning seal, eyes shut (ms). */
+/** The seal spinning up in the fog (ms). */
 const RISE_MS = 2600;
-/** It stops and the lids open (ms). */
+/** It settles (ms). */
 const WAKE_MS = 800;
 /** Over the title, which is already mounted underneath (ms; matches `.launch-screen.is-reveal`). */
 const FADE_MS = 700;
@@ -27,8 +28,7 @@ type LaunchPhase = 'rise' | 'wake' | 'reveal';
 /**
  * The cold launch (2026-09-25, per user direction, replacing the Tap to begin gate): a loading
  * screen that plays on its own. The pact's seal — the title's own, type wheel and all — spins up
- * in the middle of the dark while the title's Titan rises into the frame behind it, and the
- * lids open as it arrives; then it fades off the title, which has been mounted underneath for the
+ * in the title's fog banks, then it fades off the title, which has been mounted underneath for the
  * last beat so the picture is already there when this goes. It waits for the webfonts too, so
  * the title never lands in a fallback face, and for the first act's paintings (shared/preload.ts).
  *
@@ -76,11 +76,12 @@ export function LaunchScreen({ onReveal, onDone }: Props) {
   return (
     // Tap-anywhere skips, as the cinematics do; there is nothing on this screen to label.
     <div className={`launch-screen is-${phase}`} onClick={() => skip.current()} aria-busy={phase !== 'reveal'}>
-      {/* The title's Titan — brow and eyes — climbing up to where the title holds it, with the
-          light it is cut from climbing with it. */}
-      <div className="launch-titan" aria-hidden="true">
-        <span className="launch-backlight" />
-        <TitanColossus />
+      <img className="title-painting" src={titlePainting} alt="" draggable={false} />
+      <div className="title-fog" aria-hidden="true">
+        <span className="title-fog-band title-fog-a" />
+        <span className="title-fog-band title-fog-b" />
+        <span className="title-fog-band title-fog-c" />
+        <span className="title-fog-band title-fog-d" />
       </div>
 
       <TitanRidge />

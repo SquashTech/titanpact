@@ -19301,78 +19301,6 @@ button.star-shop-bundle-face {
   }
 }
 
-/* The title's light behind the eyes, brightening as the head climbs through it. */
-.launch-backlight {
-  position: absolute;
-  inset: calc(var(--shell-pad) * -1);
-  background:
-    radial-gradient(ellipse 62% 30% at 50% 8%, rgba(var(--titan-rgb), 0.3), transparent 76%),
-    radial-gradient(ellipse 40% 15% at 50% 9%, rgba(240, 176, 96, 0.16), transparent 72%),
-    radial-gradient(ellipse 100% 26% at 50% 94%, rgba(96, 190, 162, 0.3), transparent 74%);
-  opacity: 0;
-  animation: launch-light-up 2.4s ease-in 0.2s both;
-}
-
-@keyframes launch-light-up {
-  to {
-    opacity: 1;
-  }
-}
-
-/* The head: the title's brow-and-eyes SVG, in the title's own box (inside the shell padding) so it
-   stops exactly where the title will hold it. Parked under the frame, climbs with a slow ease. */
-.launch-titan {
-  position: absolute;
-  inset: var(--shell-pad);
-  z-index: 0;
-  transform: translateY(62%);
-  animation: launch-titan-climb 2.6s cubic-bezier(0.3, 0, 0.15, 1) both;
-  /* Feathered at the top, so the layer's leading edge is never a line across the dark. */
-  -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%);
-  mask-image: linear-gradient(180deg, transparent, #000 14%);
-}
-
-.launch-screen .title-titan {
-  overflow: visible;
-}
-
-@keyframes launch-titan-climb {
-  from {
-    transform: translateY(62%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-/* Shut on the way up (TitanRiseScreen's hairline lid), open once it has arrived. */
-.launch-screen .titan-eye-open {
-  animation: none;
-  transform: scaleY(0.04);
-}
-
-/* The gaze holds forward here: the eyes only open and burn, they never wander. */
-.launch-screen .titan-eye-gaze {
-  animation: none;
-  transform: none;
-}
-
-.launch-screen .title-titan .titan-eye-halo {
-  animation: none;
-  opacity: 0.1;
-  transition: opacity 0.8s ease-out;
-}
-
-.launch-screen.is-wake .titan-eye-open,
-.launch-screen.is-reveal .titan-eye-open {
-  animation: titan-rise-open 0.7s cubic-bezier(0.3, 0, 0.4, 1) both;
-}
-
-.launch-screen.is-wake .title-titan .titan-eye-halo,
-.launch-screen.is-reveal .title-titan .titan-eye-halo {
-  opacity: 0.9;
-}
-
 .launch-screen .title-ridge {
   z-index: 1;
 }
@@ -19533,9 +19461,7 @@ button.star-shop-bundle-face {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .launch-titan,
   .launch-mark,
-  .launch-backlight,
   .launch-core,
   .launch-loading,
   .launch-mark .title-seal-ring,
@@ -19543,14 +19469,6 @@ button.star-shop-bundle-face {
   .launch-mark .type-wheel-dial,
   .launch-mark .type-wheel-node {
     animation: none;
-  }
-
-  .launch-titan {
-    transform: none;
-  }
-
-  .launch-backlight {
-    opacity: 1;
   }
 }
 
@@ -19609,8 +19527,23 @@ button.star-shop-bundle-face {
     repeating-linear-gradient(90deg, rgba(190, 220, 235, 0.018) 0px, rgba(190, 220, 235, 0.018) 1px, transparent 1px, transparent 24px),
     radial-gradient(ellipse 78% 44% at 50% 30%, rgba(122, 150, 168, 0.15), transparent 68%),
     radial-gradient(ellipse 120% 46% at 50% 104%, rgba(86, 168, 148, 0.16), transparent 72%),
-    radial-gradient(ellipse 90% 60% at 50% -12%, rgba(96, 84, 150, 0.22), transparent 70%),
-    linear-gradient(180deg, #0a0c12, #090d10 52%, #060809);
+    radial-gradient(ellipse 90% 60% at 50% -12%, rgba(112, 127, 122, 0.16), transparent 70%),
+    linear-gradient(180deg, #0e1017, #0b0e12 52%, #060809);
+}
+
+/* The fog banks the whole title stands in (art/title/fogBanks.png): the Threshold's palette with
+   nothing in it, dimmed so the seal and the gold stay the lit things. The drifting bands below
+   move over it. */
+.title-painting {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  filter: brightness(0.5);
+  pointer-events: none;
 }
 
 /* Drifting fog. Each band is a wide soft ellipse translated well past both
@@ -19637,22 +19570,29 @@ button.star-shop-bundle-face {
 .title-fog-a {
   top: 8%;
   height: 34%;
-  background: radial-gradient(ellipse 46% 50% at 50% 50%, rgba(118, 138, 178, 0.2), transparent 70%);
+  background: radial-gradient(ellipse 46% 50% at 50% 50%, rgba(112, 127, 122, 0.4), transparent 70%);
   animation: title-fog-drift-right 61s linear infinite;
 }
 
 .title-fog-b {
   top: 44%;
   height: 40%;
-  background: radial-gradient(ellipse 40% 50% at 50% 50%, rgba(78, 158, 142, 0.16), transparent 72%);
+  background: radial-gradient(ellipse 40% 50% at 50% 50%, rgba(92, 107, 105, 0.36), transparent 72%);
   animation: title-fog-drift-left 83s linear infinite;
 }
 
 .title-fog-c {
   bottom: -6%;
   height: 46%;
-  background: radial-gradient(ellipse 60% 46% at 50% 60%, rgba(60, 120, 118, 0.22), transparent 68%);
+  background: radial-gradient(ellipse 60% 46% at 50% 60%, rgba(92, 107, 105, 0.48), transparent 68%);
   animation: title-fog-drift-right 107s linear infinite;
+}
+
+.title-fog-d {
+  top: 26%;
+  height: 30%;
+  background: radial-gradient(ellipse 52% 50% at 50% 50%, rgba(112, 127, 122, 0.26), transparent 70%);
+  animation: title-fog-drift-left 131s linear infinite;
 }
 
 @keyframes title-fog-drift-right {
@@ -19731,8 +19671,7 @@ button.star-shop-bundle-face {
   z-index: 1;
   border-radius: 14px;
   pointer-events: none;
-  box-shadow: inset 0 0 70px 16px rgba(2, 4, 5, 0.95), inset 0 0 160px 44px rgba(2, 4, 5, 0.8),
-    inset 0 0 300px 100px rgba(2, 4, 5, 0.5);
+  box-shadow: inset 0 0 60px 12px rgba(2, 4, 5, 0.9), inset 0 0 140px 24px rgba(2, 4, 5, 0.45);
 }
 
 /* The light the Titan is a hole in. Two sources and no third: the cold open's
@@ -20403,6 +20342,22 @@ button.star-shop-bundle-face {
 
 /* Duplicate text sitting behind the crisp copy, heavily blurred, giving the
    logo a soft bloom halo without relying on a raster glow asset. */
+/* The wordmark lives at the top of the screen; its footprint stays at the seal's centre so the
+   dial keeps the position the whole layout was measured around. */
+.title-logo-seat {
+  display: block;
+  height: 54px;
+}
+
+.title-logo.is-top {
+  position: absolute;
+  top: 74px;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  text-align: center;
+}
+
 .title-logo-glow {
   position: absolute;
   inset: 0;
@@ -47046,6 +47001,7 @@ img.smithy-service-art {
    bearers and press step back; the fog, ash, grain, vignette and the ridge's ground stay as the
    one world all three stand in. */
 .title-play > .title-heading,
+.title-play > .title-logo,
 .title-play > .title-buttons,
 .title-titan,
 .title-backlight,
@@ -47054,6 +47010,7 @@ img.smithy-service-art {
 }
 
 .title-screen:not(.is-mode-pact) .title-play > .title-heading,
+.title-screen:not(.is-mode-pact) .title-play > .title-logo,
 .title-screen:not(.is-mode-pact) .title-play > .title-buttons,
 .title-screen:not(.is-mode-pact) .title-titan,
 .title-screen:not(.is-mode-pact) .title-backlight,

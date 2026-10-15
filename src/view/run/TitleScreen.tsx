@@ -8,7 +8,8 @@ import { StarShopScreen } from './StarShopScreen';
 import { HUB_TABS, HubNav, type HubTab } from './HubNav';
 import { starShopCatalog } from '../../data/starShop';
 import { starBalance, type StarShopOffer } from '../../run/starShop';
-import { TitanColossus, TitanRidge } from './titanArt';
+import { TitanRidge } from './titanArt';
+import titlePainting from '../../../art/title/fogBanks.png';
 import { SealArt } from '../shared/SealArt';
 import { HubGlyph } from '../shared/nodeIcons';
 import { FIRST_CYCLE } from '../../run/cycles';
@@ -267,14 +268,12 @@ export function TitleScreen({
       {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
           back is instant, and display: contents keeps them in the screen's own flex and stacking. */}
       <div className="title-play">
-      {/* Before the Titan, not after: the figure is a hole cut in this light. */}
-      <span className="title-backlight" aria-hidden="true" />
-      <TitanColossus />
-
+      <img className="title-painting" src={titlePainting} alt="" draggable={false} />
       <div className="title-fog" aria-hidden="true">
         <span className="title-fog-band title-fog-a" />
         <span className="title-fog-band title-fog-b" />
         <span className="title-fog-band title-fog-c" />
+        <span className="title-fog-band title-fog-d" />
       </div>
 
       <div className="title-motes" aria-hidden="true">
@@ -310,13 +309,16 @@ export function TitleScreen({
           <SealArt />
           <span className="title-ray-burst" aria-hidden="true" />
           <span className="title-core-glow" aria-hidden="true" />
-          <div className="title-logo">
-            <span className="title-logo-glow" aria-hidden="true">
-              TITANPACT
-            </span>
-            TITANPACT
-          </div>
+          {/* The logo's own footprint, kept so the seal stays centred where it always was. */}
+          <span className="title-logo-seat" aria-hidden="true" />
         </div>
+      </div>
+
+      <div className="title-logo is-top">
+        <span className="title-logo-glow" aria-hidden="true">
+          TITANPACT
+        </span>
+        TITANPACT
       </div>
 
       {/* Mounted only while launching, so mounting starts them. The flash
