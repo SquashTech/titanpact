@@ -41,6 +41,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { ItemWhoScreen } from './ItemWhoScreen';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { KeeperVoice } from './RoadEncounter';
+import { PatronOffer } from './PatronOffer';
 import { RosterPeek } from './RosterPeek';
 import { PatronFigure, TrustPips, patronColor, stepFact } from './patronView';
 
@@ -95,17 +96,8 @@ export function PatronNodeScreen({ run, patronId, rung, stepsDone, seed, onStep,
         <NodeMotes count={12} />
         <RosterPeek run={run} />
         {keeper}
-        <div className="patron-rung">
-          {steps.map((step, i) => {
-            const fact = stepFact(step, run.actNumber);
-            return (
-              <div key={i} className="patron-rung-step">
-                <strong>{fact.value}</strong>
-                <span>{fact.label}</span>
-              </div>
-            );
-          })}
-        </div>
+        <div className="node-spacer" />
+        <PatronOffer run={run} patron={patron} steps={steps} />
         <div className="node-spacer" />
         <PlateButton tint={color} onClick={() => setGreeted(true)}>
           Accept

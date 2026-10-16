@@ -376,3 +376,14 @@ Awakening on a band of its own. **A Crest's even spread is one tile** — "+15 e
 five stats' colour dots — beside its HP (Crest option 1: display only, the item unchanged). The card
 takes the height it needs and the hero figures above give way; with six heroes and a Loot Pile's
 queue under it, and always in the Loot Pile, the icon moves beside the name. Lists of several pieces keep the compact card.
+
+**Reshaped the same day, per user direction** (playtest: "boxes inside of boxes", a pick squishing
+the heroes, the Loot Pile scrolling): the showcase is **one frameless strip at one size everywhere** —
+the icon in its tier's glow on the left, name and tier on one line, the grants under it as figures in
+each stat's colour with the label beside the number, no box round the card and none round a figure.
+**No "+" on a grant** (gear only ever adds; a loss keeps its minus). The counters' slot for it is
+**fixed again at 88px**, empty or full, so a pick never moves the roster; there an Awakening shows
+its name and the sentence is a tap away. **A patron's greeting shows what it pays as the thing
+itself** (`PatronOffer.tsx`): the piece as this strip, a move as its card, a passive as its readout,
+and a service (the Forge, a made-to-measure piece, a Class) as its picture with what it does — it
+was a two-word ledger row ("Lift + bind · Forge").

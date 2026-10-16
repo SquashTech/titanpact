@@ -33860,116 +33860,90 @@ button.evo-gift-card {
   opacity: 0.45;
 }
 
-/* The incoming piece as a reward (EquipChoiceCard showcase, docs/mockups/item-card.html B): the
-   icon large under its tier's glow, the name over a row of stat tiles in each stat's colour, an even
-   five-way spread folded into one tile, an Awakening read whole on a band of its own. */
+/* The incoming piece as a reward (EquipChoiceCard showcase): one frameless strip — the icon in its
+   tier's glow on the left, the name and tier on one line, the grants under it as figures in each
+   stat's colour with no box of their own. Every screen draws it at the one size, so a slot sized
+   for it never moves what sits around it. */
 .equip-showcase {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
+  column-gap: 12px;
   width: 100%;
-  padding: 12px 12px 12px;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--rarity-color) 60%, transparent);
-  background: #161922;
+  min-height: 84px;
+  padding: 6px 10px 6px 4px;
+  border: 0;
+  background: none;
   color: inherit;
-  text-align: center;
+  text-align: left;
 }
 
-/* The piece takes the height it needs; the hero figures above give way first (.counter-roster .pick-card). */
-.counter-focus:has(.equip-showcase) {
-  height: auto;
-}
-
-/* Six heroes AND a row of pieces under the card, or a fight's haul under the ledger: the icon sits
-   beside the name, not over it, so the figures above keep their faces. */
-.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase,
-.fight-result-loot-showcase .equip-showcase {
-  gap: 6px;
-  padding: 8px 10px;
-}
-
-.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase-head,
-.fight-result-loot-showcase .equip-showcase-head {
-  flex-direction: row;
-  gap: 10px;
-}
-
-.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase .equip-showcase-icon,
-.fight-result-loot-showcase .equip-showcase .equip-showcase-icon {
-  width: 48px;
-  height: 48px;
-}
-
-.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase-words,
-.fight-result-loot-showcase .equip-showcase-words {
-  align-items: flex-start;
+.equip-showcase-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
 }
 
 .equip-showcase-glow {
   position: absolute;
-  left: 50%;
-  top: -46px;
-  width: 280px;
-  height: 200px;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--rarity-color) 45%, transparent), transparent 65%);
+  inset: -18px;
+  background: radial-gradient(circle at center, color-mix(in srgb, var(--rarity-color) 50%, transparent), transparent 62%);
   pointer-events: none;
 }
 
-.equip-showcase-head {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
 .equip-showcase .equip-showcase-icon {
-  width: 72px;
-  height: 72px;
+  position: relative;
+  width: 56px;
+  height: 56px;
   image-rendering: pixelated;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.75));
 }
 
-.equip-showcase-words {
+.equip-showcase-body {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.equip-showcase-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
 }
 
 .equip-showcase-name {
+  overflow: hidden;
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1.05;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .equip-showcase-tier {
-  font-size: 11px;
-  font-weight: 700;
+  flex: none;
+  font-size: 10px;
+  font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--rarity-color);
 }
 
 .item-tiles {
-  position: relative;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
+  gap: 2px 14px;
 }
 
 .item-tile {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 58px;
-  padding: 5px 7px 4px;
-  border: 1px solid color-mix(in srgb, var(--tile-color) 55%, transparent);
-  background: color-mix(in srgb, var(--tile-color) 14%, #10131a);
+  align-items: baseline;
+  gap: 4px;
   color: var(--tile-color);
 }
 
@@ -33978,21 +33952,21 @@ button.evo-gift-card {
   align-items: center;
   gap: 3px;
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1;
 }
 
 .item-tile > span {
-  margin-top: 3px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  opacity: 0.85;
 }
 
 .item-tile-glyph {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
 }
 
 .item-tile.is-loss {
@@ -34001,7 +33975,6 @@ button.evo-gift-card {
 
 .item-tile.is-every {
   --tile-color: #f3e7c4;
-  min-width: 132px;
 }
 
 .item-tile-every {
@@ -34016,39 +33989,40 @@ button.evo-gift-card {
 }
 
 .item-tile-dots i {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 1px;
 }
 
+/* An Awakening: its glyph and name in gold beside the figures; the sentence under, where the screen has the room. */
 .item-awakening {
-  position: relative;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px solid #ffd98a55;
-  background: linear-gradient(90deg, #ffd98a1f, transparent);
-  text-align: left;
-}
-
-.item-awakening-glyph {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  color: #ffd98a;
-}
-
-.item-awakening-words {
-  display: flex;
-  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   font-size: 12px;
   line-height: 1.3;
 }
 
-.item-awakening-words strong {
+.item-awakening-glyph {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
   color: #ffd98a;
+}
+
+.item-awakening-words strong {
+  margin-right: 5px;
+  color: #ffd98a;
+}
+
+.item-awakening-words span {
+  opacity: 0.8;
+}
+
+/* A fixed slot (the counters, the who-screen): the sentence is a tap away, so the strip keeps its height. */
+.counter-focus .item-awakening-words span {
+  display: none;
 }
 
 /* Patrons (PatronNodeScreen.tsx, patronView.tsx): Trust as five quiet pips, a patron's mark in its
@@ -34223,26 +34197,104 @@ button.evo-gift-card {
   margin-top: 6px;
 }
 
-.patron-rung {
+/* What the meeting pays, as the thing itself (PatronOffer.tsx), under the greeting. */
+.patron-offer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 18px 16px 0;
+  gap: 14px;
+  margin: 0 16px;
 }
 
-.patron-rung-step {
+/* A third of the way down the open ground, not floating in the middle of it. */
+.patron-offer + .node-spacer {
+  flex-grow: 2;
+}
+
+.patron-offer-list {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 10px 14px;
-  border: 1px solid color-mix(in srgb, var(--rite-color) 45%, transparent);
-  background: rgba(0, 0, 0, 0.3);
+  flex-direction: column;
+  gap: 6px;
 }
 
-.patron-rung-step strong {
+.patron-offer-move .move-detail-card {
+  width: 100%;
+}
+
+/* A service — the Forge, a made-to-measure piece, a Class: its picture large in a glow, what it does beside. */
+.patron-service {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 14px;
+}
+
+.patron-service-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  color: var(--service-color);
+}
+
+.patron-service-glow {
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle at center, color-mix(in srgb, var(--service-color) 42%, transparent), transparent 62%);
+  pointer-events: none;
+}
+
+.patron-service-art > img,
+.patron-service-art > svg,
+.patron-service-art > .item-piece {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.7));
+}
+
+.patron-service-words {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.patron-service-words > strong {
   font-family: var(--font-display);
-  font-size: 18px;
-  color: var(--rite-color);
+  font-size: 21px;
+  line-height: 1.1;
+  color: var(--service-color);
+}
+
+.patron-service-words > span {
+  opacity: 0.85;
+}
+
+.patron-offer-verbs {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 1;
+}
+
+.patron-offer-verbs > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #f3e7c4;
+}
+
+.patron-offer-verbs svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--service-color);
 }
 
 .patron-forge {
@@ -40084,7 +40136,7 @@ img.smithy-service-art {
   justify-content: center;
   align-items: stretch;
   flex: none;
-  height: 92px;
+  height: 88px;
 }
 
 .counter-focus .equip-cache-card {

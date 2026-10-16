@@ -31,15 +31,17 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
         style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity], animationDelay: `${revealDelayMs}ms` } as CSSProperties}
         {...longPress}
       >
-        <span className="equip-showcase-glow" aria-hidden="true" />
-        <span className="equip-showcase-head">
+        <span className="equip-showcase-art">
+          <span className="equip-showcase-glow" aria-hidden="true" />
           <EquipmentIcon item={item} className="equip-showcase-icon" />
-          <span className="equip-showcase-words">
+        </span>
+        <span className="equip-showcase-body">
+          <span className="equip-showcase-title">
             <span className="equip-showcase-name">{item.name}</span>
             <span className="equip-showcase-tier">{item.familyId ? RARITY_LABELS[item.rarity] : `Unique · ${RARITY_LABELS[item.rarity]}`}</span>
           </span>
+          <ItemStatTiles item={item} />
         </span>
-        <ItemStatTiles item={item} />
       </button>
     );
   }

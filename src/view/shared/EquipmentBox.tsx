@@ -250,7 +250,7 @@ export function ItemStatTiles({ item }: { item: EquipmentDefinition }) {
       <span className="item-tiles">
         {even && (
           <span className="item-tile is-every" title={`Every stat ${fmtGrant(item.statGrants.attack!)}`}>
-            <strong>{fmtGrant(item.statGrants.attack!)}</strong>
+            <strong>{item.statGrants.attack}</strong>
             <span className="item-tile-every">
               <span className="item-tile-dots" aria-hidden="true">
                 {EVEN_SPREAD.map((stat) => (
@@ -265,7 +265,7 @@ export function ItemStatTiles({ item }: { item: EquipmentDefinition }) {
           <span key={stat} className={`item-tile${amount > 0 ? '' : ' is-loss'}`} style={{ '--tile-color': STAT_COLORS[stat] } as CSSProperties} title={`${STAT_FULL_LABELS[stat]} ${fmtGrant(amount)}`}>
             <strong>
               <StatGlyph stat={stat} className="item-tile-glyph" tone="inherit" />
-              {fmtGrant(amount)}
+              {amount}
             </strong>
             <span>{STAT_LABELS[stat]}</span>
           </span>
@@ -277,7 +277,7 @@ export function ItemStatTiles({ item }: { item: EquipmentDefinition }) {
           return (
             <span key={statusId} className="item-tile" style={{ '--tile-color': tint } as CSSProperties} title={statusGrantText(def, magnitude)}>
               <strong>
-                {def.forceType && <ElementGlyph type={def.forceType} className="item-tile-glyph" />}+{magnitude}
+                {def.forceType && <ElementGlyph type={def.forceType} className="item-tile-glyph" />}{magnitude}
               </strong>
               <span>{def.name}</span>
             </span>
