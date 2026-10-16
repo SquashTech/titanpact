@@ -14,7 +14,6 @@ import {
   statModifierCeiling,
   statModifierFloor,
   stageMultiplier,
-  STAGED_STATS,
   STAGE_LIMIT,
 } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
@@ -24,19 +23,19 @@ import { chosenEvolutionPaths, itemSlotsFor } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { levelOf } from '../../run/growth';
 import { progressionTable } from '../../data/progression';
-import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, PowerReadout, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
+import { StatGlyph, STAT_LABELS, STAT_ORDER, PowerReadout, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
+import { StatColumns } from '../shared/StatColumns';
+import { HeroSheetBanner } from '../shared/HeroSheetBanner';
+import { useTabSwipe } from '../shared/useTabSwipe';
 import { stageText } from '../shared/moveKind';
 import { shieldHeld } from '../../engine/status/shield';
 import { statuses } from '../../data/statuses';
 import { EquipmentSlotGrid, ItemReadout } from '../shared/EquipmentBox';
 import { ItemDetailCard } from '../shared/ItemDossier';
-import { MasteryPips } from '../shared/MasteryPips';
 import { MoveButtonReplica, swallowGhostClick, useLongPress } from '../shared/MoveTile';
 import { MoveDetailCard } from './MoveDetailOverlay';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
-import { TypeBadge } from '../shared/TypeBadge';
 import { TypeMatchups } from '../shared/TypeMatchups';
-import { HeroPortrait } from '../shared/HeroPortrait';
 import { HubGlyph } from '../shared/nodeIcons';
 import { getTypeColor } from './typeColors';
 import { StatusGlyph, statusColor, statusTint, StatusPips } from '../shared/statusIcons';
@@ -94,16 +93,6 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
     STAT_ORDER.map((stat) => [stat, Math.round(brought(stat) * stageMultiplier(stageOf(stat))) - brought(stat) + flatOf(stat)])
   ) as Record<StatKey, number>;
   const hasModifiers = STAT_ORDER.some((stat) => fightModifiers[stat] !== 0);
-  // What THIS fight did, apart from the loadout: the → readout and the ticks at ±5 steps.
-  const fightReadout = {
-    deltas: fightModifiers,
-    floors: Object.fromEntries(
-      STAT_ORDER.filter((stat) => STAGED_STATS.includes(stat)).map((stat) => [stat, Math.round(brought(stat) * stageMultiplier(-STAGE_LIMIT))])
-    ) as Partial<Record<StatKey, number>>,
-    ceilings: Object.fromEntries(
-      STAT_ORDER.filter((stat) => STAGED_STATS.includes(stat)).map((stat) => [stat, Math.round(brought(stat) * stageMultiplier(STAGE_LIMIT))])
-    ) as Partial<Record<StatKey, number>>,
-  };
   const heldAtFloor = (stat: StatKey) => {
     const floor = statModifierFloor(hero, combatant, stat);
     return stageOf(stat) <= -STAGE_LIMIT || (floor < 0 && flatOf(stat) <= floor);
@@ -143,6 +132,11 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
     { id: 'moves', label: 'Moves', glyph: 'moves', count: moveIds.length },
     { id: 'gear', label: 'Gear', glyph: 'equipment', count: heldItems.length },
   ];
+  const { pageRef, select, pageClass, swipeHandlers } = useTabSwipe(
+    tabs.map((t) => t.id),
+    tab,
+    setTab
+  );
 
   // swallowGhostClick: releasing the hold fires a synthesized click that would otherwise read as a dismiss (MoveTile.tsx).
   function openPopup(next: PopupRef) {
@@ -167,74 +161,62 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
       {/* Cut in the hero's INNATE primary colour, as the run's sheet is: a graft changes what the
           hero fights like, never who it is. The badges below carry the effective pair. */}
       <div
-        className="detail-panel is-tabbed is-hero-sheet"
+        className="detail-panel is-tabbed is-hero-sheet is-banner-sheet"
         style={{ '--hero-color': getTypeColor(hero.types[0]) } as CSSProperties}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="detail-header is-hero">
-          <span className="detail-portrait-plate">
-            <HeroPortrait heroId={hero.id} pathId={combatant.formPathId} className="detail-portrait is-inline" />
-          </span>
-          <div className="detail-header-titles">
-            <div className="detail-name">
-              {hero.name}
-              {rosterEntry && <span className="detail-level">Lv {levelOf(rosterEntry)}</span>}
-            </div>
-            <div className="combatant-types">
-              {types.map((t) => (
-                <TypeBadge key={t} type={t} />
+        <HeroSheetBanner
+          heroId={hero.id}
+          pathId={combatant.formPathId}
+          name={hero.name}
+          level={rosterEntry ? levelOf(rosterEntry) : undefined}
+          types={types}
+          mastery={rosterEntry?.mastery}
+          badges={
+            <>
+              {evolved.map((path) => (
+                <span key={path.id} className="evolution-badge">
+                  {path.name}
+                </span>
               ))}
+              {heroClass && (
+                <span className="evolution-badge class-badge" {...classLongPress}>
+                  <HubGlyph name="hall" /> {heroClass.name}
+                </span>
+              )}
+            </>
+          }
+          stats={<StatColumns baseStats={hero.baseStats} totals={effectiveTotals} fightDeltas={fightModifiers} scale={scale} withRegen compact />}
+        />
+        <div className="detail-resource-row">
+          <div>
+            <div className="bar-track">
+              <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
+              <ShieldFill currentHp={combatant.currentHp} maxHp={maxHp} shield={shieldHeld(combatant, statuses)} />
             </div>
-            {rosterEntry && <MasteryPips mastery={rosterEntry.mastery} className="detail-mastery" />}
-            {(evolved.length > 0 || heroClass) && (
-              <div className="detail-evolution-row">
-                {evolved.map((path) => (
-                  <span key={path.id} className="evolution-badge">
-                    {path.name}
-                  </span>
-                ))}
-                {heroClass && (
-                  <span className="evolution-badge class-badge" {...classLongPress}>
-                    <HubGlyph name="hall" /> {heroClass.name}
-                  </span>
-                )}
-              </div>
-            )}
+            <div className="bar-label">
+              HP {Math.max(0, combatant.currentHp)}/{maxHp}
+              <ShieldLabel shield={shieldHeld(combatant, statuses)} />
+            </div>
+          </div>
+          <div>
+            <div className="bar-track">
+              <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
+              {manaOverFraction > 0 && <div className="bar-fill mana-over" style={{ width: `${manaOverFraction * 100}%` }} />}
+            </div>
+            <div className={`bar-label${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>
+              MP {combatant.currentMana}/{maxMana}
+            </div>
           </div>
         </div>
+        <div className="sheet-head-row">
+          <TypeMatchups types={types} />
+          <PowerReadout stats={effectiveTotals} />
+        </div>
 
-        <div className="detail-tab-body" role="tabpanel">
+        <div key={tab} ref={pageRef} className={`detail-tab-body${pageClass}`} role="tabpanel" {...swipeHandlers}>
           {tab === 'stats' && (
             <>
-              <div className="detail-resource-row">
-                <div>
-                  <div className="bar-track">
-                    <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
-                    <ShieldFill currentHp={combatant.currentHp} maxHp={maxHp} shield={shieldHeld(combatant, statuses)} />
-                  </div>
-                  <div className="bar-label">
-                    HP {Math.max(0, combatant.currentHp)}/{maxHp}
-                    <ShieldLabel shield={shieldHeld(combatant, statuses)} />
-                  </div>
-                </div>
-                <div>
-                  <div className="bar-track">
-                    <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
-                    {manaOverFraction > 0 && <div className="bar-fill mana-over" style={{ width: `${manaOverFraction * 100}%` }} />}
-                  </div>
-                  <div className={`bar-label${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>
-                    MP {combatant.currentMana}/{maxMana}
-                  </div>
-                </div>
-              </div>
-
-              {/* Matchups lead, as on the run's sheet: which columns hurt this hero is the first thing asked. */}
-              <div className="sheet-head-row">
-                <TypeMatchups types={types} />
-                <PowerReadout stats={effectiveTotals} />
-              </div>
-              <StatBars baseStats={hero.baseStats} deltas={fightModifiers} totals={effectiveTotals} fight={fightReadout} scale={scale} />
-
               {hasModifiers && (
                 <>
                   <div className="tab-subhead">Buffs / Debuffs</div>
@@ -332,7 +314,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           )}
         </div>
 
-        <TabStrip tabs={tabs} active={tab} onSelect={setTab} />
+        <TabStrip tabs={tabs} active={tab} onSelect={select} />
       </div>
 
       <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>

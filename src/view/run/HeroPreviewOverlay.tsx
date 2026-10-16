@@ -7,7 +7,6 @@ import { relics } from '../../data/relics';
 import type { HeroDefinition, PassiveId, StatKey } from '../../engine/content';
 import { STAT_ORDER } from '../../engine/content';
 import { entryGradesFor, levelOf } from '../../run/growth';
-import { MasteryPips } from '../shared/MasteryPips';
 import { WoundBar, entryHp } from '../shared/WoundBar';
 import type { RosterEntry } from '../../run/state';
 import type { StatScale } from '../../run/statScale';
@@ -18,15 +17,16 @@ import { entryPassiveCounts, entryStatModifiers } from '../../run/entryStats';
 import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes, formIdFor } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { innatePassiveIdsFor } from '../../run/innate';
-import { PowerReadout, StatBars } from '../shared/StatBars';
+import { PowerReadout } from '../shared/StatBars';
+import { StatColumns } from '../shared/StatColumns';
+import { HeroSheetBanner } from '../shared/HeroSheetBanner';
+import { useTabSwipe } from '../shared/useTabSwipe';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { MoveButtonReplica, swallowGhostClick, useLongPress } from '../shared/MoveTile';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { EquipmentSlotGrid, ItemReadout } from '../shared/EquipmentBox';
 import { ItemDetailCard } from '../shared/ItemDossier';
-import { TypeBadge } from '../shared/TypeBadge';
 import { TypeMatchups } from '../shared/TypeMatchups';
-import { HeroPortrait } from '../shared/HeroPortrait';
 import { getTypeColor } from '../combat/typeColors';
 import { PassiveReadout } from '../shared/passiveIcons';
 import { PassiveDetailCard } from '../shared/PassiveDossier';
@@ -164,6 +164,11 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
     { id: 'moves', label: 'Moves', glyph: 'moves', count: entry.unlockedMoveIds.length },
     ...(unowned ? [] : [{ id: 'gear' as const, label: 'Gear', glyph: 'equipment' as const, count: heldItems.length }]),
   ];
+  const { pageRef, select, pageClass, swipeHandlers } = useTabSwipe(
+    tabs.map((t) => t.id),
+    tab,
+    setTab
+  );
 
   // swallowGhostClick: releasing a hold fires a synthetic click on whatever now covers the target,
   // which would reach an ancestor's onClick (possibly outside this component) and read as a dismiss.
@@ -194,59 +199,43 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
           graft changes what the hero fights like, never who it is (CLAUDE.md), and this is the
           screen that answers the second question. The badges below carry the effective pair. */}
       <div
-        className="detail-panel is-tabbed is-hero-sheet"
+        className="detail-panel is-tabbed is-hero-sheet is-banner-sheet"
         style={{ '--hero-color': getTypeColor(hero.types[0]) } as CSSProperties}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="detail-header is-hero">
-          <span className="detail-portrait-plate">
-            <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="detail-portrait is-inline" />
-          </span>
-          <div className="detail-header-titles">
-            {/* The level is set apart rather than run into the name with an em dash: it is a figure
-                ABOUT the hero, and "Squall — Lv 14" reads as one string where one half changes
-                every fight. */}
-            <div className="detail-name">
-              {hero.name}
-              <span className="detail-level">Lv {levelOf(entry)}</span>
-            </div>
-            <div className="combatant-types">
-              {types.map((t) => (
-                <TypeBadge key={t} type={t} />
+        <HeroSheetBanner
+          heroId={hero.id}
+          pathId={formIdFor(entry)}
+          name={hero.name}
+          level={levelOf(entry)}
+          types={types}
+          mastery={entry.mastery}
+          badges={
+            <>
+              {evolved.map((path) => (
+                <span key={path.id} className="evolution-badge">
+                  {path.name}
+                </span>
               ))}
-            </div>
-            {/* The pips under the types: how far this hero is from turning, read without a screen. */}
-            <MasteryPips mastery={entry.mastery} className="detail-mastery" />
-            {/* Where the act has left this hero (run/wounds.ts) — on the sheet, since the sheet is where a wound is checked. */}
-            {!unowned && <WoundBar {...entryHp(hero, entry, relicIds)} figure className="detail-hp" />}
-            {(evolved.length > 0 || heroClass) && (
-              <div className="detail-evolution-row">
-                {evolved.map((path) => (
-                  <span key={path.id} className="evolution-badge">
-                    {path.name}
-                  </span>
-                ))}
-                {heroClass && (
-                  <span className="evolution-badge class-badge" {...classLongPress} title="Hold to view details">
-                    <HubGlyph name="hall" /> {heroClass.name}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+              {heroClass && (
+                <span className="evolution-badge class-badge" {...classLongPress} title="Hold to view details">
+                  <HubGlyph name="hall" /> {heroClass.name}
+                </span>
+              )}
+            </>
+          }
+          stats={<StatColumns baseStats={hero.baseStats} totals={previewStats} grades={entryGradesFor(hero, entry)} scale={scale} withRegen compact />}
+        />
+        {/* Where the act has left this hero (run/wounds.ts) — on the sheet, since the sheet is where a wound is checked. */}
+        {!unowned && <WoundBar {...entryHp(hero, entry, relicIds)} figure className="sheet-vitals-wound" />}
+        <div className="sheet-head-row">
+          <TypeMatchups types={types} />
+          <PowerReadout stats={previewStats} />
         </div>
 
-        <div className="detail-tab-body" role="tabpanel">
+        <div key={tab} ref={pageRef} className={`detail-tab-body${pageClass}`} role="tabpanel" {...swipeHandlers}>
           {tab === 'stats' && (
             <>
-              {/* Matchups lead the page: which columns hurt this hero is the first thing asked of
-                  a sheet, and behind eight stat bars it was below the fold. */}
-              <div className="sheet-head-row">
-                <TypeMatchups types={types} />
-                <PowerReadout stats={previewStats} />
-              </div>
-              {/* Totals only, no "+N" against base: the room is the passives'. */}
-              <StatBars baseStats={hero.baseStats} totals={previewStats} grades={entryGradesFor(hero, entry)} scale={scale} />
               <ForceSourceRow label="Attunement" grants={entry.bonusStatusGrants} />
               {rows.length > 0 && (
                 <>
@@ -294,7 +283,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
           )}
         </div>
 
-        <TabStrip tabs={tabs} active={tab} onSelect={setTab} />
+        <TabStrip tabs={tabs} active={tab} onSelect={select} />
       </div>
 
       {/* Below the panel, at the very bottom of the screen. Where the sheet is asking a question

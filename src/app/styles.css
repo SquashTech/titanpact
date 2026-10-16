@@ -52202,3 +52202,279 @@ img.smithy-service-art {
     opacity: 0;
   }
 }
+
+/* ==========================================================================
+   The banner hero sheet (HeroPreviewOverlay, HeroDetailOverlay) — 2026-10-16, per user direction.
+   One frame lit from the top in the hero's colour, the hero large beside its stat columns, read on
+   every page, and the pages swipe (useTabSwipe). Replaces the stone window on these two sheets.
+   ========================================================================== */
+.detail-panel.is-hero-sheet.is-banner-sheet {
+  position: relative;
+  padding: 0 0 10px;
+  border: 1px solid rgba(224, 166, 60, 0.55);
+  border-image: none;
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 50% at 16% -6%, color-mix(in srgb, var(--hero-color, var(--accent)) 30%, transparent), transparent 62%),
+    linear-gradient(180deg, #1a1d25, #121419 60%);
+  box-shadow: 0 0 0 1px #000, 0 18px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  image-rendering: auto;
+}
+
+.is-banner-sheet::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(224, 166, 60, 0.14);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.sheet-banner {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 14px 10px;
+}
+
+.sheet-banner-portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 128px;
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 65%, color-mix(in srgb, var(--hero-color, var(--accent)) 40%, #000), #0b0c10 78%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.sheet-banner-sprite {
+  width: 92px;
+  height: 92px;
+}
+
+.sheet-banner-level {
+  position: absolute;
+  top: 7px;
+  left: 9px;
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+
+.sheet-banner-level b {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.sheet-banner-titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sheet-banner-name {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-banner-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.sheet-banner-mastery {
+  justify-content: flex-start;
+  width: auto;
+  margin-top: 6px;
+}
+
+.sheet-banner-titles > .stat-columns {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.stat-columns.is-compact {
+  gap: 3px;
+}
+
+.stat-columns.is-compact .stat-column-value {
+  font-size: 11px;
+}
+
+.stat-columns.is-compact .stat-column-track {
+  width: 10px;
+  height: 52px;
+  border-radius: 5px;
+}
+
+.stat-columns.is-compact .stat-column-fill {
+  border-radius: 5px;
+}
+
+.stat-columns.is-compact .stat-column-label svg {
+  width: 12px;
+  height: 12px;
+}
+
+.stat-columns.is-compact .stat-column-grade {
+  margin-top: 1px;
+}
+
+/* Vitals and matchups sit between the banner and the page, on every page. */
+.is-banner-sheet .detail-resource-row,
+.is-banner-sheet .sheet-vitals-wound {
+  margin: 0;
+  padding: 0 14px 8px;
+}
+
+.is-banner-sheet .sheet-head-row {
+  align-items: center;
+  padding: 7px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.is-banner-sheet .matchup-block {
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 10px;
+}
+
+.is-banner-sheet .matchup-side {
+  width: auto;
+  margin-right: 2px;
+}
+
+/* The page: no well of its own, it follows the finger while a swipe holds it. */
+.is-hero-sheet.is-banner-sheet .detail-tab-body {
+  margin: 0;
+  padding: 12px 14px 12px;
+  border: 0;
+  border-image: none;
+  background: none;
+  touch-action: pan-y;
+  transform: translateX(var(--swipe-dx, 0px));
+  transition: transform 0.22s var(--ease-out);
+}
+
+.is-banner-sheet .detail-tab-body.is-swiping {
+  transition: none;
+}
+
+.is-banner-sheet .detail-tab-body.is-enter-right {
+  animation: sheet-page-from-right 0.22s var(--ease-out);
+}
+
+.is-banner-sheet .detail-tab-body.is-enter-left {
+  animation: sheet-page-from-left 0.22s var(--ease-out);
+}
+
+@keyframes sheet-page-from-right {
+  from {
+    opacity: 0;
+    translate: 36px 0;
+  }
+}
+
+@keyframes sheet-page-from-left {
+  from {
+    opacity: 0;
+    translate: -36px 0;
+  }
+}
+
+/* The source rides on the name's line, so a passive is two lines, not three. */
+.is-banner-sheet .passive-readout {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  column-gap: 8px;
+  row-gap: 3px;
+  align-items: center;
+}
+
+.is-banner-sheet .passive-readout-head {
+  display: contents;
+}
+
+.is-banner-sheet .passive-readout-icon {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.is-banner-sheet .passive-readout-name {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.is-banner-sheet .passive-readout-stack {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.is-banner-sheet .passive-readout-source {
+  grid-column: 4;
+  grid-row: 1;
+  font-size: 9px;
+}
+
+.is-banner-sheet .passive-readout > :not(.passive-readout-head):not(.passive-readout-source) {
+  grid-column: 2 / -1;
+}
+
+/* Segmented tabs with a marker that slides to the open page. */
+.is-hero-sheet.is-banner-sheet .tab-strip {
+  position: relative;
+  gap: 0;
+  margin: 0 10px;
+  padding: 3px;
+  border-radius: 12px;
+  background: #0b0d11;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.tab-strip-marker {
+  display: none;
+}
+
+.is-banner-sheet .tab-strip-marker {
+  display: block;
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--tab-count, 3));
+  border-radius: 9px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hero-color, var(--accent)) 22%, #2a1e12), #1c150d);
+  box-shadow: inset 0 0 0 1px rgba(224, 166, 60, 0.6);
+  transform: translateX(calc(100% * var(--tab-index, 0)));
+  transition: transform 0.24s var(--ease-out);
+}
+
+.is-banner-sheet .tab-button,
+.is-hero-sheet.is-banner-sheet .tab-button.is-active {
+  padding: 6px 2px 5px;
+  border: 0;
+  border-image: none;
+  border-radius: 9px;
+  background: none;
+  box-shadow: none;
+}
+
+.is-banner-sheet .tab-button:hover:not(.is-active) {
+  background: none;
+}
+
+.is-hero-sheet.is-banner-sheet .tab-button.is-active {
+  color: var(--accent);
+}

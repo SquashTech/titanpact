@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { SectionGlyph, type SectionGlyphName } from './sectionIcons';
 
@@ -30,7 +31,14 @@ export function TabStrip<Id extends string>({
   className?: string;
 }) {
   return (
-    <div className={`tab-strip${className ? ` ${className}` : ''}`} role="tablist" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`tab-strip${className ? ` ${className}` : ''}`}
+      role="tablist"
+      style={{ '--tab-count': tabs.length, '--tab-index': Math.max(0, tabs.findIndex((t) => t.id === active)) } as CSSProperties}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* The sliding marker, drawn only where a sheet's CSS asks for it. */}
+      <span className="tab-strip-marker" aria-hidden />
       {tabs.map((tab) => {
         const isActive = tab.id === active;
         return (
