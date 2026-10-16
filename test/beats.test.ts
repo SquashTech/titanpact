@@ -132,3 +132,21 @@ test('beats: a blow shakes the arena by the share of one figure it takes, never 
   const recoil = beatsOf([...declared, { ...hit('a1', 200), recoil: { damageDealt: 200, percent: 100 } }, { type: 'HpChanged', round: 1, combatantId: 'a1', previousHp: 200, newHp: 0, maxHp: 200 }]);
   assert.ok(recoil.every((b) => b.impact === undefined), 'a hero paying its own price shakes nothing');
 });
+
+test('beats: Conduct going off is its own beat after the hit that set it off, holding any KO it causes', () => {
+  const beats = beatsOf([
+    ...declared,
+    hit('b1', 60),
+    { type: 'HpChanged', round: 1, combatantId: 'b1', previousHp: 200, newHp: 140, maxHp: 200 },
+    { type: 'StatusDetonated', round: 1, combatantId: 'b1', sourceCombatantId: 'a1', statusId: 'Conduct', amount: 140 },
+    { type: 'StatusRemoved', round: 1, combatantId: 'b1', statusId: 'Conduct', reason: 'consumed' },
+    { type: 'HpChanged', round: 1, combatantId: 'b1', previousHp: 140, newHp: 0, maxHp: 200 },
+    { type: 'Fainted', round: 1, combatantId: 'b1', side: 'B', koCount: 1 },
+  ]);
+  assert.strictEqual(beats.length, 3, 'the declaration, the hit, the detonation');
+  assert.strictEqual(beats[1].bannerFocus, '60 damage');
+  assert.ok(!beats[1].bannerRiders?.length, 'the detonation is not a rider on the hit');
+  assert.strictEqual(beats[2].bannerFocusKind, 'detonate');
+  assert.strictEqual(beats[2].holdsKo, true);
+  assert.ok(beats[2].bannerKo);
+});

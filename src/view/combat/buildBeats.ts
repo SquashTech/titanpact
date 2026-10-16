@@ -897,8 +897,10 @@ export function buildBeats(
         const targetName = name(e.combatantId);
         const absorbed = e.absorbed ?? 0;
         const through = e.amount - absorbed;
+        // Its own tap, never a rider on the hit that set it off: the detonation is the payoff the
+        // Conduct was planted for. A KO it causes is held on it, as on a blow.
         push(
-          applied,
+          faintEvent ? [...applied, faintEvent] : applied,
           absorbed > 0
             ? `${targetName}'s ${e.statusId} detonates for ${e.amount} — the Shield takes ${absorbed}!`
             : `${targetName}'s ${e.statusId} detonates for ${e.amount} damage!`,
@@ -907,9 +909,10 @@ export function buildBeats(
             bannerLead: `${targetName}'s ${e.statusId} detonates`,
             bannerFocus: `${e.amount} damage`,
             bannerFocusKind: 'detonate',
-          }
+            ...(faintEvent ? { bannerKo: `${targetName} is knocked out!`, holdsKo: true as const } : {}),
+          },
+          { solo: true }
         );
-        if (faintEvent) pushKo([faintEvent]);
         break;
       }
 
