@@ -862,7 +862,7 @@ test('passives: Overspill is what makes Singularity castable — 150 mana agains
 test('passives: Communion passes a DRAIN through to the partner, one for one', () => {
   const state = withPassive(pairFixture(602, 'revenant', 'crag'), 'a1', 'communion');
   const before = state.combatants.a2.currentHp;
-  const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'drain', declaredTarget: 'b1' } as Action], config);
+  const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'soulRend', declaredTarget: 'b1' } as Action], config);
 
   const drained = (events.find((e) => e.type === 'Healed') as any).amount;
   assert.ok(drained > 0, 'the drain landed');
@@ -872,7 +872,7 @@ test('passives: Communion passes a DRAIN through to the partner, one for one', (
 test('passives: Communion needs a partner — alone on the field it is silent, not a crash', () => {
   const base = pairFixture(603, 'revenant', 'crag');
   const solo = { ...base, active: { ...base.active, A: ['a1', null] } } as CombatState;
-  const { state: next } = resolveRound(withPassive(solo, 'a1', 'communion'), [{ kind: 'move', combatantId: 'a1', moveId: 'drain', declaredTarget: 'b1' } as Action], config);
+  const { state: next } = resolveRound(withPassive(solo, 'a1', 'communion'), [{ kind: 'move', combatantId: 'a1', moveId: 'soulRend', declaredTarget: 'b1' } as Action], config);
 
   assert.ok(next.combatants.a1.currentHp > 0);
 });
@@ -1119,9 +1119,9 @@ test('passives: Fire-Breather Burns one random enemy when Tinder switches out', 
 
 test('passives: Foxfire lights a Burn on a foe not Burning, and never refuels one already lit (onlyIfAbsent)', () => {
   const state = withPassive(deepFixture(806, ['kitsu', 'aegis'], ['crag', 'sentinel']), 'a1', 'foxfire');
-  const lit = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'drain', declaredTarget: 'b1' } as Action], config).state;
+  const lit = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'soulRend', declaredTarget: 'b1' } as Action], config).state;
   assert.strictEqual(lit.combatants.b1.statuses.Burn?.duration, 2, 'lit by the hit, ticked once at the round end');
-  const fading = resolveRound(lit, [{ kind: 'move', combatantId: 'a1', moveId: 'drain', declaredTarget: 'b1' } as Action], config).state;
+  const fading = resolveRound(lit, [{ kind: 'move', combatantId: 'a1', moveId: 'soulRend', declaredTarget: 'b1' } as Action], config).state;
   assert.strictEqual(fading.combatants.b1.statuses.Burn?.duration, 1, 'a second hit leaves the fire to fade');
 });
 
@@ -1197,7 +1197,7 @@ test('passives: Constrict takes WIS off the hero its magical hit landed on, and 
   const physical = withPassive(deepFixture(803, ['coil', 'aegis'], ['crag', 'sentinel']), 'a1', 'constrict');
   const { state: untouched } = resolveRound(
     physical,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'rally' } as Action],
+    [{ kind: 'move', combatantId: 'a1', moveId: 'howl' } as Action],
     config
   );
   assert.strictEqual(untouched.combatants.b1.statStages?.wisdom ?? 0, 0, 'a non-damaging Beast buff plants nothing');

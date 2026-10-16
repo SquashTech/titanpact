@@ -132,7 +132,7 @@ const st = (hp: number, attack: number, defense: number, intelligence: number, w
 export const titanspawnLines: readonly TitanspawnLine[] = [
   line('Fire', 'intelligence', ['Emberling', 'Kindlehide', 'Pyroclast'],
     [st(64, 30, 30, 38, 34, 36, 40, 10), st(150, 45, 60, 90, 70, 60, 60, 12), st(240, 55, 95, 140, 95, 95, 90, 15)],
-    [['ember', 'flareUp', 'setAlight'], ['scorch', 'backdraft', 'immolate', 'spreadingBlaze'], ['inferno', 'firestorm', 'sparkBurst', 'volcanicSurge']],
+    [['ember', 'flareUp', 'setAlight'], ['scorch', 'backdraft', 'immolate', 'spreadingBlaze'], ['inferno', 'firestorm', 'volcanicSurge']],
     { hp: 'A', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'B', speed: 'B', manaPool: 'S' }),
 
   line('Water', 'speed', ['Puddling', 'Rillfin', 'Breakwater'],
@@ -182,7 +182,7 @@ export const titanspawnLines: readonly TitanspawnLine[] = [
 
   line('Spirit', 'intelligence', ['Wispling', 'Shroudkin', 'Threnody'],
     [st(72, 30, 30, 38, 34, 32, 40, 10), st(160, 45, 55, 90, 70, 60, 60, 12), st(280, 50, 80, 150, 100, 80, 90, 15)],
-    [['wisp', 'drain', 'torment'], ['soulRend', 'poltergeist', 'flicker', 'vengeance'], ['banish', 'lastRites', 'ascendant', 'seance']],
+    [['wisp', 'spite', 'torment'], ['soulRend', 'poltergeist', 'flicker', 'vengeance'], ['banish', 'lastRites', 'ascendant', 'seance']],
     { hp: 'S', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'B', speed: 'B', manaPool: 'A' }),
 
   line('Iron', 'attack', ['Rivetling', 'Ingot', 'Siegework'],

@@ -235,8 +235,8 @@ test('iron: every damage row detonates Conduct for free, and the slate plants it
   const damage = ironMoves.filter((m) => m.kind === 'damage');
   const planters = ironMoves.filter((m) => firstStatusApplication(m)?.statusId === 'Conduct');
 
-  assert.strictEqual(ironMoves.length, 23, 'the authored slate is sixteen rows, the two Shield cards (docs/shield.md §3.5), the two 2026-09-15 additions, the Call’s Shrapnel, Iron Arrow (docs/charges.md) and Hone (docs/edge-and-aim.md)');
-  assert.strictEqual(damage.length, 14, 'fourteen of them detonate Conduct for free');
+  assert.strictEqual(ironMoves.length, 22, 'the authored slate is fifteen rows (Swift Blow cut 2026-10-15), the two Shield cards (docs/shield.md §3.5), the two 2026-09-15 additions, the Call’s Shrapnel, Iron Arrow (docs/charges.md) and Hone (docs/edge-and-aim.md)');
+  assert.strictEqual(damage.length, 13, 'thirteen of them detonate Conduct for free');
   assert.strictEqual(planters.length, 0, 'and none of them plants it');
   assert.ok(statuses.Conduct.triggerTypes?.includes('Iron'));
 });
@@ -269,7 +269,7 @@ test('iron: every priority row is a POSITIVE bracket, and the slate has no heal,
   // Two rows now, not one: Opening Strike traded 30 BP for 25 and a bracket (2026-09-10), which is
   // a deliberate jab rather than a slip. What the type must never do is swing SLOW — so the
   // assertion is the sign of the bracket, not how many rows hold one.
-  assert.deepStrictEqual(bracketed.map((m) => m.id).sort(), ['openingStrike', 'swiftBlow']);
+  assert.deepStrictEqual(bracketed.map((m) => m.id).sort(), ['openingStrike']);
   for (const move of bracketed) {
     assert.ok((move.priority ?? 0) > 0, `${move.id} swings slow — Iron never does`);
   }
@@ -329,7 +329,7 @@ test('iron: Swift Blow lands its Conduct detonation ABOVE bracket 0 — the one 
     state,
     [
       { kind: 'move', combatantId: 'b1', moveId: 'openingStrike', declaredTarget: 'a1' },
-      { kind: 'move', combatantId: 'a1', moveId: 'swiftBlow', declaredTarget: 'b1' },
+      { kind: 'move', combatantId: 'a1', moveId: 'openingStrike', declaredTarget: 'b1' },
     ],
     config
   );

@@ -237,7 +237,7 @@ test('fieldEffects: Stasis Bubble does not touch priority BRACKETS — a priorit
   const state = twoVTwoFixture(421);
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' }, // tidecaller, priority 0, speed 55
-    { kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a2' }, // ironWarden, priority 1, speed 30 (slower, but higher priority)
+    { kind: 'move', combatantId: 'b1', moveId: 'openingStrike', declaredTarget: 'a2' }, // ironWarden, priority 1, speed 30 (slower, but higher priority)
   ];
 
   const stasis = { ...state, activeFieldEffect: { fieldEffectId: 'stasisBubble', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
@@ -405,7 +405,7 @@ test('previewOrder: undeclared combatants sit at bracket 0 in Speed order; a dec
   const base = orderPreviewIds(state, ids, []);
   assert.deepStrictEqual(base, ['a2', 'b2', 'a1', 'b1']);
 
-  const { entries: withPriority } = previewOrder(state, heroes, ids, [{ kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a2' }], moves, fieldEffects);
+  const { entries: withPriority } = previewOrder(state, heroes, ids, [{ kind: 'move', combatantId: 'b1', moveId: 'openingStrike', declaredTarget: 'a2' }], moves, fieldEffects);
   assert.deepStrictEqual(withPriority.map((e) => e.combatantId), ['b1', 'a2', 'b2', 'a1']);
   assert.strictEqual(withPriority[0].priority, 1);
 
@@ -450,7 +450,7 @@ test('resolveRound: RoundOrdered names the settled order — brackets rolled, a 
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     { kind: 'rest', combatantId: 'a2' },
-    { kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a2' },
+    { kind: 'move', combatantId: 'b1', moveId: 'openingStrike', declaredTarget: 'a2' },
     { kind: 'move', combatantId: 'b2', moveId: 'vineLash', declaredTarget: 'a1' },
   ];
   const { events } = resolveRound(state, actions, config);
@@ -475,17 +475,17 @@ test('previewOrder + bracketEffect: under Stasis Bubble the slower is the favour
   assert.deepStrictEqual(plain.entries.map((e) => e.combatantId), ['b1', 'a1', 'b2', 'a2']);
 
   // tidecaller's +1 cuts ahead of everyone the field favoured over it — a cut, read on the reversed axis.
-  const { entries, reversedSpeed } = previewOrder(stasis, heroes, ids, [{ kind: 'move', combatantId: 'a2', moveId: 'swiftBlow', declaredTarget: 'b1' }], moves, fieldEffects);
+  const { entries, reversedSpeed } = previewOrder(stasis, heroes, ids, [{ kind: 'move', combatantId: 'a2', moveId: 'openingStrike', declaredTarget: 'b1' }], moves, fieldEffects);
   assert.deepStrictEqual(entries.map((e) => e.combatantId), ['a2', 'b1', 'a1', 'b2']);
   assert.strictEqual(bracketEffect(entries, 0, reversedSpeed), 'cut');
   // The same bracket on the hero the field already sent first moves nothing.
-  const first = previewOrder(stasis, heroes, ids, [{ kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a2' }], moves, fieldEffects);
+  const first = previewOrder(stasis, heroes, ids, [{ kind: 'move', combatantId: 'b1', moveId: 'openingStrike', declaredTarget: 'a2' }], moves, fieldEffects);
   assert.strictEqual(bracketEffect(first.entries, 0, first.reversedSpeed), null);
   // Read on the wrong axis, b1's bracket would have looked like a cut past three faster heroes.
   assert.strictEqual(bracketEffect(first.entries, 0, false), 'cut');
 
   // Without the field, a2 (66) is already first: its +1 is a pip and no effect.
-  const normal = previewOrder(state, heroes, ids, [{ kind: 'move', combatantId: 'a2', moveId: 'swiftBlow', declaredTarget: 'b1' }], moves, fieldEffects);
+  const normal = previewOrder(state, heroes, ids, [{ kind: 'move', combatantId: 'a2', moveId: 'openingStrike', declaredTarget: 'b1' }], moves, fieldEffects);
   assert.strictEqual(bracketEffect(normal.entries, 0, normal.reversedSpeed), null);
   // A Rest under the field is held behind the three the field would have sent after it.
   const rested = previewOrder(stasis, heroes, ids, [{ kind: 'rest', combatantId: 'b1' }], moves, fieldEffects);

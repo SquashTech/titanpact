@@ -241,8 +241,8 @@ test('spirit: no move authors a selfHpCost the engine cannot price', () => {
 test('spirit: every damage move in the slate is single-target, and Haunt is what makes them spread', () => {
   const spirit = Object.values(moves).filter((m) => m.type === 'Spirit' && !signatureMoves[m.id]);
   const damage = spirit.filter((m) => m.kind === 'damage');
-  assert.strictEqual(spirit.length, 23);
-  assert.strictEqual(damage.length, 17);
+  assert.strictEqual(spirit.length, 22);
+  assert.strictEqual(damage.length, 16);
   for (const move of damage) {
     // The Call's three roll their one target (docs/companion-call.md §3.2) — still one foe, still no spread.
     assert.ok(move.target === 'singleEnemy' || move.target === 'randomEnemy', `${move.id} is a spread move in a slate that has none`);
@@ -274,7 +274,7 @@ test('spirit: the slate authors no heal-kind move and no cleanse', () => {
   assert.ok(!spirit.some((m) => m.cleanses));
   assert.deepStrictEqual(
     spirit.filter((m) => m.drainPercent).map((m) => m.id).sort(),
-    ['drain', 'soulRend']
+    ['soulRend']
   );
 });
 

@@ -148,7 +148,8 @@ test('titanspawn: kits are 3 / 4 / 4, from the type\'s own slate at the tier\'s 
     for (const tier of SPAWN_TIERS) {
       const kit = line.moveIds[tier];
       const slate = slateOf(line.type, tier);
-      assert.strictEqual(kit.length, SPAWN_KIT_SIZE[tier], `${line.names[tier]} holds ${kit.length}`);
+      // A slate thinner than the kit (Fire's three Lates) is held whole.
+      assert.strictEqual(kit.length, Math.min(SPAWN_KIT_SIZE[tier], slate.length), `${line.names[tier]} holds ${kit.length}`);
       assert.strictEqual(new Set(kit).size, kit.length, `${line.names[tier]} repeats a move`);
       for (const id of kit) {
         assert.ok(moves[id], `${line.names[tier]} holds unknown move ${id}`);

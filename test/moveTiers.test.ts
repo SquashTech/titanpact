@@ -100,7 +100,7 @@ test('move tiers: every move of a tiered slate carries a tier, and no other type
 });
 
 test('move tiers: each band offers its own tier — Early expires when Mid opens, Mid when Late does — and an untiered move is ungated', () => {
-  const early = moves.swiftBlow; // Iron, Early
+  const early = moves.openingStrike; // Iron, Early
   const mid = moves.momentumSwing; // Iron, Mid
   const late = moves.juggernaut; // Iron, Late
   assert.deepStrictEqual([early.tier, mid.tier, late.tier], ['early', 'mid', 'late']);
@@ -148,7 +148,7 @@ test('schedule: the band is read off level — Early below midLevel, Mid to late
 });
 
 test('move tiers: levelMovePool only offers what the hero\'s LEVEL has opened', () => {
-  // Warden's pool: swiftBlow/pinDown/rockToss/bodyBlow are Early or untiered, rendArmor Mid, juggernaut Late.
+  // Warden's pool: openingStrike/pinDown/rockToss/bodyBlow are Early or untiered, rendArmor Mid, juggernaut Late.
   const atOne = poolOf(entryAtRank('ironWarden', 1));
   assert.ok(!atOne.includes('rendArmor'), 'a Mid move must not be offered below midLevel');
   assert.ok(!atOne.includes('juggernaut'), 'a Late move must not be offered below lateLevel');

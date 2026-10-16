@@ -223,11 +223,11 @@ test('beast: Apex Predator from no Attack steps gives ▲▲ — exactly the old
 
 test('beast: Apex Predator COMPOUNDS — it doubles the steps already there, and a cast first is inside the doubling', () => {
   const state = withDeepPools(beastFixture(721, 'cinderKnight'));
-  const rallied = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'rally', declaredTarget: 'a1' }], config).state;
+  const rallied = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'howl', declaredTarget: 'a1' }], config).state;
   const rally = rallied.combatants.a1.statStages?.attack ?? 0;
-  assert.ok(rally >= 1, 'Rally raised Attack');
+  assert.ok(rally >= 1, 'Howl raised Attack');
   const once = apex(rallied);
-  assert.strictEqual(once.combatants.a1.statStages?.attack, Math.min(5, rally * 2), 'the Rally is doubled');
+  assert.strictEqual(once.combatants.a1.statStages?.attack, Math.min(5, rally * 2), 'the Howl is doubled');
   const twice = apex(once);
   assert.strictEqual(twice.combatants.a1.statStages?.attack, Math.min(5, rally * 4), 'and again, held at five');
 });
@@ -275,7 +275,7 @@ test('beast: Rampage bills a quarter of the damage it actually dealt back to its
 
 test('beast: the slate is fifteen moves plus the four 2026-09-15 additions, Primal Roar (2026-09-29) and Blood Moon\'s rider and reader, and every status it names exists', () => {
   const beast = Object.values(moves).filter((m) => m.type === 'Beast' && !signatureMoves[m.id]);
-  assert.strictEqual(beast.length, 23);
+  assert.strictEqual(beast.length, 22);
   for (const move of beast) {
     for (const app of statusApplicationsOf(move)) {
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);

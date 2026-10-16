@@ -394,7 +394,7 @@ export const trials: Record<string, TrialDefinition> = {
         {
           heroId: 'jinx',
           pathId: 'jinx-blackCat',
-          moveIds: ['crossedPath', 'shadowstrike', 'thousandCuts', 'swiftBlow'],
+          moveIds: ['crossedPath', 'shadowstrike', 'thousandCuts', 'fadeStrike'],
           itemIds: ['sword.mythic', 'dagger.mythic', 'boots.mythic'],
         },
         {
@@ -724,7 +724,7 @@ export const trials: Record<string, TrialDefinition> = {
         {
           heroId: 'mellow',
           pathId: 'mellow-gentleGiant',
-          moveIds: ['allAboard', 'bodyguard', 'bastion', 'rally'],
+          moveIds: ['allAboard', 'bodyguard', 'bastion', 'howl'],
           itemIds: ['shield.mythic', 'robe.mythic', 'plate.mythic'],
         },
         {

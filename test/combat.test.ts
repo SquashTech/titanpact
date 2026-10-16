@@ -168,10 +168,10 @@ test('round: a resolved move spends mana and deals damage', () => {
 
 test('round: higher priority move resolves before a higher-speed move in a lower bracket', () => {
   const state = twoVTwoFixture(12);
-  // swiftBlow (priority 1) from the slower b1 resolves before singe (priority 0) from the faster a1.
+  // openingStrike (priority 1) from the slower b1 resolves before singe (priority 0) from the faster a1.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
-    { kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a1' },
+    { kind: 'move', combatantId: 'b1', moveId: 'openingStrike', declaredTarget: 'a1' },
   ];
   const { events } = resolveRound(state, actions, config);
   const moveUsedOrder = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);

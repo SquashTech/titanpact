@@ -39,7 +39,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'ironFist',
       'openingStrike',
       'pinDown',
-      'swiftBlow',
       'holyStrike',
       'momentumSwing',
       'serratedSlice',
@@ -58,7 +57,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'inferno',
       'purify',
       'spreadingBlaze',
-      'sparkBurst',
       'magicBolt',
       'psiBolt',
       'wisp',
@@ -76,7 +74,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'sparkFlash',
       'spreadingBlaze',
       'backdraft',
-      'sparkBurst',
       'umbralBeam',
       'umbralWave',
       'setAlight',
@@ -103,7 +100,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'rockToss',
       'gravelSpray',
       'heavyBlow',
-      'rally',
       'firebrand',
       'moltenLash',
       'blazingRetreat',
@@ -218,14 +214,12 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'thunderclap',
       'pinningShot',
       'stormpiercer',
-      'rally',
       'stormLash',
       'shockSlice',
       'tailwind',
       'overcharge',
       'heavyBlow',
       'charge',
-      'swiftBlow',
       'ionize',
       'fadeStrike',
       'iceShard',
@@ -294,7 +288,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'boulderSlam',
       'provoke',
       'weaken',
-      'rally',
       'bodyCrush',
       'heavyBlow',
       'iceShard',
@@ -316,7 +309,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'boulderSlam',
       'stoneheart',
       'toughenUp',
-      'rally',
       'faultLine',
       'openingStrike',
       'holyStrike',
@@ -353,7 +345,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'forceOfNature',
       'wildBloom',
       'animalSpirit',
-      'drain',
       'glimmer',
       'jolt',
       'siphon',
@@ -367,7 +358,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'greenwood',
     ],
     mordax: [
-      'rally',
       'ivySpike',
       'thornWhip',
       'leafSlice',
@@ -498,7 +488,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'shadowsweep',
     ],
     marrow: [
-    'purify','lieInWait', 'umbralBeam', 'umbralWave', 'poltergeist', 'enfeeble', 'drain', 'torment', 'soulRend', 'wisp', 'jolt', 'siphon', 'deepChill', 'flicker', 'electricBurst', 'lastRites', 'ionicZap', 'maelstrom', 'grimHarvest', 'stunningBolt', 'seance'],
+    'purify','lieInWait', 'umbralBeam', 'umbralWave', 'poltergeist', 'enfeeble', 'torment', 'soulRend', 'wisp', 'jolt', 'siphon', 'deepChill', 'flicker', 'electricBurst', 'lastRites', 'ionicZap', 'maelstrom', 'grimHarvest', 'stunningBolt', 'seance'],
     // Claw is long-standing off-type coverage; Umbra Bolt is the in-type fix — Shadow has a whole
     // magical column and Nightshade's 65 Intelligence could reach none of it.
     nightshade: [
@@ -623,7 +613,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     revenant: [
       'unbound',
       'secondWind',
-      'drain',
       'spite',
       'soulRend',
       'poltergeist',
@@ -651,14 +640,14 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // the tank's off-type verbs; Fortify and Lie in Wait telegraph the grafts.
     dread: [
       'secondWind',
-      'wisp', 'drain', 'soulfire', 'provoke', 'fortify', 'lieInWait',
+      'wisp', 'soulfire', 'provoke', 'fortify', 'lieInWait',
       'soulRend', 'poltergeist', 'soulOffering', 'vengeance', 'flicker', 'bodyguard',
       'banish', 'seance', 'lastRites', 'ascendant',
     ],
     // --- Iron ---
     ironWarden: [
       'repairKit',
-    'openingStrike','swiftBlow', 'pinDown', 'ironSkin', 'rendArmor', 'livingWall', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion', 'holyStrike', 'claw', 'metallicBlade', 'heavyBlow', 'momentumSwing', 'onslaught', 'swingingChain', 'stoneheart', 'shieldBash', 'bodyguard'],
+    'openingStrike','pinDown', 'ironSkin', 'rendArmor', 'livingWall', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion', 'holyStrike', 'claw', 'metallicBlade', 'heavyBlow', 'momentumSwing', 'onslaught', 'swingingChain', 'stoneheart', 'shieldBash', 'bodyguard'],
     valor: [
       'provoke',
       'openingStrike',
@@ -684,8 +673,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     gallant: [
       'ironArrow',
-      'rally',
-      'swiftBlow',
       'ironFist',
       'momentumSwing',
       'serratedSlice',
@@ -714,7 +701,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'sharpen',
       'ironFist',
       'openingStrike',
-      'swiftBlow',
       'fadeStrike',
       'backstab',
       'rockToss',
@@ -741,7 +727,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'repairKit',
       'rocketPod',
       'sharpen',
-      'swiftBlow',
       'pistonPunch',
       'cogSlam',
       'whirlingBlades',
@@ -797,7 +782,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     ],
     // --- Beast ---
     packAlpha: [
-      'rally',
       'prowl',
       'pounce',
       'lacerate',
@@ -823,7 +807,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // column as the off-type (Provoke in the kit telegraphs it; Stoneheart is the payoff).
     ursa: [
       'provoke',
-      'rally',
       'howl',
       'pounce',
       'venomBite',
@@ -872,7 +855,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'venomBite',
       'pounce',
       'prowl',
-      'rally',
       'fadeStrike',
       'backstab',
       'lacerate',
@@ -926,7 +908,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'setAlight',
       'sparkFlash', 'flareUp', 'stokeTheFlames', 'vigil', 'purify', 'refresh',
       'scorch', 'spreadingBlaze', 'heatHaze', 'backdraft', 'benediction', 'cleansingRain',
-      'inferno', 'firestorm', 'sparkBurst', 'divineGrace', 'highTide',
+      'inferno', 'firestorm', 'divineGrace', 'highTide',
     ],
     // Kappa: Water's physical column and the Iron and Beast brawling around it. Oasis is Deep Pool's grant.
     kappa: [
@@ -961,7 +943,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'heavyBlow',
       'hone',
       'ironArrow',
-      'swiftBlow',
       'ironFist', 'openingStrike', 'pinDown', 'fortify', 'ironSkin',
       'shrapnel',
       'serratedSlice', 'rendArmor', 'momentumSwing', 'parry', 'shadowstrike',
@@ -970,7 +951,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Kong: Beast's physical column, with Stone's brace as the off-type. Pack Leader is Silverback's grant.
     kong: [
       'ivySpike',
-      'pounce', 'venomBite', 'prowl', 'rally', 'mudBall', 'toughenUp', 'heavyBlow',
+      'pounce', 'venomBite', 'prowl', 'mudBall', 'toughenUp', 'heavyBlow',
       'gore', 'rampage', 'thrash', 'packHunt', 'lacerate', 'maul', 'bloodTrail',
       'apexPredator', 'eviscerate', 'rendingLeap', 'titanicCrush', 'boulderSlam', 'gash', 'bloodFrenzy',
     ],
@@ -1000,7 +981,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     jinx: [
       'hone',
       'pinDown',
-      'hamstring', 'backstab', 'openingStrike', 'swiftBlow', 'claw', 'pounce',
+      'hamstring', 'backstab', 'openingStrike', 'claw', 'pounce',
       'shadowSlice', 'cutthroat', 'rend', 'smokeBomb', 'lacerate', 'rendArmor', 'maul',
       'duskBlade', 'thousandCuts', 'shadowForm', 'rendingLeap', 'eviscerate',
       'shadowsweep',
@@ -1009,7 +990,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     kitsu: [
       'flashpoint',
       'unbound',
-      'ember', 'drain', 'soulfire', 'secondWind', 'spite', 'magicBolt', 'focus',
+      'ember', 'soulfire', 'secondWind', 'spite', 'magicBolt', 'focus',
       'soulRend', 'poltergeist', 'flicker', 'vengeance', 'soulOffering', 'arcPulse', 'arcaneBlast',
       'unquiet',
       'seance', 'lastRites', 'ascendant', 'twinCast', 'cataclysm',
@@ -1021,7 +1002,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'sparkFlash',
       'setAlight', 'flareUp', 'zap', 'unbound', 'wisp', 'spite',
       'scorch', 'spreadingBlaze', 'heatHaze', 'backdraft', 'immolate', 'flicker', 'stunningBolt',
-      'sparkBurst', 'inferno', 'ionicZap', 'banish',
+      'inferno', 'ionicZap', 'banish',
     ],
     // Selkie: Water's mending column, with Light's and Nature's healing beside it. High Tide is Tidewife's grant.
     selkie: [
@@ -1067,7 +1048,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Raiju: Storm's physical column and every pivot on the table, with Iron's and Shadow's quick blades. Shock Slice is Kaminari's grant.
     raiju: [
       'prowl',
-      'swiftBlow', 'openingStrike', 'hamstring', 'sharpen', 'mudBall', 'heavyBlow',
+      'openingStrike', 'hamstring', 'sharpen', 'mudBall', 'heavyBlow',
       'rideTheLightning', 'stormLash', 'tailwind', 'livingWall', 'rendArmor', 'shadowstrike',
       'skyfall', 'overcharge', 'stormSurge', 'juggernaut',
     ],
@@ -1104,7 +1085,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Koan: Mind has no fists, so Iron's and Stone's counters and Shadow's first strike carry him. Psychokinesis is Third Eye's grant.
     koan: [
       'openingStrike',
-      'swiftBlow', 'heavyBlow', 'enervate', 'ironSkin',
+      'heavyBlow', 'enervate', 'ironSkin',
       'parry', 'retribution', 'shadowstrike', 'momentumSwing', 'mentalFortress', 'rendArmor',
       'stoneheart', 'onslaught', 'juggernaut', 'fortify',
     ],
@@ -1132,7 +1113,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     // Keen: Spirit's magical column, with every other type's spreads as the off-type. Last Rites is Harbinger's grant.
     keen: [
       'rimeWind',
-      'drain', 'spite', 'unbound', 'soulfire', 'inkCloud', 'sparkFlash', 'tremor',
+      'spite', 'unbound', 'soulfire', 'inkCloud', 'sparkFlash', 'tremor',
       'willOWisp',
       'soulRend', 'poltergeist', 'flicker', 'arcPulse', 'disorient', 'deluge', 'backdraft',
       'seance', 'banish', 'ascendant', 'psionicWave', 'cataclysm', 'maelstrom',
@@ -1158,7 +1139,6 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     whirr: [
       'ironArrow',
       'rocketPod',
-      'swiftBlow',
       'cogBop', 'steamVent', 'sparkPlug', 'thunderclap', 'openingStrike', 'pinDown',
       'whirlingBlades', 'shockCoil', 'cogSlam', 'shockSlice', 'rideTheLightning', 'momentumSwing',
       'salvo', 'jackpot', 'overcharge', 'skyfall', 'onslaught',
@@ -1167,7 +1147,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
     mellow: [
       'prayer',
       'refresh',
-      'rally', 'claw', 'tideGuard', 'regrowth', 'toughenUp', 'provoke',
+      'claw', 'tideGuard', 'regrowth', 'toughenUp', 'provoke',
       'bodyguard', 'washAway', 'oasis', 'cleansingRain', 'bastion', 'wildBloom', 'packHunt',
       'highTide', 'rampart', 'overgrowth', 'seawall', 'gash', 'bloodFrenzy',
     ],

@@ -158,8 +158,8 @@ test('nature: Miasma detonates the accumulated Poison, its own application inclu
 
   const detonation = events.find((e) => e.type === 'StatusDetonated');
   assert.ok(detonation && detonation.type === 'StatusDetonated');
-  // 20 standing + the 5 Miasma plants: the detonation resolves AFTER its own statusApplication.
-  assert.strictEqual(detonation.amount, Math.ceil((maxHp * 25) / 100));
+  // 20 standing + the 10 Miasma plants: the detonation resolves AFTER its own statusApplication.
+  assert.strictEqual(detonation.amount, Math.ceil((maxHp * 30) / 100));
   assert.strictEqual(hasStatus(after.combatants.b1, 'Poison'), false, 'the stack is spent, not left ticking');
 });
 
@@ -173,7 +173,7 @@ test('nature: Miasma into a clean target is worth only the Poison it brought wit
   );
   const detonation = events.find((e) => e.type === 'StatusDetonated');
   assert.ok(detonation && detonation.type === 'StatusDetonated');
-  assert.strictEqual(detonation.amount, Math.ceil((maxHp * 5) / 100));
+  assert.strictEqual(detonation.amount, Math.ceil((maxHp * 10) / 100));
 });
 
 test('nature: a forced detonation is worth exactly what the timer expiry would have been', () => {

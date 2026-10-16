@@ -20,7 +20,7 @@ export const warbands: Record<string, WarbandDefinition> = {
   scorchedEarth: {
     id: 'scorchedEarth',
     name: 'Scorched Earth',
-    slots: [{ moveIds: ['spreadingBlaze'] }, { moveIds: ['flareUp', 'immolate'] }, { moveIds: ['setAlight', 'scorch', 'ember', 'sparkBurst'] }],
+    slots: [{ moveIds: ['spreadingBlaze'] }, { moveIds: ['flareUp', 'immolate'] }, { moveIds: ['setAlight', 'scorch', 'ember'] }],
   },
   consecration: {
     id: 'consecration',
@@ -78,7 +78,7 @@ export const warbands: Record<string, WarbandDefinition> = {
     id: 'warDrums',
     name: 'War Drums',
     slots: [
-      { moveIds: ['raiseTheStandard', 'rally', 'stormSurge', 'packLeader', 'howl'] },
+      { moveIds: ['raiseTheStandard', 'stormSurge', 'packLeader', 'howl'] },
       { moveIds: ['eviscerate', 'maul', 'bodyCrush', 'rendingLeap', 'landslide', 'immolate'] },
     ],
   },
