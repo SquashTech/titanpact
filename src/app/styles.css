@@ -25714,6 +25714,10 @@ button.evo-gift-card {
 .tip-inline-figure {
   display: inline-flex;
   vertical-align: middle;
+.icon-text-glue {
+  white-space: nowrap;
+}
+
   margin: 0 1px;
 }
 
@@ -45040,18 +45044,15 @@ img.smithy-service-art {
   height: 13px;
 }
 
-.deck-sheet-close {
-  margin-left: auto;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.4);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
+/* At the foot, where the thumb already is; matched to the dossier's Close. */
+.resolve-button.deck-sheet-done {
+  flex: none;
+  min-height: 44px;
+  margin-top: 10px;
+  padding: 11px;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .deck-sheet-info {
@@ -45197,6 +45198,8 @@ img.smithy-service-art {
   color: var(--hp-high);
 }
 
+  /* Fill each line to the edge; the global pretty wrap pulled words down early in this narrow column. */
+  text-wrap: wrap;
 .swap-stat.is-down .swap-stat-value {
   color: var(--hp-low);
 }
@@ -45276,6 +45279,15 @@ img.smithy-service-art {
 }
 
 .sky-nebula.is-b {
+/* No bundle sells it: the Constellation's Starfall is the way, named in the Constellation's gold. */
+.swap-row-locked.is-constellation,
+.coll-card-price.is-constellation,
+.coll-tray-note.is-constellation {
+  color: #f2c66c;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
   right: -34%;
   top: 30%;
   width: 95%;

@@ -15,9 +15,10 @@ import { EvolutionStar } from '../shared/EvolutionStar';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HubGlyph } from '../shared/nodeIcons';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
-import { STARFALL_NAME } from './Starfall';
+import { createPortal } from 'react-dom';
+import { overlayHost } from '../shared/overlayHost';
 import { HubPageHead, HubSubtabs, type SubtabSpec } from './hubChrome';
-import { DeckView, bundleOf } from './DeckView';
+import { CONSTELLATION_LABEL, DeckView, bundleOf } from './DeckView';
 
 interface Props {
   profile: Profile;
@@ -354,7 +355,7 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroIds, o
           <span className="coll-card-name">{heroes[heroId].name}</span>
           {freshHeroIds.includes(heroId) && <span className="coll-card-new">New</span>}
           {state === 'locked' ? (
-            <span className="coll-card-price">{price === undefined ? STARFALL_NAME : `★ ${price}`}</span>
+            <span className={`coll-card-price${price === undefined ? ' is-constellation' : ''}`}>{price === undefined ? CONSTELLATION_LABEL : `★ ${price}`}</span>
           ) : (
             <span className="coll-card-stars">
               {evolutionPathsOf(heroes[heroId]).map((path) => (
@@ -371,7 +372,7 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroIds, o
 
         {selected === heroId && !swapping && (
           <div className="coll-tray">
-            {state === 'locked' && <span className="coll-tray-note">{offer ? offer.name : `Falls only in the ${STARFALL_NAME}`}</span>}
+            {state === 'locked' && <span className={`coll-tray-note${offer ? '' : ' is-constellation'}`}>{offer ? offer.name : CONSTELLATION_LABEL}</span>}
             <button type="button" className="coll-tray-button" onClick={() => setDossierHeroId(heroId)}>
               Info
             </button>
@@ -465,7 +466,8 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroIds, o
         </div>
       )}
 
-      {dossierHero && <HeroDossierOverlay hero={dossierHero} cycle={DOSSIER_CYCLE} onClose={() => setDossierHeroId(null)} />}
+      {/* Portalled after the swap sheet so it opens over it, not under. */}
+      {dossierHero && createPortal(<HeroDossierOverlay hero={dossierHero} cycle={DOSSIER_CYCLE} onClose={() => setDossierHeroId(null)} />, overlayHost())}
     </div>
   );
 }

@@ -112,6 +112,13 @@ before owning it.
   Starfall's now. No profile is grandfathered: progress is reset at a patch like this one.
   **Why two**: a third hero a type is variance, and less variance is usually the stronger
   roguelike deck — so the full deck is earned, and Cycle V asks for it (`cycles.md` §4).
+- **Eight base seats re-picked 2026-10-16** (per user direction), each type's pair given a clearer
+  role split: Crimson for Ashwing (Fire), Riptide for Selkie (Water), Raiju for Nimbus (Storm),
+  Cairn for Petra (Stone), Sylva for Mordrax (Nature — it was two Poison heroes and no support),
+  Nightshade for Murk (Shadow), Glyph for Thane (Arcane — neither base hero was a true caster)
+  and Clockwork for Rex (Mech). The eight out are the Starfall's. No profile is grandfathered.
+- **A hero no bundle sells reads "Constellation"** in gold on the Collection (2026-10-16, per
+  user direction), where it said "Falls in the Starfall".
 - **Everything past the base is got with stars** (phase 6, 2026-09-26, per user direction — no
   hero is sold singly):
   - **A bundle** — From the Tall Grass is the only one; the Free Company was deleted and its three

@@ -100,5 +100,27 @@ export function IconText({ text, glyphs = true, tags = true }: { text: string; g
     cursor = at + token.length;
   }
   if (cursor < text.length) out.push(text.slice(cursor));
-  return <>{out}</>;
+  return <>{gluePunctuation(out)}</>;
+}
+
+/** A comma or stop after an icon term stays on the term's line, never wrapping alone. */
+function gluePunctuation(parts: ReactNode[]): ReactNode[] {
+  const out: ReactNode[] = [];
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    const next = parts[i + 1];
+    const punct = typeof next === 'string' ? /^[,.;:!?)]+/.exec(next)?.[0] : undefined;
+    if (punct && typeof part === 'object' && part !== null) {
+      out.push(
+        <span key={`glue-${i}`} className="icon-text-glue">
+          {part}
+          {punct}
+        </span>
+      );
+      parts[i + 1] = (next as string).slice(punct.length);
+      continue;
+    }
+    if (part !== '') out.push(part);
+  }
+  return out;
 }

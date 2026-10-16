@@ -34,7 +34,7 @@ import {
 
 const TALL_GRASS = 'bundle.tallGrass';
 /** Four Fire heroes owned, so a row has a reserve to trade. */
-const FOUR_FIRE = [TALL_GRASS, starfallLedgerId('crimson')];
+const FOUR_FIRE = [TALL_GRASS, starfallLedgerId('brimstone')];
 
 test('deck: the default is the base roster, two a draftable type, a row short of full', () => {
   const deck = defaultDeck(heroes);
@@ -48,10 +48,10 @@ test('deck: the default is the base roster, two a draftable type, a row short of
 });
 
 test('deck: a stored deck is made legal — unknown, unowned, mistyped and repeated ids dropped, short rows topped up', () => {
-  const deck = normalizeDeck({ Fire: ['ashwing', 'ashwing', 'noSuchHero', 'rime', 'drake', 'crimson'], Iron: 'junk' }, heroes, []);
-  assert.strictEqual(deck.Fire[0], 'ashwing', 'a legal pick is kept');
+  const deck = normalizeDeck({ Fire: ['crimson', 'crimson', 'noSuchHero', 'rime', 'drake', 'ashwing'], Iron: 'junk' }, heroes, []);
+  assert.strictEqual(deck.Fire[0], 'crimson', 'a legal pick is kept');
   assert.strictEqual(deck.Fire.length, DECK_ROW_SIZE - 1);
-  assert.ok(!deck.Fire.includes('crimson'), 'an unowned Starfall hero is not decked');
+  assert.ok(!deck.Fire.includes('ashwing'), 'an unowned Starfall hero is not decked');
   assert.ok(!deck.Fire.includes('drake'), 'an unowned bundle hero is not decked');
   assert.ok(!deck.Fire.includes('rime'), 'a Frost hero cannot sit in the Fire row');
   assert.deepStrictEqual(deck.Iron, defaultDeck(heroes).Iron);
@@ -59,8 +59,8 @@ test('deck: a stored deck is made legal — unknown, unowned, mistyped and repea
 });
 
 test('deck: a third hero of a type joins its row on its own', () => {
-  const fell = [starfallLedgerId('crimson')];
-  assert.deepStrictEqual(normalizeDeck(defaultDeck(heroes), heroes, fell).Fire, [...defaultDeck(heroes).Fire, 'crimson']);
+  const fell = [starfallLedgerId('ashwing')];
+  assert.deepStrictEqual(normalizeDeck(defaultDeck(heroes), heroes, fell).Fire, [...defaultDeck(heroes).Fire, 'ashwing']);
   assert.deepStrictEqual(reserveOfType(normalizeDeck(defaultDeck(heroes), heroes, fell), heroes, fell, 'Fire'), []);
 });
 

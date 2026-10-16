@@ -70,13 +70,15 @@ test('star shop: purchases survive a round trip and decode deduplicated', () => 
 
 test('star shop: a profile from before the 2026-09-28 base swap keeps the heroes that left the base, free', () => {
   const old = decodeProfile({ version: 1, purchases: [] });
-  for (const id of LEFT_BASE_2026_09_28) {
+  // Riptide and Nightshade came back to the base on 2026-10-16.
+  const stillOut = LEFT_BASE_2026_09_28.filter((id) => heroes[id].unlock);
+  for (const id of stillOut) {
     assert.ok(heroes[id].unlock, `${id} is no longer base`);
     assert.ok(heroPool(heroes, old.purchases)[id], `${id} is still owned`);
   }
   assert.strictEqual(starsSpent(old, starShopCatalog), 0);
   const fresh = decodeProfile(JSON.parse(JSON.stringify(createProfile())));
-  for (const id of LEFT_BASE_2026_09_28) assert.ok(!heroPool(heroes, fresh.purchases)[id], `a new account does not own ${id}`);
+  for (const id of stillOut) assert.ok(!heroPool(heroes, fresh.purchases)[id], `a new account does not own ${id}`);
 });
 
 test('star shop: the shipped catalog is consistent with itself', () => {

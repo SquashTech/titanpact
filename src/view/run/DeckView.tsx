@@ -15,11 +15,13 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { overlayHost } from '../shared/overlayHost';
-import { STARFALL_NAME } from './Starfall';
 import { PassiveText } from '../shared/PassiveText';
 
 const typeIndex = (type: TypeId) => TYPES.indexOf(type as (typeof TYPES)[number]);
 const TYPE_ORDER: TypeId[] = draftableTypes(heroes).sort((a, b) => typeIndex(a) - typeIndex(b));
+
+/** A hero no bundle sells: the Constellation's Starfall is how it is got. */
+export const CONSTELLATION_LABEL = 'Constellation';
 
 /** The bundle a hero comes in, or undefined for one only the Starfall draws. */
 export function bundleOf(heroId: string): StarShopOffer | undefined {
@@ -119,9 +121,6 @@ export function DeckView({ profile, deck, freshHeroIds, onAcknowledge, onChangeD
                 <ElementGlyph type={pickedType} />
                 {pickedType} · swap out
               </span>
-              <button type="button" className="deck-sheet-close" onClick={() => setPicked(null)} aria-label="Close">
-                ✕
-              </button>
             </div>
 
             <SwapRow heroId={pickedHero.id} current onInfo={() => onPeekHero(pickedHero.id)} />
@@ -137,9 +136,13 @@ export function DeckView({ profile, deck, freshHeroIds, onAcknowledge, onChangeD
               ))}
               {unowned.map((hero) => {
                 const offer = bundleOf(hero.id);
-                return <SwapRow key={hero.id} heroId={hero.id} locked={offer ? `★ ${offerPrice(profile, offer)} · ${offer.name}` : `Falls in the ${STARFALL_NAME}`} onInfo={() => onPeekHero(hero.id)} />;
+                return <SwapRow key={hero.id} heroId={hero.id} locked={offer ? `★ ${offerPrice(profile, offer)} · ${offer.name}` : CONSTELLATION_LABEL} onInfo={() => onPeekHero(hero.id)} />;
               })}
             </div>
+
+            <button type="button" className="resolve-button deck-sheet-done" onClick={() => setPicked(null)}>
+              Close
+            </button>
           </div>
         </div>,
         overlayHost()
@@ -210,7 +213,7 @@ function SwapRow({
         </div>
         <div className="swap-row-actions">
           {locked ? (
-            <span className="swap-row-locked">{locked}</span>
+            <span className={`swap-row-locked${locked === CONSTELLATION_LABEL ? ' is-constellation' : ''}`}>{locked}</span>
           ) : current ? (
             <span className="swap-row-locked">In deck</span>
           ) : (
