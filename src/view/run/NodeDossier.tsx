@@ -17,6 +17,12 @@ import { SectionGlyph } from '../shared/sectionIcons';
 import { BANNER } from '../shared/relicIcons';
 import { RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import type { RunState } from '../../run/state';
+import type { TypeId } from '../../engine/content';
+import { rosterEntryTypes } from '../../run/progression';
+import { ElementGlyph } from '../shared/elementIcons';
+import { getTypeColor } from '../combat/typeColors';
+import { MatchupArrow } from '../shared/MatchupArrows';
+import { matchupVerdict } from '../shared/matchupVerdict';
 
 /** Every mark a ledger row can lead with, drawn from the glyph sets the rest of the run already uses. */
 const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
@@ -94,12 +100,46 @@ function RarityOdds({ odds }: { odds: Record<EquipmentRarity, number> }) {
   );
 }
 
+/** A fork's party, one column an enemy by its typing, and each roster hero's arrow against each. */
+function PartyMatchups({ party, run }: { party: readonly (readonly TypeId[])[]; run: RunState }) {
+  return (
+    <div className="node-dossier-party" style={{ '--foes': party.length } as CSSProperties}>
+      <span aria-hidden="true" />
+      {party.map((types, i) => (
+        <span key={i} className="node-dossier-foe">
+          {types.map((type) => (
+            <span key={type} className="node-dossier-foe-type" style={{ color: getTypeColor(type) }}>
+              <ElementGlyph type={type} />
+            </span>
+          ))}
+        </span>
+      ))}
+      {run.roster.map((entry) => {
+        const heroTypes = rosterEntryTypes(rosterHeroes[entry.heroId], entry);
+        return [
+          <HeroPortrait
+            key={`${entry.rosterId}-hero`}
+            heroId={entry.heroId}
+            pathId={formIdFor(entry)}
+            className={`node-dossier-party-hero${entry.down ? ' is-down' : ''}`}
+          />,
+          ...party.map((types, i) => (
+            <span key={`${entry.rosterId}-${i}`} className={`node-dossier-party-cell${entry.down ? ' is-down' : ''}`}>
+              <MatchupArrow verdict={matchupVerdict(heroTypes, types)} />
+            </span>
+          )),
+        ];
+      })}
+    </div>
+  );
+}
+
 /**
  * The map's preview card (MapRoute): what the node pays, as loot — each reward a glowing mark beside
  * its figure — with what it fields set apart above, and a line only on the few nodes that need one. The lit tile under the card already carries its name and its picture; the
  * roster's side of it is the footer's chips (nodeLens.tsx).
  */
-export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
+export function NodeDossier({ node, run, party }: { node: MapNode; run: RunState; party?: readonly (readonly TypeId[])[] }) {
   const patron = patronOfNode(run, node);
   const dossier = patron
     ? { about: null, facts: nextRungFacts(run, patron), odds: null }
@@ -147,6 +187,8 @@ export function NodeDossier({ node, run }: { node: MapNode; run: RunState }) {
           {fact.note && <span className="node-dossier-threat-note">{fact.note}</span>}
         </div>
       ))}
+
+      {party && party.length > 0 && <PartyMatchups party={party} run={run} />}
 
       <div className="node-dossier-rewards">
         {rewards.map((fact) => (

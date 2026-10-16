@@ -2,17 +2,14 @@ import { PatronFigure, TrustPips } from './patronView';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
-import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
+import { NodeGlyph } from '../shared/nodeIcons';
 import { playSfx, type SfxId } from '../../audio/sfx';
 import { NODE_COLORS, NODE_LABELS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
 import { mapNodeArt, mapNodeIcon } from './mapNodeArt';
 import { landmarkKind, MapLandmarkFace, TITAN_LIGHT, type LandmarkKind } from './mapLandmarks';
 import campArt from '../../../art/places/rest.png';
-import { ElementPie } from '../shared/ElementPie';
-import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
-import type { TypeId } from '../../engine/content';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { handOffFlood } from '../shared/EntranceFlood';
 import { allCombatants } from '../../data/content';
@@ -35,6 +32,11 @@ import { PlateButton } from '../shared/PlateButton';
 // One path draws in this long, and the next starts this far behind it. Sized to be over inside a
 // second for three options: this plays after every node in the run, and a flourish seen forty
 // times an act has to be shorter than the patience of the fortieth viewing.
+// The map paintings' own size (locationBackdrops.ts), and the least a grounded row sits off its box's foot.
+const PAINTING_W = 196;
+const PAINTING_H = 344;
+const MIN_LIFT = 8;
+
 const PATH_DRAW_MS = 420;
 const PATH_STAGGER_MS = 130;
 const LAND_MS = 340;
@@ -165,7 +167,6 @@ export interface PatronTile {
 function ChoiceMedallion({
   map,
   node,
-  scouted,
   actNumber,
   showLeadOn,
   landDelayMs,
@@ -186,8 +187,6 @@ function ChoiceMedallion({
   hint?: string;
   /** The act's Guardian, drawn as the Guardian node's face. */
   guardianId: string | null;
-  /** The enemy typing this tile previews, or none — the Skirmish and the fork only (MapScreen). */
-  scouted: readonly TypeId[] | undefined;
   actNumber: number;
   showLeadOn: boolean;
   landDelayMs: number;
@@ -201,12 +200,7 @@ function ChoiceMedallion({
   measureRef: (el: HTMLButtonElement | null) => void;
 }) {
   const leadOns = showLeadOn ? leadOnTypes(map, node.id) : [];
-  // The enemy typing stays ON the tile (docs/titanspawn-overhaul.md §4) — a rule held in the head
-  // does not survive the map being a scene — but as a plaque under the helm, not cut into it.
-  const scoutedFace = scouted && scouted.length > 0 ? scouted : null;
   const label = patron ? patron.title : nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber);
-  // The pixel medallion wears the node's own emblem — helm or crowned helm on the fork — and a
-  // scouted typing hangs under it as a plaque, rather than being cut into the face.
   const landmark = landmarkKind(node.type);
   // A pick-1-of-3 reward or the Elite/Skirmish fork is a plain button: one stone tile for all of
   // them, its pixel icon and its name inside. The Titanspawn and the act's beats keep their art.
@@ -238,9 +232,9 @@ function ChoiceMedallion({
       )}
       <button
         type="button"
-        className={`map-medallion${tile ? ' is-tile' : ''}${scoutedFace ? ' is-scouted' : ''}${art ? ' has-art' : ''}${landmark ? ` is-landmark is-${landmark}` : ''}${opening ? ' is-opening' : ''}`}
+        className={`map-medallion${tile ? ' is-tile' : ''}${art ? ' has-art' : ''}${landmark ? ` is-landmark is-${landmark}` : ''}${opening ? ' is-opening' : ''}`}
         ref={measureRef}
-        aria-label={scoutedFace ? `${label}. Enemies: ${scoutedFace.join(', ')}` : label}
+        aria-label={label}
         data-sfx="none"
         onClick={onTap}
       >
@@ -254,24 +248,9 @@ function ChoiceMedallion({
             <span className="map-tile-label">{NODE_LABELS[node.type]}</span>
           </>
         )}
-        {(art || tile) && scoutedFace && (
-          <span className="map-medallion-typing" aria-hidden="true">
-            {scoutedFace.map((type, i) => (
-              <span key={`${type}-${i}`} className="map-medallion-type" style={{ color: getTypeColor(type) }}>
-                <ElementGlyph type={type} />
-              </span>
-            ))}
-          </span>
-        )}
-        {!art && !tile && !landmark && scoutedFace && <ElementPie types={scoutedFace} className="map-medallion-pie" />}
-        {!art && !tile && !landmark && !scoutedFace && !patron && <NodeGlyph type={node.type} className="map-medallion-glyph" />}
+        {!art && !tile && !landmark && !patron && <NodeGlyph type={node.type} className="map-medallion-glyph" />}
         {patron && <PatronFigure patronId={patron.id} className="map-medallion-patron" />}
         {patron && <TrustPips trust={patron.trust} className="map-medallion-trust" />}
-        {!art && !tile && !landmark && scoutedFace && node.type === 'elite' && (
-          <span className="map-medallion-crown" aria-hidden="true">
-            <HubGlyph name="crown" />
-          </span>
-        )}
       </button>
     </div>
   );
@@ -282,7 +261,6 @@ export function MapRoute({
   originNode,
   omen,
   choiceIds,
-  scouted,
   actNumber,
   guardianId,
   onSelectNode,
@@ -290,7 +268,10 @@ export function MapRoute({
   onPreviewChange,
   companion,
   patronFor,
+  ground,
 }: {
+  /** Where the map painting's open ground is, as a fraction of its height (mapGround); the row stands on it. */
+  ground?: number;
   /** The patron a seat tile holds, or null (MapScreen reads it off the run). */
   patronFor?: (node: MapNode) => PatronTile | null;
   /** The companion, drawn walking beside wherever the party stands. */
@@ -303,8 +284,6 @@ export function MapRoute({
   /** The Location's omen — what leaks here — shown in the origin's place at the act's first Monsters node. */
   omen: string;
   choiceIds: readonly string[];
-  /** nodeId → the enemy typing its tile previews (MapScreen scoutChoices). */
-  scouted: Readonly<Record<string, readonly TypeId[]>>;
   /** The act the map belongs to — the ledger's drop odds and hire level are per act. */
   actNumber: number;
   onSelectNode: (nodeId: string) => void;
@@ -323,6 +302,8 @@ export function MapRoute({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previewId]);
   const routeRef = useRef<HTMLDivElement>(null);
+  const choicesRef = useRef<HTMLDivElement>(null);
+  const [lift, setLift] = useState<number | null>(null);
   const originRef = useRef<HTMLSpanElement>(null);
   const medallionRefs = useRef(new Map<string, HTMLButtonElement>());
   const timers = useRef<number[]>([]);
@@ -375,14 +356,43 @@ export function MapRoute({
     // identity. Same reason below.
   }, [choiceKey, map, originNode?.id]);
 
+  /**
+   * How far the row is lifted off the foot of its box so its tiles stand on the painting's ground.
+   * The painting is drawn cover and bottom-anchored over the whole screen, so the ground line is read
+   * off the screen's box, not the route's.
+   */
+  const placeRow = useCallback(() => {
+    const choices = choicesRef.current;
+    const screen = choices?.closest<HTMLElement>('.map-screen');
+    if (ground == null || !choices || !screen) {
+      setLift(null);
+      return;
+    }
+    const s = screen.getBoundingClientRect();
+    const scale = s.height / screen.offsetHeight || 1;
+    const paintHeight = Math.max(screen.offsetHeight, (screen.offsetWidth * PAINTING_H) / PAINTING_W);
+    const groundY = screen.offsetHeight - paintHeight * (1 - ground);
+    const floor = (choices.getBoundingClientRect().bottom - s.top) / scale;
+    const tallest = Math.max(0, ...Array.from(choices.children, (el) => (el as HTMLElement).offsetHeight));
+    const room = Math.max(MIN_LIFT, choices.offsetHeight - tallest - MIN_LIFT);
+    setLift(Math.round(Math.min(Math.max(floor - groundY, MIN_LIFT), room)));
+  }, [ground, choiceKey]);
+
   useLayoutEffect(() => {
     measure();
+  }, [measure, lift]);
+
+  useLayoutEffect(() => {
+    placeRow();
     const route = routeRef.current;
     if (!route || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(() => measure());
+    const observer = new ResizeObserver(() => {
+      placeRow();
+      measure();
+    });
     observer.observe(route);
     return () => observer.disconnect();
-  }, [measure]);
+  }, [placeRow, measure]);
 
   const stopTimers = () => {
     for (const t of timers.current) clearTimeout(t);
@@ -469,7 +479,7 @@ export function MapRoute({
   }
 
   return (
-    <div className={`map-route${revealing ? ' is-revealing' : ''}`} ref={routeRef}>
+    <div className={`map-route${revealing ? ' is-revealing' : ''}${ground != null ? ' is-grounded' : ''}`} ref={routeRef}>
       {segments.length > 0 && (
         <svg className="map-paths" aria-hidden="true">
           {segments.map((seg, i) => (
@@ -496,13 +506,12 @@ export function MapRoute({
         </div>
       )}
 
-      <div className="map-choices">
+      <div className="map-choices" ref={choicesRef} style={lift != null ? { paddingBottom: lift } : undefined}>
         {choiceIds.map((nodeId, i) => (
           <ChoiceMedallion
             key={nodeId}
             map={map}
             node={map.nodes[nodeId]}
-            scouted={scouted[nodeId]}
             actNumber={actNumber}
             showLeadOn={showLeadOn}
             guardianId={guardianId}

@@ -48,7 +48,7 @@ don't silently override it.
 > eye is magenta everywhere** (`TITAN_EYE`, `--titan-rgb`); the Leviathan is renamed
 > **Kraken**, the Lava Beast **Dragon** and the Goblin Lord **Manticore**.
 > **Phases 3–5 are IN too:** the fork is Elite-or-Skirmish with the enemy typing previewed on the
-> tile from a draw seeded off the map (`src/run/encounters.ts`), the Pact Clock takes the field
+> tile's tap card (off the tile since 2026-10-16, per user direction) from a draw seeded off the map (`src/run/encounters.ts`), the Pact Clock takes the field
 > only, and the mortal companion joins after the first fight. **Phase 6 measured (sim pass 8) and
 > left two balance dials for playtest** — the overhaul is built in full; its §11 table is now the
 > rule in force wherever it disagrees with a line below.
@@ -850,7 +850,7 @@ what's still unimplemented:
   Spire-style branching map** — a uniform per-act shape of forced Fight → pick 1 of 3
   reward → **the spliced seat** (Mentor in acts 1–3, Tutor in act 4) → pick 1 of 3
   reward → the Lapidary → pick 1 of 2 (**Elite or Skirmish** since
-  2026-09-13, both recruitable, each tile previewing the enemy typing it fields from a draw
+  2026-09-13, both recruitable, each tile's tap card previewing the enemy typing it fields against the roster (2026-10-16) from a draw
   seeded off the map so the preview IS the fight, and the two guaranteed to differ in a type —
   `src/run/encounters.ts`; it was Elite or Battle) → **the Academy** (2026-10-09) → pick 1 of 3
   reward → the funnel → an end-of-act **Guardian** boss fight, no path ever skipping a

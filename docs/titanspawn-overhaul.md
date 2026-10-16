@@ -153,9 +153,12 @@ the rows between draw the hero pool.
   with the act (`OPENER_ESCORT_TIERS_BY_ACT`) and the Earlies carrying one item each
   (`OPENER_GEAR_FROM_ACT`).
 - **The fork** is **Elite-or-Skirmish** — both hero pool, both recruitable — and each option
-  **previews the enemy typing on its tile** (`ElementPie.tsx`, the disc cut into one wedge per
-  type). The Elite keeps its risk/reward axis; the preview adds the tactical one. **The two options
-  differ in at least one type**, or the choice is empty.
+  **previews the enemy typing on its tap card**, not its tile (2026-10-16, per user direction: the
+  plaque under the helm muddied a map that now stands in its painting, and the typing alone was not
+  a decision). The card sets each enemy's typing against every roster hero as the lead pick's
+  matchup arrows (`NodeDossier` `PartyMatchups`, `scoutedParty`). The Elite keeps its risk/reward
+  axis; the preview adds the tactical one. **The two options differ in at least one type**, or the
+  choice is empty.
 - **Encounters are deterministic per node** (`src/run/encounters.ts`, the one node→encounter
   function for App, sim and preview): the seed is derived from the map seed and the node id, so
   nothing new is stored and **the preview IS the fight**. The guarantee is on the TYPE SET — the

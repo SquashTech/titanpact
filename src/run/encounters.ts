@@ -179,6 +179,16 @@ export function scoutedTypes(encounter: Encounter, combatants: HeroLookup): Type
   return [...seen];
 }
 
+/** Each enemy's own typing, leads first then the bench — what the map's preview card sets the roster against. */
+export function scoutedParty(encounter: Encounter, combatants: HeroLookup): (readonly TypeId[])[] {
+  const order = [...encounter.squad.activeIds.filter((id): id is string => id !== null), ...encounter.squad.benchIds];
+  return order.flatMap((rosterId) => {
+    const entry = encounter.run.roster.find((r) => r.rosterId === rosterId);
+    const hero = entry && combatants[entry.heroId];
+    return entry && hero ? [rosterEntryTypes(hero, entry)] : [];
+  });
+}
+
 /** The fork's other option: the `elite` on the same row as a `skirmish`, or null off the fork. */
 function forkPartner(map: RunMap, node: MapNode): MapNode | null {
   if (node.type !== 'skirmish') return null;

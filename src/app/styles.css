@@ -18434,6 +18434,53 @@ button.star-shop-bundle-face {
   color: var(--reward-color);
 }
 
+/* The fork's party against the roster: one column an enemy, headed by its typing, one row a hero. */
+.node-dossier-party {
+  display: grid;
+  grid-template-columns: 36px repeat(var(--foes), minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  gap: 3px 4px;
+  padding: 6px 4px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.node-dossier-foe {
+  display: flex;
+  gap: 1px;
+}
+
+.node-dossier-foe-type {
+  display: flex;
+}
+
+.node-dossier-foe-type .element-glyph {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+.node-dossier-party-hero {
+  width: 34px;
+  height: 34px;
+}
+
+.node-dossier-party .enemy-scout-verdict-small {
+  width: 22px;
+  height: 22px;
+}
+
+.node-dossier-party .enemy-scout-verdict-small > svg {
+  width: 15px;
+  height: 15px;
+}
+
+.node-dossier-party-hero.is-down,
+.node-dossier-party-cell.is-down {
+  opacity: 0.35;
+}
+
 .node-dossier-threat-glyph {
   display: flex;
   width: 18px;
@@ -18789,6 +18836,30 @@ button.star-shop-bundle-face {
   gap: 7px;
 }
 
+/* On a painting with open ground the row stands on it (MapRoute lifts it there) and each tile
+   casts a shadow where it stands, so it is a thing in the place rather than over it. */
+.map-route.is-grounded .map-choices {
+  align-items: flex-end;
+}
+
+.map-route.is-grounded .map-choice {
+  position: relative;
+}
+
+.map-route.is-grounded .map-choice::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: -9px;
+  width: 92px;
+  height: 20px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.35) 60%, transparent);
+  pointer-events: none;
+}
+
 /* Every tile's plain name under it; the long press still reads the whole node out. */
 .map-choice-label {
   color: #e9dcc0;
@@ -18854,57 +18925,6 @@ button.star-shop-bundle-face {
   width: 32px;
   height: 32px;
   image-rendering: pixelated;
-}
-
-/* Who is in there IS the sigil (2026-09-13, per user direction — it was a row of marks under a
-   helm): a recruitable encounter's disc is cut into one wedge per enemy type, each tinted and
-   wearing its element, so the fork reads as a tactical choice before it is a difficulty one. The
-   tint is shallow and the seams are dark so it is still a dark disc with light in it, not a chart
-   laid over one; the ring keeps the node colour, which is what still says Skirmish from Elite. */
-.map-medallion-pie {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.element-pie-wedge {
-  fill-opacity: 0.26;
-}
-
-.element-pie-seam {
-  fill: none;
-  stroke: rgba(4, 5, 8, 0.7);
-  stroke-width: 1.6;
-}
-
-.element-pie-glyph {
-  filter: drop-shadow(0 0 5px currentColor);
-}
-
-.map-medallion.is-scouted {
-  box-shadow: inset 0 0 22px -6px var(--node-color), inset 0 0 0 1px rgba(4, 5, 8, 0.5), 0 0 20px -8px var(--node-color);
-}
-
-/* The Elite's crown, on the rim above its typing: what tells the two forks apart at a glance,
-   before the ring colour is read. */
-.map-medallion-crown {
-  position: absolute;
-  top: -11px;
-  left: 50%;
-  width: 24px;
-  height: 24px;
-  transform: translateX(-50%);
-  color: var(--node-color);
-  filter: drop-shadow(0 0 5px var(--node-color)) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
-  pointer-events: none;
-}
-
-.map-medallion-crown .node-glyph {
-  width: 100%;
-  height: 100%;
 }
 
 /* The sigil. A dark disc cut into the ground with its own light coming up out of it — the ring
@@ -19213,33 +19233,6 @@ button.star-shop-bundle-face {
   pointer-events: none;
 }
 
-/* A scouted encounter's typing: a plaque hung off the medallion's bottom rim, one element per
-   enemy type in its own colour — scouting read beside the emblem, not cut into it. */
-.map-medallion-typing {
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-  display: flex;
-  gap: 3px;
-  padding: 3px 6px;
-  transform: translateX(-50%);
-  border: 1px solid rgba(214, 178, 96, 0.55);
-  border-radius: 6px;
-  background: rgba(10, 11, 16, 0.94);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
-  pointer-events: none;
-}
-
-.map-medallion-type {
-  display: flex;
-}
-
-.map-medallion-type .element-glyph {
-  width: 16px;
-  height: 16px;
-  filter: drop-shadow(0 0 4px currentColor);
-}
-
 /* A pick-1-of-3 reward (MapRoute `tile`): one stone button for all of them, the kit's gold-inlaid
    frame round a dark face, the node's glyph lit in its colour and its name under it. Uniform on
    purpose — the glyph and the word say which reward, the shape only says "a reward, tap it". */
@@ -19281,15 +19274,6 @@ button.star-shop-bundle-face {
   pointer-events: none;
 }
 
-/* The fork's typing plaque hangs off the tile's bottom edge, clear of the name. */
-.map-medallion.is-tile .map-medallion-typing {
-  bottom: -46px;
-}
-
-.map-choice:has(.map-medallion.is-tile.is-scouted) {
-  margin-bottom: 34px;
-}
-
 .map-tile-label {
   position: relative;
   color: #f0e4c8;
@@ -19300,6 +19284,62 @@ button.star-shop-bundle-face {
   text-transform: uppercase;
   white-space: nowrap;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+
+/* Grounded, a reward is the object itself standing in the place: no frame, its icon on a ring
+   in the node's colour laid flat on the ground, its name under the ring. */
+.map-route.is-grounded .map-choice .map-medallion.is-tile,
+.map-route.is-grounded .map-choice .map-medallion.is-tile:hover {
+  justify-content: flex-end;
+  gap: 6px;
+  width: 100px;
+  height: 104px;
+  border: 0;
+  border-image: none;
+  background: none;
+  box-shadow: none;
+}
+
+.map-route.is-grounded .map-medallion.is-tile::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 88px;
+  height: 26px;
+  translate: -50% 0;
+  border: 2px solid var(--node-color);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.82) 35%, rgba(0, 0, 0, 0.45) 75%, transparent);
+  box-shadow: 0 0 14px -2px var(--node-color);
+}
+
+.map-route.is-grounded .map-medallion.is-tile .map-medallion-glow {
+  inset: auto;
+  left: 50%;
+  top: 0;
+  width: 78px;
+  height: 78px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--node-color) 45%, transparent), transparent);
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.map-route.is-grounded .map-medallion.is-tile .map-tile-icon {
+  margin-bottom: 4px;
+}
+
+.map-route.is-grounded .map-choice:has(.map-medallion.is-tile)::after {
+  display: none;
+}
+
+/* A row of three stands as a fan: the middle one further back, so smaller and higher. */
+.map-route.is-grounded .map-choices > .map-choice:nth-child(2):nth-last-child(2) {
+  margin-bottom: 34px;
+  scale: 0.84;
+  transform-origin: 50% 100%;
 }
 
 /* Behind you: the same tile, small and unlit. */

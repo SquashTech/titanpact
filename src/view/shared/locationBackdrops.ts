@@ -26,6 +26,25 @@ export function locationBackdrop(locationId: string, kind: BackdropKind = 'arriv
   return BACKDROPS[kind][locationId];
 }
 
+/** Where the map painting's open ground is, as a fraction of its height: the map's row stands on it. */
+const MAP_GROUND: Record<string, number> = {
+  wildsEdge: 0.72,
+  necropolis: 0.74,
+  blightedShrine: 0.74,
+  forbiddenForest: 0.74,
+  moltenFoundry: 0.74,
+  stormCoast: 0.74,
+  holySanctum: 0.74,
+  dreamingSpires: 0.76,
+  thunderAerie: 0.76,
+  frozenReach: 0.76,
+  theThreshold: 0.74,
+};
+
+export function mapGround(locationId: string): number | undefined {
+  return locationBackdrop(locationId, 'map') ? MAP_GROUND[locationId] : undefined;
+}
+
 /** Every painting one Location owns (all of them without an id) — what the preloader fetches ahead. */
 export function locationBackdropUrls(locationId?: string): string[] {
   return (Object.keys(BACKDROPS) as BackdropKind[]).flatMap((kind) =>

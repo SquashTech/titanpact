@@ -28,8 +28,9 @@ import { locationDomains, type LocationDefinition } from '../../data/locations';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { LocationAmbience } from '../shared/LocationSky';
+import { mapGround } from '../shared/locationBackdrops';
 import { AudioSettings } from '../shared/AudioSettings';
-import { nodeEncounter, scoutedTypes } from '../../run/encounters';
+import { nodeEncounter, scoutedParty } from '../../run/encounters';
 import { heroes } from '../../data/heroes';
 import { encounterPools } from '../../run/deck';
 import { heroPool } from '../../run/recruitment';
@@ -45,17 +46,17 @@ import partyArt from '../../../art/ui/party.png';
  * each one fields, from the same deterministic draw the tap will start (run/encounters.ts).
  * Only the hero-pool nodes — the mob layer's tier already says what a Monsters tile is.
  */
-function scoutChoices(run: RunState, choiceIds: readonly string[], purchases: readonly string[]): Record<string, TypeId[]> {
+function scoutChoices(run: RunState, choiceIds: readonly string[], purchases: readonly string[]): Record<string, (readonly TypeId[])[]> {
   const map = run.map!;
   const location = locationForAct(run.locationIds, run.actNumber);
-  const scouted: Record<string, TypeId[]> = {};
+  const scouted: Record<string, (readonly TypeId[])[]> = {};
   // The same pools App.tsx hands the fight, or the tile would preview a different party.
   const pools = encounterPools(run, heroes, heroPool(heroes, purchases));
   for (const id of choiceIds) {
     const node = map.nodes[id];
     if (!node || (node.type !== 'skirmish' && node.type !== 'elite')) continue;
     const encounter = nodeEncounter(node, { run, location, heroes: pools.heroes, strangers: pools.strangers, allCombatants, enemies, progression: progressionTable });
-    scouted[id] = scoutedTypes(encounter, allCombatants);
+    scouted[id] = scoutedParty(encounter, allCombatants);
   }
   return scouted;
 }
@@ -270,11 +271,11 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           originNode={originNode}
           omen={location.omen}
           choiceIds={choiceIds}
-          scouted={scouted}
           actNumber={run.actNumber}
           guardianId={location.guardianFinalEnemyId}
+          ground={mapGround(location.id)}
           onSelectNode={onSelectNode}
-          renderDossier={(node) => <NodeDossier node={node} run={run} />}
+          renderDossier={(node) => <NodeDossier node={node} run={run} party={scouted[node.id]} />}
           patronFor={(node) => {
             const patron = patronOfNode(run, node);
             return patron
