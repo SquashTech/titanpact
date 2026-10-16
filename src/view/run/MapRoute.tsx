@@ -1,4 +1,4 @@
-import { PatronEntrance, PatronFigure, TrustPips, patronEntranceSfx } from './patronView';
+import { PatronEntrance, PatronFigure, TrustPips, patronEntranceSfx, patronPose } from './patronView';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
@@ -218,7 +218,7 @@ function ChoiceMedallion({
   const art = landmark || tile ? undefined : mapNodeArt(node.type);
   return (
     <div
-      className={`map-choice tier-${NODE_TIERS[node.type]}${landmark ? ` has-${landmark}` : ''}${patron ? ' is-patron' : ''}${previewed ? ' is-previewed' : ''}${dimmed ? ' is-dimmed' : ''}`}
+      className={`map-choice tier-${NODE_TIERS[node.type]}${landmark ? ` has-${landmark}` : ''}${patron ? ' is-patron' : ''}${patron && patronPose(patron.id) ? ' has-pose' : ''}${previewed ? ' is-previewed' : ''}${dimmed ? ' is-dimmed' : ''}`}
       data-node-type={node.type}
       data-patron={patron?.id}
       style={{ '--land-delay': `${landDelayMs}ms`, '--node-color': patron ? patron.color : NODE_COLORS[node.type] } as CSSProperties}

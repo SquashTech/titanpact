@@ -19578,6 +19578,231 @@ button.star-shop-bundle-face {
   }
 }
 
+/* An entrance pose (patronView PATRON_POSES): the drawn action frame flies the motion, and the standing
+   figure takes over the moment it lands. */
+.patron-entrance-pose {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 96px;
+  height: 96px;
+  translate: -50% 0;
+  opacity: 0;
+}
+
+.map-route.is-revealing .patron-entrance.is-huntress .patron-entrance-pose {
+  animation: huntress-pose 270ms ease-out calc(var(--land-delay) + 230ms) both;
+}
+
+.map-route.is-revealing .map-choice.has-pose[data-patron='huntress'] .map-medallion-patron {
+  animation: patron-land-in 160ms ease-out calc(var(--land-delay) + 500ms) both;
+}
+
+.map-route.is-revealing .patron-entrance.is-swordsman .patron-entrance-pose {
+  animation: sword-pose 270ms cubic-bezier(0.55, 0, 0.85, 0.4) var(--land-delay) both;
+}
+
+.map-route.is-revealing .map-choice.has-pose[data-patron='swordsman'] .map-medallion-patron {
+  animation: patron-land-in 160ms ease-out calc(var(--land-delay) + 270ms) both;
+}
+
+@keyframes huntress-pose {
+  0% {
+    opacity: 0;
+    transform: translate(-100px, -84px) rotate(-10deg) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 1;
+    transform: translate(4px, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(4px, 0);
+  }
+}
+
+@keyframes sword-pose {
+  0% {
+    opacity: 0;
+    transform: translateY(-150px);
+  }
+  12% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+/* The Forgemistress's hammer is up while the ground heats; she stands on the blow. */
+.map-route.is-revealing .patron-entrance.is-forgemistress .patron-entrance-pose {
+  animation: forge-pose 250ms ease-out var(--land-delay) both;
+}
+
+/* The Archmage blinks in arms flung wide, and settles. */
+.map-route.is-revealing .patron-entrance.is-archmage .patron-entrance-pose {
+  animation: mage-pose 300ms var(--ease-out) calc(var(--land-delay) + 340ms) both;
+}
+
+.map-route.is-revealing .map-choice.has-pose[data-patron='archmage'] .map-medallion-patron {
+  animation: patron-settle-in 200ms ease-out calc(var(--land-delay) + 640ms) both;
+}
+
+/* The Priest comes down the light with his arms raised. */
+.map-route.is-revealing .patron-entrance.is-priest .patron-entrance-pose {
+  animation: priest-pose 460ms var(--ease-out) calc(var(--land-delay) + 200ms) both;
+}
+
+.map-route.is-revealing .map-choice.has-pose[data-patron='priest'] .map-medallion-patron {
+  animation: patron-settle-in 200ms ease-out calc(var(--land-delay) + 660ms) both;
+}
+
+/* The Hexwright rises clawed out of the smoke, then straightens. */
+.map-route.is-revealing .patron-entrance.is-hexwright .patron-entrance-pose {
+  animation: hex-pose 480ms ease-out calc(var(--land-delay) + 240ms) both;
+}
+
+.map-route.is-revealing .map-choice.has-pose[data-patron='hexwright'] .map-medallion-patron {
+  animation: patron-settle-in 200ms ease-out calc(var(--land-delay) + 720ms) both;
+}
+
+/* The Headmaster raises the book over the swirling pages, and stands on the slam. */
+.map-route.is-revealing .patron-entrance.is-headmaster .patron-entrance-pose {
+  animation: head-pose 170ms cubic-bezier(0.2, 1.4, 0.4, 1) calc(var(--land-delay) + 270ms) both;
+}
+
+.map-route.is-revealing .map-choice.has-pose[data-patron='headmaster'] .map-medallion-patron {
+  animation: patron-land-in 160ms ease-out calc(var(--land-delay) + 440ms) both;
+}
+
+@keyframes forge-pose {
+  0% {
+    opacity: 0;
+    filter: brightness(2.2);
+  }
+  40% {
+    opacity: 1;
+    filter: brightness(1.3);
+  }
+  94% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes mage-pose {
+  0% {
+    opacity: 0;
+    scale: 0.2 1.3;
+    filter: brightness(3);
+  }
+  40% {
+    opacity: 1;
+    scale: 1;
+    filter: brightness(1.2);
+  }
+  94% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes priest-pose {
+  0% {
+    opacity: 0;
+    transform: translateY(-26px);
+    filter: brightness(2.4);
+  }
+  30% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 1;
+    transform: none;
+    filter: brightness(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+@keyframes hex-pose {
+  0% {
+    opacity: 0;
+    filter: brightness(0);
+  }
+  45% {
+    opacity: 1;
+    filter: brightness(0) drop-shadow(0 0 6px var(--node-color));
+  }
+  94% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes head-pose {
+  0% {
+    opacity: 0;
+    scale: 0.6;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.06;
+  }
+  92% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes patron-settle-in {
+  0% {
+    opacity: 0;
+  }
+  1% {
+    opacity: 1;
+    filter: brightness(1.5) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+  }
+}
+
+@keyframes patron-land-in {
+  0% {
+    opacity: 0;
+  }
+  1% {
+    opacity: 1;
+    transform: scale(1.1, 0.86);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* The Forgemistress: the ground heats where she will stand, one hammer blow flashes and throws
    sparks, and she is standing in the shower. */
 .map-choice[data-patron='forgemistress'] {

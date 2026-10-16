@@ -86,6 +86,18 @@ const ENTRANCES: Record<string, PatronEntranceSpec> = {
 };
 
 /** The patron's own arrival sound, or none. */
+/** Each patron's entrance pose (art/npc/poses/<id>.png), 48px: flown through the entrance's motion, the standing figure taking over on landing. */
+const PATRON_POSES: Record<string, string> = Object.fromEntries(
+  Object.entries(import.meta.glob<string>('../../../art/npc/poses/*.png', { eager: true, query: '?url', import: 'default' })).map(([path, url]) => [
+    path.slice(path.lastIndexOf('/') + 1, -'.png'.length),
+    url,
+  ])
+);
+
+export function patronPose(patronId: string): string | undefined {
+  return PATRON_POSES[patronId];
+}
+
 export function patronEntranceSfx(patronId: string): SfxId | undefined {
   return ENTRANCES[patronId]?.sfx;
 }
@@ -98,8 +110,10 @@ export function PatronEntrance({ patronId }: { patronId: string }) {
   const spec = ENTRANCES[patronId];
   if (!spec) return null;
   const bits = spec.bits;
+  const pose = PATRON_POSES[patronId];
   return (
     <span className={`patron-entrance is-${patronId}`} aria-hidden="true">
+      {pose && <img src={pose} className="patron-entrance-pose patron-art" alt="" draggable={false} />}
       {spec.parts.map((part) => (
         <span key={part} className={`patron-entrance-${part}`} />
       ))}
