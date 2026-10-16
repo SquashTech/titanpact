@@ -1,4 +1,9 @@
-import { nextRungFacts, patronColor, patronOfNode, PatronFigure, TrustPips } from './patronView';
+import { nextRungSteps, patronColor, patronOfNode, PatronFigure, stepFact, TrustPips } from './patronView';
+import { moves } from '../../data/moves';
+import { passives } from '../../data/passives';
+import { MoveDetailCard } from '../combat/MoveDetailOverlay';
+import { healCasterForEntry } from '../shared/healCaster';
+import { PassiveReadout } from '../shared/passiveIcons';
 import { CAPSTONE_TRUST, studentOf, trustOf } from '../../run/patrons';
 import { formIdFor } from '../../run/progression';
 import { rosterHeroes } from '../../data/content';
@@ -8,7 +13,7 @@ import type { MapNode } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
 import { NODE_COLORS } from './mapNodes';
-import { nodeDossier, type NodeFactGlyph } from './nodeFacts';
+import { nodeDossier, type NodeFact, type NodeFactGlyph } from './nodeFacts';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { RESOURCE_COLORS, ResourceGlyph } from '../shared/RunGlyph';
 import { StatGlyph } from '../shared/statIcons';
@@ -67,6 +72,23 @@ const FACT_COLORS: Record<NodeFactGlyph, string> = {
   enemy: '#ff7b6b',
   hidden: '#b8bccb',
 };
+
+/** One reward as loot: its mark glowing in its colour beside the figure and what it is. */
+export function RewardRow({ fact }: { fact: NodeFact }) {
+  return (
+    <div className="node-dossier-reward" style={{ '--reward-color': FACT_COLORS[fact.glyph] } as CSSProperties}>
+      <span className="node-dossier-reward-glyph">{FACT_GLYPHS[fact.glyph]}</span>
+      <span className="node-dossier-reward-text">
+        <strong className="node-dossier-reward-value">{fact.value}</strong>
+        <span className="node-dossier-reward-label">
+          {fact.label}
+          {fact.who && <TargetFigures target={fact.who === 'team' ? 'bothAllies' : 'singleAlly'} small />}
+        </span>
+        {fact.note && <span className="node-dossier-reward-note">{fact.note}</span>}
+      </span>
+    </div>
+  );
+}
 
 /**
  * The act's rarity odds as one bar, the tiers in order and each as wide as its weight. A row of
@@ -141,8 +163,11 @@ function PartyMatchups({ party, run }: { party: readonly (readonly TypeId[])[]; 
  */
 export function NodeDossier({ node, run, party }: { node: MapNode; run: RunState; party?: readonly (readonly TypeId[])[] }) {
   const patron = patronOfNode(run, node);
+  // A move or a passive is shown as the thing itself; every other rung keeps its ledger row.
+  const steps = patron ? nextRungSteps(run, patron) : [];
+  const shownAsCard = steps.filter((step) => step.kind === 'move' || step.kind === 'passive');
   const dossier = patron
-    ? { about: null, facts: nextRungFacts(run, patron), odds: null }
+    ? { about: null, facts: steps.filter((step) => !shownAsCard.includes(step)).map((step) => stepFact(step, run.actNumber)), odds: null }
     : nodeDossier(node.type, run.actNumber, run.cycle);
   const color = patron ? patronColor(patron.id) : NODE_COLORS[node.type];
   const shown = dossier.facts.filter((fact) => fact.value !== null);
@@ -151,6 +176,7 @@ export function NodeDossier({ node, run, party }: { node: MapNode; run: RunState
 
   const studentId = patron?.hasStudent ? studentOf(run, patron.id) : null;
   const student = studentId ? run.roster.find((r) => r.rosterId === studentId) : null;
+  const caster = student ? healCasterForEntry(rosterHeroes[student.heroId], student, run.relics) : undefined;
 
   return (
     <div className={`node-dossier-panel${patron ? ' is-patron' : ''}`} style={{ '--node-color': color } as CSSProperties}>
@@ -190,19 +216,19 @@ export function NodeDossier({ node, run, party }: { node: MapNode; run: RunState
 
       {party && party.length > 0 && <PartyMatchups party={party} run={run} />}
 
+      {shownAsCard.map((step, i) =>
+        step.kind === 'move' ? (
+          <div key={i} className="node-dossier-move">
+            <MoveDetailCard move={moves[step.moveId]} caster={caster} terse />
+          </div>
+        ) : step.kind === 'passive' ? (
+          <PassiveReadout key={i} passive={passives[step.passiveId]} />
+        ) : null
+      )}
+
       <div className="node-dossier-rewards">
         {rewards.map((fact) => (
-          <div key={fact.label} className="node-dossier-reward" style={{ '--reward-color': FACT_COLORS[fact.glyph] } as CSSProperties}>
-            <span className="node-dossier-reward-glyph">{FACT_GLYPHS[fact.glyph]}</span>
-            <span className="node-dossier-reward-text">
-              <strong className="node-dossier-reward-value">{fact.value}</strong>
-              <span className="node-dossier-reward-label">
-                {fact.label}
-                {fact.who && <TargetFigures target={fact.who === 'team' ? 'bothAllies' : 'singleAlly'} small />}
-              </span>
-              {fact.note && <span className="node-dossier-reward-note">{fact.note}</span>}
-            </span>
-          </div>
+          <RewardRow key={fact.label} fact={fact} />
         ))}
       </div>
 

@@ -67,6 +67,7 @@ export type SfxId =
   | 'patron.priest'
   | 'patron.hexwright'
   | 'patron.headmaster'
+  | 'trust.rise'
   | 'star.rise'
   | 'star.fall'
   | 'star.land'
@@ -1067,6 +1068,20 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'noise', gain: 0.1, attack: 0.005, decay: 0.05, delay: 0.29, filter: { type: 'bandpass', freq: 3300, q: 1.6 } },
       { wave: 'noise', gain: 0.46, attack: 0.001, decay: 0.12, delay: 0.42, filter: { type: 'lowpass', freq: 1300, freqEnd: 200, q: 1 } },
       { wave: 'sine', freq: 124, freqEnd: 60, gain: 0.3, attack: 0.002, decay: 0.15, delay: 0.42 },
+    ],
+  },
+
+  /** A patron's Trust rising on the meeting's last screen: a warm bloom under three chimes climbing a fifth, a shimmer opening over them. TrustRise lifts the pitch a step each rung. */
+  'trust.rise': {
+    gain: 0.46,
+    jitter: 0.01,
+    voices: [
+      { wave: 'sine', freq: 196, gain: 0.18, attack: 0.02, decay: 0.6 },
+      { wave: 'triangle', freq: 392, gain: 0.08, attack: 0.04, decay: 0.7 },
+      { wave: 'sine', freq: 659, gain: 0.16, attack: 0.004, decay: 0.6 },
+      { wave: 'sine', freq: 988, detune: 6, gain: 0.14, attack: 0.004, decay: 0.7, delay: 0.09 },
+      { wave: 'sine', freq: 1319, gain: 0.13, attack: 0.004, decay: 0.9, delay: 0.18 },
+      { wave: 'noise', gain: 0.08, attack: 0.12, decay: 0.6, delay: 0.1, filter: { type: 'bandpass', freq: 2200, freqEnd: 8000, q: 1 } },
     ],
   },
 

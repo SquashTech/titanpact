@@ -34842,6 +34842,135 @@ button.evo-gift-card {
   box-shadow: 0 0 6px color-mix(in srgb, var(--rite-color, var(--node-color, #d8b46a)) 60%, transparent);
 }
 
+/* A meeting's last screen (PatronNodeScreen TrustRise): the Trust it earned, large, the new pip
+   filling in the patron's colour; what the next meeting pays under it. */
+.trust-rise,
+.trust-rise-next {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* The patron stands over the meter, large and alone, in its own light. */
+.trust-rise-patron {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+.trust-rise-figure {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 160px;
+  height: 160px;
+  margin-bottom: 6px;
+  color: var(--rite-color);
+}
+
+.trust-rise-figure .rite-pool {
+  bottom: 4px;
+}
+
+.trust-rise-figure .patron-art {
+  position: relative;
+  width: 144px;
+  height: 144px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+  transform-origin: center bottom;
+  animation: hero-idle-breath 3.4s ease-in-out infinite;
+}
+
+.trust-rise-next {
+  width: 100%;
+  margin-top: 26px;
+  animation: patron-label-in 320ms var(--ease-out) 900ms both;
+}
+
+.trust-rise-title {
+  margin: 0;
+  color: var(--rite-color);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.trust-rise-meter {
+  display: flex;
+  gap: 14px;
+}
+
+.trust-rise-pip {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border: 2px solid color-mix(in srgb, var(--rite-color) 70%, transparent);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.trust-rise-pip.is-filled {
+  background: var(--rite-color);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--rite-color) 70%, transparent);
+  animation: trust-pip-glint 360ms ease-out calc(var(--pip-i) * 70ms) both;
+}
+
+.trust-rise-pip.is-new::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--rite-color);
+  border-radius: 50%;
+  opacity: 0;
+  animation: trust-pip-ring 700ms var(--ease-out) 440ms both;
+}
+
+.trust-rise.is-full .trust-rise-pip.is-filled {
+  animation: trust-pip-glint 360ms ease-out calc(420ms + var(--pip-i) * 90ms) both;
+}
+
+.trust-rise .trust-rise-pip.is-new {
+  animation: trust-pip-fill 520ms cubic-bezier(0.2, 1.5, 0.4, 1) 420ms both;
+}
+
+@keyframes trust-pip-glint {
+  50% {
+    filter: brightness(1.8);
+    scale: 1.12;
+  }
+}
+
+@keyframes trust-pip-fill {
+  0% {
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: none;
+    scale: 1;
+  }
+  45% {
+    background: #fff;
+    box-shadow: 0 0 26px 6px var(--rite-color);
+    scale: 1.45;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+@keyframes trust-pip-ring {
+  0% {
+    opacity: 0.9;
+    scale: 0.8;
+  }
+  100% {
+    opacity: 0;
+    scale: 2.6;
+  }
+}
+
 .map-medallion-trust {
   position: absolute;
   left: 50%;
@@ -35013,8 +35142,15 @@ button.evo-gift-card {
   gap: 6px;
 }
 
-.patron-offer-move .move-detail-card {
+.patron-offer-move .move-detail-card,
+.node-dossier-move .move-detail-card {
   width: 100%;
+}
+
+/* On the map's preview a patron's move or passive sits above the rest of what the meeting pays. */
+.node-dossier-move,
+.node-dossier-panel .passive-readout {
+  margin-bottom: 10px;
 }
 
 /* A service — the Forge, a made-to-measure piece, a Class: its picture large in a glow, what it does beside. */

@@ -170,8 +170,8 @@ export function stepFact(step: PatronStep, actNumber: number): NodeFact {
   }
 }
 
-/** What the next meeting with `patron` pays. */
-export function nextRungFacts(run: RunState, patron: PatronDefinition): NodeFact[] {
+/** The steps the next meeting with `patron` pays. */
+export function nextRungSteps(run: RunState, patron: PatronDefinition): readonly PatronStep[] {
   const rung = Math.min(trustOf(run, patron.id) + 1, CAPSTONE_TRUST);
-  return patron.rungs[rung - 1].map((step) => stepFact(step, run.actNumber));
+  return patron.rungs[rung - 1];
 }

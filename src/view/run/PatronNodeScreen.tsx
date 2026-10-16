@@ -44,6 +44,10 @@ import { KeeperVoice } from './RoadEncounter';
 import { PatronOffer } from './PatronOffer';
 import { RosterPeek } from './RosterPeek';
 import { PatronFigure, TrustPips, patronColor, stepFact } from './patronView';
+import { RewardRow } from './NodeDossier';
+
+// When the new Trust pip fills on the meeting's last screen (styles.css .trust-rise-pip.is-new).
+const TRUST_FILL_MS = 420;
 
 interface Props {
   run: RunState;
@@ -72,6 +76,7 @@ export function PatronNodeScreen({ run, patronId, rung, stepsDone, seed, onStep,
   const color = patronColor(patronId);
   const style = { '--node-rgb': '216, 180, 106', '--rite-color': color } as CSSProperties;
 
+  // The Trust held coming in: the meeting's last screen is where it rises.
   const keeper = (
     <header className="keeper-head patron-head">
       <span className="keeper-figure">
@@ -84,7 +89,7 @@ export function PatronNodeScreen({ run, patronId, rung, stepsDone, seed, onStep,
         <span className="rite-eyebrow">{rung === CAPSTONE_TRUST ? `${patron.title}, before the Last Seal` : patron.title}</span>
         <h2 className="rite-name patron-name">{patron.name}</h2>
         <KeeperVoice line={voice} />
-        <TrustPips trust={rung} className="patron-head-trust" />
+        <TrustPips trust={rung - 1} className="patron-head-trust" />
       </span>
     </header>
   );
@@ -107,17 +112,7 @@ export function PatronNodeScreen({ run, patronId, rung, stepsDone, seed, onStep,
   }
 
   if (stepsDone >= steps.length) {
-    return (
-      <div className="node-screen rite-screen patron-screen" style={style}>
-        <span className="node-sky" aria-hidden="true" />
-        <NodeMotes count={12} />
-        {keeper}
-        <div className="node-spacer" />
-        <button className="resolve-button" onClick={onContinue}>
-          Continue
-        </button>
-      </div>
-    );
+    return <TrustRise run={run} patronId={patronId} rung={rung} style={style} onContinue={onContinue} />;
   }
 
   return (
@@ -131,6 +126,72 @@ export function PatronNodeScreen({ run, patronId, rung, stepsDone, seed, onStep,
       style={style}
       onDone={(next) => onStep(next, stepsDone + 1)}
     />
+  );
+}
+
+/**
+ * The meeting's last beat: the Trust it earned, filled in front of the player, and what the next
+ * meeting pays for it — the reason Trust is worth having.
+ */
+function TrustRise({
+  run,
+  patronId,
+  rung,
+  style,
+  onContinue,
+}: {
+  run: RunState;
+  patronId: string;
+  rung: number;
+  style: CSSProperties;
+  onContinue: () => void;
+}) {
+  const patron = patrons[patronId];
+  const next = rung < CAPSTONE_TRUST ? patron.rungs[rung] : null;
+  useEffect(() => {
+    const timer = window.setTimeout(() => playSfx('trust.rise', { pitch: 1 + 0.06 * (rung - 1) }), TRUST_FILL_MS);
+    return () => window.clearTimeout(timer);
+  }, [rung]);
+  return (
+    <div className="node-screen rite-screen patron-screen" style={style}>
+      <span className="node-sky" aria-hidden="true" />
+      <NodeMotes count={12} />
+      <div className="node-spacer" />
+      <div className="trust-rise-patron">
+        <span className="trust-rise-figure">
+          <span className="rite-pool" aria-hidden="true" />
+          <PatronFigure patronId={patronId} />
+        </span>
+        <span className="rite-eyebrow">{patron.title}</span>
+        <h2 className="rite-name patron-name">{patron.name}</h2>
+      </div>
+      <section className={`trust-rise${rung === CAPSTONE_TRUST ? ' is-full' : ''}`} aria-label={`Trust ${rung} of ${CAPSTONE_TRUST}`}>
+        <h3 className="trust-rise-title">Trust</h3>
+        <span className="trust-rise-meter" aria-hidden="true">
+          {Array.from({ length: CAPSTONE_TRUST }, (_, i) => (
+            <span
+              key={i}
+              className={`trust-rise-pip${i < rung ? ' is-filled' : ''}${i === rung - 1 ? ' is-new' : ''}`}
+              style={{ '--pip-i': i } as CSSProperties}
+            />
+          ))}
+        </span>
+      </section>
+      {next && (
+        <section className="trust-rise-next">
+          <h3 className="trust-rise-title">{rung + 1 === CAPSTONE_TRUST ? 'Before the Last Seal' : 'Next meeting'}</h3>
+          <div className="node-dossier-rewards">
+            {next.map((step, i) => (
+              <RewardRow key={i} fact={stepFact(step, run.actNumber)} />
+            ))}
+          </div>
+        </section>
+      )}
+      <div className="node-spacer" />
+      <button className="resolve-button" onClick={onContinue}>
+        Continue
+      </button>
+    </div>
   );
 }
 
