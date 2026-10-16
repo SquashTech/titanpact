@@ -1382,10 +1382,11 @@ textarea,
   }
 }
 
-/* A blow that takes half a figure's health or more shakes the whole arena (buildBeats impactOf),
-   Hearthstone's heavy-minion slam. The arena is full-bleed, so it scales up a few percent while it
-   moves and no page background shows at the edges; the shell clips the overspill. 'massive' (four
-   fifths or more) shakes harder, twists, and drops a flash on the field. The a/b twins are the
+/* The rare moment shakes the whole arena (buildBeats impactOf), Hearthstone's heavy-minion slam:
+   'massive' for a hero taken from full health to knocked out in one beat — harder, twisting, with a
+   flash on the field — and 'heavy' for a buff that takes a stat to its top step. The arena is
+   full-bleed, so it scales up a few percent while it moves and no page background shows at the
+   edges; the shell clips the overspill. The a/b twins are the
    same animation under two names, so a second big hit on the next beat restarts it. */
 .battlefield.impact-heavy.impact-a {
   animation: arena-shake-heavy-a 0.36s cubic-bezier(0.2, 0.6, 0.35, 1) 40ms;

@@ -16,7 +16,7 @@ import type {
   StatusTickedEvent,
 } from '../../engine/events';
 import type { CombatState, Side } from '../../engine/state';
-import { moveForHero } from '../../engine/state';
+import { moveForHero, STAGE_LIMIT } from '../../engine/state';
 import type { HeroDefinition, MoveDefinition, StatKey, TypeId } from '../../engine/content';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
@@ -188,27 +188,28 @@ export interface BeatFlavor {
 
 export type Impact = 'heavy' | 'massive';
 
-/** Share of one figure's max HP a single beat's blows must take for the arena to shake, and to shake hard. */
-export const HEAVY_IMPACT_SHARE = 0.5;
-export const MASSIVE_IMPACT_SHARE = 0.8;
-
-/** The heaviest share of one target's max HP the beat's blows took, Shield included; recoil and self-costs never shake anything. */
+/**
+ * Whether a beat shakes the arena, kept for the rare moment: 'massive' when it takes a hero from full
+ * HP to knocked out, 'heavy' when a buff takes a stat to its top step. Recoil and self-costs never count.
+ */
 export function impactOf(events: readonly CombatEvent[]): Impact | undefined {
-  const taken = new Map<string, number>();
-  const maxHp = new Map<string, number>();
+  const struck = new Set<string>();
+  const startHp = new Map<string, { hp: number; max: number }>();
+  const endHp = new Map<string, number>();
+  let maxedBuff = false;
   for (const e of events) {
-    if (e.type === 'DamageDealt' && !e.recoil && !e.selfCost && !e.retribution) {
-      taken.set(e.targetCombatantId, (taken.get(e.targetCombatantId) ?? 0) + e.amount + (e.absorbed ?? 0));
-    } else if (e.type === 'HpChanged') {
-      maxHp.set(e.combatantId, e.maxHp);
-    }
+    if (e.type === 'DamageDealt' && !e.recoil && !e.selfCost && !e.retribution) struck.add(e.targetCombatantId);
+    else if (e.type === 'StatusDetonated') struck.add(e.combatantId);
+    else if (e.type === 'HpChanged') {
+      if (!startHp.has(e.combatantId)) startHp.set(e.combatantId, { hp: e.previousHp, max: e.maxHp });
+      endHp.set(e.combatantId, e.newHp);
+    } else if (e.type === 'StatChanged' && e.stages && e.delta > 0 && e.newValue >= STAGE_LIMIT) maxedBuff = true;
   }
-  let share = 0;
-  for (const [id, amount] of taken) {
-    const max = maxHp.get(id);
-    if (max) share = Math.max(share, amount / max);
+  for (const id of struck) {
+    const start = startHp.get(id);
+    if (start && start.hp >= start.max && (endHp.get(id) ?? 1) <= 0) return 'massive';
   }
-  return share >= MASSIVE_IMPACT_SHARE ? 'massive' : share >= HEAVY_IMPACT_SHARE ? 'heavy' : undefined;
+  return maxedBuff ? 'heavy' : undefined;
 }
 
 /** What the cast strip calls the move's kind: the damage pipeline it swings on, or what a non-damage move does. */

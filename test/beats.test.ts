@@ -124,11 +124,16 @@ test('beats: a passive answering a switch-in rides on the switch', () => {
   assert.strictEqual(beats[0].bannerRiders?.length, 1);
 });
 
-test('beats: a blow shakes the arena by the share of one figure it takes, never for recoil', () => {
-  const blow = (amount: number, maxHp = 200) => beatsOf([...declared, hit('b1', amount), { type: 'HpChanged', round: 1, combatantId: 'b1', previousHp: maxHp, newHp: Math.max(0, maxHp - amount), maxHp }]);
-  assert.strictEqual(blow(90)[1].impact, undefined);
-  assert.strictEqual(blow(100)[1].impact, 'heavy');
-  assert.strictEqual(blow(160)[1].impact, 'massive');
+test('beats: the arena shakes only for a one-shot or a stat buffed to its top step, never for recoil', () => {
+  const blow = (amount: number, previousHp = 200) =>
+    beatsOf([...declared, hit('b1', amount), { type: 'HpChanged', round: 1, combatantId: 'b1', previousHp, newHp: Math.max(0, previousHp - amount), maxHp: 200 }]);
+  assert.strictEqual(blow(190)[1].impact, undefined, 'a huge hit that leaves the hero standing');
+  assert.strictEqual(blow(150, 150)[1].impact, undefined, 'a finish on a hero already hurt');
+  assert.strictEqual(blow(200)[1].impact, 'massive', 'full to nothing in one beat');
+  const buff = (newValue: number) =>
+    beatsOf([...declared, { type: 'StatChanged', round: 1, combatantId: 'a1', stat: 'attack', delta: 2, newValue, stages: true }]);
+  assert.strictEqual(buff(3)[1].impact, undefined);
+  assert.strictEqual(buff(5)[1].impact, 'heavy');
   const recoil = beatsOf([...declared, { ...hit('a1', 200), recoil: { damageDealt: 200, percent: 100 } }, { type: 'HpChanged', round: 1, combatantId: 'a1', previousHp: 200, newHp: 0, maxHp: 200 }]);
   assert.ok(recoil.every((b) => b.impact === undefined), 'a hero paying its own price shakes nothing');
 });
