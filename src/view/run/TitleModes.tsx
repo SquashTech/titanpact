@@ -22,11 +22,7 @@ const TITLE_MODE_LABELS: Record<TitleMode, string> = {
 };
 
 /**
- * The one press each page is built around. The bezel and the specular sweep are separate
- * elements rather than shadows on the button because the plate is chamfered by a
- * `clip-path`, and a clip-path takes the box-shadow with it — so the glow lives on the
- * socket outside the clip and the sweep lives inside it.
- *
+ * The one press each page is built around: a flat chamfered plate with a hard lip below it.
  * It carries no colour of its own: the metal is a set of custom properties declared on an
  * ancestor — `.title-screen`'s tone for the Pact, each mode stage's own for the other two.
  */
@@ -35,9 +31,7 @@ export function PactButton({ label, disabled, onClick }: { label: string; disabl
     <div className="title-cta-socket">
       <span className="title-cta-wing-tip is-left" aria-hidden="true" />
       <span className="title-cta-wing-tip is-right" aria-hidden="true" />
-      <span className="title-cta-frame" aria-hidden="true" />
       <button className="resolve-button title-cta" onClick={onClick} disabled={disabled}>
-        <span className="title-cta-sheen" aria-hidden="true" />
         <span className="title-cta-label">{label}</span>
       </button>
     </div>

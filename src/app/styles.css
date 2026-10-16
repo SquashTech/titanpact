@@ -14619,17 +14619,15 @@ button.star-shop-bundle-face {
    Contract left to pay with — the reasoning above inverts. This stops being
    the quiet way past a decision and becomes the only live control on the
    screen, so it takes back the gold slab the run loop's terminal CTAs wear
-   (.title-cta, .draft-cta:not(:disabled)) and their shared pulse. Same
-   treatment, deliberately, rather than a fourth variant of gold: the player
-   has learned that surface means "this is the press". */
+   (.title-cta). Same treatment, deliberately, rather than a fourth variant of
+   gold: the player has learned that surface means "this is the press". */
 .recruit-actions > .recruit-leave.is-only-option {
-  background: linear-gradient(135deg, #f3c877, var(--accent) 55%, #b9822a);
+  background: #e0a63c;
   border-color: transparent;
   color: #1a1300;
   text-shadow: none;
   font-weight: 800;
-  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 18px rgba(224, 166, 60, 0.22), 0 0 18px rgba(224, 166, 60, 0.16);
-  animation: title-cta-pulse 2.4s ease-in-out infinite;
+  box-shadow: inset 0 2px 0 rgba(255, 236, 194, 0.45), inset 0 -5px 0 #8a6022;
 }
 
 /* --- The signature (RecruitScreen, .recruit-stamp) -----------------------
@@ -15717,18 +15715,6 @@ button.star-shop-bundle-face {
   font-weight: 800;
   letter-spacing: 0.03em;
   border-radius: var(--radius-lg);
-}
-
-/* DraftScreen's "Begin the Pact" — same gold-gradient/pulse treatment as
-   .title-cta once the pick requirement is met, so completing the draft
-   feels like the payoff moment it is rather than just un-graying a button. */
-.draft-cta:not(:disabled) {
-  background: linear-gradient(135deg, #f3c877, var(--accent) 55%, #b9822a);
-  color: #1a1300;
-  border-color: transparent;
-  text-shadow: none;
-  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 18px rgba(224, 166, 60, 0.22), 0 0 18px rgba(224, 166, 60, 0.16);
-  animation: title-cta-pulse 2.4s ease-in-out infinite;
 }
 
 /* --- Node-resolution screens (Shop, the 4 instant-reward types) --------- */
@@ -21574,22 +21560,18 @@ button.star-shop-bundle-face {
 .title-cta-socket {
   position: relative;
   width: 100%;
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55));
-  animation: title-cta-pulse 4.6s ease-in-out infinite;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.55));
 }
 
-/* Gold is a pact being struck: hot rim, saturated body, and a bottom third
-   dropping to the same bronze the wordmark ends on, so the button and the
-   logo are lit by one source. */
+/* Gold is a pact being struck, its lip the bronze the wordmark ends on. */
 .title-screen.is-gold {
   --plate-rgb: 224, 166, 60;
-  --plate-face: linear-gradient(178deg, #fff0cc 0%, #f6c96f 12%, #e0a63c 46%, #b57c26 78%, #7d5417 100%);
-  --plate-bezel: linear-gradient(160deg, rgba(255, 226, 164, 0.7), rgba(224, 166, 60, 0.45) 40%, rgba(96, 62, 18, 0.6));
+  --plate-face: #e0a63c;
+  --plate-under: #8a6022;
   --plate-ink: #170f00;
   --plate-lip: rgba(255, 236, 194, 0.45);
   --plate-etch: rgba(112, 74, 20, 0.35);
   --plate-focus: rgba(26, 16, 0, 0.85);
-  --plate-sheen: rgba(255, 252, 236, 0.72);
   --plate-flare: #fff6e0;
   --plate-bloom-rgb: 240, 188, 95;
   --plate-dusk: 18, 15, 12;
@@ -21602,28 +21584,16 @@ button.star-shop-bundle-face {
    it: the horizon the pactbearers stand against is this hue. */
 .title-screen.is-verdigris {
   --plate-rgb: 61, 157, 125;
-  /* Oxidised copper, not mint. The first pass lifted the top two stops nearly
-     to white and the plate came out pale and sugary — brighter than the gold
-     it is supposed to defer to. Every stop here sits a shade under its gold
-     counterpart, which is what makes it read as the older of the two metals. */
-  --plate-face: linear-gradient(178deg, #d9f3e4 0%, #7cc9a8 12%, #3d9d7d 46%, #226351 78%, #0e382c 100%);
-  --plate-bezel: linear-gradient(160deg, rgba(170, 228, 204, 0.65), rgba(61, 157, 125, 0.45) 40%, rgba(10, 56, 44, 0.62));
+  /* Oxidised copper, not mint: a shade under the gold, the older of the two metals. */
+  --plate-face: #3d9d7d;
+  --plate-under: #20594a;
   --plate-ink: #04140e;
   --plate-lip: rgba(198, 244, 224, 0.35);
   --plate-etch: rgba(8, 54, 42, 0.42);
   --plate-focus: rgba(2, 22, 15, 0.85);
-  --plate-sheen: rgba(224, 252, 240, 0.5);
   --plate-flare: #eafff4;
   --plate-bloom-rgb: 116, 214, 178;
   --plate-dusk: 8, 17, 14;
-}
-
-.title-cta-frame {
-  position: absolute;
-  inset: -5px;
-  clip-path: polygon(19px 0, 100% 0, 100% calc(100% - 19px), calc(100% - 19px) 100%, 0 100%, 0 19px);
-  background: var(--plate-bezel);
-  pointer-events: none;
 }
 
 .title-cta {
@@ -21640,8 +21610,8 @@ button.star-shop-bundle-face {
   background: var(--plate-face);
   color: var(--plate-ink);
   text-shadow: 0 1px 0 var(--plate-lip);
-  box-shadow: none;
-  transition: transform 0.15s ease;
+  box-shadow: inset 0 2px 0 var(--plate-lip), inset 0 -5px 0 var(--plate-under);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -21649,8 +21619,7 @@ button.star-shop-bundle-face {
   overflow: hidden;
 }
 
-/* Hairline etch just inside the plate — the detail that stops a gradient from
-   reading as a swatch. A pseudo-element rather than an `outline`, and it
+/* Hairline etch just inside the plate. A pseudo-element rather than an `outline`, and it
    doubles as the KEYBOARD FOCUS RING below, because this button suppresses
    both of the app's usual indicators: the global `:focus-visible` rule sets
    `outline: none` and delivers the ring as a box-shadow, and a box-shadow is
@@ -21668,39 +21637,13 @@ button.star-shop-bundle-face {
   border: 2px solid var(--plate-focus);
 }
 
-/* A specular travelling across the plate, not a shimmer sitting on it: it is
-   off-screen for most of the cycle, so the button spends most of its life
-   still and the sweep is an event. Skewed, because a vertical band crossing a
-   flat plate reads as a wiper. */
-.title-cta-sheen {
-  position: absolute;
-  top: -40%;
-  left: -60%;
-  width: 45%;
-  height: 180%;
-  background: linear-gradient(90deg, transparent, var(--plate-sheen), transparent);
-  transform: skewX(-22deg);
-  pointer-events: none;
-  animation: title-cta-sweep 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-@keyframes title-cta-sweep {
-  0%,
-  62% {
-    transform: translateX(0) skewX(-22deg);
-  }
-  92%,
-  100% {
-    transform: translateX(370%) skewX(-22deg);
-  }
-}
-
 .title-cta-socket:hover {
   transform: translateY(-1px);
 }
 
 .title-cta:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY(3px);
+  box-shadow: inset 0 2px 0 var(--plate-lip), inset 0 -2px 0 var(--plate-under);
 }
 
 .title-cta-label {
@@ -21866,20 +21809,6 @@ button.star-shop-bundle-face {
   background: var(--accent);
 }
 
-/* On the SOCKET, and on `filter` rather than `box-shadow`: the plate below it
-   is chamfered by a clip-path, and a clip-path takes the shadow with it. The
-   drop-shadow follows the painted result instead, so the glow is the shape of
-   the cut plate rather than the shape of its box. */
-@keyframes title-cta-pulse {
-  0%,
-  100% {
-    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 18px rgba(var(--plate-rgb), 0.32));
-  }
-  50% {
-    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 34px rgba(var(--plate-rgb), 0.6));
-  }
-}
-
 /* --- The launch (TitleScreen `.is-launching`) ----------------------------
    "Start a Run" is the only press on this screen that leaves it, and it was
    an instant cut: the title was simply gone and the draft was simply there.
@@ -21923,10 +21852,6 @@ button.star-shop-bundle-face {
 .title-screen.is-launching .title-cta-socket {
   filter: drop-shadow(0 0 30px rgba(var(--plate-rgb), 0.75)) drop-shadow(0 0 60px rgba(var(--plate-rgb), 0.45));
   animation: none;
-}
-
-.title-screen.is-launching .title-cta-frame {
-  filter: brightness(1.4);
 }
 
 /* The seal on the launch: every ring spins up hard and locks — the outer dial
@@ -49016,13 +48941,12 @@ img.smithy-service-art {
   --mode-word: linear-gradient(180deg, #ffffff 0%, #d4e2f2 34%, #8fa6c2 66%, #43536c 100%);
   --mode-glow: 150, 196, 240;
   --plate-rgb: 150, 190, 236;
-  --plate-face: linear-gradient(178deg, #f4f9ff 0%, #c6d8ee 12%, #8fa9c9 46%, #5c7393 78%, #2c3a52 100%);
-  --plate-bezel: linear-gradient(160deg, rgba(230, 240, 255, 0.7), rgba(150, 190, 236, 0.45) 40%, rgba(30, 44, 70, 0.6));
+  --plate-face: #8fa9c9;
+  --plate-under: #4f6280;
   --plate-ink: #07101e;
   --plate-lip: rgba(240, 248, 255, 0.45);
   --plate-etch: rgba(30, 50, 80, 0.38);
   --plate-focus: rgba(4, 10, 22, 0.85);
-  --plate-sheen: rgba(250, 253, 255, 0.72);
   --plate-flare: #f4f9ff;
   --plate-bloom-rgb: 170, 206, 245;
   --plate-dusk: 12, 15, 20;
@@ -49034,13 +48958,12 @@ img.smithy-service-art {
   --mode-word: linear-gradient(180deg, #fff1dc 0%, #ffb37a 30%, #e0542e 64%, #6e1a10 100%);
   --mode-glow: 240, 96, 60;
   --plate-rgb: 226, 92, 52;
-  --plate-face: linear-gradient(178deg, #ffe6d2 0%, #ff9f6e 12%, #e0592f 46%, #a5321a 78%, #561409 100%);
-  --plate-bezel: linear-gradient(160deg, rgba(255, 210, 180, 0.7), rgba(226, 92, 52, 0.45) 40%, rgba(80, 18, 8, 0.62));
+  --plate-face: #e0592f;
+  --plate-under: #8a2f16;
   --plate-ink: #1a0400;
   --plate-lip: rgba(255, 224, 200, 0.45);
   --plate-etch: rgba(110, 30, 14, 0.38);
   --plate-focus: rgba(26, 4, 0, 0.85);
-  --plate-sheen: rgba(255, 244, 232, 0.7);
   --plate-flare: #fff0e4;
   --plate-bloom-rgb: 245, 120, 70;
   --plate-dusk: 20, 12, 10;
@@ -52228,51 +52151,21 @@ img.smithy-service-art {
    ========================================================================== */
 .plate-socket {
   --plate-color: rgb(var(--node-rgb, 224, 166, 60));
-  --plate-face: linear-gradient(178deg,
-      color-mix(in oklab, var(--plate-color) 18%, #fffaf0) 0%,
-      color-mix(in oklab, var(--plate-color) 55%, #fff6e6) 9%,
-      color-mix(in oklab, var(--plate-color) 92%, #ffffff) 30%,
-      var(--plate-color) 52%,
-      color-mix(in oklab, var(--plate-color) 66%, #000000) 82%,
-      color-mix(in oklab, var(--plate-color) 38%, #000000) 100%);
-  --plate-bezel: linear-gradient(160deg,
-      color-mix(in oklab, var(--plate-color) 45%, #ffffff),
-      color-mix(in oklab, var(--plate-color) 70%, transparent) 40%,
-      color-mix(in oklab, var(--plate-color) 40%, #000000));
+  --plate-top: color-mix(in oklab, var(--plate-color) 45%, #fff6dc);
+  --plate-under: color-mix(in oklab, var(--plate-color) 62%, #000000);
   --plate-ink: color-mix(in oklab, var(--plate-color) 18%, #050302);
-  --plate-glow: color-mix(in srgb, var(--plate-color) 45%, transparent);
-  --plate-glow-hot: color-mix(in srgb, var(--plate-color) 75%, transparent);
   position: relative;
   z-index: 1;
   flex: none;
   width: calc(100% - 52px);
   margin-inline: auto;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 14px var(--plate-glow));
-  animation: plate-pulse 3.6s ease-in-out infinite;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.55));
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
 .node-screen > .plate-socket,
 .draft-screen > .plate-socket {
   margin-bottom: 14px;
-}
-
-@keyframes plate-pulse {
-  0%,
-  100% {
-    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 12px var(--plate-glow));
-  }
-  50% {
-    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 26px var(--plate-glow-hot));
-  }
-}
-
-.plate-frame {
-  position: absolute;
-  inset: -4px;
-  clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
-  background: var(--plate-bezel);
-  pointer-events: none;
 }
 
 .plate-cta {
@@ -52286,17 +52179,17 @@ img.smithy-service-art {
   border: 0;
   border-radius: 0;
   clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
-  background: var(--plate-face);
+  background: var(--plate-color);
   color: var(--plate-ink);
   font-size: 16px;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-shadow: 0 1px 0 color-mix(in oklab, var(--plate-color) 30%, rgba(255, 255, 255, 0.55));
-  box-shadow: none;
+  box-shadow: inset 0 2px 0 var(--plate-top), inset 0 -5px 0 var(--plate-under);
   overflow: hidden;
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
+  transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 }
 
 /* The etch just inside the plate, doubling as the focus ring a clip-path would otherwise eat. */
@@ -52310,18 +52203,6 @@ img.smithy-service-art {
 
 .plate-cta:focus-visible::after {
   border: 2px solid var(--plate-ink);
-}
-
-.plate-sheen {
-  position: absolute;
-  top: -40%;
-  left: -60%;
-  width: 40%;
-  height: 180%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-  transform: skewX(-22deg);
-  pointer-events: none;
-  animation: title-cta-sweep 4.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .plate-label {
@@ -52354,8 +52235,8 @@ img.smithy-service-art {
 }
 
 .plate-cta:not(:disabled):active {
-  transform: translateY(1px);
-  filter: brightness(0.9);
+  transform: translateY(3px);
+  box-shadow: inset 0 2px 0 var(--plate-top), inset 0 -2px 0 var(--plate-under);
 }
 
 /* Wings off the flanks, in the gap the socket leaves, each ending in a diamond. */
@@ -52399,11 +52280,10 @@ img.smithy-service-art {
   left: calc(100% + 17px);
 }
 
-/* Waiting on a pick: the metal gone cold, still solid, no pulse and no sweep. */
+/* Waiting on a pick: the metal gone cold, still solid. */
 .plate-socket.is-disabled {
   --plate-color: #6f6a62;
-  animation: none;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)) brightness(0.72);
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.5)) brightness(0.72);
 }
 
 .plate-socket.is-disabled .plate-cta {
@@ -52417,8 +52297,7 @@ img.smithy-service-art {
 }
 
 .plate-socket.fight-result-cta.is-lit {
-  animation: fight-result-cta-in 0.4s var(--ease-out) both, fight-result-cta-lit 0.5s ease-out both,
-    plate-pulse 3.6s ease-in-out 0.5s infinite;
+  animation: fight-result-cta-in 0.4s var(--ease-out) both, fight-result-cta-lit 0.5s ease-out both;
 }
 
 /* The console size, for a plate in a fight action panel. */
@@ -52445,13 +52324,13 @@ img.smithy-service-art {
   left: calc(100% + 12px);
 }
 
-/* Screens that bring their plate in on a beat keep that entrance under the pulse. */
+/* Screens that bring their plate in on a beat. */
 .plate-socket.equip-cache-reveal-in {
-  animation: equip-cache-fade-up 0.3s ease-out backwards, plate-pulse 3.6s ease-in-out 0.4s infinite;
+  animation: equip-cache-fade-up 0.3s ease-out backwards;
 }
 
 .plate-socket.champion-continue {
-  animation: champion-plate-in 0.6s var(--ease-out) 1.3s backwards, plate-pulse 3.6s ease-in-out 1.9s infinite;
+  animation: champion-plate-in 0.6s var(--ease-out) 1.3s backwards;
 }
 
 /* A move offer either/or: Learn is struck in the offered move type, Decline is a stone bar. */
