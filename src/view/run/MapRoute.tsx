@@ -1,4 +1,4 @@
-import { PatronFigure, TrustPips } from './patronView';
+import { PatronEntrance, PatronFigure, TrustPips, patronEntranceSfx } from './patronView';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
@@ -40,6 +40,9 @@ const MIN_LIFT = 8;
 const PATH_DRAW_MS = 420;
 const PATH_STAGGER_MS = 130;
 const LAND_MS = 340;
+// A patron's entrance (patronView ENTRANCES) runs this long, and two in a row start this far apart so they never land together.
+const ENTRANCE_MS = 900;
+const PATRON_STAGGER_MS = 520;
 
 /**
  * Nodes a tap enters at once, with no preview (2026-10-13, per user direction): the gates and the
@@ -51,8 +54,15 @@ const ENTERED_ON_TAP: readonly MapNodeType[] = ['boss', 'finale', 'fight', 'batt
 /** A row of one is entered on one tap too (2026-10-15, per user direction), except the keepers' seats, which become NPC encounters. */
 const PREVIEWED_WHEN_ALONE: readonly MapNodeType[] = ['mentorReward', 'tutorReward', 'academyReward'];
 
-function revealDurationMs(count: number): number {
-  return Math.max(0, count - 1) * PATH_STAGGER_MS + PATH_DRAW_MS + LAND_MS;
+function revealDurationMs(count: number, patrons: boolean): number {
+  return patrons
+    ? Math.max(0, count - 1) * PATRON_STAGGER_MS + PATH_DRAW_MS + ENTRANCE_MS
+    : Math.max(0, count - 1) * PATH_STAGGER_MS + PATH_DRAW_MS + LAND_MS;
+}
+
+/** When the i-th tile of a row lands: patrons further apart, so each entrance is seen on its own. */
+function landDelayMs(i: number, patrons: boolean): number {
+  return i * (patrons ? PATRON_STAGGER_MS : PATH_STAGGER_MS) + PATH_DRAW_MS;
 }
 
 /**
@@ -208,8 +218,9 @@ function ChoiceMedallion({
   const art = landmark || tile ? undefined : mapNodeArt(node.type);
   return (
     <div
-      className={`map-choice tier-${NODE_TIERS[node.type]}${landmark ? ` has-${landmark}` : ''}${previewed ? ' is-previewed' : ''}${dimmed ? ' is-dimmed' : ''}`}
+      className={`map-choice tier-${NODE_TIERS[node.type]}${landmark ? ` has-${landmark}` : ''}${patron ? ' is-patron' : ''}${previewed ? ' is-previewed' : ''}${dimmed ? ' is-dimmed' : ''}`}
       data-node-type={node.type}
+      data-patron={patron?.id}
       style={{ '--land-delay': `${landDelayMs}ms`, '--node-color': patron ? patron.color : NODE_COLORS[node.type] } as CSSProperties}
     >
       <span className="map-choice-ahead" aria-hidden="true">
@@ -249,6 +260,7 @@ function ChoiceMedallion({
           </>
         )}
         {!art && !tile && !landmark && !patron && <NodeGlyph type={node.type} className="map-medallion-glyph" />}
+        {patron && <PatronEntrance patronId={patron.id} />}
         {patron && <PatronFigure patronId={patron.id} className="map-medallion-patron" />}
         {patron && <TrustPips trust={patron.trust} className="map-medallion-trust" />}
       </button>
@@ -313,6 +325,7 @@ export function MapRoute({
   // A new row is a new question.
   useEffect(() => setPreviewId(null), [choiceKey]);
   const showLeadOn = leadOnsDiffer(map, choiceIds);
+  const patronRow = choiceIds.some((id) => map.nodes[id]?.type === 'patronSeat');
   // Gated on the node kind, not just on being row 0: act 6 opens on the Vigil, and an omen
   // over a muster would be naming enemies that are not there — nor does a camp sit before it.
   const originLandmark = originNode ? landmarkKind(originNode.type) : undefined;
@@ -420,15 +433,17 @@ export function MapRoute({
     playSfx('map.path');
     choiceIds.forEach((id, i) => {
       const cue = ARRIVAL_SFX[NODE_TIERS[map.nodes[id].type]];
+      const patronId = patronFor?.(map.nodes[id])?.id;
+      const entrance = patronId ? patronEntranceSfx(patronId) : undefined;
       timers.current.push(
-        window.setTimeout(() => playSfx(cue.id, { pitch: cue.pitch, gain: cue.gain }), i * PATH_STAGGER_MS + PATH_DRAW_MS)
+        window.setTimeout(() => (entrance ? playSfx(entrance) : playSfx(cue.id, { pitch: cue.pitch, gain: cue.gain })), landDelayMs(i, patronRow))
       );
     });
     timers.current.push(
       window.setTimeout(() => {
         finished.current = true;
         setRevealing(false);
-      }, revealDurationMs(choiceIds.length))
+      }, revealDurationMs(choiceIds.length, patronRow))
     );
 
     return () => {
@@ -515,7 +530,7 @@ export function MapRoute({
             actNumber={actNumber}
             showLeadOn={showLeadOn}
             guardianId={guardianId}
-            landDelayMs={i * PATH_STAGGER_MS + PATH_DRAW_MS}
+            landDelayMs={landDelayMs(i, patronRow)}
             opening={openingId === nodeId}
             hint={actNumber === 1 && !originNode && choiceIds.length === 1 ? 'Tap to begin' : undefined}
             previewed={previewId === nodeId}

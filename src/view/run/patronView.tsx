@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import type { SfxId } from '../../audio/sfx';
 import { equipment } from '../../data/equipment';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
@@ -61,6 +62,57 @@ export function patronArt(patronId: string): string | undefined {
 export function PatronFigure({ patronId, className }: { patronId: string; className?: string }) {
   const art = PATRON_ART[patronId];
   return art ? <img src={art} className={`patron-art${className ? ` ${className}` : ''}`} alt="" draggable={false} /> : <PatronGlyph patronId={patronId} className={className} />;
+}
+
+/**
+ * What a patron's arrival on the map is made of (styles.css "Patron entrances"), played every time
+ * its seat's row is revealed. A patron with no entry simply appears.
+ */
+interface PatronEntranceSpec {
+  parts: readonly string[];
+  /** Small pieces thrown out or drawn in (sparks, pages), fanned over `spread` degrees. */
+  bits?: { kind: string; count: number; spread: number };
+  sfx: SfxId;
+}
+
+const ENTRANCES: Record<string, PatronEntranceSpec> = {
+  swordsman: { parts: ['slash', 'dust'], sfx: 'patron.swordsman' },
+  archmage: { parts: ['circle', 'column'], sfx: 'patron.archmage' },
+  huntress: { parts: ['trail', 'arrow', 'dust'], sfx: 'patron.huntress' },
+  priest: { parts: ['beam', 'halo'], sfx: 'patron.priest' },
+  hexwright: { parts: ['smoke-a', 'smoke-b', 'smoke-c'], sfx: 'patron.hexwright' },
+  forgemistress: { parts: ['glow', 'flash'], bits: { kind: 'spark', count: 10, spread: 160 }, sfx: 'patron.forgemistress' },
+  headmaster: { parts: ['dust'], bits: { kind: 'page', count: 6, spread: 360 }, sfx: 'patron.headmaster' },
+};
+
+/** The patron's own arrival sound, or none. */
+export function patronEntranceSfx(patronId: string): SfxId | undefined {
+  return ENTRANCES[patronId]?.sfx;
+}
+
+function bitAngle(i: number, count: number, spread: number): number {
+  return spread >= 360 ? (360 * i) / count : -spread / 2 + (spread * i) / Math.max(1, count - 1);
+}
+
+export function PatronEntrance({ patronId }: { patronId: string }) {
+  const spec = ENTRANCES[patronId];
+  if (!spec) return null;
+  const bits = spec.bits;
+  return (
+    <span className={`patron-entrance is-${patronId}`} aria-hidden="true">
+      {spec.parts.map((part) => (
+        <span key={part} className={`patron-entrance-${part}`} />
+      ))}
+      {bits &&
+        Array.from({ length: bits.count }, (_, i) => (
+          <span
+            key={`bit-${i}`}
+            className={`patron-entrance-bit is-${bits.kind}`}
+            style={{ '--bit-angle': `${bitAngle(i, bits.count, bits.spread)}deg`, '--bit-reach': `${34 + ((i * 17) % 22)}px` } as CSSProperties}
+          />
+        ))}
+    </span>
+  );
 }
 
 export function PatronGlyph({ patronId, className }: { patronId: string; className?: string }) {

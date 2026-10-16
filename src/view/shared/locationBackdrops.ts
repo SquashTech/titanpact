@@ -28,17 +28,17 @@ export function locationBackdrop(locationId: string, kind: BackdropKind = 'arriv
 
 /** Where the map painting's open ground is, as a fraction of its height: the map's row stands on it. */
 const MAP_GROUND: Record<string, number> = {
-  wildsEdge: 0.72,
-  necropolis: 0.74,
-  blightedShrine: 0.74,
-  forbiddenForest: 0.74,
-  moltenFoundry: 0.74,
-  stormCoast: 0.74,
-  holySanctum: 0.74,
+  wildsEdge: 0.7,
+  necropolis: 0.68,
+  blightedShrine: 0.68,
+  forbiddenForest: 0.68,
+  moltenFoundry: 0.72,
+  stormCoast: 0.62,
+  holySanctum: 0.68,
   dreamingSpires: 0.76,
-  thunderAerie: 0.76,
-  frozenReach: 0.76,
-  theThreshold: 0.74,
+  thunderAerie: 0.74,
+  frozenReach: 0.68,
+  theThreshold: 0.7,
 };
 
 export function mapGround(locationId: string): number | undefined {

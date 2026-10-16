@@ -19335,6 +19335,759 @@ button.star-shop-bundle-face {
   display: none;
 }
 
+/* Grounded, a patron is the person standing in the place: no disc, the figure on a ring in its
+   colour, Trust under the ring. */
+.map-route.is-grounded .map-choice.is-patron .map-medallion,
+.map-route.is-grounded .map-choice.is-patron .map-medallion:hover {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 110px;
+  height: 112px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.map-route.is-grounded .map-choice.is-patron .map-medallion::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 92px;
+  height: 26px;
+  translate: -50% 0;
+  border: 2px solid var(--node-color);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.82) 35%, rgba(0, 0, 0, 0.45) 75%, transparent);
+  box-shadow: 0 0 14px -2px var(--node-color);
+}
+
+.map-route.is-grounded .map-choice.is-patron .map-medallion-glow {
+  inset: auto;
+  left: 50%;
+  bottom: 14px;
+  width: 92px;
+  height: 92px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--node-color) 40%, transparent), transparent);
+  box-shadow: none;
+  opacity: 0.55;
+  animation: none;
+}
+
+.map-route.is-grounded .map-choice.is-patron .map-medallion-patron.patron-art {
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 12px;
+  transform-origin: 50% 100%;
+}
+
+.map-route.is-grounded .map-choice.is-patron .map-medallion-trust {
+  bottom: -12px;
+}
+
+.map-route.is-grounded .map-choice.is-patron::after {
+  display: none;
+}
+
+/* Patron entrances (patronView ENTRANCES): played every time a patron's seat is revealed, keyed off
+   the tile's own --land-delay. Outside the reveal only what stays in the scene is drawn. */
+.patron-entrance {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.patron-entrance > span {
+  position: absolute;
+  opacity: 0;
+}
+
+.map-route.is-revealing .map-choice.is-patron {
+  animation: none;
+}
+
+.map-route.is-revealing .map-choice.is-patron .map-medallion,
+.map-route.is-revealing .map-choice.is-patron .map-choice-burst {
+  animation: none;
+}
+
+.map-route.is-revealing .map-choice.is-patron .map-choice-label,
+.map-route.is-revealing .map-choice.is-patron .map-medallion-trust {
+  animation: patron-label-in 260ms var(--ease-out) calc(var(--land-delay) + 560ms) both;
+}
+
+.map-route.is-revealing .map-choice.is-patron .map-medallion::before {
+  animation: patron-ring-in 320ms var(--ease-out) calc(var(--land-delay) + var(--ring-at, 520ms)) both;
+}
+
+@keyframes patron-label-in {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+
+@keyframes patron-ring-in {
+  0% {
+    opacity: 0;
+    scale: 0.4;
+  }
+  60% {
+    opacity: 1;
+    scale: 1.12;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+/* The Huntress: her arrow falls and bites the ground beside where she lands, then she swoops in
+   after it on a green streak. The arrow stays where it fell. */
+.patron-entrance.is-huntress .patron-entrance-arrow {
+  left: 84%;
+  bottom: 10px;
+  width: 3px;
+  height: 30px;
+  opacity: 1;
+  background: linear-gradient(#a8784a, #6e4a2a);
+  transform: rotate(-38deg);
+  transform-origin: 50% 100%;
+}
+
+.patron-entrance.is-huntress .patron-entrance-arrow::before {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: -2px;
+  width: 9px;
+  height: 8px;
+  background: #7fd08a;
+  clip-path: polygon(0 0, 100% 0, 80% 100%, 50% 70%, 20% 100%);
+}
+
+.patron-entrance.is-huntress .patron-entrance-dust {
+  left: 84%;
+  bottom: 6px;
+  width: 30px;
+  height: 12px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(220, 210, 180, 0.7), transparent);
+}
+
+.patron-entrance.is-huntress .patron-entrance-trail {
+  left: 50%;
+  bottom: 26px;
+  width: 70px;
+  height: 22px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--node-color) 80%, white), transparent);
+  filter: blur(3px);
+}
+
+.map-route.is-revealing .patron-entrance.is-huntress .patron-entrance-arrow {
+  animation: huntress-arrow 420ms cubic-bezier(0.5, 0, 0.9, 0.4) var(--land-delay) both;
+}
+
+.map-route.is-revealing .patron-entrance.is-huntress .patron-entrance-dust {
+  animation: huntress-dust 420ms var(--ease-out) calc(var(--land-delay) + 170ms) both;
+}
+
+.map-route.is-revealing .patron-entrance.is-huntress .patron-entrance-trail {
+  animation: huntress-trail 380ms var(--ease-out) calc(var(--land-delay) + 230ms) both;
+}
+
+.map-route.is-revealing .map-choice[data-patron='huntress'] .map-medallion-patron {
+  animation: huntress-swoop 380ms cubic-bezier(0.2, 0.9, 0.3, 1.2) calc(var(--land-delay) + 230ms) both;
+}
+
+@keyframes huntress-arrow {
+  0% {
+    opacity: 0;
+    transform: translate(-120px, -150px) rotate(-38deg);
+  }
+  8% {
+    opacity: 1;
+  }
+  40% {
+    transform: translate(0, 0) rotate(-38deg);
+  }
+  55% {
+    transform: rotate(-44deg);
+  }
+  70% {
+    transform: rotate(-34deg);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-38deg);
+  }
+}
+
+@keyframes huntress-dust {
+  0% {
+    opacity: 0;
+    scale: 0.3;
+  }
+  4% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.6;
+  }
+}
+
+@keyframes huntress-trail {
+  0% {
+    opacity: 0;
+    transform: translate(-100px, -84px) rotate(32deg) scaleX(2.2);
+  }
+  6% {
+    opacity: 0.9;
+    transform: translate(-100px, -84px) rotate(32deg) scaleX(2.2);
+  }
+  to {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+@keyframes huntress-swoop {
+  0% {
+    opacity: 0;
+    transform: translate(-100px, -84px) rotate(-14deg) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+  }
+  70% {
+    transform: translate(4px, 0) scale(1.08, 0.9);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* The Forgemistress: the ground heats where she will stand, one hammer blow flashes and throws
+   sparks, and she is standing in the shower. */
+.map-choice[data-patron='forgemistress'] {
+  --ring-at: 300ms;
+}
+
+.patron-entrance.is-forgemistress .patron-entrance-glow {
+  left: 50%;
+  bottom: 4px;
+  width: 96px;
+  height: 34px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 170, 70, 0.9), rgba(255, 90, 30, 0.4) 55%, transparent);
+}
+
+.patron-entrance.is-forgemistress .patron-entrance-flash {
+  left: 50%;
+  bottom: 30px;
+  width: 80px;
+  height: 80px;
+  translate: -50% 50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fff7e0, rgba(255, 190, 90, 0.85) 40%, transparent);
+}
+
+.patron-entrance.is-forgemistress .patron-entrance-bit.is-spark {
+  left: 50%;
+  bottom: 30px;
+  width: 3px;
+  height: 3px;
+  background: #ffd27a;
+  box-shadow: 0 0 4px 1px #ff9a3c;
+  transform: rotate(var(--bit-angle)) translateY(0);
+}
+
+.map-route.is-revealing .patron-entrance.is-forgemistress .patron-entrance-glow {
+  animation: forge-glow 900ms ease-in-out var(--land-delay) both;
+}
+
+.map-route.is-revealing .patron-entrance.is-forgemistress .patron-entrance-flash {
+  animation: forge-flash 340ms var(--ease-out) calc(var(--land-delay) + 240ms) both;
+}
+
+.map-route.is-revealing .patron-entrance.is-forgemistress .patron-entrance-bit.is-spark {
+  animation: forge-spark 520ms cubic-bezier(0.15, 0.8, 0.4, 1) calc(var(--land-delay) + 240ms) both;
+}
+
+.map-route.is-revealing .map-choice[data-patron='forgemistress'] .map-medallion-patron {
+  animation: forge-appear 360ms var(--ease-out) calc(var(--land-delay) + 240ms) both;
+}
+
+.map-route.is-revealing .map-choice[data-patron='forgemistress'] .map-medallion {
+  animation: forge-shake 220ms linear calc(var(--land-delay) + 240ms) both;
+}
+
+@keyframes forge-glow {
+  0% {
+    opacity: 0;
+    scale: 0.3;
+  }
+  27% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.1;
+  }
+}
+
+@keyframes forge-flash {
+  0% {
+    opacity: 0;
+    scale: 0.2;
+  }
+  4% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 2.3;
+  }
+}
+
+@keyframes forge-spark {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--bit-angle)) translateY(0);
+  }
+  4% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--bit-angle)) translateY(calc(var(--bit-reach) * -1));
+  }
+}
+
+@keyframes forge-appear {
+  0% {
+    opacity: 0;
+    scale: 1.18;
+    filter: brightness(2.6) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+    filter: brightness(1) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+  }
+}
+
+@keyframes forge-shake {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  25% {
+    translate: -2px 1px;
+  }
+  50% {
+    translate: 2px -1px;
+  }
+  75% {
+    translate: -1px 0;
+  }
+}
+
+/* The Swordsman: he drops from a leap, a blade flash cuts across as he lands, and the dust kicks up. */
+.map-choice[data-patron='swordsman'] {
+  --ring-at: 300ms;
+}
+
+.patron-entrance.is-swordsman .patron-entrance-slash {
+  left: 50%;
+  bottom: 44px;
+  width: 116px;
+  height: 3px;
+  translate: -50% 0;
+  background: linear-gradient(90deg, transparent, #fff, transparent);
+  box-shadow: 0 0 8px #fff, 0 0 16px var(--node-color);
+  transform: rotate(-28deg) scaleX(0);
+}
+
+.patron-entrance.is-swordsman .patron-entrance-dust,
+.patron-entrance.is-headmaster .patron-entrance-dust {
+  left: 50%;
+  bottom: 4px;
+  width: 120px;
+  height: 16px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(220, 210, 180, 0.6), transparent);
+}
+
+.map-route.is-revealing .patron-entrance.is-swordsman .patron-entrance-slash {
+  animation: sword-slash 280ms var(--ease-out) calc(var(--land-delay) + 240ms) both;
+}
+
+.map-route.is-revealing .patron-entrance.is-swordsman .patron-entrance-dust {
+  animation: huntress-dust 420ms var(--ease-out) calc(var(--land-delay) + 290ms) both;
+}
+
+.map-route.is-revealing .map-choice[data-patron='swordsman'] .map-medallion-patron {
+  animation: sword-drop 330ms cubic-bezier(0.55, 0, 0.85, 0.4) var(--land-delay) both;
+}
+
+.map-route.is-revealing .map-choice[data-patron='swordsman'] .map-medallion {
+  animation: forge-shake 200ms linear calc(var(--land-delay) + 290ms) both;
+}
+
+@keyframes sword-slash {
+  0% {
+    opacity: 0;
+    transform: rotate(-28deg) scaleX(0);
+  }
+  12% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+    transform: rotate(-28deg) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(-28deg) scaleX(1.15);
+  }
+}
+
+@keyframes sword-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-150px);
+  }
+  12% {
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(0) scale(1.1, 0.86);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* The Archmage: a rune circle draws itself on the ground and a column of light blinks him into it. */
+.map-choice[data-patron='archmage'] {
+  --ring-at: 380ms;
+}
+
+.patron-entrance.is-archmage .patron-entrance-circle {
+  left: 50%;
+  bottom: 2px;
+  width: 104px;
+  height: 32px;
+  translate: -50% 0;
+  border: 2px dashed color-mix(in srgb, var(--node-color) 80%, white);
+  border-radius: 50%;
+  box-shadow: 0 0 14px var(--node-color), inset 0 0 10px var(--node-color);
+}
+
+.patron-entrance.is-archmage .patron-entrance-column {
+  left: 50%;
+  bottom: 14px;
+  width: 30px;
+  height: 150px;
+  translate: -50% 0;
+  transform-origin: 50% 100%;
+  background: linear-gradient(to top, color-mix(in srgb, var(--node-color) 70%, white), transparent);
+  filter: blur(2px);
+}
+
+.map-route.is-revealing .patron-entrance.is-archmage .patron-entrance-circle {
+  animation: mage-circle 900ms var(--ease-out) var(--land-delay) both;
+}
+
+.map-route.is-revealing .patron-entrance.is-archmage .patron-entrance-column {
+  animation: mage-column 380ms var(--ease-out) calc(var(--land-delay) + 320ms) both;
+}
+
+.map-route.is-revealing .map-choice[data-patron='archmage'] .map-medallion-patron {
+  animation: mage-blink 300ms var(--ease-out) calc(var(--land-delay) + 340ms) both;
+}
+
+@keyframes mage-circle {
+  0% {
+    opacity: 0;
+    scale: 0.2;
+  }
+  35% {
+    opacity: 1;
+    scale: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.1;
+  }
+}
+
+@keyframes mage-column {
+  0% {
+    opacity: 0;
+    scale: 0.2 1;
+  }
+  20% {
+    opacity: 1;
+    scale: 1 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.8 1;
+  }
+}
+
+@keyframes mage-blink {
+  0% {
+    opacity: 0;
+    scale: 0.2 1.3;
+    filter: brightness(3) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+  }
+  60% {
+    opacity: 1;
+    scale: 1.06 0.97;
+  }
+  100% {
+    scale: 1;
+    filter: brightness(1) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+  }
+}
+
+/* The Priest: a shaft of light comes down and he descends in it, a halo settling over him. */
+.map-choice[data-patron='priest'] {
+  --ring-at: 520ms;
+}
+
+.patron-entrance.is-priest .patron-entrance-beam {
+  left: 50%;
+  bottom: 14px;
+  width: 64px;
+  height: 230px;
+  translate: -50% 0;
+  transform-origin: 50% 0;
+  background: linear-gradient(to bottom, transparent, rgba(255, 240, 200, 0.8) 70%, rgba(255, 244, 214, 0.95));
+  filter: blur(3px);
+}
+
+.patron-entrance.is-priest .patron-entrance-halo {
+  left: 50%;
+  bottom: 104px;
+  width: 34px;
+  height: 10px;
+  translate: -50% 0;
+  border: 2px solid #ffe9a8;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ffe9a8;
+}
+
+.map-route.is-revealing .patron-entrance.is-priest .patron-entrance-beam {
+  animation: priest-beam 900ms ease-in-out var(--land-delay) both;
+}
+
+.map-route.is-revealing .patron-entrance.is-priest .patron-entrance-halo {
+  animation: priest-halo 560ms var(--ease-out) calc(var(--land-delay) + 340ms) both;
+}
+
+.map-route.is-revealing .map-choice[data-patron='priest'] .map-medallion-patron {
+  animation: priest-descend 440ms var(--ease-out) calc(var(--land-delay) + 200ms) both;
+}
+
+@keyframes priest-beam {
+  0% {
+    opacity: 0;
+    scale: 1 0;
+  }
+  30% {
+    opacity: 1;
+    scale: 1 1;
+  }
+  70% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes priest-halo {
+  0% {
+    opacity: 0;
+    translate: -50% -22px;
+  }
+  50% {
+    opacity: 1;
+    translate: -50% 0;
+  }
+  100% {
+    opacity: 0;
+    translate: -50% 0;
+  }
+}
+
+@keyframes priest-descend {
+  0% {
+    opacity: 0;
+    transform: translateY(-26px);
+    filter: brightness(2.4) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: brightness(1) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+  }
+}
+
+/* The Hexwright: smoke in its colour boils up out of the ground and he resolves out of it, a
+   silhouette first. */
+.map-choice[data-patron='hexwright'] {
+  --ring-at: 480ms;
+}
+
+.patron-entrance.is-hexwright [class^='patron-entrance-smoke'] {
+  bottom: 6px;
+  width: 54px;
+  height: 54px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--node-color) 70%, black), transparent);
+  filter: blur(4px);
+}
+
+.patron-entrance.is-hexwright .patron-entrance-smoke-a {
+  left: 32%;
+}
+
+.patron-entrance.is-hexwright .patron-entrance-smoke-b {
+  left: 50%;
+}
+
+.patron-entrance.is-hexwright .patron-entrance-smoke-c {
+  left: 68%;
+}
+
+.map-route.is-revealing .patron-entrance.is-hexwright .patron-entrance-smoke-a {
+  animation: hex-smoke 820ms var(--ease-out) var(--land-delay) both;
+}
+
+.map-route.is-revealing .patron-entrance.is-hexwright .patron-entrance-smoke-b {
+  animation: hex-smoke 820ms var(--ease-out) calc(var(--land-delay) + 70ms) both;
+}
+
+.map-route.is-revealing .patron-entrance.is-hexwright .patron-entrance-smoke-c {
+  animation: hex-smoke 820ms var(--ease-out) calc(var(--land-delay) + 140ms) both;
+}
+
+.map-route.is-revealing .map-choice[data-patron='hexwright'] .map-medallion-patron {
+  animation: hex-emerge 460ms ease-out calc(var(--land-delay) + 240ms) both;
+}
+
+@keyframes hex-smoke {
+  0% {
+    opacity: 0;
+    scale: 0.3;
+  }
+  30% {
+    opacity: 0.95;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.7;
+    translate: -50% -44px;
+  }
+}
+
+@keyframes hex-emerge {
+  0% {
+    opacity: 0;
+    filter: brightness(0) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+  }
+  45% {
+    opacity: 1;
+    filter: brightness(0) drop-shadow(0 0 6px var(--node-color));
+  }
+  100% {
+    filter: brightness(1) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+  }
+}
+
+/* The Headmaster: loose pages spiral in to where he stands, and he arrives on the slam of a book. */
+.map-choice[data-patron='headmaster'] {
+  --ring-at: 460ms;
+}
+
+.patron-entrance.is-headmaster .patron-entrance-bit.is-page {
+  left: 50%;
+  bottom: 50px;
+  width: 9px;
+  height: 11px;
+  margin-left: -4px;
+  background: #ece2c6;
+  box-shadow: inset 0 0 0 1px #b8a77e;
+}
+
+.map-route.is-revealing .patron-entrance.is-headmaster .patron-entrance-bit.is-page {
+  animation: head-page 460ms cubic-bezier(0.4, 0, 0.8, 0.6) var(--land-delay) both;
+}
+
+.map-route.is-revealing .patron-entrance.is-headmaster .patron-entrance-dust {
+  animation: huntress-dust 420ms var(--ease-out) calc(var(--land-delay) + 430ms) both;
+}
+
+.map-route.is-revealing .map-choice[data-patron='headmaster'] .map-medallion-patron {
+  animation: head-pop 300ms cubic-bezier(0.2, 1.4, 0.4, 1) calc(var(--land-delay) + 420ms) both;
+}
+
+.map-route.is-revealing .map-choice[data-patron='headmaster'] .map-medallion {
+  animation: forge-shake 200ms linear calc(var(--land-delay) + 430ms) both;
+}
+
+@keyframes head-page {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--bit-angle)) translateY(-66px) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(calc(var(--bit-angle) + 240deg)) translateY(0) rotate(200deg);
+  }
+}
+
+@keyframes head-pop {
+  0% {
+    opacity: 0;
+    scale: 0.6;
+  }
+  70% {
+    opacity: 1;
+    scale: 1.08;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
 /* A row of three stands as a fan: the middle one further back, so smaller and higher. */
 .map-route.is-grounded .map-choices > .map-choice:nth-child(2):nth-last-child(2) {
   margin-bottom: 34px;
