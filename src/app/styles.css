@@ -15607,7 +15607,7 @@ button.star-shop-bundle-face {
    the same gold, which is the bug this replaces. */
 .resolve-button,
 .result-panel .result-buttons button {
-  --cta-rgb: var(--node-rgb, 224, 166, 60);
+  --cta-rgb: var(--node-rgb, 212, 74, 64);
   background:
     linear-gradient(104deg, transparent 26%, rgba(255, 255, 255, 0.05) 47%, transparent 68%),
     linear-gradient(180deg, rgba(var(--cta-rgb), 0.2), rgba(var(--cta-rgb), 0.05) 46%, rgba(var(--cta-rgb), 0.12)),
