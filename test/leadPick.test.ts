@@ -6,9 +6,8 @@ import * as assert from 'assert';
 import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
-import { getMaxHp, lockInThreshold } from '../src/engine/state';
+import { lockInThreshold } from '../src/engine/state';
 import { placeLeads, replacementCandidates } from '../src/engine/combat/switching';
-import { useConsumable } from '../src/engine/combat/consumables';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { openingSquad, pickSquad } from '../src/run/squad';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
@@ -56,7 +55,7 @@ test('lead pick: placing leads is not a switch — no first-turn loss, the bench
   assert.throws(() => placeLeads(state, 'A', ['B:ironWarden']));
 });
 
-test('lead pick: a downed hero comes in fallen, outside the lock-in count, and a Revive stands it onto the bench', () => {
+test('lead pick: a downed hero comes in fallen, outside the lock-in count', () => {
   const run = withDown(seedRoster(THREE), 'tidecaller');
   const state = openingState(run);
   const tide = state.combatants['A:tidecaller'];
@@ -65,13 +64,4 @@ test('lead pick: a downed hero comes in fallen, outside the lock-in count, and a
   assert.ok(!state.bench.A.includes('A:tidecaller'));
   assert.deepStrictEqual(replacementCandidates(state, 'A'), ['A:cinderKnight', 'A:ironWarden']);
   assert.strictEqual(lockInThreshold(state, 'A'), 2, 'sized off the two standing');
-
-  const maxHpOf = (id: string) => getMaxHp(heroes[state.combatants[id].heroId], state.combatants[id]);
-  const withKo = { ...state, koCount: { ...state.koCount, A: 1 } };
-  const revived = useConsumable(withKo, 1, 'A:tidecaller', 'revive', maxHpOf, () => 0).state;
-  assert.strictEqual(revived.combatants['A:tidecaller'].fainted, false);
-  assert.strictEqual(revived.combatants['A:tidecaller'].enteredDown, false);
-  assert.ok(revived.bench.A.includes('A:tidecaller'));
-  assert.strictEqual(revived.koCount.A, 1, 'no knockout of this fight is taken back');
-  assert.strictEqual(lockInThreshold(revived, 'A'), 2);
 });

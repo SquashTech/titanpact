@@ -1,5 +1,10 @@
 # ascension.md — The Ascension ladder: Permadeath, then rules
 
+> **PERMADEATH AND THE REVIVE ARE DELETED (2026-10-15, per user direction).** Worth the
+> experiment, wrong for this game, and the Revive was finicky and padded the loot table. The Fallen
+> beat, `isPermadeath` and every Revive verb are gone; Cycle II keeps the woken Guardians (§2a) and
+> the Wardens. What follows is the record of what was built and measured.
+>
 > **SUPERSEDED IN PART by `docs/cycles.md` (2026-10-06):** the ladder is now five Cycles. A1 is
 > **Cycle II** (`src/run/cycles.ts`), no Cycle costs a star to enter, and A2–A5 below are re-seated
 > as Cycle rows. The rules here (Permadeath, the woken Guardians, the Fallen) stand as written.

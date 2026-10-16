@@ -159,7 +159,7 @@ export function buildCombatState(
         gold ?? 0
       );
       const reservePhase = phaseOf.get(rosterId);
-      // A hero the act left down enters fallen, on no slot and no bench: there for a Revive to find.
+      // A hero the act left down enters fallen, on no slot and no bench.
       if (downIds.has(rosterId)) combatants[combatant.combatantId] = { ...combatant, fainted: true, enteredDown: true, currentHp: 0 };
       else combatants[combatant.combatantId] = reservePhase !== undefined ? { ...combatant, reservePhase } : combatant;
     }

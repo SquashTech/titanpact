@@ -100,7 +100,7 @@ export interface RosterEntry {
   wounds: number;
   /**
    * Knocked out and still down (run/wounds.ts, 2026-09-17): a fight that KO'd the hero wrote it,
-   * and until a Rest, the Guild Hall's mend, a Revive or the act's end clears it the hero is not
+   * and until a Rest, the Guild Hall's mend or the act's end clears it the hero is not
    * fielded. Its own flag rather than `wounds >= max`, so a max that rises mid-act (a growth
    * roll) cannot quietly stand a downed hero back up.
    */
@@ -170,7 +170,7 @@ export interface RunState {
   locationIds: readonly string[];
   /** Appended on each Guardian win, in act order — the Pact Seal's filled sockets and the finale's enemy side. */
   brokenSeals: readonly BrokenSeal[];
-  /** The Cycle this run plays under (run/cycles.ts), 1-based: Cycle II is Permadeath. Chosen at run start, never changed. */
+  /** The Cycle this run plays under (run/cycles.ts), 1-based. Chosen at run start, never changed. */
   cycle: number;
   /** The deck the run was sealed with (run/deck.ts), fixed for the run: its recruitable pool. Null on a run saved before decks, which reads the owned roster whole. */
   deck: readonly string[] | null;

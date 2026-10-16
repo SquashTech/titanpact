@@ -98,7 +98,7 @@ export interface Combatant {
   fainted: boolean;
   /**
    * Came into the fight already down (Squad.downIds): no knockout of this fight's, so it counts
-   * toward neither the side's size nor its knockouts until a Revive stands it up and clears this.
+   * toward neither the side's size nor its knockouts.
    */
   enteredDown?: boolean;
   /**

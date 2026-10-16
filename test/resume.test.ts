@@ -70,10 +70,7 @@ test('resume: every resumable kind round trips, nested chains included', () => {
   const item = Object.keys(equipment)[0];
   const map: RunScreen = { kind: 'map' };
   const chain: RunScreen = {
-    kind: 'fallen',
-    rosterIds: ['rime-1'],
-    next: {
-      kind: 'levelUp',
+    kind: 'levelUp',
       report: [{ rosterId: 'rime-1', heroId: 'rime', fromLevel: 4, toLevel: 5, fromXp: 64, toXp: 125, gained: { attack: 2 } }],
       seed: 7,
       taken: ['rime-1'],
@@ -86,7 +83,6 @@ test('resume: every resumable kind round trips, nested chains included', () => {
           next: { kind: 'guardianBanner', next: { kind: 'recruit', offers: enemy.run.roster, claimedRosterIds: [], next: { kind: 'pactSeal' } } },
         },
       },
-    },
   };
   const screens: RunScreen[] = [
     map,
@@ -157,7 +153,6 @@ test('resume: a bad node, item or hero fails the screen, which then falls back r
   const run = sampleRun();
   assert.strictEqual(roundTrip({ screen: { kind: 'manaWell', nodeId: 'nowhere' } }, run), null);
   assert.strictEqual(roundTrip({ screen: { kind: 'itemWho', itemId: 'itemThatWasCut', next: { kind: 'map' } } }, run), null);
-  assert.strictEqual(roundTrip({ screen: { kind: 'fallen', rosterIds: ['ghost-1'], next: { kind: 'map' } } }, run), null);
   assert.strictEqual(decodeResume('junk', index, run), null);
   assert.strictEqual(decodeResume({ screen: { kind: 'map', next: 5 } }, index, run)?.screen.kind, 'map');
 });
@@ -166,6 +161,12 @@ test('resume: a run saved in the old Guardian Crucible walks on to what followed
   const run = sampleRun();
   const back = roundTrip({ screen: { kind: 'crucible', seed: 3, next: { kind: 'pactSeal' } } as unknown as RunScreen }, run);
   assert.strictEqual(back?.screen.kind, 'pactSeal');
+});
+
+test('resume: a run saved on the old Fallen beat walks on to what followed it', () => {
+  const run = sampleRun();
+  const back = roundTrip({ screen: { kind: 'fallen', rosterIds: ['rime-1'], next: { kind: 'map' } } as unknown as RunScreen }, run);
+  assert.strictEqual(back?.screen.kind, 'map');
 });
 
 test('resume: the title, the draft, the dev fights and the run end are never resumed', () => {
@@ -278,7 +279,7 @@ function openFight(): { state: CombatState; a: Encounter; b: Encounter } {
 test('combatSnapshot: a board through JSON resolves the next rounds exactly as the live one does', () => {
   const { state, a, b } = openFight();
   const mid = playRounds(state, 3, a, b);
-  const saved: CombatSnapshot = { state: mid.state, usedConsumables: { hpPotion: 0, mpPotion: 0, revive: 0 }, leadsPending: false, mvpTally: mid.tally };
+  const saved: CombatSnapshot = { state: mid.state, usedConsumables: { hpPotion: 0, mpPotion: 0 }, leadsPending: false, mvpTally: mid.tally };
   const restored = JSON.parse(JSON.stringify(saved)) as CombatSnapshot;
   const live = playRounds(mid.state, 4, a, b, mid.tally);
   const resumed = playRounds(restored.state, 4, a, b, restored.mvpTally);
@@ -346,7 +347,7 @@ test('combatSnapshot: a board naming a combatant the run does not hold costs the
     levelSeed: 1,
   };
   const state = buildCombatState(3, allCombatants, equipment, [{ side: 'A', squad, roster: run.roster }, { side: 'B', squad: enemy.squad, roster: enemy.run.roster }], passives);
-  const combat: CombatSnapshot = { state, usedConsumables: { hpPotion: 0, mpPotion: 0, revive: 0 }, leadsPending: true, mvpTally: emptyMvpTally() };
+  const combat: CombatSnapshot = { state, usedConsumables: { hpPotion: 0, mpPotion: 0 }, leadsPending: true, mvpTally: emptyMvpTally() };
   const good = roundTrip({ screen, combat }, run);
   assert.ok(good?.combat, 'a whole board resumes');
   assert.strictEqual(good!.combat!.leadsPending, true);
@@ -358,7 +359,7 @@ test('combatSnapshot: a board naming a combatant the run does not hold costs the
   assert.strictEqual(fallback!.combat, undefined, 'and opens fresh');
 
   const greedy = JSON.parse(JSON.stringify(combat));
-  greedy.usedConsumables.revive = run.consumables.revive + 1;
+  greedy.usedConsumables.hpPotion = run.consumables.hpPotion + 1;
   assert.strictEqual(roundTrip({ screen, combat: greedy }, run)!.combat, undefined, 'a board that drank more than the purse holds is refused');
 });
 

@@ -2,7 +2,7 @@
 // field and the player's two slots empty, and this panel sits in the console until the player has
 // chosen who answers them. It replaced a screen before the fight that scouted the whole enemy party
 // and asked for the leads blind to which two would open. The whole roster is here, HP as the fight
-// has it and an arrow against each enemy lead, and the downed wear the Revive while one is held.
+// has it and an arrow against each enemy lead, and the downed are drawn down.
 // Take the Field is the console's bottom row, where Back sits while a target is chosen.
 
 import type { CSSProperties, ReactNode } from 'react';
@@ -14,7 +14,6 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { BlessingMark } from '../shared/BlessingMark';
 import { MatchupRow } from '../shared/MatchupArrows';
-import { ResourceGlyph } from '../shared/RunGlyph';
 import { WoundBar } from '../shared/WoundBar';
 import { useLongPress } from '../shared/MoveTile';
 
@@ -36,8 +35,6 @@ interface Props {
   picks: readonly string[];
   onToggle: (combatantId: string) => void;
   onInspect: (combatantId: string) => void;
-  /** Present while a Revive is held. */
-  onRevive?: (combatantId: string) => void;
 }
 
 export const LEAD_COUNT = 2;
@@ -48,7 +45,6 @@ function LeadCell({
   down,
   onActivate,
   onInspect,
-  onRevive,
   children,
 }: {
   entry: LeadPickHero;
@@ -57,7 +53,6 @@ function LeadCell({
   down: boolean;
   onActivate: () => void;
   onInspect: () => void;
-  onRevive?: () => void;
   children: ReactNode;
 }) {
   const press = useLongPress(onInspect, onActivate);
@@ -85,26 +80,11 @@ function LeadCell({
           {pickSlot}
         </span>
       )}
-      {onRevive && (
-        <button
-          type="button"
-          className="squad-slot-swap squad-slot-revive"
-          aria-label={`Revive ${hero.name}`}
-          onPointerDown={(e) => e.stopPropagation()}
-          onPointerUp={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            onRevive();
-          }}
-        >
-          <ResourceGlyph kind="revive" tone="inherit" />
-        </button>
-      )}
     </div>
   );
 }
 
-export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle, onInspect, onRevive }: Props) {
+export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle, onInspect }: Props) {
   const required = Math.min(LEAD_COUNT, candidates.length);
 
   function cell(entry: LeadPickHero, down: boolean) {
@@ -118,7 +98,6 @@ export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle,
         down={down}
         onActivate={() => !down && onToggle(combatantId)}
         onInspect={() => onInspect(combatantId)}
-        onRevive={down && onRevive ? () => onRevive(combatantId) : undefined}
       >
         <HeroPortrait heroId={hero.id} pathId={combatant.formPathId} className="roster-card-portrait" />
         {/* The Blessing rides in the level's tag, after the number, as it does on the nameplate. */}

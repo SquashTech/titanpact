@@ -1,9 +1,7 @@
 // The Cycles (docs/cycles.md). A Cycle is the Titan's next rising, chosen at run start and held
-// on `RunState.cycle`, 1-based. Cycle I is the base game. Cycle II is Permadeath — every hero is
-// mortal, and a knockout on a won fight is gone with its gear unless a Revive is spent on it at
-// the Fallen beat (the companion is off the roster and cannot fall) — and beside it the Guardians
-// wake (docs/ascension.md §2a): the champion leads its fight, wears its type's Mark and grows on
-// hero grades, and the escorts rise to three from Act 3. Cycle III, the Long Winter, wards every
+// on `RunState.cycle`, 1-based. Cycle I is the base game. In Cycle II the Wardens hold the seals
+// (run/wardens.ts) and the Guardians wake (docs/ascension.md §2a): the champion leads its fight,
+// wears its type's Mark and grows on hero grades, and the escorts rise to three from Act 3. Cycle III, the Long Winter, wards every
 // Guardian while its company stands, frays the Banners to half, prices the Smithy half again and
 // loses Wild's Edge (docs/cycles.md §3). Cycle IV, the Gathering, casts the enemy as warbands
 // (run/warbands.ts) and trains the companion and the Guild. Cycle V is not built; the picker greys it.
@@ -12,7 +10,7 @@ import type { HeroDefinition } from '../engine/content';
 import { titansMarkFor } from '../data/passives';
 import type { TitanpactType } from '../data/typechart';
 import type { Profile } from './profile';
-import type { RosterEntry, RunState } from './state';
+import type { RunState } from './state';
 import { DEFAULT_GRADES } from './growth';
 import { shortTypes } from './deck';
 import { heroes } from '../data/heroes';
@@ -24,9 +22,6 @@ export const FULL_DECK_CYCLE = 5;
 
 /** The highest Cycle with rules; the picker opens nothing past it. */
 export const MAX_BUILT_CYCLE = 4;
-
-/** The Cycle Permadeath turns on at, and every Cycle after it. */
-export const PERMADEATH_FROM_CYCLE = 2;
 
 /** The Cycle the Guardians wake at (docs/ascension.md §2a), and every Cycle after it. */
 export const GUARDIANS_WAKE_FROM_CYCLE = 2;
@@ -67,7 +62,7 @@ export const CYCLES: readonly CycleDefinition[] = [
     cycle: 2,
     numeral: 'II',
     name: 'The Remembered',
-    line: 'The Titan’s darkness spreads. Fallen heroes are gone for good.',
+    line: 'The Titan’s darkness spreads. Its Guardians wake.',
     clearBonus: 6,
     lore: ['A year has passed, and the Titan wakes.', 'The heroes who sealed it stayed to guard the seals.', 'Now the Titan holds them.', 'We must seal the pact again.'],
   },
@@ -98,10 +93,6 @@ export function cycleLoreTipId(cycle: number): string {
 /** The Cycle's row; an unknown Cycle reads as Cycle I. */
 export function cycleOf(cycle: number): CycleDefinition {
   return CYCLES.find((c) => c.cycle === cycle) ?? CYCLES[0];
-}
-
-export function isPermadeath(run: Pick<RunState, 'cycle'>): boolean {
-  return run.cycle >= PERMADEATH_FROM_CYCLE;
 }
 
 export function guardiansWake(run: Pick<RunState, 'cycle'>): boolean {
@@ -151,18 +142,3 @@ export function wokenChampionMark(definition: HeroDefinition): string | null {
   return titansMarkFor[definition.types[0] as TitanpactType] ?? null;
 }
 
-/**
- * The Fallen (docs/ascension.md §3): the heroes a WON fight knocked out that Permadeath will take
- * unless a Revive keeps them — every KO'd hero still on the roster. Empty in Cycle I. Roster order,
- * so the screen's rows sit where the player expects them.
- */
-export function fallenAfterFight(run: RunState, koRosterIds: readonly string[]): RosterEntry[] {
-  if (!isPermadeath(run)) return [];
-  return run.roster.filter((entry) => koRosterIds.includes(entry.rosterId) && entry.down);
-}
-
-/** Let go: off the roster, and what it carried goes with it — gear is absorbed, never handed on. */
-export function releaseFallen(run: RunState, rosterIds: readonly string[]): RunState {
-  if (rosterIds.length === 0) return run;
-  return { ...run, roster: run.roster.filter((entry) => !rosterIds.includes(entry.rosterId)) };
-}

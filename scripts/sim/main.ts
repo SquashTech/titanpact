@@ -25,7 +25,7 @@ interface Args {
   xpMult: number;
   switching: boolean;
   pilot: PilotKind;
-  /** The Cycle (docs/cycles.md), 1-based: Cycle II turns Permadeath on. */
+  /** The Cycle (docs/cycles.md), 1-based. */
   cycle: number;
   /** From Cycle II, seat a band won in Cycle I as the Wardens (run/wardens.ts); 'off' fields none. */
   wardens: boolean;

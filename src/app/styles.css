@@ -3128,11 +3128,6 @@ textarea,
   --flask-rgb: 143, 180, 255;
 }
 
-/* The Revive in the resource's own gold (shared/RunGlyph.tsx RESOURCE_COLORS). */
-.flask-panel.is-revive {
-  --flask-rgb: 255, 180, 84;
-}
-
 .flask-panel-title {
   display: inline-flex;
   align-items: center;
@@ -3147,7 +3142,7 @@ textarea,
 
 .bag-kind {
   --flask-rgb: 255, 138, 138;
-  /* Sized to the word, then sharing the rest: three across, the Revive's chip takes what its name needs. */
+  /* Sized to the word, then sharing the rest. */
   flex: 1 1 auto;
   min-width: 0;
   display: inline-flex;
@@ -3169,10 +3164,6 @@ textarea,
 
 .bag-kind.is-mpPotion {
   --flask-rgb: 143, 180, 255;
-}
-
-.bag-kind.is-revive {
-  --flask-rgb: 255, 180, 84;
 }
 
 .bag-kind.selected {
@@ -15225,11 +15216,6 @@ button.star-shop-bundle-face {
   cursor: default;
 }
 
-.squad-slot.filled.is-down:has(.squad-slot-revive) {
-  opacity: 0.85;
-  padding-right: 30px;
-}
-
 .squad-slot-down-label {
   grid-column: 2;
   margin-top: 3px;
@@ -15238,17 +15224,6 @@ button.star-shop-bundle-face {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--hp-low);
-}
-
-.squad-slot-revive {
-  border-color: rgba(255, 214, 140, 0.8);
-  background: radial-gradient(circle at 50% 35%, #ffe0a0, #ffb454 70%);
-  color: #3a2406;
-}
-
-.squad-slot-revive > svg {
-  width: 18px;
-  height: 18px;
 }
 
 /* The lead pick (LeadPickPanel): the squad grid's cells, in the fight's console once
@@ -15310,10 +15285,6 @@ button.star-shop-bundle-face {
 .lead-pick-grid .squad-slot .wound-bar {
   grid-column: 2 / 4;
   margin-top: 1px;
-}
-
-.lead-pick-grid .squad-slot.filled.is-down:has(.squad-slot-revive) {
-  padding-right: 34px;
 }
 
 /* A chosen lead: the cell keeps its gold pixel lip (the plate family's is-picked), takes a warm

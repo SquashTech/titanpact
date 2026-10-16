@@ -219,8 +219,8 @@ export function constructedRoster(content: ConstructedContent, team: Team): Rost
   return team.slots.map((slot) => constructedEntry(content, slot));
 }
 
-/** One of each potion every Trials and Gauntlet fight (§3), so a card that answers a drink (Drake's Hoard) has one to answer. No Revive. */
-export const CONSTRUCTED_POTIONS = { hpPotion: 1, mpPotion: 1, revive: 0 } as const;
+/** One of each potion every Trials and Gauntlet fight (§3), so a card that answers a drink (Drake's Hoard) has one to answer. */
+export const CONSTRUCTED_POTIONS = { hpPotion: 1, mpPotion: 1 } as const;
 
 /**
  * A team as one side of a fight: a throwaway RunState holding no gold or relics and one of each

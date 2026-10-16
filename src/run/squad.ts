@@ -15,8 +15,8 @@ export interface Squad {
    */
   reserves?: readonly (readonly string[])[];
   /**
-   * Roster heroes a fight left down (run/wounds.ts): placed fallen and off the bench, so the
-   * fight's own Revive can stand one up. Player squads only.
+   * Roster heroes a fight left down (run/wounds.ts): placed fallen and off the bench, shown at
+   * the lead pick. Player squads only.
    */
   downIds?: readonly string[];
 }

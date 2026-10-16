@@ -7,7 +7,6 @@ import counterArt from '../../../art/guild/counter.png';
 import signArt from '../../../art/guild/sign-board.png';
 import hpArt from '../../../art/guild/good-hp.png';
 import mpArt from '../../../art/guild/good-mp.png';
-import reviveArt from '../../../art/guild/good-revive.png';
 import contractArt from '../../../art/guild/good-contract.png';
 import bellArt from '../../../art/guild/good-bell.png';
 import stewArt from '../../../art/guild/good-stew.png';
@@ -25,7 +24,6 @@ export const HALL_ART = { board: boardArt, counter: counterArt, sign: signArt };
 export const GOOD_ART = {
   hp: hpArt,
   mp: mpArt,
-  revive: reviveArt,
   contract: contractArt,
   call: bellArt,
   mend: stewArt,

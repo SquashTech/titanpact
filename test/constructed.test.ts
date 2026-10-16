@@ -122,7 +122,7 @@ test('constructed: two teams build a fight — authored leads on one side, picke
   const waterIds = typeTeam('Water').slots.map((s) => s.heroId);
   const ai = constructedSide(content, typeTeam('Water'), [waterIds[0], waterIds[1]]);
   assert.deepStrictEqual(player.squad.activeIds, [null, null]);
-  assert.deepStrictEqual(player.run.consumables, { hpPotion: 1, mpPotion: 1, revive: 0 }, 'one of each potion, no Revive');
+  assert.deepStrictEqual(player.run.consumables, { hpPotion: 1, mpPotion: 1 }, 'one of each potion');
   const state = buildCombatState(1, heroes, equipment, [
     { side: 'A', squad: player.squad, roster: player.run.roster },
     { side: 'B', squad: ai.squad, roster: ai.run.roster },

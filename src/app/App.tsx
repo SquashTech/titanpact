@@ -67,9 +67,8 @@ import { moves } from '../data/moves';
 import { allCombatants, rosterHeroes } from '../data/content';
 import { CompanionScreen } from '../view/run/CompanionScreen';
 import { awakenCompanion, companionCandidate, companionGrowth, companionHeroId, companionJoinDue, companionToAwaken, joinCompanion } from '../run/companion';
-import { FIRST_CYCLE, cycleLoreTipId, cycleOf, fallenAfterFight, isPermadeath, openCycle } from '../run/cycles';
+import { FIRST_CYCLE, cycleLoreTipId, cycleOf, openCycle } from '../run/cycles';
 import { isWarden, recordWardens, wardensFromRun } from '../run/wardens';
-import { FallenScreen } from '../view/run/FallenScreen';
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
 import { WoundsError, buyMend, mendPrice, recordWounds, mendRoster } from '../run/wounds';
@@ -931,7 +930,7 @@ export function App() {
     outcome: 'win' | 'loss',
     /** What the fight drank; debited here, so a fight quit and replayed refunds it. */
     consumablesUsed: ConsumablePurse,
-    /** The player's own KO'd roster ids at the end — what Permadeath's Fallen beat reads. */
+    /** The player's own KO'd roster ids at the end, for telemetry. */
     koRosterIds: readonly string[] = [],
     /** The fight's end state — what the roster's wounds are read off (run/wounds.ts). */
     finalState: CombatState | null = null,
@@ -1050,17 +1049,9 @@ export function App() {
     const afterLoss: Screen = levelled.run.roster.some((entry) => levelPayoffOwed(levelled.run, entry.rosterId))
       ? { kind: 'levelUp', report: levelled.report, next: afterLevels, seed: randomSeed() }
       : afterLevels;
-    // Under Permadeath the Fallen beat goes ahead of even that, for everyone the fight knocked out
-    // (docs/ascension.md §3): the KO'd stay on the roster, `down`, until it lets them go, so the
-    // level report that follows reads the roster to know who is still there.
-    const fallen = fallenAfterFight(next, koRosterIds);
-    const chain: Screen =
-      isPermadeath(next) && fallen.length > 0
-        ? { kind: 'fallen', rosterIds: fallen.map((entry) => entry.rosterId), next: afterLoss }
-        : afterLoss;
     // The Eyes closing is the fight's own last beat, so the collapse and the binding go ahead of
     // even the level report: nothing the fight pays is worth seeing before the Titan is down.
-    setScreen(isFinale ? { kind: 'titanBound', next: chain } : chain);
+    setScreen(isFinale ? { kind: 'titanBound', next: afterLoss } : afterLoss);
   }
 
   function handleNodeContinue(nodeId: string) {
@@ -1799,9 +1790,6 @@ export function App() {
         />
       )}
 
-      {screen.kind === 'fallen' && (
-        <FallenScreen run={playerRun} rosterIds={screen.rosterIds} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
-      )}
 
       {screen.kind === 'companion' && <CompanionScreen run={playerRun} beat={screen.beat} onContinue={() => setScreen(screen.next)} />}
 

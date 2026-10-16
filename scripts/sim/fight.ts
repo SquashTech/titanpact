@@ -11,8 +11,7 @@ import { fieldEffects } from '../../src/data/fieldEffects';
 import { equipment } from '../../src/data/equipment';
 import { relics } from '../../src/data/relics';
 import type { CombatState, Side } from '../../src/engine/state';
-import { getMaxHp, getMaxMana, getEffectiveStat, isFighter, sideDefeated } from '../../src/engine/state';
-import { useConsumable } from '../../src/engine/combat/consumables';
+import { getMaxHp, getEffectiveStat, isFighter, sideDefeated } from '../../src/engine/state';
 import type { CombatEvent } from '../../src/engine/events';
 import type { StatKey } from '../../src/engine/content';
 import { STAT_CEILING_MULTIPLE } from '../../src/engine/state';
@@ -107,8 +106,6 @@ export interface CombatantTelemetry {
 
 export interface FightOutcome {
   won: boolean;
-  /** Revives spent in the fight (FightInput.revives). */
-  revivesUsed: number;
   /** True when neither side was wiped inside MAX_ROUNDS. Counts as a loss. */
   stalemate: boolean;
   rounds: number;
@@ -469,8 +466,6 @@ export interface FightInput {
   pilot?: PilotKind;
   /** 'greedy' flies the ENEMY with src/run/pilot.ts — the Trials' AI (docs/constructed.md §8). Default: run/ai.ts, Classic's enemy. */
   aiPilot?: PilotKind;
-  /** Revives the pilot may spend in this fight, on the first fallen hero, before its command phase (engine/combat/consumables.ts). Default none. */
-  revives?: number;
   /** The player's companion, seated off the field (run/companion.ts companionCallFor). Default none. */
   playerCall?: CallPlacement | null;
   /** A Gathering's enemy plays its warband's engine (run/ai.ts AiContext.playsEngines). Default off. */
@@ -555,23 +550,8 @@ export function simulateFight(input: FightInput): FightOutcome {
   let wouldHaveCappedUp = false;
   let wouldHaveCappedDown = false;
 
-  let revivesLeft = input.revives ?? 0;
-  let revivesUsed = 0;
   while (rounds < MAX_ROUNDS && !sideDefeated(state, PLAYER_SIDE) && !sideDefeated(state, AI_SIDE)) {
     const events: CombatEvent[] = [];
-    // A held Revive stands the first fallen hero onto the bench before the replacements fill —
-    // the Bag's free action, so it costs the pilot nothing but the item.
-    while (revivesLeft > 0) {
-      const fallen = Object.values(state.combatants).find((c) => c.side === PLAYER_SIDE && c.fainted);
-      if (!fallen) break;
-      const maxHpOf = (id: string) => getMaxHp(allCombatants[state.combatants[id].heroId], state.combatants[id]);
-      const maxManaOf = (id: string) => getMaxMana(allCombatants[state.combatants[id].heroId], state.combatants[id]);
-      const stood = useConsumable(state, state.round, fallen.combatantId, 'revive', maxHpOf, maxManaOf);
-      state = stood.state;
-      events.push(...stood.events);
-      revivesLeft -= 1;
-      revivesUsed += 1;
-    }
     // The player's forced replacements resolve before declaration, the AI's after
     // resolution — the same order the screen enforces.
     state = fillOpenSlots(state, PLAYER_SIDE, events);
@@ -653,7 +633,6 @@ export function simulateFight(input: FightInput): FightOutcome {
 
   return {
     won: aiDown && !playerDown,
-    revivesUsed,
     stalemate,
     rounds,
     beats,

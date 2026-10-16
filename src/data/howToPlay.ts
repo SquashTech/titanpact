@@ -72,8 +72,8 @@ export const HOW_TO_PLAY: readonly Tip[] = [
     'bag',
     'The Bag',
     "The Bag holds your potions. Drinking one doesn't use a turn.",
-    "A potion restores half of a hero's HP or Mana. A Revive stands a knocked-out hero back up at half HP.",
-    'Potions and Revives sometimes drop after a won fight. You can hold three of each.'
+    "A potion restores half of a hero's HP or Mana.",
+    'Potions sometimes drop after a won fight. You can hold three of each.'
   ),
   section(
     'field',
@@ -105,7 +105,7 @@ export const HOW_TO_PLAY: readonly Tip[] = [
     'wounds',
     'Wounds',
     'HP carries over from fight to fight within an act. Mana refills between fights.',
-    'A knocked-out hero cannot battle. They can rise again by healing at a Rest site or Guild Hall, using a Revive, or by making it to the next act.'
+    'A knocked-out hero cannot battle. They can rise again by healing at a Rest site or Guild Hall, or by making it to the next act.'
   ),
   section(
     'blessing',
@@ -163,6 +163,6 @@ export const HOW_TO_PLAY: readonly Tip[] = [
     'cycles',
     'Cycles',
     'Clearing a run opens the next Cycle, each harder than the last.',
-    'From Cycle II, a hero knocked out in a won fight is gone for good unless a Revive is spent on it.'
+    'From Cycle II, the heroes who sealed the Titan stand beside its Guardians, and the Guardians wake.'
   ),
 ];

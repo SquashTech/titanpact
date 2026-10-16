@@ -41,8 +41,6 @@ export type RunScreen =
   /** The lore card, ahead of the first draft on an account (docs/tutorial.md). */
   | { kind: 'lore'; next: RunScreen; lines: readonly string[]; tipId: string }
   | { kind: 'draft'; optionIds: string[] }
-  /** Permadeath's post-fight beat (docs/ascension.md §3): the KO'd heroes, still on the roster until Continue. */
-  | { kind: 'fallen'; rosterIds: string[]; next: RunScreen }
   /** The seal: four rings, one per Guardian — the run's opening frame, and every act's close (docs/run-loop.md §4). */
   | { kind: 'pactSeal' }
   /** Acts 2-5 open on a 1-of-2 (docs/locations.md §1): the offer is drawn once, when the seal is behind the player. */
@@ -169,7 +167,6 @@ export interface ResumePayload {
 
 /** The screens a run is saved on. The title, the run's end, and anything outside a run are not. */
 const RESUMABLE: ReadonlySet<RunScreenKind> = new Set<RunScreenKind>([
-  'fallen',
   'pactSeal',
   'locationChoice',
   'blessing',
@@ -396,6 +393,8 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
   if (raw.kind === 'titanWake') return { kind: 'blessing' };
   // A run saved in the Guardian's Crucible (moved onto the map as the Academy, 2026-10-09) walks on past it.
   if (raw.kind === 'crucible') return decodeScreen(raw.next, ctx, depth + 1);
+  // A run saved on Permadeath's Fallen beat (deleted 2026-10-15) walks on past it, its heroes still down.
+  if (raw.kind === 'fallen') return decodeScreen(raw.next, ctx, depth + 1);
   const kind = raw.kind as RunScreenKind;
   if (!isResumable(kind)) reject(`screen "${kind}" is not one a run is saved on`);
   const next = () => decodeScreen(raw.next, ctx, depth + 1);
@@ -409,12 +408,6 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
   }
 
   switch (kind) {
-    case 'fallen':
-      return {
-        kind,
-        rosterIds: rosterIds(raw.rosterIds, ctx, 'fallen.rosterIds'),
-        next: next(),
-      };
     case 'locationChoice': {
       if (!isStringArray(raw.candidateIds) || raw.candidateIds.length === 0) reject('locationChoice.candidateIds is empty');
       for (const id of raw.candidateIds) if (!ctx.index.locationIds.has(id)) reject(`locationChoice references unknown location "${id}"`);
@@ -576,7 +569,7 @@ function decodeCombat(value: unknown, ctx: Ctx, fight: Extract<RunScreen, { kind
     const placed = [...fight.squad.activeIds, ...fight.squad.benchIds, ...(fight.squad.downIds ?? [])].includes(entry.rosterId);
     if (placed && !playerIds.has(combatantIdFor('A', entry.rosterId))) reject(`combat.state has no combatant for "${entry.rosterId}"`);
   }
-  const used = value.usedConsumables === undefined ? { hpPotion: 0, mpPotion: 0, revive: 0 } : decodeConsumables(value.usedConsumables);
+  const used = value.usedConsumables === undefined ? { hpPotion: 0, mpPotion: 0 } : decodeConsumables(value.usedConsumables);
   for (const kind of CONSUMABLE_KINDS) if (used[kind] > ctx.run.consumables[kind]) reject(`combat drank more ${kind} than the purse holds`);
   return {
     state: JSON.parse(JSON.stringify(state)) as CombatState,

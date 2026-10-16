@@ -188,37 +188,21 @@ don't silently override it.
 > that scales**: Boiler's Burn, `scaledBy: 'intelligence'` (StatMult, no STAB), the sole exception
 > to "passive-applied magnitudes are flat". Lingering is off the roster; the endure verb stays.
 
-> **An eighth is DECIDED, NOT BUILT: `docs/ascension.md`** (2026-09-21, per user direction).
-> **Ascension 1 is Permadeath**: every roster hero mortal, a KO on a won fight gone with its gear
-> unless a **Revive** — the ONE way back — is spent on it at the fight's end on a **Fallen** beat
-> before the level report (the companion's own rule is retired with its slot — it cannot fall,
-> `docs/companion-call.md` §5). A2–A5 are PROPOSED, each a RULE never a bare enemy stat multiplier
-> (Guardians Marked and warded, authored warbands, Banners halved + Smithy ×1.5 on the one economy
-> rung, Gaze at a tenth + two-phase Guardians + an AI tier). Recruitment stays as it is at Base —
-> the ladder is where it gets its demand. Decided beside it, every rung: a Compendium bestiary
-> for the spawn, a `companion:<type>` star for clearing a run with that line as the companion (it
-> was "alive at the Eyes' close" until the Call), and the companion exempt from Withering Gaze. Its §10 lists what each rung reverses.
-> **Phases 0–1 are IN (same day) — A1 is PLAYABLE:** `isCompanion` splits the identity from the `mortal`
-> rule; `src/run/ascension.ts` (now `cycles.ts`) holds the rung (`RunState.ascension`, now `cycle`), `isPermadeath`, and the
-> Fallen verbs; the title asks *How hard?* once a Base clear has opened A1 (`openAscension`,
-> `Profile.ascensionCleared`); `FallenScreen` is first in the post-fight chain. The sim takes
-> `--ascension`; measured (§9b, 3000 runs, skilled pilot) full-clear 73.7 → 31.2%, Act 2
-> the wall (91 → 66), contracts claimed 1.74 → 2.57 a run and the swap route 2.27 → 0.39, the Revive
-> crowding the Smithy out through Act 3 — the Revive supply is the binding number.
-> **A1 also wakes the Guardians** (2026-09-29, per user direction, §2a): the champion leads from round one,
-> wears its type's Mark, grows on hero grades, and brings escorts 2/2/3/3/3 by act — A1 49.6% skilled /
-> 5.2% chart against Base's 92 / 55, Blessings kept on every rung.
-> **Phase 2 is IN (2026-09-26, §7a):** the Compendium's Spawn page (a line revealed by its star), the
-> `companion:<type>` star, and — per user direction — the companion **awakening** at the finale:
-> Ancient takes its secondary slot, and every later companion of that line joins Ancient
-> (`Profile.ascendedSpawnTypes`). Ancient resists every type, so that is the thing to watch.
+> **An eighth, the Ascension ladder: `docs/ascension.md`** (2026-09-21, per user direction).
+> **Permadeath and the Revive are DELETED (2026-10-15, per user direction)** — worth the experiment,
+> wrong for this game; the Revive was finicky and padded the loot table. No Fallen beat, no
+> `isPermadeath`, no Revive verb; a downed hero stands at a Rest, the mend or the act's end. What
+> stands from the ladder: **the woken Guardians** (Cycle II on, §2a — the champion leads from round
+> one, wears its type's Mark, grows on hero grades, escorts 2/2/3/3/3 by act), the Spawn bestiary,
+> the `companion:<type>` star, the companion exempt from Withering Gaze, and the companion
+> **awakening** at the finale (Ancient in its secondary slot, `Profile.ascendedSpawnTypes`).
 
 > **The Ascension ladder is REPLACED: `docs/cycles.md`** (2026-10-06, per user direction;
 > phase 1 IN — `src/run/cycles.ts`, `RunState.cycle` 1-based, the *Which Cycle?* picker once
 > Cycle I is cleared, saves migrated; the Wardens are phase 2). Five **Cycles**: a sealed Titan sleeps one year, each Cycle is the
 > next rising in a changed world against an adapted Titan, and Cycle V — no seal holds — kills it
 > for good. **The account's first Cycle I winners are its Wardens forever**, each standing beside
-> its seal's beast from Cycle II (the beasts always stay). A1 Permadeath becomes Cycle II's rule;
+> its seal's beast from Cycle II (the beasts always stay). Cycle II has no rule of its own since Permadeath was deleted (§9);
 > every unlocked Cycle stays selectable; stars are coloured by Cycle; no star entry fee; the four
 > bought Locations are granted by Cycle (Sanctum II, Spires III, Aerie IV; the Frozen Reach is
 > Cycle III’s Act 1, Wild’s Edge lost under the snow) and no longer sold. Cycle IV casts the enemy
@@ -806,7 +790,7 @@ don't silently override it.
   measurement — see `docs/combat.md`.
 
 ### Consumables
-- **Two potions and a Revive, a team purse; the potions a FREE action** (2026-09-13,
+- **Two potions, a team purse, a FREE action** (2026-09-13,
   `src/run/consumables.ts`, `src/engine/combat/consumables.ts`). HP Potion and MP Potion each restore **half of max**,
   flat — outside the heal formula, no variance, no STAB. Drunk during the command phase on any
   **active** hero and applied to state on the spot, NOT declared into the round: the player sees
@@ -818,16 +802,10 @@ don't silently override it.
   Irreversible once drunk. Every run opens with one of each; **hold cap 3 a kind**, an over-cap
   drop is lost; **the one faucet is a low-odds drop off a won encounter** — deliberately no
   reward-node type, and **nothing sells a flask** (2026-10-08, per user direction: the Guild
-  Hall's potions and Revive were never a good use of gold, and came off its bar). What a fight drank comes
-  off the purse at resolve, so a replayed fight refunds it. **The Revive** (2026-09-17, per user
-  direction) is the third kind and different in every way that matters: spent on a hero that is
-  DOWN — a downed hero enters every fight fallen (`Squad.downIds`, `enteredDown`), so it is spent
-  on the lead pick (2026-09-28) or from the Bag on the potions' terms (2026-09-18),
-  the fallen hero standing onto the bench at half (`useConsumable` 'revive') — the saved-for-the-
-  finale layer of safety in a fight nothing mends inside;
-  **never sold** (the 80g one-a-visit shelf of 2026-09-18 came off with the potions, 2026-10-08)
-  and never started with; its one faucet is its own rarer drop roll (`REVIVE_DROP_CHANCE`), taken only when the potion roll missed, so a
-  fight drops one thing at most. `docs/run-loop.md` "Consumables".
+  Hall's potions were never a good use of gold, and came off its bar). What a fight drank comes
+  off the purse at resolve, so a replayed fight refunds it. **The Revive is DELETED** (2026-10-15,
+  per user direction, with Permadeath); a downed hero still enters a fight fallen (`Squad.downIds`,
+  `enteredDown`), drawn down at the lead pick. `docs/run-loop.md` "Consumables".
 
 ### Architecture
 - **All acquirable content — heroes, moves, abilities, relics, equipment — is pure data**
@@ -981,10 +959,9 @@ what's still unimplemented:
   the **Rest** seat, the Guild Hall's **mend** (whole roster, the downed included, **priced by
   what is missing** since 2026-09-18 per user direction — `mendPrice`, `MEND_PRICE_PER_HERO` = 15
   a hero's worth of missing HP, a downed hero a whole one, floor 5, so six at half is 45 where
-  the flat price was 40 and a scratch costs a scratch), a
-  **Revive** (a rare drop, spent in the next fight, half HP), or the act's end — the one free
-  mend, everyone whole. The 25% walk floor this replaces was the guard against the 2026-08-16
-  reversal, where raw persistence bricked a KO'd hero for the run with no way back; the four
+  the flat price was 40 and a scratch costs a scratch), or the act's end — the one free
+  mend, everyone whole (the Revive, a fourth faucet, was deleted 2026-10-15). The 25% walk floor this replaces was the guard against the 2026-08-16
+  reversal, where raw persistence bricked a KO'd hero for the run with no way back; the
   faucets are now the way back, and a KO is meant to cost the rest of the act. `down` is a flag,
   not `wounds >= max`, so a growth roll cannot stand a hero up. Potions stay in-fight only.
   Mana still opens full every fight; the enemy curve is untouched until it has been played. Relics are **stat-only**, by

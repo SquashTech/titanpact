@@ -1,5 +1,5 @@
 // Wounds (src/run/wounds.ts, docs/run-loop.md "Wounds"): HP carries across an act's nodes, a
-// knockout persists until a Rest, the mend, a Revive or the act's end, and the act's end is the
+// knockout persists until a Rest, the mend or the act's end, and the act's end is the
 // one free mend.
 
 import * as assert from 'assert';
@@ -17,7 +17,6 @@ import {
   MEND_PRICE_PER_HERO,
   mendPrice,
   rosterMissing,
-  REVIVE_FRACTION,
   WoundsError,
   anyDown,
   anyWounded,
@@ -25,22 +24,12 @@ import {
   canBuyMend,
   mendRoster,
   recordWounds,
-  reviveHero,
   standingHp,
   standingRoster,
   woundedHp,
   woundsFrom,
 } from '../src/run/wounds';
-import {
-  CONSUMABLE_KINDS,
-  ConsumableError,
-  REVIVE_DROP_CHANCE,
-  STARTING_CONSUMABLES,
-  canUseRevive,
-  grantConsumable,
-  rollConsumableDrop,
-  spendRevive,
-} from '../src/run/consumables';
+import { CONSUMABLE_KINDS, STARTING_CONSUMABLES, rollConsumableDrop } from '../src/run/consumables';
 
 function seedRoster(ids: string[], gold = 0): RunState {
   let run = createRunState(gold);
@@ -173,29 +162,10 @@ test('wounds: the act boundary is the free mend and stands the downed up; the Re
   assert.strictEqual(mendPrice(halved, maxHpOf), MEND_PRICE_PER_HERO * 3);
 });
 
-test('wounds: a Revive stands ONE downed hero up at half, off the purse, and only a downed one', () => {
-  const run = grantConsumable(withDown(seedRoster(['cinderKnight', 'tidecaller']), 'tidecaller'), 'revive');
-  assert.ok(canUseRevive(run));
-  const revived = spendRevive(reviveHero(run, 'tidecaller', 200));
-  const tide = revived.roster[1];
-  assert.strictEqual(tide.down, false);
-  assert.strictEqual(standingHp(200, tide), Math.round(200 * REVIVE_FRACTION));
-  assert.strictEqual(revived.consumables.revive, 0);
-  assert.ok(!canUseRevive(revived));
-  assert.throws(() => spendRevive(revived), ConsumableError);
-  assert.throws(() => reviveHero(run, 'cinderKnight', 200), WoundsError, 'standing heroes are not revived');
-  assert.throws(() => reviveHero(run, 'nobody', 200), WoundsError);
-});
-
-test('wounds: the Revive is a purse kind that starts at none and drops rarer than a potion, never at the finale', () => {
-  assert.ok(CONSUMABLE_KINDS.includes('revive'));
-  assert.strictEqual(STARTING_CONSUMABLES.revive, 0);
-  assert.ok(REVIVE_DROP_CHANCE.elite > REVIVE_DROP_CHANCE.skirmish);
-  assert.strictEqual(REVIVE_DROP_CHANCE.finale, 0);
-  // The potion roll misses (0.99), the Revive's own roll hits (0.0).
-  const draws = [0.99, 0.0];
-  assert.strictEqual(rollConsumableDrop('elite', () => draws.shift()!), 'revive');
-  const miss = [0.99, 0.99];
+test('wounds: nothing in the purse stands a downed hero up, and a missed potion roll drops nothing', () => {
+  assert.deepStrictEqual([...CONSUMABLE_KINDS], ['hpPotion', 'mpPotion']);
+  assert.deepStrictEqual(Object.keys(STARTING_CONSUMABLES), ['hpPotion', 'mpPotion']);
+  const miss = [0.99];
   assert.strictEqual(rollConsumableDrop('elite', () => miss.shift()!), null);
 });
 

@@ -333,9 +333,13 @@ aimed currency with the same who-screen was one too many to teach. **Gems** (per
 deleted 2026-09-10) failed the rule *a bare number never gets a screen*: `docs/growth-overhaul.md`
 §1.
 
-### Consumables — the two flasks and the Revive
+### Consumables — the two flasks
 
-Two potions and a Revive, held as a TEAM purse beside gold (`RunState.consumables`,
+> **The Revive is DELETED (2026-10-15, per user direction)**, with Permadeath: finicky, pointless
+> in play, and noise in the loot table. A downed hero stands up at a Rest, the mend or the act's
+> end. Mentions of it below are history.
+
+Two potions (and, until 2026-10-15, a Revive), held as a TEAM purse beside gold (`RunState.consumables`,
 `src/run/consumables.ts`). **HP Potion** restores half of max HP, **MP Potion** half of max Mana.
 Every run opens with one of each — the early lever against an awkward first matchup.
 
@@ -571,7 +575,7 @@ was weighed and set aside: it would make combat fiddlier, and speed is the game'
 
   **A knockout persists** (2026-09-17): a KO'd hero is `RosterEntry.down` — on the roster, off the
   field, entering every fight fallen — stood up only by the **Rest** seat, the Guild Hall's
-  **mend**, a **Revive** or the act's end. It is the counterweight to every fight fielding the whole
+  **mend** or the act's end (a **Revive** too, until 2026-10-15). It is the counterweight to every fight fielding the whole
   roster (`combat.md` "The fielded roster"): six bodies a fight is a large buff, and a KO that costs
   the rest of the act prices it. The flag is its own field so a growth roll cannot stand a hero up.
   This replaced a 25% walk floor, written when a KO'd hero had no way back for the run; with four

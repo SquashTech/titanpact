@@ -457,7 +457,7 @@ export function decodeConsumables(value: unknown): ConsumablePurse {
   if (!isObject(value)) reject('run.consumables is not an object');
   const purse = {} as ConsumablePurse;
   for (const kind of CONSUMABLE_KINDS) {
-    // Absent on a file written before the Revive; none held is the honest default.
+    // A kind absent from an older file is none held; a retired one (the Revive) is ignored.
     const held = value[kind] ?? 0;
     if (!isInt(held, 0, CONSUMABLE_HOLD_CAP)) reject(`run.consumables.${kind} is not a count in 0-${CONSUMABLE_HOLD_CAP}`);
     purse[kind] = held;

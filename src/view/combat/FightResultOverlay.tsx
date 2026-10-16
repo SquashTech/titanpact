@@ -79,8 +79,6 @@ export interface FightResultProps {
    * outside a run) and no bar is drawn.
    */
   hpAfter?: ReadonlyMap<string, { hp: number; maxHp: number }>;
-  /** A hero knocked out stays down until it is mended (run/wounds.ts); off when a fall is for good, which the Fallen beat says. */
-  downStays?: boolean;
   /** The fight's MVP (run/mvp.ts) and the bonus XP it takes. Null when nobody qualified. */
   mvp?: MvpPick | null;
   onContinue: () => void;
@@ -110,7 +108,6 @@ export function FightResultOverlay({
   contractReward = false,
   gemReward = NO_GEMS,
   hpAfter,
-  downStays = false,
   mvp = null,
   onContinue,
 }: FightResultProps) {
@@ -222,8 +219,8 @@ export function FightResultOverlay({
                 />
               ))}
             </div>
-            {downStays && roster.some((entry) => (hpAfter?.get(entry.rosterId)?.hp ?? 1) <= 0) && (
-              <p className="fight-result-down-note">Knocked-out heroes stay down until a Rest, the Guild Hall, a Revive, or the next act.</p>
+            {roster.some((entry) => (hpAfter?.get(entry.rosterId)?.hp ?? 1) <= 0) && (
+              <p className="fight-result-down-note">Knocked-out heroes stay down until a Rest, the Guild Hall, or the next act.</p>
             )}
             <div className="fight-result-captions">
               {/* The number itself, as the bars start: XP is what a fight pays, and the level is what
@@ -488,7 +485,7 @@ function lootPieces(
     pieces.push({
       key: 'potion',
       color: RESOURCE_COLORS[potion],
-      art: <img src={GOOD_ART[potion === 'hpPotion' ? 'hp' : potion === 'mpPotion' ? 'mp' : 'revive']} alt="" draggable={false} />,
+      art: <img src={GOOD_ART[potion === 'hpPotion' ? 'hp' : 'mp']} alt="" draggable={false} />,
       label: CONSUMABLE_NAMES[potion],
     });
   }

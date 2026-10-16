@@ -211,15 +211,9 @@ export function formatReport(
     const fights = agg.encountersWonSum + (agg.runs - agg.wins);
     out.push(
       `  knockouts persisting       ${num(k.koInWins / R, 2)} /run in won fights; ${pct(k.shortHanded, Math.max(1, fights))} of fights entered short-handed ` +
-        `(${num(k.downEntering / Math.max(1, k.shortHanded), 2)} down when so); Revives found ${num(k.revivesFound / R, 2)}, spent ${num(k.revivesSpent / R, 2)}; ` +
+        `(${num(k.downEntering / Math.max(1, k.shortHanded), 2)} down when so); ` +
         `stood up by a Rest ${num(k.restsWhileDown / R, 2)}, a mend ${num(k.mendsWhileDown / R, 2)} /run`
     );
-    if (meta.cycle >= 2) {
-      out.push(
-        `  PERMADEATH (Cycle ${meta.cycle}) fallen ${num(k.fallen / R, 2)} /run at the Fallen beat: ${num(k.fallenRevived / R, 2)} kept by a Revive, ${num(k.fallenLost / R, 2)} let go; ` +
-          `roster at the end ${num(agg.rosterSizeEndSum / R, 2)}; runs ended with nobody standing ${agg.deathByNodeType.exhausted ?? 0}`
-      );
-    }
     const byKind = Object.entries(k.koInWinsByKind).sort((a, b) => b[1] - a[1]);
     if (byKind.length > 0) {
       out.push(`    those KOs fell at: ${byKind.map(([kind, n]) => `${kind} ${pct(n, Math.max(1, k.koInWins))}`).join(', ')} — an act's last fight is mended at its end, so only the rest persist`);
@@ -640,7 +634,7 @@ export function formatReport(
   out.push('');
   out.push('  gold per run that entered the act — earned by source, the purse on entering the Guild Hall, spent by sink:');
   const earnedKeys = ['fight', 'purse', 'sell'];
-  const spentKeys = ['mend', 'hire', 'scroll', 'gear', 'anvil', 'enchant', 'contract', 'revive'];
+  const spentKeys = ['mend', 'hire', 'scroll', 'gear', 'anvil', 'enchant', 'contract'];
   out.push(`  ${pad('act', 6)}${earnedKeys.map((k) => padStart(k, 8)).join('')}${padStart('earned', 9)}${padStart('at hall', 10)}   ${spentKeys.map((k) => padStart(k, 9)).join('')}${padStart('spent', 8)}`);
   for (let act = 1; act <= TOTAL_ACTS; act++) {
     const entered = agg.actEntered[act] || 1;

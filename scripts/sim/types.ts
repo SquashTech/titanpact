@@ -105,19 +105,13 @@ export interface KnockoutCounts {
   /** Heroes KO'd inside a fight the player WON — the KOs that persist — and the same by the node kind they fell at. */
   koInWins: number;
   koInWinsByKind: Record<string, number>;
-  revivesFound: number;
-  revivesSpent: number;
   /** Rest seats taken and Guild Hall mends bought while somebody was down. */
   restsWhileDown: number;
   mendsWhileDown: number;
-  /** Permadeath (docs/ascension.md §3): heroes at the Fallen beat, and how many a Revive kept or the run let go. */
-  fallen: number;
-  fallenRevived: number;
-  fallenLost: number;
 }
 
 export function emptyKnockoutCounts(): KnockoutCounts {
-  return { shortHanded: 0, downEntering: 0, koInWins: 0, koInWinsByKind: {}, revivesFound: 0, revivesSpent: 0, restsWhileDown: 0, mendsWhileDown: 0, fallen: 0, fallenRevived: 0, fallenLost: 0 };
+  return { shortHanded: 0, downEntering: 0, koInWins: 0, koInWinsByKind: {}, restsWhileDown: 0, mendsWhileDown: 0 };
 }
 
 export function addKnockoutCounts(into: KnockoutCounts, from: KnockoutCounts): void {
@@ -141,7 +135,7 @@ export interface Aggregate {
   /** Encounters won, summed over all runs. */
   encountersWonSum: number;
   goldEndSum: number;
-  /** Roster size when the run ended, summed — under permadeath the count is the story. */
+  /** Roster size when the run ended, summed. */
   rosterSizeEndSum: number;
   /** Finales entered / won, keyed by heroes standing on entry. */
   finaleBySize: Record<number, { entered: number; won: number }>;

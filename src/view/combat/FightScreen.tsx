@@ -37,7 +37,7 @@ import { fieldHealMultiplier, resolveHealForceBonus, type HealCaster } from '../
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor, pactRoundOf } from '../../engine/combat/pactClock';
 import { applyForcedReplacement, placeLeads, replacementCandidates } from '../../engine/combat/switching';
-import { consumableRefusal, useConsumableWithReactions, type FightConsumableKind } from '../../engine/combat/consumables';
+import { consumableRefusal, useConsumableWithReactions, type PotionKind } from '../../engine/combat/consumables';
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumableKind, type ConsumablePurse } from '../../run/consumables';
 import { BagPanel, type BagTarget } from './BagPanel';
 import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
@@ -78,7 +78,7 @@ import { woundedHp, woundsFrom } from '../../run/wounds';
 import { entryHp } from '../shared/WoundBar';
 import { levelOf } from '../../run/growth';
 import { pickAiAction, type AiContext } from '../../run/ai';
-import { isGathering, isPermadeath } from '../../run/cycles';
+import { isGathering } from '../../run/cycles';
 import { pilotActions } from '../../run/pilot';
 import { applyVersusReplacements, otherSide, placeVersusLeads, replacementsOwed, SIDES as VERSUS_SIDES, stateHash, versusActions, VERSUS_CLOCK } from '../../run/versus';
 import { TurnClock, useTurnClock } from '../versus/TurnClock';
@@ -680,7 +680,7 @@ export function FightScreen({
   /** The companion's Call card, open off its figure on the field (CompanionFigure). */
   const [callSheetOpen, setCallSheetOpen] = useState(false);
   /** Potions drunk this fight. The run's purse is only debited at resolve, so a replayed fight refunds them. */
-  const [usedConsumables, setUsedConsumables] = useState<ConsumablePurse>(() => initialSnapshot?.usedConsumables ?? { hpPotion: 0, mpPotion: 0, revive: 0 });
+  const [usedConsumables, setUsedConsumables] = useState<ConsumablePurse>(() => initialSnapshot?.usedConsumables ?? { hpPotion: 0, mpPotion: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
   /** Quit is armed by a first tap and fires on the second; reset whenever the menu opens. */
   const [confirmingQuit, setConfirmingQuit] = useState(false);
@@ -917,21 +917,20 @@ export function FightScreen({
     (combat.combatants[actingId].currentMana < getMaxMana(allCombatants[combat.combatants[actingId].heroId], combat.combatants[actingId]) ||
       Object.keys(combat.combatants[actingId].statuses).some((statusId) => statuses[statusId]?.clearsOnRest));
 
-  // What is left in the Bag this fight, usable while commanding: the potions on an active hero,
-  // the Revive on a fallen one (engine/combat/consumables.ts).
+  // What is left in the Bag this fight, usable while commanding: the potions on an active hero
+  // (engine/combat/consumables.ts).
   // Versus holds no potions until a drink is synced between the two boards (docs/versus.md §3).
-  const flaskPurse: Record<FightConsumableKind, number> = versus
-    ? { hpPotion: 0, mpPotion: 0, revive: 0 }
+  const flaskPurse: Record<PotionKind, number> = versus
+    ? { hpPotion: 0, mpPotion: 0 }
     : {
         hpPotion: playerRun.consumables.hpPotion - usedConsumables.hpPotion,
         mpPotion: playerRun.consumables.mpPotion - usedConsumables.mpPotion,
-        revive: playerRun.consumables.revive - usedConsumables.revive,
       };
   const maxHpOf = (id: string) => getMaxHp(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
   const maxManaOf = (id: string) => getMaxMana(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
-  const flaskRefusal = (id: string, kind: FightConsumableKind) => consumableRefusal(combat, id, kind, maxHpOf, maxManaOf);
+  const flaskRefusal = (id: string, kind: PotionKind) => consumableRefusal(combat, id, kind, maxHpOf, maxManaOf);
   const bagCount = CONSUMABLE_KINDS.reduce((n, kind) => n + flaskPurse[kind], 0);
-  /** The player's fallen, in roster order — the Revive's targets. Fainted and on neither list: a KO takes a hero off both. */
+  /** The player's fallen, in roster order, drawn down at the lead pick. Fainted and on neither list: a KO takes a hero off both. */
   const playerFallen = Object.values(combat.combatants)
     .filter((c) => c.side === PLAYER_SIDE && c.fainted)
     .map((c) => c.combatantId);
@@ -1153,10 +1152,9 @@ export function FightScreen({
   /**
    * A consumable is a FREE action applied to the board on the spot (engine/combat/consumables.ts)
    * — not declared into the round, so the grid re-derives at once: the out-of-mana Rest row turns
-   * back into moves because the Mana is simply there now, and a Revive's hero is on the bench for
-   * the Switch key and the replacement panel. Irreversible, like the Rest key.
+   * back into moves because the Mana is simply there now. Irreversible, like the Rest key.
    */
-  function handleDrinkPotion(combatantId: string, kind: FightConsumableKind) {
+  function handleDrinkPotion(combatantId: string, kind: PotionKind) {
     if (flaskPurse[kind] <= 0 || flaskRefusal(combatantId, kind) !== null) return;
     const result = useConsumableWithReactions(combat, combat.round, combatantId, kind, maxHpOf, maxManaOf, { heroes: allCombatants, statuses, passives, fieldEffects, moves });
     const used = result.events[0];
@@ -2014,7 +2012,6 @@ export function FightScreen({
             picks={effectiveLeadPicks}
             onToggle={handleToggleLead}
             onInspect={setInspecting}
-            onRevive={flaskPurse.revive > 0 ? (id) => handleDrinkPotion(id, 'revive') : undefined}
           />
         )}
         {/* Forced replacement: select-then-Confirm, since it cannot be undone once committed. */}
@@ -2512,15 +2509,7 @@ export function FightScreen({
               combatantId: id,
               hero: allCombatants[combat.combatants[id].heroId],
               combatant: combat.combatants[id],
-              refusal: { hpPotion: flaskRefusal(id, 'hpPotion'), mpPotion: flaskRefusal(id, 'mpPotion'), revive: flaskRefusal(id, 'revive') },
-            })
-          )}
-          fallen={playerFallen.map(
-            (id): BagTarget => ({
-              combatantId: id,
-              hero: allCombatants[combat.combatants[id].heroId],
-              combatant: combat.combatants[id],
-              refusal: { hpPotion: flaskRefusal(id, 'hpPotion'), mpPotion: flaskRefusal(id, 'mpPotion'), revive: flaskRefusal(id, 'revive') },
+              refusal: { hpPotion: flaskRefusal(id, 'hpPotion'), mpPotion: flaskRefusal(id, 'mpPotion') },
             })
           )}
           onDrink={handleDrinkPotion}
@@ -2594,7 +2583,6 @@ export function FightScreen({
           contractReward={contractReward}
           gemReward={gemReward}
           hpAfter={hpAfter}
-          downStays={!isPermadeath(playerRun)}
           mvp={mvp}
           onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables, mvp)}
         />

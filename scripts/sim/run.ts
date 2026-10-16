@@ -6,9 +6,9 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
 import { companionCallFor, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
-import { fallenAfterFight, isGathering, isLongWinter, releaseFallen } from '../../src/run/cycles';
-import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, reviveHero, standingRoster } from '../../src/run/wounds';
-import { canUseRevive, grantConsumable, rollConsumableDrop, spendRevive } from '../../src/run/consumables';
+import { isGathering, isLongWinter } from '../../src/run/cycles';
+import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, standingRoster } from '../../src/run/wounds';
+import { grantConsumable, rollConsumableDrop } from '../../src/run/consumables';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
 import { relics, guardianBannersFor } from '../../src/data/relics';
@@ -224,7 +224,7 @@ export interface RunRecord {
   signatures: Record<string, { reached: number; taken: number }>;
   /** Every rolled move offer (schedule, Mentor, Tutor, signature) by move id: times on the table, times the kit took it. */
   moveOffers: Record<string, { offered: number; taken: number }>;
-  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, `act:spent:<mend|hire|scroll|gear|anvil|enchant|contract|revive>`, and `act:hall` (the purse on entering the Guild Hall, with `act:hallVisits` counting it). */
+  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, `act:spent:<mend|hire|scroll|gear|anvil|enchant|contract>`, and `act:hall` (the purse on entering the Guild Hall, with `act:hallVisits` counting it). */
   goldFlow: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
@@ -298,17 +298,6 @@ function rosterSquad(run: RunState, size: number): Squad {
   return pickSquad(run.roster, policy.fieldedSquadIds(run.roster, required), size);
 }
 
-/** A held Revive goes on the strongest hero the act has left down, before the fight it would miss. */
-function spendRevives(run: RunState, record: RunRecord): RunState {
-  let next = run;
-  while (anyDown(next) && canUseRevive(next)) {
-    const target = policy.byPower(next.roster.filter((entry) => entry.down))[0];
-    next = spendRevive(reviveHero(next, target.rosterId, policy.effectiveStats(target).hp));
-    record.knockouts.revivesSpent += 1;
-  }
-  return next;
-}
-
 // --- The run ---
 
 export interface RunOptions extends policy.PolicyOptions {
@@ -319,33 +308,10 @@ export interface RunOptions extends policy.PolicyOptions {
   playerSwitching: boolean;
   /** Who pilots the player side in every fight (fight.ts PilotKind). */
   pilot: PilotKind;
-  /** The Cycle (docs/cycles.md), 1-based: Cycle II and up is Permadeath, the Revive the one way back. */
+  /** The Cycle (docs/cycles.md), 1-based. */
   cycle: number;
   /** The band holding the seals from Cycle II (run/wardens.ts); omitted = none. */
   wardens?: readonly Warden[];
-}
-
-/**
- * The Fallen beat (docs/ascension.md §3, run/ascension.ts), in the companion's absorption slot:
- * every hero the won fight knocked out is kept by a Revive while the stock lasts — the strongest
- * first, which is the pilot's read of the choice — or let go with its gear.
- */
-function resolveFallen(run: RunState, koRosterIds: readonly string[], record: RunRecord): RunState {
-  let next = run;
-  const fallen = policy.byPower(fallenAfterFight(next, koRosterIds));
-  record.knockouts.fallen += fallen.length;
-  const letGo: string[] = [];
-  for (const entry of fallen) {
-    if (canUseRevive(next)) {
-      next = spendRevive(reviveHero(next, entry.rosterId, policy.effectiveStats(entry).hp));
-      record.knockouts.revivesSpent += 1;
-      record.knockouts.fallenRevived += 1;
-    } else {
-      letGo.push(entry.rosterId);
-      record.knockouts.fallenLost += 1;
-    }
-  }
-  return releaseFallen(next, letGo);
 }
 
 export function simulateRun(options: RunOptions): RunRecord {
@@ -450,14 +416,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       }
       run = advanceToNode(run, nodeId);
       run = { ...run, encountersWon: run.encountersWon + 1 };
-      // Under Permadeath every other KO is the same beat, with a Revive as its one way back.
-      run = resolveFallen(run, outcome.koRosterIds, record);
-      if (run.roster.length === 0) {
-        alive = false;
-        record.deathAct = run.actNumber;
-        record.deathNodeType = 'exhausted';
-        break;
-      }
       // Automatic and roster-wide, benched heroes included (src/run/growth.ts); the payoffs are the
       // schedule (docs/xp-overhaul.md §4). The report itself is on the fight result, not a screen.
       run = grantEncounterLevels(run, rosterHeroes, rng, encounterXpKind(node.type));
@@ -629,7 +587,6 @@ function resolveEncounterNode(
     ? pickWeightedEquipment(EQUIPMENT_POOL, 1, rarityWeightsFor(workingRun.actNumber, LOOT_SOURCE[kindKey]))[0] ?? null
     : null;
 
-  workingRun = spendRevives(workingRun, record);
   const downEntering = workingRun.roster.filter((entry) => entry.down).length;
   if (downEntering > 0) record.knockouts.shortHanded += 1;
   record.knockouts.downEntering += downEntering;
@@ -645,16 +602,9 @@ function resolveEncounterNode(
     rng,
     playerSwitching: options.playerSwitching,
     pilot: options.pilot,
-    // Saved for the final battle: the pilot spends a Revive in a fight only there, where nothing
-    // mends inside (docs/titan-eyes.md §10); everywhere else the map's spendRevives has first call.
-    revives: mapNodeType === 'finale' ? workingRun.consumables.revive : 0,
     playerCall: companionCallFor(workingRun, allCombatants),
     aiPlaysEngines: isGathering(workingRun),
   });
-  for (let i = 0; i < fight.revivesUsed; i++) {
-    workingRun = spendRevive(workingRun);
-    record.knockouts.revivesSpent += 1;
-  }
 
   const playerHeroes: FightRecord['playerHeroes'] = {};
   const enemyHeroes: FightRecord['enemyHeroes'] = {};
@@ -745,12 +695,10 @@ function resolveEncounterNode(
   workingRun = recordPermanentStatGains(recordWounds(workingRun, fight.final, PLAYER_SIDE, rosterHeroes), fight.final, PLAYER_SIDE);
   record.knockouts.koInWins += koRosterIds.length;
   record.knockouts.koInWinsByKind[kindKey] = (record.knockouts.koInWinsByKind[kindKey] ?? 0) + koRosterIds.length;
-  // The consumable drop (src/run/consumables.ts). Potions are never drunk here — the pilot has no
-  // Bag — but a Revive IS spent (spendRevives), since a persisting knockout is what it prices.
+  // The consumable drop (src/run/consumables.ts). Potions are never drunk here — the pilot has no Bag.
   if (MVP_ON && mapNodeType !== 'finale') workingRun = awardMvp(workingRun, fight.events, fight.final, mapNodeType, record);
   const consumableDrop = rollConsumableDrop(kindKey, rng);
   if (consumableDrop) workingRun = grantConsumable(workingRun, consumableDrop);
-  if (consumableDrop === 'revive') record.knockouts.revivesFound += 1;
   if (rollContractDrop(kindKey, rng)) workingRun = grantContract(workingRun);
   workingRun = landGems(workingRun, rollGemDrop(kindKey, workingRun.actNumber, rng), 'drop', rng, record, options);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop, encounter, koRosterIds };
@@ -1211,7 +1159,7 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     ledger(record, act, `spent:${key}`, before - next.gold);
   };
 
-  // The Tavern — the mend, the Revive under Permadeath, the hires. The Vigil has none (2026-10-08).
+  // The Tavern — the mend and the hires. The Vigil has none (2026-10-08).
   if (!muster) {
     // The mend first, when the roster is hurt enough for it to be worth its price — which now
     // rises with the hurt (run/wounds.ts mendPrice), so the pilot's threshold is the same read.

@@ -3,8 +3,10 @@
 > **STATUS: DECIDED in shape; PHASE 1 IS IN** (2026-10-06, per user direction — §7a). Replaces the
 > Ascension *ladder* (`docs/ascension.md` §5) with five **Cycles**: each is the Titan's next
 > rising, a year after the last, in a world that has changed and against a Titan that has
-> adapted — and the fifth ends the cycle for good. A1 Permadeath is built and is not thrown away;
-> it becomes Cycle II's rule. §8 lists what is decided, §9 what is open, §7a what is built.
+> adapted — and the fifth ends the cycle for good. A1 Permadeath became Cycle II's rule, and was
+> then **DELETED with the Revive (2026-10-15, per user direction)**: it did not suit the game, and
+> the Revive was finicky and padded the loot table. Cycle II is the Wardens and the woken Guardians
+> until something takes Permadeath's seat (§9). §8 lists what is decided, §9 what is open, §7a what is built.
 
 ---
 
@@ -79,7 +81,7 @@ survivors prepare between Cycles — so a Cycle is never a pure stack of penalti
 | Cycle | The world | The Titan | Lever |
 |---|---|---|---|
 | **I. The Sealing** | Today's game. | Today's game. | — |
-| **II. The Remembered** | The Wardens hold the seals (§2). Survivors raised the **Holy Sanctum**. | **It learned to eat what it kills** — Permadeath, and the woken Guardians. | `ascension.ts` A1, built |
+| **II. The Remembered** | The Wardens hold the seals (§2). Survivors raised the **Holy Sanctum**. | **It learned to eat what it kills** — the woken Guardians (Permadeath deleted 2026-10-15). | `ascension.ts` A1, built |
 | **III. The Long Winter** | Towns are poorer: Banners at half, the Smithy dearer. Wild's Edge is overrun and Act 1 is somewhere else. | **It sends its hands ahead** — every Guardian warded while its escorts stand. | `ascension.md` A2 + A4 |
 | **IV. The Gathering** | The Guild is bigger (more heroes in the pool); companions arrive already Ancient. | **It knows your shape** — authored warbands, two-phase Guardians. | A3 + A5 |
 | **V. The Last Cycle** | No seal holds. | **The Titan takes the field.** A new final fight, then the epilogue. | New content |
@@ -99,7 +101,7 @@ itself. Also a candidate: the Wardens stand with the player at the end.
   lower-variance one, so the last Cycle is not played on it (`collection.md` §4). Built ahead of
   Cycle V itself, which the picker still greys.
 - **Every unlocked Cycle stays selectable**, before the story ends and after. A player who has
-  reached Cycle II's Permadeath can still take a breezy Cycle I run.
+  reached Cycle II can still take a breezy Cycle I run.
 - **After Cycle V is cleared**, the story is over and every Cycle stays playable — for the stars
   (§5) and for its own sake.
 - **The picker is the Chronicle** (2026-10-09, per user direction; `CycleTapestry.tsx`, `run/chronicle.ts`):
@@ -190,6 +192,12 @@ who sealed it stayed to guard the seals. / Now the Titan holds them. / We must s
   fight and the epilogue go in Cycle V's own document.
 
 ## 9. Open — DO NOT silently resolve
+
+- **Cycle II's rule** (2026-10-15): Permadeath is deleted and nothing replaces it yet; Cycle II is
+  the Wardens and the woken Guardians. Direction from the user: lean on theme and lore rather than
+  a mechanic — the heroes who sealed the Titan in Cycle I now guard its seals, **turned by the
+  Titan's magic** (the lore card already says *Now the Titan holds them*). A permadeath mode after
+  Cycle V was floated and not taken up.
 
 - **Whether the Warden leads** its beast's fight or comes in from reserve.
 - **The rest of Cycle V** — the shape is decided (§8: the Wardens are freed as keys, the Titan is

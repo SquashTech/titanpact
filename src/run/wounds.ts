@@ -7,8 +7,7 @@
 //
 // A knockout PERSISTS (2026-09-17, per user direction — the counterweight to every fight fielding
 // the whole roster, docs/combat.md "The fielded roster"): a hero the fight KO'd is `down` and is
-// not fielded until a Rest, the Guild Hall's mend, a Revive (run/consumables.ts) or the act's end
-// stands it up. The 25% walk floor this replaced was written against the 2026-08-16 reversal,
+// not fielded until a Rest, the Guild Hall's mend or the act's end stands it up. The 25% walk floor this replaced was written against the 2026-08-16 reversal,
 // where a KO'd hero was a brick with no way back; the faucets above are the way back.
 
 import type { HeroLookup } from '../engine/state';
@@ -39,14 +38,11 @@ export function rosterMissing(run: RunState, maxHpOf: (entry: RosterEntry) => nu
   return missing;
 }
 
-/** What the mend costs right now — `maxHpOf` because what a hero's max IS is the run side's to read (see reviveHero). */
+/** What the mend costs right now — `maxHpOf` because what a hero's max IS is the run side's to read. */
 export function mendPrice(run: RunState, maxHpOf: (entry: RosterEntry) => number): number {
   const priced = Math.round((MEND_PRICE_PER_HERO * rosterMissing(run, maxHpOf)) / MEND_PRICE_STEP) * MEND_PRICE_STEP;
   return Math.max(MEND_PRICE_FLOOR, priced);
 }
-
-/** A Revive stands a downed hero up at this share of its max — the potions' figure, flat. */
-export const REVIVE_FRACTION = 0.5;
 
 /** The HP a hero with `wounds` missing stands at against `maxHp`. */
 export function woundedHp(maxHp: number, wounds: number): number {
@@ -127,17 +123,4 @@ export function buyMend(run: RunState, cost: number): RunState {
   if (!anyWounded(run)) throw new WoundsError('Nobody is wounded');
   if (run.gold < cost) throw new WoundsError(`Mending costs ${cost} gold, only ${run.gold} available`);
   return mendRoster({ ...run, gold: run.gold - cost });
-}
-
-/**
- * One downed hero stood up at REVIVE_FRACTION of `maxHp` — the Revive's half, spent by the caller
- * (consumables.ts). `maxHp` is passed in because what a hero's max IS depends on gear, Banners
- * and growth the run side reads through entryStatTotals, and this module reads none of them.
- */
-export function reviveHero(run: RunState, rosterId: string, maxHp: number): RunState {
-  const entry = run.roster.find((r) => r.rosterId === rosterId);
-  if (!entry) throw new WoundsError(`${rosterId} is not on the roster`);
-  if (!entry.down) throw new WoundsError(`${rosterId} is not down`);
-  const wounds = maxHp - Math.max(1, Math.round(maxHp * REVIVE_FRACTION));
-  return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? { ...r, wounds, down: false } : r)) };
 }
