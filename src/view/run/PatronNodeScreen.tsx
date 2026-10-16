@@ -206,7 +206,7 @@ function PatronStepView({ run, patronId, step, seed, keeper, style, onDone }: St
         <NodeMotes count={12} />
         {keeper}
         <div className="patron-forge">
-          <EquipChoiceCard item={equipment[after]} revealDelayMs={0} labelled onInspect={() => {}} />
+          <EquipChoiceCard item={equipment[after]} revealDelayMs={0} labelled showcase onInspect={() => {}} />
           {before === after && <span className="patron-forge-note">Already as fine as this act allows.</span>}
         </div>
         <div className="node-spacer" />

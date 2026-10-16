@@ -323,7 +323,7 @@ function CacheCounter({ run, choices, onRunChange, onContinue }: { run: RunState
 
         {/* The piece in hand, read whole, beside the three it was picked from. */}
         <div className="counter-focus">
-          {shown && <EquipChoiceCard key={shown.id} item={shown} revealDelayMs={0} labelled onInspect={() => setInspecting(shown)} />}
+          {shown && <EquipChoiceCard key={shown.id} item={shown} revealDelayMs={0} labelled showcase onInspect={() => setInspecting(shown)} />}
         </div>
 
         <div className="counter-stock is-gear">

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Incoming Item Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+:root {
+  --bg: #0f1117; --panel: #161922; --border: #353b4a; --text: #edeff4; --dim: #99a0af; --accent: #e0a63c;
+  --display: 'Pixelify Sans', 'Trebuchet MS', sans-serif; --body: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --hp: #4caf6a; --atk: #d9534f; --def: #8a94a8; --int: #c356d0; --wis: #7fd6e0; --spd: #e8d16a; --mana: #4a90d9; --regen: #4cd9a0;
+  --epic: 164, 99, 217; --legendary: 224, 166, 60; --mythic: 224, 57, 63; --rare: 74, 144, 217;
+  color-scheme: dark;
+}
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--body); font-size: 14px; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 28px 16px 64px; display: flex; flex-direction: column; gap: 36px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; }
+h1 { color: var(--accent); font-size: 1.9rem; }
+h2 { font-size: 1.3rem; }
+p { margin: 0; color: var(--dim); max-width: 72ch; line-height: 1.5; }
+p strong { color: var(--text); }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(300px, 1fr)); gap: 20px; overflow-x: auto; }
+.col { display: flex; flex-direction: column; gap: 14px; }
+.col > h3 { font-size: 1.05rem; color: var(--accent); }
+.col > p { font-size: 12.5px; }
+img.px { image-rendering: pixelated; }
+
+/* ---------- shared bits ---------- */
+.rar { --c: var(--epic); }
+.rar.legendary { --c: var(--legendary); } .rar.mythic { --c: var(--mythic); } .rar.rare { --c: var(--rare); }
+.tier { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgb(var(--c)); }
+.pas-line { font-size: 12.5px; line-height: 1.35; color: #e9e2cf; }
+.pas-name { font-weight: 700; color: #ffd98a; }
+
+/* ---------- A: Big numbers ---------- */
+.a { position: relative; display: grid; grid-template-columns: 76px 1fr; gap: 12px; padding: 12px; background: linear-gradient(180deg, rgba(var(--c), .16), rgba(var(--c), .04) 60%), var(--panel); border: 1px solid rgba(var(--c), .55); border-left: 4px solid rgb(var(--c)); }
+.a .icon { width: 76px; height: 76px; display: grid; place-items: center; background: radial-gradient(circle, rgba(var(--c), .35), transparent 70%); }
+.a .icon img { width: 64px; height: 64px; filter: drop-shadow(0 3px 4px rgba(0,0,0,.6)); }
+.a .name { font-family: var(--display); font-size: 20px; line-height: 1.05; }
+.a .stats { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; }
+.a .stat { display: flex; align-items: baseline; gap: 4px; }
+.a .stat b { font-family: var(--display); font-size: 22px; color: var(--s); text-shadow: 0 0 8px color-mix(in srgb, var(--s) 45%, transparent); }
+.a .stat span { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; color: var(--s); opacity: .85; }
+.a .pas { grid-column: 1 / -1; margin-top: 2px; padding: 8px 10px; border-top: 1px solid rgba(var(--c), .35); background: rgba(0,0,0,.25); }
+
+/* ---------- B: Showcase ---------- */
+.b { position: relative; padding: 16px 14px 12px; text-align: center; background: var(--panel); border: 1px solid rgba(var(--c), .6); overflow: hidden; }
+.b::before { content: ''; position: absolute; left: 50%; top: -40px; width: 260px; height: 220px; transform: translateX(-50%); background: radial-gradient(ellipse at center, rgba(var(--c), .45), transparent 65%); pointer-events: none; }
+.b .icon { position: relative; width: 96px; height: 96px; margin: 0 auto; }
+.b .icon img { width: 96px; height: 96px; filter: drop-shadow(0 4px 6px rgba(0,0,0,.7)); }
+.b .name { position: relative; font-family: var(--display); font-size: 24px; margin-top: 4px; }
+.b .tier { position: relative; display: block; margin-top: 2px; }
+.b .tiles { position: relative; display: flex; justify-content: center; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+.b .tile { min-width: 58px; padding: 6px 6px 5px; background: color-mix(in srgb, var(--s) 14%, #10131a); border: 1px solid color-mix(in srgb, var(--s) 55%, transparent); }
+.b .tile b { display: block; font-family: var(--display); font-size: 22px; color: var(--s); line-height: 1; }
+.b .tile span { display: block; font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--s); margin-top: 3px; }
+.b .pas { position: relative; margin-top: 12px; padding: 9px 10px; text-align: left; border: 1px solid #ffd98a55; background: linear-gradient(90deg, #ffd98a1f, transparent); }
+
+/* ---------- C: Stat bars ---------- */
+.c { display: grid; grid-template-columns: 64px 1fr; gap: 10px 12px; padding: 12px; background: var(--panel); border: 1px solid rgba(var(--c), .5); box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 0 18px rgba(var(--c), .18); }
+.c .icon img { width: 64px; height: 64px; }
+.c .name { font-family: var(--display); font-size: 20px; }
+.c .bars { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 5px; }
+.c .bar { display: grid; grid-template-columns: 34px 1fr 40px; align-items: center; gap: 8px; }
+.c .bar span { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; color: var(--s); }
+.c .bar i { height: 8px; background: #0b0d12; border: 1px solid #2a2f3b; position: relative; }
+.c .bar i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--w); background: linear-gradient(90deg, color-mix(in srgb, var(--s) 70%, #000), var(--s)); box-shadow: 0 0 6px var(--s); }
+.c .bar b { font-family: var(--display); font-size: 17px; color: var(--s); text-align: right; }
+.c .pas { grid-column: 1 / -1; padding-top: 8px; border-top: 1px dashed rgba(var(--c), .4); }
+
+/* Crest collapsed: one row for an even spread */
+.every { display: flex; align-items: center; gap: 8px; }
+.every .dots { display: flex; gap: 3px; }
+.every .dots i { width: 10px; height: 10px; border-radius: 2px; background: var(--s); }
+.note { font-size: 12px; color: var(--dim); }
+.crest-grid { display: grid; grid-template-columns: repeat(3, minmax(300px, 1fr)); gap: 20px; overflow-x: auto; }
+@media (max-width: 720px) { .grid, .crest-grid { grid-template-columns: 300px 300px 300px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Incoming Item Card</h1>
+    <p>The card on the who-screen, the Equipment Cache, a fight's loot and the patrons. Three treatments across, four pieces down: an <strong>Epic</strong> (stats only, the common case since passives are Mythic-only), a <strong>Mythic</strong> with its Awakening, a <strong>Legendary Crest</strong> (the stress case), and a <strong>Unique</strong>. Numbers are the live data.</p>
+  </header>
+
+  <div class="grid" id="grid"></div>
+
+  <section>
+    <h2>Crest</h2>
+    <p>Crest grants five stats at once (+15 each at Legendary, plus 45 HP). Every card above draws it as five or six readouts. Three ways out — the first is display only, the other two change the item.</p>
+  </section>
+  <div class="crest-grid" id="crest"></div>
+</div>
+
+<script>
+const STAT = { hp: ['HP', '--hp'], attack: ['ATK', '--atk'], defense: ['DEF', '--def'], intelligence: ['INT', '--int'], wisdom: ['WIS', '--wis'], speed: ['SPD', '--spd'], manaPool: ['MANA', '--mana'], mpRegen: ['REGEN', '--regen'] };
+const ITEMS = [
+  { name: 'Spear', tier: 'epic', art: 'spear', stats: { attack: 35, defense: 35 } },
+  { name: 'Spear', tier: 'mythic', art: 'spear', stats: { attack: 45, defense: 45 }, pas: ['Impale', 'On a hit, the target suffers Poison 5.'] },
+  { name: 'Crest', tier: 'legendary', art: 'crest', stats: { attack: 15, defense: 15, intelligence: 15, wisdom: 15, speed: 15, hp: 45 } },
+  { name: 'Moonfang', tier: 'mythic', art: 'moonfang', unique: true, stats: { attack: 60, speed: 30 }, force: ['Edge', 10] },
+];
+const art = (id) => `../../art/equipment/${id}.png`;
+const tierLabel = (it) => (it.unique ? 'Unique · Mythic' : it.tier);
+const statVar = (k) => `var(${STAT[k][1]})`;
+const pas = (it) => it.pas ? `<div class="pas"><div class="pas-line"><span class="pas-name">✦ ${it.pas[0]}</span> — ${it.pas[1]}</div></div>`
+  : it.force ? `<div class="pas"><div class="pas-line"><span class="pas-name">◆ ${it.force[0]} ${it.force[1]}</span> — every Slice hits harder.</div></div>` : '';
+
+function cardA(it) {
+  const stats = Object.entries(it.stats).map(([k, v]) => `<span class="stat" style="--s:${statVar(k)}"><b>+${v}</b><span>${STAT[k][0]}</span></span>`).join('');
+  return `<div class="a rar ${it.tier}"><div class="icon"><img class="px" src="${art(it.art)}"></div><div><div class="name">${it.name}</div><div class="tier">${tierLabel(it)}</div><div class="stats">${stats}</div></div>${pas(it)}</div>`;
+}
+function cardB(it) {
+  const tiles = Object.entries(it.stats).map(([k, v]) => `<span class="tile" style="--s:${statVar(k)}"><b>+${v}</b><span>${STAT[k][0]}</span></span>`).join('');
+  return `<div class="b rar ${it.tier}"><div class="icon"><img class="px" src="${art(it.art)}"></div><div class="name">${it.name}</div><span class="tier">${tierLabel(it)}</span><div class="tiles">${tiles}</div>${pas(it)}</div>`;
+}
+function cardC(it) {
+  const max = 70;
+  const bars = Object.entries(it.stats).map(([k, v]) => {
+    const pts = k === 'hp' ? v / 3 : v;
+    return `<span class="bar" style="--s:${statVar(k)};--w:${Math.min(100, (pts / max) * 100)}%"><span>${STAT[k][0]}</span><i></i><b>+${v}</b></span>`;
+  }).join('');
+  return `<div class="c rar ${it.tier}"><div class="icon"><img class="px" src="${art(it.art)}"></div><div><div class="name">${it.name}</div><div class="tier">${tierLabel(it)}</div></div><div class="bars">${bars}</div>${pas(it)}</div>`;
+}
+const COLS = [
+  ['A · Big numbers', 'The current layout, but the numbers are the type: big, in their stat colour, with a glow. A tinted tier wash and a left stripe. Same height as today.', cardA],
+  ['B · Showcase', 'The piece as a reward: a 96px icon under a tier glow, the name large, each stat its own coloured tile. Tallest — for the who-screen and the Cache, where the card has the room.', cardB],
+  ['C · Stat bars', 'Each stat a bar against a fixed scale, so a +45 visibly outweighs a +15. Reads the piece as a SHAPE (all Attack, or a spread). Crest becomes six short bars — honest about what it is.', cardC],
+];
+const grid = document.getElementById('grid');
+for (const [title, blurb, fn] of COLS) {
+  grid.insertAdjacentHTML('beforeend', `<div class="col"><h3>${title}</h3><p>${blurb}</p>${ITEMS.map(fn).join('')}</div>`);
+}
+
+// Crest options
+const crest = ITEMS[2];
+const dots = ['attack', 'defense', 'intelligence', 'wisdom', 'speed'].map((k) => `<i style="--s:${statVar(k)}"></i>`).join('');
+const crestCollapsed = `<div class="b rar legendary"><div class="icon"><img class="px" src="${art('crest')}"></div><div class="name">Crest</div><span class="tier">legendary</span>
+  <div class="tiles"><span class="tile" style="--s:#f3e7c4;min-width:150px"><b>+15</b><span class="every" style="justify-content:center;margin-top:5px"><span class="dots">${dots}</span>&nbsp;EVERY STAT</span></span><span class="tile" style="--s:var(--hp)"><b>+45</b><span>HP</span></span></div></div>`;
+const crestTwo = cardB({ name: 'Crest', tier: 'legendary', art: 'crest', stats: { attack: 45, intelligence: 45 } });
+const crestThree = cardB({ name: 'Crest', tier: 'legendary', art: 'crest', stats: { hp: 90, defense: 30, wisdom: 30 } });
+const CREST = [
+  ['1 · Collapse the even spread', 'Display only, no data change: when a piece grants the same figure to all five, it draws ONE tile — "+15 every stat" with five colour dots — beside the HP. Crest stays the jack of all trades.', crestCollapsed],
+  ['2 · Crest is the Either-Hand piece', 'Data change: Attack + Intelligence only (+45 each at Legendary, the budget’s 90). Fits its Awakening (partner ATK ▲ INT ▲) and the mixed attackers; half of it is spare on a pure hero, which is its price.', crestTwo],
+  ['3 · Crest is the Warden’s piece', 'Data change: HP + Defense + Wisdom — the all-round guard, the one family that covers both defences. Overlaps Plate (Def + HP) and Robe (Wis + Mana) less than it seems, since neither covers both sides.', crestThree],
+];
+const cg = document.getElementById('crest');
+for (const [title, blurb, html] of CREST) cg.insertAdjacentHTML('beforeend', `<div class="col"><h3>${title}</h3><p>${blurb}</p>${html}</div>`);
+</script>
+</body>
+</html>

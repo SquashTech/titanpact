@@ -134,7 +134,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
         </HeroPickGrid>
 
         <div className="counter-focus">
-          <EquipChoiceCard key={shownItem.id} item={shownItem} revealDelayMs={0} labelled onInspect={() => setInspecting(shownItem.id)} />
+          <EquipChoiceCard key={shownItem.id} item={shownItem} revealDelayMs={0} labelled showcase onInspect={() => setInspecting(shownItem.id)} />
         </div>
 
         {/* A Loot Pile's haul: this piece lit, the ones still to come beside it. */}

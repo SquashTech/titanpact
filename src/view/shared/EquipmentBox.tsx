@@ -2,7 +2,7 @@ import type { CSSProperties, PointerEvent, ReactNode } from 'react';
 import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity } from '../../run/equipment';
 import { ENCHANTMENTS, RARITY_ORDER, parseEquipmentId } from '../../run/equipment';
-import { StatGlyph, STAT_LABELS } from './StatBars';
+import { STAT_COLORS, StatGlyph, STAT_LABELS } from './StatBars';
 import { STAT_FULL_LABELS } from './relicStacks';
 import { RelicGlyph } from './relicIcons';
 import { EquipmentFormGlyph } from './equipmentIcons';
@@ -231,6 +231,76 @@ function TierPips({ rarity }: { rarity: EquipmentRarity }) {
  * its glyph — for the who-screen, where the piece is the one item on the screen and its face
  * has the room.
  */
+/** The five stats a Crest spreads evenly: one tile says them all when every one is the same. */
+const EVEN_SPREAD: readonly StatKey[] = ['attack', 'defense', 'intelligence', 'wisdom', 'speed'];
+
+/**
+ * The incoming piece's grants as tiles (EquipChoiceCard showcase): each stat its own tile in its
+ * colour, an even five-way spread folded into one "every stat" tile, a Force as a tile of its own,
+ * and an Awakening as a band under them, read whole.
+ */
+export function ItemStatTiles({ item }: { item: EquipmentDefinition }) {
+  const stats = (Object.entries(item.statGrants) as [StatKey, number][]).filter(([, amount]) => amount);
+  const even = EVEN_SPREAD.every((stat) => item.statGrants[stat] && item.statGrants[stat] === item.statGrants[EVEN_SPREAD[0]]);
+  const shown = even ? stats.filter(([stat]) => !EVEN_SPREAD.includes(stat)) : stats;
+  const forces = item.grantsStatusIds ?? [];
+  const granted = item.grantsPassiveIds ?? [];
+  return (
+    <>
+      <span className="item-tiles">
+        {even && (
+          <span className="item-tile is-every" title={`Every stat ${fmtGrant(item.statGrants.attack!)}`}>
+            <strong>{fmtGrant(item.statGrants.attack!)}</strong>
+            <span className="item-tile-every">
+              <span className="item-tile-dots" aria-hidden="true">
+                {EVEN_SPREAD.map((stat) => (
+                  <i key={stat} style={{ background: STAT_COLORS[stat] }} />
+                ))}
+              </span>
+              Every stat
+            </span>
+          </span>
+        )}
+        {shown.map(([stat, amount]) => (
+          <span key={stat} className={`item-tile${amount > 0 ? '' : ' is-loss'}`} style={{ '--tile-color': STAT_COLORS[stat] } as CSSProperties} title={`${STAT_FULL_LABELS[stat]} ${fmtGrant(amount)}`}>
+            <strong>
+              <StatGlyph stat={stat} className="item-tile-glyph" tone="inherit" />
+              {fmtGrant(amount)}
+            </strong>
+            <span>{STAT_LABELS[stat]}</span>
+          </span>
+        ))}
+        {forces.map(({ statusId, magnitude }) => {
+          const def = statuses[statusId];
+          if (!def) return null;
+          const tint = def.forceType ? getTypeColor(def.forceType) : '#ffd98a';
+          return (
+            <span key={statusId} className="item-tile" style={{ '--tile-color': tint } as CSSProperties} title={statusGrantText(def, magnitude)}>
+              <strong>
+                {def.forceType && <ElementGlyph type={def.forceType} className="item-tile-glyph" />}+{magnitude}
+              </strong>
+              <span>{def.name}</span>
+            </span>
+          );
+        })}
+      </span>
+      {granted.map((passiveId) => {
+        const def = passives[passiveId];
+        if (!def) return null;
+        return (
+          <span key={passiveId} className="item-awakening">
+            <PassiveGlyph passiveId={passiveId} className="item-awakening-glyph" />
+            <span className="item-awakening-words">
+              <strong>{def.name}</strong>
+              <span>{passivePlainText(def)}</span>
+            </span>
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 export function ItemEffectChips({ item, labelled }: { item: EquipmentDefinition; labelled?: boolean }) {
   const stats = (Object.entries(item.statGrants) as [StatKey, number][]).filter(([, amount]) => amount);
   const forces = item.grantsStatusIds ?? [];

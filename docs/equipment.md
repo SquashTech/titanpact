@@ -366,3 +366,13 @@ who wanted the sheet centred; centring a content-sized panel moves the strip by 
 between pages (measured 561 / 427 / 380 / 266px on one hero — a ~148px jump). So the well is
 styled instead: `.is-hero-sheet .detail-tab-body` is cut into the sheet, and the leftover room
 reads as the page's own floor.
+
+## 12. The incoming piece is shown as a reward (2026-10-15, per user direction)
+
+The card an arriving piece wears on the who-screen, the Cache, the Gear counter and a patron's forge
+is the **showcase** (`EquipChoiceCard showcase`, chosen from `docs/mockups/item-card.html`, option B):
+the icon large under its tier's glow, the name over one coloured tile a stat, a Force as a tile, an
+Awakening on a band of its own. **A Crest's even spread is one tile** — "+15 every stat", with the
+five stats' colour dots — beside its HP (Crest option 1: display only, the item unchanged). The card
+takes the height it needs and the hero figures above give way; with six heroes and a Loot Pile's
+queue under it, the icon moves beside the name. Lists of several pieces keep the compact card.

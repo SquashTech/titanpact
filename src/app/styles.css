@@ -33860,6 +33860,193 @@ button.evo-gift-card {
   opacity: 0.45;
 }
 
+/* The incoming piece as a reward (EquipChoiceCard showcase, docs/mockups/item-card.html B): the
+   icon large under its tier's glow, the name over a row of stat tiles in each stat's colour, an even
+   five-way spread folded into one tile, an Awakening read whole on a band of its own. */
+.equip-showcase {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 12px 12px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--rarity-color) 60%, transparent);
+  background: #161922;
+  color: inherit;
+  text-align: center;
+}
+
+/* The piece takes the height it needs; the hero figures above give way first (.counter-roster .pick-card). */
+.counter-focus:has(.equip-showcase) {
+  height: auto;
+}
+
+/* Six heroes AND a row of pieces under the card: the icon sits beside the name, not over it, so the
+   figures above keep their faces. */
+.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase {
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase-head {
+  flex-direction: row;
+  gap: 10px;
+}
+
+.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase .equip-showcase-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase-words {
+  align-items: flex-start;
+}
+
+.equip-showcase-glow {
+  position: absolute;
+  left: 50%;
+  top: -46px;
+  width: 280px;
+  height: 200px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--rarity-color) 45%, transparent), transparent 65%);
+  pointer-events: none;
+}
+
+.equip-showcase-head {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.equip-showcase .equip-showcase-icon {
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+}
+
+.equip-showcase-words {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.equip-showcase-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.05;
+}
+
+.equip-showcase-tier {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rarity-color);
+}
+
+.item-tiles {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.item-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 58px;
+  padding: 5px 7px 4px;
+  border: 1px solid color-mix(in srgb, var(--tile-color) 55%, transparent);
+  background: color-mix(in srgb, var(--tile-color) 14%, #10131a);
+  color: var(--tile-color);
+}
+
+.item-tile strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.item-tile > span {
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.item-tile-glyph {
+  width: 14px;
+  height: 14px;
+}
+
+.item-tile.is-loss {
+  opacity: 0.7;
+}
+
+.item-tile.is-every {
+  --tile-color: #f3e7c4;
+  min-width: 132px;
+}
+
+.item-tile-every {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.item-tile-dots {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.item-tile-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+}
+
+.item-awakening {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #ffd98a55;
+  background: linear-gradient(90deg, #ffd98a1f, transparent);
+  text-align: left;
+}
+
+.item-awakening-glyph {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: #ffd98a;
+}
+
+.item-awakening-words {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.item-awakening-words strong {
+  color: #ffd98a;
+}
+
 /* Patrons (PatronNodeScreen.tsx, patronView.tsx): Trust as five quiet pips, a patron's mark in its
    own colour, and the rung it pays as loot under the greeting. */
 .patron-trust {
@@ -39994,6 +40181,15 @@ img.smithy-service-art {
 .cache-counter-screen > .hall-counter-room,
 .item-who-screen > .hall-counter-room {
   position: relative;
+  /* Clears the roster button in the top corner. */
+  padding-top: 12px;
+}
+
+/* The Sell sits lower and slimmer here, which pays for the grid starting under the roster button. */
+.cache-counter-screen .sell-press,
+.item-who-screen .sell-press {
+  min-height: 60px;
+  margin-bottom: 2px;
 }
 
 /* Three pieces at most, not six: each gets the room for a bigger icon. */

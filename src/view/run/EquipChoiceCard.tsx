@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { EquipmentIcon, ItemEffectChips, ItemStatTiles, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ItemDetailCard } from '../shared/ItemDossier';
 import { useLongPress } from '../shared/MoveTile';
 import { playSfx } from '../../audio/sfx';
@@ -15,11 +15,34 @@ interface EquipChoiceCardProps {
   revealDelayMs: number;
   /** Spell the grants out beside their glyphs (the who-screen, where the piece has the face for it). */
   labelled?: boolean;
+  /** The incoming piece as a reward: the icon large under its tier's glow, the name over coloured stat tiles, an Awakening as its own band. */
+  showcase?: boolean;
 }
 
-export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs, labelled }: EquipChoiceCardProps) {
+export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs, labelled, showcase }: EquipChoiceCardProps) {
   // Sounded on the pick, not the press: the same pointerdown starts the hold that only inspects.
   const longPress = useLongPress(onInspect, onPick ? () => { playSfx('ui.pick'); onPick(); } : undefined);
+  if (showcase) {
+    return (
+      <button
+        type="button"
+        className={`equip-showcase equip-cache-reveal-in${picked ? ' picked' : ''}${onPick ? '' : ' is-static'}`}
+        data-sfx={onPick ? 'none' : undefined}
+        style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity], animationDelay: `${revealDelayMs}ms` } as CSSProperties}
+        {...longPress}
+      >
+        <span className="equip-showcase-glow" aria-hidden="true" />
+        <span className="equip-showcase-head">
+          <EquipmentIcon item={item} className="equip-showcase-icon" />
+          <span className="equip-showcase-words">
+            <span className="equip-showcase-name">{item.name}</span>
+            <span className="equip-showcase-tier">{item.familyId ? RARITY_LABELS[item.rarity] : `Unique · ${RARITY_LABELS[item.rarity]}`}</span>
+          </span>
+        </span>
+        <ItemStatTiles item={item} />
+      </button>
+    );
+  }
   return (
     <button
       type="button"
