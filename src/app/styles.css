@@ -45198,6 +45198,8 @@ img.smithy-service-art {
   font-size: 10.5px;
   line-height: 1.35;
   color: var(--text-dim);
+  /* Fill each line to the edge; the global pretty wrap pulled words down early in this narrow column. */
+  text-wrap: wrap;
 }
 
 .swap-row-innate-name {
@@ -45238,8 +45240,6 @@ img.smithy-service-art {
   color: var(--hp-high);
 }
 
-  /* Fill each line to the edge; the global pretty wrap pulled words down early in this narrow column. */
-  text-wrap: wrap;
 .swap-stat.is-down .swap-stat-value {
   color: var(--hp-low);
 }
