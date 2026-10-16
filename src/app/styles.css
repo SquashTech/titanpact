@@ -33883,24 +33883,28 @@ button.evo-gift-card {
   height: auto;
 }
 
-/* Six heroes AND a row of pieces under the card: the icon sits beside the name, not over it, so the
-   figures above keep their faces. */
-.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase {
+/* Six heroes AND a row of pieces under the card, or a fight's haul under the ledger: the icon sits
+   beside the name, not over it, so the figures above keep their faces. */
+.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase,
+.fight-result-loot-showcase .equip-showcase {
   gap: 6px;
   padding: 8px 10px;
 }
 
-.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase-head {
+.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase-head,
+.fight-result-loot-showcase .equip-showcase-head {
   flex-direction: row;
   gap: 10px;
 }
 
-.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase .equip-showcase-icon {
+.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase .equip-showcase-icon,
+.fight-result-loot-showcase .equip-showcase .equip-showcase-icon {
   width: 48px;
   height: 48px;
 }
 
-.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase-words {
+.hall-counter-room:has(.pick-cols-3):has(.counter-stock) .equip-showcase-words,
+.fight-result-loot-showcase .equip-showcase-words {
   align-items: flex-start;
 }
 
@@ -50967,6 +50971,18 @@ img.smithy-service-art {
 }
 
 .fight-result-loot-piece.is-out {
+  animation: fight-result-loot-pop 0.52s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+/* The dropped piece as the showcase (EquipChoiceCard), the whole width over the rest of the haul. */
+.fight-result-loot-showcase {
+  flex: 1 0 100%;
+  padding: 0 12px 4px;
+  opacity: 0;
+  transform: translateY(16px) scale(0.3);
+}
+
+.fight-result-loot-showcase.is-out {
   animation: fight-result-loot-pop 0.52s cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
 

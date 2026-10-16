@@ -12,6 +12,7 @@ import { WoundBar } from '../shared/WoundBar';
 import type { RosterEntry } from '../../run/state';
 import type { MvpColumn, MvpPick } from '../../run/mvp';
 import { ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { EquipChoiceCard } from '../run/EquipChoiceCard';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { PlateButton } from '../shared/PlateButton';
@@ -451,6 +452,8 @@ interface LootPiece {
   sub?: string;
   /** The item opens its readout; nothing else here does. */
   onInspect?: () => void;
+  /** The dropped piece, drawn as the showcase card above the rest of the haul. */
+  item?: EquipmentDefinition;
 }
 
 /** What the fight dropped, as things rather than lines: the piece of gear, each Gem, the flask, the Contract. */
@@ -470,6 +473,7 @@ function lootPieces(
       label: item.name,
       sub: RARITY_LABELS[item.rarity],
       onInspect: onInspectItem,
+      item,
     });
   }
   gems.forEach((gem, i) =>
@@ -523,6 +527,18 @@ function LootPile({ pieces, shown }: { pieces: LootPiece[]; shown: boolean }) {
     <div className="fight-result-loot">
       {pieces.map((piece, i) => {
         const out = i < popped;
+        if (piece.item) {
+          return (
+            <div
+              key={piece.key}
+              className={`fight-result-loot-showcase${out ? ' is-out' : ''}`}
+              style={{ '--loot-i': i } as CSSProperties}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <EquipChoiceCard item={piece.item} revealDelayMs={0} labelled showcase onPick={piece.onInspect} onInspect={piece.onInspect} />
+            </div>
+          );
+        }
         const body = (
           <>
             <span className="fight-result-loot-art">
