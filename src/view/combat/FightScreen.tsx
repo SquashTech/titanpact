@@ -37,9 +37,9 @@ import { fieldHealMultiplier, resolveHealForceBonus, type HealCaster } from '../
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor, pactRoundOf } from '../../engine/combat/pactClock';
 import { applyForcedReplacement, placeLeads, replacementCandidates } from '../../engine/combat/switching';
-import { consumableRefusal, useConsumableWithReactions, type PotionKind } from '../../engine/combat/consumables';
+import { CONSUMABLE_RESTORE_FRACTION, consumableRefusal, useConsumableWithReactions, type PotionKind } from '../../engine/combat/consumables';
 import { CONSUMABLE_KINDS, CONSUMABLE_NAMES, type ConsumableKind, type ConsumablePurse } from '../../run/consumables';
-import { BagPanel, type BagTarget } from './BagPanel';
+import { BagPouch } from './BagPouch';
 import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
 import { OrderTrack, type OrderTrackEntry } from './OrderTrack';
 import { EnemyPips } from './EnemyPips';
@@ -93,7 +93,7 @@ import { SwitchInPanel, type SwitchOption } from './SwitchInPanel';
 import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
 import { FightResultOverlay } from './FightResultOverlay';
 import { MoveDetailOverlay, multClass } from './MoveDetailOverlay';
-import { forecastMove } from './forecast';
+import { forecastMove, type MoveForecast } from './forecast';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, beatDwellMs, KO_HOLD_MS, type Beat, type BeatRider } from './buildBeats';
@@ -675,8 +675,8 @@ export function FightScreen({
   const [switchOpen, setSwitchOpen] = useState(false);
   /** A line the game says over the field for a moment — a tapped order coin's place in words. Keyed so a second tap replays it. */
   const [fieldNote, setFieldNote] = useState<{ key: number; text: string } | null>(null);
-  /** The Bag — every consumable held, and who drinks it — open off the bottom row's key. */
-  const [bagOpen, setBagOpen] = useState(false);
+  /** The Bag, open in the move area: `'open'` shows the pouch, a potion kind is aiming it at a hero. */
+  const [bag, setBag] = useState<'open' | PotionKind | null>(null);
   /** The companion's Call card, open off its figure on the field (CompanionFigure). */
   const [callSheetOpen, setCallSheetOpen] = useState(false);
   /** Potions drunk this fight. The run's purse is only debited at resolve, so a replayed fight refunds them. */
@@ -875,6 +875,10 @@ export function FightScreen({
 
   /** Drives the target panel and the Back button (exit targeting rather than step to the previous hero). */
   const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;
+  const bagOpen = bag !== null && actingId !== null;
+  const aimingPotion: PotionKind | null = bagOpen && bag !== 'open' ? bag : null;
+  // The pouch belongs to whoever opened it: command passing on closes it.
+  useEffect(() => setBag(null), [actingId]);
 
   // The companion (docs/companion-call.md §12): it acts on its own, and the round it does is
   // telegraphed from the top of that round's command phase — the ! on its figure and its seat on the track.
@@ -930,6 +934,23 @@ export function FightScreen({
   const maxManaOf = (id: string) => getMaxMana(allCombatants[combat.combatants[id].heroId], combat.combatants[id]);
   const flaskRefusal = (id: string, kind: PotionKind) => consumableRefusal(combat, id, kind, maxHpOf, maxManaOf);
   const bagCount = CONSUMABLE_KINDS.reduce((n, kind) => n + flaskPurse[kind], 0);
+  /** What a potion would restore on this hero: the HP potion on the HP bar, the MP potion as a chip. */
+  function potionPreview(id: string, kind: PotionKind): { forecast: MoveForecast | null; badge: { text: string; className: string } | null } {
+    const refusal = flaskRefusal(id, kind);
+    if (refusal) return { forecast: null, badge: { text: refusal, className: 'potion-refused' } };
+    const c = combat.combatants[id];
+    if (kind === 'hpPotion') {
+      const maxHp = maxHpOf(id);
+      const restored = Math.min(maxHp - c.currentHp, Math.max(1, Math.round(maxHp * CONSUMABLE_RESTORE_FRACTION)));
+      return {
+        forecast: { kind: 'heal', amount: restored, restored, hpFraction: c.currentHp / maxHp, restoredFraction: restored / maxHp, blocked: false },
+        badge: null,
+      };
+    }
+    const maxMana = maxManaOf(id);
+    const gained = Math.min(maxMana, c.currentMana + Math.max(1, Math.round(maxMana * CONSUMABLE_RESTORE_FRACTION))) - c.currentMana;
+    return { forecast: null, badge: { text: `+${gained} MP`, className: 'potion-mana' } };
+  }
   /** The player's fallen, in roster order, drawn down at the lead pick. Fainted and on neither list: a KO takes a hero off both. */
   const playerFallen = Object.values(combat.combatants)
     .filter((c) => c.side === PLAYER_SIDE && c.fainted)
@@ -1049,7 +1070,9 @@ export function FightScreen({
 
   const selectingMode: TargetMode | null = selecting ? declarationMode(selecting.move) : null;
 
-  const targetableIds: string[] = !selecting
+  const targetableIds: string[] = aimingPotion
+    ? playerActiveAlive.filter((pid) => flaskRefusal(pid, aimingPotion) === null)
+    : !selecting
     ? []
     : selectingMode === 'singleEnemy'
       ? visibleTargets(selecting.move, selectingMode, enemyActiveAlive)
@@ -1133,6 +1156,10 @@ export function FightScreen({
   }
 
   function handleTargetClick(targetId: string) {
+    if (aimingPotion) {
+      handleDrinkPotion(targetId, aimingPotion);
+      return;
+    }
     declareSelectedMove(targetId);
   }
 
@@ -1174,7 +1201,7 @@ export function FightScreen({
     }));
     const spent = { ...usedConsumables, [kind]: usedConsumables[kind] + 1 };
     setUsedConsumables(spent);
-    setBagOpen(false);
+    setBag(null);
     reportCommandPhase(result.state, { usedConsumables: spent });
     // A hero that had committed Rest has lost its reason for it: the console goes back and re-asks.
     if (pending[combatantId]?.kind === 'rest') {
@@ -1652,7 +1679,13 @@ export function FightScreen({
           combatant={combat.combatants[id]}
           level={levelFor(id)}
           targetable={targetableIds.includes(id)}
-          forecast={selecting && targetableIds.includes(id) ? forecastMove(selecting.move, combat, selecting.combatantId, id) : null}
+          forecast={
+            aimingPotion && targetableIds.includes(id)
+              ? potionPreview(id, aimingPotion).forecast
+              : selecting && targetableIds.includes(id)
+                ? forecastMove(selecting.move, combat, selecting.combatantId, id)
+                : null
+          }
           acting={id === actingId}
           onSelectTarget={() => handleTargetClick(id)}
           onInspect={() => setInspecting(id)}
@@ -2076,6 +2109,47 @@ export function FightScreen({
             const combatant = combat.combatants[id];
             const hero = allCombatants[combatant.heroId];
 
+            if (bagOpen) {
+              const kind = aimingPotion;
+              return (
+                <div className={`action-panel${kind ? ' target-panel' : ' bag-panel'}`} key={`${id}-bag-${kind ?? 'open'}`}>
+                  <ConsoleCrest
+                    state={combat}
+                    activeSlots={combat.active[PLAYER_SIDE]}
+                    actingId={actingId}
+                    combatants={combat.combatants}
+                    pending={pending}
+                    isComplete={isPendingComplete}
+                    label={kind ? CONSUMABLE_NAMES[kind] : 'Bag'}
+                    labelRgb={kind === 'mpPotion' ? '108, 160, 255' : kind === 'hpPotion' ? '255, 106, 106' : '214, 150, 110'}
+                  />
+                  {kind ? (
+                    <div className="target-row is-potion">
+                      {playerActiveAlive.map((tid) => {
+                        const tCombatant = combat.combatants[tid];
+                        const preview = potionPreview(tid, kind);
+                        return (
+                          <CombatantCard
+                            key={tid}
+                            hero={allCombatants[tCombatant.heroId]}
+                            combatant={tCombatant}
+                            level={levelFor(tid)}
+                            targetable={targetableIds.includes(tid)}
+                            onSelectTarget={() => handleDrinkPotion(tid, kind)}
+                            popups={popups[tid]}
+                            effBadge={preview.badge}
+                            forecast={preview.forecast}
+                          />
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <BagPouch purse={flaskPurse} onPick={setBag} />
+                  )}
+                </div>
+              );
+            }
+
             // Move chosen, target not yet declared: a bottom-anchored targeting panel in place of the
             // move grid. The gold `.targetable` glow on the battlefield cards still applies in parallel.
             if (selecting && selecting.combatantId === id) {
@@ -2104,7 +2178,7 @@ export function FightScreen({
                   >
                     {spread && (
                       <span className="target-row-spread-label" aria-hidden="true">
-                        {TARGET_MODE_LABELS[selectingMode!] ?? 'Everyone'}
+                        <span className="target-row-spread-word">{TARGET_MODE_LABELS[selectingMode!] ?? 'Everyone'}</span>
                       </span>
                     )}
                     {targetableIds.map((tid) => {
@@ -2155,32 +2229,21 @@ export function FightScreen({
                   label={hero.name}
                 />
                 {!canAffordAnyMove && (
-                  <div className="move-list" key={`${id}-moves`}>
+                  <div className="move-list is-rest-only" key={`${id}-moves`}>
                     <button
-                      className={`move-button rest-button${pending[id]?.kind === 'rest' ? ' selected' : ''}`}
+                      className={`move-button rest-move${pending[id]?.kind === 'rest' ? ' selected' : ''}`}
                       onClick={() => handleRestClick(id)}
                     >
                       <div className="move-row-top">
+                        <span className="rest-move-gem" aria-hidden="true">
+                          ☾
+                        </span>
                         <span className="move-name">Rest</span>
                       </div>
                       <div className="move-row-effect">
-                        <span className="move-effect-text">Out of Mana — recovers to full, but skips the turn</span>
+                        <span className="move-effect-text">Recovers all Mana, but skips the turn</span>
                       </div>
                     </button>
-                    {/* The potion at its moment: offered right under the Rest it replaces, for this hero, one tap. */}
-                    {flaskPurse.mpPotion > 0 && flaskRefusal(id, 'mpPotion') === null && (
-                      <button className="move-button flask-button" onClick={() => handleDrinkPotion(id, 'mpPotion')}>
-                        <div className="move-row-top">
-                          <span className="move-name">
-                            <ResourceGlyph kind="mpPotion" className="flask-button-glyph" /> {CONSUMABLE_NAMES.mpPotion}
-                          </span>
-                          <span className="flask-button-count">×{flaskPurse.mpPotion}</span>
-                        </div>
-                        <div className="move-row-effect">
-                          <span className="move-effect-text">Restores half of max Mana — no turn spent</span>
-                        </div>
-                      </button>
-                    )}
                   </div>
                 )}
                 {canAffordAnyMove && (
@@ -2252,7 +2315,7 @@ export function FightScreen({
       {/* Fixed bottom row; buttons stay mounted and disable rather than hide, so the row's height never changes.
           While a target is being chosen it collapses to a single full-width Back — that state has one legal exit. */}
       <div
-        className={`bottom-bar${(showingTargetPanel || pickingLeads) && !resolving ? ' bottom-bar-solo' : ''}${resolving ? ' bottom-bar-playback' : ''}`}
+        className={`bottom-bar${(showingTargetPanel || bagOpen || pickingLeads) && !resolving ? ' bottom-bar-solo' : ''}${resolving ? ' bottom-bar-playback' : ''}`}
         style={consoleStyle}
       >
         {/* While the round plays out there is nothing to command, so the row carries the
@@ -2289,15 +2352,17 @@ export function FightScreen({
           <>
           <button
             className="bottom-action bottom-action-primary bottom-action-back"
-            disabled={!(actingId !== null && (showingTargetPanel || stepIndex > 0))}
-            onClick={() => (showingTargetPanel ? setSelecting(null) : setActionStep(stepIndex - 1))}
+            disabled={!(actingId !== null && (showingTargetPanel || bagOpen || stepIndex > 0))}
+            onClick={() =>
+              aimingPotion ? setBag('open') : bagOpen ? setBag(null) : showingTargetPanel ? setSelecting(null) : setActionStep(stepIndex - 1)
+            }
           >
             <span className="bottom-action-glyph" aria-hidden="true">
               <ConsoleGlyph kind="back" />
             </span>
             Back
           </button>
-          {!showingTargetPanel && (
+          {!showingTargetPanel && !bagOpen && (
             <>
               <button
                 className="bottom-action bottom-action-primary bottom-action-switch"
@@ -2330,7 +2395,10 @@ export function FightScreen({
               <button
                 className="bottom-action bottom-action-primary bottom-action-bag"
                 disabled={!(actingId !== null && bagCount > 0)}
-                onClick={() => setBagOpen(true)}
+                onClick={() => {
+                  setSelecting(null);
+                  setBag('open');
+                }}
                 aria-label={`Bag — ${bagCount} held`}
               >
                 {/* The flask on a coin (shared/Coin.tsx), the count hung off it — the Bag panel's chips, at the key's size. */}
@@ -2500,23 +2568,6 @@ export function FightScreen({
           onClose={() => setCallSheetOpen(false)}
         />
       )}
-      {bagOpen && actingId && (
-        <BagPanel
-          purse={flaskPurse}
-          actingId={actingId}
-          targets={playerActiveAlive.map(
-            (id): BagTarget => ({
-              combatantId: id,
-              hero: allCombatants[combat.combatants[id].heroId],
-              combatant: combat.combatants[id],
-              refusal: { hpPotion: flaskRefusal(id, 'hpPotion'), mpPotion: flaskRefusal(id, 'mpPotion') },
-            })
-          )}
-          onDrink={handleDrinkPotion}
-          onClose={() => setBagOpen(false)}
-        />
-      )}
-
       {movePopup && (
         <MoveDetailOverlay
           move={movePopup.move}

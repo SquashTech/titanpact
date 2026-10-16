@@ -153,12 +153,15 @@ export function TipScene({ scene }: { scene: Scene }) {
       {scene.rest && (
         <div className="move-list">
           <div className="tip-scene-row is-focus-row">
-            <button type="button" className="move-button rest-button">
+            <button type="button" className="move-button rest-move">
               <div className="move-row-top">
+                <span className="rest-move-gem" aria-hidden="true">
+                  ☾
+                </span>
                 <span className="move-name">Rest</span>
               </div>
               <div className="move-row-effect">
-                <span className="move-effect-text">Out of Mana — recovers to full, but skips the turn</span>
+                <span className="move-effect-text">Recovers all Mana, but skips the turn</span>
               </div>
             </button>
           </div>
