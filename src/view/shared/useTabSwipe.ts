@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent as ReactPointerEvent, type MouseEvent as ReactMouseEvent } from 'react';
+import { useRef, useState, type RefObject, type PointerEvent as ReactPointerEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { playSfx } from '../../audio/sfx';
 
 /** Past this the drag is a page turn, not a scroll that wandered. */
@@ -11,8 +11,9 @@ const TURN_MIN_PX = 48;
  * and turns past a fifth of its width; a vertical drag is left to the scroller. `select` is the
  * strip's tap, so a tapped page enters from the same side a swiped one would.
  */
-export function useTabSwipe<Id extends string>(ids: readonly Id[], active: Id, onSelect: (id: Id) => void) {
-  const pageRef = useRef<HTMLDivElement>(null);
+export function useTabSwipe<Id extends string>(ids: readonly Id[], active: Id, onSelect: (id: Id) => void, sharedRef?: RefObject<HTMLDivElement | null>) {
+  const ownRef = useRef<HTMLDivElement>(null);
+  const pageRef = sharedRef ?? ownRef;
   const drag = useRef<{ id: number; x: number; y: number; axis: 'x' | 'y' | null } | null>(null);
   const swiped = useRef(false);
   const [enterFrom, setEnterFrom] = useState<'left' | 'right' | null>(null);

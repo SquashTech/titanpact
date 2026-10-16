@@ -20,6 +20,7 @@ import { computeStatTotal, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { StatColumns } from '../shared/StatColumns';
 import { ElementGlyph } from '../shared/elementIcons';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
+import { useTabSwipe } from '../shared/useTabSwipe';
 import { TypeBadge } from '../shared/TypeBadge';
 import { isTitanspawn } from '../../data/titanspawn';
 import { innatePassiveOf, masteredInnateOf, titansMarkOf } from '../../run/innate';
@@ -266,6 +267,12 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
     { id: 'moves', label: 'Moves', glyph: 'moves', count: startingKit.length + pool.length + (hero.signatureMoveId ? 1 : 0) + evolutionPools.reduce((n, p) => n + p.moveIds.length, 0) },
     { id: 'evolution', label: 'Evolution', glyph: 'buffs' },
   ];
+  const { select, pageClass, swipeHandlers } = useTabSwipe(
+    tabs.map((t) => t.id),
+    tab,
+    setTab,
+    bodyRef
+  );
 
   // stopPropagation on every dismiss: this overlay is a DOM child of the Collection's own
   // backdrop, whose onClick closes the whole screen — closing the sheet must not close that too.
@@ -280,7 +287,7 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
           the Collection and the roster are two ways into one hero, and they should not be two
           designs. */}
       <div
-        className="detail-panel is-tabbed is-hero-sheet"
+        className="detail-panel is-tabbed is-hero-sheet is-gilt-sheet"
         style={{ '--hero-color': getTypeColor(hero.types[0]) } as CSSProperties}
         onClick={(e) => e.stopPropagation()}
       >
@@ -308,7 +315,7 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
           {canCycle && <StepButton dir="next" onClick={() => step(1)} />}
         </div>
 
-        <div ref={bodyRef} className={`detail-tab-body${tab === 'stats' ? ' is-showcase-page' : ''}`} role="tabpanel">
+        <div key={tab} ref={bodyRef} className={`detail-tab-body${tab === 'stats' ? ' is-showcase-page' : ''}${pageClass}`} role="tabpanel" {...swipeHandlers}>
           {tab === 'stats' && (
             <>
               {/* The hero first and large: this page is the showcase, a swipe across it the next hero. */}
@@ -316,7 +323,10 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
                 key={`showcase-${hero.id}`}
                 className={`dossier-showcase${stepDir ? ` is-from-${stepDir}` : ''}`}
                 style={{ '--hero-color-2': getTypeColor(hero.types[1] ?? hero.types[0]) } as CSSProperties}
-                onPointerDown={onSwipeDown}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  onSwipeDown(e);
+                }}
                 onPointerUp={onSwipeUp}
                 onPointerCancel={() => (swipeRef.current = null)}
               >
@@ -421,7 +431,7 @@ export function HeroDossierOverlay({ hero: opened, cycle, onClose }: Props) {
             ))}
         </div>
 
-        <TabStrip tabs={tabs} active={tab} onSelect={setTab} />
+        <TabStrip tabs={tabs} active={tab} onSelect={select} />
       </div>
 
       <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>

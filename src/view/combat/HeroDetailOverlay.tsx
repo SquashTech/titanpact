@@ -161,7 +161,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
       {/* Cut in the hero's INNATE primary colour, as the run's sheet is: a graft changes what the
           hero fights like, never who it is. The badges below carry the effective pair. */}
       <div
-        className="detail-panel is-tabbed is-hero-sheet is-banner-sheet"
+        className="detail-panel is-tabbed is-hero-sheet is-gilt-sheet is-banner-sheet"
         style={{ '--hero-color': getTypeColor(hero.types[0]) } as CSSProperties}
         onClick={(e) => e.stopPropagation()}
       >

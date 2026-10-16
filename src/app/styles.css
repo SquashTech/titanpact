@@ -52216,11 +52216,11 @@ img.smithy-service-art {
 }
 
 /* ==========================================================================
-   The banner hero sheet (HeroPreviewOverlay, HeroDetailOverlay) — 2026-10-16, per user direction.
-   One frame lit from the top in the hero's colour, the hero large beside its stat columns, read on
-   every page, and the pages swipe (useTabSwipe). Replaces the stone window on these two sheets.
+   The gilt sheet (.is-gilt-sheet) — 2026-10-16, per user direction: one frame lit from the top in the
+   hero's colour, pages that swipe (useTabSwipe) and a marker sliding along the strip, replacing the stone
+   window on every hero sheet. The banner (.is-banner-sheet) seats the hero beside its stat columns.
    ========================================================================== */
-.detail-panel.is-hero-sheet.is-banner-sheet {
+.detail-panel.is-hero-sheet.is-gilt-sheet {
   position: relative;
   padding: 0 0 10px;
   border: 1px solid rgba(224, 166, 60, 0.55);
@@ -52233,7 +52233,7 @@ img.smithy-service-art {
   image-rendering: auto;
 }
 
-.is-banner-sheet::after {
+.is-gilt-sheet::after {
   content: '';
   position: absolute;
   inset: 4px;
@@ -52369,7 +52369,7 @@ img.smithy-service-art {
 }
 
 /* The page: no well of its own, it follows the finger while a swipe holds it. */
-.is-hero-sheet.is-banner-sheet .detail-tab-body {
+.is-hero-sheet.is-gilt-sheet .detail-tab-body {
   margin: 0;
   padding: 12px 14px 12px;
   border: 0;
@@ -52380,15 +52380,15 @@ img.smithy-service-art {
   transition: transform 0.22s var(--ease-out);
 }
 
-.is-banner-sheet .detail-tab-body.is-swiping {
+.is-gilt-sheet .detail-tab-body.is-swiping {
   transition: none;
 }
 
-.is-banner-sheet .detail-tab-body.is-enter-right {
+.is-gilt-sheet .detail-tab-body.is-enter-right {
   animation: sheet-page-from-right 0.22s var(--ease-out);
 }
 
-.is-banner-sheet .detail-tab-body.is-enter-left {
+.is-gilt-sheet .detail-tab-body.is-enter-left {
   animation: sheet-page-from-left 0.22s var(--ease-out);
 }
 
@@ -52445,7 +52445,7 @@ img.smithy-service-art {
 }
 
 /* Segmented tabs with a marker that slides to the open page. */
-.is-hero-sheet.is-banner-sheet .tab-strip {
+.is-hero-sheet.is-gilt-sheet .tab-strip {
   position: relative;
   gap: 0;
   margin: 0 10px;
@@ -52459,7 +52459,7 @@ img.smithy-service-art {
   display: none;
 }
 
-.is-banner-sheet .tab-strip-marker {
+.is-gilt-sheet .tab-strip-marker {
   display: block;
   position: absolute;
   top: 3px;
@@ -52473,8 +52473,8 @@ img.smithy-service-art {
   transition: transform 0.24s var(--ease-out);
 }
 
-.is-banner-sheet .tab-button,
-.is-hero-sheet.is-banner-sheet .tab-button.is-active {
+.is-gilt-sheet .tab-button,
+.is-hero-sheet.is-gilt-sheet .tab-button.is-active {
   padding: 6px 2px 5px;
   border: 0;
   border-image: none;
@@ -52483,10 +52483,42 @@ img.smithy-service-art {
   box-shadow: none;
 }
 
-.is-banner-sheet .tab-button:hover:not(.is-active) {
+.is-gilt-sheet .tab-button:hover:not(.is-active) {
   background: none;
 }
 
-.is-hero-sheet.is-banner-sheet .tab-button.is-active {
+.is-hero-sheet.is-gilt-sheet .tab-button.is-active {
   color: var(--accent);
+}
+
+/* The gilt sheet's title bar and portrait plate, for the sheets that keep a title bar (dossier, Records). */
+.is-hero-sheet.is-gilt-sheet .detail-header.is-hero {
+  margin: 0;
+  padding: 14px 14px 10px;
+}
+
+.is-hero-sheet.is-gilt-sheet .detail-header.is-hero::after {
+  left: 14px;
+  right: 14px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(224, 166, 60, 0.45), rgba(224, 166, 60, 0.05));
+}
+
+.is-gilt-sheet .detail-portrait-plate {
+  border: 0;
+  border-image: none;
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--hero-color, var(--accent)) 35%, #000), #0b0c10 75%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  image-rendering: auto;
+}
+
+.is-gilt-sheet.compendium-sheet .detail-portrait-plate {
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+}
+
+.detail-panel.is-hero-sheet.is-gilt-sheet.stage-overlay-panel {
+  padding: 14px 12px 12px;
 }

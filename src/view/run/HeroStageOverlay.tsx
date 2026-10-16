@@ -55,7 +55,7 @@ export function HeroStageOverlay({ hero, entry, relicIds, scale, unowned = false
   return (
     <div className="detail-overlay is-sheet" onClick={(e) => { e.stopPropagation(); onClose(); }}>
       <div
-        className="detail-panel is-hero-sheet stage-overlay-panel"
+        className="detail-panel is-hero-sheet is-gilt-sheet stage-overlay-panel"
         style={{ '--hero-color': getTypeColor(hero.types[0]), '--pact-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
         onClick={(e) => e.stopPropagation()}
       >

@@ -7,6 +7,7 @@ import { formatPlaytime, starredHeroCount, totalStars, type Profile } from '../.
 import { SEAL_ACTS } from '../../run/state';
 import { HubGlyph } from '../shared/nodeIcons';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
+import { useTabSwipe } from '../shared/useTabSwipe';
 import { RunHistory } from './RunHistory';
 
 interface Props {
@@ -58,6 +59,11 @@ export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
   // Two taps: this is the only control in the game that destroys something unrecoverable.
   const [confirmingErase, setConfirmingErase] = useState(false);
   const [tab, setTab] = useState<RecordsTab>('records');
+  const { pageRef, select, pageClass, swipeHandlers } = useTabSwipe(
+    TABS.map((t) => t.id),
+    tab,
+    setTab
+  );
 
   const cleared = profile.runsCompleted;
   const played = profile.runsStarted;
@@ -65,7 +71,7 @@ export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
 
   return (
     <div className="detail-overlay is-sheet" onClick={onClose}>
-      <div className="detail-panel is-tabbed is-hero-sheet compendium-sheet" onClick={(e) => e.stopPropagation()}>
+      <div className="detail-panel is-tabbed is-hero-sheet is-gilt-sheet compendium-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="detail-header is-hero compendium-head">
           <span className="detail-portrait-plate compendium-head-plate" aria-hidden="true">
             <HubGlyph name="trophy" className="compendium-head-glyph" />
@@ -74,7 +80,7 @@ export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
         </div>
 
         {/* Keyed on the page so a switch scrolls the well back to its top. */}
-        <div key={tab} className="detail-tab-body compendium-body" role="tabpanel">
+        <div key={tab} ref={pageRef} className={`detail-tab-body compendium-body${pageClass}`} role="tabpanel" {...swipeHandlers}>
           {tab === 'history' ? (
             <RunHistory records={profile.runHistory} />
           ) : (
@@ -131,7 +137,7 @@ export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
           )}
         </div>
 
-        <TabStrip tabs={TABS} active={tab} onSelect={setTab} />
+        <TabStrip tabs={TABS} active={tab} onSelect={select} />
       </div>
 
       <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
