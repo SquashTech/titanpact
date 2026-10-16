@@ -42,6 +42,7 @@ import './recruitment.test';
 import './shop.test';
 import './equipment.test';
 import './equipCompare.test';
+import './itemFit.test';
 import './map.test';
 import './relics.test';
 import './boons.test';

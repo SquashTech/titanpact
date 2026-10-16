@@ -86,6 +86,24 @@ hero's sheet becomes — is a long-press preview, as on every who-screen. The mo
 better, so the only real question is a family-to-hero fit, which is an identity read, not a
 numbers read.
 
+**Fit chips** (2026-10-16, per user direction, from a first-time tester who could not tell
+whether an Umbral Bow belonged on Marrow or Valor; mock in `art/concepts/item-fit/`). Each
+hero card repeats the item's grants as small chips, **lit where the stat is one this hero leans
+on, dim where it is not**. No words, no numbers. A chip lights when either holds:
+
+- **the kit reads it** — Attack for a physical attack, Intelligence for a magical one, Wisdom
+  for a heal (heal power is the caster's Wisdom), Defense for a Shield (cast off Defense), a
+  Force for a held move of its type;
+- **it is one of the hero's top two of Attack, Defense, Intelligence and Wisdom**, on current
+  stats — the tank's Defense, which no move reads.
+
+HP and Mana are always lit. **Speed is not a chip: when the item grants Speed, every card shows
+that hero's Speed value**, because Speed pays only at a threshold and the number is the
+decision — which of the six it would carry past which. A dim chip means *not where this hero
+shines*, not *wasted*: Valor's Wisdom still cuts magic damage. Watch whether the top-two read
+pulls a roster toward stacking one stat (a Wisdom piece can lift Wisdom into a hero's top two
+and light the next one).
+
 ---
 
 ## 3. Merging is a tap on the holder

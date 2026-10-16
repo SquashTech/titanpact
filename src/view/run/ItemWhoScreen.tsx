@@ -13,6 +13,7 @@ import { SellPress } from '../shared/SellPress';
 import { useArmedTap } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { GearGood, GearSockets, Preview, ReplaceSheet, useItemReceipts, type PreviewState } from './HallCounters';
+import { ItemFitChips } from './ItemFitChips';
 import { MergeBurst } from './MergeBurst';
 import { RosterPeek } from './RosterPeek';
 
@@ -126,7 +127,12 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
                 ariaLabel={`${hero.name} — ${cta}`}
                 ctaClassName={isTaker ? 'is-done' : receipt?.kind === 'merge' && open ? 'is-accent is-merge' : open ? 'is-accent' : undefined}
                 overlay={isTaker ? <span className="blessing-flare" aria-hidden="true" /> : undefined}
-                detail={<GearSockets hero={hero} entry={entry} receipt={receipt} open={open} />}
+                detail={
+                  <>
+                    <ItemFitChips run={run} hero={hero} entry={entry} item={item} />
+                    <GearSockets hero={hero} entry={entry} receipt={receipt} open={open} />
+                  </>
+                }
                 cta={cta}
               />
             );
