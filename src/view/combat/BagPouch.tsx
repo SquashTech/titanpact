@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
-import type { PotionKind } from '../../engine/combat/consumables';
-import { CONSUMABLE_BLURBS, CONSUMABLE_KINDS, CONSUMABLE_NAMES } from '../../run/consumables';
+import { CONSUMABLE_RESTORE_FRACTION, type PotionKind } from '../../engine/combat/consumables';
+import { CONSUMABLE_KINDS, CONSUMABLE_NAMES } from '../../run/consumables';
+
+const RESTORE_PERCENT = Math.round(CONSUMABLE_RESTORE_FRACTION * 100);
 
 const LIQUID: Record<PotionKind, { rgb: string; deep: string }> = {
   hpPotion: { rgb: '255, 106, 106', deep: '#a3222e' },
@@ -55,6 +57,7 @@ export function BagPouch({ purse, onPick }: { purse: Record<PotionKind, number>;
             className={`bag-potion is-${kind}${empty ? ' is-empty' : ''}`}
             style={{ '--potion-rgb': LIQUID[kind].rgb, '--rise-delay': `${0.05 + i * 0.07}s` } as CSSProperties}
             aria-disabled={empty}
+            aria-label={`${CONSUMABLE_NAMES[kind]} ×${purse[kind]}`}
             onClick={() => {
               if (!empty) onPick(kind);
             }}
@@ -62,11 +65,8 @@ export function BagPouch({ purse, onPick }: { purse: Record<PotionKind, number>;
             <span className="bag-potion-glow" aria-hidden="true" />
             <PotionFlask kind={kind} className="bag-potion-flask" />
             <span className="bag-potion-label">
-              <span className="bag-potion-name">
-                {CONSUMABLE_NAMES[kind]}
-                <span className="bag-potion-count">×{purse[kind]}</span>
-              </span>
-              <span className="bag-potion-blurb">{CONSUMABLE_BLURBS[kind]}</span>
+              <span className="bag-potion-count">×{purse[kind]}</span>
+              <span className="bag-potion-restore">{RESTORE_PERCENT}% {kind === 'hpPotion' ? 'HP' : 'MP'}</span>
             </span>
           </button>
         );

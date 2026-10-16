@@ -53534,32 +53534,25 @@ img.smithy-service-art {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 1px;
   pointer-events: none;
 }
 
-.bag-potion-name {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 14px;
+.bag-potion-count {
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
   color: #fff4e2;
-  text-shadow: 0 1px 0 #000, 0 0 8px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 2px 0 #000, 0 0 10px rgba(0, 0, 0, 0.8);
 }
 
-.bag-potion-count {
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
+.bag-potion-restore {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   color: rgb(var(--potion-rgb));
   text-shadow: 0 1px 0 #000, 0 0 8px rgba(var(--potion-rgb), 0.6);
-}
-
-.bag-potion-blurb {
-  font-size: 10px;
-  color: #d9bf98;
-  text-shadow: 0 1px 0 #000;
 }
 
 .bag-potion.is-empty {
