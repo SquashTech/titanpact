@@ -279,7 +279,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           patronFor={(node) => {
             const patron = patronOfNode(run, node);
             return patron
-              ? { id: patron.id, title: patron.title, name: patron.name, short: patron.title.replace(/^The /, ''), color: patronColor(patron.id), trust: trustOf(run, patron.id) }
+              ? { id: patron.id, title: patron.title, name: patron.name, color: patronColor(patron.id), trust: trustOf(run, patron.id) }
               : null;
           }}
           onPreviewChange={(node) => setReading(node?.type ?? null)}

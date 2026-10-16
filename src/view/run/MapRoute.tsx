@@ -166,10 +166,8 @@ interface RouteSegment {
 export interface PatronTile {
   id: string;
   title: string;
-  /** The go plate: the person, by name. */
+  /** The label under the tile and the go plate: the person, by name. The preview card carries the title. */
   name: string;
-  /** The label under the tile: the title without its article. */
-  short: string;
   color: string;
   trust: number;
 }
@@ -210,7 +208,7 @@ function ChoiceMedallion({
   measureRef: (el: HTMLButtonElement | null) => void;
 }) {
   const leadOns = showLeadOn ? leadOnTypes(map, node.id) : [];
-  const label = patron ? patron.title : nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber);
+  const label = patron ? `${patron.name}, ${patron.title}` : nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber);
   const landmark = landmarkKind(node.type);
   // A pick-1-of-3 reward or the Elite/Skirmish fork is a plain button: one stone tile for all of
   // them, its pixel icon and its name inside. The Titanspawn and the act's beats keep their art.
@@ -233,7 +231,7 @@ function ChoiceMedallion({
       {/* Above the tile: the route lines arrive from below. The two gates go unlabelled — the door says it. */}
       {!tile && landmark !== 'gate' && landmark !== 'titanGate' && (
         <span className="map-choice-label" aria-hidden="true">
-          {patron ? patron.short : NODE_LABELS[node.type]}
+          {patron ? patron.name : NODE_LABELS[node.type]}
         </span>
       )}
       {hint && !opening && (
