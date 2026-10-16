@@ -21557,21 +21557,49 @@ button.star-shop-bundle-face {
    it at several alphas. Note the eighteenth pass's warning applies — these
    have to be declared on the socket, not on `:root`, because a `var()` inside
    a custom property resolves where the property is DECLARED. */
+/* The commit presses are a piece of night sky: an ink face, starlit words, the press's own colour
+   only in its rim, its wings and a few coloured stars, the way the title's constellation is lit. */
+:root {
+  --night-face: #0b0d16;
+  --night-face-lit: #10131f;
+  --night-lip: #05060b;
+  --starlight: #f3ecda;
+  --starlight-glow: rgba(255, 233, 176, 0.55);
+  --starfield:
+    radial-gradient(circle at 4% 30%, #fff 0 0.8px, transparent 1.4px),
+    radial-gradient(circle at 7% 52%, rgba(255, 255, 255, 0.7) 0 0.7px, transparent 1.3px),
+    radial-gradient(circle at 9% 70%, #ff9a6a 0 0.9px, transparent 1.6px),
+    radial-gradient(circle at 18% 56%, #7cc4ff 0 0.9px, transparent 1.6px),
+    radial-gradient(circle at 22% 80%, rgba(255, 255, 255, 0.6) 0 0.7px, transparent 1.3px),
+    radial-gradient(circle at 78% 26%, #c9a2ff 0 0.9px, transparent 1.6px),
+    radial-gradient(circle at 82% 64%, #fff 0 0.8px, transparent 1.4px),
+    radial-gradient(circle at 91% 76%, rgba(255, 255, 255, 0.7) 0 0.7px, transparent 1.3px),
+    radial-gradient(circle at 93% 54%, #8fe0a8 0 0.9px, transparent 1.6px),
+    radial-gradient(circle at 96% 30%, #ffd86a 0 0.9px, transparent 1.6px);
+  --star-glints:
+    radial-gradient(circle at 14% 26%, #fff 0 1.3px, rgba(255, 244, 214, 0.45) 2.2px, transparent 4.5px),
+    radial-gradient(circle at 87% 42%, #fff 0 1.3px, rgba(255, 244, 214, 0.45) 2.2px, transparent 4.5px);
+}
+
+@keyframes star-glint {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .title-cta-socket {
   position: relative;
   width: 100%;
-  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.6));
 }
 
-/* Gold is a pact being struck, its lip the bronze the wordmark ends on. */
+/* Gold is a pact being struck. */
 .title-screen.is-gold {
   --plate-rgb: 224, 166, 60;
-  --plate-face: #e0a63c;
-  --plate-under: #8a6022;
-  --plate-ink: #170f00;
-  --plate-lip: rgba(255, 236, 194, 0.45);
-  --plate-etch: rgba(112, 74, 20, 0.35);
-  --plate-focus: rgba(26, 16, 0, 0.85);
   --plate-flare: #fff6e0;
   --plate-bloom-rgb: 240, 188, 95;
   --plate-dusk: 18, 15, 12;
@@ -21584,16 +21612,17 @@ button.star-shop-bundle-face {
    it: the horizon the pactbearers stand against is this hue. */
 .title-screen.is-verdigris {
   --plate-rgb: 61, 157, 125;
-  /* Oxidised copper, not mint: a shade under the gold, the older of the two metals. */
-  --plate-face: #3d9d7d;
-  --plate-under: #20594a;
-  --plate-ink: #04140e;
-  --plate-lip: rgba(198, 244, 224, 0.35);
-  --plate-etch: rgba(8, 54, 42, 0.42);
-  --plate-focus: rgba(2, 22, 15, 0.85);
   --plate-flare: #eafff4;
   --plate-bloom-rgb: 116, 214, 178;
   --plate-dusk: 8, 17, 14;
+}
+
+.title-cta-frame {
+  position: absolute;
+  inset: -2px;
+  clip-path: polygon(17px 0, 100% 0, 100% calc(100% - 17px), calc(100% - 17px) 100%, 0 100%, 0 17px);
+  background: color-mix(in oklab, rgb(var(--plate-rgb)) 80%, #000000);
+  pointer-events: none;
 }
 
 .title-cta {
@@ -21607,10 +21636,10 @@ button.star-shop-bundle-face {
   border: 0;
   border-radius: 0;
   clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
-  background: var(--plate-face);
-  color: var(--plate-ink);
-  text-shadow: 0 1px 0 var(--plate-lip);
-  box-shadow: inset 0 2px 0 var(--plate-lip), inset 0 -5px 0 var(--plate-under);
+  background: var(--starfield), var(--night-face);
+  color: var(--starlight);
+  text-shadow: 0 0 12px var(--starlight-glow), 0 1px 0 #000;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08), inset 0 -5px 0 var(--night-lip);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   display: flex;
   flex-direction: column;
@@ -21619,31 +21648,39 @@ button.star-shop-bundle-face {
   overflow: hidden;
 }
 
-/* Hairline etch just inside the plate. A pseudo-element rather than an `outline`, and it
-   doubles as the KEYBOARD FOCUS RING below, because this button suppresses
-   both of the app's usual indicators: the global `:focus-visible` rule sets
-   `outline: none` and delivers the ring as a box-shadow, and a box-shadow is
-   clipped away by the chamfer along with everything else. Without this the one
-   control the whole screen is built around would focus invisibly. */
+.title-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--star-glints);
+  animation: star-glint 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* The KEYBOARD FOCUS RING: this button suppresses both of the app's usual indicators (the global
+   `:focus-visible` rule delivers the ring as a box-shadow, which the chamfer clips away). */
 .title-cta::after {
   content: '';
   position: absolute;
   inset: 5px;
-  border: 1px solid var(--plate-etch);
   pointer-events: none;
 }
 
 .title-cta:focus-visible::after {
-  border: 2px solid var(--plate-focus);
+  border: 2px solid var(--starlight);
 }
 
 .title-cta-socket:hover {
   transform: translateY(-1px);
 }
 
+.title-cta:not(:disabled):hover {
+  background: var(--starfield), var(--night-face-lit);
+}
+
 .title-cta:not(:disabled):active {
   transform: translateY(3px);
-  box-shadow: inset 0 2px 0 var(--plate-lip), inset 0 -2px 0 var(--plate-under);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08), inset 0 -2px 0 var(--night-lip);
 }
 
 .title-cta-label {
@@ -21655,19 +21692,19 @@ button.star-shop-bundle-face {
   line-height: 1.1;
 }
 
-/* A seal-diamond either side of the words, cut in the plate's own ink. */
+/* A star either side of the words. */
 .title-cta-label::before,
 .title-cta-label::after {
   content: '';
   flex: none;
-  width: 7px;
-  height: 7px;
-  background: var(--plate-ink);
-  opacity: 0.7;
-  transform: rotate(45deg);
+  width: 11px;
+  height: 11px;
+  background: var(--starlight);
+  opacity: 0.85;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
 }
 
-/* Gilt wings off the plate's flanks, each ending in a diamond: the plate is struck into the
+/* Wings off the plate's flanks, each ending in a star: the plate is struck into the
    screen rather than floating on it. On the socket, outside the chamfer's clip. */
 .title-cta-socket::before,
 .title-cta-socket::after {
@@ -21693,20 +21730,20 @@ button.star-shop-bundle-face {
 .title-cta-wing-tip {
   position: absolute;
   top: 50%;
-  width: 8px;
-  height: 8px;
-  margin-top: -4px;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
   background: rgba(var(--plate-rgb), 1);
-  transform: rotate(45deg);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
   pointer-events: none;
 }
 
 .title-cta-wing-tip.is-left {
-  right: calc(100% + 21px);
+  right: calc(100% + 19px);
 }
 
 .title-cta-wing-tip.is-right {
-  left: calc(100% + 21px);
+  left: calc(100% + 19px);
 }
 
 /* Secondary to Continue: starting over is the rarer intent once a run is parked. */
@@ -21837,8 +21874,8 @@ button.star-shop-bundle-face {
 /* Brightened rather than repainted, so the hold works in either metal without
    a second palette: a launching plate is the same plate overdriven. */
 .title-screen.is-launching .title-cta:disabled {
-  background: var(--plate-face);
-  color: var(--plate-ink);
+  background: var(--starfield), var(--night-face);
+  color: var(--starlight);
   border-color: transparent;
   opacity: 1;
   cursor: default;
@@ -31105,8 +31142,7 @@ button.evo-gift-card {
 }
 
 .moveoffer-panel.is-signature .moveoffer-confirm {
-  border-color: rgba(var(--sig-rgb), 0.9);
-  box-shadow: 0 0 16px rgba(var(--sig-rgb), 0.45);
+  --rim: rgba(var(--sig-rgb), 0.9);
 }
 
 /* The mastered innate: the born card drawn small and struck through above the new one. */
@@ -42145,13 +42181,13 @@ img.smithy-service-art {
   image-rendering: pixelated;
 }
 
-/* The title's Continue is the pact's own chamfered metal plate, not a plank. */
+/* The title's Continue is the pact's own chamfered plate of night, not a plank. */
 .title-cta {
   border: 0;
   border-image: none;
-  background: var(--plate-face);
-  color: var(--plate-ink);
-  text-shadow: 0 1px 0 var(--plate-lip);
+  background: var(--starfield), var(--night-face);
+  color: var(--starlight);
+  text-shadow: 0 0 12px var(--starlight-glow), 0 1px 0 #000;
   filter: none;
 }
 
@@ -48992,12 +49028,6 @@ img.smithy-service-art {
   --mode-word: linear-gradient(180deg, #ffffff 0%, #d4e2f2 34%, #8fa6c2 66%, #43536c 100%);
   --mode-glow: 150, 196, 240;
   --plate-rgb: 150, 190, 236;
-  --plate-face: #8fa9c9;
-  --plate-under: #4f6280;
-  --plate-ink: #07101e;
-  --plate-lip: rgba(240, 248, 255, 0.45);
-  --plate-etch: rgba(30, 50, 80, 0.38);
-  --plate-focus: rgba(4, 10, 22, 0.85);
   --plate-flare: #f4f9ff;
   --plate-bloom-rgb: 170, 206, 245;
   --plate-dusk: 12, 15, 20;
@@ -49009,12 +49039,6 @@ img.smithy-service-art {
   --mode-word: linear-gradient(180deg, #fff1dc 0%, #ffb37a 30%, #e0542e 64%, #6e1a10 100%);
   --mode-glow: 240, 96, 60;
   --plate-rgb: 226, 92, 52;
-  --plate-face: #e0592f;
-  --plate-under: #8a2f16;
-  --plate-ink: #1a0400;
-  --plate-lip: rgba(255, 224, 200, 0.45);
-  --plate-etch: rgba(110, 30, 14, 0.38);
-  --plate-focus: rgba(26, 4, 0, 0.85);
   --plate-flare: #fff0e4;
   --plate-bloom-rgb: 245, 120, 70;
   --plate-dusk: 20, 12, 10;
@@ -52195,23 +52219,28 @@ img.smithy-service-art {
 }
 
 /* ==========================================================================
-   The plate (PlateButton): the title's chamfered metal at screen size, for a
-   screen's commit press. Every layer is mixed from one colour, --plate-color —
-   the thing being chosen, or the screen's --node-rgb when nothing is. Planks stay
+   The plate (PlateButton): the title's chamfered plate of night at screen size,
+   for a screen's commit press. Its rim and wings are --plate-color — the thing
+   being chosen, or the screen's --node-rgb when nothing is. Planks stay
    for what belongs to a place (the Hall, the Smithy, the map) and for the way out.
    ========================================================================== */
 .plate-socket {
   --plate-color: rgb(var(--node-rgb, 224, 166, 60));
-  --plate-top: color-mix(in oklab, var(--plate-color) 45%, #fff6dc);
-  --plate-under: color-mix(in oklab, var(--plate-color) 62%, #000000);
-  --plate-ink: color-mix(in oklab, var(--plate-color) 18%, #050302);
   position: relative;
   z-index: 1;
   flex: none;
   width: calc(100% - 52px);
   margin-inline: auto;
-  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.6));
   transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.plate-frame {
+  position: absolute;
+  inset: -2px;
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  background: color-mix(in oklab, var(--plate-color) 80%, #000000);
+  pointer-events: none;
 }
 
 .node-screen > .plate-socket,
@@ -52230,30 +52259,38 @@ img.smithy-service-art {
   border: 0;
   border-radius: 0;
   clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
-  background: var(--plate-color);
-  color: var(--plate-ink);
+  background: var(--starfield), var(--night-face);
+  color: var(--starlight);
   font-size: 16px;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  text-shadow: 0 1px 0 color-mix(in oklab, var(--plate-color) 30%, rgba(255, 255, 255, 0.55));
-  box-shadow: inset 0 2px 0 var(--plate-top), inset 0 -5px 0 var(--plate-under);
+  text-shadow: 0 0 10px var(--starlight-glow), 0 1px 0 #000;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08), inset 0 -5px 0 var(--night-lip);
   overflow: hidden;
   cursor: pointer;
   transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 }
 
-/* The etch just inside the plate, doubling as the focus ring a clip-path would otherwise eat. */
+.plate-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--star-glints);
+  animation: star-glint 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* The focus ring a clip-path would otherwise eat. */
 .plate-cta::after {
   content: '';
   position: absolute;
   inset: 4px;
-  border: 1px solid color-mix(in oklab, var(--plate-color) 45%, rgba(0, 0, 0, 0.5));
   pointer-events: none;
 }
 
 .plate-cta:focus-visible::after {
-  border: 2px solid var(--plate-ink);
+  border: 2px solid var(--starlight);
 }
 
 .plate-label {
@@ -52270,11 +52307,11 @@ img.smithy-service-art {
 .plate-label::after {
   content: '';
   flex: none;
-  width: 6px;
-  height: 6px;
-  background: var(--plate-ink);
-  opacity: 0.65;
-  transform: rotate(45deg);
+  width: 9px;
+  height: 9px;
+  background: var(--starlight);
+  opacity: 0.85;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
 }
 
 .plate-socket:hover:not(.is-disabled) {
@@ -52282,15 +52319,15 @@ img.smithy-service-art {
 }
 
 .plate-cta:not(:disabled):hover {
-  filter: brightness(1.07);
+  background: var(--starfield), var(--night-face-lit);
 }
 
 .plate-cta:not(:disabled):active {
   transform: translateY(3px);
-  box-shadow: inset 0 2px 0 var(--plate-top), inset 0 -2px 0 var(--plate-under);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08), inset 0 -2px 0 var(--night-lip);
 }
 
-/* Wings off the flanks, in the gap the socket leaves, each ending in a diamond. */
+/* Wings off the flanks, in the gap the socket leaves, each ending in a star. */
 .plate-socket::before,
 .plate-socket::after {
   content: '';
@@ -52315,11 +52352,11 @@ img.smithy-service-art {
 .plate-wing-tip {
   position: absolute;
   top: 50%;
-  width: 7px;
-  height: 7px;
-  margin-top: -3.5px;
+  width: 11px;
+  height: 11px;
+  margin-top: -5.5px;
   background: var(--plate-color);
-  transform: rotate(45deg);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
   pointer-events: none;
 }
 
@@ -52331,10 +52368,24 @@ img.smithy-service-art {
   left: calc(100% + 17px);
 }
 
-/* Waiting on a pick: the metal gone cold, still solid. */
+/* Waiting on a pick: the light gone out of it, the sky still there. */
 .plate-socket.is-disabled {
-  --plate-color: #6f6a62;
-  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.5)) brightness(0.72);
+  --plate-color: #4f4b45;
+}
+
+.plate-socket.is-disabled .plate-cta {
+  color: #77736c;
+  text-shadow: 0 1px 0 #000;
+}
+
+.plate-socket.is-disabled .plate-cta::before {
+  animation: none;
+  opacity: 0;
+}
+
+.plate-socket.is-disabled .plate-label::before,
+.plate-socket.is-disabled .plate-label::after {
+  background: #77736c;
 }
 
 .plate-socket.is-disabled .plate-cta {
@@ -52384,24 +52435,23 @@ img.smithy-service-art {
   animation: champion-plate-in 0.6s var(--ease-out) 1.3s backwards;
 }
 
-/* A move offer either/or: Learn is struck in the offered move type, Decline is a stone bar. */
+/* A move offer either/or: Learn is a plate of night rimmed in the offered move's type, Decline is a stone bar. */
 .moveoffer-confirm,
 .moveoffer-confirm:not(:disabled):hover {
-  --plate-color: rgb(var(--offer-rgb, 95, 207, 143));
+  --rim: color-mix(in oklab, rgb(var(--offer-rgb, 95, 207, 143)) 80%, #000000);
   border: 0;
   border-image: none;
   clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-  background: linear-gradient(178deg,
-      color-mix(in oklab, var(--plate-color) 18%, #fffaf0) 0%,
-      color-mix(in oklab, var(--plate-color) 55%, #fff6e6) 9%,
-      color-mix(in oklab, var(--plate-color) 92%, #ffffff) 30%,
-      var(--plate-color) 52%,
-      color-mix(in oklab, var(--plate-color) 66%, #000000) 82%,
-      color-mix(in oklab, var(--plate-color) 38%, #000000) 100%);
-  color: color-mix(in oklab, var(--plate-color) 18%, #050302);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
-  box-shadow: inset 0 0 0 4px color-mix(in oklab, var(--plate-color) 80%, #000000 20%), inset 0 0 0 5px color-mix(in oklab, var(--plate-color) 45%, rgba(0, 0, 0, 0.5));
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
+  /* The two short layers carry the rim along the chamfers, which the clip cuts off the inset shadow. */
+  background:
+    linear-gradient(135deg, transparent 6px, var(--rim) 6px, var(--rim) 8.5px, transparent 8.5px) top left / 12px 12px no-repeat,
+    linear-gradient(315deg, transparent 6px, var(--rim) 6px, var(--rim) 8.5px, transparent 8.5px) bottom right / 12px 12px no-repeat,
+    var(--starfield),
+    var(--night-face);
+  color: var(--starlight);
+  text-shadow: 0 0 10px var(--starlight-glow), 0 1px 0 #000;
+  box-shadow: inset 0 0 0 2px var(--rim), inset 0 -5px 0 var(--night-lip);
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.6));
 }
 
 .moveoffer-confirm .moveoffer-label {
@@ -52411,7 +52461,7 @@ img.smithy-service-art {
 }
 
 .moveoffer-confirm:not(:disabled):hover {
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55)) brightness(1.07);
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.6)) brightness(1.15);
 }
 
 /* Waiting on a pick, the plate is unlit: its chamfer and a faint rim in the move's colour, dark inside, so it reads as the press that lights up rather than a grey third button. */

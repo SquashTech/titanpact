@@ -14,8 +14,8 @@ interface Props {
 }
 
 /**
- * The commit press: the title's chamfered plate at screen size, struck flat in the colour of
- * what is being chosen. A plank belongs to a place; a plate is a decision.
+ * The commit press: the title's chamfered plate of night sky at screen size, its rim and wings
+ * lit in the colour of what is being chosen. A plank belongs to a place; a plate is a decision.
  */
 export function PlateButton({ children, onClick, disabled = false, tint, compact = false, className, style, 'data-sfx': sfx }: Props) {
   return (
@@ -25,6 +25,7 @@ export function PlateButton({ children, onClick, disabled = false, tint, compact
     >
       <span className="plate-wing-tip is-left" aria-hidden="true" />
       <span className="plate-wing-tip is-right" aria-hidden="true" />
+      <span className="plate-frame" aria-hidden="true" />
       <button type="button" className="plate-cta" onClick={onClick} disabled={disabled} data-sfx={sfx}>
         <span className="plate-label">{children}</span>
       </button>
