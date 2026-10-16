@@ -60,9 +60,25 @@ export interface MasteryFlow {
   closeMastered: () => void;
 }
 
-export function useMasteryFlow(run: RunState, onRunChange: (next: RunState) => void): MasteryFlow {
+/** An open overflow kept outside the flow, so a reload asks it again rather than dropping it. */
+export interface OverflowMemory {
+  overflow: Overflow | null;
+  onOverflow: (overflow: Overflow | null) => void;
+}
+
+export function useMasteryFlow(run: RunState, onRunChange: (next: RunState) => void, memory?: OverflowMemory): MasteryFlow {
   const [evolving, setEvolving] = useState<Evolving | null>(null);
-  const [overflow, setOverflow] = useState<Overflow | null>(null);
+  const [overflow, setOverflowState] = useState<Overflow | null>(() => {
+    const kept = memory?.overflow;
+    const entry = kept && run.roster.find((r) => r.rosterId === kept.rosterId);
+    if (!kept || !entry) return null;
+    const queue = kept.queue.filter((id) => !entry.unlockedMoveIds.includes(id));
+    return queue.length > 0 ? { ...kept, queue } : null;
+  });
+  function setOverflow(next: Overflow | null) {
+    setOverflowState(next);
+    memory?.onOverflow(next);
+  }
   const [mastered, setMastered] = useState<Mastered | null>(null);
 
   function raise(rosterId: string, on: RunState = run, fromMastery?: number): boolean {

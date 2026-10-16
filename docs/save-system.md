@@ -141,11 +141,14 @@
   (`settlingRunChange`), which marks the screen `settled` as the grant lands, and `resumeTarget`
   (`run/resume.ts`) goes past a settled screen. A node is walked; a chain link opens its `next`.
   **The cost:** a reload after a grant loses that screen's reveal. It also loses a replace-or-decline
-  question still open at the move cap: the Mentor, the Tutor, a level-up offer, an Evolution's
-  overflow, a curse's Turn. The offer was already spent, so nothing is granted twice.
+  question still open at the move cap on the Mentor, the Tutor, a Gem node's or the shop's
+  Evolution overflow, or a curse's Turn. The offer was already spent, so nothing is granted twice.
+  The level report is the exception: it keeps its open question (below), because a reload there
+  declined a hero's signature for good (2026-10-16).
 - **Multi-step screens keep their progress on the App screen:**
   - the Scrolls' pips left and heroes paid (`progress`);
-  - the heroes on the level report that took an entry (`taken`);
+  - the heroes on the level report that took an entry (`taken`), and the replace-or-decline still
+    open at the cap — an offer, the signature or an Evolution's overflow (`asking`);
   - the contracts signed (`claimedRosterIds`).
 - **Rolls lock in (D2) off a seed on the screen.** That covers the purse, the Item Cache, the Boon,
   the Crucible, the Mentor and Tutor (seeded by hero), an event's contents and its gamble, and a

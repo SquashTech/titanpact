@@ -1786,6 +1786,13 @@ export function App() {
             seed: screen.seed,
             taken: screen.taken ?? [],
             onTaken: (taken) => setScreen((at) => (at.kind === 'levelUp' ? { ...at, taken } : at)),
+            asking: screen.asking ?? null,
+            onAsking: (asking) =>
+              setScreen((at) => {
+                if (at.kind !== 'levelUp') return at;
+                const { asking: _closed, ...rest } = at;
+                return asking ? { ...rest, asking } : rest;
+              }),
           }}
         />
       )}

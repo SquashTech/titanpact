@@ -74,6 +74,7 @@ test('resume: every resumable kind round trips, nested chains included', () => {
       report: [{ rosterId: 'rime-1', heroId: 'rime', fromLevel: 4, toLevel: 5, fromXp: 64, toXp: 125, gained: { attack: 2 } }],
       seed: 7,
       taken: ['rime-1'],
+      asking: { kind: 'signature', rosterId: 'rime-1', moveId: heroes.rime.signatureMoveId! },
       next: {
         kind: 'companion',
         beat: { kind: 'join', heroId: 'rime' },
@@ -98,6 +99,7 @@ test('resume: every resumable kind round trips, nested chains included', () => {
     { kind: 'academyNode', nodeId, seed: 5 },
     { kind: 'event', nodeId, eventId: Object.keys(runEvents)[0], seed: 4 },
     { kind: 'manaWell', nodeId },
+    { kind: 'levelUp', report: [], seed: 8, asking: { kind: 'overflow', rosterId: 'rime-1', queue: [heroes.rime.moveIds[0]], eyebrow: 'e' }, next: map },
     { kind: 'rest', nodeId },
     { kind: 'scrolls', plan: { source: 'scribe', gems: [{ stat: 'attack', points: 5 }, { stat: 'speed', points: 5 }] }, nodeId, bought: false, next: map, progress: { remaining: 1, pickedIds: ['rime-1'] } },
     { kind: 'rosterReplace', candidate: { source: 'guildHall', offer: { id: 'o', heroId: 'rime', startingMoveIds: heroes.rime.moveIds } }, next: map },

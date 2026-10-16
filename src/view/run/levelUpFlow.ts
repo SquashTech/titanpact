@@ -3,6 +3,7 @@ import { rosterHeroes as heroes } from '../../data/content';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { RunState } from '../../run/state';
+import type { LevelUpQuestion } from '../../run/resume';
 import { MOVE_CAP, availableEvolution, grantOfferedMove, levelMovePool, pendingScheduleEntry, pendingSignature, recordMoveOffer, takeScheduleEntry } from '../../run/progression';
 import { curseTurnOwed } from '../../run/curse';
 import { playSfx } from '../../audio/sfx';
@@ -63,18 +64,40 @@ export function levelPayoffOwed(run: RunState, rosterId: string): boolean {
 
 /**
  * What the report keeps outside itself so a reload resumes it (docs/save-system.md): the seed its
- * offers roll off, and who has already taken an entry this report.
+ * offers roll off, who has already taken an entry this report, and the question still open at the cap.
  */
 export interface LevelUpMemory {
   seed: number;
   taken: readonly string[];
   onTaken: (taken: string[]) => void;
+  asking: LevelUpQuestion | null;
+  onAsking: (asking: LevelUpQuestion | null) => void;
+}
+
+/** The kept question, unless its move has landed since. */
+function keptQuestion(run: RunState, kind: 'offer' | 'signature', asking: LevelUpQuestion | null) {
+  if (asking?.kind !== kind) return null;
+  const entry = run.roster.find((r) => r.rosterId === asking.rosterId);
+  if (!entry || entry.unlockedMoveIds.includes(asking.moveId)) return null;
+  return { rosterId: asking.rosterId, moveId: asking.moveId, learned: false };
 }
 
 export function useLevelUpFlow(run: RunState, onRunChange: (next: RunState) => void, memory: LevelUpMemory): LevelUpFlow {
-  const [offer, setOffer] = useState<ScheduleOffer | null>(null);
-  const [signature, setSignature] = useState<SignatureOffer | null>(null);
-  const mastery = useMasteryFlow(run, onRunChange);
+  const [offer, setOfferState] = useState<ScheduleOffer | null>(() => keptQuestion(run, 'offer', memory.asking));
+  const [signature, setSignatureState] = useState<SignatureOffer | null>(() => keptQuestion(run, 'signature', memory.asking));
+  const mastery = useMasteryFlow(run, onRunChange, {
+    overflow: memory.asking?.kind === 'overflow' ? memory.asking : null,
+    onOverflow: (overflow) => memory.onAsking(overflow ? { kind: 'overflow', ...overflow } : null),
+  });
+  // Only the cap's question is kept: below it the move has landed and the box is a receipt.
+  function setOffer(next: ScheduleOffer | null) {
+    setOfferState(next);
+    memory.onAsking(next && !next.learned ? { kind: 'offer', rosterId: next.rosterId, moveId: next.moveId } : null);
+  }
+  function setSignature(next: SignatureOffer | null) {
+    setSignatureState(next);
+    memory.onAsking(next && !next.learned ? { kind: 'signature', rosterId: next.rosterId, moveId: next.moveId } : null);
+  }
   // One schedule entry a hero a report: a backlog (a raw hire's) is worked off a fight at a time.
   const tookEntry = useRef(new Set<string>(memory.taken));
 

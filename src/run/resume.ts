@@ -36,6 +36,14 @@ import {
   type SaveContentIndex,
 } from './save';
 
+/**
+ * A replace-or-decline the level report has put to the player at the move cap. The offer is spent
+ * the moment it is made, so a reload that dropped the question would decline it for them.
+ */
+export type LevelUpQuestion =
+  | { kind: 'offer' | 'signature'; rosterId: string; moveId: string }
+  | { kind: 'overflow'; rosterId: string; queue: string[]; eyebrow?: string };
+
 export type RunScreen =
   | { kind: 'title' }
   /** The lore card, ahead of the first draft on an account (docs/tutorial.md). */
@@ -127,8 +135,8 @@ export type RunScreen =
   | { kind: 'patronCapstone'; candidates: readonly string[]; next: RunScreen }
   /** Which event this node is gets rolled ONCE at node-select time; `seed` fixes what its options hold. */
   | { kind: 'event'; nodeId: string; eventId: string; seed: number; settled?: boolean }
-  /** What the fight just did to the roster. `taken` is who has already taken a schedule entry this report. */
-  | { kind: 'levelUp'; report: readonly HeroLevelUp[]; next: RunScreen; seed: number; taken?: string[] }
+  /** What the fight just did to the roster. `taken` is who has already taken a schedule entry this report; `asking` the replace-or-decline still open. */
+  | { kind: 'levelUp'; report: readonly HeroLevelUp[]; next: RunScreen; seed: number; taken?: string[]; asking?: LevelUpQuestion }
   /** The companion's beats (run/companion.ts): the join after the level report; the tier-step at the act boundary, before the seal. */
   | { kind: 'companion'; beat: CompanionBeat; next: RunScreen }
   /** Guardian's Banner after a Guardian win. Not a map node, so no nodeId. */
@@ -265,6 +273,22 @@ function rosterIds(value: unknown, ctx: Ctx, label: string): string[] {
   const known = new Set(ctx.run.roster.map((entry) => entry.rosterId));
   for (const id of value) if (!known.has(id)) reject(`${label} names "${id}", not on the roster`);
   return [...value];
+}
+
+function moveId(value: unknown, ctx: Ctx, label: string): string {
+  const id = str(value, label);
+  if (!ctx.index.moveIds.has(id)) reject(`${label} references unknown move "${id}"`);
+  return id;
+}
+
+function decodeLevelUpQuestion(value: unknown, ctx: Ctx): LevelUpQuestion {
+  if (!isObject(value)) reject('levelUp.asking is not an object');
+  const [rosterId] = rosterIds([value.rosterId], ctx, 'levelUp.asking.rosterId');
+  if (value.kind === 'offer' || value.kind === 'signature') return { kind: value.kind, rosterId, moveId: moveId(value.moveId, ctx, 'levelUp.asking.moveId') };
+  if (value.kind !== 'overflow') reject(`levelUp.asking has unknown kind "${String(value.kind)}"`);
+  if (!isStringArray(value.queue) || value.queue.length === 0) reject('levelUp.asking.queue is not a list of moves');
+  const queue = value.queue.map((id, at) => moveId(id, ctx, `levelUp.asking.queue[${at}]`));
+  return { kind: 'overflow', rosterId, queue, ...(typeof value.eyebrow === 'string' ? { eyebrow: value.eyebrow } : {}) };
 }
 
 function itemId(value: unknown, ctx: Ctx, label: string): string {
@@ -512,6 +536,7 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
         next: next(),
         seed: int(raw.seed, 'levelUp.seed'),
         ...(raw.taken !== undefined ? { taken: rosterIds(raw.taken, ctx, 'levelUp.taken') } : {}),
+        ...(raw.asking !== undefined ? { asking: decodeLevelUpQuestion(raw.asking, ctx) } : {}),
       };
     case 'companion':
       return { kind, beat: decodeBeat(raw.beat, ctx), next: next() };
