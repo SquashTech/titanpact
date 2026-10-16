@@ -40241,11 +40241,19 @@ img.smithy-service-art {
   padding-top: 12px;
 }
 
-/* The Sell sits lower and slimmer here, which pays for the grid starting under the roster button. */
+/* The Sell sits lower and slimmer here, which pays for the grid starting under the roster button;
+   the Continue that replaces it takes the same box, so the screen never hops when they swap. */
 .cache-counter-screen .sell-press,
-.item-who-screen .sell-press {
+.item-who-screen .sell-press,
+.cache-counter-screen > .resolve-button,
+.item-who-screen > .resolve-button {
   min-height: 60px;
   margin-bottom: 2px;
+}
+
+.cache-counter-screen > .resolve-button,
+.item-who-screen > .resolve-button {
+  padding-block: 16px;
 }
 
 /* Three pieces at most, not six: each gets the room for a bigger icon. */
