@@ -177,6 +177,6 @@ Firestorm), so the Late Fire spawn holds three. `test/titanspawn` holds a thinne
 Early spreads: the user's read is that spread moves are already extremely strong. The 25-mana
 spreads (Tremor, Gravel Spray, Steam Vent, Snow Blast) may be the outliers rather than the 35-mana ones.
 
-**Held for a ruling:** Umbra Bolt, Umbral Beam and Umbral Wave. Certain Poison reverses the Shadow
-slate's rule that *Shadow accumulates Poison as a side effect, and a guaranteed applier would make it a
-second Nature* (`test/shadowMoves`).
+**Shadow keeps its Poison chanced** (the slate rule stands: certain Poison is Nature's), but at
+sizes that matter: Umbra Bolt 35 Pow, 50%: Poison 10; Umbral Beam 60, 50%: Poison 20; Umbral Wave 60
+on both, 50%: Poison 15.
