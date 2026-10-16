@@ -28,7 +28,7 @@ import { locationDomains, type LocationDefinition } from '../../data/locations';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { LocationAmbience } from '../shared/LocationSky';
-import { mapGround } from '../shared/locationBackdrops';
+import { mapSpots } from '../shared/locationBackdrops';
 import { AudioSettings } from '../shared/AudioSettings';
 import { nodeEncounter, scoutedParty } from '../../run/encounters';
 import { heroes } from '../../data/heroes';
@@ -273,7 +273,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           choiceIds={choiceIds}
           actNumber={run.actNumber}
           guardianId={location.guardianFinalEnemyId}
-          ground={mapGround(location.id)}
+          spots={mapSpots(location.id)}
           onSelectNode={onSelectNode}
           renderDossier={(node) => <NodeDossier node={node} run={run} party={scouted[node.id]} />}
           patronFor={(node) => {

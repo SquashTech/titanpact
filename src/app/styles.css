@@ -18666,14 +18666,12 @@ button.star-shop-bundle-face {
   gap: 7px;
 }
 
-/* On a painting with open ground the row stands on it (MapRoute lifts it there) and each tile
-   casts a shadow where it stands, so it is a thing in the place rather than over it. */
-.map-route.is-grounded .map-choices {
-  align-items: flex-end;
-}
-
+/* On a painting each tile stands on its own spot of open ground (MapRoute places it, mapSpots) and
+   casts a shadow there, so it is a thing in the place rather than over it. Higher up is further back. */
 .map-route.is-grounded .map-choice {
-  position: relative;
+  position: absolute;
+  scale: var(--depth, 1);
+  transform-origin: 50% 100%;
 }
 
 .map-route.is-grounded .map-choice::after {
@@ -20141,13 +20139,6 @@ button.star-shop-bundle-face {
   100% {
     scale: 1;
   }
-}
-
-/* A row of three stands as a fan: the middle one further back, so smaller and higher. */
-.map-route.is-grounded .map-choices > .map-choice:nth-child(2):nth-last-child(2) {
-  margin-bottom: 34px;
-  scale: 0.84;
-  transform-origin: 50% 100%;
 }
 
 /* Behind you: the same tile, small and unlit. */

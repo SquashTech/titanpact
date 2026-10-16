@@ -26,23 +26,29 @@ export function locationBackdrop(locationId: string, kind: BackdropKind = 'arriv
   return BACKDROPS[kind][locationId];
 }
 
-/** Where the map painting's open ground is, as a fraction of its height: the map's row stands on it. */
-const MAP_GROUND: Record<string, number> = {
-  wildsEdge: 0.7,
-  necropolis: 0.68,
-  blightedShrine: 0.68,
-  forbiddenForest: 0.68,
-  moltenFoundry: 0.72,
-  stormCoast: 0.62,
-  holySanctum: 0.68,
-  dreamingSpires: 0.76,
-  thunderAerie: 0.74,
-  frozenReach: 0.68,
-  theThreshold: 0.7,
+/** A point on the map painting, in its own pixels (196x344): where one tile's foot stands. */
+export type MapSpot = readonly [x: number, y: number];
+
+/** Where a row's tiles stand on the painting, by how many share the row. */
+export type MapSpots = Readonly<Record<1 | 2 | 3, readonly MapSpot[]>>;
+
+// Picked off each painting so a tile stands on open ground: clear of trees, sea and lava, on the road.
+const MAP_SPOTS: Record<string, MapSpots> = {
+  wildsEdge:       { 1: [[98, 240]], 2: [[70, 248], [126, 248]], 3: [[60, 254], [98, 216], [136, 254]] },
+  necropolis:      { 1: [[98, 234]], 2: [[72, 238], [124, 238]], 3: [[58, 244], [98, 214], [138, 244]] },
+  blightedShrine:  { 1: [[98, 232]], 2: [[78, 250], [120, 230]], 3: [[72, 262], [98, 210], [122, 258]] },
+  forbiddenForest: { 1: [[98, 238]], 2: [[72, 244], [124, 244]], 3: [[58, 248], [98, 232], [138, 248]] },
+  moltenFoundry:   { 1: [[86, 252]], 2: [[44, 262], [150, 206]], 3: [[44, 262], [80, 176], [150, 206]] },
+  stormCoast:      { 1: [[80, 224]], 2: [[58, 246], [118, 258]], 3: [[50, 250], [86, 204], [136, 262]] },
+  holySanctum:     { 1: [[98, 226]], 2: [[62, 242], [136, 262]], 3: [[56, 240], [98, 222], [140, 262]] },
+  dreamingSpires:  { 1: [[98, 258]], 2: [[72, 260], [124, 260]], 3: [[58, 262], [98, 236], [138, 262]] },
+  thunderAerie:    { 1: [[98, 252]], 2: [[72, 254], [124, 254]], 3: [[58, 256], [98, 228], [138, 256]] },
+  frozenReach:     { 1: [[98, 234]], 2: [[72, 236], [124, 236]], 3: [[58, 240], [98, 212], [138, 240]] },
+  theThreshold:    { 1: [[98, 238]], 2: [[72, 240], [124, 240]], 3: [[58, 246], [98, 216], [138, 246]] },
 };
 
-export function mapGround(locationId: string): number | undefined {
-  return locationBackdrop(locationId, 'map') ? MAP_GROUND[locationId] : undefined;
+export function mapSpots(locationId: string): MapSpots | undefined {
+  return locationBackdrop(locationId, 'map') ? MAP_SPOTS[locationId] : undefined;
 }
 
 /** Every painting one Location owns (all of them without an id) — what the preloader fetches ahead. */

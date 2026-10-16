@@ -14,6 +14,14 @@ import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { handOffFlood } from '../shared/EntranceFlood';
 import { allCombatants } from '../../data/content';
 import { PlateButton } from '../shared/PlateButton';
+import type { MapSpots } from '../shared/locationBackdrops';
+
+/** Where a tile stands in the row's box: its top-left, and how far back it is (a scale). */
+interface Placement {
+  left: number;
+  top: number;
+  depth: number;
+}
 
 /**
  * The route out of where the player is standing (2026-09-08, per user direction): the node just
@@ -32,10 +40,14 @@ import { PlateButton } from '../shared/PlateButton';
 // One path draws in this long, and the next starts this far behind it. Sized to be over inside a
 // second for three options: this plays after every node in the run, and a flourish seen forty
 // times an act has to be shorter than the patience of the fortieth viewing.
-// The map paintings' own size (locationBackdrops.ts), and the least a grounded row sits off its box's foot.
+// The map paintings' own size (locationBackdrops.ts), and the least a placed tile keeps off its box's edge.
 const PAINTING_W = 196;
 const PAINTING_H = 344;
-const MIN_LIFT = 8;
+const EDGE = 4;
+const TILE_GAP = 6;
+// A tile standing further up the painting is further back, so smaller: this much a painting pixel, down to the least.
+const DEPTH_PER_PX = 0.004;
+const MIN_DEPTH = 0.8;
 
 const PATH_DRAW_MS = 420;
 const PATH_STAGGER_MS = 130;
@@ -185,6 +197,7 @@ function ChoiceMedallion({
   dimmed,
   onTap,
   measureRef,
+  place,
   patron,
 }: {
   map: RunMap;
@@ -206,6 +219,8 @@ function ChoiceMedallion({
   dimmed: boolean;
   onTap: () => void;
   measureRef: (el: HTMLButtonElement | null) => void;
+  /** Its spot on the painting, once the row has been placed. */
+  place?: Placement;
 }) {
   const leadOns = showLeadOn ? leadOnTypes(map, node.id) : [];
   const label = patron ? `${patron.name}, ${patron.title}` : nodeFactsLine(NODE_NAMES[node.type], node.type, actNumber);
@@ -219,7 +234,13 @@ function ChoiceMedallion({
       className={`map-choice tier-${NODE_TIERS[node.type]}${landmark ? ` has-${landmark}` : ''}${patron ? ' is-patron' : ''}${patron && patronPose(patron.id) ? ' has-pose' : ''}${previewed ? ' is-previewed' : ''}${dimmed ? ' is-dimmed' : ''}`}
       data-node-type={node.type}
       data-patron={patron?.id}
-      style={{ '--land-delay': `${landDelayMs}ms`, '--node-color': patron ? patron.color : NODE_COLORS[node.type] } as CSSProperties}
+      style={
+        {
+          '--land-delay': `${landDelayMs}ms`,
+          '--node-color': patron ? patron.color : NODE_COLORS[node.type],
+          ...(place && { left: place.left, top: place.top, '--depth': place.depth }),
+        } as CSSProperties
+      }
     >
       <span className="map-choice-ahead" aria-hidden="true">
         {leadOns.map((type) => (
@@ -278,10 +299,10 @@ export function MapRoute({
   onPreviewChange,
   companion,
   patronFor,
-  ground,
+  spots,
 }: {
-  /** Where the map painting's open ground is, as a fraction of its height (mapGround); the row stands on it. */
-  ground?: number;
+  /** Where the map painting's open ground is (mapSpots); each tile of the row stands on its spot. */
+  spots?: MapSpots;
   /** The patron a seat tile holds, or null (MapScreen reads it off the run). */
   patronFor?: (node: MapNode) => PatronTile | null;
   /** The companion, drawn walking beside wherever the party stands. */
@@ -313,13 +334,14 @@ export function MapRoute({
   }, [previewId]);
   const routeRef = useRef<HTMLDivElement>(null);
   const choicesRef = useRef<HTMLDivElement>(null);
-  const [lift, setLift] = useState<number | null>(null);
+  const [placed, setPlaced] = useState<Placement[] | null>(null);
   const originRef = useRef<HTMLSpanElement>(null);
   const medallionRefs = useRef(new Map<string, HTMLButtonElement>());
   const timers = useRef<number[]>([]);
   const finished = useRef(false);
 
   const choiceKey = choiceIds.join(',');
+  const rowSpots = spots?.[choiceIds.length as 1 | 2 | 3];
   // A new row is a new question.
   useEffect(() => setPreviewId(null), [choiceKey]);
   const showLeadOn = leadOnsDiffer(map, choiceIds);
@@ -368,30 +390,50 @@ export function MapRoute({
   }, [choiceKey, map, originNode?.id]);
 
   /**
-   * How far the row is lifted off the foot of its box so its tiles stand on the painting's ground.
-   * The painting is drawn cover and bottom-anchored over the whole screen, so the ground line is read
-   * off the screen's box, not the route's.
+   * Each tile stood on its spot of the painting. The painting is drawn cover and bottom-anchored
+   * over the whole screen, so a spot is read off the screen's box, then into the row's.
    */
   const placeRow = useCallback(() => {
     const choices = choicesRef.current;
     const screen = choices?.closest<HTMLElement>('.map-screen');
-    if (ground == null || !choices || !screen) {
-      setLift(null);
+    if (!rowSpots || !choices || !screen) {
+      setPlaced(null);
       return;
     }
     const s = screen.getBoundingClientRect();
+    const c = choices.getBoundingClientRect();
     const scale = s.height / screen.offsetHeight || 1;
     const paintHeight = Math.max(screen.offsetHeight, (screen.offsetWidth * PAINTING_H) / PAINTING_W);
-    const groundY = screen.offsetHeight - paintHeight * (1 - ground);
-    const floor = (choices.getBoundingClientRect().bottom - s.top) / scale;
-    const tallest = Math.max(0, ...Array.from(choices.children, (el) => (el as HTMLElement).offsetHeight));
-    const room = Math.max(MIN_LIFT, choices.offsetHeight - tallest - MIN_LIFT);
-    setLift(Math.round(Math.min(Math.max(floor - groundY, MIN_LIFT), room)));
-  }, [ground, choiceKey]);
+    const px = paintHeight / PAINTING_H;
+    const paintLeft = (screen.offsetWidth - PAINTING_W * px) / 2;
+    const paintTop = screen.offsetHeight - paintHeight;
+    const originX = (c.left - s.left) / scale;
+    const originY = (c.top - s.top) / scale;
+    const lowest = Math.max(...rowSpots.map(([, y]) => y));
+    const tiles = Array.from(choices.children) as HTMLElement[];
+    const feet = rowSpots.map(([x, y], i) => {
+      const depth = Math.max(MIN_DEPTH, 1 - (lowest - y) * DEPTH_PER_PX);
+      return {
+        x: paintLeft + x * px - originX,
+        y: paintTop + y * px - originY,
+        w: tiles[i]?.offsetWidth ?? 0,
+        h: tiles[i]?.offsetHeight ?? 0,
+        depth,
+      };
+    });
+    spreadApart(feet, choices.offsetWidth);
+    setPlaced(
+      feet.map(({ x, y, w, h, depth }) => ({
+        left: Math.round(x - w / 2),
+        top: Math.round(Math.min(Math.max(y - h, EDGE), choices.offsetHeight - h - EDGE)),
+        depth,
+      }))
+    );
+  }, [rowSpots, choiceKey]);
 
   useLayoutEffect(() => {
     measure();
-  }, [measure, lift]);
+  }, [measure, placed]);
 
   useLayoutEffect(() => {
     placeRow();
@@ -402,6 +444,8 @@ export function MapRoute({
       measure();
     });
     observer.observe(route);
+    // A placed tile is out of flow, so its own size (art arriving, a label) never resizes the route.
+    for (const tile of Array.from(choicesRef.current?.children ?? [])) observer.observe(tile);
     return () => observer.disconnect();
   }, [placeRow, measure]);
 
@@ -492,7 +536,7 @@ export function MapRoute({
   }
 
   return (
-    <div className={`map-route${revealing ? ' is-revealing' : ''}${ground != null ? ' is-grounded' : ''}`} ref={routeRef}>
+    <div className={`map-route${revealing ? ' is-revealing' : ''}${rowSpots ? ' is-grounded' : ''}`} ref={routeRef}>
       {segments.length > 0 && (
         <svg className="map-paths" aria-hidden="true">
           {segments.map((seg, i) => (
@@ -519,7 +563,7 @@ export function MapRoute({
         </div>
       )}
 
-      <div className="map-choices" ref={choicesRef} style={lift != null ? { paddingBottom: lift } : undefined}>
+      <div className="map-choices" ref={choicesRef}>
         {choiceIds.map((nodeId, i) => (
           <ChoiceMedallion
             key={nodeId}
@@ -534,6 +578,7 @@ export function MapRoute({
             previewed={previewId === nodeId}
             dimmed={previewId !== null && previewId !== nodeId}
             onTap={() => tap(nodeId)}
+            place={placed?.[i]}
             patron={patronFor?.(map.nodes[nodeId])}
             measureRef={(el) => {
               if (el) medallionRefs.current.set(nodeId, el);
@@ -618,6 +663,36 @@ export function MapRoute({
       {revealing && <div className="map-reveal-skip" onClick={skip} />}
     </div>
   );
+}
+
+interface Foot {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  depth: number;
+}
+
+/**
+ * Spots are picked for a reward tile; a patron or a building is wider, so two tiles that would
+ * overlap are pushed apart sideways, then the row is kept inside its box.
+ */
+function spreadApart(feet: Foot[], width: number) {
+  const box = (f: Foot) => ({ l: f.x - (f.w * f.depth) / 2, r: f.x + (f.w * f.depth) / 2, t: f.y - f.h * f.depth, b: f.y });
+  for (let pass = 0; pass < 4; pass++) {
+    for (let i = 0; i < feet.length; i++) {
+      for (let j = i + 1; j < feet.length; j++) {
+        const [a, b] = feet[i].x <= feet[j].x ? [feet[i], feet[j]] : [feet[j], feet[i]];
+        const A = box(a);
+        const B = box(b);
+        const across = A.r + TILE_GAP - B.l;
+        if (across <= 0 || A.b <= B.t || B.b <= A.t) continue;
+        a.x -= across / 2;
+        b.x += across / 2;
+      }
+    }
+    for (const f of feet) f.x = Math.min(Math.max(f.x, f.w / 2 + EDGE), width - f.w / 2 - EDGE);
+  }
 }
 
 function gateWardenColor(guardianId: string | null): string {
