@@ -192,8 +192,8 @@ don't silently override it.
 > **Permadeath and the Revive are DELETED (2026-10-15, per user direction)** — worth the experiment,
 > wrong for this game; the Revive was finicky and padded the loot table. No Fallen beat, no
 > `isPermadeath`, no Revive verb; a downed hero stands at a Rest, the mend or the act's end. What
-> stands from the ladder: **the woken Guardians** (Cycle II on, §2a — the champion leads from round
-> one, wears its type's Mark, grows on hero grades, escorts 2/2/3/3/3 by act), the Spawn bestiary,
+> stands from the ladder: **the woken Guardians** (Cycle II on, §2a — the champion waits on the
+> bench like any Guardian since 2026-10-16, wears its type's Mark, grows on hero grades, escorts 2/2/3/3/3 by act), the Spawn bestiary,
 > the `companion:<type>` star, the companion exempt from Withering Gaze, and the companion
 > **awakening** at the finale (Ancient in its secondary slot, `Profile.ascendedSpawnTypes`).
 
@@ -937,8 +937,9 @@ what's still unimplemented:
   fine dial that shapes the run where the kind offsets shape a row.
   Mastery still reads off the act. **A champion is FRONT-LOADED**: `CHAMPION_GRADES`, all E,
   because on hero grades the Act 2 Guardian measured 67% cleared. **Per act at Base** (2026-09-30, per user direction — the Act 1 Guardian was the longest
-  boss, the Act 5 one could be one-shot): **one escort in Acts 1–2** (the champion takes the lead
-  slot it leaves, unmarked) and **two after**; the champion grows on **D in Act 4 and C in Act 5**
+  boss, the Act 5 one could be one-shot): **two escorts every act** (2026-10-16, per user
+  direction — it was one in Acts 1–2 with the champion leading; **every champion, woken or not,
+  waits on the bench for the first KO**, the entrance being the fight's cinematic beat); the champion grows on **D in Act 4 and C in Act 5**
   (`GUARDIAN_ESCORTS_BY_ACT`, `CHAMPION_GRADE_BY_ACT`, `src/run/difficulty.ts`). **Enemy gear from Act 3**
   (`ENEMY_GEAR_BY_ACT`, `EnemyLoadout`, 2026-10-05: one item in Act 3, two in Act 4, no two of a
   family) on the node's own rarity curve,

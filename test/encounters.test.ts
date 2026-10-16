@@ -87,7 +87,7 @@ test('encounters: the mob nodes draw spawn and the Guardian draws escorts plus i
   for (const id of guardian.squad.activeIds) assert.ok(id && id in titanspawn, `${id} is not a spawn escort`);
 });
 
-test('encounters: from Cycle II the Guardian wakes — it leads, wears its Mark, grows on hero grades, and gains an escort from Act 3', () => {
+test('encounters: from Cycle II the Guardian wakes — it wears its Mark, grows on hero grades, and gains an escort from Act 3', () => {
   for (const act of [1, 2, 3, 4]) {
     const base = runAt(9, act);
     const [boss] = nodesOfType(base, 'boss');
@@ -96,13 +96,9 @@ test('encounters: from Cycle II the Guardian wakes — it leads, wears its Mark,
     const championId = contextFor(base).location.guardianFinalEnemyId!;
     const champion = (e: typeof woken) => e.run.roster.find((r) => r.rosterId === championId)!;
 
-    // Base fields one escort in Acts 1-2 (difficulty.ts GUARDIAN_ESCORTS_BY_ACT), and the champion
-    // takes the lead slot it leaves; with two it waits on the bench for the first KO.
-    const lone = guardianEscortCount(act) === 1;
-    if (lone) assert.strictEqual(asleep.squad.activeIds[1], championId, `act ${act}: a lone escort leaves the champion a lead slot`);
-    else assert.ok(asleep.squad.benchIds.includes(championId) && !asleep.squad.activeIds.includes(championId), `act ${act}: Base keeps the champion benched`);
+    // Asleep or woken, the champion waits on the bench for the first KO.
+    for (const e of [asleep, woken]) assert.ok(e.squad.benchIds.includes(championId) && !e.squad.activeIds.includes(championId), `act ${act}: the champion is benched`);
     assert.deepStrictEqual(champion(asleep).bonusPassiveGrants, [], `act ${act}: Base keeps the Mark off`);
-    assert.strictEqual(woken.squad.activeIds[1], championId, `act ${act}: the woken champion leads`);
     assert.deepStrictEqual(champion(woken).bonusPassiveGrants, [wokenChampionMark(enemies[championId])]);
     assert.notDeepStrictEqual(wokenChampion(enemies[championId]).growthGrades, enemies[championId].growthGrades, 'the woken champion trades its E grades');
 

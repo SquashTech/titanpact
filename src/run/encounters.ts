@@ -80,7 +80,7 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // reach one roster via a contract claim (mirrors rollGuildHallOffers). Passed unconditionally:
   // enemy and hero ids never collide (test/recruitment.test.ts), so it is inert on a mob pool.
   const excludeHeroIds = run.roster.map((r) => r.heroId);
-  // From Cycle II the Guardians wake (run/cycles.ts): the escorts climb with the act, the champion leads.
+  // From Cycle II the Guardians wake (run/cycles.ts): the escorts climb with the act, the champion wears its Mark.
   const woken = type === 'boss' && guardiansWake(run);
   const standardCount = encounterKind === 'boss' ? (woken ? wokenEscortCount(run.actNumber) : guardianEscortCount(run.actNumber)) : 4;
   // Act 1 caps the enemy count at the roster (the companion is off it — docs/companion-call.md §6).
@@ -109,9 +109,8 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   if (finalEnemyId && enemies[finalEnemyId]) {
     const champion = woken ? wokenChampion(enemies[finalEnemyId]) : grownOnActGrade(enemies[finalEnemyId], run.actNumber);
     encounter = appendFinalEnemy(encounter, finalEnemyId, { ...enemies, [finalEnemyId]: champion }, encounterSeedFor(ctx.run.map!, `${node.id}:champion`), scaling, loadout);
-    if (woken) encounter = wakeChampion(encounter, finalEnemyId, wokenChampionMark(enemies[finalEnemyId]));
-    // A lone escort (difficulty.ts GUARDIAN_ESCORTS_BY_ACT) leaves a lead slot for the champion.
-    else if (encounter.squad.activeIds[1] === null) encounter = wakeChampion(encounter, finalEnemyId, null);
+    const mark = woken ? wokenChampionMark(enemies[finalEnemyId]) : null;
+    if (mark) encounter = grantPassive(encounter, finalEnemyId, mark);
     // A Long Winter wards the champion while its company stands — the Herald's rule (docs/cycles.md §3).
     if (isLongWinter(run)) encounter = grantPassive(encounter, finalEnemyId, TITANS_WARD_ID);
   }

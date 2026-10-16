@@ -50,15 +50,14 @@ export const CHAMPION_LEVEL_BONUS = 2;
  * fastest, 4.7, and could be one-shot with the finale in sight). Index 0 unused. From A1 the woken
  * Guardian reads cycles.ts instead.
  *
- * ESCORTS: one in Acts 1-2, two after — a body is most of what a Guardian fight's length is. A lone
- * escort leaves a lead slot empty, so the champion takes it from round one (unmarked; the Mark is
- * the woken rule's).
+ * ESCORTS: two in every act, so the champion always waits on the bench for the first KO (2026-10-16,
+ * per user direction: its entrance is the fight's cinematic beat, worth the length one escort saved).
  *
  * GRADE: what the champion grows on. E is front-loaded by design (enemies.ts CHAMPION_GRADES) —
  * 2.8 points a level against a hero's 9.1 — so a late champion trails the roster by ~160 points;
  * D in Act 4 and C in Act 5 give it back part of that (+40 and +109 at their levels).
  */
-export const GUARDIAN_ESCORTS_BY_ACT: readonly number[] = [0, 1, 1, 2, 2, 2];
+export const GUARDIAN_ESCORTS_BY_ACT: readonly number[] = [0, 2, 2, 2, 2, 2];
 export const CHAMPION_GRADE_BY_ACT: readonly GrowthGrade[] = ['E', 'E', 'E', 'E', 'C', 'C'];
 
 export function guardianEscortCount(actNumber: number): number {

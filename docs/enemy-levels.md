@@ -7,7 +7,8 @@
 > figures are a first pass fitted by the sim to hold the previous run shape (§6); §7 lists the
 > invariants this reverses. §5's loadout seam is BUILT and wired for gear only, from Act 4.
 > **Since then:** the Guardian's shape is set per act (2026-09-30, `GUARDIAN_ESCORTS_BY_ACT` =
-> one escort in Acts 1–2 and two after, `CHAMPION_GRADE_BY_ACT`), and the run went to **four
+> one escort in Acts 1–2 and two after, `CHAMPION_GRADE_BY_ACT`; two every act again since
+> 2026-10-16, per user direction, so the champion always walks on from the bench), and the run went to **four
 > acts** (2026-10-02, `docs/xp-overhaul.md` §5): Act 5 is the finale, Act 4's champion grows on C,
 > and `ACT_LEVEL_ADJUST` is now Act 1 −2, Act 3 +2, the rest 0. The tables below were measured on
 > five acts; their Act 5 column is history.

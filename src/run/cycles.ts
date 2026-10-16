@@ -1,6 +1,6 @@
 // The Cycles (docs/cycles.md). A Cycle is the Titan's next rising, chosen at run start and held
 // on `RunState.cycle`, 1-based. Cycle I is the base game. In Cycle II the Wardens hold the seals
-// (run/wardens.ts) and the Guardians wake (docs/ascension.md §2a): the champion leads its fight,
+// (run/wardens.ts) and the Guardians wake (docs/ascension.md §2a): the champion
 // wears its type's Mark and grows on hero grades, and the escorts rise to three from Act 3. Cycle III, the Long Winter, wards every
 // Guardian while its company stands, frays the Banners to half, prices the Smithy half again and
 // loses Wild's Edge (docs/cycles.md §3). Cycle IV, the Gathering, casts the enemy as warbands

@@ -93,7 +93,9 @@ difficulty rom hack) wants A1 steeper, and **Blessings stay** — so A1 took hal
 proposed for A2, plus two pieces of its own. From A1 every Guardian fight (`guardiansWake`,
 `src/run/ascension.ts`, applied in `encounters.ts`):
 
-- **The champion leads** from round one, the escort it displaces on the bench.
+- ~~**The champion leads** from round one, the escort it displaces on the bench.~~ **Reversed
+  2026-10-16, per user direction:** a woken champion waits on the bench for the first KO like any
+  Guardian; its walk-on is the fight's cinematic beat. The rest below stands.
 - **It wears its primary type's Mark** (`wokenChampionMark`), which its seal keeps off at Base
   (`innate-passives.md` §3).
 - **It grows on hero grades** (`wokenChampion`), keeping pace with the act.

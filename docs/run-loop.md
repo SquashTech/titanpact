@@ -543,7 +543,7 @@ was weighed and set aside: it would make combat fiddlier, and speed is the game'
   **Measured baseline — the enemy stat convention.** An enemy line's stat total counts the six
   combat stats, HP at `HP_BUDGET_VALUE` = 0.5, with Mana and MP Regen outside it (`statBudget.ts`).
 - **The Guardian's escorts** are Titanspawn of the Location's `spawnTypes` at the act's tier, at
-  the node's level: **one in Acts 1–2, two after** (`GUARDIAN_ESCORTS_BY_ACT`). Flavour first — a
+  the node's level: **two every act** (`GUARDIAN_ESCORTS_BY_ACT`; one in Acts 1–2 from 2026-09-30 to 2026-10-16). Flavour first — a
   champion is the apex of the land the act has been fighting, not a pair of wandering adventurers.
   A Guardian therefore offers no contract of its own: the boss pays a Banner and the per-act grant.
 - **The Guardian's champion.** Each Location names one champion
@@ -551,8 +551,9 @@ was weighed and set aside: it would make combat fiddlier, and speed is the game'
   `CHAMPION_LEVEL_BONUS` = 2 over its escorts, **front-loaded**: it grows on E grades through Act 3
   and on C in Act 4 (`CHAMPION_GRADES`, `CHAMPION_GRADE_BY_ACT`). It sits on the **enemy bench**: the AI never switches
   voluntarily, so it reaches the field by **forced replacement after a KO**, walking on at the
-  moment the fight had started going the player's way; with one escort it takes the lead slot the
-  missing escort leaves. At A1 it leads from round one, Marked (`docs/ascension.md` §2a). No
+  moment the fight had started going the player's way — woken or not, from Cycle II Marked
+  (`docs/ascension.md` §2a; it led from round one there, and in Acts 1–2 at Base behind a lone
+  escort, until 2026-10-16, per user direction: the entrance is the fight's cinematic beat). No
   Guardian carries its type's Mark at Base. **It cannot be skipped**: `sideDefeated` tests every
   combatant on the side, bench included. **It is concealed until it arrives**: its scout chip is a
   silhouette and its typing and opens no sheet (`view/shared/entrances.ts`) — the typing kept so the
