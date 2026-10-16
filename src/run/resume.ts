@@ -51,8 +51,6 @@ export type RunScreen =
   | { kind: 'draft'; optionIds: string[] }
   /** The seal: four rings, one per Guardian — the run's opening frame, and every act's close (docs/run-loop.md §4). */
   | { kind: 'pactSeal' }
-  /** Acts 2-5 open on a 1-of-2 (docs/locations.md §1): the offer is drawn once, when the seal is behind the player. */
-  | { kind: 'locationChoice'; candidateIds: string[] }
   /** Per-act arrival beat; reads its location off the run's itinerary. */
   | { kind: 'blessing' }
   | { kind: 'actIntro' }
@@ -176,7 +174,6 @@ export interface ResumePayload {
 /** The screens a run is saved on. The title, the run's end, and anything outside a run are not. */
 const RESUMABLE: ReadonlySet<RunScreenKind> = new Set<RunScreenKind>([
   'pactSeal',
-  'locationChoice',
   'blessing',
   'actIntro',
   'herald',
@@ -419,6 +416,8 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
   if (raw.kind === 'crucible') return decodeScreen(raw.next, ctx, depth + 1);
   // A run saved on Permadeath's Fallen beat (deleted 2026-10-15) walks on past it, its heroes still down.
   if (raw.kind === 'fallen') return decodeScreen(raw.next, ctx, depth + 1);
+  // A run saved on the Location pick (deleted 2026-10-16) reopens on the seal, which draws the place.
+  if (raw.kind === 'locationChoice') return { kind: 'pactSeal' };
   const kind = raw.kind as RunScreenKind;
   if (!isResumable(kind)) reject(`screen "${kind}" is not one a run is saved on`);
   const next = () => decodeScreen(raw.next, ctx, depth + 1);
@@ -432,11 +431,6 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
   }
 
   switch (kind) {
-    case 'locationChoice': {
-      if (!isStringArray(raw.candidateIds) || raw.candidateIds.length === 0) reject('locationChoice.candidateIds is empty');
-      for (const id of raw.candidateIds) if (!ctx.index.locationIds.has(id)) reject(`locationChoice references unknown location "${id}"`);
-      return { kind, candidateIds: [...raw.candidateIds] };
-    }
     case 'herald':
     case 'titanBound':
       return { kind, next: next() };

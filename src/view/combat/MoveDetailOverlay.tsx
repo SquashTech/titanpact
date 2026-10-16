@@ -742,12 +742,15 @@ export function MoveDetailOverlay({
   move,
   context,
   caster,
+  free,
   onClose,
 }: {
   move: MoveDefinition;
   context?: MoveDossierContext;
   /** Who is casting, for screens that hold a hero but no live fight. Superseded by `context`. */
   caster?: HealCaster;
+  /** Cast without Mana (the companion's act): no gem. */
+  free?: boolean;
   onClose: () => void;
 }) {
   function closeAndStop(e: { stopPropagation: () => void }) {
@@ -763,7 +766,7 @@ export function MoveDetailOverlay({
         style={{ borderTopColor: getTypeColor(move.type), '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
         onClick={closeAndStop}
       >
-        <MoveDetailCard move={move} context={context} caster={caster} />
+        <MoveDetailCard move={move} context={context} caster={caster} free={free} />
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,

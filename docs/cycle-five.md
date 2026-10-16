@@ -102,7 +102,8 @@ places frees none.
    holds it. Every Cycle V run then frees **one Warden in Act 1**, guaranteed, which teaches the
    rule the first time the player meets it.
 2. **Acts 2–4's location choice shows which Warden each tile holds**, and a granted place shows
-   none. The pick-1-of-2 that exists today becomes the run's main strategic question: *a place
+   none. *(2026-10-16: the 1-of-2 pick is deleted, per user direction — places are drawn at
+   random — so this change has nothing to stand on until it is re-decided; `locations.md` §1.)* The pick-1-of-2 that exists today becomes the run's main strategic question: *a place
    whose Guardian holds a Warden, or a place whose spawn and backdrop suit my deck*.
 
 A route through only base seals frees four. A route through the granted places frees fewer and

@@ -36,7 +36,7 @@ import { capstoneCandidates, fittedRarity, forgeUnique, heldFamilyIndex, liftHel
 import { blessOpeningPair, canBless, grantBlessing } from '../../src/run/blessings';
 import { generateMap, type MapNode, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
-import { actOneLocationFor, chooseLocation, drawLocationCandidates, locationChoiceDue, locationForAct, locationPool } from '../../src/run/locations';
+import { actOneLocationFor, locationForAct, locationPool, seatNextLocation } from '../../src/run/locations';
 import { locations } from '../../src/data/locations';
 import { encounterScaling, enemyLoadoutFor } from '../../src/run/difficulty';
 import { MAX_XP, MVP_XP_SHARE, encounterXpKind, grantEncounterLevels, grantXp, levelOf, MAX_LEVEL, xpForEncounter } from '../../src/run/growth';
@@ -132,7 +132,7 @@ const UPGRADE_REWARD_XP = 2;
 // --- Records the aggregator consumes ---
 
 export interface ChoiceEvent {
-  bucket: 'banner' | 'boon' | 'evolution' | 'class' | 'draft' | 'node' | 'location' | 'event' | 'patron';
+  bucket: 'banner' | 'boon' | 'evolution' | 'class' | 'draft' | 'node' | 'event' | 'patron';
   offered: string[];
   /** Usually one; the draft takes two of its four. */
   picked: string[];
@@ -448,15 +448,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         tally(record, run.actNumber, 'pactSeal');
         if (run.actNumber < TOTAL_ACTS) {
           run = advanceToNextAct(run, randomSeed(rng));
-          // The act's 1-of-2, taken at random (docs/locations.md §1): the offer is what is left,
-          // so the pick is the matched experiment the lift table reads — which PLACE is the wall.
-          if (locationChoiceDue(run)) {
-            const offered = drawLocationCandidates(run.locationIds, randomSeed(rng), locationPool(run.cycle));
-            const pickedId = pick(rng, offered);
-            record.choices.push({ bucket: 'location', offered, picked: [pickedId], encountersWonAtChoice: run.encountersWon });
-            run = chooseLocation(run, pickedId, locationPool(run.cycle));
-            if (offered.length > 1) tally(record, run.actNumber, 'locationChoice');
-          }
+          run = seatNextLocation(run, randomSeed(rng), locationPool(run.cycle));
           tally(record, run.actNumber, 'actIntro');
         }
         else {

@@ -161,8 +161,6 @@ export interface Aggregate {
   draftChoices: Record<string, ChoiceAgg>;
   /** Map-node types: which kind of node a row offered, and which one the walk took. */
   nodeChoices: Record<string, ChoiceAgg>;
-  /** The act's 1-of-2 location offer, and which place the walk took. */
-  locationChoices: Record<string, ChoiceAgg>;
   /** Which event an event node rolled, among those eligible there. */
   eventChoices: Record<string, ChoiceAgg>;
   /** Equipment rarity actually equipped, by act. */
@@ -282,7 +280,6 @@ export function emptyAggregate(): Aggregate {
     classChoices: {},
     draftChoices: {},
     nodeChoices: {},
-    locationChoices: {},
     eventChoices: {},
     equipRarityByAct: {},
     roundHistogram: [],
@@ -497,6 +494,5 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeCounts(into.classChoices, from.classChoices, emptyChoice);
   mergeCounts(into.draftChoices, from.draftChoices, emptyChoice);
   mergeCounts(into.nodeChoices, from.nodeChoices, emptyChoice);
-  mergeCounts(into.locationChoices, from.locationChoices, emptyChoice);
   mergeCounts(into.eventChoices, from.eventChoices, emptyChoice);
 }

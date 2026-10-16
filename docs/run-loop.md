@@ -475,7 +475,8 @@ was weighed and set aside: it would make combat fiddlier, and speed is the game'
   Guardian win: record the broken seal, then
   `advanceToNextAct` (a fresh `generateMap` seed, position reset, `actNumber` incremented). Roster,
   gold, Banners, contracts and consumables all carry over; only the map resets. Acts 2–4 open on a
-  **1-of-2 Location choice** (`LocationChoiceScreen`, `locations.md` §1, §4).
+  **random Location** (`seatNextLocation`, `locations.md` §1; the 1-of-2 pick was deleted
+  2026-10-16, per user direction).
 - **Enemies are levelled, not stepped** (2026-09-15, `docs/enemy-levels.md`). An enemy's one stat
   axis is its **level**, rolled through its growth grades from 1 as a Guild hire's is, set per NODE
   off the player's par plus a kind offset (`ENEMY_LEVEL_OFFSET`) and the act's term

@@ -1,13 +1,10 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import {
-  LOCATION_CHOICE_COUNT,
-  LocationChoiceError,
-  chooseLocation,
-  drawLocationCandidates,
   generateItinerary,
-  locationChoiceDue,
+  locationDue,
   locationForAct,
+  seatNextLocation,
   affinityHeroIds,
   locationBias,
   unbrokenSealLocationIds,
@@ -19,39 +16,35 @@ import { advanceToNextAct } from '../src/run/runProgress';
 import { heroes } from '../src/data/heroes';
 import { createRunState, SEAL_ACTS, TOTAL_ACTS, type RunState } from '../src/run/state';
 
-// --- The choice (docs/locations.md §1) ---
+// --- The draw (docs/locations.md §1) ---
 
 function runAtActOne(): RunState {
   return { ...createRunState(), locationIds: [ACT_ONE_LOCATION_ID] };
 }
 
-test('locations: the choice is due on every seal act after the first, and never on the finale', () => {
+test('locations: a place is due on every seal act after the first, and never on the finale', () => {
   let run = runAtActOne();
-  assert.ok(!locationChoiceDue(run), 'Act 1 is fixed');
+  assert.ok(!locationDue(run), 'Act 1 is fixed');
+  assert.strictEqual(seatNextLocation(run, 1), run, 'nothing is seated when none is due');
   for (let act = 2; act <= SEAL_ACTS; act++) {
     run = advanceToNextAct(run, act);
-    assert.ok(locationChoiceDue(run), `act ${act} should open on a choice`);
-    run = chooseLocation(run, drawLocationCandidates(run.locationIds, act)[0]);
-    assert.ok(!locationChoiceDue(run), `act ${act} is seated once picked`);
+    assert.ok(locationDue(run), `act ${act} should be due a place`);
+    run = seatNextLocation(run, act);
+    assert.ok(!locationDue(run), `act ${act} is seated once drawn`);
   }
   run = advanceToNextAct(run, 99);
-  assert.ok(!locationChoiceDue(run), 'the Threshold is not a choice');
+  assert.ok(!locationDue(run), 'the Threshold is not drawn');
   assert.strictEqual(locationForAct(run.locationIds, TOTAL_ACTS).id, FINALE_LOCATION_ID);
 });
 
-test('locations: an act offers two of what is left, and the last seal act still has two', () => {
+test('locations: each act draws one of what is left, never a repeat or the finale', () => {
   for (let seed = 1; seed <= 40; seed++) {
     let run = runAtActOne();
     for (let act = 2; act <= SEAL_ACTS; act++) {
-      run = advanceToNextAct(run, seed * 100 + act);
-      const offered = drawLocationCandidates(run.locationIds, seed * 100 + act);
-      assert.strictEqual(offered.length, LOCATION_CHOICE_COUNT, `seed ${seed} act ${act} offered ${offered.length}`);
-      assert.notStrictEqual(offered[0], offered[1]);
-      for (const id of offered) {
-        assert.ok(!run.locationIds.includes(id), `seed ${seed} act ${act} re-offered ${id}`);
-        assert.notStrictEqual(id, FINALE_LOCATION_ID);
-      }
-      run = chooseLocation(run, offered[seed % 2]);
+      run = seatNextLocation(advanceToNextAct(run, seed * 100 + act), seed * 100 + act);
+      const drawn = run.locationIds[act - 1];
+      assert.ok(!run.locationIds.slice(0, act - 1).includes(drawn), `seed ${seed} act ${act} repeated ${drawn}`);
+      assert.notStrictEqual(drawn, FINALE_LOCATION_ID);
     }
     // Two seal locations go unvisited under four acts: the seals that held (docs/lore.md §5).
     assert.strictEqual(unvisitedLocationIds(run.locationIds).length, ITINERARY_POOL_IDS.length - (SEAL_ACTS - 1), `seed ${seed}`);
@@ -60,17 +53,9 @@ test('locations: an act offers two of what is left, and the last seal act still 
   }
 });
 
-test('locations: the offer is a pure function of the seed', () => {
-  assert.deepStrictEqual(drawLocationCandidates([ACT_ONE_LOCATION_ID], 7), drawLocationCandidates([ACT_ONE_LOCATION_ID], 7));
-});
-
-test('locations: a pick outside the offer, a repeat, or a pick when none is due is refused', () => {
-  let run = advanceToNextAct(runAtActOne(), 1);
-  assert.throws(() => chooseLocation(run, ACT_ONE_LOCATION_ID), LocationChoiceError);
-  assert.throws(() => chooseLocation(run, FINALE_LOCATION_ID), LocationChoiceError);
-  run = chooseLocation(run, 'necropolis');
-  assert.throws(() => chooseLocation(run, 'stormCoast'), LocationChoiceError);
-  assert.deepStrictEqual(run.locationIds, [ACT_ONE_LOCATION_ID, 'necropolis']);
+test('locations: the draw is a pure function of the seed', () => {
+  const run = advanceToNextAct(runAtActOne(), 1);
+  assert.deepStrictEqual(seatNextLocation(run, 7).locationIds, seatNextLocation(run, 7).locationIds);
 });
 
 test("locations: a Visit run standing anywhere still has Wild's Edge on offer later", () => {
@@ -98,10 +83,9 @@ test('locations: an itinerary covers every act and never repeats a location', ()
   }
 });
 
-test('locations: the authored pool leaves the last act a real choice', () => {
-  // SEAL_ACTS - 1 picks from the pool, and the last seal act still sees two of what is left —
-  // so its 1-of-2 choice is real. Under four acts two locations go unvisited (docs/lore.md §5).
-  assert.ok(ITINERARY_POOL_IDS.length - (SEAL_ACTS - 2) >= LOCATION_CHOICE_COUNT);
+test('locations: the authored pool covers every seal act', () => {
+  // Under four acts two locations go unvisited (docs/lore.md §5).
+  assert.ok(ITINERARY_POOL_IDS.length >= SEAL_ACTS - 1);
   assert.ok(!ITINERARY_POOL_IDS.includes(FINALE_LOCATION_ID), 'the finale location must never be drawn');
 });
 

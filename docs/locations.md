@@ -30,34 +30,22 @@ run went to four acts, two of the base five seal locations stay shut, and the un
 why there is a world left at all (`lore.md` §5). They are also the natural anchor for
 `progression.md`'s light meta-progression — the thread between runs.
 
-### Choice, not a roll (decided 2026-08-28, per user direction)
+### A roll, not a choice (2026-10-16, per user direction)
 
-The alternatives considered were a fully random location per act, or a "named location
-vs. reroll for a random one" offer. Both were rejected for the same reason: the reroll has
-no upside a player can reason about, so the interesting case — weighing two real futures —
-never happens.
-
-Instead, **each act offers 2 named locations and the player picks one.** With Wild's Edge
-locked to Act 1 and five other base locations, Act 2 picks 1 of 2 drawn from 5, Act 3 from the
-remaining 4, Act 4 from 3 — every act keeps a real choice, including the last. Bought locations
-(§4) join the pool and only widen it.
-
-What that buys over a roll is a **sequencing** decision layered on top of the pick. The
-player is not choosing *whether* to visit Necropolis so much as *when* — "take it now
-while I still have Fire coverage." The choice is never removed, it is priced — the texture the
-reward-row steering carried until it was reverted on 2026-09-08 (`run-loop.md` §1).
-
-It also puts the location decision on the same footing as everything else in the run. The
-map is fully visible and priceable from the start of an act; a random location would be
-the only major strategic axis decided by luck the player cannot see coming.
+**Each seal act after the first is drawn at random** from what is left unvisited, flat, never
+weighted, and the arrival screen says where. The 1-of-2 pick that held from 2026-08-28 is
+deleted: in play it read as tedious rather than interesting, even to the designer. The
+sequencing argument for it (*the Necropolis now, while the Fire coverage holds*) did not survive
+contact; a place changes WHO you fight, and the map that follows is where the run's decisions
+are. The cost is the one the old decision named: the place is now luck the player cannot see
+coming, read on arrival rather than chosen.
 
 **As built:** `RunState.locationIds` is a **history** — where the run has been and where it
-stands, never a plan. Every seal act after the first opens on `LocationChoiceScreen` (§4),
-between the Pact Seal and the arrival screen; `drawLocationCandidates` draws
-`LOCATION_CHOICE_COUNT` = 2 flat (never weighted) from `unvisitedLocationIds`, `chooseLocation`
-seats the pick, and `advanceToNextAct` seats the Threshold itself. `generateItinerary` survives
-for fixtures and dev routes. The sim takes the offer at random and reports a **location lift**
-table (which PLACE is the wall, matched against the one it could have gone to).
+stands, never a plan. `enterAct` (App) calls `seatNextLocation` once the Pact Seal is behind the
+player, which draws one of `unvisitedLocationIds` off a seed and seats it; `advanceToNextAct`
+seats the Threshold itself. `generateItinerary` survives for fixtures and dev routes. A save
+parked on the deleted pick screen reopens on the Pact Seal, which draws. The sim's location
+lift table went with the pick, since there is no longer an offer to match a place against.
 
 ## 2. Weighting, not filtering
 
@@ -160,7 +148,7 @@ level curve already say. This says *whose ground you are standing on*, and belon
 ## 4. The arrival screen
 
 `src/view/run/ActIntroScreen.tsx` — shown once per act, before the map: after the draft
-for Act 1, and after the location choice for each seal act after it. It is the **per-act beat**,
+for Act 1, and after the random draw for each seal act after it. It is the **per-act beat**,
 not an Act-1-only title card.
 
 It stands on the shared node stage (`visual-language.md` ninth pass) with a **`LocationSky`**,
@@ -202,32 +190,6 @@ glob in `src/view/shared/locationBackdrops.ts`, generated with PixelLab:
   roll with figures in it or a floor that is patterned rather than plain. The Titan's back
   draws none.
 
-The location-choice cards still draw the vector band.
-
-### The location choice
-
-`src/view/run/LocationChoiceScreen.tsx` — the 1-of-2 that opens every seal act after the
-first (§1), shown after the Pact Seal and before the arrival screen. Two places, stacked
-(a horizon band is wide and a phone is not), each card a scene built from the same three
-things the arrival screen reads — its `tintRgb` on the card's own wash, its `ambience`
-at half density, its horizon band in front — plus one thing the arrival screen keeps back:
-**the warden on the skyline**. `guardianFinalEnemyId` is drawn through `HeroPortrait`
-(the same generated figure the fight will show) standing behind the horizon band, dim and
-desaturated, its feet hidden by the silhouette so it reads as some way off. The domains sit
-over the band; Wild's Edge gets the words.
-
-The screen itself is **placeless** (`PLACELESS_SCREENS`), like the Pact Seal: gold sky,
-gold header, until a card is picked — then the screen's `--node-rgb` takes that place's
-tint, so the sky, the title bloom and the button all turn its colour, the warden comes
-forward, the other place steps back into the dark. No line under the name on either card
-(2026-09-19, per user direction): the scene is the description, and the omen waits for the
-map's first node. Pick-then-confirm, the Banner's idiom: the button names the pick (*Set out
-for the Necropolis*), and the arrival screen's *Enter* is the next beat. Both candidates'
-tracks are prefetched while the player weighs them.
-
-One card is no choice: `enterAct` takes a lone candidate silently and the arrival screen
-says where. It only happens on a dev run that opened somewhere other than Wild's Edge.
-
 ### Bought Locations — the Holy Sanctum, Dreaming Spires, Thunder Aerie, Frozen Reach (2026-09-19)
 
 > **Granted by the Cycles since 2026-10-06** (`docs/cycles.md` §6): `fromCycle` replaces `unlock`,
@@ -238,15 +200,15 @@ Four places the Constellation sells (`docs/constellation.md` §11 phase 5 has ea
 look), each with a warden of a type no base Guardian covers — the Seraph (Light), Sphinx (Mind),
 Roc (Storm) and Wendigo (Frost). `LocationDefinition.unlock` names its offer, and it is in a
 run's pool only while that offer is held: `locationPool(profile.purchases)` in
-`src/run/locations.ts`, read once where the act's offer is drawn. A bought location is drawn
+`src/run/locations.ts`, read once where the act's place is drawn. A bought location is drawn
 **beside** the base five, so its spawn types overlap theirs — the partition in §3 is a rule for
 the base pool, which `ITINERARY_POOL_IDS` still is.
 
 ## 5. Status and known gaps
 
-### 5.1 The 1-of-2 location choice — built (2026-09-19)
+### 5.1 The 1-of-2 location choice — built (2026-09-19), deleted (2026-10-16)
 
-See §1 and §4 "The location choice".
+See §1.
 
 ### 5.2 The mob layer — built, then replaced
 

@@ -136,11 +136,10 @@ import {
 } from '../run/enemyGen';
 import { CHAMPION_LEVEL_BONUS, encounterScaling, enemyLevelFor, enemyLoadoutFor } from '../run/difficulty';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, MAX_XP, applySeededEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
-import { actOneLocationFor, arenaLocationIds, chooseLocation, drawLocationCandidates, generateItinerary, locationChoiceDue, locationForAct, locationForType, locationPool } from '../run/locations';
+import { actOneLocationFor, arenaLocationIds, generateItinerary, locationDue, locationForAct, locationForType, locationPool, seatNextLocation } from '../run/locations';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
-import { LocationChoiceScreen } from '../view/run/LocationChoiceScreen';
 import { ProfileProvider } from '../view/shared/ProfileContext';
 import { starShopCatalog } from '../data/starShop';
 import { buyOffer, starBalance, starfall, type StarShopOffer } from '../run/starShop';
@@ -191,8 +190,6 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'blessing',
   // Between two acts, and the property of neither.
   'pactSeal',
-  // Each place on offer lights its own card; the sky behind them belongs to none of them.
-  'locationChoice',
 
   // After the last fight: the Threshold's track drops and the binding plays in silence.
   'titanBound',
@@ -1228,30 +1225,20 @@ export function App() {
 
   /** The arrival screen — and the moment the act's music is allowed to start (see `trackId`). */
   /**
-   * The seal is behind the player; the next act opens on where to go, then on arriving there.
-   * The offer is drawn here, once — a run never knows its next place before this beat. One
-   * candidate is no choice, so it is taken silently and the arrival screen says where.
+   * The seal is behind the player; the next act's place is drawn here, at random — a run never
+   * knows its next place before this beat — and the arrival screen says where.
+   * `run` is passed where the run was built in the same handler, before `playerRun` has caught up.
    */
-  /** `run` is passed where the run was built in the same handler, before `playerRun` has caught up. */
   function enterAct(run: RunState = playerRun) {
     setActBreak(false);
-    if (locationChoiceDue(run)) {
+    if (locationDue(run)) {
       // The pool is the Cycle's: a Location a Cycle granted is drawn beside the base five (docs/cycles.md §6).
-      const pool = locationPool(run.cycle);
-      const candidateIds = drawLocationCandidates(run.locationIds, randomSeed(), pool);
-      // Whichever is taken, its arrival screen is next: fetch both places' paintings now.
-      void preloadImages(locationArtUrls(candidateIds));
-      if (candidateIds.length > 1) {
-        setScreen({ kind: 'locationChoice', candidateIds });
-        return;
-      }
-      if (candidateIds.length === 1) setPlayerRun(chooseLocation(run, candidateIds[0], pool));
+      const seated = seatNextLocation(run, randomSeed(), locationPool(run.cycle));
+      const placeIds = seated.locationIds.slice(run.locationIds.length);
+      void preloadImages(locationArtUrls(placeIds));
+      for (const id of placeIds) if (hasTrack(id)) prefetchTrack(id);
+      setPlayerRun(seated);
     }
-    setScreen({ kind: 'actIntro' });
-  }
-
-  function handleLocationChosen(locationId: string) {
-    setPlayerRun(chooseLocation(playerRun, locationId, locationPool(playerRun.cycle)));
     setScreen({ kind: 'actIntro' });
   }
 
@@ -1294,15 +1281,12 @@ export function App() {
     setTrack(trackId);
   }, [trackId]);
 
-  // A run never knows its next place before the choice, so the tracks warmed are the offer's:
-  // both candidates while the player weighs them, so the one picked doesn't arrive in silence
-  // through a multi-megabyte download. From the title the next thing needed is Act 1's, always
-  // the same place.
-  const nextLocationIds = screen.kind === 'title' ? [ACT_ONE_LOCATION_ID] : screen.kind === 'locationChoice' ? screen.candidateIds : [];
-  const nextLocationKey = nextLocationIds.join(',');
+  // From the title the next thing needed is Act 1's track, always the same place; a later act's
+  // is warmed where its place is drawn (`enterAct`).
+  const onTitle = screen.kind === 'title';
   useEffect(() => {
-    for (const id of nextLocationKey.split(',')) if (hasTrack(id)) prefetchTrack(id);
-  }, [nextLocationKey]);
+    if (onTitle && hasTrack(ACT_ONE_LOCATION_ID)) prefetchTrack(ACT_ONE_LOCATION_ID);
+  }, [onTitle]);
   // The draft follows the title (behind at most the lore cards), so its track is warmed there.
   const warmStarter = screen.kind === 'title' || screen.kind === 'lore';
   useEffect(() => {
@@ -1532,10 +1516,6 @@ export function App() {
 
       {/* A run saved on the old Blessing screen picks up on the forging that replaced it. */}
       {screen.kind === 'blessing' && <PactForging heroIds={playerRun.roster.map((entry) => entry.heroId)} onDone={() => setScreen({ kind: 'pactSeal' })} />}
-
-      {screen.kind === 'locationChoice' && (
-        <LocationChoiceScreen run={playerRun} candidateIds={screen.candidateIds} onChoose={handleLocationChosen} />
-      )}
 
       {screen.kind === 'herald' && <HeraldScreen company={heraldCompany(screen.next, playerRun.brokenSeals)} onContinue={() => setScreen(screen.next)} />}
 

@@ -19,7 +19,6 @@ export type ScreenKind =
   | 'evolution'
   | 'banner'
   | 'pactSeal'
-  | 'locationChoice'
   | 'actIntro'
   | 'scrollReward'
   | 'currencyReward'
@@ -63,8 +62,6 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   evolution: 30,
   banner: 12,
   pactSeal: 8,
-  // Two scenes to weigh against the roster's coverage: the Banner's price.
-  locationChoice: 12,
   actIntro: 8,
   // Three taps on a pick-a-hero screen, no comparison asked: the Forge's price.
   scrollReward: 10,

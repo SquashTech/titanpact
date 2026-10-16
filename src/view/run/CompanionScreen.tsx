@@ -2,10 +2,13 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { moves } from '../../data/moves';
-import { companionCallMoveId } from '../../run/companion';
+import { companionCallFor } from '../../run/companion';
 import type { RunState } from '../../run/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { MoveDetailOverlay } from '../combat/MoveDetailOverlay';
+import { healCasterForEntry } from '../shared/healCaster';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { MoveButtonReplica } from '../shared/MoveTile';
 import { NodeHeader } from '../shared/NodeStage';
 import { RoadBackdrop } from './RoadEncounter';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -25,21 +28,21 @@ interface Props {
 const HOP_MS = 520;
 const HOPS = 5;
 
-function copyFor(beat: CompanionBeat, callName: string | null): { eyebrow: string; title: string; readout: string; button: string } {
+function copyFor(beat: CompanionBeat): { eyebrow: string; title: string; readout: string; button: string } {
   const named = (id: string) => rosterHeroes[id]?.name ?? id;
   switch (beat.kind) {
     case 'join':
       return {
         eyebrow: 'Something small stirs',
         title: `The friendly ${named(beat.heroId)} wants to accompany you!`,
-        readout: callName ? `Once a fight, it joins in on its own: ${callName}.` : 'Once a fight, it joins in on its own.',
+        readout: 'Once a fight, it joins in on its own.',
         button: `Welcome, ${named(beat.heroId)}`,
       };
     case 'grown':
       return {
         eyebrow: 'The leak grows',
         title: `${named(beat.fromHeroId)} has grown into ${named(beat.toHeroId)}!`,
-        readout: callName ? `Same creature, next body. Now it casts ${callName}.` : 'Same creature, next body.',
+        readout: 'Same creature, next body, and a new move.',
         button: 'Onward',
       };
   }
@@ -49,9 +52,12 @@ export function CompanionScreen({ run, beat, onContinue }: Props) {
   const heroId = beat.kind === 'grown' ? beat.toHeroId : beat.heroId;
   const hero = rosterHeroes[heroId];
   const [hop, setHop] = useState(0);
-  // The run already stands in the act the beat belongs to, so its Call move is the one to name.
-  const callMoveId = companionCallMoveId(run);
-  const copy = copyFor(beat, callMoveId ? (moves[callMoveId]?.name ?? null) : null);
+  const [reading, setReading] = useState(false);
+  // The run already stands in the act the beat belongs to, so its move is the one it will cast.
+  const call = companionCallFor(run, rosterHeroes);
+  const callMove = call ? moves[call.moveId] : undefined;
+  const caster = call && hero ? { ...healCasterForEntry(hero, call.entry), types: hero.types } : undefined;
+  const copy = copyFor(beat);
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
@@ -103,7 +109,15 @@ export function CompanionScreen({ run, beat, onContinue }: Props) {
         </span>
       </div>
 
+      {callMove && (
+        <div className="companion-move">
+          <MoveButtonReplica move={callMove} caster={caster} free onClick={() => setReading(true)} onLongPress={() => setReading(true)} />
+        </div>
+      )}
+
       <PlateButton onClick={onContinue}>{copy.button}</PlateButton>
+
+      {reading && callMove && <MoveDetailOverlay move={callMove} caster={caster} free onClose={() => setReading(false)} />}
     </div>
   );
 }

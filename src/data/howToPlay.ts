@@ -157,7 +157,7 @@ export const HOW_TO_PLAY: readonly Tip[] = [
   section(
     'nextAct',
     'The Next Act',
-    'Choose where the next act takes place. Each place is home to different types of Titanspawn and heroes.'
+    'Each act takes you somewhere new, never the same place twice. Each place is home to different types of Titanspawn and heroes.'
   ),
   section(
     'cycles',

@@ -26,16 +26,13 @@ export function locationForType(type: TypeId): string | null {
   return (all.find((l) => l.spawnTypes?.[0] === type) ?? all.find((l) => !l.fromCycle && l.spawnTypes?.includes(type)))?.id ?? null;
 }
 
-/** How many places an act offers (docs/locations.md §1): the player picks one. */
-export const LOCATION_CHOICE_COUNT = 2;
-
 /**
  * `RunState.locationIds` is a HISTORY, index 0 = Act 1: a run knows where it has been and where
- * it stands, never where it is going. Every seal act after the first opens on a choice; the
- * finale is seated by `advanceToNextAct`, since the Threshold is where the seals lead rather
- * than a place to pick. True while the current act has no location yet.
+ * it stands, never where it is going. Every seal act after the first is drawn at random as it
+ * opens (`seatNextLocation`); the finale is seated by `advanceToNextAct`. True while the current
+ * act has no location yet.
  */
-export function locationChoiceDue(run: RunState): boolean {
+export function locationDue(run: RunState): boolean {
   return run.actNumber <= SEAL_ACTS && run.locationIds.length < run.actNumber;
 }
 
@@ -69,35 +66,21 @@ export function unvisitedLocationIds(visited: readonly string[], pool: readonly 
 }
 
 /**
- * The act's offer: LOCATION_CHOICE_COUNT of what is left, drawn off `seed` — fewer only when
- * fewer remain. Sequencing is the decision (the Necropolis now, while the Fire coverage holds),
- * so the offer is drawn flat off what is left and never weighted.
+ * Seats the current act's place: one of what is left, drawn flat off `seed` (docs/locations.md §1).
+ * Unchanged when none is due or none is left.
  */
-export function drawLocationCandidates(visited: readonly string[], seed: number, pool: readonly string[] = locationPool()): string[] {
-  let rng: RngState = createRng(seed);
-  const remaining = unvisitedLocationIds(visited, pool);
-  const drawn: string[] = [];
-  while (drawn.length < LOCATION_CHOICE_COUNT && remaining.length > 0) {
-    const { value, nextState } = nextFloat(rng);
-    rng = nextState;
-    drawn.push(remaining.splice(Math.floor(value * remaining.length), 1)[0]);
-  }
-  return drawn;
-}
-
-export class LocationChoiceError extends Error {}
-
-/** Seats the pick as the current act's place. Refuses a place already visited or outside the pool, and any pick when none is due. */
-export function chooseLocation(run: RunState, locationId: string, pool: readonly string[] = locationPool()): RunState {
-  if (!locationChoiceDue(run)) throw new LocationChoiceError('no location choice is due');
-  if (!unvisitedLocationIds(run.locationIds, pool).includes(locationId)) throw new LocationChoiceError(`${locationId} is not open to this run`);
-  return { ...run, locationIds: [...run.locationIds, locationId] };
+export function seatNextLocation(run: RunState, seed: number, pool: readonly string[] = locationPool()): RunState {
+  if (!locationDue(run)) return run;
+  const remaining = unvisitedLocationIds(run.locationIds, pool);
+  if (remaining.length === 0) return run;
+  const { value } = nextFloat(createRng(seed));
+  return { ...run, locationIds: [...run.locationIds, remaining[Math.floor(value * remaining.length)]] };
 }
 
 /**
  * A whole run's places drawn at once — index 0 Wild's Edge, the last the Threshold, acts 2-5
- * without replacement — for a fixture or a dev route that stands a run past the choices it
- * would have made. A played run walks `drawLocationCandidates` / `chooseLocation` instead;
+ * without replacement — for a fixture or a dev route that stands a run past the draws it
+ * would have made. A played run walks `seatNextLocation` instead;
  * the shape is the same, so exactly one pool location goes unvisited either way, which is the
  * sixth seal (docs/lore.md §5).
  */

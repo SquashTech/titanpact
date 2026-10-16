@@ -89,7 +89,6 @@ test('resume: every resumable kind round trips, nested chains included', () => {
     map,
     chain,
     { kind: 'actIntro' },
-    { kind: 'locationChoice', candidateIds: Object.keys(locations).slice(0, 2) },
     { kind: 'herald', next: { kind: 'titanBound', next: { kind: 'champions' } } },
     { kind: 'shop', nodeId, offers: { heroOfferIds: ['a'], itemIds: [item], gems: [{ stat: 'wisdom', points: 10 }] }, gemsBought: [0], called: true, itemsBought: [0] },
     { kind: 'reward', nodeId, nodeType: 'currencyReward', seed: 11 },
@@ -169,6 +168,12 @@ test('resume: a run saved on the old Fallen beat walks on to what followed it', 
   const run = sampleRun();
   const back = roundTrip({ screen: { kind: 'fallen', rosterIds: ['rime-1'], next: { kind: 'map' } } as unknown as RunScreen }, run);
   assert.strictEqual(back?.screen.kind, 'map');
+});
+
+test('resume: a run saved on the old Location pick reopens on the seal', () => {
+  const run = sampleRun();
+  const back = roundTrip({ screen: { kind: 'locationChoice', candidateIds: ['necropolis', 'stormCoast'] } as unknown as RunScreen }, run);
+  assert.strictEqual(back?.screen.kind, 'pactSeal');
 });
 
 test('resume: the title, the draft, the dev fights and the run end are never resumed', () => {
