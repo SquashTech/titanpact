@@ -43,6 +43,7 @@ section p{margin:0 0 10px;color:var(--mute);font-size:13px}
 
 /* Story art: a backdrop slice with the protagonists standing in it */
 .scene{position:absolute;inset:0;background-size:cover;background-position:center}
+.scene.painted{image-rendering:pixelated}
 .scene::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,10,.1) 30%,rgba(5,6,10,.85) 100%)}
 .figs{position:absolute;z-index:1;display:flex;align-items:flex-end;gap:2px}
 .figs img{display:block}
@@ -96,6 +97,7 @@ section p{margin:0 0 10px;color:var(--mute);font-size:13px}
 <h1>The Story select</h1>
 <p class="sub">What Seal the Pact opens once the prologue is done. Three layouts with the same contents: Valor's Story partway through Cycle I, Drift's not yet started, one locked, and the Classic run. Progress is five Cycle pips in the star colours (I white, II copper, III frost, IV gold, V rainbow); the lit outline is the Cycle you're in. Story and chapter titles are placeholders.</p>
 <div class="names">Classic's name: <button data-n="Pactbearer" class="on">Pactbearer</button><button data-n="Your Pact">Your Pact</button><button data-n="Classic">Classic</button></div>
+<div class="names">Tall banner: <span id="tallPick"></span>&nbsp; Wide banner: <span id="widePick"></span></div>
 <div class="grid" id="grid"></div>
 </main>
 <script>
@@ -106,33 +108,44 @@ const STORIES = [
   { name: '', chap: '', bg: 'locations/necropolis.png', figs: [['heroes/Widow.png', 84]], locked: true, pips: ['', '', '', '', ''] },
 ];
 let NAME = 'Pactbearer';
+let TALL = 2, WIDE = 1;
 const pips = (p) => `<span class="pips">${p.map((c) => `<b class="${c}"></b>`).join('')}</span>`;
 const figs = (s, scale = 1) => `<span class="figs">${s.figs.map(([src, h]) => `<img class="px" src="${ART}art/${src}" style="height:${Math.round(h * scale)}px" alt="">`).join('')}</span>`;
-const scene = (s) => `<span class="scene" style="background-image:url('${ART}art/${s.bg}')"></span>`;
+const scene = (s, img, pos) => img
+  ? `<span class="scene painted" style="background-image:url('${img}');background-position:${pos || 'center'}"></span>`
+  : `<span class="scene" style="background-image:url('${ART}art/${s.bg}')"></span>`;
 const title = (s) => s.locked ? `<span class="tname">? ? ?</span>` : `<span class="tname">${s.name}</span>`;
 const plate = (label, sm) => `<div class="plate${sm ? ' sm' : ''}"><span class="mk"></span>${label}<span class="mk"></span></div>`;
 const classicPips = pips(['c1', 'c1', '', '', '']);
 const sky = `<span class="sky">${Array.from({ length: 40 }, (_, i) => `<i style="left:${(i * 37) % 100}%;top:${(i * 53) % 100}%;opacity:${0.25 + (i % 4) * 0.15}"></i>`).join('')}</span>`;
 
-function layoutA() {
-  const cards = STORIES.map((s) => `<div class="card${s.locked ? ' locked' : ''}">${scene(s)}${figs(s, s.locked ? 0.7 : 0.7)}<span class="txt">${title(s)}${s.locked ? '' : `<span class="chap">${s.chap}</span>${pips(s.pips)}`}</span></div>`).join('');
+function layoutA(painted) {
+  const cards = STORIES.map((s, i) => `<div class="card${s.locked ? ' locked' : ''}">${painted && i === 0 ? scene(s, `valor-wide-${WIDE}.png`) : scene(s) + figs(s, 0.7)}<span class="txt">${title(s)}${s.locked ? '' : `<span class="chap">${s.chap}</span>${pips(s.pips)}`}</span></div>`).join('');
   return `<div class="phone a">${sky}<span class="back">‹</span><div class="list">${cards}<div class="classic">${plate(NAME)}</div></div></div>`;
 }
-function layoutB() {
+function layoutB(painted) {
   const [f, ...rest] = STORIES;
-  const covers = [f, ...rest].map((s, i) => `<div class="cover${s.locked ? ' locked' : ''}"${i === 0 ? ' style="box-shadow:inset 0 0 0 2px #f3ecda"' : ''}>${scene(s)}${figs(s, 0.5)}<span class="tname">${s.locked ? '? ? ?' : s.name}</span>${s.locked ? '' : pips(s.pips)}</div>`).join('');
-  return `<div class="phone b">${sky}<span class="back">‹</span><div class="feat">${scene(f)}${figs(f, 1.15)}<span class="txt">${title(f)}<span class="chap">${f.chap}</span>${pips(f.pips)}${plate('Continue')}</span></div><div class="shelf">${covers}</div><div class="classic">${plate(NAME, true)}</div></div>`;
+  const covers = [f, ...rest].map((s, i) => `<div class="cover${s.locked ? ' locked' : ''}"${i === 0 ? ' style="box-shadow:inset 0 0 0 2px #f3ecda"' : ''}>${painted && i === 0 ? scene(s, `valor-tall-${TALL}.png`, 'center 70%') : scene(s) + figs(s, 0.5)}<span class="tname">${s.locked ? '? ? ?' : s.name}</span>${s.locked ? '' : pips(s.pips)}</div>`).join('');
+  return `<div class="phone b">${sky}<span class="back">‹</span><div class="feat">${painted ? scene(f, `valor-tall-${TALL}.png`, 'center top') : scene(f) + figs(f, 1.15)}<span class="txt">${title(f)}<span class="chap">${f.chap}</span>${pips(f.pips)}${plate('Continue')}</span></div><div class="shelf">${covers}</div><div class="classic">${plate(NAME, true)}</div></div>`;
 }
 function layoutC() {
   const s = STORIES[0];
   return `<div class="phone c">${sky}<div class="page">${scene(s)}${figs(s, 1.5)}<span class="txt">${title(s)}<span class="chap">${s.chap}</span>${pips(s.pips)}</span></div><span class="back">‹</span><span class="chev l">‹</span><span class="chev r">›</span><div class="go">${plate('Continue')}</div><div class="rail"><span class="on"></span><span></span><span></span><span class="cls"></span></div><div class="classic">${plate(NAME, true)}</div></div>`;
 }
 const OPTIONS = [
-  ['A · Banner stack', 'Every Story is a wide banner, stacked; the Classic run is a plate at the foot. Tap a banner to continue it. Everything is visible at once, but past four or five Stories it scrolls.', layoutA],
-  ['B · Featured book', 'The Story you\'re in takes the top half with its Continue plate; every Story, this one included, sits on a shelf of covers below. The common case is one tap. Closest to Hearthstone\'s Book of Heroes.', layoutB],
+  ['A · Banner stack, painted', 'Valor’s banner painted whole in PixelLab off her and Fang’s sprites (Drift and the locked Story are still sprites, for contrast). The title sits on the calm left of the sky.', () => layoutA(true)],
+  ['B · Featured book, painted', 'One tall painting fills the featured half; the shelf cover is a crop of the same painting.', () => layoutB(true)],
+  ['A · Banner stack', 'Every Story is a wide banner, stacked; the Classic run is a plate at the foot. Tap a banner to continue it. Everything is visible at once, but past four or five Stories it scrolls.', () => layoutA()],
+  ['B · Featured book', 'The Story you\'re in takes the top half with its Continue plate; every Story, this one included, sits on a shelf of covers below. The common case is one tap. Closest to Hearthstone\'s Book of Heroes.', () => layoutB()],
   ['C · One Story a page', 'Each Story fills the screen and you swipe between them (the rail and the arrows). The Classic run is a quiet plate at the bottom, always there. The most art per Story, the least overview.', layoutC],
 ];
+function picks(id, n, cur, set) {
+  document.getElementById(id).innerHTML = [0, 1, 2, 3].map((i) => `<button data-i="${i}" class="${i === cur ? 'on' : ''}">${i + 1}</button>`).join('');
+  document.querySelectorAll(`#${id} button`).forEach((b) => b.addEventListener('click', () => { set(+b.dataset.i); }));
+}
 function render() {
+  picks('tallPick', 4, TALL, (i) => { TALL = i; render(); });
+  picks('widePick', 4, WIDE, (i) => { WIDE = i; render(); });
   document.getElementById('grid').innerHTML = OPTIONS.map(([h, p, f]) => `<section><h2>${h}</h2><p>${p}</p>${f()}</section>`).join('');
 }
 document.querySelectorAll('.names button').forEach((b) => b.addEventListener('click', () => {
