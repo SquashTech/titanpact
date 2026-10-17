@@ -231,3 +231,7 @@ What it reverses, still to rewrite:
 - The Endbringer's name origin (`cycles.md` §7) — the people who watched it fall can name it.
 
 Open: whether the Starfall (heroes arriving as falling stars) is meant to rhyme with the fall.
+
+**The Herald comes first** (2026-10-17, per user direction, `stories.md` §4): the Endbringer walks
+the land before the Titan falls, the way the Silver Surfer comes before Galactus. The Story
+prologue is the first place it's shown.
