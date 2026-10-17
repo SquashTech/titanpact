@@ -128,7 +128,7 @@ the prologue's wildlife can't be Titanspawn. A first set for Wild's Edge is to b
   proposed: the type chart, mana and Rest, statuses, fields, the Guardian and its Banner, Evolution,
   Gems, Classes, patrons. Roughly one idea a chapter, and the party grows as the mechanics do.
 - **How many chapters a Cycle**, and how long a Cycle-V chapter runs.
-- **The brother's name and type.** Proposed: the brother, not Ren, is who the Titan holds, which
+- **The brother's name and type** (proposal in §12). Proposed: the brother, not Ren, is who the Titan holds, which
   makes him the Story's **Cycle II Warden**: the family's first real fight against the Titan is
   against their own boy. That leaves Ren free to be Valor's teacher, with the patron ladder's rung-5
   blade as the moment he finally gives her the sword.
@@ -138,9 +138,8 @@ the prologue's wildlife can't be Titanspawn. A first set for Wild's Edge is to b
 - **The existing first-press fall** (`TitanFallScreen` and its lore crawl, 2026-10-14). The prologue
   plays the fall from the ground. Does it replace the first-press beat, follow it, or fold the crawl
   into its end card?
-- **What the title offers after the prologue.** The user's direction says "the next part of Valor's
-  story, or some other mode". Does Classic open at once? The Trials and the Gauntlet still open on a
-  Cycle I clear?
+- **What the title offers after the prologue.** Seal the Pact opens the Story select (§10). Does
+  its Classic button appear at once? The Trials and the Gauntlet still open on a Cycle I clear?
 - **Do Story clears seat Wardens?** `cycles.md` makes the account's first Cycle I winners its
   Wardens forever. A Story's Cycle I win would make them scripted. Either Story clears don't count,
   or a Story has canonical Wardens of its own.
@@ -155,3 +154,103 @@ the prologue's wildlife can't be Titanspawn. A first set for Wild's Edge is to b
   first press now plays the Story prologue. The reasons that run was deleted (§1) are what this mode
   is designed against.
 - **`patrons.md` rule 13**, in Stories (§6).
+
+---
+
+## 10. The Story select (UI)
+
+**Decided (2026-10-17, per user direction):** once the prologue is done, **Seal the Pact opens a
+screen of every available Story as a big button**, each showing its progress, plus a way into a
+Classic run. The Trials and the Gauntlet keep their own doors on the title.
+
+**Proposed:**
+
+- **Before the prologue is done there is no screen.** The first press plays the prologue directly.
+- **A Story button** is the protagonist's art, the Story's name, and **the next chapter's title**
+  as the only other words. Progress is a quiet mark, not a tally: **five Cycle pips** (lit by
+  colour as each Cycle's chapters are cleared, the colours stars already use). Never "3 of 12
+  chapters".
+- **One tap continues.** The big button starts the next chapter, so the usual case is one decision.
+  Replaying a cleared chapter lives a level down: a chapter timeline across the five Cycles, opened
+  from a smaller control on the button. Reference: Hearthstone's Book of Heroes (a book a hero,
+  chapters inside); Dicey Dungeons' episode select.
+- **The Classic button** carries the Cycle picker it already has and no story art. It sits last,
+  or first once Stories are done.
+- **Locked Stories show as silhouettes**: art in shadow and the name, with no condition text. The
+  condition is explained at the moment it's met.
+
+**What to call Classic.** It's the player's own timeline: their deck, their draft, no canonical
+hero. Candidates:
+
+1. **Pactbearer.** The lore's own word for the role, and "a role, not a person" (`lore.md`) is
+   exactly what Classic is set against the Stories' named heroes. Recommended.
+2. **Your Pact.** Plainer, and reads well next to "Stories".
+3. **Classic.** Clear, but names a mode against a history the player doesn't have.
+
+**Other screens Stories needs:**
+
+- **The scene player.** Figures on the location's backdrop, one short line a tap, the speaker's
+  figure stepping forward. **Skip is always one tap**, for the player who isn't here for the story,
+  and a skipped scene leaves one line saying what happened, so a chapter still makes sense.
+- **The guided-fight layer.** Only the scripted button is live; it's lit and the rest are dimmed.
+  The line that motivates it plays over the stage, with no tooltip.
+- **The chapter end card.** The chapter's name, one closing image, back to the Story select.
+
+## 11. Chapter 2 (PROPOSED)
+
+Teaches **the map, rewards and items** (decided). Proposed story: Valor, Fang and Ren follow the
+Endbringer's trail out of Wild's Edge to get the brother back. Valor carries his sword; Ren won't
+teach her to use it.
+
+- **The party is three:** Valor, Fang and Ren. This is the first time Ren is playable, and three
+  heroes means a real bench.
+- **The first item is the brother's sword.** The chapter opens on the item who-screen with that one
+  piece, so the socket is taught on an object the story has already made matter.
+- **The map is one short act:** fight → a pick-1-of-3 row → fight → a row → the chapter's last fight.
+  The rows carry an item, a potion and a Rest, so each kind of reward gets seen once.
+- **The world changes.** The chapter's enemies are **the first Titanspawn**: the land the Titan
+  touched, turning. The prologue's wildlife was the world before; this is *"It spread into
+  everything it touched"* happening to the place the player just learned to fight in.
+- **The ending beat:** Ren relents. *If you're carrying his sword, carry it properly.* That opens
+  the patron ladder, which chapter 3 would teach.
+
+**The tension to settle:** a map row is a real choice, so the fights after it can't be identical on
+every play. Proposed: chapter 2 keeps a fixed seed and scripted enemies, but the player's commands
+are free (guided only the first time something new appears), and its numbers may vary. Which makes
+chapter 1 the only fully deterministic chapter, against "the first couple" in §5.
+
+## 12. Valor's brother (PROPOSED)
+
+- **Name: Ward** (recommended). The family names its children for what Ren hopes they'll be, Valor
+  included, and the boy the Titan takes ends up its **Warden**. Alternatives: Earnest, Constant.
+- **Type: Storm.** He's trained in Ren's own style (Gale Sever, the cut that moves the air), so
+  **Ren is Storm too**, which settles `patron-heroes.md`'s "no obvious home" without a second Iron
+  swordsman beside Ronin. **Valor is Iron**: the daughter who taught herself is the steel, not her
+  father's wind. The family resemblance is a type chart.
+- **Across the Cycles:** taken in the prologue; in Cycle II he's the Warden the Titan holds, Storm
+  with **Ancient grafted** into his secondary slot (the curse precedent makes a turned typing
+  possible), and the family fights its own boy. Cycle V frees him with the rest of the Wardens.
+
+## 13. More Stories
+
+Decided (per user direction): more Stories with new protagonists unlock over time, and **they can
+go in wildly different directions**.
+
+**Proposed principle: each Story tells itself through its protagonist's domain.** The way a Story
+is told, both its scene grammar and its one Story-only rule, comes from who it's about, so no two
+Stories feel the same. Valor's is spoken family drama: people arguing out loud.
+
+**Drift's Story (direction).** Drift, the psychic jellyfish (Mind), **can't speak**, but thinks
+deeply, and his thoughts are internalised as he meets new characters.
+
+- **His lines are thoughts, never speech:** no speech box, no nameplate. A different line kind in
+  the scene data (`say` / `think`), drawn as drifting text near his figure.
+- **He hears what others don't say.** When Drift is near a character, their thoughts surface next to
+  their spoken line, sometimes agreeing with it and sometimes not. That's Mind as "the domain a
+  hero's power draws from", told as story.
+- **The Story-only rule could be the same idea in a fight:** Drift's chapters show the enemy's
+  commands before the player declares (Mind reads intent). It also teaches the telegraph grammar
+  the companion's ! already uses.
+
+**Open:** what unlocks a new Story (a chapter of another one, a Cycle clear, an achievement), and
+whether a Story's protagonist must be owned in the Collection.
