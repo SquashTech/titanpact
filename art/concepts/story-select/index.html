@@ -76,6 +76,28 @@ section p{margin:0 0 10px;color:var(--mute);font-size:13px}
 .b .cover .pips b{width:6px;height:6px;border-width:1px}
 .b .classic{position:absolute;left:12px;right:12px;bottom:14px}
 
+/* B2 · Featured book, Classic on the shelf, confirm at the foot */
+.b2 .feat{position:absolute;left:0;right:0;top:0;height:56%}
+.b2 .feat .figs{left:50%;bottom:120px;transform:translateX(-50%)}
+.b2 .feat .txt{position:absolute;z-index:2;left:0;right:0;bottom:18px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.b2 .shelf{position:absolute;left:10px;right:10px;top:calc(56% + 12px);display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.b2 .cover{position:relative;height:150px;border-radius:4px;overflow:hidden;cursor:pointer;box-shadow:inset 0 0 0 2px rgba(224,166,60,.45)}
+.b2 .cover.on{box-shadow:inset 0 0 0 2px #f3ecda,0 0 10px rgba(243,236,218,.35)}
+.b2 .cover.locked{cursor:default;box-shadow:inset 0 0 0 2px #3a3d48}
+.b2 .cover .figs{left:50%;top:22px;transform:translateX(-50%)}
+.b2 .cover .tname{position:absolute;z-index:2;left:3px;right:3px;bottom:19px;font-size:10px;text-align:center}
+.b2 .cover .pips{position:absolute;z-index:2;left:0;right:0;bottom:7px;justify-content:center;gap:2px}
+.b2 .cover .pips b{width:5px;height:5px;border-width:1px}
+.b2 .go{position:absolute;left:16px;right:16px;bottom:16px}
+.cl-sky{position:absolute;inset:0;background:radial-gradient(ellipse 110% 70% at 50% 15%,#202a55,#0a0c18 65%,#05060a)}
+.cl-sky i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;box-shadow:0 0 3px #fff}
+.cl-sky i.big{width:4px;height:4px}
+.cl-land{position:absolute;left:0;right:0;bottom:0;height:55%;background-size:cover;background-position:center bottom;image-rendering:pixelated;opacity:.85}
+.cl-seal{position:absolute;left:50%;top:26%;width:86px;height:86px;transform:translate(-50%,-50%);border-radius:50%;border:2px solid rgba(243,236,218,.5);box-shadow:0 0 18px rgba(255,233,176,.25),inset 0 0 14px rgba(255,233,176,.15)}
+.cl-seal::before{content:'';position:absolute;inset:14px;border-radius:50%;border:1px dashed rgba(243,236,218,.4)}
+.cover .cl-seal{top:30%;width:40px;height:40px}
+.cover .cl-seal::before{inset:6px}
+
 /* C · One Story a page */
 .c .page{position:absolute;inset:0}
 .c .page .figs{left:50%;top:34%;transform:translateX(-50%)}
@@ -96,18 +118,19 @@ section p{margin:0 0 10px;color:var(--mute);font-size:13px}
 <main>
 <h1>The Story select</h1>
 <p class="sub">What Seal the Pact opens once the prologue is done. Three layouts with the same contents: Valor's Story partway through Cycle I, Drift's not yet started, one locked, and the Classic run. Progress is five Cycle pips in the star colours (I white, II copper, III frost, IV gold, V rainbow); the lit outline is the Cycle you're in. Story and chapter titles are placeholders.</p>
-<div class="names">Classic's name: <button data-n="Pactbearer" class="on">Pactbearer</button><button data-n="Your Pact">Your Pact</button><button data-n="Classic">Classic</button></div>
+<div class="names">Classic's name: <button data-n="Classic Mode" class="on">Classic Mode</button><button data-n="Pactbearer">Pactbearer</button><button data-n="Your Pact">Your Pact</button><button data-n="Classic">Classic</button></div>
 <div class="names">Tall banner: <span id="tallPick"></span>&nbsp; Wide banner: <span id="widePick"></span></div>
 <div class="grid" id="grid"></div>
 </main>
 <script>
 const ART = '../../../';
 const STORIES = [
-  { name: "The Hunter's Daughter", chap: 'His Sword', bg: 'locations/wildsEdge.png', figs: [['heroes/starters/valor.png', 92], ['heroes/starters/fang.png', 64]], pips: ['now', '', '', '', ''] },
+  { name: 'A Tale of Valor', chap: 'His Sword', bg: 'locations/wildsEdge.png', figs: [['heroes/starters/valor.png', 92], ['heroes/starters/fang.png', 64]], pips: ['now', '', '', '', ''] },
   { name: 'What Drift Heard', chap: 'Low Tide', bg: 'locations/stormCoast.png', figs: [['heroes/unlocks/drift.png', 84]], pips: ['', '', '', '', ''] },
   { name: '', chap: '', bg: 'locations/necropolis.png', figs: [['heroes/Widow.png', 84]], locked: true, pips: ['', '', '', '', ''] },
 ];
-let NAME = 'Pactbearer';
+let NAME = 'Classic Mode';
+let SEL = 0;
 let TALL = 2, WIDE = 1;
 const pips = (p) => `<span class="pips">${p.map((c) => `<b class="${c}"></b>`).join('')}</span>`;
 const figs = (s, scale = 1) => `<span class="figs">${s.figs.map(([src, h]) => `<img class="px" src="${ART}art/${src}" style="height:${Math.round(h * scale)}px" alt="">`).join('')}</span>`;
@@ -128,11 +151,27 @@ function layoutB(painted) {
   const covers = [f, ...rest].map((s, i) => `<div class="cover${s.locked ? ' locked' : ''}"${i === 0 ? ' style="box-shadow:inset 0 0 0 2px #f3ecda"' : ''}>${painted && i === 0 ? scene(s, `valor-tall-${TALL}.png`, 'center 70%') : scene(s) + figs(s, 0.5)}<span class="tname">${s.locked ? '? ? ?' : s.name}</span>${s.locked ? '' : pips(s.pips)}</div>`).join('');
   return `<div class="phone b">${sky}<span class="back">‹</span><div class="feat">${painted ? scene(f, `valor-tall-${TALL}.png`, 'center top') : scene(f) + figs(f, 1.15)}<span class="txt">${title(f)}<span class="chap">${f.chap}</span>${pips(f.pips)}${plate('Continue')}</span></div><div class="shelf">${covers}</div><div class="classic">${plate(NAME, true)}</div></div>`;
 }
+const CLASSIC = { classic: true, chap: 'Cycle III', pips: ['c1', 'c2', 'now', '', ''] };
+const clSky = (n) => `<span class="cl-sky">${Array.from({ length: n }, (_, i) => `<i class="${i % 9 === 0 ? 'big' : ''}" style="left:${(i * 41 + 7) % 100}%;top:${(i * 29 + 3) % 70}%;opacity:${0.3 + (i % 5) * 0.14}"></i>`).join('')}</span><span class="cl-land" style="background-image:url('${ART}art/title/fogBanks.png')"></span><span class="cl-seal"></span>`;
+function layoutB2() {
+  const items = [...STORIES, CLASSIC];
+  const f = items[SEL];
+  const art = (s, i, big) => {
+    if (s.classic) return clSky(big ? 46 : 14);
+    if (i === 0) return scene(s, `valor-tall-${TALL}.png`, big ? 'center top' : 'center 70%');
+    return scene(s) + figs(s, big ? 1.15 : 0.45);
+  };
+  const name = (s) => s.classic ? NAME : s.locked ? '? ? ?' : s.name;
+  const covers = items.map((s, i) => `<div class="cover${s.locked ? ' locked' : ''}${i === SEL ? ' on' : ''}" data-sel="${s.locked ? '' : i}">${art(s, i, false)}<span class="tname">${name(s)}</span>${s.locked ? '' : pips(s.pips)}</div>`).join('');
+  const verb = f.classic ? 'Seal the Pact' : f.pips.some((p) => p) ? 'Continue' : 'Begin';
+  return `<div class="phone b2">${sky}<span class="back">‹</span><div class="feat">${art(f, SEL, true)}<span class="txt"><span class="tname">${name(f)}</span><span class="chap">${f.chap}</span>${pips(f.pips)}</span></div><div class="shelf">${covers}</div><div class="go">${plate(verb)}</div></div>`;
+}
 function layoutC() {
   const s = STORIES[0];
   return `<div class="phone c">${sky}<div class="page">${scene(s)}${figs(s, 1.5)}<span class="txt">${title(s)}<span class="chap">${s.chap}</span>${pips(s.pips)}</span></div><span class="back">‹</span><span class="chev l">‹</span><span class="chev r">›</span><div class="go">${plate('Continue')}</div><div class="rail"><span class="on"></span><span></span><span></span><span class="cls"></span></div><div class="classic">${plate(NAME, true)}</div></div>`;
 }
 const OPTIONS = [
+  ['B · Featured book, painted, Classic on the shelf', 'Tap a cover to feature it; the plate at the foot plays it. Classic Mode is a cover beside the Stories, with the night sky and the seal for its art and its Cycles as its pips. The plate says Continue, Begin or Seal the Pact for what is selected.', layoutB2],
   ['A · Banner stack, painted', 'Valor’s banner painted whole in PixelLab off her and Fang’s sprites (Drift and the locked Story are still sprites, for contrast). The title sits on the calm left of the sky.', () => layoutA(true)],
   ['B · Featured book, painted', 'One tall painting fills the featured half; the shelf cover is a crop of the same painting.', () => layoutB(true)],
   ['A · Banner stack', 'Every Story is a wide banner, stacked; the Classic run is a plate at the foot. Tap a banner to continue it. Everything is visible at once, but past four or five Stories it scrolls.', () => layoutA()],
@@ -143,6 +182,10 @@ function picks(id, n, cur, set) {
   document.getElementById(id).innerHTML = [0, 1, 2, 3].map((i) => `<button data-i="${i}" class="${i === cur ? 'on' : ''}">${i + 1}</button>`).join('');
   document.querySelectorAll(`#${id} button`).forEach((b) => b.addEventListener('click', () => { set(+b.dataset.i); }));
 }
+document.addEventListener('click', (e) => {
+  const c = e.target.closest('.b2 .cover');
+  if (c && c.dataset.sel !== '') { SEL = +c.dataset.sel; render(); }
+});
 function render() {
   picks('tallPick', 4, TALL, (i) => { TALL = i; render(); });
   picks('widePick', 4, WIDE, (i) => { WIDE = i; render(); });

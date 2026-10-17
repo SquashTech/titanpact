@@ -160,32 +160,41 @@ the prologue's wildlife can't be Titanspawn. A first set for Wild's Edge is to b
 ## 10. The Story select (UI)
 
 **Decided (2026-10-17, per user direction):** once the prologue is done, **Seal the Pact opens a
-screen of every available Story as a big button**, each showing its progress, plus a way into a
-Classic run. The Trials and the Gauntlet keep their own doors on the title.
+screen of every available Story**, each showing its progress, plus a way into a Classic run. The
+Trials and the Gauntlet keep their own doors on the title.
+
+**The layout is the featured book, painted** (picked off `art/concepts/story-select/`, per user
+direction):
+
+- **Each Story has one painted key-art banner**, made in PixelLab from its heroes' own sprites
+  (A Tale of Valor's is `valor-tall-*.png` there). The selected Story fills the top half with it.
+- **A shelf of covers below holds every Story and Classic Mode side by side.** A cover is a crop of
+  the same painting. **Classic is one of the options on the shelf**, so it reads as the other way to
+  play, not as a footnote.
+- **The confirm plate is along the bottom**, not in the middle of the art. It names what it does
+  for what is selected: Continue, Begin, or Seal the Pact for Classic.
+- **Progress is a quiet mark, not a tally:** five Cycle pips in the star colours under the title
+  and on each cover. Classic's pips are its Cycles. Never "3 of 12 chapters".
+- **Locked Stories show as silhouettes**, with no condition text. The condition is explained at the
+  moment it's met.
 
 **Proposed:**
 
 - **Before the prologue is done there is no screen.** The first press plays the prologue directly.
-- **A Story button** is the protagonist's art, the Story's name, and **the next chapter's title**
-  as the only other words. Progress is a quiet mark, not a tally: **five Cycle pips** (lit by
-  colour as each Cycle's chapters are cleared, the colours stars already use). Never "3 of 12
-  chapters".
-- **One tap continues.** The big button starts the next chapter, so the usual case is one decision.
-  Replaying a cleared chapter lives a level down: a chapter timeline across the five Cycles, opened
-  from a smaller control on the button. Reference: Hearthstone's Book of Heroes (a book a hero,
-  chapters inside); Dicey Dungeons' episode select.
-- **The Classic button** carries the Cycle picker it already has and no story art. It sits last,
-  or first once Stories are done.
-- **Locked Stories show as silhouettes**: art in shadow and the name, with no condition text. The
-  condition is explained at the moment it's met.
+- **The Story last played is selected on arrival**, so the usual case is still one tap, on the
+  plate. Selecting from the shelf then confirming is two taps, and only when the player is switching.
+- Replaying a cleared chapter lives a level down: a chapter timeline across the five Cycles, opened
+  from the featured Story. Reference: Hearthstone's Book of Heroes.
+- **Classic needs a painting of its own.** The mock uses the night sky and a seal ring as a
+  stand-in.
 
-**What to call Classic.** It's the player's own timeline: their deck, their draft, no canonical
-hero. Candidates:
+**What to call Classic.** The user's lean is **Classic Mode** ("or something"), which reads plainest
+on a shelf of named Stories. Other candidates are still on the comparison page's toggle:
+**Pactbearer** (the lore's word for the role), **Your Pact**.
 
-1. **Pactbearer.** The lore's own word for the role, and "a role, not a person" (`lore.md`) is
-   exactly what Classic is set against the Stories' named heroes. Recommended.
-2. **Your Pact.** Plainer, and reads well next to "Stories".
-3. **Classic.** Clear, but names a mode against a history the player doesn't have.
+**The first Story's name: A Tale of Valor** (decided 2026-10-17, per user direction). It's a pun on
+her name and says what will happen. "The Hunter's Daughter" was dropped because Ren is the
+Swordsman; the Huntress is Sable.
 
 **Other screens Stories needs:**
 
