@@ -219,10 +219,10 @@ every play. Proposed: chapter 2 keeps a fixed seed and scripted enemies, but the
 are free (guided only the first time something new appears), and its numbers may vary. Which makes
 chapter 1 the only fully deterministic chapter, against "the first couple" in §5.
 
-## 12. Valor's brother (PROPOSED)
+## 12. Valor's brother, Will (name decided; the rest PROPOSED)
 
-- **Name: Ward** (recommended). The family names its children for what Ren hopes they'll be, Valor
-  included, and the boy the Titan takes ends up its **Warden**. Alternatives: Earnest, Constant.
+- **Name: Will** (decided 2026-10-17, per user direction). Valor and Will: a pair, and a normal
+  boy's name.
 - **Type: Storm.** He's trained in Ren's own style (Gale Sever, the cut that moves the air), so
   **Ren is Storm too**, which settles `patron-heroes.md`'s "no obvious home" without a second Iron
   swordsman beside Ronin. **Valor is Iron**: the daughter who taught herself is the steel, not her

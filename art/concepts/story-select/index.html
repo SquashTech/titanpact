@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Story Select</title>
+<style>
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1d1c1a;--mute:#6b675f;--line:#e2ddd2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}}
+:root[data-theme="dark"]{--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 12px;max-width:800px}
+.names{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 16px;color:var(--mute);font-size:13px}
+.names button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer}
+.names button.on{border-color:#e0a63c;box-shadow:0 0 0 1px #e0a63c inset}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+h2{font-size:15px;margin:0 0 2px}
+section p{margin:0 0 10px;color:var(--mute);font-size:13px}
+
+/* The phone */
+.phone{--gold:#e0a63c;position:relative;width:100%;max-width:340px;aspect-ratio:9/18.5;margin:0 auto;border-radius:16px;overflow:hidden;background:#07080d;color:#edeff4;box-shadow:0 0 0 6px #0c0d12,0 8px 24px rgba(0,0,0,.35)}
+.sky{position:absolute;inset:0;background:radial-gradient(ellipse 120% 60% at 50% 0%,#1a2140,#0a0c16 60%,#05060a);}
+.sky i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.6;box-shadow:0 0 3px #fff}
+.back{position:absolute;z-index:5;left:12px;top:12px;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.18);font-size:16px;color:#edeff4}
+.px{image-rendering:pixelated}
+
+/* Cycle pips: I white, II copper, III frost, IV gold, V rainbow */
+.pips{display:flex;gap:5px;align-items:center}
+.pips b{width:9px;height:9px;transform:rotate(45deg);border:1.5px solid rgba(255,255,255,.35);background:transparent}
+.pips b.c1{background:#f4f1ea;border-color:#f4f1ea;box-shadow:0 0 6px rgba(244,241,234,.6)}
+.pips b.c2{background:#d08a4a;border-color:#d08a4a}
+.pips b.now{border-color:#f4f1ea;animation:now 2.4s ease-in-out infinite}
+@keyframes now{0%,100%{box-shadow:0 0 0 rgba(244,241,234,0)}50%{box-shadow:0 0 7px rgba(244,241,234,.8)}}
+@media (prefers-reduced-motion:reduce){.pips b.now{animation:none}}
+
+/* The shipped night plate: ink face, starlit words, colour in the rim */
+.plate{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 14px;font:900 15px/1 system-ui,-apple-system,Segoe UI,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#f3ecda;text-shadow:0 0 10px rgba(255,233,176,.55),0 1px 0 #000;background:#0b0d16;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px);box-shadow:inset 0 0 0 2px var(--c,#e0a63c),inset 0 -5px 0 #05060b}
+.plate.sm{min-height:40px;font-size:13px}
+.plate .mk{width:7px;height:7px;transform:rotate(45deg);background:currentColor;opacity:.8}
+
+/* Story art: a backdrop slice with the protagonists standing in it */
+.scene{position:absolute;inset:0;background-size:cover;background-position:center}
+.scene::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,10,.1) 30%,rgba(5,6,10,.85) 100%)}
+.figs{position:absolute;z-index:1;display:flex;align-items:flex-end;gap:2px}
+.figs img{display:block}
+.locked .scene{filter:grayscale(1) brightness(.25)}
+.locked .figs img{filter:brightness(0) drop-shadow(0 0 1px rgba(255,255,255,.25))}
+.tname{font:800 17px/1.1 Georgia,'Times New Roman',serif;letter-spacing:.02em}
+.chap{font:italic 13px/1.2 Georgia,serif;color:#d9d2c2}
+.locked .tname{color:#8a8578}
+
+/* A · Banner stack */
+.a .list{position:absolute;inset:52px 12px 12px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.a .card{position:relative;flex:none;height:150px;border-radius:4px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(224,166,60,.75),0 3px 0 rgba(0,0,0,.6)}
+.a .card.locked{height:96px;box-shadow:inset 0 0 0 2px #3a3d48}
+.a .card .figs{right:8px;top:12px}
+.a .card .txt{position:absolute;z-index:2;left:12px;bottom:12px;display:flex;flex-direction:column;gap:5px}
+.a .card.locked .txt{bottom:auto;top:50%;transform:translateY(-50%)}
+.a .classic{margin-top:auto}
+
+/* B · Featured book */
+.b .feat{position:absolute;left:0;right:0;top:0;height:58%}
+.b .feat .figs{left:50%;bottom:150px;transform:translateX(-50%)}
+.b .feat .txt{position:absolute;z-index:2;left:0;right:0;bottom:18px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.b .feat .plate{width:200px;margin-top:6px}
+.b .shelf{position:absolute;left:12px;right:12px;top:calc(58% + 14px);display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.b .cover{position:relative;height:116px;border-radius:4px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(224,166,60,.6)}
+.b .cover.locked{box-shadow:inset 0 0 0 2px #3a3d48}
+.b .cover .figs{left:50%;top:10px;transform:translateX(-50%)}
+.b .cover .tname{position:absolute;z-index:2;left:4px;right:4px;bottom:20px;font-size:11px;text-align:center}
+.b .cover .pips{position:absolute;z-index:2;left:0;right:0;bottom:8px;justify-content:center;gap:3px}
+.b .cover .pips b{width:6px;height:6px;border-width:1px}
+.b .classic{position:absolute;left:12px;right:12px;bottom:14px}
+
+/* C · One Story a page */
+.c .page{position:absolute;inset:0}
+.c .page .figs{left:50%;top:34%;transform:translateX(-50%)}
+.c .page .txt{position:absolute;z-index:2;left:0;right:0;bottom:150px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
+.c .page .tname{font-size:22px}
+.c .go{position:absolute;z-index:3;left:24px;right:24px;bottom:84px}
+.c .chev{position:absolute;z-index:3;top:42%;width:26px;height:44px;display:grid;place-items:center;font-size:22px;color:rgba(255,255,255,.55)}
+.c .chev.l{left:2px}.c .chev.r{right:2px}
+.c .rail{position:absolute;z-index:3;left:0;right:0;bottom:56px;display:flex;justify-content:center;gap:8px}
+.c .rail span{width:22px;height:4px;border-radius:2px;background:rgba(255,255,255,.22)}
+.c .rail span.on{background:#e0a63c}
+.c .rail span.cls{width:8px;background:transparent;border:1px solid rgba(255,255,255,.35);height:6px;margin-top:-1px;transform:rotate(45deg);border-radius:0}
+.c .classic{position:absolute;z-index:3;left:60px;right:60px;bottom:12px}
+.c .classic .plate{--c:#6f6a62}
+</style>
+</head>
+<body>
+<main>
+<h1>The Story select</h1>
+<p class="sub">What Seal the Pact opens once the prologue is done. Three layouts with the same contents: Valor's Story partway through Cycle I, Drift's not yet started, one locked, and the Classic run. Progress is five Cycle pips in the star colours (I white, II copper, III frost, IV gold, V rainbow); the lit outline is the Cycle you're in. Story and chapter titles are placeholders.</p>
+<div class="names">Classic's name: <button data-n="Pactbearer" class="on">Pactbearer</button><button data-n="Your Pact">Your Pact</button><button data-n="Classic">Classic</button></div>
+<div class="grid" id="grid"></div>
+</main>
+<script>
+const ART = '../../../';
+const STORIES = [
+  { name: "The Hunter's Daughter", chap: 'His Sword', bg: 'locations/wildsEdge.png', figs: [['heroes/starters/valor.png', 92], ['heroes/starters/fang.png', 64]], pips: ['now', '', '', '', ''] },
+  { name: 'What Drift Heard', chap: 'Low Tide', bg: 'locations/stormCoast.png', figs: [['heroes/unlocks/drift.png', 84]], pips: ['', '', '', '', ''] },
+  { name: '', chap: '', bg: 'locations/necropolis.png', figs: [['heroes/Widow.png', 84]], locked: true, pips: ['', '', '', '', ''] },
+];
+let NAME = 'Pactbearer';
+const pips = (p) => `<span class="pips">${p.map((c) => `<b class="${c}"></b>`).join('')}</span>`;
+const figs = (s, scale = 1) => `<span class="figs">${s.figs.map(([src, h]) => `<img class="px" src="${ART}art/${src}" style="height:${Math.round(h * scale)}px" alt="">`).join('')}</span>`;
+const scene = (s) => `<span class="scene" style="background-image:url('${ART}art/${s.bg}')"></span>`;
+const title = (s) => s.locked ? `<span class="tname">? ? ?</span>` : `<span class="tname">${s.name}</span>`;
+const plate = (label, sm) => `<div class="plate${sm ? ' sm' : ''}"><span class="mk"></span>${label}<span class="mk"></span></div>`;
+const classicPips = pips(['c1', 'c1', '', '', '']);
+const sky = `<span class="sky">${Array.from({ length: 40 }, (_, i) => `<i style="left:${(i * 37) % 100}%;top:${(i * 53) % 100}%;opacity:${0.25 + (i % 4) * 0.15}"></i>`).join('')}</span>`;
+
+function layoutA() {
+  const cards = STORIES.map((s) => `<div class="card${s.locked ? ' locked' : ''}">${scene(s)}${figs(s, s.locked ? 0.7 : 0.7)}<span class="txt">${title(s)}${s.locked ? '' : `<span class="chap">${s.chap}</span>${pips(s.pips)}`}</span></div>`).join('');
+  return `<div class="phone a">${sky}<span class="back">‹</span><div class="list">${cards}<div class="classic">${plate(NAME)}</div></div></div>`;
+}
+function layoutB() {
+  const [f, ...rest] = STORIES;
+  const covers = [f, ...rest].map((s, i) => `<div class="cover${s.locked ? ' locked' : ''}"${i === 0 ? ' style="box-shadow:inset 0 0 0 2px #f3ecda"' : ''}>${scene(s)}${figs(s, 0.5)}<span class="tname">${s.locked ? '? ? ?' : s.name}</span>${s.locked ? '' : pips(s.pips)}</div>`).join('');
+  return `<div class="phone b">${sky}<span class="back">‹</span><div class="feat">${scene(f)}${figs(f, 1.15)}<span class="txt">${title(f)}<span class="chap">${f.chap}</span>${pips(f.pips)}${plate('Continue')}</span></div><div class="shelf">${covers}</div><div class="classic">${plate(NAME, true)}</div></div>`;
+}
+function layoutC() {
+  const s = STORIES[0];
+  return `<div class="phone c">${sky}<div class="page">${scene(s)}${figs(s, 1.5)}<span class="txt">${title(s)}<span class="chap">${s.chap}</span>${pips(s.pips)}</span></div><span class="back">‹</span><span class="chev l">‹</span><span class="chev r">›</span><div class="go">${plate('Continue')}</div><div class="rail"><span class="on"></span><span></span><span></span><span class="cls"></span></div><div class="classic">${plate(NAME, true)}</div></div>`;
+}
+const OPTIONS = [
+  ['A · Banner stack', 'Every Story is a wide banner, stacked; the Classic run is a plate at the foot. Tap a banner to continue it. Everything is visible at once, but past four or five Stories it scrolls.', layoutA],
+  ['B · Featured book', 'The Story you\'re in takes the top half with its Continue plate; every Story, this one included, sits on a shelf of covers below. The common case is one tap. Closest to Hearthstone\'s Book of Heroes.', layoutB],
+  ['C · One Story a page', 'Each Story fills the screen and you swipe between them (the rail and the arrows). The Classic run is a quiet plate at the bottom, always there. The most art per Story, the least overview.', layoutC],
+];
+function render() {
+  document.getElementById('grid').innerHTML = OPTIONS.map(([h, p, f]) => `<section><h2>${h}</h2><p>${p}</p>${f()}</section>`).join('');
+}
+document.querySelectorAll('.names button').forEach((b) => b.addEventListener('click', () => {
+  NAME = b.dataset.n;
+  document.querySelectorAll('.names button').forEach((x) => x.classList.toggle('on', x === b));
+  render();
+}));
+render();
+</script>
+</body>
+</html>
