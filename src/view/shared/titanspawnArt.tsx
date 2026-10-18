@@ -4,7 +4,7 @@
 // keeps: the Titan's eye is the one thing on every body not type-coloured — one at Early, two
 // from Mid, a Late's wrong-placed and half-lidded; the element is a feature, then a tool, then
 // the body; poses are a global transform plus a per-line accent; everything faces right and the
-// enemy row mirrors. The Guardians (guardianFigures.ts) draw with the same vocabulary.
+// enemy row mirrors.
 //
 // A pose is a STATE, exactly as a hero's PNG frame is (heroArt.ts) — HeroPortrait picks the
 // frame, the figure system's timing is untouched. Markup is built as a string, as the gallery

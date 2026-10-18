@@ -1,6 +1,5 @@
-import { enemies, isTitanEye } from '../../data/enemies';
+import { enemies, isGuardianId, isTitanEye } from '../../data/enemies';
 import { phaseOf, type CombatState, type Side } from '../../engine/state';
-import { isGuardianFigure } from '../shared/guardianFigures';
 
 interface Props {
   combat: CombatState;
@@ -9,7 +8,7 @@ interface Props {
 
 /** A Guardian, its unsealed twin, the Herald or an Eye — the fight's boss, drawn as a larger mark with the Titan's eye in it. */
 function isBoss(heroId: string): boolean {
-  return heroId in enemies || isTitanEye(heroId) || isGuardianFigure(heroId);
+  return heroId in enemies || isTitanEye(heroId) || isGuardianId(heroId);
 }
 
 /**

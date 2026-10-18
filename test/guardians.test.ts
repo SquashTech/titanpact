@@ -3,12 +3,12 @@
 // the type chart is allowed to lie (§1), so the wall and the kit shape are guarded here.
 
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as path from 'path';
 import { test } from './harness';
 import { moves } from '../src/data/moves';
 import { statusApplicationsOf } from '../src/engine/content';
-import { enemies, CHAMPION_IDS, ELDER_BOUGH_ID, ENDBRINGER_ID, DRAGON_ID, KRAKEN_ID, SKELETON_KING_ID, YUGZULACH_ID, unsealedIdFor } from '../src/data/enemies';
-import { guardianMarkup, isGuardianFigure } from '../src/view/shared/guardianFigures';
-import { getTypeColor } from '../src/view/combat/typeColors';
+import { enemies, CHAMPION_IDS, ELDER_BOUGH_ID, ENDBRINGER_ID, DRAGON_ID, KRAKEN_ID, SKELETON_KING_ID, YUGZULACH_ID, isGuardianId, unsealedIdFor } from '../src/data/enemies';
 import { locations } from '../src/data/locations';
 import { typeChart } from '../src/data/typechart';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
@@ -110,19 +110,15 @@ test('guardians: the Skeleton King is the lowest-HP champion, and that IS the fi
   }
 });
 
-test('guardians: every champion has a figure and the Herald none (it is pixel art, the Titan’s own), a Guardian is drawn in its mortal hue alone, and the unsealed twin is the same figure', () => {
-  const ancient = getTypeColor('Ancient');
+test('guardians: every champion has a sprite with both frames, its unsealed twin shares it, and the Herald keeps its own', () => {
+  const dir = path.resolve(__dirname, '../../art/heroes/guardians');
   for (const id of CHAMPION_IDS) {
-    for (const pose of ['idle', 'attack', 'hurt'] as const) {
-      const markup = guardianMarkup(id, pose, 't');
-      assert.ok(markup.length > 0, `${id} has no ${pose} figure`);
-      // The worn seal ring was removed 2026-09-16; nothing on a Guardian is Ancient-coloured.
-      assert.ok(!markup.includes(ancient), `${id} carries the Ancient hue`);
-      // The finale takes the type off the stats, never anything off the body.
-      assert.strictEqual(guardianMarkup(unsealedIdFor(id), pose, 't'), markup, `${id}'s unsealed twin is drawn differently`);
+    for (const pose of ['', 'attack', 'damaged']) {
+      assert.ok(fs.existsSync(path.join(dir, `${id}${pose}.png`)), `${id}${pose}.png is missing`);
     }
+    assert.ok(isGuardianId(id) && isGuardianId(unsealedIdFor(id)), `${id} is not drawn as a Guardian`);
   }
-  assert.ok(!isGuardianFigure(ENDBRINGER_ID) && guardianMarkup(ENDBRINGER_ID, 'idle', 't') === '', 'the Herald is drawn as a geometric figure');
-  assert.ok(isGuardianFigure(unsealedIdFor(KRAKEN_ID)));
-  assert.strictEqual(guardianMarkup('valor', 'idle', 't'), '', 'a hero is never drawn as a Guardian');
+  assert.ok(!isGuardianId(ENDBRINGER_ID), 'the Herald is drawn as a Guardian');
+  assert.ok(fs.existsSync(path.resolve(__dirname, '../../art/heroes/titan/herald.png')));
+  assert.ok(!isGuardianId('valor'), 'a hero is drawn as a Guardian');
 });

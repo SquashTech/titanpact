@@ -2,9 +2,8 @@ import type { CSSProperties } from 'react';
 import { heroArt, heroPoses } from './heroArt';
 import { evolutionArt, evolutionPoses } from './evolutionArt';
 import { TitanspawnGlyph } from './titanspawnArt';
-import { GuardianGlyph } from './guardianArt';
-import { isGuardianFigure } from './guardianFigures';
 import { isTitanspawn } from '../../data/titanspawn';
+import { isGuardianId } from '../../data/enemies';
 
 interface Props {
   heroId: string;
@@ -31,7 +30,6 @@ function hashSeed(key: string): number {
  * Renders nothing for heroes without art, so callers can place it unconditionally. A Titanspawn
  * (data/titanspawn.ts) has no sprite: its figure is generated (titanspawnArt.tsx) and takes the
  * same class, seed and pose, so every screen that shows a hero shows a spawn with no other change.
- * The Guardians and the Endbringer (data/enemies.ts) are drawn the same way (guardianArt.tsx).
  */
 export function HeroPortrait({ heroId, className, seed, pose = 'idle', pathId }: Props) {
   const h = hashSeed(seed ?? heroId);
@@ -40,11 +38,10 @@ export function HeroPortrait({ heroId, className, seed, pose = 'idle', pathId }:
     '--idle-rate': (0.85 + ((h >>> 7) % 31) / 100).toFixed(2),
   } as CSSProperties;
   if (isTitanspawn(heroId)) return <TitanspawnGlyph heroId={heroId} className={className} pose={pose === 'closed' ? 'idle' : pose} style={idleStyle} />;
-  if (isGuardianFigure(heroId)) return <GuardianGlyph heroId={heroId} className={className} pose={pose} style={idleStyle} />;
   // A form draws its own frame, then the hero's (a flash of the old look beats a pose that never moves), then its idle.
   const posed = pose === 'attack' || pose === 'hurt' || pose === 'closed' ? (pathId && pose !== 'closed' ? evolutionPoses[pathId]?.[pose] : undefined) ?? heroPoses[heroId]?.[pose] : undefined;
   const src = posed ?? (pathId ? evolutionArt[pathId] : undefined) ?? heroArt[heroId];
   if (!src) return null;
   // draggable={false} as well as CSS `-webkit-user-drag: none` (WebKit-only): a drag ghost eats the long-press.
-  return <img className={className} src={src} alt="" style={idleStyle} draggable={false} />;
+  return <img className={isGuardianId(heroId) ? `${className} guardian-sprite` : className} src={src} alt="" style={idleStyle} draggable={false} />;
 }

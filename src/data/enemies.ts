@@ -22,7 +22,7 @@ export const CHAMPION_GRADES: Record<GrowthStatKey, GrowthGrade> = {
 
 export const enemies: Record<string, HeroDefinition> = {
   // Wild's Edge's Guardian reinforcement (the Goblin Lord until 2026-09-16, renamed with its
-  // figure — guardianFigures.ts draws a manticore, per user direction): held on the enemy bench so
+  // figure, per user direction): held on the enemy bench so
   // the fight's first KO brings it in (enemyGen.ts `appendFinalEnemy`, locations.ts `guardianFinalEnemyId`).
   // Never drawn by any generator.
   // Redistributed 2026-09-02, per user direction: -15 Attack and -10 Intelligence into +25 HP,
@@ -87,7 +87,7 @@ export const enemies: Record<string, HeroDefinition> = {
   },
 
   // The Molten Foundry's Guardian reinforcement (the Lava Beast until 2026-09-16, renamed with its
-  // figure — guardianFigures.ts draws a dragon). It lights its own Scorched Land and then feeds
+  // figure). It lights its own Scorched Land and then feeds
   // a Burn stack that cannot fall off, 10 a cast on both heroes, while Immolate triples off the
   // stack it just built. Every move is cheap on a 150 pool, so it acts every round and never
   // Rests — a Guardian that grinds rather than one that lands one enormous turn.
@@ -130,7 +130,7 @@ export const enemies: Record<string, HeroDefinition> = {
   },
 
   // The Storm Coast's Guardian reinforcement (the Leviathan until 2026-09-16, renamed with its
-  // figure — guardianFigures.ts draws a kraken, so the name says so). 550, matching every other champion.
+  // figure, so the name says so). 550, matching every other champion.
   // Archon Blast is the Manticore's move because the Ancient slate is three moves
   // long and unauthored (CLAUDE.md "Repo map"); it should be revisited when Ancient lands.
   kraken: {
@@ -204,8 +204,7 @@ export const enemies: Record<string, HeroDefinition> = {
   // The finale's last combatant, and the only mono-Ancient thing in the game. It enters LAST,
   // after five unsealed champions, so it is authored as the fight's ending rather than its
   // whole — an enormous, slow, magical body for something that does not need to hurry. It is
-  // the Titan's HERALD, not the Titan (2026-09-16, per user direction; the figure is a
-  // standard-bearer, guardianFigures.ts).
+  // the Titan's HERALD, not the Titan (2026-09-16, per user direction; art/heroes/titan/herald.png).
   //
   // 900 combat stats against the champions' 700 — a step, not a different number class.
   // Magical-leaning (135 Int / 100 Atk) with one physical hand — Transfix is the standard's
@@ -313,6 +312,11 @@ export const CHAMPION_IDS: readonly string[] = [
 
 export function unsealedIdFor(championId: string): string {
   return `${championId}Unsealed`;
+}
+
+/** A champion or its unsealed twin: the one body, drawn from one sprite. */
+export function isGuardianId(heroId: string): boolean {
+  return CHAMPION_IDS.some((id) => id === heroId || unsealedIdFor(id) === heroId);
 }
 
 /**

@@ -97,7 +97,18 @@ type hue, primitives only. The two styles are meant to be *obviously* different.
   No per-side flip — this battlefield never flips a sprite. The gallery's ground shadow is dropped
   in favour of the card's own platform.
 
-**Guardian art** (2026-09-16, per user direction — *these enemies are pieces of the Titan that
+**Guardian art, Touched** (2026-10-18, per user direction, replacing the geometric figures below).
+The Guardians are pixel art at the heroes' density: 64px sprites drawn at 2× in a fight, so a
+Guardian is a third taller than a hero and breaks the frame by being drawn bigger
+(`art/heroes/guardians/<id>.png`, `attack`, `damaged`; the unsealed twin shares its sprite,
+`isGuardianId`). Each keeps its own creature and its mortal type's colours, and the Titan has
+left exactly two marks on it: **one vertical magenta slit-eye where no eye belongs** (the eye
+colours are `EYE_GRADIENT`'s) and **one thin magenta crack**. The same in every act: escalating
+the corruption by act ("Touched / Turned / Hollowed", `art/concepts/guardians-eldritch/explore/`)
+was drawn and declined. **The Endbringer is untouched**: its sprite stands as the Titan's Herald
+(`docs/titan-eyes.md` §12). The geometric module, its gallery and its script are deleted.
+
+*Superseded, kept for the record:* **Guardian art** (2026-09-16, per user direction — *these enemies are pieces of the Titan that
 mutated, so keeping them visually consistent is key*). The champions and the Herald are drawn in
 the same vocabulary (`src/view/shared/guardianFigures.ts`, primitives shared through
 `figurePrimitives.ts`; review page `docs/art/guardian-bestiary.html`, written FROM the module by

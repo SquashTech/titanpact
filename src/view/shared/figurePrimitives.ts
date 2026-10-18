@@ -1,8 +1,7 @@
-// The generated-figure vocabulary the Titanspawn (titanspawnArt.tsx) and the Guardians
-// (guardianFigures.ts) draw with: three tones of one hue, flat primitives built as markup
-// strings, and the Titan's eye — the one thing on every body that is not type-coloured. Lifted
-// verbatim from the approved gallery (docs/art/titanspawn-bestiary.html). Pure: no React, no DOM,
-// so a script can render a figure to a file.
+// The generated-figure vocabulary the Titanspawn (titanspawnArt.tsx) draw with: three tones of one
+// hue, flat primitives built as markup strings, and the Titan's eye — the one thing on every body
+// that is not type-coloured. Lifted verbatim from the approved gallery
+// (docs/art/titanspawn-bestiary.html). Pure: no React, no DOM, so a script can render a figure to a file.
 
 export type FigurePose = 'idle' | 'attack' | 'hurt';
 

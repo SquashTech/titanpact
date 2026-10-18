@@ -3949,6 +3949,14 @@ textarea,
     drop-shadow(0 3px 5px rgba(0, 0, 0, 0.7));
 }
 
+/* A Guardian: its 64px sprite at exactly 2x, so it stands a third taller than a hero and breaks the frame
+   upward while its feet stay on the platform. */
+.team-row .combatant-portrait.is-guardian {
+  width: 128px;
+  height: 128px;
+  margin: -24px -16px 8px;
+}
+
 /* Per-hero type identity (CombatantCard sets --type-color/--type-rgb inline
    from typeColors.ts) — a soft type-tinted wash behind the portrait plus a
    type-colored top edge, so each box reads as "whose power this is" at a

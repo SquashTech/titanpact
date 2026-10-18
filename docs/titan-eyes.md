@@ -302,7 +302,8 @@ The ask: the Herald's standard-bearer read as odd, and the Threshold's screens d
 as its arrival painting (the Titan standing in a fogged valley, two magenta eyes). Chosen from a
 side-by-side (`art/concepts/herald/compare.html`):
 
-- **The split.** What the Titan *turned* (Titanspawn, Guardians) stays in the geometric figures.
+- **The split.** What the Titan *turned* stays in the geometric figures — the Titanspawn only since
+  2026-10-18, when the Guardians became pixel art (`docs/titanspawn-overhaul.md` §2, "Touched").
   The Titan's *own* pieces take the painting's language: pixel art, fog greys, near-black, and its
   magenta as the only colour.
 - **The Herald** is "The Slit" (PixelLab Pixflux, seed 8, flat / lineless / low detail): a tall

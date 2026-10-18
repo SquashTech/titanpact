@@ -38,11 +38,12 @@ don't silently override it.
 > hard filter, `fight`/`battle` and the Guardian's escorts draw spawn by act tier
 > (`SPAWN_TIER_BY_ACT`), and every spawn — escorts included — levels to its node
 > (`docs/enemy-levels.md`, 2026-09-15, which retired the monsters track). **The Guardians are
-> drawn in the spawn's geometry** (2026-09-16, `guardianFigures.ts`, §2 "Guardian
-> art"): the mortal type's tones and one Titan eye, nothing Ancient-coloured on the body (a
-> worn seal ring and a second wrong-placed eye were both tried and removed). **What the Titan
-> turned is geometric; the Titan's own pieces are pixel art in the Threshold painting's fog and
-> magenta** (2026-10-14, per user direction, `docs/titan-eyes.md` §12): the Endbringer is the
+> pixel art, "Touched"** (2026-10-18, per user direction, §2 "Guardian art", replacing the
+> geometric figures of 2026-09-16): each is its own mortal creature in its type's colours with
+> ONE magenta slit-eye where no eye belongs and one thin magenta crack, the same in every act,
+> 64px drawn at 2× (`art/heroes/guardians/`). **The Titanspawn stay geometric; the Titan's own
+> pieces are pixel art in the Threshold painting's fog and magenta** (2026-10-14, per user
+> direction, `docs/titan-eyes.md` §12): the Endbringer is the
 > Titan's **Herald**, an eldritch faceless figure split by one magenta seam
 > (`art/heroes/titan/`) — never the Titan, and no longer a standard-bearer — and **the Titan's
 > eye is magenta everywhere** (`TITAN_EYE`, `--titan-rgb`); the Leviathan is renamed

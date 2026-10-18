@@ -85,8 +85,27 @@ import mellowArt from '../../../art/heroes/unlocks/mellow.png';
 import heraldArt from '../../../art/heroes/titan/herald.png';
 import leftEyeArt from '../../../art/heroes/titan/eye.png';
 import rightEyeArt from '../../../art/heroes/titan/righteye.png';
+import story_valorswordlessArt from '../../../art/heroes/story/valorswordless.png';
+import story_renArt from '../../../art/heroes/story/ren.png';
+import story_willArt from '../../../art/heroes/story/will.png';
+import story_stagArt from '../../../art/heroes/story/stag.png';
+import story_foxArt from '../../../art/heroes/story/fox.png';
+import story_boarArt from '../../../art/heroes/story/boar.png';
+import story_crowArt from '../../../art/heroes/story/crow.png';
+import story_heraldrisenArt from '../../../art/heroes/story/heraldrisen.png';
+import manticoreGuardianArt from '../../../art/heroes/guardians/manticore.png';
+import yugzulachGuardianArt from '../../../art/heroes/guardians/yugzulach.png';
+import elderBoughGuardianArt from '../../../art/heroes/guardians/elderBough.png';
+import dragonGuardianArt from '../../../art/heroes/guardians/dragon.png';
+import skeletonKingGuardianArt from '../../../art/heroes/guardians/skeletonKing.png';
+import krakenGuardianArt from '../../../art/heroes/guardians/kraken.png';
+import seraphGuardianArt from '../../../art/heroes/guardians/seraph.png';
+import sphinxGuardianArt from '../../../art/heroes/guardians/sphinx.png';
+import rocGuardianArt from '../../../art/heroes/guardians/roc.png';
+import wendigoGuardianArt from '../../../art/heroes/guardians/wendigo.png';
+import { unsealedIdFor } from '../../data/enemies';
 
-/** Portraits keyed by hero id (heroes.ts order). A missing entry renders text-only; a Titanspawn or Guardian id never reaches this — HeroPortrait draws it. */
+/** Portraits keyed by hero id (heroes.ts order). A missing entry renders text-only; a Titanspawn id never reaches this — HeroPortrait draws it. */
 export const heroArt: Partial<Record<string, string>> = {
   // --- Fire ---
   cinderKnight: cinderKnightArt,
@@ -188,12 +207,36 @@ export const heroArt: Partial<Record<string, string>> = {
   mellow: mellowArt,
   // --- The Titan's own (pixel, as the Threshold paints it; what it turned stays geometric) ---
   endbringer: heraldArt,
+  // --- The Story cast (data/storyCast.ts) ---
+  valorPrologue: story_valorswordlessArt,
+  ren: story_renArt,
+  will: story_willArt,
+  stag: story_stagArt,
+  fox: story_foxArt,
+  boar: story_boarArt,
+  crow: story_crowArt,
+  endbringerPrologue: heraldArt,
+  /** The Endbringer risen after the fall: a scene figure only. */
+  heraldRisen: story_heraldrisenArt,
   leftEye: leftEyeArt,
   rightEye: rightEyeArt,
 };
 
-// The Guardians are not here either: guardianFigures.ts draws them, sealed and unsealed, from one
-// figure each. Their retired sprites are under art/archive/guardians/.
+// The Guardians, sealed and unsealed, from one sprite each (art/heroes/guardians, 64px: a fight draws
+// them at 2x, past the frame). Their first sprites and the geometric figures are retired.
+const guardianArt: Record<string, string> = {
+  manticore: manticoreGuardianArt,
+  yugzulach: yugzulachGuardianArt,
+  elderBough: elderBoughGuardianArt,
+  dragon: dragonGuardianArt,
+  skeletonKing: skeletonKingGuardianArt,
+  kraken: krakenGuardianArt,
+  seraph: seraphGuardianArt,
+  sphinx: sphinxGuardianArt,
+  roc: rocGuardianArt,
+  wendigo: wendigoGuardianArt,
+};
+for (const [id, url] of Object.entries(guardianArt)) heroArt[id] = heroArt[unsealedIdFor(id)] = url;
 
 /** The frames a hero has beyond its idle one. Both optional and independent. */
 export interface HeroPoses {

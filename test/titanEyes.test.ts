@@ -13,7 +13,7 @@ import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
-import { ENDBRINGER_ID, EYE_IDS, EYE_PHASES, LEFT_EYE_ID, RIGHT_EYE_ID, finaleEnemies, titanEyes, enemies } from '../src/data/enemies';
+import { ENDBRINGER_ID, EYE_IDS, EYE_PHASES, LEFT_EYE_ID, RIGHT_EYE_ID, finaleEnemies, isGuardianId, titanEyes, enemies } from '../src/data/enemies';
 import { HERALDS_STANDARD_ID, WITHERING_GAZE_CADENCE, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID, boonPassives } from '../src/data/passives';
 import { WITHERING_GAZE_FRACTION } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
@@ -30,7 +30,6 @@ import { buildCombatState } from '../src/run/buildCombatState';
 import { equipment } from '../src/data/equipment';
 import { locations } from '../src/data/locations';
 import { COMBAT_BUDGET_STATS, statBudgetTotal } from '../src/run/statBudget';
-import { isGuardianFigure } from '../src/view/shared/guardianFigures';
 import { cinematicEntranceFor } from '../src/view/shared/entrances';
 
 const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -382,5 +381,5 @@ test('titanEyes: every Eye is pixel art with all four frames', () => {
       assert.ok(fs.existsSync(path.join(dir, `${stem}${pose}.png`)), `${stem}${pose}.png is missing`);
     }
   }
-  for (const id of EYE_IDS) assert.ok(!isGuardianFigure(id), `${id} is drawn as a geometric figure`);
+  for (const id of EYE_IDS) assert.ok(!isGuardianId(id), `${id} is drawn as a Guardian`);
 });

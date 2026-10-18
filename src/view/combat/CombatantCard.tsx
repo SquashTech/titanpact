@@ -6,7 +6,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { isWardenCombatant } from '../../run/wardens';
-import { ENDBRINGER_ID, isTitanEye } from '../../data/enemies';
+import { ENDBRINGER_ID, isGuardianId, isTitanEye } from '../../data/enemies';
 import { STAT_ORDER, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
 import { STAT_LABELS } from '../shared/moveKind';
 import { shieldHeld } from '../../engine/status/shield';
@@ -476,7 +476,7 @@ export function CombatantCard({
           heroId={hero.id}
           pathId={combatant.formPathId}
           seed={combatant.combatantId}
-          className={hero.id === ENDBRINGER_ID || isTitanEye(hero.id) ? 'combatant-portrait is-titans-own' : 'combatant-portrait'}
+          className={hero.id === ENDBRINGER_ID || isTitanEye(hero.id) ? 'combatant-portrait is-titans-own' : isGuardianId(hero.id) ? 'combatant-portrait is-guardian' : 'combatant-portrait'}
           pose={pose}
         />
         {aimedBy && aimedBy.length > 0 && !combatant.fainted && (
