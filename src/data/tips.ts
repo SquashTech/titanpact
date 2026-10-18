@@ -55,9 +55,12 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
  * shown. A page may carry a staged picture (src/data/tipScenes.ts) with ONE thing ringed, so the
  * words name that thing — "a move's arrows", never "the number".
  */
+/** The round, taught by the Story prologue too (App marks it seen when the prologue is done). */
+export const FIGHT_BASICS_TIP_ID = 'fight.basics';
+
 export const FIGHT_TIPS: readonly FightTip[] = [
   {
-    id: 'fight.basics',
+    id: FIGHT_BASICS_TIP_ID,
     title: 'Combat',
     when: {},
     pages: [

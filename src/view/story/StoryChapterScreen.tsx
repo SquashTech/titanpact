@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { allCombatants } from '../../data/content';
-import { storySides, type StoryChapter } from '../../run/story';
+import { storySides, type StoryAct, type StoryChapter } from '../../run/story';
 import { FightScreen } from '../combat/FightScreen';
 import { TitanFallScreen } from '../run/TitanFallScreen';
 import { StoryEndCard, StoryScene } from './StoryScene';
@@ -13,17 +13,26 @@ interface Props {
   onQuit: () => void;
   /** The Titan's fall has played: the account has seen it, so Classic does not play it again. */
   onFallSeen: () => void;
+  /** The beat to open on: 0, or the one after an act the run's screens just played. */
+  startBeat?: number;
+  /** A beat that is an Act hands over to the run's own screens. */
+  onStartAct: (act: StoryAct, beat: number) => void;
 }
 
 /** Plays a chapter's beats in order (docs/stories.md §10). A lost fight is played again from its start. */
-export function StoryChapterScreen({ chapter, onFinished, onQuit, onFallSeen }: Props) {
-  const [index, setIndex] = useState(0);
+export function StoryChapterScreen({ chapter, onFinished, onQuit, onFallSeen, startBeat = 0, onStartAct }: Props) {
+  const [index, setIndex] = useState(startBeat);
   const [attempt, setAttempt] = useState(0);
   const beat = chapter.beats[index];
   const next = () => setIndex((i) => i + 1);
   const sides = useMemo(() => (beat?.kind === 'fight' ? storySides(beat.fight, allCombatants) : null), [beat]);
 
-  if (!beat) return null;
+  useEffect(() => {
+    if (beat?.kind === 'act') onStartAct(beat.act, index);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
+
+  if (!beat || beat.kind === 'act') return null;
   if (beat.kind === 'scene') return <StoryScene key={index} locationId={beat.locationId} cast={beat.cast} lines={beat.lines} skipped={beat.skipped} onDone={next} />;
   if (beat.kind === 'fall')
     return (

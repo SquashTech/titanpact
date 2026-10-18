@@ -118,7 +118,7 @@ import { grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableK
 import { guildHallEntry } from '../run/guildRecruit';
 import { generateMap, PATRON_ROWS, type MapNodeType, type RewardNodeType } from '../run/map';
 import { firstUnseenTip, LORE_TIP_ID, type ScreenTipId } from '../run/tips';
-import { SCREEN_TIPS } from '../data/tips';
+import { FIGHT_BASICS_TIP_ID, SCREEN_TIPS } from '../data/tips';
 import { TipOverlay } from '../view/run/TipOverlay';
 import { SaveTroubleBanner } from '../view/run/SaveTroubleBanner';
 import { InstallOverlay } from '../view/run/InstallOverlay';
@@ -128,7 +128,7 @@ import { LoreScreen } from '../view/run/LoreScreen';
 import { StorySelectScreen } from '../view/story/StorySelectScreen';
 import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
 import { storyCatalog } from '../data/stories';
-import { chapterById } from '../run/story';
+import { chapterById, endsStoryAct, storyActRun, storyNodeEncounter, storyNodeSpec, type StoryAct } from '../run/story';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
 import {
@@ -513,7 +513,8 @@ export function App() {
 
   /** Writes the run as it stands on `at`: a checkpoint is itself; anywhere else rides on the last one. */
   function persist(run: RunState, at: Screen) {
-    if (!run.map || !isResumable(at.kind)) return;
+    // A Story act is short and never saved: it must not write over a parked Classic run.
+    if (!run.map || run.story || !isResumable(at.kind)) return;
     let save: SavedRun | null;
     if (at.kind === 'map' || at.kind === 'actIntro') {
       fallback.current = { run, checkpoint: at.kind };
@@ -581,7 +582,7 @@ export function App() {
   // act alone, not the screen: this must not re-write storage at every screen change. A null
   // map is a run that never started (the title's placeholder, a Quick Battle's throwaway).
   useEffect(() => {
-    if (!playerRun.map) return;
+    if (!playerRun.map || playerRun.story) return;
     updateProfile((current) => recordActReached(current, playerRun.actNumber));
   }, [playerRun.actNumber, playerRun.map]);
 
@@ -805,7 +806,7 @@ export function App() {
       // The same deterministic draw the map's tile previewed (run/encounters.ts).
       const isMobFight = node.type === 'fight' || node.type === 'battle';
       const encounterKind = encounterKindOf(node.type);
-      let encounter = nodeEncounter(node, {
+      let encounter = storyNodeEncounter(playerRun, storyCatalog, nodeId, allCombatants) ?? nodeEncounter(node, {
         run: playerRun,
         location,
         heroes: recruitPool,
@@ -816,7 +817,7 @@ export function App() {
         wardens: readProfile().wardens,
       });
       const isFirstFight = encounterKind === 'fight' && playerRun.fightsStarted === 0;
-      if (isMobFight && isFirstFight) {
+      if (isMobFight && isFirstFight && !playerRun.story) {
         encounter = equipTestDagger(encounter);
       }
       if (encounterKind === 'fight') {
@@ -878,7 +879,9 @@ export function App() {
 
   function handleEnterFight(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
     const mapNodeType = playerRun.map!.nodes[nodeId].type as EncounterMapNodeType;
-    const equipmentReward = equipmentDropFor(mapNodeType, playerRun.actNumber);
+    // A Story act drops only what its node names (docs/stories.md §14): no roll, no Gem, no Contract, no flask.
+    const storyNode = playerRun.story ? storyNodeSpec(playerRun, storyCatalog, nodeId) : null;
+    const equipmentReward = playerRun.story ? (storyNode?.drop ? equipment[storyNode.drop] ?? null : null) : equipmentDropFor(mapNodeType, playerRun.actNumber);
     setResumedCombat(null);
     const fight: Screen = {
       kind: 'fight',
@@ -891,9 +894,9 @@ export function App() {
       // the kind is the tile's, so the figure is known before the fight rather than rolled after it.
       xpGained: xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),
       equipmentRewardId: equipmentReward?.id ?? null,
-      consumableReward: rollConsumableDrop(mapNodeType),
-      contractReward: rollContractDrop(mapNodeType),
-      gemReward: rollGemDrop(mapNodeType, playerRun.actNumber),
+      consumableReward: playerRun.story ? null : rollConsumableDrop(mapNodeType),
+      contractReward: playerRun.story ? false : rollContractDrop(mapNodeType),
+      gemReward: playerRun.story ? [] : rollGemDrop(mapNodeType, playerRun.actNumber),
       levelSeed: randomSeed(),
     };
     // The Herald is announced before the fight — and a
@@ -954,7 +957,8 @@ export function App() {
       enemies: encounter.run.roster.map((entry) => entry.heroId),
     });
     if (outcome === 'loss') {
-      setScreen({ kind: 'runFailed' });
+      // A Story act lost is played again from its start; it never ends a run.
+      setScreen(playerRun.story ? { kind: 'storyChapter', ...playerRun.story } : { kind: 'runFailed' });
       return;
     }
     const defeatedRoster = encounter.run.roster;
@@ -963,7 +967,7 @@ export function App() {
     const isFinale = mapNodeType === 'finale';
     // EVERY Guardian pays a Banner now that the finale act follows act 5 — the reason act 5's
     // used to pay none (nothing left to spend it on) is void (docs/run-loop.md §4).
-    const banner = isGuardian;
+    const banner = isGuardian && !playerRun.story;
 
     let next = grantCurrencyReward(spendConsumables(playerRun, consumablesUsed), goldReward);
     next = advanceToNode(next, nodeId);
@@ -984,11 +988,13 @@ export function App() {
     next = levelled.run;
     // The run's first fight is won: one of the Earlies it beat asks to come along, and it does.
     // Joined after the levels roll so the report is the fight's and the newcomer arrives at par.
-    const companionId = companionJoinDue(playerRun, mapNodeType) ? companionCandidate(encounter) : null;
+    const companionId = !playerRun.story && companionJoinDue(playerRun, mapNodeType) ? companionCandidate(encounter) : null;
     if (companionId) next = joinCompanion(next, companionId, isSpawnAscended(readProfile(), companionTypeOf(companionId) ?? ''));
 
     let afterScreen: Screen;
-    if (isFinale) {
+    if (playerRun.story && endsStoryAct(playerRun, nodeId)) {
+      afterScreen = { kind: 'storyChapter', chapterId: playerRun.story.chapterId, beat: playerRun.story.beat + 1 };
+    } else if (isFinale) {
       afterScreen = { kind: 'champions' };
     } else if (isGuardian) {
       // The seal, snapshotted at the power it was beaten at, so the finale can field it
@@ -1031,7 +1037,7 @@ export function App() {
     // stands under the Banner.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
     const recruitable = defeatedRoster.filter((entry) => !isWarden(entry) && isRecruitable(entry.heroId, recruitPool));
-    const contractOffers = next.recruitContracts > 0 ? pickContractOffers(recruitable) : [];
+    const contractOffers = !playerRun.story && next.recruitContracts > 0 ? pickContractOffers(recruitable) : [];
     const afterRecruit: Screen = contractOffers.length > 0 ? { kind: 'recruit', offers: contractOffers, next: afterScreen } : afterScreen;
     const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
 
@@ -1166,8 +1172,16 @@ export function App() {
     setScreen(profile.storyChaptersDone.includes(prologue) ? { kind: 'storySelect' } : { kind: 'storyChapter', chapterId: prologue });
   }
 
+  /** A chapter reaches its act: the run's own screens take over from the arrival on (docs/stories.md §14). */
+  function handleStartStoryAct(act: StoryAct, chapterId: string, beat: number) {
+    setResumedCombat(null);
+    setPlayerRun(storyActRun(act, { chapterId, beat }, rosterHeroes, randomSeed()));
+    setScreen({ kind: 'actIntro' });
+  }
+
   function handleStoryChapterDone(chapterId: string) {
-    setProfile(updateProfile((current) => recordStoryChapterDone(current, chapterId)));
+    // The prologue taught the round; its tip would only say it again in the next chapter's first fight.
+    setProfile(updateProfile((current) => recordTipSeen(recordStoryChapterDone(current, chapterId), FIGHT_BASICS_TIP_ID)));
     setScreen({ kind: 'title' });
   }
 
@@ -1497,8 +1511,10 @@ export function App() {
 
       {screen.kind === 'storyChapter' && chapterById(storyCatalog, screen.chapterId) && (
         <StoryChapterScreen
-          key={screen.chapterId}
+          key={`${screen.chapterId}:${screen.beat ?? 0}`}
           chapter={chapterById(storyCatalog, screen.chapterId)!.chapter}
+          startBeat={screen.beat ?? 0}
+          onStartAct={(act, beat) => handleStartStoryAct(act, screen.chapterId, beat)}
           onFinished={() => handleStoryChapterDone(screen.chapterId)}
           onQuit={() => setScreen({ kind: 'title' })}
           onFallSeen={() => markTipSeen(LORE_TIP_ID)}
@@ -1564,6 +1580,7 @@ export function App() {
           run={playerRun}
           location={locationForAct(playerRun.locationIds, playerRun.actNumber)}
           onEnter={() => setScreen({ kind: 'map' })}
+          eyebrow={playerRun.story ? chapterById(storyCatalog, playerRun.story.chapterId)?.chapter.title : undefined}
         />
       )}
 
@@ -1573,7 +1590,8 @@ export function App() {
           onRunChange={setPlayerRun}
           onSelectNode={handleSelectNode}
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
-          onAbandonRun={handleAbandonRun}
+          quitLabel={playerRun.story ? 'Leave the Story' : undefined}
+          onAbandonRun={playerRun.story ? undefined : handleAbandonRun}
           saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
         />
       )}
@@ -1619,8 +1637,10 @@ export function App() {
                   lastMvpRosterId: playerRun.lastMvpRosterId ?? undefined,
                 }
           }
-          onSaveAndQuit={() => setScreen({ kind: 'title' })}
-          onAbandonRun={handleAbandonRun}
+          onSaveAndQuit={playerRun.story ? undefined : () => setScreen({ kind: 'title' })}
+          onAbandonRun={playerRun.story ? undefined : handleAbandonRun}
+          onExitToTitle={playerRun.story ? () => setScreen({ kind: 'title' }) : undefined}
+          exitLabel={playerRun.story ? 'Leave the Story' : undefined}
           saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
           tips={{ nodeType: playerRun.map!.nodes[screen.nodeId].type, seenIds: profile.seenTipIds, onSeen: markTipSeen }}
           cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'finale'}
@@ -1712,6 +1732,7 @@ export function App() {
           onRunChange={settlingRunChange(screen)}
           onContinue={() => handleNodeContinue(screen.nodeId)}
           seed={screen.seed}
+          items={storyNodeSpec(playerRun, storyCatalog, screen.nodeId)?.items}
         />
       )}
 

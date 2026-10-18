@@ -217,28 +217,42 @@ Swordsman; the Huntress is Sable.
   The line that motivates it plays over the stage, with no tooltip.
 - **The chapter end card.** The chapter's name, one closing image, back to the Story select.
 
-## 11. Chapter 2 (PROPOSED)
+## 11. Chapter 2, His Sword (BUILT 2026-10-18; numbers first pass)
 
-Teaches **the map, rewards and items** (decided). Proposed story: Valor, Fang and Ren follow the
-Endbringer's trail out of Wild's Edge to get the brother back. Valor carries his sword; Ren won't
-teach her to use it.
+**Every chapter past the prologue is a single Act, never a full run** (2026-10-18, per user
+direction), and each one layers in a few new mechanics. Chapter 2 teaches **the map, a pick from
+three, items, levels and the Rest**.
 
-- **The party is three:** Valor, Fang and Ren. This is the first time Ren is playable, and three
-  heroes means a real bench.
-- **The first item is the brother's sword.** The chapter opens on the item who-screen with that one
-  piece, so the socket is taught on an object the story has already made matter.
-- **The map is one short act:** fight → a pick-1-of-3 row → fight → a row → the chapter's last fight.
-  The rows carry an item, a potion and a Rest, so each kind of reward gets seen once.
-- **The world changes.** The chapter's enemies are **the first Titanspawn**: the land the Titan
-  touched, turning. The prologue's wildlife was the world before; this is *"It spread into
-  everything it touched"* happening to the place the player just learned to fight in.
-- **The ending beat:** Ren relents. *If you're carrying his sword, carry it properly.* That opens
-  the patron ladder, which chapter 3 would teach.
+- **Story:** the morning after, the river runs black and Ren sets out north after the faceless
+  thing. Valor carries Will's sword; Ren won't teach her. At the end he watches her fight and
+  relents: *If you're carrying his sword, carry it properly.* That opens the patron ladder for
+  chapter 3.
+- **The party:** Valor (the roster's own, sword and all, level 4), Fang (4), Ren (6). Three heroes,
+  so the first bench.
+- **The act** (Wild's Edge, five rows): a Fight → Items / Rest / Boon → a Fight → Rest / Items /
+  Mana Well → an Elite. The enemies are **the first Titanspawn**, the land turning: Cubling and
+  Sproutling, then Rivetling, Cubling and Sproutling, then a Ravager leading Sproutling and
+  Rivetling. The later two fights hold a third on the bench.
+- **Every drop is authored** (per user direction, same day): each fight names its one item and each
+  Items chest its three, all suited to the party (`test/story.test.ts` checks each piece grants a
+  stat someone in the party uses). A Story act drops **no random Gem, Contract or flask**. The tips
+  that fire are the ones that belong: the bench at the first lead pick, the item at the first gear.
+  The round's tip is marked seen when the prologue ends.
+- **Measured, directional** (skilled sim pilot vs the game's AI, 200 seeds a fight): the opener and
+  the second fight are won in 2–3 rounds with the party almost untouched; the Elite takes ~5 rounds,
+  leaves the party at ~67% and sometimes costs a hero. The player's levels and gear are the dial; the
+  user tunes by playing.
 
-**The tension to settle:** a map row is a real choice, so the fights after it can't be identical on
-every play. Proposed: chapter 2 keeps a fixed seed and scripted enemies, but the player's commands
-are free (guided only the first time something new appears), and its numbers may vary. Which makes
-chapter 1 the only fully deterministic chapter, against "the first couple" in §5.
+The deterministic question in the earlier proposal is settled the simple way: only the prologue is
+scripted round by round. From chapter 2 the fights are the player's.
+
+**How an act plugs in** (`src/run/story.ts`): a chapter beat `{ kind: 'act', act }` hands the run's
+own screens a hand-built map (`storyActMap`, every row fully connected), a fixed party
+(`storyActRun`), each fight's authored enemies (`storyNodeEncounter`, the map's scouting reads the
+same) and drops (`storyNodeSpec`). The run carries `RunState.story` back to its chapter: winning the
+last row returns to the next beat, losing replays the act. **A Story act is never saved and never
+touches the profile's run records**, so a parked Classic run is safe. No companion joins, no
+contract is offered, no Banner is paid, and the arrival screen names the chapter instead of the act.
 
 ## 12. Valor's brother, Will (name decided; the rest PROPOSED)
 
@@ -338,7 +352,27 @@ What exists and what's missing (surveyed 2026-10-18):
 4. **Art**, which can run beside steps 1–3 in its own session: swordless Valor, Will, Ren as a
    fighter (each with attack/hurt frames), two or three creatures, the powered-up Endbringer, and
    the fall seen from the ground.
-5. **Chapter 2** on the same pieces, plus the map/reward/item teaching.
+5. **Chapter 2: BUILT 2026-10-18** (§11), on a one-Act layer every later chapter reuses.
 6. **An alpha pass:** a full playthrough from a fresh profile into Classic.
 
 **Still needed from the user:** a pass over the dialogue (the user's, in the coming days).
+
+## 15. The Cycle I chapters (PROPOSED, 2026-10-18)
+
+Each chapter is one Act that adds a few mechanics on top of the last, until a player arriving at
+Classic has met everything its first act asks of them. The order follows what Classic's Act 1 puts
+in front of the player.
+
+| Chapter | Story | Layers in | Map |
+|---|---|---|---|
+| 1. The Fall | Wild's Edge; Will taken | Moves, targets, the round, switching, Rest | Two scripted fights (built) |
+| 2. His Sword | North after the faceless thing; Ren relents | The map, a pick of three, items, levels | Fight, row, fight, row, Elite (built) |
+| 3. The Lesson | Ren teaches; the first ally joins | **Types and matchup arrows**, the **patron seat** (Ren as the Swordsman, Trust), **the fork** (Elite or Skirmish, previewed) | Fight, row, patron seat, fork, row, Elite |
+| 4. The Hall | A town that survived; supplies, a hire | **Gems** (the Lapidary), **Mastery and the Evolution at five pips**, **the Guild Hall** (gold, gear, mend) | Fight, row, Lapidary, fork, Guild Hall, Elite |
+| 5. The Seal | The first Guardian; the seal holds | **The Guardian**, its **Banner**, **the Academy and a Class** | A full Act 1 shape, Guardian at the end |
+
+After chapter 5 the Story points the player at Classic, and the chapters set in Cycles II–V wait
+on Classic milestones (§2).
+
+**Open:** the ally who joins in chapter 3 (a scripted party member who isn't family, so the party
+reaches four), and whether chapter 4's hire is that ally or a Guild hire the player picks.

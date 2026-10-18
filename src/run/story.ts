@@ -7,7 +7,8 @@ import type { CombatState, FightEndTrigger, Side } from '../engine/state';
 import { combatantIdFor } from './combatantIds';
 import type { Encounter } from './enemyGen';
 import { expectedGrowthAt, xpForLevel } from './growth';
-import { createRosterEntry, createRunState, type RosterEntry } from './state';
+import type { MapNode, MapNodeType, RunMap } from './map';
+import { createRosterEntry, createRunState, type RosterEntry, type RunState } from './state';
 
 export const STORY_PLAYER_SIDE: Side = 'A';
 export const STORY_ENEMY_SIDE: Side = 'B';
@@ -153,6 +154,8 @@ export type StoryBeat =
   | { kind: 'fight'; fight: StoryFight; cast: readonly StoryActor[]; cues?: readonly StoryCue[] }
   /** The Titan's fall across the sky (docs/stories.md §4), its lines crawling over it a tap at a time. */
   | { kind: 'fall'; lines: readonly string[] }
+  /** One Act of a run on the real map (docs/stories.md §14), a fixed party and fixed fights, ending at its last row. */
+  | { kind: 'act'; act: StoryAct }
   | { kind: 'end'; line: string };
 
 export interface StoryChapter {
@@ -167,6 +170,86 @@ export interface StoryDefinition {
   id: string;
   name: string;
   chapters: readonly StoryChapter[];
+}
+
+/**
+ * A node of a Story act: its kind, and for a fight the party it fields (leads default to the first
+ * two) and the one item it drops. An Items chest offers `items`. Nothing else drops in a Story act:
+ * every piece is chosen for the party it is handed to.
+ */
+export interface StoryActNode {
+  type: MapNodeType;
+  enemy?: readonly StoryHeroSpec[];
+  enemyLeads?: readonly string[];
+  drop?: string;
+  items?: readonly string[];
+}
+
+/**
+ * A single Act played on the run's own screens: a hand-built map whose rows connect fully, a fixed
+ * party, no draft and no recruiting. Winning the last row's fight ends the act and the chapter goes on.
+ */
+export interface StoryAct {
+  locationId: string;
+  party: readonly StoryHeroSpec[];
+  rows: readonly (readonly StoryActNode[])[];
+  gold?: number;
+}
+
+/** Where a Story act sits in its chapter, carried on the run so the act's end can hand back. */
+export interface StoryActMarker {
+  chapterId: string;
+  beat: number;
+}
+
+export function storyActMap(act: StoryAct, seed: number): RunMap {
+  const id = (row: number, col: number) => `r${row}-c${col}`;
+  const nodes: Record<string, MapNode> = {};
+  const rows = act.rows.map((row, r) =>
+    row.map((node, c) => {
+      const nextIds = r + 1 < act.rows.length ? act.rows[r + 1].map((_, nc) => id(r + 1, nc)) : [];
+      nodes[id(r, c)] = { id: id(r, c), type: node.type, row: r, col: c, nextIds };
+      return id(r, c);
+    })
+  );
+  return { seed, nodes, rows, startNodeIds: rows[0], bossNodeId: rows[rows.length - 1][0] };
+}
+
+/** The run a Story act plays on: its party at their levels, its map, its place, and no contract to recruit with. */
+export function storyActRun(act: StoryAct, marker: StoryActMarker, heroes: Record<string, HeroDefinition>, seed: number): RunState {
+  const roster = act.party.map((spec) => {
+    const hero = heroes[spec.heroId];
+    if (!hero) throw new Error(`story: unknown hero ${spec.heroId}`);
+    return storyEntry(spec, hero);
+  });
+  return { ...createRunState(act.gold ?? 0, 0), roster, map: storyActMap(act, seed), locationIds: [act.locationId], story: marker };
+}
+
+/** The act a run is playing, or null for a run outside Stories. */
+export function storyActOf(run: RunState, stories: readonly StoryDefinition[]): StoryAct | null {
+  if (!run.story) return null;
+  const beat = chapterById(stories, run.story.chapterId)?.chapter.beats[run.story.beat];
+  return beat?.kind === 'act' ? beat.act : null;
+}
+
+/** The authored node a Story act's map node was built from, or null outside Stories. */
+export function storyNodeSpec(run: RunState, stories: readonly StoryDefinition[], nodeId: string): StoryActNode | null {
+  const act = storyActOf(run, stories);
+  const node = run.map?.nodes[nodeId];
+  return (act && node && act.rows[node.row]?.[node.col]) || null;
+}
+
+/** The fixed party a Story act's fight node fields, or null for a node or a run without one. */
+export function storyNodeEncounter(run: RunState, stories: readonly StoryDefinition[], nodeId: string, heroes: Record<string, HeroDefinition>): Encounter | null {
+  const spec = storyNodeSpec(run, stories, nodeId);
+  if (!spec?.enemy) return null;
+  return storySide(spec.enemy, spec.enemyLeads ?? spec.enemy.slice(0, 2).map((s) => s.rosterId), heroes);
+}
+
+/** Whether winning this node ends the Story act: its last row. */
+export function endsStoryAct(run: RunState, nodeId: string): boolean {
+  const node = run.map?.nodes[nodeId];
+  return !!run.story && !!node && !!run.map && node.row === run.map.rows.length - 1;
 }
 
 /** The first chapter of `story` not yet finished, or null when every one is. */

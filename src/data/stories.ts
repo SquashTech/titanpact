@@ -1,6 +1,6 @@
 // Stories as data (docs/stories.md). The prologue's lines are a DRAFT for the user to rewrite.
 
-import type { StoryActor, StoryCommand, StoryDefinition, StoryFight } from '../run/story';
+import type { StoryAct, StoryActor, StoryCommand, StoryDefinition, StoryFight } from '../run/story';
 import { STORY_CAST_IDS as CAST } from './storyCast';
 
 const valor: StoryActor = { id: 'valor', name: 'Valor', artHeroId: CAST.valor, stands: 'left' };
@@ -37,6 +37,26 @@ const firstHunt: StoryFight = {
 };
 
 const reach: StoryCommand[] = [{ actor: 'faceless', moveId: 'erode' }];
+
+// Chapter 2's Valor has the sword: the roster's own Valor, sprite and kit.
+const valorArmed: StoryActor = { id: 'valor', name: 'Valor', artHeroId: 'valor', stands: 'left' };
+
+/** Chapter 2: the map, a pick from three, an item, a level, the Rest. The land the Titan touched has started to turn. */
+const northRoad: StoryAct = {
+  locationId: 'wildsEdge',
+  party: [
+    { rosterId: 'valor', heroId: 'valor', level: 4 },
+    { rosterId: 'fang', heroId: 'packAlpha', level: 4 },
+    { rosterId: 'ren', heroId: CAST.ren, level: 6 },
+  ],
+  rows: [
+    [{ type: 'fight', enemy: [{ rosterId: 'cub', heroId: 'cubling', level: 6 }, { rosterId: 'sprout', heroId: 'sproutling', level: 6 }], drop: 'dagger.common.feral' }],
+    [{ type: 'equipmentReward', items: ['greataxe.common', 'leathers.common.feral', 'shield.common'] }, { type: 'restReward' }, { type: 'passiveReward' }],
+    [{ type: 'fight', enemy: [{ rosterId: 'rivet', heroId: 'rivetling', level: 8 }, { rosterId: 'cub', heroId: 'cubling', level: 8 }, { rosterId: 'sprout', heroId: 'sproutling', level: 7 }], drop: 'spear.common.tempered' }],
+    [{ type: 'restReward' }, { type: 'equipmentReward', items: ['boots.common', 'plate.common', 'dagger.common.tempered'] }, { type: 'manaWellReward' }],
+    [{ type: 'elite', enemy: [{ rosterId: 'ravager', heroId: 'ravager', level: 9 }, { rosterId: 'sprout', heroId: 'sproutling', level: 8 }, { rosterId: 'rivet', heroId: 'rivetling', level: 8 }], drop: 'sword.rare.tempered' }],
+  ],
+};
 
 const theClearing: StoryFight = {
   id: 'valor-1-clearing',
@@ -160,6 +180,41 @@ export const storyCatalog: readonly StoryDefinition[] = [
             skipped: 'The Titan fell. The faceless thing rose stronger, took Will, and was gone. Valor picked up his sword.',
           },
           { kind: 'end', line: 'Valor had wanted a sword her whole life.' },
+        ],
+      },
+      {
+        id: 'valor-2',
+        title: 'His Sword',
+        cycle: 1,
+        beats: [
+          {
+            kind: 'scene',
+            locationId: 'wildsEdge',
+            cast: [valorArmed, fang, ren],
+            lines: [
+              { text: 'Morning. The river runs black.' },
+              { speaker: 'ren', text: 'It went north. So do we.' },
+              { speaker: 'valor', text: 'Then teach me on the way. I have his sword now.' },
+              { speaker: 'ren', text: "You have his sword. That isn't the same thing." },
+              { text: 'Ren walks on ahead. Fang waits for her.' },
+            ],
+            skipped: 'The morning after, Ren set out north after the faceless thing. He would not teach Valor the sword.',
+          },
+          { kind: 'act', act: northRoad },
+          {
+            kind: 'scene',
+            locationId: 'wildsEdge',
+            cast: [valorArmed, fang, ren],
+            lines: [
+              { speaker: 'ren', text: 'You hold it like an axe.' },
+              { speaker: 'valor', text: 'It worked.' },
+              { speaker: 'ren', text: "It won't, against that thing." },
+              { text: 'He looks at the sword a long time.' },
+              { speaker: 'ren', text: "Tomorrow, before the light. If you're carrying his sword, carry it properly." },
+            ],
+            skipped: 'Ren watched her fight, and agreed to teach her.',
+          },
+          { kind: 'end', line: 'She had a teacher now. She did not have her brother.' },
         ],
       },
     ],

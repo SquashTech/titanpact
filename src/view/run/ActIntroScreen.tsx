@@ -14,6 +14,8 @@ interface Props {
   run: RunState;
   location: LocationDefinition;
   onEnter: () => void;
+  /** Said in place of the act count: a Story act names its chapter (docs/stories.md §14). */
+  eyebrow?: string;
 }
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
@@ -25,7 +27,7 @@ function actLabel(actNumber: number): string {
 
 // Per-act arrival beat (docs/locations.md §4), shown at the top of every act.
 // LocationSky rather than NodeSky: this screen says what PLACE, not what kind of moment.
-export function ActIntroScreen({ run, location, onEnter }: Props) {
+export function ActIntroScreen({ run, location, onEnter, eyebrow }: Props) {
   // What spawns here — the counter-pick the player is choosing against (docs/titanspawn-overhaul.md §3).
   const domains = locationDomains(location);
   // The finale is not a sixth act but what the five seals unsealed, so it takes neither the
@@ -50,7 +52,7 @@ export function ActIntroScreen({ run, location, onEnter }: Props) {
         )}
 
         <NodeHeader
-          eyebrow={isFinale ? `All ${SEAL_ACTS} rings locked` : `${actLabel(run.actNumber)} of ${ROMAN[SEAL_ACTS - 1]}`}
+          eyebrow={eyebrow ?? (isFinale ? `All ${SEAL_ACTS} rings locked` : `${actLabel(run.actNumber)} of ${ROMAN[SEAL_ACTS - 1]}`)}
           title={location.name}
         />
 

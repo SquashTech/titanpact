@@ -18,4 +18,4 @@ export const allCombatants: Record<string, HeroDefinition> = { ...heroes, ...ene
  * from (draft, Guild Hall, contracts, encounters) still read `heroes`, which is what keeps a
  * spawn out of them.
  */
-export const rosterHeroes: Record<string, HeroDefinition> = { ...heroes, ...titanspawn };
+export const rosterHeroes: Record<string, HeroDefinition> = { ...heroes, ...titanspawn, ...storyCast };
