@@ -23,13 +23,16 @@ import {
   withStoryEnds,
   STORY_ENEMY_SIDE,
   STORY_PLAYER_SIDE,
+  autoStage,
   endsStoryAct,
+  stageAt,
   storyActMap,
   storyActRun,
   storyNodeEncounter,
   type StoryAct,
   type StoryActNode,
   type StoryFight,
+  type StoryLine,
 } from '../src/run/story';
 import { storyCatalog } from '../src/data/stories';
 import { rosterHeroes } from '../src/data/content';
@@ -310,4 +313,33 @@ test('story act: a patron seat seats the patron it names, on a patron row, teach
     }
   }
   assert.ok(seated > 0, 'some chapter seats a patron');
+});
+
+test('story stage: every mark and move names someone in the scene, and moves accumulate line by line', () => {
+  for (const story of storyCatalog) {
+    for (const chapter of story.chapters) {
+      for (const beat of chapter.beats) {
+        if (beat.kind !== 'scene') continue;
+        const ids = new Set(beat.cast.map((actor) => actor.id));
+        for (const id of Object.keys(beat.stage ?? {})) assert.ok(ids.has(id), `${chapter.id}: ${id} is staged but not cast`);
+        beat.lines.forEach((line, step) => {
+          for (const id of Object.keys(line.moves ?? {})) assert.ok(ids.has(id), `${chapter.id}: ${id} moves but is not cast`);
+          const marks = stageAt(beat.cast, beat.stage, beat.lines, step);
+          for (const actor of beat.cast) {
+            const mark = marks[actor.id];
+            assert.ok(mark && mark.depth >= 0 && mark.depth <= 1, `${chapter.id}: ${actor.id} has no mark at line ${step}`);
+          }
+        });
+      }
+    }
+  }
+  const cast = [
+    { id: 'a', name: 'A', artHeroId: 'valor', stands: 'left' as const },
+    { id: 'b', name: 'B', artHeroId: 'valor', stands: 'right' as const },
+  ];
+  const lines: StoryLine[] = [{ text: '1' }, { text: '2', moves: { a: { x: 60 } } }, { text: '3', moves: { b: { off: true } } }];
+  assert.deepStrictEqual(stageAt(cast, undefined, lines, 0), autoStage(cast));
+  assert.strictEqual(stageAt(cast, undefined, lines, 1).a.x, 60);
+  assert.strictEqual(stageAt(cast, undefined, lines, 2).a.x, 60);
+  assert.strictEqual(stageAt(cast, undefined, lines, 2).b.off, true);
 });

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import type { StoryActor, StoryLine, StoryVoice } from '../../run/story';
+import { stageAt, type StageMark, type StoryActor, type StoryLine, type StoryVoice } from '../../run/story';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { locationBackdrop } from '../shared/locationBackdrops';
 import { prefersReducedMotion } from '../shared/reducedMotion';
@@ -75,12 +75,22 @@ interface Props {
   locationId: string;
   cast: readonly StoryActor[];
   lines: readonly StoryLine[];
+  stage?: Readonly<Record<string, StageMark>>;
   skipped: string;
   onDone: () => void;
 }
 
+/** Which way a figure looks: the speaker at whoever stands nearest, everyone else at the speaker. Sprites are drawn facing right. */
+function facesLeft(id: string, marks: Record<string, StageMark>, speakerId: string | null): boolean {
+  const me = marks[id];
+  const onStage = Object.entries(marks).filter(([other, mark]) => other !== id && !mark.off);
+  if (speakerId && speakerId !== id && marks[speakerId] && !marks[speakerId].off) return marks[speakerId].x < me.x;
+  const nearest = onStage.sort(([, a], [, b]) => Math.abs(a.x - me.x) - Math.abs(b.x - me.x))[0];
+  return nearest ? nearest[1].x < me.x : me.x > 50;
+}
+
 /** A Story scene (docs/stories.md §10): the cast on the place's backdrop, one line a tap, the speaker stepping forward. */
-export function StoryScene({ locationId, cast, lines, skipped, onDone }: Props) {
+export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: Props) {
   const [step, setStep] = useState(0);
   const [skipping, setSkipping] = useState(false);
   const line = lines[Math.min(step, lines.length - 1)];
@@ -106,21 +116,37 @@ export function StoryScene({ locationId, cast, lines, skipped, onDone }: Props) 
     setStep((i) => i + 1);
   }
 
-  const left = cast.filter((actor) => actor.stands === 'left');
-  const right = cast.filter((actor) => actor.stands === 'right');
-  const figure = (actor: StoryActor) => (
-    <div key={actor.id} className={`story-figure${actor.id === speaker?.id ? ' is-speaking' : ''}`}>
-      <HeroPortrait heroId={actor.artHeroId} className="story-figure-sprite" />
-    </div>
-  );
+  const marks = stageAt(cast, stage, lines, step);
+  const before = step > 0 ? stageAt(cast, stage, lines, step - 1) : marks;
+  const figure = (actor: StoryActor) => {
+    const mark = marks[actor.id];
+    if (!mark) return null;
+    const was = before[actor.id];
+    const walking = !!was && !was.off && !mark.off && (was.x !== mark.x || was.depth !== mark.depth);
+    const style = {
+      left: `${mark.x}%`,
+      bottom: `${(1 - mark.depth) * 100}%`,
+      zIndex: Math.round(mark.depth * 100),
+      '--figure-scale': (0.7 + 0.45 * mark.depth) * (actor.scale ?? 1),
+      '--figure-flip': facesLeft(actor.id, marks, speaker?.id ?? null) ? -1 : 1,
+    } as CSSProperties;
+    return (
+      <div
+        key={actor.id}
+        className={`story-figure${actor.id === speaker?.id ? ' is-speaking' : ''}${mark.off ? ' is-off' : ''}${walking ? ' is-walking' : ''}`}
+        style={style}
+      >
+        <HeroPortrait key={walking ? `walk-${step}` : 'still'} heroId={actor.artHeroId} className="story-figure-sprite" />
+      </div>
+    );
+  };
 
   return (
     <div className="story-screen story-scene" onClick={advance} role="dialog" aria-live="polite">
       {backdrop && <div className="story-backdrop" style={{ backgroundImage: `url(${backdrop})` }} aria-hidden="true" />}
       <SkipButton onSkip={() => setSkipping(true)} />
-      <div className="story-stage" aria-hidden="true">
-        <div className="story-side is-left">{left.map(figure)}</div>
-        <div className="story-side is-right">{right.map(figure)}</div>
+      <div className="story-ground" aria-hidden="true">
+        {cast.map(figure)}
       </div>
       <div className={`story-line${speaker && !skipping ? '' : ' is-narration'}${line?.think ? ' is-thought' : ''}`}>
         {speaker && !skipping && <span className="story-line-name">{speaker.name}</span>}

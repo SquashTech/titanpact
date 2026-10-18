@@ -128,6 +128,41 @@ export interface StoryActor {
   stands: 'left' | 'right';
   /** The blip under this actor's typed lines, and its pitch. Unset: typed in silence. */
   voice?: StoryVoice;
+  /** Drawn this much larger than a hero (the risen Endbringer towers). Unset: 1. */
+  scale?: number;
+}
+
+/**
+ * Where an actor stands in a scene: `x` across the ground (0 the left edge, 100 the right), `depth`
+ * into it (0 the far back, small and high; 1 the front). `off` is off stage: not yet come, or gone.
+ */
+export interface StageMark {
+  x: number;
+  depth: number;
+  off?: boolean;
+}
+
+/** The cast spread over the ground when a scene authors no stage: each side fanned out, depths staggered. */
+export function autoStage(cast: readonly StoryActor[]): Record<string, StageMark> {
+  const marks: Record<string, StageMark> = {};
+  for (const side of ['left', 'right'] as const) {
+    const group = cast.filter((actor) => actor.stands === side);
+    group.forEach((actor, i) => {
+      const t = group.length === 1 ? 0.5 : i / (group.length - 1);
+      const x = side === 'left' ? 14 + t * 26 : 86 - t * 26;
+      marks[actor.id] = { x, depth: i % 2 === 0 ? 0.8 : 0.45 };
+    });
+  }
+  return marks;
+}
+
+/** The marks standing at line `step`: the scene's stage with every line's moves up to it applied. */
+export function stageAt(cast: readonly StoryActor[], stage: Readonly<Record<string, StageMark>> | undefined, lines: readonly StoryLine[], step: number): Record<string, StageMark> {
+  const marks: Record<string, StageMark> = { ...autoStage(cast), ...(stage ?? {}) };
+  for (const line of lines.slice(0, step + 1)) {
+    for (const [id, move] of Object.entries(line.moves ?? {})) marks[id] = { ...marks[id], ...move } as StageMark;
+  }
+  return marks;
 }
 
 /** A timbre (audio/sounds.ts `voice.*`) and a pitch multiplier. */
@@ -143,6 +178,8 @@ export interface StoryLine {
   think?: true;
   /** A sound the moment the line appears (audio/sounds.ts id): Fang's bark, his howl. */
   sound?: 'wolf.bark' | 'wolf.howl';
+  /** Who moves as the line appears, and to where: a step, a retreat, an entrance (`off: false`), an exit (`off: true`). */
+  moves?: Readonly<Record<string, Partial<StageMark>>>;
 }
 
 /** A line over the fight's stage at the top of `round`'s command phase. */
@@ -162,6 +199,8 @@ export type StoryBeat =
       locationId: string;
       cast: readonly StoryActor[];
       lines: readonly StoryLine[];
+      /** Where the cast stands at the scene's start. Unset: `autoStage`. */
+      stage?: Readonly<Record<string, StageMark>>;
       /** What a skipped scene leaves behind: one line saying what happened. */
       skipped: string;
     }

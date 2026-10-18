@@ -38,7 +38,7 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onFallSeen, on
 
   if (!beat || beat.kind === 'act') return null;
   if (beat.kind === 'memory') return <StoryMemory key={index} locationId={beat.locationId} lines={beat.lines} voice={beat.voice} onDone={next} />;
-  if (beat.kind === 'scene') return <StoryScene key={index} locationId={beat.locationId} cast={beat.cast} lines={beat.lines} skipped={beat.skipped} onDone={next} />;
+  if (beat.kind === 'scene') return <StoryScene key={index} locationId={beat.locationId} cast={beat.cast} lines={beat.lines} stage={beat.stage} skipped={beat.skipped} onDone={next} />;
   if (beat.kind === 'fall')
     return (
       <TitanFallScreen

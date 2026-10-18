@@ -55,6 +55,8 @@ A player who isn't interested in the story must never feel held hostage by it.
   Will is taken, and howls north at the end of chapter 3. `wolf.bark` and `wolf.howl` are
   procedural like every other sound in the game: first passes, to be judged by ear.
 
+- **Scenes are staged, not a row** (2026-10-18, per user direction). A scene can place its cast (`stage`: `x` across the ground, `depth` into it, far figures higher and smaller and behind) and any line can move someone (`moves`: a step, a retreat, an entrance, an exit), so the scene acts out what the lines say: Ren and Will walk off on the hunt, the Faceless appears far back and comes closer, Valor steps out between it and her family, Will is taken off with it, Solace walks in out of the trees. Everyone faces whoever is speaking, the speaker the nearest other. A scene with no staging fans each side out with staggered depths (`autoStage`). An actor can be drawn larger (`scale`: the risen Endbringer towers).
+
 ## 2. The shape
 
 - A **Story** follows one hero (or one pairing) through the five Cycles. Each **chapter** is a

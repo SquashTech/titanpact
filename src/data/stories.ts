@@ -11,8 +11,8 @@ const valor: StoryActor = { id: 'valor', name: 'Valor', artHeroId: CAST.valor, s
 const fang: StoryActor = { id: 'fang', name: 'Fang', artHeroId: 'packAlpha', stands: 'left' };
 const ren: StoryActor = { id: 'ren', name: 'Ren', artHeroId: CAST.ren, stands: 'right', voice: { timbre: 'deep', pitch: 1 } };
 const will: StoryActor = { id: 'will', name: 'Will', artHeroId: CAST.will, stands: 'right', voice: { timbre: 'bright', pitch: 1.18 } };
-const faceless: StoryActor = { id: 'faceless', name: '???', artHeroId: CAST.endbringer, stands: 'right' };
-const risen: StoryActor = { id: 'risen', name: '???', artHeroId: 'heraldRisen', stands: 'right' };
+const faceless: StoryActor = { id: 'faceless', name: '???', artHeroId: CAST.endbringer, stands: 'right', scale: 1.2 };
+const risen: StoryActor = { id: 'risen', name: '???', artHeroId: 'heraldRisen', stands: 'right', scale: 1.7 };
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
 const ally = (rosterId: string) => ({ side: 'A' as const, rosterId });
@@ -140,15 +140,16 @@ export const storyCatalog: readonly StoryDefinition[] = [
             kind: 'scene',
             locationId: 'wildsEdge',
             cast: [valor, fang, ren, will],
+            stage: { valor: { x: 22, depth: 0.8 }, fang: { x: 34, depth: 0.5 }, ren: { x: 68, depth: 0.75 }, will: { x: 82, depth: 0.5 } },
             lines: [
               { speaker: 'ren', text: 'The tracks split at the ridge. Will, with me.' },
               { speaker: 'ren', text: 'Valor, you and Fang take the high path. If you see it, you whistle.' },
               { speaker: 'valor', text: 'And if it sees me first?' },
               { speaker: 'ren', text: 'Then you whistle louder.' },
               { speaker: 'will', text: "I'll bring you back a claw, Val." },
-              { speaker: 'fang', text: 'Fang barks, impatient to go.', sound: 'wolf.bark' },
+              { speaker: 'fang', text: 'Fang barks, impatient to go.', sound: 'wolf.bark', moves: { ren: { x: 106, off: true }, will: { x: 112, off: true }, fang: { x: 46, depth: 0.6 } } },
               { speaker: 'valor', text: "One month with a sword and he's a hunter." },
-              { text: 'Fang presses into her hand until she laughs.' },
+              { text: 'Fang presses into her hand until she laughs.', moves: { fang: { x: 30, depth: 0.85 } } },
             ],
             skipped: 'The family split up to hunt. Valor and Fang took the high path.',
           },
@@ -165,12 +166,13 @@ export const storyCatalog: readonly StoryDefinition[] = [
             kind: 'scene',
             locationId: 'wildsEdge',
             cast: [ren, will, faceless],
+            stage: { ren: { x: 34, depth: 0.7 }, will: { x: 48, depth: 0.75 }, faceless: { x: 78, depth: 0.05, off: true } },
             lines: [
               { speaker: 'will', text: 'Father. The birds have stopped.' },
-              { speaker: 'ren', text: 'Behind me. Now.' },
-              { text: 'Something stands in the clearing, taller than a man. Where its face should be, there is nothing.' },
+              { speaker: 'ren', text: 'Behind me. Now.', moves: { ren: { x: 44, depth: 0.8 }, will: { x: 30, depth: 0.5 } } },
+              { text: 'Something stands in the clearing, taller than a man. Where its face should be, there is nothing.', moves: { faceless: { off: false } } },
               { speaker: 'will', text: 'What is that?' },
-              { speaker: 'ren', text: "Walk backwards. Don't run until I say." },
+              { speaker: 'ren', text: "Walk backwards. Don't run until I say.", moves: { ren: { x: 32 }, will: { x: 16 }, faceless: { x: 72, depth: 0.25 } } },
             ],
             skipped: 'Ren and Will found something with no face in the clearing, and backed away.',
           },
@@ -178,10 +180,17 @@ export const storyCatalog: readonly StoryDefinition[] = [
             kind: 'scene',
             locationId: 'wildsEdge',
             cast: [valor, fang, ren, will, faceless],
+            stage: {
+              valor: { x: 20, depth: 0.75 },
+              fang: { x: 10, depth: 0.5 },
+              ren: { x: 46, depth: 0.7 },
+              will: { x: 36, depth: 0.45 },
+              faceless: { x: 88, depth: 0.15 },
+            },
             lines: [
-              { speaker: 'will', text: "Val! It's following us!" },
+              { speaker: 'will', text: "Val! It's following us!", moves: { faceless: { x: 80, depth: 0.3 } } },
               { speaker: 'ren', text: 'Take your brother and go. We do not fight that.' },
-              { speaker: 'valor', text: 'You taught him to fight. Let me.' },
+              { speaker: 'valor', text: 'You taught him to fight. Let me.', moves: { valor: { x: 58, depth: 0.9 }, fang: { x: 50, depth: 0.6 } } },
               { speaker: 'ren', text: 'Valor, no—' },
             ],
             skipped: 'Ren told Valor not to fight it. She did anyway.',
@@ -201,6 +210,13 @@ export const storyCatalog: readonly StoryDefinition[] = [
             kind: 'scene',
             locationId: 'wildsEdge',
             cast: [valor, fang, ren, will, faceless],
+            stage: {
+              valor: { x: 44, depth: 0.85 },
+              fang: { x: 32, depth: 0.6 },
+              ren: { x: 24, depth: 0.75 },
+              will: { x: 14, depth: 0.5 },
+              faceless: { x: 72, depth: 0.4 },
+            },
             lines: [
               { speaker: 'valor', text: "It's down. Is it down?" },
               { speaker: 'will', text: "It isn't even bleeding." },
@@ -213,13 +229,20 @@ export const storyCatalog: readonly StoryDefinition[] = [
             kind: 'scene',
             locationId: 'wildsEdge',
             cast: [valor, fang, ren, will, risen],
+            stage: {
+              valor: { x: 30, depth: 0.85 },
+              fang: { x: 18, depth: 0.6 },
+              ren: { x: 42, depth: 0.55 },
+              will: { x: 58, depth: 0.7 },
+              risen: { x: 78, depth: 0.1 },
+            },
             lines: [
-              { text: 'The ground shakes. The faceless thing stands, and it is taller now.' },
+              { text: 'The ground shakes. The faceless thing stands, and it is taller now.', moves: { risen: { x: 74, depth: 0.3 } } },
               { speaker: 'will', text: 'Val—!' },
-              { text: 'It takes Will, and it is gone.' },
+              { text: 'It takes Will, and it is gone.', moves: { will: { x: 84, depth: 0.2, off: true }, risen: { x: 90, depth: 0.05, off: true } } },
               { text: 'His sword lies in the grass.' },
               { speaker: 'fang', text: 'Fang howls at the empty sky.', sound: 'wolf.howl' },
-              { speaker: 'ren', text: 'Pick it up.' },
+              { speaker: 'ren', text: 'Pick it up.', moves: { valor: { x: 58, depth: 0.75 } } },
               { speaker: 'ren', text: 'We run.' },
             ],
             skipped: 'The Titan fell. The faceless thing rose stronger, took Will, and was gone. Valor picked up his sword.',
@@ -251,7 +274,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
               { speaker: 'ren', text: 'It went north. So do we.' },
               { speaker: 'valor', text: 'Then teach me on the way. I have his sword now.' },
               { speaker: 'ren', text: "You have his sword. That isn't the same thing." },
-              { text: 'Ren walks on ahead. Fang waits for her.' },
+              { text: 'Ren walks on ahead. Fang waits for her.', moves: { ren: { x: 108, off: true } } },
             ],
             skipped: 'The morning after, Ren set out north after the faceless thing. He would not teach Valor the sword.',
           },
@@ -304,11 +327,12 @@ export const storyCatalog: readonly StoryDefinition[] = [
             kind: 'scene',
             locationId: 'forbiddenForest',
             cast: [valorArmed, fang, ren, solace],
+            stage: { valor: { x: 18, depth: 0.8 }, fang: { x: 30, depth: 0.55 }, ren: { x: 40, depth: 0.7 }, solace: { x: 82, depth: 0.1, off: true } },
             lines: [
-              { text: 'Light, through the trees. Someone is fighting.' },
+              { text: 'Light, through the trees. Someone is fighting.', moves: { solace: { off: false } } },
               { speaker: 'solace', text: 'Either help or get out of my way!' },
               { text: 'The turned things scatter from the glare of her hands.' },
-              { speaker: 'solace', text: 'Solace. The chapel I kept is under the roots now.' },
+              { speaker: 'solace', text: 'Solace. The chapel I kept is under the roots now.', moves: { solace: { x: 66, depth: 0.7 } } },
               { speaker: 'valor', text: 'Something took my brother. It went north.' },
               { speaker: 'solace', text: 'Then so do I. Whatever did this to my chapel, I want to see its face.' },
               { speaker: 'valor', text: "It doesn't have one." },
