@@ -242,10 +242,11 @@ chapter 1 the only fully deterministic chapter, against "the first couple" in §
 
 - **Name: Will** (decided 2026-10-17, per user direction). Valor and Will: a pair, and a normal
   boy's name.
-- **Type: Storm.** He's trained in Ren's own style (Gale Sever, the cut that moves the air), so
-  **Ren is Storm too**, which settles `patron-heroes.md`'s "no obvious home" without a second Iron
-  swordsman beside Ronin. **Valor is Iron**: the daughter who taught herself is the steel, not her
-  father's wind. The family resemblance is a type chart.
+- **Types, decided 2026-10-18 (per user direction): Will is Storm, Ren is Iron.** Ren is Iron by
+  precedent: his patron cuts (Crescent Cut, Gale Sever) are authored Iron. Will is Storm, quick and
+  light. Valor is Iron like her father. This replaces the proposal that Ren be Storm too. It leaves
+  Ren a second Iron swordsman beside Ronin (`patron-heroes.md` §0), a tension that only bites once
+  Ren is a draftable hero.
 - **Across the Cycles:** taken in the prologue; in Cycle II he's the Warden the Titan holds, Storm
   with **Ancient grafted** into his secondary slot (the curse precedent makes a turned typing
   possible), and the family fights its own boy. Cycle V frees him with the rest of the Wardens.
@@ -330,7 +331,7 @@ What exists and what's missing (surveyed 2026-10-18):
    `art/heroes/story/`. Both fights finish inside their scripts with nobody down (pinned by
    `test/story.test.ts`): the hunt in two rounds, the clearing in four, the Faceless brought to 1 HP
    by Will after Ren's guided **Rest**, which is the prologue's first Rest. Dialogue is a second
-   draft, for the user to rewrite. **Ren's and Will's types are still the user's to confirm.**
+   draft, for the user to rewrite. Ren's and Will's types are decided (§12).
    Boar and Crow are unused, waiting for chapter 2.
 4. **Art**, which can run beside steps 1–3 in its own session: swordless Valor, Will, Ren as a
    fighter (each with attack/hurt frames), two or three creatures, the powered-up Endbringer, and
@@ -338,6 +339,6 @@ What exists and what's missing (surveyed 2026-10-18):
 5. **Chapter 2** on the same pieces, plus the map/reward/item teaching.
 6. **An alpha pass:** a full playthrough from a fresh profile into Classic.
 
-**Needed from the user before step 3:** Ren's and Will's types (Storm proposed, §12); whether the
+**Still needed from the user:** whether the
 prologue replaces `TitanFallScreen`'s first-press fall (recommended: the prologue's fall reuses its
 art, and the lore crawl becomes the end card); and sign-off on the dialogue once drafted.

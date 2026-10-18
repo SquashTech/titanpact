@@ -27,7 +27,7 @@ export const storyCast: Record<string, HeroDefinition> = {
     moveIds: ['ironFist', 'fortify'],
     growthGrades: { hp: 'A', attack: 'A', defense: 'B', intelligence: 'C', wisdom: 'B', speed: 'B', manaPool: 'C' },
   },
-  // Ren, the Swordsman: Iron by precedent (his patron cuts are authored Iron), open per docs/stories.md §12.
+  // Ren, the Swordsman: Iron, his patron cuts' type (docs/stories.md §12).
   [STORY_CAST_IDS.ren]: {
     id: STORY_CAST_IDS.ren,
     name: 'Ren',
@@ -36,7 +36,7 @@ export const storyCast: Record<string, HeroDefinition> = {
     moveIds: ['crescentCut', 'galeSever'],
     growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'A', manaPool: 'C' },
   },
-  // Will: Storm as proposed (docs/stories.md §12), quick and light, trained in his father's cut.
+  // Will: Storm, quick and light, trained in his father's cut (docs/stories.md §12).
   [STORY_CAST_IDS.will]: {
     id: STORY_CAST_IDS.will,
     name: 'Will',
