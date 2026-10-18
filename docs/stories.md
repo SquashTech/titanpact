@@ -257,16 +257,18 @@ contract is offered, no Banner is paid, and the arrival screen names the chapter
 ## 11b. Chapter 3, The Lesson (BUILT 2026-10-18; numbers first pass)
 
 Teaches **types and the matchup arrows, Ren's patron seat, and the fork**, and brings in **the
-party's first caster** (per user direction: a new character with new mechanics).
+party's first caster** (per user direction: a caster with new mechanics, and **an existing hero
+rather than a new character**, 2026-10-18).
 
 - **Story:** Ren starts teaching Valor before dawn: which turned things a blade can cut, and which it
-  can't. In the Forbidden Forest they find **Mira**, a hedge-mage whose chapel the turning swallowed.
-  She comes north with them. At the end Mira knows a town to the east that hasn't fallen, which
-  leads into chapter 4.
-- **Mira (name and type PROPOSED, for the user to confirm):** Light, Intelligence 95 and Wisdom 85
-  on the 550, kit Glimmer, Mend and Blind. She is the party's first magical damage (against Wisdom,
-  not Defense), first heal and first status (Blind Dazes). Light also hits the Frost Elite at the
-  fork double. She stands in on Solace's sprite until her own is drawn.
+  can't. In the Forbidden Forest they find **Solace**, a priest of the dawn whose chapel the turning
+  swallowed. She comes north with them. At the end Solace knows a town to the east that hasn't
+  fallen, which leads into chapter 4.
+- **Solace** (the base roster's own, `dawnwarden`, decided 2026-10-18 per user direction): Light,
+  Glimmer and Mend from her own kit plus Blind, and her innate Dawnlight. She is the party's first
+  magical damage (against Wisdom, not Defense), first heal, first status (Blind Dazes) and first
+  innate that isn't a fighter's. Light also hits the Frost Elite at the fork double. A player who
+  finishes the Story already owns her in Classic.
 - **The act** (Forbidden Forest, six rows): a Fight → Items / Rest / Boon → **Ren's seat** → **the
   fork** → Rest / Items / Mana Well → an Elite.
   - **The opener** is Sproutling and Whimling (Nature, Mind). Beast hits both double, so the lead
@@ -276,15 +278,15 @@ party's first caster** (per user direction: a new character with new mechanics).
     must sit on a patron row (`PATRON_ROWS`, rows 2 and 6); the test pins it.
   - **The fork is the type lesson.** The Elite is Hoarfang, Pebbling and Sleetling (Frost, Stone),
     a level above the party but Iron's prey. The Skirmish is Voltail and Gearhound (Storm, Mech), at
-    level 6 but double against everyone. The preview shows it: the Elite's grid is green for the
+    level 5 but double against everyone. The preview shows it: the Elite's grid is green for the
     Iron pair and red for Fang, and the Skirmish's is red across the party.
   - **The last Elite** mixes it up (Bramblehide, Gearhound, Whimling), so leads have to be chosen
     on the matchups.
 - **Story nodes get their own map card:** the authored enemy levels, XP, gold and one item, with
   no Gem, recruit or Contract line (`storyNodeDossier`).
 - **Measured, directional** (skilled sim pilot, 200 seeds): the opener is won in ~2.5 rounds
-  untouched; **the Elite at the fork wins 100% with ~79% HP left; the Skirmish wins 85% with ~39%
-  left and ~2 heroes down**; the last Elite wins 99% with ~61% left. A lost fight replays the whole
+  untouched; **the Elite at the fork wins 100% with ~79% HP left; the Skirmish wins 86% with ~40%
+  left and ~2 heroes down**; the last Elite wins 99% with ~59% left (re-measured with Solace). A lost fight replays the whole
   act, so the Skirmish's level is the dial to watch in play.
 
 ## 12. Valor's brother, Will (name decided; the rest PROPOSED)
@@ -407,5 +409,5 @@ in front of the player.
 After chapter 5 the Story points the player at Classic, and the chapters set in Cycles II–V wait
 on Classic milestones (§2).
 
-**Chapter 3 is BUILT** (§11b): the ally is **Mira**, a Light hedge-mage (name and type proposed).
+**Chapter 3 is BUILT** (§11b): the ally is **Solace**, the base roster's Light caster.
 **Open:** whether chapter 4's hire is a Guild hire the player picks.

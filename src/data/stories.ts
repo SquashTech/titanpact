@@ -41,12 +41,12 @@ const reach: StoryCommand[] = [{ actor: 'faceless', moveId: 'erode' }];
 // Chapter 2's Valor has the sword: the roster's own Valor, sprite and kit.
 const valorArmed: StoryActor = { id: 'valor', name: 'Valor', artHeroId: 'valor', stands: 'left' };
 
-const mira: StoryActor = { id: 'mira', name: 'Mira', artHeroId: CAST.mira, stands: 'right' };
+const solace: StoryActor = { id: 'solace', name: 'Solace', artHeroId: 'dawnwarden', stands: 'right' };
 
 /**
- * Chapter 3: matchups (the opener favours Fang, the fork's Elite favours the Iron pair and Mira's
+ * Chapter 3: matchups (the opener favours Fang, the fork's Elite favours the Iron pair and Solace's
  * Light, its Skirmish hits everyone double), Ren's seat as the Swordsman with Valor his student,
- * and Mira, the first caster: magic against Wisdom, a heal, a status.
+ * and Solace, the roster's own Light caster: magic against Wisdom, a heal, a status, an innate.
  */
 const forestRoad: StoryAct = {
   locationId: 'forbiddenForest',
@@ -54,7 +54,7 @@ const forestRoad: StoryAct = {
     { rosterId: 'valor', heroId: 'valor', level: 8 },
     { rosterId: 'fang', heroId: 'packAlpha', level: 8 },
     { rosterId: 'ren', heroId: CAST.ren, level: 9 },
-    { rosterId: 'mira', heroId: CAST.mira, level: 8, moveIds: ['glimmer', 'mend', 'blind'] },
+    { rosterId: 'solace', heroId: 'dawnwarden', level: 8, moveIds: ['glimmer', 'mend', 'blind'] },
   ],
   students: { swordsman: 'valor' },
   rows: [
@@ -63,7 +63,7 @@ const forestRoad: StoryAct = {
     [{ type: 'patronSeat', patrons: ['swordsman'] }],
     [
       { type: 'elite', enemy: [{ rosterId: 'hoar', heroId: 'hoarfang', level: 11 }, { rosterId: 'pebble', heroId: 'pebbling', level: 10 }, { rosterId: 'sleet', heroId: 'sleetling', level: 10 }], drop: 'spear.rare.tempered' },
-      { type: 'skirmish', enemy: [{ rosterId: 'volt', heroId: 'voltail', level: 6 }, { rosterId: 'gear', heroId: 'gearhound', level: 6 }], drop: 'plate.rare' },
+      { type: 'skirmish', enemy: [{ rosterId: 'volt', heroId: 'voltail', level: 5 }, { rosterId: 'gear', heroId: 'gearhound', level: 5 }], drop: 'plate.rare' },
     ],
     [{ type: 'restReward' }, { type: 'equipmentReward', items: ['shield.rare', 'plate.rare', 'greataxe.rare.tempered'] }, { type: 'manaWellReward' }],
     [{ type: 'elite', enemy: [{ rosterId: 'bramble', heroId: 'bramblehide', level: 11 }, { rosterId: 'gear', heroId: 'gearhound', level: 11 }, { rosterId: 'whim', heroId: 'whimling', level: 10 }], drop: 'greataxe.rare.tempered' }],
@@ -267,30 +267,30 @@ export const storyCatalog: readonly StoryDefinition[] = [
           {
             kind: 'scene',
             locationId: 'forbiddenForest',
-            cast: [valorArmed, fang, ren, mira],
+            cast: [valorArmed, fang, ren, solace],
             lines: [
               { text: 'Light, through the trees. Someone is fighting.' },
-              { speaker: 'mira', text: 'Either help or get out of my way!' },
+              { speaker: 'solace', text: 'Either help or get out of my way!' },
               { text: 'The turned things scatter from the glare of her hands.' },
-              { speaker: 'mira', text: 'Mira. The chapel I kept is under the roots now.' },
+              { speaker: 'solace', text: 'Solace. The chapel I kept is under the roots now.' },
               { speaker: 'valor', text: 'Something took my brother. It went north.' },
-              { speaker: 'mira', text: 'Then so do I. Whatever did this to my chapel, I want to see its face.' },
+              { speaker: 'solace', text: 'Then so do I. Whatever did this to my chapel, I want to see its face.' },
               { speaker: 'valor', text: "It doesn't have one." },
             ],
-            skipped: 'In the forest they met Mira, a hedge-mage whose chapel the turning swallowed. She came north with them.',
+            skipped: 'In the forest they met Solace, a priest of the dawn whose chapel the turning swallowed. She came north with them.',
           },
           { kind: 'act', act: forestRoad },
           {
             kind: 'scene',
             locationId: 'forbiddenForest',
-            cast: [valorArmed, fang, ren, mira],
+            cast: [valorArmed, fang, ren, solace],
             lines: [
               { speaker: 'valor', text: 'Every day we spend learning, Will is further away.' },
               { speaker: 'ren', text: 'Every day you don\'t, you\'d die before you reached him.' },
-              { speaker: 'mira', text: 'There\'s a town east of the forest that hasn\'t fallen. Supplies. People who\'ve seen it.' },
+              { speaker: 'solace', text: 'There\'s a town east of the forest that hasn\'t fallen. Supplies. People who\'ve seen it.' },
               { text: 'Fang stays close to Valor all that night.' },
             ],
-            skipped: 'Valor wanted to hurry. Mira knew a town to the east that had not fallen yet.',
+            skipped: 'Valor wanted to hurry. Solace knew a town to the east that had not fallen yet.',
           },
           { kind: 'end', line: 'Four of them now, and a road east.' },
         ],

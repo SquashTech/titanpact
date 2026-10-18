@@ -15,7 +15,6 @@ export const STORY_CAST_IDS = {
   boar: 'boar',
   crow: 'crow',
   endbringer: 'endbringerPrologue',
-  mira: 'mira',
 } as const;
 
 export const storyCast: Record<string, HeroDefinition> = {
@@ -45,16 +44,6 @@ export const storyCast: Record<string, HeroDefinition> = {
     baseStats: { hp: 180, attack: 80, defense: 50, intelligence: 40, wisdom: 45, speed: 100, manaPool: 55, mpRegen: 10 },
     moveIds: ['thunderclap', 'zap'],
     growthGrades: { hp: 'C', attack: 'A', defense: 'C', intelligence: 'B', wisdom: 'C', speed: 'S', manaPool: 'B' },
-  },
-  // Mira, a hedge-mage from a chapel the Titan's wake swallowed (name and type PROPOSED, docs/stories.md §15):
-  // the party's first caster, so its first magical damage, heal and status.
-  [STORY_CAST_IDS.mira]: {
-    id: STORY_CAST_IDS.mira,
-    name: 'Mira',
-    types: ['Light'],
-    baseStats: { hp: 190, attack: 20, defense: 45, intelligence: 95, wisdom: 85, speed: 60, manaPool: 55, mpRegen: 10 },
-    moveIds: ['glimmer', 'mend', 'blind'],
-    growthGrades: { hp: 'C', attack: 'F', defense: 'C', intelligence: 'S', wisdom: 'A', speed: 'B', manaPool: 'A' },
   },
   [STORY_CAST_IDS.stag]: {
     id: STORY_CAST_IDS.stag,
