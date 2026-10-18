@@ -41,8 +41,18 @@ A player who isn't interested in the story must never feel held hostage by it.
   mini-run: the same grammar as Classic (fights, pick-1-of-3 map rows, levels), but with
   **scripted party members** in place of the draft and recruiting.
 - The first chapters are **tutorials**: short, deterministic (§5), and each one introduces a
-  mechanic or a type. Later chapters loosen up until a chapter plays like a Classic run.
-- **The first Story is Valor and Fang's.** Its prologue is what the first press of the game plays.
+  mechanic or a type.
+- **Classic Mode is the main way to play long-term; Stories are a cinematic onboarding**
+  (2026-10-18, per user direction). **Every chapter is short and none is a full run.** This replaces
+  "later chapters loosen up until a chapter plays like a Classic run".
+- **The first Story is Valor and Fang's, *A Tale of Valor*.** Its prologue is what the first press
+  of the game plays.
+
+**Proposed: later chapters are paced by Classic.** A five-Cycle arc told in short chapters works best
+if the chapters past the tutorials unlock off Classic milestones. For example, A Tale of Valor's
+Cycle II chapter opens the first time the player reaches Cycle II in Classic. Classic stays the
+spine, and the Story arrives as a cinematic between runs, the way Hades tells its story between
+escapes. It also means a chapter set in a Cycle is only played by someone who has seen that Cycle.
 
 ## 3. The cast of the first Story
 
@@ -263,3 +273,47 @@ deeply, and his thoughts are internalised as he meets new characters.
 
 **Open:** what unlocks a new Story (a chapter of another one, a Cycle clear, an achievement), and
 whether a Story's protagonist must be owned in the Collection.
+
+## 14. Building it for the alpha (PROPOSED, 2026-10-18)
+
+**Alpha scope:** the two tutorial chapters (the prologue and chapter 2), the Story select with A
+Tale of Valor and Classic Mode on the shelf, and the first-press flow. Later chapters are story
+content, not onboarding, so they don't block the alpha.
+
+What exists and what's missing (surveyed 2026-10-18):
+
+- **Determinism is nearly free.** The engine replays identically for a fixed seed and fixed inputs
+  (`seededRng.ts`; the AI reads `derivedRandom`). FightScreen just needs a seed prop; today only
+  Versus passes one.
+- **Missing engine vocabulary**, to add as data the engine understands, never Endbringer-specific
+  code: scripted enemy commands per round (a choke point exists: FightScreen's `planAiActions`), an
+  end-of-fight trigger (today only a wiped side ends a fight; `sideDefeated`), and "can't be knocked
+  out" (today only finite `enduresOnce` stacks and a Blessing). The mid-fight cinematic hook already
+  exists (`TitanRiseScreen` via `awaitingCinematic`), so the Titan's fall can play over fight 2.
+- **Missing view pieces:** a live-button allowlist for guided input (TipOverlay's spotlights are
+  emphasis only, and nothing restricts a button), an in-fight line overlay, and a scene player.
+  The deleted tutorial's `TutorialOverlay` and cue system (`git show 65dbfe24~1:…`) are a starting
+  point for the overlay.
+- **Plumbing that's ready:** a fight outside a run is built like the Trials' (`constructedSide`, an
+  `Encounter` pair into FightScreen). New screens join the `RunScreen` union (`resume.ts`) and
+  App.tsx. Story progress is a new tolerant `Profile` field (`decodeProfile`). First press is gated
+  on the `lore` tip today (`firstFall`).
+
+**Order:**
+
+1. **Engine and run:** the seed prop; a `StoryEncounter` data shape (parties and levels, scripted
+   enemy commands, guided player commands, the end trigger, unkillable holders); `Profile.story`.
+   Tests that replay the prologue's fights to an identical event stream.
+2. **View:** the scene player (with one-tap skip), the guided-fight layer and line overlay, the
+   chapter end card, the Story select, and the first-press flow.
+3. **Content:** the prologue as data, with dialogue drafted for the user to edit; the pre-fall
+   creatures; Ren's and Will's kits; prologue Valor's swordless kit.
+4. **Art**, which can run beside steps 1–3 in its own session: swordless Valor, Will, Ren as a
+   fighter (each with attack/hurt frames), two or three creatures, the powered-up Endbringer, and
+   the fall seen from the ground.
+5. **Chapter 2** on the same pieces, plus the map/reward/item teaching.
+6. **An alpha pass:** a full playthrough from a fresh profile into Classic.
+
+**Needed from the user before step 3:** Ren's and Will's types (Storm proposed, §12); whether the
+prologue replaces `TitanFallScreen`'s first-press fall (recommended: the prologue's fall reuses its
+art, and the lore crawl becomes the end card); and sign-off on the dialogue once drafted.
