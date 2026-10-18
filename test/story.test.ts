@@ -184,3 +184,18 @@ test('story: every catalog fight scripts only moves its actors hold, and leads a
     }
   }
 });
+
+test('story: each prologue fight ends inside its script, won, with no hero of the party down', () => {
+  for (const beat of storyCatalog[0].chapters[0].beats) {
+    if (beat.kind !== 'fight') continue;
+    const played = playScript(beat.fight);
+    assert.strictEqual(fightWinner(played.state), 'A', `${beat.fight.id} is not won inside its script`);
+    const down = Object.values(played.state.combatants).filter((c) => c.side === 'A' && c.fainted);
+    assert.deepStrictEqual(down.map((c) => c.combatantId), [], `${beat.fight.id} knocks out the party`);
+  }
+  const clearing = storyCatalog[0].chapters[0].beats.find((b) => b.kind === 'fight' && b.fight.id === 'valor-1-clearing');
+  assert.ok(clearing && clearing.kind === 'fight');
+  const held = playScript(clearing.fight).state.combatants['B:faceless'];
+  assert.strictEqual(held.currentHp, 1, 'the Faceless is brought to its knees, not outlasted');
+  assert.strictEqual(held.fainted, false);
+});

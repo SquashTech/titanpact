@@ -322,8 +322,16 @@ What exists and what's missing (surveyed 2026-10-18):
    (`valor-tall-2`, provisional). Not yet: the switch panel doesn't dim the unguided bench hero,
    the +1 level after the first fight isn't shown (story fights skip the result overlay), and the
    stand-ins' names show in the fight.
-3. **Content:** the prologue as data, with dialogue drafted for the user to edit; the pre-fall
-   creatures; Ren's and Will's kits; prologue Valor's swordless kit.
+3. **Content: BUILT 2026-10-18.** `src/data/storyCast.ts`: prologue Valor (her line, Iron Fist and
+   Fortify, no innate), **Ren** (Iron, by precedent: his patron cuts Crescent Cut and Gale Sever
+   are authored Iron; on the 550), **Will** (Storm, as proposed; on the 550), the Wild's Edge
+   creatures (Stag, Fox, Boar, Crow, under the 550 on purpose), and **The Faceless**, the Endbringer
+   as the family meets it (200 HP, Undying). The art is the prologue session's concepts, now in
+   `art/heroes/story/`. Both fights finish inside their scripts with nobody down (pinned by
+   `test/story.test.ts`): the hunt in two rounds, the clearing in four, the Faceless brought to 1 HP
+   by Will after Ren's guided **Rest**, which is the prologue's first Rest. Dialogue is a second
+   draft, for the user to rewrite. **Ren's and Will's types are still the user's to confirm.**
+   Boar and Crow are unused, waiting for chapter 2.
 4. **Art**, which can run beside steps 1–3 in its own session: swordless Valor, Will, Ren as a
    fighter (each with attack/hurt frames), two or three creatures, the powered-up Endbringer, and
    the fall seen from the ground.
