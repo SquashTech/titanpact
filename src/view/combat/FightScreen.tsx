@@ -82,7 +82,7 @@ import { isGathering } from '../../run/cycles';
 import { pilotActions } from '../../run/pilot';
 import { applyVersusReplacements, otherSide, placeVersusLeads, replacementsOwed, SIDES as VERSUS_SIDES, stateHash, versusActions, VERSUS_CLOCK } from '../../run/versus';
 import { TurnClock, useTurnClock } from '../versus/TurnClock';
-import { scriptedEnemyActions, withStoryEnds, type StoryFight } from '../../run/story';
+import { cueFor, guidedAction, scriptedEnemyActions, withStoryEnds, type StoryCue, type StoryFight } from '../../run/story';
 import type { VersusChannel } from '../versus/versusChannel';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
@@ -161,11 +161,13 @@ interface MoveRowProps {
   restoredCharges: number;
   onSelect: () => void;
   onInspect: () => void;
+  /** A Story's guided round (docs/stories.md §5): the one move to press glows, every other steps back. */
+  guide?: 'lit' | 'dim';
 }
 
 // Lifted out of the `.map()` because useLongPress is a hook. Unaffordable rows are
 // `.is-unaffordable` + aria-disabled rather than `disabled` so a hold still opens the dossier.
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, seats, faceOf, chargeHolder, restoredCharges, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, seats, faceOf, chargeHolder, restoredCharges, onSelect, onInspect, guide }: MoveRowProps) {
   const usable = affordable && !gateUnmet;
   const spent = chargesLeft(chargeHolder, move) === 0;
   const longPress = useLongPress(onInspect, () => {
@@ -182,7 +184,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
 
   return (
     <button
-      className={`move-button has-stub${selected ? ' selected' : ''}${usable ? '' : ' is-unusable'}${affordable ? '' : ' is-unaffordable'}${spent ? ' is-spent' : ''}${faceOf ? ' is-trick-face' : ''}`}
+      className={`move-button has-stub${selected ? ' selected' : ''}${usable ? '' : ' is-unusable'}${affordable ? '' : ' is-unaffordable'}${spent ? ' is-spent' : ''}${faceOf ? ' is-trick-face' : ''}${guide === 'lit' ? ' is-guided' : guide === 'dim' ? ' is-unguided' : ''}`}
       style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
       aria-disabled={!usable}
       {...longPress}
@@ -580,6 +582,8 @@ interface Props {
   versus?: VersusFight;
   /** A Story fight (docs/stories.md §5): its seed, its scripted enemy and its scripted ends. */
   story?: StoryFight;
+  /** Its lines over the stage, one a scripted round. */
+  storyCues?: readonly StoryCue[];
 }
 
 export interface VersusFight {
@@ -612,6 +616,7 @@ export function FightScreen({
   aiPilot = false,
   versus,
   story,
+  storyCues,
   mvpRules,
   initialSnapshot,
   onCommandPhase,
@@ -623,7 +628,7 @@ export function FightScreen({
   const PLAYER_SIDE: Side = versus?.channel.side ?? 'A';
   const AI_SIDE: Side = otherSide(PLAYER_SIDE);
   // The Threshold's two fights (docs/titan-eyes.md): the Herald walks on the Titan's hide, the Eyes open in it — the arena is the Titan whatever the Location says.
-  const onTheTitan = aiRun.roster.some((entry) => entry.heroId === ENDBRINGER_ID || EYE_IDS.includes(entry.heroId));
+  const onTheTitan = !story && aiRun.roster.some((entry) => entry.heroId === ENDBRINGER_ID || EYE_IDS.includes(entry.heroId));
 
   const teamStatModifiers = relicTeamStatModifiers(playerRelicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(playerRelicIds, relics);
@@ -876,6 +881,8 @@ export function FightScreen({
   const awaitingCinematic = resolving && beat?.cinematic !== undefined;
   const stepIndex = canAct ? Math.min(actionStep, playerActiveAlive.length - 1) : 0;
   const actingId: string | null = canAct ? playerActiveAlive[stepIndex] : null;
+  const guide = story && actingId ? guidedAction(story, combat, actingId) : null;
+  const storyCue = story ? cueFor(storyCues, combat.round) : null;
 
   /** Drives the target panel and the Back button (exit targeting rather than step to the previous hero). */
   const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;
@@ -1135,6 +1142,7 @@ export function FightScreen({
   // Always two taps: this loads the move and lights its targets, a second tap on a card commits —
   // even with one legal target, the cheap "are you sure" (2026-10-05, per user direction).
   function handleMoveClick(combatantId: string, move: MoveDefinition) {
+    if (guide && (guide.kind !== 'move' || guide.moveId !== move.id)) return;
     setSelecting({ combatantId, move });
   }
 
@@ -1164,6 +1172,7 @@ export function FightScreen({
       handleDrinkPotion(targetId, aimingPotion);
       return;
     }
+    if (guide?.kind === 'move' && guide.declaredTarget && guide.declaredTarget !== targetId) return;
     declareSelectedMove(targetId);
   }
 
@@ -1173,10 +1182,12 @@ export function FightScreen({
   }
 
   function handleSwitchClick(combatantId: string, benchedCombatantId: string) {
+    if (guide && !(guide.kind === 'switch' && guide.benchedCombatantId === benchedCombatantId)) return;
     commitAction(combatantId, { kind: 'switch', benchedCombatantId });
   }
 
   function handleRestClick(combatantId: string) {
+    if (guide && guide.kind !== 'rest') return;
     commitAction(combatantId, { kind: 'rest' });
   }
 
@@ -1816,6 +1827,13 @@ export function FightScreen({
         <EnemyPips combat={combat} side={AI_SIDE} />
 
         {/* What a tapped sprite says, for a moment, on the horizon — the band the Pact warning takes when it is due. */}
+        {storyCue && !resolving && !winner && (
+          <div key={combat.round} className="story-cue" role="status">
+            {storyCue.speaker && <span className="story-cue-name">{storyCue.speaker}</span>}
+            {storyCue.text}
+          </div>
+        )}
+
         {fieldNote && !resolving && (
           <div key={fieldNote.key} className="field-note" role="status" onAnimationEnd={() => setFieldNote(null)}>
             {fieldNote.text}
@@ -2196,7 +2214,7 @@ export function FightScreen({
                           hero={allCombatants[tCombatant.heroId]}
                           combatant={tCombatant}
                           level={levelFor(tid)}
-                          targetable={!spread}
+                          targetable={!spread && !(guide?.kind === 'move' && guide.declaredTarget && guide.declaredTarget !== tid)}
                           onSelectTarget={spread ? undefined : () => handleTargetClick(tid)}
                           popups={popups[tid]}
                           effBadge={mult === 1 ? null : { text: effLabel(mult), className: multClass(mult) }}
@@ -2306,6 +2324,7 @@ export function FightScreen({
                               )
                             : []
                         }
+                        guide={guide ? (guide.kind === 'move' && guide.moveId === moveId ? 'lit' : 'dim') : undefined}
                         onSelect={() => handleMoveClick(id, move)}
                         onInspect={() => setMovePopup({ combatantId: id, move })}
                       />
@@ -2371,7 +2390,7 @@ export function FightScreen({
           {!showingTargetPanel && !bagOpen && (
             <>
               <button
-                className="bottom-action bottom-action-primary bottom-action-switch"
+                className={`bottom-action bottom-action-primary bottom-action-switch${guide && guide.kind !== 'switch' ? ' is-unguided' : ''}`}
                 disabled={!(actingId !== null && playerBench.length > 0 && canSwitchOut(combat, actingId))}
                 onClick={() => setSwitchOpen(true)}
               >
@@ -2388,7 +2407,7 @@ export function FightScreen({
               <button
                 className={`bottom-action bottom-action-primary bottom-action-rest${
                   actingId !== null && pending[actingId]?.kind === 'rest' ? ' selected' : ''
-                }`}
+                }${guide && guide.kind !== 'rest' ? ' is-unguided' : ''}`}
                 disabled={!actingCanRest}
                 onClick={() => actingId !== null && handleRestClick(actingId)}
               >
@@ -2399,7 +2418,7 @@ export function FightScreen({
               </button>
               {/* Opens a panel, like Switch — the row's two panel keys flank its one irreversible one. Dark with nothing left to drink. */}
               <button
-                className="bottom-action bottom-action-primary bottom-action-bag"
+                className={`bottom-action bottom-action-primary bottom-action-bag${guide ? ' is-unguided' : ''}`}
                 disabled={!(actingId !== null && bagCount > 0)}
                 onClick={() => {
                   setSelecting(null);

@@ -25,6 +25,7 @@ import {
   STORY_PLAYER_SIDE,
   type StoryFight,
 } from '../src/run/story';
+import { storyCatalog } from '../src/data/stories';
 
 const UNBREAKABLE = 'storyTestUnbreakable';
 const testPassives: Record<string, PassiveDefinition> = {
@@ -154,4 +155,32 @@ test('story: a finished chapter is recorded once and survives a reload', () => {
   assert.deepStrictEqual(done.storyChaptersDone, ['valor-1']);
   assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(done))).storyChaptersDone, ['valor-1']);
   assert.deepStrictEqual(decodeProfile({ version: 2 }).storyChaptersDone, []);
+});
+
+test('story: every catalog fight scripts only moves its actors hold, and leads and targets are in the parties', () => {
+  for (const story of storyCatalog) {
+    for (const chapter of story.chapters) {
+      for (const beat of chapter.beats) {
+        if (beat.kind !== 'fight') continue;
+        const { fight } = beat;
+        const sides = storySides(fight, allCombatants);
+        const kit = (side: 'A' | 'B', rosterId: string) =>
+          (side === 'A' ? sides.player : sides.ai).run.roster.find((r) => r.rosterId === rosterId)?.unlockedMoveIds;
+        const check = (side: 'A' | 'B', script: StoryFight['guide']) => {
+          for (const round of script) {
+            for (const command of round) {
+              assert.ok(kit(side, command.actor), `${fight.id}: ${command.actor} is not in the party`);
+              if ('moveId' in command) {
+                assert.ok(kit(side, command.actor)!.includes(command.moveId), `${fight.id}: ${command.actor} does not hold ${command.moveId}`);
+                if (command.target) assert.ok(kit(command.target.side, command.target.rosterId), `${fight.id}: target ${command.target.rosterId} is not in the fight`);
+              }
+              if ('switchTo' in command) assert.ok(kit(side, command.switchTo), `${fight.id}: ${command.switchTo} is not in the party`);
+            }
+          }
+        };
+        check('A', fight.guide);
+        check('B', fight.enemyScript);
+      }
+    }
+  }
 });

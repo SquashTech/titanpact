@@ -1,0 +1,337 @@
+/* Stories (docs/stories.md §10): the scene player, the end card, the Story select, the fight's cue line. */
+
+.story-screen {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 40;
+  overflow: hidden;
+  background: #05060a;
+  color: #edeff4;
+}
+
+/* --- Scene --- */
+.story-scene {
+  cursor: pointer;
+}
+.story-backdrop {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  image-rendering: pixelated;
+}
+.story-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 6, 10, 0) 40%, rgba(5, 6, 10, 0.92) 100%);
+}
+.story-skip {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  right: 14px;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #d9d2c2;
+  font: 600 13px/1 system-ui, sans-serif;
+  letter-spacing: 0.04em;
+}
+.story-stage {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  bottom: 34%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 10px;
+}
+.story-side {
+  display: flex;
+  align-items: flex-end;
+}
+.story-side.is-right {
+  flex-direction: row-reverse;
+}
+.story-side.is-right .story-figure-sprite {
+  transform: scaleX(-1);
+}
+.story-figure {
+  opacity: 0.55;
+  filter: brightness(0.7);
+  transition: opacity 0.2s, filter 0.2s, transform 0.2s;
+}
+.story-figure.is-speaking {
+  opacity: 1;
+  filter: none;
+  transform: translateY(-6px) scale(1.06);
+}
+.story-figure-sprite {
+  display: block;
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+}
+.story-line {
+  position: absolute;
+  z-index: 2;
+  left: 16px;
+  right: 16px;
+  bottom: 9%;
+  min-height: 110px;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: rgba(8, 10, 18, 0.88);
+  box-shadow: inset 0 0 0 1px rgba(224, 166, 60, 0.45);
+}
+.story-line-name {
+  display: block;
+  margin-bottom: 6px;
+  color: #e0a63c;
+  font: 800 13px/1 system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.story-line-text {
+  margin: 0;
+  font: 17px/1.4 Georgia, 'Times New Roman', serif;
+}
+.story-line.is-narration .story-line-text,
+.story-line.is-thought .story-line-text {
+  font-style: italic;
+  color: #d9d2c2;
+}
+.story-line.is-thought {
+  background: rgba(8, 10, 18, 0.6);
+  box-shadow: none;
+}
+
+/* --- End card --- */
+.story-end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 32px 28px;
+  cursor: pointer;
+  text-align: center;
+}
+.story-end-line {
+  margin: 0;
+  color: #d9d2c2;
+  font: italic 18px/1.45 Georgia, serif;
+}
+.story-end-title {
+  margin: 0;
+  font: 800 26px/1.1 Georgia, serif;
+  letter-spacing: 0.04em;
+}
+
+/* --- Story select --- */
+.story-back {
+  position: absolute;
+  z-index: 5;
+  top: 14px;
+  left: 14px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #edeff4;
+  font-size: 20px;
+  line-height: 1;
+}
+.story-feature {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 56%;
+  overflow: hidden;
+}
+.story-feature::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 6, 10, 0) 45%, rgba(5, 6, 10, 0.9) 100%);
+}
+.story-banner {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  image-rendering: pixelated;
+}
+.story-cover .story-banner {
+  background-position: center 70%;
+}
+.story-classic-art {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(1px 1px at 20% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 72% 12%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 38% 34%, #fff, transparent),
+    radial-gradient(1px 1px at 84% 40%, #fff, transparent),
+    radial-gradient(1px 1px at 12% 52%, #fff, transparent),
+    radial-gradient(ellipse 110% 70% at 50% 15%, #202a55, #0a0c18 65%, #05060a);
+}
+.story-classic-seal {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  width: 34%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(243, 236, 218, 0.5);
+  box-shadow: 0 0 18px rgba(255, 233, 176, 0.25), inset 0 0 14px rgba(255, 233, 176, 0.15);
+}
+.story-feature-text {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.story-feature-name {
+  margin: 0;
+  font: 800 22px/1.1 Georgia, serif;
+  letter-spacing: 0.02em;
+}
+.story-feature-chapter {
+  margin: 0;
+  color: #d9d2c2;
+  font: italic 14px/1.2 Georgia, serif;
+}
+.story-pips {
+  display: flex;
+  gap: 5px;
+}
+.story-pips b {
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+}
+.story-pips b.c1 { background: #f4f1ea; border-color: #f4f1ea; }
+.story-pips b.c2 { background: #d08a4a; border-color: #d08a4a; }
+.story-pips b.c3 { background: #9fb6d2; border-color: #9fb6d2; }
+.story-pips b.c4 { background: #e0a63c; border-color: #e0a63c; }
+.story-pips b.c5 { background: linear-gradient(90deg, #ff5c5c, #ffb84d, #6be38a, #5cc8ff, #b48cff); border-color: #fff; }
+.story-pips b.is-now { border-color: #f4f1ea; box-shadow: 0 0 6px rgba(244, 241, 234, 0.7); }
+.story-shelf {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: calc(56% + 12px);
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.story-cover {
+  position: relative;
+  flex: 0 1 calc((100% - 18px) / 4);
+  height: 150px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 4px;
+  background: #0b0d16;
+  color: inherit;
+  box-shadow: inset 0 0 0 2px rgba(224, 166, 60, 0.45);
+}
+.story-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 6, 10, 0) 45%, rgba(5, 6, 10, 0.9) 100%);
+}
+.story-cover.is-on {
+  box-shadow: inset 0 0 0 2px #f3ecda, 0 0 10px rgba(243, 236, 218, 0.35);
+}
+.story-cover-name {
+  position: absolute;
+  z-index: 2;
+  left: 3px;
+  right: 3px;
+  bottom: 19px;
+  font: 800 10px/1.15 Georgia, serif;
+  text-align: center;
+}
+.story-cover .story-pips {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 7px;
+  justify-content: center;
+  gap: 2px;
+}
+.story-cover .story-pips b {
+  width: 5px;
+  height: 5px;
+  border-width: 1px;
+}
+.story-screen .plate-socket.story-go {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 20px;
+}
+
+/* --- The fight's cue line, over the stage at the top of a scripted round --- */
+.story-cue {
+  position: absolute;
+  z-index: 6;
+  /* On the horizon, between the two sides, where a field note sits. */
+  top: 50%;
+  left: 12px;
+  right: 12px;
+  transform: translateY(-50%);
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(8, 10, 18, 0.85);
+  box-shadow: inset 0 0 0 1px rgba(224, 166, 60, 0.45);
+  color: #edeff4;
+  font: 15px/1.35 Georgia, serif;
+  pointer-events: none;
+  animation: story-cue-in 0.25s ease-out;
+}
+.story-cue-name {
+  margin-right: 8px;
+  color: #e0a63c;
+  font: 800 12px/1 system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+@keyframes story-cue-in {
+  from { opacity: 0; transform: translateY(calc(-50% - 4px)); }
+  to { opacity: 1; transform: translateY(-50%); }
+}
+
+/* --- Guided input: the one live command glows, the rest step back --- */
+.move-button.is-guided {
+  box-shadow: 0 0 0 2px #f3ecda, 0 0 14px rgba(255, 233, 176, 0.55);
+}
+.move-button.is-unguided,
+.bottom-action.is-unguided {
+  opacity: 0.35;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-cue { animation: none; }
+  .story-figure { transition: none; }
+}

@@ -201,6 +201,8 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   for (const definition of Object.values(allCombatants)) for (const id of definition.masteredPassiveIds ?? []) granted.add(id);
   // A Cycle's rule (run/encounters.ts): the Long Winter wards every Guardian.
   granted.add(require('../src/data/passives').TITANS_WARD_ID);
+  // A Story fight's party (data/stories.ts StoryHeroSpec.passiveIds): the prologue's Endbringer.
+  for (const story of require('../src/data/stories').storyCatalog) for (const chapter of story.chapters) for (const beat of chapter.beats) if (beat.kind === 'fight') for (const spec of [...beat.fight.player, ...beat.fight.enemy]) for (const id of spec.passiveIds ?? []) granted.add(id);
 
   // Static Tide was RESERVED for a year and then used (Pincer). A new orphan should be a decision.
   const orphans = Object.keys(passives).filter((id) => !granted.has(id)).sort();

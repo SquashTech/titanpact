@@ -37,9 +37,10 @@ export interface StoryFight {
   id: string;
   seed: number;
   player: readonly StoryHeroSpec[];
-  playerLeads: readonly [string, string];
+  /** One or two leads; a single lead fights alone in the first slot. */
+  playerLeads: readonly string[];
   enemy: readonly StoryHeroSpec[];
-  enemyLeads: readonly [string, string];
+  enemyLeads: readonly string[];
   /** The enemy's commands, one list a round from round 1. A round past the end falls back to the AI. */
   enemyScript: readonly (readonly StoryCommand[])[];
   /** The one command the player is guided to each round, by hero. A round past the end is the player's own. */
@@ -56,7 +57,7 @@ export function storyEntry(spec: StoryHeroSpec, hero: HeroDefinition): RosterEnt
   };
 }
 
-function storySide(specs: readonly StoryHeroSpec[], leads: readonly [string, string], heroes: Record<string, HeroDefinition>): Encounter {
+function storySide(specs: readonly StoryHeroSpec[], leads: readonly string[], heroes: Record<string, HeroDefinition>): Encounter {
   const roster = specs.map((spec) => {
     const hero = heroes[spec.heroId];
     if (!hero) throw new Error(`story: unknown hero ${spec.heroId}`);
@@ -65,7 +66,7 @@ function storySide(specs: readonly StoryHeroSpec[], leads: readonly [string, str
   for (const id of leads) if (!roster.some((r) => r.rosterId === id)) throw new Error(`story: lead ${id} is not in the party`);
   return {
     run: { ...createRunState(0, 0), roster },
-    squad: { activeIds: [leads[0], leads[1]], benchIds: roster.map((r) => r.rosterId).filter((id) => !leads.includes(id)) },
+    squad: { activeIds: [leads[0] ?? null, leads[1] ?? null], benchIds: roster.map((r) => r.rosterId).filter((id) => !leads.includes(id)) },
   };
 }
 
@@ -113,4 +114,83 @@ export function scriptedEnemyActions(fight: StoryFight, state: CombatState): Act
 /** The action the player is guided to this round for `combatantId`, or null when that hero is the player's own to command. */
 export function guidedAction(fight: StoryFight, state: CombatState, combatantId: string): Action | null {
   return commandsFor(fight.guide, state, STORY_PLAYER_SIDE)?.find((action) => action.combatantId === combatantId) ?? null;
+}
+
+/** Who stands in a scene: a name over a figure drawn from a hero's sprite. */
+export interface StoryActor {
+  id: string;
+  name: string;
+  /** A hero or combatant id whose sprite is drawn. */
+  artHeroId: string;
+  /** Faces into the scene from this side. */
+  stands: 'left' | 'right';
+}
+
+/** One line of a scene: spoken by an actor, thought by one (`think`), or narration (no speaker). */
+export interface StoryLine {
+  speaker?: string;
+  text: string;
+  think?: true;
+}
+
+/** A line over the fight's stage at the top of `round`'s command phase. */
+export interface StoryCue {
+  round: number;
+  speaker?: string;
+  text: string;
+}
+
+export type StoryBeat =
+  | {
+      kind: 'scene';
+      /** The Location whose backdrop the scene stands on. */
+      locationId: string;
+      cast: readonly StoryActor[];
+      lines: readonly StoryLine[];
+      /** What a skipped scene leaves behind: one line saying what happened. */
+      skipped: string;
+    }
+  | { kind: 'fight'; fight: StoryFight; cast: readonly StoryActor[]; cues?: readonly StoryCue[] }
+  | { kind: 'end'; line: string };
+
+export interface StoryChapter {
+  id: string;
+  title: string;
+  /** The Cycle the chapter is set in (docs/stories.md §2). */
+  cycle: number;
+  beats: readonly StoryBeat[];
+}
+
+export interface StoryDefinition {
+  id: string;
+  name: string;
+  chapters: readonly StoryChapter[];
+}
+
+/** The first chapter of `story` not yet finished, or null when every one is. */
+export function nextChapter(story: StoryDefinition, done: readonly string[]): StoryChapter | null {
+  return story.chapters.find((chapter) => !done.includes(chapter.id)) ?? null;
+}
+
+export function chapterById(stories: readonly StoryDefinition[], chapterId: string): { story: StoryDefinition; chapter: StoryChapter } | null {
+  for (const story of stories) {
+    const chapter = story.chapters.find((c) => c.id === chapterId);
+    if (chapter) return { story, chapter };
+  }
+  return null;
+}
+
+/** Each Cycle's mark on the Story select: done once every chapter set in it is, current where the next chapter is. */
+export function storyCyclePips(story: StoryDefinition, done: readonly string[]): ('done' | 'now' | null)[] {
+  const next = nextChapter(story, done);
+  return [1, 2, 3, 4, 5].map((cycle) => {
+    const chapters = story.chapters.filter((c) => c.cycle === cycle);
+    if (next?.cycle === cycle) return 'now';
+    return chapters.length > 0 && chapters.every((c) => done.includes(c.id)) ? 'done' : null;
+  });
+}
+
+/** The cue for the round the board stands on, if the beat has one. */
+export function cueFor(cues: readonly StoryCue[] | undefined, round: number): StoryCue | null {
+  return cues?.find((cue) => cue.round === round) ?? null;
 }

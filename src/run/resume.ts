@@ -46,6 +46,9 @@ export type LevelUpQuestion =
 
 export type RunScreen =
   | { kind: 'title' }
+  /** Stories (docs/stories.md §10): the shelf Seal the Pact opens, and a chapter playing. */
+  | { kind: 'storySelect' }
+  | { kind: 'storyChapter'; chapterId: string }
   /** The lore card, ahead of the first draft on an account (docs/tutorial.md). */
   | { kind: 'lore'; next: RunScreen; lines: readonly string[]; tipId: string }
   | { kind: 'draft'; optionIds: string[] }

@@ -436,6 +436,7 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.extraHits !== undefined ||
     passive.piercesShield !== undefined ||
     passive.enduresOnce !== undefined ||
+    passive.cannotBeKnockedOut !== undefined ||
     passive.cannotSwitchOut !== undefined ||
     passive.sideRefusesStatuses !== undefined ||
     passive.setsOffStatus !== undefined ||

@@ -50,6 +50,11 @@ interface Props {
   onContinueRun: () => void;
   /** Start a run on the given Cycle (run/cycles.ts). */
   onStartRun: (cycle: number) => void;
+  /** Seal the Pact with no run parked opens Stories (docs/stories.md §10): the prologue, then the Story select. */
+  onOpenStories?: () => void;
+  /** Classic Mode was picked on the Story select: start it as the press once did. */
+  startClassic?: boolean;
+  onClassicStarted?: () => void;
   /** The account has never started a run: the press fades the title to its sky for the fall (TitanFallScreen). */
   firstFall?: boolean;
   /** The highest Cycle the profile may start on; Cycle I until a run has been cleared. */
@@ -119,6 +124,9 @@ export function TitleScreen({
   saveNotice = null,
   onContinueRun,
   onStartRun,
+  onOpenStories,
+  startClassic = false,
+  onClassicStarted,
   firstFall = false,
   openCycle,
   onSeeTip,
@@ -229,8 +237,19 @@ export function TitleScreen({
       setConfirmingNewRun(true);
       return;
     }
+    if (onOpenStories) {
+      launch(onOpenStories);
+      return;
+    }
     startFresh();
   }
+
+  useEffect(() => {
+    if (!startClassic) return;
+    onClassicStarted?.();
+    startFresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startClassic]);
 
   /** Nothing to ask until Cycle I is cleared; then the Cycle is the one question between the press and the draft. */
   function startFresh() {

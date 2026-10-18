@@ -309,8 +309,19 @@ What exists and what's missing (surveyed 2026-10-18):
    limit). FightScreen takes `story` (seed, script, ends). `Profile.storyChaptersDone` and
    `recordStoryChapterDone`. `test/story.test.ts` replays a scripted fight to an identical event
    stream. Guided input is read by nothing yet: the view's lock is step 2.
-2. **View:** the scene player (with one-tap skip), the guided-fight layer and line overlay, the
-   chapter end card, the Story select, and the first-press flow.
+2. **View: BUILT 2026-10-18.** `src/view/story/`: the scene player (`StoryScene`, one line a tap,
+   the speaker stepping forward, Skip leaves the beat's `skipped` line), the end card, the Story
+   select (`StorySelectScreen`, the painted featured book, Classic Mode on the shelf, the plate
+   at the foot), and the chapter runner (`StoryChapterScreen`, a lost fight replayed from its
+   start). FightScreen's guided round lights the one move and target and dims the rest
+   (Switch, Rest, Bag), and a beat's `cues` put a line on the stage's horizon. **Seal the Pact
+   with no run parked plays the prologue until it is done, then opens the Story select**; Classic
+   Mode there starts a run exactly as the press used to (the fall, the draft). The chapter data is
+   `src/data/stories.ts`, a DRAFT prologue with stand-ins (Gallant for Ren, Skyshear for Will,
+   Pixie and Kitsu for the wildlife) until step 3. The banner is `art/stories/valor.png`
+   (`valor-tall-2`, provisional). Not yet: the switch panel doesn't dim the unguided bench hero,
+   the +1 level after the first fight isn't shown (story fights skip the result overlay), and the
+   stand-ins' names show in the fight.
 3. **Content:** the prologue as data, with dialogue drafted for the user to edit; the pre-fall
    creatures; Ren's and Will's kits; prologue Valor's swordless kit.
 4. **Art**, which can run beside steps 1–3 in its own session: swordless Valor, Will, Ren as a

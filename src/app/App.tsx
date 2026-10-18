@@ -16,6 +16,7 @@ import {
   recordSpawnAscended,
   recordRunStarted,
   recordTipSeen,
+  recordStoryChapterDone,
   recordTrialCleared,
   TRIAL_CLEAR_STARS,
   resetTips,
@@ -125,6 +126,10 @@ import { currentInstallPlatform } from './installPrompt';
 import { INSTALL_TIP_ID } from '../run/installHint';
 import { LoreScreen } from '../view/run/LoreScreen';
 import { TitanFallScreen } from '../view/run/TitanFallScreen';
+import { StorySelectScreen } from '../view/story/StorySelectScreen';
+import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
+import { storyCatalog } from '../data/stories';
+import { chapterById } from '../run/story';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
 import {
@@ -182,6 +187,8 @@ type Screen = RunScreen;
 /** Screens outside an act get no ambient Location (LocationContext). Listed as the exceptions so new node screens inherit the place by default. */
 const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'title',
+  'storySelect',
+  'storyChapter',
   'lore',
   // The lore cards drop the title's track and leave the cold open in silence; the draft and the
   // pact forged at its end name their own (`starterScreen`), and Act I's music then starts where
@@ -414,6 +421,8 @@ function screenTipIds(screen: Screen): readonly ScreenTipId[] {
 export function App() {
   const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(40));
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
+  /** Classic Mode picked on the Story select: the title starts it as Seal the Pact once did. */
+  const [classicRequested, setClassicRequested] = useState(false);
   // Read once: a device does not change platform mid-session, and installing reopens the game.
   const [installPlatform] = useState(currentInstallPlatform);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -1152,6 +1161,17 @@ export function App() {
   }
 
   /** A tip or the lore card dismissed: account-wide, so it is written straight to storage. */
+  /** Seal the Pact (docs/stories.md §10): the prologue until it is played, the Story select after. */
+  function handleOpenStories() {
+    const prologue = storyCatalog[0].chapters[0].id;
+    setScreen(profile.storyChaptersDone.includes(prologue) ? { kind: 'storySelect' } : { kind: 'storyChapter', chapterId: prologue });
+  }
+
+  function handleStoryChapterDone(chapterId: string) {
+    setProfile(updateProfile((current) => recordStoryChapterDone(current, chapterId)));
+    setScreen({ kind: 'title' });
+  }
+
   function markTipSeen(id: string) {
     setProfile(updateProfile((current) => recordTipSeen(current, id)));
   }
@@ -1316,6 +1336,9 @@ export function App() {
           }
           onContinueRun={handleContinueRun}
           onStartRun={handleStartNewRun}
+          onOpenStories={handleOpenStories}
+          startClassic={classicRequested}
+          onClassicStarted={() => setClassicRequested(false)}
           firstFall={!profile.seenTipIds.includes(LORE_TIP_ID)}
           openCycle={openCycle(profile)}
           onSeeTip={markTipSeen}
@@ -1458,6 +1481,29 @@ export function App() {
       )}
 
       {screen.kind === 'versus' && <VersusScreen owned={Object.keys(heroPool(heroes, profile.purchases))} local={screen.local} onClose={() => setScreen({ kind: 'title' })} />}
+
+      {screen.kind === 'storySelect' && (
+        <StorySelectScreen
+          stories={storyCatalog}
+          chaptersDone={profile.storyChaptersDone}
+          cyclesCleared={profile.cyclesCleared}
+          onPlayChapter={(chapterId) => setScreen({ kind: 'storyChapter', chapterId })}
+          onClassic={() => {
+            setClassicRequested(true);
+            setScreen({ kind: 'title' });
+          }}
+          onBack={() => setScreen({ kind: 'title' })}
+        />
+      )}
+
+      {screen.kind === 'storyChapter' && chapterById(storyCatalog, screen.chapterId) && (
+        <StoryChapterScreen
+          key={screen.chapterId}
+          chapter={chapterById(storyCatalog, screen.chapterId)!.chapter}
+          onFinished={() => handleStoryChapterDone(screen.chapterId)}
+          onQuit={() => setScreen({ kind: 'title' })}
+        />
+      )}
 
       {screen.kind === 'trialsFight' && (
         <FightScreen
