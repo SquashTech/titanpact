@@ -138,8 +138,8 @@ what the expected count is.
 **PROPOSED:** each part is a **pair**: Left and Right Foot, Left and Right Hand, Left and Right Eye.
 This is a doubles game, so a pair fills the enemy's two slots and every phase is a true 2v2.
 - The Eyes are already a pair.
-- The Feet and Hands are drawn in the same geometric grammar as the Eyes and Guardians
-  (`guardianFigures.ts`, `figurePrimitives.ts`).
+- The Feet and Hands are pixel, in the Titan's own language, as the Eyes are (§12, 2026-10-18;
+  this line once put them in the Guardians' geometric grammar).
 - Six bodies, three phases.
 
 ### 4.2 Length
@@ -339,3 +339,14 @@ the first playtest of whether the Wardens-as-keys rule changes the route choice.
 | `CombatState.calls` | One off-field caster a side | A list a side (§5) |
 | `companion-call.md` §12.4 | The woken companion is the one thing that strikes the Titan at full | Still true of the Eyes; on the Feet and Hands the secondary opens other windows (§4.3) |
 | `cycles.md` §2 | A Warden is always an enemy | In Cycle V a freed one fights beside the player |
+
+## 12. Art direction (2026-10-18, per user direction)
+
+Picked from mock-ups (`art/concepts/titan-look/cycle-five.html`), nothing built: the arena is
+**"on its body"**, the band standing on the Titan's hide among the stars, magenta cracks, its
+curve the horizon; **the Feet are "monument"** (blunt, fused stone, cracks running up from the
+sole); **the Hands are "cracked palm"** (near-black, magenta cracks across the palm). All three
+are pixel in the Titan's own language, not the Guardians' geometric grammar, so §4.1's line that
+the Feet and Hands are drawn in `guardianFigures.ts` is superseded. The Eyes are the finale's
+(`titan-eyes.md` §13). The concepts are `raw/c5-hide-8.png`, `raw/c5-foot2-11.png` and
+`raw/c5-hand-29.png` there; each still needs its pair, frames and a broken frame.

@@ -15,9 +15,9 @@
 //
 // Pure — no React, no DOM — so scripts/art/guardian-gallery.ts can write the review page from it.
 
-import { CHAMPION_IDS, LEFT_EYE_ID, RIGHT_EYE_ID, enemies, unsealedIdFor } from '../../data/enemies';
+import { CHAMPION_IDS, enemies, unsealedIdFor } from '../../data/enemies';
 import { getTypeColor } from '../combat/typeColors';
-import { C, D, E, EYE_GRADIENT, G, L, P, R, TITAN_EYE, makeEye, pal, sparks, ticks, type Eye, type EyeState, type FigurePose, type Pal } from './figurePrimitives';
+import { C, D, E, EYE_GRADIENT, G, L, P, R, makeEye, pal, sparks, ticks, type Eye, type FigurePose, type Pal } from './figurePrimitives';
 
 /** `closed` is the Eyes' alone: a knocked-out Eye stays on the field with its lid shut (FightScreen). Every other figure reads it as idle. */
 export type GuardianPose = FigurePose | 'closed';
@@ -270,49 +270,6 @@ const GUARDIANS: Record<string, Draw> = {
 /** The Skeleton King's crown: a band round the skull and four points, in his own bone tones. */
 const crown = (p: Pal) => E(50, 12, 13, 4.2, 'none', `stroke="${p.d}" stroke-width="3"`) + [40, 46, 54, 60].map((x, i) => P(`${x - 3},10 ${x},${i % 2 ? -8 : -2} ${x + 3},10`, p.d) + P(`${x - 1},10 ${x},${i % 2 ? -4 : 0} ${x + 1},10`, p.ll, 'opacity=".6"')).join('');
 
-// ---------- the Endbringer ----------
-
-/**
- * The Titan's own eye, the title screen's (titanArt.tsx `LENS`): pointed at both corners, lit
- * from inside, a slit contracted to a hairline. The lid state scales the lens height.
- */
-function lens(x: number, y: number, hw: number, hh: number, tilt: number, state: EyeState | 'closed', uid: string, gradientId: string): string {
-  const k = state === 'closed' ? 0.07 : state === 'narrow' ? 0.3 : state === 'wide' ? 1.0 : state === 'stare' ? 0.55 : 0.75;
-  const h = hh * k;
-  const id = `${uid}l${x}`;
-  const path = `M${-hw} 0 Q0 ${-h} ${hw} 0 Q0 ${h} ${-hw} 0 Z`;
-  // A shut lid throws no light: the seam of the lids, and nothing behind it.
-  if (state === 'closed') {
-    // The lids meet: a dark seam, and the lid's edge lit faintly above it so the shape still reads on the hide.
-    const lid = `M${-hw} 0 Q0 ${-hh * 0.42} ${hw} 0`;
-    return G(`translate(${x} ${y}) rotate(${tilt})`, D(`M${-hw} 0 Q0 ${-hh * 0.42} ${hw} 0 Q0 ${hh * 0.42} ${-hw} 0 Z`, '#3a1a36', 'opacity=".9"') + L(lid, '#8a4478', 1.6, 'opacity=".8"') + D(path, '#07050a') + L(path, TITAN_EYE, 0.8, 'opacity=".5"'));
-  }
-  const halo = C(0, 0, hw * 1.25, TITAN_EYE, `opacity="${state === 'wide' ? 0.26 : 0.1}" class="halo"`);
-  return G(
-    `translate(${x} ${y}) rotate(${tilt})`,
-    `<defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs>${halo}<g clip-path="url(#${id})">${E(0, 0, hw, hh * 1.1, `url(#${gradientId})`)}${E(0, 0, hw * 0.16, hh, '#07050a')}</g>${L(path, '#07050a', 1.2, 'opacity=".6"')}`
-  );
-}
-
-/**
- * The Titan's Eyes (docs/titan-eyes.md): the title screen's lens (titanArt.tsx) at boss scale,
- * hanging in the dark above the platform with nothing around it — the socket is the sky. The
- * Left Eye tilts down toward the middle as the title's does, the Right Eye the other way, so the
- * pair on the field reads as one gaze. WIDE, with the halo the state carries — the rise that
- * brings them opens the lids all the way (docs/titan-eyes.md §10), and what walks on is paying
- * attention. An attack contracts the pupil to a hairline and throws rays; a hit squints.
- */
-function titanEye(side: 'left' | 'right', po: GuardianPose, uid: string, gradientId: string): string {
-  const state: EyeState | 'closed' = po === 'closed' ? 'closed' : po === 'hurt' ? 'narrow' : 'wide';
-  const tilt = side === 'left' ? 7 : -7;
-  const rays = po === 'attack'
-    ? [-30, -10, 10, 30].map((a) => G(`rotate(${a} 50 46)`, L('M50,4 L50,-14', '#f6dc96', 1.6, 'opacity=".8"'))).join('')
-    : '';
-  const shadow = E(50, 89, 40, 3, '#07050a', 'opacity=".5"');
-  const outer = po !== 'closed' ? C(50, 46, 46, TITAN_EYE, 'opacity=".08" class="halo"') : '';
-  return shadow + outer + rays + lens(50, 46, 44, 20, tilt, state, uid, gradientId);
-}
-
 // ---------- assembly ----------
 
 interface Figure {
@@ -328,23 +285,17 @@ function figureFor(heroId: string): Figure | undefined {
   return { draw: GUARDIANS[championId], hue: getTypeColor(enemies[championId].types[0]) };
 }
 
-/** True for any id this module draws: a champion, its unsealed twin (the same figure), or the Endbringer. */
-const EYE_SIDE: Record<string, 'left' | 'right'> = { [LEFT_EYE_ID]: 'left', [RIGHT_EYE_ID]: 'right' };
-
+/** True for any id this module draws: a champion, or its unsealed twin (the same figure). */
 export function isGuardianFigure(heroId: string): boolean {
-  return heroId in EYE_SIDE || figureFor(heroId) !== undefined;
+  return figureFor(heroId) !== undefined;
 }
 
 /** The figure's inner markup: body under the pose transform, impact ticks on a hurt. Facing right, ground y=88. Empty for an id this module does not draw. */
 export function guardianMarkup(heroId: string, pose: GuardianPose, uid: string): string {
   const gradientId = `${uid}eg`;
-  if (pose === 'closed' && !(heroId in EYE_SIDE)) pose = 'idle';
+  if (pose === 'closed') pose = 'idle';
   const t = pose === 'attack' ? 'translate(4 0) rotate(4 50 88)' : pose === 'hurt' ? 'translate(-5 0) rotate(-4 50 88) translate(50 88) scale(1.05 .94) translate(-50 -88)' : '';
   const hit = pose === 'hurt' ? ticks(84, 44) : '';
-  if (heroId in EYE_SIDE) {
-    // An eye does not lean or recoil like a body; the pose is in the lid and the pupil alone.
-    return `${EYE_GRADIENT(gradientId)}${titanEye(EYE_SIDE[heroId], pose, uid, gradientId)}${hit}`;
-  }
   const figure = figureFor(heroId);
   if (!figure) return '';
   const p = pal(figure.hue);

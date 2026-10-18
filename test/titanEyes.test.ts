@@ -4,6 +4,8 @@
 // behind: the Herald's ward, the Withering Gaze and the Clock that counts from the phase.
 
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as path from 'path';
 import { test } from './harness';
 import { allCombatants } from '../src/data/content';
 import { moves } from '../src/data/moves';
@@ -28,7 +30,7 @@ import { buildCombatState } from '../src/run/buildCombatState';
 import { equipment } from '../src/data/equipment';
 import { locations } from '../src/data/locations';
 import { COMBAT_BUDGET_STATS, statBudgetTotal } from '../src/run/statBudget';
-import { guardianMarkup, isGuardianFigure } from '../src/view/shared/guardianFigures';
+import { isGuardianFigure } from '../src/view/shared/guardianFigures';
 import { cinematicEntranceFor } from '../src/view/shared/entrances';
 
 const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -373,10 +375,12 @@ test('gaze: the passive facts read as a cadence, and the round hook fires only f
   assert.strictEqual(passives[HERALDS_STANDARD_ID].wardedWhileCompanyStands, true);
 });
 
-test('titanEyes: every Eye has a figure, and the pair tilt opposite ways', () => {
-  for (const id of EYE_IDS) {
-    assert.ok(isGuardianFigure(id));
-    assert.ok(guardianMarkup(id, 'idle', 't').length > 0, `${id} has no figure`);
+test('titanEyes: every Eye is pixel art with all four frames', () => {
+  const dir = path.resolve(__dirname, '../../art/heroes/titan');
+  for (const stem of ['eye', 'righteye']) {
+    for (const pose of ['', 'attack', 'damaged', 'closed']) {
+      assert.ok(fs.existsSync(path.join(dir, `${stem}${pose}.png`)), `${stem}${pose}.png is missing`);
+    }
   }
-  assert.notStrictEqual(guardianMarkup(LEFT_EYE_ID, 'idle', 't'), guardianMarkup(RIGHT_EYE_ID, 'idle', 't'), 'the pair tilt opposite ways');
+  for (const id of EYE_IDS) assert.ok(!isGuardianFigure(id), `${id} is drawn as a geometric figure`);
 });

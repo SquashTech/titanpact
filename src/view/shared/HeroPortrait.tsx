@@ -11,7 +11,7 @@ interface Props {
   className: string;
   /** Idle-breath seed; combat passes `combatantId` so two identical goblins don't breathe in lockstep. */
   seed?: string;
-  /** Which frame to draw. Falls back to the idle frame for a hero that has no art for the pose asked for; `closed` is the Titan's Eyes' alone (guardianFigures.ts). */
+  /** Which frame to draw. Falls back to the idle frame for a hero that has no art for the pose asked for; `closed` is the Titan's Eyes' alone. */
   pose?: 'idle' | 'attack' | 'hurt' | 'closed';
   /** An Evolution path: its own form is drawn where one exists (evolutionArt.ts), the hero's sprite where not. */
   pathId?: string | null;
@@ -42,7 +42,7 @@ export function HeroPortrait({ heroId, className, seed, pose = 'idle', pathId }:
   if (isTitanspawn(heroId)) return <TitanspawnGlyph heroId={heroId} className={className} pose={pose === 'closed' ? 'idle' : pose} style={idleStyle} />;
   if (isGuardianFigure(heroId)) return <GuardianGlyph heroId={heroId} className={className} pose={pose} style={idleStyle} />;
   // A form draws its own frame, then the hero's (a flash of the old look beats a pose that never moves), then its idle.
-  const posed = pose === 'attack' || pose === 'hurt' ? (pathId ? evolutionPoses[pathId]?.[pose] : undefined) ?? heroPoses[heroId]?.[pose] : undefined;
+  const posed = pose === 'attack' || pose === 'hurt' || pose === 'closed' ? (pathId && pose !== 'closed' ? evolutionPoses[pathId]?.[pose] : undefined) ?? heroPoses[heroId]?.[pose] : undefined;
   const src = posed ?? (pathId ? evolutionArt[pathId] : undefined) ?? heroArt[heroId];
   if (!src) return null;
   // draggable={false} as well as CSS `-webkit-user-drag: none` (WebKit-only): a drag ghost eats the long-press.

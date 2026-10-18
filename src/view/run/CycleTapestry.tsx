@@ -3,9 +3,7 @@ import { CYCLES, type CycleDefinition } from '../../run/cycles';
 import { locationBackdrop } from '../shared/locationBackdrops';
 import { heroArt } from '../shared/heroArt';
 import { evolutionArt } from '../shared/evolutionArt';
-import { GUARDIAN_VIEW_BOX, guardianMarkup } from '../shared/guardianFigures';
 import { titanspawnMarkup } from '../shared/titanspawnArt';
-import { LEFT_EYE_ID } from '../../data/enemies';
 import './cycleTapestry.css';
 
 // The Cycle picker as a woven chronicle (docs/cycles.md §4). Each Cycle is a panel cross-stitched
@@ -103,7 +101,7 @@ function sceneFor(cycle: number, wardens: readonly TapestryWarden[]): Scene {
     default:
       return {
         ground: '#16121c',
-        figures: [{ src: svgUrl(guardianMarkup(LEFT_EYE_ID, 'idle', 'tpEye'), GUARDIAN_VIEW_BOX) }],
+        figures: [{ src: heroArt.leftEye ?? '' }],
         figureRows: 76,
       };
   }

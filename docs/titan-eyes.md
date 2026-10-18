@@ -321,3 +321,19 @@ side-by-side (`art/concepts/herald/compare.html`):
 - **The rise** pushes into the Threshold painting onto its Titan's head until the painted eyes
   fill the frame and ignite; **the binding's collapse** starts on that close-up, the eyes blown
   wide, then out as it sinks into the fog. The seal stays the pact's gold.
+
+## 13. The arena and the Eyes in pixel (2026-10-18, per user direction)
+
+The ask: the Titan should look better wherever it is on screen. The finale's arena (`TitanBody`)
+and the Eyes (`guardianFigures.ts`, the title's lens at boss scale) were the last Titan pieces
+still in the geometric language §12 moved it off. Chosen from a side-by-side
+(`art/concepts/titan-look/`):
+
+- **The arena is "the hide, in pixel"**: the same idea, standing on its body, painted (Pixen,
+  seed 29) as a floor of cracked plates lit magenta, fog where it curves out of sight. It is
+  `art/locations/battle/theThreshold.png`, replacing the pillared floor no fight ever showed.
+  Dimmed as every painted arena is; a slow magenta pulse stays as the heartbeat.
+- **The Eyes are "the black almond"**: a near-black almond, a magenta iris, a slit pupil.
+  `art/heroes/titan/eye.png` with its attack, damaged and closed frames; the Right Eye is the
+  Left mirrored. Drawn at the Herald's size, with its rim.
+- The title's lens and the map gate's eye are untouched.

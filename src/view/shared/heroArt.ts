@@ -83,6 +83,8 @@ import abacusArt from '../../../art/heroes/unlocks/abacus.png';
 import whirrArt from '../../../art/heroes/unlocks/whirr.png';
 import mellowArt from '../../../art/heroes/unlocks/mellow.png';
 import heraldArt from '../../../art/heroes/titan/herald.png';
+import leftEyeArt from '../../../art/heroes/titan/eye.png';
+import rightEyeArt from '../../../art/heroes/titan/righteye.png';
 
 /** Portraits keyed by hero id (heroes.ts order). A missing entry renders text-only; a Titanspawn or Guardian id never reaches this — HeroPortrait draws it. */
 export const heroArt: Partial<Record<string, string>> = {
@@ -186,6 +188,8 @@ export const heroArt: Partial<Record<string, string>> = {
   mellow: mellowArt,
   // --- The Titan's own (pixel, as the Threshold paints it; what it turned stays geometric) ---
   endbringer: heraldArt,
+  leftEye: leftEyeArt,
+  rightEye: rightEyeArt,
 };
 
 // The Guardians are not here either: guardianFigures.ts draws them, sealed and unsealed, from one
@@ -197,10 +201,12 @@ export interface HeroPoses {
   attack?: string;
   /** Held for as long as the console is narrating a hit landing on it (`.hit-struck` / `.hit-crit` / `.hit-wince`). */
   hurt?: string;
+  /** A knocked-out Titan Eye, shut (CombatantCard 'closed'). */
+  closed?: string;
 }
 
 /** The suffix each pose's file carries, appended to the idle sprite's own filename. */
-const POSE_SUFFIX: Record<keyof HeroPoses, string> = { attack: 'attack', hurt: 'damaged' };
+const POSE_SUFFIX: Record<keyof HeroPoses, string> = { attack: 'attack', hurt: 'damaged', closed: 'closed' };
 
 /**
  * Every sprite in the hero directory, source path → URL. Scoped to it on
@@ -248,7 +254,7 @@ for (const [heroId, idleUrl] of Object.entries(heroArt)) {
     const found = spriteFiles[`${stem}${POSE_SUFFIX[pose]}.png`];
     if (found) poses[pose] = found;
   }
-  if (poses.attack || poses.hurt) heroPoses[heroId] = poses;
+  if (poses.attack || poses.hurt || poses.closed) heroPoses[heroId] = poses;
 }
 
 // Dead art, in the two shapes it comes in. This is the whole price of naming by
@@ -266,7 +272,7 @@ if (import.meta.env.DEV) {
   const naming = `<idle sprite name>{${POSE_SUFFIX.attack},${POSE_SUFFIX.hurt}}.png, beside that idle sprite`;
   const drawnUrls = new Set([
     ...Object.values(heroArt),
-    ...Object.values(heroPoses).flatMap((p) => [p?.attack, p?.hurt]),
+    ...Object.values(heroPoses).flatMap((p) => [p?.attack, p?.hurt, p?.closed]),
   ]);
   const undrawn = Object.keys(spriteFiles).filter((path) => !drawnUrls.has(spriteFiles[path]));
   const suffixed = new RegExp(`(${Object.values(POSE_SUFFIX).join('|')})\\.png$`);

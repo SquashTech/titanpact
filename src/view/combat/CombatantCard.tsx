@@ -476,7 +476,7 @@ export function CombatantCard({
           heroId={hero.id}
           pathId={combatant.formPathId}
           seed={combatant.combatantId}
-          className={hero.id === ENDBRINGER_ID ? 'combatant-portrait is-herald' : 'combatant-portrait'}
+          className={hero.id === ENDBRINGER_ID || isTitanEye(hero.id) ? 'combatant-portrait is-titans-own' : 'combatant-portrait'}
           pose={pose}
         />
         {aimedBy && aimedBy.length > 0 && !combatant.fainted && (
