@@ -254,6 +254,39 @@ last row returns to the next beat, losing replays the act. **A Story act is neve
 touches the profile's run records**, so a parked Classic run is safe. No companion joins, no
 contract is offered, no Banner is paid, and the arrival screen names the chapter instead of the act.
 
+## 11b. Chapter 3, The Lesson (BUILT 2026-10-18; numbers first pass)
+
+Teaches **types and the matchup arrows, Ren's patron seat, and the fork**, and brings in **the
+party's first caster** (per user direction: a new character with new mechanics).
+
+- **Story:** Ren starts teaching Valor before dawn: which turned things a blade can cut, and which it
+  can't. In the Forbidden Forest they find **Mira**, a hedge-mage whose chapel the turning swallowed.
+  She comes north with them. At the end Mira knows a town to the east that hasn't fallen, which
+  leads into chapter 4.
+- **Mira (name and type PROPOSED, for the user to confirm):** Light, Intelligence 95 and Wisdom 85
+  on the 550, kit Glimmer, Mend and Blind. She is the party's first magical damage (against Wisdom,
+  not Defense), first heal and first status (Blind Dazes). Light also hits the Frost Elite at the
+  fork double. She stands in on Solace's sprite until her own is drawn.
+- **The act** (Forbidden Forest, six rows): a Fight → Items / Rest / Boon → **Ren's seat** → **the
+  fork** → Rest / Items / Mana Well → an Elite.
+  - **The opener** is Sproutling and Whimling (Nature, Mind). Beast hits both double, so the lead
+    pick's arrows say *lead with Fang*.
+  - **Ren's seat** is the real patron screen: the Swordsman, his rung-1 line, a Rare Sword to Valor
+    (preset as his student, `StoryAct.students`), Trust 1, Crescent Cut promised next time. A seat
+    must sit on a patron row (`PATRON_ROWS`, rows 2 and 6); the test pins it.
+  - **The fork is the type lesson.** The Elite is Hoarfang, Pebbling and Sleetling (Frost, Stone),
+    a level above the party but Iron's prey. The Skirmish is Voltail and Gearhound (Storm, Mech), at
+    level 6 but double against everyone. The preview shows it: the Elite's grid is green for the
+    Iron pair and red for Fang, and the Skirmish's is red across the party.
+  - **The last Elite** mixes it up (Bramblehide, Gearhound, Whimling), so leads have to be chosen
+    on the matchups.
+- **Story nodes get their own map card:** the authored enemy levels, XP, gold and one item, with
+  no Gem, recruit or Contract line (`storyNodeDossier`).
+- **Measured, directional** (skilled sim pilot, 200 seeds): the opener is won in ~2.5 rounds
+  untouched; **the Elite at the fork wins 100% with ~79% HP left; the Skirmish wins 85% with ~39%
+  left and ~2 heroes down**; the last Elite wins 99% with ~61% left. A lost fight replays the whole
+  act, so the Skirmish's level is the dial to watch in play.
+
 ## 12. Valor's brother, Will (name decided; the rest PROPOSED)
 
 - **Name: Will** (decided 2026-10-17, per user direction). Valor and Will: a pair, and a normal
@@ -374,5 +407,5 @@ in front of the player.
 After chapter 5 the Story points the player at Classic, and the chapters set in Cycles II–V wait
 on Classic milestones (§2).
 
-**Open:** the ally who joins in chapter 3 (a scripted party member who isn't family, so the party
-reaches four), and whether chapter 4's hire is that ally or a Guild hire the player picks.
+**Chapter 3 is BUILT** (§11b): the ally is **Mira**, a Light hedge-mage (name and type proposed).
+**Open:** whether chapter 4's hire is a Guild hire the player picks.

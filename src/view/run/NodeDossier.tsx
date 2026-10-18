@@ -13,7 +13,9 @@ import type { MapNode } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
 import { NODE_COLORS } from './mapNodes';
-import { nodeDossier, type NodeFact, type NodeFactGlyph } from './nodeFacts';
+import { nodeDossier, storyNodeDossier, type NodeFact, type NodeFactGlyph } from './nodeFacts';
+import { storyCatalog } from '../../data/stories';
+import { storyNodeSpec } from '../../run/story';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { RESOURCE_COLORS, ResourceGlyph } from '../shared/RunGlyph';
 import { StatGlyph } from '../shared/statIcons';
@@ -161,6 +163,11 @@ function PartyMatchups({ party, run }: { party: readonly (readonly TypeId[])[]; 
  * its figure — with what it fields set apart above, and a line only on the few nodes that need one. The lit tile under the card already carries its name and its picture; the
  * roster's side of it is the footer's chips (nodeLens.tsx).
  */
+function storyDossierFor(run: RunState, node: MapNode) {
+  const spec = run.story ? storyNodeSpec(run, storyCatalog, node.id) : null;
+  return spec ? storyNodeDossier(spec, run.actNumber) : null;
+}
+
 export function NodeDossier({ node, run, party }: { node: MapNode; run: RunState; party?: readonly (readonly TypeId[])[] }) {
   const patron = patronOfNode(run, node);
   // A move or a passive is shown as the thing itself; every other rung keeps its ledger row.
@@ -168,7 +175,7 @@ export function NodeDossier({ node, run, party }: { node: MapNode; run: RunState
   const shownAsCard = steps.filter((step) => step.kind === 'move' || step.kind === 'passive');
   const dossier = patron
     ? { about: null, facts: steps.filter((step) => !shownAsCard.includes(step)).map((step) => stepFact(step, run.actNumber)), odds: null }
-    : nodeDossier(node.type, run.actNumber, run.cycle);
+    : storyDossierFor(run, node) ?? nodeDossier(node.type, run.actNumber, run.cycle);
   const color = patron ? patronColor(patron.id) : NODE_COLORS[node.type];
   const shown = dossier.facts.filter((fact) => fact.value !== null);
   const threats = shown.filter((fact) => fact.threat);

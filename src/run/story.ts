@@ -7,7 +7,8 @@ import type { CombatState, FightEndTrigger, Side } from '../engine/state';
 import { combatantIdFor } from './combatantIds';
 import type { Encounter } from './enemyGen';
 import { expectedGrowthAt, xpForLevel } from './growth';
-import type { MapNode, MapNodeType, RunMap } from './map';
+import { PATRON_ROWS, type MapNode, type MapNodeType, type RunMap } from './map';
+import { createPatronState, seatIndexFor } from './patrons';
 import { createRosterEntry, createRunState, type RosterEntry, type RunState } from './state';
 
 export const STORY_PLAYER_SIDE: Side = 'A';
@@ -183,6 +184,8 @@ export interface StoryActNode {
   enemyLeads?: readonly string[];
   drop?: string;
   items?: readonly string[];
+  /** A patron seat's patron(s), one a tile. The seat must stand on a patron row (run/map.ts PATRON_ROWS). */
+  patrons?: readonly string[];
 }
 
 /**
@@ -194,6 +197,8 @@ export interface StoryAct {
   party: readonly StoryHeroSpec[];
   rows: readonly (readonly StoryActNode[])[];
   gold?: number;
+  /** Patron id -> the party member it teaches, set before the seat so the lesson goes to them. */
+  students?: Readonly<Record<string, string>>;
 }
 
 /** Where a Story act sits in its chapter, carried on the run so the act's end can hand back. */
@@ -222,7 +227,27 @@ export function storyActRun(act: StoryAct, marker: StoryActMarker, heroes: Recor
     if (!hero) throw new Error(`story: unknown hero ${spec.heroId}`);
     return storyEntry(spec, hero);
   });
-  return { ...createRunState(act.gold ?? 0, 0), roster, map: storyActMap(act, seed), locationIds: [act.locationId], story: marker };
+  return {
+    ...createRunState(act.gold ?? 0, 0),
+    roster,
+    map: storyActMap(act, seed),
+    locationIds: [act.locationId],
+    story: marker,
+    patrons: storyPatrons(act),
+  };
+}
+
+/** The act's seats filled with the patrons it names, and its students set (run/patrons.ts). */
+function storyPatrons(act: StoryAct) {
+  const offers: Record<number, readonly string[]> = {};
+  act.rows.forEach((row, r) => {
+    const seated = row.find((node) => node.type === 'patronSeat');
+    if (!seated) return;
+    const seat = seatIndexFor(1, r, PATRON_ROWS);
+    if (seat === null) throw new Error(`story: a patron seat on row ${r} is not on a patron row`);
+    offers[seat] = row.map((node) => node.patrons?.[0] ?? '');
+  });
+  return { ...createPatronState(), offers, students: { ...(act.students ?? {}) } };
 }
 
 /** The act a run is playing, or null for a run outside Stories. */

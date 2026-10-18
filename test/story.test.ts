@@ -35,6 +35,10 @@ import { storyCatalog } from '../src/data/stories';
 import { rosterHeroes } from '../src/data/content';
 import { MAP_NODE_TYPES } from '../src/run/map';
 import { levelOf } from '../src/run/growth';
+import { patrons } from '../src/data/patrons';
+import { patronAtSeat, seatIndexFor, studentOf } from '../src/run/patrons';
+import { PATRON_ROWS } from '../src/run/map';
+import { withReachableSeatOffers } from '../src/run/runProgress';
 
 const UNBREAKABLE = 'storyTestUnbreakable';
 const testPassives: Record<string, PassiveDefinition> = {
@@ -284,4 +288,26 @@ test('story act: every fight names its drop and every Items chest its three, eac
       }
     }
   }
+});
+
+test('story act: a patron seat seats the patron it names, on a patron row, teaching a student in the party', () => {
+  let seated = 0;
+  for (const { chapter, beat, index } of actBeats) {
+    if (beat.kind !== 'act') continue;
+    const run = storyActRun(beat.act, { chapterId: chapter.id, beat: index }, rosterHeroes, 3);
+    for (const [patronId, rosterId] of Object.entries(beat.act.students ?? {})) {
+      assert.ok(patrons[patronId], `${chapter.id}: no patron ${patronId}`);
+      assert.ok(run.roster.some((entry) => entry.rosterId === rosterId), `${chapter.id}: ${rosterId} is not in the party`);
+      assert.strictEqual(studentOf(run, patronId), rosterId);
+    }
+    for (const node of Object.values(run.map!.nodes)) {
+      if (node.type !== 'patronSeat') continue;
+      const seat = seatIndexFor(run.actNumber, node.row, PATRON_ROWS);
+      assert.notStrictEqual(seat, null, `${chapter.id}: a seat off the patron rows`);
+      assert.strictEqual(patronAtSeat(run, seat!, node.col), beat.act.rows[node.row][node.col].patrons![0]);
+      assert.deepStrictEqual(withReachableSeatOffers(run).patrons, run.patrons, 'the authored seat is never redrawn');
+      seated++;
+    }
+  }
+  assert.ok(seated > 0, 'some chapter seats a patron');
 });

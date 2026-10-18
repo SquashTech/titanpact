@@ -41,6 +41,35 @@ const reach: StoryCommand[] = [{ actor: 'faceless', moveId: 'erode' }];
 // Chapter 2's Valor has the sword: the roster's own Valor, sprite and kit.
 const valorArmed: StoryActor = { id: 'valor', name: 'Valor', artHeroId: 'valor', stands: 'left' };
 
+const mira: StoryActor = { id: 'mira', name: 'Mira', artHeroId: CAST.mira, stands: 'right' };
+
+/**
+ * Chapter 3: matchups (the opener favours Fang, the fork's Elite favours the Iron pair and Mira's
+ * Light, its Skirmish hits everyone double), Ren's seat as the Swordsman with Valor his student,
+ * and Mira, the first caster: magic against Wisdom, a heal, a status.
+ */
+const forestRoad: StoryAct = {
+  locationId: 'forbiddenForest',
+  party: [
+    { rosterId: 'valor', heroId: 'valor', level: 8 },
+    { rosterId: 'fang', heroId: 'packAlpha', level: 8 },
+    { rosterId: 'ren', heroId: CAST.ren, level: 9 },
+    { rosterId: 'mira', heroId: CAST.mira, level: 8, moveIds: ['glimmer', 'mend', 'blind'] },
+  ],
+  students: { swordsman: 'valor' },
+  rows: [
+    [{ type: 'fight', enemy: [{ rosterId: 'sprout', heroId: 'sproutling', level: 9 }, { rosterId: 'whim', heroId: 'whimling', level: 9 }], drop: 'dagger.rare.feral' }],
+    [{ type: 'equipmentReward', items: ['greataxe.rare', 'leathers.rare.feral', 'boots.rare'] }, { type: 'restReward' }, { type: 'passiveReward' }],
+    [{ type: 'patronSeat', patrons: ['swordsman'] }],
+    [
+      { type: 'elite', enemy: [{ rosterId: 'hoar', heroId: 'hoarfang', level: 11 }, { rosterId: 'pebble', heroId: 'pebbling', level: 10 }, { rosterId: 'sleet', heroId: 'sleetling', level: 10 }], drop: 'spear.rare.tempered' },
+      { type: 'skirmish', enemy: [{ rosterId: 'volt', heroId: 'voltail', level: 6 }, { rosterId: 'gear', heroId: 'gearhound', level: 6 }], drop: 'plate.rare' },
+    ],
+    [{ type: 'restReward' }, { type: 'equipmentReward', items: ['shield.rare', 'plate.rare', 'greataxe.rare.tempered'] }, { type: 'manaWellReward' }],
+    [{ type: 'elite', enemy: [{ rosterId: 'bramble', heroId: 'bramblehide', level: 11 }, { rosterId: 'gear', heroId: 'gearhound', level: 11 }, { rosterId: 'whim', heroId: 'whimling', level: 10 }], drop: 'greataxe.rare.tempered' }],
+  ],
+};
+
 /** Chapter 2: the map, a pick from three, an item, a level, the Rest. The land the Titan touched has started to turn. */
 const northRoad: StoryAct = {
   locationId: 'wildsEdge',
@@ -215,6 +244,55 @@ export const storyCatalog: readonly StoryDefinition[] = [
             skipped: 'Ren watched her fight, and agreed to teach her.',
           },
           { kind: 'end', line: 'She had a teacher now. She did not have her brother.' },
+        ],
+      },
+      {
+        id: 'valor-3',
+        title: 'The Lesson',
+        cycle: 1,
+        beats: [
+          {
+            kind: 'scene',
+            locationId: 'forbiddenForest',
+            cast: [valorArmed, fang, ren],
+            lines: [
+              { text: 'Before the light, Ren wakes her.' },
+              { speaker: 'ren', text: 'Show me how you stand.' },
+              { text: 'She stands. He moves her back foot without a word.' },
+              { speaker: 'ren', text: 'The forest ahead is full of turned things. Some a blade cuts through. Some it doesn\'t.' },
+              { speaker: 'ren', text: 'Learn which is which, and you live long enough to learn the rest.' },
+            ],
+            skipped: 'Ren began teaching Valor before dawn: which turned things a blade can cut, and which it can\'t.',
+          },
+          {
+            kind: 'scene',
+            locationId: 'forbiddenForest',
+            cast: [valorArmed, fang, ren, mira],
+            lines: [
+              { text: 'Light, through the trees. Someone is fighting.' },
+              { speaker: 'mira', text: 'Either help or get out of my way!' },
+              { text: 'The turned things scatter from the glare of her hands.' },
+              { speaker: 'mira', text: 'Mira. The chapel I kept is under the roots now.' },
+              { speaker: 'valor', text: 'Something took my brother. It went north.' },
+              { speaker: 'mira', text: 'Then so do I. Whatever did this to my chapel, I want to see its face.' },
+              { speaker: 'valor', text: "It doesn't have one." },
+            ],
+            skipped: 'In the forest they met Mira, a hedge-mage whose chapel the turning swallowed. She came north with them.',
+          },
+          { kind: 'act', act: forestRoad },
+          {
+            kind: 'scene',
+            locationId: 'forbiddenForest',
+            cast: [valorArmed, fang, ren, mira],
+            lines: [
+              { speaker: 'valor', text: 'Every day we spend learning, Will is further away.' },
+              { speaker: 'ren', text: 'Every day you don\'t, you\'d die before you reached him.' },
+              { speaker: 'mira', text: 'There\'s a town east of the forest that hasn\'t fallen. Supplies. People who\'ve seen it.' },
+              { text: 'Fang stays close to Valor all that night.' },
+            ],
+            skipped: 'Valor wanted to hurry. Mira knew a town to the east that had not fallen yet.',
+          },
+          { kind: 'end', line: 'Four of them now, and a road east.' },
         ],
       },
     ],

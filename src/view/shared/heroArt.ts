@@ -216,6 +216,8 @@ export const heroArt: Partial<Record<string, string>> = {
   boar: story_boarArt,
   crow: story_crowArt,
   endbringerPrologue: heraldArt,
+  /** Mira stands in on Solace until her own sprite is drawn. */
+  mira: sunPriestArt,
   /** The Endbringer risen after the fall: a scene figure only. */
   heraldRisen: story_heraldrisenArt,
   leftEye: leftEyeArt,
