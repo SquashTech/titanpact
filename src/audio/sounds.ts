@@ -67,6 +67,12 @@ export type SfxId =
   | 'patron.priest'
   | 'patron.hexwright'
   | 'patron.headmaster'
+  // Stories: the blip under typed text, a timbre a voice, and the wolf
+  | 'voice.bright'
+  | 'voice.warm'
+  | 'voice.deep'
+  | 'wolf.bark'
+  | 'wolf.howl'
   | 'trust.rise'
   | 'star.rise'
   | 'star.fall'
@@ -1010,6 +1016,61 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 112, freqEnd: 58, gain: 0.32, attack: 0.002, decay: 0.16, delay: 0.29 },
       { wave: 'sine', freq: 1760, detune: 12, gain: 0.11, attack: 0.001, decay: 0.6, delay: 0.26 },
       { wave: 'sine', freq: 2637, detune: -8, gain: 0.07, attack: 0.001, decay: 0.45, delay: 0.26 },
+    ],
+  },
+
+  /** A bright voice under typed Story text (Valor, Will): a short triangle tick with a faint octave. Pitched per speaker. */
+  'voice.bright': {
+    gain: 0.16,
+    jitter: 0.07,
+    voices: [
+      { wave: 'triangle', freq: 660, freqEnd: 620, gain: 0.3, attack: 0.003, decay: 0.04 },
+      { wave: 'sine', freq: 1320, gain: 0.08, attack: 0.003, decay: 0.025 },
+    ],
+  },
+
+  /** A warm voice (Solace, Valor remembering): a rounder sine with a soft body under it. */
+  'voice.warm': {
+    gain: 0.15,
+    jitter: 0.05,
+    voices: [
+      { wave: 'sine', freq: 470, freqEnd: 440, gain: 0.32, attack: 0.004, decay: 0.05 },
+      { wave: 'triangle', freq: 235, gain: 0.1, attack: 0.004, decay: 0.04 },
+    ],
+  },
+
+  /** A deep voice (Ren): a low saw through a closed filter, more breath than note. */
+  'voice.deep': {
+    gain: 0.15,
+    jitter: 0.04,
+    voices: [
+      { wave: 'sawtooth', freq: 170, freqEnd: 150, gain: 0.26, attack: 0.004, decay: 0.05, filter: { type: 'lowpass', freq: 900, freqEnd: 500, q: 1.2 } },
+      { wave: 'sine', freq: 85, gain: 0.14, attack: 0.004, decay: 0.05 },
+    ],
+  },
+
+  /** Fang's bark: a throaty burst falling in pitch, the chest under it, and a short second yip. */
+  'wolf.bark': {
+    gain: 0.5,
+    jitter: 0.05,
+    voices: [
+      { wave: 'noise', gain: 0.32, attack: 0.004, decay: 0.14, filter: { type: 'bandpass', freq: 1100, freqEnd: 500, q: 2.2 } },
+      { wave: 'sawtooth', freq: 310, freqEnd: 170, gain: 0.3, attack: 0.006, hold: 0.03, decay: 0.12, filter: { type: 'lowpass', freq: 1400, freqEnd: 600, q: 1.6 } },
+      { wave: 'sine', freq: 120, freqEnd: 80, gain: 0.3, attack: 0.004, decay: 0.12 },
+      { wave: 'noise', gain: 0.18, attack: 0.004, decay: 0.09, delay: 0.17, filter: { type: 'bandpass', freq: 1300, freqEnd: 700, q: 2.4 } },
+      { wave: 'sawtooth', freq: 340, freqEnd: 210, gain: 0.18, attack: 0.006, decay: 0.08, delay: 0.17, filter: { type: 'lowpass', freq: 1600, freqEnd: 700, q: 1.6 } },
+    ],
+  },
+
+  /** Fang's howl: a voice rising and holding, a second beating against it so it wavers, then falling away, with breath around it. */
+  'wolf.howl': {
+    gain: 0.42,
+    jitter: 0.03,
+    voices: [
+      { wave: 'sine', freq: 360, freqEnd: 620, sweep: 'lin', detune: 18, gain: 0.34, attack: 0.45, hold: 0.7, decay: 0.5 },
+      { wave: 'sine', freq: 620, freqEnd: 430, sweep: 'lin', detune: -14, gain: 0.3, attack: 0.15, hold: 0.5, decay: 1.2, delay: 1.1 },
+      { wave: 'triangle', freq: 180, freqEnd: 310, sweep: 'lin', gain: 0.08, attack: 0.45, hold: 0.7, decay: 0.5 },
+      { wave: 'noise', gain: 0.05, attack: 0.3, hold: 1.2, decay: 1.4, filter: { type: 'bandpass', freq: 1800, freqEnd: 1200, q: 1.5 } },
     ],
   },
 

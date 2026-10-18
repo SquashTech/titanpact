@@ -420,6 +420,8 @@ function screenTipIds(screen: Screen): readonly ScreenTipId[] {
 export function App() {
   const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(40));
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
+  /** The place a Story chapter's beat stands in, for its music and its fights' arena. */
+  const [storyPlaceId, setStoryPlaceId] = useState<string | null>(null);
   /** Classic Mode picked on the Story select: the title starts it as Seal the Pact once did. */
   const [classicRequested, setClassicRequested] = useState(false);
   // Read once: a device does not change platform mid-session, and installing reopens the game.
@@ -1298,7 +1300,9 @@ export function App() {
   const borrowedLocationId = screen.kind === 'constructedFight' || screen.kind === 'gauntletFight' ? screen.locationId ?? null : null;
   const ambientLocation = borrowedLocationId
     ? locations[borrowedLocationId] ?? null
-    : PLACELESS_SCREENS.has(screen.kind) || playerRun.locationIds.length === 0
+    : screen.kind === 'storyChapter'
+      ? (storyPlaceId ? locations[storyPlaceId] ?? null : null)
+      : PLACELESS_SCREENS.has(screen.kind) || playerRun.locationIds.length === 0
       ? null
       : locationForAct(playerRun.locationIds, actBreak ? playerRun.actNumber - 1 : playerRun.actNumber);
 
@@ -1518,6 +1522,7 @@ export function App() {
           onFinished={() => handleStoryChapterDone(screen.chapterId)}
           onQuit={() => setScreen({ kind: 'title' })}
           onFallSeen={() => markTipSeen(LORE_TIP_ID)}
+          onPlace={setStoryPlaceId}
         />
       )}
 

@@ -126,6 +126,14 @@ export interface StoryActor {
   artHeroId: string;
   /** Faces into the scene from this side. */
   stands: 'left' | 'right';
+  /** The blip under this actor's typed lines, and its pitch. Unset: typed in silence. */
+  voice?: StoryVoice;
+}
+
+/** A timbre (audio/sounds.ts `voice.*`) and a pitch multiplier. */
+export interface StoryVoice {
+  timbre: 'bright' | 'warm' | 'deep';
+  pitch: number;
 }
 
 /** One line of a scene: spoken by an actor, thought by one (`think`), or narration (no speaker). */
@@ -133,6 +141,8 @@ export interface StoryLine {
   speaker?: string;
   text: string;
   think?: true;
+  /** A sound the moment the line appears (audio/sounds.ts id): Fang's bark, his howl. */
+  sound?: 'wolf.bark' | 'wolf.howl';
 }
 
 /** A line over the fight's stage at the top of `round`'s command phase. */
@@ -140,9 +150,12 @@ export interface StoryCue {
   round: number;
   speaker?: string;
   text: string;
+  sound?: 'wolf.bark' | 'wolf.howl';
 }
 
 export type StoryBeat =
+  /** Valor remembering (docs/stories.md §1): her lines over the place, before its scene. */
+  | { kind: 'memory'; locationId: string; lines: readonly string[]; voice?: StoryVoice }
   | {
       kind: 'scene';
       /** The Location whose backdrop the scene stands on. */

@@ -1,9 +1,75 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { playSfx } from '../../audio/sfx';
-import type { StoryActor, StoryLine } from '../../run/story';
+import type { StoryActor, StoryLine, StoryVoice } from '../../run/story';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { locationBackdrop } from '../shared/locationBackdrops';
+import { prefersReducedMotion } from '../shared/reducedMotion';
 import './story.css';
+
+/** Ms a character; a blip every BLIP_EVERY characters typed, spaces skipped. */
+const TYPE_MS = 28;
+const BLIP_EVERY = 2;
+
+/**
+ * A line typed out a character at a time with its speaker's blip under it (audio/sounds.ts
+ * `voice.*`). `finish` shows the rest at once: the first tap on a line still typing.
+ */
+function useTypedLine(text: string, voice: StoryVoice | undefined): { shown: number; done: boolean; finish: () => void } {
+  const instant = prefersReducedMotion();
+  const [shown, setShown] = useState(instant ? text.length : 0);
+  const typed = useRef(0);
+  useEffect(() => {
+    typed.current = instant ? text.length : 0;
+    setShown(typed.current);
+    if (instant) return;
+    let sinceBlip = BLIP_EVERY;
+    const timer = window.setInterval(() => {
+      typed.current += 1;
+      setShown(typed.current);
+      const char = text[typed.current - 1];
+      if (voice && char && char.trim() && ++sinceBlip >= BLIP_EVERY) {
+        sinceBlip = 0;
+        playSfx(`voice.${voice.timbre}`, { pitch: voice.pitch });
+      }
+      if (typed.current >= text.length) window.clearInterval(timer);
+    }, TYPE_MS);
+    return () => window.clearInterval(timer);
+  }, [text, voice, instant]);
+  return {
+    shown,
+    done: shown >= text.length,
+    finish: () => {
+      typed.current = text.length;
+      setShown(text.length);
+    },
+  };
+}
+
+/** The line's text, the untyped part held in place (invisible) so nothing reflows as it types. */
+function TypedText({ text, shown }: { text: string; shown: number }) {
+  return (
+    <p className="story-line-text">
+      {text.slice(0, shown)}
+      <span className="story-untyped">{text.slice(shown)}</span>
+    </p>
+  );
+}
+
+function SkipButton({ onSkip }: { onSkip: () => void }) {
+  return (
+    <button
+      type="button"
+      className="story-skip"
+      onClick={(e) => {
+        e.stopPropagation();
+        playSfx('ui.tap');
+        onSkip();
+      }}
+    >
+      Skip
+    </button>
+  );
+}
 
 interface Props {
   locationId: string;
@@ -20,14 +86,23 @@ export function StoryScene({ locationId, cast, lines, skipped, onDone }: Props) 
   const line = lines[Math.min(step, lines.length - 1)];
   const speaker = cast.find((actor) => actor.id === line?.speaker) ?? null;
   const backdrop = locationBackdrop(locationId);
+  const text = skipping ? skipped : (line?.text ?? '');
+  const typing = useTypedLine(text, skipping ? undefined : speaker?.voice);
+
+  useEffect(() => {
+    if (!skipping && line?.sound) playSfx(line.sound);
+  }, [step, skipping, line]);
 
   function advance() {
+    if (!typing.done) {
+      typing.finish();
+      return;
+    }
     if (skipping || step >= lines.length - 1) {
       playSfx('ui.confirm');
       onDone();
       return;
     }
-    playSfx('ui.tap');
     setStep((i) => i + 1);
   }
 
@@ -42,30 +117,45 @@ export function StoryScene({ locationId, cast, lines, skipped, onDone }: Props) 
   return (
     <div className="story-screen story-scene" onClick={advance} role="dialog" aria-live="polite">
       {backdrop && <div className="story-backdrop" style={{ backgroundImage: `url(${backdrop})` }} aria-hidden="true" />}
-      <button
-        type="button"
-        className="story-skip"
-        onClick={(e) => {
-          e.stopPropagation();
-          playSfx('ui.tap');
-          setSkipping(true);
-        }}
-      >
-        Skip
-      </button>
+      <SkipButton onSkip={() => setSkipping(true)} />
       <div className="story-stage" aria-hidden="true">
         <div className="story-side is-left">{left.map(figure)}</div>
         <div className="story-side is-right">{right.map(figure)}</div>
       </div>
-      <div className={`story-line${speaker ? '' : ' is-narration'}${line?.think ? ' is-thought' : ''}`}>
-        {skipping ? (
-          <p className="story-line-text">{skipped}</p>
-        ) : (
-          <>
-            {speaker && <span className="story-line-name">{speaker.name}</span>}
-            <p className="story-line-text">{line?.text}</p>
-          </>
-        )}
+      <div className={`story-line${speaker && !skipping ? '' : ' is-narration'}${line?.think ? ' is-thought' : ''}`}>
+        {speaker && !skipping && <span className="story-line-name">{speaker.name}</span>}
+        <TypedText text={text} shown={typing.shown} />
+      </div>
+    </div>
+  );
+}
+
+/** Valor remembering (docs/stories.md §1): her lines over the place, faded like an old picture, in her voice. */
+export function StoryMemory({ locationId, lines, voice, onDone }: { locationId: string; lines: readonly string[]; voice?: StoryVoice; onDone: () => void }) {
+  const [step, setStep] = useState(0);
+  const backdrop = locationBackdrop(locationId);
+  const text = lines[Math.min(step, lines.length - 1)] ?? '';
+  const typing = useTypedLine(text, voice);
+
+  function advance() {
+    if (!typing.done) {
+      typing.finish();
+      return;
+    }
+    if (step >= lines.length - 1) {
+      playSfx('ui.confirm');
+      onDone();
+      return;
+    }
+    setStep((i) => i + 1);
+  }
+
+  return (
+    <div className="story-screen story-memory" onClick={advance} role="dialog" aria-live="polite">
+      {backdrop && <div className="story-backdrop story-memory-backdrop" style={{ backgroundImage: `url(${backdrop})` }} aria-hidden="true" />}
+      <SkipButton onSkip={onDone} />
+      <div className="story-memory-text">
+        <TypedText text={text} shown={typing.shown} />
       </div>
     </div>
   );

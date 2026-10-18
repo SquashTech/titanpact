@@ -35,6 +35,26 @@ The scripted Act 1 (deleted 2026-09-24) failed for two reasons, per user directi
 **Dialogue stays light.** It's just enough to give the characters a backstory and a personality.
 A player who isn't interested in the story must never feel held hostage by it.
 
+## 1b. How a chapter is told (2026-10-18, per user direction)
+
+- **Valor's memories frame every chapter.** Each one opens on a `memory` beat: Valor, later, telling
+  it ("When it all started, we were out on a hunt. It was the first time Father let Will come with
+  us."), her lines typed over the chapter's place faded like an old picture. It gives the prologue
+  the context it started without, and each later chapter its *why now*. This is narration, not
+  instruction: the tutorial voice §1 rejected stays rejected.
+- **The place's music plays under the Story.** A scene or memory sets the chapter's place
+  (`onPlace`), so its track plays (Wild's Edge for the prologue) and its fights stand in its arena.
+  The Titan's fall plays in silence. The user may write a Story-specific piece later.
+- **Lines type out with a voice under them.** A character at a time, a blip every second character,
+  in the speaker's timbre and pitch (`StoryActor.voice`; `voice.bright` / `warm` / `deep` in
+  audio/sounds.ts): Valor bright, Will brighter and higher, Ren deep, Solace warm, Valor remembering
+  a little lower than herself. Narration, Fang and the Faceless type in silence. A tap finishes a line
+  still typing; the next tap moves on. Reduced motion shows lines whole.
+- **Fang has his moments.** A line can carry a sound (`StoryLine.sound`, `StoryCue.sound`): Fang
+  barks when the hunt sets out and again at the first fight's call, howls at the empty sky after
+  Will is taken, and howls north at the end of chapter 3. `wolf.bark` and `wolf.howl` are
+  procedural like every other sound in the game: first passes, to be judged by ear.
+
 ## 2. The shape
 
 - A **Story** follows one hero (or one pairing) through the five Cycles. Each **chapter** is a

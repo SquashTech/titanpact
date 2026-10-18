@@ -335,3 +335,33 @@
   .story-cue { animation: none; }
   .story-figure { transition: none; }
 }
+
+/* --- Typed lines: the part not yet typed holds its place, unseen --- */
+.story-untyped {
+  visibility: hidden;
+}
+
+/* --- Valor remembering: the place faded like an old picture, her words centred over it --- */
+.story-memory {
+  cursor: pointer;
+}
+.story-memory-backdrop {
+  filter: sepia(0.55) saturate(0.6) brightness(0.45) blur(1px);
+}
+.story-memory-backdrop::after {
+  background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(5, 6, 10, 0) 35%, rgba(5, 6, 10, 0.85) 100%);
+}
+.story-memory-text {
+  position: absolute;
+  z-index: 2;
+  left: 28px;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: center;
+}
+.story-memory-text .story-line-text {
+  color: #efe6d2;
+  font: italic 20px/1.5 Georgia, 'Times New Roman', serif;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}

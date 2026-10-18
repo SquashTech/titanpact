@@ -883,6 +883,12 @@ export function FightScreen({
   const actingId: string | null = canAct ? playerActiveAlive[stepIndex] : null;
   const guide = story && actingId ? guidedAction(story, combat, actingId) : null;
   const storyCue = story ? cueFor(storyCues, combat.round) : null;
+  const cueSounded = useRef<number | null>(null);
+  useEffect(() => {
+    if (!storyCue?.sound || resolving || winner || cueSounded.current === combat.round) return;
+    cueSounded.current = combat.round;
+    playSfx(storyCue.sound);
+  });
 
   /** Drives the target panel and the Back button (exit targeting rather than step to the previous hero). */
   const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;

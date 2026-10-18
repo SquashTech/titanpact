@@ -1,12 +1,16 @@
 // Stories as data (docs/stories.md). The prologue's lines are a DRAFT for the user to rewrite.
 
-import type { StoryAct, StoryActor, StoryCommand, StoryDefinition, StoryFight } from '../run/story';
+import type { StoryAct, StoryActor, StoryCommand, StoryDefinition, StoryFight, StoryVoice } from '../run/story';
 import { STORY_CAST_IDS as CAST } from './storyCast';
 
-const valor: StoryActor = { id: 'valor', name: 'Valor', artHeroId: CAST.valor, stands: 'left' };
+const VALOR_VOICE: StoryVoice = { timbre: 'bright', pitch: 1 };
+/** Valor telling it later: her own voice, a little lower. */
+const REMEMBERING: StoryVoice = { timbre: 'bright', pitch: 0.92 };
+
+const valor: StoryActor = { id: 'valor', name: 'Valor', artHeroId: CAST.valor, stands: 'left', voice: VALOR_VOICE };
 const fang: StoryActor = { id: 'fang', name: 'Fang', artHeroId: 'packAlpha', stands: 'left' };
-const ren: StoryActor = { id: 'ren', name: 'Ren', artHeroId: CAST.ren, stands: 'right' };
-const will: StoryActor = { id: 'will', name: 'Will', artHeroId: CAST.will, stands: 'right' };
+const ren: StoryActor = { id: 'ren', name: 'Ren', artHeroId: CAST.ren, stands: 'right', voice: { timbre: 'deep', pitch: 1 } };
+const will: StoryActor = { id: 'will', name: 'Will', artHeroId: CAST.will, stands: 'right', voice: { timbre: 'bright', pitch: 1.18 } };
 const faceless: StoryActor = { id: 'faceless', name: '???', artHeroId: CAST.endbringer, stands: 'right' };
 const risen: StoryActor = { id: 'risen', name: '???', artHeroId: 'heraldRisen', stands: 'right' };
 
@@ -39,9 +43,9 @@ const firstHunt: StoryFight = {
 const reach: StoryCommand[] = [{ actor: 'faceless', moveId: 'erode' }];
 
 // Chapter 2's Valor has the sword: the roster's own Valor, sprite and kit.
-const valorArmed: StoryActor = { id: 'valor', name: 'Valor', artHeroId: 'valor', stands: 'left' };
+const valorArmed: StoryActor = { id: 'valor', name: 'Valor', artHeroId: 'valor', stands: 'left', voice: VALOR_VOICE };
 
-const solace: StoryActor = { id: 'solace', name: 'Solace', artHeroId: 'dawnwarden', stands: 'right' };
+const solace: StoryActor = { id: 'solace', name: 'Solace', artHeroId: 'dawnwarden', stands: 'right', voice: { timbre: 'warm', pitch: 1.12 } };
 
 /**
  * Chapter 3: matchups (the opener favours Fang, the fork's Elite favours the Iron pair and Solace's
@@ -123,6 +127,16 @@ export const storyCatalog: readonly StoryDefinition[] = [
         cycle: 1,
         beats: [
           {
+            kind: 'memory',
+            locationId: 'wildsEdge',
+            voice: REMEMBERING,
+            lines: [
+              'When it all started, we were out on a hunt.',
+              'It was the first time Father let Will come with us.',
+              "He'd had a sword for a month. I'd wanted one my whole life.",
+            ],
+          },
+          {
             kind: 'scene',
             locationId: 'wildsEdge',
             cast: [valor, fang, ren, will],
@@ -132,6 +146,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
               { speaker: 'valor', text: 'And if it sees me first?' },
               { speaker: 'ren', text: 'Then you whistle louder.' },
               { speaker: 'will', text: "I'll bring you back a claw, Val." },
+              { speaker: 'fang', text: 'Fang barks, impatient to go.', sound: 'wolf.bark' },
               { speaker: 'valor', text: "One month with a sword and he's a hunter." },
               { text: 'Fang presses into her hand until she laughs.' },
             ],
@@ -142,7 +157,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
             fight: firstHunt,
             cast: [valor, fang],
             cues: [
-              { round: 1, speaker: 'Valor', text: 'The fox first. Fang, with me!' },
+              { round: 1, speaker: 'Valor', text: 'The fox first. Fang, with me!', sound: 'wolf.bark' },
               { round: 2, speaker: 'Valor', text: 'Now the stag.' },
             ],
           },
@@ -203,6 +218,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
               { speaker: 'will', text: 'Val—!' },
               { text: 'It takes Will, and it is gone.' },
               { text: 'His sword lies in the grass.' },
+              { speaker: 'fang', text: 'Fang howls at the empty sky.', sound: 'wolf.howl' },
               { speaker: 'ren', text: 'Pick it up.' },
               { speaker: 'ren', text: 'We run.' },
             ],
@@ -216,6 +232,16 @@ export const storyCatalog: readonly StoryDefinition[] = [
         title: 'His Sword',
         cycle: 1,
         beats: [
+          {
+            kind: 'memory',
+            locationId: 'wildsEdge',
+            voice: REMEMBERING,
+            lines: [
+              "I didn't sleep that night. Neither did Father.",
+              'I could hear him by the fire, sharpening a blade he never drew.',
+              'In the morning, we went north.',
+            ],
+          },
           {
             kind: 'scene',
             locationId: 'wildsEdge',
@@ -251,6 +277,16 @@ export const storyCatalog: readonly StoryDefinition[] = [
         title: 'The Lesson',
         cycle: 1,
         beats: [
+          {
+            kind: 'memory',
+            locationId: 'forbiddenForest',
+            voice: REMEMBERING,
+            lines: [
+              'After that, Father taught me before dawn, every day.',
+              'I think it was easier for him than talking about Will.',
+              'And in the forest, we found someone else who had lost something.',
+            ],
+          },
           {
             kind: 'scene',
             locationId: 'forbiddenForest',
@@ -289,6 +325,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
               { speaker: 'ren', text: 'Every day you don\'t, you\'d die before you reached him.' },
               { speaker: 'solace', text: 'There\'s a town east of the forest that hasn\'t fallen. Supplies. People who\'ve seen it.' },
               { text: 'Fang stays close to Valor all that night.' },
+              { speaker: 'fang', text: 'Once, he lifts his head and howls toward the north.', sound: 'wolf.howl' },
             ],
             skipped: 'Valor wanted to hurry. Solace knew a town to the east that had not fallen yet.',
           },
