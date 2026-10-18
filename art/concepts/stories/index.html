@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prologue Sprites</title>
+<style>
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1d1c1a;--mute:#6b675f;--line:#e2ddd2;--cell:#2e2d33}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}}
+:root[data-theme="dark"]{--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 16px;max-width:800px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+section.wide{grid-column:1/-1}
+h2{font-size:15px;margin:0 0 2px}
+section p{margin:0 0 10px;color:var(--mute);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+figure .c{background:var(--cell);border-radius:6px;display:grid;place-items:end center;padding:6px}
+figure img{image-rendering:pixelated;display:block}
+figcaption{font-size:11px;color:var(--mute)}
+.ref .c{outline:2px dashed #6b675f;outline-offset:-2px}
+h3{font-size:12px;margin:12px 0 6px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.stage{position:relative;height:300px;border-radius:8px;overflow:hidden;background:#222 center/cover no-repeat;image-rendering:pixelated}
+.stage .side{position:absolute;bottom:34px;display:flex;align-items:flex-end;gap:4px}
+.stage .side img{image-rendering:pixelated;display:block}
+.stage .l{left:4%}.stage .r{right:4%}
+.flip{transform:scaleX(-1)}
+.toggle{display:flex;gap:6px;margin:6px 0 10px}
+.toggle button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer}
+.toggle button.on{border-color:#e0a63c;box-shadow:0 0 0 1px #e0a63c inset}
+</style>
+</head>
+<body>
+<main>
+<h1>A Tale of Valor: prologue sprites</h1>
+<p class="sub">Concepts only, nothing is wired in. Each row is idle, attack, damaged at 3×; the dashed cell is the sprite it was made from. Alternates sit below each pick.</p>
+
+<div class="grid">
+<section class="wide">
+<h2>On the field</h2>
+<div class="toggle" id="tg">
+<button class="on" data-f="1">Fight 1: wildlife</button>
+<button data-f="2">Fight 2: the Endbringer</button>
+<button data-f="3">The fall</button>
+</div>
+<div class="stage" id="stage" style="background-image:url(../../locations/battle/wildsEdge.png)">
+<div class="side l" id="L"></div><div class="side r" id="R"></div>
+</div>
+</section>
+</div>
+
+<div class="grid" id="subjects" style="margin-top:16px"></div>
+</main>
+<script>
+const V = 'variants/';
+const S = [
+ {name:'Valor, swordless', note:'Her own sprite with the sword taken out and fists up; the punch is Iron Fist.',
+  ref:['../../heroes/starters/valor.png','her sprite'], pick:['valor-swordless','valor-swordlessattack','valor-swordlessdamaged'],
+  alts:[[V+'valor-a.png','seed 11']]},
+ {name:'Will', note:'Light and quick: tunic, vest, a blue scarf for Storm. Valor\'s brown hair and colouring.',
+  ref:null, pick:['will','willattack','willdamaged'],
+  alts:[[V+'will-edit.png','Valor edited into him'],[V+'will-b.png','seed 23']]},
+ {name:'Ren, the Swordsman', note:'His patron portrait with the blade drawn: same topknot, beard and navy coat.',
+  ref:['../../npc/patron-swordsman.png','patron portrait'], pick:['ren','renattack','rendamaged'],
+  alts:[[V+'ren-b.png','seed 23']]},
+ {name:'Bristleback Boar', note:'Wildlife the family hunts: the tanky one.', ref:null, pick:['boar','boarattack','boardamaged'],
+  alts:[[V+'boar-b.png','seed 23']]},
+ {name:'Thicket Fox', note:'The quick one.', ref:null, pick:['fox','foxattack','foxdamaged'],
+  alts:[[V+'fox-c.png','seed 37'],[V+'fox-a.png','bigger, tail on the edge'],[V+'fox-b.png','bigger, nose on the edge']]},
+ {name:'Carrion Crow', note:'The flier.', ref:null, pick:['crow','crowattack','crowdamaged'], alts:[]},
+ {name:'Thornhorn Stag', note:'A fourth, if the fight wants one.', ref:null, pick:['stag','stagattack','stagdamaged'], alts:[]},
+ {name:'The Endbringer, risen', note:'After the Titan falls: the seam torn open, magenta cracks through the body, a crown of shards.',
+  ref:['../../heroes/titan/herald.png','the Herald'], pick:['herald-risen','herald-risenattack','herald-risendamaged'], big:true,
+  alts:[[V+'herald-b.png','seed 23'],[V+'herald-attack.png','attack: chest burst']]},
+];
+const fig = (src, cap, scale, cls='') => `<figure class="${cls}"><div class="c"><img src="${src}" style="width:${scale}px"></div><figcaption>${cap}</figcaption></figure>`;
+document.getElementById('subjects').innerHTML = S.map(s => {
+  const sc = s.big ? 256 : 144;
+  return `<section${s.big?' class="wide"':''}><h2>${s.name}</h2><p>${s.note}</p><div class="row">
+  ${s.ref?fig(s.ref[0], s.ref[1], sc, 'ref'):''}
+  ${fig(s.pick[0]+'.png','idle',sc)}${fig(s.pick[1]+'.png','attack',sc)}${fig(s.pick[2]+'.png','damaged',sc)}
+  </div>${s.alts.length?`<h3>Alternates</h3><div class="row">${s.alts.map(a=>fig(a[0],a[1],s.big?128:96)).join('')}</div>`:''}</section>`;
+}).join('');
+
+const img = (f, h, flip) => `<img src="${f}.png" style="height:${h}px"${flip?' class="flip"':''}>`;
+const fang = '../../heroes/starters/fang';
+const F = {
+ 1:{L:[img('valor-swordless',144,1),img(fang,144)], R:[img('boar',144),img('fox',144)]},
+ 2:{L:[img('valor-swordless',112,1),img(fang,112),img('ren',112,1),img('will',112,1)], R:[img('../../heroes/titan/herald',240)]},
+ 3:{L:[img('valor-swordless',112,1),img(fang,112),img('ren',112,1)], R:[img('herald-risen',240)]},
+};
+function show(n){document.getElementById('L').innerHTML=F[n].L.join('');document.getElementById('R').innerHTML=F[n].R.join('');
+ document.querySelectorAll('#tg button').forEach(b=>b.classList.toggle('on',b.dataset.f==n));}
+document.getElementById('tg').onclick=e=>{if(e.target.dataset.f)show(e.target.dataset.f)};
+show(1);
+</script>
+</body>
+</html>
