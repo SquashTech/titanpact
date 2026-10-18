@@ -52,6 +52,12 @@ export function enduranceOf(counts: Record<PassiveId, number>, passiveDefs: Reco
   return total > 0 ? total : undefined;
 }
 
+/** Whether any held passive refuses every knockout (PassiveDefinition.cannotBeKnockedOut); undefined when none. */
+export function unbreakableOf(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>): true | undefined {
+  for (const [passiveId, stacks] of Object.entries(counts)) if (stacks > 0 && passiveDefs[passiveId]?.cannotBeKnockedOut) return true;
+  return undefined;
+}
+
 /** Whether any held passive is Ironbound (PassiveDefinition.cannotSwitchOut); undefined when none. */
 export function switchLockOf(counts: Record<PassiveId, number>, passiveDefs: Record<PassiveId, PassiveDefinition>): true | undefined {
   for (const [passiveId, stacks] of Object.entries(counts)) if (stacks > 0 && passiveDefs[passiveId]?.cannotSwitchOut) return true;

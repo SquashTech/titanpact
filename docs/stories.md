@@ -301,9 +301,14 @@ What exists and what's missing (surveyed 2026-10-18):
 
 **Order:**
 
-1. **Engine and run:** the seed prop; a `StoryEncounter` data shape (parties and levels, scripted
-   enemy commands, guided player commands, the end trigger, unkillable holders); `Profile.story`.
-   Tests that replay the prologue's fights to an identical event stream.
+1. **Engine and run: BUILT 2026-10-18.** `src/run/story.ts`: `StoryFight` (parties at fixed
+   levels and kits, leads, a seed, `enemyScript` and `guide` as one command list a round, `endsWhen`),
+   `storySides`, `scriptedEnemyActions`, `guidedAction`. Engine verbs: `FightEndTrigger` on
+   `CombatState.endsWhen` (`afterRound`, `hpAtMost`) read by `fightWinner`, and the passive verb
+   `cannotBeKnockedOut` (`Combatant.unbreakable`, held at 1 HP with an `Endured` beat, without
+   limit). FightScreen takes `story` (seed, script, ends). `Profile.storyChaptersDone` and
+   `recordStoryChapterDone`. `test/story.test.ts` replays a scripted fight to an identical event
+   stream. Guided input is read by nothing yet: the view's lock is step 2.
 2. **View:** the scene player (with one-tap skip), the guided-fight layer and line overlay, the
    chapter end card, the Story select, and the first-press flow.
 3. **Content:** the prologue as data, with dialogue drafted for the user to edit; the pre-fall

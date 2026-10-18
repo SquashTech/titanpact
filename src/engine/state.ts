@@ -79,6 +79,8 @@ export interface Combatant {
   passives: Record<PassiveId, PassiveInstance>;
   /** How many more knockouts this combatant shrugs off at 1 HP (PassiveDefinition.enduresOnce), set at fight build and spent in applyHpDelta. */
   enduresLeft?: number;
+  /** Every knockout is refused at 1 HP (PassiveDefinition.cannotBeKnockedOut), set at fight build. */
+  unbreakable?: true;
   /** Holds a Blessing (docs/blessings-and-statuses.md §1): the next knockout's whole loss is prevented and this goes false. Copied from the roster entry at fight build, read back at resolve. */
   blessed?: boolean;
   /** A Turned curse's typing (run/curse.ts), set at fight build; effectiveTypes returns it whole. */
@@ -139,7 +141,17 @@ export interface CombatState {
   pendingSideStatuses?: Partial<Record<Side, StatusId[]>>;
   /** Each side's off-field companion and when it acts (docs/companion-call.md §12). Unset = none. */
   calls?: Partial<Record<Side, SideCall>>;
+  /** Ways a scripted fight ends besides a wiped side (docs/stories.md §5). Unset = none. */
+  endsWhen?: readonly FightEndTrigger[];
 }
+
+/**
+ * A scripted end: `afterRound` once round `round` has resolved; `hpAtMost` once that combatant's
+ * HP is at or under `hp` (an unbreakable foe held at 1).
+ */
+export type FightEndTrigger =
+  | { kind: 'afterRound'; round: number; winner: Side }
+  | { kind: 'hpAtMost'; combatantId: string; hp: number; winner: Side };
 
 /**
  * A side's companion: the off-field caster (in `combatants`, `called` set), its one move, whether
@@ -233,6 +245,17 @@ export function rearmCallsForPhase(state: CombatState, round: number): CombatSta
 export function sideDefeated(state: CombatState, side: Side): boolean {
   const fighters = Object.values(state.combatants).filter((c) => c.side === side && isFighter(c));
   return fighters.length > 0 && fighters.every((c) => c.fainted);
+}
+
+/** Who has won, or null while the fight goes on: a wiped side first, then the first trigger met. */
+export function fightWinner(state: CombatState): Side | null {
+  if (sideDefeated(state, 'A')) return 'B';
+  if (sideDefeated(state, 'B')) return 'A';
+  for (const trigger of state.endsWhen ?? []) {
+    if (trigger.kind === 'afterRound' && state.round > trigger.round) return trigger.winner;
+    if (trigger.kind === 'hpAtMost' && (state.combatants[trigger.combatantId]?.currentHp ?? Infinity) <= trigger.hp) return trigger.winner;
+  }
+  return null;
 }
 
 /** The fight phase a combatant belongs to: 0 for the opening company, Squad.reserves' index + 1 after. */

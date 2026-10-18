@@ -62,11 +62,11 @@ export function applyHpDelta(
   // Lingering (PassiveDefinition.enduresOnce): a KO is refused and the hero stands at 1. A floor,
   // not a trigger — every loss source reads it, the Pact Clock included.
   let enduresLeft = target.enduresLeft;
-  const endured = fainted && (enduresLeft ?? 0) > 0;
+  const endured = fainted && (target.unbreakable === true || (enduresLeft ?? 0) > 0);
   if (endured) {
     newHp = 1;
     fainted = false;
-    enduresLeft = (enduresLeft as number) - 1;
+    if (!target.unbreakable) enduresLeft = (enduresLeft as number) - 1;
   }
   // A Blessing (docs/blessings-and-statuses.md §1): after the Shield and after Lingering, the
   // knockout's whole loss is prevented and the Blessing is spent. Never the Clock, never a cost.

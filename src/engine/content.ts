@@ -384,6 +384,8 @@ export interface PassiveDefinition {
    * trigger but a floor. Counted onto Combatant.enduresLeft at fight build, one a stack.
    */
   enduresOnce?: true;
+  /** A Story's unbeatable foe (docs/stories.md §5): every knockout is refused at 1 HP, without limit. Read onto Combatant.unbreakable at fight build. */
+  cannotBeKnockedOut?: true;
   /**
    * Ironbound (docs/innate-passives.md §4): the holder never switches out voluntarily — a pivot
    * move degrades to its buff, the Switch key is dead for it — while a forced replacement of a

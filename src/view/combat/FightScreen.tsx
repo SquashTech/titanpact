@@ -29,7 +29,7 @@ import {
   getMaxMana,
   moveForHero,
   derivedRandom,
-  sideDefeated,
+  fightWinner,
   callIntent,
   calledMove,
 } from '../../engine/state';
@@ -82,6 +82,7 @@ import { isGathering } from '../../run/cycles';
 import { pilotActions } from '../../run/pilot';
 import { applyVersusReplacements, otherSide, placeVersusLeads, replacementsOwed, SIDES as VERSUS_SIDES, stateHash, versusActions, VERSUS_CLOCK } from '../../run/versus';
 import { TurnClock, useTurnClock } from '../versus/TurnClock';
+import { scriptedEnemyActions, withStoryEnds, type StoryFight } from '../../run/story';
 import type { VersusChannel } from '../versus/versusChannel';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
@@ -577,6 +578,8 @@ interface Props {
   aiPilot?: boolean;
   /** A friend flies the other side (docs/versus.md): `playerRun` is this client's side, `aiRun` theirs. */
   versus?: VersusFight;
+  /** A Story fight (docs/stories.md §5): its seed, its scripted enemy and its scripted ends. */
+  story?: StoryFight;
 }
 
 export interface VersusFight {
@@ -608,6 +611,7 @@ export function FightScreen({
   cinematicWin = false,
   aiPilot = false,
   versus,
+  story,
   mvpRules,
   initialSnapshot,
   onCommandPhase,
@@ -633,7 +637,7 @@ export function FightScreen({
    * already changed, with nothing on screen having named the passive that changed them.
    */
   function openBattle(seed: number): { start: CombatState; events: CombatEvent[]; final: CombatState } {
-    const start = buildInitialState(seed);
+    const start = story ? withStoryEnds(buildInitialState(seed), story) : buildInitialState(seed);
     const resolved = resolveBattleStartEntries(start, 1, allCombatants, statuses, passives, fieldEffects);
     return { start, events: resolved.events, final: resolved.state };
   }
@@ -666,7 +670,7 @@ export function FightScreen({
   }
 
   // A resumed fight has no opening: its board is the snapshot, and the intro already played.
-  const [opening] = useState(() => (initialSnapshot ? null : openBattle(versus ? versus.seed : Math.floor(Math.random() * 2 ** 31))));
+  const [opening] = useState(() => (initialSnapshot ? null : openBattle(versus ? versus.seed : story ? story.seed : Math.floor(Math.random() * 2 ** 31))));
   const [combat, setCombat] = useState<CombatState>(() => initialSnapshot?.state ?? opening!.start);
   /** Empty at open: the opening events reach the log through the intro's beats as they reveal, like any round's. */
   const [log, setLog] = useState<LogLine[]>([]);
@@ -798,7 +802,7 @@ export function FightScreen({
   const playerBench = replacementCandidates(combat, PLAYER_SIDE);
   const pactRound = pactRoundOf(combat, combat.round);
 
-  const winner: Side | null = sideDefeated(combat, PLAYER_SIDE) ? AI_SIDE : sideDefeated(combat, AI_SIDE) ? PLAYER_SIDE : null;
+  const winner: Side | null = fightWinner(combat);
   // A cinematic win skips the result overlay: the hand-off IS the overlay's continue, fired once
   // the last beat has played (`resolving` false) so the KO lands on screen before the cut.
   const skipResult = cinematicWin && winner === PLAYER_SIDE && !resolving;
@@ -1299,6 +1303,8 @@ export function FightScreen({
 
   /** The enemy's actions against the board as it stands — seeded, so the round resolves exactly what the intent preview shows. */
   function planAiActions(): Action[] {
+    const scripted = story ? scriptedEnemyActions(story, combat) : null;
+    if (scripted) return scripted;
     return aiPilot
       ? pilotActions(combat, AI_SIDE, pilotContext, { switching: true })
       : enemyActiveAlive.map((id) => pickAiAction(combat, id, { ...aiContext, random: derivedRandom(combat, id, 'ai') }));

@@ -123,6 +123,8 @@ export interface Profile {
   gauntletEntriesBought: number;
   gauntletEntered: number;
   gauntletClears: number;
+  /** Story chapters finished (docs/stories.md), by chapter id, each once, in the order played. */
+  storyChaptersDone: string[];
 }
 
 /** Stars a Trial pays on its first clear (docs/constructed.md §7). First pass. */
@@ -198,6 +200,7 @@ export function createProfile(): Profile {
     gauntletEntriesBought: 0,
     gauntletEntered: 0,
     gauntletClears: 0,
+    storyChaptersDone: [],
   };
 }
 
@@ -357,6 +360,12 @@ export function totalStars(profile: Profile): number {
 export function recordTrialCleared(profile: Profile, trialId: string): Profile {
   if (profile.trialsCleared.includes(trialId)) return profile;
   return { ...profile, trialsCleared: [...profile.trialsCleared, trialId] };
+}
+
+/** A Story chapter finished: recorded the first time, unchanged on a replay. */
+export function recordStoryChapterDone(profile: Profile, chapterId: string): Profile {
+  if (profile.storyChaptersDone.includes(chapterId)) return profile;
+  return { ...profile, storyChaptersDone: [...profile.storyChaptersDone, chapterId] };
 }
 
 /** What the beaten Trials have paid into the balance. */
@@ -585,5 +594,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     gauntletEntriesBought: count(value.gauntletEntriesBought),
     gauntletEntered: count(value.gauntletEntered),
     gauntletClears: count(value.gauntletClears),
+    // Absent on every profile written before Stories.
+    storyChaptersDone: [...new Set(stringList(value.storyChaptersDone))],
   };
 }
