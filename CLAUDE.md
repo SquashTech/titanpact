@@ -976,7 +976,9 @@ what's still unimplemented:
   (2026-10-13, per user direction, cut from 27: everything else is the screen's job, and the
   rules in full are the Reference's **How to Play**). Tips are video-game information, never a hero speaking and never
   "we". Content `src/data/tips.ts`, mechanism `src/run/tips.ts`, reset from the Dev menu
-  (`docs/tutorial.md`).
+  (`docs/tutorial.md`). **Superseded 2026-10-17/18 by Stories** (`docs/stories.md`, per user direction):
+  the first press plays A Tale of Valor's prologue, which carries the fall; the lore card no longer
+  plays ahead of the first draft. The three tips stand.
 - Field Effects (2026-08-21 sign-off): resolves the former "weather subsystem" open
   question — Field Effects **is** that subsystem, generalized. A single global
   battlefield state (only one active at a time), settable by a move or a passive

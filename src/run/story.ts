@@ -151,6 +151,8 @@ export type StoryBeat =
       skipped: string;
     }
   | { kind: 'fight'; fight: StoryFight; cast: readonly StoryActor[]; cues?: readonly StoryCue[] }
+  /** The Titan's fall across the sky (docs/stories.md §4), its lines crawling over it a tap at a time. */
+  | { kind: 'fall'; lines: readonly string[] }
   | { kind: 'end'; line: string };
 
 export interface StoryChapter {

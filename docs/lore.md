@@ -213,6 +213,10 @@ an account opens on a beat that stays on the title — everything else fades, a 
 stars (drawn only by the stars it puts out) and falls to the land below — under one in-world
 line, first pass: *"One day, pure calamity fell upon our land."*
 
+**Moved into the Story prologue (2026-10-18, per user direction, `stories.md` §8):** the fall plays
+during A Tale of Valor's prologue, over the prologue's own lines, and no longer on the first press or
+ahead of the first Classic draft. `LORE_LINES` no longer plays.
+
 **Built (same day):** the title and the loading screen stand under the night (`NightSky.tsx`, a fixed
 field of stars, the fog-bank painting masked in as the land); the first press on an account fades the
 title to that sky (`.is-falling`) and `TitanFallScreen` takes over on the same picture — a black

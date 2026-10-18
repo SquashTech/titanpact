@@ -140,11 +140,11 @@ export const storyCatalog: readonly StoryDefinition[] = [
             lines: [
               { speaker: 'valor', text: "It's down. Is it down?" },
               { speaker: 'will', text: "It isn't even bleeding." },
-              { text: 'Above them, the stars go out, one after another, in a line.' },
-              { text: 'Something falls.' },
+              { speaker: 'ren', text: 'Look up.' },
             ],
-            skipped: 'They brought it to its knees. Then the stars began to go out.',
+            skipped: 'They brought it to its knees. Then Ren looked up.',
           },
+          { kind: 'fall', lines: ['Above them, the stars go out, one after another, in a line.', 'Something falls.'] },
           {
             kind: 'scene',
             locationId: 'wildsEdge',

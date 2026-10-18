@@ -145,9 +145,11 @@ the prologue's wildlife can't be Titanspawn. A first set for Wild's Edge is to b
 - **Fang's death at the midpoint (Cycle III)**, and whether Cycle V's freed Wardens bring Fang back
   for one last fight (keeping the grief) or for good (spending it). Proposed path: a Story-only
   Evolution where Valor grafts Beast.
-- **The existing first-press fall** (`TitanFallScreen` and its lore crawl, 2026-10-14). The prologue
-  plays the fall from the ground. Does it replace the first-press beat, follow it, or fold the crawl
-  into its end card?
+- **The first-press fall: DECIDED 2026-10-18 (per user direction).** The prologue replaces it, and the
+  fall happens during the prologue: a `fall` beat plays `TitanFallScreen` with the scene's own lines
+  after the clearing fight, and marks the lore seen. Classic no longer plays the fall or the Cycle I
+  lore card before its first draft (a later Cycle's card still plays), and the title's press no
+  longer fades into a fall.
 - **What the title offers after the prologue.** Seal the Pact opens the Story select (§10). Does
   its Classic button appear at once? The Trials and the Gauntlet still open on a Cycle I clear?
 - **Do Story clears seat Wardens?** `cycles.md` makes the account's first Cycle I winners its
@@ -339,6 +341,4 @@ What exists and what's missing (surveyed 2026-10-18):
 5. **Chapter 2** on the same pieces, plus the map/reward/item teaching.
 6. **An alpha pass:** a full playthrough from a fresh profile into Classic.
 
-**Still needed from the user:** whether the
-prologue replaces `TitanFallScreen`'s first-press fall (recommended: the prologue's fall reuses its
-art, and the lore crawl becomes the end card); and sign-off on the dialogue once drafted.
+**Still needed from the user:** a pass over the dialogue (the user's, in the coming days).

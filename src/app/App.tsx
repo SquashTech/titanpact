@@ -118,14 +118,13 @@ import { grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableK
 import { guildHallEntry } from '../run/guildRecruit';
 import { generateMap, PATRON_ROWS, type MapNodeType, type RewardNodeType } from '../run/map';
 import { firstUnseenTip, LORE_TIP_ID, type ScreenTipId } from '../run/tips';
-import { LORE_LINES, SCREEN_TIPS } from '../data/tips';
+import { SCREEN_TIPS } from '../data/tips';
 import { TipOverlay } from '../view/run/TipOverlay';
 import { SaveTroubleBanner } from '../view/run/SaveTroubleBanner';
 import { InstallOverlay } from '../view/run/InstallOverlay';
 import { currentInstallPlatform } from './installPrompt';
 import { INSTALL_TIP_ID } from '../run/installHint';
 import { LoreScreen } from '../view/run/LoreScreen';
-import { TitanFallScreen } from '../view/run/TitanFallScreen';
 import { StorySelectScreen } from '../view/story/StorySelectScreen';
 import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
 import { storyCatalog } from '../data/stories';
@@ -1182,9 +1181,9 @@ export function App() {
     const optionIds = generateStarterOptions(randomSeed(), deckRows(profileDeck(profile, heroes)));
     setPlayerRun((run) => ({ ...run, cycle }));
     const draft: Screen = { kind: 'draft', optionIds };
-    // A lore card once an account per Cycle: Cycle I's ahead of the very first draft, a later Cycle's ahead of its first.
-    const lore = cycle === FIRST_CYCLE ? { lines: LORE_LINES, tipId: LORE_TIP_ID } : { lines: cycleOf(cycle).lore ?? [], tipId: cycleLoreTipId(cycle) };
-    setScreen(lore.lines.length === 0 || profile.seenTipIds.includes(lore.tipId) ? draft : { kind: 'lore', next: draft, ...lore });
+    // A later Cycle's lore card ahead of its first draft; Cycle I's fall is the Story prologue's (docs/stories.md §4).
+    const lore = cycle === FIRST_CYCLE ? null : { lines: cycleOf(cycle).lore ?? [], tipId: cycleLoreTipId(cycle) };
+    setScreen(!lore || lore.lines.length === 0 || profile.seenTipIds.includes(lore.tipId) ? draft : { kind: 'lore', next: draft, ...lore });
   }
 
   function handleDraftConfirm(chosenIds: string[]) {
@@ -1339,7 +1338,7 @@ export function App() {
           onOpenStories={handleOpenStories}
           startClassic={classicRequested}
           onClassicStarted={() => setClassicRequested(false)}
-          firstFall={!profile.seenTipIds.includes(LORE_TIP_ID)}
+          firstFall={false}
           openCycle={openCycle(profile)}
           onSeeTip={markTipSeen}
           beatReady={launchDone && !(installPlatform && !profile.seenTipIds.includes(INSTALL_TIP_ID))}
@@ -1502,6 +1501,7 @@ export function App() {
           chapter={chapterById(storyCatalog, screen.chapterId)!.chapter}
           onFinished={() => handleStoryChapterDone(screen.chapterId)}
           onQuit={() => setScreen({ kind: 'title' })}
+          onFallSeen={() => markTipSeen(LORE_TIP_ID)}
         />
       )}
 
@@ -1533,17 +1533,7 @@ export function App() {
         />
       )}
 
-      {screen.kind === 'lore' && screen.tipId === LORE_TIP_ID && (
-        <TitanFallScreen
-          lines={screen.lines}
-          onDone={() => {
-            markTipSeen(screen.tipId);
-            setScreen(screen.next);
-          }}
-        />
-      )}
-
-      {screen.kind === 'lore' && screen.tipId !== LORE_TIP_ID && (
+      {screen.kind === 'lore' && (
         <LoreScreen
           lines={screen.lines}
           onDone={() => {
