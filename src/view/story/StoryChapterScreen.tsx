@@ -7,6 +7,8 @@ import { StoryEndCard, StoryMemory, StoryScene } from './StoryScene';
 
 interface Props {
   chapter: StoryChapter;
+  /** Its place in its Story (chapter 1 is the prologue), named on the end card. */
+  number: number;
   /** The chapter played to its end card. */
   onFinished: () => void;
   /** Left mid-chapter; nothing is recorded. */
@@ -19,10 +21,12 @@ interface Props {
   startBeat?: number;
   /** A beat that is an Act hands over to the run's own screens. */
   onStartAct: (act: StoryAct, beat: number) => void;
+  /** The account's seen tips, for the control tips on a fight's cues. */
+  tips: { seenIds: readonly string[]; onSeen: (id: string) => void };
 }
 
 /** Plays a chapter's beats in order (docs/stories.md §10). A lost fight is played again from its start. */
-export function StoryChapterScreen({ chapter, onFinished, onQuit, onFallSeen, onPlace, startBeat = 0, onStartAct }: Props) {
+export function StoryChapterScreen({ chapter, number, onFinished, onQuit, onFallSeen, onPlace, startBeat = 0, onStartAct, tips }: Props) {
   const [index, setIndex] = useState(startBeat);
   const [attempt, setAttempt] = useState(0);
   const beat = chapter.beats[index];
@@ -50,7 +54,7 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onFallSeen, on
         }}
       />
     );
-  if (beat.kind === 'end') return <StoryEndCard title={chapter.title} line={beat.line} onDone={onFinished} />;
+  if (beat.kind === 'end') return <StoryEndCard title={chapter.title} number={number} line={beat.line} onDone={onFinished} />;
   return (
     <FightScreen
       key={`${index}:${attempt}`}
@@ -63,6 +67,7 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onFallSeen, on
       equipmentReward={null}
       story={beat.fight}
       storyCues={beat.cues}
+      storyTips={tips}
       cinematicWin
       onResolved={(outcome) => (outcome === 'win' ? next() : setAttempt((n) => n + 1))}
       onExitToTitle={onQuit}

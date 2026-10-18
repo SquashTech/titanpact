@@ -120,6 +120,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
   {
     id: 'valor',
     name: 'A Tale of Valor',
+    plannedChapters: { 1: 5 },
     chapters: [
       {
         id: 'valor-1',
@@ -158,8 +159,33 @@ export const storyCatalog: readonly StoryDefinition[] = [
             fight: firstHunt,
             cast: [valor, fang],
             cues: [
-              { round: 1, speaker: 'Valor', text: 'The fox first. Fang, with me!', sound: 'wolf.bark' },
-              { round: 2, speaker: 'Valor', text: 'Now the stag.' },
+              {
+                round: 1,
+                speaker: 'Valor',
+                text: 'The fox first. Fang, with me!',
+                sound: 'wolf.bark',
+                tip: {
+                  id: 'story.moves',
+                  title: 'Choosing a Move',
+                  pages: [
+                    'Each hero on the field acts once a round. Tap the move you want Valor to use.',
+                    'Then tap the enemy it should hit. Fang chooses next, the same way.',
+                  ],
+                },
+              },
+              {
+                round: 2,
+                speaker: 'Valor',
+                text: 'Now the stag.',
+                tip: {
+                  id: 'story.round',
+                  title: 'The Round',
+                  pages: [
+                    'When both heroes have chosen, everyone acts in order of Speed, fastest first. The order runs along the top.',
+                    'The green bar is health, the blue bar Mana. A move costs the Mana in its gem.',
+                  ],
+                },
+              },
             ],
           },
           {
@@ -200,10 +226,32 @@ export const storyCatalog: readonly StoryDefinition[] = [
             fight: theClearing,
             cast: [valor, fang, ren, will],
             cues: [
-              { round: 1, speaker: 'Valor', text: 'Hit it together!' },
-              { round: 2, speaker: 'Ren', text: 'Fall back! Will, with me.' },
+              {
+                round: 1,
+                speaker: 'Valor',
+                text: 'Hit it together!',
+                tip: { id: 'story.inspect', title: 'Reading a Foe', pages: ['Tap any hero, yours or theirs, to read their stats, moves and passives.'] },
+              },
+              {
+                round: 2,
+                speaker: 'Ren',
+                text: 'Fall back! Will, with me.',
+                tip: {
+                  id: 'story.switch',
+                  title: 'Switching',
+                  pages: [
+                    "Switch trades a hero on the field for one on the bench. The one coming in doesn't act this round.",
+                    'Heroes on the bench regain Mana every round, so switching keeps the team fresh.',
+                  ],
+                },
+              },
               { round: 3, speaker: 'Ren', text: 'Strike where I strike.' },
-              { round: 4, speaker: 'Ren', text: 'Catch your breath. Will, now!' },
+              {
+                round: 4,
+                speaker: 'Ren',
+                text: 'Catch your breath. Will, now!',
+                tip: { id: 'story.rest', title: 'Rest', pages: ['A hero without the Mana for any move must Rest. Rest skips their turn and refills all of it.'] },
+              },
             ],
           },
           {

@@ -584,6 +584,8 @@ interface Props {
   story?: StoryFight;
   /** Its lines over the stage, one a scripted round. */
   storyCues?: readonly StoryCue[];
+  /** The account's seen tips, for a cue's control tip (shown once). Omitted: no cue tips. */
+  storyTips?: { seenIds: readonly string[]; onSeen: (id: string) => void };
 }
 
 export interface VersusFight {
@@ -617,6 +619,7 @@ export function FightScreen({
   versus,
   story,
   storyCues,
+  storyTips,
   mvpRules,
   initialSnapshot,
   onCommandPhase,
@@ -925,6 +928,11 @@ export function FightScreen({
     const ctx: FightTipContext = { round: combat.round, nodeType: tips.nodeType };
     return matchFightTip(FIGHT_TIPS, ctx, tips.seenIds);
   })();
+  // A Story cue's control tip lands at the same moment a fight tip would: the top of the round's command phase.
+  const storyTip =
+    winner === null && storyTips && storyCue?.tip && canAct && actionStep === 0 && Object.keys(pending).length === 0 && !storyTips.seenIds.includes(storyCue.tip.id)
+      ? storyCue.tip
+      : null;
 
   /**
    * Rest is a recovery, not a pass: the key stays dark while the hero has nothing to recover, so
@@ -2671,6 +2679,7 @@ export function FightScreen({
       )}
 
       {fightTip && tips && <TipOverlay key={fightTip.id} tip={fightTip} onDone={() => tips.onSeen(fightTip.id)} />}
+      {storyTip && storyTips && <TipOverlay key={storyTip.id} tip={storyTip} onDone={() => storyTips.onSeen(storyTip.id)} />}
       {pickingLeads && tips && !tips.seenIds.includes('bench') && (
         <TipOverlay key="bench" tip={SCREEN_TIPS.bench} onDone={() => tips.onSeen('bench')} />
       )}

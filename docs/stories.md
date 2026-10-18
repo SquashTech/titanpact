@@ -57,6 +57,30 @@ A player who isn't interested in the story must never feel held hostage by it.
 
 - **Scenes are staged, not a row** (2026-10-18, per user direction). A scene can place its cast (`stage`: `x` across the ground, `depth` into it, far figures higher and smaller and behind) and any line can move someone (`moves`: a step, a retreat, an entrance, an exit), so the scene acts out what the lines say: Ren and Will walk off on the hunt, the Faceless appears far back and comes closer, Valor steps out between it and her family, Will is taken off with it, Solace walks in out of the trees. Everyone faces whoever is speaking, the speaker the nearest other. A scene with no staging fans each side out with staggered depths (`autoStage`). An actor can be drawn larger (`scale`: the risen Endbringer towers).
 
+## 1c. Teaching the controls (2026-10-18, per user direction)
+
+**The prologue is A Tale of Valor's chapter 1 of 5** (Cycle I plans five, `plannedChapters`): the
+Story select marks those five chapters, built or not, and each end card names its chapter number.
+
+**Some explanation of how to play is necessary** to make sure every player learns the exact
+controls, without becoming overbearing. A Story fight's cue can carry a **control tip**
+(`StoryCue.tip`), shown once an account at the top of that round's command phase, the moment the
+control is first needed, with what it names lit on the live board (`view/run/tipStaging.ts`). This
+brings tips back that the 2026-10-13 cut removed, but only inside the prologue's guided fights.
+
+| Fight | Round | Tip | Lights |
+|---|---|---|---|
+| The hunt | 1 | **Choosing a Move**: tap the move, then the enemy it hits | the guided move, then the foes |
+| The hunt | 2 | **The Round**: Speed order along the top; health, Mana, a move's cost | the order track, then the bars |
+| The clearing | 1 | **Reading a Foe**: tap any hero to read them | the Faceless |
+| The clearing | 2 | **Switching**: the one coming in doesn't act; the bench regains Mana | the Switch key, then the bars |
+| The clearing | 4 | **Rest**: no Mana for any move, so Rest skips the turn and refills it | the Rest row |
+
+The bench and item tips still fire where they belong, in chapter 2's act. The general round tip
+(`fight.basics`) is marked seen when chapter 1 ends, since its first two tips say the same.
+**Not yet taught anywhere:** the Bag (potions as a free action), the matchup arrows on a move, and
+holding a move to read it.
+
 ## 2. The shape
 
 - A **Story** follows one hero (or one pairing) through the five Cycles. Each **chapter** is a

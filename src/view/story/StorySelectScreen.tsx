@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { nextChapter, storyCyclePips, type StoryDefinition } from '../../run/story';
+import { nextChapter, storyChapterPips, type StoryDefinition } from '../../run/story';
 import { PlateButton } from '../shared/PlateButton';
 import './story.css';
 
@@ -22,11 +22,12 @@ interface Props {
 
 type Pick = { kind: 'story'; story: StoryDefinition } | { kind: 'classic' };
 
-function Pips({ marks }: { marks: readonly ('done' | 'now' | null)[] }) {
+/** Lit marks wear their Cycle's colour: a Story's chapters all one Cycle's, Classic's Cycles each their own. */
+function Pips({ marks, cycle }: { marks: readonly ('done' | 'now' | null)[]; cycle?: number }) {
   return (
     <span className="story-pips" aria-hidden="true">
       {marks.map((mark, i) => (
-        <b key={i} className={mark === 'done' ? CYCLE_CLASS[i + 1] : mark === 'now' ? 'is-now' : ''} />
+        <b key={i} className={mark === 'done' ? CYCLE_CLASS[cycle ?? i + 1] : mark === 'now' ? 'is-now' : ''} />
       ))}
     </span>
   );
@@ -50,7 +51,11 @@ export function StorySelectScreen({ stories, chaptersDone, cyclesCleared, onPlay
     return banner ? <span className="story-banner" style={{ backgroundImage: `url(${banner})` }} aria-hidden="true" /> : null;
   }
   const name = (p: Pick) => (p.kind === 'classic' ? 'Classic Mode' : p.story.name);
-  const pipsOf = (p: Pick) => (p.kind === 'classic' ? classicPips : storyCyclePips(p.story, chaptersDone));
+  const pipsOf = (p: Pick) => {
+    if (p.kind === 'classic') return <Pips marks={classicPips} />;
+    const { cycle, marks } = storyChapterPips(p.story, chaptersDone);
+    return <Pips marks={marks} cycle={cycle} />;
+  };
 
   return (
     <div className="story-screen story-select">
@@ -62,7 +67,7 @@ export function StorySelectScreen({ stories, chaptersDone, cyclesCleared, onPlay
         <div className="story-feature-text">
           <h1 className="story-feature-name">{name(pick)}</h1>
           {chapter && <p className="story-feature-chapter">{chapter.title}</p>}
-          <Pips marks={pipsOf(pick)} />
+          {pipsOf(pick)}
         </div>
       </div>
       <div className="story-shelf">
@@ -78,7 +83,7 @@ export function StorySelectScreen({ stories, chaptersDone, cyclesCleared, onPlay
           >
             {art(p)}
             <span className="story-cover-name">{name(p)}</span>
-            <Pips marks={pipsOf(p)} />
+            {pipsOf(p)}
           </button>
         ))}
       </div>

@@ -134,6 +134,13 @@
   color: #d9d2c2;
   font: italic 18px/1.45 Georgia, serif;
 }
+.story-end-number {
+  margin: 8px 0 -10px;
+  color: #e0a63c;
+  font: 800 12px/1 system-ui, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
 .story-end-title {
   margin: 0;
   font: 800 26px/1.1 Georgia, serif;

@@ -10,6 +10,7 @@ import { expectedGrowthAt, xpForLevel } from './growth';
 import { PATRON_ROWS, type MapNode, type MapNodeType, type RunMap } from './map';
 import { createPatronState, seatIndexFor } from './patrons';
 import { createRosterEntry, createRunState, type RosterEntry, type RunState } from './state';
+import type { Tip } from './tips';
 
 export const STORY_PLAYER_SIDE: Side = 'A';
 export const STORY_ENEMY_SIDE: Side = 'B';
@@ -188,6 +189,11 @@ export interface StoryCue {
   speaker?: string;
   text: string;
   sound?: 'wolf.bark' | 'wolf.howl';
+  /**
+   * A control taught at the top of this round (docs/stories.md §1c), once an account: plain game
+   * words, the thing it names lit on the board (view/run/tipStaging.ts, by the tip's id).
+   */
+  tip?: Tip;
 }
 
 export type StoryBeat =
@@ -223,6 +229,8 @@ export interface StoryDefinition {
   id: string;
   name: string;
   chapters: readonly StoryChapter[];
+  /** Chapters planned for each Cycle, built or not, so the select's marks count the whole of it. */
+  plannedChapters: Readonly<Record<number, number>>;
 }
 
 /**
@@ -343,13 +351,26 @@ export function chapterById(stories: readonly StoryDefinition[], chapterId: stri
 }
 
 /** Each Cycle's mark on the Story select: done once every chapter set in it is, current where the next chapter is. */
-export function storyCyclePips(story: StoryDefinition, done: readonly string[]): ('done' | 'now' | null)[] {
+/**
+ * The Story select's marks (docs/stories.md §10): one a chapter of the Cycle the Story stands in,
+ * planned ones included, finished ones lit and the next one ringed.
+ */
+export function storyChapterPips(story: StoryDefinition, done: readonly string[]): { cycle: number; marks: ('done' | 'now' | null)[] } {
   const next = nextChapter(story, done);
-  return [1, 2, 3, 4, 5].map((cycle) => {
-    const chapters = story.chapters.filter((c) => c.cycle === cycle);
-    if (next?.cycle === cycle) return 'now';
-    return chapters.length > 0 && chapters.every((c) => done.includes(c.id)) ? 'done' : null;
+  const cycle = next?.cycle ?? story.chapters[story.chapters.length - 1]?.cycle ?? 1;
+  const built = story.chapters.filter((c) => c.cycle === cycle);
+  const count = Math.max(story.plannedChapters[cycle] ?? 0, built.length);
+  const marks = Array.from({ length: count }, (_, i) => {
+    const chapter = built[i];
+    if (chapter && done.includes(chapter.id)) return 'done' as const;
+    return chapter && chapter.id === next?.id ? ('now' as const) : null;
   });
+  return { cycle, marks };
+}
+
+/** A chapter's place in its Story, 1-based: chapter 1 is the prologue. */
+export function chapterNumber(story: StoryDefinition, chapterId: string): number {
+  return story.chapters.findIndex((c) => c.id === chapterId) + 1;
 }
 
 /** The cue for the round the board stands on, if the beat has one. */

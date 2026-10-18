@@ -24,6 +24,8 @@ import {
   STORY_ENEMY_SIDE,
   STORY_PLAYER_SIDE,
   autoStage,
+  chapterNumber,
+  storyChapterPips,
   endsStoryAct,
   stageAt,
   storyActMap,
@@ -35,6 +37,7 @@ import {
   type StoryLine,
 } from '../src/run/story';
 import { storyCatalog } from '../src/data/stories';
+import { TIP_STAGING } from '../src/view/run/tipStaging';
 import { rosterHeroes } from '../src/data/content';
 import { MAP_NODE_TYPES } from '../src/run/map';
 import { levelOf } from '../src/run/growth';
@@ -342,4 +345,31 @@ test('story stage: every mark and move names someone in the scene, and moves acc
   assert.strictEqual(stageAt(cast, undefined, lines, 1).a.x, 60);
   assert.strictEqual(stageAt(cast, undefined, lines, 2).a.x, 60);
   assert.strictEqual(stageAt(cast, undefined, lines, 2).b.off, true);
+});
+
+test('story select: a Story marks every chapter its Cycle plans, the finished lit and the next ringed', () => {
+  const valor = storyCatalog[0];
+  const ids = valor.chapters.map((c) => c.id);
+  assert.deepStrictEqual(storyChapterPips(valor, []), { cycle: 1, marks: ['now', null, null, null, null] });
+  assert.deepStrictEqual(storyChapterPips(valor, ids.slice(0, 2)).marks, ['done', 'done', 'now', null, null]);
+  assert.strictEqual(chapterNumber(valor, ids[0]), 1);
+});
+
+test('story tips: every control tip is short, unique, and lights something', () => {
+  const seen = new Set<string>();
+  for (const story of storyCatalog) {
+    for (const chapter of story.chapters) {
+      for (const beat of chapter.beats) {
+        if (beat.kind !== 'fight') continue;
+        for (const cue of beat.cues ?? []) {
+          if (!cue.tip) continue;
+          assert.ok(!seen.has(cue.tip.id), `${cue.tip.id} is used twice`);
+          seen.add(cue.tip.id);
+          assert.ok(cue.tip.pages.length >= 1 && cue.tip.pages.length <= 3, `${cue.tip.id} runs past three pages`);
+          assert.ok(TIP_STAGING[cue.tip.id], `${cue.tip.id} has no staging`);
+        }
+      }
+    }
+  }
+  assert.ok(seen.size > 0);
 });

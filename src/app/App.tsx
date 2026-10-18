@@ -128,7 +128,7 @@ import { LoreScreen } from '../view/run/LoreScreen';
 import { StorySelectScreen } from '../view/story/StorySelectScreen';
 import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
 import { storyCatalog } from '../data/stories';
-import { chapterById, endsStoryAct, storyActRun, storyNodeEncounter, storyNodeSpec, type StoryAct } from '../run/story';
+import { chapterById, chapterNumber, endsStoryAct, storyActRun, storyNodeEncounter, storyNodeSpec, type StoryAct } from '../run/story';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
 import {
@@ -1517,12 +1517,14 @@ export function App() {
         <StoryChapterScreen
           key={`${screen.chapterId}:${screen.beat ?? 0}`}
           chapter={chapterById(storyCatalog, screen.chapterId)!.chapter}
+          number={chapterNumber(chapterById(storyCatalog, screen.chapterId)!.story, screen.chapterId)}
           startBeat={screen.beat ?? 0}
           onStartAct={(act, beat) => handleStartStoryAct(act, screen.chapterId, beat)}
           onFinished={() => handleStoryChapterDone(screen.chapterId)}
           onQuit={() => setScreen({ kind: 'title' })}
           onFallSeen={() => markTipSeen(LORE_TIP_ID)}
           onPlace={setStoryPlaceId}
+          tips={{ seenIds: profile.seenTipIds, onSeen: markTipSeen }}
         />
       )}
 
