@@ -76,10 +76,14 @@ brings tips back that the 2026-10-13 cut removed, but only inside the prologue's
 | The clearing | 2 | **Switching**: the one coming in doesn't act; the bench regains Mana | the Switch key, then the bars |
 | The clearing | 4 | **Rest**: no Mana for any move, so Rest skips the turn and refills it | the Rest row |
 
-The bench and item tips still fire where they belong, in chapter 2's act. The general round tip
-(`fight.basics`) is marked seen when chapter 1 ends, since its first two tips say the same.
-**Not yet taught anywhere:** the Bag (potions as a free action), the matchup arrows on a move, and
-holding a move to read it.
+Chapter 2's act teaches the rest (2026-10-18, per user direction): an act's fight can carry cues
+and tips too (`StoryActNode.cues`). Its opener teaches **Matchups** (the arrows under a move's
+number, and holding a move to read it), and the Ursa fight teaches **the Bag** (a potion costs no
+turn, restores half). The bench and item tips still fire where they belong, in the same act. The
+general round tip (`fight.basics`) is marked seen when chapter 1 ends, since its tips say the same.
+
+**A tip page ignores taps for its first ~half second** (`TipOverlay`, every tip in the game): a
+player tapping through a round's playback dismissed a tip unread when it landed under the tap.
 
 ## 2. The shape
 
@@ -277,17 +281,22 @@ three, items, levels and the Rest**.
   so the first bench.
 - **The act** (Wild's Edge, five rows): a Fight → Items / Rest / Boon → a Fight → Rest / Items /
   Mana Well → an Elite. The enemies are **the first Titanspawn**, the land turning: Cubling and
-  Sproutling, then Rivetling, Cubling and Sproutling, then a Ravager leading Sproutling and
-  Rivetling. The later two fights hold a third on the bench.
+  Sproutling, then Rivetling, Cubling and Sproutling, then **an Ursa** (per user direction: thematic,
+  and a real challenge): a turned bear at level 15 (Claw, Maul, Prowl) with a Sproutling that can
+  Renew it and a Cubling on the bench. Ren warns *don't stand in front of it*. The later two fights
+  hold a third on the bench.
 - **Every drop is authored** (per user direction, same day): each fight names its one item and each
   Items chest its three, all suited to the party (`test/story.test.ts` checks each piece grants a
   stat someone in the party uses). A Story act drops **no random Gem, Contract or flask**. The tips
   that fire are the ones that belong: the bench at the first lead pick, the item at the first gear.
   The round's tip is marked seen when the prologue ends.
-- **Measured, directional** (skilled sim pilot vs the game's AI, 200 seeds a fight): the opener and
-  the second fight are won in 2–3 rounds with the party almost untouched; the Elite takes ~5 rounds,
-  leaves the party at ~67% and sometimes costs a hero. The player's levels and gear are the dial; the
-  user tunes by playing.
+- **Measured, directional** (200 seeds a fight): the opener and the second fight are won in 2–3
+  rounds with the party almost untouched. **The Ursa** takes ~5 rounds and leaves the party at ~54%
+  with about one hero down, for the skilled pilot and for the game's own AI flying the party alike
+  (100% / 98% won), before the act's carried wounds. The sims put it short of *forcing* the Bag or a
+  switch: Ren (Crescent Cut at Attack S) carries chapter 2's fights. Raising the bear's level barely
+  moved it; the levers left are Ren's kit or level in this chapter, and wounds. The user tunes by
+  playing.
 
 The deterministic question in the earlier proposal is settled the simple way: only the prologue is
 scripted round by round. From chapter 2 the fights are the player's.

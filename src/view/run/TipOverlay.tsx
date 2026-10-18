@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import { parseTipText, type Tip, type TipIconToken } from '../../run/tips';
@@ -186,6 +186,9 @@ interface Props {
  * Portalled through overlayHost, never document.body: the shell is the transform-scaled design
  * canvas (the standing rule in overlayHost.ts).
  */
+/** How long a fresh page ignores taps (ms). */
+const TAP_GUARD_MS = 450;
+
 export function TipOverlay({ tip, onDone }: Props) {
   const [step, setStep] = useState(0);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -203,7 +206,14 @@ export function TipOverlay({ tip, onDone }: Props) {
   const placement: Placement | 'low' =
     staging?.placement === 'low' ? 'low' : choosePlacement(holes, overlayRef.current?.clientHeight ?? 0);
 
+  // A page lands while the player may still be tapping through what it interrupts: those taps must not dismiss it unread.
+  const shownAt = useRef(performance.now());
+  useEffect(() => {
+    shownAt.current = performance.now();
+  }, [index]);
+
   function advance() {
+    if (performance.now() - shownAt.current < TAP_GUARD_MS) return;
     if (last) {
       playSfx('ui.confirm');
       onDone();

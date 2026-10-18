@@ -246,6 +246,8 @@ export interface StoryActNode {
   items?: readonly string[];
   /** A patron seat's patron(s), one a tile. The seat must stand on a patron row (run/map.ts PATRON_ROWS). */
   patrons?: readonly string[];
+  /** A fight's lines over the stage and its control tips, as a Story fight's (StoryCue). */
+  cues?: readonly StoryCue[];
 }
 
 /**

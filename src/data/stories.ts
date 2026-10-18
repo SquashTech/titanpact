@@ -83,11 +83,58 @@ const northRoad: StoryAct = {
     { rosterId: 'ren', heroId: CAST.ren, level: 6 },
   ],
   rows: [
-    [{ type: 'fight', enemy: [{ rosterId: 'cub', heroId: 'cubling', level: 6 }, { rosterId: 'sprout', heroId: 'sproutling', level: 6 }], drop: 'dagger.common.feral' }],
+    [
+      {
+        type: 'fight',
+        enemy: [{ rosterId: 'cub', heroId: 'cubling', level: 6 }, { rosterId: 'sprout', heroId: 'sproutling', level: 6 }],
+        drop: 'dagger.common.feral',
+        cues: [
+          {
+            round: 1,
+            speaker: 'Ren',
+            text: 'Turned things. Hit them where it hurts.',
+            tip: {
+              id: 'story.arrows',
+              title: 'Matchups',
+              pages: [
+                "The arrows under a move's number show how it hits each enemy: [super] double, [resist] half. Strike where it hurts.",
+                'Hold a move to read everything it does.',
+              ],
+            },
+          },
+        ],
+      },
+    ],
     [{ type: 'equipmentReward', items: ['greataxe.common', 'leathers.common.feral', 'shield.common'] }, { type: 'restReward' }, { type: 'passiveReward' }],
     [{ type: 'fight', enemy: [{ rosterId: 'rivet', heroId: 'rivetling', level: 8 }, { rosterId: 'cub', heroId: 'cubling', level: 8 }, { rosterId: 'sprout', heroId: 'sproutling', level: 7 }], drop: 'spear.common.tempered' }],
     [{ type: 'restReward' }, { type: 'equipmentReward', items: ['boots.common', 'plate.common', 'dagger.common.tempered'] }, { type: 'manaWellReward' }],
-    [{ type: 'elite', enemy: [{ rosterId: 'ravager', heroId: 'ravager', level: 9 }, { rosterId: 'sprout', heroId: 'sproutling', level: 8 }, { rosterId: 'rivet', heroId: 'rivetling', level: 8 }], drop: 'sword.rare.tempered' }],
+    [
+      {
+        type: 'elite',
+        enemy: [
+          { rosterId: 'bear', heroId: 'ursa', level: 15, moveIds: ['claw', 'maul', 'prowl'] },
+          { rosterId: 'sprout', heroId: 'sproutling', level: 12 },
+          { rosterId: 'cub', heroId: 'cubling', level: 12 },
+        ],
+        drop: 'sword.rare.tempered',
+        cues: [
+          { round: 1, speaker: 'Ren', text: "A bear the turning got to. Don't stand in front of it.", sound: 'wolf.bark' },
+          {
+            round: 2,
+            speaker: 'Valor',
+            text: 'Hold on, Fang!',
+            tip: {
+              id: 'story.bag',
+              title: 'The Bag',
+              pages: [
+                'The Bag holds potions for the whole team. Drinking one costs no turn: drink, then choose a move as usual.',
+                "Each potion restores half of a hero's health or Mana. Find more after fights.",
+              ],
+            },
+          },
+        ],
+      },
+    ],
   ],
 };
 

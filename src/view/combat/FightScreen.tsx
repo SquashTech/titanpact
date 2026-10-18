@@ -885,7 +885,7 @@ export function FightScreen({
   const stepIndex = canAct ? Math.min(actionStep, playerActiveAlive.length - 1) : 0;
   const actingId: string | null = canAct ? playerActiveAlive[stepIndex] : null;
   const guide = story && actingId ? guidedAction(story, combat, actingId) : null;
-  const storyCue = story ? cueFor(storyCues, combat.round) : null;
+  const storyCue = storyCues ? cueFor(storyCues, combat.round) : null;
   const cueSounded = useRef<number | null>(null);
   useEffect(() => {
     if (!storyCue?.sound || resolving || winner || cueSounded.current === combat.round) return;

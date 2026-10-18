@@ -1650,6 +1650,8 @@ export function App() {
           exitLabel={playerRun.story ? 'Leave the Story' : undefined}
           saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
           tips={{ nodeType: playerRun.map!.nodes[screen.nodeId].type, seenIds: profile.seenTipIds, onSeen: markTipSeen }}
+          storyCues={playerRun.story ? storyNodeSpec(playerRun, storyCatalog, screen.nodeId)?.cues : undefined}
+          storyTips={playerRun.story ? { seenIds: profile.seenTipIds, onSeen: markTipSeen } : undefined}
           cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'finale'}
         />
       )}

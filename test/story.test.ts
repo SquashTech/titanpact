@@ -360,8 +360,9 @@ test('story tips: every control tip is short, unique, and lights something', () 
   for (const story of storyCatalog) {
     for (const chapter of story.chapters) {
       for (const beat of chapter.beats) {
-        if (beat.kind !== 'fight') continue;
-        for (const cue of beat.cues ?? []) {
+        const cues =
+          beat.kind === 'fight' ? beat.cues ?? [] : beat.kind === 'act' ? beat.act.rows.flatMap((row) => row.flatMap((node) => node.cues ?? [])) : [];
+        for (const cue of cues) {
           if (!cue.tip) continue;
           assert.ok(!seen.has(cue.tip.id), `${cue.tip.id} is used twice`);
           seen.add(cue.tip.id);
