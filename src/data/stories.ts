@@ -67,7 +67,7 @@ const forestRoad: StoryAct = {
     [{ type: 'patronSeat', patrons: ['swordsman'] }],
     [
       { type: 'elite', enemy: [{ rosterId: 'hoar', heroId: 'hoarfang', level: 11 }, { rosterId: 'pebble', heroId: 'pebbling', level: 10 }, { rosterId: 'sleet', heroId: 'sleetling', level: 10 }], drop: 'spear.rare.tempered' },
-      { type: 'skirmish', enemy: [{ rosterId: 'volt', heroId: 'voltail', level: 5 }, { rosterId: 'gear', heroId: 'gearhound', level: 5 }], drop: 'plate.rare' },
+      { type: 'skirmish', enemy: [{ rosterId: 'volt', heroId: 'voltail', level: 7 }, { rosterId: 'gear', heroId: 'gearhound', level: 7 }], drop: 'plate.rare' },
     ],
     [{ type: 'restReward' }, { type: 'equipmentReward', items: ['shield.rare', 'plate.rare', 'greataxe.rare.tempered'] }, { type: 'manaWellReward' }],
     [{ type: 'elite', enemy: [{ rosterId: 'bramble', heroId: 'bramblehide', level: 11 }, { rosterId: 'gear', heroId: 'gearhound', level: 11 }, { rosterId: 'whim', heroId: 'whimling', level: 10 }], drop: 'greataxe.rare.tempered' }],
@@ -154,7 +154,7 @@ const theClearing: StoryFight = {
   guide: [
     [{ actor: 'valor', moveId: 'ironFist', target: foe('faceless') }, { actor: 'fang', moveId: 'claw', target: foe('faceless') }],
     [{ actor: 'valor', switchTo: 'ren' }, { actor: 'fang', switchTo: 'will' }],
-    [{ actor: 'ren', moveId: 'crescentCut', target: foe('faceless') }, { actor: 'will', moveId: 'thunderclap', target: foe('faceless') }],
+    [{ actor: 'ren', moveId: 'galeSever' }, { actor: 'will', moveId: 'thunderclap', target: foe('faceless') }],
     [{ actor: 'ren', rest: true }, { actor: 'will', moveId: 'thunderclap', target: foe('faceless') }],
   ],
   endsWhen: [

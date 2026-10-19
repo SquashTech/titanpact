@@ -110,7 +110,7 @@ escapes. It also means a chapter set in a Cycle is only played by someone who ha
 |---|---|---|
 | **Valor** | The lead. A monster hunter's daughter who hasn't been allowed the blade | Prologue Valor is **swordless**: a new sprite, fighting with Iron Fist. The sword is something she gains. |
 | **Fang** | Valor's wolf; the two of them are a pairing | Doesn't speak; reacts through animation. |
-| **Ren, the Swordsman** | Valor's father, the family's master of the blade | **Playable in Stories** (§6). |
+| **Ren, the Swordsman** | Valor's father, the family's master of the blade | **Playable in Stories** (§6). **Weakened 2026-10-18** (per user direction): he carried every fight, so he is the family's wall now, not its blade. Attack 80 / Defense 80 / Mana 40, grades Attack B and Defense A, kit Heavy Blow and Gale Sever. **Crescent Cut left his kit**, so it is the move he teaches Valor at his seat: the student learns her father's cut. |
 | **Valor's younger brother** | Already being trained, which Valor resents | Name and type open (§8). |
 | **The Endbringer** | The Titan's Herald | **Arrives before the Titan** (§4). |
 
@@ -293,10 +293,9 @@ three, items, levels and the Rest**.
 - **Measured, directional** (200 seeds a fight): the opener and the second fight are won in 2–3
   rounds with the party almost untouched. **The Ursa** takes ~5 rounds and leaves the party at ~54%
   with about one hero down, for the skilled pilot and for the game's own AI flying the party alike
-  (100% / 98% won), before the act's carried wounds. The sims put it short of *forcing* the Bag or a
-  switch: Ren (Crescent Cut at Attack S) carries chapter 2's fights. Raising the bear's level barely
-  moved it; the levers left are Ren's kit or level in this chapter, and wounds. The user tunes by
-  playing.
+  (100% / 98% won), before the act's carried wounds. **With Ren weakened** the bear wins 94.5% for the
+  game's own AI flying the party (49% HP left, about one hero down) and 99.5% for the skilled pilot
+  (59%). The rest is the user's to tune by playing.
 
 The deterministic question in the earlier proposal is settled the simple way: only the prologue is
 scripted round by round. From chapter 2 the fights are the player's.
@@ -333,15 +332,17 @@ rather than a new character**, 2026-10-18).
     must sit on a patron row (`PATRON_ROWS`, rows 2 and 6); the test pins it.
   - **The fork is the type lesson.** The Elite is Hoarfang, Pebbling and Sleetling (Frost, Stone),
     a level above the party but Iron's prey. The Skirmish is Voltail and Gearhound (Storm, Mech), at
-    level 5 but double against everyone. The preview shows it: the Elite's grid is green for the
+    level 7 but double against everyone. The preview shows it: the Elite's grid is green for the
     Iron pair and red for Fang, and the Skirmish's is red across the party.
   - **The last Elite** mixes it up (Bramblehide, Gearhound, Whimling), so leads have to be chosen
     on the matchups.
 - **Story nodes get their own map card:** the authored enemy levels, XP, gold and one item, with
   no Gem, recruit or Contract line (`storyNodeDossier`).
 - **Measured, directional** (skilled sim pilot, 200 seeds): the opener is won in ~2.5 rounds
-  untouched; **the Elite at the fork wins 100% with ~79% HP left; the Skirmish wins 86% with ~40%
-  left and ~2 heroes down**; the last Elite wins 99% with ~59% left (re-measured with Solace). A lost fight replays the whole
+  untouched; **the Elite at the fork wins 100% with ~74% HP left and 0.7 heroes down; the Skirmish
+  wins 97.5% with ~43% left and 1.7 heroes down**; the last Elite wins 100% with ~51% left
+  (re-measured with Solace and the weakened Ren, who soaks the Skirmish's Storm and Mech hits: the
+  wrong pick now costs heroes rather than the act). A lost fight replays the whole
   act, so the Skirmish's level is the dial to watch in play.
 
 ## 12. Valor's brother, Will (name decided; the rest PROPOSED)

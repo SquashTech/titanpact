@@ -27,14 +27,15 @@ export const storyCast: Record<string, HeroDefinition> = {
     moveIds: ['ironFist', 'fortify'],
     growthGrades: { hp: 'A', attack: 'A', defense: 'B', intelligence: 'C', wisdom: 'B', speed: 'B', manaPool: 'C' },
   },
-  // Ren, the Swordsman: Iron, his patron cuts' type (docs/stories.md §12).
+  // Ren, the Swordsman: Iron, his patron cuts' type (docs/stories.md §12). The family's wall, not its blade:
+  // he holds the line and runs dry, and Crescent Cut is the move he teaches Valor, not one he swings.
   [STORY_CAST_IDS.ren]: {
     id: STORY_CAST_IDS.ren,
     name: 'Ren',
     types: ['Iron'],
-    baseStats: { hp: 200, attack: 100, defense: 65, intelligence: 20, wisdom: 50, speed: 60, manaPool: 55, mpRegen: 10 },
-    moveIds: ['crescentCut', 'galeSever'],
-    growthGrades: { hp: 'B', attack: 'S', defense: 'B', intelligence: 'F', wisdom: 'B', speed: 'A', manaPool: 'C' },
+    baseStats: { hp: 220, attack: 80, defense: 80, intelligence: 20, wisdom: 60, speed: 50, manaPool: 40, mpRegen: 10 },
+    moveIds: ['heavyBlow', 'galeSever'],
+    growthGrades: { hp: 'A', attack: 'B', defense: 'A', intelligence: 'F', wisdom: 'A', speed: 'B', manaPool: 'C' },
   },
   // Will: Storm, quick and light, trained in his father's cut (docs/stories.md §12).
   [STORY_CAST_IDS.will]: {
@@ -78,7 +79,7 @@ export const storyCast: Record<string, HeroDefinition> = {
     id: STORY_CAST_IDS.endbringer,
     name: 'The Faceless',
     types: ['Ancient'],
-    baseStats: { hp: 200, attack: 60, defense: 60, intelligence: 70, wisdom: 60, speed: 40, manaPool: 200, mpRegen: 25 },
+    baseStats: { hp: 195, attack: 60, defense: 60, intelligence: 70, wisdom: 60, speed: 40, manaPool: 200, mpRegen: 25 },
     moveIds: ['erode', 'transfix'],
     passiveIds: [STORY_UNDYING_ID],
   },
