@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>World Map</title>
+<style>
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1d1c1a;--mute:#6b675f;--line:#e2ddd2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}}
+:root[data-theme="dark"]{--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 12px;max-width:820px}
+.names{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 10px;color:var(--mute);font-size:13px}
+.names button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer}
+.names button.on{border-color:#e0a63c;box-shadow:0 0 0 1px #e0a63c inset}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;margin-top:16px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+h2{font-size:15px;margin:0 0 2px}
+section p{margin:0 0 10px;color:var(--mute);font-size:13px}
+.layout{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;margin-top:22px}
+.layout img{width:180px;image-rendering:pixelated;border-radius:6px;border:1px solid var(--line)}
+.layout div{max-width:560px;color:var(--mute);font-size:13px}
+
+/* The phone */
+.phone{position:relative;width:100%;max-width:340px;aspect-ratio:9/18.5;margin:0 auto;border-radius:16px;overflow:hidden;background:#07080d;color:#edeff4;box-shadow:0 0 0 6px #0c0d12,0 8px 24px rgba(0,0,0,.35)}
+.phone svg{position:absolute;left:0;top:0;width:100%;height:auto;display:block}
+.px{image-rendering:pixelated}
+.foot{position:absolute;left:0;right:0;bottom:0;padding:34px 16px 16px;background:linear-gradient(180deg,rgba(7,8,13,0),#07080d 40%);display:flex;flex-direction:column;align-items:center;gap:10px}
+.line{font:italic 13px/1.3 Georgia,serif;color:#d9d2c2;text-align:center;min-height:17px}
+.plate{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;font:900 14px/1 system-ui,-apple-system,Segoe UI,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#f3ecda;text-shadow:0 0 10px rgba(255,233,176,.55),0 1px 0 #000;background:#0b0d16;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px);box-shadow:inset 0 0 0 2px var(--c,#e0a63c),inset 0 -5px 0 #05060b}
+.plate .mk{width:7px;height:7px;transform:rotate(45deg);background:currentColor;opacity:.8}
+.chart .line{color:#3a2e22}
+.chart .plate{background:#2a2118;--c:#8a6a3a}
+
+/* Shared overlay vocabulary, each treatment re-colours it */
+.lbl{font:600 10.5px Georgia,'Times New Roman',serif;letter-spacing:.02em;paint-order:stroke;stroke-width:3px;stroke-linejoin:round}
+.lbl.big{font-size:13px;font-weight:800}
+.lbl.dim{opacity:.4}
+.pulse{animation:pulse 2.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pulse{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
+.glow{animation:glow 3.4s ease-in-out infinite}
+@keyframes glow{0%,100%{opacity:.55}50%{opacity:1}}
+.road{stroke-dasharray:2 5;stroke-linecap:round;fill:none}
+.road.draw{stroke-dasharray:3 4;animation:march 1.2s linear infinite}
+@keyframes march{to{stroke-dashoffset:-14}}
+@media (prefers-reduced-motion:reduce){.pulse,.glow,.road.draw{animation:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>The world map</h1>
+<p class="sub">First shown when the Titan falls at the end of A Tale of Valor's prologue, then between acts. North is up. The city (unnamed) is the centre, Wild's Edge just north of it, and the river runs out of the Titan's crater, through the forest and the city, to the Necropolis at its mouth. The layout is the same in every treatment; only the drawing changes. Docs: <code>docs/world-map.md</code>.</p>
+<div class="names" id="moments">Moment: </div>
+<div class="names" id="cityNames">The city: </div>
+<div class="names" id="paints">Painting (A): </div>
+<div class="grid" id="grid"></div>
+<div class="layout"><img src="layout-rich.png" alt=""><div><b>The layout the painting was made from.</b> Laid by hand so the geography is exactly the doc's, then painted over in PixelLab. Moving a place on the painted map means re-laying this and repainting; the two vector treatments only change a coordinate.</div></div>
+</main>
+<script>
+const ART = '../../../';
+const W = 360, H = 640;
+let CRATER = { x: 185, y: 110 };
+let CITY = { x: 190, y: 366 };
+// seal: one of the six base seals. cycle: the Cycle that grants it. lost: the Cycle it's lost in.
+let PLACES = [
+  { id: 'wildsEdge', name: "Wild's Edge", x: 138, y: 304, seal: true, lost: 3, anchor: 'end', lx: 14, ly: -10 },
+  { id: 'forbiddenForest', name: 'Forbidden Forest', x: 172, y: 232, seal: true, ly: -40 },
+  { id: 'stormCoast', name: 'Storm Coast', x: 52, y: 322, seal: true, lx: 2, anchor: 'start', ly: 26 },
+  { id: 'moltenFoundry', name: 'Molten Foundry', x: 296, y: 292, seal: true, anchor: 'end', lx: 8, ly: 22 },
+  { id: 'necropolis', name: 'Necropolis', x: 80, y: 528, seal: true, ly: 26 },
+  { id: 'blightedShrine', name: 'Blighted Shrine', x: 288, y: 492, seal: true, anchor: 'end', lx: 10, ly: 28 },
+  { id: 'holySanctum', name: 'Holy Sanctum', x: 216, y: 440, cycle: 2, anchor: 'start', lx: 12, ly: 4 },
+  { id: 'frozenReach', name: 'Frozen Reach', x: 84, y: 54, cycle: 3, ly: 34 },
+  { id: 'dreamingSpires', name: 'Dreaming Spires', x: 214, y: 566, cycle: 3, ly: 30 },
+  { id: 'thunderAerie', name: 'Thunder Aerie', x: 306, y: 112, cycle: 4, anchor: 'end', lx: 4, ly: 26 },
+];
+let byId = Object.fromEntries(PLACES.map((p) => [p.id, p]));
+const BASE = { CRATER, CITY, PLACES };
+// Each painting placed things a little differently; the marks follow the painting
+const PAINT_POS = {
+  'painted-1.png': { crater: [193, 74], city: [193, 356], wildsEdge: [136, 312], forbiddenForest: [180, 200], moltenFoundry: [318, 296], necropolis: [70, 530], blightedShrine: [310, 482], dreamingSpires: [228, 590], frozenReach: [75, 44], stormCoast: [40, 330], holySanctum: [232, 430] },
+  'painted-2.png': { crater: [185, 72], city: [193, 365], wildsEdge: [110, 322], forbiddenForest: [169, 200], moltenFoundry: [312, 286], necropolis: [66, 552], blightedShrine: [300, 500], dreamingSpires: [225, 598], frozenReach: [70, 36], stormCoast: [36, 300], holySanctum: [232, 440] },
+};
+function placeFor(t) {
+  const o = t.key === 'a' ? PAINT_POS[PAINT] : {};
+  const at = (k, d) => o[k] ? { x: o[k][0], y: o[k][1] } : d;
+  CRATER = at('crater', BASE.CRATER); CITY = at('city', BASE.CITY);
+  PLACES = BASE.PLACES.map((p) => o[p.id] ? { ...p, x: o[p.id][0], y: o[p.id][1] } : p);
+  byId = Object.fromEntries(PLACES.map((p) => [p.id, p]));
+}
+
+const MOMENTS = {
+  reveal: { label: 'Prologue: the fall', cycle: 1, here: 'wildsEdge', trail: [], locked: [], next: null, fall: true, line: 'It came down north of the city.', plate: 'Continue' },
+  act3: { label: 'Classic: into Act 3', cycle: 1, here: 'stormCoast', trail: ['wildsEdge', 'stormCoast'], locked: ['wildsEdge', 'stormCoast'], next: 'moltenFoundry', line: 'Two rings locked. The road turns east.', plate: 'Onward' },
+  winter: { label: 'Cycle III: the Long Winter', cycle: 3, here: 'frozenReach', trail: [], locked: [], next: null, winter: true, line: 'The winter came down from the Reach.', plate: 'Seal the Pact' },
+};
+let MOMENT = new URLSearchParams(location.search).get('m') || 'reveal';
+let CITY_NAME = 'The City';
+let PAINT = new URLSearchParams(location.search).get('p') === '2' ? 'painted-2.png' : 'painted-1.png';
+const PAINTS = ['painted-1.png', 'painted-2.png'];
+
+const visible = (p, m) => !p.cycle || m.cycle >= p.cycle;
+const isLost = (p, m) => p.lost && m.cycle >= p.lost;
+const RIVER = 'M185,140 Q168,200 150,270 Q158,320 190,366 Q172,420 158,450 Q130,500 108,560 Q100,590 100,640';
+const LAND = 'M75,0 L360,0 L360,640 L262,640 Q236,612 204,618 Q152,628 120,604 Q86,582 62,560 Q30,522 42,472 Q56,432 32,402 Q14,362 30,322 Q46,282 26,242 Q18,202 44,172 Q62,142 42,112 Q30,70 75,0 Z';
+const RANGE = [[300,60],[318,80],[296,120],[322,140],[300,170],[326,200],[304,230],[330,260],[310,320],[326,350],[306,380],[284,150],[288,210],[290,350]];
+
+// Seeded scatter so every render places trees the same
+function rng(seed) { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
+const trees = (() => { const r = rng(3), out = []; for (let i = 0; i < 70; i++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()); out.push([172 + Math.cos(a) * 66 * d, 232 + Math.sin(a) * 44 * d]); } return out; })();
+const stars = (() => { const r = rng(9), out = []; for (let i = 0; i < 90; i++) out.push([r() * W, r() * H, r()]); return out; })();
+
+// The Titan: the title's falling body lying in the crater, the magenta under it
+function titan(t) {
+  const { x, y } = CRATER;
+  return `<g>
+    <ellipse cx="${x}" cy="${y}" rx="40" ry="28" fill="${t.crater}" stroke="${t.craterRim}" stroke-width="3"/>
+    <ellipse class="glow" cx="${x}" cy="${y + 4}" rx="22" ry="11" fill="rgba(242,71,220,.35)"/>
+    <ellipse cx="${x}" cy="${y + 5}" rx="10" ry="3" fill="#f247dc" class="glow"/>
+    <image class="px" href="${ART}art/title/fallingTitan.png" x="${x - 20}" y="${y - 34}" width="40" height="60" transform="rotate(78 ${x} ${y})" style="filter:drop-shadow(0 0 1.5px rgba(242,71,220,.9)) drop-shadow(0 0 4px rgba(242,71,220,.4))"/>
+  </g>`;
+}
+function fallTrail(m) {
+  if (!m.fall) return '';
+  return `<path d="M352,-10 Q290,40 ${CRATER.x + 6},${CRATER.y - 8}" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="7" stroke-linecap="round"/>
+    <path d="M352,-10 Q290,40 ${CRATER.x + 6},${CRATER.y - 8}" fill="none" stroke="rgba(242,71,220,.55)" stroke-width="1.5" stroke-linecap="round" class="glow"/>`;
+}
+// A seal: an open ring (a gap) or a locked one, chained to the crater
+function seal(p, m, t) {
+  if (!p.seal || isLost(p, m)) return '';
+  const locked = m.locked.includes(p.id);
+  const ring = locked
+    ? `<circle cx="${p.x}" cy="${p.y}" r="11" fill="none" stroke="${t.sealOn}" stroke-width="2"/>`
+    : `<circle cx="${p.x}" cy="${p.y}" r="11" fill="none" stroke="${t.sealOff}" stroke-width="1.5" stroke-dasharray="52 17" transform="rotate(-60 ${p.x} ${p.y})"/>`;
+  const chain = locked ? `<line x1="${p.x}" y1="${p.y}" x2="${CRATER.x}" y2="${CRATER.y}" stroke="${t.sealOn}" stroke-width="1.2" stroke-dasharray="4 3" opacity=".7"/>` : '';
+  return chain + ring;
+}
+function mark(p, m, t) {
+  const here = m.here === p.id, next = m.next === p.id, visited = m.trail.includes(p.id);
+  const lost = isLost(p, m);
+  const lit = here || next || visited || (m.fall && p.id === 'wildsEdge');
+  const fill = lost ? t.lostDot : lit ? t.dotOn : t.dot;
+  const dot = t.glyph(p, fill, lit);
+  const ring = next || here ? `<circle class="pulse" cx="${p.x}" cy="${p.y}" r="16" fill="none" stroke="${t.here}" stroke-width="2"/>` : '';
+  const anchor = p.anchor || 'middle';
+  const lx = p.x + (anchor === 'start' ? (p.lx || 14) : anchor === 'end' ? -(p.lx || 14) : 0);
+  const label = `<text class="lbl${lit || next ? '' : ' dim'}" x="${lx}" y="${p.y + (p.ly || 22)}" text-anchor="${anchor}" fill="${t.text}" stroke="${t.halo}">${p.name}</text>`;
+  return ring + dot + (lost ? '' : label);
+}
+function road(m, t) {
+  const pts = [CITY, ...m.trail.map((id) => byId[id])];
+  let d = pts.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(' ');
+  let out = m.trail.length ? `<path class="road" d="${d}" stroke="${t.road}" stroke-width="2"/>` : '';
+  if (m.next) {
+    const a = byId[m.here], b = byId[m.next];
+    out += `<path class="road draw" d="M${a.x},${a.y} Q${(a.x + b.x) / 2},${Math.min(a.y, b.y) - 40} ${b.x},${b.y}" stroke="${t.here}" stroke-width="2.5"/>`;
+  }
+  return out;
+}
+function city(t) {
+  return `${t.cityGlyph(CITY)}<text class="lbl big" x="${CITY.x}" y="${CITY.y + 30}" text-anchor="middle" fill="${t.text}" stroke="${t.halo}">${CITY_NAME}</text>`;
+}
+function winter(m, t) {
+  if (!m.winter) return '';
+  return `<defs><radialGradient id="snow${t.key}" cx="25%" cy="5%" r="70%"><stop offset="0" stop-color="${t.snow}" stop-opacity=".85"/><stop offset=".6" stop-color="${t.snow}" stop-opacity=".45"/><stop offset="1" stop-color="${t.snow}" stop-opacity="0"/></radialGradient></defs>
+    <path d="${LAND}" fill="url(#snow${t.key})"/>`;
+}
+function overlays(m, t) {
+  return winter(m, t) + fallTrail(m) + titan(t)
+    + `<text class="lbl" x="${CRATER.x}" y="${CRATER.y - 38}" text-anchor="middle" fill="${t.titanText}" stroke="${t.halo}">The Threshold</text>`
+    + PLACES.filter((p) => visible(p, m)).map((p) => seal(p, m, t)).join('')
+    + road(m, t) + city(t)
+    + PLACES.filter((p) => visible(p, m)).map((p) => mark(p, m, t)).join('');
+}
+
+// A · Painted
+const PAINTED = {
+  key: 'a', crater: 'rgba(8,6,10,.0)', craterRim: 'rgba(0,0,0,0)', text: '#f3ecda', halo: 'rgba(5,6,10,.85)', titanText: '#e9b3e0',
+  dot: 'rgba(243,236,218,.55)', dotOn: '#ffe7a8', lostDot: 'rgba(200,210,220,.35)', here: '#ffe7a8', road: 'rgba(255,231,168,.8)',
+  sealOff: 'rgba(243,236,218,.55)', sealOn: '#e0a63c', snow: '#e8f0f6',
+  glyph: (p, fill) => `<rect x="${p.x - 3.5}" y="${p.y - 3.5}" width="7" height="7" transform="rotate(45 ${p.x} ${p.y})" fill="${fill}"/>`,
+  cityGlyph: (c) => `<rect x="${c.x - 5}" y="${c.y - 5}" width="10" height="10" transform="rotate(45 ${c.x} ${c.y})" fill="#ffe7a8" stroke="#05060a" stroke-width="1.5"/>`,
+  base: () => `<image class="px" href="${PAINT}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="none"/><rect width="${W}" height="${H}" fill="rgba(5,6,12,.18)"/>`,
+};
+// B · Night land
+const NIGHT = {
+  key: 'b', crater: '#030305', craterRim: 'rgba(242,71,220,.35)', text: '#e9e4d6', halo: '#05060a', titanText: '#e9b3e0',
+  dot: 'rgba(233,228,214,.45)', dotOn: '#fff4d6', lostDot: 'rgba(200,210,220,.25)', here: '#ffe7a8', road: 'rgba(255,231,168,.75)',
+  sealOff: 'rgba(233,228,214,.4)', sealOn: '#e0a63c', snow: '#cfe0ee',
+  glyph: (p, fill, lit) => `<path d="M${p.x},${p.y - 6} L${p.x + 1.6},${p.y - 1.6} L${p.x + 6},${p.y} L${p.x + 1.6},${p.y + 1.6} L${p.x},${p.y + 6} L${p.x - 1.6},${p.y + 1.6} L${p.x - 6},${p.y} L${p.x - 1.6},${p.y - 1.6} Z" fill="${fill}" ${lit ? 'filter="url(#bglow)"' : ''}/>`,
+  cityGlyph: (c) => `<circle cx="${c.x}" cy="${c.y}" r="14" fill="rgba(255,210,122,.18)"/><path d="M${c.x},${c.y - 9} L${c.x + 2.5},${c.y - 2.5} L${c.x + 9},${c.y} L${c.x + 2.5},${c.y + 2.5} L${c.x},${c.y + 9} L${c.x - 2.5},${c.y + 2.5} L${c.x - 9},${c.y} L${c.x - 2.5},${c.y - 2.5} Z" fill="#ffd27a" filter="url(#bglow)"/>`,
+  base: () => `<defs><filter id="bglow" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <radialGradient id="bsky" cx="50%" cy="10%" r="90%"><stop offset="0" stop-color="#1a2140"/><stop offset=".6" stop-color="#0a0c16"/><stop offset="1" stop-color="#05060a"/></radialGradient></defs>
+    <rect width="${W}" height="${H}" fill="url(#bsky)"/>
+    ${stars.map(([x, y, o]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${o > .9 ? 1.3 : .8}" fill="#fff" opacity="${(.2 + o * .5).toFixed(2)}"/>`).join('')}
+    <path d="${LAND}" fill="#151b2c" stroke="rgba(233,228,214,.4)" stroke-width="1.5"/>
+    <path d="${RIVER}" fill="none" stroke="rgba(130,160,210,.5)" stroke-width="2.5"/>
+    ${RANGE.map(([x, y]) => `<path d="M${x - 13},${y + 9} L${x},${y - 9} L${x + 13},${y + 9}" fill="none" stroke="rgba(233,228,214,.3)" stroke-width="1.2"/>`).join('')}
+    ${trees.map(([x, y]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.3" fill="rgba(150,200,160,.4)"/>`).join('')}`,
+};
+// C · Cartographer's chart (flat face, ink only)
+const CHART = {
+  key: 'c', crater: '#1a1416', craterRim: '#3a2e22', text: '#2a2118', halo: '#e9dfc6', titanText: '#7a2a6e',
+  dot: '#6a5a44', dotOn: '#2a2118', lostDot: '#a8a090', here: '#a8341c', road: '#a8341c',
+  sealOff: '#8a6a3a', sealOn: '#a8341c', snow: '#ffffff',
+  glyph: (p, fill, lit) => `<circle cx="${p.x}" cy="${p.y}" r="${lit ? 4.5 : 3.5}" fill="${fill}" stroke="#e9dfc6" stroke-width="1"/>`,
+  cityGlyph: (c) => `<g fill="#e9dfc6" stroke="#2a2118" stroke-width="1.5"><rect x="${c.x - 12}" y="${c.y - 6}" width="24" height="14"/><rect x="${c.x - 15}" y="${c.y - 11}" width="7" height="19"/><rect x="${c.x + 8}" y="${c.y - 11}" width="7" height="19"/><rect x="${c.x - 4}" y="${c.y - 15}" width="8" height="10"/></g>`,
+  base: () => `<rect width="${W}" height="${H}" fill="#cdd6d0"/>
+    ${Array.from({ length: 26 }, (_, i) => { const y = 30 + i * 24, x = 10 + (i % 3) * 6; return `<path d="M${x},${y} q4,-3 8,0 q4,3 8,0" fill="none" stroke="#8a9c98" stroke-width="1"/>`; }).join('')}
+    <path d="${LAND}" fill="#e9dfc6" stroke="#2a2118" stroke-width="2"/>
+    <path d="${RIVER}" fill="none" stroke="#5a7090" stroke-width="2.5"/>
+    ${RANGE.map(([x, y]) => `<path d="M${x - 13},${y + 9} L${x},${y - 9} L${x + 13},${y + 9}" fill="#e9dfc6" stroke="#2a2118" stroke-width="1.4"/><path d="M${x},${y - 9} L${x + 5},${y + 9}" stroke="#2a2118" stroke-width=".8"/>`).join('')}
+    ${trees.map(([x, y]) => `<path d="M${x.toFixed(1)},${(y - 5).toFixed(1)} L${(x + 3).toFixed(1)},${(y + 2).toFixed(1)} L${(x - 3).toFixed(1)},${(y + 2).toFixed(1)} Z" fill="#4a5a3a"/>`).join('')}
+    <path d="M286,292 q10,-12 20,2" fill="none" stroke="#a8341c" stroke-width="2"/>
+    <text x="22" y="470" transform="rotate(-90 22 470)" style="font:italic 11px Georgia,serif;letter-spacing:.3em" fill="#5a6a68">THE WESTERN SEA</text>`,
+};
+const TREATMENTS = [
+  ['A · Painted', 'A PixelLab painting of the land at night, laid out from the doc\'s geography, with the places, seals and road drawn over it in the game\'s gold. Closest to the Location paintings. A moved place means a repaint.', PAINTED, 'night'],
+  ['B · Night land', 'The land as a dark shape under the title\'s night sky; places are stars, the city the brightest. Locked seals chain to the crater in gold, like the Pact Seal screen. All vector, so Cycles can change it freely.', NIGHT, 'night'],
+  ['C · Cartographer\'s chart', 'Ink on a flat parchment face (no grain), drawn trees and peaks, the road in red ink. The most readable as a map; the furthest from the game\'s night palette.', CHART, 'chart'],
+];
+
+function phone([, , t, cls]) {
+  const m = MOMENTS[MOMENT];
+  placeFor(t);
+  return `<div class="phone ${cls}"><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${t.base()}${overlays(m, t)}</svg>
+    <div class="foot"><div class="line">${m.line}</div><div class="plate"><span class="mk"></span>${m.plate}<span class="mk"></span></div></div></div>`;
+}
+function buttons(id, items, cur, set) {
+  const el = document.getElementById(id);
+  el.querySelectorAll('button').forEach((b) => b.remove());
+  items.forEach(([v, label]) => {
+    const b = document.createElement('button');
+    b.textContent = label; b.className = v === cur ? 'on' : '';
+    b.addEventListener('click', () => { set(v); render(); });
+    el.appendChild(b);
+  });
+}
+function render() {
+  buttons('moments', Object.entries(MOMENTS).map(([k, v]) => [k, v.label]), MOMENT, (v) => { MOMENT = v; });
+  buttons('cityNames', ['The City', 'Hearthold', 'Pactford', 'Lanternfall', 'Kingsmere', 'Haven'].map((n) => [n, n]), CITY_NAME, (v) => { CITY_NAME = v; });
+  buttons('paints', PAINTS.map((p, i) => [p, String(i + 1)]), PAINT, (v) => { PAINT = v; });
+  document.getElementById('grid').innerHTML = TREATMENTS.map((tr) => `<section><h2>${tr[0]}</h2><p>${tr[1]}</p>${phone(tr)}</section>`).join('');
+}
+render();
+</script>
+</body>
+</html>

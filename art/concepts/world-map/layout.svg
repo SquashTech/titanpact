@@ -1,0 +1,18 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 640" width="224" height="400" preserveAspectRatio="none">
+  <rect width="360" height="640" fill="#14203a"/>
+  <path d="M75,0 L360,0 L360,640 L262,640 Q236,612 204,618 Q152,628 120,604 Q86,582 62,560 Q30,522 42,472 Q56,432 32,402 Q14,362 30,322 Q46,282 26,242 Q18,202 44,172 Q62,142 42,112 Q30,70 75,0 Z" fill="#33452c"/>
+  <path d="M80,0 Q60,40 66,90 Q90,120 120,96 Q130,50 120,0 Z" fill="#9fb4c0"/>
+  <ellipse cx="172" cy="232" rx="74" ry="52" fill="#1c3020"/>
+  <path d="M270,40 L300,60 L330,40 L352,90 L340,150 L352,220 L330,300 L346,360 L322,420 L290,400 L280,330 L262,260 L276,190 L262,120 Z" fill="#5a524a"/>
+  <path d="M296,92 L306,70 L318,96 Z M300,250 L312,226 L322,254 Z M310,350 L320,330 L330,356 Z" fill="#a8a29a"/>
+  <path d="M286,292 Q296,280 306,294 Q298,306 286,292 Z" fill="#d0602c"/>
+  <path d="M230,450 Q290,430 336,470 Q340,540 300,560 Q250,560 236,520 Z" fill="#3a2f44"/>
+  <path d="M180,540 Q230,530 260,560 Q262,600 220,606 Q180,600 172,570 Z" fill="#4a3a52"/>
+  <path d="M185,140 Q168,200 150,270 Q158,320 190,370 Q172,420 158,450 Q130,500 108,560 Q100,590 100,620" fill="none" stroke="#1e2c46" stroke-width="7"/>
+  <ellipse cx="185" cy="110" rx="40" ry="30" fill="#0a090c"/>
+  <ellipse cx="185" cy="110" rx="40" ry="30" fill="none" stroke="#5a3a4a" stroke-width="6"/>
+  <ellipse cx="80" cy="528" rx="26" ry="18" fill="#56626a"/>
+  <rect x="176" y="356" width="30" height="22" fill="#c8b48a"/>
+  <rect x="186" y="346" width="10" height="12" fill="#c8b48a"/>
+  <ellipse cx="138" cy="306" rx="30" ry="20" fill="#56703a"/>
+</svg>
