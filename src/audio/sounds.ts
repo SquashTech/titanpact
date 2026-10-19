@@ -71,6 +71,7 @@ export type SfxId =
   | 'voice.bright'
   | 'voice.warm'
   | 'voice.deep'
+  | 'voice.click'
   | 'wolf.bark'
   | 'wolf.howl'
   | 'trust.rise'
@@ -1021,9 +1022,10 @@ export const sounds: Record<SfxId, SoundSpec> = {
 
   /** A bright voice under typed Story text (Valor, Will): a short triangle tick with a faint octave. Pitched per speaker. */
   'voice.bright': {
-    gain: 0.16,
+    gain: 0.28,
     jitter: 0.07,
     voices: [
+      { wave: 'noise', gain: 0.5, attack: 0.001, decay: 0.014, filter: { type: 'bandpass', freq: 3400, q: 3.5 } },
       { wave: 'triangle', freq: 660, freqEnd: 620, gain: 0.3, attack: 0.003, decay: 0.04 },
       { wave: 'sine', freq: 1320, gain: 0.08, attack: 0.003, decay: 0.025 },
     ],
@@ -1031,9 +1033,10 @@ export const sounds: Record<SfxId, SoundSpec> = {
 
   /** A warm voice (Solace, Valor remembering): a rounder sine with a soft body under it. */
   'voice.warm': {
-    gain: 0.15,
+    gain: 0.27,
     jitter: 0.05,
     voices: [
+      { wave: 'noise', gain: 0.5, attack: 0.001, decay: 0.014, filter: { type: 'bandpass', freq: 3400, q: 3.5 } },
       { wave: 'sine', freq: 470, freqEnd: 440, gain: 0.32, attack: 0.004, decay: 0.05 },
       { wave: 'triangle', freq: 235, gain: 0.1, attack: 0.004, decay: 0.04 },
     ],
@@ -1041,11 +1044,23 @@ export const sounds: Record<SfxId, SoundSpec> = {
 
   /** A deep voice (Ren): a low saw through a closed filter, more breath than note. */
   'voice.deep': {
-    gain: 0.15,
+    gain: 0.27,
     jitter: 0.04,
     voices: [
+      { wave: 'noise', gain: 0.5, attack: 0.001, decay: 0.014, filter: { type: 'bandpass', freq: 3400, q: 3.5 } },
       { wave: 'sawtooth', freq: 170, freqEnd: 150, gain: 0.26, attack: 0.004, decay: 0.05, filter: { type: 'lowpass', freq: 900, freqEnd: 500, q: 1.2 } },
       { wave: 'sine', freq: 85, gain: 0.14, attack: 0.004, decay: 0.05 },
+    ],
+  },
+
+  /** Narration typing out (and anyone without a voice): a typewriter key, the clack and a hint of its bell-metal. */
+  'voice.click': {
+    gain: 0.26,
+    jitter: 0.1,
+    voices: [
+      { wave: 'noise', gain: 0.55, attack: 0.001, decay: 0.016, filter: { type: 'bandpass', freq: 2600, q: 4 } },
+      { wave: 'noise', gain: 0.2, attack: 0.001, decay: 0.03, filter: { type: 'lowpass', freq: 900, q: 1 } },
+      { wave: 'triangle', freq: 1900, gain: 0.06, attack: 0.001, decay: 0.012 },
     ],
   },
 

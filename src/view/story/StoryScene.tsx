@@ -6,6 +6,9 @@ import { locationBackdrop } from '../shared/locationBackdrops';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import './story.css';
 
+/** Narration, and anyone with no voice of their own, types with a typewriter's click. */
+const TYPEWRITER: StoryVoice = { timbre: 'click', pitch: 1 };
+
 /** Ms a character; a blip every BLIP_EVERY characters typed, spaces skipped. */
 const TYPE_MS = 28;
 const BLIP_EVERY = 2;
@@ -97,7 +100,7 @@ export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: 
   const speaker = cast.find((actor) => actor.id === line?.speaker) ?? null;
   const backdrop = locationBackdrop(locationId);
   const text = skipping ? skipped : (line?.text ?? '');
-  const typing = useTypedLine(text, skipping ? undefined : speaker?.voice);
+  const typing = useTypedLine(text, speaker?.voice ?? TYPEWRITER);
 
   useEffect(() => {
     if (!skipping && line?.sound) playSfx(line.sound);

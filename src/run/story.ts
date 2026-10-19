@@ -168,7 +168,7 @@ export function stageAt(cast: readonly StoryActor[], stage: Readonly<Record<stri
 
 /** A timbre (audio/sounds.ts `voice.*`) and a pitch multiplier. */
 export interface StoryVoice {
-  timbre: 'bright' | 'warm' | 'deep';
+  timbre: 'bright' | 'warm' | 'deep' | 'click';
   pitch: number;
 }
 
