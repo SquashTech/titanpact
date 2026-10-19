@@ -1,10 +1,24 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { stageAt, type StageMark, type StoryActor, type StoryLine, type StoryVoice } from '../../run/story';
+import { bustsAt, stageAt, type StageMark, type StoryActor, type StoryLine, type StoryMood, type StoryVoice } from '../../run/story';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { locationBackdrop } from '../shared/locationBackdrops';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import './story.css';
+
+const PORTRAITS = import.meta.glob<string>('../../../art/portraits/*/*.png', { eager: true, query: '?url', import: 'default' });
+/** A character's bust in a mood, falling back to their neutral face. */
+function portraitUrl(id: string, mood: StoryMood): string | undefined {
+  const at = (m: string) => Object.entries(PORTRAITS).find(([path]) => path.endsWith(`/${id}/${m}.png`))?.[1];
+  return at(mood) ?? at('neutral');
+}
+
+/** One side's bust: drawn facing into the scene, lit while it speaks. Keyed on the character so a new face slides in. */
+function Bust({ side, bust }: { side: 'left' | 'right'; bust: { actor: StoryActor; mood: StoryMood; lit: boolean } | null }) {
+  const url = bust?.actor.portrait ? portraitUrl(bust.actor.portrait, bust.mood) : undefined;
+  if (!bust || !url) return null;
+  return <img key={bust.actor.id} className={`story-bust is-${side}${bust.lit ? ' is-lit' : ''}`} src={url} alt="" draggable={false} />;
+}
 
 /** Narration, and anyone with no voice of their own, types with a typewriter's click. */
 const TYPEWRITER: StoryVoice = { timbre: 'click', pitch: 1 };
@@ -120,6 +134,8 @@ export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: 
   }
 
   const marks = stageAt(cast, stage, lines, step);
+  const busts = skipping ? { left: null, right: null } : bustsAt(cast, lines, step);
+  const hasBusts = !!(busts.left || busts.right);
   const before = step > 0 ? stageAt(cast, stage, lines, step - 1) : marks;
   const figure = (actor: StoryActor) => {
     const mark = marks[actor.id];
@@ -145,11 +161,15 @@ export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: 
   };
 
   return (
-    <div className="story-screen story-scene" onClick={advance} role="dialog" aria-live="polite">
+    <div className={`story-screen story-scene${hasBusts ? ' has-busts' : ''}`} onClick={advance} role="dialog" aria-live="polite">
       {backdrop && <div className="story-backdrop" style={{ backgroundImage: `url(${backdrop})` }} aria-hidden="true" />}
       <SkipButton onSkip={() => setSkipping(true)} />
       <div className="story-ground" aria-hidden="true">
         {cast.map(figure)}
+      </div>
+      <div className="story-busts" aria-hidden="true">
+        <Bust side="left" bust={busts.left} />
+        <Bust side="right" bust={busts.right} />
       </div>
       <div className={`story-line${speaker && !skipping ? '' : ' is-narration'}${line?.think ? ' is-thought' : ''}`}>
         {speaker && !skipping && <span className="story-line-name">{speaker.name}</span>}

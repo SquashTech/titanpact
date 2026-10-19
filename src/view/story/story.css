@@ -381,3 +381,46 @@
   font: italic 20px/1.5 Georgia, 'Times New Roman', serif;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
 }
+
+/* --- Dialogue busts: the speaker lit on their side, the one they speak with dimmed on the other --- */
+.story-busts {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: calc(9% + 104px);
+  height: 0;
+  pointer-events: none;
+}
+.story-bust {
+  position: absolute;
+  bottom: 0;
+  width: 54%;
+  max-width: 220px;
+  image-rendering: pixelated;
+  filter: brightness(0.42) saturate(0.8);
+  transition: filter 0.2s, translate 0.2s;
+  animation: story-bust-in 0.25s ease-out;
+}
+.story-bust.is-left {
+  left: -10px;
+}
+.story-bust.is-right {
+  right: -10px;
+  transform: scaleX(-1);
+}
+.story-bust.is-lit {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55));
+  translate: 0 -4px;
+}
+@keyframes story-bust-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* The scene's figures step back behind the busts. */
+.story-scene.has-busts .story-ground {
+  filter: brightness(0.6);
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-bust { animation: none; transition: none; }
+}

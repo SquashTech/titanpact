@@ -48,7 +48,7 @@ A player who isn't interested in the story must never feel held hostage by it.
 - **Lines type out with a voice under them.** A character at a time, a blip every second character,
   in the speaker's timbre and pitch (`StoryActor.voice`; `voice.bright` / `warm` / `deep` in
   audio/sounds.ts): Valor bright, Will brighter and higher, Ren deep, Solace warm, Valor remembering
-  a little lower than herself. Narration, Fang and the Faceless type in silence. A tap finishes a line
+  a little lower than herself, each with a key's clack on its front. Narration, Fang and the Faceless type with a typewriter's click (`voice.click`). A tap finishes a line
   still typing; the next tap moves on. Reduced motion shows lines whole.
 - **Fang has his moments.** A line can carry a sound (`StoryLine.sound`, `StoryCue.sound`): Fang
   barks when the hunt sets out and again at the first fight's call, howls at the empty sky after
@@ -56,6 +56,7 @@ A player who isn't interested in the story must never feel held hostage by it.
   procedural like every other sound in the game: first passes, to be judged by ear.
 
 - **Scenes are staged, not a row** (2026-10-18, per user direction). A scene can place its cast (`stage`: `x` across the ground, `depth` into it, far figures higher and smaller and behind) and any line can move someone (`moves`: a step, a retreat, an entrance, an exit), so the scene acts out what the lines say: Ren and Will walk off on the hunt, the Faceless appears far back and comes closer, Valor steps out between it and her family, Will is taken off with it, Solace walks in out of the trees. Everyone faces whoever is speaking, the speaker the nearest other. A scene with no staging fans each side out with staggered depths (`autoStage`). An actor can be drawn larger (`scale`: the risen Endbringer towers).
+- **Dialogue leads with busts, two sides** (2026-10-19, per user direction, picked off `art/concepts/portraits/`). The speaker's bust stands lit on their own side over the scene, the one they last spoke with dimmed on the other, flipped to face in; narration leaves both dimmed and the staged scene, stepped back, carries the action. A bust is `StoryActor.portrait` (`art/portraits/<id>/<mood>.png`) and a line's expression `StoryLine.mood` (neutral, happy, angry, sad, shocked; a missing mood falls back to neutral). Drawn so far: Valor all five; Ren neutral, angry, sad, shocked; Will neutral, happy, shocked; Solace neutral, happy, angry, sad; Fang neutral, happy, and a howl as sad. Every expression is an edit of one neutral face so it stays the same person. The Faceless has no bust: it is only ever seen on the ground.
 
 ## 1c. Teaching the controls (2026-10-18, per user direction)
 

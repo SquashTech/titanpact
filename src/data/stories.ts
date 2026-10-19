@@ -7,10 +7,10 @@ const VALOR_VOICE: StoryVoice = { timbre: 'bright', pitch: 1 };
 /** Valor telling it later: her own voice, a little lower. */
 const REMEMBERING: StoryVoice = { timbre: 'bright', pitch: 0.92 };
 
-const valor: StoryActor = { id: 'valor', name: 'Valor', artHeroId: CAST.valor, stands: 'left', voice: VALOR_VOICE };
-const fang: StoryActor = { id: 'fang', name: 'Fang', artHeroId: 'packAlpha', stands: 'left' };
-const ren: StoryActor = { id: 'ren', name: 'Ren', artHeroId: CAST.ren, stands: 'right', voice: { timbre: 'deep', pitch: 1 } };
-const will: StoryActor = { id: 'will', name: 'Will', artHeroId: CAST.will, stands: 'right', voice: { timbre: 'bright', pitch: 1.18 } };
+const valor: StoryActor = { id: 'valor', name: 'Valor', artHeroId: CAST.valor, stands: 'left', voice: VALOR_VOICE, portrait: 'valor' };
+const fang: StoryActor = { id: 'fang', name: 'Fang', artHeroId: 'packAlpha', stands: 'left', portrait: 'fang' };
+const ren: StoryActor = { id: 'ren', name: 'Ren', artHeroId: CAST.ren, stands: 'right', voice: { timbre: 'deep', pitch: 1 }, portrait: 'ren' };
+const will: StoryActor = { id: 'will', name: 'Will', artHeroId: CAST.will, stands: 'right', voice: { timbre: 'bright', pitch: 1.18 }, portrait: 'will' };
 const faceless: StoryActor = { id: 'faceless', name: '???', artHeroId: CAST.endbringer, stands: 'right', scale: 1.2 };
 const risen: StoryActor = { id: 'risen', name: '???', artHeroId: 'heraldRisen', stands: 'right', scale: 1.7 };
 
@@ -43,9 +43,9 @@ const firstHunt: StoryFight = {
 const reach: StoryCommand[] = [{ actor: 'faceless', moveId: 'erode' }];
 
 // Chapter 2's Valor has the sword: the roster's own Valor, sprite and kit.
-const valorArmed: StoryActor = { id: 'valor', name: 'Valor', artHeroId: 'valor', stands: 'left', voice: VALOR_VOICE };
+const valorArmed: StoryActor = { id: 'valor', name: 'Valor', artHeroId: 'valor', stands: 'left', voice: VALOR_VOICE, portrait: 'valor' };
 
-const solace: StoryActor = { id: 'solace', name: 'Solace', artHeroId: 'dawnwarden', stands: 'right', voice: { timbre: 'warm', pitch: 1.12 } };
+const solace: StoryActor = { id: 'solace', name: 'Solace', artHeroId: 'dawnwarden', stands: 'right', voice: { timbre: 'warm', pitch: 1.12 }, portrait: 'solace' };
 
 /**
  * Chapter 3: matchups (the opener favours Fang, the fork's Elite favours the Iron pair and Solace's
@@ -194,9 +194,9 @@ export const storyCatalog: readonly StoryDefinition[] = [
               { speaker: 'ren', text: 'Valor, you and Fang take the high path. If you see it, you whistle.' },
               { speaker: 'valor', text: 'And if it sees me first?' },
               { speaker: 'ren', text: 'Then you whistle louder.' },
-              { speaker: 'will', text: "I'll bring you back a claw, Val." },
-              { speaker: 'fang', text: 'Fang barks, impatient to go.', sound: 'wolf.bark', moves: { ren: { x: 106, off: true }, will: { x: 112, off: true }, fang: { x: 46, depth: 0.6 } } },
-              { speaker: 'valor', text: "One month with a sword and he's a hunter." },
+              { speaker: 'will', mood: 'happy', text: "I'll bring you back a claw, Val." },
+              { speaker: 'fang', mood: 'happy', text: 'Fang barks, impatient to go.', sound: 'wolf.bark', moves: { ren: { x: 106, off: true }, will: { x: 112, off: true }, fang: { x: 46, depth: 0.6 } } },
+              { speaker: 'valor', mood: 'happy', text: "One month with a sword and he's a hunter." },
               { text: 'Fang presses into her hand until she laughs.', moves: { fang: { x: 30, depth: 0.85 } } },
             ],
             skipped: 'The family split up to hunt. Valor and Fang took the high path.',
@@ -241,10 +241,10 @@ export const storyCatalog: readonly StoryDefinition[] = [
             cast: [ren, will, faceless],
             stage: { ren: { x: 34, depth: 0.7 }, will: { x: 48, depth: 0.75 }, faceless: { x: 78, depth: 0.05, off: true } },
             lines: [
-              { speaker: 'will', text: 'Father. The birds have stopped.' },
-              { speaker: 'ren', text: 'Behind me. Now.', moves: { ren: { x: 44, depth: 0.8 }, will: { x: 30, depth: 0.5 } } },
+              { speaker: 'will', mood: 'shocked', text: 'Father. The birds have stopped.' },
+              { speaker: 'ren', mood: 'angry', text: 'Behind me. Now.', moves: { ren: { x: 44, depth: 0.8 }, will: { x: 30, depth: 0.5 } } },
               { text: 'Something stands in the clearing, taller than a man. Where its face should be, there is nothing.', moves: { faceless: { off: false } } },
-              { speaker: 'will', text: 'What is that?' },
+              { speaker: 'will', mood: 'shocked', text: 'What is that?' },
               { speaker: 'ren', text: "Walk backwards. Don't run until I say.", moves: { ren: { x: 32 }, will: { x: 16 }, faceless: { x: 72, depth: 0.25 } } },
             ],
             skipped: 'Ren and Will found something with no face in the clearing, and backed away.',
@@ -261,10 +261,10 @@ export const storyCatalog: readonly StoryDefinition[] = [
               faceless: { x: 88, depth: 0.15 },
             },
             lines: [
-              { speaker: 'will', text: "Val! It's following us!", moves: { faceless: { x: 80, depth: 0.3 } } },
-              { speaker: 'ren', text: 'Take your brother and go. We do not fight that.' },
-              { speaker: 'valor', text: 'You taught him to fight. Let me.', moves: { valor: { x: 58, depth: 0.9 }, fang: { x: 50, depth: 0.6 } } },
-              { speaker: 'ren', text: 'Valor, no—' },
+              { speaker: 'will', mood: 'shocked', text: "Val! It's following us!", moves: { faceless: { x: 80, depth: 0.3 } } },
+              { speaker: 'ren', mood: 'angry', text: 'Take your brother and go. We do not fight that.' },
+              { speaker: 'valor', mood: 'angry', text: 'You taught him to fight. Let me.', moves: { valor: { x: 58, depth: 0.9 }, fang: { x: 50, depth: 0.6 } } },
+              { speaker: 'ren', mood: 'shocked', text: 'Valor, no—' },
             ],
             skipped: 'Ren told Valor not to fight it. She did anyway.',
           },
@@ -313,9 +313,9 @@ export const storyCatalog: readonly StoryDefinition[] = [
               faceless: { x: 72, depth: 0.4 },
             },
             lines: [
-              { speaker: 'valor', text: "It's down. Is it down?" },
-              { speaker: 'will', text: "It isn't even bleeding." },
-              { speaker: 'ren', text: 'Look up.' },
+              { speaker: 'valor', mood: 'shocked', text: "It's down. Is it down?" },
+              { speaker: 'will', mood: 'shocked', text: "It isn't even bleeding." },
+              { speaker: 'ren', mood: 'shocked', text: 'Look up.' },
             ],
             skipped: 'They brought it to its knees. Then Ren looked up.',
           },
@@ -333,12 +333,12 @@ export const storyCatalog: readonly StoryDefinition[] = [
             },
             lines: [
               { text: 'The ground shakes. The faceless thing stands, and it is taller now.', moves: { risen: { x: 74, depth: 0.3 } } },
-              { speaker: 'will', text: 'Val—!' },
+              { speaker: 'will', mood: 'shocked', text: 'Val—!' },
               { text: 'It takes Will, and it is gone.', moves: { will: { x: 84, depth: 0.2, off: true }, risen: { x: 90, depth: 0.05, off: true } } },
               { text: 'His sword lies in the grass.' },
-              { speaker: 'fang', text: 'Fang howls at the empty sky.', sound: 'wolf.howl' },
-              { speaker: 'ren', text: 'Pick it up.', moves: { valor: { x: 58, depth: 0.75 } } },
-              { speaker: 'ren', text: 'We run.' },
+              { speaker: 'fang', mood: 'sad', text: 'Fang howls at the empty sky.', sound: 'wolf.howl' },
+              { speaker: 'ren', mood: 'sad', text: 'Pick it up.', moves: { valor: { x: 58, depth: 0.75 } } },
+              { speaker: 'ren', mood: 'sad', text: 'We run.' },
             ],
             skipped: 'The Titan fell. The faceless thing rose stronger, took Will, and was gone. Valor picked up his sword.',
           },
@@ -367,8 +367,8 @@ export const storyCatalog: readonly StoryDefinition[] = [
             lines: [
               { text: 'Morning. The river runs black.' },
               { speaker: 'ren', text: 'It went north. So do we.' },
-              { speaker: 'valor', text: 'Then teach me on the way. I have his sword now.' },
-              { speaker: 'ren', text: "You have his sword. That isn't the same thing." },
+              { speaker: 'valor', mood: 'angry', text: 'Then teach me on the way. I have his sword now.' },
+              { speaker: 'ren', mood: 'sad', text: "You have his sword. That isn't the same thing." },
               { text: 'Ren walks on ahead. Fang waits for her.', moves: { ren: { x: 108, off: true } } },
             ],
             skipped: 'The morning after, Ren set out north after the faceless thing. He would not teach Valor the sword.',
@@ -380,10 +380,10 @@ export const storyCatalog: readonly StoryDefinition[] = [
             cast: [valorArmed, fang, ren],
             lines: [
               { speaker: 'ren', text: 'You hold it like an axe.' },
-              { speaker: 'valor', text: 'It worked.' },
-              { speaker: 'ren', text: "It won't, against that thing." },
+              { speaker: 'valor', mood: 'happy', text: 'It worked.' },
+              { speaker: 'ren', mood: 'angry', text: "It won't, against that thing." },
               { text: 'He looks at the sword a long time.' },
-              { speaker: 'ren', text: "Tomorrow, before the light. If you're carrying his sword, carry it properly." },
+              { speaker: 'ren', mood: 'sad', text: "Tomorrow, before the light. If you're carrying his sword, carry it properly." },
             ],
             skipped: 'Ren watched her fight, and agreed to teach her.',
           },
@@ -425,11 +425,11 @@ export const storyCatalog: readonly StoryDefinition[] = [
             stage: { valor: { x: 18, depth: 0.8 }, fang: { x: 30, depth: 0.55 }, ren: { x: 40, depth: 0.7 }, solace: { x: 82, depth: 0.1, off: true } },
             lines: [
               { text: 'Light, through the trees. Someone is fighting.', moves: { solace: { off: false } } },
-              { speaker: 'solace', text: 'Either help or get out of my way!' },
+              { speaker: 'solace', mood: 'angry', text: 'Either help or get out of my way!' },
               { text: 'The turned things scatter from the glare of her hands.' },
-              { speaker: 'solace', text: 'Solace. The chapel I kept is under the roots now.', moves: { solace: { x: 66, depth: 0.7 } } },
-              { speaker: 'valor', text: 'Something took my brother. It went north.' },
-              { speaker: 'solace', text: 'Then so do I. Whatever did this to my chapel, I want to see its face.' },
+              { speaker: 'solace', mood: 'sad', text: 'Solace. The chapel I kept is under the roots now.', moves: { solace: { x: 66, depth: 0.7 } } },
+              { speaker: 'valor', mood: 'sad', text: 'Something took my brother. It went north.' },
+              { speaker: 'solace', mood: 'angry', text: 'Then so do I. Whatever did this to my chapel, I want to see its face.' },
               { speaker: 'valor', text: "It doesn't have one." },
             ],
             skipped: 'In the forest they met Solace, a priest of the dawn whose chapel the turning swallowed. She came north with them.',
@@ -440,11 +440,11 @@ export const storyCatalog: readonly StoryDefinition[] = [
             locationId: 'forbiddenForest',
             cast: [valorArmed, fang, ren, solace],
             lines: [
-              { speaker: 'valor', text: 'Every day we spend learning, Will is further away.' },
-              { speaker: 'ren', text: 'Every day you don\'t, you\'d die before you reached him.' },
-              { speaker: 'solace', text: 'There\'s a town east of the forest that hasn\'t fallen. Supplies. People who\'ve seen it.' },
+              { speaker: 'valor', mood: 'sad', text: 'Every day we spend learning, Will is further away.' },
+              { speaker: 'ren', mood: 'angry', text: 'Every day you don\'t, you\'d die before you reached him.' },
+              { speaker: 'solace', mood: 'happy', text: 'There\'s a town east of the forest that hasn\'t fallen. Supplies. People who\'ve seen it.' },
               { text: 'Fang stays close to Valor all that night.' },
-              { speaker: 'fang', text: 'Once, he lifts his head and howls toward the north.', sound: 'wolf.howl' },
+              { speaker: 'fang', mood: 'sad', text: 'Once, he lifts his head and howls toward the north.', sound: 'wolf.howl' },
             ],
             skipped: 'Valor wanted to hurry. Solace knew a town to the east that had not fallen yet.',
           },

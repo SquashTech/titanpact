@@ -131,6 +131,37 @@ export interface StoryActor {
   voice?: StoryVoice;
   /** Drawn this much larger than a hero (the risen Endbringer towers). Unset: 1. */
   scale?: number;
+  /** The dialogue bust (art/portraits/<id>/<mood>.png). Unset: no bust; the scene's figures speak. */
+  portrait?: string;
+}
+
+/** A bust's expression. A portrait without the mood shows its neutral face. */
+export type StoryMood = 'neutral' | 'happy' | 'angry' | 'sad' | 'shocked';
+
+/**
+ * The two busts at line `step` (docs/stories.md §1b): the speaker lit on their own side, and the one
+ * they last spoke with dimmed on the other, each in the mood of their last line. A line with no bust
+ * to speak (narration, the Faceless) leaves the last two standing, both dimmed.
+ */
+export function bustsAt(cast: readonly StoryActor[], lines: readonly StoryLine[], step: number): { left: { actor: StoryActor; mood: StoryMood; lit: boolean } | null; right: { actor: StoryActor; mood: StoryMood; lit: boolean } | null } {
+  const withBust = (id: string | undefined) => cast.find((actor) => actor.id === id && actor.portrait) ?? null;
+  const moodOf = (id: string, upTo: number): StoryMood => {
+    for (let i = upTo; i >= 0; i--) if (lines[i]?.speaker === id) return lines[i].mood ?? 'neutral';
+    return 'neutral';
+  };
+  // The last one or two who spoke with a bust, newest first.
+  const recent: StoryActor[] = [];
+  for (let i = step; i >= 0 && recent.length < 2; i--) {
+    const actor = withBust(lines[i]?.speaker);
+    if (actor && !recent.includes(actor)) recent.push(actor);
+  }
+  const [speaker, other] = recent;
+  if (!speaker) return { left: null, right: null };
+  const speaking = withBust(lines[step]?.speaker) === speaker;
+  const side = speaker.stands;
+  const lead = { actor: speaker, mood: moodOf(speaker.id, step), lit: speaking };
+  const partner = other ? { actor: other, mood: moodOf(other.id, step), lit: false } : null;
+  return side === 'left' ? { left: lead, right: partner } : { left: partner, right: lead };
 }
 
 /**
@@ -181,6 +212,8 @@ export interface StoryLine {
   sound?: 'wolf.bark' | 'wolf.howl';
   /** Who moves as the line appears, and to where: a step, a retreat, an entrance (`off: false`), an exit (`off: true`). */
   moves?: Readonly<Record<string, Partial<StageMark>>>;
+  /** The speaker's expression on this line. Unset: neutral. */
+  mood?: StoryMood;
 }
 
 /** A line over the fight's stage at the top of `round`'s command phase. */
