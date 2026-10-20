@@ -4,7 +4,11 @@
 > `lore.md` (the fall, the seal) and `stories.md` (where the map is first shown). This doc owns
 > **where the places are relative to each other**, and when the player is shown that.
 >
-> **PROPOSED 2026-10-19, nothing decided or built.** The user's direction, in their words:
+> **SHELVED 2026-10-20, per user direction:** the maps weren't working, and the idea is set
+> aside for now. Nothing below is decided or built; it stays as a record of what was tried (a
+> centred city, then a city on the south coast with the road running north).
+>
+> **Proposed 2026-10-19.** The user's direction, in their words:
 > *"something to orient the player with some more context. We can wait to show this until the
 > Titan drops and include the Titan in the map maybe. We probably need some central point like a
 > city which is not named or anything yet, but naturally I think a city would be where everything
