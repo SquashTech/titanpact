@@ -14,6 +14,8 @@ export interface TipSceneFighter {
   mana?: number;
   /** Fraction of max HP held; full when omitted. */
   hp?: number;
+  /** The level on its nameplate; the scenes' level 5 when omitted. */
+  level?: number;
   stages?: Partial<Record<StatKey, number>>;
 }
 
@@ -39,6 +41,9 @@ export type TipSceneFocus =
   | 'stock'
   | 'heroCards';
 
+/** A part of a move row a scene labels in place, with a line to it. */
+export type TipSceneCallout = 'mana' | 'type' | 'kind' | 'power' | 'matchup';
+
 export interface TipScene {
   /** Enemy figures across the top; a damage row shows its matchup against each. */
   foes?: readonly TipSceneFighter[];
@@ -59,6 +64,8 @@ export interface TipScene {
   focus?: readonly TipSceneFocus[];
   /** Restrict a row-level focus to these moves. */
   focusMoves?: readonly string[];
+  /** Parts of the first focus row named in place, each ringed with its label beside it. */
+  callouts?: readonly TipSceneCallout[];
   /** The matchup each damage row must show against each foe, row by row — checked by test. */
   expect?: Readonly<Record<string, readonly number[]>>;
 }
@@ -128,10 +135,19 @@ const TARGETS_SCENE: TipScene = {
 
 const SWITCH_SCENE: TipScene = { hero: { heroId: 'cinderKnight' }, bar: true, focus: ['switch'] };
 
+/** The Story prologue's second round: the White Stag, which Iron cuts and Beast glances off. */
+const HUNT_FOES = [{ heroId: 'stag', level: 1 }] as const;
+const HUNT_VALOR = { heroId: 'valorPrologue', level: 2 } as const;
+
 /** Per tip or How to Play section, per page: the picture above the words, or null for none. */
 export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>> = {
   'fight.basics': [null, MANA_SCENE, { ...TARGETS_SCENE, moves: ['ember', 'firestorm'] }],
   bench: [null, null, SWITCH_SCENE],
+  'story.reading': [
+    { foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist'], callouts: ['mana', 'type', 'kind', 'power', 'matchup'], expect: { ironFist: [2] } },
+  ],
+  // Valor's Iron Fist over Fang's Claw: the one move each would swing at it.
+  'story.combo': [{ foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist', 'claw'], focus: ['matchups'], expect: { ironFist: [2], claw: [0.5] } }],
   'howto.combat': [null, { foes: [{ heroId: 'wildOracle' }], hero: { heroId: 'cinderKnight' }, moves: ['singe'], focus: ['foe', 'move'] }],
   'howto.mana': [MANA_SCENE, { hero: { heroId: 'cinderKnight', mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],
   'howto.types': [

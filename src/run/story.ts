@@ -242,10 +242,13 @@ export interface StoryCue {
   text: string;
   sound?: StorySound;
   /**
-   * A control taught at the top of this round (docs/stories.md §1c), once an account: plain game
-   * words, the thing it names lit on the board (view/run/tipStaging.ts, by the tip's id).
+   * Controls taught at the top of this round (docs/stories.md §1c), in order, each once an account:
+   * plain game words, the thing each names lit on the board or drawn (view/run/tipStaging.ts,
+   * data/tipScenes.ts, by the tip's id). The line itself waits until they are read.
    */
-  tip?: Tip;
+  tips?: readonly Tip[];
+  /** A hand points at each guided tap this round: the move, then its target. */
+  point?: true;
 }
 
 export type StoryBeat =

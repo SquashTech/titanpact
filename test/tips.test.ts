@@ -26,8 +26,18 @@ import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
+import { storyCatalog } from '../src/data/stories';
 
-const allTips: Tip[] = [...Object.values(SCREEN_TIPS), ...FIGHT_TIPS];
+/** The control tips a Story's fights teach, in its fights and in its acts' fights. */
+const storyTips: Tip[] = storyCatalog.flatMap((story) =>
+  story.chapters.flatMap((chapter) =>
+    chapter.beats.flatMap((beat) => {
+      const cues = beat.kind === 'fight' ? beat.cues ?? [] : beat.kind === 'act' ? beat.act.rows.flatMap((row) => row.flatMap((node) => node.cues ?? [])) : [];
+      return cues.flatMap((cue) => cue.tips ?? []);
+    })
+  )
+);
+const allTips: Tip[] = [...Object.values(SCREEN_TIPS), ...FIGHT_TIPS, ...storyTips];
 /** Every block of player-facing rules text: the tips, and the How to Play page's sections. */
 const allText: Tip[] = [...allTips, ...HOW_TO_PLAY];
 
@@ -68,6 +78,7 @@ test('tips: every inline icon token is one the view can draw', () => {
   }
   assert.deepStrictEqual(parseTipText('a [physical] b [nope]'), [{ text: 'a ' }, { icon: 'physical' }, { text: ' b [nope]' }]);
   assert.deepStrictEqual(parseTipText('[stages]'), [{ block: 'stages' }], 'the stage chart is a block token');
+  assert.deepStrictEqual(parseTipText('[kinds]'), [{ block: 'kinds' }], 'the kinds legend is a block token');
 });
 
 test('tips: the lore card tells the fall as a story already over', () => {

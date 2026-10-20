@@ -513,3 +513,196 @@
   0%, 30% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* A cue said by a hero on the field: a speech bubble on the speaker's half, its tail down to them. */
+.story-cue.is-said {
+  top: auto;
+  bottom: calc(50% + 6px);
+  right: auto;
+  max-width: 88%;
+  transform: none;
+  text-align: left;
+  padding: 7px 11px 8px;
+  border-radius: 10px;
+  background: #f3ecda;
+  box-shadow: 0 0 0 2px #3a2412, 0 6px 14px rgba(0, 0, 0, 0.5);
+  color: #2a1a0c;
+  animation-name: story-said-in;
+}
+.story-cue.is-said.is-from-right {
+  left: auto;
+  right: 12px;
+}
+.story-cue.is-said .story-cue-name {
+  display: block;
+  margin: 0 0 2px;
+  color: #8a3f10;
+  font-size: 10px;
+}
+.story-cue.is-said::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 26px;
+  border: 9px solid transparent;
+  border-top-color: #f3ecda;
+  border-bottom: 0;
+  filter: drop-shadow(0 2px 0 #3a2412);
+}
+.story-cue.is-said.is-from-right::after {
+  left: auto;
+  right: 26px;
+}
+@keyframes story-said-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+/* A guided move's other targets step back while it is aimed: tapping them does nothing. */
+.combatant-card.is-unguided {
+  opacity: 0.32;
+  filter: grayscale(0.85);
+  pointer-events: none;
+}
+
+/* --- The tap guide (GuideHand): a pixel glove bobbing at the next tap --- */
+.guide-hand {
+  position: absolute;
+  z-index: 55;
+  pointer-events: none;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.6));
+  animation: guide-hand-in 0.25s ease-out both, guide-hand-tap 0.9s ease-in-out 0.25s infinite;
+}
+@keyframes guide-hand-in {
+  from { opacity: 0; }
+}
+@keyframes guide-hand-tap {
+  0%, 100% { transform: translate(6px, 12px); }
+  45% { transform: translate(0, 0); }
+  55% { transform: translate(0, 1px) scale(0.94); }
+}
+
+/* --- The welcome (a tip's `welcome` look): the wordmark large over the dimmed fight, no card --- */
+.tip-overlay.is-welcome {
+  align-items: center;
+  background: radial-gradient(ellipse at 50% 45%, rgba(20, 16, 10, 0.72), rgba(4, 4, 7, 0.9) 70%);
+}
+.tip-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-width: 340px;
+  text-align: center;
+}
+.tip-welcome-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  animation: tip-welcome-drop 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.tip-welcome-kicker {
+  font: 800 13px/1 system-ui, sans-serif;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #e7d6ae;
+}
+.tip-welcome-title .title-wordmark {
+  width: 300px;
+  height: auto;
+  filter: drop-shadow(0 0 18px rgba(224, 166, 60, 0.45));
+}
+.tip-welcome-line {
+  margin: 0;
+  font: 16px/1.45 Georgia, serif;
+  color: #edeff4;
+  animation: tip-welcome-fade 0.6s ease-out 0.55s both;
+}
+.tip-welcome-advance {
+  margin-top: 10px;
+  font: 700 10px/1 system-ui, sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(232, 226, 212, 0.5);
+  animation: tip-welcome-fade 0.6s ease-out 1.2s both;
+}
+@keyframes tip-welcome-drop {
+  from { opacity: 0; transform: translateY(-14px) scale(1.12); }
+}
+@keyframes tip-welcome-fade {
+  from { opacity: 0; transform: translateY(4px); }
+}
+
+/* --- The kinds legend (a tip's `[kinds]` page): each badge over its name --- */
+.tip-kinds {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 2px;
+}
+.tip-kind {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex: 1 1 0;
+}
+.tip-kind-badge {
+  font-size: 18px;
+  padding: 4px 7px;
+}
+.tip-kind-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #3a2412;
+}
+
+/* --- A scene's callouts (TipScene CalloutLayer): each mark ringed, a line to its label --- */
+.tip-scene.has-callouts {
+  position: relative;
+}
+.tip-scene.has-callouts .move-list {
+  margin: 30px 0;
+  overflow: visible;
+}
+.tip-callout-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.tip-callout-ring {
+  fill: rgba(224, 166, 60, 0.12);
+  stroke: #f1c45e;
+  stroke-width: 2;
+  animation: tip-callout-pulse 1.4s ease-in-out infinite alternate;
+}
+.tip-callout-leader {
+  stroke: #f1c45e;
+  stroke-width: 1.5;
+}
+.tip-callout {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font: 800 11px/1.2 system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  color: #1b1206;
+  background: #f1c45e;
+  box-shadow: 0 0 0 1px #3a2412;
+}
+@keyframes tip-callout-pulse {
+  from { stroke-opacity: 0.6; }
+  to { stroke-opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-hand, .tip-welcome-title, .tip-welcome-line, .tip-welcome-advance, .tip-callout-ring { animation: none; }
+}

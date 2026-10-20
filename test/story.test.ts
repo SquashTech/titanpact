@@ -220,6 +220,32 @@ test('story: each prologue fight ends inside its script, won, with no hero of th
   assert.strictEqual(held.fainted, false);
 });
 
+test("story prologue: the hunt's lessons hold — the fox takes both hunters, and the White Stag falls to Iron Fist only after Howl", () => {
+  const hunt = storyCatalog[0].chapters[0].beats.find((b) => b.kind === 'fight' && b.fight.id === 'valor-1-hunt');
+  assert.ok(hunt && hunt.kind === 'fight');
+  const fight = hunt.fight;
+  /** Plays the script's rounds with the named heroes Resting in the named round instead of following the guide. */
+  const play = (rests: Record<number, string>) => {
+    let state = openStoryFight(fight);
+    const after: CombatState[] = [];
+    while (state.round <= fight.guide.length && fightWinner(state) === null) {
+      const resting = rests[state.round];
+      const player = state.active[STORY_PLAYER_SIDE].flatMap((id) =>
+        !id ? [] : id === `A:${resting}` ? [{ kind: 'rest' as const, combatantId: id }] : [guidedAction(fight, state, id)!]
+      );
+      state = resolveRound(state, [...player, ...scriptedEnemyActions(fight, state)!], config).state;
+      after.push(state);
+    }
+    return after;
+  };
+  const down = (state: CombatState, rosterId: string) => state.combatants[`B:${rosterId}`].fainted;
+  assert.ok(down(play({})[0], 'fox'), 'both hunters on the fox drop it');
+  assert.ok(!down(play({ 1: 'fang' })[0], 'fox'), "Valor's Iron Fist alone leaves the fox standing");
+  assert.ok(!down(play({ 1: 'valor' })[0], 'fox'), "Fang's Claw alone leaves the fox standing");
+  assert.ok(down(play({})[1], 'stag'), 'Howl, then Iron Fist, drops the White Stag');
+  assert.ok(!down(play({ 2: 'fang' })[1], 'stag'), 'Iron Fist without the Howl leaves it standing');
+});
+
 const actBeats = storyCatalog.flatMap((story) =>
   story.chapters.flatMap((chapter) => chapter.beats.map((beat, index) => ({ chapter, beat, index }))).filter((b) => b.beat.kind === 'act')
 );
@@ -363,12 +389,11 @@ test('story tips: every control tip is short, unique, and lights something', () 
       for (const beat of chapter.beats) {
         const cues =
           beat.kind === 'fight' ? beat.cues ?? [] : beat.kind === 'act' ? beat.act.rows.flatMap((row) => row.flatMap((node) => node.cues ?? [])) : [];
-        for (const cue of cues) {
-          if (!cue.tip) continue;
-          assert.ok(!seen.has(cue.tip.id), `${cue.tip.id} is used twice`);
-          seen.add(cue.tip.id);
-          assert.ok(cue.tip.pages.length >= 1 && cue.tip.pages.length <= 3, `${cue.tip.id} runs past three pages`);
-          assert.ok(TIP_STAGING[cue.tip.id], `${cue.tip.id} has no staging`);
+        for (const tip of cues.flatMap((cue) => cue.tips ?? [])) {
+          assert.ok(!seen.has(tip.id), `${tip.id} is used twice`);
+          seen.add(tip.id);
+          assert.ok(tip.pages.length >= 1 && tip.pages.length <= 3, `${tip.id} runs past three pages`);
+          assert.ok(TIP_STAGING[tip.id], `${tip.id} has no staging`);
         }
       }
     }

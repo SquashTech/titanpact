@@ -46,18 +46,20 @@ export const storyCast: Record<string, HeroDefinition> = {
     moveIds: ['thunderclap', 'zap'],
     growthGrades: { hp: 'C', attack: 'A', defense: 'C', intelligence: 'B', wisdom: 'C', speed: 'S', manaPool: 'B' },
   },
+  // The prologue's second lesson: Iron cuts it, Beast glances off, and Valor only drops it after Fang's Howl.
   [STORY_CAST_IDS.stag]: {
     id: STORY_CAST_IDS.stag,
-    name: 'Stag',
-    types: ['Nature'],
-    baseStats: { hp: 120, attack: 40, defense: 35, intelligence: 25, wisdom: 30, speed: 45, manaPool: 40, mpRegen: 10 },
-    moveIds: ['ivySpike'],
+    name: 'White Stag',
+    types: ['Frost'],
+    baseStats: { hp: 285, attack: 30, defense: 35, intelligence: 35, wisdom: 30, speed: 45, manaPool: 70, mpRegen: 10 },
+    moveIds: ['rimeWind'],
   },
+  // Takes both hunters' hits to drop: neither one alone finishes it.
   [STORY_CAST_IDS.fox]: {
     id: STORY_CAST_IDS.fox,
     name: 'Fox',
     types: ['Beast'],
-    baseStats: { hp: 100, attack: 45, defense: 30, intelligence: 20, wisdom: 30, speed: 70, manaPool: 40, mpRegen: 10 },
+    baseStats: { hp: 200, attack: 45, defense: 30, intelligence: 20, wisdom: 30, speed: 70, manaPool: 40, mpRegen: 10 },
     moveIds: ['pounce'],
   },
   [STORY_CAST_IDS.boar]: {

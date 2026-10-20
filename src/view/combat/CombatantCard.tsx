@@ -153,6 +153,8 @@ interface Props {
   forecast?: MoveForecast | null;
   /** The enemies whose move this round would land on THIS hero (enemyIntent.ts), worn over the figure's head. */
   aimedBy?: readonly Combatant[];
+  /** A Story's guided round: the one target to tap glows, the others step back (docs/stories.md §5). */
+  guide?: 'lit' | 'dim';
 }
 
 const BLESSING_STAR = 'M6 0 L7.3 4.7 L12 6 L7.3 7.3 L6 12 L4.7 7.3 L0 6 L4.7 4.7 Z';
@@ -335,6 +337,7 @@ export function CombatantCard({
   warded,
   forecast,
   aimedBy,
+  guide,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const shown = (popups ?? []).slice(0, MAX_POPUPS_PER_FIGURE);
@@ -416,6 +419,7 @@ export function CombatantCard({
   if (isWardenCombatant(combatant.combatantId)) classes.push('is-held');
   if (pose === 'closed') classes.push('is-closed-eye');
   if (targetable && !combatant.fainted) classes.push('targetable');
+  if (guide) classes.push(guide === 'lit' ? 'is-guided' : 'is-unguided');
   if (selected) classes.push('selected');
   if (acting) classes.push('acting');
   if (effBadge) classes.push(effBadge.className);

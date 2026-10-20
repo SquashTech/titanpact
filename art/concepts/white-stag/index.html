@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>White Stag recolours</title>
+<style>
+  body { margin: 0; padding: 16px; background: #15171e; color: #e8e2d4; font: 14px/1.4 system-ui, sans-serif; }
+  h1 { font-size: 15px; margin: 0 0 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #e0a63c; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .opt { background: #23262f url('../../ui/flagstones.png') 0 0 / 64px repeat; border: 2px solid #3a2412; border-radius: 6px; padding: 10px; text-align: center; }
+  .opt b { display: block; margin-bottom: 6px; }
+  .frames { display: flex; justify-content: center; gap: 4px; }
+  img { width: 96px; height: 96px; image-rendering: pixelated; }
+  .frames img + img { width: 48px; height: 48px; align-self: flex-end; }
+</style>
+</head>
+<body>
+<h1>White Stag: pick a coat</h1>
+<div class="grid">
+  <div class="opt"><b>Original (brown)</b><div class="frames"><img src="brown-stag.png"><img src="brown-stagattack.png"><img src="brown-stagdamaged.png"></div></div>
+  <div class="opt"><b>A · White</b><div class="frames"><img src="white-stag.png"><img src="white-stagattack.png"><img src="white-stagdamaged.png"></div></div>
+  <div class="opt"><b>B · Frost</b><div class="frames"><img src="frost-stag.png"><img src="frost-stagattack.png"><img src="frost-stagdamaged.png"></div></div>
+  <div class="opt"><b>C · Silver</b><div class="frames"><img src="silver-stag.png"><img src="silver-stagattack.png"><img src="silver-stagdamaged.png"></div></div>
+</div>
+</body>
+</html>

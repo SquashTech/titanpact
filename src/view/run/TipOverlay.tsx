@@ -9,6 +9,7 @@ import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { pageSpotlight, TIP_STAGING } from './tipStaging';
 import { TipPictureView } from './TipScene';
 import { TIP_SCENES } from '../../data/tipScenes';
+import { TitleLogo } from './TitleLogo';
 
 /**
  * Which badge class an inline token wears — the move grid's own (`MoveKindBadge`), so the mark in
@@ -46,7 +47,7 @@ export function TipText({ text }: { text: string }) {
     <>
       {parseTipText(text).map((segment, i) =>
         'block' in segment ? (
-          <StageChart key={i} />
+          segment.block === 'kinds' ? <KindsLegend key={i} /> : <StageChart key={i} />
         ) : 'icon' in segment ? (
           isKindToken(segment.icon) ? (
             <span key={i} className={`category-badge move-kind-badge tip-inline-icon ${TOKEN_BADGE_CLASS[segment.icon]}`}>
@@ -60,6 +61,30 @@ export function TipText({ text }: { text: string }) {
         )
       )}
     </>
+  );
+}
+
+const KINDS: readonly { kind: KindToken; name: string }[] = [
+  { kind: 'physical', name: 'Physical' },
+  { kind: 'magical', name: 'Magical' },
+  { kind: 'buff', name: 'Buff' },
+  { kind: 'debuff', name: 'Debuff' },
+  { kind: 'heal', name: 'Heal' },
+];
+
+/** The five kinds of move, each badge as the move grid draws it, its name under it. */
+function KindsLegend() {
+  return (
+    <span className="tip-kinds">
+      {KINDS.map(({ kind, name }) => (
+        <span key={kind} className="tip-kind">
+          <span className={`category-badge move-kind-badge tip-kind-badge ${TOKEN_BADGE_CLASS[kind]}`}>
+            <MoveKindGlyph kind={kind} className="move-kind-glyph" />
+          </span>
+          <span className="tip-kind-name">{name}</span>
+        </span>
+      ))}
+    </span>
   );
 }
 
@@ -201,6 +226,7 @@ export function TipOverlay({ tip, onDone }: Props) {
   const last = index >= tip.pages.length - 1;
 
   const scene = TIP_SCENES[tip.id]?.[index] ?? null;
+  const welcome = tip.look === 'welcome';
   const holes = useHoles(pageSpotlight(staging, index));
   const lit = holes.length > 0;
   const placement: Placement | 'low' =
@@ -226,7 +252,7 @@ export function TipOverlay({ tip, onDone }: Props) {
   return createPortal(
     <div
       ref={overlayRef}
-      className={`tip-overlay${lit ? ' has-spotlight' : ''}${scene ? ' has-scene' : ''} is-${placement}`}
+      className={`tip-overlay${lit ? ' has-spotlight' : ''}${scene ? ' has-scene' : ''}${welcome ? ' is-welcome' : ''} is-${placement}`}
       onClick={advance}
       role="dialog"
       aria-live="polite"
@@ -248,32 +274,45 @@ export function TipOverlay({ tip, onDone }: Props) {
       {holes.map((h, i) => (
         <div key={`${index}-${i}`} className="tip-spotlight" style={{ left: h.left, top: h.top, width: h.width, height: h.height }} />
       ))}
-      <div className="tip-box">
-        <div className="tip-title">{tip.title}</div>
-
-        {/* Keyed on the page so each one re-runs its arrival. */}
-        {scene && (
-          <div className="tip-scene-frame" key={`scene-${index}`}>
-            <TipPictureView scene={scene} />
-          </div>
-        )}
-        <p className="tip-page" key={index}>
-          <TipText text={tip.pages[index]} />
-        </p>
-
-        <div className="tip-foot">
-          {tip.pages.length > 1 ? (
-            <div className="tip-pips" aria-label={`Page ${index + 1} of ${tip.pages.length}`}>
-              {tip.pages.map((_, i) => (
-                <span key={i} className={`tip-pip${i === index ? ' is-current' : ''}${i < index ? ' is-done' : ''}`} />
-              ))}
-            </div>
-          ) : (
-            <span />
-          )}
-          <span className="tip-advance">{last ? 'Got it' : 'Next'}</span>
+      {welcome ? (
+        <div className="tip-welcome">
+          <h1 className="tip-welcome-title">
+            <span className="tip-welcome-kicker">{tip.title}</span>
+            <TitleLogo />
+          </h1>
+          <p className="tip-welcome-line">
+            <TipText text={tip.pages[index]} />
+          </p>
+          <span className="tip-welcome-advance">Tap to begin</span>
         </div>
-      </div>
+      ) : (
+        <div className="tip-box">
+          <div className="tip-title">{tip.title}</div>
+
+          {/* Keyed on the page so each one re-runs its arrival. */}
+          {scene && (
+            <div className="tip-scene-frame" key={`scene-${index}`}>
+              <TipPictureView scene={scene} />
+            </div>
+          )}
+          <p className="tip-page" key={index}>
+            <TipText text={tip.pages[index]} />
+          </p>
+
+          <div className="tip-foot">
+            {tip.pages.length > 1 ? (
+              <div className="tip-pips" aria-label={`Page ${index + 1} of ${tip.pages.length}`}>
+                {tip.pages.map((_, i) => (
+                  <span key={i} className={`tip-pip${i === index ? ' is-current' : ''}${i < index ? ' is-done' : ''}`} />
+                ))}
+              </div>
+            ) : (
+              <span />
+            )}
+            <span className="tip-advance">{last ? 'Got it' : 'Next'}</span>
+          </div>
+        </div>
+      )}
     </div>,
     overlayHost()
   );

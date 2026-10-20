@@ -77,15 +77,16 @@ A player who isn't interested in the story must never feel held hostage by it.
 Story select marks those five chapters, built or not, and each end card names its chapter number.
 
 **Some explanation of how to play is necessary** to make sure every player learns the exact
-controls, without becoming overbearing. A Story fight's cue can carry a **control tip**
-(`StoryCue.tip`), shown once an account at the top of that round's command phase, the moment the
+controls, without becoming overbearing. A Story fight's cue can carry **control tips**
+(`StoryCue.tips`, shown in order), each once an account at the top of that round's command phase, the moment the
 control is first needed, with what it names lit on the live board (`view/run/tipStaging.ts`). This
 brings tips back that the 2026-10-13 cut removed, but only inside the prologue's guided fights.
 
 | Fight | Round | Tip | Lights |
 |---|---|---|---|
-| The hunt | 1 | **Choosing a Move**: tap the move, then the enemy it hits | the guided move, then the foes |
-| The hunt | 2 | **The Round**: Speed order along the top; health, Mana, a move's cost | the order track, then the bars |
+| The hunt | 1 | **Welcome**: the wordmark large, "battles are turn-based" under it | nothing; a hand points at each tap |
+| The hunt | 2 | **Reading a Move**: Iron Fist drawn with Mana, Type, kind, Power and Matchup labelled; then the five kinds | a drawn scene, then the legend |
+| The hunt | 2 | **Setting Up**: Iron cuts Frost, Beast barely scratches it; Fang's Howl lands before Valor's strike | a drawn scene, then the order track |
 | The clearing | 1 | **Reading a Foe**: tap any hero to read them | the Faceless |
 | The clearing | 2 | **Switching**: the one coming in doesn't act; the bench regains Mana | the Switch key, then the bars |
 | The clearing | 4 | **Rest**: no Mana for any move, so Rest skips the turn and refills it | the Rest row |
@@ -95,6 +96,25 @@ and tips too (`StoryActNode.cues`). Its opener teaches **Matchups** (the arrows 
 number, and holding a move to read it), and the Ursa fight teaches **the Bag** (a potion costs no
 turn, restores half). The bench and item tips still fire where they belong, in the same act. The
 general round tip (`fight.basics`) is marked seen when chapter 1 ends, since its tips say the same.
+
+**Fewer words, more marks** (2026-10-20, per user direction). The hunt's first tip is a welcome (`Tip.look`
+`welcome`: the game's wordmark large, no card) and the old "Choosing a Move" card is gone: a cue with
+`point` draws a pixel hand bobbing at each guided tap (`GuideHand`), the move and then its target, and
+a guided move's other targets fade and stop answering. The cue's line waits until the round's tips are
+read, and a line said by a hero on the field is a speech bubble on that hero's half, its tail down to
+them. A drawn scene can label a move row's parts in place (`TipScene.callouts`), and `[kinds]` is a
+page that is the five kinds of move, badge over name. The blue-bar line from the old round-2 tip is
+not taught anywhere in the prologue now; the Rest tip still names Mana.
+
+**The hunt teaches by its numbers** (2026-10-20, per user direction). The Fox has 200 HP: Fang's Claw
+alone tops out at 172 and Valor's Iron Fist at 103, together never under 235, so the forced double
+attack is the only way it falls. The Stag is the **White Stag**, mono-Frost (285 HP, Rime Wind, its
+sprite a frost recolour, alternatives in `art/concepts/white-stag/`): Iron hits it double, Beast half.
+Round 2 guides Fang to Howl and Valor to Iron Fist: Fang is faster, so the Howl lifts Valor's Attack
+before she strikes, and only then does Iron Fist drop it (226–266 without, 301–354 with).
+`test/story.test.ts` pins both lessons on the authored seed. **Open:** Claw plus Iron Fist without the
+Howl also clears 285 (Pack Hunter lifts Fang's Attack when the Fox drops below half), so the Howl is
+the guided play, not the only one.
 
 **A tip page ignores taps for its first ~half second** (`TipOverlay`, every tip in the game): a
 player tapping through a round's playback dismissed a tip unread when it landed under the tap.

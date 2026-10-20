@@ -83,6 +83,7 @@ import { pilotActions } from '../../run/pilot';
 import { applyVersusReplacements, otherSide, placeVersusLeads, replacementsOwed, SIDES as VERSUS_SIDES, stateHash, versusActions, VERSUS_CLOCK } from '../../run/versus';
 import { TurnClock, useTurnClock } from '../versus/TurnClock';
 import { cueFor, guidedAction, scriptedEnemyActions, withStoryEnds, type StoryCue, type StoryFight } from '../../run/story';
+import { GuideHand } from '../story/GuideHand';
 import type { VersusChannel } from '../versus/versusChannel';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
@@ -887,11 +888,6 @@ export function FightScreen({
   const guide = story && actingId ? guidedAction(story, combat, actingId) : null;
   const storyCue = storyCues ? cueFor(storyCues, combat.round) : null;
   const cueSounded = useRef<number | null>(null);
-  useEffect(() => {
-    if (!storyCue?.sound || resolving || winner || cueSounded.current === combat.round) return;
-    cueSounded.current = combat.round;
-    playSfx(storyCue.sound);
-  });
 
   /** Drives the target panel and the Back button (exit targeting rather than step to the previous hero). */
   const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;
@@ -928,11 +924,25 @@ export function FightScreen({
     const ctx: FightTipContext = { round: combat.round, nodeType: tips.nodeType };
     return matchFightTip(FIGHT_TIPS, ctx, tips.seenIds);
   })();
-  // A Story cue's control tip lands at the same moment a fight tip would: the top of the round's command phase.
+  // A Story cue's control tips land at the same moment a fight tip would: the top of the round's command phase, one at a time.
   const storyTip =
-    winner === null && storyTips && storyCue?.tip && canAct && actionStep === 0 && Object.keys(pending).length === 0 && !storyTips.seenIds.includes(storyCue.tip.id)
-      ? storyCue.tip
+    winner === null && storyTips && canAct && actionStep === 0 && Object.keys(pending).length === 0
+      ? (storyCue?.tips ?? []).find((tip) => !storyTips.seenIds.includes(tip.id)) ?? null
       : null;
+  // The line waits for the round's tips, then speaks: the bark lands with it.
+  const cueShown = storyCue !== null && !resolving && !winner && storyTip === null;
+  useEffect(() => {
+    if (!cueShown || !storyCue?.sound || cueSounded.current === combat.round) return;
+    cueSounded.current = combat.round;
+    playSfx(storyCue.sound);
+  });
+  /** The active hero speaking the cue, by name: its line points down at it. */
+  const cueSlot = storyCue?.speaker
+    ? combat.active[PLAYER_SIDE].findIndex((cid) => !!cid && allCombatants[combat.combatants[cid].heroId]?.name === storyCue.speaker)
+    : -1;
+  /** A guided move's one target: every other card steps back while the move is aimed. */
+  const guidedTargetId = guide?.kind === 'move' ? guide.declaredTarget : null;
+  const targetGuide = (tid: string): 'lit' | 'dim' | undefined => (selecting && guidedTargetId ? (tid === guidedTargetId ? 'lit' : 'dim') : undefined);
 
   /**
    * Rest is a recovery, not a pass: the key stays dark while the hero has nothing to recover, so
@@ -1709,7 +1719,8 @@ export function FightScreen({
           hero={hero}
           combatant={combat.combatants[id]}
           level={levelFor(id)}
-          targetable={targetableIds.includes(id)}
+          targetable={targetableIds.includes(id) && targetGuide(id) !== 'dim'}
+          guide={targetGuide(id)}
           forecast={
             aimingPotion && targetableIds.includes(id)
               ? potionPreview(id, aimingPotion).forecast
@@ -1841,8 +1852,8 @@ export function FightScreen({
         <EnemyPips combat={combat} side={AI_SIDE} />
 
         {/* What a tapped sprite says, for a moment, on the horizon — the band the Pact warning takes when it is due. */}
-        {storyCue && !resolving && !winner && (
-          <div key={combat.round} className="story-cue" role="status">
+        {cueShown && storyCue && (
+          <div key={combat.round} className={`story-cue${cueSlot >= 0 ? ` is-said is-from-${cueSlot === 0 ? 'left' : 'right'}` : ''}`} role="status">
             {storyCue.speaker && <span className="story-cue-name">{storyCue.speaker}</span>}
             {storyCue.text}
           </div>
@@ -2246,7 +2257,8 @@ export function FightScreen({
                           hero={allCombatants[tCombatant.heroId]}
                           combatant={tCombatant}
                           level={levelFor(tid)}
-                          targetable={!spread && !(guide?.kind === 'move' && guide.declaredTarget && guide.declaredTarget !== tid)}
+                          targetable={!spread && targetGuide(tid) !== 'dim'}
+                          guide={spread ? undefined : targetGuide(tid)}
                           onSelectTarget={spread ? undefined : () => handleTargetClick(tid)}
                           popups={popups[tid]}
                           effBadge={mult === 1 ? null : { text: effLabel(mult), className: multClass(mult) }}
@@ -2698,6 +2710,17 @@ export function FightScreen({
 
       {fightTip && tips && <TipOverlay key={fightTip.id} tip={fightTip} onDone={() => tips.onSeen(fightTip.id)} />}
       {storyTip && storyTips && <TipOverlay key={storyTip.id} tip={storyTip} onDone={() => storyTips.onSeen(storyTip.id)} />}
+      {cueShown && storyCue?.point && guide?.kind === 'move' && (
+        <GuideHand
+          selector={
+            !showingTargetPanel
+              ? '.move-list .move-button.is-guided'
+              : guide.declaredTarget
+                ? '.target-row .combatant-card.is-guided'
+                : '.target-row.target-row-spread'
+          }
+        />
+      )}
       {pickingLeads && tips && !tips.seenIds.includes('bench') && (
         <TipOverlay key="bench" tip={SCREEN_TIPS.bench} onDone={() => tips.onSeen('bench')} />
       )}

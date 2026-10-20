@@ -12,7 +12,7 @@ const fang: StoryActor = { id: 'fang', name: 'Fang', artHeroId: 'packAlpha', sta
 const ren: StoryActor = { id: 'ren', name: 'Ren', artHeroId: CAST.ren, stands: 'right', voice: { timbre: 'deep', pitch: 1 }, portrait: 'ren' };
 const will: StoryActor = { id: 'will', name: 'Will', artHeroId: CAST.will, stands: 'right', voice: { timbre: 'bright', pitch: 1.18 }, portrait: 'will' };
 const faceless: StoryActor = { id: 'faceless', name: '???', artHeroId: CAST.endbringer, stands: 'right', scale: 1.2, uncanny: true };
-const stag: StoryActor = { id: 'stag', name: 'Stag', artHeroId: CAST.stag, stands: 'right' };
+const stag: StoryActor = { id: 'stag', name: 'White Stag', artHeroId: CAST.stag, stands: 'right' };
 const fox: StoryActor = { id: 'fox', name: 'Fox', artHeroId: CAST.fox, stands: 'right' };
 const risen: StoryActor = { id: 'risen', name: '???', artHeroId: 'heraldRisen', stands: 'right', scale: 1.7, uncanny: true };
 
@@ -33,12 +33,12 @@ const firstHunt: StoryFight = {
   ],
   enemyLeads: ['stag', 'fox'],
   enemyScript: [
-    [{ actor: 'stag', moveId: 'ivySpike', target: ally('fang') }, { actor: 'fox', moveId: 'pounce', target: ally('valor') }],
-    [{ actor: 'stag', moveId: 'ivySpike', target: ally('valor') }],
+    [{ actor: 'stag', moveId: 'rimeWind' }, { actor: 'fox', moveId: 'pounce', target: ally('valor') }],
+    [{ actor: 'stag', moveId: 'rimeWind' }],
   ],
   guide: [
     [{ actor: 'valor', moveId: 'ironFist', target: foe('fox') }, { actor: 'fang', moveId: 'claw', target: foe('fox') }],
-    [{ actor: 'valor', moveId: 'ironFist', target: foe('stag') }, { actor: 'fang', moveId: 'claw', target: foe('stag') }],
+    [{ actor: 'valor', moveId: 'ironFist', target: foe('stag') }, { actor: 'fang', moveId: 'howl' }],
   ],
 };
 
@@ -95,14 +95,16 @@ const northRoad: StoryAct = {
             round: 1,
             speaker: 'Ren',
             text: 'Turned things. Hit them where it hurts.',
-            tip: {
-              id: 'story.arrows',
-              title: 'Matchups',
-              pages: [
-                "The arrows under a move's number show how it hits each enemy: [super] double, [resist] half. Strike where it hurts.",
-                'Hold a move to read everything it does.',
-              ],
-            },
+            tips: [
+              {
+                id: 'story.arrows',
+                title: 'Matchups',
+                pages: [
+                  "The arrows under a move's number show how it hits each enemy: [super] double, [resist] half. Strike where it hurts.",
+                  'Hold a move to read everything it does.',
+                ],
+              },
+            ],
           },
         ],
       },
@@ -125,14 +127,16 @@ const northRoad: StoryAct = {
             round: 2,
             speaker: 'Valor',
             text: 'Hold on, Fang!',
-            tip: {
-              id: 'story.bag',
-              title: 'The Bag',
-              pages: [
-                'The Bag holds potions for the whole team. Drinking one costs no turn: drink, then choose a move as usual.',
-                "Each potion restores half of a hero's health or Mana. Find more after fights.",
-              ],
-            },
+            tips: [
+              {
+                id: 'story.bag',
+                title: 'The Bag',
+                pages: [
+                  'The Bag holds potions for the whole team. Drinking one costs no turn: drink, then choose a move as usual.',
+                  "Each potion restores half of a hero's health or Mana. Find more after fights.",
+                ],
+              },
+            ],
           },
         ],
       },
@@ -213,11 +217,11 @@ export const storyCatalog: readonly StoryDefinition[] = [
               { text: 'The high path climbs above the trees. Valor reads the ground the way Father taught her.' },
               { speaker: 'valor', text: 'Fresh. Hooves, and something smaller following them.', moves: { valor: { x: 32, depth: 0.75 }, fang: { x: 24, depth: 0.6 } } },
               { text: 'Fang goes still, nose to the wind.', moves: { fang: { x: 42, depth: 0.65 } } },
-              { text: 'Below the ridge, a stag lifts its head from the grass. A fox lies low in the brush beside it.', moves: { stag: { off: false }, fox: { off: false } } },
+              { text: 'Below the ridge, a white stag lifts its head from the grass, frost on its antlers. A fox lies low in the brush beside it.', moves: { stag: { off: false }, fox: { off: false } } },
               { speaker: 'valor', text: 'Easy, Fang. On my word.', moves: { valor: { x: 36, depth: 0.85 } } },
               { speaker: 'valor', mood: 'happy', text: 'Now!', sound: 'wolf.bark', moves: { stag: { x: 84, depth: 0.45 }, fox: { x: 70, depth: 0.5 } } },
             ],
-            skipped: 'On the high path, Valor and Fang found a stag, and a fox stalking it.',
+            skipped: 'On the high path, Valor and Fang found a white stag, and a fox stalking it.',
           },
           {
             kind: 'fight',
@@ -229,27 +233,33 @@ export const storyCatalog: readonly StoryDefinition[] = [
                 speaker: 'Valor',
                 text: 'The fox first. Fang, with me!',
                 sound: 'wolf.bark',
-                tip: {
-                  id: 'story.moves',
-                  title: 'Choosing a Move',
-                  pages: [
-                    'Each hero on the field acts once a round. Tap the move you want Valor to use.',
-                    'Then tap the enemy it should hit. Fang chooses next, the same way.',
-                  ],
-                },
+                point: true,
+                tips: [
+                  {
+                    id: 'story.welcome',
+                    title: 'Welcome to',
+                    pages: ['Battles are turn-based. Select moves for your heroes, then watch the round play out.'],
+                    look: 'welcome',
+                  },
+                ],
               },
               {
                 round: 2,
                 speaker: 'Valor',
-                text: 'Now the stag.',
-                tip: {
-                  id: 'story.round',
-                  title: 'The Round',
-                  pages: [
-                    'When both heroes have chosen, everyone acts in order of Speed, fastest first. The order runs along the top.',
-                    'The green bar is health, the blue bar Mana. A move costs the Mana in its gem.',
-                  ],
-                },
+                text: "Howl, Fang! Your bite won't touch it.",
+                sound: 'wolf.bark',
+                point: true,
+                tips: [
+                  { id: 'story.reading', title: 'Reading a Move', pages: ['Hold any move to read all of it.', '[kinds]'] },
+                  {
+                    id: 'story.combo',
+                    title: 'Setting Up',
+                    pages: [
+                      'Iron cuts through Frost [super]. Beast barely scratches it [resist].',
+                      "Fang is faster, so his Howl lands first and lifts Valor's Attack before she strikes.",
+                    ],
+                  },
+                ],
               },
             ],
           },
@@ -302,27 +312,29 @@ export const storyCatalog: readonly StoryDefinition[] = [
                 round: 1,
                 speaker: 'Valor',
                 text: 'Hit it together!',
-                tip: { id: 'story.inspect', title: 'Reading a Foe', pages: ['Tap any hero, yours or theirs, to read their stats, moves and passives.'] },
+                tips: [{ id: 'story.inspect', title: 'Reading a Foe', pages: ['Tap any hero, yours or theirs, to read their stats, moves and passives.'] }],
               },
               {
                 round: 2,
                 speaker: 'Ren',
                 text: 'Fall back! Will, with me.',
-                tip: {
-                  id: 'story.switch',
-                  title: 'Switching',
-                  pages: [
-                    "Switch trades a hero on the field for one on the bench. The one coming in doesn't act this round.",
-                    'Heroes on the bench regain Mana every round, so switching keeps the team fresh.',
-                  ],
-                },
+                tips: [
+                  {
+                    id: 'story.switch',
+                    title: 'Switching',
+                    pages: [
+                      "Switch trades a hero on the field for one on the bench. The one coming in doesn't act this round.",
+                      'Heroes on the bench regain Mana every round, so switching keeps the team fresh.',
+                    ],
+                  },
+                ],
               },
               { round: 3, speaker: 'Ren', text: 'Strike where I strike.' },
               {
                 round: 4,
                 speaker: 'Ren',
                 text: 'Catch your breath. Will, now!',
-                tip: { id: 'story.rest', title: 'Rest', pages: ['A hero without the Mana for any move must Rest. Rest skips their turn and refills all of it.'] },
+                tips: [{ id: 'story.rest', title: 'Rest', pages: ['A hero without the Mana for any move must Rest. Rest skips their turn and refills all of it.'] }],
               },
             ],
           },

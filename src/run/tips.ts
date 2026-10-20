@@ -17,6 +17,8 @@ export interface Tip {
   title: string;
   /** One page per tap. Most tips are a single page; none should need more than three. */
   pages: readonly string[];
+  /** `welcome`: no card; the title over the game's wordmark, large, and the page under it (the Story's first fight). */
+  look?: 'welcome';
 }
 
 /** The lore card's id in `seenTipIds`: the four lines ahead of the first draft, once an account. */
@@ -64,8 +66,11 @@ export const TIP_ICON_TOKENS = [
 
 export type TipIconToken = (typeof TIP_ICON_TOKENS)[number];
 
-/** Block tokens: a page that IS the token renders a drawn panel in its place — `[stages]` is the stage chart (docs/stat-stages.md §5). */
-export const TIP_BLOCK_TOKENS = ['stages'] as const;
+/**
+ * Block tokens: a page that IS the token renders a drawn panel in its place — `[stages]` is the stage
+ * chart (docs/stat-stages.md §5), `[kinds]` the five kinds of move, each badge beside its name.
+ */
+export const TIP_BLOCK_TOKENS = ['stages', 'kinds'] as const;
 
 export type TipBlockToken = (typeof TIP_BLOCK_TOKENS)[number];
 
