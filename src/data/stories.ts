@@ -151,7 +151,8 @@ const theClearing: StoryFight = {
     { rosterId: 'valor', heroId: CAST.valor, level: 3 },
     { rosterId: 'fang', heroId: 'packAlpha', level: 3 },
     { rosterId: 'ren', heroId: CAST.ren, level: 12 },
-    { rosterId: 'will', heroId: CAST.will, level: 4 },
+    // Storm Lash marks with Conduct, so his first strike in round 3 sets up his father's Iron blade.
+    { rosterId: 'will', heroId: CAST.will, level: 4, moveIds: ['stormLash', 'thunderclap'] },
   ],
   playerLeads: ['valor', 'fang'],
   enemy: [{ rosterId: 'faceless', heroId: CAST.endbringer, level: 1 }],
@@ -160,7 +161,7 @@ const theClearing: StoryFight = {
   guide: [
     [{ actor: 'valor', moveId: 'ironFist', target: foe('faceless') }, { actor: 'fang', moveId: 'claw', target: foe('faceless') }],
     [{ actor: 'valor', switchTo: 'ren' }, { actor: 'fang', switchTo: 'will' }],
-    [{ actor: 'ren', moveId: 'galeSever' }, { actor: 'will', moveId: 'thunderclap', target: foe('faceless') }],
+    [{ actor: 'ren', moveId: 'galeSever' }, { actor: 'will', moveId: 'stormLash', target: foe('faceless') }],
     [{ actor: 'ren', rest: true }, { actor: 'will', moveId: 'thunderclap', target: foe('faceless') }],
   ],
   endsWhen: [
@@ -250,7 +251,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
                 sound: 'wolf.bark',
                 point: true,
                 tips: [
-                  { id: 'story.reading', title: 'Reading a Move', pages: ['Hold any move to read all of it.', '[kinds]'] },
+                  { id: 'story.reading', title: 'Reading a Move', pages: ['[kinds] *Hold* any move to read all of it.'] },
                   {
                     id: 'story.combo',
                     title: 'Setting Up',
@@ -312,7 +313,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
                 round: 1,
                 speaker: 'Valor',
                 text: 'Hit it together!',
-                tips: [{ id: 'story.inspect', title: 'Reading a Foe', pages: ['Tap any hero, yours or theirs, to read their stats, moves and passives.'] }],
+                tips: [{ id: 'story.inspect', title: 'Reading a Foe', pages: ['*Tap* any hero, yours or theirs, to read its *stats*, *moves* and *passives*.'] }],
               },
               {
                 round: 2,
@@ -323,18 +324,34 @@ export const storyCatalog: readonly StoryDefinition[] = [
                     id: 'story.switch',
                     title: 'Switching',
                     pages: [
-                      "Switch trades a hero on the field for one on the bench. The one coming in doesn't act this round.",
-                      'Heroes on the bench regain Mana every round, so switching keeps the team fresh.',
+                      "*Switch* trades a hero on the field for one on the *bench*. The one coming in doesn't act this round.",
+                      'Heroes on the bench *regain Mana* every round, so switching keeps the team fresh.',
                     ],
                   },
                 ],
               },
-              { round: 3, speaker: 'Ren', text: 'Strike where I strike.' },
+              {
+                round: 3,
+                speaker: 'Ren',
+                text: 'Mark it, Will. My blade follows.',
+                point: true,
+                tips: [
+                  {
+                    id: 'story.conduct',
+                    title: 'Conduct',
+                    pages: [
+                      '*Storm Lash* puts *Conduct* [conduct] on its target.',
+                      'The next *Storm*, *Iron* or *Mech* hit on that target deals *Bonus* damage and uses up the mark.',
+                      "Will is *faster*, so his mark lands first. Then Ren's *Iron* blade sets it off.",
+                    ],
+                  },
+                ],
+              },
               {
                 round: 4,
                 speaker: 'Ren',
                 text: 'Catch your breath. Will, now!',
-                tips: [{ id: 'story.rest', title: 'Rest', pages: ['A hero without the Mana for any move must Rest. Rest skips their turn and refills all of it.'] }],
+                tips: [{ id: 'story.rest', title: 'Rest', pages: ['*Rest* skips a turn and *refills all Mana*. A hero with no Mana for any move must Rest.'] }],
               },
             ],
           },

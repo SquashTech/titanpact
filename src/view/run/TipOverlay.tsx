@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import { parseTipText, type Tip, type TipIconToken } from '../../run/tips';
 import { MoveKindGlyph } from '../shared/statIcons';
+import { StatusGlyph } from '../shared/statusIcons';
 import type { MoveDefinition } from '../../engine/content';
 import { EnemySeats, SeatArrow, TargetFigures } from '../shared/MoveStrip';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
@@ -28,6 +29,7 @@ const FIGURE_TOKENS: Partial<Record<TipIconToken, MoveDefinition['target']>> = {
 
 /** A token that draws the move row's own mark: a seat arrow, the seats' bars, or a target figure. */
 function RowMarkToken({ token }: { token: TipIconToken }) {
+  if (token === 'conduct') return <span className="tip-inline-status"><StatusGlyph statusId="Conduct" className="move-rider-glyph" /></span>;
   const seats = SEAT_TOKENS[token];
   if (seats) return <span className="tip-inline-seats"><EnemySeats mults={[1, 1]} target={seats} /></span>;
   const figure = FIGURE_TOKENS[token];

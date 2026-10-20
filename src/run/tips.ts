@@ -62,6 +62,7 @@ export const TIP_ICON_TOKENS = [
   'self',
   'ally',
   'foe',
+  'conduct',
 ] as const;
 
 export type TipIconToken = (typeof TIP_ICON_TOKENS)[number];

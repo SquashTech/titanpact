@@ -85,10 +85,11 @@ brings tips back that the 2026-10-13 cut removed, but only inside the prologue's
 | Fight | Round | Tip | Lights |
 |---|---|---|---|
 | The hunt | 1 | **Welcome**: the wordmark large, "battles are turn-based" under it | nothing; a hand points at each tap |
-| The hunt | 2 | **Reading a Move**: Iron Fist drawn with Mana, Type, kind, Power and Matchup labelled; then the five kinds | a drawn scene, then the legend |
+| The hunt | 2 | **Reading a Move**: Iron Fist drawn with Mana, Type, Kind of move, Power and Matchup labelled, the five kinds under it | a drawn scene and the legend, one page |
 | The hunt | 2 | **Setting Up**: Iron cuts Frost, Beast barely scratches it; Fang's Howl lands before Valor's strike | a drawn scene, then the order track |
 | The clearing | 1 | **Reading a Foe**: tap any hero to read them | the Faceless |
 | The clearing | 2 | **Switching**: the one coming in doesn't act; the bench regains Mana | the Switch key, then the bars |
+| The clearing | 3 | **Conduct**: Storm Lash marks the target; the next Storm, Iron or Mech hit deals Bonus damage; Will is faster, so Ren's blade sets it off | Storm Lash drawn with its Conduct labelled, then the order track |
 | The clearing | 4 | **Rest**: no Mana for any move, so Rest skips the turn and refills it | the Rest row |
 
 Chapter 2's act teaches the rest (2026-10-18, per user direction): an act's fight can carry cues
@@ -123,6 +124,14 @@ user direction; measured without crits: Iron Fist alone 151–177, Claw then Iro
 Iron Fist 226–266). Storm is there for the quarter: no Attack lever alone opened a window, the variance
 is wider than one stage step. `test/story.test.ts` pins every branch on the authored seed; a crit, or
 Claw's Bleed on a high roll, can still drop it off-script on another seed.
+
+**The clearing's combo** (2026-10-20, per user direction): Will carries **Storm Lash** (Storm, plants
+Conduct) in place of Zap, and round 3 guides him to it ahead of Ren's Gale Sever. Will is faster, so
+the mark lands first and Ren's Iron sets it off for 15% of the Faceless's max HP. The Faceless went
+195 → 240 HP so the combo leaves it on 34 and the Rest round still comes; `test/story.test.ts` pins
+both. A labelled move picture puts the labels for the stub's three stacked marks above and below the
+row, with Power's line meeting the number's left side so no two lines cross; the label reads **Kind of
+move**, the How to Play page's own word, since **Type** labels the element beside it.
 
 **A tip page ignores taps for its first ~half second** (`TipOverlay`, every tip in the game): a
 player tapping through a round's playback dismissed a tip unread when it landed under the tap.

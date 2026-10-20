@@ -719,3 +719,10 @@
 .tip-welcome .tip-key {
   color: #f1c45e;
 }
+
+.tip-inline-status {
+  display: inline-flex;
+  vertical-align: -3px;
+  width: 16px;
+  height: 16px;
+}

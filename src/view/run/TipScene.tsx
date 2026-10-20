@@ -22,7 +22,8 @@ import { MoveButtonReplica } from '../shared/MoveTile';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { Coin } from '../shared/Coin';
 import { FieldGlyph } from '../shared/fieldIcons';
-import { moveKindGlyph } from '../shared/moveKind';
+import { statuses } from '../../data/statuses';
+import { firstStatusApplication } from '../../engine/content';
 
 /** A scene's fighters are full-strength level-5 heroes unless the scene says otherwise. */
 const SCENE_LEVEL = 5;
@@ -103,22 +104,30 @@ function HallScene({ scene }: { scene: TipHallScene }) {
   );
 }
 
-/** Each callout's mark on the move row, and whether its label sits above the row or below it. */
-const CALLOUT_PARTS: Readonly<Record<TipSceneCallout, { selector: string; band: 'above' | 'below' }>> = {
-  mana: { selector: '.mana-gem', band: 'above' },
-  type: { selector: '.move-type-code', band: 'above' },
-  kind: { selector: '.move-stub-glyph', band: 'above' },
-  power: { selector: '.move-stub-value', band: 'below' },
-  matchup: { selector: '.move-seats', band: 'below' },
+/**
+ * Each callout's mark on the move row: whether its label sits above the row or below it, how far its
+ * label is nudged from straight over or under the mark, and whether its line meets the mark's near
+ * edge (top or bottom) or its left side — the stub stacks three marks in one column, so Power's line
+ * comes in from the left to pass beside the arrows under it rather than through them.
+ */
+const CALLOUT_PARTS: Readonly<Record<TipSceneCallout, { selector: string; side: 'above' | 'below'; nudge?: number; meets?: 'left' }>> = {
+  mana: { selector: '.mana-gem', side: 'above' },
+  type: { selector: '.move-type-code', side: 'above' },
+  rider: { selector: '.move-rider', side: 'above' },
+  kind: { selector: '.move-stub-glyph', side: 'above' },
+  power: { selector: '.move-stub-value', side: 'below', nudge: -44, meets: 'left' },
+  matchup: { selector: '.move-seats', side: 'below' },
 };
-
-const KIND_NAMES: Readonly<Record<string, string>> = { physical: 'Physical', magical: 'Magical', buff: 'Buff', debuff: 'Debuff', heal: 'Heal' };
 
 function calloutLabel(part: TipSceneCallout, move: MoveDefinition): string {
   if (part === 'mana') return 'Mana';
   if (part === 'type') return 'Type';
-  if (part === 'kind') return KIND_NAMES[moveKindGlyph(move)] ?? 'Kind';
+  if (part === 'kind') return 'Kind of move';
   if (part === 'power') return 'Power';
+  if (part === 'rider') {
+    const statusId = firstStatusApplication(move)?.statusId;
+    return (statusId && statuses[statusId]?.name) || 'Effect';
+  }
   return 'Matchup';
 }
 
@@ -129,47 +138,72 @@ interface PlacedCallout {
   ring: { x: number; y: number; w: number; h: number };
   /** The label's centre. */
   at: { x: number; y: number };
+  /** Where the label's line meets the ring. */
+  meet: { x: number; y: number };
 }
 
 /** Labels never closer than this, centre to centre, in a band. */
 const LABEL_GAP = 62;
 const LABEL_EDGE = 30;
+/** Half a label's height, so a line starts at the label's edge. */
+const LABEL_HALF = 9;
 
-/**
- * Measures the first focus row's marks inside `root` and lays a label for each in the band above
- * or below the row, pushed apart so none overlaps and none leaves the frame.
- */
+/** Lays a label for each found mark in its band, pushed apart so none overlaps and none leaves the frame. */
+function place(found: readonly { part: TipSceneCallout; ring: PlacedCallout['ring'] }[], rowBox: PlacedCallout['ring'], width: number, move: MoveDefinition): PlacedCallout[] {
+  const out: PlacedCallout[] = [];
+  for (const side of ['above', 'below'] as const) {
+    const inBand = found
+      .filter((f) => CALLOUT_PARTS[f.part].side === side)
+      .map((f) => ({ ...f, x: f.ring.x + f.ring.w / 2 + (CALLOUT_PARTS[f.part].nudge ?? 0) }))
+      .sort((p, q) => p.x - q.x);
+    const xs = inBand.map((f) => f.x);
+    for (let i = 1; i < xs.length; i++) xs[i] = Math.max(xs[i], xs[i - 1] + LABEL_GAP);
+    if ((xs[xs.length - 1] ?? 0) > width - LABEL_EDGE) for (let i = xs.length - 1; i >= 0; i--) xs[i] = Math.min(xs[i], (xs[i + 1] ?? width - LABEL_EDGE + LABEL_GAP) - LABEL_GAP);
+    const y = side === 'above' ? rowBox.y - 18 : rowBox.y + rowBox.h + 18;
+    inBand.forEach((f, i) => {
+      const { ring } = f;
+      const meet =
+        CALLOUT_PARTS[f.part].meets === 'left'
+          ? { x: ring.x - 2, y: ring.y + ring.h / 2 }
+          : { x: ring.x + ring.w / 2, y: side === 'above' ? ring.y - 2 : ring.y + ring.h + 2 };
+      out.push({ part: f.part, label: calloutLabel(f.part, move), ring, at: { x: Math.max(LABEL_EDGE, xs[i]), y }, meet });
+    });
+  }
+  return out;
+}
+
+/** Measures the first focus row's marks inside `root`, and again as the note settles and on any resize. */
 function useCallouts(root: RefObject<HTMLDivElement | null>, callouts: readonly TipSceneCallout[] | undefined, move: MoveDefinition | null): PlacedCallout[] {
   const [placed, setPlaced] = useState<PlacedCallout[]>([]);
   const key = callouts?.join('|') ?? '';
   useLayoutEffect(() => {
     const el = root.current;
-    const row = el?.querySelector('.tip-scene-row.is-focus-row .move-button');
-    if (!el || !row || !callouts || !move) {
+    if (!el || !callouts || !move) {
       setPlaced([]);
       return;
     }
-    const box = el.getBoundingClientRect();
-    // The tip sits inside the scaled canvas: client px back to the scene's own.
-    const scale = el.offsetWidth / (box.width || 1);
-    const local = (r: DOMRect) => ({ x: (r.left - box.left) * scale, y: (r.top - box.top) * scale, w: r.width * scale, h: r.height * scale });
-    const rowBox = local(row.getBoundingClientRect());
-    const found = callouts.flatMap((part) => {
-      const mark = row.querySelector(CALLOUT_PARTS[part].selector);
-      return mark ? [{ part, ring: local(mark.getBoundingClientRect()) }] : [];
-    });
-    const out: PlacedCallout[] = [];
-    for (const band of ['above', 'below'] as const) {
-      const inBand = found.filter((f) => CALLOUT_PARTS[f.part].band === band).sort((a, b) => a.ring.x - b.ring.x);
-      const xs = inBand.map((f) => f.ring.x + f.ring.w / 2);
-      for (let i = 1; i < xs.length; i++) xs[i] = Math.max(xs[i], xs[i - 1] + LABEL_GAP);
-      const width = el.offsetWidth;
-      const over = (xs[xs.length - 1] ?? 0) - (width - LABEL_EDGE);
-      if (over > 0) for (let i = xs.length - 1; i >= 0; i--) xs[i] = Math.min(xs[i], (xs[i + 1] ?? width - LABEL_EDGE + LABEL_GAP) - LABEL_GAP);
-      const y = band === 'above' ? rowBox.y - 18 : rowBox.y + rowBox.h + 18;
-      inBand.forEach((f, i) => out.push({ part: f.part, label: calloutLabel(f.part, move), ring: f.ring, at: { x: Math.max(LABEL_EDGE, xs[i]), y } }));
-    }
-    setPlaced(out);
+    const measure = () => {
+      const row = el.querySelector('.tip-scene-row.is-focus-row .move-button');
+      if (!row) return;
+      const box = el.getBoundingClientRect();
+      // The tip sits inside the scaled canvas: client px back to the scene's own.
+      const scale = el.offsetWidth / (box.width || 1);
+      const local = (r: DOMRect) => ({ x: (r.left - box.left) * scale, y: (r.top - box.top) * scale, w: r.width * scale, h: r.height * scale });
+      const found = callouts.flatMap((part) => {
+        const mark = row.querySelector(CALLOUT_PARTS[part].selector);
+        return mark ? [{ part, ring: local(mark.getBoundingClientRect()) }] : [];
+      });
+      setPlaced(place(found, local(row.getBoundingClientRect()), el.offsetWidth, move));
+    };
+    measure();
+    // The note arrives on an animation and the row's name steps its size down a beat later: measure again once both have settled.
+    const timers = [120, 400, 900].map((ms) => window.setTimeout(measure, ms));
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => {
+      timers.forEach((t) => window.clearTimeout(t));
+      observer.disconnect();
+    };
     // Keyed on the joined callouts and the move: a fresh array with the same contents is no change.
   }, [key, move?.id]);
   return placed;
@@ -181,18 +215,15 @@ function CalloutLayer({ placed }: { placed: readonly PlacedCallout[] }) {
   return (
     <>
       <svg className="tip-callout-lines" aria-hidden="true">
-        {placed.map(({ part, ring, at }) => {
-          const above = at.y < ring.y;
-          return (
-            <g key={part}>
-              <rect className="tip-callout-ring" x={ring.x - 2} y={ring.y - 2} width={ring.w + 4} height={ring.h + 4} rx="4" />
-              <line className="tip-callout-leader" x1={at.x} y1={at.y + (above ? 8 : -8)} x2={ring.x + ring.w / 2} y2={above ? ring.y - 2 : ring.y + ring.h + 2} />
-            </g>
-          );
-        })}
+        {placed.map(({ part, ring, at, meet }) => (
+          <g key={part}>
+            <rect className="tip-callout-ring" x={ring.x - 2} y={ring.y - 2} width={ring.w + 4} height={ring.h + 4} rx="4" />
+            <line className="tip-callout-leader" x1={at.x} y1={at.y + (at.y < meet.y ? LABEL_HALF : -LABEL_HALF)} x2={meet.x} y2={meet.y} />
+          </g>
+        ))}
       </svg>
       {placed.map(({ part, label, at }) => (
-        <span key={part} className={`tip-callout is-${part}`} style={{ left: at.x, top: at.y }}>
+        <span key={part} className="tip-callout" style={{ left: at.x, top: at.y }}>
           {label}
         </span>
       ))}
@@ -220,7 +251,8 @@ export function TipScene({ scene }: { scene: Scene }) {
   const foes = (scene.foes ?? []).map((f, i) => build(f, `scene-foe-${i}`, 'B')).filter((f): f is Built => f !== null);
   const caster = { wisdom: hero.hero.baseStats.wisdom, types: hero.hero.types };
   const focusRows = scene.focusMoves;
-  const classes = ['tip-scene', ...(scene.focus ?? []).map((f) => `focus-${f}`), ...(scene.callouts ? ['has-callouts'] : [])];
+  const classes = ['tip-scene', ...(scene.focus ?? []).map((f) => `focus-${f}`), ...(scene.callouts ? ['has-callouts'] : []),
+  ];
 
   return (
     <div ref={root} className={classes.join(' ')} aria-hidden="true">

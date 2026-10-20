@@ -98,7 +98,7 @@ export const storyCast: Record<string, HeroDefinition> = {
     id: STORY_CAST_IDS.endbringer,
     name: 'The Faceless',
     types: ['Ancient'],
-    baseStats: { hp: 195, attack: 60, defense: 60, intelligence: 70, wisdom: 60, speed: 40, manaPool: 200, mpRegen: 25 },
+    baseStats: { hp: 240, attack: 60, defense: 60, intelligence: 70, wisdom: 60, speed: 40, manaPool: 200, mpRegen: 25 },
     moveIds: ['erode', 'transfix'],
     passiveIds: [STORY_UNDYING_ID],
   },
