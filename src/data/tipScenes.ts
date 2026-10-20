@@ -147,6 +147,8 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
     { foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist'], callouts: ['mana', 'type', 'kind', 'power', 'matchup'], expect: { ironFist: [2] } },
   ],
   // Valor's Iron Fist over Fang's Claw: the one move each would swing at it.
+  // Will's Rime Coat, its Shield named in place.
+  'story.shield': [{ hero: { heroId: 'will', level: 4 }, moves: ['rimeCoat'], callouts: ['rider'] }],
   // Will's Storm Lash, its Conduct named in place, against the Faceless.
   'story.conduct': [{ foes: [{ heroId: 'endbringerPrologue', level: 1 }], hero: { heroId: 'will', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
   'story.combo': [{ foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist', 'claw'], focus: ['matchups'], expect: { ironFist: [2], claw: [0.25] } }],

@@ -2710,14 +2710,18 @@ export function FightScreen({
 
       {fightTip && tips && <TipOverlay key={fightTip.id} tip={fightTip} onDone={() => tips.onSeen(fightTip.id)} />}
       {storyTip && storyTips && <TipOverlay key={storyTip.id} tip={storyTip} onDone={() => storyTips.onSeen(storyTip.id)} />}
-      {cueShown && storyCue?.point && guide?.kind === 'move' && (
+      {cueShown && storyCue?.point && guide && (
         <GuideHand
           selector={
-            !showingTargetPanel
-              ? '.move-list .move-button.is-guided'
-              : guide.declaredTarget
-                ? '.target-row .combatant-card.is-guided'
-                : '.target-row.target-row-spread'
+            guide.kind === 'rest'
+              ? '.rest-move, .bottom-action-rest'
+              : guide.kind === 'switch'
+                ? '.bottom-action-switch'
+                : !showingTargetPanel
+                  ? '.move-list .move-button.is-guided'
+                  : guide.kind === 'move' && guide.declaredTarget
+                    ? '.target-row .combatant-card.is-guided'
+                    : '.target-row.target-row-spread'
           }
         />
       )}

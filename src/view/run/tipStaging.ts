@@ -34,6 +34,7 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   'story.reading': {},
   'story.combo': { pages: [null, ['.order-track']] },
   'story.conduct': { pages: [null, null, ['.order-track']] },
+  'story.shield': {},
   'story.inspect': { pages: [['.team-row.enemy .combatant-card']] },
   'story.switch': { pages: [['.bottom-action-switch'], ['.team-row.ally .resource-row']] },
   'story.rest': { pages: [['.rest-move']] },

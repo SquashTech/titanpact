@@ -151,22 +151,29 @@ const theClearing: StoryFight = {
     { rosterId: 'valor', heroId: CAST.valor, level: 3 },
     { rosterId: 'fang', heroId: 'packAlpha', level: 3 },
     { rosterId: 'ren', heroId: CAST.ren, level: 12 },
-    // Storm Lash marks with Conduct, so his first strike in round 3 sets up his father's Iron blade.
-    { rosterId: 'will', heroId: CAST.will, level: 4, moveIds: ['stormLash', 'thunderclap'] },
+    // Zap is cheap enough to leave Storm Lash's Mana for round 5, and Rime Coat shields his father while he Rests.
+    { rosterId: 'will', heroId: CAST.will, level: 4, moveIds: ['zap', 'rimeCoat', 'stormLash'] },
   ],
   playerLeads: ['valor', 'fang'],
   enemy: [{ rosterId: 'faceless', heroId: CAST.endbringer, level: 1 }],
   enemyLeads: ['faceless'],
-  enemyScript: [reach, [{ actor: 'faceless', moveId: 'transfix', target: ally('fang') }], reach, reach],
+  enemyScript: [
+    reach,
+    [{ actor: 'faceless', moveId: 'transfix', target: ally('fang') }],
+    reach,
+    [{ actor: 'faceless', moveId: 'transfix', target: ally('ren') }],
+    reach,
+  ],
   guide: [
     [{ actor: 'valor', moveId: 'ironFist', target: foe('faceless') }, { actor: 'fang', moveId: 'claw', target: foe('faceless') }],
     [{ actor: 'valor', switchTo: 'ren' }, { actor: 'fang', switchTo: 'will' }],
+    [{ actor: 'ren', moveId: 'galeSever' }, { actor: 'will', moveId: 'zap', target: foe('faceless') }],
+    [{ actor: 'ren', rest: true }, { actor: 'will', moveId: 'rimeCoat', target: ally('ren') }],
     [{ actor: 'ren', moveId: 'galeSever' }, { actor: 'will', moveId: 'stormLash', target: foe('faceless') }],
-    [{ actor: 'ren', rest: true }, { actor: 'will', moveId: 'thunderclap', target: foe('faceless') }],
   ],
   endsWhen: [
     { kind: 'hpAtMost', side: 'B', rosterId: 'faceless', hp: 1, winner: 'A' },
-    { kind: 'afterRound', round: 4, winner: 'A' },
+    { kind: 'afterRound', round: 5, winner: 'A' },
   ],
 };
 
@@ -319,6 +326,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
                 round: 2,
                 speaker: 'Ren',
                 text: 'Fall back! Will, with me.',
+                point: true,
                 tips: [
                   {
                     id: 'story.switch',
@@ -330,8 +338,23 @@ export const storyCatalog: readonly StoryDefinition[] = [
                   },
                 ],
               },
+              { round: 3, speaker: 'Ren', text: 'Strike where I strike.' },
               {
-                round: 3,
+                round: 4,
+                speaker: 'Ren',
+                text: "I'm spent. Will, cover me!",
+                point: true,
+                tips: [
+                  { id: 'story.rest', title: 'Rest', pages: ['Ren has no Mana for any move. *Rest* skips his turn and *refills all Mana*.'] },
+                  {
+                    id: 'story.shield',
+                    title: 'Shield',
+                    pages: ['*Rime Coat* gives an ally a *Shield*: extra health that takes hits before HP does, until a hit *breaks* it.'],
+                  },
+                ],
+              },
+              {
+                round: 5,
                 speaker: 'Ren',
                 text: 'Mark it, Will. My blade follows.',
                 point: true,
@@ -346,12 +369,6 @@ export const storyCatalog: readonly StoryDefinition[] = [
                     ],
                   },
                 ],
-              },
-              {
-                round: 4,
-                speaker: 'Ren',
-                text: 'Catch your breath. Will, now!',
-                tips: [{ id: 'story.rest', title: 'Rest', pages: ['*Rest* skips a turn and *refills all Mana*. A hero with no Mana for any move must Rest.'] }],
               },
             ],
           },

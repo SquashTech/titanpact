@@ -89,8 +89,9 @@ brings tips back that the 2026-10-13 cut removed, but only inside the prologue's
 | The hunt | 2 | **Setting Up**: Iron cuts Frost, Beast barely scratches it; Fang's Howl lands before Valor's strike | a drawn scene, then the order track |
 | The clearing | 1 | **Reading a Foe**: tap any hero to read them | the Faceless |
 | The clearing | 2 | **Switching**: the one coming in doesn't act; the bench regains Mana | the Switch key, then the bars |
-| The clearing | 3 | **Conduct**: Storm Lash marks the target; the next Storm, Iron or Mech hit deals Bonus damage; Will is faster, so Ren's blade sets it off | Storm Lash drawn with its Conduct labelled, then the order track |
-| The clearing | 4 | **Rest**: no Mana for any move, so Rest skips the turn and refills it | the Rest row |
+| The clearing | 4 | **Rest**: Ren has no Mana for any move, so Rest skips his turn and refills it | the Rest row |
+| The clearing | 4 | **Shield**: Rime Coat gives an ally extra health that takes hits first, until one breaks it | Rime Coat drawn with its Shield labelled |
+| The clearing | 5 | **Conduct**: Storm Lash marks the target; the next Storm, Iron or Mech hit deals Bonus damage; Will is faster, so Ren's blade sets it off | Storm Lash drawn with its Conduct labelled, then the order track |
 
 Chapter 2's act teaches the rest (2026-10-18, per user direction): an act's fight can carry cues
 and tips too (`StoryActNode.cues`). Its opener teaches **Matchups** (the arrows under a move's
@@ -125,11 +126,14 @@ Iron Fist 226–266). Storm is there for the quarter: no Attack lever alone open
 is wider than one stage step. `test/story.test.ts` pins every branch on the authored seed; a crit, or
 Claw's Bleed on a high roll, can still drop it off-script on another seed.
 
-**The clearing's combo** (2026-10-20, per user direction): Will carries **Storm Lash** (Storm, plants
-Conduct) in place of Zap, and round 3 guides him to it ahead of Ren's Gale Sever. Will is faster, so
-the mark lands first and Ren's Iron sets it off for 15% of the Faceless's max HP. The Faceless went
-195 → 240 HP so the combo leaves it on 34 and the Rest round still comes; `test/story.test.ts` pins
-both. A labelled move picture puts the labels for the stub's three stacked marks above and below the
+**The clearing's five rounds** (2026-10-20, per user direction). Will carries Zap, **Rime Coat**
+(Frost, a Shield on one ally) and **Storm Lash** (Storm, plants Conduct). Round 3 is plain strikes,
+and Gale Sever leaves Ren genuinely out of Mana, so in round 4 he Rests ("I'm spent. Will, cover
+me!") while Will's Rime Coat shields him and the Faceless's Transfix breaks the Shield (26 taken of 42).
+Round 5 is the combo: Will is faster, so his mark lands first and Ren's Iron, refilled by the Rest, sets
+it off for 15% of the Faceless's max HP and brings it to its knees. The Faceless went 195 → 250 HP so
+it still stands at 44% going into the defensive round; Zap in round 3 is what leaves Will the Mana for
+Storm Lash in round 5. `test/story.test.ts` pins the Shield soak and the combo. A labelled move picture puts the labels for the stub's three stacked marks above and below the
 row, with Power's line meeting the number's left side so no two lines cross; the label reads **Kind of
 move**, the How to Play page's own word, since **Type** labels the element beside it.
 

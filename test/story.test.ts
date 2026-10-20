@@ -254,7 +254,7 @@ test("story prologue: the hunt's lessons hold — the fox takes both hunters, an
   assert.ok(!down(play({ 2: { hero: 'fang', does: 'claw' } })[1], 'stag'), 'Claw, then Iron Fist, leaves it standing too: the Howl is the only way');
 });
 
-test("story prologue: in the clearing, Will's Storm Lash marks the Faceless and Ren's Iron sets it off the same round, and the Rest round still comes", () => {
+test("story prologue: in the clearing, Will shields his father while he Rests, then marks the Faceless for Ren's Iron to set off", () => {
   const clearing = storyCatalog[0].chapters[0].beats.find((b) => b.kind === 'fight' && b.fight.id === 'valor-1-clearing');
   assert.ok(clearing && clearing.kind === 'fight');
   const fight = clearing.fight;
@@ -266,12 +266,14 @@ test("story prologue: in the clearing, Will's Storm Lash marks the Faceless and 
     rounds.push(result.events);
     state = result.state;
   }
-  const third = rounds[2] ?? [];
-  const planted = third.find((e) => e.type === 'StatusApplied' && e.statusId === 'Conduct');
-  const burst = third.find((e) => e.type === 'StatusDetonated' && e.statusId === 'Conduct');
+  assert.strictEqual(rounds.length, 5, 'the Faceless stands into round 5');
+  const fourth = rounds[3];
+  const soaked = fourth.find((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'A:ren');
+  assert.ok(soaked && soaked.type === 'DamageDealt' && (soaked.absorbed ?? 0) > 0, "Rime Coat's Shield takes the Faceless's hit on the Resting Ren");
+  const fifth = rounds[4];
+  const planted = fifth.find((e) => e.type === 'StatusApplied' && e.statusId === 'Conduct');
   assert.ok(planted && planted.type === 'StatusApplied' && planted.sourceCombatantId === 'A:will', 'Storm Lash plants Conduct');
-  assert.ok(burst, "Ren's Gale Sever sets it off in the same round");
-  assert.strictEqual(rounds.length, 4, 'the Faceless stands into round 4, where Ren Rests');
+  assert.ok(fifth.some((e) => e.type === 'StatusDetonated' && e.statusId === 'Conduct'), "Ren's Gale Sever sets it off in the same round");
 });
 
 const actBeats = storyCatalog.flatMap((story) =>
