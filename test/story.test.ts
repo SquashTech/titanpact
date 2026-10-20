@@ -13,6 +13,7 @@ import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import { applyHpDelta } from '../src/engine/combat/faintHandling';
 import { fightWinner, type CombatState } from '../src/engine/state';
 import type { CombatEvent } from '../src/engine/events';
+import type { Action } from '../src/engine/combat/actions';
 import type { PassiveDefinition } from '../src/engine/content';
 import { createProfile, decodeProfile, recordStoryChapterDone } from '../src/run/profile';
 import { stateHash } from '../src/run/versus';
@@ -224,14 +225,20 @@ test("story prologue: the hunt's lessons hold — the fox takes both hunters, an
   const hunt = storyCatalog[0].chapters[0].beats.find((b) => b.kind === 'fight' && b.fight.id === 'valor-1-hunt');
   assert.ok(hunt && hunt.kind === 'fight');
   const fight = hunt.fight;
-  /** Plays the script's rounds with the named heroes Resting in the named round instead of following the guide. */
-  const play = (rests: Record<number, string>) => {
+  /** Plays the script's rounds with the named hero, in the named round, Resting or Clawing the White Stag instead of following the guide. */
+  const play = (swaps: Record<number, { hero: string; does: 'rest' | 'claw' }>) => {
     let state = openStoryFight(fight);
     const after: CombatState[] = [];
     while (state.round <= fight.guide.length && fightWinner(state) === null) {
-      const resting = rests[state.round];
-      const player = state.active[STORY_PLAYER_SIDE].flatMap((id) =>
-        !id ? [] : id === `A:${resting}` ? [{ kind: 'rest' as const, combatantId: id }] : [guidedAction(fight, state, id)!]
+      const swap = swaps[state.round];
+      const player = state.active[STORY_PLAYER_SIDE].flatMap((id): Action[] =>
+        !id
+          ? []
+          : id !== `A:${swap?.hero}`
+            ? [guidedAction(fight, state, id)!]
+            : swap.does === 'rest'
+              ? [{ kind: 'rest', combatantId: id }]
+              : [{ kind: 'move', combatantId: id, moveId: 'claw', declaredTarget: 'B:stag' }]
       );
       state = resolveRound(state, [...player, ...scriptedEnemyActions(fight, state)!], config).state;
       after.push(state);
@@ -240,10 +247,11 @@ test("story prologue: the hunt's lessons hold — the fox takes both hunters, an
   };
   const down = (state: CombatState, rosterId: string) => state.combatants[`B:${rosterId}`].fainted;
   assert.ok(down(play({})[0], 'fox'), 'both hunters on the fox drop it');
-  assert.ok(!down(play({ 1: 'fang' })[0], 'fox'), "Valor's Iron Fist alone leaves the fox standing");
-  assert.ok(!down(play({ 1: 'valor' })[0], 'fox'), "Fang's Claw alone leaves the fox standing");
+  assert.ok(!down(play({ 1: { hero: 'fang', does: 'rest' } })[0], 'fox'), "Valor's Iron Fist alone leaves the fox standing");
+  assert.ok(!down(play({ 1: { hero: 'valor', does: 'rest' } })[0], 'fox'), "Fang's Claw alone leaves the fox standing");
   assert.ok(down(play({})[1], 'stag'), 'Howl, then Iron Fist, drops the White Stag');
-  assert.ok(!down(play({ 2: 'fang' })[1], 'stag'), 'Iron Fist without the Howl leaves it standing');
+  assert.ok(!down(play({ 2: { hero: 'fang', does: 'rest' } })[1], 'stag'), 'Iron Fist without the Howl leaves it standing');
+  assert.ok(!down(play({ 2: { hero: 'fang', does: 'claw' } })[1], 'stag'), 'Claw, then Iron Fist, leaves it standing too: the Howl is the only way');
 });
 
 const actBeats = storyCatalog.flatMap((story) =>

@@ -48,6 +48,10 @@ export function TipText({ text }: { text: string }) {
       {parseTipText(text).map((segment, i) =>
         'block' in segment ? (
           segment.block === 'kinds' ? <KindsLegend key={i} /> : <StageChart key={i} />
+        ) : 'key' in segment ? (
+          <strong key={i} className="tip-key">
+            {segment.key}
+          </strong>
         ) : 'icon' in segment ? (
           isKindToken(segment.icon) ? (
             <span key={i} className={`category-badge move-kind-badge tip-inline-icon ${TOKEN_BADGE_CLASS[segment.icon]}`}>

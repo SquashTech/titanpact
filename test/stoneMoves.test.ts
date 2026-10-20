@@ -8,6 +8,7 @@ import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { classMoves } from '../src/data/classes';
 import { signatureMoves } from '../src/data/signatures';
+import { storyMoves } from '../src/data/storyCast';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -448,6 +449,8 @@ test('stone: no move is unreachable that was not already known to be', () => {
   // A patron move is reached through its patron's rung alone (src/data/patrons.ts).
   for (const id of Object.keys(patronMoves)) reachable.add(id);
   for (const id of Object.keys(signatureMoves)) reachable.add(id);
+  // A Story move is reached through its Story creature alone (src/data/storyCast.ts).
+  for (const id of Object.keys(storyMoves)) reachable.add(id);
   // An Evolution path reaches moves two ways: granted outright, or added to the level-up pool.
   for (const nodes of Object.values(progressionTable.evolutions)) {
     for (const node of nodes) {

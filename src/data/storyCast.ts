@@ -3,7 +3,7 @@
 // as the family first meets it. The creatures sit under the 550 on purpose: they are the world before
 // the Titan, not heroes.
 
-import type { HeroDefinition } from '../engine/content';
+import type { HeroDefinition, MoveDefinition } from '../engine/content';
 import { STORY_UNDYING_ID } from './passives';
 
 export const STORY_CAST_IDS = {
@@ -16,6 +16,22 @@ export const STORY_CAST_IDS = {
   crow: 'crow',
   endbringer: 'endbringerPrologue',
 } as const;
+
+/** The cast's own moves: untiered, in no pool — a Story creature is their only holder. */
+export const storyMoves: Record<string, MoveDefinition> = {
+  // The White Stag's opener: the cold saps both hunters, so Fang's Howl is the turn that wins round 2.
+  wintersBreath: {
+    id: 'wintersBreath',
+    name: "Winter's Breath",
+    type: 'Frost',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'attack', stages: -1 }],
+    manaCost: 20,
+    priority: 0,
+    target: 'bothEnemies',
+  },
+};
 
 export const storyCast: Record<string, HeroDefinition> = {
   // Valor before the sword: her own line and grades, her fists.
@@ -46,13 +62,14 @@ export const storyCast: Record<string, HeroDefinition> = {
     moveIds: ['thunderclap', 'zap'],
     growthGrades: { hp: 'C', attack: 'A', defense: 'C', intelligence: 'B', wisdom: 'C', speed: 'S', manaPool: 'B' },
   },
-  // The prologue's second lesson: Iron cuts it, Beast glances off, and Valor only drops it after Fang's Howl.
+  // The prologue's second lesson: Iron cuts it, Beast barely scratches it, and once its breath has
+  // sapped both hunters Valor only drops it after Fang's Howl. Storm for the quarter Beast does.
   [STORY_CAST_IDS.stag]: {
     id: STORY_CAST_IDS.stag,
     name: 'White Stag',
-    types: ['Frost'],
-    baseStats: { hp: 285, attack: 30, defense: 35, intelligence: 35, wisdom: 30, speed: 45, manaPool: 70, mpRegen: 10 },
-    moveIds: ['rimeWind'],
+    types: ['Frost', 'Storm'],
+    baseStats: { hp: 220, attack: 30, defense: 35, intelligence: 35, wisdom: 30, speed: 45, manaPool: 70, mpRegen: 10 },
+    moveIds: ['wintersBreath'],
   },
   // Takes both hunters' hits to drop: neither one alone finishes it.
   [STORY_CAST_IDS.fox]: {

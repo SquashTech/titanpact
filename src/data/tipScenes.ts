@@ -147,7 +147,7 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
     { foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist'], callouts: ['mana', 'type', 'kind', 'power', 'matchup'], expect: { ironFist: [2] } },
   ],
   // Valor's Iron Fist over Fang's Claw: the one move each would swing at it.
-  'story.combo': [{ foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist', 'claw'], focus: ['matchups'], expect: { ironFist: [2], claw: [0.5] } }],
+  'story.combo': [{ foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist', 'claw'], focus: ['matchups'], expect: { ironFist: [2], claw: [0.25] } }],
   'howto.combat': [null, { foes: [{ heroId: 'wildOracle' }], hero: { heroId: 'cinderKnight' }, moves: ['singe'], focus: ['foe', 'move'] }],
   'howto.mana': [MANA_SCENE, { hero: { heroId: 'cinderKnight', mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],
   'howto.types': [

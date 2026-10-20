@@ -106,15 +106,23 @@ them. A drawn scene can label a move row's parts in place (`TipScene.callouts`),
 page that is the five kinds of move, badge over name. The blue-bar line from the old round-2 tip is
 not taught anywhere in the prologue now; the Rest tip still names Mana.
 
+**Keywords, not jargon** (2026-10-20, per user direction). Tip text is set larger (16px), and a page says
+the game's own words for a thing, the word the board prints, with that word emphasised: `*Bonus*`
+and `*Resist*` as the matchup chips print them, each with its arrow right beside it ("Iron deals
+**Bonus** damage against Frost"). A `*word*` in a tip page is drawn heavier in the note's ink-red.
+
 **The hunt teaches by its numbers** (2026-10-20, per user direction). The Fox has 200 HP: Fang's Claw
 alone tops out at 172 and Valor's Iron Fist at 103, together never under 235, so the forced double
-attack is the only way it falls. The Stag is the **White Stag**, mono-Frost (285 HP, Rime Wind, its
-sprite a frost recolour, alternatives in `art/concepts/white-stag/`): Iron hits it double, Beast half.
-Round 2 guides Fang to Howl and Valor to Iron Fist: Fang is faster, so the Howl lifts Valor's Attack
-before she strikes, and only then does Iron Fist drop it (226–266 without, 301–354 with).
-`test/story.test.ts` pins both lessons on the authored seed. **Open:** Claw plus Iron Fist without the
-Howl also clears 285 (Pack Hunter lifts Fang's Attack when the Fox drops below half), so the Howl is
-the guided play, not the only one.
+attack is the only way it falls. The Stag is the **White Stag**, Frost/Storm (220 HP, its sprite a
+frost recolour, alternatives in `art/concepts/white-stag/`): Iron hits it double, Beast a quarter.
+Its round-1 move, **Winter's Breath** (Story-only, `storyMoves` in `data/storyCast.ts`, in no pool),
+lowers both hunters' Attack a step after they have struck the Fox, taking back what Iron Fist and Pack
+Hunter gave them. Round 2 guides Fang to Howl and Valor to Iron Fist: Fang is faster, so the Howl gives
+the step back before she strikes, and **the Howl is the only way it falls that round** (2026-10-20, per
+user direction; measured without crits: Iron Fist alone 151–177, Claw then Iron Fist 183–214, Howl then
+Iron Fist 226–266). Storm is there for the quarter: no Attack lever alone opened a window, the variance
+is wider than one stage step. `test/story.test.ts` pins every branch on the authored seed; a crit, or
+Claw's Bleed on a high roll, can still drop it off-script on another seed.
 
 **A tip page ignores taps for its first ~half second** (`TipOverlay`, every tip in the game): a
 player tapping through a round's playback dismissed a tip unread when it landed under the tap.

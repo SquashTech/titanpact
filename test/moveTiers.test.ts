@@ -13,6 +13,7 @@ import { test } from './harness';
 import { moves } from '../src/data/moves';
 import { classMoves } from '../src/data/classes';
 import { signatureMoves } from '../src/data/signatures';
+import { storyMoves } from '../src/data/storyCast';
 import { progressionTable } from '../src/data/progression';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
 import type { RunState } from '../src/run/state';
@@ -89,8 +90,8 @@ test('move tiers: every move of a tiered slate carries a tier, and no other type
   for (const move of Object.values(moves)) {
     // A class move wears a type for flavour and no tier: it is in no pool (test/classes.test.ts).
     // A signature likewise: its only source is the tenth Mastery pip (test/mastery.test.ts).
-    // A metamorphic move (Motley's Trick) is never cast as itself and is in no pool either.
-    if (classMoves[move.id] || patronMoves[move.id] || signatureMoves[move.id] || move.metamorphic) continue;
+    // A metamorphic move (Motley's Trick) is never cast as itself and is in no pool either, nor is a Story creature's own.
+    if (classMoves[move.id] || patronMoves[move.id] || signatureMoves[move.id] || storyMoves[move.id] || move.metamorphic) continue;
     if (TIERED_TYPES.includes(move.type)) {
       assert.ok(move.tier, `${move.id} (${move.type}) has no tier`);
     } else {

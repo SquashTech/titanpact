@@ -706,3 +706,16 @@
 @media (prefers-reduced-motion: reduce) {
   .guide-hand, .tip-welcome-title, .tip-welcome-line, .tip-welcome-advance, .tip-callout-ring { animation: none; }
 }
+
+/* Tip text, every tip: larger, and its keyword (a `*word*`) set in the note's ink-red, heavier. */
+.tip-overlay .tip-box .tip-page {
+  font-size: 16px;
+  line-height: 1.45;
+}
+.tip-key {
+  font-weight: 800;
+  color: #8a3f10;
+}
+.tip-welcome .tip-key {
+  color: #f1c45e;
+}

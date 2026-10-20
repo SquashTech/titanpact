@@ -74,7 +74,8 @@ export const TIP_BLOCK_TOKENS = ['stages', 'kinds'] as const;
 
 export type TipBlockToken = (typeof TIP_BLOCK_TOKENS)[number];
 
-export type TipSegment = { text: string } | { icon: TipIconToken } | { block: TipBlockToken };
+/** A `key` run is a `*word*`: the one word a page turns on, drawn emphasised (Bonus, Resist). */
+export type TipSegment = { text: string } | { key: string } | { icon: TipIconToken } | { block: TipBlockToken };
 
 /** Any `[word]`, so an unknown token can be reported rather than silently printed as prose. */
 const TOKEN_PATTERN = /\[([a-zA-Z]+)\]/g;
@@ -83,7 +84,23 @@ export function isTipIconToken(value: string): value is TipIconToken {
   return (TIP_ICON_TOKENS as readonly string[]).includes(value);
 }
 
-/** Splits a page into text and icon runs. An unrecognised `[word]` stays literal — a typo should look wrong, and a test fails on one. */
+const KEY_PATTERN = /\*([^*]+)\*/g;
+
+/** Plain prose with its `*word*` keywords split out. */
+function withKeys(text: string): TipSegment[] {
+  const segments: TipSegment[] = [];
+  let cursor = 0;
+  for (const match of text.matchAll(KEY_PATTERN)) {
+    const at = match.index ?? 0;
+    if (at > cursor) segments.push({ text: text.slice(cursor, at) });
+    segments.push({ key: match[1] });
+    cursor = at + match[0].length;
+  }
+  if (cursor < text.length) segments.push({ text: text.slice(cursor) });
+  return segments;
+}
+
+/** Splits a page into text, keyword and icon runs. An unrecognised `[word]` stays literal — a typo should look wrong, and a test fails on one. */
 export function parseTipText(text: string): TipSegment[] {
   const segments: TipSegment[] = [];
   let cursor = 0;
@@ -92,11 +109,11 @@ export function parseTipText(text: string): TipSegment[] {
     const block = (TIP_BLOCK_TOKENS as readonly string[]).includes(token);
     if (!isTipIconToken(token) && !block) continue;
     const at = match.index ?? 0;
-    if (at > cursor) segments.push({ text: text.slice(cursor, at) });
+    if (at > cursor) segments.push(...withKeys(text.slice(cursor, at)));
     segments.push(block ? { block: token as TipBlockToken } : { icon: token as TipIconToken });
     cursor = at + match[0].length;
   }
-  if (cursor < text.length) segments.push({ text: text.slice(cursor) });
+  if (cursor < text.length) segments.push(...withKeys(text.slice(cursor)));
   return segments;
 }
 

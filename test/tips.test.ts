@@ -79,6 +79,7 @@ test('tips: every inline icon token is one the view can draw', () => {
   assert.deepStrictEqual(parseTipText('a [physical] b [nope]'), [{ text: 'a ' }, { icon: 'physical' }, { text: ' b [nope]' }]);
   assert.deepStrictEqual(parseTipText('[stages]'), [{ block: 'stages' }], 'the stage chart is a block token');
   assert.deepStrictEqual(parseTipText('[kinds]'), [{ block: 'kinds' }], 'the kinds legend is a block token');
+  assert.deepStrictEqual(parseTipText('a *Bonus* [super] b'), [{ text: 'a ' }, { key: 'Bonus' }, { text: ' ' }, { icon: 'super' }, { text: ' b' }], 'a keyword is its own run');
 });
 
 test('tips: the lore card tells the fall as a story already over', () => {

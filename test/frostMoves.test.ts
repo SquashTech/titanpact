@@ -8,6 +8,7 @@ import { createFightState } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { signatureMoves } from '../src/data/signatures';
+import { storyMoves } from '../src/data/storyCast';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -73,7 +74,7 @@ function outspeeds(state: CombatState, combatantId: string): CombatState {
 // --- The pool itself ---
 
 test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime\'s Evolution move, Ice Shell, Rime Coat and the two 2026-09-15 additions, all Frost-typed', () => {
-  const frost = Object.values(moves).filter((m) => m.type === 'Frost' && !signatureMoves[m.id]);
+  const frost = Object.values(moves).filter((m) => m.type === 'Frost' && !signatureMoves[m.id] && !storyMoves[m.id]);
   assert.deepStrictEqual(
     frost.map((m) => m.id).sort(),
     [
@@ -87,7 +88,7 @@ test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime
 test('frost: every "Spread" move in the design table targets both enemies, and the two "all other heroes" moves catch the partner', () => {
   const byTarget = (target: string) =>
     Object.values(moves)
-      .filter((m) => m.type === 'Frost' && !signatureMoves[m.id] && m.target === target)
+      .filter((m) => m.type === 'Frost' && !signatureMoves[m.id] && !storyMoves[m.id] && m.target === target)
       .map((m) => m.id)
       .sort();
   assert.deepStrictEqual(byTarget('bothEnemies'), ['avalanche', 'blindingSnow', 'permafrost', 'rimeWind']);

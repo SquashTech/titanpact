@@ -33,8 +33,8 @@ const firstHunt: StoryFight = {
   ],
   enemyLeads: ['stag', 'fox'],
   enemyScript: [
-    [{ actor: 'stag', moveId: 'rimeWind' }, { actor: 'fox', moveId: 'pounce', target: ally('valor') }],
-    [{ actor: 'stag', moveId: 'rimeWind' }],
+    [{ actor: 'stag', moveId: 'wintersBreath' }, { actor: 'fox', moveId: 'pounce', target: ally('valor') }],
+    [{ actor: 'stag', moveId: 'wintersBreath' }],
   ],
   guide: [
     [{ actor: 'valor', moveId: 'ironFist', target: foe('fox') }, { actor: 'fang', moveId: 'claw', target: foe('fox') }],
@@ -238,7 +238,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
                   {
                     id: 'story.welcome',
                     title: 'Welcome to',
-                    pages: ['Battles are turn-based. Select moves for your heroes, then watch the round play out.'],
+                    pages: ['Battles are *turn-based*. Select *moves* for your heroes, then watch the round play out.'],
                     look: 'welcome',
                   },
                 ],
@@ -255,8 +255,8 @@ export const storyCatalog: readonly StoryDefinition[] = [
                     id: 'story.combo',
                     title: 'Setting Up',
                     pages: [
-                      'Iron cuts through Frost [super]. Beast barely scratches it [resist].',
-                      "Fang is faster, so his Howl lands first and lifts Valor's Attack before she strikes.",
+                      'Iron deals *Bonus* [super] damage against Frost. Frost and Storm *Resist* [resist] Beast damage.',
+                      "The stag's breath *lowered* both heroes' Attack. Fang is *faster*, so his Howl *raises* it again before Valor strikes.",
                     ],
                   },
                 ],
