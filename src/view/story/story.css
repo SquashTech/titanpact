@@ -389,50 +389,51 @@
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
 }
 
-/* --- Dialogue busts: the speaker lit on their side, the one they speak with dimmed on the other --- */
-.story-busts {
-  position: absolute;
-  z-index: 2;
-  left: 0;
-  right: 0;
-  bottom: calc(9% + 104px);
-  height: 0;
-  pointer-events: none;
+/* --- The speaker's face in the dialogue box, on their own side, looking in at the line --- */
+.story-line.has-face {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
 }
-.story-bust {
+.story-line.has-face.is-right {
+  flex-direction: row-reverse;
+}
+.story-line-body {
+  flex: 1;
+  min-width: 0;
+}
+.story-face {
+  flex: none;
+  position: relative;
+  width: 84px;
+  height: 84px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: radial-gradient(ellipse at 50% 35%, #2b2f48, #12141f 80%);
+  box-shadow: inset 0 0 0 1px rgba(224, 166, 60, 0.55);
+  animation: story-face-in 0.2s ease-out;
+}
+.story-face img {
   position: absolute;
-  bottom: 0;
-  width: 54%;
-  max-width: 220px;
+  left: 50%;
+  top: -2px;
+  width: 108px;
+  height: 108px;
+  translate: -50% 0;
   image-rendering: pixelated;
-  filter: brightness(0.42) saturate(0.8);
-  transition: filter 0.2s, translate 0.2s;
-  animation: story-bust-in 0.25s ease-out;
 }
-.story-bust.is-left {
-  left: -10px;
-}
-.story-bust.is-right {
-  right: -10px;
+.story-face.is-right img {
   transform: scaleX(-1);
 }
-.story-bust.is-lit {
-  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55));
-  translate: 0 -4px;
-}
-@keyframes story-bust-in {
+@keyframes story-face-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-/* The scene's figures step back behind the busts. */
-.story-scene.has-busts .story-ground {
-  filter: brightness(0.6);
-}
 @media (prefers-reduced-motion: reduce) {
-  .story-bust { animation: none; transition: none; }
+  .story-face { animation: none; }
 }
 
-/* --- A painted moment: cross-fades over the scene; the cast and busts give way to it --- */
+/* --- A painted moment: cross-fades over the scene; the cast gives way to it --- */
 .story-painting {
   position: absolute;
   z-index: 2;
@@ -469,12 +470,10 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.story-ground,
-.story-busts {
+.story-ground {
   transition: opacity 0.6s;
 }
-.story-scene.has-painting .story-ground,
-.story-scene.has-painting .story-busts {
+.story-scene.has-painting .story-ground {
   opacity: 0;
 }
 @media (prefers-reduced-motion: reduce) {

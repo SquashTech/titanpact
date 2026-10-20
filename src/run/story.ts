@@ -131,7 +131,7 @@ export interface StoryActor {
   voice?: StoryVoice;
   /** Drawn this much larger than a hero (the risen Endbringer towers). Unset: 1. */
   scale?: number;
-  /** The dialogue bust (art/portraits/<id>/<mood>.png). Unset: no bust; the scene's figures speak. */
+  /** The face in the dialogue box (art/portraits/<id>/<mood>.png). Unset: no face. */
   portrait?: string;
   /** Moves wrong: fades in slowly from nothing, and is simply somewhere else between lines, never seen to step. */
   uncanny?: boolean;
@@ -143,34 +143,8 @@ export type StorySound = 'wolf.bark' | 'wolf.howl' | 'titan.stir' | 'titan.gaze'
 /** A beat's music: a track id (audio/tracks.ts), `null` for silence. Unset: the place's own track. */
 export type StoryMusic = string | null;
 
-/** A bust's expression. A portrait without the mood shows its neutral face. */
+/** A speaker's expression. A portrait without the mood shows its neutral face. */
 export type StoryMood = 'neutral' | 'happy' | 'angry' | 'sad' | 'shocked';
-
-/**
- * The two busts at line `step` (docs/stories.md §1b): the speaker lit on their own side, and the one
- * they last spoke with dimmed on the other, each in the mood of their last line. A line with no bust
- * to speak (narration, the Faceless) leaves the last two standing, both dimmed.
- */
-export function bustsAt(cast: readonly StoryActor[], lines: readonly StoryLine[], step: number): { left: { actor: StoryActor; mood: StoryMood; lit: boolean } | null; right: { actor: StoryActor; mood: StoryMood; lit: boolean } | null } {
-  const withBust = (id: string | undefined) => cast.find((actor) => actor.id === id && actor.portrait) ?? null;
-  const moodOf = (id: string, upTo: number): StoryMood => {
-    for (let i = upTo; i >= 0; i--) if (lines[i]?.speaker === id) return lines[i].mood ?? 'neutral';
-    return 'neutral';
-  };
-  // The last one or two who spoke with a bust, newest first.
-  const recent: StoryActor[] = [];
-  for (let i = step; i >= 0 && recent.length < 2; i--) {
-    const actor = withBust(lines[i]?.speaker);
-    if (actor && !recent.includes(actor)) recent.push(actor);
-  }
-  const [speaker, other] = recent;
-  if (!speaker) return { left: null, right: null };
-  const speaking = withBust(lines[step]?.speaker) === speaker;
-  const side = speaker.stands;
-  const lead = { actor: speaker, mood: moodOf(speaker.id, step), lit: speaking };
-  const partner = other ? { actor: other, mood: moodOf(other.id, step), lit: false } : null;
-  return side === 'left' ? { left: lead, right: partner } : { left: partner, right: lead };
-}
 
 /**
  * Where an actor stands in a scene: `x` across the ground (0 the left edge, 100 the right), `depth`
