@@ -80,6 +80,9 @@ export interface BeatRosterEntry {
   name: string;
   /** The type colors the name is set in — one, or two for a dual type, which the view gradients across. */
   colors: readonly string[];
+  /** The figure the opening dashes in; absent, the name stands alone. */
+  heroId?: string;
+  pathId?: string;
 }
 
 /** A declared move as the console draws it, against its live caster. `calledType`: the companion's act, free, cast at the type it resolves as. */

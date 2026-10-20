@@ -1652,91 +1652,313 @@ textarea,
 }
 
 /*
- * The opening beat only (openingBeats.ts): the leads the player is about to
- * fight, under a struck VS. Prose set them in one headline run — "Vulcan and
- * Bramble" at 30px wrapped inside a 316px console and broke across a name,
- * which is the one word in the beat that has to survive intact. A name is the
- * unit here, so a name is a line, and the joiner goes away with the wrap.
- *
- * The VS is a divider rather than a word in the stack: hairlines out to both
- * margins, the glyph struck in the beat's color between them. It reads as the
- * fight being called, and it gives the roster under it something to hang from
- * so two centred names are not just floating text.
+ * The opening beat only (openingBeats.ts), the mix picked from the comparison
+ * page (2026-10-20, per user direction): black bars open, the leads dash in as
+ * dark shapes in their type colors, VS slams down on a gold crack with a flash
+ * and the arena shakes, then each name lands on a slanted bar from its own edge.
  */
-.combat-banner-versus {
-  display: flex;
-  align-items: center;
-  gap: 9px;
+/* The bars and the flash reach the console's own edges, past the banner's padding. */
+.action-area:has(.opening-stage) {
+  overflow: hidden;
+}
+
+.combat-banner:has(.opening-stage) {
+  overflow: visible;
+}
+
+.opening-bars {
+  position: absolute;
+  inset: -12px calc(-1 * var(--shell-pad)) -8px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.opening-bars > i {
+  position: absolute;
+  left: -10%;
+  width: 120%;
+  height: 50%;
+  background: #05060a;
+  animation: opening-bar-top 0.5s cubic-bezier(0.7, 0, 0.3, 1) both;
+}
+
+.opening-bars > i:first-child {
+  top: 0;
+}
+
+.opening-bars > i:last-child {
+  bottom: 0;
+  animation-name: opening-bar-bottom;
+}
+
+@keyframes opening-bar-top {
+  0%, 40% { transform: translateY(0) rotate(-6deg); }
+  100% { transform: translateY(-150%) rotate(-6deg); }
+}
+
+@keyframes opening-bar-bottom {
+  0%, 40% { transform: translateY(0) rotate(-6deg); }
+  100% { transform: translateY(150%) rotate(-6deg); }
+}
+
+.opening-stage {
+  position: relative;
+  display: block;
   width: 100%;
-  max-width: 210px;
-  margin: 1px 0 3px;
-  font-size: 14px;
-  font-weight: 900;
-  font-style: italic;
-  letter-spacing: 0.24em;
-  /* letter-spacing hangs off the S, so the glyph sits right of true centre
-     between the two rules; half a step back puts it on the axis. */
-  text-indent: 0.24em;
-  color: var(--banner-color);
-  text-shadow: 0 0 16px color-mix(in srgb, var(--banner-color) 55%, transparent);
-  animation: banner-stamp 0.24s cubic-bezier(0.2, 1.4, 0.45, 1) both;
+  height: 196px;
+  animation: opening-stage-shake 0.32s 0.62s both;
 }
 
-.combat-banner-versus::before,
-.combat-banner-versus::after {
-  content: "";
-  flex: 1 1 auto;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--banner-color) 60%, transparent));
+@keyframes opening-stage-shake {
+  0%, 100% { transform: none; }
+  15% { transform: translate(-5px, 3px); }
+  30% { transform: translate(5px, -2px); }
+  45% { transform: translate(-4px, -3px); }
+  60% { transform: translate(3px, 2px); }
+  80% { transform: translate(-1px, 1px); }
 }
 
-/* Mirrored, so both rules fade *away* from the glyph rather than both running
-   left to right. */
-.combat-banner-versus::after {
-  transform: scaleX(-1);
+/* The arena takes the same blow as the console, on the heavy shake's keyframes. */
+.battlefield.opening-slam {
+  animation: arena-shake-heavy-a 0.36s cubic-bezier(0.2, 0.6, 0.35, 1) 0.62s;
 }
 
-.combat-banner-roster {
+.opening-crack {
+  position: absolute;
+  left: 50%;
+  top: -30px;
+  width: 40px;
+  height: 196px;
+  margin-left: -20px;
+  -webkit-mask: linear-gradient(180deg, #000 80%, transparent);
+  mask: linear-gradient(180deg, #000 80%, transparent);
+  overflow: visible;
+}
+
+.opening-crack polyline {
+  fill: none;
+  stroke: #ffe39a;
+  stroke-width: 2.5;
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  filter: drop-shadow(0 0 5px var(--accent));
+  animation: opening-crack-draw 0.2s 0.45s ease-out forwards, opening-crack-flicker 0.9s 1.1s ease-in-out infinite;
+}
+
+@keyframes opening-crack-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes opening-crack-flicker {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.45; }
+}
+
+.opening-foe {
+  position: absolute;
+  top: 0;
+  width: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  width: 100%;
 }
 
-/* One lead. Ellipsis rather than wrap: a name that will not fit is still read
-   as one name, and the card it belongs to is on screen behind this. A tier
-   under .combat-banner-focus because there are two of these, plus the VS and
-   the stamp, in the height that line gets to itself. */
-.combat-banner-roster-name {
+.opening-foe.is-left {
+  left: 0;
+  background: radial-gradient(ellipse 80% 55% at 45% 30%, color-mix(in srgb, var(--roster-color) 20%, transparent), transparent 70%);
+}
+
+.opening-foe.is-right {
+  right: 0;
+  background: radial-gradient(ellipse 80% 55% at 55% 30%, color-mix(in srgb, var(--roster-color) 20%, transparent), transparent 70%);
+}
+
+.opening-stage.is-solo .opening-foe {
+  left: 25%;
+}
+
+.opening-foe-figure {
+  display: block;
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  /* The reveal fills forwards only, so its bright first frame never covers the dark dash before it. */
+  animation: opening-dash-left 0.5s cubic-bezier(0.2, 0.9, 0.3, 1) 0.3s both, opening-reveal 0.3s 0.8s forwards;
+}
+
+.opening-foe.is-right .opening-foe-figure {
+  animation-name: opening-dash-right, opening-reveal;
+  animation-delay: 0.38s, 0.8s;
+}
+
+@keyframes opening-dash-left {
+  from { transform: translateX(-260px); filter: brightness(0) drop-shadow(0 0 0 var(--roster-color)); }
+  to { transform: none; filter: brightness(0) drop-shadow(0 0 6px var(--roster-color)); }
+}
+
+@keyframes opening-dash-right {
+  from { transform: translateX(260px); filter: brightness(0) drop-shadow(0 0 0 var(--roster-color)); }
+  to { transform: none; filter: brightness(0) drop-shadow(0 0 6px var(--roster-color)); }
+}
+
+@keyframes opening-reveal {
+  from { filter: brightness(3); }
+  to { filter: none; }
+}
+
+/* The name's bar runs off its own edge of the console, so it reads as having come from there. */
+.opening-slab {
+  position: absolute;
+  top: 114px;
+  display: flex;
+  align-items: center;
+  width: calc(100% + var(--shell-pad) + 6px);
+  height: 42px;
+  padding: 0 20px;
+  transform: skewX(-14deg);
+  animation: opening-slab-left 0.26s cubic-bezier(0.2, 1.25, 0.4, 1) 0.82s both;
+}
+
+.opening-foe.is-left .opening-slab {
+  left: calc(-1 * var(--shell-pad) - 6px);
+  background: linear-gradient(90deg, var(--roster-color) 0%, color-mix(in srgb, var(--roster-color-2) 85%, transparent) 60%, transparent 100%);
+}
+
+.opening-foe.is-right .opening-slab {
+  right: calc(-1 * var(--shell-pad) - 6px);
+  justify-content: flex-end;
+  background: linear-gradient(270deg, var(--roster-color) 0%, color-mix(in srgb, var(--roster-color-2) 85%, transparent) 60%, transparent 100%);
+  animation-name: opening-slab-right;
+  animation-delay: 0.9s;
+}
+
+.opening-stage.is-solo .opening-slab {
+  left: -8px;
+  width: calc(100% + 16px);
+  justify-content: center;
+  background: linear-gradient(90deg, transparent, var(--roster-color) 25%, var(--roster-color-2) 75%, transparent);
+}
+
+@keyframes opening-slab-left {
+  from { transform: skewX(-14deg) translateX(-110%); }
+  to { transform: skewX(-14deg); }
+}
+
+@keyframes opening-slab-right {
+  from { transform: skewX(-14deg) translateX(110%); }
+  to { transform: skewX(-14deg); }
+}
+
+.opening-slab-name {
+  display: block;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1.14;
-  letter-spacing: -0.02em;
-  /* Set in its own types, not the beat's color: the name is the one place in the
-     opening where the player learns what they are up against, and Fire orange /
-     Frost cyan says it before the badges on the cards are read. FightScreen sets
-     both stops inline, repeating the first for a mono type, so this is one rule
-     for both cases — and passes them through getTypeTextColor, since the raw 15
-     are tuned as fills and the dim end of the set goes muddy set as type. */
-  background: linear-gradient(
-    100deg,
-    var(--roster-color, var(--banner-color)) 18%,
-    var(--roster-color-2, var(--roster-color, var(--banner-color))) 82%
-  );
+  transform: skewX(14deg);
+  font-size: 29px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 0, 0, 0.35);
+}
+
+.opening-slab.is-long .opening-slab-name {
+  font-size: 22px;
+}
+
+.opening-versus {
+  position: absolute;
+  top: 26px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 56px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  background: linear-gradient(180deg, #fff6d0 10%, var(--accent) 55%, #9a6b1c 95%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  /* Not text-shadow: the fill is transparent for the clip above, so a shadow
-     would paint straight through the letters (same trade .title-logo makes). */
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 18px rgba(0, 0, 0, 0.5));
-  /* Staggered from FightScreen by index, so the two leads land one after the
-     other instead of together. */
-  animation: banner-strike 0.26s cubic-bezier(0.2, 1.5, 0.5, 1) both;
+  -webkit-text-stroke: 2px #2a1d08;
+  /* Not text-shadow: the fill is transparent for the clip above. */
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 0 18px rgba(227, 181, 74, 0.55));
+  animation: opening-versus-punch 0.3s cubic-bezier(0.3, 1.6, 0.5, 1) 0.58s both;
+}
+
+@keyframes opening-versus-punch {
+  from { opacity: 0; transform: scale(3.2) rotate(-8deg); }
+  to { opacity: 1; transform: none; }
+}
+
+.opening-ring {
+  position: absolute;
+  top: 54px;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px;
+  border-radius: 50%;
+  border: 3px solid #ffe39a;
+  opacity: 0;
+  animation: opening-ring 0.5s 0.64s ease-out both;
+}
+
+@keyframes opening-ring {
+  0% { opacity: 0; transform: scale(1); }
+  4% { opacity: 0.9; transform: scale(1.5); }
+  to { opacity: 0; transform: scale(14); border-width: 1px; }
+}
+
+.opening-flash {
+  position: absolute;
+  inset: -12px calc(-1 * var(--shell-pad)) -8px;
+  z-index: 6;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  animation: opening-flash 0.3s 0.62s ease-out both;
+}
+
+@keyframes opening-flash {
+  0% { opacity: 0; }
+  6% { opacity: 0.75; }
+  100% { opacity: 0; }
+}
+
+.opening-tag {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.32em;
+  text-indent: 0.32em;
+  text-transform: uppercase;
+  color: #ffe39a;
+  animation: banner-stamp 0.22s cubic-bezier(0.2, 1.4, 0.45, 1) 1.12s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .opening-bars,
+  .opening-ring,
+  .opening-flash {
+    display: none;
+  }
+  .opening-stage,
+  .battlefield.opening-slam,
+  .opening-stage * {
+    animation: none !important;
+  }
+  .opening-crack polyline {
+    stroke-dashoffset: 0;
+  }
 }
 
 /* A move's targets, under its name. An arrow rather than the word "on", since

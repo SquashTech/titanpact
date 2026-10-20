@@ -36,7 +36,7 @@ export function openingBeat(
       // retints the name the fight is called on. Two at most: a third color in one word
       // is a smear, not a read.
       const colors = [...new Set(effectiveTypes(hero, combatant).map(getTypeTextColor))].slice(0, 2);
-      return { name: hero.name, colors };
+      return { name: hero.name, colors, heroId: combatant.heroId, pathId: combatant.formPathId };
     });
 
   return {

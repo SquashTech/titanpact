@@ -1805,7 +1805,7 @@ export function FightScreen({
         }${
           /* Two copies of each shake, alternated per beat, so a second big hit straight after the first replays it. */
           resolving && beat?.impact ? ` impact-${beat.impact} impact-${beatSeq % 2 ? 'a' : 'b'}` : ''
-        }${onTheTitan ? ' on-the-titan' : ''}${
+        }${resolving && beat?.bannerRoster ? ' opening-slam' : ''}${onTheTitan ? ' on-the-titan' : ''}${
           location && !onTheTitan && locationBackdrop(location.id, 'battle') ? ' has-painted-arena' : ''
         }`}
         /* The Location's lighting recipe keys off this; absent, styles.css's placeless arena stands. */
@@ -2006,29 +2006,47 @@ export function FightScreen({
               <>
               {beat.bannerLead && <span className="combat-banner-lead">{beat.bannerLead}</span>}
               {beat.bannerRoster ? (
-                /* The opening beat: a VS mark, then one lead per line. */
+                /* The opening beat: the bars open, the leads dash in dark, VS slams down between them and their names follow. */
                 <>
-                  <span className="combat-banner-versus" aria-hidden="true">
-                    VS
+                  <span className="opening-bars" aria-hidden="true">
+                    <i />
+                    <i />
                   </span>
-                  <span className="combat-banner-roster">
-                    {beat.bannerRoster.map((entry, i) => (
+                  <span className={`opening-stage${beat.bannerRoster.length === 1 ? ' is-solo' : ''}`}>
+                    {beat.bannerRoster.length > 1 && (
+                      <svg className="opening-crack" viewBox="0 0 40 255" preserveAspectRatio="none" aria-hidden="true">
+                        <polyline points="24,0 14,40 26,70 12,112 28,150 16,190 25,225 18,255" />
+                      </svg>
+                    )}
+                    {beat.bannerRoster.slice(0, 2).map((entry, i) => (
                       <span
-                        key={entry.name}
-                        className="combat-banner-roster-name"
+                        key={`${entry.name}:${i}`}
+                        className={`opening-foe ${i === 0 ? 'is-left' : 'is-right'}`}
                         style={
                           {
-                            animationDelay: `${0.06 * i}s`,
                             // A mono type passes the same color twice, so one gradient rule paints both cases.
                             '--roster-color': entry.colors[0] ?? 'var(--banner-color)',
                             '--roster-color-2': entry.colors[1] ?? entry.colors[0] ?? 'var(--banner-color)',
                           } as CSSProperties
                         }
                       >
-                        {entry.name}
+                        {entry.heroId && <HeroPortrait heroId={entry.heroId} pathId={entry.pathId} className="opening-foe-figure" />}
+                        <span className={`opening-slab${entry.name.length > 9 ? ' is-long' : ''}`}>
+                          <span className="opening-slab-name">{entry.name}</span>
+                        </span>
                       </span>
                     ))}
+                    {beat.bannerRoster.length > 1 && (
+                      <>
+                        <span className="opening-ring" aria-hidden="true" />
+                        <span className="opening-versus" aria-hidden="true">
+                          VS
+                        </span>
+                      </>
+                    )}
+                    {beat.bannerTag && <span className="opening-tag">{beat.bannerTag}</span>}
                   </span>
+                  <span className="opening-flash" aria-hidden="true" />
                 </>
               ) : (
                 <span className={`combat-banner-focus${beat.bannerFocus ? '' : ' banner-focus-sentence'}`}>
@@ -2036,7 +2054,7 @@ export function FightScreen({
                 </span>
               )}
               {beat.bannerSub && <span className="combat-banner-sub">{beat.bannerSub}</span>}
-              {beat.bannerTag && <span className="combat-banner-tag">{beat.bannerTag}</span>}
+              {beat.bannerTag && !beat.bannerRoster && <span className="combat-banner-tag">{beat.bannerTag}</span>}
               {beat.bannerKo && <span className="combat-banner-ko">{beat.bannerKo}</span>}
               {beat.bannerRiders && <BannerRiders riders={beat.bannerRiders} />}
               {beat.bannerCast && (
