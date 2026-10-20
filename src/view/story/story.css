@@ -61,6 +61,10 @@
 .story-figure.is-off {
   opacity: 0;
 }
+/* Something that isn't a person: it surfaces slowly, and is just closer between one line and the next. */
+.story-figure.is-uncanny {
+  transition: opacity 3.2s ease-in, filter 0.2s;
+}
 .story-figure-sprite {
   display: block;
   width: 96px;

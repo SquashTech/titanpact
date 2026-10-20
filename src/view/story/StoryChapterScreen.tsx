@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { allCombatants } from '../../data/content';
-import { storySides, type StoryAct, type StoryChapter } from '../../run/story';
+import { storySides, type StoryAct, type StoryChapter, type StoryMusic } from '../../run/story';
 import { FightScreen } from '../combat/FightScreen';
 import { TitanFallScreen } from '../run/TitanFallScreen';
 import { StoryEndCard, StoryMemory, StoryScene } from './StoryScene';
@@ -16,7 +16,7 @@ interface Props {
   /** The Titan's fall has played: the account has seen it, so Classic does not play it again. */
   onFallSeen: () => void;
   /** Where the chapter stands now, for the music: a scene's or a memory's place, silence for the fall. */
-  onPlace: (locationId: string | null) => void;
+  onPlace: (locationId: string | null, music?: StoryMusic) => void;
   /** The beat to open on: 0, or the one after an act the run's screens just played. */
   startBeat?: number;
   /** A beat that is an Act hands over to the run's own screens. */
@@ -34,7 +34,7 @@ export function StoryChapterScreen({ chapter, number, onFinished, onQuit, onFall
   const sides = useMemo(() => (beat?.kind === 'fight' ? storySides(beat.fight, allCombatants) : null), [beat]);
 
   useEffect(() => {
-    if (beat?.kind === 'scene' || beat?.kind === 'memory') onPlace(beat.locationId);
+    if (beat?.kind === 'scene' || beat?.kind === 'memory') onPlace(beat.locationId, beat.music);
     else if (beat?.kind === 'fall') onPlace(null);
     if (beat?.kind === 'act') onStartAct(beat.act, index);
     // eslint-disable-next-line react-hooks/exhaustive-deps

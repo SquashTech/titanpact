@@ -128,7 +128,7 @@ import { LoreScreen } from '../view/run/LoreScreen';
 import { StorySelectScreen } from '../view/story/StorySelectScreen';
 import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
 import { storyCatalog } from '../data/stories';
-import { chapterById, chapterNumber, endsStoryAct, storyActRun, storyNodeEncounter, storyNodeSpec, type StoryAct } from '../run/story';
+import { chapterById, chapterNumber, endsStoryAct, storyActRun, storyNodeEncounter, storyNodeSpec, type StoryAct, type StoryMusic } from '../run/story';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
 import {
@@ -422,6 +422,7 @@ export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
   /** The place a Story chapter's beat stands in, for its music and its fights' arena. */
   const [storyPlaceId, setStoryPlaceId] = useState<string | null>(null);
+  const [storyMusic, setStoryMusic] = useState<StoryMusic | undefined>(undefined);
   /** Classic Mode picked on the Story select: the title starts it as Seal the Pact once did. */
   const [classicRequested, setClassicRequested] = useState(false);
   // Read once: a device does not change platform mid-session, and installing reopens the game.
@@ -1313,7 +1314,9 @@ export function App() {
   const titleTrack = screen.kind === 'title' || screen.kind === 'constructed' || screen.kind === 'gauntlet' || screen.kind === 'versus';
   // The draft, the pact forged at its end (the resumed `blessing` screen) and the seal that opens the run carry the starter track.
   const starterTrack = screen.kind === 'draft' || screen.kind === 'blessing' || (screen.kind === 'pactSeal' && playerRun.brokenSeals.length === 0);
-  const trackId = titleTrack ? 'titleScreen' : starterTrack ? 'starterScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
+  const storyTrack = screen.kind === 'storyChapter' && storyMusic !== undefined ? (hasTrack(storyMusic) ? storyMusic : null) : undefined;
+  const trackId =
+    storyTrack !== undefined ? storyTrack : titleTrack ? 'titleScreen' : starterTrack ? 'starterScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
   useEffect(() => {
     setTrack(trackId);
   }, [trackId]);
@@ -1523,7 +1526,10 @@ export function App() {
           onFinished={() => handleStoryChapterDone(screen.chapterId)}
           onQuit={() => setScreen({ kind: 'title' })}
           onFallSeen={() => markTipSeen(LORE_TIP_ID)}
-          onPlace={setStoryPlaceId}
+          onPlace={(placeId, music) => {
+            setStoryPlaceId(placeId);
+            setStoryMusic(music);
+          }}
           tips={{ seenIds: profile.seenTipIds, onSeen: markTipSeen }}
         />
       )}

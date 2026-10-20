@@ -11,7 +11,9 @@ const valor: StoryActor = { id: 'valor', name: 'Valor', artHeroId: CAST.valor, s
 const fang: StoryActor = { id: 'fang', name: 'Fang', artHeroId: 'packAlpha', stands: 'left', portrait: 'fang' };
 const ren: StoryActor = { id: 'ren', name: 'Ren', artHeroId: CAST.ren, stands: 'right', voice: { timbre: 'deep', pitch: 1 }, portrait: 'ren' };
 const will: StoryActor = { id: 'will', name: 'Will', artHeroId: CAST.will, stands: 'right', voice: { timbre: 'bright', pitch: 1.18 }, portrait: 'will' };
-const faceless: StoryActor = { id: 'faceless', name: '???', artHeroId: CAST.endbringer, stands: 'right', scale: 1.2 };
+const faceless: StoryActor = { id: 'faceless', name: '???', artHeroId: CAST.endbringer, stands: 'right', scale: 1.2, uncanny: true };
+const stag: StoryActor = { id: 'stag', name: 'Stag', artHeroId: CAST.stag, stands: 'right' };
+const fox: StoryActor = { id: 'fox', name: 'Fox', artHeroId: CAST.fox, stands: 'right' };
 const risen: StoryActor = { id: 'risen', name: '???', artHeroId: 'heraldRisen', stands: 'right', scale: 1.7 };
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
@@ -178,6 +180,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
             kind: 'memory',
             locationId: 'wildsEdge',
             voice: REMEMBERING,
+            music: null,
             lines: [
               'When it all started, we were out on a hunt.',
               'It was the first time Father let Will come with us.',
@@ -200,6 +203,21 @@ export const storyCatalog: readonly StoryDefinition[] = [
               { text: 'Fang presses into her hand until she laughs.', moves: { fang: { x: 30, depth: 0.85 } } },
             ],
             skipped: 'The family split up to hunt. Valor and Fang took the high path.',
+          },
+          {
+            kind: 'scene',
+            locationId: 'wildsEdge',
+            cast: [valor, fang, stag, fox],
+            stage: { valor: { x: 26, depth: 0.8 }, fang: { x: 14, depth: 0.55 }, stag: { x: 86, depth: 0.2, off: true }, fox: { x: 74, depth: 0.15, off: true } },
+            lines: [
+              { text: 'The high path climbs above the trees. Valor reads the ground the way Father taught her.' },
+              { speaker: 'valor', text: 'Fresh. Hooves, and something smaller following them.', moves: { valor: { x: 32, depth: 0.75 }, fang: { x: 24, depth: 0.6 } } },
+              { text: 'Fang goes still, nose to the wind.', moves: { fang: { x: 42, depth: 0.65 } } },
+              { text: 'Below the ridge, a stag lifts its head from the grass. A fox lies low in the brush beside it.', moves: { stag: { off: false }, fox: { off: false } } },
+              { speaker: 'valor', text: 'Easy, Fang. On my word.', moves: { valor: { x: 36, depth: 0.85 } } },
+              { speaker: 'valor', mood: 'happy', text: 'Now!', sound: 'wolf.bark', moves: { stag: { x: 84, depth: 0.45 }, fox: { x: 70, depth: 0.5 } } },
+            ],
+            skipped: 'On the high path, Valor and Fang found a stag, and a fox stalking it.',
           },
           {
             kind: 'fight',
@@ -239,13 +257,19 @@ export const storyCatalog: readonly StoryDefinition[] = [
             kind: 'scene',
             locationId: 'wildsEdge',
             cast: [ren, will, faceless],
-            stage: { ren: { x: 34, depth: 0.7 }, will: { x: 48, depth: 0.75 }, faceless: { x: 78, depth: 0.05, off: true } },
+            music: 'threshold',
+            stage: { ren: { x: 34, depth: 0.7 }, will: { x: 48, depth: 0.75 }, faceless: { x: 84, depth: 0.05, off: true } },
             lines: [
-              { speaker: 'will', mood: 'shocked', text: 'Father. The birds have stopped.' },
-              { speaker: 'ren', mood: 'angry', text: 'Behind me. Now.', moves: { ren: { x: 44, depth: 0.8 }, will: { x: 30, depth: 0.5 } } },
-              { text: 'Something stands in the clearing, taller than a man. Where its face should be, there is nothing.', moves: { faceless: { off: false } } },
-              { speaker: 'will', mood: 'shocked', text: 'What is that?' },
-              { speaker: 'ren', text: "Walk backwards. Don't run until I say.", moves: { ren: { x: 32 }, will: { x: 16 }, faceless: { x: 72, depth: 0.25 } } },
+              { text: 'On the low path, Ren stops walking.' },
+              { text: 'No birds. No wind. Only Will, breathing.' },
+              { speaker: 'will', text: 'Father?' },
+              { speaker: 'ren', text: "Don't move." },
+              { text: 'Across the clearing, something stands among the trees. It was not there a moment ago.', moves: { faceless: { off: false } } },
+              { speaker: 'will', mood: 'shocked', text: 'Is that a man?' },
+              { text: 'It is turned toward them. Where its face should be, there is nothing.' },
+              { text: 'Then it is closer. Neither of them saw it move.', moves: { faceless: { x: 74, depth: 0.25 } } },
+              { speaker: 'ren', mood: 'angry', text: 'Behind me, Will. Slowly.', moves: { ren: { x: 44, depth: 0.8 }, will: { x: 30, depth: 0.5 } } },
+              { speaker: 'ren', text: "Walk backwards. Don't run until I say.", moves: { ren: { x: 32 }, will: { x: 16 } } },
             ],
             skipped: 'Ren and Will found something with no face in the clearing, and backed away.',
           },
@@ -267,6 +291,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
               { speaker: 'ren', mood: 'shocked', text: 'Valor, no—' },
             ],
             skipped: 'Ren told Valor not to fight it. She did anyway.',
+            music: 'threshold',
           },
           {
             kind: 'fight',
@@ -318,6 +343,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
               { speaker: 'ren', mood: 'shocked', text: 'Look up.' },
             ],
             skipped: 'They brought it to its knees. Then Ren looked up.',
+            music: 'threshold',
           },
           { kind: 'fall', lines: ['Above them, the stars go out, one after another, in a line.', 'Something falls.'] },
           {
@@ -341,6 +367,7 @@ export const storyCatalog: readonly StoryDefinition[] = [
               { speaker: 'ren', mood: 'sad', text: 'We run.' },
             ],
             skipped: 'The Titan fell. The faceless thing rose stronger, took Will, and was gone. Valor picked up his sword.',
+            music: 'threshold',
           },
           { kind: 'end', line: 'Valor had wanted a sword her whole life.' },
         ],

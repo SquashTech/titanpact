@@ -20,6 +20,7 @@ import holySanctumUrl from '../../music/holysanctum.flac?url';
 import frozenReachUrl from '../../music/frozenreach.flac?url';
 import titleScreenUrl from '../../music/titlescreen.flac?url';
 import starterScreenUrl from '../../music/starterscreen.flac?url';
+import thresholdUrl from '../../music/threshold.flac?url';
 
 export interface TrackDefinition {
   /** Bundler-resolved, content-hashed. */
@@ -74,6 +75,11 @@ const trackTable = {
   },
   starterScreen: {
     url: starterScreenUrl,
+    gain: 0.85,
+  },
+  /** Not a place: the Titan's own track, which a Story beat names (StoryBeat `music`). */
+  threshold: {
+    url: thresholdUrl,
     gain: 0.85,
   },
 } as const;

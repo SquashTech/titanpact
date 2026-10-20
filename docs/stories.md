@@ -45,6 +45,10 @@ A player who isn't interested in the story must never feel held hostage by it.
 - **The place's music plays under the Story.** A scene or memory sets the chapter's place
   (`onPlace`), so its track plays (Wild's Edge for the prologue) and its fights stand in its arena.
   The Titan's fall plays in silence. The user may write a Story-specific piece later.
+  A beat can name its own music (`music`: a track, or `null` for silence), held through the fights
+  after it (2026-10-20, per user direction): the prologue's memory opens in silence and Wild's Edge
+  starts with the hunt; **Threshold** starts as the Faceless is found and plays through the clearing,
+  and again after the fall.
 - **Lines type out with a voice under them.** A character at a time, a blip every second character,
   in the speaker's timbre and pitch (`StoryActor.voice`; `voice.bright` / `warm` / `deep` in
   audio/sounds.ts): Valor bright, Will brighter and higher, Ren deep, Solace warm, Valor remembering
@@ -56,6 +60,7 @@ A player who isn't interested in the story must never feel held hostage by it.
   procedural like every other sound in the game: first passes, to be judged by ear.
 
 - **Scenes are staged, not a row** (2026-10-18, per user direction). A scene can place its cast (`stage`: `x` across the ground, `depth` into it, far figures higher and smaller and behind) and any line can move someone (`moves`: a step, a retreat, an entrance, an exit), so the scene acts out what the lines say: Ren and Will walk off on the hunt, the Faceless appears far back and comes closer, Valor steps out between it and her family, Will is taken off with it, Solace walks in out of the trees. Everyone faces whoever is speaking, the speaker the nearest other. A scene with no staging fans each side out with staggered depths (`autoStage`). An actor can be drawn larger (`scale`: the risen Endbringer towers).
+- **The Faceless arrives slowly** (2026-10-20, per user direction): the quiet comes first, then it is simply there among the trees, fading up out of nothing, and between one line and the next it is closer with no step seen (`StoryActor.uncanny`). Between the split and the first fight, Valor and Fang track the stag and the fox on the high path, so the hunt has a beat before its fight.
 - **Dialogue leads with busts, two sides** (2026-10-19, per user direction, picked off `art/concepts/portraits/`). The speaker's bust stands lit on their own side over the scene, the one they last spoke with dimmed on the other, flipped to face in; narration leaves both dimmed and the staged scene, stepped back, carries the action. A bust is `StoryActor.portrait` (`art/portraits/<id>/<mood>.png`) and a line's expression `StoryLine.mood` (neutral, happy, angry, sad, shocked; a missing mood falls back to neutral). Drawn so far: Valor all five; Ren neutral, angry, sad, shocked; Will neutral, happy, shocked; Solace neutral, happy, angry, sad; Fang neutral, happy, and a howl as sad. Every expression is an edit of one neutral face so it stays the same person. The Faceless has no bust: it is only ever seen on the ground.
 
 ## 1c. Teaching the controls (2026-10-18, per user direction)

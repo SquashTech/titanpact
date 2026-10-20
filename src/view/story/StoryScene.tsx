@@ -33,7 +33,10 @@ const BLIP_EVERY = 2;
  */
 function useTypedLine(text: string, voice: StoryVoice | undefined): { shown: number; done: boolean; finish: () => void } {
   const instant = prefersReducedMotion();
-  const [shown, setShown] = useState(instant ? text.length : 0);
+  // The count is kept with the line it counts, so a new line's first frame never shows the last one's count.
+  const [count, setCount] = useState({ text, n: instant ? text.length : 0 });
+  const shown = count.text === text ? count.n : instant ? text.length : 0;
+  const setShown = (n: number) => setCount({ text, n });
   const typed = useRef(0);
   useEffect(() => {
     typed.current = instant ? text.length : 0;
@@ -152,7 +155,7 @@ export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: 
     return (
       <div
         key={actor.id}
-        className={`story-figure${actor.id === speaker?.id ? ' is-speaking' : ''}${mark.off ? ' is-off' : ''}${walking ? ' is-walking' : ''}`}
+        className={`story-figure${actor.id === speaker?.id ? ' is-speaking' : ''}${mark.off ? ' is-off' : ''}${walking && !actor.uncanny ? ' is-walking' : ''}${actor.uncanny ? ' is-uncanny' : ''}`}
         style={style}
       >
         <HeroPortrait key={walking ? `walk-${step}` : 'still'} heroId={actor.artHeroId} className="story-figure-sprite" />

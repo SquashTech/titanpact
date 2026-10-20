@@ -133,7 +133,12 @@ export interface StoryActor {
   scale?: number;
   /** The dialogue bust (art/portraits/<id>/<mood>.png). Unset: no bust; the scene's figures speak. */
   portrait?: string;
+  /** Moves wrong: fades in slowly from nothing, and is simply somewhere else between lines, never seen to step. */
+  uncanny?: boolean;
 }
+
+/** A beat's music: a track id (audio/tracks.ts), `null` for silence. Unset: the place's own track. */
+export type StoryMusic = string | null;
 
 /** A bust's expression. A portrait without the mood shows its neutral face. */
 export type StoryMood = 'neutral' | 'happy' | 'angry' | 'sad' | 'shocked';
@@ -231,7 +236,7 @@ export interface StoryCue {
 
 export type StoryBeat =
   /** Valor remembering (docs/stories.md §1): her lines over the place, before its scene. */
-  | { kind: 'memory'; locationId: string; lines: readonly string[]; voice?: StoryVoice }
+  | { kind: 'memory'; locationId: string; lines: readonly string[]; voice?: StoryVoice; music?: StoryMusic }
   | {
       kind: 'scene';
       /** The Location whose backdrop the scene stands on. */
@@ -242,6 +247,8 @@ export type StoryBeat =
       stage?: Readonly<Record<string, StageMark>>;
       /** What a skipped scene leaves behind: one line saying what happened. */
       skipped: string;
+      /** Plays from this scene on, through the fights after it, until a later beat names its own. */
+      music?: StoryMusic;
     }
   | { kind: 'fight'; fight: StoryFight; cast: readonly StoryActor[]; cues?: readonly StoryCue[] }
   /** The Titan's fall across the sky (docs/stories.md §4), its lines crawling over it a tap at a time. */
