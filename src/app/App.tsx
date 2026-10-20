@@ -1172,7 +1172,7 @@ export function App() {
   /** Seal the Pact (docs/stories.md §10): the prologue until it is played, the Story select after. */
   function handleOpenStories() {
     const prologue = storyCatalog[0].chapters[0].id;
-    setScreen(profile.storyChaptersDone.includes(prologue) ? { kind: 'storySelect' } : { kind: 'storyChapter', chapterId: prologue });
+    setScreen(profile.storyChaptersDone.includes(prologue) ? { kind: 'storySelect' } : { kind: 'storyChapter', chapterId: prologue, fromSky: true });
   }
 
   /** A chapter reaches its act: the run's own screens take over from the arrival on (docs/stories.md §14). */
@@ -1522,6 +1522,7 @@ export function App() {
           chapter={chapterById(storyCatalog, screen.chapterId)!.chapter}
           number={chapterNumber(chapterById(storyCatalog, screen.chapterId)!.story, screen.chapterId)}
           startBeat={screen.beat ?? 0}
+          fromSky={screen.fromSky}
           onStartAct={(act, beat) => handleStartStoryAct(act, screen.chapterId, beat)}
           onFinished={() => handleStoryChapterDone(screen.chapterId)}
           onQuit={() => setScreen({ kind: 'title' })}

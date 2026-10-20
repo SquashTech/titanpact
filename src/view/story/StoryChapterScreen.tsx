@@ -19,6 +19,8 @@ interface Props {
   onPlace: (locationId: string | null, music?: StoryMusic) => void;
   /** The beat to open on: 0, or the one after an act the run's screens just played. */
   startBeat?: number;
+  /** Opened straight off the title: the first memory comes down out of the title's sky. */
+  fromSky?: boolean;
   /** A beat that is an Act hands over to the run's own screens. */
   onStartAct: (act: StoryAct, beat: number) => void;
   /** The account's seen tips, for the control tips on a fight's cues. */
@@ -26,7 +28,7 @@ interface Props {
 }
 
 /** Plays a chapter's beats in order (docs/stories.md §10). A lost fight is played again from its start. */
-export function StoryChapterScreen({ chapter, number, onFinished, onQuit, onFallSeen, onPlace, startBeat = 0, onStartAct, tips }: Props) {
+export function StoryChapterScreen({ chapter, number, onFinished, onQuit, onFallSeen, onPlace, startBeat = 0, fromSky = false, onStartAct, tips }: Props) {
   const [index, setIndex] = useState(startBeat);
   const [attempt, setAttempt] = useState(0);
   const beat = chapter.beats[index];
@@ -41,7 +43,7 @@ export function StoryChapterScreen({ chapter, number, onFinished, onQuit, onFall
   }, [index]);
 
   if (!beat || beat.kind === 'act') return null;
-  if (beat.kind === 'memory') return <StoryMemory key={index} locationId={beat.locationId} lines={beat.lines} voice={beat.voice} onDone={next} />;
+  if (beat.kind === 'memory') return <StoryMemory key={index} locationId={beat.locationId} lines={beat.lines} voice={beat.voice} descend={fromSky && index === 0} onDone={next} />;
   if (beat.kind === 'scene') return <StoryScene key={index} locationId={beat.locationId} cast={beat.cast} lines={beat.lines} stage={beat.stage} skipped={beat.skipped} onDone={next} />;
   if (beat.kind === 'fall')
     return (

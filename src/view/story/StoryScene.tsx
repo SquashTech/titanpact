@@ -3,6 +3,7 @@ import { playSfx } from '../../audio/sfx';
 import { bustsAt, paintingAt, stageAt, type StageMark, type StoryActor, type StoryLine, type StoryMood, type StoryVoice } from '../../run/story';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { locationBackdrop } from '../shared/locationBackdrops';
+import { NightSky } from '../run/NightSky';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import './story.css';
 
@@ -34,6 +35,9 @@ function Painting({ id, up }: { id: string | null; up: boolean }) {
   );
 }
 
+/** How long the title's sky takes to give way to the place, matching story.css `story-sky-away`. */
+const DESCENT_MS = 3600;
+
 /** Narration, and anyone with no voice of their own, types with a typewriter's click. */
 const TYPEWRITER: StoryVoice = { timbre: 'click', pitch: 1 };
 
@@ -55,7 +59,7 @@ function useTypedLine(text: string, voice: StoryVoice | undefined): { shown: num
   useEffect(() => {
     typed.current = instant ? text.length : 0;
     setShown(typed.current);
-    if (instant) return;
+    if (instant || !text) return;
     let sinceBlip = BLIP_EVERY;
     const timer = window.setInterval(() => {
       typed.current += 1;
@@ -202,13 +206,37 @@ export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: 
 }
 
 /** Valor remembering (docs/stories.md §1): her lines over the place, faded like an old picture, in her voice. */
-export function StoryMemory({ locationId, lines, voice, onDone }: { locationId: string; lines: readonly string[]; voice?: StoryVoice; onDone: () => void }) {
+export function StoryMemory({
+  locationId,
+  lines,
+  voice,
+  descend = false,
+  onDone,
+}: {
+  locationId: string;
+  lines: readonly string[];
+  voice?: StoryVoice;
+  /** Come down out of the title's night sky onto the place before the first line types. */
+  descend?: boolean;
+  onDone: () => void;
+}) {
   const [step, setStep] = useState(0);
+  const [descending, setDescending] = useState(descend && !prefersReducedMotion());
   const backdrop = locationBackdrop(locationId);
   const text = lines[Math.min(step, lines.length - 1)] ?? '';
-  const typing = useTypedLine(text, voice);
+  const typing = useTypedLine(descending ? '' : text, voice);
+
+  useEffect(() => {
+    if (!descending) return;
+    const timer = window.setTimeout(() => setDescending(false), DESCENT_MS);
+    return () => window.clearTimeout(timer);
+  }, [descending]);
 
   function advance() {
+    if (descending) {
+      setDescending(false);
+      return;
+    }
     if (!typing.done) {
       typing.finish();
       return;
@@ -222,11 +250,16 @@ export function StoryMemory({ locationId, lines, voice, onDone }: { locationId: 
   }
 
   return (
-    <div className="story-screen story-memory" onClick={advance} role="dialog" aria-live="polite">
+    <div className={`story-screen story-memory${descending ? ' is-descending' : ''}`} onClick={advance} role="dialog" aria-live="polite">
       {backdrop && <div className="story-backdrop story-memory-backdrop" style={{ backgroundImage: `url(${backdrop})` }} aria-hidden="true" />}
+      {descending && (
+        <div className="story-descent-sky" aria-hidden="true">
+          <NightSky />
+        </div>
+      )}
       <SkipButton onSkip={onDone} />
       <div className="story-memory-text">
-        <TypedText text={text} shown={typing.shown} />
+        {!descending && <TypedText text={text} shown={typing.shown} />}
       </div>
     </div>
   );

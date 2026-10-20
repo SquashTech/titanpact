@@ -480,3 +480,24 @@
 @media (prefers-reduced-motion: reduce) {
   .story-painting { transition: none; }
 }
+
+/* --- Off the title: the view tilts down out of the night sky onto the place --- */
+.story-descent-sky {
+  position: absolute;
+  z-index: 1;
+  inset: -2px;
+  background: linear-gradient(180deg, #03040a 0%, #070a16 45%, #0c1220 100%);
+  animation: story-sky-away 3.6s ease-in-out both;
+}
+.story-memory.is-descending .story-memory-backdrop {
+  animation: story-place-rise 3.6s ease-in-out both;
+}
+@keyframes story-sky-away {
+  0%, 18% { transform: none; opacity: 1; }
+  70% { opacity: 0.85; }
+  100% { transform: translateY(-60%); opacity: 0; }
+}
+@keyframes story-place-rise {
+  0%, 18% { transform: translateY(45%); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
