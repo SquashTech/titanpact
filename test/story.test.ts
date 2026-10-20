@@ -28,6 +28,7 @@ import {
   storyChapterPips,
   endsStoryAct,
   stageAt,
+  paintingAt,
   storyActMap,
   storyActRun,
   storyNodeEncounter,
@@ -373,4 +374,9 @@ test('story tips: every control tip is short, unique, and lights something', () 
     }
   }
   assert.ok(seen.size > 0);
+});
+
+test('story painting: a painting stays up from the line that raises it until a line takes it down', () => {
+  const lines = [{ text: 'a' }, { text: 'b', painting: 'p' }, { text: 'c' }, { text: 'd', painting: null }, { text: 'e' }];
+  assert.deepStrictEqual(lines.map((_, step) => paintingAt(lines, step)), [null, 'p', 'p', null, null]);
 });

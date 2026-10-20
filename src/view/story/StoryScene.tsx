@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { bustsAt, stageAt, type StageMark, type StoryActor, type StoryLine, type StoryMood, type StoryVoice } from '../../run/story';
+import { bustsAt, paintingAt, stageAt, type StageMark, type StoryActor, type StoryLine, type StoryMood, type StoryVoice } from '../../run/story';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { locationBackdrop } from '../shared/locationBackdrops';
 import { prefersReducedMotion } from '../shared/reducedMotion';
@@ -18,6 +18,20 @@ function Bust({ side, bust }: { side: 'left' | 'right'; bust: { actor: StoryActo
   const url = bust?.actor.portrait ? portraitUrl(bust.actor.portrait, bust.mood) : undefined;
   if (!bust || !url) return null;
   return <img key={bust.actor.id} className={`story-bust is-${side}${bust.lit ? ' is-lit' : ''}`} src={url} alt="" draggable={false} />;
+}
+
+const PAINTINGS = import.meta.glob<string>('../../../art/stories/paintings/*.png', { eager: true, query: '?url', import: 'default' });
+const paintingUrl = (id: string) => Object.entries(PAINTINGS).find(([path]) => path.endsWith(`/${id}.png`))?.[1];
+
+/** A painted moment over the scene, cross-faded in and out. One not yet painted shows a plain plate with its name. */
+function Painting({ id, up }: { id: string | null; up: boolean }) {
+  if (!id) return null;
+  const url = paintingUrl(id);
+  return (
+    <div className={`story-painting${up ? ' is-up' : ''}`} aria-hidden="true">
+      {url ? <img key={id} className="story-painting-art" src={url} alt="" draggable={false} /> : <span key={id} className="story-painting-placeholder">{id}</span>}
+    </div>
+  );
 }
 
 /** Narration, and anyone with no voice of their own, types with a typewriter's click. */
@@ -136,6 +150,10 @@ export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: 
     setStep((i) => i + 1);
   }
 
+  const painting = skipping ? null : paintingAt(lines, step);
+  // The last painting stays mounted after it is taken down, so it can fade out.
+  const lastPainting = useRef<string | null>(null);
+  if (painting) lastPainting.current = painting;
   const marks = stageAt(cast, stage, lines, step);
   const busts = skipping ? { left: null, right: null } : bustsAt(cast, lines, step);
   const hasBusts = !!(busts.left || busts.right);
@@ -164,7 +182,7 @@ export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: 
   };
 
   return (
-    <div className={`story-screen story-scene${hasBusts ? ' has-busts' : ''}`} onClick={advance} role="dialog" aria-live="polite">
+    <div className={`story-screen story-scene${hasBusts ? ' has-busts' : ''}${painting ? ' has-painting' : ''}`} onClick={advance} role="dialog" aria-live="polite">
       {backdrop && <div className="story-backdrop" style={{ backgroundImage: `url(${backdrop})` }} aria-hidden="true" />}
       <SkipButton onSkip={() => setSkipping(true)} />
       <div className="story-ground" aria-hidden="true">
@@ -174,6 +192,7 @@ export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: 
         <Bust side="left" bust={busts.left} />
         <Bust side="right" bust={busts.right} />
       </div>
+      <Painting id={painting ?? lastPainting.current} up={!!painting} />
       <div className={`story-line${speaker && !skipping ? '' : ' is-narration'}${line?.think ? ' is-thought' : ''}`}>
         {speaker && !skipping && <span className="story-line-name">{speaker.name}</span>}
         <TypedText text={text} shown={typing.shown} />

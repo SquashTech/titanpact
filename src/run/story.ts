@@ -222,6 +222,17 @@ export interface StoryLine {
   moves?: Readonly<Record<string, Partial<StageMark>>>;
   /** The speaker's expression on this line. Unset: neutral. */
   mood?: StoryMood;
+  /** A painted moment (art/stories/paintings/<id>.png) over the scene from this line on; `null` takes it down. */
+  painting?: string | null;
+}
+
+/** The painting up at line `step`: the last one a line raised, unless a later line took it down. */
+export function paintingAt(lines: readonly StoryLine[], step: number): string | null {
+  for (let i = Math.min(step, lines.length - 1); i >= 0; i--) {
+    const painting = lines[i].painting;
+    if (painting !== undefined) return painting;
+  }
+  return null;
 }
 
 /** A line over the fight's stage at the top of `round`'s command phase. */
