@@ -35,8 +35,11 @@ function Painting({ id, up }: { id: string | null; up: boolean }) {
   );
 }
 
-/** How long the title's sky takes to give way to the place, matching story.css `story-sky-away`. */
-const DESCENT_MS = 3600;
+/** How long the scroll from the stars to the place runs, matching story.css `story-descent-scroll`. */
+const DESCENT_MS = 5200;
+const DESCENTS = import.meta.glob<string>('../../../art/stories/descents/*.png', { eager: true, query: '?url', import: 'default' });
+/** A place's descent strip: its backdrop with two screens of sky above it, three times its height. */
+const descentUrl = (locationId: string) => Object.entries(DESCENTS).find(([path]) => path.endsWith(`/${locationId}.png`))?.[1];
 
 /** Narration, and anyone with no voice of their own, types with a typewriter's click. */
 const TYPEWRITER: StoryVoice = { timbre: 'click', pitch: 1 };
@@ -221,7 +224,8 @@ export function StoryMemory({
   onDone: () => void;
 }) {
   const [step, setStep] = useState(0);
-  const [descending, setDescending] = useState(descend && !prefersReducedMotion());
+  const strip = descentUrl(locationId);
+  const [descending, setDescending] = useState(descend && !!strip && !prefersReducedMotion());
   const backdrop = locationBackdrop(locationId);
   const text = lines[Math.min(step, lines.length - 1)] ?? '';
   const typing = useTypedLine(descending ? '' : text, voice);
@@ -253,9 +257,12 @@ export function StoryMemory({
     <div className={`story-screen story-memory${descending ? ' is-descending' : ''}`} onClick={advance} role="dialog" aria-live="polite">
       {backdrop && <div className="story-backdrop story-memory-backdrop" style={{ backgroundImage: `url(${backdrop})` }} aria-hidden="true" />}
       {descending && (
-        <div className="story-descent-sky" aria-hidden="true">
-          <NightSky />
-        </div>
+        <>
+          <div className="story-descent" style={{ backgroundImage: `url(${strip})` }} aria-hidden="true" />
+          <div className="story-descent-stars" aria-hidden="true">
+            <NightSky />
+          </div>
+        </>
       )}
       <SkipButton onSkip={onDone} />
       <div className="story-memory-text">

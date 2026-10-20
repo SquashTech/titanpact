@@ -43,9 +43,12 @@ A player who isn't interested in the story must never feel held hostage by it.
   the context it started without, and each later chapter its *why now*. This is narration, not
   instruction: the tutorial voice §1 rejected stays rejected.
   **Off the title it comes down out of the sky** (2026-10-20, per user direction): Seal the Pact's
-  first press opens on the title's own stars, and over 3.6 seconds, in silence, the view tilts down —
-  the sky drifts up and away as Wild's Edge rises into place — before the first line types
-  (`fromSky`, `StoryMemory descend`). A tap lands it at once; reduced motion skips it.
+  first press opens on the title's own stars, and over 5.2 seconds, in silence, the camera scrolls
+  down ONE tall painting — the place's backdrop with two screens of sky above it, three times its
+  height (`art/stories/descents/<locationId>.png`) — through the stars and the banded sky onto the
+  place, before the first line types (`fromSky`, `StoryMemory descend`; a place with no strip opens
+  as before). A tap lands it at once; reduced motion skips it. Wild's Edge's strip is a DRAFT, the
+  painting's own bands extended upward by script; a PixelLab painting replaces it when it is drawn.
 - **The place's music plays under the Story.** A scene or memory sets the chapter's place
   (`onPlace`), so its track plays (Wild's Edge for the prologue) and its fights stand in its arena.
   The Titan's fall plays in silence. The user may write a Story-specific piece later.

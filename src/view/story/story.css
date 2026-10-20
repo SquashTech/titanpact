@@ -481,23 +481,35 @@
   .story-painting { transition: none; }
 }
 
-/* --- Off the title: the view tilts down out of the night sky onto the place --- */
-.story-descent-sky {
+/* --- Off the title: one tall painting (the place with two screens of sky above it), scrolled
+   from the stars down onto the place; the title's own stars soften into its top, and the memory's
+   faded look settles over the place once it lands --- */
+.story-descent {
   position: absolute;
   z-index: 1;
-  inset: -2px;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 300%;
+  background-size: cover;
+  background-position: center bottom;
+  image-rendering: pixelated;
+  animation: story-descent-scroll 5.2s both;
+}
+.story-descent-stars {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
   background: linear-gradient(180deg, #03040a 0%, #070a16 45%, #0c1220 100%);
-  animation: story-sky-away 3.6s ease-in-out both;
+  animation: story-descent-stars 1.4s ease-in both;
 }
-.story-memory.is-descending .story-memory-backdrop {
-  animation: story-place-rise 3.6s ease-in-out both;
+@keyframes story-descent-scroll {
+  0% { transform: translateY(0); opacity: 1; }
+  10% { transform: translateY(0); opacity: 1; animation-timing-function: cubic-bezier(0.45, 0, 0.3, 1); }
+  86% { transform: translateY(-66.6667%); opacity: 1; animation-timing-function: ease-in; }
+  100% { transform: translateY(-66.6667%); opacity: 0; }
 }
-@keyframes story-sky-away {
-  0%, 18% { transform: none; opacity: 1; }
-  70% { opacity: 0.85; }
-  100% { transform: translateY(-60%); opacity: 0; }
-}
-@keyframes story-place-rise {
-  0%, 18% { transform: translateY(45%); opacity: 0; }
-  100% { transform: none; opacity: 1; }
+@keyframes story-descent-stars {
+  0%, 30% { opacity: 1; }
+  100% { opacity: 0; }
 }
