@@ -51,7 +51,7 @@ section p{margin:0 0 10px;color:var(--mute);font-size:13px}
 <body>
 <main>
 <h1>The world map</h1>
-<p class="sub">First shown when the Titan falls at the end of A Tale of Valor's prologue, then between acts. North is up. The city (unnamed) is the centre, Wild's Edge just north of it, and the river runs out of the Titan's crater, through the forest and the city, to the Necropolis at its mouth. The layout is the same in every treatment; only the drawing changes. Docs: <code>docs/world-map.md</code>.</p>
+<p class="sub">First shown when the Titan falls at the end of A Tale of Valor's prologue, then between acts. North is up. The city (unnamed) is on the south coast where the run starts, Wild's Edge just north of it, and every other place lies on the road north to the Titan's crater. The river runs out of the crater, through the forest, down to the city at its mouth. The layout is the same in every treatment; only the drawing changes. Docs: <code>docs/world-map.md</code>.</p>
 <div class="names" id="moments">Moment: </div>
 <div class="names" id="cityNames">The city: </div>
 <div class="names" id="paints">Painting (A): </div>
@@ -61,27 +61,27 @@ section p{margin:0 0 10px;color:var(--mute);font-size:13px}
 <script>
 const ART = '../../../';
 const W = 360, H = 640;
-let CRATER = { x: 185, y: 110 };
-let CITY = { x: 190, y: 366 };
+let CRATER = { x: 180, y: 96 };
+let CITY = { x: 181, y: 582 };
 // seal: one of the six base seals. cycle: the Cycle that grants it. lost: the Cycle it's lost in.
 let PLACES = [
-  { id: 'wildsEdge', name: "Wild's Edge", x: 138, y: 304, seal: true, lost: 3, anchor: 'end', lx: 14, ly: -10 },
-  { id: 'forbiddenForest', name: 'Forbidden Forest', x: 172, y: 232, seal: true, ly: -40 },
-  { id: 'stormCoast', name: 'Storm Coast', x: 52, y: 322, seal: true, lx: 2, anchor: 'start', ly: 26 },
-  { id: 'moltenFoundry', name: 'Molten Foundry', x: 296, y: 292, seal: true, anchor: 'end', lx: 8, ly: 22 },
-  { id: 'necropolis', name: 'Necropolis', x: 80, y: 528, seal: true, ly: 26 },
-  { id: 'blightedShrine', name: 'Blighted Shrine', x: 288, y: 492, seal: true, anchor: 'end', lx: 10, ly: 28 },
-  { id: 'holySanctum', name: 'Holy Sanctum', x: 216, y: 440, cycle: 2, anchor: 'start', lx: 12, ly: 4 },
-  { id: 'frozenReach', name: 'Frozen Reach', x: 84, y: 54, cycle: 3, ly: 34 },
-  { id: 'dreamingSpires', name: 'Dreaming Spires', x: 214, y: 566, cycle: 3, ly: 30 },
-  { id: 'thunderAerie', name: 'Thunder Aerie', x: 306, y: 112, cycle: 4, anchor: 'end', lx: 4, ly: 26 },
+  { id: 'wildsEdge', name: "Wild's Edge", x: 148, y: 510, seal: true, lost: 3, anchor: 'end', lx: 16, ly: 4 },
+  { id: 'forbiddenForest', name: 'Forbidden Forest', x: 176, y: 400, seal: true, ly: -34 },
+  { id: 'stormCoast', name: 'Storm Coast', x: 48, y: 410, seal: true, lx: 2, anchor: 'start', ly: 26 },
+  { id: 'moltenFoundry', name: 'Molten Foundry', x: 302, y: 382, seal: true, ly: 28 },
+  { id: 'necropolis', name: 'Necropolis', x: 88, y: 252, seal: true, ly: 32 },
+  { id: 'blightedShrine', name: 'Blighted Shrine', x: 284, y: 238, seal: true, ly: 30 },
+  { id: 'holySanctum', name: 'Holy Sanctum', x: 250, y: 544, cycle: 2, anchor: 'start', lx: 12, ly: 4 },
+  { id: 'frozenReach', name: 'Frozen Reach', x: 72, y: 46, cycle: 3, ly: 30 },
+  { id: 'dreamingSpires', name: 'Dreaming Spires', x: 184, y: 252, cycle: 3, ly: 34 },
+  { id: 'thunderAerie', name: 'Thunder Aerie', x: 308, y: 100, cycle: 4, anchor: 'end', lx: 4, ly: 26 },
 ];
 let byId = Object.fromEntries(PLACES.map((p) => [p.id, p]));
 const BASE = { CRATER, CITY, PLACES };
 // Each painting placed things a little differently; the marks follow the painting
 const PAINT_POS = {
-  'painted-1.png': { crater: [193, 74], city: [193, 356], wildsEdge: [136, 312], forbiddenForest: [180, 200], moltenFoundry: [318, 296], necropolis: [70, 530], blightedShrine: [310, 482], dreamingSpires: [228, 590], frozenReach: [75, 44], stormCoast: [40, 330], holySanctum: [232, 430] },
-  'painted-2.png': { crater: [185, 72], city: [193, 365], wildsEdge: [110, 322], forbiddenForest: [169, 200], moltenFoundry: [312, 286], necropolis: [66, 552], blightedShrine: [300, 500], dreamingSpires: [225, 598], frozenReach: [70, 36], stormCoast: [36, 300], holySanctum: [232, 440] },
+  'painted-1.png': { crater: [180, 68], city: [177, 610], wildsEdge: [141, 530], forbiddenForest: [177, 421], dreamingSpires: [193, 249], necropolis: [72, 241], blightedShrine: [289, 219], moltenFoundry: [312, 394], frozenReach: [70, 30], stormCoast: [36, 400], holySanctum: [257, 570] },
+  'painted-2.png': { crater: [180, 64], city: [212, 590], wildsEdge: [146, 540], forbiddenForest: [177, 402], dreamingSpires: [193, 236], necropolis: [72, 236], blightedShrine: [298, 226], moltenFoundry: [314, 430], frozenReach: [84, 34], stormCoast: [40, 400], holySanctum: [270, 530] },
 };
 function placeFor(t) {
   const o = t.key === 'a' ? PAINT_POS[PAINT] : {};
@@ -103,13 +103,13 @@ const PAINTS = ['painted-1.png', 'painted-2.png'];
 
 const visible = (p, m) => !p.cycle || m.cycle >= p.cycle;
 const isLost = (p, m) => p.lost && m.cycle >= p.lost;
-const RIVER = 'M185,140 Q168,200 150,270 Q158,320 190,366 Q172,420 158,450 Q130,500 108,560 Q100,590 100,640';
-const LAND = 'M75,0 L360,0 L360,640 L262,640 Q236,612 204,618 Q152,628 120,604 Q86,582 62,560 Q30,522 42,472 Q56,432 32,402 Q14,362 30,322 Q46,282 26,242 Q18,202 44,172 Q62,142 42,112 Q30,70 75,0 Z';
-const RANGE = [[300,60],[318,80],[296,120],[322,140],[300,170],[326,200],[304,230],[330,260],[310,320],[326,350],[306,380],[284,150],[288,210],[290,350]];
+const RIVER = 'M180,128 Q166,190 184,250 Q196,320 176,400 Q160,460 150,505 Q162,560 180,640';
+const LAND = 'M90,0 L360,0 L360,600 Q320,612 280,606 Q240,620 200,612 Q170,622 140,608 Q100,598 70,580 Q40,550 46,500 Q58,460 34,420 Q18,380 34,340 Q50,300 30,260 Q20,220 46,190 Q62,160 44,130 Q34,80 90,0 Z';
+const RANGE = [[302,50],[320,72],[298,110],[324,130],[302,160],[328,190],[306,220],[332,250],[312,310],[328,340],[308,370],[286,140],[290,200],[292,330],[316,400]];
 
 // Seeded scatter so every render places trees the same
 function rng(seed) { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
-const trees = (() => { const r = rng(3), out = []; for (let i = 0; i < 70; i++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()); out.push([172 + Math.cos(a) * 66 * d, 232 + Math.sin(a) * 44 * d]); } return out; })();
+const trees = (() => { const r = rng(3), out = []; for (let i = 0; i < 70; i++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()); out.push([176 + Math.cos(a) * 62 * d, 400 + Math.sin(a) * 40 * d]); } return out; })();
 const stars = (() => { const r = rng(9), out = []; for (let i = 0; i < 90; i++) out.push([r() * W, r() * H, r()]); return out; })();
 
 // The Titan: the title's falling body lying in the crater, the magenta under it
@@ -160,11 +160,11 @@ function road(m, t) {
   return out;
 }
 function city(t) {
-  return `${t.cityGlyph(CITY)}<text class="lbl big" x="${CITY.x}" y="${CITY.y + 30}" text-anchor="middle" fill="${t.text}" stroke="${t.halo}">${CITY_NAME}</text>`;
+  return `${t.cityGlyph(CITY)}<text class="lbl big" x="${CITY.x}" y="${CITY.y - 22}" text-anchor="middle" fill="${t.text}" stroke="${t.halo}">${CITY_NAME}</text>`;
 }
 function winter(m, t) {
   if (!m.winter) return '';
-  return `<defs><radialGradient id="snow${t.key}" cx="25%" cy="5%" r="70%"><stop offset="0" stop-color="${t.snow}" stop-opacity=".85"/><stop offset=".6" stop-color="${t.snow}" stop-opacity=".45"/><stop offset="1" stop-color="${t.snow}" stop-opacity="0"/></radialGradient></defs>
+  return `<defs><radialGradient id="snow${t.key}" cx="30%" cy="0%" r="100%"><stop offset="0" stop-color="${t.snow}" stop-opacity=".85"/><stop offset=".7" stop-color="${t.snow}" stop-opacity=".45"/><stop offset="1" stop-color="${t.snow}" stop-opacity="0"/></radialGradient></defs>
     <path d="${LAND}" fill="url(#snow${t.key})"/>`;
 }
 function overlays(m, t) {
@@ -213,7 +213,7 @@ const CHART = {
     <path d="${RIVER}" fill="none" stroke="#5a7090" stroke-width="2.5"/>
     ${RANGE.map(([x, y]) => `<path d="M${x - 13},${y + 9} L${x},${y - 9} L${x + 13},${y + 9}" fill="#e9dfc6" stroke="#2a2118" stroke-width="1.4"/><path d="M${x},${y - 9} L${x + 5},${y + 9}" stroke="#2a2118" stroke-width=".8"/>`).join('')}
     ${trees.map(([x, y]) => `<path d="M${x.toFixed(1)},${(y - 5).toFixed(1)} L${(x + 3).toFixed(1)},${(y + 2).toFixed(1)} L${(x - 3).toFixed(1)},${(y + 2).toFixed(1)} Z" fill="#4a5a3a"/>`).join('')}
-    <path d="M286,292 q10,-12 20,2" fill="none" stroke="#a8341c" stroke-width="2"/>
+    <path d="M292,382 q10,-12 20,2" fill="none" stroke="#a8341c" stroke-width="2"/>
     <text x="22" y="470" transform="rotate(-90 22 470)" style="font:italic 11px Georgia,serif;letter-spacing:.3em" fill="#5a6a68">THE WESTERN SEA</text>`,
 };
 const TREATMENTS = [

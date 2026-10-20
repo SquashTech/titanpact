@@ -30,40 +30,41 @@ board, a cursor on where you are, place names, and nothing to manage.
 
 ## 2. The layout
 
-North is up. The board is portrait, sized to the phone.
+North is up. The board is portrait, sized to the phone. **The city is at the bottom and
+everything else lies north of it** (2026-10-20, per user direction, replacing a first draft with
+the city at the centre: a city in the middle made a run read as circling it). The game's own
+first omen already says the shape: *"It's a long road to the Titan. Our journey begins here."*
 
 | Where | Place | Why there |
 |---|---|---|
-| **Centre** | **The city** (unnamed, §6) | Where everything starts. It sits at a **ford on the river**, which is why a city is there at all. |
-| Just **north** of the city | **Wild's Edge** | Where the farmland stops and the wild begins: the city's own edge, close enough to walk to for a hunting job (the prologue). Every type walks here because it's the crossroads. |
-| **North**, past Wild's Edge | **Forbidden Forest** | Chapter 3's forest, on the road north. The river runs through it. Nature, Beast, Light. |
-| **Far north**, centre | **The Threshold**: the Titan's crater | Where it fell (`lore.md` "The fall"). Ren goes north after the Herald, so the Titan is north. The river rises here: **"the river runs black"** the morning after (`stories.md` §11) because it flows out of the crater, through the forest, past Wild's Edge and through the city. |
-| **West** coast | **Storm Coast** | The open sea is west, so the weather comes ashore here. Storm, Water, Stone. |
-| **South-west**, at the river's mouth | **Necropolis** | The dead city at the end of the river the living city sits on. Proposed as the old capital (§7). Spirit, Frost. |
-| **East** | **Molten Foundry** | In a canyon of the eastern range: furnaces want ore and a mountain. Fire, Mech, Iron. Chapter 4's surviving town is on the road east toward it. |
-| **South-east** | **Blighted Shrine** | Dark badlands below the end of the range, far from the river and the roads. Shadow, Arcane, Mind. |
-| **Far north-west**, a frozen bay | **Frozen Reach** (Cycle III) | The northern sea, where ships go out and don't come back. In Cycle III the Long Winter **spreads south from here** and buries Wild's Edge, which is why Act 1 moves to the Reach (`cycles.md` §3). |
+| **South coast**, centre bottom | **The city** (unnamed, §6) | Where everything starts: a port at the **river's mouth**, which is why a city is there at all. Every road leaves it going north. |
+| Just **north** of the city | **Wild's Edge** | Where the farmland stops and the wild begins: the city's own edge, close enough to walk to for a hunting job (the prologue). Every type walks here because it's the threshold of the wild. |
+| **Middle**, up the river | **Forbidden Forest** | Chapter 3's forest, on the road north. The river runs through it. Nature, Beast, Light. |
+| **West** coast, middle | **Storm Coast** | The open sea is west, so the weather comes ashore here. Storm, Water, Stone. |
+| **East**, in the range | **Molten Foundry** | In a canyon of the eastern range: furnaces want ore and a mountain. Fire, Mech, Iron. Chapter 4's surviving town is on the road east toward it. |
+| **North-west**, the cold uplands | **Necropolis** | High and cold, close enough to the crater to be the Titan's: Spirit, and the Frost its omen doesn't explain until it's this far north. |
+| **North-east**, below the peaks | **Blighted Shrine** | Dark badlands near the crater, where the light gives out first. Shadow, Arcane, Mind. |
+| **Top**, centre | **The Threshold**: the Titan's crater | Where it fell (`lore.md` "The fall"), at the end of the road. Ren goes north after the Herald, so the Titan is north. The river rises here: **"the river runs black"** the morning after (`stories.md` §11) because it flows out of the crater, through the forest and Wild's Edge, down to the city. |
+| **Far north-west**, a frozen bay | **Frozen Reach** (Cycle III) | The northern sea, where ships go out and don't come back. In Cycle III the Long Winter **spreads south from here** over the whole north and as far as Wild's Edge, which is why Act 1 moves to the Reach (`cycles.md` §3). |
 | **North-east**, the range's high peak | **Thunder Aerie** (Cycle IV) | The tallest peak of the same eastern range as the Foundry. |
-| **Just south** of the city | **Holy Sanctum** (Cycle II) | Survivors raised it (`cycles.md` §3), so it's built next to the people who raised it. |
-| **Far south**, misty highlands | **Dreaming Spires** (Cycle III) | The farthest place from the Titan, quiet enough to dream in. Mind, Arcane, Spirit. |
+| **Beside the city** | **Holy Sanctum** (Cycle II) | Survivors raised it (`cycles.md` §3), so it's built next to the people who raised it. |
+| **Just below the crater**, a misty plateau | **Dreaming Spires** (Cycle III) | Proposed: *built by someone asleep* is the Titan, asleep after the seal. The nearest place to it dreams its dreams. Mind, Arcane, Spirit. |
 
 Three things this layout gives without adding a rule:
 
-- **The river is the story's spine.** Crater → forest → Wild's Edge → city → Necropolis → sea.
-  Whatever the Titan does to the land, the river carries home. One line on the map explains
-  chapter 2's black river, why the city is in danger, and why the dead city is at its end.
-- **The seals ring the Titan.** The six base seals (Wild's Edge, Forest, Coast, Foundry,
-  Necropolis, Shrine) stand on every side of the crater, and each one's chain can be drawn to it.
-  That's the Pact Seal screen's picture laid out on the land.
-- **The roads leave from the city.** A run's random draw of Locations reads as setting out from
-  home in a different direction each act, not a teleport.
+- **A run walks north.** Act 1 at the city's edge, the Guardians in the middle bands, the
+  Threshold at the top. Whatever three places a run draws, each is further up the map than home,
+  and the finale is the top of the page.
+- **The river is the story's spine.** Crater → forest → Wild's Edge → city → sea. Whatever the
+  Titan does to the land, the river carries home. One line on the map explains chapter 2's black
+  river and why the city is in danger.
+- **The seals fan out below the Titan.** The six base seals (Wild's Edge, Forest, Coast, Foundry,
+  Necropolis, Shrine) stand between the city and the crater, and each one's chain runs up to it:
+  the seals are literally what stands between the Titan and home.
 
-**A tension to decide.** The user asked for a central city, and the seals would like the Titan at
-the centre. The layout above puts the city at the centre of the board and the crater in the
-north, a day's walk past Wild's Edge, so the seal chains converge north instead of radiating out.
-The alternative is to put the crater at the centre and the city just south of it, which makes the
-seal picture cleaner but puts the city in the Titan's shadow. Proposed: city centre. The prologue
-needs the Titan close enough to see fall from Wild's Edge, and both layouts give that.
+**What it gives up.** The draw still ignores distance, so a run can go Coast → Shrine → Forest,
+and "north" is a direction of the run as a whole, not of every act. The road is drawn however it
+goes (§7).
 
 ## 3. When it's shown
 
@@ -121,7 +122,7 @@ in magenta.
 Every treatment shows the same three moments: the prologue reveal, a Classic run entering
 Act 3, and Cycle III's Long Winter. The city's name candidates (§6) toggle on the page too.
 
-**How the paintings were made** (36 PixelLab generations): the layout was laid by hand as flat
+**How the paintings were made** (66 PixelLab generations across two layouts): the layout was laid by hand as flat
 shapes (`layout-rich.svg`/`.png`), then given to `create_image_pro` at 224x400 as a "composition
 and layout only" reference (15 generations each, seeds 8 and 29). Pixflux img2img off the same
 layout at strengths 60–160 came out flat or toy-like and was dropped. The Pro paintings moved a
@@ -135,17 +136,17 @@ pacts are made: the Guild could be headquartered here), **Lanternfall**, **Kings
 
 ## 7. Open — do not silently resolve
 
-- **City at the centre, or the Titan** (§2).
 - **Whether the map replaces the Pact Seal screen** or only joins the arrival (§3.3).
 - **What the city is in play.** It has no node. Candidates: it's where the Guild Hall is
   (the funnel every act is the city's guild, met on the road); it's where a Story chapter
   returns between acts; or it's only a picture.
-- **The Necropolis as the old capital**: a lore proposal that would make the river a line from
-  the living city to the dead one. It also touches `lore.md` §2's open item (the fall has no age
-  before it), since an old capital implies an age before the Titan.
+- **The Dreaming Spires as the Titan's dream** (§2): a lore proposal for its omen.
 - **Distances.** The run's draw ignores geography: Act 2 can be the Coast and Act 3 the Shrine,
-  across the whole map. Proposed: keep the draw and draw the road however long it is. The
-  alternative (the draw prefers neighbours) changes run variety for a picture and isn't
-  recommended.
+  across the whole map. Proposed: keep the draw and draw the road however long it is. Two
+  alternatives: the draw prefers neighbours (changes run variety for a picture; not
+  recommended), or the draw climbs, each act drawn from places further north than the last
+  (Act 2 from the middle band, Act 3 from the upper one). Climbing would make "the long road
+  north" literally true and give each band a difficulty reading, at the cost of fixing which
+  places can be Act 2.
 - **Chapter 4's town** east of the city: whether it gets a name and a mark.
 - **Where the Wardens show**, from Cycle II.
