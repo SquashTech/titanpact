@@ -65,6 +65,9 @@
 .story-figure.is-uncanny {
   transition: opacity 3.2s ease-in, filter 0.2s;
 }
+.story-figure.is-uncanny.is-off {
+  transition: opacity 0.12s, filter 0.2s;
+}
 .story-figure-sprite {
   display: block;
   width: 96px;

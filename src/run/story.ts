@@ -137,6 +137,9 @@ export interface StoryActor {
   uncanny?: boolean;
 }
 
+/** What a line or cue may sound as it appears: Fang, and the Titan's own noises. */
+export type StorySound = 'wolf.bark' | 'wolf.howl' | 'titan.stir' | 'titan.gaze';
+
 /** A beat's music: a track id (audio/tracks.ts), `null` for silence. Unset: the place's own track. */
 export type StoryMusic = string | null;
 
@@ -214,7 +217,7 @@ export interface StoryLine {
   text: string;
   think?: true;
   /** A sound the moment the line appears (audio/sounds.ts id): Fang's bark, his howl. */
-  sound?: 'wolf.bark' | 'wolf.howl';
+  sound?: StorySound;
   /** Who moves as the line appears, and to where: a step, a retreat, an entrance (`off: false`), an exit (`off: true`). */
   moves?: Readonly<Record<string, Partial<StageMark>>>;
   /** The speaker's expression on this line. Unset: neutral. */
@@ -226,7 +229,7 @@ export interface StoryCue {
   round: number;
   speaker?: string;
   text: string;
-  sound?: 'wolf.bark' | 'wolf.howl';
+  sound?: StorySound;
   /**
    * A control taught at the top of this round (docs/stories.md §1c), once an account: plain game
    * words, the thing it names lit on the board (view/run/tipStaging.ts, by the tip's id).

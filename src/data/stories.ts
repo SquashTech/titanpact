@@ -14,7 +14,7 @@ const will: StoryActor = { id: 'will', name: 'Will', artHeroId: CAST.will, stand
 const faceless: StoryActor = { id: 'faceless', name: '???', artHeroId: CAST.endbringer, stands: 'right', scale: 1.2, uncanny: true };
 const stag: StoryActor = { id: 'stag', name: 'Stag', artHeroId: CAST.stag, stands: 'right' };
 const fox: StoryActor = { id: 'fox', name: 'Fox', artHeroId: CAST.fox, stands: 'right' };
-const risen: StoryActor = { id: 'risen', name: '???', artHeroId: 'heraldRisen', stands: 'right', scale: 1.7 };
+const risen: StoryActor = { id: 'risen', name: '???', artHeroId: 'heraldRisen', stands: 'right', scale: 1.7, uncanny: true };
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
 const ally = (rosterId: string) => ({ side: 'A' as const, rosterId });
@@ -351,19 +351,28 @@ export const storyCatalog: readonly StoryDefinition[] = [
             locationId: 'wildsEdge',
             cast: [valor, fang, ren, will, risen],
             stage: {
-              valor: { x: 30, depth: 0.85 },
-              fang: { x: 18, depth: 0.6 },
-              ren: { x: 42, depth: 0.55 },
-              will: { x: 58, depth: 0.7 },
-              risen: { x: 78, depth: 0.1 },
+              valor: { x: 22, depth: 0.85 },
+              fang: { x: 12, depth: 0.6 },
+              ren: { x: 38, depth: 0.55 },
+              will: { x: 62, depth: 0.7 },
+              risen: { x: 84, depth: 0.15, off: true },
             },
             lines: [
-              { text: 'The ground shakes. The faceless thing stands, and it is taller now.', moves: { risen: { x: 74, depth: 0.3 } } },
+              { text: 'For a long moment, nothing. Dust drifts down where the stars were.' },
+              { text: 'Then the faceless thing gets up.', sound: 'titan.stir', moves: { risen: { off: false } } },
+              { text: 'It is taller now. Much taller. It does not look at Ren, or at Valor.' },
+              { text: 'It is turned toward Will.', moves: { risen: { x: 78, depth: 0.3 } } },
+              { speaker: 'will', mood: 'shocked', text: 'Father...?', moves: { will: { x: 66, depth: 0.7 } } },
+              { speaker: 'ren', mood: 'angry', text: 'Will! To me!', moves: { ren: { x: 44, depth: 0.6 } } },
+              { speaker: 'valor', mood: 'shocked', text: 'Will, run!' },
+              { text: 'Will runs.', moves: { will: { x: 58, depth: 0.75 } } },
+              { text: 'It is already in front of him.', sound: 'titan.gaze', moves: { risen: { x: 51, depth: 0.72 } } },
               { speaker: 'will', mood: 'shocked', text: 'Val—!' },
-              { text: 'It takes Will, and it is gone.', moves: { will: { x: 84, depth: 0.2, off: true }, risen: { x: 90, depth: 0.05, off: true } } },
-              { text: 'His sword lies in the grass.' },
+              { text: 'And then neither of them is there.', moves: { will: { off: true }, risen: { off: true } } },
+              { text: 'Where he stood, his sword lies in the grass.' },
               { speaker: 'fang', mood: 'sad', text: 'Fang howls at the empty sky.', sound: 'wolf.howl' },
-              { speaker: 'ren', mood: 'sad', text: 'Pick it up.', moves: { valor: { x: 58, depth: 0.75 } } },
+              { speaker: 'valor', mood: 'sad', text: 'Will...' },
+              { speaker: 'ren', mood: 'sad', text: 'Pick it up.', moves: { valor: { x: 56, depth: 0.75 } } },
               { speaker: 'ren', mood: 'sad', text: 'We run.' },
             ],
             skipped: 'The Titan fell. The faceless thing rose stronger, took Will, and was gone. Valor picked up his sword.',
