@@ -4353,7 +4353,7 @@ textarea,
    picker.
 
    The voluntary Switch overlay used to share this row and no longer does — it
-   has purpose-built rows of its own now (SwitchInPanel.tsx, .switch-option
+   has a stage of its own now (SwitchInPanel.tsx, .switch-stage
    below), so everything scoped to .target-panel here is the KO flow alone.
 
    The fifth pass let these cards grow to fill the chassis the way the target
@@ -9504,240 +9504,336 @@ textarea,
 }
 
 /* --- Switch-in picker (SwitchInPanel.tsx) ---------------------------------
- *
- * This used to be a bare .log-panel wrapping a row of shrunken battlefield
- * cards. It is now authored for the decision it serves: a switch is a TRADE,
- * and the three things that decide one are who leaves, how much HP and mana
- * arrives, and how the type matchup lands in both directions. Each of those
- * gets its own band below.
- *
- * The panel keeps .log-panel's chassis (same scrim, same radius, same header)
- * — it should still read as one of this game's modals, not as a screen of its
- * own.
- */
-.switch-panel {
-  gap: 8px;
+   A face-off: the hero being considered stands on a stage opposite each enemy on the field, the
+   bench is a strip beneath it, and a plate sends it in. The sheet sits on the bottom of the
+   screen so the dimmed fight above it is a wide target for closing. */
+.switch-overlay {
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  padding: 0;
 }
 
-/* The outgoing half of the trade, on a sunken track: the same "this is a
-   readout, not a control" language .map-header uses, so it can sit directly
-   above a stack of large pressable rows without competing with them. */
-.switch-outgoing {
-  flex-shrink: 0;
+.switch-sheet {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  padding: 5px 8px;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  color: var(--text-dim);
+  padding: 26px 10px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(10, 11, 17, 0), rgba(10, 11, 17, 0.94) 26px);
+  animation: switch-rise 300ms cubic-bezier(0.2, 0.9, 0.3, 1.05) both;
 }
 
-/* Same socket idiom as the fight console's commander portraits
-   (.console-socket): a carved slot ringed in the hero's own primary-type
-   color. Reused rather than reinvented so a hero looks like the same object
-   wherever the game frames one. */
-.switch-outgoing-socket,
-.switch-option-socket {
+@keyframes switch-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes switch-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+
+@keyframes switch-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+
+@keyframes switch-chevron {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.switch-stage {
   position: relative;
+  height: 240px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(ellipse 70% 60% at 28% 70%, rgba(var(--rgb), 0.35), transparent 70%),
+    linear-gradient(180deg, #1b1f2b, #0e1016);
+  transition: background var(--dur-mid) var(--ease-out);
+}
+
+/* The floor the duel stands on. */
+.switch-stage::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 42px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  pointer-events: none;
+}
+
+.switch-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Who leaves and who arrives, on the fight's own slanted nameplates. */
+.switch-handoff {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 46px;
+  z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, rgba(6, 8, 12, 0.55), rgba(10, 13, 18, 0.32));
-  box-shadow:
-    inset 0 0 0 1px rgba(var(--socket-rgb), 0.55),
-    inset 0 -7px 14px -7px rgba(var(--socket-rgb), 0.45),
-    inset 0 1px 2px rgba(0, 0, 0, 0.7);
-}
-
-.switch-outgoing-socket {
-  width: 28px;
-  height: 28px;
-  /* Dimmed: this hero is leaving. The ring stays lit so the type is still
-     readable — what fades is the sprite, not the identity. */
-  opacity: 0.62;
-  filter: grayscale(0.45);
-}
-
-.switch-outgoing-portrait {
-  width: 24px;
-  height: 24px;
-  image-rendering: pixelated;
-}
-
-.switch-outgoing-text {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.switch-outgoing-text strong {
-  color: var(--text);
-}
-
-.switch-outgoing-chips {
-  flex-shrink: 0;
-  display: flex;
   gap: 4px;
 }
 
-/* Scrolls rather than squeezing: a bring-4 squad tops out at two bench heroes
-   today, but nothing in the rules caps it there, and a row whose gauges
-   collapse is worse than a row you have to scroll to. */
-.switch-options {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  /* Padding, not margin: `overflow-y: auto` also makes overflow-x `auto`, so
-     this box clips at its own padding edge — and .switch-stamp hangs 7px above
-     the first row while the hover glow spills sideways. Both need room inside
-     the scroller or the top row loses its stamp entirely. */
-  padding: 8px 5px 2px;
-  margin: -8px -5px -2px;
-}
-
-/*
- * One candidate. Full width and ~76px tall — deliberately the same weight as
- * the .options-item rows in the pause menu, because this is a comparably
- * consequential press and the old thumbnail-strip version read as a preview
- * rather than as a choice.
- */
-.switch-option {
-  position: relative;
+.switch-handoff-bar {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-  box-shadow: var(--hairline);
-  transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
-}
-
-/* Lit in the candidate's own primary type, not in the app accent: with two or
-   three heroes stacked, the hover cue doubles as a reminder of what you're
-   about to bring in. */
-.switch-option:hover {
-  border-color: rgba(var(--socket-rgb), 0.8);
-  box-shadow: var(--hairline), 0 0 14px -4px rgba(var(--socket-rgb), 0.6), var(--elev-2);
-  transform: translateY(-2px);
-}
-
-.switch-option:active {
-  transform: translateY(0);
-}
-
-/* Already the declared replacement for THIS hero. Uses the app-wide
-   "you picked this one" fill (--selected-fill) so a committed switch looks
-   like every other committed choice in the game. */
-.switch-option.selected {
-  background: var(--selected-fill);
-  border-color: var(--accent);
-}
-
-/* Queued as the OTHER active hero's replacement — inert, and said with light
-   rather than by hiding anything: the player still needs to read who it is to
-   understand why this row can't be pressed. */
-.switch-option.claimed {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.switch-option.claimed:hover {
-  border-color: var(--border-strong);
-  box-shadow: var(--hairline);
-  transform: none;
-}
-
-.switch-option-socket {
-  width: 52px;
-  height: 52px;
-}
-
-/* 48px — the sprite's native size, so the one hero portrait the player is
-   actually studying before a trade is the one place in the fight UI that
-   never downscales it. */
-.switch-option-portrait {
-  width: 48px;
-  height: 48px;
-  image-rendering: pixelated;
-}
-
-.switch-option-body {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.switch-option-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.switch-option-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 13px;
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  gap: 5px;
+  height: 30px;
+  padding: 0 10px 0 4px;
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
-.switch-option-types {
-  flex-shrink: 0;
+.switch-handoff-face {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.switch-handoff-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.switch-handoff-bar.is-from {
+  background: linear-gradient(90deg, rgba(var(--out-rgb), 0.28), rgba(var(--out-rgb), 0.08));
+  color: rgba(233, 230, 222, 0.5);
+}
+
+.switch-handoff-bar.is-from .switch-handoff-face {
+  filter: grayscale(0.8) brightness(0.7);
+}
+
+.switch-handoff-bar.is-from .switch-handoff-name {
+  text-decoration: line-through;
+  text-decoration-color: rgba(240, 122, 106, 0.85);
+  text-decoration-thickness: 2px;
+}
+
+.switch-handoff-bar.is-to {
+  background: linear-gradient(90deg, rgba(var(--rgb), 0.55), rgba(var(--rgb), 0.2));
+  color: #fff;
+  text-shadow: 0 1px 0 #000;
+  animation: switch-from-right 350ms 100ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.switch-chevrons {
+  flex: none;
+  display: flex;
+}
+
+.switch-chevrons i {
+  width: 8px;
+  height: 12px;
+  background: rgb(var(--rgb));
+  clip-path: polygon(0 0, 45% 0, 100% 50%, 45% 100%, 0 100%, 55% 50%);
+  animation: switch-chevron 1.2s ease-in-out infinite;
+}
+
+.switch-chevrons i:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.switch-chevrons i:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+/* Sprites face left; the arrival is turned to face the enemies across the stage. */
+.switch-arrival {
+  position: absolute;
+  left: 22px;
+  bottom: 42px;
+  z-index: 1;
+  animation: switch-from-left 340ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.switch-arrival-sprite {
+  display: block;
+  width: 104px;
+  height: 104px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  transform: scaleX(-1);
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 0 16px rgba(var(--rgb), 0.45));
+}
+
+.switch-duels {
+  position: absolute;
+  top: 46px;
+  right: 10px;
+  bottom: 48px;
+  width: 176px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.switch-duel-lane {
+  display: grid;
+  grid-template-columns: 1fr 48px;
+  align-items: center;
+  gap: 6px;
+  animation: switch-from-right 360ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.switch-duel {
+  display: grid;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.switch-duel.is-up {
+  border-color: rgba(95, 210, 125, 0.45);
+  background: linear-gradient(90deg, rgba(95, 210, 125, 0.16), rgba(0, 0, 0, 0.4));
+}
+
+.switch-duel.is-down {
+  border-color: rgba(239, 90, 82, 0.45);
+  background: linear-gradient(90deg, rgba(239, 90, 82, 0.16), rgba(0, 0, 0, 0.4));
+}
+
+.switch-duel-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(233, 230, 222, 0.6);
+}
+
+.switch-duel-glyph {
+  width: 11px;
+  height: 11px;
+  opacity: 0.75;
+}
+
+.switch-mult {
+  margin-left: auto;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.switch-mult.good {
+  color: #6fdc8b;
+  text-shadow: 0 0 8px rgba(95, 210, 125, 0.6);
+}
+
+.switch-mult.bad {
+  color: #f06a62;
+  text-shadow: 0 0 8px rgba(239, 90, 82, 0.6);
+}
+
+.switch-mult.flat {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.switch-foe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.switch-foe-sprite {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6));
+}
+
+.switch-foe-name {
+  max-width: 100%;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(233, 230, 222, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.switch-stage-foot {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switch-stage-types {
+  flex: none;
   display: flex;
   gap: 3px;
 }
 
-/* Label / track / numerals on one line. The battlefield stacks a caption
-   under its bars because it has no horizontal room to spare; this panel does,
-   and a gauge that reads left-to-right in one pass is faster to compare
-   across two stacked candidates than two stacked two-line blocks. */
+.switch-stage-gauges {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
 .switch-gauge {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.switch-gauge-label {
-  flex-shrink: 0;
-  width: 16px;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
-}
-
-/* `display: block` is load-bearing, not tidiness: this panel's track and fill
-   are spans (they sit inside a <button>, which may not contain a <div>), and
-   an inline box ignores height/width entirely — the gauges rendered as empty
-   grooves until both were blockified. */
 .switch-gauge-track {
   display: block;
   flex: 1 1 auto;
   min-width: 0;
-  height: 7px;
-  /* .bar-track carries a bottom margin for the stacked battlefield layout;
-     on one line it would push the bar off-center. */
+  height: 6px;
   margin-bottom: 0;
 }
 
@@ -9746,133 +9842,163 @@ textarea,
 }
 
 .switch-gauge-value {
-  flex-shrink: 0;
+  flex: none;
   min-width: 52px;
   text-align: right;
   font-size: 10px;
   font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
   color: var(--text);
 }
 
 .switch-gauge-max {
-  font-weight: 600;
   color: var(--text-dim);
 }
 
-.switch-option-readout {
+/* Statuses and the mana warning, top-left under the hand-off, where they read as the arrival's. */
+.switch-stage-flags {
+  position: absolute;
+  top: 46px;
+  left: 10px;
+  z-index: 2;
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
   gap: 4px;
-  margin-top: 1px;
 }
 
-/*
- * The matchup pair. Colored by CONSEQUENCE, not by multiplier: green means
- * "this is in your favour" on both chips, which is why the sword chip and the
- * shield chip invert against each other (SwitchInPanel's toneFor). A player
- * scanning two candidates should be able to pick on color alone and be right.
- */
-.switch-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 5px 1px 4px;
-  border-radius: var(--radius-xs);
-  background: var(--well);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
-.switch-chip-glyph {
-  width: 10px;
-  height: 10px;
-  flex-shrink: 0;
-  opacity: 0.9;
-}
-
-.switch-chip.good {
-  color: var(--hp-high);
-  box-shadow: inset 0 0 0 1px rgba(76, 175, 106, 0.4);
-}
-
-.switch-chip.bad {
-  color: var(--hp-low);
-  box-shadow: inset 0 0 0 1px rgba(217, 83, 79, 0.4);
-}
-
-.switch-chip.flat {
-  color: var(--text-dim);
-}
-
-/* Statuses that travel in with this hero. Icon only — the panel is a
-   comparison, and a hero arriving Burned is a fact the player needs to see,
-   not one they need the magnitude of mid-tap (that's a hold on the
-   battlefield card). */
 .switch-status {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
   border: 1px solid;
-  border-radius: var(--radius-xs);
+  border-radius: 4px;
 }
 
 .switch-status svg {
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
 }
 
-/* Printed only when it's bad news: a hero arriving with no affordable move
-   spends its first round Resting. "Ready" has no chip — the common case earns
-   no ink. */
 .switch-flag {
-  padding: 1px 5px;
-  border-radius: var(--radius-xs);
-  background: rgba(217, 83, 79, 0.16);
-  box-shadow: inset 0 0 0 1px rgba(217, 83, 79, 0.45);
-  color: var(--hp-low);
+  padding: 3px 5px;
+  border: 1px solid rgba(95, 160, 240, 0.45);
+  border-radius: 4px;
+  color: #7fb2ff;
   font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
+  line-height: 1;
   text-transform: uppercase;
 }
 
-/* Corner stamp for the row's own state. Sits over the border rather than in
-   the flow so it can't reflow the gauges underneath it. */
-.switch-stamp {
-  position: absolute;
-  top: -7px;
-  right: 8px;
-  padding: 1px 7px;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-  color: var(--bg);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  box-shadow: 0 0 0 2px var(--panel);
+/* The bench: at most four tiles, wide enough for the longest name (Hollowbark) at full size. */
+.switch-bench {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
 }
 
-.switch-stamp.claimed-stamp {
-  background: var(--border-strong);
+.switch-pick {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 3px 7px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(var(--rgb), 0.2), #141720 70%);
   color: var(--text);
+  animation: switch-rise 360ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 }
 
-/* The one rule of switching that isn't visible anywhere on this panel: the
-   arrival loses its turn. Stated once, at the bottom, in the same register
-   .options-note uses. */
+.switch-pick.is-staged {
+  border-color: rgba(var(--rgb), 0.9);
+  box-shadow: 0 0 0 1px rgba(var(--rgb), 0.9), 0 0 16px rgba(var(--rgb), 0.35);
+  transform: translateY(-3px);
+}
+
+.switch-pick.is-claimed {
+  opacity: 0.45;
+}
+
+.switch-pick-sprite {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.switch-pick-name {
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.switch-pick-arrows {
+  display: flex;
+  gap: 1px;
+}
+
+.switch-pick-hp {
+  position: relative;
+  width: 80%;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.switch-pick-hp .bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+}
+
+.switch-pick-stamp {
+  position: absolute;
+  top: -6px;
+  right: -3px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: #2a2d38;
+  color: rgba(233, 230, 222, 0.75);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.switch-overlay .plate-socket {
+  margin-top: 4px;
+}
+
 .switch-note {
-  flex-shrink: 0;
   margin: 0;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.4;
   text-align: center;
   color: var(--text-dim);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch-sheet,
+  .switch-handoff-bar.is-to,
+  .switch-chevrons i,
+  .switch-arrival,
+  .switch-duel-lane,
+  .switch-pick {
+    animation: none;
+  }
 }
 
 /* The shared "tap anywhere to close" popup chassis, still used by the map
@@ -42516,33 +42642,6 @@ img.smithy-service-art {
 .roster-mgmt-card.is-over {
   border-color: transparent;
   border-image-source: url('../../art/ui/slot-thin-lit.png');
-}
-
-/* The switch-in's candidates: carved like every other choice in a window. */
-.switch-option {
-  border: 4px solid transparent;
-  border-image: url('../../art/ui/slot-thin.png') 2 / 4px round;
-  border-radius: 0;
-  background: #111319 padding-box;
-  box-shadow: none;
-  image-rendering: pixelated;
-}
-
-.switch-option:hover {
-  border-color: transparent;
-  background: #161922 padding-box;
-  box-shadow: 0 0 14px -4px rgba(var(--socket-rgb), 0.6);
-}
-
-.switch-option.selected {
-  border-color: transparent;
-  border-image-source: url('../../art/ui/slot-thin-lit.png');
-  background: var(--selected-fill) padding-box;
-}
-
-.switch-option.claimed:hover {
-  border-color: transparent;
-  box-shadow: none;
 }
 
 /* -- The map's HUD in the kit. The top bar is a stone lintel hung from the screen's edge with the
