@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pointer hand options</title>
+<style>
+  body { margin: 0; padding: 16px; background: #0d0f14; color: #e8e2d4; font: 14px/1.4 system-ui, sans-serif; }
+  h1 { font-size: 15px; margin: 0 0 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #e0a63c; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .opt { background: #15171e; border: 2px solid #3a2412; border-radius: 6px; padding: 10px 10px 18px; }
+  .opt b { display: block; margin-bottom: 8px; }
+  .opt small { display: block; color: #9a937f; margin-top: 70px; }
+  /* A stand-in for the fight's move row the hand points at. */
+  .row { position: relative; height: 64px; border-radius: 6px; background: linear-gradient(90deg, #1d2130, #262b3b); box-shadow: 0 0 0 2px #f3ecda, 0 0 14px rgba(255, 233, 176, 0.55); display: flex; align-items: center; gap: 10px; padding: 0 14px; font-weight: 700; font-size: 17px; }
+  .gem { width: 30px; height: 30px; border-radius: 6px; background: #20324f; border: 2px solid #6fa0d8; display: grid; place-items: center; font-size: 13px; }
+  .hand { position: absolute; left: 62%; top: 42%; pointer-events: none; image-rendering: pixelated; filter: drop-shadow(0 3px 2px rgba(0,0,0,.6)); animation: tap .9s ease-in-out infinite; }
+  .hand img, .hand svg { display: block; image-rendering: pixelated; }
+  .ring { position: absolute; left: 62%; top: 42%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; border: 2px solid rgba(255, 236, 190, .9); animation: ring .9s ease-out infinite; pointer-events: none; }
+  @keyframes tap { 0%,100% { transform: translate(6px, 12px); } 45% { transform: translate(0,0); } 55% { transform: translate(0,1px) scale(.94); } }
+  @keyframes ring { 0%,40% { opacity: 0; transform: scale(.3); } 50% { opacity: 1; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.6); } }
+</style>
+</head>
+<body>
+<h1>Pointer hand: pick one</h1>
+<div class="grid" id="grid"></div>
+<script>
+// Fingertip in each image's own pixels (x, y), so every hand touches the same spot on the row.
+const OPTIONS = [
+  { name: 'Current', note: 'What ships now: one-tone glove, no ring.', svg: 'current', tip: [5.5, 0], scale: 3, ring: false },
+  { name: 'A · Redrawn glove', note: 'Hand-drawn: shaded finger edges, gold cuff, tap ring.', svg: 'redrawn', tip: [6.5, 0], scale: 3, ring: true },
+  { name: 'B · Glove (PixelLab)', note: 'Painted white glove with a gold cuff, upright.', img: 'glove.png', tip: [13, 4], scale: 3, ring: true },
+  { name: 'C · Gauntlet (PixelLab)', note: 'Steel and gold gauntlet; matches the stone-and-gold UI.', img: 'gauntlet.png', tip: [14, 3], scale: 3, ring: true },
+  { name: 'D · Tilted glove (PixelLab)', note: 'Classic tilted cursor glove.', img: 'tilted.png', tip: [10, 5], scale: 3, ring: true },
+];
+const BITMAPS = {
+  current: [
+    '.....oo......', '....owwo.....', '....owwo.....', '....owwo.....', '....owwooo...', '....owwowwoo.', '.ooowwowwowwo',
+    'owwowwwwwowwo', 'owwwwwwwwwwwo', 'owwwwwwwwwwwo', '.owwwwwwwwwwo', '..owwwwwwwwwo', '..owwwwwwwwo.', '...owwwwwwwo.', '...owwwwwwwo.', '...ooooooooo.',
+  ],
+  redrawn: [
+    '......oo........', '.....owwo.......', '.....owso.......', '.....owso.......', '.....owsooo.....', '.....owsowsoo...',
+    '..oo.owsowsowo..', '.owwoowsowsowso.', '.owwsowwwwwwwso.', '..owsswwwwwwwso.', '...owwwwwwwwwso.', '...owwwwwwwwsso.',
+    '....owwwwwwsso..', '....owwwwwwsso..', '....occcccccdo..', '....occcccccdo..', '....oooooooooo..',
+  ],
+};
+const COLORS = { o: '#1b1206', w: '#fffaf0', s: '#d8c9a8', c: '#e0a63c', d: '#9c6a1e' };
+function svgFor(rows, px) {
+  const w = rows[0].length, h = rows.length;
+  let rects = '';
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch !== '.') rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${COLORS[ch]}"/>`; }));
+  return `<svg width="${w * px}" height="${h * px}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges">${rects}</svg>`;
+}
+const grid = document.getElementById('grid');
+for (const o of OPTIONS) {
+  const art = o.svg ? svgFor(BITMAPS[o.svg], o.scale) : `<img src="${o.img}" width="${32 * o.scale}" height="${32 * o.scale}">`;
+  grid.insertAdjacentHTML('beforeend', `
+    <div class="opt"><b>${o.name}</b>
+      <div class="row"><span class="gem">20</span> Iron Fist
+        ${o.ring ? '<span class="ring"></span>' : ''}
+        <span class="hand" style="margin-left:${-o.tip[0] * o.scale}px;margin-top:${-o.tip[1] * o.scale}px">${art}</span>
+      </div>
+      <small>${o.note}</small>
+    </div>`);
+}
+</script>
+</body>
+</html>
