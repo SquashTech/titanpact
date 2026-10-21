@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Story Paintings</title>
+<style>
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1d1c1a;--mute:#6b675f;--line:#e2ddd2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}}
+:root[data-theme="dark"]{--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:22px;margin:0 0 16px}
+h2{font-size:17px;margin:28px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+h3{font-size:15px;margin:0 0 10px}
+
+.phone{position:relative;width:100%;max-width:300px;aspect-ratio:9/19.5;margin:0 auto;border-radius:16px;overflow:hidden;background:#07080d;color:#edeff4;box-shadow:0 0 0 6px #0c0d12,0 8px 24px rgba(0,0,0,.35)}
+.art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+.phone.painting::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,10,0) 55%,rgba(5,6,10,.9) 100%)}
+.line{position:absolute;z-index:2;left:14px;right:14px;bottom:9%;min-height:92px;padding:12px 14px;border-radius:6px;background:rgba(8,10,18,.88);box-shadow:inset 0 0 0 1px rgba(224,166,60,.45)}
+.line p{margin:0;font:italic 15px/1.4 Georgia,'Times New Roman',serif;color:#d9d2c2}
+
+.descent{position:absolute;left:0;right:0;top:0;height:300%;background-size:cover;background-position:center bottom;image-rendering:pixelated;animation:scroll 5.2s both}
+@keyframes scroll{from{transform:translateY(0)}to{transform:translateY(-66.6667%)}}
+.replay{display:block;margin:12px auto 0;font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:5px 14px;cursor:pointer}
+.strips{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.strips figure{margin:0;text-align:center}
+.strips img{display:block;width:196px;height:1032px;image-rendering:pixelated;border:1px solid var(--line)}
+.strips figcaption{margin-top:6px;color:var(--mute);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+<h1>Story paintings</h1>
+
+<h2>It is already in front of him</h2>
+<div class="grid">
+  <section><h3>A · Pixel</h3><div class="phone painting"><img class="art" src="willTaken-pixel.png" alt=""><div class="line"><p>It is already in front of him.</p></div></div></section>
+  <section><h3>B · Painted</h3><div class="phone painting"><img class="art" src="willTaken-painted.png" alt=""><div class="line"><p>It is already in front of him.</p></div></div></section>
+</div>
+
+<h2>Valor lifts her brother's sword</h2>
+<div class="grid">
+  <section><h3>A · Pixel</h3><div class="phone painting"><img class="art" src="valorTakesTheSword-pixel.png" alt=""><div class="line"><p>Valor lifts her brother's sword out of the grass.</p></div></div></section>
+  <section><h3>B · Painted</h3><div class="phone painting"><img class="art" src="valorTakesTheSword-painted.png" alt=""><div class="line"><p>Valor lifts her brother's sword out of the grass.</p></div></div></section>
+</div>
+
+<h2>Wild's Edge descent</h2>
+<div class="grid">
+  <section><h3>1 · Draft</h3><div class="phone"><div class="descent" style="background-image:url(wildsEdge-draft.png)"></div></div></section>
+  <section><h3>2 · Painted sky</h3><div class="phone"><div class="descent" style="background-image:url(wildsEdge-painted.png)"></div></div></section>
+</div>
+<button class="replay" id="replay">Replay</button>
+<div class="strips">
+  <figure><img src="wildsEdge-draft.png" alt=""><figcaption>1 · Draft</figcaption></figure>
+  <figure><img src="wildsEdge-painted.png" alt=""><figcaption>2 · Painted sky</figcaption></figure>
+</div>
+</main>
+<script>
+document.getElementById('replay').onclick = () => document.querySelectorAll('.descent').forEach(d => { d.style.animation = 'none'; void d.offsetWidth; d.style.animation = ''; });
+</script>
+</body>
+</html>
