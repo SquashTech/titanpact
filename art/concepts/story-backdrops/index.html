@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Story Backdrops</title>
+<style>
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1d1c1a;--mute:#6b675f;--line:#e2ddd2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}}
+:root[data-theme="dark"]{--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:22px;margin:0 0 16px}
+h2{font-size:17px;margin:28px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+h3{font-size:15px;margin:0 0 10px}
+
+.phone{position:relative;width:100%;max-width:300px;aspect-ratio:9/19.5;margin:0 auto;border-radius:16px;overflow:hidden;background:#05060a;color:#edeff4;box-shadow:0 0 0 6px #0c0d12,0 8px 24px rgba(0,0,0,.35)}
+.bd{position:absolute;inset:0;background-size:cover;background-position:center;image-rendering:pixelated}
+.bd::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,10,0) 40%,rgba(5,6,10,.92) 100%)}
+.ground{position:absolute;z-index:1;left:0;right:0;bottom:30%;height:16%}
+.fig{position:absolute;width:74px;height:74px;transform:translateX(-50%) scale(var(--s,1));transform-origin:50% 100%;image-rendering:pixelated;filter:brightness(.72)}
+.fig.flip{transform:translateX(-50%) scale(calc(var(--s,1) * -1),var(--s,1))}
+.line{position:absolute;z-index:2;left:14px;right:14px;bottom:9%;min-height:92px;padding:12px 14px;border-radius:6px;background:rgba(8,10,18,.88);box-shadow:inset 0 0 0 1px rgba(224,166,60,.45)}
+.line p{margin:0;font:italic 15px/1.4 Georgia,'Times New Roman',serif;color:#d9d2c2}
+</style>
+</head>
+<body>
+<main>
+<h1>Story backdrops</h1>
+
+<h2>The ridge</h2>
+<div class="grid" data-cast="ridge">
+  <section><h3>Today · Wild's Edge</h3><div class="phone" data-bd="../../locations/wildsEdge.png"></div></section>
+  <section><h3>A · Valley in the mist</h3><div class="phone" data-bd="wildsEdgeRidge-a.png"></div></section>
+  <section><h3>B · The lone tree</h3><div class="phone" data-bd="wildsEdgeRidge-b.png"></div></section>
+</div>
+
+<h2>The clearing</h2>
+<div class="grid" data-cast="clearing">
+  <section><h3>Today · Wild's Edge</h3><div class="phone" data-bd="../../locations/wildsEdge.png"></div></section>
+  <section><h3>A · Pines and mist</h3><div class="phone" data-bd="wildsEdgeClearing-a.png"></div></section>
+  <section><h3>B · The ring of trunks</h3><div class="phone" data-bd="wildsEdgeClearing-b.png"></div></section>
+</div>
+</main>
+<script>
+const H = '../../heroes/';
+// [sprite, x %, depth, flip] — depth 0 is the ground's far edge, 1 its foot, as the game stages it.
+const CAST = {
+  ridge: { line: 'The high path climbs above the trees. Valor reads the ground the way Father taught her.', figs: [[H + 'story/valorswordless.png', 30, 0.8], [H + 'starters/fang.png', 15, 0.6]] },
+  clearing: { line: 'Across the clearing, something stands among the trees. It was not there a moment ago.', figs: [[H + 'story/ren.png', 38, 0.55], [H + 'story/will.png', 62, 0.7, true], [H + 'story/valorswordless.png', 22, 0.85]] },
+};
+document.querySelectorAll('[data-cast]').forEach(grid => {
+  const c = CAST[grid.dataset.cast];
+  grid.querySelectorAll('.phone').forEach(p => {
+    const figs = c.figs.map(([src, x, d, flip]) => `<img class="fig${flip ? ' flip' : ''}" src="${src}" alt="" style="left:${x}%;bottom:${(1 - d) * 100}%;--s:${0.7 + 0.45 * d};z-index:${Math.round(d * 100)}">`).join('');
+    p.innerHTML = `<div class="bd" style="background-image:url(${p.dataset.bd})"></div><div class="ground">${figs}</div><div class="line"><p>${c.line}</p></div>`;
+  });
+});
+</script>
+</body>
+</html>
