@@ -252,7 +252,8 @@ export type StoryBeat =
   | { kind: 'fall'; lines: readonly string[] }
   /** One Act of a run on the real map (docs/stories.md §14), a fixed party and fixed fights, ending at its last row. */
   | { kind: 'act'; act: StoryAct }
-  | { kind: 'end'; line: string };
+  /** The chapter's end card; `line` is one closing line over its title, unset for none. */
+  | { kind: 'end'; line?: string };
 
 export interface StoryChapter {
   id: string;

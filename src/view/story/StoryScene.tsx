@@ -289,7 +289,7 @@ export function StoryMemory({
 }
 
 /** A chapter's last beat: its title, one closing line, back to the Story select. */
-export function StoryEndCard({ title, number, line, onDone }: { title: string; number: number; line: string; onDone: () => void }) {
+export function StoryEndCard({ title, number, line, onDone }: { title: string; number: number; line?: string; onDone: () => void }) {
   return (
     <div
       className="story-screen story-end"
@@ -299,7 +299,7 @@ export function StoryEndCard({ title, number, line, onDone }: { title: string; n
       }}
       role="dialog"
     >
-      <p className="story-end-line">{line}</p>
+      {line && <p className="story-end-line">{line}</p>}
       <p className="story-end-number">Chapter {number}</p>
       <h1 className="story-end-title">{title}</h1>
     </div>
