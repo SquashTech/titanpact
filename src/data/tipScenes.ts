@@ -93,11 +93,38 @@ export interface TipHallScene {
   focus?: readonly TipSceneFocus[];
 }
 
-export type TipPicture = TipScene | TipHallScene;
+/** A roll call of heroes, one a type, each over its type's badge. */
+export interface TipRollScene {
+  roll: readonly string[];
+}
+
+export type TipPicture = TipScene | TipHallScene | TipRollScene;
 
 export function isHallScene(scene: TipPicture): scene is TipHallScene {
   return 'hall' in scene;
 }
+
+export function isRollScene(scene: TipPicture): scene is TipRollScene {
+  return 'roll' in scene;
+}
+
+/** One base hero of every draftable type, in the chart's order: faces the Story's player meets first where it can. */
+export const TYPE_ROLL = [
+  'cinderKnight',
+  'tidecaller',
+  'rime',
+  'raiju',
+  'crag',
+  'wildOracle',
+  'dawnwarden',
+  'nightshade',
+  'runescribe',
+  'drift',
+  'revenant',
+  'valor',
+  'forgewright',
+  'packAlpha',
+] as const;
 
 // --- The casts ---
 
@@ -151,6 +178,7 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
   'story.shield': [{ hero: { heroId: 'will', level: 4 }, moves: ['rimeCoat'], callouts: ['rider'] }],
   // Will's Storm Lash, its Conduct named in place, against the Faceless.
   'story.conduct': [{ foes: [{ heroId: 'endbringerPrologue', level: 1 }], hero: { heroId: 'will', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
+  'story.types': [{ roll: TYPE_ROLL }, MATCHUP_SCENE],
   'story.combo': [{ foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist', 'claw'], focus: ['matchups'], expect: { ironFist: [2], claw: [0.25] } }],
   'howto.combat': [null, { foes: [{ heroId: 'wildOracle' }], hero: { heroId: 'cinderKnight' }, moves: ['singe'], focus: ['foe', 'move'] }],
   'howto.mana': [MANA_SCENE, { hero: { heroId: 'cinderKnight', mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],

@@ -15,7 +15,8 @@ import {
   type Tip,
 } from '../src/run/tips';
 import { createProfile, decodeProfile, recordTipSeen, resetTips } from '../src/run/profile';
-import { isHallScene, TIP_SCENES, type TipHallScene, type TipScene } from '../src/data/tipScenes';
+import { isHallScene, isRollScene, TIP_SCENES, TYPE_ROLL, type TipHallScene, type TipScene } from '../src/data/tipScenes';
+import { TYPES } from '../src/data/typechart';
 import { equipment } from '../src/data/equipment';
 import { guildHallOffersFor } from '../src/data/recruitment';
 import { heroes } from '../src/data/heroes';
@@ -110,8 +111,13 @@ test('tips: the first command phase of the first fight is the basics, and nothin
 // --- Scenes ---
 
 const allPictures = Object.entries(TIP_SCENES).flatMap(([id, pages]) => pages.flatMap((scene, page) => (scene ? [{ id, page, scene }] : [])));
-const scenePages = allPictures.filter((p) => !isHallScene(p.scene)) as { id: string; page: number; scene: TipScene }[];
+const scenePages = allPictures.filter((p) => !isHallScene(p.scene) && !isRollScene(p.scene)) as { id: string; page: number; scene: TipScene }[];
 const hallPages = allPictures.filter((p) => isHallScene(p.scene)) as { id: string; page: number; scene: TipHallScene }[];
+
+test('tips: the type roll shows one hero of every draftable type, in the chart\'s order', () => {
+  const rolled = TYPE_ROLL.map((id) => allCombatants[id]?.types[0]);
+  assert.deepStrictEqual(rolled, TYPES.filter((type) => type !== 'Ancient'));
+});
 
 test('tips: every scene belongs to a tip page that exists', () => {
   for (const [id, pages] of Object.entries(TIP_SCENES)) {

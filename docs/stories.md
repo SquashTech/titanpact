@@ -525,7 +525,19 @@ the far one are the same call, so the player knows it again.
 **Open:** whether the whistle ever becomes a mechanic, e.g. the final fight's turn is answering it.
 Not before the ending; until then it is story only.
 
-## 15. The Cycle I chapters (PROPOSED, 2026-10-18)
+## 14c. Many Roads, and Journey (BUILT 2026-10-22, per user direction)
+
+The base roguelike mode is called **Journey** wherever a player reads it (it was Classic Mode; the
+code keeps `classic`). The first time the prologue is cleared, a screen raises once, in place of the
+return to the title: **Many Roads** — "Titanpact can be played many ways. For now, two roads are open
+to you." **Continue Valor's Story** (the default, lit gold) goes straight into chapter 2; **Begin a
+Journey** says exactly what one is — draft a team from the heroes in your Collection, defeat four
+Guardians, then face the Titan itself, and a lost fight ends it — and starts one as the title would
+(`ManyRoadsScreen`). It is a decision at the moment it is made, so it passes the tips rule. After it
+the choice lives on the Story select's shelf, where the Journey cover reads "Four Guardians, then the
+Titan".
+
+## 15. The Cycle I chapters (PROPOSED, 2026-10-18; revised 2026-10-22 per user direction)
 
 Each chapter is one Act that adds a few mechanics on top of the last, until a player arriving at
 Classic has met everything its first act asks of them. The order follows what Classic's Act 1 puts
@@ -533,14 +545,21 @@ in front of the player.
 
 | Chapter | Story | Layers in | Map |
 |---|---|---|---|
-| 1. The Fall | Wild's Edge; Will taken | Moves, targets, the round, switching, Rest | Two scripted fights (built) |
-| 2. His Sword | North after the faceless thing; Ren relents | The map, a pick of three, items, levels | Fight, row, fight, row, Elite (built) |
-| 3. The Lesson | Ren teaches; the first ally joins | **Types and matchup arrows**, the **patron seat** (Ren as the Swordsman, Trust), **the fork** (Elite or Skirmish, previewed) | Fight, row, patron seat, fork, row, Elite |
-| 4. The Hall | A town that survived; supplies, a hire | **Gems** (the Lapidary), **Mastery and the Evolution at five pips**, **the Guild Hall** (gold, gear, mend) | Fight, row, Lapidary, fork, Guild Hall, Elite |
+| 1. The Fall | Wild's Edge; Will taken | Moves, targets, the round, switching, Rest, **types** (a page of every type, then "watch the arrows", built), PLANNED: **the lead pick** at the clearing fight | Two scripted fights (built) |
+| 2. His Sword | North after the faceless thing; Ren relents | The map, a pick of three, items, levels, potions (the Bag, built); PLANNED: **a status and a stage** off the turned Ursa, and **a knockout that stays down** after the fight, so the row's Rest pays | Fight, row, fight, row, Elite (built) |
+| 3. The Lesson | Ren teaches; the first ally joins | **The arrows put to work**, **physical against magical** (Solace hits Wisdom), the **patron seat** (Ren as the Swordsman, Trust), **the fork** (Elite or Skirmish, previewed) | Fight, row, patron seat, fork, row, Elite |
+| 4. The Hall | A town that survived; supplies, a hire | **Recruiting** (a contract, the roster), **Gems** (the Lapidary), **Mastery and the Evolution at five pips**, **the Guild Hall** (gold, gear, mend) | Fight, row, Lapidary, fork, Guild Hall, Elite |
 | 5. The Seal | The first Guardian; the seal holds | **The Guardian**, its **Banner**, **the Academy and a Class** | A full Act 1 shape, Guardian at the end |
 
-After chapter 5 the Story points the player at Classic, and the chapters set in Cycles II–V wait
-on Classic milestones (§2).
+After chapter 5 the Story points the player at a Journey, and the chapters set in Cycles II–V wait
+on Journey milestones (§2).
+
+**What a run asks of a player** (2026-10-22): to win a fight — two actors a round, Speed order,
+Mana and Rest, the bench and lock-in, leads, types and arrows, physical and magical, status and
+stage pips, potions; to finish a run — the map and its previews, the fork, Wounds and downs, levels
+and move offers, items, recruiting and the roster cap, Gems and the Evolution, the Guild Hall,
+patron seats, the Academy, the Guardian and its Banner. Left to play and How to Play: innates,
+signatures, fields, events, the companion, the Pact Clock, Cycles and the deck.
 
 **Chapter 3 is BUILT** (§11b): the ally is **Solace**, the base roster's Light caster.
 **Open:** whether chapter 4's hire is a Guild hire the player picks.

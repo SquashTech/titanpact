@@ -1,0 +1,19 @@
+/* A tip's roll call of the types: a small sprite over each type's badge, five to a row. */
+.tip-roll {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px 4px;
+  padding: 6px 4px 2px;
+  justify-items: center;
+}
+.tip-roll-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.tip-roll-sprite {
+  width: 44px;
+  height: 44px;
+  image-rendering: pixelated;
+}

@@ -219,7 +219,7 @@ don't silently override it.
 > any, a third hero joins its row on its own, a bundle hero never falls, and Cycle V asks for three
 > of every type owned (`shortTypes`, `FULL_DECK_CYCLE`). **A recruitable fight fields at
 > least two deck heroes; the rest may be strangers** off the whole catalog, never offered a
-> contract. **Classic** names the base run mode. Stars turn renewable — a clear bonus by rung, an entry fee
+> contract. **Journey** names the base run mode (2026-10-22, per user direction; it was Classic, and code ids still say `classic`). Stars turn renewable — a clear bonus by rung, an entry fee
 > on an Ascension attempt, heroes past the base got in bundles or by a no-duplicate blind draw,
 > the **Starfall** — every number open. Build-around heroes that bend a deck rule are PROPOSED (§6a).
 > **Phase 1 is IN** (same day): `src/run/deck.ts`, `Profile.deck`, `RunState.deck` (snapshotted at the

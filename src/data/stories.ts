@@ -272,6 +272,14 @@ export const storyCatalog: readonly StoryDefinition[] = [
                 tips: [
                   { id: 'story.reading', title: 'Reading a Move', pages: ['[kinds] *Hold* any move to read all of it.'] },
                   {
+                    id: 'story.types',
+                    title: 'Types',
+                    pages: [
+                      'There are many *types* in Titanpact, each with its own *weaknesses* and *resistances*.',
+                      "Don't worry about learning them all at once. Watch the *arrows* on a move: [super] it hits hard, [resist] it's resisted.",
+                    ],
+                  },
+                  {
                     id: 'story.combo',
                     title: 'Setting Up',
                     pages: [

@@ -33,7 +33,7 @@ function Pips({ marks, cycle }: { marks: readonly ('done' | 'now' | null)[]; cyc
   );
 }
 
-/** What Seal the Pact opens once the prologue is played (docs/stories.md §10): the featured book, Classic Mode on the shelf. */
+/** What Seal the Pact opens once the prologue is played (docs/stories.md §10): the featured book, a Journey on the shelf. */
 export function StorySelectScreen({ stories, chaptersDone, cyclesCleared, onPlayChapter, onClassic, onBack }: Props) {
   const picks: Pick[] = [...stories.map((story) => ({ kind: 'story' as const, story })), { kind: 'classic' }];
   const [selected, setSelected] = useState(0);
@@ -50,7 +50,7 @@ export function StorySelectScreen({ stories, chaptersDone, cyclesCleared, onPlay
     const banner = bannerFor(p.story.id);
     return banner ? <span className="story-banner" style={{ backgroundImage: `url(${banner})` }} aria-hidden="true" /> : null;
   }
-  const name = (p: Pick) => (p.kind === 'classic' ? 'Classic Mode' : p.story.name);
+  const name = (p: Pick) => (p.kind === 'classic' ? 'Journey' : p.story.name);
   const pipsOf = (p: Pick) => {
     if (p.kind === 'classic') return <Pips marks={classicPips} />;
     const { cycle, marks } = storyChapterPips(p.story, chaptersDone);
@@ -67,6 +67,7 @@ export function StorySelectScreen({ stories, chaptersDone, cyclesCleared, onPlay
         <div className="story-feature-text">
           <h1 className="story-feature-name">{name(pick)}</h1>
           {chapter && <p className="story-feature-chapter">{chapter.title}</p>}
+          {pick.kind === 'classic' && <p className="story-feature-chapter">Four Guardians, then the Titan</p>}
           {pipsOf(pick)}
         </div>
       </div>

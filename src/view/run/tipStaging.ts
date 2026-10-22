@@ -32,6 +32,7 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   // board, or draws it (data/tipScenes.ts). The welcome lights nothing: it is the fight's title card.
   'story.welcome': {},
   'story.reading': {},
+  'story.types': {},
   'story.combo': { pages: [null, ['.order-track']] },
   'story.conduct': { pages: [null, null, ['.order-track']] },
   'story.shield': {},

@@ -8,7 +8,7 @@ import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
 import { fieldEffects } from '../../data/fieldEffects';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
-import { isHallScene, type TipHallScene, type TipPicture, type TipScene as Scene, type TipSceneCallout, type TipSceneFighter } from '../../data/tipScenes';
+import { isHallScene, isRollScene, type TipRollScene, type TipHallScene, type TipPicture, type TipScene as Scene, type TipSceneCallout, type TipSceneFighter } from '../../data/tipScenes';
 import { createRosterEntry, createRunState, type RunState } from '../../run/state';
 import { xpForLevel } from '../../run/growth';
 import { rosterHeroes } from '../../data/content';
@@ -24,6 +24,9 @@ import { Coin } from '../shared/Coin';
 import { FieldGlyph } from '../shared/fieldIcons';
 import { statuses } from '../../data/statuses';
 import { firstStatusApplication } from '../../engine/content';
+import { HeroPortrait } from '../shared/HeroPortrait';
+import { TypeBadge } from '../shared/TypeBadge';
+import './tipRoll.css';
 
 /** A scene's fighters are full-strength level-5 heroes unless the scene says otherwise. */
 const SCENE_LEVEL = 5;
@@ -233,7 +236,26 @@ function CalloutLayer({ placed }: { placed: readonly PlacedCallout[] }) {
 
 /** Whichever picture a tip page carries. */
 export function TipPictureView({ scene }: { scene: TipPicture }) {
+  if (isRollScene(scene)) return <RollScene scene={scene} />;
   return isHallScene(scene) ? <HallScene scene={scene} /> : <TipScene scene={scene} />;
+}
+
+/** Every type at a glance: a hero of each, standing over its type's badge. */
+function RollScene({ scene }: { scene: TipRollScene }) {
+  return (
+    <div className="tip-roll" aria-hidden="true">
+      {scene.roll.map((heroId) => {
+        const hero = allCombatants[heroId];
+        if (!hero) return null;
+        return (
+          <div key={heroId} className="tip-roll-cell">
+            <HeroPortrait heroId={heroId} className="tip-roll-sprite" />
+            <TypeBadge type={hero.types[0]} />
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 /**
