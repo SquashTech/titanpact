@@ -198,6 +198,10 @@ export interface StoryLine {
   mood?: StoryMood;
   /** A painted moment (art/stories/paintings/<id>.png) over the scene from this line on; `null` takes it down. */
   painting?: string | null;
+  /** The screen cuts to black as the line lands and comes back with this line's moves already made, none seen happening. */
+  blink?: boolean;
+  /** The music from this line on (a track id, `null` for silence), until a later line or beat names its own. */
+  music?: StoryMusic;
 }
 
 /** The painting up at line `step`: the last one a line raised, unless a later line took it down. */
@@ -240,6 +244,8 @@ export type StoryBeat =
       skipped: string;
       /** Plays from this scene on, through the fights after it, until a later beat names its own. */
       music?: StoryMusic;
+      /** A spot within the place to stand on (art/stories/backdrops/<id>.png). Unset, or not yet painted: the place's own backdrop. */
+      backdrop?: string;
     }
   | { kind: 'fight'; fight: StoryFight; cast: readonly StoryActor[]; cues?: readonly StoryCue[] }
   /** The Titan's fall across the sky (docs/stories.md §4), its lines crawling over it a tap at a time. */

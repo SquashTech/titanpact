@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { paintingAt, stageAt, type StageMark, type StoryActor, type StoryLine, type StoryMood, type StoryVoice } from '../../run/story';
+import { paintingAt, stageAt, type StoryMusic, type StageMark, type StoryActor, type StoryLine, type StoryMood, type StoryVoice } from '../../run/story';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { locationBackdrop } from '../shared/locationBackdrops';
 import { NightSky } from '../run/NightSky';
@@ -116,8 +116,15 @@ function SkipButton({ onSkip }: { onSkip: () => void }) {
   );
 }
 
+const BACKDROPS = import.meta.glob<string>('../../../art/stories/backdrops/*.png', { eager: true, query: '?url', import: 'default' });
+const sceneBackdrop = (id: string | undefined) => (id ? Object.entries(BACKDROPS).find(([path]) => path.endsWith(`/${id}.png`))?.[1] : undefined);
+
 interface Props {
   locationId: string;
+  /** A spot within the place (art/stories/backdrops/<id>.png); the place's own backdrop until it is painted. */
+  backdrop?: string;
+  /** A line that names its music hands it up. */
+  onMusic?: (music: StoryMusic) => void;
   cast: readonly StoryActor[];
   lines: readonly StoryLine[];
   stage?: Readonly<Record<string, StageMark>>;
@@ -135,17 +142,19 @@ function facesLeft(id: string, marks: Record<string, StageMark>, speakerId: stri
 }
 
 /** A Story scene (docs/stories.md §10): the cast on the place's backdrop, one line a tap, the speaker stepping forward. */
-export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: Props) {
+export function StoryScene({ locationId, backdrop: backdropId, onMusic, cast, lines, stage, skipped, onDone }: Props) {
   const [step, setStep] = useState(0);
   const [skipping, setSkipping] = useState(false);
   const line = lines[Math.min(step, lines.length - 1)];
   const speaker = cast.find((actor) => actor.id === line?.speaker) ?? null;
-  const backdrop = locationBackdrop(locationId);
+  const backdrop = sceneBackdrop(backdropId) ?? locationBackdrop(locationId);
   const text = skipping ? skipped : (line?.text ?? '');
   const typing = useTypedLine(text, speaker?.voice ?? TYPEWRITER);
 
   useEffect(() => {
     if (!skipping && line?.sound) playSfx(line.sound);
+    if (!skipping && line?.music !== undefined) onMusic?.(line.music);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, skipping, line]);
 
   function advance() {
@@ -168,6 +177,9 @@ export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: 
   const marks = stageAt(cast, stage, lines, step);
   const face = !skipping && speaker?.portrait ? speaker : null;
   const before = step > 0 ? stageAt(cast, stage, lines, step - 1) : marks;
+  const blinking = !skipping && !!line?.blink;
+  // Something that isn't a person is on the field: the place drains and the dark closes in.
+  const dread = !skipping && cast.some((actor) => actor.uncanny && marks[actor.id] && !marks[actor.id].off);
   const figure = (actor: StoryActor) => {
     const mark = marks[actor.id];
     if (!mark) return null;
@@ -192,12 +204,14 @@ export function StoryScene({ locationId, cast, lines, stage, skipped, onDone }: 
   };
 
   return (
-    <div className={`story-screen story-scene${painting ? ' has-painting' : ''}`} onClick={advance} role="dialog" aria-live="polite">
+    <div className={`story-screen story-scene${painting ? ' has-painting' : ''}${dread ? ' has-dread' : ''}${blinking ? ' is-blinking' : ''}`} onClick={advance} role="dialog" aria-live="polite">
       {backdrop && <div className="story-backdrop" style={{ backgroundImage: `url(${backdrop})` }} aria-hidden="true" />}
       <SkipButton onSkip={() => setSkipping(true)} />
       <div className="story-ground" aria-hidden="true">
         {cast.map(figure)}
       </div>
+      <div className="story-dread" aria-hidden="true" />
+      {blinking && <div key={step} className="story-blink" aria-hidden="true" />}
       <Painting id={painting ?? lastPainting.current} up={!!painting} />
       <div className={`story-line${speaker && !skipping ? '' : ' is-narration'}${line?.think ? ' is-thought' : ''}${face ? ` has-face is-${face.stands}` : ''}`}>
         {face && <Face actor={face} mood={line?.mood ?? 'neutral'} />}

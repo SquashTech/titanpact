@@ -742,3 +742,42 @@
   width: 16px;
   height: 16px;
 }
+
+/* --- Dread: while something uncanny stands on the field the place drains and the dark closes in --- */
+.story-backdrop {
+  transition: filter 1.4s ease-in-out;
+}
+.story-scene.has-dread .story-backdrop {
+  filter: saturate(0.5) brightness(0.72);
+}
+.story-dread {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(3, 4, 10, 0) 40%, rgba(3, 4, 10, 0.85) 100%);
+  transition: opacity 1.4s ease-in-out;
+}
+.story-scene.has-dread .story-dread {
+  opacity: 1;
+}
+/* A blink: the screen goes black as the line lands, and comes back with what happened already done. */
+.story-blink {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  pointer-events: none;
+  background: #000;
+  animation: story-blink 0.9s ease-in both;
+}
+.story-scene.is-blinking .story-figure {
+  transition: none;
+}
+@keyframes story-blink {
+  0%, 55% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-blink { animation-duration: 0.3s; }
+}
