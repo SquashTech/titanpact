@@ -41,7 +41,7 @@ export const SECTION_PATHS = {
     />
   ),
   passives: <path d="M12 1.6 14.7 8.9 22.5 9.2 16.4 14 18.5 21.5 12 17.2 5.5 21.5 7.6 14 1.5 9.2 9.3 8.9Z" />,
-  // The same five points: the Constellation's Stars page.
+  // The same five points: the Observatory's Stars page.
   stars: <path d="M12 1.6 14.7 8.9 22.5 9.2 16.4 14 18.5 21.5 12 17.2 5.5 21.5 7.6 14 1.5 9.2 9.3 8.9Z" />,
   // Crossed swords; the outer transform re-centres and scales the pair to fill the box.
   moves: (
@@ -135,7 +135,7 @@ export const SECTION_PATHS = {
       <path d="M9.6 4.4h4.8V6H9.6Z" />
     </>
   ),
-  // One open eye, the Titan's — the Constellation's Spawn page.
+  // One open eye, the Titan's — the Observatory's Spawn page.
   spawn: (
     <path
       fillRule="evenodd"

@@ -73,7 +73,7 @@ const NOTES: Partial<Record<SfxId, string>> = {
   'class.learn': 'a Class conferred on a hero',
   'seal.strike': 'a warden struck off the Pact Seal',
   'seal.shatter': 'the fifth socket — the seal itself giving way',
-  'star.rise': 'a spent star lifting into the Constellation — re-pitched per star',
+  'star.rise': 'a spent star lifting into the Observatory — re-pitched per star',
   'star.fall': 'the Starfall — a star leaving the sky',
   'star.land': 'the star landing, a hero standing up out of it',
   'star.tick': 'the summoning wheel passing a sigil — re-pitched as it slows',

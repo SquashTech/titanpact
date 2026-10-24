@@ -31,7 +31,7 @@ interface Props {
   /** Pulls a fresh profile before Records opens, so playtime is not as of screen entry. */
   onRefreshProfile: () => void;
   onEraseAllData: () => void;
-  /** Spends stars on a Constellation offer (run/starShop.ts buyOffer) and re-reads the profile. */
+  /** Spends stars on a Observatory offer (run/starShop.ts buyOffer) and re-reads the profile. */
   onBuyOffer: (offer: StarShopOffer) => void;
   /** A Starfall of one or ten (run/starShop.ts), written to the profile; returns the heroes drawn. */
   onStarfall: (count: 1 | 10) => string[];
@@ -57,7 +57,7 @@ interface Props {
   onSeeTip: (id: string) => void;
   /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
   onResetTips: () => void;
-  /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +2,500 Stardust to test the Constellation and the stakes. */
+  /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +2,500 Stardust to test the Observatory and the stakes. */
   onGrantDevStars: () => void;
   onQuickBattle: () => void;
   onOpenSandbox: () => void;

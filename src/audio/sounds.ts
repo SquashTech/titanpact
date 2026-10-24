@@ -270,7 +270,7 @@ export const sounds: Record<SfxId, SoundSpec> = {
     ],
   },
 
-  /** A tab switched (TabStrip, the Constellation, the reference sheet): a page turned. Paper is a hush, not a strike, and the only transient is the leaf seating at the end. */
+  /** A tab switched (TabStrip, the Observatory, the reference sheet): a page turned. Paper is a hush, not a strike, and the only transient is the leaf seating at the end. */
   'ui.tab': {
     gain: 0.62,
     jitter: 0.04,

@@ -17,8 +17,8 @@ import { deckHeroIds, profileDeck } from '../../run/deck';
 import { SKY_HERO_COUNT, StarSky } from './StarSky';
 import { HubPageHead, HubSubtabs, type SubtabSpec } from './hubChrome';
 
-/** The shop's name, in one place: the hub tab, this page's head. The Constellation — every star earned, charted, and the sky they are spent on. */
-export const STAR_SHOP_NAME = 'The Constellation';
+/** The shop's name, in one place: the hub tab, this page's head. The Observatory — every star earned, charted, and the sky Stardust calls heroes down from. */
+export const STAR_SHOP_NAME = 'The Observatory';
 
 type SectionId = 'sky' | 'shop' | 'stars' | 'spawn';
 
@@ -45,7 +45,7 @@ export interface OfferPurchase {
 }
 
 /**
- * The Constellation, a hub page (run/starShop.ts): where Stardust is spent and stars are charted. Its first
+ * The Observatory, a hub page (run/starShop.ts): where Stardust is spent and stars are charted. Its first
  * section is the sky itself — every hero a star, the owned ones lit — with the Lodestar at its
  * centre, which calls the Starfall. The Market holds the bundles and the Locations; Stars and
  * Spawn chart where stars were earned. Nothing on a Market row spends anything: rows open the

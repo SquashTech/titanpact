@@ -1,4 +1,4 @@
-// The Constellation's rules (the star shop): what Stardust buys, and the ledger that says what has been bought.
+// The Observatory's rules (the star shop): what Stardust buys, and the ledger that says what has been bought.
 // Offers are content (src/data/starShop.ts); this file is the mechanism, the same split as
 // progression.ts against data/progression.ts.
 //

@@ -452,7 +452,7 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Held so the title, its Records screen and the Constellation can render it, and so the Evolution
+  // Held so the title, its Records screen and the Observatory can render it, and so the Evolution
   // screen can mark the paths already starred (ProfileProvider). Stars only change at a run's end
   // and this is re-read on the way back to the title, so mid-run it is a snapshot, and current.
   // Everything that WRITES the profile goes straight to storage (profileStorage.updateProfile) —
@@ -573,7 +573,7 @@ export function App() {
 
   usePlaytime();
 
-  // Re-read on the way back to the title so Records and the Constellation show what the run
+  // Re-read on the way back to the title so Records and the Observatory show what the run
   // just banked. Nothing else in the app renders the profile, so nothing else needs this.
   useEffect(() => {
     if (screen.kind !== 'title') return;
@@ -624,7 +624,7 @@ export function App() {
     fallback.current = null;
   }
 
-  /** A Constellation purchase (run/starShop.ts): written to storage, then the title re-reads it so the balance moves. */
+  /** A Observatory purchase (run/starShop.ts): written to storage, then the title re-reads it so the balance moves. */
   function handleBuyOffer(offer: StarShopOffer) {
     setProfile(updateProfile((current) => buyOffer(current, starShopCatalog, offer)));
   }
@@ -647,7 +647,7 @@ export function App() {
     return drawn;
   }
 
-  /** TEMPORARY DEV/TEST — 2,500 Stardust on the bonus ledger, so the Constellation can be tried without clearing runs. */
+  /** TEMPORARY DEV/TEST — 2,500 Stardust on the bonus ledger, so the Observatory can be tried without clearing runs. */
   function handleGrantDevStars() {
     setProfile(updateProfile((current) => ({ ...current, bonusStardust: current.bonusStardust + 2500 })));
   }

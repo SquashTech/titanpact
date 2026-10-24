@@ -6,7 +6,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { ELEMENT_PATHS } from '../shared/elementIcons';
 import { WHEEL_STEP_DEG, WHEEL_TYPES } from '../shared/TypeWheel';
 
-// The Constellation's sky (docs/collection.md §4): every hero in the catalog is a star, each type a
+// The Observatory's sky (docs/collection.md §4): every hero in the catalog is a star, each type a
 // constellation on its own spoke. A hero owned burns in its type's colour; one still in the sky is
 // a cold point. The figure is the collection, read at a glance — and what the Starfall fills in.
 

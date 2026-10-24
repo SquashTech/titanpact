@@ -237,7 +237,11 @@ scenario carrying code. Most modifiers already exist:
 4. **Journey's name.** Renamed Journey on 2026-10-22; it may be renamed again to suit the sky.
 5. **The Cycles' gate** (a clear opens the next) maps onto a constellation of five. Do the Cycles'
    Location grants become that constellation's payouts?
-6. **The shop's name and shape** (§7).
+6. **The shop's name and shape** (§7). **Name DECIDED 2026-10-24, per user direction: the
+   Observatory.** Its first page is a sky of heroes you call one down from, and its Stars and Spawn
+   pages are the record of what was watched. The shape is still open: if per-hero constellations
+   ever reach the sky, the Stars page may move there. Code ids keep `starShop` and
+   `constellation`, as Journey kept `classic`.
 7. **Each scenario's numbers**: act count, goals, rewards. All open.
 
 **A Tale of Valor is cut in full** (2026-10-24, per user direction): its cast, chapters and
@@ -336,8 +340,8 @@ on the title's Play page in place of the seal, the Seal the Pact press and the t
 - **The rails are `uncharted`** until phase 6. They open what comes after them as if lit, so a
   new account can begin a Journey today. They show as hollow stars, and their sheet says "Not
   yet charted."
-- **Still OPEN, not touched:** the shop is still called **The Constellation** on the hub nav
-  (§7, §8.6). Placements and shapes are first pass. A brand-new account currently has no
+- The shop was renamed **the Observatory** right after (§8.6).
+- **Still OPEN:** placements and shapes are first pass. A brand-new account currently has no
   tutorial at all until the rails land.
 
 **Phase 5 — The light and its thoughts.** *(view, plus a data table)*

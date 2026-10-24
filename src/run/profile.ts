@@ -51,7 +51,7 @@ export interface Profile {
   evolutionStars: Record<string, string[]>;
   /**
    * The Titanspawn lines (by type) a run has been cleared with the companion still on the roster —
-   * one star a type, fourteen to collect, on the Constellation's Spawn page (docs/ascension.md §7).
+   * one star a type, fourteen to collect, on the Observatory's Spawn page (docs/ascension.md §7).
    * Alive is the condition, not the body it reached.
    */
   companionStars: string[];
@@ -88,7 +88,7 @@ export interface Profile {
   bonusStardust: number;
   /** Lifetime Stardust paid as Ascension entry fees before the Cycles deleted them — spent, never refunded. */
   feesPaid: number;
-  /** Constellation (star shop) offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
+  /** Observatory (star shop) offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
   purchases: string[];
   /**
    * The deck as stored (run/deck.ts): type → hero ids, three a row. Kept loose and made legal on

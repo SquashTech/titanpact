@@ -52,8 +52,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 /**
  * Lifetime figures, read once when this opens (profileStorage is not React state). Stars
- * themselves live on the Constellation's Stars page — this screen only counts them, so the two
- * are not two places to keep the same list. The Constellation's sheet, page for page: title bar, well, the strip at the foot, one Close under the panel.
+ * themselves live on the Observatory's Stars page — this screen only counts them, so the two
+ * are not two places to keep the same list. The Observatory's sheet, page for page: title bar, well, the strip at the foot, one Close under the panel.
  */
 export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
   // Two taps: this is the only control in the game that destroys something unrecoverable.

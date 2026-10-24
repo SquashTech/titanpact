@@ -305,6 +305,8 @@ don't silently override it.
 > at the skilled sim pilot.
 > **Stars as a currency are STARDUST** (2026-10-24, per user direction, `docs/the-sky.md` §5): every
 > star figure above is ×50 (a lit star pays 50, a Starfall is 100, ten are 1,000), and ★ means a lit star only.
+> **The shop is the OBSERVATORY** (2026-10-24, per user direction): wherever a line here says "the
+> Constellation" it means the shop; a constellation is now a set of stars in the sky.
 
 > **Patrons are BUILT: `docs/patrons.md`** (2026-10-13, per user direction; built 2026-10-15 — all
 > seven, placeholder art; the Mentor and the Tutor roll in the reward rows). The Mentor's

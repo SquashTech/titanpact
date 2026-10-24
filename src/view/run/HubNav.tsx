@@ -11,7 +11,7 @@ export const HUB_TABS: readonly HubTab[] = ['collection', 'play', 'constellation
 interface Props {
   tab: HubTab;
   onSelect: (tab: HubTab) => void;
-  /** Stars to spend, worn on the Constellation's tab. */
+  /** Stars to spend, worn on the Observatory's tab. */
   balance: number;
   /** Something new waits in the Collection (a hero just fallen). */
   collectionFresh: boolean;
@@ -19,7 +19,7 @@ interface Props {
 }
 
 /**
- * The title hub's bottom bar (Clash Royale / Marvel Snap): the Collection and the Constellation
+ * The title hub's bottom bar (Clash Royale / Marvel Snap): the Collection and the Observatory
  * either side of Play, which is raised out of the bar as the seal it leaves through.
  */
 export function HubNav({ tab, onSelect, balance, collectionFresh, disabled }: Props) {
@@ -49,7 +49,7 @@ export function HubNav({ tab, onSelect, balance, collectionFresh, disabled }: Pr
       <button type="button" role="tab" aria-selected={tab === 'constellation'} data-sfx="none" className={`hub-nav-tab is-sky${tab === 'constellation' ? ' is-active' : ''}`} onClick={() => select('constellation')}>
         <span className="hub-nav-light" aria-hidden="true" />
         <img src={constellationArt} className="hub-nav-icon" alt="" draggable={false} />
-        <span className="hub-nav-label">Constellation</span>
+        <span className="hub-nav-label">Observatory</span>
         <span className={`hub-nav-badge${balance > 0 ? ' is-lit' : ''}`}>✦ {balance}</span>
       </button>
     </nav>

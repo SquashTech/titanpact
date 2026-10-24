@@ -17,7 +17,7 @@ import { EvolutionStar } from '../shared/EvolutionStar';
 import { pathTintStyle } from '../shared/pathTint';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 
-// The Constellation's star pages: where every star the account has earned is charted — a hero's
+// The Observatory's star pages: where every star the account has earned is charted — a hero's
 // three Evolution paths, a curse's one (docs/wild-innates-and-events.md §3.3), and a Titanspawn
 // line's companion star (docs/collection.md §2).
 

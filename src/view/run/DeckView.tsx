@@ -20,8 +20,8 @@ import { PassiveText } from '../shared/PassiveText';
 const typeIndex = (type: TypeId) => TYPES.indexOf(type as (typeof TYPES)[number]);
 const TYPE_ORDER: TypeId[] = draftableTypes(heroes).sort((a, b) => typeIndex(a) - typeIndex(b));
 
-/** A hero no bundle sells: the Constellation's Starfall is how it is got. */
-export const CONSTELLATION_LABEL = 'Constellation';
+/** A hero no bundle sells: the Observatory's Starfall is how it is got. */
+export const CONSTELLATION_LABEL = 'Observatory';
 
 /** The bundle a hero comes in, or undefined for one only the Starfall draws. */
 export function bundleOf(heroId: string): StarShopOffer | undefined {

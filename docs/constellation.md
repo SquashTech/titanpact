@@ -1,5 +1,9 @@
 # constellation.md — The Constellation: what a star buys
 
+> **Renamed the Observatory 2026-10-24** (per user direction, `docs/the-sky.md` §8.6): "the
+> Constellation" below means the shop, now the Observatory. A constellation is now a set of stars
+> in the sky, and a star bought is now Stardust spent.
+
 > **The four Locations left the shelf 2026-10-06** — the Cycles grant them (`docs/cycles.md` §6).
 > Where this doc says they are sold, read the Cycles.
 

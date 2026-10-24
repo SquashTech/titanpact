@@ -17,7 +17,7 @@ import { prefersReducedMotion } from '../shared/reducedMotion';
 // light swells in that colour, leaves the sky, and comes back down as a falling star; it strikes
 // the ground and the hero rises out of the light as a silhouette before colouring in.
 
-/** The draw's name, in one place: the Constellation, the scene, the Collection's note. */
+/** The draw's name, in one place: the Observatory, the scene, the Collection's note. */
 export const STARFALL_NAME = 'Starfall';
 
 /** A fixed night: the same sky every draw. */
