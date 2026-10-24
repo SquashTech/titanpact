@@ -26,9 +26,12 @@ export type ThoughtMoment =
 export interface ThoughtDefinition {
   id: string;
   moment: ThoughtMoment;
-  line: string;
+  /** One bubble each, typed out in turn. */
+  lines: readonly string[];
   /** Said once an account; without it, the thought is one of its moment's pool. */
   once?: boolean;
+  /** Once said, Blip flies to this constellation and says its first there, charted or not. */
+  showsNext?: string;
 }
 
 function sameMoment(a: ThoughtMoment, b: ThoughtMoment): boolean {
@@ -66,6 +69,15 @@ export function revealedThought(
     if (thought) return { constellationId: constellation.id, thought };
   }
   return null;
+}
+
+/** The constellation's first for being revealed, still unheard, whether or not it is charted. */
+export function revealedFirst(profile: Profile, thoughts: readonly ThoughtDefinition[], constellationId: string): ThoughtDefinition | null {
+  return (
+    thoughts.find(
+      (t) => t.once && t.moment.kind === 'revealed' && t.moment.constellationId === constellationId && !profile.seenThoughtIds.includes(t.id)
+    ) ?? null
+  );
 }
 
 /** A first heard: recorded once; a pool thought is never recorded. */

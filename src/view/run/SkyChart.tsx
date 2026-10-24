@@ -5,7 +5,7 @@ import { trials } from '../../data/trials';
 import { cycleOf } from '../../run/cycles';
 import type { Profile } from '../../run/profile';
 import { constellationState, isConstellationLit, isStarLit, starScenario, type ConstellationDefinition, type ConstellationState, type SkyStar } from '../../run/sky';
-import { revealedThought, thoughtFor, type ThoughtDefinition, type ThoughtMoment } from '../../run/thoughts';
+import { revealedFirst, revealedThought, thoughtFor, type ThoughtDefinition, type ThoughtMoment } from '../../run/thoughts';
 import { PlateButton } from '../shared/PlateButton';
 import { Blip, type BlipHandle } from './Blip';
 import './skyChart.css';
@@ -131,10 +131,19 @@ export function SkyChart({ profile, disabled = false, active = true, returned = 
 
   const blip = useRef<BlipHandle>(null);
   const blipActive = active && !open;
-  const say = (moment: ThoughtMoment) => {
+  /** Fly to a constellation, say its first there, and come home after. */
+  const show = (constellationId: string, thought: ThoughtDefinition, later: (ms: number, fn: () => void) => void) => {
+    const target = toStage(perchOf(sky.constellations[constellationId]));
+    blip.current?.goTo(target.x, target.y, () => {
+      blip.current?.think(thought.lines, () => later(1200, goHome), true);
+      onSeeThought?.(thought);
+    });
+  };
+  const say = (moment: ThoughtMoment, later?: (ms: number, fn: () => void) => void) => {
     const thought = thoughtFor(profile, THOUGHTS, moment, Math.random());
     if (!thought) return false;
-    blip.current?.think(thought.line);
+    const next = thought.showsNext && later ? revealedFirst(profile, THOUGHTS, thought.showsNext) : null;
+    blip.current?.think(thought.lines, next && later ? () => show(thought.showsNext!, next, later) : undefined, !!thought.once);
     if (thought.once) onSeeThought?.(thought);
     return true;
   };
@@ -152,21 +161,16 @@ export function SkyChart({ profile, disabled = false, active = true, returned = 
         onReturnedSeen?.();
         return;
       }
-      if (say({ kind: 'firstSky' })) return;
+      if (say({ kind: 'firstSky' }, at)) return;
       const reveal = revealedThought(profile, sky, THOUGHTS);
-      if (reveal) {
-        const target = toStage(perchOf(sky.constellations[reveal.constellationId]));
-        blip.current?.goTo(target.x, target.y, () => {
-          blip.current?.think(reveal.thought.line);
-          onSeeThought?.(reveal.thought);
-          at(5200, goHome);
-        });
-      }
+      if (reveal) show(reveal.constellationId, reveal.thought, at);
     });
     let idle = 0;
     const next = () =>
       at(IDLE_MS[0] + Math.random() * (IDLE_MS[1] - IDLE_MS[0]), () => {
-        if (Math.random() < 0.5 && idle < IDLE_THOUGHTS_A_VISIT) {
+        if (blip.current?.busy()) {
+          // Never cut a thought or a trip short: try again next beat.
+        } else if (Math.random() < 0.5 && idle < IDLE_THOUGHTS_A_VISIT) {
           idle++;
           say({ kind: 'idle' });
         } else {
@@ -260,6 +264,8 @@ export function SkyChart({ profile, disabled = false, active = true, returned = 
           home={home}
           active={blipActive}
           onPoke={(inARow) => {
+            // A poke mid-thought only giggles, so it never cuts a first short.
+            if (blip.current?.guarded()) return;
             if (inARow >= 5) say({ kind: 'pokedLots' });
             else if (inARow === 1 || inARow === 3) say({ kind: 'poked' });
           }}
@@ -308,7 +314,7 @@ function ConstellationSheet({
     const timer = window.setTimeout(() => {
       const thought = thoughtFor(profile, THOUGHTS, uncharted ? { kind: 'uncharted' } : { kind: 'opened', constellationId: constellation.id }, Math.random());
       if (!thought) return;
-      blip.current?.think(thought.line);
+      blip.current?.think(thought.lines);
       if (thought.once) onSeeThought?.(thought);
     }, 450);
     return () => window.clearTimeout(timer);

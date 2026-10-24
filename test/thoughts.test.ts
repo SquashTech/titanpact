@@ -3,17 +3,19 @@ import { test } from './harness';
 import { createProfile, decodeProfile, recordRunEnded, type RunEnd } from '../src/run/profile';
 import { sky } from '../src/data/sky';
 import { THOUGHTS } from '../src/data/thoughts';
-import { recordThoughtSeen, revealedThought, thoughtFor } from '../src/run/thoughts';
+import { recordThoughtSeen, revealedFirst, revealedThought, thoughtFor } from '../src/run/thoughts';
 
 const win: RunEnd = { outcome: 'win', actReached: 6, locationId: null, encountersWon: 1, cycle: 1, roster: [] };
 
-test('thoughts: the table hangs together — unique ids, real constellations, short lines', () => {
+test('thoughts: the table hangs together — unique ids, real constellations, bubbles that fit', () => {
   const ids = new Set<string>();
   for (const t of THOUGHTS) {
     assert.ok(!ids.has(t.id), `${t.id} twice`);
     ids.add(t.id);
     if (t.moment.kind === 'revealed' || t.moment.kind === 'opened') assert.ok(sky.constellations[t.moment.constellationId], `${t.id} names a missing constellation`);
-    assert.ok(t.line.length > 0 && t.line.length <= 72, `${t.id} is ${t.line.length} characters, past what one bubble holds`);
+    assert.ok(t.lines.length > 0, `${t.id} says nothing`);
+    for (const line of t.lines) assert.ok(line.length > 0 && line.length <= 100, `${t.id}: "${line}" is past what one bubble holds`);
+    if (t.showsNext) assert.ok(revealedFirst(createProfile(), THOUGHTS, t.showsNext), `${t.id} leads to ${t.showsNext}, which has no first`);
   }
   for (const c of Object.values(sky.constellations)) {
     assert.ok(THOUGHTS.some((t) => t.once && t.moment.kind === 'revealed' && t.moment.constellationId === c.id), `${c.id} has no first for being revealed`);
@@ -57,6 +59,16 @@ test('thoughts: a constellation seen open is revealed once, uncharted ones never
     profile = recordThoughtSeen(profile, next.thought);
   }
   assert.deepStrictEqual(order, ['cycles', 'trials', 'gauntlet']);
+});
+
+test('thoughts: the first sky leads to First Light, charted or not, and says it once', () => {
+  let profile = createProfile();
+  const hello = thoughtFor(profile, THOUGHTS, { kind: 'firstSky' }, 0)!;
+  assert.strictEqual(hello.showsNext, 'firstLight');
+  const shown = revealedFirst(profile, THOUGHTS, 'firstLight');
+  assert.ok(shown && sky.constellations.firstLight.uncharted, 'an uncharted constellation can still be shown');
+  profile = recordThoughtSeen(profile, shown!);
+  assert.strictEqual(revealedFirst(profile, THOUGHTS, 'firstLight'), null);
 });
 
 test('thoughts: an opened sheet says its first once, and a return picks from its outcome', () => {

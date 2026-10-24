@@ -22,9 +22,16 @@ type Mood = 'idle' | 'happy' | 'sad' | 'dizzy' | 'surprised';
 export interface BlipHandle {
   /** Fly to a point in the stage's own pixels, and run `onArrive` once there. */
   goTo(x: number, y: number, onArrive?: () => void): void;
-  /** Type a thought beside Blip, babbling, then let it fade. */
-  think(line: string): void;
+  /**
+   * Type a thought beside Blip a bubble at a time, babbling, then let it fade; `onDone` once the last
+   * has gone. A `guarded` thought (a first) is never cut short by a poke.
+   */
+  think(lines: readonly string[], onDone?: () => void, guarded?: boolean): void;
   react(kind: 'win' | 'lose' | 'chirp'): void;
+  /** Mid-thought or mid-flight: an idle thought waits rather than cut in. */
+  busy(): boolean;
+  /** Mid-flight, or saying a first: even a poke's thought waits. */
+  guarded(): boolean;
 }
 
 interface Props {
@@ -99,6 +106,7 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
   const clock = useRef(0);
   const typing = useRef<number[]>([]);
   const pokes = useRef({ count: 0, at: 0 });
+  const guarding = useRef(false);
 
   function clearTyping() {
     typing.current.forEach(window.clearTimeout);
@@ -121,21 +129,43 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
       Object.assign(body.current, { homeX: x, homeY: y, travelling: true, onArrive: onArrive ?? null });
       playSfx('blip.chirp');
     },
-    think(line) {
+    think(lines, onDone, guarded = false) {
       const bubble = bubbleRef.current;
       if (!bubble || !active) return;
       clearTyping();
-      bubble.textContent = '';
-      bubble.classList.add('is-on');
-      let n = 0;
-      const type = () => {
-        n++;
-        bubble.textContent = line.slice(0, n);
-        if (n % 2 === 0 && line[n - 1] !== ' ') playSfx('blip.syllable');
-        if (n < line.length) typing.current.push(window.setTimeout(type, 34));
-        else typing.current.push(window.setTimeout(() => bubble.classList.remove('is-on'), 1800 + line.length * 35));
+      guarding.current = guarded;
+      const later = (ms: number, fn: () => void) => typing.current.push(window.setTimeout(fn, ms));
+      const say = (i: number) => {
+        const line = lines[i];
+        bubble.textContent = '';
+        bubble.classList.add('is-on');
+        let n = 0;
+        const type = () => {
+          n++;
+          bubble.textContent = line.slice(0, n);
+          if (n % 2 === 0 && line[n - 1] !== ' ') playSfx('blip.syllable');
+          if (n < line.length) later(34, type);
+          else if (i + 1 < lines.length) later(900 + line.length * 25, () => say(i + 1));
+          else
+            later(1800 + line.length * 35, () => {
+              bubble.classList.remove('is-on');
+              if (onDone)
+                later(400, () => {
+                  typing.current = [];
+                  onDone();
+                });
+              else typing.current = [];
+            });
+        };
+        type();
       };
-      type();
+      if (lines.length > 0) say(0);
+    },
+    busy() {
+      return typing.current.length > 0 || body.current.travelling;
+    },
+    guarded() {
+      return (guarding.current && typing.current.length > 0) || body.current.travelling;
     },
     react(kind) {
       const b = body.current;

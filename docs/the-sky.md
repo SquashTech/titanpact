@@ -367,8 +367,17 @@ it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own
   - A sheet's first about its constellation, or an uncharted line.
 - **The poke:** a squish, a hop and a giggle. The first and third poke think a line, and five in a
   run make it dizzy. The tap never reaches the sky under it.
-- **First pass, open to you:** every line in `thoughts.ts`, and how often Blip talks (one
-  arrival line, three idle at most, 9–16 s apart).
+- **The voice** (2026-10-24, per user direction): chatty and a little silly, not aphorisms. The
+  user wrote the first-sky hello and the three rail lines; the rest were rewritten to match. A
+  thought can run to several bubbles, and `showsNext` sends Blip on to a constellation to say
+  its first there. The hello ends "I'll show you my favorite one first" and flies to First Light.
+- **Blip never cuts itself off:** an idle thought or a dart waits while it is mid-thought or
+  mid-flight, and a poke during a first only giggles.
+- **How often Blip talks is first pass** (one arrival line, three idle at most, 9–16 s apart).
+- **OPEN, raised by the First Light line** ("a mighty fighter and her trusty canine companion"):
+  is the first rail's fixed team Valor and Fang? Valor's *Tale* is cut, but the pair may stand
+  as the rail's cast with no dialogue.
+- **OPEN: Journey's name** (§8.4): the user asked for something more celestial and multiversal.
 - **Not built:** a first look at a hero (Blip doesn't live in the Collection), skins, and the
   Titan-noticing arc (still PROPOSED).
 
