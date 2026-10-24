@@ -47,21 +47,21 @@ test('thoughts: a first is thought once an account, and a pool is never used up'
 
 test('thoughts: a constellation seen open is revealed once, uncharted ones never, in sky order', () => {
   let profile = createProfile();
-  // A new account: the lessons are uncharted, so the Infinite is the first one Blip points out.
+  // A new account: First Light is the one thing open, so it is the first Blip points out.
   const first = revealedThought(profile, sky, THOUGHTS);
-  assert.strictEqual(first?.constellationId, 'infinite');
+  assert.strictEqual(first?.constellationId, 'firstLight');
   profile = recordThoughtSeen(profile, first!.thought);
   assert.strictEqual(revealedThought(profile, sky, THOUGHTS), null, 'nothing else is open yet');
 
-  // An Infinite run won opens the Trials and the Gauntlet: one first a visit, in sky order. Strange
-  // Worlds opens too, but uncharted, so it is never pointed out.
+  // An Infinite run won opens the rest: one first a visit, in sky order. Strange Worlds opens too,
+  // but uncharted, so it is never pointed out.
   profile = recordRunEnded(profile, win, 1);
   const order: string[] = [];
   for (let next = revealedThought(profile, sky, THOUGHTS); next; next = revealedThought(profile, sky, THOUGHTS)) {
     order.push(next.constellationId);
     profile = recordThoughtSeen(profile, next.thought);
   }
-  assert.deepStrictEqual(order, ['trials', 'gauntlet']);
+  assert.deepStrictEqual(order, ['infinite', 'trials', 'gauntlet']);
 });
 
 test('thoughts: a zoom says its constellation first, then a star that is lit or next, then nothing', () => {
@@ -79,12 +79,12 @@ test('thoughts: a zoom says its constellation first, then a star that is lit or 
   assert.strictEqual(uncharted?.moment.kind, 'uncharted');
 });
 
-test('thoughts: the first sky leads to First Light, charted or not, and says it once', () => {
+test('thoughts: the first sky leads to First Light and says it once', () => {
   let profile = createProfile();
   const hello = thoughtFor(profile, THOUGHTS, { kind: 'firstSky' }, 0)!;
   assert.strictEqual(hello.showsNext, 'firstLight');
   const shown = revealedFirst(profile, THOUGHTS, 'firstLight');
-  assert.ok(shown && sky.constellations.firstLight.uncharted, 'an uncharted constellation can still be shown');
+  assert.ok(shown, 'First Light has a first to show');
   profile = recordThoughtSeen(profile, shown!);
   assert.strictEqual(revealedFirst(profile, THOUGHTS, 'firstLight'), null);
 });

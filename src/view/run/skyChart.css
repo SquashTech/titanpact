@@ -213,3 +213,11 @@
 .sky-band.is-away {
   opacity: 0.28;
 }
+
+/* A lesson's name is its own way in: the lit ones to replay, the next to play. */
+.sky-band-label.is-playable {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 220, 150, 0.35);
+  text-underline-offset: 3px;
+}

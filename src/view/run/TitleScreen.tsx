@@ -61,6 +61,8 @@ interface Props {
   onSkyReturnSeen?: () => void;
   /** One of Blip's firsts, thought: kept once an account (run/thoughts.ts). */
   onSeeThought?: (thought: ThoughtDefinition) => void;
+  /** A First Light lesson, by its scenario id (data/sky.ts). */
+  onPlayLesson?: (scenarioId: string) => void;
   /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
   onResetTips: () => void;
   /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +2,500 Stardust to test the Observatory and the stakes. */
@@ -126,6 +128,7 @@ export function TitleScreen({
   skyReturn = null,
   onSkyReturnSeen,
   onSeeThought,
+  onPlayLesson,
   onResetTips,
   onGrantDevStars,
   onQuickBattle,
@@ -274,6 +277,7 @@ export function TitleScreen({
         onReturnedSeen={onSkyReturnSeen}
         onSeeThought={onSeeThought}
         onPlay={handleSkyPlay}
+        onPlayLesson={(scenarioId) => onPlayLesson && launch(() => onPlayLesson(scenarioId))}
       />
 
       <div className="title-logo is-top">

@@ -67,6 +67,8 @@ export interface ScenarioDefinition {
   name: string;
   goal: ScenarioGoal;
   modifiers: ScenarioModifiers;
+  /** A First Light lesson: the chapter of data/lessons.ts it plays, by id. */
+  lesson?: string;
 }
 
 export interface SkyContent {

@@ -25,10 +25,12 @@ interface Props {
   onStartAct: (act: StoryAct, beat: number) => void;
   /** The account's seen tips, for the control tips on a fight's cues. */
   tips: { seenIds: readonly string[]; onSeen: (id: string) => void };
+  /** What leaving a fight is called: a Story's, or a lesson's way back to the sky. */
+  exitLabel?: string;
 }
 
 /** Plays a chapter's beats in order (docs/stories.md §10). A lost fight is played again from its start. */
-export function StoryChapterScreen({ chapter, number, onFinished, onQuit, onFallSeen, onPlace, startBeat = 0, fromSky = false, onStartAct, tips }: Props) {
+export function StoryChapterScreen({ chapter, number, onFinished, onQuit, onFallSeen, onPlace, startBeat = 0, fromSky = false, onStartAct, tips, exitLabel = 'Leave the Story' }: Props) {
   const [index, setIndex] = useState(startBeat);
   const [attempt, setAttempt] = useState(0);
   const beat = chapter.beats[index];
@@ -42,7 +44,9 @@ export function StoryChapterScreen({ chapter, number, onFinished, onQuit, onFall
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]);
 
-  if (!beat || beat.kind === 'act') return null;
+  // A chapter whose beats run out with no end card is a lesson: it finishes there (data/lessons.ts).
+  if (!beat) return <Finish onFinished={onFinished} />;
+  if (beat.kind === 'act') return null;
   if (beat.kind === 'memory') return <StoryMemory key={index} locationId={beat.locationId} lines={beat.lines} voice={beat.voice} descend={fromSky && index === 0} onDone={next} />;
   if (beat.kind === 'scene') return <StoryScene key={index} locationId={beat.locationId} backdrop={beat.backdrop} cast={beat.cast} lines={beat.lines} stage={beat.stage} skipped={beat.skipped} onMusic={(music) => onPlace(beat.locationId, music)} onDone={next} />;
   if (beat.kind === 'fall')
@@ -73,7 +77,16 @@ export function StoryChapterScreen({ chapter, number, onFinished, onQuit, onFall
       cinematicWin
       onResolved={(outcome) => (outcome === 'win' ? next() : setAttempt((n) => n + 1))}
       onExitToTitle={onQuit}
-      exitLabel="Leave the Story"
+      exitLabel={exitLabel}
     />
   );
+}
+
+/** Says a chapter is over the moment it mounts. */
+function Finish({ onFinished }: { onFinished: () => void }) {
+  useEffect(() => {
+    onFinished();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return null;
 }

@@ -1852,7 +1852,7 @@ export function FightScreen({
         <EnemyPips combat={combat} side={AI_SIDE} />
 
         {/* What a tapped sprite says, for a moment, on the horizon — the band the Pact warning takes when it is due. */}
-        {cueShown && storyCue && (
+        {cueShown && storyCue?.text && (
           <div key={combat.round} className={`story-cue${cueSlot >= 0 ? ` is-said is-from-${cueSlot === 0 ? 'left' : 'right'}` : ''}`} role="status">
             {storyCue.speaker && <span className="story-cue-name">{storyCue.speaker}</span>}
             {storyCue.text}

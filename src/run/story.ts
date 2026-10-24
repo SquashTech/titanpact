@@ -217,7 +217,8 @@ export function paintingAt(lines: readonly StoryLine[], step: number): string | 
 export interface StoryCue {
   round: number;
   speaker?: string;
-  text: string;
+  /** What is said; a lesson's cues say nothing, and only teach (data/lessons.ts). */
+  text?: string;
   sound?: StorySound;
   /**
    * Controls taught at the top of this round (docs/stories.md §1c), in order, each once an account:

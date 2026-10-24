@@ -1,24 +1,22 @@
 // The sky (docs/the-sky.md §2–§4): five constellations, one a way to play. First Light holds the
 // lessons, the Infinite its five Cycles, the Trials one star a Trial, the Gauntlet its clears, and
 // Strange Worlds the twisted runs to come. Each is drawn in a band of its own; shapes are first pass.
-// The lessons and Strange Worlds are named seats, uncharted until their scenarios are authored (§10).
+// The lessons are data/lessons.ts's; Strange Worlds is named seats, uncharted until its scenarios are authored (§10).
 
 import type { ConstellationDefinition, ScenarioDefinition, SkyContent, SkyStar } from '../run/sky';
 import { TRIAL_LIST } from './trials';
 
 const WIN = { kind: 'win' } as const;
 
-const scenario = (id: string, name: string, acts?: number): ScenarioDefinition => ({ id, name, goal: WIN, modifiers: acts ? { acts } : {} });
+const scenario = (id: string, name: string): ScenarioDefinition => ({ id, name, goal: WIN, modifiers: {} });
+/** A First Light lesson plays the chapter of data/lessons.ts that shares its id. */
+const lesson = (id: string, name: string): ScenarioDefinition => ({ ...scenario(id, name), lesson: id });
 
 const SCENARIOS: readonly ScenarioDefinition[] = [
-  scenario('firstLight.move', 'Read a Move'),
-  scenario('firstLight.matchup', 'The Matchup'),
-  scenario('firstLight.target', 'Two at Once'),
-  scenario('firstLight.order', 'Who Goes First'),
-  scenario('bench.switch', 'The Switch'),
-  scenario('bench.rest', 'Rest'),
-  scenario('bench.lockIn', 'Locked In'),
-  scenario('road.act', 'The Road', 1),
+  lesson('firstLight.hunt', 'The Hunt'),
+  lesson('firstLight.clearing', 'The Clearing'),
+  lesson('firstLight.road', 'The Road'),
+  lesson('firstLight.fork', 'The Fork'),
   scenario('strange.monotype', 'One Type'),
   scenario('strange.newPlace', 'A New Place'),
   scenario('strange.strangers', 'Strangers'),
@@ -40,20 +38,16 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
   {
     id: 'firstLight',
     name: 'First Light',
+    // The two guided fights rise to the two acts, played in that order.
     stars: [
-      scenarioStar('firstLight.move', 0.04, 0.82),
-      scenarioStar('firstLight.matchup', 0.18, 0.6),
-      scenarioStar('firstLight.target', 0.31, 0.72),
-      scenarioStar('firstLight.order', 0.44, 0.45),
-      scenarioStar('bench.switch', 0.57, 0.56),
-      scenarioStar('bench.rest', 0.7, 0.3),
-      scenarioStar('bench.lockIn', 0.83, 0.4),
-      scenarioStar('road.act', 0.96, 0.16),
+      scenarioStar('firstLight.hunt', 0.06, 0.82),
+      scenarioStar('firstLight.clearing', 0.36, 0.56),
+      scenarioStar('firstLight.road', 0.66, 0.64),
+      scenarioStar('firstLight.fork', 0.94, 0.2),
     ],
-    lines: chain(8),
+    lines: chain(4),
     after: [],
     rail: true,
-    uncharted: true,
     rewards: [{ kind: 'stardust', amount: 300 }],
   },
   {
@@ -74,7 +68,8 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
       [1, 3],
       [3, 0],
     ],
-    after: ['road.act'],
+    // The two fights open it; the two acts stay First Light's to play, never a gate (2026-10-24, per user direction).
+    after: ['firstLight.clearing'],
     rewards: [],
   },
   {

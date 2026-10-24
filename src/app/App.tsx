@@ -129,6 +129,9 @@ import { LoreScreen } from '../view/run/LoreScreen';
 import { StorySelectScreen } from '../view/story/StorySelectScreen';
 import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
 import { storyCatalog } from '../data/stories';
+import { LESSONS } from '../data/lessons';
+import { sky } from '../data/sky';
+import { recordScenarioLit } from '../run/sky';
 import { chapterById, chapterNumber, endsStoryAct, storyActRun, storyNodeEncounter, storyNodeSpec, type StoryAct, type StoryMusic } from '../run/story';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
@@ -417,6 +420,12 @@ function runEndOf(run: RunState, outcome: RunEnd['outcome']): RunEnd {
 function screenTipIds(screen: Screen): readonly ScreenTipId[] {
   return screen.kind === 'itemWho' ? ['item'] : [];
 }
+
+/** The books the Story machinery looks a chapter up in: A Tale of Valor's, and First Light's lessons (data/lessons.ts). */
+const ALL_STORIES = [...storyCatalog, LESSONS];
+const isLesson = (chapterId: string) => LESSONS.chapters.some((chapter) => chapter.id === chapterId);
+const LESSON_EXIT = 'Back to the Sky';
+const storyExitLabel = (chapterId: string) => (isLesson(chapterId) ? LESSON_EXIT : 'Leave the Story');
 
 export function App() {
   const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(40));
@@ -818,7 +827,7 @@ export function App() {
       // The same deterministic draw the map's tile previewed (run/encounters.ts).
       const isMobFight = node.type === 'fight' || node.type === 'battle';
       const encounterKind = encounterKindOf(node.type);
-      let encounter = storyNodeEncounter(playerRun, storyCatalog, nodeId, allCombatants) ?? nodeEncounter(node, {
+      let encounter = storyNodeEncounter(playerRun, ALL_STORIES, nodeId, allCombatants) ?? nodeEncounter(node, {
         run: playerRun,
         location,
         heroes: recruitPool,
@@ -892,7 +901,7 @@ export function App() {
   function handleEnterFight(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
     const mapNodeType = playerRun.map!.nodes[nodeId].type as EncounterMapNodeType;
     // A Story act drops only what its node names (docs/stories.md §14): no roll, no Gem, no Contract, no flask.
-    const storyNode = playerRun.story ? storyNodeSpec(playerRun, storyCatalog, nodeId) : null;
+    const storyNode = playerRun.story ? storyNodeSpec(playerRun, ALL_STORIES, nodeId) : null;
     const equipmentReward = playerRun.story ? (storyNode?.drop ? equipment[storyNode.drop] ?? null : null) : equipmentDropFor(mapNodeType, playerRun.actNumber);
     setResumedCombat(null);
     const fight: Screen = {
@@ -1186,9 +1195,22 @@ export function App() {
   }
 
   function handleStoryChapterDone(chapterId: string) {
+    if (isLesson(chapterId)) {
+      // A lesson lights its star and hands back to the sky, where Blip cheers it (docs/the-sky.md §3).
+      setProfile(updateProfile((current) => recordTipSeen(recordScenarioLit(current, sky, chapterId), FIGHT_BASICS_TIP_ID)));
+      setSkyReturn('win');
+      setScreen({ kind: 'title' });
+      return;
+    }
     // The prologue taught the round; its tip would only say it again in the next chapter's first fight.
     setProfile(updateProfile((current) => recordTipSeen(recordStoryChapterDone(current, chapterId), FIGHT_BASICS_TIP_ID)));
     setScreen({ kind: 'title' });
+  }
+
+  /** A First Light lesson from the sky: its chapter of data/lessons.ts, played by the Story machinery. */
+  function handlePlayLesson(scenarioId: string) {
+    const chapterId = sky.scenarios[scenarioId]?.lesson;
+    if (chapterId) setScreen({ kind: 'storyChapter', chapterId });
   }
 
   /** An Infinite run is started from the title, so its draft and its Cycle picker are the ones a title press runs. */
@@ -1378,6 +1400,7 @@ export function App() {
           skyReturn={skyReturn}
           onSkyReturnSeen={() => setSkyReturn(null)}
           onSeeThought={markThoughtSeen}
+          onPlayLesson={handlePlayLesson}
           onResetTips={handleResetTips}
           onGrantDevStars={handleGrantDevStars}
           onQuickBattle={handleQuickBattle}
@@ -1528,11 +1551,12 @@ export function App() {
         />
       )}
 
-      {screen.kind === 'storyChapter' && chapterById(storyCatalog, screen.chapterId) && (
+      {screen.kind === 'storyChapter' && chapterById(ALL_STORIES, screen.chapterId) && (
         <StoryChapterScreen
           key={`${screen.chapterId}:${screen.beat ?? 0}`}
-          chapter={chapterById(storyCatalog, screen.chapterId)!.chapter}
-          number={chapterNumber(chapterById(storyCatalog, screen.chapterId)!.story, screen.chapterId)}
+          chapter={chapterById(ALL_STORIES, screen.chapterId)!.chapter}
+          number={chapterNumber(chapterById(ALL_STORIES, screen.chapterId)!.story, screen.chapterId)}
+          exitLabel={isLesson(screen.chapterId) ? LESSON_EXIT : undefined}
           startBeat={screen.beat ?? 0}
           fromSky={screen.fromSky}
           onStartAct={(act, beat) => handleStartStoryAct(act, screen.chapterId, beat)}
@@ -1606,7 +1630,7 @@ export function App() {
           run={playerRun}
           location={locationForAct(playerRun.locationIds, playerRun.actNumber)}
           onEnter={() => setScreen({ kind: 'map' })}
-          eyebrow={playerRun.story ? chapterById(storyCatalog, playerRun.story.chapterId)?.chapter.title : undefined}
+          eyebrow={playerRun.story ? chapterById(ALL_STORIES, playerRun.story.chapterId)?.chapter.title : undefined}
         />
       )}
 
@@ -1616,7 +1640,7 @@ export function App() {
           onRunChange={setPlayerRun}
           onSelectNode={handleSelectNode}
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
-          quitLabel={playerRun.story ? 'Leave the Story' : undefined}
+          quitLabel={playerRun.story ? storyExitLabel(playerRun.story.chapterId) : undefined}
           onAbandonRun={playerRun.story ? undefined : handleAbandonRun}
           saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
         />
@@ -1666,10 +1690,10 @@ export function App() {
           onSaveAndQuit={playerRun.story ? undefined : () => setScreen({ kind: 'title' })}
           onAbandonRun={playerRun.story ? undefined : handleAbandonRun}
           onExitToTitle={playerRun.story ? () => setScreen({ kind: 'title' }) : undefined}
-          exitLabel={playerRun.story ? 'Leave the Story' : undefined}
+          exitLabel={playerRun.story ? storyExitLabel(playerRun.story.chapterId) : undefined}
           saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
           tips={{ nodeType: playerRun.map!.nodes[screen.nodeId].type, seenIds: profile.seenTipIds, onSeen: markTipSeen }}
-          storyCues={playerRun.story ? storyNodeSpec(playerRun, storyCatalog, screen.nodeId)?.cues : undefined}
+          storyCues={playerRun.story ? storyNodeSpec(playerRun, ALL_STORIES, screen.nodeId)?.cues : undefined}
           storyTips={playerRun.story ? { seenIds: profile.seenTipIds, onSeen: markTipSeen } : undefined}
           cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'finale'}
         />
@@ -1760,7 +1784,7 @@ export function App() {
           onRunChange={settlingRunChange(screen)}
           onContinue={() => handleNodeContinue(screen.nodeId)}
           seed={screen.seed}
-          items={storyNodeSpec(playerRun, storyCatalog, screen.nodeId)?.items}
+          items={storyNodeSpec(playerRun, ALL_STORIES, screen.nodeId)?.items}
         />
       )}
 

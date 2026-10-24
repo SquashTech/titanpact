@@ -88,9 +88,11 @@ interface Props {
   /** A first Blip has thought, to keep once an account. */
   onSeeThought?: (thought: ThoughtDefinition) => void;
   onPlay: (play: SkyPlay) => void;
+  /** A First Light lesson, by its scenario id. */
+  onPlayLesson?: (scenarioId: string) => void;
 }
 
-export function SkyChart({ profile, disabled = false, active = true, pressHidden = false, returned = null, onReturnedSeen, onSeeThought, onPlay }: Props) {
+export function SkyChart({ profile, disabled = false, active = true, pressHidden = false, returned = null, onReturnedSeen, onSeeThought, onPlay, onPlayLesson }: Props) {
   const bands = Object.values(sky.constellations)
     .map((c) => ({ c, state: constellationState(profile, sky, c.id) }))
     .filter((entry): entry is { c: ConstellationDefinition; state: Exclude<ConstellationState, 'hidden'> } => entry.state !== 'hidden');
@@ -228,6 +230,7 @@ export function SkyChart({ profile, disabled = false, active = true, pressHidden
             pressHidden={pressHidden && c.id === 'infinite'}
             away={inView !== c.id}
             onPlay={onPlay}
+            onPlayLesson={onPlayLesson}
           />
         ))}
       </div>
@@ -256,14 +259,19 @@ interface BandProps {
   disabled: boolean;
   pressHidden: boolean;
   onPlay: (play: SkyPlay) => void;
+  onPlayLesson?: (scenarioId: string) => void;
   bandRef: (el: HTMLElement | null) => void;
   /** Not the band in view: it peeks, dimmed. */
   away: boolean;
 }
 
 /** One constellation's band: its name, its shape with its stars named, and its press. */
-function SkyBand({ profile, constellation: c, state, disabled, pressHidden, onPlay, bandRef, away }: BandProps) {
+function SkyBand({ profile, constellation: c, state, disabled, pressHidden, onPlay, onPlayLesson, bandRef, away }: BandProps) {
   const lit = c.stars.map((star) => isStarLit(profile, c, star));
+  // A lesson can be played once it is lit or the next to light; the press plays the next.
+  const lessonOf = (i: number) => starScenario(sky, c.stars[i])?.lesson ?? null;
+  const playableLesson = (i: number) => !!lessonOf(i) && !disabled && state !== 'glimpsed' && (lit[i] || i === 0 || lit[i - 1]);
+  const nextLesson = c.stars.findIndex((_, i) => lessonOf(i) && !lit[i]);
   const play = playOf(c);
   const glimpsed = state === 'glimpsed';
   const uncharted = !!c.uncharted && !lit.every(Boolean);
@@ -312,7 +320,9 @@ function SkyBand({ profile, constellation: c, state, disabled, pressHidden, onPl
             return (
               <text
                 key={`${star.id}-label`}
-                className={`sky-band-label${lit[i] ? ' is-lit' : ''}`}
+                className={`sky-band-label${lit[i] ? ' is-lit' : ''}${playableLesson(i) ? ' is-playable' : ''}`}
+                role={playableLesson(i) ? 'button' : undefined}
+                onClick={playableLesson(i) ? () => onPlayLesson?.(c.stars[i].id) : undefined}
                 x={p.x + (dx / d) * 11}
                 y={p.y + (dy / d) * 11 + labelSize * 0.35}
                 textAnchor={anchor}
@@ -326,6 +336,10 @@ function SkyBand({ profile, constellation: c, state, disabled, pressHidden, onPl
       <div className="sky-band-foot">
         {glimpsed ? (
           reward > 0 && <span className="sky-band-reward">✦ {reward}</span>
+        ) : nextLesson >= 0 ? (
+          <PlateButton compact onClick={() => onPlayLesson?.(c.stars[nextLesson].id)} disabled={disabled} data-sfx="ui.commit">
+            {starName(c.stars[nextLesson])}
+          </PlateButton>
         ) : uncharted ? (
           <PlateButton compact disabled onClick={() => undefined}>
             Not yet charted

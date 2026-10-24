@@ -409,7 +409,33 @@ it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own
 - **Not built:** a first look at a hero (Blip doesn't live in the Collection), skins, and the
   Titan-noticing arc (still PROPOSED).
 
-**Phase 6 — The rails.** *(content on Stories' machinery)*
+**Phase 6 — The rails.** *(content on Stories' machinery)* **LESSONS BUILT 2026-10-24** (per user
+direction): First Light's four stars are the four tutorials Stories already had, every scene and
+spoken line cut (`src/data/lessons.ts`, `test/lessons.test.ts`):
+1. **The Hunt** — Valor and Fang, guided: picking a move and a target, matchups, turn order.
+2. **The Clearing** — four heroes against the Faceless, guided: switching, Rest, a Shield and a
+   Conduct setup.
+3. **The Road** — chapter 2's act: the map, rewards, items, levels, the Bag.
+4. **The Fork** — chapter 3's act: types, the Swordsman's seat, Elite or Skirmish, Solace.
+
+- **Ren and Will are recast** with base heroes: **Iron Warden** (Iron, the wall, Ren's seat in all
+  three) and **Raiju** (Storm, speed 100, Will's seat in the Clearing). Each holds the lesson's moves.
+  The Clearing still teaches as before, pinned by test: the Warden runs dry (24 Mana against a
+  25-cost cheapest move) and Rests under Rime Coat's Shield, then the Raiju's Conduct is set off by
+  the Warden's Gale Sever and the Faceless ends at 1 HP, nobody down. The two acts are NOT
+  re-measured with the Warden in Ren's place; play them.
+- **The Infinite opens on the Clearing's star**, about ten minutes in. The two acts stay First
+  Light's, never a gate, and the constellation pays its 300 when all four are lit.
+- **How it plugs in:** each lesson is a one-beat chapter in its own book (`LESSONS`), played by
+  `StoryChapterScreen`; a chapter whose beats run out with no end card finishes. App looks a
+  chapter up in Valor's book and the lessons' alike. A won lesson lights its star
+  (`recordScenarioLit`), returns to the sky and Blip cheers; a lost fight or act replays; "Back to
+  the Sky" leaves. A cue's line is optional now, and a lesson's say nothing.
+- **On the sky:** First Light's press plays the next lesson by name, and a lesson's name is tappable
+  once it is lit or next, to play or replay it.
+- **Not done:** A Tale of Valor's chapters, scenes and the Story select still exist, unreachable
+  from the title; deleting them (and `storyCast`'s Ren, Will, boar and crow) is the follow-up.
+
 - First Light, The Bench and The Road as scenarios on `src/run/story.ts`'s fixed casts, encounter
   scripts and seeds. Their control tips stay.
 - The new piece: a scenario **goal**, checked in the run layer off the event stream.
