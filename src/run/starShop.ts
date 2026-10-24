@@ -11,6 +11,8 @@ import { heroes } from '../data/heroes';
 import { ownsHero, starfallLedgerId } from './recruitment';
 import { shortTypes } from './deck';
 import { GAUNTLET_ENTRY_PRICE } from './gauntlet';
+import { skyStardust } from './sky';
+import { sky } from '../data/sky';
 
 /**
  * What a purchase unlocks (docs/constellation.md §4, §8): a discriminant a pool edge reads once.
@@ -40,9 +42,9 @@ export const STARFALL_TEN = 10;
 /** `HeroDefinition.unlock` for a hero the Starfall alone draws. */
 export const STARFALL_UNLOCK = 'starfall';
 
-/** Every Stardust the profile has been paid: its lit stars, clear bonuses and Trials. */
+/** Every Stardust the profile has been paid: its lit stars, clear bonuses, Trials and lit constellations. */
 export function stardustEarned(profile: Profile): number {
-  return totalStars(profile) * STARDUST_PER_STAR + profile.bonusStardust + trialStardust(profile);
+  return totalStars(profile) * STARDUST_PER_STAR + profile.bonusStardust + trialStardust(profile) + skyStardust(profile, sky);
 }
 
 /**

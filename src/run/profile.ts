@@ -125,6 +125,8 @@ export interface Profile {
   gauntletClears: number;
   /** Story chapters finished (docs/stories.md), by chapter id, each once, in the order played. */
   storyChaptersDone: string[];
+  /** Sky scenarios won (run/sky.ts), each once. Every other star in the sky is derived from a record above. */
+  litStars: string[];
 }
 
 /** Stardust a lit star pays (docs/the-sky.md §5): a draw is two, as it was when stars were the currency. */
@@ -204,6 +206,7 @@ export function createProfile(): Profile {
     gauntletEntered: 0,
     gauntletClears: 0,
     storyChaptersDone: [],
+    litStars: [],
   };
 }
 
@@ -601,5 +604,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     gauntletClears: count(value.gauntletClears),
     // Absent on every profile written before Stories.
     storyChaptersDone: [...new Set(stringList(value.storyChaptersDone))],
+    // Absent on every file written before the sky.
+    litStars: [...new Set(stringList(value.litStars))],
   };
 }

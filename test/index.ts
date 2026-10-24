@@ -79,6 +79,7 @@ import './leadPick.test';
 import './blessings.test';
 import './profile.test';
 import './starShop.test';
+import './sky.test';
 import './deck.test';
 import './tips.test';
 import './installHint.test';

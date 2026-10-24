@@ -1,6 +1,6 @@
 # the-sky.md — The Sky: lighting the multiverse
 
-> **STATUS: DIRECTION DECIDED; PHASES 1–2 DONE (2026-10-24): Stardust is the currency, and Blip is the little face.** §1–§5 hold what is
+> **STATUS: DIRECTION DECIDED; PHASES 1–3 DONE (2026-10-24): Stardust is the currency, Blip is the little face, and the sky exists as data and rules with no screen yet.** §1–§5 hold what is
 > decided; anything marked PROPOSED or OPEN is not. §10 is the build plan. If built, it replaces
 > Stories as the front door (§9).
 >
@@ -284,6 +284,35 @@ with no wheel. It needs ten heroes left to draw. The Stardust mark is a sparkle 
 - The existing modes as constellations (§4), so the sky can stand in for the title before any new
   scenario exists.
 - Tests: an existing profile lights exactly what it has already done.
+
+**DONE 2026-10-24.** `src/run/sky.ts` holds the rules and `src/data/sky.ts` the sky; `test/sky.test.ts`
+pins them. As built:
+- **Four states.** A constellation is *lit* (every star lit), *open* (playable: it is a root, or
+  something it comes after is lit), *glimpsed* (shape and reward only, one step past an open one)
+  or *hidden*. "Neighbours" became `after`: the graph points one way.
+- **What lights a star.** A scenario win (stored in `Profile.litStars`), a Journey won, a Cycle
+  cleared, a Trial beaten or a Gauntlet cleared. Each of the last four reads a record that already
+  exists.
+- **The existing modes open in the sky exactly when they open today.** The Trials and the Gauntlet
+  open after a Journey win, the Cycles after the first clear. A test checks this against
+  `isConstructedOpen` and `isGauntletOpen`.
+- **An account that played before the sky** (finished a run or a Story chapter) has its rails lit
+  but is NOT paid their reward, so the sky arriving moves no existing balance. Only a rail
+  actually played pays.
+- **First-pass content (FLAGGED, needs your call):**
+  - **The rails are 4 / 3 / 1 stars**, as named seats: First Light (a move, the matchup,
+    targeting, turn order), The Bench (the switch, Rest, lock-in) and The Road (one act). §8.2
+    is still open.
+  - **Each rail pays 100 Stardust**, one draw, which is the Starfall's price used as precedent.
+    §8.3 is still open.
+  - **No other constellation pays yet.** Journey, the Trials and the Gauntlet already pay
+    through their own clears, and whether the Cycles' Location grants become constellation
+    payouts is §8.5.
+  - **Placements and shapes are placeholders** for phase 4 to tune.
+- **Not built:** goals past a plain win (`ScenarioGoal` holds only `win`; the rest land with
+  phase 6), and a constellation for each hero (still PROPOSED).
+- **One thing phase 4 must handle:** a brand-new account cannot open Journey until the rails are
+  playable, which is phase 6.
 
 **Phase 4 — The sky screen.** *(view)*
 - The title becomes the sky: constellations drawn, lit or shown as a shape with a reward, a tap
