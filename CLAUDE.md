@@ -303,6 +303,8 @@ don't silently override it.
 > and pays 5. One free entry a day (claimed or not, never banked), then 3 stars. A fight left unfinished is a loss.
 > **The AI is the escalation**: Classic's AI until three wins, the Trials' pilot after — measured 22% clear
 > at the skilled sim pilot.
+> **Stars as a currency are STARDUST** (2026-10-24, per user direction, `docs/the-sky.md` §5): every
+> star figure above is ×50 (a lit star pays 50, a Starfall is 100, ten are 1,000), and ★ means a lit star only.
 
 > **Patrons are BUILT: `docs/patrons.md`** (2026-10-13, per user direction; built 2026-10-15 — all
 > seven, placeholder art; the Mentor and the Tutor roll in the reward rows). The Mentor's

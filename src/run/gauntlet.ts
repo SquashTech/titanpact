@@ -21,8 +21,9 @@ export const LOSSES_TO_END = 2;
 export const ESCALATION_STEP = 3;
 /** From this many wins the opponent is flown by the Trials' pilot (run/pilot.ts); below it, by Classic's AI (run/ai.ts). */
 export const PILOT_FROM_WINS = 3;
-export const GAUNTLET_CLEAR_BONUS = 5;
-export const GAUNTLET_ENTRY_PRICE = 3;
+/** In Stardust. */
+export const GAUNTLET_CLEAR_BONUS = 250;
+export const GAUNTLET_ENTRY_PRICE = 150;
 
 const TIER_WEIGHT = { early: 1, mid: 2, late: 3 } as const;
 /** A damage move swinging off the stat the hero does not lead with. */
@@ -80,7 +81,7 @@ export function canEnterGauntlet(profile: Profile, balance: number, today: strin
   return isGauntletOpen(profile) && !profile.gauntlet && (freeEntryAvailable(profile, today) || balance >= GAUNTLET_ENTRY_PRICE);
 }
 
-/** Spends today's free entry if it is there, else GAUNTLET_ENTRY_PRICE stars, and rolls the first offer. */
+/** Spends today's free entry if it is there, else GAUNTLET_ENTRY_PRICE Stardust, and rolls the first offer. */
 export function enterGauntlet(profile: Profile, content: GauntletContent, ownedHeroIds: readonly string[], seed: number, today: string, balance: number): Profile {
   if (!isGauntletOpen(profile)) throw new GauntletError('the Gauntlet opens on the first Cycle I clear');
   if (profile.gauntlet) throw new GauntletError('a Gauntlet is already open');
@@ -313,7 +314,7 @@ export function endGauntlet(profile: Profile): { profile: Profile; result: Gaunt
       ...profile,
       gauntlet: null,
       evolutionStars,
-      bonusStars: profile.bonusStars + bonus,
+      bonusStardust: profile.bonusStardust + bonus,
       gauntletClears: profile.gauntletClears + (cleared ? 1 : 0),
     },
     result: { wins: run.wins, losses: run.losses, cleared, starsEarned, bonus },

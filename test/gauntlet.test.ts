@@ -10,7 +10,7 @@ import { createProfile, decodeProfile, type Profile } from '../src/run/profile';
 import { constructedHeroIds, constructedSide, overPoolMoveIds, slotManaPool, slotProblems, TEAM_SIZE } from '../src/run/constructed';
 import { signatureIdFor } from '../src/run/progression';
 import { createRng } from '../src/engine/rng/seededRng';
-import { starsSpent } from '../src/run/starShop';
+import { stardustSpent } from '../src/run/starShop';
 import {
   OFFER_SIZE,
   TEAM_TYPE_LIMIT,
@@ -179,7 +179,7 @@ test('gauntlet: one free entry a day; the next costs stars; one run at a time', 
   assert.throws(() => enterGauntlet(profile, content, owned, 2, TODAY, GAUNTLET_ENTRY_PRICE - 1), GauntletError);
   profile = enterGauntlet(profile, content, owned, 2, TODAY, GAUNTLET_ENTRY_PRICE);
   assert.strictEqual(profile.gauntletEntriesBought, 1);
-  assert.strictEqual(starsSpent(profile, {}), GAUNTLET_ENTRY_PRICE);
+  assert.strictEqual(stardustSpent(profile, {}), GAUNTLET_ENTRY_PRICE);
   profile = endGauntlet(profile).profile;
   // Tomorrow is free again, and a missed day does not bank.
   profile = enterGauntlet(profile, content, owned, 3, '2026-10-09', 0);
@@ -224,7 +224,7 @@ test('gauntlet: five wins stars every unstarred path on the team and pays the bo
   assert.strictEqual(result!.bonus, GAUNTLET_CLEAR_BONUS);
   assert.strictEqual(profile.gauntlet, null);
   assert.strictEqual(profile.gauntletClears, 1);
-  assert.strictEqual(profile.bonusStars, GAUNTLET_CLEAR_BONUS);
+  assert.strictEqual(profile.bonusStardust, GAUNTLET_CLEAR_BONUS);
   for (const slot of team) assert.ok(profile.evolutionStars[slot.heroId].includes(slot.pathId!));
   // A Gauntlet star opens the hero in the Trials.
   for (const slot of team) assert.ok(constructedHeroIds(profile).has(slot.heroId));
@@ -241,7 +241,7 @@ test('gauntlet: nothing below five wins — two losses, or a retire', () => {
   assert.deepStrictEqual(result, { wins: 4, losses: 2, cleared: false, starsEarned: [], bonus: 0 });
   assert.strictEqual(profile.gauntlet, null);
   assert.deepStrictEqual(profile.evolutionStars, {});
-  assert.strictEqual(profile.bonusStars, 0);
+  assert.strictEqual(profile.bonusStardust, 0);
 
   const retired = endGauntlet(drafted(enterGauntlet(opened(), content, owned, 5, TODAY, 0)));
   assert.strictEqual(retired.result.cleared, false);

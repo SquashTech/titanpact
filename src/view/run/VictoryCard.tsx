@@ -100,7 +100,7 @@ export function VictoryCard({ run, profileAfter, stars, onInspect, ref }: Props)
         )}
         {earned > 0 && (
           <span className="vcard-stars">
-            <span className="vcard-stars-glyph">★</span>+{earned}
+            <span className="vcard-stars-glyph">✦</span>+{earned}
           </span>
         )}
         <span className="vcard-facts">{facts.join(' · ')}</span>

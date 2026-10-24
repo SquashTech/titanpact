@@ -50,7 +50,7 @@ export function HubNav({ tab, onSelect, balance, collectionFresh, disabled }: Pr
         <span className="hub-nav-light" aria-hidden="true" />
         <img src={constellationArt} className="hub-nav-icon" alt="" draggable={false} />
         <span className="hub-nav-label">Constellation</span>
-        <span className={`hub-nav-badge${balance > 0 ? ' is-lit' : ''}`}>★ {balance}</span>
+        <span className={`hub-nav-badge${balance > 0 ? ' is-lit' : ''}`}>✦ {balance}</span>
       </button>
     </nav>
   );

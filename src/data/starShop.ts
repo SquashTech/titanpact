@@ -1,7 +1,7 @@
 import type { StarShopCatalog, StarShopOffer } from '../run/starShop';
 
 /**
- * What stars buy (docs/constellation.md). The rule: a purchase widens what a run can draw from
+ * What Stardust buys (docs/constellation.md, docs/the-sky.md §5). The rule: a purchase widens what a run can draw from
  * and never carries power into one: the hero bundles (heroes.ts `unlock`), joining the Collection
  * once owned. The four places it sold are granted by the Cycles now (docs/cycles.md §6). No hero
  * is sold singly: one outside every bundle comes by the Starfall, which is not an offer — it has
@@ -13,7 +13,7 @@ export const STAR_SHOP_OFFERS: readonly StarShopOffer[] = [
     id: 'bundle.tallGrass',
     name: 'From the Tall Grass',
     description: 'Fire, water and green, come up out of the long grass at the road\'s edge. Into the Collection, to deck like anyone.',
-    cost: 8,
+    cost: 400,
     grant: { kind: 'heroBundle', heroIds: ['drake', 'nautilus', 'tixwick'] },
   },
 ];

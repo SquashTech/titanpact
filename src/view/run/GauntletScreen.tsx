@@ -16,6 +16,7 @@ import {
   type GauntletRun,
 } from '../../run/gauntlet';
 import { innatePassiveOf, masteredInnateOf } from '../../run/innate';
+import { STARDUST_PER_STAR } from '../../run/profile';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { MoveButtonReplica } from '../shared/MoveTile';
@@ -343,7 +344,7 @@ function ResultView({ result, onDone }: { result: GauntletResult; onDone: () => 
                 ))}
               </div>
             )}
-            <div className="gx-result-bonus">{`+${result.bonus + earned.length} ★`}</div>
+            <div className="gx-result-bonus">{`+${result.bonus + earned.length * STARDUST_PER_STAR} ✦`}</div>
           </>
         ) : (
           <p className="gx-result-copy">{`A Gauntlet pays at ${WINS_TO_CLEAR} wins.`}</p>
@@ -365,7 +366,7 @@ function EntryView({ freeEntry, balance, entered, clears, onEnter, onVersus, onC
       <Header title="The Gauntlet" />
       <div className="screen-scroll gx-entry">
         <p className="gx-entry-copy">
-          {`Draft six, one at a time, each from three of your heroes rolled into random forms. Win ${WINS_TO_CLEAR} fights before you lose ${LOSSES_TO_END}, and every path on your team is starred, plus ${GAUNTLET_CLEAR_BONUS} ★.`}
+          {`Draft six, one at a time, each from three of your heroes rolled into random forms. Win ${WINS_TO_CLEAR} fights before you lose ${LOSSES_TO_END}, and every path on your team is starred, plus ${GAUNTLET_CLEAR_BONUS} Stardust.`}
         </p>
         {entered > 0 && (
           <div className="gx-entry-record">
@@ -382,7 +383,7 @@ function EntryView({ freeEntry, balance, entered, clears, onEnter, onVersus, onC
       <div className="gx-footer">
         <Back label="Back to the title" onClick={onClose} />
         <PlateButton disabled={!affordable} onClick={onEnter}>
-          {freeEntry ? 'Enter — free today' : `Enter — ${GAUNTLET_ENTRY_PRICE} ★`}
+          {freeEntry ? 'Enter — free today' : `Enter — ${GAUNTLET_ENTRY_PRICE} ✦`}
         </PlateButton>
       </div>
     </>

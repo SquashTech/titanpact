@@ -12,7 +12,7 @@ import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 
 // The Starfall (docs/collection.md §4): a blind draw of a hero the account does not own, played as
-// a summoning. The spent stars rise into the sky; the type wheel spins up around them and slows,
+// a summoning. The spent Stardust rises into the sky; the type wheel spins up around it and slows,
 // ticking, until it locks on the hero's type — the first thing the player learns; the gathered
 // light swells in that colour, leaves the sky, and comes back down as a falling star; it strikes
 // the ground and the hero rises out of the light as a silhouette before colouring in.
@@ -29,6 +29,8 @@ function skyStars(count: number): { x: number; y: number; r: number; delay: numb
 const SKY = skyStars(90);
 const STREAKS = Array.from({ length: 28 }, (_, i) => ({ angle: (i * 137.51) % 360, delay: (i * 0.071) % 0.6, len: 30 + ((i * 53) % 40) }));
 const EMBERS = 22;
+/** Motes of Stardust that rise at the start, each carrying its share of the price. */
+const TOKENS = 2;
 
 /** The burst at the reveal: up out of the light, then fluttering down. Fixed, so every draw throws the same. */
 const CONFETTI = Array.from({ length: 60 }, (_, i) => ({
@@ -69,7 +71,7 @@ const ease = (t: number) => 1 - Math.pow(1 - t, 4);
 
 interface ScreenProps {
   heroId: string;
-  /** The balance the stars were spent from, before the draw. */
+  /** The balance the Stardust was spent from, before the draw. */
   balanceBefore: number;
   /** The hero took an empty seat in its deck row on arrival. */
   joinsDeck: boolean;
@@ -97,7 +99,7 @@ export function StarfallScreen({ heroId, balanceBefore, joinsDeck, onClose }: Sc
     timers.current = [];
     cancelAnimationFrame(frame.current);
     setSpin(finalSpin);
-    setLaunched(STARFALL_PRICE);
+    setLaunched(TOKENS);
     setPhase('reveal');
     setSettled(true);
   }
@@ -108,7 +110,7 @@ export function StarfallScreen({ heroId, balanceBefore, joinsDeck, onClose }: Sc
       return;
     }
     const at = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms));
-    for (let i = 0; i < STARFALL_PRICE; i++) {
+    for (let i = 0; i < TOKENS; i++) {
       at(BEATS.firstToken + i * BEATS.tokenGap, () => {
         setLaunched(i + 1);
         playSfx('star.rise', { pitch: 1 + i * 0.12 });
@@ -193,16 +195,16 @@ export function StarfallScreen({ heroId, balanceBefore, joinsDeck, onClose }: Sc
           ))}
         </div>
 
-        <div className="summon-balance" aria-label={`${balanceBefore - launched} stars`}>
-          <HubGlyph name="star" />
+        <div className="summon-balance" aria-label={`${balanceBefore - launched * (STARFALL_PRICE / TOKENS)} Stardust`}>
+          <HubGlyph name="stardust" />
           <span key={launched} className="summon-balance-count">
-            {balanceBefore - launched}
+            {balanceBefore - launched * (STARFALL_PRICE / TOKENS)}
           </span>
         </div>
 
-        {Array.from({ length: STARFALL_PRICE }, (_, i) => (
+        {Array.from({ length: TOKENS }, (_, i) => (
           <span key={i} className={`summon-token${i < launched ? ' is-launched' : ''}`} style={{ '--i': i } as CSSProperties} aria-hidden="true">
-            <HubGlyph name="star" />
+            <HubGlyph name="stardust" />
           </span>
         ))}
 

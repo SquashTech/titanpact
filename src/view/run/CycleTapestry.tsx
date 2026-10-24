@@ -440,7 +440,7 @@ export function CycleTapestry({ openCycle, cleared, wardens, chronicle, weaveCyc
             <div className="tp-sheet-head">
               <span className="tp-numeral">{pickedDef.numeral}</span>
               <span className="tp-sheet-name">{pickedDef.name}</span>
-              <span className="tp-sheet-bonus">Clear +★ {pickedDef.clearBonus}</span>
+              <span className="tp-sheet-bonus">Clear +✦ {pickedDef.clearBonus}</span>
             </div>
             <p className="tp-sheet-line">{pickedDef.line}</p>
             <button className="tp-begin" onClick={() => onBegin(pickedDef.cycle)}>

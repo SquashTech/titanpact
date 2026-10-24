@@ -111,7 +111,7 @@ test('cycles: a star is coloured by the highest Cycle it was earned on, never wa
   const raised = recordRunEnded(first, end(2), 2);
   assert.strictEqual(starCycleOf(raised, pathId, true), 2, 'a clear on a higher Cycle raises it');
   assert.deepStrictEqual(raised.runHistory[0].starsEarned, [], 'a raised star is not a new star');
-  assert.strictEqual(raised.bonusStars - first.bonusStars, cycleOf(2).clearBonus, 'raising pays nothing beyond the clear');
+  assert.strictEqual(raised.bonusStardust - first.bonusStardust, cycleOf(2).clearBonus, 'raising pays nothing beyond the clear');
   const back = recordRunEnded(raised, end(1), 3);
   assert.strictEqual(starCycleOf(back, pathId, true), 2, 'a lower Cycle never walks it back');
   assert.strictEqual(starCycleOf(recordRunEnded(raised, end(5, 'loss'), 4), pathId, true), 2, 'a loss colours nothing');

@@ -1,13 +1,12 @@
-// The Constellation's rules (the star shop): what a star buys, and the ledger that says what has been bought.
+// The Constellation's rules (the star shop): what Stardust buys, and the ledger that says what has been bought.
 // Offers are content (src/data/starShop.ts); this file is the mechanism, the same split as
 // progression.ts against data/progression.ts.
 //
-// Stars are EARNED per Evolution path (profile.ts `evolutionStars`) and that record is
-// permanent — the Constellation's Stars page shows a star whether or not it has been spent. Spending is a
-// separate ledger, `Profile.purchases`, and the balance is earned minus the cost of what is
-// held. So a star is never taken off a hero; it is the count that is drawn down.
+// Stars are EARNED per Evolution path (profile.ts `evolutionStars`), each paying STARDUST_PER_STAR,
+// and that record is permanent. Spending is a separate ledger, `Profile.purchases`, and the balance
+// is earned minus the cost of what is held, so a star is never taken off a hero.
 
-import { totalStars, trialStars, type Profile } from './profile';
+import { STARDUST_PER_STAR, totalStars, trialStardust, type Profile } from './profile';
 import { heroes } from '../data/heroes';
 import { ownsHero, starfallLedgerId } from './recruitment';
 import { shortTypes } from './deck';
@@ -25,7 +24,7 @@ export interface StarShopOffer {
   name: string;
   /** What the player gets, in a sentence. */
   description: string;
-  /** In stars — a bundle's full price, before what is already owned comes off it. */
+  /** In Stardust — a bundle's full price, before what is already owned comes off it. */
   cost: number;
   grant: StarShopGrant;
 }
@@ -33,25 +32,29 @@ export interface StarShopOffer {
 export type StarShopCatalog = Record<string, StarShopOffer>;
 
 /** One blind draw of a hero the account does not own (docs/collection.md §4): the choice given up is the discount. */
-export const STARFALL_PRICE = 2;
+export const STARFALL_PRICE = 100;
+
+/** Ten draws at once (docs/the-sky.md §5): spectacle and convenience, at exactly ten singles' price. */
+export const STARFALL_TEN = 10;
 
 /** `HeroDefinition.unlock` for a hero the Starfall alone draws. */
 export const STARFALL_UNLOCK = 'starfall';
 
-/** Every star the profile has been paid: hero and companion stars, and clear bonuses. */
-export function starsEarned(profile: Profile): number {
-  return totalStars(profile) + profile.bonusStars + trialStars(profile);
+/** Every Stardust the profile has been paid: its lit stars, clear bonuses and Trials. */
+export function stardustEarned(profile: Profile): number {
+  return totalStars(profile) * STARDUST_PER_STAR + profile.bonusStardust + trialStardust(profile);
 }
 
 /**
  * A bundle's price against what a ledger already owns: its cost times the share of its heroes
- * still to get, rounded up — a bundle whose last hero is all that is left costs that hero's share.
+ * still to get, rounded up to a whole star's worth — a bundle whose last hero is all that is left
+ * costs that hero's share.
  */
 function bundlePriceAgainst(offer: StarShopOffer, purchases: readonly string[]): number {
   if (offer.grant.kind !== 'heroBundle') return offer.cost;
   const { heroIds } = offer.grant;
   const missing = heroIds.filter((id) => !heroes[id] || !ownsHero(id, heroes[id], purchases)).length;
-  return Math.ceil((offer.cost * missing) / heroIds.length);
+  return Math.ceil((offer.cost * missing) / heroIds.length / STARDUST_PER_STAR) * STARDUST_PER_STAR;
 }
 
 /** What the offer costs this profile now — a bundle less what of it is already owned. */
@@ -64,7 +67,7 @@ export function offerPrice(profile: Profile, offer: StarShopOffer): number {
  * what it cost the day it was bought. A purchase whose offer this build no longer ships costs
  * nothing — a single hero from before singles were withdrawn, the Free Company — and is refunded.
  */
-export function starsSpent(profile: Profile, catalog: StarShopCatalog): number {
+export function stardustSpent(profile: Profile, catalog: StarShopCatalog): number {
   let spent = profile.feesPaid + profile.gauntletEntriesBought * GAUNTLET_ENTRY_PRICE;
   profile.purchases.forEach((id, at) => {
     if (id.startsWith(starfallLedgerId(''))) spent += STARFALL_PRICE;
@@ -74,8 +77,8 @@ export function starsSpent(profile: Profile, catalog: StarShopCatalog): number {
 }
 
 /** Earned minus spent. */
-export function starBalance(profile: Profile, catalog: StarShopCatalog): number {
-  return starsEarned(profile) - starsSpent(profile, catalog);
+export function stardustBalance(profile: Profile, catalog: StarShopCatalog): number {
+  return stardustEarned(profile) - stardustSpent(profile, catalog);
 }
 
 export function isPurchased(profile: Profile, offerId: string): boolean {
@@ -100,7 +103,7 @@ export function bundleOwnedHeroIds(profile: Profile, offer: StarShopOffer): stri
 }
 
 export function canBuy(profile: Profile, catalog: StarShopCatalog, offer: StarShopOffer): boolean {
-  return !offerHeld(profile, offer) && starBalance(profile, catalog) >= offerPrice(profile, offer);
+  return !offerHeld(profile, offer) && stardustBalance(profile, catalog) >= offerPrice(profile, offer);
 }
 
 export class StarShopError extends Error {}
@@ -109,7 +112,7 @@ export class StarShopError extends Error {}
 export function buyOffer(profile: Profile, catalog: StarShopCatalog, offer: StarShopOffer): Profile {
   if (offerHeld(profile, offer)) throw new StarShopError(`${offer.id} is already held`);
   const price = offerPrice(profile, offer);
-  if (starBalance(profile, catalog) < price) throw new StarShopError(`${offer.id} costs ${price}, balance is ${starBalance(profile, catalog)}`);
+  if (stardustBalance(profile, catalog) < price) throw new StarShopError(`${offer.id} costs ${price}, balance is ${stardustBalance(profile, catalog)}`);
   return { ...profile, purchases: [...profile.purchases, offer.id] };
 }
 
@@ -126,14 +129,32 @@ export function starfallPool(profile: Profile): string[] {
 }
 
 export function canCallStarfall(profile: Profile, catalog: StarShopCatalog): boolean {
-  return starfallPool(profile).length > 0 && starBalance(profile, catalog) >= STARFALL_PRICE;
+  return starfallPool(profile).length > 0 && stardustBalance(profile, catalog) >= STARFALL_PRICE;
+}
+
+/** Ten at once needs ten heroes left to draw; past that the Starfall is called one at a time. */
+export function canCallStarfallTen(profile: Profile, catalog: StarShopCatalog): boolean {
+  return starfallPool(profile).length >= STARFALL_TEN && stardustBalance(profile, catalog) >= STARFALL_PRICE * STARFALL_TEN;
 }
 
 /** One blind draw — never a hero already owned, so never a duplicate. `random` is in [0, 1). */
 export function starfall(profile: Profile, catalog: StarShopCatalog, random: number): { profile: Profile; heroId: string } {
   const pool = starfallPool(profile);
   if (pool.length === 0) throw new StarShopError('every hero is already owned');
-  if (starBalance(profile, catalog) < STARFALL_PRICE) throw new StarShopError(`a Starfall costs ${STARFALL_PRICE}, balance is ${starBalance(profile, catalog)}`);
+  if (stardustBalance(profile, catalog) < STARFALL_PRICE) throw new StarShopError(`a Starfall costs ${STARFALL_PRICE}, balance is ${stardustBalance(profile, catalog)}`);
   const heroId = pool[Math.min(pool.length - 1, Math.floor(random * pool.length))];
   return { profile: { ...profile, purchases: [...profile.purchases, starfallLedgerId(heroId)] }, heroId };
+}
+
+/** Ten single draws in one call, each against the pool the last one left, so the ten never repeat. */
+export function starfallTen(profile: Profile, catalog: StarShopCatalog, randoms: readonly number[]): { profile: Profile; heroIds: string[] } {
+  if (!canCallStarfallTen(profile, catalog)) throw new StarShopError(`ten Starfalls cost ${STARFALL_PRICE * STARFALL_TEN} and need ten heroes left`);
+  const heroIds: string[] = [];
+  let current = profile;
+  for (let i = 0; i < STARFALL_TEN; i++) {
+    const drawn = starfall(current, catalog, randoms[i] ?? 0);
+    current = drawn.profile;
+    heroIds.push(drawn.heroId);
+  }
+  return { profile: current, heroIds };
 }

@@ -340,6 +340,14 @@ const HUB_PATHS = {
   star: (
     <path d="M12 1.8l3.1 6.5 7.1 1-5.2 5 1.3 7.1L12 18l-6.3 3.4 1.3-7.1-5.2-5 7.1-1Z" />
   ),
+  // Stardust: a large sparkle, a small one and a mote — the currency, never a lit star.
+  stardust: (
+    <>
+      <path d="M10 4.5 11.9 11.1 18.5 13 11.9 14.9 10 21.5 8.1 14.9 1.5 13 8.1 11.1Z" />
+      <path d="M18.5 1.6 19.4 4.6 22.4 5.5 19.4 6.4 18.5 9.4 17.6 6.4 14.6 5.5 17.6 4.6Z" />
+      <circle cx="20" cy="19" r="1.5" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type HubGlyphName = keyof typeof HUB_PATHS;

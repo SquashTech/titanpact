@@ -50,20 +50,20 @@ export interface CycleDefinition {
   name: string;
   /** One short line in the player's voice; empty on a Cycle that is not built. */
   line: string;
-  /** Stars a clear pays on top of its hero stars, every clear. */
+  /** Stardust a clear pays on top of what its new stars pay, every clear. */
   clearBonus: number;
   /** A lore card, a line a tap, ahead of the first draft of this Cycle on an account (docs/cycles.md §7). */
   lore?: readonly string[];
 }
 
 export const CYCLES: readonly CycleDefinition[] = [
-  { cycle: 1, numeral: 'I', name: 'The Sealing', line: 'The Titan rises. Seal it.', clearBonus: 1 },
+  { cycle: 1, numeral: 'I', name: 'The Sealing', line: 'The Titan rises. Seal it.', clearBonus: 50 },
   {
     cycle: 2,
     numeral: 'II',
     name: 'The Remembered',
     line: 'The Titan’s darkness spreads. Its Guardians wake.',
-    clearBonus: 6,
+    clearBonus: 300,
     lore: ['A year has passed, and the Titan wakes.', 'The heroes who sealed it stayed to guard the seals.', 'Now the Titan holds them.', 'We must seal the pact again.'],
   },
   {
@@ -71,7 +71,7 @@ export const CYCLES: readonly CycleDefinition[] = [
     numeral: 'III',
     name: 'The Long Winter',
     line: 'Winter has come. The Guardians hide behind their own, and the banners fray.',
-    clearBonus: 30,
+    clearBonus: 1500,
     lore: ['Another year, and the winter never ended.', 'Wild’s Edge is lost under the snow.', 'The Guardians have learned to hide behind their own.', 'We must seal the pact again.'],
   },
   {
@@ -79,7 +79,7 @@ export const CYCLES: readonly CycleDefinition[] = [
     numeral: 'IV',
     name: 'The Gathering',
     line: 'The Titan knows your shape. Its servants fight as one.',
-    clearBonus: 40,
+    clearBonus: 2000,
     lore: ['A fourth year, and the Titan has been watching.', 'Its servants no longer gather at random.', 'Neither do we. The Guild has grown, and our companion with it.', 'We must seal the pact again.'],
   },
   { cycle: 5, numeral: 'V', name: 'The Last Cycle', line: '', clearBonus: 0 },

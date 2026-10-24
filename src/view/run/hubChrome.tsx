@@ -9,8 +9,8 @@ export function HubPageHead({ title, balance, children }: { title: string; balan
       <span className="hub-head-title">{title}</span>
       {children}
       {balance !== undefined && (
-        <span className="hub-head-balance" aria-label={`${balance} ${balance === 1 ? 'star' : 'stars'}`}>
-          <HubGlyph name="star" />
+        <span className="hub-head-balance" aria-label={`${balance} Stardust`}>
+          <HubGlyph name="stardust" />
           {balance}
         </span>
       )}

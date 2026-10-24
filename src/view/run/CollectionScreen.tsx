@@ -7,7 +7,7 @@ import type { HeroDefinition, TypeId } from '../../engine/content';
 import type { Profile } from '../../run/profile';
 import { draftableTypes, profileDeck, reserveOfType, swapIntoDeck, type Deck } from '../../run/deck';
 import { ownsHero } from '../../run/recruitment';
-import { canBuy, offerPrice, starBalance, type StarShopOffer } from '../../run/starShop';
+import { canBuy, offerPrice, stardustBalance, type StarShopOffer } from '../../run/starShop';
 import { playSfx } from '../../audio/sfx';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
@@ -72,7 +72,7 @@ interface Drag {
  */
 export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroIds, onAcknowledge }: Props) {
   const deck = profileDeck(profile, heroes);
-  const balance = starBalance(profile, starShopCatalog);
+  const balance = stardustBalance(profile, starShopCatalog);
   const [view, setView] = useState<View>('deck');
   const ownedCount = Object.values(heroes).filter((hero) => ownsHero(hero.id, hero, profile.purchases)).length;
   const views: readonly SubtabSpec<View>[] = [
@@ -355,7 +355,7 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroIds, o
           <span className="coll-card-name">{heroes[heroId].name}</span>
           {freshHeroIds.includes(heroId) && <span className="coll-card-new">New</span>}
           {state === 'locked' ? (
-            <span className={`coll-card-price${price === undefined ? ' is-constellation' : ''}`}>{price === undefined ? CONSTELLATION_LABEL : `★ ${price}`}</span>
+            <span className={`coll-card-price${price === undefined ? ' is-constellation' : ''}`}>{price === undefined ? CONSTELLATION_LABEL : `✦ ${price}`}</span>
           ) : (
             <span className="coll-card-stars">
               {evolutionPathsOf(heroes[heroId]).map((path) => (
@@ -388,9 +388,9 @@ export function CollectionScreen({ profile, onChangeDeck, onBuy, freshHeroIds, o
                 data-sfx={canBuy(profile, starShopCatalog, offer) ? 'ui.commit' : 'none'}
                 disabled={!canBuy(profile, starShopCatalog, offer)}
                 onClick={() => onBuy(offer)}
-                aria-label={canBuy(profile, starShopCatalog, offer) ? `Buy ${offer.name} for ${price} stars` : `${offer.name} costs ${price} stars — not enough`}
+                aria-label={canBuy(profile, starShopCatalog, offer) ? `Buy ${offer.name} for ${price} Stardust` : `${offer.name} costs ${price} Stardust — not enough`}
               >
-                Buy ★ {price}
+                Buy ✦ {price}
               </button>
             )}
           </div>

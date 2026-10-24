@@ -31,7 +31,7 @@ import {
 } from '../../run/constructed';
 import { BASE_ITEM_SLOTS, EQUIPMENT_FAMILIES, equipmentIdFor, parseEquipmentId, type EquipmentDefinition } from '../../run/equipment';
 import { innatePassiveOf, masteredInnateOf } from '../../run/innate';
-import { TRIAL_CLEAR_STARS } from '../../run/profile';
+import { TRIAL_CLEAR_STARDUST } from '../../run/profile';
 import { GEM_ORDER, gemAmount, gemPointsForPip } from '../../run/gems';
 import { MASTERY_CAP } from '../../run/mastery';
 import type { RosterEntry } from '../../run/state';
@@ -821,7 +821,7 @@ function TrialsView({ cleared, onPick, onBack }: { cleared: ReadonlySet<string>;
                   Beaten
                 </span>
               ) : (
-                <span className="cx-trial-reward">+{TRIAL_CLEAR_STARS} ★</span>
+                <span className="cx-trial-reward">+{TRIAL_CLEAR_STARDUST} ✦</span>
               )}
             </span>
             <span className="cx-trial-line">{trial.line}</span>

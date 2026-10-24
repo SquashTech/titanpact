@@ -136,7 +136,7 @@ export function DeckView({ profile, deck, freshHeroIds, onAcknowledge, onChangeD
               ))}
               {unowned.map((hero) => {
                 const offer = bundleOf(hero.id);
-                return <SwapRow key={hero.id} heroId={hero.id} locked={offer ? `★ ${offerPrice(profile, offer)} · ${offer.name}` : CONSTELLATION_LABEL} onInfo={() => onPeekHero(hero.id)} />;
+                return <SwapRow key={hero.id} heroId={hero.id} locked={offer ? `✦ ${offerPrice(profile, offer)} · ${offer.name}` : CONSTELLATION_LABEL} onInfo={() => onPeekHero(hero.id)} />;
               })}
             </div>
 

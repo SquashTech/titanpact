@@ -18,7 +18,7 @@ import type { GrowthStatKey } from '../engine/content';
 import type { Warden } from './wardens';
 import type { GauntletRun } from './gauntlet';
 
-export const PROFILE_VERSION = 2;
+export const PROFILE_VERSION = 3;
 
 /**
  * Heroes that left the base roster on 2026-09-28 (docs/types-and-heroes.md): a profile written
@@ -84,9 +84,9 @@ export interface Profile {
    * A dev test run never records a start, so its record carries no duration.
    */
   runStartedAtPlaytimeMs: number | null;
-  /** Lifetime stars paid by clear bonuses (run/cycles.ts `clearBonus`, run/gauntlet.ts `GAUNTLET_CLEAR_BONUS`), beside the hero and companion stars. */
-  bonusStars: number;
-  /** Lifetime stars paid as Ascension entry fees before the Cycles deleted them — spent, never refunded. */
+  /** Lifetime Stardust paid by clear bonuses (run/cycles.ts `clearBonus`, run/gauntlet.ts `GAUNTLET_CLEAR_BONUS`), beside what the lit stars pay. */
+  bonusStardust: number;
+  /** Lifetime Stardust paid as Ascension entry fees before the Cycles deleted them — spent, never refunded. */
   feesPaid: number;
   /** Constellation (star shop) offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
   purchases: string[];
@@ -111,15 +111,15 @@ export interface Profile {
    */
   constructedTeams: Team[];
   /**
-   * The Trials beaten (data/trials.ts ids), each once — the record, and the stars: a first clear pays
-   * TRIAL_CLEAR_STARS, derived from this set (starShop.ts starsEarned) so there is no count to inflate.
+   * The Trials beaten (data/trials.ts ids), each once — the record, and the Stardust: a first clear pays
+   * TRIAL_CLEAR_STARDUST, derived from this set (starShop.ts stardustEarned) so there is no count to inflate.
    */
   trialsCleared: string[];
   /** The open Gauntlet (run/gauntlet.ts, docs/gauntlet.md), or null. One at a time. */
   gauntlet: GauntletRun | null;
   /** The local day (`localDay`) the free entry was last taken, or null. */
   gauntletFreeDay: string | null;
-  /** Entries paid in stars — a count `starsSpent` charges, as the Starfall's ledger entries are charged. */
+  /** Entries paid in Stardust — a count `stardustSpent` charges, as the Starfall's ledger entries are charged. */
   gauntletEntriesBought: number;
   gauntletEntered: number;
   gauntletClears: number;
@@ -127,8 +127,11 @@ export interface Profile {
   storyChaptersDone: string[];
 }
 
-/** Stars a Trial pays on its first clear (docs/constructed.md §7). First pass. */
-export const TRIAL_CLEAR_STARS = 5;
+/** Stardust a lit star pays (docs/the-sky.md §5): a draw is two, as it was when stars were the currency. */
+export const STARDUST_PER_STAR = 50;
+
+/** Stardust a Trial pays on its first clear (docs/constructed.md §7). First pass. */
+export const TRIAL_CLEAR_STARDUST = 250;
 
 /** Oldest records fall off the end. Fifty is a season of play, and past that a list stops being read. */
 export const RUN_HISTORY_CAP = 50;
@@ -162,7 +165,7 @@ export interface RunRecord {
   companionType?: string | null;
   /** The Evolution path ids — and `companion:<type>` — this run's clear starred for the first time; a loss stars nothing. */
   starsEarned: string[];
-  /** The Cycle's clear bonus this run paid; 0 on a loss and on every record written before the stakes. */
+  /** The Cycle's clear bonus this run paid, in Stardust; 0 on a loss and on every record written before the stakes. */
   clearBonus: number;
 }
 
@@ -186,7 +189,7 @@ export function createProfile(): Profile {
     ascendedSpawnTypes: [],
     runHistory: [],
     runStartedAtPlaytimeMs: null,
-    bonusStars: 0,
+    bonusStardust: 0,
     feesPaid: 0,
     purchases: [],
     deck: {},
@@ -283,7 +286,7 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
     companionStars,
     curseStars,
     starCycles,
-    bonusStars: profile.bonusStars + record.clearBonus,
+    bonusStardust: profile.bonusStardust + record.clearBonus,
     runHistory: [record, ...profile.runHistory].slice(0, RUN_HISTORY_CAP),
     // The run is over; a dev test run started without a pact must not inherit this one's clock.
     runStartedAtPlaytimeMs: null,
@@ -369,8 +372,8 @@ export function recordStoryChapterDone(profile: Profile, chapterId: string): Pro
 }
 
 /** What the beaten Trials have paid into the balance. */
-export function trialStars(profile: Profile): number {
-  return profile.trialsCleared.length * TRIAL_CLEAR_STARS;
+export function trialStardust(profile: Profile): number {
+  return profile.trialsCleared.length * TRIAL_CLEAR_STARDUST;
 }
 
 /** Heroes holding at least one star. */
@@ -479,7 +482,7 @@ function stringList(value: unknown): string[] {
  * hero this build no longer ships is still what the run was played with (the view skips what
  * it cannot draw). Path ids are checked against `knownPathIds` where given, as the stars are.
  */
-function decodeRunRecord(raw: unknown, knownPathIds?: ReadonlySet<string>): RunRecord | null {
+function decodeRunRecord(raw: unknown, dustScale: number, knownPathIds?: ReadonlySet<string>): RunRecord | null {
   if (!isRecord(raw)) return null;
   if (raw.outcome !== 'win' && raw.outcome !== 'loss') return null;
   const actReached = count(raw.actReached);
@@ -510,7 +513,7 @@ function decodeRunRecord(raw: unknown, knownPathIds?: ReadonlySet<string>): RunR
     roster,
     ...(typeof raw.companionType === 'string' && raw.companionType.length > 0 ? { companionType: raw.companionType } : {}),
     starsEarned: stringList(raw.starsEarned).filter((id) => id.startsWith('companion:') || id.startsWith('curse:') || knownPath(id) !== null),
-    clearBonus: count(raw.clearBonus),
+    clearBonus: count(raw.clearBonus) * dustScale,
   };
 }
 
@@ -544,10 +547,12 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     }
   }
 
+  // A file from before Stardust counted the currency in stars, each worth STARDUST_PER_STAR now.
+  const dustScale = count(value.version, 1) < 3 ? STARDUST_PER_STAR : 1;
   const runHistory: RunRecord[] = [];
   if (Array.isArray(value.runHistory)) {
     for (const raw of value.runHistory) {
-      const record = decodeRunRecord(raw, knownPathIds);
+      const record = decodeRunRecord(raw, dustScale, knownPathIds);
       if (record) runHistory.push(record);
       if (runHistory.length >= RUN_HISTORY_CAP) break;
     }
@@ -576,8 +581,8 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Deduplicated: an offer is held once. An id this build no longer sells is kept — it costs
     // nothing against the balance (starShop.ts) and comes back if the offer does.
     // Absent on every file written before the stakes; such a player has earned and paid none.
-    bonusStars: count(value.bonusStars),
-    feesPaid: count(value.feesPaid),
+    bonusStardust: dustScale === 1 ? count(value.bonusStardust) : count(value.bonusStars) * dustScale,
+    feesPaid: count(value.feesPaid) * dustScale,
     purchases: [...new Set([...stringList(value.purchases), ...(count(value.version, 1) < 2 ? LEFT_BASE_2026_09_28.map(grantLedgerId) : [])])],
     deck: decodeDeck(value),
     firstPlayedAt: count(value.firstPlayedAt),

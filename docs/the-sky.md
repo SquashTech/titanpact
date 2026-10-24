@@ -1,6 +1,6 @@
 # the-sky.md — The Sky: lighting the multiverse
 
-> **STATUS: DIRECTION DECIDED, NOTHING BUILT (2026-10-23, per user direction).** §1–§5 hold what is
+> **STATUS: DIRECTION DECIDED; PHASES 1–2 DONE (2026-10-24): Stardust is the currency, and Blip is the little face.** §1–§5 hold what is
 > decided; anything marked PROPOSED or OPEN is not. §10 is the build plan. If built, it replaces
 > Stories as the front door (§9).
 >
@@ -68,6 +68,15 @@ the sky by finding them. The player is the light: its picks are the player's pic
 - **Its voice** (decided with the look): a babble, one bandpass-filtered sawtooth syllable on every
   other letter as a thought types out. It's procedural Web Audio, beside the existing voice-blip
   system (`StoryActor.voice`, `src/audio/`).
+- **It can be poked** (PROPOSED 2026-10-24, user idea). Tapping Blip squishes it like poking the
+  Pillsbury Doughboy: a squash and spring-back, a giggle, the face reacting. It's a toy, not a
+  control. It never opens anything, and poking it isn't a decision. *Second-order:* a tap on Blip
+  must not also count as a tap on the sky under it. Does a run of pokes escalate (dizzy, then
+  annoyed), and is there a thought for being poked a lot?
+- **Blip skins** (PROPOSED 2026-10-24, user idea): new content that changes its look, and can
+  bring its own thoughts or its own poke animation. A skin is the obvious second Stardust sink
+  (§5), and lighting a constellation can pay one. Skins are cosmetic only: a skin never changes
+  what a scenario pays or what Blip notices.
 
 The register, as samples rather than drafts:
 
@@ -181,11 +190,15 @@ Open questions about Stardust:
 - **The finer grain is the real gain** (PROPOSED): a lost Journey can pay a little for how far it
   got, which whole stars never could.
 - **The sink runs dry.** The Starfall never draws a duplicate, so Stardust stops buying heroes once
-  the Collection is complete. Cosmetics are the obvious second sink.
-- **The conversion** (PROPOSED): today a draw is 2 stars, so 1 star = **50 Stardust** keeps every
-  price where it is. A path star pays 50, a Trial clear 250, a Gauntlet entry costs 150, and a
-  bundle's cost is ×50. The balance is DERIVED today (`starsEarned − starsSpent`,
-  `src/run/starShop.ts`), so it converts without a save migration.
+  the Collection is complete. Cosmetics are the obvious second sink, and Blip skins (§1) are the
+  first candidate.
+- **The conversion** (BUILT 2026-10-24): a draw was 2 stars, so 1 star = **50 Stardust**
+  (`STARDUST_PER_STAR`) keeps every price where it was. A lit star pays 50, a Trial clear 250, a
+  Gauntlet clear 250, and a Gauntlet entry costs 150. The Cycle clears pay 50 / 300 / 1,500 / 2,000,
+  and From the Tall Grass costs 400. A bundle's discounted share rounds up to a whole 50, so a
+  converted balance buys exactly what it did. The balance is still derived
+  (`stardustEarned − stardustSpent`). A file from before (profile version 2) is converted as it is
+  read: its stored star counts are ×50, and the file is never converted twice.
 
 ## 6. A scenario is data
 
@@ -246,7 +259,10 @@ stars) stays for §3.
 Seven phases, each landing on its own with the tests and typecheck green. Phases 1 and 2 can run in
 parallel (they touch different files). The rest go in order.
 
-**Phase 1 — Stardust.** *(run layer and copy; no new screen)*
+**Phase 1 — Stardust.** *(run layer and copy; no new screen)* **DONE 2026-10-24.** The ten-draw is
+`starfallTen` (ten singles on one ledger) and `StarfallTenScreen`: ten lights fall into a grid
+with no wheel. It needs ten heroes left to draw. The Stardust mark is a sparkle (`HubGlyph
+'stardust'`, or ✦ in text); ★ means only a lit star. Whether a lost Journey pays is still OPEN.
 - Rescale the derived ledger in `src/run/starShop.ts`: earnings and prices ×50 (§5), `STARFALL_PRICE`
   100, `GAUNTLET_ENTRY_PRICE` 150, `TRIAL_CLEAR_STARS` → a Stardust figure.
 - A Journey win pays Stardust (the clear bonus, converted). Whether a loss pays is OPEN (§5).
@@ -281,6 +297,8 @@ parallel (they touch different files). The rest go in order.
   Journey won or lost, a first look at a hero). `Profile.seenThoughtIds` keeps the firsts once an
   account.
 - Passive: a thought appears beside the light and fades. No tap, never during a run.
+- The poke (§1): a squash and spring-back on tap, with the face reacting. Skins come later, once
+  a constellation or the shop has a seat to pay one.
 
 **Phase 6 — The rails.** *(content on Stories' machinery)*
 - First Light, The Bench and The Road as scenarios on `src/run/story.ts`'s fixed casts, encounter

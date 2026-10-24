@@ -7,7 +7,7 @@ import { RecordsScreen } from './RecordsScreen';
 import { StarShopScreen } from './StarShopScreen';
 import { HUB_TABS, HubNav, type HubTab } from './HubNav';
 import { starShopCatalog } from '../../data/starShop';
-import { starBalance, type StarShopOffer } from '../../run/starShop';
+import { stardustBalance, type StarShopOffer } from '../../run/starShop';
 import { TitanRidge } from './titanArt';
 import titlePainting from '../../../art/title/fogBanks.png';
 import { NightSky } from './NightSky';
@@ -37,8 +37,8 @@ interface Props {
   onEraseAllData: () => void;
   /** Spends stars on a Constellation offer (run/starShop.ts buyOffer) and re-reads the profile. */
   onBuyOffer: (offer: StarShopOffer) => void;
-  /** One Starfall (run/starShop.ts starfall), written to the profile; returns the hero drawn. */
-  onStarfall: () => string;
+  /** A Starfall of one or ten (run/starShop.ts), written to the profile; returns the heroes drawn. */
+  onStarfall: (count: 1 | 10) => string[];
   /** Writes the edited deck to the profile (run/deck.ts) and re-reads it. */
   onChangeDeck: (deck: Deck) => void;
   /** The parked run a Continue would resume, or null when there is none. */
@@ -65,7 +65,7 @@ interface Props {
   beatReady: boolean;
   /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
   onResetTips: () => void;
-  /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +50 stars to test the Constellation and the stakes. */
+  /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +2,500 Stardust to test the Constellation and the stakes. */
   onGrantDevStars: () => void;
   onQuickBattle: () => void;
   onOpenSandbox: () => void;
@@ -287,7 +287,7 @@ export function TitleScreen({
   // of it — they can only inherit the palette from an ancestor both of them share.
   const tone = parkedRun ? 'verdigris' : 'gold';
 
-  const balance = starBalance(profile, starShopCatalog);
+  const balance = stardustBalance(profile, starShopCatalog);
 
   return (
     <div
@@ -465,7 +465,7 @@ export function TitleScreen({
               Visit Location
             </button>
             <button className="title-dev-item" onClick={() => runDev(onGrantDevStars)}>
-              ⭐ +50 Stars
+              ✦ +2,500 Stardust
             </button>
             <button className="title-dev-item" onClick={() => runDev(onResetTips)}>
               Reset Tips

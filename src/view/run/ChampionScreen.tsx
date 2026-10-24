@@ -10,6 +10,7 @@ import { rosterHeroes } from '../../data/content';
 import { levelOf } from '../../run/growth';
 import { rosterEntryTypes, formIdFor } from '../../run/progression';
 import { cycleOf } from '../../run/cycles';
+import { STARDUST_PER_STAR } from '../../run/profile';
 import { unbrokenSealLocationIds } from '../../run/locations';
 import type { RunState } from '../../run/state';
 import { getTypeColorRgb } from '../combat/typeColors';
@@ -96,9 +97,9 @@ function tallySteps(run: RunState, stars: VictoryStars): TallyStep[] {
   const steps: TallyStep[] = [];
   for (const entry of run.roster) {
     const earned = stars.byRosterId[entry.rosterId];
-    if (earned) steps.push({ kind: 'hero', rosterId: entry.rosterId, add: earned.filter((s) => s.fromCycle === 0).length });
+    if (earned) steps.push({ kind: 'hero', rosterId: entry.rosterId, add: earned.filter((s) => s.fromCycle === 0).length * STARDUST_PER_STAR });
   }
-  if (stars.companion) steps.push({ kind: 'companion', type: stars.companion.type, add: stars.companion.fromCycle === 0 ? 1 : 0 });
+  if (stars.companion) steps.push({ kind: 'companion', type: stars.companion.type, add: stars.companion.fromCycle === 0 ? STARDUST_PER_STAR : 0 });
   if (stars.clearBonus > 0) steps.push({ kind: 'bonus', add: stars.clearBonus });
   return steps;
 }
@@ -354,7 +355,7 @@ export function ChampionScreen({ run, stars, onContinue }: Props) {
           {stars && tally.steps.length > 0 && (
             <div className={`champion-tally${tally.settled ? ' is-settled' : ''}`}>
               <div className="champion-tally-count" ref={tally.countRef} key={tally.shown}>
-                <span className="champion-tally-glyph">★</span>
+                <span className="champion-tally-glyph">✦</span>
                 <span className="champion-tally-number">{tally.shown}</span>
               </div>
               <div className="champion-tally-chips">

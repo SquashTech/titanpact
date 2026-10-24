@@ -1,7 +1,7 @@
 import { currentEvolutionPathId } from '../../run/progression';
 import { turnedCurse } from '../../run/curse';
 import { companionStarId, curseStarId, hasCompanionStar, hasCurseStar, hasEvolutionStar, starCycleOf, type Profile } from '../../run/profile';
-import { starBalance } from '../../run/starShop';
+import { stardustBalance } from '../../run/starShop';
 import { starShopCatalog } from '../../data/starShop';
 import type { RosterEntry, RunState } from '../../run/state';
 
@@ -50,8 +50,8 @@ export function victoryStars(run: RunState, before: Profile, after: Profile): Vi
   return {
     byRosterId,
     companion,
-    clearBonus: after.bonusStars - before.bonusStars,
-    balanceBefore: starBalance(before, starShopCatalog),
-    balanceAfter: starBalance(after, starShopCatalog),
+    clearBonus: after.bonusStardust - before.bonusStardust,
+    balanceBefore: stardustBalance(before, starShopCatalog),
+    balanceAfter: stardustBalance(after, starShopCatalog),
   };
 }

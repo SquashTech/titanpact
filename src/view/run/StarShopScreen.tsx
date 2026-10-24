@@ -1,9 +1,9 @@
 import { useState, type CSSProperties } from 'react';
 import { STAR_SHOP_OFFERS, starShopCatalog } from '../../data/starShop';
 import { heroes } from '../../data/heroes';
-import type { Profile } from '../../run/profile';
+import { STARDUST_PER_STAR, type Profile } from '../../run/profile';
 import { ownsHero } from '../../run/recruitment';
-import { STARFALL_PRICE, bundleOwnedHeroIds, canBuy, canCallStarfall, offerHeld, offerPrice, starBalance, starfallPool, starsEarned, starsSpent, type StarShopOffer } from '../../run/starShop';
+import { STARFALL_PRICE, STARFALL_TEN, bundleOwnedHeroIds, canBuy, canCallStarfall, canCallStarfallTen, offerHeld, offerPrice, stardustBalance, starfallPool, stardustEarned, stardustSpent, type StarShopOffer } from '../../run/starShop';
 import { HubGlyph } from '../shared/nodeIcons';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -12,6 +12,7 @@ import { HeroDossierOverlay } from './HeroDossierOverlay';
 import { BundlePeekOverlay } from './BundlePeekOverlay';
 import { CurseStarsSection, HeroStarsPage, SpawnStarsPage } from './StarPages';
 import { STARFALL_NAME, StarfallScreen } from './Starfall';
+import { StarfallTenScreen } from './StarfallTen';
 import { deckHeroIds, profileDeck } from '../../run/deck';
 import { SKY_HERO_COUNT, StarSky } from './StarSky';
 import { HubPageHead, HubSubtabs, type SubtabSpec } from './hubChrome';
@@ -23,10 +24,10 @@ type SectionId = 'sky' | 'shop' | 'stars' | 'spawn';
 
 interface Props {
   profile: Profile;
-  /** Spends stars on the offer and hands back the profile to render. */
+  /** Spends Stardust on the offer and hands back the profile to render. */
   onBuy: (offer: StarShopOffer) => void;
-  /** One Starfall (run/starShop.ts starfall), written to the profile; returns the hero drawn. */
-  onStarfall: () => string;
+  /** A Starfall of one or ten (run/starShop.ts), written to the profile; returns the heroes drawn. */
+  onStarfall: (count: 1 | 10) => string[];
   /** A Starfall's hero once its scene closes — the hub marks it new in the Collection. */
   onHeroFallen: (heroId: string) => void;
   /** The last hero fallen this session; its star flares in the sky. */
@@ -44,25 +45,26 @@ export interface OfferPurchase {
 }
 
 /**
- * The Constellation, a hub page (run/starShop.ts): where stars are spent and charted. Its first
+ * The Constellation, a hub page (run/starShop.ts): where Stardust is spent and stars are charted. Its first
  * section is the sky itself — every hero a star, the owned ones lit — with the Lodestar at its
  * centre, which calls the Starfall. The Market holds the bundles and the Locations; Stars and
- * Spawn chart where stars were earned. Nothing on a Market row spends a star: rows open the
+ * Spawn chart where stars were earned. Nothing on a Market row spends anything: rows open the
  * offer's own screen, where the one Purchase button is.
  */
 export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, freshHeroId }: Props) {
-  const earned = starsEarned(profile);
-  const spent = starsSpent(profile, starShopCatalog);
-  const balance = starBalance(profile, starShopCatalog);
+  const earned = stardustEarned(profile);
+  const spent = stardustSpent(profile, starShopCatalog);
+  const balance = stardustBalance(profile, starShopCatalog);
   const [section, setSection] = useState<SectionId>('sky');
   const [dossierHeroId, setDossierHeroId] = useState<string | null>(null);
   const [openOfferId, setOpenOfferId] = useState<string | null>(null);
-  const [fallen, setFallen] = useState<{ heroId: string; balanceBefore: number } | null>(null);
+  const [fallen, setFallen] = useState<{ heroIds: string[]; balanceBefore: number } | null>(null);
   const [showPool, setShowPool] = useState(false);
 
   const pool = starfallPool(profile);
   const lit = Object.values(heroes).filter((hero) => ownsHero(hero.id, hero, profile.purchases)).length;
   const canCall = canCallStarfall(profile, starShopCatalog);
+  const canCallTen = canCallStarfallTen(profile, starShopCatalog);
   const bundles = STAR_SHOP_OFFERS.filter((o) => o.grant.kind === 'heroBundle');
   const dossierHero = dossierHeroId ? heroes[dossierHeroId] : null;
   const openOffer = openOfferId ? starShopCatalog[openOfferId] : null;
@@ -81,9 +83,15 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
     { id: 'spawn', label: 'Spawn' },
   ];
 
-  function call() {
-    if (!canCall) return;
-    setFallen({ balanceBefore: balance, heroId: onStarfall() });
+  function call(count: 1 | 10) {
+    if (!(count === 10 ? canCallTen : canCall)) return;
+    setFallen({ balanceBefore: balance, heroIds: onStarfall(count) });
+  }
+
+  function closeFallen(heroIds: readonly string[]) {
+    heroIds.forEach(onHeroFallen);
+    setFallen(null);
+    setShowPool(false);
   }
 
   return (
@@ -109,8 +117,8 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
                 type="button"
                 className={`lodestar${canCall ? ' is-ready' : ''}`}
                 data-sfx={canCall ? 'ui.commit' : 'ui.denied'}
-                onClick={call}
-                aria-label={canCall ? `Call to the stars for ${STARFALL_PRICE} stars` : 'Not enough stars to call one'}
+                onClick={() => call(1)}
+                aria-label={canCall ? `Call to the stars for ${STARFALL_PRICE} Stardust` : 'Not enough Stardust to call one'}
               >
                 <span className="lodestar-rays" aria-hidden="true" />
                 <span className="lodestar-halo" aria-hidden="true" />
@@ -125,21 +133,31 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
               <span className="sky-tally-of"> / {SKY_HERO_COUNT} heroes owned</span>
             </div>
 
-            <button type="button" className="sky-call" disabled={!canCall} data-sfx={canCall ? 'ui.commit' : 'none'} onClick={call}>
+            <button type="button" className="sky-call" disabled={!canCall} data-sfx={canCall ? 'ui.commit' : 'none'} onClick={() => call(1)}>
               <span className="sky-call-sheen" aria-hidden="true" />
               <span className="sky-call-label">{pool.length === 0 ? 'The sky is quiet' : 'Call to the Stars'}</span>
               {pool.length > 0 && (
                 <span className="sky-call-price">
-                  <HubGlyph name="star" />
+                  <HubGlyph name="stardust" />
                   {STARFALL_PRICE}
                 </span>
               )}
             </button>
+            {pool.length >= STARFALL_TEN && (
+              <button type="button" className="sky-call is-ten" disabled={!canCallTen} data-sfx={canCallTen ? 'ui.commit' : 'none'} onClick={() => call(10)}>
+                <span className="sky-call-sheen" aria-hidden="true" />
+                <span className="sky-call-label">Call Ten</span>
+                <span className="sky-call-price">
+                  <HubGlyph name="stardust" />
+                  {(STARFALL_PRICE * STARFALL_TEN).toLocaleString('en-US')}
+                </span>
+              </button>
+            )}
             <p className="sky-hint">
               {pool.length === 0
                 ? 'Every hero is yours.'
                 : balance < STARFALL_PRICE
-                  ? `${STARFALL_PRICE - balance} more ${STARFALL_PRICE - balance === 1 ? 'star' : 'stars'} to call one down. Clear a run to earn them.`
+                  ? `${STARFALL_PRICE - balance} more Stardust to call one down. Clear a run to earn it.`
                   : 'A hero you don’t own falls into your Collection.'}
             </p>
 
@@ -206,12 +224,12 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
           <>
             <div className="star-shop-balance">
               <span className="star-shop-balance-ledger">
-                {earned} earned · {spent} spent
+                ✦ {earned} earned · {spent} spent
               </span>
             </div>
             <HeroStarsPage profile={profile} />
             <p className="records-note star-shop-note">
-              {'One star is earned by winning a run with an evolved hero. The star can only be earned one time per evolution.'}
+              {`One star is earned by winning a run with an evolved hero, once per evolution. Each pays ${STARDUST_PER_STAR} Stardust.`}
             </p>
             <CurseStarsSection profile={profile} />
           </>
@@ -229,17 +247,16 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
           onClose={() => setOpenOfferId(null)}
         />
       )}
-      {fallen && (
+      {fallen && fallen.heroIds.length === 1 && (
         <StarfallScreen
-          heroId={fallen.heroId}
+          heroId={fallen.heroIds[0]}
           balanceBefore={fallen.balanceBefore}
-          joinsDeck={deckHeroIds(profileDeck(profile, heroes)).includes(fallen.heroId)}
-          onClose={() => {
-            onHeroFallen(fallen.heroId);
-            setFallen(null);
-            setShowPool(false);
-          }}
+          joinsDeck={deckHeroIds(profileDeck(profile, heroes)).includes(fallen.heroIds[0])}
+          onClose={() => closeFallen(fallen.heroIds)}
         />
+      )}
+      {fallen && fallen.heroIds.length > 1 && (
+        <StarfallTenScreen heroIds={fallen.heroIds} balanceBefore={fallen.balanceBefore} onClose={() => closeFallen(fallen.heroIds)} />
       )}
       {dossierHero && <HeroDossierOverlay hero={dossierHero} onClose={() => setDossierHeroId(null)} />}
     </div>
@@ -251,7 +268,7 @@ export function CostBadge({ offer, held, price = offer.cost }: { offer: StarShop
   if (held) return <span className="star-shop-offer-cost is-held">Owned</span>;
   return (
     <span className={`star-shop-offer-cost${price < offer.cost ? ' is-discounted' : ''}`}>
-      {price < offer.cost && <s className="star-shop-offer-was">{offer.cost}</s>}★ {price}
+      {price < offer.cost && <s className="star-shop-offer-was">{offer.cost}</s>}✦ {price}
     </span>
   );
 }
@@ -266,9 +283,9 @@ export function PurchaseButton({ purchase }: { purchase: OfferPurchase }) {
       data-sfx={held || !affordable ? 'none' : 'ui.commit'}
       disabled={held || !affordable}
       onClick={onBuy}
-      aria-label={held ? `${offer.name}: owned` : affordable ? `Purchase ${offer.name} for ${price} ${price === 1 ? 'star' : 'stars'}` : `${offer.name} costs ${price} stars — not enough`}
+      aria-label={held ? `${offer.name}: owned` : affordable ? `Purchase ${offer.name} for ${price} Stardust` : `${offer.name} costs ${price} Stardust — not enough`}
     >
-      {held ? 'Owned' : `Purchase · ★ ${price}`}
+      {held ? 'Owned' : `Purchase · ✦ ${price}`}
     </button>
   );
 }

@@ -7,8 +7,8 @@ import { passives } from '../src/data/passives';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { TRIAL_LIST, suggestedSlotFor } from '../src/data/trials';
-import { TRIAL_CLEAR_STARS, createProfile, decodeProfile, recordTrialCleared, trialStars } from '../src/run/profile';
-import { starsEarned } from '../src/run/starShop';
+import { TRIAL_CLEAR_STARDUST, createProfile, decodeProfile, recordTrialCleared, trialStardust } from '../src/run/profile';
+import { stardustEarned } from '../src/run/starShop';
 import { parseEquipmentId } from '../src/run/equipment';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { gradeExpectedPoints, levelOf } from '../src/run/growth';
@@ -224,11 +224,11 @@ test('trials record: a first clear is recorded once, and a replay changes nothin
   assert.strictEqual(recordTrialCleared(once, 'fire'), once);
 });
 
-test('trials record: each Trial beaten pays TRIAL_CLEAR_STARS into the balance, derived from the set', () => {
-  const before = starsEarned(createProfile());
+test('trials record: each Trial beaten pays TRIAL_CLEAR_STARDUST into the balance, derived from the set', () => {
+  const before = stardustEarned(createProfile());
   const two = recordTrialCleared(recordTrialCleared(createProfile(), 'fire'), 'water');
-  assert.strictEqual(trialStars(two), 2 * TRIAL_CLEAR_STARS);
-  assert.strictEqual(starsEarned(two) - before, 2 * TRIAL_CLEAR_STARS);
+  assert.strictEqual(trialStardust(two), 2 * TRIAL_CLEAR_STARDUST);
+  assert.strictEqual(stardustEarned(two) - before, 2 * TRIAL_CLEAR_STARDUST);
 });
 
 test('trials record: it survives the profile, deduplicated', () => {

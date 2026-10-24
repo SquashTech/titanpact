@@ -18,7 +18,7 @@ import {
   recordTipSeen,
   recordStoryChapterDone,
   recordTrialCleared,
-  TRIAL_CLEAR_STARS,
+  TRIAL_CLEAR_STARDUST,
   resetTips,
   type Profile,
   type RunEnd,
@@ -147,7 +147,7 @@ import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
 import { ProfileProvider } from '../view/shared/ProfileContext';
 import { starShopCatalog } from '../data/starShop';
-import { buyOffer, starBalance, starfall, type StarShopOffer } from '../run/starShop';
+import { buyOffer, stardustBalance, starfall, starfallTen, type StarShopOffer } from '../run/starShop';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { playSfx } from '../audio/sfx';
@@ -630,22 +630,27 @@ export function App() {
     setProfile(updateProfile((current) => buyOffer(current, starShopCatalog, offer)));
   }
 
-  /** A Starfall (docs/collection.md §4): written to storage like a purchase, the hero drawn handed back for the scene. */
-  function handleStarfall(): string {
-    let drawn = '';
+  /** A Starfall, one or ten (docs/collection.md §4): written to storage like a purchase, the heroes drawn handed back for the scene. */
+  function handleStarfall(count: 1 | 10): string[] {
+    let drawn: string[] = [];
     setProfile(
       updateProfile((current) => {
+        if (count === 10) {
+          const result = starfallTen(current, starShopCatalog, Array.from({ length: 10 }, () => Math.random()));
+          drawn = result.heroIds;
+          return result.profile;
+        }
         const result = starfall(current, starShopCatalog, Math.random());
-        drawn = result.heroId;
+        drawn = [result.heroId];
         return result.profile;
       })
     );
     return drawn;
   }
 
-  /** TEMPORARY DEV/TEST — 50 stars on the bonus ledger, so the Constellation can be tried without clearing runs. */
+  /** TEMPORARY DEV/TEST — 2,500 Stardust on the bonus ledger, so the Constellation can be tried without clearing runs. */
   function handleGrantDevStars() {
-    setProfile(updateProfile((current) => ({ ...current, bonusStars: current.bonusStars + 50 })));
+    setProfile(updateProfile((current) => ({ ...current, bonusStardust: current.bonusStardust + 2500 })));
   }
 
   /** The Collection's edit (docs/collection.md §2): the next run drafts from it and is sealed with it. */
@@ -656,7 +661,7 @@ export function App() {
     if (outcome === 'win') {
       const first = !profile.trialsCleared.includes(trialId);
       if (first && !unlockAll) setProfile(updateProfile((current) => recordTrialCleared(current, trialId)));
-      notice = first && !unlockAll ? `${name} beaten — +${TRIAL_CLEAR_STARS} ★` : `${name} beaten again`;
+      notice = first && !unlockAll ? `${name} beaten — +${TRIAL_CLEAR_STARDUST} Stardust` : `${name} beaten again`;
     }
     setScreen({ kind: 'constructed', startTeam: teamIndex, unlockAll, notice });
   }
@@ -675,7 +680,7 @@ export function App() {
 
   function handleEnterGauntlet() {
     const seed = Math.floor(Math.random() * 0x100000000);
-    setProfile(updateProfile((current) => enterGauntlet(current, gauntletContent, Object.keys(heroPool(heroes, current.purchases)), seed, localDay(Date.now()), starBalance(current, starShopCatalog))));
+    setProfile(updateProfile((current) => enterGauntlet(current, gauntletContent, Object.keys(heroPool(heroes, current.purchases)), seed, localDay(Date.now()), stardustBalance(current, starShopCatalog))));
     setScreen({ kind: 'gauntlet' });
   }
 
@@ -1470,7 +1475,7 @@ export function App() {
           run={profile.gauntlet}
           stars={profile.evolutionStars}
           freeEntry={freeEntryAvailable(profile, localDay(Date.now()))}
-          balance={starBalance(profile, starShopCatalog)}
+          balance={stardustBalance(profile, starShopCatalog)}
           entered={profile.gauntletEntered}
           clears={profile.gauntletClears}
           result={screen.result ?? null}

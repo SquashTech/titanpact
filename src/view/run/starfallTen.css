@@ -1,0 +1,299 @@
+/* Ten Starfalls as one scene (StarfallTen.tsx). */
+
+.summon-ten {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: 56px 16px 28px;
+  background: #03040b;
+  color: var(--text);
+  text-align: center;
+  animation: summon-ten-in 0.4s ease-out both;
+}
+
+@keyframes summon-ten-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.summon-ten-nebula {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(40% 30% at 30% 30%, rgba(120, 90, 255, 0.22), transparent 70%),
+    radial-gradient(45% 35% at 70% 65%, rgba(60, 160, 255, 0.16), transparent 70%);
+  pointer-events: none;
+}
+
+.summon-ten-balance {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffe9b0;
+}
+
+.summon-ten-balance svg {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 0 6px rgba(255, 210, 122, 0.8));
+}
+
+.summon-ten-count {
+  animation: summon-ten-count 0.5s ease-out both;
+}
+
+@keyframes summon-ten-count {
+  from {
+    color: #fff;
+    transform: scale(1.35);
+  }
+}
+
+.summon-ten-ribbon {
+  position: relative;
+  min-height: 30px;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #fff3d6;
+  text-shadow: 0 0 12px rgba(255, 210, 122, 0.7), 0 2px 0 #000;
+}
+
+.summon-ten.is-settled .summon-ten-ribbon {
+  animation: summon-ten-pop 0.5s var(--ease-spring) both;
+}
+
+@keyframes summon-ten-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.summon-ten-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px 8px;
+  width: 100%;
+  max-width: 420px;
+  margin: auto 0;
+}
+
+.summon-ten-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* The light falls from above its seat and stays as a glow under the hero. */
+.summon-ten-light {
+  position: absolute;
+  left: 50%;
+  top: 30px;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 4px rgba(var(--type-rgb), 0.95), 0 0 26px 10px rgba(var(--type-rgb), 0.5);
+  opacity: 0;
+  animation: summon-ten-fall 0.52s cubic-bezier(0.55, 0, 0.9, 0.4) calc(0.9s + var(--i) * 0.24s) both;
+}
+
+.summon-ten-light::before {
+  content: '';
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  width: 3px;
+  height: 120px;
+  margin-left: -1.5px;
+  background: linear-gradient(to top, rgba(var(--type-rgb), 0.9), transparent);
+  border-radius: 2px;
+  opacity: 0.8;
+}
+
+@keyframes summon-ten-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(-110vh);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.summon-ten-cell.is-landed .summon-ten-light {
+  animation: summon-ten-glow 0.6s ease-out both;
+}
+
+@keyframes summon-ten-glow {
+  from {
+    opacity: 1;
+    transform: scale(1.6);
+  }
+  to {
+    opacity: 0;
+    transform: scale(4);
+  }
+}
+
+.summon-ten-light::before {
+  transition: opacity 0.1s;
+}
+
+.summon-ten-cell.is-landed .summon-ten-light::before {
+  opacity: 0;
+}
+
+.summon-ten-flash {
+  position: absolute;
+  left: 50%;
+  top: 36px;
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(var(--type-rgb), 0.5) 40%, transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.summon-ten-cell.is-landed .summon-ten-flash {
+  animation: summon-ten-flash 0.5s ease-out both;
+}
+
+@keyframes summon-ten-flash {
+  from {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+/* The hero rises out of its light a silhouette, then colours in. */
+.summon-ten-figure {
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+  opacity: 0;
+  filter: brightness(0) drop-shadow(0 0 6px rgba(var(--type-rgb), 0.9));
+}
+
+.summon-ten-cell.is-landed .summon-ten-figure {
+  animation: summon-ten-rise 0.9s ease-out both;
+}
+
+@keyframes summon-ten-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.7);
+    filter: brightness(0) drop-shadow(0 0 6px rgba(var(--type-rgb), 0.9));
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(0) scale(1.08);
+    filter: brightness(0) drop-shadow(0 0 8px rgba(var(--type-rgb), 1));
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: brightness(1) drop-shadow(0 0 6px rgba(var(--type-rgb), 0.6));
+  }
+}
+
+.summon-ten-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--type-color);
+  opacity: 0;
+}
+
+.summon-ten-name svg {
+  flex: none;
+  width: 11px;
+  height: 11px;
+}
+
+.summon-ten-cell.is-landed .summon-ten-name {
+  opacity: 1;
+  transition: opacity 0.4s ease-out 0.4s;
+}
+
+/* A skip lands everything at once: no fall, no stagger. */
+.summon-ten.is-settled .summon-ten-light,
+.summon-ten.is-settled .summon-ten-flash {
+  animation: none;
+  opacity: 0;
+}
+
+.summon-ten.is-settled .summon-ten-figure {
+  animation: none;
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(var(--type-rgb), 0.6));
+}
+
+.summon-ten.is-settled .summon-ten-name {
+  opacity: 1;
+  transition: none;
+}
+
+.summon-ten-foot {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 60px;
+}
+
+.summon-ten .summon-ten-cheer {
+  --type-rgb: 255, 210, 122;
+  opacity: 1;
+  animation: summon-ten-pop 0.5s var(--ease-spring) both;
+}
+
+.summon-ten-skip {
+  align-self: flex-end;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(214, 222, 255, 0.35);
+}
+
+/* The Constellation's second call sits under the first, smaller: a convenience, not the headline. */
+.sky-call.is-ten {
+  max-width: 220px;
+  min-height: 40px;
+  margin-top: 8px;
+  font-size: 0.85em;
+}
