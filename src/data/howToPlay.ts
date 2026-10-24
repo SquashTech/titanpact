@@ -11,9 +11,9 @@ function section(id: string, title: string, ...pages: string[]): Tip {
 export const HOW_TO_PLAY: readonly Tip[] = [
   section(
     'journey',
-    'The Journey',
+    'The Infinite',
     "Each act ends with a Guardian. Defeat all four to lock the four rings of the Titan's Seal, then win one last fight.",
-    'If all your heroes fall, the journey is over.'
+    'If all your heroes fall, the run is over.'
   ),
   section(
     'map',

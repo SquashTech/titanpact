@@ -46,13 +46,13 @@ export interface ConstellationDefinition {
   rewards: readonly SkyReward[];
 }
 
-/** One way to bend a Journey (§6). Each field names a mechanism that already exists in the run layer. */
+/** One way to bend an Infinite run (§6). Each field names a mechanism that already exists in the run layer. */
 export interface ScenarioModifiers {
   /** A set team, by hero id: no draft and no recruiting. */
   fixedTeam?: readonly string[];
   /** A fixed seed, so the fights play the same every time. */
   seed?: number;
-  /** A run of this many acts, not the full Journey. */
+  /** A run of this many acts, not a full Infinite run. */
   acts?: number;
   cycle?: number;
   /** Where the draft and the Guild Hall draw from, in place of the deck. */

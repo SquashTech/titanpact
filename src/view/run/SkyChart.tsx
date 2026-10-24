@@ -45,7 +45,7 @@ function playOf(c: ConstellationDefinition): SkyPlay | null {
 }
 
 const PLAY_LABELS: Record<SkyPlay, string> = {
-  journey: 'Begin a Journey',
+  journey: 'Enter the Infinite',
   cycles: 'Choose a Cycle',
   trials: 'Open the Trials',
   gauntlet: 'Enter the Gauntlet',
@@ -56,7 +56,7 @@ function starName(star: SkyStar): string {
   if (scenario) return scenario.name;
   switch (star.light.kind) {
     case 'journeyWon':
-      return 'A Journey won';
+      return 'The Titan slain';
     case 'cycleCleared': {
       const cycle = cycleOf(star.light.cycle);
       return `Cycle ${cycle.numeral} · ${cycle.name}`;
@@ -86,7 +86,7 @@ interface Props {
   disabled?: boolean;
   /** Off, the sky is not on screen (another page, a launch): Blip stops and says nothing. */
   active?: boolean;
-  /** How the last Journey ended, when the player has just come back from it; Blip reacts once. */
+  /** How the last Infinite run ended, when the player has just come back from it; Blip reacts once. */
   returned?: 'win' | 'loss' | null;
   onReturnedSeen?: () => void;
   /** A first Blip has thought, to keep once an account. */
@@ -121,7 +121,7 @@ export function SkyChart({ profile, disabled = false, active = true, returned = 
   fitRef.current = fit;
   const toStage = (p: { x: number; y: number }) => ({ x: fitRef.current.ox + p.x * fitRef.current.scale, y: fitRef.current.oy + p.y * fitRef.current.scale });
 
-  // Blip rests by the constellation a press would play next: the first open, unlit one with a press, else Journey.
+  // Blip rests by the constellation a press would play next: the first open, unlit one with a press, else the Infinite.
   const restingBy =
     shown.find(({ c, state }) => state === 'open' && !c.uncharted && playOf(c) && !isConstellationLit(profile, c))?.c ?? sky.constellations.journey;
   const home = toStage(perchOf(restingBy));
@@ -148,7 +148,7 @@ export function SkyChart({ profile, disabled = false, active = true, returned = 
     return true;
   };
 
-  // One thing to say on arriving — a Journey's end, the first sky, a constellation seen open for the
+  // One thing to say on arriving — an Infinite run's end, the first sky, a constellation seen open for the
   // first time — then a few idle thoughts, spaced out, and a dart now and then to look around.
   useEffect(() => {
     if (!blipActive) return;

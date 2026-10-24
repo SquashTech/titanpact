@@ -56,7 +56,7 @@ interface Props {
   openCycle: number;
   /** Records a seen-once beat (the Chronicle weave) in the profile. */
   onSeeTip: (id: string) => void;
-  /** How the Journey just played ended, for Blip to react to once; null otherwise. */
+  /** How the Infinite run just played ended, for Blip to react to once; null otherwise. */
   skyReturn?: 'win' | 'loss' | null;
   onSkyReturnSeen?: () => void;
   /** One of Blip's firsts, thought: kept once an account (run/thoughts.ts). */
@@ -175,7 +175,7 @@ export function TitleScreen({
     startFresh();
   }
 
-  /** A constellation's one press (SkyChart.tsx): a Journey and a Cycle both start a run; the modes open their own screens. */
+  /** A constellation's one press (SkyChart.tsx): the Infinite and a Cycle both start a run; the modes open their own screens. */
   function handleSkyPlay(play: SkyPlay) {
     if (play === 'journey' || play === 'cycles') handleStart();
     else if (play === 'trials') onOpenConstructed();

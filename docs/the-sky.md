@@ -377,7 +377,9 @@ it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own
 - **OPEN, raised by the First Light line** ("a mighty fighter and her trusty canine companion"):
   is the first rail's fixed team Valor and Fang? Valor's *Tale* is cut, but the pair may stand
   as the rail's cast with no dialogue.
-- **OPEN: Journey's name** (§8.4): the user asked for something more celestial and multiversal.
+- **Journey is renamed THE INFINITE** (2026-10-24, per user direction, §8.4). The constellation
+  is "The Infinite", its press "Enter the Infinite", and its star "The Titan slain". Code ids keep
+  `journey` and `classic`.
 - **Not built:** a first look at a hero (Blip doesn't live in the Collection), skins, and the
   Titan-noticing arc (still PROPOSED).
 

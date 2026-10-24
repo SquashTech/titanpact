@@ -17,7 +17,7 @@ export type ThoughtMoment =
   | { kind: 'opened'; constellationId: string }
   /** A sheet whose stars are not authored yet. */
   | { kind: 'uncharted' }
-  /** Back in the sky after a Journey ended. */
+  /** Back in the sky after an Infinite run ended. */
   | { kind: 'returned'; outcome: 'win' | 'loss' }
   | { kind: 'poked' }
   /** Poked again and again. */

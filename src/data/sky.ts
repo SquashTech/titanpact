@@ -1,4 +1,4 @@
-// The sky (docs/the-sky.md §2–§4): the rails first, then Journey, then the modes that already exist,
+// The sky (docs/the-sky.md §2–§4): the rails first, then the Infinite, then the modes that already exist,
 // each as a constellation. Shapes and placements are first pass, for the sky screen to tune.
 // The rail scenarios are named seats, uncharted until their fights are authored (§10, phase 6).
 
@@ -75,7 +75,7 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
   },
   {
     id: 'journey',
-    name: 'Journey',
+    name: 'The Infinite',
     at: { x: 0.5, y: 0.45 },
     stars: [{ id: 'journey.won', x: 0.5, y: 0.5, light: { kind: 'journeyWon' } }],
     lines: [],

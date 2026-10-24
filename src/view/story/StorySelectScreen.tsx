@@ -50,7 +50,7 @@ export function StorySelectScreen({ stories, chaptersDone, cyclesCleared, onPlay
     const banner = bannerFor(p.story.id);
     return banner ? <span className="story-banner" style={{ backgroundImage: `url(${banner})` }} aria-hidden="true" /> : null;
   }
-  const name = (p: Pick) => (p.kind === 'classic' ? 'Journey' : p.story.name);
+  const name = (p: Pick) => (p.kind === 'classic' ? 'The Infinite' : p.story.name);
   const pipsOf = (p: Pick) => {
     if (p.kind === 'classic') return <Pips marks={classicPips} />;
     const { cycle, marks } = storyChapterPips(p.story, chaptersDone);

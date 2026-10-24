@@ -426,7 +426,7 @@ export function App() {
   const [storyMusic, setStoryMusic] = useState<StoryMusic | undefined>(undefined);
   /** Classic Mode picked on the Story select: the title starts it as Seal the Pact once did. */
   const [classicRequested, setClassicRequested] = useState(false);
-  /** How the last Journey ended, until Blip has reacted to it in the sky. Session-only. */
+  /** How the last Infinite run ended, until Blip has reacted to it in the sky. Session-only. */
   const [skyReturn, setSkyReturn] = useState<'win' | 'loss' | null>(null);
   // Read once: a device does not change platform mid-session, and installing reopens the game.
   const [installPlatform] = useState(currentInstallPlatform);
@@ -1191,7 +1191,7 @@ export function App() {
     setScreen({ kind: 'title' });
   }
 
-  /** A Journey is started from the title, so its draft and its Cycle picker are the ones a title press runs. */
+  /** An Infinite run is started from the title, so its draft and its Cycle picker are the ones a title press runs. */
   function handleStartJourney() {
     setClassicRequested(true);
     setScreen({ kind: 'title' });
