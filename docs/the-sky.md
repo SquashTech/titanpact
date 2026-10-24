@@ -40,7 +40,8 @@ References:
 ## 1. The light
 
 Something in the stars watches every telling of the Titan's rising: every world where a band sets
-out, in every way it could. **It is a happy, twinkly light** (the name is OPEN, §8). It loves
+out, in every way it could. **It is a happy, twinkly light named Blip** (2026-10-24, per user
+direction). It loves
 watching these stories unfold and goes looking for new ones that might be interesting. Sometimes it
 darts around the screen making cute sounds. **A star is a telling that held**, and the light lights
 the sky by finding them. The player is the light: its picks are the player's picks.
@@ -140,8 +141,7 @@ The sky branches. Some constellations hold modes that already exist; others hold
   every Journey.
 - **Strangers**: the draft and the Guild Hall draw off the whole catalog, not the deck.
 - **One Guardian, twice as hard**: a short scenario, one act against a woken champion.
-- **A fixed band**: a set team for the whole run, with no recruiting. An authored hero telling
-  (Valor's, if it stays) can live here as an optional star.
+- **A fixed band**: a set team for the whole run, with no recruiting.
 - **Puzzles past the rails**: one-fight scenarios on advanced verbs (fields, Charges, Blessings,
   the companion's Call).
 
@@ -166,14 +166,14 @@ Every reward is shown on the unlit shape (§2).
 ever means a lit node.
 
 - **100 is one draw** (the Starfall), and 1,000 is ten.
+- **The ten-draw is spectacle and convenience** (2026-10-24, per user direction): exactly ten
+  singles' price, no discount and no guarantee. It lets a player with a pile of Stardust spend it
+  in one go instead of watching a single draw over and over.
 - It is paid by constellation rewards and by winning a Journey.
 - **This is not a microtransaction game.** Stardust is never sold.
 
 Open questions about Stardust:
 
-- **The ten-draw needs a reason** (OPEN). With no money behind it, a 1,000-for-ten pack is gacha
-  vocabulary with nothing to buy. If ten draws cost exactly ten singles, it's a spectacle (a shower
-  of ten), which is fine. A bulk discount or a guarantee would need justifying.
 - **The finer grain is the real gain** (PROPOSED): a lost Journey can pay a little for how far it
   got, which whole stars never could.
 - **The sink runs dry.** The Starfall never draws a duplicate, so Stardust stops buying heroes once
@@ -203,7 +203,7 @@ scenario carrying code. Most modifiers already exist:
 
 - **"The Constellation" is already the shop's name.** The sky either absorbs the shop or the shop
   takes another name.
-- **Do heroes shrink into pieces?** If every run is "a telling," one Valor may matter less. The
+- **Do heroes shrink into pieces?** If every run is "a telling," one hero may matter less. The
   Wardens push back on that: they're the one band that is the player's forever.
 - **A voice the player didn't choose.** Keeping the light curious rather than opinionated limits
   that.
@@ -213,19 +213,19 @@ scenario carrying code. Most modifiers already exist:
 
 ## 8. Open — DO NOT silently resolve
 
-1. **The light's name.** Suggested: **Mote** (a mote of stardust, tying it to the currency), Glim.
-   "Pip" is taken by Mastery.
-2. **The twist.** The Titan's eye is magenta everywhere, and the light could be its other eye. A
+1. **The twist.** The Titan's eye is magenta everywhere, and the light could be its other eye. A
    happy light makes that a gut punch rather than a reveal. Probably dropped.
-3. **How many rail stars?** It has to be few enough that Journey opens fast.
-4. **Stardust's figures** (§5): what a Journey win, a loss and a constellation pay.
-5. **Journey's name.** Renamed Journey on 2026-10-22; it may be renamed again to suit the sky.
-6. **What happens to A Tale of Valor.** It could become an optional fixed-band star, or be cut. Its
-   built chapters are the machinery for §3 either way.
-7. **The Cycles' gate** (a clear opens the next) maps onto a constellation of five. Do the Cycles'
+2. **How many rail stars?** It has to be few enough that Journey opens fast.
+3. **Stardust's figures** (§5): what a Journey win, a loss and a constellation pay.
+4. **Journey's name.** Renamed Journey on 2026-10-22; it may be renamed again to suit the sky.
+5. **The Cycles' gate** (a clear opens the next) maps onto a constellation of five. Do the Cycles'
    Location grants become that constellation's payouts?
-8. **The shop's name and shape** (§7).
-9. **Each scenario's numbers**: act count, goals, rewards. All open.
+6. **The shop's name and shape** (§7).
+7. **Each scenario's numbers**: act count, goals, rewards. All open.
+
+**A Tale of Valor is cut in full** (2026-10-24, per user direction): its cast, chapters and
+dialogue. The machinery it was built on (deterministic fights, control tips, the descent from the
+stars) stays for §3.
 
 ## 9. What it reverses (if built)
 
@@ -247,14 +247,12 @@ parallel (they touch different files). The rest go in order.
   100, `GAUNTLET_ENTRY_PRICE` 150, `TRIAL_CLEAR_STARS` → a Stardust figure.
 - A Journey win pays Stardust (the clear bonus, converted). Whether a loss pays is OPEN (§5).
 - Rename every player-facing "star" that means currency to Stardust. The lit stars keep the word.
-- Ten draws at once: one Starfall scene showing ten, at ten singles' price, unless §5's question is
-  answered otherwise.
+- Ten draws at once: one Starfall scene showing ten, at ten singles' price.
 - Tests: balances convert exactly for an existing profile; no save migration.
 
 **Phase 2 — The light, as a comparison page.** *(art direction before code)*
 - Three or four looks and motion personalities side by side, each with its chirps, for the designer
-  to pick (glow and particles in CSS, procedural Web Audio).
-- Pick the name at the same time.
+  to pick (glow and particles in CSS, procedural Web Audio). `art/concepts/blip/`.
 
 **Phase 3 — The sky's data and logic.** *(pure run layer)*
 - `src/data/sky.ts`: `ConstellationDefinition` (id, shape, stars, neighbours, reward) and
@@ -270,7 +268,7 @@ parallel (they touch different files). The rest go in order.
 - The title becomes the sky: constellations drawn, lit or shown as a shape with a reward, a tap
   opening its stars, a star opening its scenario card.
 - Retire the three doors (`TitleModes.tsx`) and the Many Roads screen.
-- Fold or rename the shop (§7, §8.8).
+- Fold or rename the shop (§7, §8.6).
 
 **Phase 5 — The light and its thoughts.** *(view, plus a data table)*
 - The light from phase 2, living in the sky and on scenario cards.
@@ -283,7 +281,7 @@ parallel (they touch different files). The rest go in order.
 - First Light, The Bench and The Road as scenarios on `src/run/story.ts`'s fixed casts, encounter
   scripts and seeds. Their control tips stay.
 - The new piece: a scenario **goal**, checked in the run layer off the event stream.
-- Strip the cast dialogue. Decide A Tale of Valor's fate (§8.6) before deleting any of it.
+- Delete A Tale of Valor's cast, chapters and dialogue (§8). Keep the machinery.
 - The first press on a new account descends from the sky into First Light.
 
 **Phase 7 — The first twisted scenarios.**

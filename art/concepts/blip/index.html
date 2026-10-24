@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blip</title>
+<style>
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1d1c1a;--mute:#6b675f;--line:#e2ddd2;--btn:#ece8df;--btn-ink:#1d1c1a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a;--btn:#2d2a32;--btn-ink:#ece8df}}
+:root[data-theme="dark"]{--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a;--btn:#2d2a32;--btn-ink:#ece8df}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;flex-wrap:wrap}
+h1{font-size:22px;margin:0}
+.toggles{display:flex;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+h2{font-size:15px;margin:0 0 2px}
+section p{margin:0 0 10px;color:var(--mute);font-size:13px}
+button{font:600 13px/1 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--btn);color:var(--btn-ink);border:1px solid var(--line);border-radius:7px;padding:8px 11px;cursor:pointer}
+button[aria-pressed="true"]{background:#e0a63c;color:#1a1100;border-color:#b98425}
+.stage{position:relative;height:300px;overflow:hidden;border-radius:8px;background:radial-gradient(ellipse 90% 70% at 50% 15%,#1d2238,#0b0c14 78%);cursor:crosshair;touch-action:manipulation}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.controls{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.thought{position:absolute;left:0;top:0;max-width:200px;padding:7px 10px;border-radius:12px;background:rgba(18,20,34,.86);border:1px solid rgba(255,240,200,.28);color:#f4efe2;font:500 13px/1.35 system-ui,-apple-system,Segoe UI,sans-serif;opacity:0;transition:opacity .35s;pointer-events:none;white-space:normal;will-change:transform}
+.thought.on{opacity:1}
+.thought::before,.thought::after{content:'';position:absolute;border-radius:50%;background:rgba(18,20,34,.86);border:1px solid rgba(255,240,200,.28)}
+.thought::before{width:8px;height:8px;left:6px;bottom:-11px}
+.thought::after{width:5px;height:5px;left:0;bottom:-18px}
+.thought.flip::before{left:auto;right:6px}
+.thought.flip::after{left:auto;right:0}
+.thought.below::before{bottom:auto;top:-11px}
+.thought.below::after{bottom:auto;top:-18px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Blip</h1>
+  <div class="toggles">
+    <button id="sound" aria-pressed="false">Sound</button>
+    <button id="auto" aria-pressed="true">Auto</button>
+  </div>
+</header>
+<div class="grid" id="grid"></div>
+</main>
+
+<script>
+const TAU = Math.PI * 2;
+const R = Math.random;
+const pick = (a) => a[Math.floor(R() * a.length)];
+
+function seeded(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// --- Sound ---------------------------------------------------------------
+
+let ac = null;
+let master = null;
+let soundOn = false;
+
+function audio() {
+  if (!ac) {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    master = ac.createGain();
+    master.gain.value = 0.55;
+    master.connect(ac.destination);
+  }
+  if (ac.state === 'suspended') ac.resume();
+  return ac;
+}
+
+function tone({ f, f2 = f, at = 0, dur = 0.06, type = 'sine', gain = 0.1, attack = 0.005, filter = null }) {
+  if (!soundOn) return;
+  const a = audio();
+  const t = a.currentTime + at;
+  const o = a.createOscillator();
+  o.type = type;
+  o.frequency.setValueAtTime(f, t);
+  if (f2 !== f) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+  const g = a.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  let node = o;
+  if (filter) {
+    const b = a.createBiquadFilter();
+    b.type = filter.type;
+    b.frequency.value = filter.f;
+    b.Q.value = filter.q || 1;
+    o.connect(b);
+    node = b;
+  }
+  node.connect(g);
+  g.connect(master);
+  o.start(t);
+  o.stop(t + dur + 0.03);
+}
+
+const pip = (f, at, gain = 0.05) => tone({ f, at, dur: 0.025, type: 'square', gain, attack: 0.002, filter: { type: 'lowpass', f: 3500 } });
+const syl = (p, at, dur, form, p2 = p * 1.04, gain = 0.09) =>
+  tone({ f: p, f2: p2, at, dur, type: 'sawtooth', gain, attack: 0.012, filter: { type: 'bandpass', f: form, q: 5 } });
+const glide = (f, f2, at, dur, gain = 0.11) =>
+  tone({ f, f2, at, dur, type: 'triangle', gain, attack: 0.04, filter: { type: 'lowpass', f: 2000 } });
+
+const VOICES = {
+  twinkle: {
+    chirp() { for (let i = 0; i < 3; i++) { const f = pick([1568, 1760, 2093, 2349, 2637]); tone({ f, f2: f * 1.08, at: i * 0.06, dur: 0.05, gain: 0.08 }); } },
+    tick() { tone({ f: 2000 + R() * 700, dur: 0.03, gain: 0.035 }); },
+    win() { [1047, 1319, 1568, 2093].forEach((f, i) => tone({ f, f2: f * 1.02, at: i * 0.07, dur: 0.12, gain: 0.08 })); tone({ f: 3136, at: 0.3, dur: 0.45, gain: 0.03 }); },
+    lose() { [1319, 1175, 988].forEach((f, i) => tone({ f, f2: f * 0.97, at: i * 0.14, dur: 0.16, gain: 0.07 })); },
+  },
+  wisp: {
+    chirp() { glide(520, 900, 0, 0.22); glide(900, 720, 0.2, 0.16, 0.08); },
+    tick() { const f = 420 + R() * 200; glide(f, f * 1.15, 0, 0.08, 0.05); },
+    win() { [523, 659, 784, 1047].forEach((f, i) => glide(f, f * 1.12, i * 0.12, 0.25, 0.09)); },
+    lose() { glide(700, 330, 0, 0.6, 0.1); },
+  },
+  firefly: {
+    chirp() { pip(1800, 0); pip(2400, 0.07); pip(1800, 0.22); pip(2400, 0.29); },
+    tick() { pip(1600 + R() * 700, 0, 0.025); },
+    win() { for (let i = 0; i < 6; i++) pip(1500 + i * 250, i * 0.05); },
+    lose() { pip(1800, 0); pip(1300, 0.25, 0.04); },
+  },
+  face: {
+    chirp() { syl(360, 0, 0.07, 1000); syl(400, 0.08, 0.07, 1300); syl(520, 0.16, 0.12, 1100, 640); },
+    tick() { syl(300 + R() * 220, 0, 0.05, 800 + R() * 700, undefined, 0.06); },
+    win() { syl(440, 0, 0.08, 1200); syl(554, 0.09, 0.08, 1200); syl(660, 0.18, 0.2, 1400, 800); },
+    lose() { syl(420, 0, 0.18, 900, 340); syl(330, 0.2, 0.32, 800, 250); },
+  },
+};
+
+// --- What Blip thinks ----------------------------------------------------
+
+const THOUGHTS = [
+  'That one’s guarded this door so long it forgot why.',
+  'Slowest bear I’ve ever seen. I love him.',
+  'What if nobody could recruit anything but Frost? Just to see.',
+  'I’ve watched this one forty times. Still good.',
+  'Two by two. Always two by two. I don’t make the rules.',
+  '…I might make the rules.',
+  '…It’s looking at me. It isn’t supposed to be able to do that.',
+  'Somewhere, a crab is very proud of itself.',
+];
+const ARRIVE = ['Ooh. What’s that one?', 'Haven’t seen this one yet.', 'Hmm. Hmm hmm.'];
+const WIN = ['That’s a crab. I made a crab.', 'Yes! Yes yes yes.', 'Put that one in the sky.'];
+const LOSE = ['Oh no.', 'Oh no. …Okay. Again. That one had a really good bear.', '…Okay. Again.'];
+
+// --- The four Blips ------------------------------------------------------
+
+const VARIANTS = [
+  {
+    id: 'twinkle', name: 'A · Twinkle',
+    blurb: 'A four-point star. Snappy darts that overshoot, quick bright chirps.',
+    k: 60, c: 7,
+    idle(b, t) {
+      if (t > b.hopAt) { b.hop = [(R() - 0.5) * 28, (R() - 0.5) * 18]; b.hopAt = t + 1 + R() * 1.6; }
+      return [b.hop[0] + Math.sin(t * 1.3) * 4, b.hop[1] + Math.sin(t * 2.1) * 3];
+    },
+    draw(g, b, t) {
+      const s = 7.5 * (1 + 0.14 * Math.sin(t * 9)) * Math.sqrt(b.bright);
+      glow(g, b.x, b.y, 30 * b.bright, 'rgba(255,236,170,', 0.55 * b.bright);
+      g.save();
+      g.translate(b.x, b.y);
+      g.rotate(t * 0.6 + b.spin);
+      g.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const r = i % 2 === 0 ? s : s * 0.28;
+        const a = (i / 8) * TAU;
+        g.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      g.closePath();
+      g.fillStyle = '#fff6d8';
+      g.fill();
+      g.restore();
+      if (b.speed > 160 && R() < 0.35) b.stage.spark(b.x, b.y, 'rgba(255,240,190,', 0.6);
+    },
+  },
+  {
+    id: 'wisp', name: 'B · Wisp',
+    blurb: 'A soft orb with a comet tail. Floats in slow loops, sings in glides.',
+    k: 6, c: 4.5,
+    idle(b, t) { return [Math.sin(t * 0.7) * 22, Math.sin(t * 1.4) * 10]; },
+    draw(g, b) {
+      b.trail.forEach((p, i) => {
+        const k = i / b.trail.length;
+        g.beginPath();
+        g.arc(p[0], p[1], 1 + 6 * k, 0, TAU);
+        g.fillStyle = `rgba(170,230,255,${0.22 * k * b.bright})`;
+        g.fill();
+      });
+      glow(g, b.x, b.y, 36 * b.bright, 'rgba(160,220,255,', 0.5 * b.bright);
+      const core = g.createRadialGradient(b.x, b.y, 0, b.x, b.y, 8);
+      core.addColorStop(0, '#ffffff');
+      core.addColorStop(1, 'rgba(200,240,255,0)');
+      g.fillStyle = core;
+      g.beginPath();
+      g.arc(b.x, b.y, 8, 0, TAU);
+      g.fill();
+    },
+    trail: 26,
+  },
+  {
+    id: 'firefly', name: 'C · Firefly',
+    blurb: 'A tiny spark that pulses and blinks. Zigzags, talks in little pips.',
+    k: 30, c: 6,
+    idle(b, t) {
+      if (t > b.hopAt) { b.hop = [(R() - 0.5) * 36, (R() - 0.5) * 30]; b.hopAt = t + 0.25 + R() * 0.35; }
+      return b.hop;
+    },
+    draw(g, b, t) {
+      const phase = (t + b.seed) % 2.6;
+      const blink = phase < 0.3 ? 0.25 + 0.75 * Math.abs(phase / 0.15 - 1) : 1;
+      const pulse = (0.8 + 0.2 * Math.sin(t * 6)) * blink * b.bright;
+      b.trail.forEach((p, i) => {
+        if (i % 3) return;
+        const k = i / b.trail.length;
+        g.beginPath();
+        g.arc(p[0], p[1], 1.2, 0, TAU);
+        g.fillStyle = `rgba(220,255,140,${0.35 * k * b.bright})`;
+        g.fill();
+      });
+      glow(g, b.x, b.y, 22 * pulse + 4, 'rgba(210,255,120,', 0.6 * pulse);
+      g.beginPath();
+      g.arc(b.x, b.y, 3.2, 0, TAU);
+      g.fillStyle = `rgba(247,255,208,${0.4 + 0.6 * blink})`;
+      g.fill();
+    },
+    trail: 18,
+  },
+  {
+    id: 'face', name: 'D · Little face',
+    blurb: 'A glow with two eyes that look where it’s going. Bobs, babbles like a voice.',
+    k: 25, c: 8,
+    idle(b, t) { return [Math.sin(t * 0.9) * 6, Math.sin(t * 2) * 5]; },
+    draw(g, b, t) {
+      const want = b.speed > 30 ? [b.vx / b.speed, b.vy / b.speed] : b.lookAt;
+      b.look[0] += (want[0] - b.look[0]) * 0.12;
+      b.look[1] += (want[1] - b.look[1]) * 0.12;
+      glow(g, b.x, b.y, 34 * b.bright, 'rgba(255,220,150,', 0.45 * b.bright);
+      const squash = Math.min(0.18, b.speed / 1400);
+      g.save();
+      g.translate(b.x, b.y);
+      g.rotate(Math.atan2(b.vy, b.vx));
+      g.scale(1 + squash, 1 - squash);
+      g.rotate(-Math.atan2(b.vy, b.vx));
+      const body = g.createRadialGradient(-3, -4, 1, 0, 0, 13);
+      body.addColorStop(0, '#fffdf3');
+      body.addColorStop(0.7, '#ffe7a8');
+      body.addColorStop(1, '#ffcf6e');
+      g.fillStyle = body;
+      g.beginPath();
+      g.arc(0, 0, 12.5, 0, TAU);
+      g.fill();
+      const ex = b.look[0] * 3;
+      const ey = b.look[1] * 2;
+      g.fillStyle = g.strokeStyle = '#2a2140';
+      g.lineWidth = 1.6;
+      g.lineCap = 'round';
+      const blinking = (t + b.seed) % 3.7 < 0.12;
+      for (const side of [-1, 1]) {
+        const x = side * 4.2 + ex;
+        if (b.mood === 'happy') {
+          g.beginPath();
+          g.arc(x, 0 + ey, 2.2, Math.PI * 1.1, Math.PI * 1.9);
+          g.stroke();
+          g.fillStyle = 'rgba(255,140,140,.45)';
+          g.beginPath();
+          g.arc(side * 7.5, 3.5, 1.8, 0, TAU);
+          g.fill();
+          g.fillStyle = '#2a2140';
+        } else {
+          const sad = b.mood === 'sad';
+          g.beginPath();
+          g.ellipse(x, (sad ? 1.5 : -1) + ey, sad ? 1.3 : 1.7, blinking ? 0.25 : sad ? 2 : 2.8, 0, 0, TAU);
+          g.fill();
+        }
+      }
+      g.restore();
+    },
+  },
+];
+
+function glow(g, x, y, r, rgb, a) {
+  const grad = g.createRadialGradient(x, y, 0, x, y, Math.max(1, r));
+  grad.addColorStop(0, `${rgb}${a})`);
+  grad.addColorStop(1, `${rgb}0)`);
+  g.fillStyle = grad;
+  g.beginPath();
+  g.arc(x, y, Math.max(1, r), 0, TAU);
+  g.fill();
+}
+
+// --- The sky each Blip lives in ------------------------------------------
+
+const CONSTELLATIONS = [
+  { pts: [[0.14, 0.32], [0.22, 0.24], [0.3, 0.32], [0.22, 0.4], [0.12, 0.47], [0.32, 0.47]], edges: [[0, 1], [1, 2], [2, 3], [3, 0], [3, 4], [3, 5]], lit: true },
+  { pts: [[0.58, 0.2], [0.68, 0.17], [0.77, 0.22], [0.86, 0.15], [0.8, 0.32], [0.9, 0.35]], edges: [[0, 1], [1, 2], [2, 3], [2, 4], [4, 5]], lit: false },
+  { pts: [[0.4, 0.72], [0.52, 0.63], [0.62, 0.75], [0.5, 0.86]], edges: [[0, 1], [1, 2], [2, 3], [3, 0], [1, 3]], lit: false },
+  { pts: [[0.8, 0.66], [0.89, 0.74], [0.82, 0.86]], edges: [[0, 1], [1, 2]], lit: false },
+];
+
+class Stage {
+  constructor(variant, index) {
+    this.v = variant;
+    this.voice = VOICES[variant.id];
+    const section = document.createElement('section');
+    section.innerHTML = `<h2>${variant.name}</h2><p>${variant.blurb}</p>
+      <div class="stage"><canvas></canvas><div class="thought"></div></div>
+      <div class="controls">
+        <button data-a="dart">Dart</button><button data-a="think">Think</button>
+        <button data-a="win">Win</button><button data-a="lose">Lose</button><button data-a="chirp">Chirp</button>
+      </div>`;
+    document.getElementById('grid').append(section);
+    this.el = section.querySelector('.stage');
+    this.canvas = section.querySelector('canvas');
+    this.g = this.canvas.getContext('2d');
+    this.bubble = section.querySelector('.thought');
+    section.querySelectorAll('button').forEach((btn) => btn.addEventListener('click', () => this[btn.dataset.a]()));
+    this.el.addEventListener('pointerdown', (e) => {
+      const r = this.el.getBoundingClientRect();
+      this.goTo(e.clientX - r.left, e.clientY - r.top);
+      this.voice.chirp();
+    });
+
+    const rand = seeded(97 + index * 31);
+    this.stars = Array.from({ length: 80 }, () => ({ x: rand(), y: rand(), s: 0.4 + rand() * 0.9, ph: rand() * TAU, sp: 0.6 + rand() * 2 }));
+    this.cons = CONSTELLATIONS.map((c) => ({ ...c, drawn: c.lit ? 1 : 0 }));
+    this.at = 0;
+    this.particles = [];
+    this.timers = [];
+    this.nextAuto = 2 + index * 1.3;
+    this.b = {
+      stage: this, x: 0, y: 0, vx: 0, vy: 0, speed: 0, homeX: 0, homeY: 0, bright: 1, brightTo: 1, brightUntil: 0,
+      sinkUntil: 0, loopUntil: 0, spin: 0, hop: [0, 0], hopAt: 0, trail: [], look: [0, 0], lookAt: [0, 0.3],
+      mood: 'idle', moodUntil: 0, travelling: false, seed: index * 1.7,
+    };
+
+    new ResizeObserver(() => this.resize()).observe(this.el);
+    this.resize();
+    const [hx, hy] = this.homeFor(0);
+    Object.assign(this.b, { x: hx, y: hy, homeX: hx, homeY: hy });
+  }
+
+  resize() {
+    const dpr = window.devicePixelRatio || 1;
+    this.W = this.el.clientWidth;
+    this.H = this.el.clientHeight;
+    this.canvas.width = this.W * dpr;
+    this.canvas.height = this.H * dpr;
+    this.g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (!this.b.travelling && this.W) [this.b.homeX, this.b.homeY] = this.homeFor(this.at);
+  }
+
+  homeFor(i) {
+    const c = this.cons[i];
+    const xs = c.pts.map((p) => p[0] * this.W);
+    const ys = c.pts.map((p) => p[1] * this.H);
+    const cx = xs.reduce((a, b) => a + b) / xs.length;
+    return [cx, Math.max(28, Math.min(...ys) - 24)];
+  }
+
+  goTo(x, y) {
+    Object.assign(this.b, { homeX: x, homeY: y, travelling: true });
+    this.arrivingAt = null;
+  }
+
+  dart() {
+    let i;
+    do i = Math.floor(R() * this.cons.length); while (i === this.at);
+    this.at = i;
+    const [x, y] = this.homeFor(i);
+    this.goTo(x, y);
+    this.arrivingAt = i;
+    this.voice.chirp();
+  }
+
+  arrive() {
+    this.b.travelling = false;
+    const c = this.arrivingAt === null ? null : this.cons[this.arrivingAt];
+    this.b.lookAt = [0, 0.4];
+    if (c && !c.lit && R() < 0.6) this.think(pick(ARRIVE));
+  }
+
+  chirp() {
+    this.voice.chirp();
+    this.b.brightTo = 1.5;
+    this.b.brightUntil = this.t + 0.25;
+    this.b.vy -= 120;
+  }
+
+  win() {
+    const b = this.b;
+    this.voice.win();
+    Object.assign(b, { brightTo: 1.8, brightUntil: this.t + 1.3, loopUntil: this.t + 1, mood: 'happy', moodUntil: this.t + 1.8 });
+    b.spin += Math.PI * 2;
+    for (let i = 0; i < 16; i++) this.spark(b.x, b.y, 'rgba(255,236,170,', 1.2, (i / 16) * TAU);
+    const c = this.cons[this.at];
+    if (!c.lit) { c.lit = true; c.drawn = 0; }
+    this.later(0.7, () => this.think(pick(WIN)));
+  }
+
+  lose() {
+    const b = this.b;
+    this.voice.lose();
+    Object.assign(b, { brightTo: 0.45, brightUntil: this.t + 2, sinkUntil: this.t + 2, mood: 'sad', moodUntil: this.t + 2.2 });
+    this.later(0.9, () => this.think(pick(LOSE)));
+  }
+
+  think(text) {
+    if (!text) {
+      this.deck = this.deck && this.deck.length ? this.deck : [...THOUGHTS].sort(() => R() - 0.5);
+      text = this.deck.pop();
+    }
+    this.timers.forEach(clearTimeout);
+    this.timers = [];
+    const bubble = this.bubble;
+    bubble.textContent = '';
+    bubble.classList.add('on');
+    let n = 0;
+    const type = () => {
+      n++;
+      bubble.textContent = text.slice(0, n);
+      if (n % 2 === 0 && text[n - 1] !== ' ') this.voice.tick();
+      if (n < text.length) this.timers.push(setTimeout(type, 34));
+      else this.timers.push(setTimeout(() => bubble.classList.remove('on'), 1800 + text.length * 35));
+    };
+    type();
+  }
+
+  later(sec, fn) { this.timers.push(setTimeout(fn, sec * 1000)); }
+
+  spark(x, y, rgb, power = 1, angle = R() * TAU) {
+    const sp = (40 + R() * 90) * power;
+    this.particles.push({ x, y, vx: Math.cos(angle) * sp, vy: Math.sin(angle) * sp, life: 0, max: 0.5 + R() * 0.5, rgb });
+  }
+
+  step(t, dt) {
+    this.t = t;
+    const b = this.b;
+    const v = this.v;
+    if (t > b.brightUntil) b.brightTo = 1;
+    if (t > b.moodUntil) b.mood = 'idle';
+    b.bright += (b.brightTo - b.bright) * Math.min(1, dt * 4);
+
+    let [ox, oy] = b.travelling ? [0, 0] : v.idle(b, t);
+    if (t < b.loopUntil) { ox += Math.cos(t * 9) * 26; oy += Math.sin(t * 9) * 26; }
+    if (t < b.sinkUntil) oy += 20;
+    const tx = b.homeX + ox;
+    const ty = b.homeY + oy;
+    b.vx += (v.k * (tx - b.x) - v.c * b.vx) * dt;
+    b.vy += (v.k * (ty - b.y) - v.c * b.vy) * dt;
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.speed = Math.hypot(b.vx, b.vy);
+    if (b.travelling && Math.hypot(b.homeX - b.x, b.homeY - b.y) < 10 && b.speed < 60) this.arrive();
+    if (v.trail) {
+      b.trail.push([b.x, b.y]);
+      if (b.trail.length > v.trail) b.trail.shift();
+    }
+
+    if (autoplay.on && !b.travelling && !this.bubble.classList.contains('on')) {
+      this.nextAuto -= dt;
+      if (this.nextAuto <= 0) {
+        this.nextAuto = 4 + R() * 4;
+        const roll = R();
+        if (roll < 0.55) this.dart();
+        else if (roll < 0.85) this.think();
+        else this.chirp();
+      }
+    }
+
+    this.particles = this.particles.filter((p) => (p.life += dt) < p.max);
+    this.particles.forEach((p) => { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.94; p.vy *= 0.94; });
+    this.cons.forEach((c) => { if (c.lit && c.drawn < 1) c.drawn = Math.min(1, c.drawn + dt * 1.2); });
+
+    this.draw(t);
+    this.placeBubble();
+  }
+
+  draw(t) {
+    const { g, W, H } = this;
+    g.clearRect(0, 0, W, H);
+    for (const s of this.stars) {
+      g.globalAlpha = 0.25 + 0.5 * (0.5 + 0.5 * Math.sin(t * s.sp + s.ph));
+      g.fillStyle = '#fff';
+      g.fillRect(s.x * W, s.y * H, s.s, s.s);
+    }
+    g.globalAlpha = 1;
+    for (const c of this.cons) {
+      const pts = c.pts.map((p) => [p[0] * W, p[1] * H]);
+      g.lineWidth = 1.4;
+      if (c.lit) {
+        g.setLineDash([]);
+        g.strokeStyle = 'rgba(243,207,122,.75)';
+        for (const [a, z] of c.edges) {
+          const [x1, y1] = pts[a];
+          const [x2, y2] = pts[z];
+          g.beginPath();
+          g.moveTo(x1, y1);
+          g.lineTo(x1 + (x2 - x1) * c.drawn, y1 + (y2 - y1) * c.drawn);
+          g.stroke();
+        }
+      } else {
+        g.setLineDash([3, 4]);
+        g.strokeStyle = 'rgba(150,170,220,.25)';
+        for (const [a, z] of c.edges) {
+          g.beginPath();
+          g.moveTo(...pts[a]);
+          g.lineTo(...pts[z]);
+          g.stroke();
+        }
+      }
+      g.setLineDash([]);
+      for (const [x, y] of pts) {
+        if (c.lit) glow(g, x, y, 7, 'rgba(255,230,160,', 0.5);
+        g.beginPath();
+        g.arc(x, y, c.lit ? 2.2 : 1.5, 0, TAU);
+        g.fillStyle = c.lit ? '#fff3c4' : 'rgba(200,210,255,.45)';
+        g.fill();
+      }
+    }
+    for (const p of this.particles) {
+      const a = 1 - p.life / p.max;
+      g.beginPath();
+      g.arc(p.x, p.y, 1.6 * a + 0.4, 0, TAU);
+      g.fillStyle = `${p.rgb}${a})`;
+      g.fill();
+    }
+    this.v.draw(g, this.b, t);
+  }
+
+  placeBubble() {
+    const bubble = this.bubble;
+    const w = bubble.offsetWidth;
+    const h = bubble.offsetHeight;
+    let x = this.b.x + 16;
+    let y = this.b.y - 22 - h;
+    const flip = x + w > this.W - 8;
+    if (flip) x = this.b.x - 16 - w;
+    const below = y < 6;
+    if (below) y = this.b.y + 24;
+    x = Math.max(6, Math.min(this.W - w - 6, x));
+    bubble.classList.toggle('flip', flip);
+    bubble.classList.toggle('below', below);
+    bubble.style.transform = `translate(${x}px,${y}px)`;
+  }
+}
+
+const autoplay = { on: true };
+const stages = VARIANTS.map((v, i) => new Stage(v, i));
+
+document.getElementById('sound').addEventListener('click', (e) => {
+  soundOn = !soundOn;
+  if (soundOn) audio();
+  e.currentTarget.setAttribute('aria-pressed', String(soundOn));
+});
+document.getElementById('auto').addEventListener('click', (e) => {
+  autoplay.on = !autoplay.on;
+  e.currentTarget.setAttribute('aria-pressed', String(autoplay.on));
+});
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  stages.forEach((s) => s.step(now / 1000, dt));
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
