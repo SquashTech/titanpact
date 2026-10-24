@@ -1,7 +1,7 @@
 // The sky's rules (docs/the-sky.md §2): a constellation is a set of stars, lit when every star is,
-// and lighting one opens the ones that come after it. Content is data (src/data/sky.ts); this file
-// is the mechanism. Every star an existing record already settles is DERIVED from that record, so
-// an account lights exactly what it has done; only a new scenario's win is stored
+// and a constellation opens once a star it waits on is lit. Content is data (src/data/sky.ts); this
+// file is the mechanism. Every star an existing record already settles is DERIVED from that record,
+// so an account lights exactly what it has done; only a new scenario's win is stored
 // (`Profile.litStars`).
 
 import type { Profile } from './profile';
@@ -9,10 +9,10 @@ import type { Profile } from './profile';
 /** What lights one star. Every kind but `scenario` reads a record the profile already keeps. */
 export type SkyStarLight =
   | { kind: 'scenario'; scenarioId: string }
-  | { kind: 'journeyWon' }
   | { kind: 'cycleCleared'; cycle: number }
   | { kind: 'trialBeaten'; trialId: string }
-  | { kind: 'gauntletCleared' };
+  /** The Gauntlet cleared this many times. */
+  | { kind: 'gauntletCleared'; count: number };
 
 export interface SkyStar {
   id: string;
@@ -30,10 +30,12 @@ export interface ConstellationDefinition {
   name: string;
   /** The constellation's centre in the sky, 0–1 on each axis. */
   at: { x: number; y: number };
+  /** Its box across, as a share of the sky's width. */
+  size: number;
   stars: readonly SkyStar[];
   /** The shape drawn in when it is lit: pairs of indices into `stars`. */
   lines: readonly (readonly [number, number])[];
-  /** Lit by any of these, it opens; none means it is open from the start. */
+  /** Star ids: any one of them lit opens it. None means it is open from the start. */
   after: readonly string[];
   /**
    * A tutorial constellation (§3). An account that played before the sky existed already knows what
@@ -41,7 +43,7 @@ export interface ConstellationDefinition {
    * arriving moves no existing balance.
    */
   rail?: boolean;
-  /** Its scenarios are not authored yet: it opens what comes after it as if lit, and lights and pays nothing itself. */
+  /** Its scenarios are not authored yet: what waits on its stars opens as if they were lit, and it lights and pays nothing itself. */
   uncharted?: boolean;
   rewards: readonly SkyReward[];
 }
@@ -88,14 +90,12 @@ function lightIsLit(profile: Profile, light: SkyStarLight): boolean {
   switch (light.kind) {
     case 'scenario':
       return profile.litStars.includes(light.scenarioId);
-    case 'journeyWon':
-      return profile.runsCompleted > 0;
     case 'cycleCleared':
       return profile.cyclesCleared >= light.cycle;
     case 'trialBeaten':
       return profile.trialsCleared.includes(light.trialId);
     case 'gauntletCleared':
-      return profile.gauntletClears > 0;
+      return profile.gauntletClears >= light.count;
   }
 }
 
@@ -107,14 +107,24 @@ export function isConstellationLit(profile: Profile, constellation: Constellatio
   return constellation.stars.every((star) => isStarLit(profile, constellation, star));
 }
 
-/** Its own stars decide `lit`; the constellations it comes after decide the rest. */
+/** The constellation a star belongs to, and the star. */
+export function findStar(sky: SkyContent, starId: string): { constellation: ConstellationDefinition; star: SkyStar } | null {
+  for (const constellation of Object.values(sky.constellations)) {
+    const star = constellation.stars.find((s) => s.id === starId);
+    if (star) return { constellation, star };
+  }
+  return null;
+}
+
+/** Its own stars decide `lit`; the stars it waits on decide the rest. */
 export function constellationState(profile: Profile, sky: SkyContent, id: string): ConstellationState {
   const constellation = sky.constellations[id];
   if (!constellation) return 'hidden';
   if (isConstellationLit(profile, constellation)) return 'lit';
-  const before = constellation.after.map((prior) => sky.constellations[prior]).filter((c): c is ConstellationDefinition => !!c);
-  if (constellation.after.length === 0 || before.some((c) => c.uncharted || isConstellationLit(profile, c))) return 'open';
-  if (before.some((c) => constellationState(profile, sky, c.id) === 'open')) return 'glimpsed';
+  if (constellation.after.length === 0) return 'open';
+  const waits = constellation.after.map((starId) => findStar(sky, starId)).filter((w): w is NonNullable<typeof w> => !!w);
+  if (waits.some(({ constellation: c, star }) => c.uncharted || isStarLit(profile, c, star))) return 'open';
+  if (waits.some(({ constellation: c }) => constellationState(profile, sky, c.id) === 'open')) return 'glimpsed';
   return 'hidden';
 }
 

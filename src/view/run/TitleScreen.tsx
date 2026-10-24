@@ -175,9 +175,9 @@ export function TitleScreen({
     startFresh();
   }
 
-  /** A constellation's one press (SkyChart.tsx): the Infinite and a Cycle both start a run; the modes open their own screens. */
+  /** A constellation's press (SkyChart.tsx): the Infinite starts a run, past Cycle I by its Cycle picker; the modes open their own screens. */
   function handleSkyPlay(play: SkyPlay) {
-    if (play === 'journey' || play === 'cycles') handleStart();
+    if (play === 'infinite') handleStart();
     else if (play === 'trials') onOpenConstructed();
     else onOpenGauntlet();
   }
@@ -269,6 +269,7 @@ export function TitleScreen({
         profile={profile}
         disabled={launching}
         active={tab === 'play' && !launching && !falling}
+        pressHidden={!!parkedRun}
         returned={skyReturn}
         onReturnedSeen={onSkyReturnSeen}
         onSeeThought={onSeeThought}

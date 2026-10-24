@@ -1,6 +1,6 @@
 # the-sky.md — The Sky: lighting the multiverse
 
-> **STATUS: DIRECTION DECIDED; PHASES 1–5 DONE (2026-10-24): Stardust is the currency, the title is the sky, and Blip lives in it, thinking and pokeable.** §1–§5 hold what is
+> **STATUS: DIRECTION DECIDED; PHASES 1–5 DONE (2026-10-24): Stardust is the currency, the title is the zoom sky (five constellations), and Blip lives in it, thinking and pokeable.** §1–§5 hold what is
 > decided; anything marked PROPOSED or OPEN is not. §10 is the build plan. If built, it replaces
 > Stories as the front door (§9).
 >
@@ -377,6 +377,24 @@ it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own
 - **OPEN, raised by the First Light line** ("a mighty fighter and her trusty canine companion"):
   is the first rail's fixed team Valor and Fang? Valor's *Tale* is cut, but the pair may stand
   as the rail's cast with no dialogue.
+- **The zoom sky** (2026-10-24, per user direction, picked from `art/concepts/sky-layout/` over
+  a carousel and a scroll map). The first sky's small constellations, scattered about with Blip's
+  bubble landing on them, didn't work. Now:
+  - **Five constellations, one for each way to play:** First Light (the eight lessons, the three
+    rails merged), the Infinite (its five Cycles, a pentagram), the Trials (a ring of fourteen),
+    the Gauntlet (crossed blades, a star for each of the first five clears) and Strange Worlds
+    (six named seats for §4's twisted runs, uncharted).
+  - **"Enter the Infinite" sits under the Infinite**, one tap. A tap on any constellation zooms the
+    sky into it: its stars named, the others dimmed, its own press at the foot and "‹ The Sky"
+    back. A parked run hides the overview's press; Continue and Start a New Run stand under the sky.
+  - **Blip sits in a band under the logo** and talks there, its bubble beside it, never over a
+    constellation. It flies out only to point at one, then comes back to say its piece. On a zoom
+    it says its first for that constellation, or for a star that is lit or next.
+  - **A constellation opens off a STAR** (`after` is star ids): the Trials, the Gauntlet and
+    Strange Worlds open on Cycle I's star, as the doors did on a first win.
+  - **First pass, flagged:** First Light pays 300 (the three rails' 100 each, merged); the Gauntlet's
+    five stars are five clears (new goals, precedent the Cycles' line of five); "Strange Worlds" is
+    a working name; and placements and shapes are still first pass.
 - **Journey is renamed THE INFINITE** (2026-10-24, per user direction, §8.4). The constellation
   is "The Infinite", its press "Enter the Infinite", and its star "The Titan slain". Code ids keep
   `journey` and `classic`.

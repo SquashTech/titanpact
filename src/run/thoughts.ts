@@ -4,7 +4,7 @@
 // Thoughts live outside runs only: nothing in a run reads this file.
 
 import type { Profile } from './profile';
-import { constellationState, type SkyContent } from './sky';
+import { constellationState, isStarLit, type SkyContent } from './sky';
 
 export type ThoughtMoment =
   /** The very first time the sky is seen. */
@@ -13,9 +13,11 @@ export type ThoughtMoment =
   | { kind: 'idle' }
   /** A constellation seen open for the first time. */
   | { kind: 'revealed'; constellationId: string }
-  /** A constellation's sheet opened. */
+  /** A constellation zoomed into. */
   | { kind: 'opened'; constellationId: string }
-  /** A sheet whose stars are not authored yet. */
+  /** One star, seen up close once it is lit or the next to light. */
+  | { kind: 'star'; starId: string }
+  /** A constellation zoomed into whose stars are not authored yet. */
   | { kind: 'uncharted' }
   /** Back in the sky after an Infinite run ended. */
   | { kind: 'returned'; outcome: 'win' | 'loss' }
@@ -38,6 +40,7 @@ function sameMoment(a: ThoughtMoment, b: ThoughtMoment): boolean {
   if (a.kind !== b.kind) return false;
   if ((a.kind === 'revealed' || a.kind === 'opened') && (b.kind === 'revealed' || b.kind === 'opened')) return a.constellationId === b.constellationId;
   if (a.kind === 'returned' && b.kind === 'returned') return a.outcome === b.outcome;
+  if (a.kind === 'star' && b.kind === 'star') return a.starId === b.starId;
   return true;
 }
 
@@ -78,6 +81,24 @@ export function revealedFirst(profile: Profile, thoughts: readonly ThoughtDefini
       (t) => t.once && t.moment.kind === 'revealed' && t.moment.constellationId === constellationId && !profile.seenThoughtIds.includes(t.id)
     ) ?? null
   );
+}
+
+/**
+ * What Blip says on zooming into a constellation: its first for the constellation, else a first for
+ * one of its stars that is lit or next to light, else an uncharted line, else nothing.
+ */
+export function zoomThought(profile: Profile, sky: SkyContent, thoughts: readonly ThoughtDefinition[], constellationId: string, random: number): ThoughtDefinition | null {
+  const constellation = sky.constellations[constellationId];
+  if (!constellation) return null;
+  const opened = thoughts.find((t) => t.once && sameMoment(t.moment, { kind: 'opened', constellationId }) && !profile.seenThoughtIds.includes(t.id));
+  if (opened) return opened;
+  const lit = constellation.stars.map((star) => isStarLit(profile, constellation, star));
+  for (const [i, star] of constellation.stars.entries()) {
+    if (!(lit[i] || i === 0 || lit[i - 1])) continue;
+    const first = thoughts.find((t) => t.once && sameMoment(t.moment, { kind: 'star', starId: star.id }) && !profile.seenThoughtIds.includes(t.id));
+    if (first) return first;
+  }
+  return constellation.uncharted && !lit.every(Boolean) ? thoughtFor(profile, thoughts, { kind: 'uncharted' }, random) : null;
 }
 
 /** A first heard: recorded once; a pool thought is never recorded. */

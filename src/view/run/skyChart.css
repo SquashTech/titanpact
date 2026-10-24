@@ -1,15 +1,12 @@
-/* The title as the sky (SkyChart.tsx). */
+/* The title as the sky (SkyChart.tsx): Blip's band under the logo, then the sky that zooms. */
 
 .sky-chart {
   position: absolute;
   z-index: 2;
-  top: 132px;
+  top: 128px;
   left: 0;
   right: 0;
-  bottom: calc(var(--hub-nav-h, 64px) + var(--sky-chart-foot, 24px));
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
+  bottom: calc(var(--hub-nav-h, 64px) + var(--sky-chart-foot, 16px));
   animation: sky-chart-in 0.9s ease-out both;
 }
 
@@ -24,16 +21,28 @@
   }
 }
 
-.sky-chart svg {
+.sky-chart-stage {
+  position: absolute;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.sky-chart-stage > svg {
+  display: block;
   width: 100%;
   height: 100%;
-  max-width: 420px;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .sky-con {
-  pointer-events: auto;
   outline: none;
+  transition: opacity 0.4s ease-out;
+}
+
+.sky-con.is-dimmed {
+  opacity: 0.07;
 }
 
 .sky-con.is-glimpsed {
@@ -45,36 +54,30 @@
   cursor: pointer;
 }
 
-.sky-con:focus-visible .sky-con-hit,
-.sky-con:hover .sky-con-hit {
+.sky-con[role="button"]:focus-visible .sky-con-hit,
+.sky-con[role="button"]:hover .sky-con-hit {
   fill: rgba(255, 233, 176, 0.05);
 }
 
 .sky-con-line {
-  stroke: rgba(205, 214, 255, 0.14);
+  stroke: rgba(205, 214, 255, 0.16);
   stroke-width: 1;
   stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
 .sky-con.is-glimpsed .sky-con-line {
-  stroke: rgba(205, 214, 255, 0.12);
+  stroke: rgba(205, 214, 255, 0.14);
   stroke-dasharray: 2 4;
 }
 
 .sky-con.is-lit .sky-con-line {
-  stroke: rgba(255, 210, 122, 0.75);
-  stroke-width: 1.4;
-  animation: sky-con-draw 1.2s ease-out both;
-}
-
-@keyframes sky-con-draw {
-  from {
-    stroke-opacity: 0;
-  }
+  stroke: rgba(255, 210, 122, 0.8);
+  stroke-width: 1.5;
 }
 
 .sky-con-star {
-  fill: rgba(220, 228, 255, 0.55);
+  fill: rgba(220, 228, 255, 0.6);
   animation: sky-con-twinkle 3.2s ease-in-out var(--twinkle, 0s) infinite;
 }
 
@@ -84,13 +87,13 @@
 }
 
 .sky-con.is-glimpsed .sky-con-star {
-  fill: rgba(205, 214, 255, 0.22);
+  fill: rgba(205, 214, 255, 0.24);
   animation: none;
 }
 
 .sky-con.is-uncharted:not(.is-lit) .sky-con-star {
   fill: none;
-  stroke: rgba(205, 214, 255, 0.35);
+  stroke: rgba(205, 214, 255, 0.4);
   stroke-width: 0.8;
   animation: none;
 }
@@ -102,20 +105,21 @@
 }
 
 .sky-con-name {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  fill: rgba(220, 228, 255, 0.72);
+  fill: rgba(220, 228, 255, 0.75);
 }
 
-.sky-con.is-lit .sky-con-name {
+.sky-con.is-lit .sky-con-name,
+.sky-con.is-main.is-open .sky-con-name {
   fill: #ffd27a;
 }
 
 .sky-con.is-glimpsed .sky-con-name,
 .sky-con.is-uncharted:not(.is-lit) .sky-con-name {
-  fill: rgba(205, 214, 255, 0.32);
+  fill: rgba(205, 214, 255, 0.35);
 }
 
 .sky-con-reward {
@@ -124,173 +128,60 @@
   fill: rgba(255, 220, 150, 0.5);
 }
 
-/* --- A constellation's sheet --- */
-
-.sky-sheet-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 70;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 16px;
-  background: rgba(3, 4, 11, 0.62);
-  animation: sky-sheet-fade 0.2s ease-out both;
+.sky-con-label {
+  font-weight: 700;
+  fill: rgba(240, 234, 214, 0.8);
+  animation: sky-label-in 0.4s ease-out 0.45s both;
 }
 
-@keyframes sky-sheet-fade {
+.sky-con-label.is-lit {
+  fill: #ffe7a8;
+}
+
+@keyframes sky-label-in {
   from {
     opacity: 0;
   }
 }
 
-.sky-sheet {
-  width: 100%;
-  max-width: 400px;
-  max-height: 80%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px 16px 20px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #121733, #070a18);
-  box-shadow: inset 0 0 0 1px rgba(255, 210, 122, 0.35), 0 12px 40px rgba(0, 0, 0, 0.6);
-  animation: sky-sheet-rise 0.3s var(--ease-spring) both;
+/* --- the presses: the Infinite's under it, and a zoom's at the foot --- */
+
+.sky-press {
+  position: absolute;
+  z-index: 3;
+  width: 270px;
 }
 
-@keyframes sky-sheet-rise {
-  from {
-    transform: translateY(24px);
-    opacity: 0;
-  }
+.sky-press.is-overview {
+  transform: translateX(-50%);
+  animation: sky-label-in 0.5s ease-out both;
 }
 
-.sky-sheet-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.sky-press.is-zoomed {
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  animation: sky-label-in 0.4s ease-out 0.4s both;
 }
 
-.sky-sheet-name {
-  flex: 1;
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #ffe7a8;
-}
-
-.sky-sheet-reward {
-  font-size: 13px;
-  font-weight: 800;
-  color: #ffd27a;
-}
-
-.sky-sheet-close {
-  padding: 4px 8px;
+.sky-back {
+  position: absolute;
+  z-index: 3;
+  top: 4px;
+  left: 12px;
+  padding: 6px 4px;
   border: 0;
   background: none;
-  color: rgba(220, 228, 255, 0.6);
-  font: inherit;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.sky-sheet-stars {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  list-style: none;
-}
-
-.sky-sheet-stars.is-many {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px 12px;
-}
-
-.sky-sheet-star {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(220, 228, 255, 0.55);
-}
-
-.sky-sheet-star.is-lit {
-  color: #f4ead2;
-}
-
-.sky-sheet-star-mark {
-  flex: none;
-  color: rgba(220, 228, 255, 0.4);
-}
-
-.sky-sheet-star.is-lit .sky-sheet-star-mark {
   color: #ffd27a;
-}
-
-.sky-sheet-uncharted {
-  margin: 0;
+  font: inherit;
   font-size: 12px;
-  font-style: italic;
-  color: rgba(205, 214, 255, 0.45);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  animation: sky-label-in 0.3s ease-out both;
 }
 
-.sky-sheet-play {
-  align-self: center;
-  width: 100%;
-  max-width: 296px;
-  margin-top: 4px;
-}
-
-/* A one-star constellation's halo: a slow breath, so a mode in itself reads as somewhere to go. */
-.sky-con-halo {
-  fill: rgba(255, 220, 150, 0.08);
-  stroke: rgba(255, 220, 150, 0.25);
-  stroke-width: 0.6;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: sky-con-halo 3.6s ease-in-out infinite;
-}
-
-.sky-con.is-uncharted:not(.is-lit) .sky-con-halo {
-  display: none;
-}
-
-@keyframes sky-con-halo {
-  50% {
-    transform: scale(1.25);
-    opacity: 0.5;
-  }
-}
-
-/* The svg's own box: Blip flies in it on the same fit as the chart. */
-.sky-chart-stage {
-  position: relative;
-  width: 100%;
-  max-width: 420px;
-  height: 100%;
-}
-
-.sky-chart-stage > svg {
-  max-width: none;
-}
-
-/* Blip sits on the sheet's top edge, its thoughts floating above it. */
-.sky-sheet {
-  position: relative;
-}
-
-.sky-sheet-perch {
-  position: absolute;
-  top: -100px;
-  left: 0;
-  right: 0;
-  height: 120px;
-  pointer-events: none;
+.sky-press .plate-label {
+  white-space: nowrap;
 }

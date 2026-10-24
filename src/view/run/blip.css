@@ -52,3 +52,14 @@
   pointer-events: auto;
   transition: none;
 }
+
+/* Beside Blip in its seat: a tail pointing back at it. */
+.blip-bubble.is-beside::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: calc(50% - 6px);
+  border: 6px solid transparent;
+  border-left: 0;
+  border-right-color: rgba(255, 249, 232, 0.96);
+}

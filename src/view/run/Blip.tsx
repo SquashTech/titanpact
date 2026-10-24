@@ -41,6 +41,8 @@ interface Props {
   active: boolean;
   /** A poke landed; `inARow` counts a quick run of them. */
   onPoke?: (inARow: number) => void;
+  /** The bubble opens to Blip's right, into the band it sits in, rather than above or below it. */
+  bubbleBeside?: boolean;
 }
 
 interface Body {
@@ -75,7 +77,7 @@ interface Spark {
   max: number;
 }
 
-export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, onPoke }, ref) {
+export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, onPoke, bubbleBeside = false }, ref) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -348,6 +350,13 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
     if (hit) hit.style.transform = `translate(${b.x - 22}px, ${b.y - 22}px)`;
     const bubble = bubbleRef.current;
     if (!bubble) return;
+    if (bubbleBeside) {
+      const left = b.x + 24;
+      bubble.style.maxWidth = `${Math.max(120, width - left - 6)}px`;
+      bubble.classList.add('is-beside');
+      bubble.style.transform = `translate(${left}px, ${b.y - bubble.offsetHeight / 2}px)`;
+      return;
+    }
     const half = bubble.offsetWidth / 2;
     const x = Math.max(half + 4, Math.min(width - half - 4, b.x));
     const below = b.y < 80;

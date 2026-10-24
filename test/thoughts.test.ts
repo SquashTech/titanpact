@@ -2,8 +2,9 @@ import * as assert from 'assert';
 import { test } from './harness';
 import { createProfile, decodeProfile, recordRunEnded, type RunEnd } from '../src/run/profile';
 import { sky } from '../src/data/sky';
+import { findStar } from '../src/run/sky';
 import { THOUGHTS } from '../src/data/thoughts';
-import { recordThoughtSeen, revealedFirst, revealedThought, thoughtFor } from '../src/run/thoughts';
+import { recordThoughtSeen, revealedFirst, revealedThought, thoughtFor, zoomThought } from '../src/run/thoughts';
 
 const win: RunEnd = { outcome: 'win', actReached: 6, locationId: null, encountersWon: 1, cycle: 1, roster: [] };
 
@@ -13,6 +14,7 @@ test('thoughts: the table hangs together — unique ids, real constellations, bu
     assert.ok(!ids.has(t.id), `${t.id} twice`);
     ids.add(t.id);
     if (t.moment.kind === 'revealed' || t.moment.kind === 'opened') assert.ok(sky.constellations[t.moment.constellationId], `${t.id} names a missing constellation`);
+    if (t.moment.kind === 'star') assert.ok(findStar(sky, t.moment.starId), `${t.id} names a missing star`);
     assert.ok(t.lines.length > 0, `${t.id} says nothing`);
     for (const line of t.lines) assert.ok(line.length > 0 && line.length <= 100, `${t.id}: "${line}" is past what one bubble holds`);
     if (t.showsNext) assert.ok(revealedFirst(createProfile(), THOUGHTS, t.showsNext), `${t.id} leads to ${t.showsNext}, which has no first`);
@@ -45,20 +47,36 @@ test('thoughts: a first is thought once an account, and a pool is never used up'
 
 test('thoughts: a constellation seen open is revealed once, uncharted ones never, in sky order', () => {
   let profile = createProfile();
-  // A new account: the rails are uncharted, so Journey is the first one Blip points out.
+  // A new account: the lessons are uncharted, so the Infinite is the first one Blip points out.
   const first = revealedThought(profile, sky, THOUGHTS);
-  assert.strictEqual(first?.constellationId, 'journey');
+  assert.strictEqual(first?.constellationId, 'infinite');
   profile = recordThoughtSeen(profile, first!.thought);
   assert.strictEqual(revealedThought(profile, sky, THOUGHTS), null, 'nothing else is open yet');
 
-  // A Journey won opens the Cycles, the Trials and the Gauntlet: one first a visit, in sky order.
+  // An Infinite run won opens the Trials and the Gauntlet: one first a visit, in sky order. Strange
+  // Worlds opens too, but uncharted, so it is never pointed out.
   profile = recordRunEnded(profile, win, 1);
   const order: string[] = [];
   for (let next = revealedThought(profile, sky, THOUGHTS); next; next = revealedThought(profile, sky, THOUGHTS)) {
     order.push(next.constellationId);
     profile = recordThoughtSeen(profile, next.thought);
   }
-  assert.deepStrictEqual(order, ['cycles', 'trials', 'gauntlet']);
+  assert.deepStrictEqual(order, ['trials', 'gauntlet']);
+});
+
+test('thoughts: a zoom says its constellation first, then a star that is lit or next, then nothing', () => {
+  let profile = createProfile();
+  const first = zoomThought(profile, sky, THOUGHTS, 'infinite', 0)!;
+  assert.strictEqual(first.id, 'opened.infinite');
+  profile = recordThoughtSeen(profile, first);
+  assert.strictEqual(zoomThought(profile, sky, THOUGHTS, 'infinite', 0), null, 'Cycle II is not next until Cycle I is cleared');
+  profile = recordRunEnded(profile, win, 1);
+  const next = zoomThought(profile, sky, THOUGHTS, 'infinite', 0)!;
+  assert.ok(next.moment.kind === 'star' && next.moment.starId === 'cycles.2');
+  profile = recordThoughtSeen(profile, next);
+  assert.strictEqual(zoomThought(profile, sky, THOUGHTS, 'infinite', 0), null);
+  const uncharted = zoomThought(createProfile(), sky, THOUGHTS, 'strange', 0);
+  assert.strictEqual(uncharted?.moment.kind, 'uncharted');
 });
 
 test('thoughts: the first sky leads to First Light, charted or not, and says it once', () => {
@@ -73,10 +91,10 @@ test('thoughts: the first sky leads to First Light, charted or not, and says it 
 
 test('thoughts: an opened sheet says its first once, and a return picks from its outcome', () => {
   let profile = createProfile();
-  const opened = thoughtFor(profile, THOUGHTS, { kind: 'opened', constellationId: 'journey' }, 0);
+  const opened = thoughtFor(profile, THOUGHTS, { kind: 'opened', constellationId: 'infinite' }, 0);
   assert.ok(opened?.once);
   profile = recordThoughtSeen(profile, opened!);
-  assert.strictEqual(thoughtFor(profile, THOUGHTS, { kind: 'opened', constellationId: 'journey' }, 0), null);
+  assert.strictEqual(thoughtFor(profile, THOUGHTS, { kind: 'opened', constellationId: 'infinite' }, 0), null);
   const lost = thoughtFor(profile, THOUGHTS, { kind: 'returned', outcome: 'loss' }, 0.5);
   assert.ok(lost && lost.moment.kind === 'returned' && lost.moment.outcome === 'loss');
 });
