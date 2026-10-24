@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sky Layout</title>
+<style>
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1d1c1a;--mute:#6b675f;--line:#e2ddd2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}}
+:root[data-theme="dark"]{--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1160px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:22px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;justify-items:center}
+section{width:100%;max-width:372px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px 16px}
+h2{font-size:15px;margin:0 0 2px}
+section>p{margin:0 0 10px;color:var(--mute);font-size:13px}
+
+/* --- a phone ------------------------------------------------------------------ */
+.phone{position:relative;width:340px;height:700px;max-width:100%;margin:0 auto;border-radius:22px;overflow:hidden;
+  background:radial-gradient(ellipse 120% 60% at 50% 10%,#1d2240,#0a0b16 70%);color:#ece8df;user-select:none;touch-action:pan-y}
+.phone .stars{position:absolute;inset:0;pointer-events:none}
+.phone .ridge{position:absolute;left:0;right:0;bottom:56px;height:90px;pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(8,10,16,.9) 70%),radial-gradient(ellipse 80% 100% at 30% 100%,#10141c 60%,transparent 61%),radial-gradient(ellipse 70% 90% at 80% 100%,#0e1219 60%,transparent 61%)}
+.logo{position:absolute;top:16px;left:0;right:0;text-align:center;font:900 30px/1 Georgia,serif;letter-spacing:.14em;
+  background:linear-gradient(180deg,#fff3c8,#e8b54a 55%,#8a5a1c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #2a1806);z-index:3;pointer-events:none}
+.nav{position:absolute;left:0;right:0;bottom:0;height:56px;display:flex;justify-content:space-around;align-items:center;background:linear-gradient(180deg,#14121a,#0b0a10);border-top:1px solid #4a3a1c;font:800 9px/1 system-ui;letter-spacing:.12em;color:#c9b88f;z-index:6}
+.nav b{display:flex;flex-direction:column;align-items:center;gap:5px}
+.nav i{width:22px;height:18px;border-radius:5px;background:#3a2e1a;display:block}
+.nav b.on{color:#ffd27a}.nav b.on i{background:#e0a63c;box-shadow:0 0 12px #e0a63c}
+
+/* --- Blip's seat: a fixed band under the logo, the bubble always opening into it --- */
+.seat{position:absolute;top:60px;left:12px;right:12px;height:56px;z-index:5;pointer-events:none}
+.blip{position:absolute;left:4px;top:12px;width:28px;height:28px;border-radius:50%;pointer-events:auto;cursor:pointer;
+  background:radial-gradient(circle at 38% 34%,#fffdf3,#ffe7a8 60%,#ffcf6e);box-shadow:0 0 18px 6px rgba(255,220,150,.45);animation:bob 3.2s ease-in-out infinite}
+.blip::before,.blip::after{content:'';position:absolute;top:10px;width:4px;height:6px;border-radius:50%;background:#2a2140;animation:blink 4.1s infinite}
+.blip::before{left:8px}.blip::after{right:8px}
+.blip.squish{animation:squish .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes bob{50%{transform:translate(3px,-5px)}}
+@keyframes blink{0%,96%,100%{transform:scaleY(1)}98%{transform:scaleY(.1)}}
+@keyframes squish{0%{transform:scale(1.35,.65)}40%{transform:scale(.85,1.2)}100%{transform:none}}
+.bubble{position:absolute;left:44px;right:0;top:4px;min-height:44px;padding:7px 10px;border-radius:12px;background:rgba(255,249,232,.96);color:#2a2140;font:700 12px/1.3 system-ui;opacity:0;transition:opacity .3s}
+.bubble.on{opacity:1}
+.bubble::before{content:'';position:absolute;left:-6px;top:16px;border:6px solid transparent;border-left:0;border-right-color:rgba(255,249,232,.96)}
+
+/* --- constellations --------------------------------------------------------------- */
+svg .ln{stroke:rgba(205,214,255,.16);stroke-width:1;stroke-linecap:round;fill:none}
+svg .lit .ln{stroke:rgba(255,210,122,.8);stroke-width:1.5}
+svg .glimpsed .ln{stroke-dasharray:2 4;stroke:rgba(205,214,255,.16)}
+svg .st{fill:rgba(220,228,255,.6)}
+svg .st.on{fill:#ffe7a8;filter:drop-shadow(0 0 4px rgba(255,220,150,.9))}
+svg .glimpsed .st{fill:rgba(205,214,255,.25)}
+svg .nm{font:800 10px system-ui;letter-spacing:.14em;text-transform:uppercase;fill:rgba(220,228,255,.75)}
+svg .lit .nm,svg .open.main .nm{fill:#ffd27a}
+svg .glimpsed .nm{fill:rgba(205,214,255,.35)}
+svg .hit{fill:transparent;cursor:pointer}
+svg .lbl{font-family:system-ui;font-weight:700;fill:rgba(240,234,214,.85)}
+svg .lbl.on{fill:#ffe7a8}
+
+/* --- a plate press ------------------------------------------------------------------ */
+.plate{display:block;margin:0 auto;padding:12px 22px;border:0;border-radius:6px;cursor:pointer;
+  background:linear-gradient(180deg,#1d2452,#0a0d26);box-shadow:inset 0 0 0 2px #ffd27a,0 0 18px rgba(255,210,122,.35);color:#fff3d6;font:900 14px/1 system-ui;letter-spacing:.12em;text-transform:uppercase}
+.plate:disabled{opacity:.45;cursor:default}
+
+/* --- A: carousel -------------------------------------------------------------------- */
+.car{position:absolute;top:122px;bottom:56px;left:0;right:0;overflow:hidden;z-index:2}
+.car-track{display:flex;height:100%;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.car-page{flex:0 0 100%;display:flex;flex-direction:column;align-items:center;padding:10px 20px 0}
+.car-page svg{width:280px;height:280px}
+.car-name{font:900 20px/1 Georgia,serif;letter-spacing:.08em;color:#ffe7a8;margin:4px 0 16px;text-transform:uppercase}
+.car-dots{position:absolute;bottom:72px;left:0;right:0;display:flex;justify-content:center;gap:7px;z-index:3}
+.car-dots i{width:7px;height:7px;border-radius:50%;background:rgba(220,228,255,.25)}
+.car-dots i.on{background:#ffd27a}
+.car-arrow{position:absolute;top:260px;z-index:3;width:30px;height:44px;border:0;background:none;color:#ffd27a;font:900 26px/1 system-ui;cursor:pointer}
+.car-arrow.l{left:2px}.car-arrow.r{right:2px}
+
+/* --- B: scroll map ------------------------------------------------------------------ */
+.map{position:absolute;top:122px;bottom:56px;left:0;right:0;overflow-y:auto;z-index:2;scrollbar-width:none}
+.map::-webkit-scrollbar{display:none}
+.map svg{display:block;width:340px;height:1460px}
+.map .path{stroke:rgba(255,220,150,.18);stroke-width:2;stroke-dasharray:1 7;stroke-linecap:round;fill:none}
+
+/* --- C: zoom sky -------------------------------------------------------------------- */
+.zoom{position:absolute;top:118px;bottom:56px;left:0;right:0;z-index:2}
+.zoom svg{width:100%;height:100%;display:block}
+.zoom .press{position:absolute;left:0;right:0;top:372px;transition:opacity .3s}
+.zoom.in .press{top:auto;bottom:18px}
+.zoom .back{position:absolute;top:2px;left:10px;border:0;background:none;color:#ffd27a;font:800 12px system-ui;letter-spacing:.1em;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .3s;z-index:3}
+.zoom.in .back{opacity:1;pointer-events:auto}
+
+/* --- the sheet A and B share --------------------------------------------------------- */
+.sheet{position:absolute;left:10px;right:10px;bottom:66px;z-index:7;padding:14px;border-radius:12px;background:linear-gradient(180deg,#121733,#070a18);box-shadow:inset 0 0 0 1px rgba(255,210,122,.35),0 12px 30px rgba(0,0,0,.6);transform:translateY(calc(100% + 90px));transition:transform .3s cubic-bezier(.2,.9,.3,1.1)}
+.sheet.on{transform:none}
+.sheet h3{margin:0 0 8px;font:900 15px/1 system-ui;letter-spacing:.1em;text-transform:uppercase;color:#ffe7a8}
+.sheet ul{margin:0 0 12px;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font:700 11px/1.3 system-ui;color:rgba(220,228,255,.55)}
+.sheet li.on{color:#f4ead2}
+.sheet li::before{content:'☆ ';color:rgba(220,228,255,.4)}
+.sheet li.on::before{content:'★ ';color:#ffd27a}
+.sheet .x{position:absolute;top:10px;right:12px;border:0;background:none;color:rgba(220,228,255,.6);font-size:14px;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<h1>Sky layout</h1>
+<div class="grid">
+  <section>
+    <h2>A · Carousel</h2>
+    <p>One category a page; swipe or tap the arrows. Each gets the whole screen and its own press.</p>
+    <div class="phone" id="phone-a"></div>
+  </section>
+  <section>
+    <h2>B · Scroll map</h2>
+    <p>One tall sky, climbed from the horizon. Opens scrolled to the frontier; tap a constellation for its sheet.</p>
+    <div class="phone" id="phone-b"></div>
+  </section>
+  <section>
+    <h2>C · Zoom sky</h2>
+    <p>Five big constellations on one screen, the Infinite's press under it. Tap one to zoom into its stars.</p>
+    <div class="phone" id="phone-c"></div>
+  </section>
+</div>
+</main>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+const ring = (n) => Array.from({ length: n }, (_, i) => { const a = (i / n) * Math.PI * 2 - Math.PI / 2; return [0.5 + 0.46 * Math.cos(a), 0.5 + 0.46 * Math.sin(a)]; });
+const chain = (n) => Array.from({ length: n - 1 }, (_, i) => [i, i + 1]);
+
+// A veteran account: the lessons done, two Cycles cleared, three Trials beaten, the Gauntlet open.
+const CATS = [
+  { id: 'first', name: 'First Light', play: 'Play a Lesson',
+    pts: [[.04,.82],[.18,.6],[.31,.72],[.44,.45],[.57,.56],[.7,.3],[.83,.4],[.96,.16]], lines: chain(8), lit: [0,1,2,3,4,5,6,7],
+    items: ['Read a Move','The Matchup','Two at Once','Who Goes First','The Switch','Rest','Locked In','The Road'] },
+  { id: 'infinite', name: 'The Infinite', play: 'Enter the Infinite', main: true,
+    pts: [[.5,.04],[.96,.38],[.78,.94],[.22,.94],[.04,.38]], lines: [[0,2],[2,4],[4,1],[1,3],[3,0]], lit: [0,1],
+    items: ['I · The Sealing','II · The Remembered','III · The Long Winter','IV · The Gathering','V · The Last Cycle'] },
+  { id: 'trials', name: 'The Trials', play: 'Open the Trials',
+    pts: ring(14), lines: ring(14).map((_, i) => [i, (i + 1) % 14]), lit: [0,1,4],
+    items: ['The Kindling','The Long Tide','The White Hold','The Front','The Return','The Undergrowth','The Sounding Bell','The Ill Omen','The Wellspring Court','The Unravelling','The Bound Choir','The Charged Line','The Wound Spring','The Blood Trail'] },
+  { id: 'gauntlet', name: 'The Gauntlet', play: 'Enter the Gauntlet',
+    pts: [[.1,.1],[.5,.5],[.9,.9],[.9,.1],[.1,.9]], lines: [[0,1],[1,2],[3,1],[1,4]], lit: [],
+    items: ['One win','Two wins','Three wins','Four wins','Five wins'] },
+  { id: 'strange', name: 'Strange Worlds', play: null, glimpsed: true,
+    pts: [[.5,.5],[.64,.4],[.62,.66],[.34,.62],[.36,.26],[.78,.2]], lines: chain(6), lit: [],
+    items: ['???','???','???','???','???','???'] },
+];
+const byId = Object.fromEntries(CATS.map((c) => [c.id, c]));
+const stateOf = (c) => (c.glimpsed ? 'glimpsed' : c.lit.length === c.pts.length ? 'lit' : 'open');
+
+function el(tag, attrs = {}, parent) {
+  const node = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  if (parent) parent.appendChild(node);
+  return node;
+}
+
+/** One constellation into an svg: its box centred at (cx, cy), `size` across. */
+function drawCon(svg, c, cx, cy, size, { name = true, labels = false, onTap } = {}) {
+  const g = el('g', { class: `${stateOf(c)}${c.main ? ' main' : ''}` }, svg);
+  const at = ([x, y]) => [cx - size / 2 + x * size, cy - size / 2 + y * size];
+  if (onTap && !c.glimpsed) { el('circle', { class: 'hit', cx, cy, r: size * 0.62 }, g).addEventListener('click', () => onTap(c)); }
+  for (const [a, b] of c.lines) { const [x1, y1] = at(c.pts[a]); const [x2, y2] = at(c.pts[b]); el('line', { class: 'ln', x1, y1, x2, y2 }, g); }
+  c.pts.forEach((p, i) => {
+    const [x, y] = at(p);
+    const on = c.lit.includes(i);
+    el('circle', { class: `st${on ? ' on' : ''}`, cx: x, cy: y, r: (on ? 3.4 : 2.3) * Math.max(1, size / 160) }, g);
+    if (labels) {
+      // Out from the shape's centre, so a ring's names stand round it rather than on each other.
+      const dx = x - cx;
+      const dy = y - cy;
+      const d = Math.hypot(dx, dy) || 1;
+      const push = size * 0.07;
+      const anchor = Math.abs(dx) < size * 0.12 ? 'middle' : dx < 0 ? 'end' : 'start';
+      const t = el('text', { class: `lbl${on ? ' on' : ''}`, x: x + (dx / d) * push, y: y + (dy / d) * push + size * 0.015, 'text-anchor': anchor, 'font-size': size * 0.045 }, g);
+      t.textContent = c.items[i];
+    }
+  });
+  if (name) { const t = el('text', { class: 'nm', x: cx, y: cy + size / 2 + 16, 'text-anchor': 'middle' }, g); t.textContent = c.name; }
+  return g;
+}
+
+function starfield(phone, seed) {
+  const canvas = document.createElement('canvas');
+  canvas.className = 'stars';
+  canvas.width = 680; canvas.height = 1400;
+  const g = canvas.getContext('2d');
+  let s = seed;
+  const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(230,236,255,${0.2 + r() * 0.6})`; g.beginPath(); g.arc(r() * 680, r() * 1400, 0.6 + r() * 1.6, 0, 7); g.fill(); }
+  phone.appendChild(canvas);
+}
+
+const THOUGHTS = [
+  'Oh, hi! Sorry, I would’ve cleaned up a bit, but I wasn’t expecting company.',
+  'Wait... it came back? It came BACK. And it’s still mad about last time.',
+  'I tried counting all the stars once. I got to eleven and then sneezed.',
+  'I’m not supposed to have favorites. ...I have like forty favorites.',
+];
+
+function chrome(phone, seed) {
+  starfield(phone, seed);
+  phone.insertAdjacentHTML('beforeend', `
+    <div class="ridge"></div>
+    <div class="logo">TITANPACT</div>
+    <div class="seat"><div class="blip" title="Poke"></div><div class="bubble"></div></div>
+    <div class="nav"><b><i></i>COLLECTION</b><b class="on"><i></i>PLAY</b><b><i></i>OBSERVATORY</b></div>`);
+  const blip = phone.querySelector('.blip');
+  const bubble = phone.querySelector('.bubble');
+  let timers = [];
+  const think = (line) => {
+    timers.forEach(clearTimeout); timers = [];
+    bubble.textContent = ''; bubble.classList.add('on');
+    let n = 0;
+    const type = () => { n++; bubble.textContent = line.slice(0, n); if (n < line.length) timers.push(setTimeout(type, 30)); else timers.push(setTimeout(() => bubble.classList.remove('on'), 2600)); };
+    type();
+  };
+  let i = seed % THOUGHTS.length;
+  const loop = () => { think(THOUGHTS[i++ % THOUGHTS.length]); setTimeout(loop, 7000); };
+  setTimeout(loop, 800 + seed * 9);
+  blip.addEventListener('click', () => { blip.classList.remove('squish'); void blip.offsetWidth; blip.classList.add('squish'); think(['Hee!', 'Boop!', 'Hey, that tickles!'][Math.floor(Math.random() * 3)]); });
+  return { think };
+}
+
+function sheet(phone) {
+  phone.insertAdjacentHTML('beforeend', `<div class="sheet"><button class="x">✕</button><h3></h3><ul></ul><button class="plate"></button></div>`);
+  const node = phone.querySelector('.sheet');
+  node.querySelector('.x').addEventListener('click', () => node.classList.remove('on'));
+  return (c) => {
+    node.querySelector('h3').textContent = c.name;
+    node.querySelector('ul').innerHTML = c.items.map((it, i) => `<li class="${c.lit.includes(i) ? 'on' : ''}">${it}</li>`).join('');
+    const press = node.querySelector('.plate');
+    press.textContent = c.play; press.style.display = c.play ? '' : 'none';
+    node.classList.add('on');
+  };
+}
+
+// --- A: carousel ---------------------------------------------------------------------
+(function () {
+  const phone = document.getElementById('phone-a');
+  chrome(phone, 3);
+  const order = ['first', 'infinite', 'trials', 'gauntlet', 'strange'];
+  phone.insertAdjacentHTML('beforeend', `<div class="car"><div class="car-track"></div></div><div class="car-dots"></div>
+    <button class="car-arrow l" aria-label="Back">‹</button><button class="car-arrow r" aria-label="Next">›</button>`);
+  const track = phone.querySelector('.car-track');
+  const dots = phone.querySelector('.car-dots');
+  for (const id of order) {
+    const c = byId[id];
+    const page = document.createElement('div');
+    page.className = 'car-page';
+    const svg = el('svg', { viewBox: '0 0 280 280' });
+    drawCon(svg, c, 140, 140, c.id === 'trials' ? 220 : 210, { name: false });
+    page.appendChild(svg);
+    page.insertAdjacentHTML('beforeend', `<div class="car-name">${c.name}</div><button class="plate" ${c.play ? '' : 'disabled'}>${c.play ?? 'Not yet found'}</button>`);
+    track.appendChild(page);
+    dots.appendChild(document.createElement('i'));
+  }
+  let at = 1;
+  const go = (i) => { at = Math.max(0, Math.min(order.length - 1, i)); track.style.transform = `translateX(${-at * 100}%)`; [...dots.children].forEach((d, j) => d.classList.toggle('on', j === at)); };
+  phone.querySelector('.car-arrow.l').addEventListener('click', () => go(at - 1));
+  phone.querySelector('.car-arrow.r').addEventListener('click', () => go(at + 1));
+  let start = null;
+  phone.querySelector('.car').addEventListener('pointerdown', (e) => (start = e.clientX));
+  phone.querySelector('.car').addEventListener('pointerup', (e) => { if (start === null) return; const dx = e.clientX - start; start = null; if (Math.abs(dx) > 40) go(at + (dx < 0 ? 1 : -1)); });
+  go(1);
+})();
+
+// --- B: scroll map ---------------------------------------------------------------------
+(function () {
+  const phone = document.getElementById('phone-b');
+  chrome(phone, 5);
+  phone.insertAdjacentHTML('beforeend', `<div class="map"></div>`);
+  const map = phone.querySelector('.map');
+  const svg = el('svg', { viewBox: '0 0 340 1460' });
+  map.appendChild(svg);
+  const spots = { first: [170, 1330, 170], infinite: [170, 1010, 200], trials: [90, 690, 140], gauntlet: [255, 610, 120], strange: [170, 300, 150] };
+  el('path', { class: 'path', d: 'M170 1400 C 120 1250, 220 1150, 170 1010 C 120 880, 90 800, 90 690 M170 1010 C 230 860, 260 720, 255 610 M90 690 C 120 520, 200 420, 170 300 M255 610 C 240 460, 200 400, 170 300 M170 300 C 150 200, 190 120, 170 40' }, svg);
+  const open = sheet(phone);
+  for (const [id, [x, y, s]] of Object.entries(spots)) drawCon(svg, byId[id], x, y, s, { onTap: open });
+  for (let i = 0; i < 9; i++) el('circle', { class: 'st', cx: 60 + ((i * 97) % 220), cy: 60 + ((i * 53) % 180), r: 1.6, opacity: 0.3 }, svg);
+  requestAnimationFrame(() => (map.scrollTop = 1010 - map.clientHeight / 2 + 40));
+})();
+
+// --- C: zoom sky ---------------------------------------------------------------------------
+(function () {
+  const phone = document.getElementById('phone-c');
+  chrome(phone, 7);
+  phone.insertAdjacentHTML('beforeend', `<div class="zoom"><button class="back">‹ THE SKY</button><svg viewBox="0 0 340 540"></svg><div class="press"><button class="plate">Enter the Infinite</button></div></div>`);
+  const zoom = phone.querySelector('.zoom');
+  const svg = zoom.querySelector('svg');
+  const press = zoom.querySelector('.press .plate');
+  const SKY = [0, 0, 340, 540];
+  const spots = { strange: [258, 56, 74], trials: [76, 168, 104], gauntlet: [272, 166, 86], infinite: [170, 266, 160], first: [84, 466, 84] };
+  let view = SKY.slice();
+  const groups = {};
+  const draw = (zoomedId) => {
+    svg.innerHTML = '';
+    for (const [id, [x, y, s]] of Object.entries(spots)) {
+      groups[id] = drawCon(svg, byId[id], x, y, s, { name: !zoomedId, labels: zoomedId === id, onTap: zoomedId ? null : (c) => zoomInto(c.id) });
+      if (zoomedId && zoomedId !== id) groups[id].style.opacity = '0.15';
+    }
+  };
+  const animate = (to, done) => {
+    const from = view.slice();
+    const t0 = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / 650);
+      const e = 1 - Math.pow(1 - t, 3);
+      view = from.map((v, i) => v + (to[i] - v) * e);
+      svg.setAttribute('viewBox', view.join(' '));
+      if (t < 1) requestAnimationFrame(step); else done && done();
+    };
+    requestAnimationFrame(step);
+  };
+  const zoomInto = (id) => {
+    const [x, y, s] = spots[id];
+    const w = s * 2;
+    const h = w * (540 / 340);
+    draw(id);
+    zoom.classList.add('in');
+    const c = byId[id];
+    press.textContent = c.play ?? 'Not yet found';
+    press.disabled = !c.play;
+    animate([x - w / 2, y - h / 2 + s * 0.08, w, h]);
+  };
+  zoom.querySelector('.back').addEventListener('click', () => {
+    zoom.classList.remove('in');
+    press.textContent = 'Enter the Infinite';
+    press.disabled = false;
+    animate(SKY, () => draw(null));
+    for (const g of Object.values(groups)) g.style.opacity = '1';
+  });
+  draw(null);
+})();
+</script>
+</body>
+</html>
