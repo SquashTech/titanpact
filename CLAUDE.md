@@ -982,7 +982,8 @@ what's still unimplemented:
   "we". Content `src/data/tips.ts`, mechanism `src/run/tips.ts`, reset from the Dev menu
   (`docs/tutorial.md`). **Superseded 2026-10-17/18 by Stories** (`docs/stories.md`, per user direction):
   the first press plays A Tale of Valor's prologue, which carries the fall; the lore card no longer
-  plays ahead of the first draft. The three tips stand.
+  plays ahead of the first draft. The three tips stand. **A Tale of Valor is DELETED 2026-10-24**
+  (`docs/the-sky.md`): First Light's lessons teach on its machinery, and nothing plays the fall or the lore card now.
 - Field Effects (2026-08-21 sign-off): resolves the former "weather subsystem" open
   question — Field Effects **is** that subsystem, generalized. A single global
   battlefield state (only one active at a time), settable by a move or a passive

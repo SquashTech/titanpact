@@ -887,7 +887,6 @@ export function FightScreen({
   const actingId: string | null = canAct ? playerActiveAlive[stepIndex] : null;
   const guide = story && actingId ? guidedAction(story, combat, actingId) : null;
   const storyCue = storyCues ? cueFor(storyCues, combat.round) : null;
-  const cueSounded = useRef<number | null>(null);
 
   /** Drives the target panel and the Back button (exit targeting rather than step to the previous hero). */
   const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;
@@ -924,22 +923,13 @@ export function FightScreen({
     const ctx: FightTipContext = { round: combat.round, nodeType: tips.nodeType };
     return matchFightTip(FIGHT_TIPS, ctx, tips.seenIds);
   })();
-  // A Story cue's control tips land at the same moment a fight tip would: the top of the round's command phase, one at a time.
+  // A lesson cue's control tips land at the same moment a fight tip would: the top of the round's command phase, one at a time.
   const storyTip =
     winner === null && storyTips && canAct && actionStep === 0 && Object.keys(pending).length === 0
       ? (storyCue?.tips ?? []).find((tip) => !storyTips.seenIds.includes(tip.id)) ?? null
       : null;
-  // The line waits for the round's tips, then speaks: the bark lands with it.
+  // The guide's hand waits for the round's tips.
   const cueShown = storyCue !== null && !resolving && !winner && storyTip === null;
-  useEffect(() => {
-    if (!cueShown || !storyCue?.sound || cueSounded.current === combat.round) return;
-    cueSounded.current = combat.round;
-    playSfx(storyCue.sound);
-  });
-  /** The active hero speaking the cue, by name: its line points down at it. */
-  const cueSlot = storyCue?.speaker
-    ? combat.active[PLAYER_SIDE].findIndex((cid) => !!cid && allCombatants[combat.combatants[cid].heroId]?.name === storyCue.speaker)
-    : -1;
   /** A guided move's one target: every other card steps back while the move is aimed. */
   const guidedTargetId = guide?.kind === 'move' ? guide.declaredTarget : null;
   const targetGuide = (tid: string): 'lit' | 'dim' | undefined => (selecting && guidedTargetId ? (tid === guidedTargetId ? 'lit' : 'dim') : undefined);
@@ -1852,13 +1842,6 @@ export function FightScreen({
         <EnemyPips combat={combat} side={AI_SIDE} />
 
         {/* What a tapped sprite says, for a moment, on the horizon — the band the Pact warning takes when it is due. */}
-        {cueShown && storyCue?.text && (
-          <div key={combat.round} className={`story-cue${cueSlot >= 0 ? ` is-said is-from-${cueSlot === 0 ? 'left' : 'right'}` : ''}`} role="status">
-            {storyCue.speaker && <span className="story-cue-name">{storyCue.speaker}</span>}
-            {storyCue.text}
-          </div>
-        )}
-
         {fieldNote && !resolving && (
           <div key={fieldNote.key} className="field-note" role="status" onAnimationEnd={() => setFieldNote(null)}>
             {fieldNote.text}

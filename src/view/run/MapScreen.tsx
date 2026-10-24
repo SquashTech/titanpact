@@ -38,7 +38,7 @@ import { useProfile } from '../shared/ProfileContext';
 import { enemies } from '../../data/enemies';
 import { FIRST_CYCLE, cycleOf } from '../../run/cycles';
 import { allCombatants } from '../../data/content';
-import { storyCatalog } from '../../data/stories';
+import { STORY_BOOKS } from '../../data/lessons';
 import { storyNodeEncounter } from '../../run/story';
 import type { TypeId } from '../../engine/content';
 import partyArt from '../../../art/ui/party.png';
@@ -57,7 +57,7 @@ function scoutChoices(run: RunState, choiceIds: readonly string[], purchases: re
   for (const id of choiceIds) {
     const node = map.nodes[id];
     if (!node || (node.type !== 'skirmish' && node.type !== 'elite')) continue;
-    const encounter = storyNodeEncounter(run, storyCatalog, id, allCombatants) ?? nodeEncounter(node, { run, location, heroes: pools.heroes, strangers: pools.strangers, allCombatants, enemies, progression: progressionTable });
+    const encounter = storyNodeEncounter(run, STORY_BOOKS, id, allCombatants) ?? nodeEncounter(node, { run, location, heroes: pools.heroes, strangers: pools.strangers, allCombatants, enemies, progression: progressionTable });
     scouted[id] = scoutedParty(encounter, allCombatants);
   }
   return scouted;

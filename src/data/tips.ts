@@ -16,8 +16,8 @@ import type { InstallPlatform } from '../run/installHint';
 import type { FightTip, ScreenTipId, Tip } from '../run/tips';
 
 /**
- * The one piece of lore, ahead of the first draft on an account, under the fall (TitanFallScreen,
- * docs/lore.md "The fall"): one line a tap. Everything else the run says about itself it says in its
+ * The one piece of lore (docs/lore.md "The fall"), one line a tap. Nothing plays it now: the fall it
+ * stood under went with A Tale of Valor's prologue. Everything else the run says about itself it says in its
  * own beats (the arrival, the seal). Told as a story already over: the run is the telling.
  */
 export const LORE_LINES: readonly string[] = [

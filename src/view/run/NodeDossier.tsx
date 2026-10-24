@@ -14,7 +14,7 @@ import type { EquipmentRarity } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
 import { NODE_COLORS } from './mapNodes';
 import { nodeDossier, storyNodeDossier, type NodeFact, type NodeFactGlyph } from './nodeFacts';
-import { storyCatalog } from '../../data/stories';
+import { STORY_BOOKS } from '../../data/lessons';
 import { storyNodeSpec } from '../../run/story';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { RESOURCE_COLORS, ResourceGlyph } from '../shared/RunGlyph';
@@ -164,7 +164,7 @@ function PartyMatchups({ party, run }: { party: readonly (readonly TypeId[])[]; 
  * roster's side of it is the footer's chips (nodeLens.tsx).
  */
 function storyDossierFor(run: RunState, node: MapNode) {
-  const spec = run.story ? storyNodeSpec(run, storyCatalog, node.id) : null;
+  const spec = run.story ? storyNodeSpec(run, STORY_BOOKS, node.id) : null;
   return spec ? storyNodeDossier(spec, run.actNumber) : null;
 }
 

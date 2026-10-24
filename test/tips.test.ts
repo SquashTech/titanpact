@@ -25,13 +25,13 @@ import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
-import { storyCatalog } from '../src/data/stories';
+import { STORY_BOOKS } from '../src/data/lessons';
 
-/** The control tips a Story's fights teach, in its fights and in its acts' fights. */
-const storyTips: Tip[] = storyCatalog.flatMap((story) =>
+/** The control tips the lessons teach, in their fights and in their acts' fights. */
+const storyTips: Tip[] = STORY_BOOKS.flatMap((story) =>
   story.chapters.flatMap((chapter) =>
     chapter.beats.flatMap((beat) => {
-      const cues = beat.kind === 'fight' ? beat.cues ?? [] : beat.kind === 'act' ? beat.act.rows.flatMap((row) => row.flatMap((node) => node.cues ?? [])) : [];
+      const cues = beat.kind === 'fight' ? beat.cues ?? [] : beat.act.rows.flatMap((row) => row.flatMap((node) => node.cues ?? []));
       return cues.flatMap((cue) => cue.tips ?? []);
     })
   )

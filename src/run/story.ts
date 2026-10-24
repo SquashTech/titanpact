@@ -119,111 +119,13 @@ export function guidedAction(fight: StoryFight, state: CombatState, combatantId:
   return commandsFor(fight.guide, state, STORY_PLAYER_SIDE)?.find((action) => action.combatantId === combatantId) ?? null;
 }
 
-/** Who stands in a scene: a name over a figure drawn from a hero's sprite. */
-export interface StoryActor {
-  id: string;
-  name: string;
-  /** A hero or combatant id whose sprite is drawn. */
-  artHeroId: string;
-  /** Faces into the scene from this side. */
-  stands: 'left' | 'right';
-  /** The blip under this actor's typed lines, and its pitch. Unset: typed in silence. */
-  voice?: StoryVoice;
-  /** Drawn this much larger than a hero (the risen Endbringer towers). Unset: 1. */
-  scale?: number;
-  /** The face in the dialogue box (art/portraits/<id>/<mood>.png). Unset: no face. */
-  portrait?: string;
-  /** Moves wrong: fades in slowly from nothing, and is simply somewhere else between lines, never seen to step. */
-  uncanny?: boolean;
-}
-
-/** What a line or cue may sound as it appears: Fang, and the Titan's own noises. */
-export type StorySound = 'wolf.bark' | 'wolf.howl' | 'titan.stir' | 'titan.gaze';
-
-/** A beat's music: a track id (audio/tracks.ts), `null` for silence. Unset: the place's own track. */
-export type StoryMusic = string | null;
-
-/** A speaker's expression. A portrait without the mood shows its neutral face. */
-export type StoryMood = 'neutral' | 'happy' | 'angry' | 'sad' | 'shocked';
-
-/**
- * Where an actor stands in a scene: `x` across the ground (0 the left edge, 100 the right), `depth`
- * into it (0 the far back, small and high; 1 the front). `off` is off stage: not yet come, or gone.
- */
-export interface StageMark {
-  x: number;
-  depth: number;
-  off?: boolean;
-}
-
-/** The cast spread over the ground when a scene authors no stage: each side fanned out, depths staggered. */
-export function autoStage(cast: readonly StoryActor[]): Record<string, StageMark> {
-  const marks: Record<string, StageMark> = {};
-  for (const side of ['left', 'right'] as const) {
-    const group = cast.filter((actor) => actor.stands === side);
-    group.forEach((actor, i) => {
-      const t = group.length === 1 ? 0.5 : i / (group.length - 1);
-      const x = side === 'left' ? 14 + t * 26 : 86 - t * 26;
-      marks[actor.id] = { x, depth: i % 2 === 0 ? 0.8 : 0.45 };
-    });
-  }
-  return marks;
-}
-
-/** The marks standing at line `step`: the scene's stage with every line's moves up to it applied. */
-export function stageAt(cast: readonly StoryActor[], stage: Readonly<Record<string, StageMark>> | undefined, lines: readonly StoryLine[], step: number): Record<string, StageMark> {
-  const marks: Record<string, StageMark> = { ...autoStage(cast), ...(stage ?? {}) };
-  for (const line of lines.slice(0, step + 1)) {
-    for (const [id, move] of Object.entries(line.moves ?? {})) marks[id] = { ...marks[id], ...move } as StageMark;
-  }
-  return marks;
-}
-
-/** A timbre (audio/sounds.ts `voice.*`) and a pitch multiplier. */
-export interface StoryVoice {
-  timbre: 'bright' | 'warm' | 'deep' | 'click';
-  pitch: number;
-}
-
-/** One line of a scene: spoken by an actor, thought by one (`think`), or narration (no speaker). */
-export interface StoryLine {
-  speaker?: string;
-  text: string;
-  think?: true;
-  /** A sound the moment the line appears (audio/sounds.ts id): Fang's bark, his howl. */
-  sound?: StorySound;
-  /** Who moves as the line appears, and to where: a step, a retreat, an entrance (`off: false`), an exit (`off: true`). */
-  moves?: Readonly<Record<string, Partial<StageMark>>>;
-  /** The speaker's expression on this line. Unset: neutral. */
-  mood?: StoryMood;
-  /** A painted moment (art/stories/paintings/<id>.png) over the scene from this line on; `null` takes it down. */
-  painting?: string | null;
-  /** The screen cuts to black as the line lands and comes back with this line's moves already made, none seen happening. */
-  blink?: boolean;
-  /** The music from this line on (a track id, `null` for silence), until a later line or beat names its own. */
-  music?: StoryMusic;
-}
-
-/** The painting up at line `step`: the last one a line raised, unless a later line took it down. */
-export function paintingAt(lines: readonly StoryLine[], step: number): string | null {
-  for (let i = Math.min(step, lines.length - 1); i >= 0; i--) {
-    const painting = lines[i].painting;
-    if (painting !== undefined) return painting;
-  }
-  return null;
-}
-
-/** A line over the fight's stage at the top of `round`'s command phase. */
+/** What a lesson teaches at the top of `round`'s command phase. A lesson says nothing; it guides and it tips. */
 export interface StoryCue {
   round: number;
-  speaker?: string;
-  /** What is said; a lesson's cues say nothing, and only teach (data/lessons.ts). */
-  text?: string;
-  sound?: StorySound;
   /**
    * Controls taught at the top of this round (docs/stories.md §1c), in order, each once an account:
    * plain game words, the thing each names lit on the board or drawn (view/run/tipStaging.ts,
-   * data/tipScenes.ts, by the tip's id). The line itself waits until they are read.
+   * data/tipScenes.ts, by the tip's id).
    */
   tips?: readonly Tip[];
   /** A hand points at each guided tap this round: the move, then its target. */
@@ -231,36 +133,15 @@ export interface StoryCue {
 }
 
 export type StoryBeat =
-  /** Valor remembering (docs/stories.md §1): her lines over the place, before its scene. */
-  | { kind: 'memory'; locationId: string; lines: readonly string[]; voice?: StoryVoice; music?: StoryMusic }
-  | {
-      kind: 'scene';
-      /** The Location whose backdrop the scene stands on. */
-      locationId: string;
-      cast: readonly StoryActor[];
-      lines: readonly StoryLine[];
-      /** Where the cast stands at the scene's start. Unset: `autoStage`. */
-      stage?: Readonly<Record<string, StageMark>>;
-      /** What a skipped scene leaves behind: one line saying what happened. */
-      skipped: string;
-      /** Plays from this scene on, through the fights after it, until a later beat names its own. */
-      music?: StoryMusic;
-      /** A spot within the place to stand on (art/stories/backdrops/<id>.png). Unset, or not yet painted: the place's own backdrop. */
-      backdrop?: string;
-    }
-  | { kind: 'fight'; fight: StoryFight; cast: readonly StoryActor[]; cues?: readonly StoryCue[] }
-  /** The Titan's fall across the sky (docs/stories.md §4), its lines crawling over it a tap at a time. */
-  | { kind: 'fall'; lines: readonly string[] }
+  /** A scripted fight, stood on `locationId`'s ground (unset: the plain arena). */
+  | { kind: 'fight'; fight: StoryFight; locationId?: string; cues?: readonly StoryCue[] }
   /** One Act of a run on the real map (docs/stories.md §14), a fixed party and fixed fights, ending at its last row. */
-  | { kind: 'act'; act: StoryAct }
-  /** The chapter's end card; `line` is one closing line over its title, unset for none. */
-  | { kind: 'end'; line?: string };
+  | { kind: 'act'; act: StoryAct };
 
+/** A run of beats played in order; a First Light lesson is a chapter of one (data/lessons.ts). */
 export interface StoryChapter {
   id: string;
   title: string;
-  /** The Cycle the chapter is set in (docs/stories.md §2). */
-  cycle: number;
   beats: readonly StoryBeat[];
 }
 
@@ -268,8 +149,6 @@ export interface StoryDefinition {
   id: string;
   name: string;
   chapters: readonly StoryChapter[];
-  /** Chapters planned for each Cycle, built or not, so the select's marks count the whole of it. */
-  plannedChapters: Readonly<Record<number, number>>;
 }
 
 /**
@@ -285,7 +164,7 @@ export interface StoryActNode {
   items?: readonly string[];
   /** A patron seat's patron(s), one a tile. The seat must stand on a patron row (run/map.ts PATRON_ROWS). */
   patrons?: readonly string[];
-  /** A fight's lines over the stage and its control tips, as a Story fight's (StoryCue). */
+  /** A fight's control tips, as a lesson fight's (StoryCue). */
   cues?: readonly StoryCue[];
 }
 
@@ -378,40 +257,12 @@ export function endsStoryAct(run: RunState, nodeId: string): boolean {
   return !!run.story && !!node && !!run.map && node.row === run.map.rows.length - 1;
 }
 
-/** The first chapter of `story` not yet finished, or null when every one is. */
-export function nextChapter(story: StoryDefinition, done: readonly string[]): StoryChapter | null {
-  return story.chapters.find((chapter) => !done.includes(chapter.id)) ?? null;
-}
-
 export function chapterById(stories: readonly StoryDefinition[], chapterId: string): { story: StoryDefinition; chapter: StoryChapter } | null {
   for (const story of stories) {
     const chapter = story.chapters.find((c) => c.id === chapterId);
     if (chapter) return { story, chapter };
   }
   return null;
-}
-
-/** Each Cycle's mark on the Story select: done once every chapter set in it is, current where the next chapter is. */
-/**
- * The Story select's marks (docs/stories.md §10): one a chapter of the Cycle the Story stands in,
- * planned ones included, finished ones lit and the next one ringed.
- */
-export function storyChapterPips(story: StoryDefinition, done: readonly string[]): { cycle: number; marks: ('done' | 'now' | null)[] } {
-  const next = nextChapter(story, done);
-  const cycle = next?.cycle ?? story.chapters[story.chapters.length - 1]?.cycle ?? 1;
-  const built = story.chapters.filter((c) => c.cycle === cycle);
-  const count = Math.max(story.plannedChapters[cycle] ?? 0, built.length);
-  const marks = Array.from({ length: count }, (_, i) => {
-    const chapter = built[i];
-    if (chapter && done.includes(chapter.id)) return 'done' as const;
-    return chapter && chapter.id === next?.id ? ('now' as const) : null;
-  });
-  return { cycle, marks };
-}
-
-/** A chapter's place in its Story, 1-based: chapter 1 is the prologue. */
-export function chapterNumber(story: StoryDefinition, chapterId: string): number {
-  return story.chapters.findIndex((c) => c.id === chapterId) + 1;
 }
 
 /** The cue for the round the board stands on, if the beat has one. */

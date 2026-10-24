@@ -1,5 +1,11 @@
 # stories.md — Stories: the guided mode and the front door
 
+> **DELETED 2026-10-24 (per user direction, `docs/the-sky.md`).** A Tale of Valor is gone: its chapters,
+> scenes, memories, the fall, the end cards, the Story select, its cast's Ren, Will, boar, crow and the
+> risen Herald, the portraits, paintings and backdrops, and the scene voices. What stands is the
+> machinery its fights and acts ran on (`src/run/story.ts`: scripted fights, guided taps, control
+> tips, one-act runs), now carrying First Light's lessons (`src/data/lessons.ts`). This doc is history.
+
 > **STATUS: DIRECTION DECIDED, NOTHING BUILT (2026-10-17, per user direction).** The shape of the
 > mode and the prologue's beats are decided. Names, numbers, the chapter list past chapter 2 and
 > every open question in §8 are not.

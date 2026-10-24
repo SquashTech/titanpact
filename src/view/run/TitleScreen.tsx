@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { CollectionScreen } from './CollectionScreen';
 import type { Deck } from '../../run/deck';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
@@ -47,11 +47,6 @@ interface Props {
   onContinueRun: () => void;
   /** Start a run on the given Cycle (run/cycles.ts). */
   onStartRun: (cycle: number) => void;
-  /** Classic Mode was picked on the Story select: start it as the press once did. */
-  startClassic?: boolean;
-  onClassicStarted?: () => void;
-  /** The account has never started a run: the press fades the title to its sky for the fall (TitanFallScreen). */
-  firstFall?: boolean;
   /** The highest Cycle the profile may start on; Cycle I until a run has been cleared. */
   openCycle: number;
   /** Records a seen-once beat (the Chronicle weave) in the profile. */
@@ -91,8 +86,6 @@ const MOTE_COUNT = 26;
 
 /** Hold before handing off to the draft. Matched to `ui.launch` in sounds.ts — change either and re-check both. */
 const LAUNCH_ANIM_MS = 620;
-/** The title fading to its sky ahead of the first fall (styles.css title-fall-away). */
-const FALL_AWAY_MS = 1000;
 
 // Golden-angle scatter: stable across renders, no seed to store. Slow and long-lived — these
 // are drifting ash, not sparks; anything under ~12s reads as energy rather than as decay.
@@ -120,9 +113,6 @@ export function TitleScreen({
   saveNotice = null,
   onContinueRun,
   onStartRun,
-  startClassic = false,
-  onClassicStarted,
-  firstFall = false,
   openCycle,
   onSeeTip,
   skyReturn = null,
@@ -156,7 +146,6 @@ export function TitleScreen({
   const [showDev, setShowDev] = useState(false);
   const [intentOn, setIntentOn] = useState(readEnemyIntent);
   const [launching, setLaunching] = useState(false);
-  const [falling, setFalling] = useState(false);
   const [confirmingNewRun, setConfirmingNewRun] = useState(false);
   // The weave is chosen as the tapestry opens and held, since marking it seen re-renders the profile.
   const [pickingCycle, setPickingCycle] = useState<{ weave?: number } | null>(null);
@@ -185,25 +174,12 @@ export function TitleScreen({
     else onOpenGauntlet();
   }
 
-  useEffect(() => {
-    if (!startClassic) return;
-    onClassicStarted?.();
-    startFresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startClassic]);
-
   /** Nothing to ask until Cycle I is cleared; then the Cycle is the one question between the press and the draft. */
   function startFresh() {
     if (openCycle > FIRST_CYCLE) {
       const weave = pendingWeave(profile);
       if (weave) onSeeTip(chronicleWovenTipId(weave));
       setPickingCycle({ weave });
-      return;
-    }
-    if (firstFall) {
-      if (falling) return;
-      setFalling(true);
-      window.setTimeout(() => onStartRun(FIRST_CYCLE), FALL_AWAY_MS);
       return;
     }
     launch(() => onStartRun(FIRST_CYCLE));
@@ -235,7 +211,7 @@ export function TitleScreen({
 
   return (
     <div
-      className={`title-screen is-${tone}${pressRow ? ' has-parked-run' : ''}${launching ? ' is-launching' : ''}${falling ? ' is-falling' : ''}${tab !== 'play' ? ' is-away' : ''}`}
+      className={`title-screen is-${tone}${pressRow ? ' has-parked-run' : ''}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}`}
     >
       {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
           back is instant, and display: contents keeps them in the screen's own flex and stacking. */}
@@ -271,7 +247,7 @@ export function TitleScreen({
       <SkyChart
         profile={profile}
         disabled={launching}
-        active={tab === 'play' && !launching && !falling}
+        active={tab === 'play' && !launching}
         pressHidden={!!parkedRun}
         returned={skyReturn}
         onReturnedSeen={onSkyReturnSeen}

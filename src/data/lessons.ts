@@ -89,7 +89,7 @@ const road: StoryAct = {
             round: 1,
             tips: [
               {
-                id: 'lesson.arrows',
+                id: 'story.arrows',
                 title: 'Matchups',
                 pages: [
                   "The arrows under a move's number show how it hits each enemy: [super] double, [resist] half. Strike where it hurts.",
@@ -118,7 +118,7 @@ const road: StoryAct = {
             round: 2,
             tips: [
               {
-                id: 'lesson.bag',
+                id: 'story.bag',
                 title: 'The Bag',
                 pages: [
                   'The Bag holds potions for the whole team. Drinking one costs no turn: drink, then choose a move as usual.',
@@ -164,17 +164,15 @@ const fork: StoryAct = {
 export const LESSONS: StoryDefinition = {
   id: 'firstLight',
   name: 'First Light',
-  plannedChapters: {},
   chapters: [
     {
       id: 'firstLight.hunt',
       title: 'The Hunt',
-      cycle: 1,
       beats: [
         {
           kind: 'fight',
           fight: hunt,
-          cast: [],
+          locationId: 'wildsEdge',
           cues: [
             {
               round: 1,
@@ -218,12 +216,11 @@ export const LESSONS: StoryDefinition = {
     {
       id: 'firstLight.clearing',
       title: 'The Clearing',
-      cycle: 1,
       beats: [
         {
           kind: 'fight',
           fight: clearing,
-          cast: [],
+          locationId: 'wildsEdge',
           cues: [
             { round: 1, tips: [{ id: 'story.inspect', title: 'Reading a Foe', pages: ['*Tap* any hero, yours or theirs, to read its *stats*, *moves* and *passives*.'] }] },
             {
@@ -244,7 +241,7 @@ export const LESSONS: StoryDefinition = {
               round: 4,
               point: true,
               tips: [
-                { id: 'lesson.rest', title: 'Rest', pages: ['Iron Warden has no Mana for any move. *Rest* skips its turn and *refills all Mana*.'] },
+                { id: 'story.rest', title: 'Rest', pages: ['Iron Warden has no Mana for any move. *Rest* skips its turn and *refills all Mana*.'] },
                 {
                   id: 'story.shield',
                   title: 'Shield',
@@ -257,7 +254,7 @@ export const LESSONS: StoryDefinition = {
               point: true,
               tips: [
                 {
-                  id: 'lesson.conduct',
+                  id: 'story.conduct',
                   title: 'Conduct',
                   pages: [
                     '*Storm Lash* puts *Conduct* [conduct] on its target.',
@@ -271,7 +268,10 @@ export const LESSONS: StoryDefinition = {
         },
       ],
     },
-    { id: 'firstLight.road', title: 'The Road', cycle: 1, beats: [{ kind: 'act', act: road }] },
-    { id: 'firstLight.fork', title: 'The Fork', cycle: 1, beats: [{ kind: 'act', act: fork }] },
+    { id: 'firstLight.road', title: 'The Road', beats: [{ kind: 'act', act: road }] },
+    { id: 'firstLight.fork', title: 'The Fork', beats: [{ kind: 'act', act: fork }] },
   ],
 };
+
+/** The books the Story machinery looks a chapter up in (run/story.ts chapterById). */
+export const STORY_BOOKS: readonly StoryDefinition[] = [LESSONS];

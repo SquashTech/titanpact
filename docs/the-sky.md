@@ -433,8 +433,13 @@ spoken line cut (`src/data/lessons.ts`, `test/lessons.test.ts`):
   the Sky" leaves. A cue's line is optional now, and a lesson's say nothing.
 - **On the sky:** First Light's press plays the next lesson by name, and a lesson's name is tappable
   once it is lit or next, to play or replay it.
-- **Not done:** A Tale of Valor's chapters, scenes and the Story select still exist, unreachable
-  from the title; deleting them (and `storyCast`'s Ren, Will, boar and crow) is the follow-up.
+- **A Tale of Valor is deleted** (2026-10-24, per user direction): its book of chapters, the
+  scene player, memories, the fall, end cards, the Story select, Ren, Will, the boar, the crow and
+  the risen Herald with their art, the portraits, paintings and backdrops, the scene voices, and a
+  cue's spoken line. A lesson's fight stands on Wild's Edge by its own `locationId`. The four
+  tips that named Ren or Will name the Warden and the Raiju, and keep their ids for their staging.
+- **OPEN, raised by the deletion:** nothing plays the Titan's fall or the lore card now (they were
+  the prologue's), so a new account meets no lore before the sky. Blip's hello is the only framing.
 
 - First Light, The Bench and The Road as scenarios on `src/run/story.ts`'s fixed casts, encounter
   scripts and seeds. Their control tips stay.

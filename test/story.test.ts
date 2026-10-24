@@ -15,7 +15,7 @@ import { fightWinner, type CombatState } from '../src/engine/state';
 import type { CombatEvent } from '../src/engine/events';
 import type { Action } from '../src/engine/combat/actions';
 import type { PassiveDefinition } from '../src/engine/content';
-import { createProfile, decodeProfile, recordStoryChapterDone } from '../src/run/profile';
+import { createProfile, decodeProfile } from '../src/run/profile';
 import { stateHash } from '../src/run/versus';
 import {
   guidedAction,
@@ -24,21 +24,15 @@ import {
   withStoryEnds,
   STORY_ENEMY_SIDE,
   STORY_PLAYER_SIDE,
-  autoStage,
-  chapterNumber,
-  storyChapterPips,
   endsStoryAct,
-  stageAt,
-  paintingAt,
   storyActMap,
   storyActRun,
   storyNodeEncounter,
   type StoryAct,
   type StoryActNode,
   type StoryFight,
-  type StoryLine,
 } from '../src/run/story';
-import { storyCatalog } from '../src/data/stories';
+import { LESSONS, STORY_BOOKS } from '../src/data/lessons';
 import { TIP_STAGING } from '../src/view/run/tipStaging';
 import { rosterHeroes } from '../src/data/content';
 import { MAP_NODE_TYPES } from '../src/run/map';
@@ -171,15 +165,8 @@ test('story: a fight ends on its trigger, and a wiped side still ends it first',
   assert.strictEqual(fightWinner({ ...wiped, round: 7 }), 'B');
 });
 
-test('story: a finished chapter is recorded once and survives a reload', () => {
-  const done = recordStoryChapterDone(recordStoryChapterDone(createProfile(), 'valor-1'), 'valor-1');
-  assert.deepStrictEqual(done.storyChaptersDone, ['valor-1']);
-  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(done))).storyChaptersDone, ['valor-1']);
-  assert.deepStrictEqual(decodeProfile({ version: 2 }).storyChaptersDone, []);
-});
-
 test('story: every catalog fight scripts only moves its actors hold, and leads and targets are in the parties', () => {
-  for (const story of storyCatalog) {
+  for (const story of STORY_BOOKS) {
     for (const chapter of story.chapters) {
       for (const beat of chapter.beats) {
         if (beat.kind !== 'fight') continue;
@@ -206,23 +193,8 @@ test('story: every catalog fight scripts only moves its actors hold, and leads a
   }
 });
 
-test('story: each prologue fight ends inside its script, won, with no hero of the party down', () => {
-  for (const beat of storyCatalog[0].chapters[0].beats) {
-    if (beat.kind !== 'fight') continue;
-    const played = playScript(beat.fight);
-    assert.strictEqual(fightWinner(played.state), 'A', `${beat.fight.id} is not won inside its script`);
-    const down = Object.values(played.state.combatants).filter((c) => c.side === 'A' && c.fainted);
-    assert.deepStrictEqual(down.map((c) => c.combatantId), [], `${beat.fight.id} knocks out the party`);
-  }
-  const clearing = storyCatalog[0].chapters[0].beats.find((b) => b.kind === 'fight' && b.fight.id === 'valor-1-clearing');
-  assert.ok(clearing && clearing.kind === 'fight');
-  const held = playScript(clearing.fight).state.combatants['B:faceless'];
-  assert.strictEqual(held.currentHp, 1, 'the Faceless is brought to its knees, not outlasted');
-  assert.strictEqual(held.fainted, false);
-});
-
-test("story prologue: the hunt's lessons hold — the fox takes both hunters, and the White Stag falls to Iron Fist only after Howl", () => {
-  const hunt = storyCatalog[0].chapters[0].beats.find((b) => b.kind === 'fight' && b.fight.id === 'valor-1-hunt');
+test("story lesson: the Hunt's lessons hold — the fox takes both hunters, and the White Stag falls to Iron Fist only after Howl", () => {
+  const hunt = LESSONS.chapters.find((c) => c.id === 'firstLight.hunt')?.beats[0];
   assert.ok(hunt && hunt.kind === 'fight');
   const fight = hunt.fight;
   /** Plays the script's rounds with the named hero, in the named round, Resting or Clawing the White Stag instead of following the guide. */
@@ -254,29 +226,7 @@ test("story prologue: the hunt's lessons hold — the fox takes both hunters, an
   assert.ok(!down(play({ 2: { hero: 'fang', does: 'claw' } })[1], 'stag'), 'Claw, then Iron Fist, leaves it standing too: the Howl is the only way');
 });
 
-test("story prologue: in the clearing, Will shields his father while he Rests, then marks the Faceless for Ren's Iron to set off", () => {
-  const clearing = storyCatalog[0].chapters[0].beats.find((b) => b.kind === 'fight' && b.fight.id === 'valor-1-clearing');
-  assert.ok(clearing && clearing.kind === 'fight');
-  const fight = clearing.fight;
-  let state = openStoryFight(fight);
-  const rounds: CombatEvent[][] = [];
-  while (state.round <= fight.guide.length && fightWinner(state) === null) {
-    const player = state.active[STORY_PLAYER_SIDE].flatMap((id) => (id ? [guidedAction(fight, state, id)!] : []));
-    const result = resolveRound(state, [...player, ...scriptedEnemyActions(fight, state)!], config);
-    rounds.push(result.events);
-    state = result.state;
-  }
-  assert.strictEqual(rounds.length, 5, 'the Faceless stands into round 5');
-  const fourth = rounds[3];
-  const soaked = fourth.find((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'A:ren');
-  assert.ok(soaked && soaked.type === 'DamageDealt' && (soaked.absorbed ?? 0) > 0, "Rime Coat's Shield takes the Faceless's hit on the Resting Ren");
-  const fifth = rounds[4];
-  const planted = fifth.find((e) => e.type === 'StatusApplied' && e.statusId === 'Conduct');
-  assert.ok(planted && planted.type === 'StatusApplied' && planted.sourceCombatantId === 'A:will', 'Storm Lash plants Conduct');
-  assert.ok(fifth.some((e) => e.type === 'StatusDetonated' && e.statusId === 'Conduct'), "Ren's Gale Sever sets it off in the same round");
-});
-
-const actBeats = storyCatalog.flatMap((story) =>
+const actBeats = STORY_BOOKS.flatMap((story) =>
   story.chapters.flatMap((chapter) => chapter.beats.map((beat, index) => ({ chapter, beat, index }))).filter((b) => b.beat.kind === 'act')
 );
 
@@ -315,7 +265,7 @@ test('story act: a fight node fields its authored party, a reward node none, and
     const run = storyActRun(beat.act, { chapterId: chapter.id, beat: index }, rosterHeroes, 3);
     for (const node of Object.values(run.map!.nodes)) {
       const spec: StoryActNode = beat.act.rows[node.row][node.col];
-      const encounter = storyNodeEncounter(run, storyCatalog, node.id, allCombatants);
+      const encounter = storyNodeEncounter(run, STORY_BOOKS, node.id, allCombatants);
       if (spec.enemy) assert.deepStrictEqual(encounter!.run.roster.map((e) => e.heroId), spec.enemy.map((e) => e.heroId), `${node.id}`);
       else assert.strictEqual(encounter, null, `${node.id} is a reward and fields nobody`);
       assert.strictEqual(endsStoryAct(run, node.id), node.row === beat.act.rows.length - 1);
@@ -324,7 +274,7 @@ test('story act: a fight node fields its authored party, a reward node none, and
     assert.ok(lastRow.length === 1 && lastRow[0].enemy, `${chapter.id}: an act ends on one fight`);
   }
   const classic = { ...storyActRun((actBeats[0].beat as { act: StoryAct }).act, { chapterId: 'x', beat: 0 }, rosterHeroes, 3), story: undefined };
-  assert.strictEqual(storyNodeEncounter(classic, storyCatalog, 'r0-c0', allCombatants), null);
+  assert.strictEqual(storyNodeEncounter(classic, STORY_BOOKS, 'r0-c0', allCombatants), null);
   assert.strictEqual(endsStoryAct(classic, classic.map!.bossNodeId), false);
 });
 
@@ -375,46 +325,9 @@ test('story act: a patron seat seats the patron it names, on a patron row, teach
   assert.ok(seated > 0, 'some chapter seats a patron');
 });
 
-test('story stage: every mark and move names someone in the scene, and moves accumulate line by line', () => {
-  for (const story of storyCatalog) {
-    for (const chapter of story.chapters) {
-      for (const beat of chapter.beats) {
-        if (beat.kind !== 'scene') continue;
-        const ids = new Set(beat.cast.map((actor) => actor.id));
-        for (const id of Object.keys(beat.stage ?? {})) assert.ok(ids.has(id), `${chapter.id}: ${id} is staged but not cast`);
-        beat.lines.forEach((line, step) => {
-          for (const id of Object.keys(line.moves ?? {})) assert.ok(ids.has(id), `${chapter.id}: ${id} moves but is not cast`);
-          const marks = stageAt(beat.cast, beat.stage, beat.lines, step);
-          for (const actor of beat.cast) {
-            const mark = marks[actor.id];
-            assert.ok(mark && mark.depth >= 0 && mark.depth <= 1, `${chapter.id}: ${actor.id} has no mark at line ${step}`);
-          }
-        });
-      }
-    }
-  }
-  const cast = [
-    { id: 'a', name: 'A', artHeroId: 'valor', stands: 'left' as const },
-    { id: 'b', name: 'B', artHeroId: 'valor', stands: 'right' as const },
-  ];
-  const lines: StoryLine[] = [{ text: '1' }, { text: '2', moves: { a: { x: 60 } } }, { text: '3', moves: { b: { off: true } } }];
-  assert.deepStrictEqual(stageAt(cast, undefined, lines, 0), autoStage(cast));
-  assert.strictEqual(stageAt(cast, undefined, lines, 1).a.x, 60);
-  assert.strictEqual(stageAt(cast, undefined, lines, 2).a.x, 60);
-  assert.strictEqual(stageAt(cast, undefined, lines, 2).b.off, true);
-});
-
-test('story select: a Story marks every chapter its Cycle plans, the finished lit and the next ringed', () => {
-  const valor = storyCatalog[0];
-  const ids = valor.chapters.map((c) => c.id);
-  assert.deepStrictEqual(storyChapterPips(valor, []), { cycle: 1, marks: ['now', null, null, null, null] });
-  assert.deepStrictEqual(storyChapterPips(valor, ids.slice(0, 2)).marks, ['done', 'done', 'now', null, null]);
-  assert.strictEqual(chapterNumber(valor, ids[0]), 1);
-});
-
 test('story tips: every control tip is short, unique, and lights something', () => {
   const seen = new Set<string>();
-  for (const story of storyCatalog) {
+  for (const story of STORY_BOOKS) {
     for (const chapter of story.chapters) {
       for (const beat of chapter.beats) {
         const cues =
@@ -431,7 +344,3 @@ test('story tips: every control tip is short, unique, and lights something', () 
   assert.ok(seen.size > 0);
 });
 
-test('story painting: a painting stays up from the line that raises it until a line takes it down', () => {
-  const lines = [{ text: 'a' }, { text: 'b', painting: 'p' }, { text: 'c' }, { text: 'd', painting: null }, { text: 'e' }];
-  assert.deepStrictEqual(lines.map((_, step) => paintingAt(lines, step)), [null, 'p', 'p', null, null]);
-});

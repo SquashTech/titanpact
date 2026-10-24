@@ -11,6 +11,7 @@ import { pageSpotlight, TIP_STAGING } from './tipStaging';
 import { TipPictureView } from './TipScene';
 import { TIP_SCENES } from '../../data/tipScenes';
 import { TitleLogo } from './TitleLogo';
+import '../story/story.css';
 
 /**
  * Which badge class an inline token wears — the move grid's own (`MoveKindBadge`), so the mark in

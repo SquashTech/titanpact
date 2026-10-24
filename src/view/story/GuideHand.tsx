@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
+import './story.css';
 
 // A pointing glove, drawn pixel by pixel (picked off art/concepts/pointer-hand/): 'o' outline, 'w' glove,
 // 's' its shade, 'c' the gold cuff, 'd' the cuff's shade. The fingertip is the top of columns 6–7.

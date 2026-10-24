@@ -62,12 +62,12 @@ test('lessons: every lesson is a scenario star of First Light, and every First L
   for (const id of stars) assert.strictEqual(sky.scenarios[id!]?.lesson, id, `${id} plays its own lesson`);
 });
 
-test('lessons: no lesson says a line, and the party is the base roster bar Valor before her sword', () => {
+test('lessons: every cue teaches, and the party is the base roster bar Valor before her sword', () => {
   for (const chapter of LESSONS.chapters) {
     for (const beat of chapter.beats) {
       assert.ok(beat.kind === 'fight' || beat.kind === 'act', `${chapter.id} holds a ${beat.kind}`);
       const cues = beat.kind === 'fight' ? beat.cues ?? [] : beat.act.rows.flat().flatMap((node) => node.cues ?? []);
-      for (const cue of cues) assert.ok(!cue.text && !cue.speaker, `${chapter.id} round ${cue.round} speaks`);
+      for (const cue of cues) assert.ok(cue.tips?.length || cue.point, `${chapter.id} round ${cue.round} teaches nothing`);
       const party = beat.kind === 'fight' ? beat.fight.player : beat.act.party;
       for (const spec of party) {
         const ok = spec.heroId === STORY_CAST_IDS.valor || (heroes[spec.heroId] && !heroes[spec.heroId].unlock);

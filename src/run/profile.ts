@@ -123,7 +123,7 @@ export interface Profile {
   gauntletEntriesBought: number;
   gauntletEntered: number;
   gauntletClears: number;
-  /** Story chapters finished (docs/stories.md), by chapter id, each once, in the order played. */
+  /** A Tale of Valor's chapters finished, from before it was cut: read only to know an account played before the sky (run/sky.ts). */
   storyChaptersDone: string[];
   /** Sky scenarios won (run/sky.ts), each once. Every other star in the sky is derived from a record above. */
   litStars: string[];
@@ -371,11 +371,6 @@ export function recordTrialCleared(profile: Profile, trialId: string): Profile {
   return { ...profile, trialsCleared: [...profile.trialsCleared, trialId] };
 }
 
-/** A Story chapter finished: recorded the first time, unchanged on a replay. */
-export function recordStoryChapterDone(profile: Profile, chapterId: string): Profile {
-  if (profile.storyChaptersDone.includes(chapterId)) return profile;
-  return { ...profile, storyChaptersDone: [...profile.storyChaptersDone, chapterId] };
-}
 
 /** What the beaten Trials have paid into the balance. */
 export function trialStardust(profile: Profile): number {

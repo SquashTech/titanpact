@@ -16,7 +16,6 @@ import {
   recordSpawnAscended,
   recordRunStarted,
   recordTipSeen,
-  recordStoryChapterDone,
   recordTrialCleared,
   TRIAL_CLEAR_STARDUST,
   resetTips,
@@ -118,7 +117,7 @@ import { ShopItemError, TavernCallError, buyShopItem, callForType, callableTypes
 import { grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { guildHallEntry } from '../run/guildRecruit';
 import { generateMap, PATRON_ROWS, type MapNodeType, type RewardNodeType } from '../run/map';
-import { firstUnseenTip, LORE_TIP_ID, type ScreenTipId } from '../run/tips';
+import { firstUnseenTip, type ScreenTipId } from '../run/tips';
 import { FIGHT_BASICS_TIP_ID, SCREEN_TIPS } from '../data/tips';
 import { TipOverlay } from '../view/run/TipOverlay';
 import { SaveTroubleBanner } from '../view/run/SaveTroubleBanner';
@@ -126,13 +125,11 @@ import { InstallOverlay } from '../view/run/InstallOverlay';
 import { currentInstallPlatform } from './installPrompt';
 import { INSTALL_TIP_ID } from '../run/installHint';
 import { LoreScreen } from '../view/run/LoreScreen';
-import { StorySelectScreen } from '../view/story/StorySelectScreen';
 import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
-import { storyCatalog } from '../data/stories';
-import { LESSONS } from '../data/lessons';
+import { STORY_BOOKS } from '../data/lessons';
 import { sky } from '../data/sky';
 import { recordScenarioLit } from '../run/sky';
-import { chapterById, chapterNumber, endsStoryAct, storyActRun, storyNodeEncounter, storyNodeSpec, type StoryAct, type StoryMusic } from '../run/story';
+import { chapterById, endsStoryAct, storyActRun, storyNodeEncounter, storyNodeSpec, type StoryAct } from '../run/story';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
 import {
@@ -190,7 +187,6 @@ type Screen = RunScreen;
 /** Screens outside an act get no ambient Location (LocationContext). Listed as the exceptions so new node screens inherit the place by default. */
 const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'title',
-  'storySelect',
   'storyChapter',
   'lore',
   // The lore cards drop the title's track and leave the cold open in silence; the draft and the
@@ -421,20 +417,15 @@ function screenTipIds(screen: Screen): readonly ScreenTipId[] {
   return screen.kind === 'itemWho' ? ['item'] : [];
 }
 
-/** The books the Story machinery looks a chapter up in: A Tale of Valor's, and First Light's lessons (data/lessons.ts). */
-const ALL_STORIES = [...storyCatalog, LESSONS];
-const isLesson = (chapterId: string) => LESSONS.chapters.some((chapter) => chapter.id === chapterId);
+/** What leaving a First Light lesson is called. */
 const LESSON_EXIT = 'Back to the Sky';
-const storyExitLabel = (chapterId: string) => (isLesson(chapterId) ? LESSON_EXIT : 'Leave the Story');
 
 export function App() {
   const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(40));
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
   /** The place a Story chapter's beat stands in, for its music and its fights' arena. */
   const [storyPlaceId, setStoryPlaceId] = useState<string | null>(null);
-  const [storyMusic, setStoryMusic] = useState<StoryMusic | undefined>(undefined);
   /** Classic Mode picked on the Story select: the title starts it as Seal the Pact once did. */
-  const [classicRequested, setClassicRequested] = useState(false);
   /** How the last Infinite run ended, until Blip has reacted to it in the sky. Session-only. */
   const [skyReturn, setSkyReturn] = useState<'win' | 'loss' | null>(null);
   // Read once: a device does not change platform mid-session, and installing reopens the game.
@@ -827,7 +818,7 @@ export function App() {
       // The same deterministic draw the map's tile previewed (run/encounters.ts).
       const isMobFight = node.type === 'fight' || node.type === 'battle';
       const encounterKind = encounterKindOf(node.type);
-      let encounter = storyNodeEncounter(playerRun, ALL_STORIES, nodeId, allCombatants) ?? nodeEncounter(node, {
+      let encounter = storyNodeEncounter(playerRun, STORY_BOOKS, nodeId, allCombatants) ?? nodeEncounter(node, {
         run: playerRun,
         location,
         heroes: recruitPool,
@@ -901,7 +892,7 @@ export function App() {
   function handleEnterFight(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
     const mapNodeType = playerRun.map!.nodes[nodeId].type as EncounterMapNodeType;
     // A Story act drops only what its node names (docs/stories.md §14): no roll, no Gem, no Contract, no flask.
-    const storyNode = playerRun.story ? storyNodeSpec(playerRun, ALL_STORIES, nodeId) : null;
+    const storyNode = playerRun.story ? storyNodeSpec(playerRun, STORY_BOOKS, nodeId) : null;
     const equipmentReward = playerRun.story ? (storyNode?.drop ? equipment[storyNode.drop] ?? null : null) : equipmentDropFor(mapNodeType, playerRun.actNumber);
     setResumedCombat(null);
     const fight: Screen = {
@@ -1194,16 +1185,10 @@ export function App() {
     setScreen({ kind: 'actIntro' });
   }
 
+  /** A lesson won lights its star and hands back to the sky, where Blip cheers it (docs/the-sky.md §3). Its fights taught the round, so the round's tip would only say it again. */
   function handleStoryChapterDone(chapterId: string) {
-    if (isLesson(chapterId)) {
-      // A lesson lights its star and hands back to the sky, where Blip cheers it (docs/the-sky.md §3).
-      setProfile(updateProfile((current) => recordTipSeen(recordScenarioLit(current, sky, chapterId), FIGHT_BASICS_TIP_ID)));
-      setSkyReturn('win');
-      setScreen({ kind: 'title' });
-      return;
-    }
-    // The prologue taught the round; its tip would only say it again in the next chapter's first fight.
-    setProfile(updateProfile((current) => recordTipSeen(recordStoryChapterDone(current, chapterId), FIGHT_BASICS_TIP_ID)));
+    setProfile(updateProfile((current) => recordTipSeen(recordScenarioLit(current, sky, chapterId), FIGHT_BASICS_TIP_ID)));
+    setSkyReturn('win');
     setScreen({ kind: 'title' });
   }
 
@@ -1211,12 +1196,6 @@ export function App() {
   function handlePlayLesson(scenarioId: string) {
     const chapterId = sky.scenarios[scenarioId]?.lesson;
     if (chapterId) setScreen({ kind: 'storyChapter', chapterId });
-  }
-
-  /** An Infinite run is started from the title, so its draft and its Cycle picker are the ones a title press runs. */
-  function handleStartJourney() {
-    setClassicRequested(true);
-    setScreen({ kind: 'title' });
   }
 
   function markTipSeen(id: string) {
@@ -1350,9 +1329,7 @@ export function App() {
   const titleTrack = screen.kind === 'title' || screen.kind === 'constructed' || screen.kind === 'gauntlet' || screen.kind === 'versus';
   // The draft, the pact forged at its end (the resumed `blessing` screen) and the seal that opens the run carry the starter track.
   const starterTrack = screen.kind === 'draft' || screen.kind === 'blessing' || (screen.kind === 'pactSeal' && playerRun.brokenSeals.length === 0);
-  const storyTrack = screen.kind === 'storyChapter' && storyMusic !== undefined ? (hasTrack(storyMusic) ? storyMusic : null) : undefined;
-  const trackId =
-    storyTrack !== undefined ? storyTrack : titleTrack ? 'titleScreen' : starterTrack ? 'starterScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
+  const trackId = titleTrack ? 'titleScreen' : starterTrack ? 'starterScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
   useEffect(() => {
     setTrack(trackId);
   }, [trackId]);
@@ -1392,9 +1369,6 @@ export function App() {
           }
           onContinueRun={handleContinueRun}
           onStartRun={handleStartNewRun}
-          startClassic={classicRequested}
-          onClassicStarted={() => setClassicRequested(false)}
-          firstFall={false}
           openCycle={openCycle(profile)}
           onSeeTip={markTipSeen}
           skyReturn={skyReturn}
@@ -1540,33 +1514,16 @@ export function App() {
 
       {screen.kind === 'versus' && <VersusScreen owned={Object.keys(heroPool(heroes, profile.purchases))} local={screen.local} onClose={() => setScreen({ kind: 'title' })} />}
 
-      {screen.kind === 'storySelect' && (
-        <StorySelectScreen
-          stories={storyCatalog}
-          chaptersDone={profile.storyChaptersDone}
-          cyclesCleared={profile.cyclesCleared}
-          onPlayChapter={(chapterId) => setScreen({ kind: 'storyChapter', chapterId })}
-          onClassic={handleStartJourney}
-          onBack={() => setScreen({ kind: 'title' })}
-        />
-      )}
-
-      {screen.kind === 'storyChapter' && chapterById(ALL_STORIES, screen.chapterId) && (
+      {screen.kind === 'storyChapter' && chapterById(STORY_BOOKS, screen.chapterId) && (
         <StoryChapterScreen
           key={`${screen.chapterId}:${screen.beat ?? 0}`}
-          chapter={chapterById(ALL_STORIES, screen.chapterId)!.chapter}
-          number={chapterNumber(chapterById(ALL_STORIES, screen.chapterId)!.story, screen.chapterId)}
-          exitLabel={isLesson(screen.chapterId) ? LESSON_EXIT : undefined}
+          chapter={chapterById(STORY_BOOKS, screen.chapterId)!.chapter}
+          exitLabel={LESSON_EXIT}
           startBeat={screen.beat ?? 0}
-          fromSky={screen.fromSky}
           onStartAct={(act, beat) => handleStartStoryAct(act, screen.chapterId, beat)}
           onFinished={() => handleStoryChapterDone(screen.chapterId)}
           onQuit={() => setScreen({ kind: 'title' })}
-          onFallSeen={() => markTipSeen(LORE_TIP_ID)}
-          onPlace={(placeId, music) => {
-            setStoryPlaceId(placeId);
-            setStoryMusic(music);
-          }}
+          onPlace={setStoryPlaceId}
           tips={{ seenIds: profile.seenTipIds, onSeen: markTipSeen }}
         />
       )}
@@ -1630,7 +1587,7 @@ export function App() {
           run={playerRun}
           location={locationForAct(playerRun.locationIds, playerRun.actNumber)}
           onEnter={() => setScreen({ kind: 'map' })}
-          eyebrow={playerRun.story ? chapterById(ALL_STORIES, playerRun.story.chapterId)?.chapter.title : undefined}
+          eyebrow={playerRun.story ? chapterById(STORY_BOOKS, playerRun.story.chapterId)?.chapter.title : undefined}
         />
       )}
 
@@ -1640,7 +1597,7 @@ export function App() {
           onRunChange={setPlayerRun}
           onSelectNode={handleSelectNode}
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
-          quitLabel={playerRun.story ? storyExitLabel(playerRun.story.chapterId) : undefined}
+          quitLabel={playerRun.story ? LESSON_EXIT : undefined}
           onAbandonRun={playerRun.story ? undefined : handleAbandonRun}
           saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
         />
@@ -1690,10 +1647,10 @@ export function App() {
           onSaveAndQuit={playerRun.story ? undefined : () => setScreen({ kind: 'title' })}
           onAbandonRun={playerRun.story ? undefined : handleAbandonRun}
           onExitToTitle={playerRun.story ? () => setScreen({ kind: 'title' }) : undefined}
-          exitLabel={playerRun.story ? storyExitLabel(playerRun.story.chapterId) : undefined}
+          exitLabel={playerRun.story ? LESSON_EXIT : undefined}
           saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
           tips={{ nodeType: playerRun.map!.nodes[screen.nodeId].type, seenIds: profile.seenTipIds, onSeen: markTipSeen }}
-          storyCues={playerRun.story ? storyNodeSpec(playerRun, ALL_STORIES, screen.nodeId)?.cues : undefined}
+          storyCues={playerRun.story ? storyNodeSpec(playerRun, STORY_BOOKS, screen.nodeId)?.cues : undefined}
           storyTips={playerRun.story ? { seenIds: profile.seenTipIds, onSeen: markTipSeen } : undefined}
           cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'finale'}
         />
@@ -1784,7 +1741,7 @@ export function App() {
           onRunChange={settlingRunChange(screen)}
           onContinue={() => handleNodeContinue(screen.nodeId)}
           seed={screen.seed}
-          items={storyNodeSpec(playerRun, ALL_STORIES, screen.nodeId)?.items}
+          items={storyNodeSpec(playerRun, STORY_BOOKS, screen.nodeId)?.items}
         />
       )}
 

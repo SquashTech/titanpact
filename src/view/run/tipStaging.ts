@@ -28,7 +28,7 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   // The third page is about the Switch key, which the lead pick does not show: its scene draws it.
   bench: { pages: [['.lead-pick-grid', '.lead-pick-panel .resolve-button'], ['.lead-pick-grid .squad-slot-matchups', '.team-row.enemy .combatant-card'], null] },
   item: { pages: [['.pick-card'], ['.item-who-sockets'], ['.item-who-sell']] },
-  // The Story prologue's control tips (data/stories.ts cues): each lights the control it names on the live
+  // The lessons' control tips (data/lessons.ts cues): each lights the control it names on the live
   // board, or draws it (data/tipScenes.ts). The welcome lights nothing: it is the fight's title card.
   'story.welcome': {},
   'story.reading': {},

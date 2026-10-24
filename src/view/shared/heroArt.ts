@@ -86,13 +86,8 @@ import heraldArt from '../../../art/heroes/titan/herald.png';
 import leftEyeArt from '../../../art/heroes/titan/eye.png';
 import rightEyeArt from '../../../art/heroes/titan/righteye.png';
 import story_valorswordlessArt from '../../../art/heroes/story/valorswordless.png';
-import story_renArt from '../../../art/heroes/story/ren.png';
-import story_willArt from '../../../art/heroes/story/will.png';
 import story_stagArt from '../../../art/heroes/story/stag.png';
 import story_foxArt from '../../../art/heroes/story/fox.png';
-import story_boarArt from '../../../art/heroes/story/boar.png';
-import story_crowArt from '../../../art/heroes/story/crow.png';
-import story_heraldrisenArt from '../../../art/heroes/story/heraldrisen.png';
 import manticoreGuardianArt from '../../../art/heroes/guardians/manticore.png';
 import yugzulachGuardianArt from '../../../art/heroes/guardians/yugzulach.png';
 import elderBoughGuardianArt from '../../../art/heroes/guardians/elderBough.png';
@@ -207,17 +202,11 @@ export const heroArt: Partial<Record<string, string>> = {
   mellow: mellowArt,
   // --- The Titan's own (pixel, as the Threshold paints it; what it turned stays geometric) ---
   endbringer: heraldArt,
-  // --- The Story cast (data/storyCast.ts) ---
+  // --- The lessons' cast (data/storyCast.ts) ---
   valorPrologue: story_valorswordlessArt,
-  ren: story_renArt,
-  will: story_willArt,
   stag: story_stagArt,
   fox: story_foxArt,
-  boar: story_boarArt,
-  crow: story_crowArt,
   endbringerPrologue: heraldArt,
-  /** The Endbringer risen after the fall: a scene figure only. */
-  heraldRisen: story_heraldrisenArt,
   leftEye: leftEyeArt,
   rightEye: rightEyeArt,
 };
