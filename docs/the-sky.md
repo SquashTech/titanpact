@@ -61,9 +61,13 @@ the sky by finding them. The player is the light: its picks are the player's pic
 - **The Titan is the one thing it doesn't enjoy** (PROPOSED). The magenta eye shouldn't be able to
   see it, and over the Cycles it starts to. By Cycle V the Titan is looking right at it. That's an
   arc told in a handful of thoughts, and it keeps the Titan serious while the light stays playful.
-- **Its voice** (PROPOSED): procedural chirps in the existing voice-blip system
-  (`StoryActor.voice`, `src/audio/`). The light itself is a glow and particles, drawn in CSS, so
-  it costs no PixelLab generations.
+- **Its look: the little face** (decided 2026-10-24, per user direction; variant D of
+  `art/concepts/blip/`). It's a soft glowing body with two eyes that look where it's going and
+  blink. On a win the eyes go ^^ with a blush; on a loss they droop. It's drawn as a glow, not a
+  sprite, so it costs no PixelLab generations.
+- **Its voice** (decided with the look): a babble, one bandpass-filtered sawtooth syllable on every
+  other letter as a thought types out. It's procedural Web Audio, beside the existing voice-blip
+  system (`StoryActor.voice`, `src/audio/`).
 
 The register, as samples rather than drafts:
 
@@ -252,7 +256,8 @@ parallel (they touch different files). The rest go in order.
 
 **Phase 2 — The light, as a comparison page.** *(art direction before code)*
 - Three or four looks and motion personalities side by side, each with its chirps, for the designer
-  to pick (glow and particles in CSS, procedural Web Audio). `art/concepts/blip/`.
+  to pick (glow and particles in CSS, procedural Web Audio). `art/concepts/blip/`. **DONE: D, the
+  little face, picked 2026-10-24.**
 
 **Phase 3 — The sky's data and logic.** *(pure run layer)*
 - `src/data/sky.ts`: `ConstellationDefinition` (id, shape, stars, neighbours, reward) and
