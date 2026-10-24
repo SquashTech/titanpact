@@ -80,6 +80,7 @@ import './blessings.test';
 import './profile.test';
 import './starShop.test';
 import './sky.test';
+import './thoughts.test';
 import './deck.test';
 import './tips.test';
 import './installHint.test';

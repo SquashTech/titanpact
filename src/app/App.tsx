@@ -23,6 +23,7 @@ import {
   type Profile,
   type RunEnd,
 } from '../run/profile';
+import { recordThoughtSeen, type ThoughtDefinition } from '../run/thoughts';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
 import { LaunchScreen } from '../view/run/LaunchScreen';
@@ -425,6 +426,8 @@ export function App() {
   const [storyMusic, setStoryMusic] = useState<StoryMusic | undefined>(undefined);
   /** Classic Mode picked on the Story select: the title starts it as Seal the Pact once did. */
   const [classicRequested, setClassicRequested] = useState(false);
+  /** How the last Journey ended, until Blip has reacted to it in the sky. Session-only. */
+  const [skyReturn, setSkyReturn] = useState<'win' | 'loss' | null>(null);
   // Read once: a device does not change platform mid-session, and installing reopens the game.
   const [installPlatform] = useState(currentInstallPlatform);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -609,6 +612,7 @@ export function App() {
     const band = end.outcome === 'win' && playerRun.cycle === FIRST_CYCLE ? wardensFromRun(playerRun, heroes) : [];
     const after = updateProfile((current) => recordWardens(recordRunEnded(current, end, now), band));
     setRunOutcome({ before, after });
+    setSkyReturn(end.outcome);
     telemetryRunEnded({
       ...end,
       companionType: end.companionType ?? null,
@@ -1197,6 +1201,11 @@ export function App() {
     setProfile(updateProfile((current) => recordTipSeen(current, id)));
   }
 
+  /** One of Blip's firsts: account-wide, written straight to storage like a tip. */
+  function markThoughtSeen(thought: ThoughtDefinition) {
+    setProfile(updateProfile((current) => recordThoughtSeen(current, thought)));
+  }
+
   /** The Cycle rides `playerRun` across the draft; the run itself is only built on confirm. */
   function handleStartNewRun(cycle: number) {
     // One hero drawn from each deck row, then four of those shown (run/draft.ts).
@@ -1366,6 +1375,9 @@ export function App() {
           firstFall={false}
           openCycle={openCycle(profile)}
           onSeeTip={markTipSeen}
+          skyReturn={skyReturn}
+          onSkyReturnSeen={() => setSkyReturn(null)}
+          onSeeThought={markThoughtSeen}
           onResetTips={handleResetTips}
           onGrantDevStars={handleGrantDevStars}
           onQuickBattle={handleQuickBattle}

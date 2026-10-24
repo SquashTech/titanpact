@@ -23,6 +23,7 @@ import type { Profile } from '../../run/profile';
 import recordsArt from '../../../art/ui/records.png';
 import { PactButton } from './PactButton';
 import { SkyChart, type SkyPlay } from './SkyChart';
+import type { ThoughtDefinition } from '../../run/thoughts';
 import { readEnemyIntent, writeEnemyIntent } from '../combat/enemyIntent';
 
 interface Props {
@@ -55,6 +56,11 @@ interface Props {
   openCycle: number;
   /** Records a seen-once beat (the Chronicle weave) in the profile. */
   onSeeTip: (id: string) => void;
+  /** How the Journey just played ended, for Blip to react to once; null otherwise. */
+  skyReturn?: 'win' | 'loss' | null;
+  onSkyReturnSeen?: () => void;
+  /** One of Blip's firsts, thought: kept once an account (run/thoughts.ts). */
+  onSeeThought?: (thought: ThoughtDefinition) => void;
   /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
   onResetTips: () => void;
   /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +2,500 Stardust to test the Observatory and the stakes. */
@@ -117,6 +123,9 @@ export function TitleScreen({
   firstFall = false,
   openCycle,
   onSeeTip,
+  skyReturn = null,
+  onSkyReturnSeen,
+  onSeeThought,
   onResetTips,
   onGrantDevStars,
   onQuickBattle,
@@ -256,7 +265,15 @@ export function TitleScreen({
       <span className="title-grain" aria-hidden="true" />
       <span className="title-vignette" aria-hidden="true" />
 
-      <SkyChart profile={profile} disabled={launching} onPlay={handleSkyPlay} />
+      <SkyChart
+        profile={profile}
+        disabled={launching}
+        active={tab === 'play' && !launching && !falling}
+        returned={skyReturn}
+        onReturnedSeen={onSkyReturnSeen}
+        onSeeThought={onSeeThought}
+        onPlay={handleSkyPlay}
+      />
 
       <div className="title-logo is-top">
         <TitleLogo />

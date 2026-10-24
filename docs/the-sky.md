@@ -1,6 +1,6 @@
 # the-sky.md — The Sky: lighting the multiverse
 
-> **STATUS: DIRECTION DECIDED; PHASES 1–4 DONE (2026-10-24): Stardust is the currency, Blip is the little face, and the title is the sky.** §1–§5 hold what is
+> **STATUS: DIRECTION DECIDED; PHASES 1–5 DONE (2026-10-24): Stardust is the currency, the title is the sky, and Blip lives in it, thinking and pokeable.** §1–§5 hold what is
 > decided; anything marked PROPOSED or OPEN is not. §10 is the build plan. If built, it replaces
 > Stories as the front door (§9).
 >
@@ -68,7 +68,7 @@ the sky by finding them. The player is the light: its picks are the player's pic
 - **Its voice** (decided with the look): a babble, one bandpass-filtered sawtooth syllable on every
   other letter as a thought types out. It's procedural Web Audio, beside the existing voice-blip
   system (`StoryActor.voice`, `src/audio/`).
-- **It can be poked** (PROPOSED 2026-10-24, user idea). Tapping Blip squishes it like poking the
+- **It can be poked** (BUILT 2026-10-24, user idea; phase 5). Tapping Blip squishes it like poking the
   Pillsbury Doughboy: a squash and spring-back, a giggle, the face reacting. It's a toy, not a
   control. It never opens anything, and poking it isn't a decision. *Second-order:* a tap on Blip
   must not also count as a tap on the sky under it. Does a run of pokes escalate (dizzy, then
@@ -352,6 +352,25 @@ on the title's Play page in place of the seal, the Seal the Pact press and the t
 - Passive: a thought appears beside the light and fades. No tap, never during a run.
 - The poke (§1): a squash and spring-back on tap, with the face reacting. Skins come later, once
   a constellation or the shop has a seat to pay one.
+
+**DONE 2026-10-24.** `Blip.tsx` is the little face on a canvas: it springs toward its home, bobs,
+looks along its motion, blinks, and goes happy, sad, surprised or dizzy. Thoughts type out beside
+it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own.
+- **Where it goes:** it rests over the constellation a press would play next (the first open,
+  unlit one with a press, else Journey). On a sheet, it perches on the top edge. It stops, and
+  says nothing, whenever the sky is off screen or a sheet stands over it.
+- **What it says** (`src/data/thoughts.ts`, picked by `src/run/thoughts.ts`, firsts kept in
+  `Profile.seenThoughtIds`):
+  - On arriving, one thing: a reaction to the Journey just ended (session-only, never stored),
+    else the first-sky hello, else the first constellation seen open (it flies there to say it).
+  - Then up to three idle thoughts a visit, with a dart to look around between them.
+  - A sheet's first about its constellation, or an uncharted line.
+- **The poke:** a squish, a hop and a giggle. The first and third poke think a line, and five in a
+  run make it dizzy. The tap never reaches the sky under it.
+- **First pass, open to you:** every line in `thoughts.ts`, and how often Blip talks (one
+  arrival line, three idle at most, 9–16 s apart).
+- **Not built:** a first look at a hero (Blip doesn't live in the Collection), skins, and the
+  Titan-noticing arc (still PROPOSED).
 
 **Phase 6 — The rails.** *(content on Stories' machinery)*
 - First Light, The Bench and The Road as scenarios on `src/run/story.ts`'s fixed casts, encounter

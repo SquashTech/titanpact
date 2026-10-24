@@ -72,6 +72,12 @@ export type SfxId =
   | 'voice.warm'
   | 'voice.deep'
   | 'voice.click'
+  // Blip (docs/the-sky.md §1): a babble a syllable at a time, and its reactions
+  | 'blip.syllable'
+  | 'blip.chirp'
+  | 'blip.giggle'
+  | 'blip.win'
+  | 'blip.lose'
   | 'wolf.bark'
   | 'wolf.howl'
   | 'trust.rise'
@@ -1061,6 +1067,57 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'noise', gain: 0.55, attack: 0.001, decay: 0.016, filter: { type: 'bandpass', freq: 2600, q: 4 } },
       { wave: 'noise', gain: 0.2, attack: 0.001, decay: 0.03, filter: { type: 'lowpass', freq: 900, q: 1 } },
       { wave: 'triangle', freq: 1900, gain: 0.06, attack: 0.001, decay: 0.012 },
+    ],
+  },
+
+  /** Blip's babble, one syllable a beat: a sawtooth through a narrow formant, wide jitter so no two match. */
+  'blip.syllable': {
+    gain: 0.22,
+    jitter: 0.22,
+    voices: [{ wave: 'sawtooth', freq: 420, freqEnd: 440, gain: 0.5, attack: 0.012, decay: 0.05, filter: { type: 'bandpass', freq: 1150, q: 5 } }],
+  },
+
+  /** Blip setting off: three syllables climbing. */
+  'blip.chirp': {
+    gain: 0.22,
+    jitter: 0.05,
+    voices: [
+      { wave: 'sawtooth', freq: 360, freqEnd: 375, gain: 0.5, attack: 0.012, decay: 0.07, filter: { type: 'bandpass', freq: 1000, q: 5 } },
+      { wave: 'sawtooth', freq: 400, freqEnd: 416, gain: 0.5, attack: 0.012, decay: 0.07, delay: 0.08, filter: { type: 'bandpass', freq: 1300, q: 5 } },
+      { wave: 'sawtooth', freq: 520, freqEnd: 640, gain: 0.5, attack: 0.012, decay: 0.12, delay: 0.16, filter: { type: 'bandpass', freq: 1100, q: 5 } },
+    ],
+  },
+
+  /** Blip poked: a quick rising giggle, four syllables tumbling up. */
+  'blip.giggle': {
+    gain: 0.22,
+    jitter: 0.06,
+    voices: [
+      { wave: 'sawtooth', freq: 520, freqEnd: 600, gain: 0.5, attack: 0.008, decay: 0.05, filter: { type: 'bandpass', freq: 1400, q: 5 } },
+      { wave: 'sawtooth', freq: 560, freqEnd: 650, gain: 0.45, attack: 0.008, decay: 0.05, delay: 0.07, filter: { type: 'bandpass', freq: 1500, q: 5 } },
+      { wave: 'sawtooth', freq: 610, freqEnd: 700, gain: 0.4, attack: 0.008, decay: 0.05, delay: 0.14, filter: { type: 'bandpass', freq: 1600, q: 5 } },
+      { wave: 'sawtooth', freq: 660, freqEnd: 820, gain: 0.35, attack: 0.008, decay: 0.08, delay: 0.21, filter: { type: 'bandpass', freq: 1700, q: 5 } },
+    ],
+  },
+
+  /** Blip delighted: a little three-note rise, the last one sung. */
+  'blip.win': {
+    gain: 0.24,
+    jitter: 0.02,
+    voices: [
+      { wave: 'sawtooth', freq: 440, freqEnd: 458, gain: 0.5, attack: 0.012, decay: 0.08, filter: { type: 'bandpass', freq: 1200, q: 5 } },
+      { wave: 'sawtooth', freq: 554, freqEnd: 576, gain: 0.5, attack: 0.012, decay: 0.08, delay: 0.09, filter: { type: 'bandpass', freq: 1200, q: 5 } },
+      { wave: 'sawtooth', freq: 660, freqEnd: 800, gain: 0.5, attack: 0.012, decay: 0.2, delay: 0.18, filter: { type: 'bandpass', freq: 1400, q: 5 } },
+    ],
+  },
+
+  /** Blip let down: two sighing syllables, falling. */
+  'blip.lose': {
+    gain: 0.22,
+    jitter: 0.02,
+    voices: [
+      { wave: 'sawtooth', freq: 420, freqEnd: 340, gain: 0.5, attack: 0.02, decay: 0.18, filter: { type: 'bandpass', freq: 900, q: 5 } },
+      { wave: 'sawtooth', freq: 330, freqEnd: 250, gain: 0.5, attack: 0.02, decay: 0.32, delay: 0.2, filter: { type: 'bandpass', freq: 800, q: 5 } },
     ],
   },
 

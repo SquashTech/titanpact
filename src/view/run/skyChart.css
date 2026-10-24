@@ -268,3 +268,29 @@
     opacity: 0.5;
   }
 }
+
+/* The svg's own box: Blip flies in it on the same fit as the chart. */
+.sky-chart-stage {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+}
+
+.sky-chart-stage > svg {
+  max-width: none;
+}
+
+/* Blip sits on the sheet's top edge, its thoughts floating above it. */
+.sky-sheet {
+  position: relative;
+}
+
+.sky-sheet-perch {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  right: 0;
+  height: 120px;
+  pointer-events: none;
+}

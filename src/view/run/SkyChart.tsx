@@ -1,10 +1,13 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { sky } from '../../data/sky';
+import { THOUGHTS } from '../../data/thoughts';
 import { trials } from '../../data/trials';
 import { cycleOf } from '../../run/cycles';
 import type { Profile } from '../../run/profile';
-import { constellationState, isStarLit, starScenario, type ConstellationDefinition, type ConstellationState, type SkyStar } from '../../run/sky';
+import { constellationState, isConstellationLit, isStarLit, starScenario, type ConstellationDefinition, type ConstellationState, type SkyStar } from '../../run/sky';
+import { revealedThought, thoughtFor, type ThoughtDefinition, type ThoughtMoment } from '../../run/thoughts';
 import { PlateButton } from '../shared/PlateButton';
+import { Blip, type BlipHandle } from './Blip';
 import './skyChart.css';
 
 // The title as the sky (docs/the-sky.md §2, §10 phase 4): every constellation the account can see,
@@ -67,22 +70,125 @@ function starName(star: SkyStar): string {
   }
 }
 
+/** Where Blip rests by a constellation, in chart units: just over its highest star. */
+function perchOf(c: ConstellationDefinition): { x: number; y: number } {
+  const top = Math.min(...c.stars.map((star) => place(c, star).y));
+  return { x: c.at.x * W, y: top - (c.stars.length === 1 ? 26 : 16) };
+}
+
+/** Idle thoughts a visit, at most: Blip leans on firsts and keeps its pool small (docs/the-sky.md §7). */
+const IDLE_THOUGHTS_A_VISIT = 3;
+const ARRIVE_MS = 900;
+const IDLE_MS = [9000, 16000] as const;
+
 interface Props {
   profile: Profile;
   disabled?: boolean;
+  /** Off, the sky is not on screen (another page, a launch): Blip stops and says nothing. */
+  active?: boolean;
+  /** How the last Journey ended, when the player has just come back from it; Blip reacts once. */
+  returned?: 'win' | 'loss' | null;
+  onReturnedSeen?: () => void;
+  /** A first Blip has thought, to keep once an account. */
+  onSeeThought?: (thought: ThoughtDefinition) => void;
   onPlay: (play: SkyPlay) => void;
 }
 
-export function SkyChart({ profile, disabled = false, onPlay }: Props) {
+export function SkyChart({ profile, disabled = false, active = true, returned = null, onReturnedSeen, onSeeThought, onPlay }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const shown = Object.values(sky.constellations)
     .map((c) => ({ c, state: constellationState(profile, sky, c.id) }))
     .filter((entry): entry is { c: ConstellationDefinition; state: Exclude<ConstellationState, 'hidden'> } => entry.state !== 'hidden');
   const open = openId ? sky.constellations[openId] : null;
 
+  // The stage is the svg's own box, so a chart point maps to Blip's pixels on the same meet fit.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState({ scale: 1, ox: 0, oy: 0 });
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const measure = () => {
+      const scale = Math.min(stage.clientWidth / W, stage.clientHeight / H) || 1;
+      setFit({ scale, ox: (stage.clientWidth - W * scale) / 2, oy: (stage.clientHeight - H * scale) / 2 });
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    measure();
+    return () => observer.disconnect();
+  }, []);
+  // Read through a ref: the visit's timers outlive the render that set them, and must see the fit as it is now.
+  const fitRef = useRef(fit);
+  fitRef.current = fit;
+  const toStage = (p: { x: number; y: number }) => ({ x: fitRef.current.ox + p.x * fitRef.current.scale, y: fitRef.current.oy + p.y * fitRef.current.scale });
+
+  // Blip rests by the constellation a press would play next: the first open, unlit one with a press, else Journey.
+  const restingBy =
+    shown.find(({ c, state }) => state === 'open' && !c.uncharted && playOf(c) && !isConstellationLit(profile, c))?.c ?? sky.constellations.journey;
+  const home = toStage(perchOf(restingBy));
+  const homeRef = useRef(home);
+  homeRef.current = home;
+  const goHome = () => blip.current?.goTo(homeRef.current.x, homeRef.current.y);
+
+  const blip = useRef<BlipHandle>(null);
+  const blipActive = active && !open;
+  const say = (moment: ThoughtMoment) => {
+    const thought = thoughtFor(profile, THOUGHTS, moment, Math.random());
+    if (!thought) return false;
+    blip.current?.think(thought.line);
+    if (thought.once) onSeeThought?.(thought);
+    return true;
+  };
+
+  // One thing to say on arriving — a Journey's end, the first sky, a constellation seen open for the
+  // first time — then a few idle thoughts, spaced out, and a dart now and then to look around.
+  useEffect(() => {
+    if (!blipActive) return;
+    const timers: number[] = [];
+    const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
+    at(ARRIVE_MS, () => {
+      if (returned) {
+        blip.current?.react(returned === 'win' ? 'win' : 'lose');
+        at(700, () => say({ kind: 'returned', outcome: returned }));
+        onReturnedSeen?.();
+        return;
+      }
+      if (say({ kind: 'firstSky' })) return;
+      const reveal = revealedThought(profile, sky, THOUGHTS);
+      if (reveal) {
+        const target = toStage(perchOf(sky.constellations[reveal.constellationId]));
+        blip.current?.goTo(target.x, target.y, () => {
+          blip.current?.think(reveal.thought.line);
+          onSeeThought?.(reveal.thought);
+          at(5200, goHome);
+        });
+      }
+    });
+    let idle = 0;
+    const next = () =>
+      at(IDLE_MS[0] + Math.random() * (IDLE_MS[1] - IDLE_MS[0]), () => {
+        if (Math.random() < 0.5 && idle < IDLE_THOUGHTS_A_VISIT) {
+          idle++;
+          say({ kind: 'idle' });
+        } else {
+          const visible = shown.filter(({ state }) => state !== 'glimpsed');
+          const pick = visible[Math.floor(Math.random() * visible.length)];
+          if (pick) {
+            const target = toStage(perchOf(pick.c));
+            blip.current?.goTo(target.x, target.y, () => at(2600, goHome));
+          }
+        }
+        next();
+      });
+    next();
+    return () => timers.forEach(window.clearTimeout);
+    // A visit is one mount while active; the profile changing under it (a first recorded) must not restart it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blipActive]);
+
   return (
     <>
       <div className="sky-chart">
+        <div ref={stageRef} className="sky-chart-stage">
         <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" aria-label="The sky">
           <defs>
             <filter id="sky-chart-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -149,12 +255,23 @@ export function SkyChart({ profile, disabled = false, onPlay }: Props) {
             );
           })}
         </svg>
+        <Blip
+          ref={blip}
+          home={home}
+          active={blipActive}
+          onPoke={(inARow) => {
+            if (inARow >= 5) say({ kind: 'pokedLots' });
+            else if (inARow === 1 || inARow === 3) say({ kind: 'poked' });
+          }}
+        />
+        </div>
       </div>
 
       {open && (
         <ConstellationSheet
           profile={profile}
           constellation={open}
+          onSeeThought={onSeeThought}
           onClose={() => setOpenId(null)}
           onPlay={(play) => {
             setOpenId(null);
@@ -169,11 +286,13 @@ export function SkyChart({ profile, disabled = false, onPlay }: Props) {
 function ConstellationSheet({
   profile,
   constellation,
+  onSeeThought,
   onClose,
   onPlay,
 }: {
   profile: Profile;
   constellation: ConstellationDefinition;
+  onSeeThought?: (thought: ThoughtDefinition) => void;
   onClose: () => void;
   onPlay: (play: SkyPlay) => void;
 }) {
@@ -181,9 +300,27 @@ function ConstellationSheet({
   const reward = constellation.rewards.reduce((sum, r) => sum + r.amount, 0);
   const lit = constellation.stars.map((star) => isStarLit(profile, constellation, star));
   const allLit = lit.every(Boolean);
+  const uncharted = !!constellation.uncharted && !allLit;
+
+  // Blip perches on the sheet, and says its first about this constellation, if it has one left.
+  const blip = useRef<BlipHandle>(null);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const thought = thoughtFor(profile, THOUGHTS, uncharted ? { kind: 'uncharted' } : { kind: 'opened', constellationId: constellation.id }, Math.random());
+      if (!thought) return;
+      blip.current?.think(thought.line);
+      if (thought.once) onSeeThought?.(thought);
+    }, 450);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="sky-sheet-scrim" onClick={onClose}>
       <div className="sky-sheet" role="dialog" aria-label={constellation.name} onClick={(e) => e.stopPropagation()}>
+        <div className="sky-sheet-perch">
+          <Blip ref={blip} home={{ x: 40, y: 92 }} active />
+        </div>
         <div className="sky-sheet-head">
           <span className="sky-sheet-name">{constellation.name}</span>
           {reward > 0 && !allLit && <span className="sky-sheet-reward">✦ {reward}</span>}
@@ -201,7 +338,7 @@ function ConstellationSheet({
             </li>
           ))}
         </ul>
-        {constellation.uncharted && !allLit && <p className="sky-sheet-uncharted">Not yet charted.</p>}
+        {uncharted && <p className="sky-sheet-uncharted">Not yet charted.</p>}
         {play && (
           <PlateButton className="sky-sheet-play" onClick={() => onPlay(play)} data-sfx="ui.commit">
             {PLAY_LABELS[play]}

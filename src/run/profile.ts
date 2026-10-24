@@ -127,6 +127,8 @@ export interface Profile {
   storyChaptersDone: string[];
   /** Sky scenarios won (run/sky.ts), each once. Every other star in the sky is derived from a record above. */
   litStars: string[];
+  /** Blip's firsts already thought (run/thoughts.ts), each once an account. */
+  seenThoughtIds: string[];
 }
 
 /** Stardust a lit star pays (docs/the-sky.md §5): a draw is two, as it was when stars were the currency. */
@@ -207,6 +209,7 @@ export function createProfile(): Profile {
     gauntletClears: 0,
     storyChaptersDone: [],
     litStars: [],
+    seenThoughtIds: [],
   };
 }
 
@@ -606,5 +609,6 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     storyChaptersDone: [...new Set(stringList(value.storyChaptersDone))],
     // Absent on every file written before the sky.
     litStars: [...new Set(stringList(value.litStars))],
+    seenThoughtIds: [...new Set(stringList(value.seenThoughtIds))],
   };
 }
