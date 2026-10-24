@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { CollectionScreen } from './CollectionScreen';
 import type { Deck } from '../../run/deck';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
@@ -12,7 +12,6 @@ import { TitanRidge } from './titanArt';
 import titlePainting from '../../../art/title/fogBanks.png';
 import { NightSky } from './NightSky';
 import { TitleLogo } from './TitleLogo';
-import { SealArt } from '../shared/SealArt';
 import { HubGlyph } from '../shared/nodeIcons';
 import { FIRST_CYCLE } from '../../run/cycles';
 import { chronicleBand, chronicleLines, chronicleWovenTipId, pendingWeave } from '../../run/chronicle';
@@ -21,12 +20,9 @@ import { CycleTapestry } from './CycleTapestry';
 import { AudioSettings } from '../shared/AudioSettings';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
-import { isConstructedOpen } from '../../run/constructed';
-import { isGauntletOpen } from '../../run/gauntlet';
 import recordsArt from '../../../art/ui/records.png';
-import { ModeDoors, ModeLight, ModeStage, PactButton, TITLE_MODES, type TitleMode } from './TitleModes';
-import { ModesOpenBeat, type ModesBeatStage } from './ModesOpenBeat';
-import { MODES_OPEN_TIP_ID, modesOpenDue } from '../../run/tips';
+import { PactButton } from './PactButton';
+import { SkyChart, type SkyPlay } from './SkyChart';
 import { readEnemyIntent, writeEnemyIntent } from '../combat/enemyIntent';
 
 interface Props {
@@ -50,8 +46,6 @@ interface Props {
   onContinueRun: () => void;
   /** Start a run on the given Cycle (run/cycles.ts). */
   onStartRun: (cycle: number) => void;
-  /** Seal the Pact with no run parked opens Stories (docs/stories.md §10): the prologue, then the Story select. */
-  onOpenStories?: () => void;
   /** Classic Mode was picked on the Story select: start it as the press once did. */
   startClassic?: boolean;
   onClassicStarted?: () => void;
@@ -61,8 +55,6 @@ interface Props {
   openCycle: number;
   /** Records a seen-once beat (the Chronicle weave) in the profile. */
   onSeeTip: (id: string) => void;
-  /** The launch screen is down and no card stands over the title, so a beat may play. */
-  beatReady: boolean;
   /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
   onResetTips: () => void;
   /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +2,500 Stardust to test the Constellation and the stakes. */
@@ -108,10 +100,6 @@ const MOTES = Array.from({ length: MOTE_COUNT }, (_, i) => {
   };
 });
 
-/** How far a drag must run sideways, and how much straighter than it is tall, to turn the page. */
-const SWIPE_MIN_PX = 48;
-const SWIPE_SLOPE = 1.4;
-
 export function TitleScreen({
   profile,
   onRefreshProfile,
@@ -124,13 +112,11 @@ export function TitleScreen({
   saveNotice = null,
   onContinueRun,
   onStartRun,
-  onOpenStories,
   startClassic = false,
   onClassicStarted,
   firstFall = false,
   openCycle,
   onSeeTip,
-  beatReady,
   onResetTips,
   onGrantDevStars,
   onQuickBattle,
@@ -163,66 +149,6 @@ export function TitleScreen({
   // The weave is chosen as the tapestry opens and held, since marking it seen re-renders the profile.
   const [pickingCycle, setPickingCycle] = useState<{ weave?: number } | null>(null);
   const [staleNoteDismissed, setStaleNoteDismissed] = useState(false);
-  const [mode, setMode] = useState<TitleMode>('pact');
-  /** Which way the mode page slid in: +1 from the right, -1 from the left. */
-  const [modeSlide, setModeSlide] = useState(0);
-  const swipe = useRef<{ x: number; y: number; id: number } | null>(null);
-  /** Set when a drag turned the page, so the click that ends it does not also press what it ended on. */
-  const swiped = useRef(false);
-
-  /** A mode's page does not exist for the player until the win that opens it. */
-  function modeOpen(m: TitleMode): boolean {
-    return m === 'trials' ? isConstructedOpen(profile) : m === 'gauntlet' ? isGauntletOpen(profile) : true;
-  }
-
-  function selectMode(next: TitleMode) {
-    if (next === mode || launching || !modeOpen(next)) return;
-    setModeSlide(Math.sign(TITLE_MODES.indexOf(next) - TITLE_MODES.indexOf(mode)));
-    setMode(next);
-  }
-
-  function stepMode(delta: number) {
-    const next = TITLE_MODES[TITLE_MODES.indexOf(mode) + delta];
-    if (next) selectMode(next);
-  }
-
-  const bareTitle = tab === 'play' && !confirmingNewRun && !pickingCycle && !showRecords && !showReference && !showOptions && !showLocations && !showDev;
-
-  // Once started it plays to the end; it starts only on the bare Pact page.
-  const [beatStage, setBeatStage] = useState<ModesBeatStage | null>(null);
-  const beatOn = beatStage !== null || (beatReady && bareTitle && mode === 'pact' && !launching && modesOpenDue(profile));
-
-  /** Pages turn only on the bare title — never under a sheet, a menu or a beat standing over it. */
-  const pagesTurn = bareTitle && !beatOn;
-
-  function handlePointerDown(e: ReactPointerEvent) {
-    swiped.current = false;
-    swipe.current = pagesTurn && e.isPrimary ? { x: e.clientX, y: e.clientY, id: e.pointerId } : null;
-  }
-
-  function handlePointerUp(e: ReactPointerEvent) {
-    const start = swipe.current;
-    swipe.current = null;
-    if (!start || start.id !== e.pointerId) return;
-    const dx = e.clientX - start.x;
-    const dy = e.clientY - start.y;
-    if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) < Math.abs(dy) * SWIPE_SLOPE) return;
-    swiped.current = true;
-    // The click, if one follows, is dispatched in this same input task; a drag that ended off its
-    // start element has none, and must not leave the flag to swallow the next real tap.
-    window.setTimeout(() => (swiped.current = false), 0);
-    stepMode(dx < 0 ? 1 : -1);
-  }
-
-  useEffect(() => {
-    if (!pagesTurn) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowLeft') stepMode(-1);
-      if (e.key === 'ArrowRight') stepMode(1);
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
 
   // The sound already plays from the delegated pointerdown listener (audio/uiSfx.ts).
   function launch(action: () => void) {
@@ -237,11 +163,14 @@ export function TitleScreen({
       setConfirmingNewRun(true);
       return;
     }
-    if (onOpenStories) {
-      launch(onOpenStories);
-      return;
-    }
     startFresh();
+  }
+
+  /** A constellation's one press (SkyChart.tsx): a Journey and a Cycle both start a run; the modes open their own screens. */
+  function handleSkyPlay(play: SkyPlay) {
+    if (play === 'journey' || play === 'cycles') handleStart();
+    else if (play === 'trials') onOpenConstructed();
+    else onOpenGauntlet();
   }
 
   useEffect(() => {
@@ -288,19 +217,13 @@ export function TitleScreen({
   const tone = parkedRun ? 'verdigris' : 'gold';
 
   const balance = stardustBalance(profile, starShopCatalog);
+  const staleNote = !staleNoteDismissed ? (staleSaveReason ? 'A run saved by an earlier version of the game could not be loaded, and has been cleared.' : saveNotice) : null;
+  /** The press row stands under the sky only when it holds something: a parked run, or a note about the save. */
+  const pressRow = !!parkedRun || !!staleNote;
 
   return (
     <div
-      className={`title-screen is-${tone} is-mode-${mode}${launching ? ' is-launching' : ''}${falling ? ' is-falling' : ''}${tab !== 'play' ? ' is-away' : ''}`}
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={() => (swipe.current = null)}
-      onClickCapture={(e) => {
-        if (!swiped.current) return;
-        swiped.current = false;
-        e.stopPropagation();
-        e.preventDefault();
-      }}
+      className={`title-screen is-${tone}${pressRow ? ' has-parked-run' : ''}${launching ? ' is-launching' : ''}${falling ? ' is-falling' : ''}${tab !== 'play' ? ' is-away' : ''}`}
     >
       {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
           back is instant, and display: contents keeps them in the screen's own flex and stacking. */}
@@ -333,18 +256,7 @@ export function TitleScreen({
       <span className="title-grain" aria-hidden="true" />
       <span className="title-vignette" aria-hidden="true" />
 
-      <div className="title-heading">
-        {/* The seal, the godrays and the bloom all hang off this wrapper rather than off
-            the screen, so they track the wordmark's actual position instead of drifting
-            into empty space whenever the stack below it changes. */}
-        <div className="title-mark">
-          <SealArt />
-          <span className="title-ray-burst" aria-hidden="true" />
-          <span className="title-core-glow" aria-hidden="true" />
-          {/* The logo's own footprint, kept so the seal stays centred where it always was. */}
-          <span className="title-logo-seat" aria-hidden="true" />
-        </div>
-      </div>
+      <SkyChart profile={profile} disabled={launching} onPlay={handleSkyPlay} />
 
       <div className="title-logo is-top">
         <TitleLogo />
@@ -359,58 +271,26 @@ export function TitleScreen({
         </>
       )}
 
-      {/* One entry: play. Everything else on this screen is a lookup tool or
-          scaffolding, and all of it is pushed to the bottom edge so the middle
-          of the screen is the seal and the press that leaves it. A parked run
-          takes the primary slot: coming back to a run in progress is the
-          likelier intent. */}
-      <div className="title-buttons">
-        {parkedRun ? (
-          <>
-            <PactButton label="Continue Run" disabled={launching} onClick={() => launch(onContinueRun)} />
-            <button className="title-newrun-button" onClick={handleStart} disabled={launching}>
-              Start a New Run
+      {/* The sky is the way in; a parked run keeps the one press under it, since coming back to a
+          run in progress is the likelier intent. */}
+      {pressRow && (
+        <div className="title-buttons">
+          {parkedRun && (
+            <>
+              <PactButton label="Continue Run" disabled={launching} onClick={() => launch(onContinueRun)} />
+              <button className="title-newrun-button" onClick={handleStart} disabled={launching}>
+                Start a New Run
+              </button>
+            </>
+          )}
+          {/* The reason itself is developer-shaped ("roster[0].unlockedMoveIds references..."), so it
+              goes to the console (App.tsx) and the player gets the one fact they can act on. */}
+          {staleNote && (
+            <button className="title-stale-note" onClick={() => setStaleNoteDismissed(true)}>
+              {staleNote} Tap to dismiss.
             </button>
-          </>
-        ) : (
-          <PactButton label="Seal the Pact" disabled={launching} onClick={handleStart} />
-        )}
-        {/* The reason itself is developer-shaped ("roster[0].unlockedMoveIds references..."), so it
-            goes to the console (App.tsx) and the player gets the one fact they can act on. */}
-        {staleSaveReason && !staleNoteDismissed && (
-          <button className="title-stale-note" onClick={() => setStaleNoteDismissed(true)}>
-            A run saved by an earlier version of the game could not be loaded, and has been cleared. Tap to dismiss.
-          </button>
-        )}
-        {!staleSaveReason && saveNotice && !staleNoteDismissed && (
-          <button className="title-stale-note" onClick={() => setStaleNoteDismissed(true)}>
-            {saveNotice} Tap to dismiss.
-          </button>
-        )}
-        {/* The mode doors stand in the corners of this band; it holds their height, so the seal does not move. */}
-        <span className="title-mode-door-seat" aria-hidden="true" />
-      </div>
-
-      {/* The other two doors (docs/gauntlet.md §7) are pages either side of this one, there once they open. */}
-      {mode !== 'pact' && <ModeLight mode={mode} />}
-      {mode !== 'pact' && (
-        <ModeStage
-          mode={mode}
-          profile={profile}
-          disabled={launching}
-          direction={modeSlide}
-          onOpen={mode === 'trials' ? () => onOpenConstructed() : onOpenGauntlet}
-        />
-      )}
-      <ModeDoors mode={mode} isOpen={modeOpen} onSelect={selectMode} beat={beatOn ? (beatStage ?? { doors: 'held' }) : null} />
-      {beatOn && (
-        <ModesOpenBeat
-          onStage={setBeatStage}
-          onDone={() => {
-            onSeeTip(MODES_OPEN_TIP_ID);
-            setBeatStage(null);
-          }}
-        />
+          )}
+        </div>
       )}
 
       {/* Records, Reference and Options are corner glyphs: a ledger, a lookup and a dial, not places. */}

@@ -1,6 +1,6 @@
 // The sky (docs/the-sky.md §2–§4): the rails first, then Journey, then the modes that already exist,
 // each as a constellation. Shapes and placements are first pass, for the sky screen to tune.
-// The rail scenarios are named seats: their fights are authored with the rails (§10, phase 6).
+// The rail scenarios are named seats, uncharted until their fights are authored (§10, phase 6).
 
 import type { ConstellationDefinition, ScenarioDefinition, SkyContent, SkyStar } from '../run/sky';
 import { TRIAL_LIST } from './trials';
@@ -44,6 +44,7 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
     ],
     after: [],
     rail: true,
+    uncharted: true,
     rewards: [{ kind: 'stardust', amount: 100 }],
   },
   {
@@ -58,6 +59,7 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
     ],
     after: ['firstLight'],
     rail: true,
+    uncharted: true,
     rewards: [{ kind: 'stardust', amount: 100 }],
   },
   {
@@ -68,6 +70,7 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
     lines: [],
     after: ['theBench'],
     rail: true,
+    uncharted: true,
     rewards: [{ kind: 'stardust', amount: 100 }],
   },
   {

@@ -13,7 +13,7 @@
 //     fails `test/tips.test.ts`.
 
 import type { InstallPlatform } from '../run/installHint';
-import type { FightTip, ModesOpenPage, ScreenTipId, Tip } from '../run/tips';
+import type { FightTip, ScreenTipId, Tip } from '../run/tips';
 
 /**
  * The one piece of lore, ahead of the first draft on an account, under the fall (TitanFallScreen,
@@ -68,25 +68,6 @@ export const FIGHT_TIPS: readonly FightTip[] = [
       'A move costs the Mana in its gem, paid from the blue bar. Everyone regains some each round, and Rest recovers all of it.',
       "The arrows under a move's number show how it hits each enemy: [super] double, [resist] half. [single] hits one enemy, [spread] hits both. Hold a move to read what it does.",
     ],
-  },
-];
-
-/**
- * The title's beat after the first Cycle I win (run/tips.ts `modesOpenDue`): the caption over the
- * doors' arrival, then one window a mode, each over a picture of that mode's own screen.
- */
-export const MODES_OPEN_CAPTION = 'Two New Ways to Play';
-
-export const MODES_OPEN_PAGES: readonly ModesOpenPage[] = [
-  {
-    mode: 'trials',
-    word: 'Trials',
-    line: "Build a team of six from heroes you've won with, at full strength, choosing every Evolution, move and item. Beat fourteen teams, one of each type, for stars.",
-  },
-  {
-    mode: 'gauntlet',
-    word: 'Gauntlet',
-    line: 'Draft six heroes you own, one of three at a time, each in a random Evolution. Win five fights before you lose two, and every new Evolution on your team earns its star.',
   },
 ];
 

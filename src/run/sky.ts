@@ -41,6 +41,8 @@ export interface ConstellationDefinition {
    * arriving moves no existing balance.
    */
   rail?: boolean;
+  /** Its scenarios are not authored yet: it opens what comes after it as if lit, and lights and pays nothing itself. */
+  uncharted?: boolean;
   rewards: readonly SkyReward[];
 }
 
@@ -111,7 +113,7 @@ export function constellationState(profile: Profile, sky: SkyContent, id: string
   if (!constellation) return 'hidden';
   if (isConstellationLit(profile, constellation)) return 'lit';
   const before = constellation.after.map((prior) => sky.constellations[prior]).filter((c): c is ConstellationDefinition => !!c);
-  if (constellation.after.length === 0 || before.some((c) => isConstellationLit(profile, c))) return 'open';
+  if (constellation.after.length === 0 || before.some((c) => c.uncharted || isConstellationLit(profile, c))) return 'open';
   if (before.some((c) => constellationState(profile, sky, c.id) === 'open')) return 'glimpsed';
   return 'hidden';
 }

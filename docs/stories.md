@@ -525,7 +525,10 @@ the far one are the same call, so the player knows it again.
 **Open:** whether the whistle ever becomes a mechanic, e.g. the final fight's turn is answering it.
 Not before the ending; until then it is story only.
 
-## 14c. Many Roads, and Journey (BUILT 2026-10-22, per user direction)
+## 14c. Many Roads, and Journey (BUILT 2026-10-22, per user direction; Many Roads RETIRED 2026-10-24)
+
+**Many Roads is retired** (`docs/the-sky.md` phase 4): the sky is where a player chooses what to
+play, and the prologue returns to it. The name Journey stands.
 
 The base roguelike mode is called **Journey** wherever a player reads it (it was Classic Mode; the
 code keeps `classic`). The first time the prologue is cleared, a screen raises once, in place of the

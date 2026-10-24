@@ -110,7 +110,10 @@ sockets, then Sell.
 
 Fights outside a run (Quick Battle, the sandbox) show none: they pass no `tips` prop.
 
-### The modes opening (2026-10-13, per user direction)
+### The modes opening (2026-10-13, per user direction) — RETIRED 2026-10-24
+
+**Retired with the doors** (`docs/the-sky.md` phase 4): the sky shows the Trials and the Gauntlet
+opening, glimpsed to open, so the beat, its tip id and its stills are deleted. Kept below as history.
 
 The one beat outside a run. **The first title after the win that opens the Trials and the Gauntlet**
 (`modesOpenDue`, id `modes.open`) plays it once, on the bare Pact page, after the launch screen and

@@ -15,6 +15,9 @@ const states = (profile: Profile): Record<string, ConstellationState> =>
 
 const playable = (state: ConstellationState) => state === 'open' || state === 'lit';
 
+/** The sky as it will be once the rails are authored. */
+const charted = { ...sky, constellations: Object.fromEntries(Object.entries(sky.constellations).map(([id, c]) => [id, { ...c, uncharted: false }])) };
+
 test('sky: the data hangs together — every link, line, star and scenario points at something real', () => {
   const ids = Object.keys(sky.constellations);
   const starIds = new Set<string>();
@@ -44,11 +47,18 @@ test('sky: the data hangs together — every link, line, star and scenario point
 });
 
 test('sky: a new account sees the rails first and nothing past the next one', () => {
-  const s = states(createProfile());
+  const s = Object.fromEntries(Object.keys(charted.constellations).map((id) => [id, constellationState(createProfile(), charted, id)]));
   assert.strictEqual(s.firstLight, 'open');
   assert.strictEqual(s.theBench, 'glimpsed', 'the next rail shows its shape and reward');
   for (const id of ['theRoad', 'journey', 'cycles', 'trials', 'gauntlet']) assert.strictEqual(s[id], 'hidden', id);
-  assert.strictEqual(skyStardust(createProfile(), sky), 0);
+  assert.strictEqual(skyStardust(createProfile(), charted), 0);
+});
+
+test('sky: while the rails are uncharted they stand aside, so a new account can still begin a Journey', () => {
+  const s = states(createProfile());
+  for (const id of ['firstLight', 'theBench', 'theRoad', 'journey']) assert.strictEqual(s[id], 'open', id);
+  assert.strictEqual(s.trials, 'glimpsed');
+  assert.ok(Object.values(sky.constellations).filter((c) => c.uncharted).every((c) => c.rail), 'only a rail waits on its fights');
 });
 
 test('sky: playing a rail lights its stars once, opens the next and pays its reward once', () => {
@@ -58,9 +68,9 @@ test('sky: playing a rail lights its stars once, opens the next and pays its rew
     assert.ok(!isConstellationLit(profile, firstLight));
     profile = recordScenarioLit(profile, sky, (star.light as { scenarioId: string }).scenarioId);
   }
-  assert.strictEqual(constellationState(profile, sky, 'firstLight'), 'lit');
-  assert.strictEqual(constellationState(profile, sky, 'theBench'), 'open');
-  assert.strictEqual(constellationState(profile, sky, 'theRoad'), 'glimpsed');
+  assert.strictEqual(constellationState(profile, charted, 'firstLight'), 'lit');
+  assert.strictEqual(constellationState(profile, charted, 'theBench'), 'open');
+  assert.strictEqual(constellationState(profile, charted, 'theRoad'), 'glimpsed');
   const paid = skyStardust(profile, sky);
   assert.strictEqual(paid, 100);
   assert.strictEqual(recordScenarioLit(profile, sky, 'firstLight.move'), profile, 'a replay stores nothing');

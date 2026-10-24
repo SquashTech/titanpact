@@ -126,10 +126,9 @@ import { currentInstallPlatform } from './installPrompt';
 import { INSTALL_TIP_ID } from '../run/installHint';
 import { LoreScreen } from '../view/run/LoreScreen';
 import { StorySelectScreen } from '../view/story/StorySelectScreen';
-import { ManyRoadsScreen } from '../view/story/ManyRoadsScreen';
 import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
 import { storyCatalog } from '../data/stories';
-import { chapterById, chapterNumber, endsStoryAct, nextChapter, storyActRun, storyNodeEncounter, storyNodeSpec, type StoryAct, type StoryMusic } from '../run/story';
+import { chapterById, chapterNumber, endsStoryAct, storyActRun, storyNodeEncounter, storyNodeSpec, type StoryAct, type StoryMusic } from '../run/story';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
 import {
@@ -1175,12 +1174,6 @@ export function App() {
   }
 
   /** A tip or the lore card dismissed: account-wide, so it is written straight to storage. */
-  /** Seal the Pact (docs/stories.md §10): the prologue until it is played, the Story select after. */
-  function handleOpenStories() {
-    const prologue = storyCatalog[0].chapters[0].id;
-    setScreen(profile.storyChaptersDone.includes(prologue) ? { kind: 'storySelect' } : { kind: 'storyChapter', chapterId: prologue, fromSky: true });
-  }
-
   /** A chapter reaches its act: the run's own screens take over from the arrival on (docs/stories.md §14). */
   function handleStartStoryAct(act: StoryAct, chapterId: string, beat: number) {
     setResumedCombat(null);
@@ -1189,10 +1182,9 @@ export function App() {
   }
 
   function handleStoryChapterDone(chapterId: string) {
-    const firstPrologue = chapterId === storyCatalog[0].chapters[0].id && !profile.storyChaptersDone.includes(chapterId);
     // The prologue taught the round; its tip would only say it again in the next chapter's first fight.
     setProfile(updateProfile((current) => recordTipSeen(recordStoryChapterDone(current, chapterId), FIGHT_BASICS_TIP_ID)));
-    setScreen(firstPrologue ? { kind: 'manyRoads' } : { kind: 'title' });
+    setScreen({ kind: 'title' });
   }
 
   /** A Journey is started from the title, so its draft and its Cycle picker are the ones a title press runs. */
@@ -1324,7 +1316,7 @@ export function App() {
   // A location with no authored track fades to silence rather than carrying the previous act's music.
   // The title is the exception — it is placeless, so it names its own track (audio/tracks.ts) — and
   // the Trials' and the Gauntlet's menus carry it on, since they are reached from it.
-  const titleTrack = screen.kind === 'title' || screen.kind === 'manyRoads' || screen.kind === 'constructed' || screen.kind === 'gauntlet' || screen.kind === 'versus';
+  const titleTrack = screen.kind === 'title' || screen.kind === 'constructed' || screen.kind === 'gauntlet' || screen.kind === 'versus';
   // The draft, the pact forged at its end (the resumed `blessing` screen) and the seal that opens the run carry the starter track.
   const starterTrack = screen.kind === 'draft' || screen.kind === 'blessing' || (screen.kind === 'pactSeal' && playerRun.brokenSeals.length === 0);
   const storyTrack = screen.kind === 'storyChapter' && storyMusic !== undefined ? (hasTrack(storyMusic) ? storyMusic : null) : undefined;
@@ -1369,13 +1361,11 @@ export function App() {
           }
           onContinueRun={handleContinueRun}
           onStartRun={handleStartNewRun}
-          onOpenStories={handleOpenStories}
           startClassic={classicRequested}
           onClassicStarted={() => setClassicRequested(false)}
           firstFall={false}
           openCycle={openCycle(profile)}
           onSeeTip={markTipSeen}
-          beatReady={launchDone && !(installPlatform && !profile.seenTipIds.includes(INSTALL_TIP_ID))}
           onResetTips={handleResetTips}
           onGrantDevStars={handleGrantDevStars}
           onQuickBattle={handleQuickBattle}
@@ -1523,16 +1513,6 @@ export function App() {
           onPlayChapter={(chapterId) => setScreen({ kind: 'storyChapter', chapterId })}
           onClassic={handleStartJourney}
           onBack={() => setScreen({ kind: 'title' })}
-        />
-      )}
-
-      {screen.kind === 'manyRoads' && (
-        <ManyRoadsScreen
-          onStory={() => {
-            const next = nextChapter(storyCatalog[0], profile.storyChaptersDone);
-            setScreen(next ? { kind: 'storyChapter', chapterId: next.id } : { kind: 'storySelect' });
-          }}
-          onJourney={handleStartJourney}
         />
       )}
 

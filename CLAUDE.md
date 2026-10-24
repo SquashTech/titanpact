@@ -295,7 +295,7 @@ don't silently override it.
 > Late move ROLLED" is reversed. `docs/gems.md` §7 lists what the Gems reverse.
 
 > **A third MODE is BUILT, phase 1: `docs/gauntlet.md`** (2026-10-07, per user direction). The title
-> is three doors — **Seal the Pact** (Classic), **the Trials** (Constructed), **the Gauntlet** — the
+> was three doors (**the sky replaced them 2026-10-24**, `docs/the-sky.md` phase 4) — **Seal the Pact** (Classic), **the Trials** (Constructed), **the Gauntlet** — the
 > last two opening on the first Cycle I clear. The Gauntlet rolls fifteen OWNED heroes, each in a
 > random path and kit (signature and path move held, level 30, Mastery 10, no items); the player drafts
 > six and fights random six-hero teams to **five wins before two losses**. **Nothing below five**; a

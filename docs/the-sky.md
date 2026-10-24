@@ -1,6 +1,6 @@
 # the-sky.md — The Sky: lighting the multiverse
 
-> **STATUS: DIRECTION DECIDED; PHASES 1–3 DONE (2026-10-24): Stardust is the currency, Blip is the little face, and the sky exists as data and rules with no screen yet.** §1–§5 hold what is
+> **STATUS: DIRECTION DECIDED; PHASES 1–4 DONE (2026-10-24): Stardust is the currency, Blip is the little face, and the title is the sky.** §1–§5 hold what is
 > decided; anything marked PROPOSED or OPEN is not. §10 is the build plan. If built, it replaces
 > Stories as the front door (§9).
 >
@@ -319,6 +319,26 @@ pins them. As built:
   opening its stars, a star opening its scenario card.
 - Retire the three doors (`TitleModes.tsx`) and the Many Roads screen.
 - Fold or rename the shop (§7, §8.6).
+
+**DONE 2026-10-24 (per user direction, the first-pass rails kept).** `SkyChart.tsx` draws the sky
+on the title's Play page in place of the seal, the Seal the Pact press and the three doors:
+- Lit constellations draw their shape in gold, and open ones show their stars. Glimpsed ones are
+  faint with their reward, and a one-star constellation (Journey, the Gauntlet, the Road) is drawn
+  larger with a slow halo.
+- A tap opens a sheet: the constellation's name, its stars ★/☆ by name, and one press. That press
+  is read off the kind of star it holds: *Begin a Journey*, *Choose a Cycle* (the Chronicle
+  picker), *Open the Trials*, *Enter the Gauntlet*.
+- A parked run keeps Continue Run and Start a New Run under the sky.
+- **Retired:** `TitleModes.tsx` (the doors and mode pages, with `PactButton` moved to its own
+  file), `ModesOpenBeat.tsx` and the modes-open tip, `ManyRoadsScreen` and its route, the
+  doors' CSS and `art/ui/modes/`. The title no longer opens Stories: Valor is cut (§8), and its
+  code goes in phase 6.
+- **The rails are `uncharted`** until phase 6. They open what comes after them as if lit, so a
+  new account can begin a Journey today. They show as hollow stars, and their sheet says "Not
+  yet charted."
+- **Still OPEN, not touched:** the shop is still called **The Constellation** on the hub nav
+  (§7, §8.6). Placements and shapes are first pass. A brand-new account currently has no
+  tutorial at all until the rails land.
 
 **Phase 5 — The light and its thoughts.** *(view, plus a data table)*
 - The light from phase 2, living in the sky and on scenario cards.

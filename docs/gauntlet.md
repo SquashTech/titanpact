@@ -135,7 +135,10 @@ So a cleared bought entry nets 2 stars plus its path stars; a 4–2 is the 3 sta
 If 4–2 proves to feel bad in play, the reserve fix is **four wins refunds the entry** — not a reward,
 the stake back.
 
-## 7. The title: three doors
+## 7. The title: three doors — RETIRED 2026-10-24
+
+**Replaced by the sky** (`docs/the-sky.md` phase 4): the Gauntlet is a constellation, open after a
+Journey win as the door was. Kept below as history.
 
 The Play page carries three doors: **Seal the Pact** (the press that has always been there — the
 Cycle picker sits behind it), **The Trials**, **The Gauntlet**. The Trials and the Gauntlet are
