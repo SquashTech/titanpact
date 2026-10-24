@@ -28,10 +28,6 @@ export type SkyReward = { kind: 'stardust'; amount: number };
 export interface ConstellationDefinition {
   id: string;
   name: string;
-  /** The constellation's centre in the sky, 0–1 on each axis. */
-  at: { x: number; y: number };
-  /** Its box across, as a share of the sky's width. */
-  size: number;
   stars: readonly SkyStar[];
   /** The shape drawn in when it is lit: pairs of indices into `stars`. */
   lines: readonly (readonly [number, number])[];

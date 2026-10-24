@@ -1,14 +1,10 @@
 // The sky (docs/the-sky.md §2–§4): five constellations, one a way to play. First Light holds the
 // lessons, the Infinite its five Cycles, the Trials one star a Trial, the Gauntlet its clears, and
-// Strange Worlds the twisted runs to come. The sky is 340 × 540; shapes and placements are first pass.
+// Strange Worlds the twisted runs to come. Each is drawn in a band of its own; shapes are first pass.
 // The lessons and Strange Worlds are named seats, uncharted until their scenarios are authored (§10).
 
 import type { ConstellationDefinition, ScenarioDefinition, SkyContent, SkyStar } from '../run/sky';
 import { TRIAL_LIST } from './trials';
-
-/** The sky's own units: a chart point is laid out on this box. */
-export const SKY_WIDTH = 340;
-export const SKY_HEIGHT = 540;
 
 const WIN = { kind: 'win' } as const;
 
@@ -44,8 +40,6 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
   {
     id: 'firstLight',
     name: 'First Light',
-    at: { x: 0.25, y: 0.86 },
-    size: 0.25,
     stars: [
       scenarioStar('firstLight.move', 0.04, 0.82),
       scenarioStar('firstLight.matchup', 0.18, 0.6),
@@ -65,8 +59,6 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
   {
     id: 'infinite',
     name: 'The Infinite',
-    at: { x: 0.5, y: 0.49 },
-    size: 0.47,
     // A pentagram, Cycle I at its crown, drawn star to star the way it is cleared.
     stars: [
       [0.5, 0.04],
@@ -88,8 +80,6 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
   {
     id: 'trials',
     name: 'The Trials',
-    at: { x: 0.22, y: 0.31 },
-    size: 0.31,
     stars: TRIAL_LIST.map((trial, i) => ({ id: `trials.${trial.id}`, ...ring(TRIAL_LIST.length, i), light: { kind: 'trialBeaten', trialId: trial.id } })),
     lines: TRIAL_LIST.map((_, i) => [i, (i + 1) % TRIAL_LIST.length] as const),
     after: ['cycles.1'],
@@ -98,8 +88,6 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
   {
     id: 'gauntlet',
     name: 'The Gauntlet',
-    at: { x: 0.8, y: 0.31 },
-    size: 0.25,
     // Crossed blades, the centre the first clear.
     stars: [
       [0.5, 0.5],
@@ -120,8 +108,6 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
   {
     id: 'strange',
     name: 'Strange Worlds',
-    at: { x: 0.76, y: 0.1 },
-    size: 0.22,
     stars: [
       scenarioStar('strange.monotype', 0.5, 0.5),
       scenarioStar('strange.newPlace', 0.64, 0.4),

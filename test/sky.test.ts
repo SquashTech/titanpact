@@ -25,7 +25,6 @@ test('sky: the data hangs together — every wait, line, star and scenario point
     for (const starId of c.after) assert.ok(findStar(sky, starId), `${c.id} waits on a missing star ${starId}`);
     for (const [a, b] of c.lines) assert.ok(c.stars[a] && c.stars[b] && a !== b, `${c.id} has a line to nowhere`);
     assert.ok(c.stars.length > 0, `${c.id} has no stars`);
-    assert.ok(c.size > 0 && c.size < 1, `${c.id} has no size`);
     for (const star of c.stars) {
       assert.ok(!starIds.has(star.id), `star ${star.id} twice`);
       starIds.add(star.id);
@@ -35,7 +34,6 @@ test('sky: the data hangs together — every wait, line, star and scenario point
         scenarioStars.add(star.light.scenarioId);
       }
     }
-    assert.ok(c.at.x >= 0 && c.at.x <= 1 && c.at.y >= 0 && c.at.y <= 1, `${c.id} is outside the sky`);
   }
   for (const id of Object.keys(sky.scenarios)) assert.ok(scenarioStars.has(id), `scenario ${id} has no star`);
   assert.deepStrictEqual(Object.keys(sky.constellations), ['firstLight', 'infinite', 'trials', 'gauntlet', 'strange'], 'five ways to play');

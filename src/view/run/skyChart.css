@@ -1,4 +1,4 @@
-/* The title as the sky (SkyChart.tsx): Blip's band under the logo, then the sky that zooms. */
+/* The title as the sky (SkyChart.tsx): Blip's seat under the logo, then a band of sky a constellation, scrolled and snapping. */
 
 .sky-chart {
   position: absolute;
@@ -6,7 +6,7 @@
   top: 128px;
   left: 0;
   right: 0;
-  bottom: calc(var(--hub-nav-h, 64px) + var(--sky-chart-foot, 16px));
+  bottom: calc(var(--hub-nav-h, 64px) + var(--sky-chart-foot, 12px));
   animation: sky-chart-in 0.9s ease-out both;
 }
 
@@ -21,167 +21,195 @@
   }
 }
 
-.sky-chart-stage {
+.sky-seat {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+}
+
+/* The scroller: the bands snap to its centre, the next one peeking above and below. A soft fade at
+   both edges says there is more without a word. */
+.sky-bands {
   position: absolute;
   top: 56px;
   left: 0;
   right: 0;
   bottom: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
 }
 
-.sky-chart-stage > svg {
-  display: block;
+.sky-bands::-webkit-scrollbar {
+  display: none;
+}
+
+.sky-band {
+  height: 88%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 22px 12px;
+  scroll-snap-align: center;
+  transition: opacity 0.35s ease-out;
+}
+
+.sky-band:first-child {
+  margin-top: 6%;
+}
+
+.sky-band:last-child {
+  margin-bottom: 6%;
+}
+
+.sky-band-name {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(220, 228, 255, 0.8);
+  text-shadow: 0 2px 0 #000;
+}
+
+.sky-band.is-lit .sky-band-name,
+.sky-band.is-main.is-open .sky-band-name {
+  color: #ffd27a;
+}
+
+.sky-band.is-glimpsed .sky-band-name,
+.sky-band.is-uncharted:not(.is-lit) .sky-band-name {
+  color: rgba(205, 214, 255, 0.4);
+}
+
+.sky-band-shape {
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
-  height: 100%;
-  overflow: hidden;
 }
 
-.sky-con {
-  outline: none;
-  transition: opacity 0.4s ease-out;
-}
-
-.sky-con.is-dimmed {
-  opacity: 0.07;
-}
-
-.sky-con.is-glimpsed {
-  pointer-events: none;
-}
-
-.sky-con-hit {
-  fill: transparent;
-  cursor: pointer;
-}
-
-.sky-con[role="button"]:focus-visible .sky-con-hit,
-.sky-con[role="button"]:hover .sky-con-hit {
-  fill: rgba(255, 233, 176, 0.05);
-}
-
-.sky-con-line {
-  stroke: rgba(205, 214, 255, 0.16);
-  stroke-width: 1;
+.sky-band-line {
+  stroke: rgba(205, 214, 255, 0.18);
+  stroke-width: 1.2;
   stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
 }
 
-.sky-con.is-glimpsed .sky-con-line {
-  stroke: rgba(205, 214, 255, 0.14);
+.sky-band.is-glimpsed .sky-band-line {
   stroke-dasharray: 2 4;
+  stroke: rgba(205, 214, 255, 0.14);
 }
 
-.sky-con.is-lit .sky-con-line {
+.sky-band.is-lit .sky-band-line {
   stroke: rgba(255, 210, 122, 0.8);
-  stroke-width: 1.5;
+  stroke-width: 1.6;
 }
 
-.sky-con-star {
+.sky-band-star {
   fill: rgba(220, 228, 255, 0.6);
-  animation: sky-con-twinkle 3.2s ease-in-out var(--twinkle, 0s) infinite;
+  animation: sky-band-twinkle 3.2s ease-in-out var(--twinkle, 0s) infinite;
 }
 
-.sky-con-star.is-lit {
+.sky-band-star.is-lit {
   fill: #ffe7a8;
   animation: none;
 }
 
-.sky-con.is-glimpsed .sky-con-star {
-  fill: rgba(205, 214, 255, 0.24);
+.sky-band.is-glimpsed .sky-band-star {
+  fill: rgba(205, 214, 255, 0.22);
   animation: none;
 }
 
-.sky-con.is-uncharted:not(.is-lit) .sky-con-star {
+.sky-band.is-uncharted:not(.is-lit) .sky-band-star {
   fill: none;
-  stroke: rgba(205, 214, 255, 0.4);
-  stroke-width: 0.8;
+  stroke: rgba(205, 214, 255, 0.45);
+  stroke-width: 1;
   animation: none;
 }
 
-@keyframes sky-con-twinkle {
+@keyframes sky-band-twinkle {
   50% {
     opacity: 0.45;
   }
 }
 
-.sky-con-name {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  fill: rgba(220, 228, 255, 0.75);
-}
-
-.sky-con.is-lit .sky-con-name,
-.sky-con.is-main.is-open .sky-con-name {
-  fill: #ffd27a;
-}
-
-.sky-con.is-glimpsed .sky-con-name,
-.sky-con.is-uncharted:not(.is-lit) .sky-con-name {
-  fill: rgba(205, 214, 255, 0.35);
-}
-
-.sky-con-reward {
-  font-size: 8px;
-  font-weight: 800;
-  fill: rgba(255, 220, 150, 0.5);
-}
-
-.sky-con-label {
+.sky-band-label {
   font-weight: 700;
-  fill: rgba(240, 234, 214, 0.8);
-  animation: sky-label-in 0.4s ease-out 0.45s both;
+  fill: rgba(240, 234, 214, 0.75);
 }
 
-.sky-con-label.is-lit {
+.sky-band-label.is-lit {
   fill: #ffe7a8;
 }
 
-@keyframes sky-label-in {
-  from {
-    opacity: 0;
-  }
+.sky-band.is-uncharted:not(.is-lit) .sky-band-label {
+  fill: rgba(205, 214, 255, 0.4);
 }
 
-/* --- the presses: the Infinite's under it, and a zoom's at the foot --- */
+.sky-band-foot {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+}
 
-.sky-press {
-  position: absolute;
-  z-index: 3;
+.sky-band-foot .plate-socket {
   width: 270px;
 }
 
-.sky-press.is-overview {
-  transform: translateX(-50%);
-  animation: sky-label-in 0.5s ease-out both;
+.sky-band-foot .plate-label {
+  white-space: nowrap;
 }
 
-.sky-press.is-zoomed {
-  left: 50%;
-  bottom: 30px;
-  transform: translateX(-50%);
-  animation: sky-label-in 0.4s ease-out 0.4s both;
+.sky-band-reward {
+  align-self: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(255, 220, 150, 0.55);
 }
 
-.sky-back {
+/* The rail: a pip a band down the right edge, the one in view lit. */
+.sky-rail {
   position: absolute;
   z-index: 3;
-  top: 4px;
-  left: 12px;
-  padding: 6px 4px;
-  border: 0;
-  background: none;
-  color: #ffd27a;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
-  animation: sky-label-in 0.3s ease-out both;
+  top: 56px;
+  bottom: 0;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
 }
 
-.sky-press .plate-label {
-  white-space: nowrap;
+.sky-rail-pip {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(220, 228, 255, 0.25);
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.sky-rail-pip.is-lit {
+  background: rgba(255, 210, 122, 0.55);
+}
+
+.sky-rail-pip.is-here {
+  background: #ffd27a;
+  transform: scale(1.5);
+  box-shadow: 0 0 8px rgba(255, 210, 122, 0.8);
+}
+
+/* Only the band in view is at full strength; its neighbours peek, dimmed. */
+.sky-band.is-away {
+  opacity: 0.28;
 }

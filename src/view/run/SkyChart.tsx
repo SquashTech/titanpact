@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { SKY_HEIGHT as H, SKY_WIDTH as W, sky } from '../../data/sky';
+import { sky } from '../../data/sky';
 import { THOUGHTS } from '../../data/thoughts';
 import { trials } from '../../data/trials';
 import { cycleOf } from '../../run/cycles';
@@ -10,41 +10,21 @@ import { PlateButton } from '../shared/PlateButton';
 import { Blip, type BlipHandle } from './Blip';
 import './skyChart.css';
 
-// The title as the sky (docs/the-sky.md §2, the zoom sky picked 2026-10-24): five constellations on
-// one screen, the Infinite's press under it. A tap zooms the sky into a constellation, its stars named
-// and its own press at the foot. Blip sits in a band under the logo and talks there, so its thoughts
-// never cover a constellation; it flies out only to point at one.
+// The title as the sky (docs/the-sky.md §2; stacked bands, picked 2026-10-24 over the zoom sky, which
+// didn't fit a portrait screen): one full-width band of sky a constellation, scrolled through and
+// snapping, each drawn big with its stars named and its own press. It opens on the band a press would
+// play next. Blip sits in a seat under the logo and talks there, about the band in view.
 
-/** Blip's band, over the sky; its seat sits in it. */
-const BAND = 56;
-const SEAT = { x: 26, y: BAND / 2 };
-const ZOOM_MS = 650;
+const SEAT = { x: 26, y: 28 };
+/** The band's own drawing box; the constellation sits in the middle with room round it for names. */
+const VIEW_W = 360;
+const VIEW_H = 280;
+const SHAPE = 150;
+const CENTRE = { x: VIEW_W / 2, y: VIEW_H / 2 };
 
-type Box = [number, number, number, number];
-const OVERVIEW: Box = [0, 0, W, H];
-
-const sizeOf = (c: ConstellationDefinition) => c.size * W;
-const centreOf = (c: ConstellationDefinition) => ({ x: c.at.x * W, y: c.at.y * H });
-
-/** Where a star sits in the sky. */
-function place(c: ConstellationDefinition, star: SkyStar): { x: number; y: number } {
-  const size = sizeOf(c);
-  const o = centreOf(c);
-  return { x: o.x - size / 2 + star.x * size, y: o.y - size / 2 + star.y * size };
-}
-
-/** Just over a constellation's highest star, where Blip points from. */
-function perchOf(c: ConstellationDefinition): { x: number; y: number } {
-  return { x: centreOf(c).x, y: Math.min(...c.stars.map((star) => place(c, star).y)) - 22 };
-}
-
-/** The view a zoom settles on: the constellation with room round it for its names, in the sky's own shape. */
-function zoomBox(c: ConstellationDefinition): Box {
-  const size = sizeOf(c);
-  const w = Math.min(size * 2, size + 110);
-  const h = (w * H) / W;
-  const o = centreOf(c);
-  return [o.x - w / 2, o.y - h / 2 + size * 0.08, w, h];
+/** Where a star sits in its band. */
+function place(star: SkyStar): { x: number; y: number } {
+  return { x: CENTRE.x - SHAPE / 2 + star.x * SHAPE, y: CENTRE.y - SHAPE / 2 + star.y * SHAPE };
 }
 
 /** What a constellation's press does, read off the kind of star it holds. */
@@ -92,6 +72,8 @@ function starName(star: SkyStar): string {
 const IDLE_THOUGHTS_A_VISIT = 3;
 const ARRIVE_MS = 900;
 const IDLE_MS = [9000, 16000] as const;
+/** How long a band must sit in view before Blip says its piece about it. */
+const SETTLE_MS = 700;
 
 interface Props {
   profile: Profile;
@@ -109,69 +91,61 @@ interface Props {
 }
 
 export function SkyChart({ profile, disabled = false, active = true, pressHidden = false, returned = null, onReturnedSeen, onSeeThought, onPlay }: Props) {
-  const [zoomId, setZoomId] = useState<string | null>(null);
-  const shown = Object.values(sky.constellations)
+  const bands = Object.values(sky.constellations)
     .map((c) => ({ c, state: constellationState(profile, sky, c.id) }))
     .filter((entry): entry is { c: ConstellationDefinition; state: Exclude<ConstellationState, 'hidden'> } => entry.state !== 'hidden');
-  const zoomed = zoomId ? sky.constellations[zoomId] : null;
 
-  // The stage is the svg's own box; a sky point maps to it on the overview's meet fit.
-  const stageRef = useRef<HTMLDivElement>(null);
-  const [fit, setFit] = useState({ scale: 1, ox: 0, oy: 0 });
+  // The band a press would play next: the first open, unlit one with a press or charted lessons, else the Infinite.
+  const focusId =
+    bands.find(({ c, state }) => state === 'open' && !c.uncharted && !isConstellationLit(profile, c) && (playOf(c) || c.rail))?.c.id ?? 'infinite';
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const bandRefs = useRef(new Map<string, HTMLElement>());
+  const [inView, setInView] = useState(focusId);
+  const inViewRef = useRef(inView);
+  inViewRef.current = inView;
+
+  const scrollTo = (id: string, smooth: boolean) => {
+    const band = bandRefs.current.get(id);
+    const scroller = scrollRef.current;
+    if (!band || !scroller) return;
+    scroller.scrollTo({ top: band.offsetTop - (scroller.clientHeight - band.offsetHeight) / 2, behavior: smooth ? 'smooth' : 'auto' });
+  };
+
+  // Opens on the focus band, without an animation.
   useLayoutEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const measure = () => {
-      const scale = Math.min(stage.clientWidth / W, stage.clientHeight / H) || 1;
-      setFit({ scale, ox: (stage.clientWidth - W * scale) / 2, oy: (stage.clientHeight - H * scale) / 2 });
-    };
-    const observer = new ResizeObserver(measure);
-    observer.observe(stage);
-    measure();
-    return () => observer.disconnect();
-  }, []);
-  // Read through a ref: the visit's timers outlive the render that set them, and must see the fit as it is now.
-  const fitRef = useRef(fit);
-  fitRef.current = fit;
-  /** A sky point in Blip's stage, which also covers the band above the sky. */
-  const toBlip = (p: { x: number; y: number }) => ({ x: fitRef.current.ox + p.x * fitRef.current.scale, y: BAND + fitRef.current.oy + p.y * fitRef.current.scale });
-
-  // The zoom: the viewBox walks between the overview and a constellation's box, set straight on the svg.
-  const svgRef = useRef<SVGSVGElement>(null);
-  const view = useRef<Box>(OVERVIEW);
-  useEffect(() => {
-    const to = zoomed ? zoomBox(zoomed) : OVERVIEW;
-    const from = view.current.slice() as Box;
-    const start = performance.now();
-    let frame = 0;
-    const step = (now: number) => {
-      const t = Math.min(1, (now - start) / ZOOM_MS);
-      const e = 1 - Math.pow(1 - t, 3);
-      view.current = from.map((v, i) => v + (to[i] - v) * e) as Box;
-      svgRef.current?.setAttribute('viewBox', view.current.join(' '));
-      if (t < 1) frame = requestAnimationFrame(step);
-    };
-    frame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(frame);
+    scrollTo(focusId, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoomId]);
+  }, []);
+
+  // The band in view is the one most of the scroller shows.
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) if (entry.isIntersecting) setInView((entry.target as HTMLElement).dataset.id ?? inViewRef.current);
+      },
+      { root: scroller, threshold: 0.6 }
+    );
+    bandRefs.current.forEach((band) => observer.observe(band));
+    return () => observer.disconnect();
+  }, [bands.length]);
 
   const blip = useRef<BlipHandle>(null);
-  const goSeat = (onArrive?: () => void) => blip.current?.goTo(SEAT.x, SEAT.y, onArrive);
-  /** Fly out to a constellation, point at it, and come back to the seat to say its first. */
-  const show = (constellationId: string, thought: ThoughtDefinition, later: (ms: number, fn: () => void) => void) => {
-    const target = toBlip(perchOf(sky.constellations[constellationId]));
-    blip.current?.goTo(target.x, target.y, () => {
-      blip.current?.react('chirp');
-      later(650, () => goSeat(() => blip.current?.think(thought.lines, undefined, true)));
-      onSeeThought?.(thought);
-    });
-  };
   const sayThought = (thought: ThoughtDefinition | null, onDone?: () => void) => {
     if (!thought) return false;
     blip.current?.think(thought.lines, onDone, !!thought.once);
     if (thought.once) onSeeThought?.(thought);
     return true;
+  };
+  /** Bring a constellation's band into view and say its first from the seat. */
+  const show = (constellationId: string, thought: ThoughtDefinition, later: (ms: number, fn: () => void) => void) => {
+    scrollTo(constellationId, true);
+    later(600, () => {
+      blip.current?.react('chirp');
+      sayThought(thought);
+    });
   };
   const say = (moment: ThoughtMoment, later?: (ms: number, fn: () => void) => void) => {
     const thought = thoughtFor(profile, THOUGHTS, moment, Math.random());
@@ -181,8 +155,6 @@ export function SkyChart({ profile, disabled = false, active = true, pressHidden
 
   // One thing to say on arriving — an Infinite run's end, the first sky, a constellation seen open
   // for the first time — then a few idle thoughts, spaced out.
-  const zoomRef = useRef(zoomId);
-  zoomRef.current = zoomId;
   useEffect(() => {
     if (!active) return;
     const timers: number[] = [];
@@ -201,8 +173,8 @@ export function SkyChart({ profile, disabled = false, active = true, pressHidden
     let idle = 0;
     const next = () =>
       at(IDLE_MS[0] + Math.random() * (IDLE_MS[1] - IDLE_MS[0]), () => {
-        // Never cut a thought or a trip short, and leave a zoom to its own thought.
-        if (!blip.current?.busy() && !zoomRef.current && idle < IDLE_THOUGHTS_A_VISIT) {
+        // Never cut a thought short.
+        if (!blip.current?.busy() && idle < IDLE_THOUGHTS_A_VISIT) {
           idle++;
           say({ kind: 'idle' });
         }
@@ -214,151 +186,159 @@ export function SkyChart({ profile, disabled = false, active = true, pressHidden
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
-  // Zoomed in, Blip says its first about the constellation or one of its stars, if it has one left.
+  // A band settled in view: Blip says its first about it, or one of its stars, if it has one left.
   useEffect(() => {
-    if (!active || !zoomId) return;
+    if (!active) return;
     const timer = window.setTimeout(() => {
-      if (!blip.current?.guarded()) sayThought(zoomThought(profile, sky, THOUGHTS, zoomId, Math.random()));
-    }, ZOOM_MS + 100);
+      if (!blip.current?.busy()) sayThought(zoomThought(profile, sky, THOUGHTS, inView, Math.random()));
+    }, SETTLE_MS + ARRIVE_MS);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoomId, active]);
-
-  const infinite = sky.constellations.infinite;
-  const infiniteOpen = shown.some(({ c, state }) => c.id === infinite.id && state !== 'glimpsed');
-  const pressAt = {
-    left: fit.ox + centreOf(infinite).x * fit.scale,
-    top: fit.oy + (centreOf(infinite).y + sizeOf(infinite) / 2 + 24) * fit.scale,
-  };
-  const zoomedPlay = zoomed ? playOf(zoomed) : null;
-  const zoomedUncharted = !!zoomed?.uncharted && !isConstellationLit(profile, zoomed);
+  }, [inView, active]);
 
   return (
-    <div className={`sky-chart${zoomed ? ' is-zoomed' : ''}`}>
-      <div ref={stageRef} className="sky-chart-stage">
-        <svg ref={svgRef} viewBox={OVERVIEW.join(' ')} preserveAspectRatio="xMidYMid meet" aria-label="The sky">
-          <defs>
-            <filter id="sky-chart-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2.4" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-          {shown.map(({ c, state }) => {
-            const size = sizeOf(c);
-            const o = centreOf(c);
-            const lit = c.stars.map((star) => isStarLit(profile, c, star));
-            const isZoomed = zoomId === c.id;
-            const tappable = state !== 'glimpsed' && !disabled && !zoomId;
-            const reward = c.rewards.reduce((sum, r) => sum + r.amount, 0);
-            const labelSize = size * 0.05;
-            return (
-              <g
-                key={c.id}
-                className={`sky-con is-${state}${c.uncharted ? ' is-uncharted' : ''}${c.id === infinite.id ? ' is-main' : ''}${zoomId && !isZoomed ? ' is-dimmed' : ''}`}
-                role={tappable ? 'button' : undefined}
-                tabIndex={tappable ? 0 : undefined}
-                aria-label={tappable ? c.name : undefined}
-                onClick={tappable ? () => setZoomId(c.id) : undefined}
-                onKeyDown={
-                  tappable
-                    ? (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') setZoomId(c.id);
-                      }
-                    : undefined
-                }
-              >
-                <circle className="sky-con-hit" cx={o.x} cy={o.y} r={size * 0.62} />
-                {c.lines.map(([a, b]) => {
-                  const p = place(c, c.stars[a]);
-                  const q = place(c, c.stars[b]);
-                  return <line key={`${a}-${b}`} className="sky-con-line" x1={p.x} y1={p.y} x2={q.x} y2={q.y} />;
-                })}
-                {c.stars.map((star, i) => {
-                  const p = place(c, star);
-                  return (
-                    <circle
-                      key={star.id}
-                      className={`sky-con-star${lit[i] ? ' is-lit' : ''}`}
-                      cx={p.x}
-                      cy={p.y}
-                      r={(lit[i] ? 3.4 : 2.3) * Math.max(1, size / 140)}
-                      filter={lit[i] ? 'url(#sky-chart-glow)' : undefined}
-                      style={{ '--twinkle': `${(i * 0.37) % 2.4}s` } as CSSProperties}
-                    />
-                  );
-                })}
-                {isZoomed &&
-                  c.stars.map((star, i) => {
-                    // Out from the shape's centre, so a ring's names stand round it rather than on each other.
-                    const p = place(c, star);
-                    const dx = p.x - o.x;
-                    const dy = p.y - o.y;
-                    const d = Math.hypot(dx, dy) || 1;
-                    const anchor = Math.abs(dx) < size * 0.12 ? 'middle' : dx < 0 ? 'end' : 'start';
-                    return (
-                      <text
-                        key={`${star.id}-label`}
-                        className={`sky-con-label${lit[i] ? ' is-lit' : ''}`}
-                        x={p.x + (dx / d) * size * 0.07}
-                        y={p.y + (dy / d) * size * 0.07 + labelSize * 0.35}
-                        textAnchor={anchor}
-                        fontSize={labelSize}
-                      >
-                        {starName(star)}
-                      </text>
-                    );
-                  })}
-                {!isZoomed && (
-                  <text className="sky-con-name" x={o.x} y={o.y + size / 2 + 14} textAnchor="middle">
-                    {c.name}
-                  </text>
-                )}
-                {state === 'glimpsed' && reward > 0 && (
-                  <text className="sky-con-reward" x={o.x} y={o.y + size / 2 + 26} textAnchor="middle">
-                    ✦ {reward}
-                  </text>
-                )}
-              </g>
-            );
-          })}
-        </svg>
-
-        {zoomed && (
-          <button type="button" className="sky-back" onClick={() => setZoomId(null)}>
-            ‹ The Sky
-          </button>
-        )}
-        {!zoomed && infiniteOpen && !pressHidden && (
-          <div className="sky-press is-overview" style={{ left: pressAt.left, top: pressAt.top }}>
-            <PlateButton compact onClick={() => onPlay('infinite')} disabled={disabled} data-sfx="ui.commit">
-              {PLAY_LABELS.infinite}
-            </PlateButton>
-          </div>
-        )}
-        {zoomed && (zoomedPlay || zoomedUncharted) && (
-          <div className="sky-press is-zoomed">
-            <PlateButton compact onClick={() => zoomedPlay && onPlay(zoomedPlay)} disabled={disabled || zoomedUncharted || !zoomedPlay} data-sfx="ui.commit">
-              {zoomedUncharted ? 'Not yet charted' : PLAY_LABELS[zoomedPlay!]}
-            </PlateButton>
-          </div>
-        )}
+    <div className="sky-chart">
+      <div className="sky-seat">
+        <Blip
+          ref={blip}
+          home={SEAT}
+          active={active}
+          bubbleBeside
+          onPoke={(inARow) => {
+            // A poke mid-first only giggles, so it never cuts one short.
+            if (blip.current?.guarded()) return;
+            if (inARow >= 5) say({ kind: 'pokedLots' });
+            else if (inARow === 1 || inARow === 3) say({ kind: 'poked' });
+          }}
+        />
       </div>
 
-      <Blip
-        ref={blip}
-        home={SEAT}
-        active={active}
-        bubbleBeside
-        onPoke={(inARow) => {
-          // A poke mid-first only giggles, so it never cuts one short.
-          if (blip.current?.guarded()) return;
-          if (inARow >= 5) say({ kind: 'pokedLots' });
-          else if (inARow === 1 || inARow === 3) say({ kind: 'poked' });
-        }}
-      />
+      <div ref={scrollRef} className="sky-bands">
+        {bands.map(({ c, state }) => (
+          <SkyBand
+            key={c.id}
+            bandRef={(el) => {
+              if (el) bandRefs.current.set(c.id, el);
+              else bandRefs.current.delete(c.id);
+            }}
+            profile={profile}
+            constellation={c}
+            state={state}
+            disabled={disabled}
+            pressHidden={pressHidden && c.id === 'infinite'}
+            away={inView !== c.id}
+            onPlay={onPlay}
+          />
+        ))}
+      </div>
+
+      {/* Where the scroll stands, a pip a band: a quiet mark, and a way to jump. */}
+      <div className="sky-rail" aria-hidden="true">
+        {bands.map(({ c, state }) => (
+          <button
+            key={c.id}
+            type="button"
+            tabIndex={-1}
+            data-sfx="none"
+            className={`sky-rail-pip is-${state}${inView === c.id ? ' is-here' : ''}`}
+            onClick={() => scrollTo(c.id, true)}
+          />
+        ))}
+      </div>
     </div>
+  );
+}
+
+interface BandProps {
+  profile: Profile;
+  constellation: ConstellationDefinition;
+  state: Exclude<ConstellationState, 'hidden'>;
+  disabled: boolean;
+  pressHidden: boolean;
+  onPlay: (play: SkyPlay) => void;
+  bandRef: (el: HTMLElement | null) => void;
+  /** Not the band in view: it peeks, dimmed. */
+  away: boolean;
+}
+
+/** One constellation's band: its name, its shape with its stars named, and its press. */
+function SkyBand({ profile, constellation: c, state, disabled, pressHidden, onPlay, bandRef, away }: BandProps) {
+  const lit = c.stars.map((star) => isStarLit(profile, c, star));
+  const play = playOf(c);
+  const glimpsed = state === 'glimpsed';
+  const uncharted = !!c.uncharted && !lit.every(Boolean);
+  const reward = c.rewards.reduce((sum, r) => sum + r.amount, 0);
+  const labelSize = c.stars.length > 8 ? 8.5 : 10;
+  return (
+    <section ref={bandRef} data-id={c.id} className={`sky-band is-${state}${away ? ' is-away' : ''}${c.uncharted ? ' is-uncharted' : ''}${c.id === 'infinite' ? ' is-main' : ''}`}>
+      <h2 className="sky-band-name">{c.name}</h2>
+      <svg className="sky-band-shape" viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <defs>
+          <filter id={`sky-glow-${c.id}`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.6" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        {c.lines.map(([a, b]) => {
+          const p = place(c.stars[a]);
+          const q = place(c.stars[b]);
+          return <line key={`${a}-${b}`} className="sky-band-line" x1={p.x} y1={p.y} x2={q.x} y2={q.y} />;
+        })}
+        {c.stars.map((star, i) => {
+          const p = place(star);
+          return (
+            <circle
+              key={star.id}
+              className={`sky-band-star${lit[i] ? ' is-lit' : ''}`}
+              cx={p.x}
+              cy={p.y}
+              r={lit[i] ? 4.6 : 3}
+              filter={lit[i] ? `url(#sky-glow-${c.id})` : undefined}
+              style={{ '--twinkle': `${(i * 0.37) % 2.4}s` } as CSSProperties}
+            />
+          );
+        })}
+        {!glimpsed &&
+          c.stars.map((star, i) => {
+            // Out from the shape's centre, so a ring's names stand round it rather than on each other.
+            const p = place(star);
+            const dx = p.x - CENTRE.x;
+            const dy = p.y - CENTRE.y;
+            const d = Math.hypot(dx, dy) || 1;
+            const anchor = Math.abs(dx) < SHAPE * 0.12 ? 'middle' : dx < 0 ? 'end' : 'start';
+            return (
+              <text
+                key={`${star.id}-label`}
+                className={`sky-band-label${lit[i] ? ' is-lit' : ''}`}
+                x={p.x + (dx / d) * 11}
+                y={p.y + (dy / d) * 11 + labelSize * 0.35}
+                textAnchor={anchor}
+                fontSize={labelSize}
+              >
+                {starName(star)}
+              </text>
+            );
+          })}
+      </svg>
+      <div className="sky-band-foot">
+        {glimpsed ? (
+          reward > 0 && <span className="sky-band-reward">✦ {reward}</span>
+        ) : uncharted ? (
+          <PlateButton compact disabled onClick={() => undefined}>
+            Not yet charted
+          </PlateButton>
+        ) : (
+          play &&
+          !pressHidden && (
+            <PlateButton compact onClick={() => onPlay(play)} disabled={disabled} data-sfx="ui.commit">
+              {PLAY_LABELS[play]}
+            </PlateButton>
+          )
+        )}
+      </div>
+    </section>
   );
 }
