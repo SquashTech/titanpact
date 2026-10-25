@@ -250,9 +250,11 @@ function PatronStepView({ run, patronId, step, seed, keeper, style, onDone }: St
   }
 
   if (step.kind === 'liftItem' || step.kind === 'unique') {
-    const before = run.roster.find((r) => r.rosterId === student)!.equipment[heldFamilyIndex(run, student!, step.familyId)];
+    // Read the same socket after: a forged Unique no longer parses as the family.
+    const socket = heldFamilyIndex(run, student!, step.familyId);
+    const before = run.roster.find((r) => r.rosterId === student)!.equipment[socket];
     const next = step.kind === 'liftItem' ? liftHeldItem(run, student!, step.familyId, equipment) : forgeUnique(run, student!, step.familyId, step.uniqueId);
-    const after = next.roster.find((r) => r.rosterId === student)!.equipment[heldFamilyIndex(next, student!, step.familyId)];
+    const after = next.roster.find((r) => r.rosterId === student)!.equipment[socket];
     return (
       <div className="node-screen rite-screen patron-screen" style={style}>
         <span className="node-sky" aria-hidden="true" />
