@@ -38,6 +38,8 @@ export interface ThoughtDefinition {
   forced?: boolean;
   /** Once a forced thought ends, this lesson (a scenario id) starts, unless its star is already lit. */
   plays?: string;
+  /** A forced thought's cinematic: it plays once the lines end, and the first showsNext leads to is said over its last frame. */
+  scene?: 'fall';
 }
 
 function sameMoment(a: ThoughtMoment, b: ThoughtMoment): boolean {

@@ -11,6 +11,7 @@ export const THOUGHTS: readonly ThoughtDefinition[] = [
     forced: true,
     showsNext: 'firstLight',
     plays: 'firstLight.hunt',
+    scene: 'fall',
     lines: [
       'Oh, hi! Sorry, I would’ve cleaned up a bit, but I wasn’t expecting company.',
       'So, this is my job. I watch over one little world. Well... a LOT of versions of it.',
@@ -18,10 +19,11 @@ export const THOUGHTS: readonly ThoughtDefinition[] = [
       'But in a few, the heroes win! Every one of those becomes a star, and I keep them all up here.',
       'I guess you’re going to help me look for worlds where the Titan was slain, huh?',
       'I’ll show you my favorite one first.',
+      'This one starts the way they always do...',
     ],
   },
 
-  { id: 'revealed.firstLight', moment: { kind: 'revealed', constellationId: 'firstLight' }, once: true, lines: ['A mighty fighter and her trusty canine companion. Their bond can never be broken.'] },
+  { id: 'revealed.firstLight', moment: { kind: 'revealed', constellationId: 'firstLight' }, once: true, lines: ['A mighty fighter and her trusty canine companion. Their bond can never be broken.', 'Valor and Fang. I’ve watched them a hundred times, and I still cheer every time.'] },
   { id: 'revealed.infinite', moment: { kind: 'revealed', constellationId: 'infinite' }, once: true, lines: ['Ooh, these are my favorite kind. Start to finish, no skipping!'] },
   { id: 'revealed.trials', moment: { kind: 'revealed', constellationId: 'trials' }, once: true, lines: ['I’ve watched these teams before. They’re kind of show-offs, honestly.'] },
   { id: 'revealed.gauntlet', moment: { kind: 'revealed', constellationId: 'gauntlet' }, once: true, lines: ['Heroes from totally different worlds, all fighting each other? I need snacks for this.'] },

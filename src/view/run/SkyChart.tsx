@@ -263,7 +263,15 @@ export function SkyChart({ profile, disabled = false, active = true, pressHidden
         ))}
       </div>
 
-      {beat && active && <BlipBeat lines={[...beat.thought.lines, ...(beat.next?.lines ?? [])]} onDone={endBeat} from={seatPoint()} />}
+      {beat && active && (
+        <BlipBeat
+          lines={beat.thought.scene ? beat.thought.lines : [...beat.thought.lines, ...(beat.next?.lines ?? [])]}
+          scene={beat.thought.scene}
+          sceneLines={beat.next?.lines}
+          onDone={endBeat}
+          from={seatPoint()}
+        />
+      )}
 
       {/* Where the scroll stands, a pip a band: a quiet mark, and a way to jump. */}
       <div className="sky-rail" aria-hidden="true">

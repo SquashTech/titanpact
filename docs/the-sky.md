@@ -380,10 +380,15 @@ it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own
   `plays` on a forced thought starts a lesson when it ends, unless that star is already lit.
 - **The opening beat** (2026-10-24, per user direction) is the first-sky hello, now forced. It
   gives the premise in Blip's voice: it watches over one world in many versions, a Titan ends most
-  of them, the few the heroes win become its stars, and the player is here to help find them. Its
-  `showsNext` First Light line rides in the same beat, then The Hunt starts. It replaces the fall
-  and the lore card as a new account's framing. The premise lines are first pass; the user wrote
-  the hello and First Light lines.
+  of them, the few the heroes win become its stars, and the player is here to help find them.
+  **The fall came back as its scene** (2026-10-25, per user direction): after *This one starts the
+  way they always do...* Blip flies up out of frame, the Titan falls across the title's night onto
+  the land (`OpeningFall`, a thought's `scene: 'fall'`), and the view pulls back to a painted ridge
+  where Valor and Fang stand watching the glow (`art/title/openingRidge.png`, Pixen seed 8; the
+  other rolls are in `art/concepts/opening-ridge/`). Blip drifts back and says the First Light
+  first over it, then the ridge goes to black and The Hunt starts. The scene plays on its own; no
+  tap skips it. The premise lines and First Light's second line are first pass; the user wrote the
+  hello, the hand-off line and First Light's first.
 - **A lesson shows its tips every time it is played** (2026-10-24): the welcome and every control
   tip came back only once an account, so a lesson replayed from the sky taught nothing. They are
   still recorded on the account.

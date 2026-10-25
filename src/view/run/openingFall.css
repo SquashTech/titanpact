@@ -1,0 +1,168 @@
+/* The opening beat's scene (OpeningFall.tsx): the fall over the title's own night and land, then the
+   ridge painting (art/title/openingRidge.png) it pulls back to. */
+.opening-fall {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #03040a;
+  animation: opening-fall-in 0.7s ease-out backwards;
+  transition: opacity 0.6s ease-in;
+}
+
+@keyframes opening-fall-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.opening-fall-world,
+.opening-fall-shake {
+  position: absolute;
+  inset: 0;
+}
+
+.opening-fall-world {
+  background: linear-gradient(180deg, #03040a 0%, #070a16 45%, #0c1220 100%);
+}
+
+.opening-fall.is-impact .opening-fall-shake {
+  animation: titan-rumble-hit 1.75s cubic-bezier(0.2, 0, 0.3, 1) both;
+}
+
+.opening-fall-ridge {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.opening-fall-body {
+  position: absolute;
+  left: 88%;
+  top: -14%;
+  width: 96px;
+  height: 144px;
+}
+
+/* Pure black whatever the sprite's own greys, with a hairline of the Titan's light round it. */
+.opening-fall-figure {
+  position: absolute;
+  inset: 0;
+  background: center / contain no-repeat;
+  image-rendering: pixelated;
+  filter: brightness(0) drop-shadow(0 0 1px rgba(var(--titan-rgb), 0.9)) drop-shadow(0 0 8px rgba(var(--titan-rgb), 0.35));
+}
+
+.opening-fall-trail {
+  position: absolute;
+  left: 50%;
+  top: 78%;
+  width: 26px;
+  height: 300px;
+  transform: translateX(-50%);
+  background: linear-gradient(to bottom, rgba(6, 8, 14, 0.9), rgba(var(--titan-rgb), 0.14) 35%, rgba(6, 8, 14, 0));
+  filter: blur(6px);
+}
+
+.opening-fall.is-impact .opening-fall-body,
+.opening-fall.is-pan .opening-fall-body {
+  visibility: hidden;
+}
+
+.opening-fall-flash,
+.opening-fall-plume,
+.opening-fall-ember {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.opening-fall-flash {
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgba(255, 214, 246, 0.9) 30%, rgba(var(--titan-rgb), 0.5) 55%, transparent 72%);
+}
+
+.opening-fall.is-impact .opening-fall-flash {
+  animation: opening-fall-flash 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) both;
+}
+
+@keyframes opening-fall-flash {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(48);
+  }
+}
+
+.opening-fall-plume {
+  width: 150px;
+  height: 340px;
+  transform: translate(-50%, -100%) scaleY(0);
+  transform-origin: 50% 100%;
+  background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(var(--titan-rgb), 0.16), rgba(40, 44, 58, 0.55) 40%, transparent 72%);
+  filter: blur(8px);
+}
+
+.opening-fall.is-impact .opening-fall-plume,
+.opening-fall.is-pan .opening-fall-plume {
+  animation: opening-fall-plume 3.2s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@keyframes opening-fall-plume {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%) scaleY(0.05) scaleX(0.5);
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.85;
+    transform: translate(-50%, -100%) scaleY(1) scaleX(1);
+  }
+}
+
+.opening-fall-ember {
+  width: 240px;
+  height: 130px;
+  transform: translate(-50%, -82%);
+  background: radial-gradient(ellipse 50% 100% at 50% 100%, rgba(255, 214, 246, 0.8), rgba(var(--titan-rgb), 0.5) 34%, transparent 74%);
+  filter: blur(3px);
+}
+
+.opening-fall.is-impact .opening-fall-ember,
+.opening-fall.is-pan .opening-fall-ember {
+  opacity: 1;
+  animation: opening-fall-ember 3.6s ease-in-out 0.6s infinite;
+}
+
+@keyframes opening-fall-ember {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* The beat ends into the lesson: the ridge goes to black rather than back to the sky. */
+.blip-beat.is-leaving .opening-fall {
+  opacity: 0;
+}
+
+.blip-beat.has-scene {
+  background: #000;
+}
