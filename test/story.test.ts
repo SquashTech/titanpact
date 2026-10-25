@@ -28,6 +28,7 @@ import {
   storyActMap,
   storyActRun,
   storyNodeEncounter,
+  storyNodeFight,
   type StoryAct,
   type StoryActNode,
   type StoryFight,
@@ -168,9 +169,10 @@ test('story: a fight ends on its trigger, and a wiped side still ends it first',
 test('story: every catalog fight scripts only moves its actors hold, and leads and targets are in the parties', () => {
   for (const story of STORY_BOOKS) {
     for (const chapter of story.chapters) {
-      for (const beat of chapter.beats) {
-        if (beat.kind !== 'fight') continue;
-        const { fight } = beat;
+      const fights = chapter.beats.flatMap((beat) =>
+        beat.kind === 'fight' ? [beat.fight] : beat.act.rows.flat().flatMap((node, i) => storyNodeFight(beat.act, node, `${chapter.id}#${i}`) ?? [])
+      );
+      for (const fight of fights) {
         const sides = storySides(fight, allCombatants);
         const kit = (side: 'A' | 'B', rosterId: string) =>
           (side === 'A' ? sides.player : sides.ai).run.roster.find((r) => r.rosterId === rosterId)?.unlockedMoveIds;
@@ -195,8 +197,9 @@ test('story: every catalog fight scripts only moves its actors hold, and leads a
 
 test("story lesson: the Hunt's lessons hold — the fox takes both hunters, and the White Stag falls to Iron Fist only after Howl", () => {
   const hunt = LESSONS.chapters.find((c) => c.id === 'firstLight.hunt')?.beats[0];
-  assert.ok(hunt && hunt.kind === 'fight');
-  const fight = hunt.fight;
+  assert.ok(hunt && hunt.kind === 'act', 'the Hunt is played off the map');
+  const fight = storyNodeFight(hunt.act, hunt.act.rows[0][0], 'hunt');
+  assert.ok(fight, "the Hunt's tile is guided");
   /** Plays the script's rounds with the named hero, in the named round, Resting or Clawing the White Stag instead of following the guide. */
   const play = (swaps: Record<number, { hero: string; does: 'rest' | 'claw' }>) => {
     let state = openStoryFight(fight);
@@ -289,8 +292,9 @@ test('story act: every fight names its drop and every Items chest its three, eac
     }
     for (const row of beat.act.rows) {
       for (const node of row) {
-        const ids = node.enemy ? [node.drop] : node.type === 'equipmentReward' ? node.items ?? [] : [];
-        if (node.enemy) assert.ok(node.drop, `${chapter.id}: a fight with no drop`);
+        // A guided tile is a lesson fight, not a road one: it drops nothing.
+        const ids = node.enemy && !node.script ? [node.drop] : node.type === 'equipmentReward' ? node.items ?? [] : [];
+        if (node.enemy && !node.script) assert.ok(node.drop, `${chapter.id}: a fight with no drop`);
         if (node.type === 'equipmentReward') assert.strictEqual(node.items?.length, 3, `${chapter.id}: a chest holds three`);
         for (const id of ids) {
           const item = equipment[id!];

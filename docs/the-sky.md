@@ -431,8 +431,13 @@ it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own
 direction): First Light's four stars are the four tutorials Stories already had, every scene and
 spoken line cut (`src/data/lessons.ts`, `test/lessons.test.ts`):
 1. **The Hunt** — Valor and Fang, guided: picking a move and a target, matchups, turn order.
-2. **The Clearing** — four heroes against the Faceless, guided: switching, Rest, a Shield and a
-   Conduct setup.
+   **Played off Wild's Edge's map since 2026-10-25** (per user direction: the cut from the opening
+   ridge straight into the fight was jarring): a one-tile act, the arrival, then the map, and the
+   tile tapped. A tile's `script` holds the guide (`StoryActNode.script`); a guided tile drops nothing.
+2. **The Clearing** — four heroes against two of the Titan's spawn, guided: switching, Rest, a
+   Shield and a Conduct setup. **The Faceless is gone 2026-10-25** (per user direction: an Endbringer
+   with no context read strangely): a level-12 Ravager (Pounce) and Slabback (Rock Toss), the first
+   things out of the fall. Both fall in round 5, nobody down.
 3. **The Road** — chapter 2's act: the map, rewards, items, levels, the Bag.
 4. **The Fork** — chapter 3's act: types, the Swordsman's seat, Elite or Skirmish, Solace.
 
@@ -440,7 +445,7 @@ spoken line cut (`src/data/lessons.ts`, `test/lessons.test.ts`):
   three) and **Raiju** (Storm, speed 100, Will's seat in the Clearing). Each holds the lesson's moves.
   The Clearing still teaches as before, pinned by test: the Warden runs dry (24 Mana against a
   25-cost cheapest move) and Rests under Rime Coat's Shield, then the Raiju's Conduct is set off by
-  the Warden's Gale Sever and the Faceless ends at 1 HP, nobody down. The two acts are NOT
+  the Warden's Gale Sever and both spawn fall, nobody down. The two acts are NOT
   re-measured with the Warden in Ren's place; play them.
 - **The Infinite opens on the Clearing's star**, about ten minutes in. The two acts stay First
   Light's, never a gate, and the constellation pays its 300 when all four are lit.

@@ -13,7 +13,7 @@ import { resolveRound } from '../src/engine/combat/resolveRound';
 import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import { fightWinner, getMaxMana, type CombatState } from '../src/engine/state';
 import type { CombatEvent } from '../src/engine/events';
-import { guidedAction, scriptedEnemyActions, storySides, withStoryEnds, STORY_ENEMY_SIDE, STORY_PLAYER_SIDE, type StoryFight } from '../src/run/story';
+import { guidedAction, scriptedEnemyActions, storyNodeFight, storySides, withStoryEnds, STORY_ENEMY_SIDE, STORY_PLAYER_SIDE, type StoryFight } from '../src/run/story';
 import { LESSONS } from '../src/data/lessons';
 import { sky } from '../src/data/sky';
 import { STORY_CAST_IDS } from '../src/data/storyCast';
@@ -50,10 +50,14 @@ function play(fight: StoryFight): { rounds: CombatEvent[][]; boards: CombatState
   return { rounds, boards };
 }
 
+/** A guided fight: a fight beat's own, or the scripted tile of a one-tile act (the Hunt, played off the map). */
 const fightOf = (chapterId: string): StoryFight => {
   const beat = LESSONS.chapters.find((c) => c.id === chapterId)?.beats[0];
-  assert.ok(beat && beat.kind === 'fight', `${chapterId} is not a fight`);
-  return beat.fight;
+  if (beat?.kind === 'fight') return beat.fight;
+  const node = beat?.kind === 'act' ? beat.act.rows.flat().find((n) => n.script) : undefined;
+  const fight = beat?.kind === 'act' && node ? storyNodeFight(beat.act, node, chapterId) : null;
+  assert.ok(fight, `${chapterId} has no guided fight`);
+  return fight;
 };
 
 test('lessons: every lesson is a scenario star of First Light, and every First Light star a lesson', () => {
@@ -88,19 +92,19 @@ test('lessons: each guided fight ends inside its script, won, with nobody down',
   }
 });
 
-test('lessons: in the clearing, the Warden runs dry and Rests under a Shield, then the Raiju marks the Faceless for the Warden to set off', () => {
+test('lessons: in the clearing, the Warden runs dry and Rests under a Shield, then the Raiju marks the Slabback for the Warden to set off', () => {
   const fight = fightOf('firstLight.clearing');
   const { rounds, boards } = play(fight);
-  assert.strictEqual(rounds.length, 5, 'the Faceless stands into round 5');
+  assert.strictEqual(rounds.length, 5, 'the spawn stand into round 5');
   const before4 = boards[3].combatants['A:warden'];
   const kit = fight.player.find((spec) => spec.rosterId === 'warden')!.moveIds!;
   const affordable = kit.filter((moveId) => moves[moveId].manaCost <= before4.currentMana);
   assert.deepStrictEqual(affordable, [], `the Warden can still afford ${affordable.join(', ')} (Mana ${before4.currentMana}/${getMaxMana(allCombatants[before4.heroId], before4)})`);
   const soaked = rounds[3].find((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'A:warden');
-  assert.ok(soaked && soaked.type === 'DamageDealt' && (soaked.absorbed ?? 0) > 0, "Rime Coat's Shield takes the Faceless's hit on the Resting Warden");
+  assert.ok(soaked && soaked.type === 'DamageDealt' && (soaked.absorbed ?? 0) > 0, "Rime Coat's Shield takes a hit on the Resting Warden");
   const planted = rounds[4].find((e) => e.type === 'StatusApplied' && e.statusId === 'Conduct');
   assert.ok(planted && planted.type === 'StatusApplied' && planted.sourceCombatantId === 'A:raiju', 'Storm Lash plants Conduct');
   assert.ok(rounds[4].some((e) => e.type === 'StatusDetonated' && e.statusId === 'Conduct'), "the Warden's Gale Sever sets it off in the same round");
-  const faceless = boards[boards.length - 1].combatants['B:faceless'];
-  assert.strictEqual(faceless.currentHp, 1, 'the Faceless is brought to its knees, not outlasted');
+  const foes = Object.values(boards[boards.length - 1].combatants).filter((c) => c.side === 'B');
+  assert.ok(foes.every((c) => c.fainted), 'both spawn fall in round 5');
 });

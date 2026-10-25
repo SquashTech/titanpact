@@ -1,15 +1,13 @@
 // The lessons' own cast (data/lessons.ts): battlefield-only, in no pool, deck or draft. Valor before
-// her sword, Wild's Edge's wildlife, and the Endbringer as the Faceless. The creatures sit under the 550
-// on purpose: they are the world before the Titan, not heroes.
+// her sword and Wild's Edge's wildlife. The creatures sit under the 550 on purpose: they are the world
+// before the Titan, not heroes.
 
 import type { HeroDefinition, MoveDefinition } from '../engine/content';
-import { STORY_UNDYING_ID } from './passives';
 
 export const STORY_CAST_IDS = {
   valor: 'valorPrologue',
   stag: 'stag',
   fox: 'fox',
-  endbringer: 'endbringerPrologue',
 } as const;
 
 /** The cast's own moves: untiered, in no pool — a Story creature is their only holder. */
@@ -54,14 +52,5 @@ export const storyCast: Record<string, HeroDefinition> = {
     types: ['Beast'],
     baseStats: { hp: 200, attack: 45, defense: 30, intelligence: 20, wisdom: 30, speed: 70, manaPool: 40, mpRegen: 10 },
     moveIds: ['pounce'],
-  },
-  // The Herald before the Titan falls: it can't be knocked out, and the fight ends when it is held at 1.
-  [STORY_CAST_IDS.endbringer]: {
-    id: STORY_CAST_IDS.endbringer,
-    name: 'The Faceless',
-    types: ['Ancient'],
-    baseStats: { hp: 250, attack: 60, defense: 60, intelligence: 70, wisdom: 60, speed: 40, manaPool: 200, mpRegen: 25 },
-    moveIds: ['erode', 'transfix'],
-    passiveIds: [STORY_UNDYING_ID],
   },
 };

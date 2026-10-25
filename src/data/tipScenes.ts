@@ -176,8 +176,8 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
   // Valor's Iron Fist over Fang's Claw: the one move each would swing at it.
   // Raiju's Rime Coat, its Shield named in place.
   'story.shield': [{ hero: { heroId: 'raiju', level: 4 }, moves: ['rimeCoat'], callouts: ['rider'] }],
-  // Raiju's Storm Lash, its Conduct named in place, against the Faceless.
-  'story.conduct': [{ foes: [{ heroId: 'endbringerPrologue', level: 1 }], hero: { heroId: 'raiju', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
+  // Raiju's Storm Lash, its Conduct named in place, against the Clearing's Slabback.
+  'story.conduct': [{ foes: [{ heroId: 'slabback', level: 12 }], hero: { heroId: 'raiju', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
   'story.types': [{ roll: TYPE_ROLL }, MATCHUP_SCENE],
   'story.combo': [{ foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist', 'claw'], focus: ['matchups'], expect: { ironFist: [2], claw: [0.25] } }],
   'howto.combat': [null, { foes: [{ heroId: 'wildOracle' }], hero: { heroId: 'cinderKnight' }, moves: ['singe'], focus: ['foe', 'move'] }],

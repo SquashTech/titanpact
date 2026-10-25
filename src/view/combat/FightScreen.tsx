@@ -82,7 +82,7 @@ import { isGathering } from '../../run/cycles';
 import { pilotActions } from '../../run/pilot';
 import { applyVersusReplacements, otherSide, placeVersusLeads, replacementsOwed, SIDES as VERSUS_SIDES, stateHash, versusActions, VERSUS_CLOCK } from '../../run/versus';
 import { TurnClock, useTurnClock } from '../versus/TurnClock';
-import { cueFor, guidedAction, scriptedEnemyActions, withStoryEnds, type StoryCue, type StoryFight } from '../../run/story';
+import { cueFor, guidedAction, scriptedEnemyActions, withStoryEnds, type StoryCue, type StoryScript } from '../../run/story';
 import { GuideHand } from '../story/GuideHand';
 import type { VersusChannel } from '../versus/versusChannel';
 import { relicTeamStatModifiers } from '../../run/relics';
@@ -582,7 +582,7 @@ interface Props {
   /** A friend flies the other side (docs/versus.md): `playerRun` is this client's side, `aiRun` theirs. */
   versus?: VersusFight;
   /** A Story fight (docs/stories.md §5): its seed, its scripted enemy and its scripted ends. */
-  story?: StoryFight;
+  story?: StoryScript;
   /** Its lines over the stage, one a scripted round. */
   storyCues?: readonly StoryCue[];
   /** The account's seen tips, for a cue's control tip (shown once). Omitted: no cue tips. */

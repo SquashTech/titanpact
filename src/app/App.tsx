@@ -903,10 +903,11 @@ export function App() {
       nodeType,
       squad,
       encounter,
-      goldReward: goldRewardFor(mapNodeType, playerRun.actNumber),
+      // A guided tile is a lesson fight: it pays nothing, so no report or offer follows it.
+      goldReward: storyNode?.script ? 0 : goldRewardFor(mapNodeType, playerRun.actNumber),
       // Read off the win this fight WILL be: the act's base is a function of encounters won and
       // the kind is the tile's, so the figure is known before the fight rather than rolled after it.
-      xpGained: xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),
+      xpGained: storyNode?.script ? 0 : xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),
       equipmentRewardId: equipmentReward?.id ?? null,
       consumableReward: playerRun.story ? null : rollConsumableDrop(mapNodeType),
       contractReward: playerRun.story ? false : rollContractDrop(mapNodeType),
@@ -1356,6 +1357,8 @@ export function App() {
     if (warmStarter) prefetchTrack('starterScreen');
   }, [warmStarter]);
 
+  const fightNode = screen.kind === 'fight' && playerRun.story ? storyNodeSpec(playerRun, STORY_BOOKS, screen.nodeId) : null;
+
   return (
     <LocationProvider location={ambientLocation}>
     <ProfileProvider profile={profile}>
@@ -1659,10 +1662,11 @@ export function App() {
           onExitToTitle={playerRun.story ? () => setScreen({ kind: 'title' }) : undefined}
           exitLabel={playerRun.story ? LESSON_EXIT : undefined}
           saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
-          tips={{ nodeType: playerRun.map!.nodes[screen.nodeId].type, seenIds: profile.seenTipIds, onSeen: markTipSeen }}
-          storyCues={playerRun.story ? storyNodeSpec(playerRun, STORY_BOOKS, screen.nodeId)?.cues : undefined}
+          tips={fightNode?.script ? undefined : { nodeType: playerRun.map!.nodes[screen.nodeId].type, seenIds: profile.seenTipIds, onSeen: markTipSeen }}
+          story={fightNode?.script}
+          storyCues={fightNode?.cues}
           storyTips={playerRun.story ? { seenIds: lessonTips, onSeen: markLessonTipSeen } : undefined}
-          cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'finale'}
+          cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'finale' || !!fightNode?.script}
         />
       )}
 

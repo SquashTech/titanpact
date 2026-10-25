@@ -21,7 +21,7 @@ export interface StoryHeroSpec {
   heroId: string;
   level: number;
   moveIds?: readonly string[];
-  /** Passives beyond its innate, a Story's own (the Endbringer's cannotBeKnockedOut). */
+  /** Passives beyond its innate, a Story's own. */
   passiveIds?: readonly string[];
 }
 
@@ -51,6 +51,9 @@ export interface StoryFight {
   endsWhen?: readonly StoryEnd[];
 }
 
+/** What holds a guided fight to its lesson, wherever its two sides come from. */
+export type StoryScript = Pick<StoryFight, 'seed' | 'enemyScript' | 'guide' | 'endsWhen'>;
+
 export function storyEntry(spec: StoryHeroSpec, hero: HeroDefinition): RosterEntry {
   return {
     ...createRosterEntry(spec.rosterId, spec.heroId, spec.moveIds ?? hero.moveIds),
@@ -78,14 +81,14 @@ export function storySides(fight: StoryFight, heroes: Record<string, HeroDefinit
   return { player: storySide(fight.player, fight.playerLeads, heroes), ai: storySide(fight.enemy, fight.enemyLeads, heroes) };
 }
 
-export function storyEndTriggers(fight: StoryFight): FightEndTrigger[] {
+export function storyEndTriggers(fight: StoryScript): FightEndTrigger[] {
   return (fight.endsWhen ?? []).map((end) =>
     end.kind === 'afterRound' ? end : { kind: 'hpAtMost', combatantId: combatantIdFor(end.side, end.rosterId), hp: end.hp, winner: end.winner }
   );
 }
 
 /** The built board with the fight's scripted ends on it. */
-export function withStoryEnds(state: CombatState, fight: StoryFight): CombatState {
+export function withStoryEnds(state: CombatState, fight: StoryScript): CombatState {
   const endsWhen = storyEndTriggers(fight);
   return endsWhen.length > 0 ? { ...state, endsWhen } : state;
 }
@@ -110,12 +113,12 @@ function commandsFor(script: readonly (readonly StoryCommand[])[], state: Combat
 }
 
 /** The enemy's scripted actions this round, those whose actor stands active; null past the script's end. */
-export function scriptedEnemyActions(fight: StoryFight, state: CombatState): Action[] | null {
+export function scriptedEnemyActions(fight: StoryScript, state: CombatState): Action[] | null {
   return commandsFor(fight.enemyScript, state, STORY_ENEMY_SIDE);
 }
 
 /** The action the player is guided to this round for `combatantId`, or null when that hero is the player's own to command. */
-export function guidedAction(fight: StoryFight, state: CombatState, combatantId: string): Action | null {
+export function guidedAction(fight: StoryScript, state: CombatState, combatantId: string): Action | null {
   return commandsFor(fight.guide, state, STORY_PLAYER_SIDE)?.find((action) => action.combatantId === combatantId) ?? null;
 }
 
@@ -166,6 +169,8 @@ export interface StoryActNode {
   patrons?: readonly string[];
   /** A fight's control tips, as a lesson fight's (StoryCue). */
   cues?: readonly StoryCue[];
+  /** A guided fight's script; the enemy's roster ids are its enemy's, the player's the act party's. */
+  script?: StoryScript;
 }
 
 /**
@@ -179,6 +184,13 @@ export interface StoryAct {
   gold?: number;
   /** Patron id -> the party member it teaches, set before the seat so the lesson goes to them. */
   students?: Readonly<Record<string, string>>;
+}
+
+/** The guided fight a scripted tile plays, its sides the act's party and the tile's enemy; null for a tile without a script. */
+export function storyNodeFight(act: StoryAct, node: StoryActNode, id: string): StoryFight | null {
+  if (!node.script || !node.enemy) return null;
+  const enemyLeads = node.enemyLeads ?? node.enemy.slice(0, 2).map((s) => s.rosterId);
+  return { id, ...node.script, player: act.party, playerLeads: act.party.slice(0, 2).map((s) => s.rosterId), enemy: node.enemy, enemyLeads };
 }
 
 /** Where a Story act sits in its chapter, carried on the run so the act's end can hand back. */

@@ -4,7 +4,7 @@
 // roster's Iron Warden and Raiju (2026-10-24, per user direction). Each lesson is a one-beat chapter
 // in its own book, so the Story machinery plays it unchanged.
 
-import type { StoryAct, StoryCommand, StoryDefinition, StoryFight } from '../run/story';
+import type { StoryAct, StoryDefinition, StoryFight } from '../run/story';
 import { STORY_CAST_IDS as CAST } from './storyCast';
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
@@ -34,9 +34,7 @@ const hunt: StoryFight = {
   ],
 };
 
-const reach: StoryCommand[] = [{ actor: 'faceless', moveId: 'erode' }];
-
-/** The bench: switching, Rest, a Shield and a Conduct setup, four heroes against the Faceless. */
+/** The bench: switching, Rest, a Shield and a Conduct setup, four heroes against the first spawn out of the fall. */
 const clearing: StoryFight = {
   id: 'lesson-clearing',
   seed: 1702,
@@ -48,25 +46,25 @@ const clearing: StoryFight = {
     { rosterId: 'raiju', heroId: 'raiju', level: 4, moveIds: ['zap', 'rimeCoat', 'stormLash'] },
   ],
   playerLeads: ['valor', 'fang'],
-  enemy: [{ rosterId: 'faceless', heroId: CAST.endbringer, level: 1 }],
-  enemyLeads: ['faceless'],
+  enemy: [
+    { rosterId: 'ravager', heroId: 'ravager', level: 12, moveIds: ['pounce'] },
+    { rosterId: 'slabback', heroId: 'slabback', level: 12, moveIds: ['rockToss'] },
+  ],
+  enemyLeads: ['ravager', 'slabback'],
   enemyScript: [
-    reach,
-    [{ actor: 'faceless', moveId: 'transfix', target: ally('fang') }],
-    reach,
-    [{ actor: 'faceless', moveId: 'transfix', target: ally('warden') }],
-    reach,
+    [{ actor: 'ravager', moveId: 'pounce', target: ally('valor') }, { actor: 'slabback', moveId: 'rockToss', target: ally('fang') }],
+    [{ actor: 'ravager', moveId: 'pounce', target: ally('valor') }, { actor: 'slabback', moveId: 'rockToss', target: ally('valor') }],
+    [{ actor: 'ravager', moveId: 'pounce', target: ally('raiju') }, { actor: 'slabback', moveId: 'rockToss', target: ally('warden') }],
+    // Pounce goes first, so it leaves the Warden to Rock Toss and Rime Coat's Shield.
+    [{ actor: 'ravager', moveId: 'pounce', target: ally('raiju') }, { actor: 'slabback', moveId: 'rockToss', target: ally('warden') }],
+    [{ actor: 'ravager', moveId: 'pounce', target: ally('raiju') }, { actor: 'slabback', moveId: 'rockToss', target: ally('warden') }],
   ],
   guide: [
-    [{ actor: 'valor', moveId: 'ironFist', target: foe('faceless') }, { actor: 'fang', moveId: 'claw', target: foe('faceless') }],
+    [{ actor: 'valor', moveId: 'ironFist', target: foe('slabback') }, { actor: 'fang', moveId: 'claw', target: foe('ravager') }],
     [{ actor: 'valor', switchTo: 'warden' }, { actor: 'fang', switchTo: 'raiju' }],
-    [{ actor: 'warden', moveId: 'galeSever' }, { actor: 'raiju', moveId: 'zap', target: foe('faceless') }],
+    [{ actor: 'warden', moveId: 'galeSever' }, { actor: 'raiju', moveId: 'zap', target: foe('ravager') }],
     [{ actor: 'warden', rest: true }, { actor: 'raiju', moveId: 'rimeCoat', target: ally('warden') }],
-    [{ actor: 'warden', moveId: 'galeSever' }, { actor: 'raiju', moveId: 'stormLash', target: foe('faceless') }],
-  ],
-  endsWhen: [
-    { kind: 'hpAtMost', side: 'B', rosterId: 'faceless', hp: 1, winner: 'A' },
-    { kind: 'afterRound', round: 5, winner: 'A' },
+    [{ actor: 'warden', moveId: 'galeSever' }, { actor: 'raiju', moveId: 'stormLash', target: foe('slabback') }],
   ],
 };
 
@@ -82,7 +80,7 @@ const road: StoryAct = {
     [
       {
         type: 'fight',
-        enemy: [{ rosterId: 'cub', heroId: 'cubling', level: 6 }, { rosterId: 'sprout', heroId: 'sproutling', level: 6 }],
+        enemy: [{ rosterId: 'ravager', heroId: 'cubling', level: 6 }, { rosterId: 'sprout', heroId: 'sproutling', level: 6 }],
         drop: 'dagger.common.feral',
         cues: [
           {
@@ -102,7 +100,7 @@ const road: StoryAct = {
       },
     ],
     [{ type: 'equipmentReward', items: ['greataxe.common', 'leathers.common.feral', 'shield.common'] }, { type: 'restReward' }, { type: 'passiveReward' }],
-    [{ type: 'fight', enemy: [{ rosterId: 'rivet', heroId: 'rivetling', level: 8 }, { rosterId: 'cub', heroId: 'cubling', level: 8 }, { rosterId: 'sprout', heroId: 'sproutling', level: 7 }], drop: 'spear.common.tempered' }],
+    [{ type: 'fight', enemy: [{ rosterId: 'rivet', heroId: 'rivetling', level: 8 }, { rosterId: 'ravager', heroId: 'cubling', level: 8 }, { rosterId: 'sprout', heroId: 'sproutling', level: 7 }], drop: 'spear.common.tempered' }],
     [{ type: 'restReward' }, { type: 'equipmentReward', items: ['boots.common', 'plate.common', 'dagger.common.tempered'] }, { type: 'manaWellReward' }],
     [
       {
@@ -110,7 +108,7 @@ const road: StoryAct = {
         enemy: [
           { rosterId: 'bear', heroId: 'ursa', level: 15, moveIds: ['claw', 'maul', 'prowl'] },
           { rosterId: 'sprout', heroId: 'sproutling', level: 12 },
-          { rosterId: 'cub', heroId: 'cubling', level: 12 },
+          { rosterId: 'ravager', heroId: 'cubling', level: 12 },
         ],
         drop: 'sword.rare.tempered',
         cues: [
@@ -152,7 +150,7 @@ const fork: StoryAct = {
     [{ type: 'equipmentReward', items: ['greataxe.rare', 'leathers.rare.feral', 'boots.rare'] }, { type: 'restReward' }, { type: 'passiveReward' }],
     [{ type: 'patronSeat', patrons: ['swordsman'] }],
     [
-      { type: 'elite', enemy: [{ rosterId: 'hoar', heroId: 'hoarfang', level: 11 }, { rosterId: 'pebble', heroId: 'pebbling', level: 10 }, { rosterId: 'sleet', heroId: 'sleetling', level: 10 }], drop: 'spear.rare.tempered' },
+      { type: 'elite', enemy: [{ rosterId: 'hoar', heroId: 'hoarfang', level: 11 }, { rosterId: 'slabback', heroId: 'pebbling', level: 10 }, { rosterId: 'sleet', heroId: 'sleetling', level: 10 }], drop: 'spear.rare.tempered' },
       { type: 'skirmish', enemy: [{ rosterId: 'volt', heroId: 'voltail', level: 7 }, { rosterId: 'gear', heroId: 'gearhound', level: 7 }], drop: 'plate.rare' },
     ],
     [{ type: 'restReward' }, { type: 'equipmentReward', items: ['shield.rare', 'plate.rare', 'greataxe.rare.tempered'] }, { type: 'manaWellReward' }],
@@ -170,46 +168,58 @@ export const LESSONS: StoryDefinition = {
       title: 'The Hunt',
       beats: [
         {
-          kind: 'fight',
-          fight: hunt,
-          locationId: 'wildsEdge',
-          cues: [
-            {
-              round: 1,
-              point: true,
-              tips: [
+          kind: 'act',
+          act: {
+            locationId: 'wildsEdge',
+            party: hunt.player,
+            rows: [
+              [
                 {
-                  id: 'story.welcome',
-                  title: 'Welcome to',
-                  pages: ['Battles are *turn-based*. Select *moves* for your heroes, then watch the round play out.'],
-                  look: 'welcome',
-                },
-              ],
-            },
-            {
-              round: 2,
-              point: true,
-              tips: [
-                { id: 'story.reading', title: 'Reading a Move', pages: ['[kinds] *Hold* any move to read all of it.'] },
-                {
-                  id: 'story.types',
-                  title: 'Types',
-                  pages: [
-                    'There are many *types* in Titanpact, each with its own *weaknesses* and *resistances*.',
-                    "Don't worry about learning them all at once. Watch the *arrows* on a move: [super] it hits hard, [resist] it's resisted.",
+                  type: 'fight',
+                  enemy: hunt.enemy,
+                  enemyLeads: hunt.enemyLeads,
+                  script: hunt,
+                  cues: [
+                    {
+                      round: 1,
+                      point: true,
+                      tips: [
+                        {
+                          id: 'story.welcome',
+                          title: 'Welcome to',
+                          pages: ['Battles are *turn-based*. Select *moves* for your heroes, then watch the round play out.'],
+                          look: 'welcome',
+                        },
+                      ],
+                    },
+                    {
+                      round: 2,
+                      point: true,
+                      tips: [
+                        { id: 'story.reading', title: 'Reading a Move', pages: ['[kinds] *Hold* any move to read all of it.'] },
+                        {
+                          id: 'story.types',
+                          title: 'Types',
+                          pages: [
+                            'There are many *types* in Titanpact, each with its own *weaknesses* and *resistances*.',
+                            "Don't worry about learning them all at once. Watch the *arrows* on a move: [super] it hits hard, [resist] it's resisted.",
+                          ],
+                        },
+                        {
+                          id: 'story.combo',
+                          title: 'Setting Up',
+                          pages: [
+                            'Iron deals *Bonus* [super] damage against Frost. Frost and Storm *Resist* [resist] Beast damage.',
+                            "The stag's breath *lowered* both heroes' Attack. Fang is *faster*, so his Howl *raises* it again before Valor strikes.",
+                          ],
+                        },
+                      ],
+                    },
                   ],
                 },
-                {
-                  id: 'story.combo',
-                  title: 'Setting Up',
-                  pages: [
-                    'Iron deals *Bonus* [super] damage against Frost. Frost and Storm *Resist* [resist] Beast damage.',
-                    "The stag's breath *lowered* both heroes' Attack. Fang is *faster*, so his Howl *raises* it again before Valor strikes.",
-                  ],
-                },
               ],
-            },
-          ],
+            ],
+          },
         },
       ],
     },

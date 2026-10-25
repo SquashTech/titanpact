@@ -2669,18 +2669,6 @@ export const WITHERING_GAZE_RETURNS_ID = 'witheringGazeReturns';
 /** Every third round: the Gaze lasts five, so a player's field is overwritten inside it (never refreshed — re-setting the active field is a no-op). */
 export const WITHERING_GAZE_CADENCE = 3;
 
-/** A Story foe that cannot fall (docs/stories.md §5): the prologue's Endbringer. In no pool. */
-export const STORY_UNDYING_ID = 'storyUndying';
-
-const storyPassives: Record<string, PassiveDefinition> = {
-  [STORY_UNDYING_ID]: {
-    id: STORY_UNDYING_ID,
-    name: 'Undying',
-    description: "Can't be knocked out.",
-    cannotBeKnockedOut: true,
-  },
-};
-
 const titanPassives: Record<string, PassiveDefinition> = {
   [TITANS_WARD_ID]: {
     id: TITANS_WARD_ID,
@@ -2808,7 +2796,6 @@ export const passives: Record<string, PassiveDefinition> = {
   ...masteredInnatePassives,
   ...titansMarkPassives,
   ...titanPassives,
-  ...storyPassives,
 };
 
 /**

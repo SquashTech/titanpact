@@ -206,7 +206,6 @@ export const heroArt: Partial<Record<string, string>> = {
   valorPrologue: story_valorswordlessArt,
   stag: story_stagArt,
   fox: story_foxArt,
-  endbringerPrologue: heraldArt,
   leftEye: leftEyeArt,
   rightEye: rightEyeArt,
 };
