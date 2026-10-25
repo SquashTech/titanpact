@@ -1019,11 +1019,14 @@ export const sounds: Record<SfxId, SoundSpec> = {
     ],
   },
 
-  /** Blip's babble, one syllable a beat: a sawtooth through a narrow formant, wide jitter so no two match. */
+  /** Blip's voice as a line types, one blip a syllable: a soft square with a lift, jittered like speech. */
   'blip.syllable': {
-    gain: 0.22,
-    jitter: 0.22,
-    voices: [{ wave: 'sawtooth', freq: 420, freqEnd: 440, gain: 0.5, attack: 0.012, decay: 0.05, filter: { type: 'bandpass', freq: 1150, q: 5 } }],
+    gain: 0.3,
+    jitter: 0.12,
+    voices: [
+      { wave: 'square', freq: 640, freqEnd: 700, gain: 0.42, attack: 0.004, hold: 0.018, decay: 0.045, filter: { type: 'lowpass', freq: 2200, q: 0.8 } },
+      { wave: 'sine', freq: 1280, freqEnd: 1400, gain: 0.18, attack: 0.004, decay: 0.05 },
+    ],
   },
 
   /** Blip setting off: three syllables climbing. */

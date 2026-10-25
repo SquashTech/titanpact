@@ -38,6 +38,11 @@
   transition-duration: 0.15s;
 }
 
+/* The rest of the line, laid out but not yet said: the bubble is its full size from the first letter. */
+.blip-untyped {
+  visibility: hidden;
+}
+
 .blip-hit {
   position: absolute;
   top: 0;
@@ -120,7 +125,8 @@
   animation: blip-wait 0.9s ease-in-out infinite;
 }
 
-.blip-bubble.is-waiting {
+/* Room for the mark from the first letter, so the bubble doesn't grow when the line ends. */
+.blip-bubble.is-forced {
   padding-bottom: 16px;
 }
 

@@ -1,5 +1,5 @@
-// The lessons' own cast (data/lessons.ts): battlefield-only, in no pool, deck or draft. Valor before
-// her sword and Wild's Edge's wildlife. The creatures sit under the 550 on purpose: they are the world
+// The lessons' own cast (data/lessons.ts): battlefield-only, in no pool, deck or draft. Valor at
+// lesson strength and Wild's Edge's wildlife. The creatures sit under the 550 on purpose: they are the world
 // before the Titan, not heroes.
 
 import type { HeroDefinition, MoveDefinition } from '../engine/content';
@@ -27,7 +27,7 @@ export const storyMoves: Record<string, MoveDefinition> = {
 };
 
 export const storyCast: Record<string, HeroDefinition> = {
-  // Valor before the sword: her own line and grades, her fists.
+  // Valor at lesson strength: her own sprite, line and grades, and a starting kit of her own.
   [STORY_CAST_IDS.valor]: {
     id: STORY_CAST_IDS.valor,
     name: 'Valor',

@@ -66,7 +66,7 @@ test('lessons: every lesson is a scenario star of First Light, and every First L
   for (const id of stars) assert.strictEqual(sky.scenarios[id!]?.lesson, id, `${id} plays its own lesson`);
 });
 
-test('lessons: every cue teaches, and the party is the base roster bar Valor before her sword', () => {
+test('lessons: every cue teaches, and the party is the base roster bar the lesson Valor', () => {
   for (const chapter of LESSONS.chapters) {
     for (const beat of chapter.beats) {
       assert.ok(beat.kind === 'fight' || beat.kind === 'act', `${chapter.id} holds a ${beat.kind}`);

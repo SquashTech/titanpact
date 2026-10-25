@@ -123,7 +123,7 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
   function hideBubble() {
     clearTyping();
     held.current = null;
-    bubbleRef.current?.classList.remove('is-on', 'is-waiting');
+    bubbleRef.current?.classList.remove('is-on', 'is-waiting', 'is-forced');
   }
 
   function spark(power: number, angle = Math.random() * TAU) {
@@ -144,15 +144,22 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
       held.current = null;
       guarding.current = guarded || forced;
       const later = (ms: number, fn: () => void) => typing.current.push(window.setTimeout(fn, ms));
+      bubble.classList.toggle('is-forced', forced);
       const say = (i: number) => {
         const line = lines[i];
-        bubble.textContent = '';
+        // The whole line is laid out from the first letter, the untyped rest hidden, so the bubble never grows as it types.
+        const typed = document.createElement('span');
+        const rest = document.createElement('span');
+        rest.className = 'blip-untyped';
+        rest.textContent = line;
+        bubble.replaceChildren(typed, rest);
         bubble.classList.remove('is-waiting');
         bubble.classList.add('is-on');
         let n = 0;
         const wait = () => {
           clearTyping();
-          bubble.textContent = line;
+          typed.textContent = line;
+          rest.textContent = '';
           bubble.classList.add('is-waiting');
           held.current = () => {
             held.current = null;
@@ -160,14 +167,15 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
               say(i + 1);
               return;
             }
-            bubble.classList.remove('is-on', 'is-waiting');
+            bubble.classList.remove('is-on', 'is-waiting', 'is-forced');
             guarding.current = false;
             onDone?.();
           };
         };
         const type = () => {
           n++;
-          bubble.textContent = line.slice(0, n);
+          typed.textContent = line.slice(0, n);
+          rest.textContent = line.slice(n);
           if (n % 2 === 0 && line[n - 1] !== ' ') playSfx('blip.syllable');
           if (n < line.length) later(34, type);
           else if (forced) wait();
@@ -371,25 +379,29 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
     g.restore();
   }
 
-  /** The bubble rides above Blip (below it near the top), kept inside the stage; the poke target rides on it. */
+  /**
+   * The bubble sits above Blip (below it near the top), kept inside the stage. It is pinned to where
+   * Blip rests, not to the bob, so it holds still to be read; the poke target rides on Blip itself.
+   */
   function place(width: number) {
     const b = body.current;
     const hit = hitRef.current;
     if (hit) hit.style.transform = `translate(${b.x - 22}px, ${b.y - 22}px)`;
     const bubble = bubbleRef.current;
     if (!bubble) return;
+    const at = b.travelling ? { x: b.x, y: b.y } : { x: b.homeX, y: b.homeY };
     if (bubbleAt === 'beside') {
-      const left = b.x + 24;
+      const left = at.x + 24;
       bubble.style.maxWidth = `${Math.max(120, width - left - 6)}px`;
       bubble.classList.add('is-beside');
-      bubble.style.transform = `translate(${left}px, ${b.y - bubble.offsetHeight / 2}px)`;
+      bubble.style.transform = `translate(${left}px, ${at.y - bubble.offsetHeight / 2}px)`;
       return;
     }
     const half = bubble.offsetWidth / 2;
-    const x = Math.max(half + 4, Math.min(width - half - 4, b.x));
-    const below = bubbleAt === 'below' || b.y < 80;
+    const x = Math.max(half + 4, Math.min(width - half - 4, at.x));
+    const below = bubbleAt === 'below' || at.y < 80;
     bubble.classList.toggle('is-below', below);
-    bubble.style.transform = `translate(${x - half}px, ${below ? b.y + 24 : b.y - 24}px) translateY(${below ? '0' : '-100%'})`;
+    bubble.style.transform = `translate(${x - half}px, ${below ? at.y + 24 : at.y - 24}px) translateY(${below ? '0' : '-100%'})`;
   }
 
   function poke() {
