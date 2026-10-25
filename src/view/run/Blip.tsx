@@ -25,9 +25,11 @@ export interface BlipHandle {
   /**
    * Type a thought beside Blip a bubble at a time, babbling, then let it fade; `onDone` once the last
    * has gone. A `guarded` thought (a first) is never cut short by a poke; a `forced` one holds each
-   * bubble until `advance`.
+   * bubble until `advance`; a `linger` one leaves its last bubble up until `quiet`.
    */
-  think(lines: readonly string[], onDone?: () => void, options?: { guarded?: boolean; forced?: boolean }): void;
+  think(lines: readonly string[], onDone?: () => void, options?: { guarded?: boolean; forced?: boolean; linger?: boolean }): void;
+  /** Stop talking: the bubble fades, mid-line or not. */
+  quiet(): void;
   /** A forced thought: finish the line being typed, or move on from the one that waits. */
   advance(): void;
   react(kind: 'win' | 'lose' | 'chirp'): void;
@@ -137,7 +139,7 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
       Object.assign(body.current, { homeX: x, homeY: y, travelling: true, onArrive: onArrive ?? null });
       playSfx('blip.chirp');
     },
-    think(lines, onDone, { guarded = false, forced = false } = {}) {
+    think(lines, onDone, { guarded = false, forced = false, linger = false } = {}) {
       const bubble = bubbleRef.current;
       if (!bubble || !active) return;
       clearTyping();
@@ -180,6 +182,7 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
           if (n < line.length) later(34, type);
           else if (forced) wait();
           else if (i + 1 < lines.length) later(900 + line.length * 25, () => say(i + 1));
+          else if (linger) typing.current = [];
           else
             later(1800 + line.length * 35, () => {
               bubble.classList.remove('is-on');
@@ -198,6 +201,10 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
     },
     advance() {
       held.current?.();
+    },
+    quiet() {
+      hideBubble();
+      guarding.current = false;
     },
     busy() {
       return typing.current.length > 0 || held.current !== null || body.current.travelling;

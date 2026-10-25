@@ -81,6 +81,19 @@ test('lessons: every cue teaches, and the party is the base roster bar the lesso
   }
 });
 
+test('lessons: Blip says why on every guided round', () => {
+  for (const chapter of LESSONS.chapters) {
+    const beat = chapter.beats[0];
+    const cues = beat.kind === 'fight' ? beat.cues ?? [] : beat.kind === 'act' ? beat.act.rows.flat().find((n) => n.script)?.cues ?? [] : [];
+    if (beat.kind === 'act' && !beat.act.rows.flat().some((n) => n.script)) continue;
+    const fight = fightOf(chapter.id);
+    for (let round = 1; round <= fight.guide.length; round++) {
+      const blip = cues.find((cue) => cue.round === round)?.blip;
+      assert.ok(blip?.length, `${chapter.id} round ${round} is guided with no word from Blip`);
+    }
+  }
+});
+
 test('lessons: each guided fight ends inside its script, won, with nobody down', () => {
   for (const id of ['firstLight.hunt', 'firstLight.clearing']) {
     const fight = fightOf(id);

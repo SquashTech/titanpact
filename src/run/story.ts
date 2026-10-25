@@ -122,7 +122,7 @@ export function guidedAction(fight: StoryScript, state: CombatState, combatantId
   return commandsFor(fight.guide, state, STORY_PLAYER_SIDE)?.find((action) => action.combatantId === combatantId) ?? null;
 }
 
-/** What a lesson teaches at the top of `round`'s command phase. A lesson says nothing; it guides and it tips. */
+/** What a lesson teaches at the top of `round`'s command phase: it guides, it tips, and Blip says why. */
 export interface StoryCue {
   round: number;
   /**
@@ -133,6 +133,8 @@ export interface StoryCue {
   tips?: readonly Tip[];
   /** A hand points at each guided tap this round: the move, then its target. */
   point?: true;
+  /** Blip's thought once the tips are done: why this round's guided taps are the ones (docs/the-sky.md §1). */
+  blip?: readonly string[];
 }
 
 export type StoryBeat =

@@ -1,8 +1,8 @@
 // First Light's lessons (docs/the-sky.md §3): the tutorial fights and acts that A Tale of Valor was
-// built on, with every scene and every spoken line cut. A lesson teaches by its guided taps, its
-// control tips and its numbers; Blip frames it from the sky. Ren and Will are recast with the base
-// roster's Iron Warden and Raiju (2026-10-24, per user direction). Each lesson is a one-beat chapter
-// in its own book, so the Story machinery plays it unchanged.
+// built on, with its scenes and its cast's lines cut. A lesson teaches by its guided taps, its control
+// tips and its numbers, and Blip, who has watched each guided fight before, says why each round's taps
+// are the ones. Ren and Will are recast with the base roster's Iron Warden and Raiju (2026-10-24, per
+// user direction). Each lesson is a one-beat chapter in its own book, so the Story machinery plays it unchanged.
 
 import type { StoryAct, StoryDefinition, StoryFight } from '../run/story';
 import { STORY_CAST_IDS as CAST } from './storyCast';
@@ -183,6 +183,7 @@ export const LESSONS: StoryDefinition = {
                     {
                       round: 1,
                       point: true,
+                      blip: ["Ooh, I've watched this telling before! I know what these two do next.", "The fox always leaps first. Hit it with both, and it never leaps again."],
                       tips: [
                         {
                           id: 'story.welcome',
@@ -195,6 +196,7 @@ export const LESSONS: StoryDefinition = {
                     {
                       round: 2,
                       point: true,
+                      blip: ["The stag's slow. If Valor's fist lands this round, it never breathes on us again."],
                       tips: [
                         { id: 'story.reading', title: 'Reading a Move', pages: ['[kinds] *Hold* any move to read all of it.'] },
                         {
@@ -232,10 +234,15 @@ export const LESSONS: StoryDefinition = {
           fight: clearing,
           locationId: 'wildsEdge',
           cues: [
-            { round: 1, tips: [{ id: 'story.inspect', title: 'Reading a Foe', pages: ['*Tap* any hero, yours or theirs, to read its *stats*, *moves* and *passives*.'] }] },
+            {
+              round: 1,
+              blip: ["I know this one too! The Ravager jumps Valor, and the Slabback throws a rock at Fang."],
+              tips: [{ id: 'story.inspect', title: 'Reading a Foe', pages: ['*Tap* any hero, yours or theirs, to read its *stats*, *moves* and *passives*.'] }],
+            },
             {
               round: 2,
               point: true,
+              blip: ["Next they both go for Valor. Swap her and Fang out for the two waiting on the bench."],
               tips: [
                 {
                   id: 'story.switch',
@@ -248,8 +255,14 @@ export const LESSONS: StoryDefinition = {
               ],
             },
             {
+              round: 3,
+              point: true,
+              blip: ["Gale Sever cuts both of them at once. Raiju, keep it cheap: you'll want that Mana soon."],
+            },
+            {
               round: 4,
               point: true,
+              blip: ["The Warden's run dry, and the Slabback's about to throw at it. Ice first, then Rest."],
               tips: [
                 { id: 'story.rest', title: 'Rest', pages: ['Iron Warden has no Mana for any move. *Rest* skips its turn and *refills all Mana*.'] },
                 {
@@ -262,6 +275,7 @@ export const LESSONS: StoryDefinition = {
             {
               round: 5,
               point: true,
+              blip: ["Raiju's quicker, so the mark lands before the Warden swings. Boom!", "And that's as far as I've seen. Out there, I won't know what they'll do either!"],
               tips: [
                 {
                   id: 'story.conduct',

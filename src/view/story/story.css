@@ -195,3 +195,11 @@
   width: 16px;
   height: 16px;
 }
+
+/* --- Blip watching a lesson fight (FightBlip): over the field, under the tips, catching only its own pokes --- */
+.fight-blip {
+  position: absolute;
+  inset: 0;
+  z-index: 54;
+  pointer-events: none;
+}

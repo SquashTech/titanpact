@@ -13,7 +13,11 @@
 >   for new ones. It **thinks**, and the player reads its thoughts: meta and fun, never serious.
 > - **The light lives outside runs.** It appears in the sky, while the player browses scenarios,
 >   and at the very beginning. Inside a run you're just playing Titanpact. Its thoughts appear
->   passively and are never tapped through.
+>   passively and are never tapped through. **One exception, the guided lessons** (2026-10-25, per
+>   user direction): Blip has watched those tellings before, so it sits by the field and says what
+>   the foes do next and why each round's guided taps are the ones (`StoryCue.blip`, `FightBlip`).
+>   The Clearing's last round closes the frame, saying it won't know what foes do from here on,
+>   so nobody expects a real fight to preview the enemy's moves.
 > - The currency is **Stardust**, in larger increments (100 a draw), never sold.
 
 ---
