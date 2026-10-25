@@ -178,6 +178,17 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
   'story.shield': [{ hero: { heroId: 'raiju', level: 4 }, moves: ['rimeCoat'], callouts: ['rider'] }],
   // Raiju's Storm Lash, its Conduct named in place, against the Clearing's Slabback.
   'story.conduct': [{ foes: [{ heroId: 'slabback', level: 12 }], hero: { heroId: 'raiju', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
+  // The Warden's two attacks against the Clearing's spawn, one bar a foe over one bar under both.
+  'story.spread': [
+    null,
+    {
+      foes: [{ heroId: 'ravager', level: 12 }, { heroId: 'slabback', level: 12 }],
+      hero: { heroId: 'ironWarden', level: 12 },
+      moves: ['heavyBlow', 'galeSever'],
+      focus: ['matchups'],
+      expect: { heavyBlow: [1, 2], galeSever: [1, 2] },
+    },
+  ],
   'story.types': [{ roll: TYPE_ROLL }, MATCHUP_SCENE],
   'story.combo': [{ foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist', 'claw'], focus: ['matchups'], expect: { ironFist: [2], claw: [0.25] } }],
   'howto.combat': [null, { foes: [{ heroId: 'wildOracle' }], hero: { heroId: 'cinderKnight' }, moves: ['singe'], focus: ['foe', 'move'] }],

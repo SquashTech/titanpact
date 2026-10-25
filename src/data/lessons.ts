@@ -257,7 +257,17 @@ export const LESSONS: StoryDefinition = {
             {
               round: 3,
               point: true,
-              blip: ["Gale Sever cuts both of them at once. Raiju, keep it cheap: you'll want that Mana soon."],
+              blip: ["Gale Sever's a spread move: one swing, and both of them feel it!", "Raiju, keep it cheap: you'll want that Mana soon."],
+              tips: [
+                {
+                  id: 'story.spread',
+                  title: 'Spread Moves',
+                  pages: [
+                    "*Gale Sever* is a *spread* move: it hits *both* enemies at once, each at full power.",
+                    'The bars under the arrows show who a move hits. [single] A bar under each: the one enemy you pick. [spread] One long bar under both: it hits them both.',
+                  ],
+                },
+              ],
             },
             {
               round: 4,
