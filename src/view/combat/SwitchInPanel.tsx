@@ -38,6 +38,8 @@ interface Props {
   onPick: (benchCombatantId: string) => void;
   onInspect: (benchCombatantId: string) => void;
   onClose: () => void;
+  /** A lesson's guided pick: lit for the guide's hand, and the send button lit once it is staged. */
+  guidedId?: string;
 }
 
 // Types, not movepools: the standing type matchup is what the player can act on at the instant of the trade.
@@ -94,7 +96,7 @@ function Gauge({ kind, value, max, shield = 0 }: { kind: 'hp' | 'mana'; value: n
  * stage for the hero being considered, the bench beneath it, and a plate that sends it in.
  * The scrim above the sheet closes it.
  */
-export function SwitchInPanel({ outgoingHero, outgoing, options, enemies, typeChart, moves, onPick, onInspect, onClose }: Props) {
+export function SwitchInPanel({ outgoingHero, outgoing, options, enemies, typeChart, moves, onPick, onInspect, onClose, guidedId }: Props) {
   const firstOpen = options.find((o) => o.selected && !o.claimedByOther) ?? options.find((o) => !o.claimedByOther);
   const [stagedId, setStagedId] = useState(firstOpen?.combatantId);
   const staged = options.find((o) => o.combatantId === stagedId && !o.claimedByOther) ?? firstOpen;
@@ -200,7 +202,7 @@ export function SwitchInPanel({ outgoingHero, outgoing, options, enemies, typeCh
               <button
                 key={option.combatantId}
                 type="button"
-                className={`switch-pick${option.combatantId === staged.combatantId ? ' is-staged' : ''}${option.claimedByOther ? ' is-claimed' : ''}`}
+                className={`switch-pick${option.combatantId === staged.combatantId ? ' is-staged' : ''}${option.claimedByOther ? ' is-claimed' : ''}${option.combatantId === guidedId ? ' is-guided' : ''}`}
                 style={{ '--rgb': getTypeColorRgb(optionTypes[0]), animationDelay: `${80 + i * 50}ms` } as CSSProperties}
                 aria-disabled={option.claimedByOther}
                 aria-pressed={option.combatantId === staged.combatantId}
@@ -228,7 +230,12 @@ export function SwitchInPanel({ outgoingHero, outgoing, options, enemies, typeCh
           })}
         </div>
 
-        <PlateButton compact tint={getTypeColor(types[0])} onClick={() => onPick(staged.combatantId)}>
+        <PlateButton
+          compact
+          className={guidedId && staged.combatantId === guidedId ? 'switch-send is-guided' : 'switch-send'}
+          tint={getTypeColor(types[0])}
+          onClick={() => onPick(staged.combatantId)}
+        >
           Send {hero.name} in
         </PlateButton>
         <p className="switch-note">Comes in without acting this round.</p>

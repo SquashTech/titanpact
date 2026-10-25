@@ -2608,6 +2608,7 @@ export function FightScreen({
               }}
               onInspect={(benchId) => setInspecting(benchId)}
               onClose={() => setSwitchOpen(false)}
+              guidedId={guide?.kind === 'switch' ? guide.benchedCombatantId : undefined}
             />
           );
         })()}
@@ -2703,7 +2704,9 @@ export function FightScreen({
             guide.kind === 'rest'
               ? '.rest-move, .bottom-action-rest'
               : guide.kind === 'switch'
-                ? '.bottom-action-switch'
+                ? switchOpen
+                  ? '.switch-pick.is-guided:not(.is-staged), .switch-send.is-guided .plate-cta'
+                  : '.bottom-action-switch'
                 : !showingTargetPanel
                   ? '.move-list .move-button.is-guided'
                   : guide.kind === 'move' && guide.declaredTarget
