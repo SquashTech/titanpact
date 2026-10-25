@@ -18,6 +18,10 @@ test('thoughts: the table hangs together — unique ids, real constellations, bu
     assert.ok(t.lines.length > 0, `${t.id} says nothing`);
     for (const line of t.lines) assert.ok(line.length > 0 && line.length <= 100, `${t.id}: "${line}" is past what one bubble holds`);
     if (t.showsNext) assert.ok(revealedFirst(createProfile(), THOUGHTS, t.showsNext), `${t.id} leads to ${t.showsNext}, which has no first`);
+    if (t.plays) {
+      assert.ok(t.forced, `${t.id} starts a lesson without holding the sky`);
+      assert.ok(findStar(sky, t.plays) && sky.scenarios[t.plays]?.lesson, `${t.id} plays ${t.plays}, which is no lesson`);
+    }
   }
   for (const c of Object.values(sky.constellations)) {
     assert.ok(THOUGHTS.some((t) => t.once && t.moment.kind === 'revealed' && t.moment.constellationId === c.id), `${c.id} has no first for being revealed`);
@@ -83,6 +87,8 @@ test('thoughts: the first sky leads to First Light and says it once', () => {
   let profile = createProfile();
   const hello = thoughtFor(profile, THOUGHTS, { kind: 'firstSky' }, 0)!;
   assert.strictEqual(hello.showsNext, 'firstLight');
+  assert.ok(hello.forced, 'the hello is a beat the player taps through');
+  assert.strictEqual(hello.plays, 'firstLight.hunt');
   const shown = revealedFirst(profile, THOUGHTS, 'firstLight');
   assert.ok(shown, 'First Light has a first to show');
   profile = recordThoughtSeen(profile, shown!);

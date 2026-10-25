@@ -4,10 +4,12 @@ import { THOUGHTS } from '../../data/thoughts';
 import { trials } from '../../data/trials';
 import { cycleOf } from '../../run/cycles';
 import type { Profile } from '../../run/profile';
-import { constellationState, isConstellationLit, isStarLit, starScenario, type ConstellationDefinition, type ConstellationState, type SkyStar } from '../../run/sky';
+import { constellationState, findStar, isConstellationLit, isStarLit, starScenario, type ConstellationDefinition, type ConstellationState, type SkyStar } from '../../run/sky';
 import { revealedFirst, revealedThought, thoughtFor, zoomThought, type ThoughtDefinition, type ThoughtMoment } from '../../run/thoughts';
 import { PlateButton } from '../shared/PlateButton';
 import { Blip, type BlipHandle } from './Blip';
+import { BlipBeat } from './BlipBeat';
+import { canvasPoint } from '../shared/overlayHost';
 import './skyChart.css';
 
 // The title as the sky (docs/the-sky.md §2; stacked bands, picked 2026-10-24 over the zoom sky, which
@@ -135,11 +137,37 @@ export function SkyChart({ profile, disabled = false, active = true, pressHidden
   }, [bands.length]);
 
   const blip = useRef<BlipHandle>(null);
+  // A forced thought standing over the sky; the first its showsNext leads to rides in the same beat.
+  const [beat, setBeat] = useState<{ thought: ThoughtDefinition; next: ThoughtDefinition | null } | null>(null);
+  const beatRef = useRef(beat);
+  beatRef.current = beat;
   const sayThought = (thought: ThoughtDefinition | null, onDone?: () => void) => {
     if (!thought) return false;
-    blip.current?.think(thought.lines, onDone, !!thought.once);
+    if (thought.forced) {
+      setBeat({ thought, next: thought.showsNext ? revealedFirst(profile, THOUGHTS, thought.showsNext) : null });
+      return true;
+    }
+    blip.current?.think(thought.lines, onDone, { guarded: !!thought.once });
     if (thought.once) onSeeThought?.(thought);
     return true;
+  };
+  const seatRef = useRef<HTMLDivElement>(null);
+  /** Blip's seat in the canvas's px, where the beat's Blip flies out from. */
+  const seatPoint = () => {
+    const rect = seatRef.current?.getBoundingClientRect();
+    if (!rect) return undefined;
+    const corner = canvasPoint(rect.left, rect.top);
+    return { x: corner.x + SEAT.x, y: corner.y + SEAT.y };
+  };
+  const endBeat = () => {
+    if (!beat) return;
+    const { thought, next } = beat;
+    setBeat(null);
+    if (thought.once) onSeeThought?.(thought);
+    if (next?.once) onSeeThought?.(next);
+    const lesson = thought.plays ? findStar(sky, thought.plays) : null;
+    if (lesson && !isStarLit(profile, lesson.constellation, lesson.star)) onPlayLesson?.(lesson.star.id);
+    else if (thought.showsNext) scrollTo(thought.showsNext, true);
   };
   /** Bring a constellation's band into view and say its first from the seat. */
   const show = (constellationId: string, thought: ThoughtDefinition, later: (ms: number, fn: () => void) => void) => {
@@ -176,7 +204,7 @@ export function SkyChart({ profile, disabled = false, active = true, pressHidden
     const next = () =>
       at(IDLE_MS[0] + Math.random() * (IDLE_MS[1] - IDLE_MS[0]), () => {
         // Never cut a thought short.
-        if (!blip.current?.busy() && idle < IDLE_THOUGHTS_A_VISIT) {
+        if (!beatRef.current && !blip.current?.busy() && idle < IDLE_THOUGHTS_A_VISIT) {
           idle++;
           say({ kind: 'idle' });
         }
@@ -192,7 +220,7 @@ export function SkyChart({ profile, disabled = false, active = true, pressHidden
   useEffect(() => {
     if (!active) return;
     const timer = window.setTimeout(() => {
-      if (!blip.current?.busy()) sayThought(zoomThought(profile, sky, THOUGHTS, inView, Math.random()));
+      if (!beatRef.current && !blip.current?.busy()) sayThought(zoomThought(profile, sky, THOUGHTS, inView, Math.random()));
     }, SETTLE_MS + ARRIVE_MS);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -200,12 +228,12 @@ export function SkyChart({ profile, disabled = false, active = true, pressHidden
 
   return (
     <div className="sky-chart">
-      <div className="sky-seat">
+      <div ref={seatRef} className={`sky-seat${beat ? ' is-empty' : ''}`}>
         <Blip
           ref={blip}
           home={SEAT}
-          active={active}
-          bubbleBeside
+          active={active && !beat}
+          bubbleAt="beside"
           onPoke={(inARow) => {
             // A poke mid-first only giggles, so it never cuts one short.
             if (blip.current?.guarded()) return;
@@ -234,6 +262,8 @@ export function SkyChart({ profile, disabled = false, active = true, pressHidden
           />
         ))}
       </div>
+
+      {beat && active && <BlipBeat lines={[...beat.thought.lines, ...(beat.next?.lines ?? [])]} onDone={endBeat} from={seatPoint()} />}
 
       {/* Where the scroll stands, a pip a band: a quiet mark, and a way to jump. */}
       <div className="sky-rail" aria-hidden="true">

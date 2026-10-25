@@ -30,6 +30,11 @@
   height: 56px;
 }
 
+/* Blip has come forward to talk (BlipBeat.tsx): its seat stands empty until it flies back. */
+.sky-seat.is-empty {
+  visibility: hidden;
+}
+
 /* The scroller: the bands snap to its centre, the next one peeking above and below. A soft fade at
    both edges says there is more without a word. */
 .sky-bands {

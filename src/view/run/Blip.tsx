@@ -24,9 +24,12 @@ export interface BlipHandle {
   goTo(x: number, y: number, onArrive?: () => void): void;
   /**
    * Type a thought beside Blip a bubble at a time, babbling, then let it fade; `onDone` once the last
-   * has gone. A `guarded` thought (a first) is never cut short by a poke.
+   * has gone. A `guarded` thought (a first) is never cut short by a poke; a `forced` one holds each
+   * bubble until `advance`.
    */
-  think(lines: readonly string[], onDone?: () => void, guarded?: boolean): void;
+  think(lines: readonly string[], onDone?: () => void, options?: { guarded?: boolean; forced?: boolean }): void;
+  /** A forced thought: finish the line being typed, or move on from the one that waits. */
+  advance(): void;
   react(kind: 'win' | 'lose' | 'chirp'): void;
   /** Mid-thought or mid-flight: an idle thought waits rather than cut in. */
   busy(): boolean;
@@ -41,8 +44,8 @@ interface Props {
   active: boolean;
   /** A poke landed; `inARow` counts a quick run of them. */
   onPoke?: (inARow: number) => void;
-  /** The bubble opens to Blip's right, into the band it sits in, rather than above or below it. */
-  bubbleBeside?: boolean;
+  /** `beside`: to Blip's right, into the band it sits in; `below`: under it, centred; else above it. */
+  bubbleAt?: 'beside' | 'below';
 }
 
 interface Body {
@@ -77,7 +80,7 @@ interface Spark {
   max: number;
 }
 
-export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, onPoke, bubbleBeside = false }, ref) {
+export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, onPoke, bubbleAt }, ref) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -109,6 +112,8 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
   const typing = useRef<number[]>([]);
   const pokes = useRef({ count: 0, at: 0 });
   const guarding = useRef(false);
+  /** A forced thought's next step: finish the line, or go on from it. */
+  const held = useRef<(() => void) | null>(null);
 
   function clearTyping() {
     typing.current.forEach(window.clearTimeout);
@@ -117,7 +122,8 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
 
   function hideBubble() {
     clearTyping();
-    bubbleRef.current?.classList.remove('is-on');
+    held.current = null;
+    bubbleRef.current?.classList.remove('is-on', 'is-waiting');
   }
 
   function spark(power: number, angle = Math.random() * TAU) {
@@ -131,22 +137,40 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
       Object.assign(body.current, { homeX: x, homeY: y, travelling: true, onArrive: onArrive ?? null });
       playSfx('blip.chirp');
     },
-    think(lines, onDone, guarded = false) {
+    think(lines, onDone, { guarded = false, forced = false } = {}) {
       const bubble = bubbleRef.current;
       if (!bubble || !active) return;
       clearTyping();
-      guarding.current = guarded;
+      held.current = null;
+      guarding.current = guarded || forced;
       const later = (ms: number, fn: () => void) => typing.current.push(window.setTimeout(fn, ms));
       const say = (i: number) => {
         const line = lines[i];
         bubble.textContent = '';
+        bubble.classList.remove('is-waiting');
         bubble.classList.add('is-on');
         let n = 0;
+        const wait = () => {
+          clearTyping();
+          bubble.textContent = line;
+          bubble.classList.add('is-waiting');
+          held.current = () => {
+            held.current = null;
+            if (i + 1 < lines.length) {
+              say(i + 1);
+              return;
+            }
+            bubble.classList.remove('is-on', 'is-waiting');
+            guarding.current = false;
+            onDone?.();
+          };
+        };
         const type = () => {
           n++;
           bubble.textContent = line.slice(0, n);
           if (n % 2 === 0 && line[n - 1] !== ' ') playSfx('blip.syllable');
           if (n < line.length) later(34, type);
+          else if (forced) wait();
           else if (i + 1 < lines.length) later(900 + line.length * 25, () => say(i + 1));
           else
             later(1800 + line.length * 35, () => {
@@ -159,15 +183,19 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
               else typing.current = [];
             });
         };
+        if (forced) held.current = wait;
         type();
       };
       if (lines.length > 0) say(0);
     },
+    advance() {
+      held.current?.();
+    },
     busy() {
-      return typing.current.length > 0 || body.current.travelling;
+      return typing.current.length > 0 || held.current !== null || body.current.travelling;
     },
     guarded() {
-      return (guarding.current && typing.current.length > 0) || body.current.travelling;
+      return (guarding.current && (typing.current.length > 0 || held.current !== null)) || body.current.travelling;
     },
     react(kind) {
       const b = body.current;
@@ -350,7 +378,7 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
     if (hit) hit.style.transform = `translate(${b.x - 22}px, ${b.y - 22}px)`;
     const bubble = bubbleRef.current;
     if (!bubble) return;
-    if (bubbleBeside) {
+    if (bubbleAt === 'beside') {
       const left = b.x + 24;
       bubble.style.maxWidth = `${Math.max(120, width - left - 6)}px`;
       bubble.classList.add('is-beside');
@@ -359,7 +387,7 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
     }
     const half = bubble.offsetWidth / 2;
     const x = Math.max(half + 4, Math.min(width - half - 4, b.x));
-    const below = b.y < 80;
+    const below = bubbleAt === 'below' || b.y < 80;
     bubble.classList.toggle('is-below', below);
     bubble.style.transform = `translate(${x - half}px, ${below ? b.y + 24 : b.y - 24}px) translateY(${below ? '0' : '-100%'})`;
   }

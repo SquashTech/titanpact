@@ -428,6 +428,8 @@ export function App() {
   /** Classic Mode picked on the Story select: the title starts it as Seal the Pact once did. */
   /** How the last Infinite run ended, until Blip has reacted to it in the sky. Session-only. */
   const [skyReturn, setSkyReturn] = useState<'win' | 'loss' | null>(null);
+  // The control tips shown in the lesson being played, which shows them all again next time.
+  const [lessonTips, setLessonTips] = useState<readonly string[]>([]);
   // Read once: a device does not change platform mid-session, and installing reopens the game.
   const [installPlatform] = useState(currentInstallPlatform);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -1195,11 +1197,19 @@ export function App() {
   /** A First Light lesson from the sky: its chapter of data/lessons.ts, played by the Story machinery. */
   function handlePlayLesson(scenarioId: string) {
     const chapterId = sky.scenarios[scenarioId]?.lesson;
-    if (chapterId) setScreen({ kind: 'storyChapter', chapterId });
+    if (!chapterId) return;
+    setLessonTips([]);
+    setScreen({ kind: 'storyChapter', chapterId });
   }
 
   function markTipSeen(id: string) {
     setProfile(updateProfile((current) => recordTipSeen(current, id)));
+  }
+
+  /** A lesson teaches every time it is played: its tips count as shown for this play, and on the account too. */
+  function markLessonTipSeen(id: string) {
+    setLessonTips((ids) => [...ids, id]);
+    markTipSeen(id);
   }
 
   /** One of Blip's firsts: account-wide, written straight to storage like a tip. */
@@ -1524,7 +1534,7 @@ export function App() {
           onFinished={() => handleStoryChapterDone(screen.chapterId)}
           onQuit={() => setScreen({ kind: 'title' })}
           onPlace={setStoryPlaceId}
-          tips={{ seenIds: profile.seenTipIds, onSeen: markTipSeen }}
+          tips={{ seenIds: lessonTips, onSeen: markLessonTipSeen }}
         />
       )}
 
@@ -1651,7 +1661,7 @@ export function App() {
           saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
           tips={{ nodeType: playerRun.map!.nodes[screen.nodeId].type, seenIds: profile.seenTipIds, onSeen: markTipSeen }}
           storyCues={playerRun.story ? storyNodeSpec(playerRun, STORY_BOOKS, screen.nodeId)?.cues : undefined}
-          storyTips={playerRun.story ? { seenIds: profile.seenTipIds, onSeen: markTipSeen } : undefined}
+          storyTips={playerRun.story ? { seenIds: lessonTips, onSeen: markLessonTipSeen } : undefined}
           cinematicWin={playerRun.map!.nodes[screen.nodeId].type === 'finale'}
         />
       )}

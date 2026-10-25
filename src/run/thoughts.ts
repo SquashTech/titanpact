@@ -34,6 +34,10 @@ export interface ThoughtDefinition {
   once?: boolean;
   /** Once said, Blip flies to this constellation and says its first there, charted or not. */
   showsNext?: string;
+  /** Holds the sky: Blip comes forward and each bubble waits for a tap. Without it, a thought is passive and fades on its own. */
+  forced?: boolean;
+  /** Once a forced thought ends, this lesson (a scenario id) starts, unless its star is already lit. */
+  plays?: string;
 }
 
 function sameMoment(a: ThoughtMoment, b: ThoughtMoment): boolean {

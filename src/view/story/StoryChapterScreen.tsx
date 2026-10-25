@@ -15,7 +15,7 @@ interface Props {
   startBeat?: number;
   /** A beat that is an Act hands over to the run's own screens. */
   onStartAct: (act: StoryAct, beat: number) => void;
-  /** The account's seen tips, for the control tips on a fight's cues. */
+  /** The tips already shown, for the control tips on a fight's cues. */
   tips: { seenIds: readonly string[]; onSeen: (id: string) => void };
   /** What leaving a fight is called. */
   exitLabel: string;

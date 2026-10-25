@@ -63,3 +63,75 @@
   border-left: 0;
   border-right-color: rgba(255, 249, 232, 0.96);
 }
+
+/* A forced thought (BlipBeat.tsx): the sky dims and Blip talks from the middle of it, a tap a bubble. */
+.blip-beat {
+  position: fixed;
+  inset: 0;
+  z-index: 58;
+  cursor: pointer;
+}
+
+.blip-beat::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 34%, rgba(10, 12, 30, 0.55), rgba(4, 5, 14, 0.86) 70%);
+  animation: blip-beat-in 0.5s ease-out backwards;
+  transition: opacity 0.35s ease-in;
+}
+
+.blip-beat.is-leaving::before {
+  opacity: 0;
+}
+
+@keyframes blip-beat-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.blip-beat .blip-bubble {
+  max-width: 300px;
+  padding: 11px 15px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+/* Below Blip: a tail pointing up at it. */
+.blip-bubble.is-below::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: calc(50% - 6px);
+  border: 6px solid transparent;
+  border-top: 0;
+  border-bottom-color: rgba(255, 249, 232, 0.96);
+}
+
+/* A held bubble waits for a tap: a small bobbing mark in its corner. */
+.blip-bubble.is-waiting::after {
+  content: '\25BE';
+  position: absolute;
+  right: 8px;
+  bottom: 2px;
+  font-size: 11px;
+  color: rgba(42, 33, 64, 0.6);
+  animation: blip-wait 0.9s ease-in-out infinite;
+}
+
+.blip-bubble.is-waiting {
+  padding-bottom: 16px;
+}
+
+@keyframes blip-wait {
+  50% {
+    transform: translateY(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blip-bubble.is-waiting::after {
+    animation: none;
+  }
+}

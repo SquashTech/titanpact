@@ -374,6 +374,19 @@ it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own
 - **Blip never cuts itself off:** an idle thought or a dart waits while it is mid-thought or
   mid-flight, and a poke during a first only giggles.
 - **How often Blip talks is first pass** (one arrival line, three idle at most, 9–16 s apart).
+- **Forced and passive thoughts** (2026-10-24, per user direction): a thought marked `forced`
+  holds the sky. Blip flies out of its seat to the middle of a dimmed screen, and each bubble waits
+  for a tap (a tap mid-line finishes it). Every other thought stays passive and fades on its own.
+  `plays` on a forced thought starts a lesson when it ends, unless that star is already lit.
+- **The opening beat** (2026-10-24, per user direction) is the first-sky hello, now forced. It
+  gives the premise in Blip's voice: it watches over one world in many versions, a Titan ends most
+  of them, the few the heroes win become its stars, and the player is here to help find them. Its
+  `showsNext` First Light line rides in the same beat, then The Hunt starts. It replaces the fall
+  and the lore card as a new account's framing. The premise lines are first pass; the user wrote
+  the hello and First Light lines.
+- **A lesson shows its tips every time it is played** (2026-10-24): the welcome and every control
+  tip came back only once an account, so a lesson replayed from the sky taught nothing. They are
+  still recorded on the account.
 - **OPEN, raised by the First Light line** ("a mighty fighter and her trusty canine companion"):
   is the first rail's fixed team Valor and Fang? Valor's *Tale* is cut, but the pair may stand
   as the rail's cast with no dialogue.
