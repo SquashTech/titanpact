@@ -774,14 +774,47 @@
 
 /* ---- A constellation zoomed in ---- */
 
+/* A zoomed seat takes the whole screen: the logo, the corners, the parked run's press and the
+   hub's bar step away, and the sky fills the shell top to bottom. */
+.title-screen.is-sky-zoomed :is(.hub-nav, .title-logo, .title-records-button, .title-icon-row, .title-dev, .title-buttons) {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.3s ease-out,
+    visibility 0s 0.3s;
+}
+
+.title-screen.is-sky-zoomed .sky-chart {
+  top: 12px;
+  bottom: 0;
+  /* The zoomed world spills far past the screen; clipped, or the title scrolls to chase it. */
+  overflow: hidden;
+}
+
+/* The ground the hub's bar stood on sinks into the dark under the Back. */
+.title-screen.is-sky-zoomed .sky-chart::before {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 190px;
+  background: linear-gradient(180deg, transparent, rgba(5, 7, 11, 0.92) 55%);
+  pointer-events: none;
+  animation: sky-chart-in 0.4s ease-out both;
+}
+
 .sky-detail {
   position: absolute;
   z-index: 4;
-  top: 30px;
+  top: 56px;
   left: 0;
   right: 0;
   bottom: 0;
   display: flex;
+  flex-direction: column;
   animation: sky-detail-in 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
 
@@ -793,26 +826,39 @@
 }
 
 .sky-detail-card {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   width: 100%;
-  height: 100%;
 }
 
+/* The way out, always at the foot where the thumb is: quieter than the card's press above it. */
 .sky-detail-back {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  right: 12px;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 1px solid rgba(232, 196, 106, 0.35);
-  border-radius: 50%;
-  background: rgba(10, 14, 30, 0.7);
-  color: #f0e2bd;
-  font-size: 26px;
-  line-height: 36px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 270px;
+  height: 46px;
+  margin: 4px auto calc(18px + env(safe-area-inset-bottom, 0px));
+  border: 0;
+  border-top: 1px solid rgba(232, 196, 106, 0.35);
+  border-bottom: 1px solid rgba(232, 196, 106, 0.35);
+  background: linear-gradient(90deg, rgba(10, 14, 30, 0.2), rgba(10, 14, 30, 0.85) 50%, rgba(10, 14, 30, 0.2));
+  color: #d9c7a0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   cursor: pointer;
+}
+
+.sky-detail-back-arrow {
+  font-size: 22px;
+  line-height: 1;
+  margin-top: -3px;
 }
 
 .sky-band {
@@ -820,18 +866,28 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 10px;
   padding: 10px 22px 12px;
 }
 
 .sky-band-name {
   margin: 0;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(220, 228, 255, 0.8);
-  text-shadow: 0 2px 0 #000;
+  text-shadow: 0 2px 0 #000, 0 0 18px rgba(232, 196, 106, 0.25);
+}
+
+/* A thin gold rule under the name, fading at both ends. */
+.sky-band-name::after {
+  content: '';
+  display: block;
+  width: 180px;
+  height: 1px;
+  margin: 10px auto 0;
+  background: linear-gradient(90deg, transparent, rgba(232, 196, 106, 0.6), transparent);
 }
 
 .sky-band.is-lit .sky-band-name,
@@ -1016,4 +1072,9 @@
 .pact-orbit,
 .sky-band-orbit {
   fill: none;
+}
+
+/* The title never scrolls: a focused press past its foot (the held press, a zoomed seat's Back) must not drag the whole hub up. */
+.title-screen.title-screen {
+  overflow: clip;
 }

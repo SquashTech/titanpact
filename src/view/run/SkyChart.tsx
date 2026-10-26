@@ -67,8 +67,8 @@ const TRAIL = [
 
 /** A detail card's own drawing box; the constellation sits in the middle with room round it for names. */
 const VIEW_W = 360;
-const VIEW_H = 280;
-const SHAPE = 180;
+const VIEW_H = 320;
+const SHAPE = 200;
 const CENTRE = { x: VIEW_W / 2, y: VIEW_H / 2 };
 
 function seatPoint(id: string, star: SkyStar): { x: number; y: number } {
@@ -185,6 +185,8 @@ interface Props {
   onSeeLighting?: (tipId: string) => void;
   /** Stardust already earned that the Observatory should not show yet: it is still flying there. */
   onHoldStardust?: (amount: number) => void;
+  /** A seat zoomed into or backed out of: the title clears the rest of the screen for it. */
+  onZoomChange?: (zoomed: boolean) => void;
   onPlay: (play: SkyPlay) => void;
   /** A First Light lesson, by its scenario id. */
   onPlayLesson?: (scenarioId: string) => void;
@@ -200,6 +202,7 @@ export function SkyChart({
   onSeeThought,
   onSeeLighting,
   onHoldStardust,
+  onZoomChange,
   onPlay,
   onPlayLesson,
 }: Props) {
@@ -500,6 +503,10 @@ export function SkyChart({
     setOpen(null);
     window.setTimeout(() => setZoomed(null), 120);
   };
+  useEffect(() => {
+    onZoomChange?.(zoomed !== null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoomed]);
 
   const shift = settled ? SETTLE : 0;
   const worldStyle: CSSProperties | undefined = zoomed
@@ -603,11 +610,8 @@ export function SkyChart({
       </div>
 
       {open && (
-        <div className="sky-detail" onClick={zoomOut}>
-          <button type="button" className="sky-detail-back" aria-label="Back" data-sfx="ui.back" onClick={zoomOut}>
-            ‹
-          </button>
-          <div className="sky-detail-card" onClick={(e) => e.stopPropagation()}>
+        <div className="sky-detail">
+          <div className="sky-detail-card">
             <ConstellationCard
               profile={shown}
               constellation={sky.constellations[open]}
@@ -618,6 +622,12 @@ export function SkyChart({
               onPlayLesson={onPlayLesson}
             />
           </div>
+          <button type="button" className="sky-detail-back" data-sfx="ui.back" onClick={zoomOut}>
+            <span className="sky-detail-back-arrow" aria-hidden="true">
+              ‹
+            </span>
+            Back
+          </button>
         </div>
       )}
 

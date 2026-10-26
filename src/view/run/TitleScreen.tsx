@@ -152,6 +152,8 @@ export function TitleScreen({
   const [staleNoteDismissed, setStaleNoteDismissed] = useState(false);
   /** Stardust the sky is still flying to the Observatory, kept off its badge until it lands. */
   const [heldDust, setHeldDust] = useState(0);
+  /** A sky seat zoomed into: it takes the whole screen, the hub's bar and corners stepping away. */
+  const [skyZoomed, setSkyZoomed] = useState(false);
 
   // The sound already plays from the delegated pointerdown listener (audio/uiSfx.ts).
   function launch(action: () => void) {
@@ -213,7 +215,7 @@ export function TitleScreen({
 
   return (
     <div
-      className={`title-screen is-${tone}${pressRow ? ' has-parked-run' : ''}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}`}
+      className={`title-screen is-${tone}${pressRow ? ' has-parked-run' : ''}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}${skyZoomed ? ' is-sky-zoomed' : ''}`}
     >
       {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
           back is instant, and display: contents keeps them in the screen's own flex and stacking. */}
@@ -256,6 +258,7 @@ export function TitleScreen({
         onSeeThought={onSeeThought}
         onSeeLighting={onSeeTip}
         onHoldStardust={setHeldDust}
+        onZoomChange={setSkyZoomed}
         onPlay={handleSkyPlay}
         onPlayLesson={(scenarioId) => onPlayLesson && launch(() => onPlayLesson(scenarioId))}
       />
