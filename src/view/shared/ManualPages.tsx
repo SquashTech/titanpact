@@ -14,7 +14,7 @@ import { SeatArrow } from './MoveStrip';
 import { TypeBadge } from './TypeBadge';
 import { mapNodeArt, mapNodeIcon } from '../run/mapNodeArt';
 import { TipPictureView } from '../run/TipScene';
-import { TipText } from '../run/TipOverlay';
+import { PageText } from '../run/TipOverlay';
 import { TIP_SCENES } from '../../data/tipScenes';
 import { overlayHost } from './overlayHost';
 import { useProfile } from './ProfileContext';
@@ -145,9 +145,9 @@ export function PageBody({ page }: { page: ManualPage }) {
                 <TipPictureView scene={scene} />
               </div>
             )}
-            <p className="howto-text">
-              <TipText text={text} />
-            </p>
+            <div className="howto-text">
+              <PageText text={text} />
+            </div>
           </div>
         );
       })}

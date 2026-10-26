@@ -8,7 +8,8 @@ import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
 import { fieldEffects } from '../../data/fieldEffects';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
-import { isHallScene, isRollScene, type TipRollScene, type TipHallScene, type TipPicture, type TipScene as Scene, type TipSceneCallout, type TipSceneFighter } from '../../data/tipScenes';
+import { isHallScene, isRollScene, isStatusScene, type TipRollScene, type TipHallScene, type TipPicture, type TipScene as Scene, type TipSceneCallout, type TipSceneFighter, type TipStatusScene } from '../../data/tipScenes';
+import { StatusGlyph, StatusPips, statusColor, statusTint } from '../shared/statusIcons';
 import { createRosterEntry, createRunState, type RunState } from '../../run/state';
 import { xpForLevel } from '../../run/growth';
 import { rosterHeroes } from '../../data/content';
@@ -42,6 +43,7 @@ function build(fighter: TipSceneFighter, id: string, side: Side): Built | null {
   if (!hero) return null;
   const combatant = createCombatant(id, hero.id, side, 0, 0);
   combatant.statStages = { ...(fighter.stages ?? {}) };
+  combatant.statuses = Object.fromEntries((fighter.statuses ?? []).map((s) => [s.statusId, { ...s }]));
   combatant.currentHp = Math.round(getMaxHp(hero, combatant) * (fighter.hp ?? 1));
   combatant.currentMana = Math.round(getMaxMana(hero, combatant) * (fighter.mana ?? 1));
   return { hero, combatant, level: fighter.level ?? SCENE_LEVEL };
@@ -237,7 +239,37 @@ function CalloutLayer({ placed }: { placed: readonly PlacedCallout[] }) {
 /** Whichever picture a tip page carries. */
 export function TipPictureView({ scene }: { scene: TipPicture }) {
   if (isRollScene(scene)) return <RollScene scene={scene} />;
+  if (isStatusScene(scene)) return <StatusStripScene scene={scene} />;
   return isHallScene(scene) ? <HallScene scene={scene} /> : <TipScene scene={scene} />;
+}
+
+/** A status round by round: its fight badge, drawn large, at each step, a note under each. */
+function StatusStripScene({ scene }: { scene: TipStatusScene }) {
+  const timed = !!statuses[scene.status]?.timed;
+  const color = statusColor(scene.status);
+  return (
+    <div className="tip-status-strip" aria-hidden="true">
+      {scene.steps.map((step, i) => {
+        const n = timed ? undefined : (step.magnitude ?? step.duration);
+        return (
+          <div key={i} className="tip-status-step">
+            {i > 0 && <span className="tip-status-arrow">›</span>}
+            <span className="tip-status-cell">
+              <span
+                className={`status-badge tip-status-badge${n !== undefined ? ' status-badge-has-count' : ''}`}
+                style={{ color, background: statusTint(scene.status, 0.16), borderColor: statusTint(scene.status, 0.55) }}
+              >
+                <StatusGlyph statusId={scene.status} />
+                {n !== undefined && <span className="status-badge-count">{n}</span>}
+                <StatusPips instance={{ statusId: scene.status, duration: step.duration }} />
+              </span>
+              {step.note && <span className="tip-status-note">{step.note}</span>}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 /** Every type at a glance: a hero of each, standing over its type's badge. */

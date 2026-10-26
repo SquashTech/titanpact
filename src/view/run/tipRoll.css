@@ -17,3 +17,71 @@
   height: 44px;
   image-rendering: pixelated;
 }
+
+/* A status round by round (TipScene StatusStripScene): its fight badge at twice the size, a note under each. */
+.tip-status-strip {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 6px 10px;
+}
+
+.tip-status-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.tip-status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 52px;
+}
+
+.tip-status-badge.status-badge {
+  font-size: 15px;
+  padding: 3px 8px;
+  gap: 4px;
+  cursor: default;
+}
+
+.tip-status-badge .stat-glyph,
+.tip-status-badge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tip-status-arrow {
+  margin-top: 3px;
+  font-size: 18px;
+  line-height: 1;
+  color: rgba(233, 220, 192, 0.5);
+}
+
+.tip-status-note {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim, #b8ad94);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* A scene that rings what a card wears. */
+.tip-scene.focus-statuses .status-badge {
+  outline: 2px solid #ffe7a8;
+  outline-offset: 1px;
+}
+
+.tip-status-badge .status-pips {
+  gap: 3px;
+  margin-left: 3px;
+}
+
+.tip-status-badge .status-pip {
+  width: 7px;
+  height: 7px;
+  border-width: 1.5px;
+}

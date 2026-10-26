@@ -13,7 +13,7 @@ import {
   type Tip,
 } from '../src/run/tips';
 import { createProfile, decodeProfile, recordTipSeen, resetTips } from '../src/run/profile';
-import { isHallScene, isRollScene, TIP_SCENES, TYPE_ROLL, type TipHallScene, type TipScene } from '../src/data/tipScenes';
+import { isHallScene, isRollScene, isStatusScene, TIP_SCENES, TYPE_ROLL, type TipHallScene, type TipScene } from '../src/data/tipScenes';
 import { TYPES } from '../src/data/typechart';
 import { equipment } from '../src/data/equipment';
 import { guildHallOffersFor } from '../src/data/recruitment';
@@ -24,6 +24,7 @@ import { allCombatants } from '../src/data/content';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { fieldEffects } from '../src/data/fieldEffects';
+import { statuses } from '../src/data/statuses';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
 import { STORY_BOOKS } from '../src/data/lessons';
 
@@ -109,7 +110,7 @@ test('tips: the first command phase of the first fight is the basics, and nothin
 // --- Scenes ---
 
 const allPictures = Object.entries(TIP_SCENES).flatMap(([id, pages]) => pages.flatMap((scene, page) => (scene ? [{ id, page, scene }] : [])));
-const scenePages = allPictures.filter((p) => !isHallScene(p.scene) && !isRollScene(p.scene)) as { id: string; page: number; scene: TipScene }[];
+const scenePages = allPictures.filter((p) => !isHallScene(p.scene) && !isRollScene(p.scene) && !isStatusScene(p.scene)) as { id: string; page: number; scene: TipScene }[];
 const hallPages = allPictures.filter((p) => isHallScene(p.scene)) as { id: string; page: number; scene: TipHallScene }[];
 
 test('tips: the type roll shows one hero of every draftable type, in the chart\'s order', () => {
@@ -201,4 +202,24 @@ test('tips: seen ids are account-wide, idempotent, resettable, and survive a rou
 test('tips: a profile from before the tips shows every one, whatever its tutorial flag said', () => {
   const legacy = { version: 1, runsStarted: 4, runsCompleted: 1, tutorialDone: true };
   assert.deepStrictEqual(decodeProfile(legacy).seenTipIds, []);
+});
+
+test('tips: a status strip draws a real status, and every hero a scene dresses in one wears a real one', () => {
+  for (const { id, scene } of allPictures) {
+    if (isStatusScene(scene)) {
+      assert.ok(statuses[scene.status], `${id}: status ${scene.status}`);
+      assert.ok(scene.steps.length > 0, `${id} has a step`);
+    }
+  }
+  for (const { id, scene } of scenePages) {
+    for (const fighter of [scene.hero, ...(scene.foes ?? [])]) for (const s of fighter.statuses ?? []) assert.ok(statuses[s.statusId], `${id}: ${s.statusId}`);
+  }
+});
+
+test('tips: a page that lists rules lists them as bullets, never a bare dash in a sentence', () => {
+  for (const tip of allText) {
+    for (const page of tip.pages) {
+      for (const line of page.split('\n')) assert.ok(!/^-\S/.test(line) && !/^\s+-/.test(line), `${tip.id}: "${line}"`);
+    }
+  }
 });

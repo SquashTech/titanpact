@@ -260,3 +260,26 @@
     animation: none;
   }
 }
+
+/* --- A page's words (TipOverlay PageText): paragraphs, and bullets for a page that lists rules --- */
+.tip-para {
+  margin: 0;
+}
+
+.tip-para + .tip-para,
+.tip-para + .tip-bullets,
+.tip-bullets + .tip-para {
+  margin-top: 6px;
+}
+
+.tip-bullets {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tip-bullets li::marker {
+  color: #c98a2c;
+}

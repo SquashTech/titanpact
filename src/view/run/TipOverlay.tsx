@@ -44,6 +44,37 @@ function isKindToken(token: TipIconToken): token is KindToken {
   return token in TOKEN_BADGE_CLASS;
 }
 
+/** A page's words: a line opening `- ` is a bullet, consecutive bullets one list, any other line a paragraph. */
+export function PageText({ text }: { text: string }) {
+  const parts: ({ bullets: string[] } | string)[] = [];
+  for (const line of text.split('\n')) {
+    if (line.startsWith('- ')) {
+      const last = parts[parts.length - 1];
+      if (last && typeof last !== 'string') last.bullets.push(line.slice(2));
+      else parts.push({ bullets: [line.slice(2)] });
+    } else if (line.trim()) parts.push(line);
+  }
+  return (
+    <>
+      {parts.map((part, i) =>
+        typeof part === 'string' ? (
+          <p key={i} className="tip-para">
+            <TipText text={part} />
+          </p>
+        ) : (
+          <ul key={i} className="tip-bullets">
+            {part.bullets.map((b, k) => (
+              <li key={k}>
+                <TipText text={b} />
+              </li>
+            ))}
+          </ul>
+        )
+      )}
+    </>
+  );
+}
+
 /** One page, with `[physical]`-style tokens swapped for the glyph they name. */
 export function TipText({ text }: { text: string }) {
   return (
@@ -302,9 +333,9 @@ export function TipOverlay({ tip, onDone }: Props) {
               <TipPictureView scene={scene} />
             </div>
           )}
-          <p className="tip-page" key={index}>
-            <TipText text={tip.pages[index]} />
-          </p>
+          <div className="tip-page" key={index}>
+            <PageText text={tip.pages[index]} />
+          </div>
 
           <div className="tip-foot">
             {tip.pages.length > 1 ? (

@@ -17,6 +17,15 @@ export interface TipSceneFighter {
   /** The level on its nameplate; the scenes' level 5 when omitted. */
   level?: number;
   stages?: Partial<Record<StatKey, number>>;
+  /** Statuses it wears, drawn on its card exactly as a fight draws them. */
+  statuses?: readonly SceneStatus[];
+}
+
+/** A status as a card wears it: the number on its badge and the rounds its pips count. */
+export interface SceneStatus {
+  statusId: string;
+  magnitude?: number;
+  duration?: number;
 }
 
 /** What a page rings. Every focus names one kind of mark, never a region. */
@@ -39,7 +48,8 @@ export type TipSceneFocus =
   | 'posters'
   | 'bar'
   | 'stock'
-  | 'heroCards';
+  | 'heroCards'
+  | 'statuses';
 
 /** A part of a move row a scene labels in place, with a line to it. */
 export type TipSceneCallout = 'mana' | 'type' | 'rider' | 'kind' | 'power' | 'matchup';
@@ -93,12 +103,21 @@ export interface TipHallScene {
   focus?: readonly TipSceneFocus[];
 }
 
+/**
+ * One status, drawn as its badge round by round (the badge a fight draws, larger), each step with a
+ * short note under it: how a Burn dies down, how a Poison's timer fills.
+ */
+export interface TipStatusScene {
+  status: string;
+  steps: readonly { magnitude?: number; duration?: number; note?: string }[];
+}
+
 /** A roll call of heroes, one a type, each over its type's badge. */
 export interface TipRollScene {
   roll: readonly string[];
 }
 
-export type TipPicture = TipScene | TipHallScene | TipRollScene;
+export type TipPicture = TipScene | TipHallScene | TipRollScene | TipStatusScene;
 
 export function isHallScene(scene: TipPicture): scene is TipHallScene {
   return 'hall' in scene;
@@ -106,6 +125,10 @@ export function isHallScene(scene: TipPicture): scene is TipHallScene {
 
 export function isRollScene(scene: TipPicture): scene is TipRollScene {
   return 'roll' in scene;
+}
+
+export function isStatusScene(scene: TipPicture): scene is TipStatusScene {
+  return 'steps' in scene;
 }
 
 /** One base hero of every draftable type, in the chart's order: faces the Story's player meets first where it can. */
@@ -199,8 +222,29 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
   ],
   'howto.bench': [SWITCH_SCENE],
   'howto.heals': [{ hero: { heroId: 'dawnwarden' }, moves: ['glimmer', 'mend'], focus: ['kindBadge'], focusMoves: ['mend'] }],
-  // Raiju's Rime Coat, its Shield named in place.
-  'howto.status.Shield': [{ hero: { heroId: 'raiju', level: 4 }, moves: ['rimeCoat'], callouts: ['rider'] }],
+  // A hero wearing three statuses at once, every badge ringed.
+  'howto.statuses': [
+    {
+      hero: { heroId: 'raiju', statuses: [{ statusId: 'Burn', duration: 2 }, { statusId: 'Shield', magnitude: 30 }, { statusId: 'Poison', magnitude: 10, duration: 2 }] },
+      heroFigure: true,
+      focus: ['statuses'],
+    },
+  ],
+  // Raiju's Rime Coat, its Shield named in place; then the Shield on a hero, as the fight draws it.
+  'howto.status.Shield': [
+    { hero: { heroId: 'raiju', level: 4 }, moves: ['rimeCoat'], callouts: ['rider'] },
+    { hero: { heroId: 'ironWarden', statuses: [{ statusId: 'Shield', magnitude: 30 }] }, heroFigure: true, focus: ['statuses'] },
+  ],
+  'howto.status.Burn': [{ status: 'Burn', steps: [{ duration: 3, note: '15%' }, { duration: 2, note: '8%' }, { duration: 1, note: '4%' }] }],
+  'howto.status.Poison': [
+    { status: 'Poison', steps: [{ magnitude: 10, duration: 3, note: 'Lands' }, { magnitude: 10, duration: 2, note: 'Fills' }, { magnitude: 10, duration: 1, note: 'Goes off' }] },
+  ],
+  'howto.status.Renew': [{ status: 'Renew', steps: [{ duration: 3, note: '+10%' }, { duration: 2, note: '+10%' }, { duration: 1, note: '+10%' }] }],
+  'howto.status.Bleed': [{ status: 'Bleed', steps: [{ note: '6% a round' }] }],
+  'howto.status.Freeze': [{ status: 'Freeze', steps: [{ note: 'Speed ½' }] }],
+  'howto.status.Daze': [{ status: 'Daze', steps: [{ note: 'This round' }] }],
+  'howto.status.Barrier': [{ status: 'Barrier', steps: [{ note: 'This round' }] }],
+  'howto.status.Provoke': [{ status: 'Provoke', steps: [{ note: 'This round' }] }],
   // Raiju's Storm Lash, its Conduct named in place, against the Clearing's Slabback.
   'howto.status.Conduct': [{ foes: [{ heroId: 'slabback', level: 12 }], hero: { heroId: 'raiju', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
   'howto.bag': [{ hero: { heroId: 'cinderKnight' }, bar: true, focus: ['bag'] }],
