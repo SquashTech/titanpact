@@ -166,33 +166,17 @@ const SWITCH_SCENE: TipScene = { hero: { heroId: 'cinderKnight' }, bar: true, fo
 const HUNT_FOES = [{ heroId: 'stag', level: 1 }] as const;
 const HUNT_VALOR = { heroId: 'valorPrologue', level: 2 } as const;
 
-/** Per tip or How to Play section, per page: the picture above the words, or null for none. */
+/** Per tip or How to Play page, per page: the picture above the words, or null for none. */
 export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>> = {
   'fight.basics': [null, MANA_SCENE, { ...TARGETS_SCENE, moves: ['ember', 'firestorm'] }],
   bench: [null, null, SWITCH_SCENE],
-  'story.reading': [
+  // Valor's Iron Fist against the Hunt's stag, every part of the row named in place.
+  'howto.combat': [
+    null,
     { foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist'], callouts: ['mana', 'type', 'kind', 'power', 'matchup'], expect: { ironFist: [2] } },
   ],
-  // Valor's Iron Fist over Fang's Claw: the one move each would swing at it.
-  // Raiju's Rime Coat, its Shield named in place.
-  'story.shield': [{ hero: { heroId: 'raiju', level: 4 }, moves: ['rimeCoat'], callouts: ['rider'] }],
-  // Raiju's Storm Lash, its Conduct named in place, against the Clearing's Slabback.
-  'story.conduct': [{ foes: [{ heroId: 'slabback', level: 12 }], hero: { heroId: 'raiju', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
-  // The Warden's two attacks against the Clearing's spawn, one bar a foe over one bar under both.
-  'story.spread': [
-    null,
-    {
-      foes: [{ heroId: 'ravager', level: 12 }, { heroId: 'slabback', level: 12 }],
-      hero: { heroId: 'ironWarden', level: 12 },
-      moves: ['heavyBlow', 'galeSever'],
-      focus: ['matchups'],
-      expect: { heavyBlow: [1, 2], galeSever: [1, 2] },
-    },
-  ],
-  'story.types': [{ roll: TYPE_ROLL }, MATCHUP_SCENE],
-  'story.combo': [{ foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist', 'claw'], focus: ['matchups'], expect: { ironFist: [2], claw: [0.25] } }],
-  'howto.combat': [null, { foes: [{ heroId: 'wildOracle' }], hero: { heroId: 'cinderKnight' }, moves: ['singe'], focus: ['foe', 'move'] }],
-  'howto.mana': [MANA_SCENE, { hero: { heroId: 'cinderKnight', mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],
+  'howto.mana': [MANA_SCENE],
+  'howto.rest': [{ hero: { heroId: 'cinderKnight', mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],
   'howto.types': [
     MATCHUP_SCENE,
     {
@@ -208,12 +192,17 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
     { ...TYPES_CAST, moves: ['ironFist', 'tideGuard'], focus: ['reach'] },
     { ...TYPES_CAST, moves: ['snowBlast'], focus: ['reach'] },
   ],
-  'howto.kinds': [
-    { hero: { heroId: 'cinderKnight' }, moves: KINDS_MOVES, focus: ['kindBadge'], focusMoves: ['singe', 'ember'] },
+  'howto.kinds': [{ hero: { heroId: 'cinderKnight' }, moves: KINDS_MOVES, focus: ['kindBadge'], focusMoves: ['singe', 'ember'] }],
+  'howto.stages': [
     { hero: { heroId: 'cinderKnight' }, moves: KINDS_MOVES, focus: ['kindBadge'], focusMoves: ['kindle', 'weaken'] },
+    { hero: { heroId: 'cinderKnight', stages: { attack: 2, speed: -1 } }, heroFigure: true, focus: ['stageMarks'] },
   ],
-  'howto.stages': [{ hero: { heroId: 'cinderKnight', stages: { attack: 2, speed: -1 } }, heroFigure: true, focus: ['stageMarks'] }],
-  'howto.bench': [null, null, SWITCH_SCENE],
+  'howto.bench': [SWITCH_SCENE],
+  'howto.heals': [{ hero: { heroId: 'dawnwarden' }, moves: ['glimmer', 'mend'], focus: ['kindBadge'], focusMoves: ['mend'] }],
+  // Raiju's Rime Coat, its Shield named in place.
+  'howto.status.Shield': [{ hero: { heroId: 'raiju', level: 4 }, moves: ['rimeCoat'], callouts: ['rider'] }],
+  // Raiju's Storm Lash, its Conduct named in place, against the Clearing's Slabback.
+  'howto.status.Conduct': [{ foes: [{ heroId: 'slabback', level: 12 }], hero: { heroId: 'raiju', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
   'howto.bag': [{ hero: { heroId: 'cinderKnight' }, bar: true, focus: ['bag'] }],
   'howto.field': [{ hero: { heroId: 'cinderKnight' }, field: 'scorchedLand', focus: ['field'] }],
   'howto.ancient': [

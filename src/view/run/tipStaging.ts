@@ -28,20 +28,16 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   // The third page is about the Switch key, which the lead pick does not show: its scene draws it.
   bench: { pages: [['.lead-pick-grid', '.lead-pick-panel .resolve-button'], ['.lead-pick-grid .squad-slot-matchups', '.team-row.enemy .combatant-card'], null] },
   item: { pages: [['.pick-card'], ['.item-who-sockets'], ['.item-who-sell']] },
-  // The lessons' control tips (data/lessons.ts cues): each lights the control it names on the live
-  // board, or draws it (data/tipScenes.ts). The welcome lights nothing: it is the fight's title card.
+  // The pages the lessons show as control tips (data/lessons.ts cues): each lights the control it
+  // names on the live board, beside its drawn scene. The welcome lights nothing: it is the fight's title card.
   'story.welcome': {},
-  'story.reading': {},
-  'story.types': {},
-  'story.combo': { pages: [null, ['.order-track']] },
-  'story.conduct': { pages: [null, null, ['.order-track']] },
-  'story.shield': {},
-  'story.inspect': { pages: [['.team-row.enemy .combatant-card']] },
-  'story.switch': { pages: [['.bottom-action-switch'], ['.team-row.ally .resource-row']] },
-  'story.rest': { pages: [['.rest-move']] },
-  'story.spread': { pages: [['.move-list .move-button.is-guided'], null] },
-  'story.arrows': { pages: [['.move-list .move-seats'], ['.move-list .move-button']] },
-  'story.bag': { pages: [['.bottom-action-bag'], null] },
+  'howto.combat': { pages: [['.order-track'], null, null] },
+  'howto.status.Conduct': { pages: [null, ['.order-track']] },
+  'howto.statuses': { pages: [['.status-badge'], ['.status-badge']] },
+  'howto.status.Daze': {},
+  'howto.bench': { pages: [['.bottom-action-switch'], ['.team-row.ally .resource-row']] },
+  'howto.rest': { pages: [['.rest-move']] },
+  'howto.bag': { pages: [['.bottom-action-bag'], null] },
 };
 
 /** The selectors page `index` lights, or none. */

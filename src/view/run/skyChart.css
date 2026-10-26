@@ -469,42 +469,6 @@
   animation: pact-call 2s ease-out infinite;
 }
 
-.pact-trail-name {
-  font-size: 11.5px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  fill: rgba(240, 234, 214, 0.9);
-  paint-order: stroke;
-  stroke: #05070f;
-  stroke-width: 3.5px;
-  stroke-linejoin: round;
-  transition: fill 0.6s, opacity 0.4s;
-  pointer-events: none;
-}
-
-.pact-trail-name.is-lit {
-  fill: #ffe7a8;
-}
-
-.pact-trail-star.is-next .pact-trail-name {
-  fill: #ffffff;
-}
-
-.pact-letter {
-  opacity: 0;
-  animation: pact-letter 0.3s ease-out forwards;
-}
-
-@keyframes pact-letter {
-  from {
-    opacity: 0;
-    fill: #ffe7a8;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 /* Charging before it lights: the halo swells and the core shivers bright. */
 .pact-trail-star.is-charging .pact-trail-halo {
   animation: pact-swell 0.9s ease-in forwards;
@@ -569,7 +533,6 @@
   transform: translate(var(--fold-x), var(--fold-y));
 }
 
-.pact-trail.is-folding .pact-trail-name,
 .pact-trail.is-folding .pact-trail-line,
 .pact-trail.is-folding .pact-thread,
 .pact-trail.is-folding .pact-trail-pulse {
@@ -974,4 +937,77 @@
   font-size: 14px;
   font-weight: 800;
   color: rgba(255, 220, 150, 0.55);
+}
+
+/* A lesson's page beside its star (PageMark): blank while it waits, inked once the lesson is won. */
+.pact-page {
+  pointer-events: none;
+}
+
+.pact-page-body {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.pact-page-sheet {
+  fill: rgba(234, 220, 188, 0.82);
+  stroke: rgba(5, 7, 15, 0.9);
+  stroke-width: 1.2px;
+  paint-order: stroke;
+}
+
+.pact-page-fold {
+  fill: none;
+  stroke: rgba(150, 120, 80, 0.9);
+  stroke-width: 0.8;
+}
+
+.pact-page-ink {
+  fill: none;
+  stroke: #8a3f10;
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+.pact-page.is-inked .pact-page-sheet {
+  fill: #f1e2bd;
+  filter: drop-shadow(0 0 3px rgba(255, 207, 106, 0.55));
+}
+
+.pact-trail-star.is-next .pact-page-body {
+  animation: pact-page-bob 2.4s ease-in-out infinite;
+}
+
+@keyframes pact-page-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+.pact-page.is-fresh .pact-page-body {
+  animation: pact-page-in 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) 0.3s both;
+}
+
+@keyframes pact-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) rotate(-18deg) scale(0.3);
+  }
+}
+
+.pact-trail.is-folding .pact-page {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.sky-band-page.is-playable {
+  cursor: pointer;
+}
+
+.sky-band-hit {
+  fill: transparent;
 }

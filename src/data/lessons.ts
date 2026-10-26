@@ -6,11 +6,12 @@
 
 import type { StoryAct, StoryDefinition, StoryFight } from '../run/story';
 import { STORY_CAST_IDS as CAST } from './storyCast';
+import { manualPage } from './howToPlay';
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
 const ally = (rosterId: string) => ({ side: 'A' as const, rosterId });
 
-/** Picking a move and a target, a round resolving, matchups and turn order: two hunters, both guided. */
+/** Picking a move and a target, Mana, one target or both, a debuff answered by a buff, matchups: two hunters, both guided. */
 const hunt: StoryFight = {
   id: 'lesson-hunt',
   seed: 1701,
@@ -34,7 +35,7 @@ const hunt: StoryFight = {
   ],
 };
 
-/** The bench: switching, Rest, a Shield and a Conduct setup, four heroes against the first spawn out of the fall. */
+/** The bench: switching, the two kinds of attack, Rest, a Shield and a Conduct setup, four heroes against the first spawn out of the fall. */
 const clearing: StoryFight = {
   id: 'lesson-clearing',
   seed: 1702,
@@ -81,22 +82,8 @@ const road: StoryAct = {
       {
         type: 'fight',
         enemy: [{ rosterId: 'ravager', heroId: 'cubling', level: 6 }, { rosterId: 'sprout', heroId: 'sproutling', level: 6 }],
+        // The lead pick's own first-time tip teaches the leads, at the moment they are picked.
         drop: 'dagger.common.feral',
-        cues: [
-          {
-            round: 1,
-            tips: [
-              {
-                id: 'story.arrows',
-                title: 'Matchups',
-                pages: [
-                  "The arrows under a move's number show how it hits each enemy: [super] double, [resist] half. Strike where it hurts.",
-                  'Hold a move to read everything it does.',
-                ],
-              },
-            ],
-          },
-        ],
       },
     ],
     [{ type: 'equipmentReward', items: ['greataxe.common', 'leathers.common.feral', 'shield.common'] }, { type: 'restReward' }, { type: 'passiveReward' }],
@@ -114,16 +101,7 @@ const road: StoryAct = {
         cues: [
           {
             round: 2,
-            tips: [
-              {
-                id: 'story.bag',
-                title: 'The Bag',
-                pages: [
-                  'The Bag holds potions for the whole team. Drinking one costs no turn: drink, then choose a move as usual.',
-                  "Each potion restores half of a hero's health or Mana. Find more after fights.",
-                ],
-              },
-            ],
+            tips: [manualPage('howto.bag')],
           },
         ],
       },
@@ -146,7 +124,17 @@ const fork: StoryAct = {
   ],
   students: { swordsman: 'valor' },
   rows: [
-    [{ type: 'fight', enemy: [{ rosterId: 'sprout', heroId: 'sproutling', level: 9 }, { rosterId: 'whim', heroId: 'whimling', level: 9 }], drop: 'dagger.rare.feral' }],
+    [
+      {
+        type: 'fight',
+        enemy: [{ rosterId: 'sprout', heroId: 'sproutling', level: 9 }, { rosterId: 'whim', heroId: 'whimling', level: 9 }],
+        drop: 'dagger.rare.feral',
+        cues: [
+          { round: 1, tips: [manualPage('howto.heals')] },
+          { round: 2, tips: [manualPage('howto.status.Daze')] },
+        ],
+      },
+    ],
     [{ type: 'equipmentReward', items: ['greataxe.rare', 'leathers.rare.feral', 'boots.rare'] }, { type: 'restReward' }, { type: 'passiveReward' }],
     [{ type: 'patronSeat', patrons: ['swordsman'] }],
     [
@@ -191,31 +179,18 @@ export const LESSONS: StoryDefinition = {
                           pages: ['Battles are *turn-based*. Select *moves* for your heroes, then watch the round play out.'],
                           look: 'welcome',
                         },
+                        manualPage('howto.combat'),
+                        manualPage('howto.mana'),
                       ],
                     },
                     {
                       round: 2,
                       point: true,
-                      blip: ["The stag's slow. If Valor's fist lands this round, it never breathes on us again."],
-                      tips: [
-                        { id: 'story.reading', title: 'Reading a Move', pages: ['[kinds] *Hold* any move to read all of it.'] },
-                        {
-                          id: 'story.types',
-                          title: 'Types',
-                          pages: [
-                            'There are many *types* in Titanpact, each with its own *weaknesses* and *resistances*.',
-                            "Don't worry about learning them all at once. Watch the *arrows* on a move: [super] it hits hard, [resist] it's resisted.",
-                          ],
-                        },
-                        {
-                          id: 'story.combo',
-                          title: 'Setting Up',
-                          pages: [
-                            'Iron deals *Bonus* [super] damage against Frost. Frost and Storm *Resist* [resist] Beast damage.',
-                            "The stag's breath *lowered* both heroes' Attack. Fang is *faster*, so his Howl *raises* it again before Valor strikes.",
-                          ],
-                        },
+                      blip: [
+                        "Its breath lowered both our Attacks! Fang's faster, so his Howl lifts them back before Valor swings.",
+                        "The stag's weak to Iron. If Valor's fist lands this round, it never breathes on us again.",
                       ],
+                      tips: [manualPage('howto.targets'), manualPage('howto.stages'), manualPage('howto.types')],
                     },
                   ],
                 },
@@ -236,67 +211,35 @@ export const LESSONS: StoryDefinition = {
           cues: [
             {
               round: 1,
+              point: true,
               blip: ["I know this one too! The Ravager jumps Valor, and the Slabback throws a rock at Fang."],
-              tips: [{ id: 'story.inspect', title: 'Reading a Foe', pages: ['*Tap* any hero, yours or theirs, to read its *stats*, *moves* and *passives*.'] }],
             },
             {
               round: 2,
               point: true,
               blip: ["Next they both go for Valor. Swap her and Fang out for the two waiting on the bench."],
-              tips: [
-                {
-                  id: 'story.switch',
-                  title: 'Switching',
-                  pages: [
-                    "*Switch* trades a hero on the field for one on the *bench*. The one coming in doesn't act this round.",
-                    'Heroes on the bench *regain Mana* every round, so switching keeps the team fresh.',
-                  ],
-                },
-              ],
+              tips: [manualPage('howto.bench')],
             },
             {
               round: 3,
               point: true,
-              blip: ["Gale Sever's a spread move: one swing, and both of them feel it!", "Raiju, keep it cheap: you'll want that Mana soon."],
-              tips: [
-                {
-                  id: 'story.spread',
-                  title: 'Spread Moves',
-                  pages: [
-                    "*Gale Sever* is a *spread* move: it hits *both* enemies at once, each at full power.",
-                    'The bars under the arrows show who a move hits. [single] A bar under each: the one enemy you pick. [spread] One long bar under both: it hits them both.',
-                  ],
-                },
+              blip: [
+                "The Warden's Gale Sever is physical: it swings at Defense, and the Slabback's is huge. But it hits both, and Iron splits stone.",
+                "Raiju's Zap is magic, so it goes at the Ravager's Wisdom instead. Keep it cheap: you'll want that Mana soon.",
               ],
+              tips: [manualPage('howto.kinds')],
             },
             {
               round: 4,
               point: true,
               blip: ["The Warden's run dry, and the Slabback's about to throw at it. Ice first, then Rest."],
-              tips: [
-                { id: 'story.rest', title: 'Rest', pages: ['Iron Warden has no Mana for any move. *Rest* skips its turn and *refills all Mana*.'] },
-                {
-                  id: 'story.shield',
-                  title: 'Shield',
-                  pages: ['*Rime Coat* gives an ally a *Shield*: extra health that takes hits before HP does, until a hit *breaks* it.'],
-                },
-              ],
+              tips: [manualPage('howto.rest'), manualPage('howto.statuses'), manualPage('howto.status.Shield')],
             },
             {
               round: 5,
               point: true,
               blip: ["Raiju's quicker, so the mark lands before the Warden swings. Boom!", "And that's as far as I've seen. Out there, I won't know what they'll do either!"],
-              tips: [
-                {
-                  id: 'story.conduct',
-                  title: 'Conduct',
-                  pages: [
-                    '*Storm Lash* puts *Conduct* [conduct] on its target.',
-                    'The next *Storm*, *Iron* or *Mech* hit on that target deals *Bonus* damage and uses up the mark.',
-                    "Raiju is *faster*, so its mark lands first. Then Iron Warden's *Iron* strike sets it off.",
-                  ],
-                },
-              ],
+              tips: [manualPage('howto.status.Conduct')],
             },
           ],
         },

@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { allCombatants } from '../../data/content';
 import { storySides, type StoryAct, type StoryChapter } from '../../run/story';
 import { FightScreen } from '../combat/FightScreen';
+import { MANUAL_PAGES } from '../../data/howToPlay';
+import { lessonPages } from '../../run/manual';
+import { LessonLearnedScreen } from './LessonLearnedScreen';
 
 interface Props {
   chapter: StoryChapter;
@@ -35,7 +38,10 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, start
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]);
 
-  if (!beat) return <Finish onFinished={onFinished} />;
+  if (!beat) {
+    const pages = lessonPages(MANUAL_PAGES, chapter.id);
+    return pages.length > 0 ? <LessonLearnedScreen pages={pages} onContinue={onFinished} /> : <Finish onFinished={onFinished} />;
+  }
   if (beat.kind === 'act') return null;
   return (
     <FightScreen

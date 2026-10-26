@@ -1,0 +1,342 @@
+/* How to Play's pages (ManualPages.tsx): a page's emblem, the Learned tiles a win lands, and a page read whole. */
+
+.manual-emblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #2c2219 0%, #15100b 75%);
+  box-shadow:
+    0 0 0 1.5px #a07a3e,
+    inset 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.manual-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mark-color, #e9dcc0);
+}
+
+.manual-mark-glyph {
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6));
+}
+
+.manual-emblem.is-pair .manual-mark-glyph {
+  width: 18px;
+  height: 18px;
+}
+
+.manual-mark-art {
+  width: 34px;
+  height: 34px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.manual-emblem.is-pair .manual-mark-art {
+  width: 20px;
+  height: 20px;
+}
+
+.manual-mark-arrow {
+  transform: scale(1.25);
+}
+
+.manual-mark-type {
+  transform: scale(1.3);
+}
+
+/* --- The Learned tiles --- */
+
+.manual-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.manual-tiles.is-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.manual-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 4px 7px;
+  border: 6px solid transparent;
+  border-image: url('../../../art/guild/panel-parch.png') 12 fill / 6px stretch;
+  background: none;
+  image-rendering: pixelated;
+  font: inherit;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(16px) rotate(-4deg) scale(0.86);
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.55));
+}
+
+.manual-tile.is-landed {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.22s ease-out,
+    transform 0.42s cubic-bezier(0.3, 1.55, 0.5, 1);
+}
+
+.manual-tile.is-landed .manual-emblem {
+  animation: manual-emblem-glint 0.9s ease-out 0.15s both;
+}
+
+@keyframes manual-emblem-glint {
+  0% {
+    box-shadow:
+      0 0 0 1.5px #a07a3e,
+      0 0 0 0 rgba(255, 220, 140, 0.8),
+      inset 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1.5px #a07a3e,
+      0 0 0 12px rgba(255, 220, 140, 0),
+      inset 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+}
+
+.manual-tile-title {
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #3a2412;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.manual-tile .manual-emblem {
+  width: 40px;
+  height: 40px;
+}
+
+/* The fight result's row (FightResultOverlay): the head over the tiles. */
+.fight-result-learned {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.manual-learned-head {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #e8c46a;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+/* --- A page read whole --- */
+
+.manual-reader {
+  z-index: 80;
+}
+
+.manual-reader-sheet {
+  width: 100%;
+  max-width: 360px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 6px 6px 10px;
+  border: 12px solid transparent;
+  border-image: url('../../../art/guild/panel-parch.png') 12 fill / 12px stretch;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.6));
+  animation: tip-box-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.manual-reader-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 4px 10px;
+}
+
+.manual-reader-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  color: #8a3f10;
+}
+
+.manual-page-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.manual-reader .howto-text {
+  font-size: 13.5px;
+  color: #3a2412;
+}
+
+/* A lesson won (LessonLearnedScreen): the fight result's stage, the pages where its ledger would be. */
+.lesson-learned {
+  background: #07080c;
+}
+
+.lesson-learned-pages {
+  width: 100%;
+  margin-top: 22px;
+  padding: 0 4px;
+}
+
+/* --- The book (the Reference's How to Play tab) --- */
+
+.manual-book {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.manual-sky {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin: 2px auto 4px;
+  overflow: visible;
+}
+
+.manual-sky-line {
+  stroke: rgba(205, 214, 255, 0.16);
+  stroke-width: 1.2;
+}
+
+.manual-sky-line.is-lit {
+  stroke: rgba(255, 210, 122, 0.75);
+}
+
+.manual-sky-star {
+  cursor: pointer;
+}
+
+.manual-sky-hit {
+  fill: transparent;
+}
+
+.manual-sky-ring {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 1.5;
+  transition: stroke 0.2s;
+}
+
+.manual-sky-star.is-chosen .manual-sky-ring {
+  stroke: #e8c46a;
+}
+
+.manual-sky-core {
+  fill: rgba(205, 214, 255, 0.22);
+}
+
+.manual-sky-star.is-lit .manual-sky-core {
+  fill: #ffe7a8;
+  filter: drop-shadow(0 0 4px rgba(255, 207, 106, 0.8));
+}
+
+.manual-sky-pent {
+  fill: none;
+  stroke: rgba(205, 214, 255, 0.3);
+  stroke-width: 1.4;
+}
+
+.manual-sky-star.is-run.is-lit .manual-sky-pent {
+  stroke: #ffe7a8;
+  filter: drop-shadow(0 0 4px rgba(255, 207, 106, 0.7));
+}
+
+.manual-dark {
+  display: grid;
+  place-items: center;
+  height: 180px;
+}
+
+.manual-dark svg {
+  width: 60px;
+  height: 60px;
+  fill: none;
+  stroke: rgba(205, 214, 255, 0.28);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+}
+
+.manual-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.manual-entry {
+  border-radius: var(--radius-sm);
+  box-shadow: var(--hairline), var(--elev-1);
+}
+
+.manual-entry-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.manual-entry-head .manual-emblem {
+  width: 34px;
+  height: 34px;
+}
+
+.manual-entry-head .manual-mark-glyph {
+  width: 20px;
+  height: 20px;
+}
+
+.manual-entry-head .manual-emblem.is-pair .manual-mark-glyph {
+  width: 14px;
+  height: 14px;
+}
+
+.manual-entry-head .manual-mark-art {
+  width: 26px;
+  height: 26px;
+}
+
+.manual-entry-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.manual-entry.is-open .manual-entry-title {
+  color: #e8c66a;
+}
+
+.manual-entry .manual-page-body {
+  padding: 0 0 10px;
+}
+
+/* Under a fight's ledger the tiles stay three across, so the row stays short. */
+.fight-result-learned .manual-tiles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}

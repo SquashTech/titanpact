@@ -114,7 +114,12 @@ const PLAY_LABELS: Record<SkyPlay, string> = {
   gauntlet: 'Enter the Gauntlet',
 };
 
-const ORDINALS = ['First', 'Second', 'Third', 'Fourth', 'Fifth'];
+/** The press while First Light is unfinished: a lesson speaks for itself, so it is never named. */
+function lessonLabel(index: number): string {
+  return index === 0 ? 'Begin' : 'Next Lesson';
+}
+
+const ORDINALS =['First', 'Second', 'Third', 'Fourth', 'Fifth'];
 
 function starName(star: SkyStar): string {
   const scenario = starScenario(sky, star);
@@ -305,7 +310,7 @@ export function SkyChart({
       if (reveal) show(reveal.constellationId, reveal.thought, at);
     };
 
-    /** One star lit, and the next woken with its name written in. */
+    /** One star lit, and the next woken with a blank page beside it. */
     const lightStar = async (i: number) => {
       const star = firstLight.stars[i];
       const before = statesOf(pendingRef.current);
@@ -326,8 +331,7 @@ export function SkyChart({
         await wait(700);
         setFx((f) => ({ ...f, waking: next }));
         playSfx('star.lock', { gain: 0.55 });
-        const name = starName(firstLight.stars[next]);
-        for (let c = 0; c < name.length; c += 2) playSfx('star.tick', { delay: 0.25 + c * 0.04, gain: 0.45, pitch: 1 + c * 0.03 });
+        playSfx('ui.page', { delay: 0.3, gain: 0.8 });
         await wait(1100);
       }
       // A seat that opens on this star wakes where it sits.
@@ -511,7 +515,7 @@ export function SkyChart({
   const infinite = sky.constellations.infinite;
   const press =
     !folded && nextLesson >= 0
-      ? { label: starName(firstLight.stars[nextLesson]), go: () => onPlayLesson?.(firstLight.stars[nextLesson].id) }
+      ? { label: lessonLabel(nextLesson), go:() => onPlayLesson?.(firstLight.stars[nextLesson].id) }
       : folded && !pressHidden && (states.infinite === 'open' || states.infinite === 'lit')
         ? { label: PLAY_LABELS.infinite, go: () => onPlay('infinite') }
         : null;
@@ -787,7 +791,7 @@ interface TrailProps {
   onPlayLesson: (scenarioId: string) => void;
 }
 
-/** First Light before it is sealed: four stars climbing to the gap, the next one awake and named, the rest unknown. */
+/** First Light before it is sealed: four stars climbing to the gap, a lit one's page inked, the next one's blank, the rest unknown. */
 function Trail({ lit, fx, disabled, calling, onPlayLesson }: TrailProps) {
   const c = sky.constellations.firstLight;
   const nextIndex = lit.findIndex((l) => !l);
@@ -831,7 +835,6 @@ function Trail({ lit, fx, disabled, calling, onPlayLesson }: TrailProps) {
         const known = isLit || isNext;
         const playable = !disabled && known;
         const off = foldTo(i);
-        const name = starName(star);
         return (
           <g
             key={star.id}
@@ -846,26 +849,24 @@ function Trail({ lit, fx, disabled, calling, onPlayLesson }: TrailProps) {
               {isLit && <path className="pact-trail-glint" d={glint(9)} />}
               {fx.burst?.i === i && <Burst key={fx.burst.n} />}
             </g>
-            {known && (
-              <text
-                className={`pact-trail-name${isLit ? ' is-lit' : ''}`}
-                x={p.x + (p.side === 'start' ? 13 : -13)}
-                y={p.y + 4}
-                textAnchor={p.side}
-              >
-                {waking
-                  ? [...name].map((ch, k) => (
-                      <tspan key={k} className="pact-letter" style={{ animationDelay: `${0.25 + k * 0.04}s` }}>
-                        {ch}
-                      </tspan>
-                    ))
-                  : name}
-              </text>
-            )}
+            {known && <PageMark x={p.x + (p.side === 'start' ? 16 : -16)} y={p.y - 2} inked={isLit} fresh={waking} />}
             {playable && <circle className="pact-hit" cx={p.x} cy={p.y} r={22} onClick={() => onPlayLesson(scenarioIdOf(star))} />}
           </g>
         );
       })}
+    </g>
+  );
+}
+
+/** A lesson's page beside its star: inked once the lesson is won, blank while it waits. */
+function PageMark({ x, y, inked, fresh = false }: { x: number; y: number; inked: boolean; fresh?: boolean }) {
+  return (
+    <g className={`pact-page${inked ? ' is-inked' : ''}${fresh ? ' is-fresh' : ''}`} transform={`translate(${x} ${y}) scale(1.35)`}>
+      <g className="pact-page-body">
+        <path className="pact-page-sheet" d="M-5 -7h7l3 3v11h-10z" />
+        <path className="pact-page-fold" d="M2 -7v3h3" />
+        {inked && <path className="pact-page-ink" d="M-3 -1.5h6M-3 1.2h5M-3 3.9h6" />}
+      </g>
     </g>
   );
 }
@@ -949,6 +950,15 @@ function ConstellationCard({ profile, constellation: c, state, disabled, pressHi
             const dx = p.x - CENTRE.x;
             const dy = p.y - CENTRE.y;
             const d = Math.hypot(dx, dy) || 1;
+            // A lesson is known by its page, not a name: tap it to play the lesson again.
+            if (lessonOf(i)) {
+              return (
+                <g key={`${star.id}-label`} className={`sky-band-page${playableLesson(i) ? ' is-playable' : ''}`} onClick={playableLesson(i) ? () => onPlayLesson?.(c.stars[i].id) : undefined}>
+                  <circle className="sky-band-hit" cx={p.x} cy={p.y} r={18} />
+                  <PageMark x={p.x + (dx / d) * 16} y={p.y + (dy / d) * 16} inked={lit[i]} />
+                </g>
+              );
+            }
             const anchor = Math.abs(dx) < SHAPE * 0.12 ? 'middle' : dx < 0 ? 'end' : 'start';
             return (
               <text
@@ -971,7 +981,7 @@ function ConstellationCard({ profile, constellation: c, state, disabled, pressHi
           reward > 0 && <span className="sky-band-reward">✦ {reward}</span>
         ) : nextLesson >= 0 ? (
           <PlateButton compact onClick={() => onPlayLesson?.(c.stars[nextLesson].id)} disabled={disabled} data-sfx="ui.commit">
-            {starName(c.stars[nextLesson])}
+            {lessonLabel(nextLesson)}
           </PlateButton>
         ) : uncharted ? (
           <PlateButton compact disabled onClick={() => undefined}>

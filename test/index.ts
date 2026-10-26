@@ -82,6 +82,7 @@ import './starShop.test';
 import './sky.test';
 import './thoughts.test';
 import './lessons.test';
+import './manual.test';
 import './deck.test';
 import './tips.test';
 import './installHint.test';

@@ -35,6 +35,7 @@ import {
 } from '../src/run/story';
 import { LESSONS, STORY_BOOKS } from '../src/data/lessons';
 import { TIP_STAGING } from '../src/view/run/tipStaging';
+import { TIP_SCENES } from '../src/data/tipScenes';
 import { rosterHeroes } from '../src/data/content';
 import { MAP_NODE_TYPES } from '../src/run/map';
 import { levelOf } from '../src/run/growth';
@@ -340,7 +341,7 @@ test('story tips: every control tip is short, unique, and lights something', () 
           assert.ok(!seen.has(tip.id), `${tip.id} is used twice`);
           seen.add(tip.id);
           assert.ok(tip.pages.length >= 1 && tip.pages.length <= 3, `${tip.id} runs past three pages`);
-          assert.ok(TIP_STAGING[tip.id], `${tip.id} has no staging`);
+          assert.ok(TIP_STAGING[tip.id] || TIP_SCENES[tip.id], `${tip.id} neither lights nor draws anything`);
         }
       }
     }

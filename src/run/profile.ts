@@ -127,6 +127,12 @@ export interface Profile {
   storyChaptersDone: string[];
   /** Sky scenarios won (run/sky.ts), each once. Every other star in the sky is derived from a record above. */
   litStars: string[];
+  /** How to Play pages a run has filed (run/manual.ts), each once; a lesson's pages are read off `litStars`. */
+  manualPages: string[];
+  /** Filed pages a won fight's Learned row has not yet shown. */
+  manualUnshown: string[];
+  /** Played before the manual: every page is in the book. */
+  manualComplete: boolean;
   /** Blip's firsts already thought (run/thoughts.ts), each once an account. */
   seenThoughtIds: string[];
 }
@@ -210,6 +216,9 @@ export function createProfile(): Profile {
     storyChaptersDone: [],
     litStars: [],
     seenThoughtIds: [],
+    manualPages: [],
+    manualUnshown: [],
+    manualComplete: false,
   };
 }
 
@@ -307,7 +316,7 @@ export function recordTipSeen(profile: Profile, id: string): Profile {
 
 /** Every tip, and the lore card, shows again on its next occasion (the title's Dev menu). */
 export function resetTips(profile: Profile): Profile {
-  return profile.seenTipIds.length === 0 ? profile : { ...profile, seenTipIds: [] };
+  return { ...profile, seenTipIds: [], manualPages: [], manualUnshown: [] };
 }
 
 /** The companion reached the finale and woke: its line joins with Ancient on every later run. Idempotent. */
@@ -605,5 +614,9 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Absent on every file written before the sky.
     litStars: [...new Set(stringList(value.litStars))],
     seenThoughtIds: [...new Set(stringList(value.seenThoughtIds))],
+    manualPages: [...new Set(stringList(value.manualPages))],
+    manualUnshown: [...new Set(stringList(value.manualUnshown))],
+    // A file from before the manual that had played a run or a Story chapter keeps every page.
+    manualComplete: value.manualComplete === true || (value.manualPages === undefined && (count(value.runsCompleted) + count(value.runsFailed) > 0 || stringList(value.storyChaptersDone).length > 0)),
   };
 }

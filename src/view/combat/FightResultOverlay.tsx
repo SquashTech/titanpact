@@ -25,6 +25,8 @@ import { getTypeColor } from './typeColors';
 import { gemAmount, type Gem } from '../../run/gems';
 import { GemIcon, GEM_STONES } from '../shared/GemIcon';
 import { GOOD_ART } from '../run/guildHallArt';
+import type { ManualPage } from '../../run/manual';
+import { LearnedTiles, LEARNED_STAGGER_MS } from '../shared/ManualPages';
 
 /** A loss wears the enemy's red; a win, the run's gold — the Location's own tint stays on the field behind. */
 const TINT_LOSS = '217, 83, 79';
@@ -46,6 +48,7 @@ const STAGE_CAPTION = 2;
 const STAGE_LEDGER = 3;
 
 const NO_GEMS: readonly Gem[] = [];
+const NO_PAGES: readonly ManualPage[] = [];
 
 /** Whether the whole sequence has landed, played out or tapped through — read by the loot pile. */
 const LandedContext = createContext(false);
@@ -82,6 +85,8 @@ export interface FightResultProps {
   hpAfter?: ReadonlyMap<string, { hp: number; maxHp: number }>;
   /** The fight's MVP (run/mvp.ts) and the bonus XP it takes. Null when nobody qualified. */
   mvp?: MvpPick | null;
+  /** How to Play pages this win files (run/manual.ts), shown last in the ledger. */
+  learned?: readonly ManualPage[];
   onContinue: () => void;
 }
 
@@ -110,6 +115,7 @@ export function FightResultOverlay({
   gemReward = NO_GEMS,
   hpAfter,
   mvp = null,
+  learned = NO_PAGES,
   onContinue,
 }: FightResultProps) {
   const won = outcome === 'win';
@@ -138,8 +144,15 @@ export function FightResultOverlay({
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
     const loot = lootPieces(equipmentReward, gemReward, consumableReward, contractReward, () => setInspecting(true));
     if (loot.length > 0) rows.push({ key: 'loot', render: (shown) => <LootPile pieces={loot} shown={shown} />, holdMs: loot.length * LOOT_STAGGER_MS });
+    if (learned.length > 0) {
+      rows.push({
+        key: 'learned',
+        render: (shown) => <LearnedRow pages={learned} shown={shown} />,
+        holdMs: learned.length * LEARNED_STAGGER_MS,
+      });
+    }
     return rows;
-  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, gemReward, contractReward, mvp, xpGained]);
+  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, gemReward, contractReward, mvp, xpGained, learned]);
 
   const stageDone = STAGE_LEDGER + ledger.length;
   const [stage, setStage] = useState(() => (prefersReducedMotion() ? stageDone : STAGE_TITLE));
@@ -279,6 +292,17 @@ export function FightResultOverlay({
 
       {inspecting && <ItemDetailOverlay item={equipmentReward} onClose={() => setInspecting(false)} />}
       {showingGains && levelReport && <StatGainsSheet report={levelReport} roster={roster} onClose={() => setShowingGains(false)} />}
+    </div>
+  );
+}
+
+/** The pages this win filed: tiles that land one by one, or all at once when the screen is tapped through. */
+function LearnedRow({ pages, shown }: { pages: readonly ManualPage[]; shown: boolean }) {
+  const landed = useContext(LandedContext);
+  return (
+    <div className="fight-result-learned">
+      <h3 className="manual-learned-head">Learned</h3>
+      <LearnedTiles pages={pages} shown={shown} landed={landed} />
     </div>
   );
 }

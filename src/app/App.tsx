@@ -129,6 +129,8 @@ import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
 import { STORY_BOOKS } from '../data/lessons';
 import { sky } from '../data/sky';
 import { recordScenarioLit } from '../run/sky';
+import { fileRunPages, markPagesShown, pagesMetOnScreen } from '../run/manual';
+import { MANUAL_PAGES } from '../data/howToPlay';
 import { chapterById, endsStoryAct, storyActRun, storyNodeEncounter, storyNodeSpec, type StoryAct } from '../run/story';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
@@ -593,6 +595,15 @@ export function App() {
     if (!playerRun.map || playerRun.story) return;
     updateProfile((current) => recordActReached(current, playerRun.actNumber));
   }, [playerRun.actNumber, playerRun.map]);
+
+  // A run's screen files its How to Play page the first time it is reached; the next won fight shows it.
+  useEffect(() => {
+    if (!playerRun.map || playerRun.story) return;
+    const key = screen.kind === 'actIntro' ? (playerRun.actNumber === 1 ? 'actIntro:first' : 'actIntro:later') : screen.kind;
+    const ids = pagesMetOnScreen(MANUAL_PAGES, key);
+    if (ids.length > 0) setProfile(updateProfile((current) => fileRunPages(current, MANUAL_PAGES, ids)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen.kind]);
 
   // A finished run has nothing left to resume; the save would otherwise re-offer the map of a
   // run the player already lost or cleared. `playerRun` is final here: the handler that set this
@@ -1213,6 +1224,14 @@ export function App() {
     markTipSeen(id);
   }
 
+  /** A fight's How to Play pages: filed, and marked shown when a win's Learned row showed them. */
+  function handlePagesLearned(ids: readonly string[], shown: boolean) {
+    setProfile(updateProfile((current) => {
+      const filed = fileRunPages(current, MANUAL_PAGES, ids);
+      return shown ? markPagesShown(filed, ids) : filed;
+    }));
+  }
+
   /** One of Blip's firsts: account-wide, written straight to storage like a tip. */
   function markThoughtSeen(thought: ThoughtDefinition) {
     setProfile(updateProfile((current) => recordThoughtSeen(current, thought)));
@@ -1600,7 +1619,7 @@ export function App() {
           run={playerRun}
           location={locationForAct(playerRun.locationIds, playerRun.actNumber)}
           onEnter={() => setScreen({ kind: 'map' })}
-          eyebrow={playerRun.story ? chapterById(STORY_BOOKS, playerRun.story.chapterId)?.chapter.title : undefined}
+          eyebrow={playerRun.story ? chapterById(STORY_BOOKS, playerRun.story.chapterId)?.story.name : undefined}
         />
       )}
 
@@ -1657,6 +1676,7 @@ export function App() {
                   lastMvpRosterId: playerRun.lastMvpRosterId ?? undefined,
                 }
           }
+          onPagesLearned={handlePagesLearned}
           onSaveAndQuit={playerRun.story ? undefined : () => setScreen({ kind: 'title' })}
           onAbandonRun={playerRun.story ? undefined : handleAbandonRun}
           onExitToTitle={playerRun.story ? () => setScreen({ kind: 'title' }) : undefined}

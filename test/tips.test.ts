@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { FIGHT_TIPS, LORE_LINES, SCREEN_TIPS } from '../src/data/tips';
-import { HOW_TO_PLAY } from '../src/data/howToPlay';
+import { MANUAL_PAGES } from '../src/data/howToPlay';
 import {
   firstUnseenTip,
   LORE_TIP_ID,
@@ -37,8 +37,8 @@ const storyTips: Tip[] = STORY_BOOKS.flatMap((story) =>
   )
 );
 const allTips: Tip[] = [...Object.values(SCREEN_TIPS), ...FIGHT_TIPS, ...storyTips];
-/** Every block of player-facing rules text: the tips, and the How to Play page's sections. */
-const allText: Tip[] = [...allTips, ...HOW_TO_PLAY];
+/** Every block of player-facing rules text: the tips, and How to Play's pages (a lesson's tip IS its page, so each once). */
+const allText: Tip[] = [...new Set<Tip>([...allTips, ...MANUAL_PAGES])];
 
 /** A quiet round-1 command phase in an opener — the baseline each case moves one field off. */
 function ctx(overrides: Partial<FightTipContext> = {}): FightTipContext {

@@ -129,6 +129,48 @@ through. Picked from a side-by-side page (`art/concepts/pact-circle/`, "B · The
   then *Enter the Infinite*.
 - The Stardust is the 300 First Light already paid (§10, still FLAGGED). Nothing about the payout
   changed; it is only shown now.
+- **Revised by §2c (2026-10-26):** a lesson is never named. A woken star shows a blank page, not
+  its name, and the press reads *Begin* then *Next Lesson*.
+
+## 2c. The manual (2026-10-26, per user direction)
+
+How to Play is a book the player fills by playing, the way Hades' Codex and Hollow Knight's Hunter's
+Journal fill. Picked from a side-by-side page (`art/concepts/manual-pages/`, "C · Learned, then
+filed"). Content `src/data/howToPlay.ts`, mechanism `src/run/manual.ts`.
+
+- **A lesson's tip IS its page.** The lessons' cues show How to Play's own pages, so the rules are
+  written once. Anything about this round in particular ("Fang is faster, so Howl first") is said in
+  the fight, never on the page.
+- **The lessons speak for themselves.** No lesson is named anywhere: the title shows a star and its
+  page, the act screen says *First Light*.
+- **Pages land on a Learned screen.** A lesson won ends on its own screen: the fight result's stage,
+  its pages as tiles landing one by one, any one opened by a tap. Then the title lights the star.
+- **The curriculum** (per user direction: what every fight needs comes first, so Mana before
+  Switching, and one target or both in the first fight):
+
+  | Lesson | Pages it files |
+  |---|---|
+  | First (2v2, guided) | Turn by Turn · Mana · Single and Spread · Buffs and Debuffs · Types |
+  | Second (the bench, guided) | Switching · Physical and Magical · Rest · Status Effects · Shield · Conduct |
+  | Third (an act) | Leads · The Map · Items · Levels and Moves · Wounds · The Bag |
+  | Fourth (an act) | Heals · Daze · Patrons · Elite or Skirmish · Recruiting |
+
+- **Status Effects is the general page, then one page a status.** The lessons teach Shield,
+  Conduct and Daze; every other status is filed the first time it lands in any fight.
+- **A run files the rest** the first time it meets the thing: a status, a Field Effect, lock-in, the
+  Pact Clock, an Ancient foe, or a screen (the Guild Hall, the Academy, Gems, a Banner, the next
+  act, a Cycle). A filed page waits (`Profile.manualUnshown`) and lands as a **Learned** row in the
+  next won fight's result, last in its ledger.
+- **The book's contents are the sky.** The Reference's How to Play tab draws First Light's four
+  stars and the Infinite's pentagram. A lit star opens its lesson's pages; the pentagram holds what
+  runs have filed. A page not yet learned is not shown, and a dark star is what is left: a count
+  drawn as the sky, never a number.
+- An account that played before the manual (`Profile.manualComplete`, set on decode) has every page.
+
+**Watch in playtest:** the Clearing teaches six pages, and the Hunt shows three tips at the top of
+its round 2. The Clearing's Physical and Magical is taught in Blip's words more than by its numbers:
+the Ravager's Defense and Wisdom are equal, and the Slabback resists Raiju's Storm. A foe whose
+Defense far outweighs its Wisdom would show it; that is a re-script of the fight.
 
 ## 3. The rails: tutorial constellations
 

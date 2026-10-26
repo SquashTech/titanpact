@@ -127,6 +127,9 @@ import { ENDBRINGER_ID, EYE_IDS, isTitanEye } from '../../data/enemies';
 import type { LocationDefinition } from '../../data/locations';
 import type { Gem } from '../../run/gems';
 import { PlateButton } from '../shared/PlateButton';
+import { MANUAL_PAGES } from '../../data/howToPlay';
+import { isPageLearned, pagesMetInFight, type ManualPage } from '../../run/manual';
+import { useProfile } from '../shared/ProfileContext';
 
 /** Every live figure is resolved by the caller (it holds the Combatant and the board); the row only renders. */
 interface MoveRowProps {
@@ -551,6 +554,11 @@ interface Props {
    * the run. `consumablesUsed` is what this fight drank, for the caller to take off the purse.
    */
   onResolved: (outcome: 'win' | 'loss', finalState: CombatState, consumablesUsed: ConsumablePurse, mvp: MvpPick | null) => void;
+  /**
+   * How to Play pages this fight meets (run/manual.ts): a win shows them, with any a screen filed
+   * since the last win, as its Learned row, and hands every one back to be filed. Omitted: none.
+   */
+  onPagesLearned?: (ids: readonly string[], shown: boolean) => void;
   /** Who can be the MVP (run/mvp.ts). Omitted — a fight outside a run, or the finale — names none. */
   mvpRules?: MvpRules;
   /** Leave to the title; the run is saved at this fight's last command phase. Omit for fights outside a run. */
@@ -623,6 +631,7 @@ export function FightScreen({
   storyCues,
   storyTips,
   mvpRules,
+  onPagesLearned,
   initialSnapshot,
   onCommandPhase,
   saveTrouble = null,
@@ -727,6 +736,8 @@ export function FightScreen({
   // Starts true: a fight opens mid-playback (the intro), and the mount effect below fills the
   // queue. Initialising it false would paint one frame of a live action console first.
   const [resolving, setResolving] = useState(!initialSnapshot);
+  // How to Play pages this fight has met (noteMet), read by the result once it is won.
+  const metPages = useRef(new Set<string>());
   const [beat, setBeat] = useState<Beat | null>(null);
   /**
    * The round being played back, for the order marks: the resolve order the engine settled
@@ -820,9 +831,23 @@ export function FightScreen({
   handoff.current = onResolved;
   useEffect(() => {
     if (!skipResult) return;
-    const t = window.setTimeout(() => handoff.current('win', combat, usedConsumables, null), 650);
+    const t = window.setTimeout(() => {
+      onPagesLearned?.([...metPages.current], false);
+      handoff.current('win', combat, usedConsumables, null);
+    }, 650);
     return () => window.clearTimeout(t);
   }, [skipResult]);
+  // Read once the fight is won: what a screen filed since the last win, then what this fight met for the first time.
+  const profile = useProfile();
+  const learnedPages = useMemo((): ManualPage[] => {
+    if (winner !== PLAYER_SIDE || resolving || !onPagesLearned) return [];
+    const ids = [...new Set([...profile.manualUnshown, ...metPages.current])];
+    return ids.flatMap((id) => {
+      const page = MANUAL_PAGES.find((p) => p.id === id);
+      return page && page.source.kind === 'run' && (profile.manualUnshown.includes(id) || !isPageLearned(profile, page)) ? [page] : [];
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [winner, resolving]);
   const resultRoster = playerRun.roster;
   // Read once the fight is won; a hero the fight took off the roster cannot take the pip.
   const mvp = useMemo(() => {
@@ -1218,6 +1243,7 @@ export function FightScreen({
     const amount = used.type === 'ConsumableUsed' ? used.amount : 0;
     setCombat(result.state);
     appendLog(formatEvents(result.events, allCombatants, result.state.combatants, moves));
+    noteMet(result.events, result.state);
     playSfx(kind === 'mpPotion' ? 'mana' : 'heal');
     setPopups((prev) => ({
       ...prev,
@@ -1254,6 +1280,7 @@ export function FightScreen({
     mvpTally.current = tallyMvpEvents(mvpTally.current, [...result.events, ...entry.events], entry.state, PLAYER_SIDE, statuses);
     reportCommandPhase(entry.state);
     appendLog(formatEvents([...result.events, ...entry.events], allCombatants, entry.state.combatants, moves));
+    noteMet([...result.events, ...entry.events], entry.state);
     setReplacementPick(null);
     summon([benchedCombatantId]);
   }
@@ -1292,6 +1319,15 @@ export function FightScreen({
     summon(effectiveLeadPicks);
     playSfx('switchIn');
     startBeatPlayback(placed, entry.events, entry.state);
+  }
+
+  function noteMet(events: CombatEvent[], board: CombatState) {
+    if (!onPagesLearned) return;
+    const typesOf = (id: string) => {
+      const c = board.combatants[id];
+      return c ? effectiveTypes(allCombatants[c.heroId], c) : [];
+    };
+    for (const id of pagesMetInFight(MANUAL_PAGES, events, board, typesOf)) metPages.current.add(id);
   }
 
   // formatEvents keys by round+index within its own call, which collides across calls in one round; re-key against the running length.
@@ -1506,6 +1542,7 @@ export function FightScreen({
       setCombat(replaced.state);
       mvpTally.current = tallyMvpEvents(mvpTally.current, replaced.events, replaced.state, PLAYER_SIDE, statuses);
       appendLog(formatEvents(replaced.events, allCombatants, replaced.state.combatants, moves));
+      noteMet(replaced.events, replaced.state);
       setReplacementPicks([]);
       summon([...replacementPicks, ...theirIds]);
       return;
@@ -1614,6 +1651,7 @@ export function FightScreen({
 
     if (!holdsSwap) setCombat(next);
     appendLog(formatEvents(revealed.events, allCombatants, next.combatants, moves));
+    noteMet(revealed.events, next);
     playBeatSfx(revealed);
     // EXPERIMENTAL: a dramatic entrance drags the music down for the rest of the fight. Delete this line to drop it.
     if (revealed.dramaticEntrance) setMusicRate(DREAD_MUSIC_RATE);
@@ -2689,7 +2727,11 @@ export function FightScreen({
           gemReward={gemReward}
           hpAfter={hpAfter}
           mvp={mvp}
-          onContinue={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables, mvp)}
+          learned={learnedPages}
+          onContinue={() => {
+            onPagesLearned?.([...metPages.current, ...learnedPages.map((p) => p.id)], winner === PLAYER_SIDE);
+            onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables, mvp);
+          }}
         />
       )}
 

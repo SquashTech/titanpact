@@ -10,10 +10,7 @@ import { TypeBadge } from './TypeBadge';
 import { TypeWheel } from './TypeWheel';
 import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from './EquipmentBox';
 import { ItemDetailOverlay } from './ItemDossier';
-import { HOW_TO_PLAY } from '../../data/howToPlay';
-import { TIP_SCENES } from '../../data/tipScenes';
-import { TipText } from '../run/TipOverlay';
-import { TipPictureView } from '../run/TipScene';
+import { ManualBook } from './ManualPages';
 
 // Reference pages that are more than a table: How to Play, the type dial and the equipment catalog.
 
@@ -157,41 +154,7 @@ export function EquipmentCatalog() {
   );
 }
 
-/** The rules in full (src/data/howToPlay.ts): every section a head, one open at a time, pictures over the words they show. */
+/** The rules as far as the player has learned them (src/data/howToPlay.ts, run/manual.ts). */
 export function HowToPlay() {
-  const [openId, setOpenId] = useState<string | null>(null);
-  return (
-    <div className="howto">
-      {HOW_TO_PLAY.map((section) => {
-        const open = section.id === openId;
-        const scenes = TIP_SCENES[section.id] ?? [];
-        return (
-          <section key={section.id} className={`howto-section${open ? ' is-open' : ''}`}>
-            <button type="button" className="howto-head" aria-expanded={open} data-sfx="ui.select" onClick={() => setOpenId(open ? null : section.id)}>
-              {section.title}
-            </button>
-            {open && (
-              <div className="howto-body">
-                {section.pages.map((page, i) => {
-                  const scene = scenes[i];
-                  return (
-                    <div key={i} className="howto-page">
-                      {scene && (
-                        <div className="tip-scene-frame">
-                          <TipPictureView scene={scene} />
-                        </div>
-                      )}
-                      <p className="howto-text">
-                        <TipText text={page} />
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        );
-      })}
-    </div>
-  );
+  return <ManualBook />;
 }
