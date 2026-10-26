@@ -51,6 +51,13 @@ const STATUS_WORDS: Readonly<Record<string, readonly string[]>> = {
   Haunt: ['- A *Spirit* or *Mind* attack on this hero also strikes its partner.\n- When this hero falls, the Haunt passes to its partner.\n- Switching clears it.'],
   IceShell: ["- Whoever's hit *breaks* this hero's Shield is *Frozen*.\n- It is spent when it fires."],
   Beheld: ["- The Titan's eye is on this hero: a *Regard* is coming.\n- Switching out breaks its gaze. A Shield takes the hit first."],
+  Poised: ["- The hero's *next attack* goes ahead of moves it would otherwise follow.\n- Then it's spent.\n- It waits until used, but switching clears it."],
+  DrawnBlade: ["- The hero's *next Slice* goes ahead of moves it would otherwise follow.\n- Then it's spent.\n- Switching clears it."],
+  Ambush: ["- The hero's *next attack* hits harder: the badge's number is added to its power, whatever its type.\n- Then it's spent.\n- It waits until used, but switching clears it."],
+  Edge: ["- Every *Slice* this hero uses hits harder: the badge's number is added to its power, whatever its type.\n- It lasts the whole fight, through switching."],
+  Crescendo: ["- For *this round*, every *Arcane* move this hero uses hits harder by the badge's number.\n- It's gone when the round ends."],
+  Grace: ["- Every *heal* this hero casts heals more: the badge's number is added to its power.\n- It lasts the whole fight, through switching."],
+  Aim: ["- Every *Arrow* this hero looses hits harder: the badge's number is added to its power, whatever its type.\n- It lasts the whole fight, through switching."],
 };
 
 /** A description as bullets, a sentence each. */
@@ -74,7 +81,7 @@ function statusPage(statusId: string): ManualPage {
 
 /** Every status a fighter can carry, an Elemental Force aside: those are an item's, read on the item. */
 const STATUS_PAGES = Object.values(statuses)
-  .filter((status) => !status.forceType && status.description)
+  .filter((status) => status.id !== `${status.forceType}Force` && status.description)
   .map((status) => statusPage(status.id));
 
 const taughtIn = (source: ManualSource) => STATUS_PAGES.filter((p) => TAUGHT_BY[p.id.slice('howto.status.'.length)] === source);

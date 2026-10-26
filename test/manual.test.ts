@@ -56,7 +56,7 @@ test('manual: every lesson files pages, and every page a lesson shows in a fight
 });
 
 test('manual: a status has a page, and a page the lessons do not teach is met in a run', () => {
-  for (const status of Object.values(statuses).filter((s) => !s.forceType)) assert.ok(MANUAL_PAGES.some((p) => p.id === `howto.status.${status.id}`), status.id);
+  for (const status of Object.values(statuses).filter((s) => s.id !== `${s.forceType}Force`)) assert.ok(MANUAL_PAGES.some((p) => p.id === `howto.status.${status.id}`), status.id);
   const taught = new Set(LESSONS.chapters.flatMap((c) => lessonPages(MANUAL_PAGES, c.id).map((p) => p.id)));
   for (const page of MANUAL_PAGES) assert.ok(taught.has(page.id) || page.source.kind === 'run', `${page.id} is neither taught nor met`);
 });

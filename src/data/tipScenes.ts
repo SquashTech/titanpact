@@ -245,6 +245,13 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
   'howto.status.Daze': [{ status: 'Daze', steps: [{ note: 'This round' }] }],
   'howto.status.Barrier': [{ status: 'Barrier', steps: [{ note: 'This round' }] }],
   'howto.status.Provoke': [{ status: 'Provoke', steps: [{ note: 'This round' }] }],
+  'howto.status.Poised': [{ status: 'Poised', steps: [{ note: 'Next attack' }] }],
+  'howto.status.DrawnBlade': [{ status: 'DrawnBlade', steps: [{ note: 'Next Slice' }] }],
+  'howto.status.Ambush': [{ status: 'Ambush', steps: [{ magnitude: 20, note: 'Next attack +20' }] }],
+  'howto.status.Edge': [{ status: 'Edge', steps: [{ magnitude: 10, note: 'Every Slice +10' }] }],
+  'howto.status.Crescendo': [{ status: 'Crescendo', steps: [{ magnitude: 15, note: 'This round' }] }],
+  'howto.status.Grace': [{ status: 'Grace', steps: [{ magnitude: 10, note: 'Every heal +10' }] }],
+  'howto.status.Aim': [{ status: 'Aim', steps: [{ magnitude: 10, note: 'Every Arrow +10' }] }],
   // Raiju's Storm Lash, its Conduct named in place, against the Clearing's Slabback.
   'howto.status.Conduct': [{ foes: [{ heroId: 'slabback', level: 12 }], hero: { heroId: 'raiju', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
   'howto.bag': [{ hero: { heroId: 'cinderKnight' }, bar: true, focus: ['bag'] }],
