@@ -73,14 +73,15 @@ test('gems: the MVP takes half the fight again in XP', () => {
   assert.strictEqual(fightXpFor(560, 'b', null), 560);
 });
 
-test('gems: the Elite and the Guardian always drop two, the small fights sometimes one, the finale none', () => {
+test('gems: the fork always drops two, the Guardian three, the opener sometimes one, the finale none', () => {
   assert.strictEqual(SCRIBE_GEMS, 3, 'the Lapidary hands out three');
   assert.strictEqual(rollGemDrop('elite', 1, () => 0.99).length, 2);
-  assert.strictEqual(rollGemDrop('boss', 3, () => 0.99).length, 2);
+  assert.strictEqual(rollGemDrop('boss', 3, () => 0.99).length, 3);
   assert.ok(rollGemDrop('boss', 3, () => 0.99).every((g) => g.points === 10), 'sized by the act like any other Gem');
-  assert.strictEqual(rollGemDrop('skirmish', 1, () => 0.99).length, 0, 'a miss');
-  assert.strictEqual(rollGemDrop('skirmish', 1, () => 0).length, 1, 'a hit');
-  assert.ok(GEM_DROP.skirmish.chance > 0 && GEM_DROP.skirmish.chance < 1);
+  assert.strictEqual(rollGemDrop('skirmish', 1, () => 0.99).length, 2);
+  assert.strictEqual(rollGemDrop('fight', 1, () => 0.99).length, 0, 'a miss');
+  assert.strictEqual(rollGemDrop('fight', 1, () => 0).length, 1, 'a hit');
+  assert.ok(GEM_DROP.fight.chance > 0 && GEM_DROP.fight.chance < 1);
   assert.strictEqual(rollGemDrop('finale', 4, () => 0).length, 0);
 });
 

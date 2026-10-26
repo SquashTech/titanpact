@@ -39,15 +39,15 @@ export const SCRIBE_GEMS = 3;
 export const GEM_CACHE_COUNT = 3;
 
 /**
- * A won fight's Gem drop: `count` Gems at `chance`. The Elite and the Guardian always pay; the
- * small fights sometimes do; the finale pays nothing, the run being over (docs/gems.md §4).
+ * A won fight's Gem drop: `count` Gems at `chance`. Both sides of the fork and the Guardian always
+ * pay; the opener sometimes does; the finale pays nothing, the run being over (docs/gems.md §4).
  */
 export const GEM_DROP: Record<EncounterNodeKind, { chance: number; count: number }> = {
   fight: { chance: 0.2, count: 1 },
   battle: { chance: 0.2, count: 1 },
-  skirmish: { chance: 0.2, count: 1 },
+  skirmish: { chance: 1, count: 2 },
   elite: { chance: 1, count: 2 },
-  boss: { chance: 1, count: 2 },
+  boss: { chance: 1, count: 3 },
   finale: { chance: 0, count: 0 },
 };
 
