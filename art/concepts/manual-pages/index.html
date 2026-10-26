@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Manual Pages</title>
+<style>
+  :root { color-scheme: dark; --bg: #0b0d12; --text: #e9dcc0; --dim: #8f8a7c; --gold: #e8c46a; --paper: #eadcbc; --ink: #3a2c1c; --ink-soft: #7a6448; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 20px 16px 48px; background: var(--bg); color: var(--text);
+    font: 13px/1.45 ui-sans-serif, system-ui, Segoe UI, sans-serif; }
+  h1 { text-align: center; font: 700 18px/1.2 Georgia, serif; letter-spacing: .12em; margin: 0 0 18px; color: #f0e2bd; }
+  .row { display: flex; flex-wrap: wrap; gap: 22px; justify-content: center; }
+  .col { width: 315px; }
+  .col h2 { margin: 0 0 2px; font-size: 15px; letter-spacing: .04em; }
+  .col p { margin: 0 0 10px; color: var(--dim); min-height: 112px; }
+  .demo { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+  .demo button { background: #1a1d25; color: var(--gold); border: 1px solid #6b5a33; padding: 6px 12px; border-radius: 4px; cursor: pointer; font: inherit; }
+  .demo button:disabled { opacity: .4; cursor: default; }
+
+  /* A phone at 394x780, shown at 0.8 */
+  .phone { width: 315px; height: 624px; overflow: hidden; border-radius: 14px; border: 1px solid #262a33; position: relative; }
+  .screen { width: 394px; height: 780px; transform: scale(.8); transform-origin: 0 0; position: relative; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 45%, #18203a 0%, #0d1222 55%, #070910 100%); user-select: none; }
+
+  /* The title */
+  .wordmark { position: absolute; top: 46px; left: 0; right: 0; text-align: center; font: 700 22px/1 Georgia, serif;
+    letter-spacing: .32em; color: #f0e2bd; text-shadow: 0 0 18px #e8c46a55; pointer-events: none; }
+  .gear { position: absolute; top: 18px; right: 16px; width: 26px; height: 26px; border-radius: 50%; border: 1px solid #ffffff22;
+    display: grid; place-items: center; color: #ffffff66; font-size: 15px; }
+  .book { position: absolute; top: 14px; left: 14px; width: 34px; height: 34px; border-radius: 6px; border: 1px solid #ffffff22;
+    display: grid; place-items: center; cursor: pointer; transition: box-shadow .3s, border-color .3s; }
+  .book svg { width: 20px; height: 20px; }
+  .book.glow { border-color: #e8c46a; box-shadow: 0 0 0 0 #e8c46a88; animation: bookglow 1.4s ease-out 2; }
+  @keyframes bookglow { 0% { box-shadow: 0 0 0 0 #e8c46acc; } 100% { box-shadow: 0 0 0 16px #e8c46a00; } }
+  .book.catch { animation: catch .28s ease-out; }
+  @keyframes catch { 50% { transform: scale(1.25); } }
+  .press { position: absolute; left: 67px; width: 260px; bottom: 112px; height: 48px; border-radius: 6px; background: #4a3720; border: 1px solid #a07a3e;
+    display: grid; place-items: center; font-weight: 700; letter-spacing: .14em; font-size: 12px; text-transform: uppercase; color: #f6e6bf; }
+  .ftr { position: absolute; left: 0; right: 0; bottom: 30px; display: flex; gap: 12px; justify-content: center; }
+  .ftr span { width: 150px; height: 44px; border-radius: 6px; background: #2a2118; border: 1px solid #5b4a33; display: grid; place-items: center;
+    font-weight: 700; letter-spacing: .14em; font-size: 11px; text-transform: uppercase; color: #d9c7a0; }
+
+  .sigil { stroke: rgba(232, 196, 106, .34); fill: none; }
+  .tline { stroke: rgba(205, 214, 255, .14); stroke-width: 1.2; }
+  .tline.lit { stroke: rgba(255, 210, 122, .8); stroke-dasharray: 200; stroke-dashoffset: 0; }
+  .tline.draw { stroke: rgba(255, 210, 122, .8); stroke-dasharray: 200; stroke-dashoffset: 200; animation: draw .7s ease-out forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .tstar { fill: rgba(220, 228, 255, .5); transition: fill .3s; }
+  .tstar.lit { fill: #ffe7a8; filter: drop-shadow(0 0 5px #ffcf6a); }
+  .tstar.socket { fill: none; stroke: rgba(220, 228, 255, .3); stroke-dasharray: 2 2; }
+  .tstar.charging { animation: charge .8s ease-in forwards; }
+  @keyframes charge { 0% { fill: rgba(220,228,255,.5); } 100% { fill: #fff6d8; filter: drop-shadow(0 0 10px #ffe7a8); } }
+  .halo { fill: rgba(255, 220, 140, .35); animation: pulse 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  @keyframes pulse { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: .9; transform: scale(1.25); } }
+  .burst { fill: none; stroke: #ffe7a8; stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: burst .7s ease-out forwards; }
+  @keyframes burst { 0% { opacity: 1; transform: scale(.3); } 100% { opacity: 0; transform: scale(3.2); } }
+  .blank { opacity: 0; transition: opacity .5s; }
+  .blank.on { opacity: 1; }
+  .blip { position: absolute; left: 24px; right: 24px; bottom: 176px; background: #12182b; border: 1px solid #3a4572; border-radius: 10px;
+    padding: 10px 12px; color: #dfe6ff; font-size: 13px; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; pointer-events: none; }
+  .blip.on { opacity: 1; transform: none; }
+
+  /* A page: parchment, a picture over the words */
+  .page { background: var(--paper); color: var(--ink); border-radius: 6px; box-shadow: 0 10px 28px #000a, inset 0 0 0 1px #b99f72;
+    padding: 14px 16px 16px; }
+  .page h3 { margin: 0 0 8px; font: 700 15px/1.2 Georgia, serif; letter-spacing: .06em; text-align: center; }
+  .page .pic { height: 108px; border-radius: 4px; background: #d9c8a2; display: grid; place-items: center; margin-bottom: 10px; }
+  .page .pic svg { width: 100%; height: 100%; }
+  .page .words { font-size: 13.5px; line-height: 1.45; }
+  .page .words b { color: #7a3d12; }
+
+  /* A: cards rise off the star */
+  .card { position: absolute; left: 0; top: 0; width: 290px; transform-origin: 50% 50%; transition: transform .55s cubic-bezier(.3, .7, .2, 1), opacity .4s; cursor: pointer; }
+  .card.file { transition: transform .5s cubic-bezier(.6, 0, .8, .4), opacity .5s .2s; }
+  .count-tick { position: absolute; left: 0; right: 0; bottom: 176px; display: flex; gap: 6px; justify-content: center; opacity: 0; transition: opacity .3s; }
+  .count-tick i { width: 7px; height: 7px; border-radius: 50%; background: #e8c46a44; }
+  .count-tick i.on { background: #e8c46a; }
+  .count-tick.on { opacity: 1; }
+
+  /* B: the book opens over the Pact */
+  .tome { position: absolute; left: 17px; top: 150px; width: 360px; height: 400px; perspective: 1400px; pointer-events: none; opacity: 0; }
+  .tome.on { pointer-events: auto; cursor: pointer; }
+  .tome .cover { position: absolute; inset: 0; border-radius: 8px; background: linear-gradient(135deg, #5a3a1e, #3b2410);
+    border: 2px solid #a07a3e; box-shadow: 0 16px 40px #000c; display: grid; place-items: center; }
+  .tome .cover svg { width: 90px; height: 90px; opacity: .85; }
+  .tome .leaf { position: absolute; inset: 0; border-radius: 8px; background: var(--paper); box-shadow: 0 16px 40px #000c, inset 0 0 0 1px #b99f72;
+    padding: 20px 22px; color: var(--ink); transform-origin: 0 50%; backface-visibility: hidden; transition: transform .7s cubic-bezier(.5, 0, .3, 1); }
+  .tome .leaf.turned { transform: rotateY(-180deg); }
+  .tome .leaf h3 { margin: 0 0 10px; font: 700 18px/1.2 Georgia, serif; text-align: center; letter-spacing: .06em; }
+  .tome .leaf .pic { height: 150px; border-radius: 4px; background: #d9c8a2; margin-bottom: 14px; }
+  .tome .leaf .pic svg { width: 100%; height: 100%; }
+  .tome .leaf .ink { font-size: 15px; line-height: 1.5; }
+  .tome .leaf .ink span { opacity: 0; transition: opacity .25s; }
+  .tome .leaf .ink span.on { opacity: 1; }
+  .tome .leaf .folio { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font: italic 12px Georgia, serif; color: var(--ink-soft); }
+  .tome .leaf .pic, .tome .leaf h3 { opacity: 0; transition: opacity .4s; }
+  .tome .leaf.inked .pic, .tome .leaf.inked h3 { opacity: 1; }
+
+  /* C: the victory screen */
+  .victory { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, #2b2414 0%, #120f0a 70%); display: none; }
+  .victory.on { display: block; }
+  .victory .head { position: absolute; top: 60px; left: 0; right: 0; text-align: center; font: 700 30px/1 Georgia, serif; letter-spacing: .3em; color: #ffe7a8;
+    text-shadow: 0 0 20px #e8c46a66; }
+  .victory .heroes { position: absolute; top: 112px; left: 0; right: 0; display: flex; justify-content: center; gap: 14px; }
+  .victory .heroes i { width: 64px; height: 64px; border-radius: 8px; background: #2a2418; border: 1px solid #5b4a33; }
+  .victory .learned { position: absolute; top: 214px; left: 22px; right: 22px; }
+  .victory .learned h4 { margin: 0 0 10px; text-align: center; font: 700 12px/1 ui-sans-serif, system-ui; letter-spacing: .28em; text-transform: uppercase; color: #c9b484; }
+  .victory .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .tile { background: var(--paper); border-radius: 5px; box-shadow: inset 0 0 0 1px #b99f72, 0 4px 10px #0008; padding: 6px 6px 8px; color: var(--ink);
+    opacity: 0; transform: translateY(14px) rotate(-3deg) scale(.9); transition: opacity .3s, transform .4s cubic-bezier(.3, 1.5, .5, 1); cursor: pointer; }
+  .tile.on { opacity: 1; transform: none; }
+  .tile .pic { height: 58px; background: #d9c8a2; border-radius: 3px; }
+  .tile .pic svg { width: 100%; height: 100%; }
+  .tile b { display: block; text-align: center; font: 700 11.5px/1.2 Georgia, serif; margin-top: 6px; }
+  .victory .zoom { position: absolute; left: 34px; right: 34px; top: 200px; display: none; }
+  .victory .zoom.on { display: block; }
+  .victory .go { position: absolute; left: 67px; width: 260px; bottom: 60px; height: 48px; border-radius: 6px; background: #4a3720; border: 1px solid #a07a3e;
+    display: grid; place-items: center; font-weight: 700; letter-spacing: .14em; font-size: 12px; text-transform: uppercase; color: #f6e6bf; cursor: pointer;
+    opacity: 0; transition: opacity .3s; }
+  .victory .go.on { opacity: 1; }
+
+  /* The manual, three ways */
+  .manual { position: absolute; inset: 0; background: #14100b; display: none; overflow-y: auto; }
+  .manual.on { display: block; }
+  .manual .bar { position: sticky; top: 0; height: 60px; display: grid; place-items: center; background: #14100bee; z-index: 2;
+    font: 700 16px/1 Georgia, serif; letter-spacing: .24em; text-transform: uppercase; color: #f0e2bd; }
+  .manual .bar .x { position: absolute; left: 14px; top: 13px; font-size: 26px; color: #f0e2bd; cursor: pointer; width: 34px; text-align: center; }
+  .manual .body { padding: 6px 18px 40px; }
+  .chap { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; }
+  .chap svg { width: 22px; height: 22px; }
+  .chap::after { content: ''; flex: 1; height: 1px; background: #5b4a33; }
+  .entry { display: flex; gap: 10px; align-items: center; background: var(--paper); color: var(--ink); border-radius: 5px; padding: 6px;
+    margin-bottom: 8px; box-shadow: inset 0 0 0 1px #b99f72; cursor: pointer; }
+  .entry .pic { width: 68px; height: 44px; flex: none; background: #d9c8a2; border-radius: 3px; }
+  .entry .pic svg { width: 100%; height: 100%; }
+  .entry b { font: 700 14px/1.2 Georgia, serif; }
+  .entry .more { display: none; font-size: 13px; margin-top: 4px; }
+  .entry.open { align-items: flex-start; }
+  .entry.open .more { display: block; }
+  .entry.new { box-shadow: inset 0 0 0 1px #b99f72, 0 0 0 2px #e8c46a; }
+
+  .shelf { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .leafthumb { aspect-ratio: 3 / 4; border-radius: 4px; background: var(--paper); box-shadow: inset 0 0 0 1px #b99f72; padding: 6px; color: var(--ink); cursor: pointer; }
+  .leafthumb .pic { height: 52%; background: #d9c8a2; border-radius: 3px; }
+  .leafthumb .pic svg { width: 100%; height: 100%; }
+  .leafthumb b { display: block; text-align: center; font: 700 11.5px/1.2 Georgia, serif; margin-top: 6px; }
+  .leafthumb.locked { background: #3a3122; box-shadow: inset 0 0 0 1px #5b4a33; cursor: default; }
+  .leafthumb.locked .pic { background: transparent; opacity: .22; filter: grayscale(1) brightness(1.8); }
+  .leafthumb.locked b { visibility: hidden; }
+  .leafthumb.new { box-shadow: inset 0 0 0 1px #b99f72, 0 0 0 2px #e8c46a; }
+  .reader { position: absolute; left: 22px; right: 22px; top: 150px; display: none; z-index: 3; }
+  .reader.on { display: block; }
+
+  .sky { display: block; margin: 4px auto 6px; }
+  .sky .s { cursor: pointer; }
+  .sky .sel { fill: none; stroke: #e8c46a; stroke-width: 1.5; }
+
+  .note { max-width: 990px; margin: 28px auto 0; color: var(--dim); }
+  .note h3 { color: var(--text); font-size: 14px; margin: 18px 0 6px; }
+  .note li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<h1>The Manual Grows — the Clearing just won</h1>
+<div class="row" id="row"></div>
+
+<div class="note">
+  <h3>What all three share</h3>
+  <ul>
+    <li>No lesson names. A woken star holds a blank page instead of a typed-in name; the next lesson is known by what it will add, not what it is called.</li>
+    <li>The page a lesson files is the <b>general rule</b> (How to Play's voice), not the in-fight tip. The fight says "Iron Warden has no Mana"; the page says what Rest is. One source, two voices: the situational line stays in the fight.</li>
+    <li>The Clearing teaches six things, so it files six pages. That is the honest count, and the main thing to judge here: six taps after a fight in A and B, one glance in C.</li>
+    <li>Pictures are stand-ins. The real pages would draw with the tip-scene renderer (<code>tipScenes.ts</code>), the same staged fights How to Play already uses.</li>
+    <li>Pages the lessons never teach (Gems, the Guild Hall, the Academy, Cycles…) would file quietly the first time a run meets them. Not shown here.</li>
+  </ul>
+  <h3>The open question each one answers differently</h3>
+  <ul>
+    <li><b>A</b> shows only what you have. Nothing hints at the size of the book.</li>
+    <li><b>B</b> shows the shelf with blank leaves still to fill. The pull of the next part, but it is a visible count, without a number.</li>
+    <li><b>C</b> files pages under the stars that taught them. The dark stars are what is left, a count drawn as the sky you already know.</li>
+  </ul>
+</div>
+
+<script>
+const PIC = {
+  turn: `<svg viewBox="0 0 200 100"><circle cx="50" cy="42" r="16" fill="#7a6448"/><circle cx="150" cy="42" r="16" fill="#9a5a3a"/><rect x="20" y="72" width="60" height="12" rx="3" fill="#3a2c1c"/><rect x="120" y="72" width="60" height="12" rx="3" fill="#3a2c1c" opacity=".35"/><path d="M75 42h48" stroke="#3a2c1c" stroke-width="3" marker-end="url(#a)"/><defs><marker id="a" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#3a2c1c"/></marker></defs></svg>`,
+  types: `<svg viewBox="0 0 200 100"><rect x="30" y="28" width="140" height="30" rx="4" fill="#3a2c1c"/><text x="44" y="48" fill="#eadcbc" font-size="13" font-family="Georgia">Rock Toss</text><text x="150" y="48" fill="#eadcbc" font-size="13">45</text><path d="M68 70l10 12 10-12z" fill="#2f7a3a"/><path d="M112 82l10-12 10 12z" fill="#a33a2a"/></svg>`,
+  reading: `<svg viewBox="0 0 200 100"><rect x="30" y="18" width="140" height="22" rx="4" fill="#3a2c1c"/><rect x="40" y="46" width="120" height="44" rx="4" fill="#f4ead2" stroke="#3a2c1c"/><path d="M52 58h90M52 68h70M52 78h80" stroke="#7a6448" stroke-width="3"/><circle cx="160" cy="32" r="9" fill="none" stroke="#7a3d12" stroke-width="2"/></svg>`,
+  stages: `<svg viewBox="0 0 200 100"><text x="40" y="58" font-size="20" font-family="Georgia" fill="#3a2c1c">ATK</text><path d="M100 60l8-12 8 12zM120 60l8-12 8 12z" fill="#2f7a3a"/><text x="40" y="86" font-size="20" font-family="Georgia" fill="#3a2c1c">DEF</text><path d="M100 72l8 12 8-12z" fill="#a33a2a"/></svg>`,
+  foe: `<svg viewBox="0 0 200 100"><circle cx="58" cy="50" r="22" fill="#9a5a3a"/><path d="M62 58l8 8" stroke="#3a2c1c" stroke-width="3"/><rect x="96" y="20" width="84" height="62" rx="4" fill="#f4ead2" stroke="#3a2c1c"/><path d="M106 34h50M106 46h64M106 58h40M106 70h56" stroke="#7a6448" stroke-width="3"/></svg>`,
+  switch: `<svg viewBox="0 0 200 100"><rect x="34" y="20" width="40" height="40" rx="5" fill="#7a6448"/><rect x="126" y="44" width="40" height="40" rx="5" fill="#3f6f9a"/><path d="M80 34q46-16 60 6" fill="none" stroke="#3a2c1c" stroke-width="3"/><path d="M120 70q-46 16-60-6" fill="none" stroke="#3a2c1c" stroke-width="3"/><path d="M136 36l6 6 3-8zM64 68l-6-6-3 8z" fill="#3a2c1c"/></svg>`,
+  spread: `<svg viewBox="0 0 200 100"><circle cx="66" cy="40" r="18" fill="#9a5a3a"/><circle cx="134" cy="40" r="18" fill="#9a5a3a"/><rect x="44" y="72" width="112" height="9" rx="4" fill="#3a2c1c"/></svg>`,
+  rest: `<svg viewBox="0 0 200 100"><path d="M60 26l18 24-18 24-18-24z" fill="none" stroke="#3f6f9a" stroke-width="3"/><path d="M92 50h20" stroke="#3a2c1c" stroke-width="3"/><path d="M106 44l8 6-8 6" fill="none" stroke="#3a2c1c" stroke-width="3"/><path d="M140 26l18 24-18 24-18-24z" fill="#3f6f9a"/></svg>`,
+  shield: `<svg viewBox="0 0 200 100"><circle cx="100" cy="52" r="20" fill="#7a6448"/><circle cx="100" cy="52" r="32" fill="none" stroke="#5aa0c8" stroke-width="5" opacity=".9"/><path d="M150 20l-24 22" stroke="#9a5a3a" stroke-width="4"/></svg>`,
+  conduct: `<svg viewBox="0 0 200 100"><circle cx="100" cy="54" r="22" fill="#9a5a3a"/><path d="M104 14l-12 22h10l-8 20 18-26h-10l8-16z" fill="#c9a12a" stroke="#3a2c1c" stroke-width="1.5"/></svg>`,
+  map: `<svg viewBox="0 0 200 100"><circle cx="40" cy="70" r="9" fill="#3a2c1c"/><circle cx="100" cy="40" r="9" fill="#3a2c1c"/><circle cx="160" cy="62" r="9" fill="#3a2c1c"/><path d="M48 66L92 44M108 44L152 58" stroke="#7a6448" stroke-width="3" stroke-dasharray="4 4"/></svg>`,
+  bag: `<svg viewBox="0 0 200 100"><path d="M76 30h48l10 54H66z" fill="#7a6448"/><circle cx="90" cy="60" r="8" fill="#a33a2a"/><circle cx="112" cy="60" r="8" fill="#3f6f9a"/></svg>`,
+  items: `<svg viewBox="0 0 200 100"><rect x="40" y="30" width="34" height="34" rx="4" fill="none" stroke="#3a2c1c" stroke-width="2"/><rect x="83" y="30" width="34" height="34" rx="4" fill="#7a6448"/><rect x="126" y="30" width="34" height="34" rx="4" fill="none" stroke="#3a2c1c" stroke-width="2"/></svg>`,
+  levels: `<svg viewBox="0 0 200 100"><rect x="30" y="44" width="140" height="12" rx="6" fill="#d9c8a2" stroke="#3a2c1c"/><rect x="30" y="44" width="96" height="12" rx="6" fill="#c9a12a"/><text x="88" y="34" font-size="15" font-family="Georgia" fill="#3a2c1c">Lv 6</text></svg>`,
+  recruit: `<svg viewBox="0 0 200 100"><rect x="62" y="20" width="76" height="62" rx="4" fill="#f4ead2" stroke="#3a2c1c"/><path d="M74 36h52M74 48h40" stroke="#7a6448" stroke-width="3"/><circle cx="118" cy="68" r="9" fill="#a33a2a"/></svg>`,
+  guardian: `<svg viewBox="0 0 200 100"><circle cx="100" cy="52" r="30" fill="#5a3a5a"/><path d="M100 36v18" stroke="#d04aa8" stroke-width="4"/></svg>`,
+};
+
+const LESSONS = [
+  { id: 'hunt', pages: [
+    ['Turn by Turn', 'turn', 'Choose a move for each of your heroes, then watch the round play out in <b>Speed</b> order.'],
+    ['Types', 'types', 'The arrows under a move show how it hits each enemy: green <b>double</b>, red <b>half</b>.'],
+    ['Reading a Move', 'reading', '<b>Hold</b> any move to read all of it.'],
+    ['Raised and Lowered', 'stages', 'An arrow beside a stat means it was <b>raised</b> or <b>lowered</b> this fight. Arrows stay through a switch.'],
+  ]},
+  { id: 'clearing', pages: [
+    ['Reading a Foe', 'foe', '<b>Tap</b> any hero, yours or theirs, to read its stats, moves and passives.'],
+    ['Switching', 'switch', 'Switch trades a hero on the field for one on the <b>bench</b>. Benched heroes <b>regain Mana</b> every round.'],
+    ['Spread Moves', 'spread', 'One long bar under both enemies: the move hits <b>both</b>, each at full power.'],
+    ['Rest', 'rest', 'A hero out of Mana can <b>Rest</b>: it skips its turn and refills all of its Mana.'],
+    ['Shield', 'shield', 'A <b>Shield</b> is extra health that takes hits before HP does, until a hit breaks it.'],
+    ['Conduct', 'conduct', 'A <b>Conduct</b> mark makes the next Storm, Iron or Mech hit on its target deal <b>Bonus</b> damage.'],
+  ]},
+  { id: 'road', pages: [
+    ['The Map', 'map', ''], ['The Bag', 'bag', ''], ['Items', 'items', ''], ['Levels', 'levels', ''],
+  ]},
+  { id: 'fork', pages: [
+    ['Recruiting', 'recruit', ''], ['The Guardian', 'guardian', ''],
+  ]},
+];
+const CLEARING = LESSONS[1].pages;
+const TRAIL = [[136, 528], [92, 468], [264, 452], [197, 404]];
+const BOOK_SVG = `<svg viewBox="0 0 24 24"><path d="M4 5c3-1 6-1 8 1 2-2 5-2 8-1v14c-3-1-6-1-8 1-2-2-5-2-8-1z" fill="none" stroke="#e9dcc0" stroke-width="1.5"/><path d="M12 6v14" stroke="#e9dcc0" stroke-width="1.2"/></svg>`;
+const STAR_PATH = (cx, cy, r) => {
+  let d = '';
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 - Math.PI / 2; const rr = i % 2 ? r * .38 : r; d += (i ? 'L' : 'M') + (cx + rr * Math.cos(a)).toFixed(1) + ' ' + (cy + rr * Math.sin(a)).toFixed(1); }
+  return d + 'Z';
+};
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function pageHTML([title, pic, words]) {
+  return `<h3>${title}</h3><div class="pic">${PIC[pic]}</div><div class="words">${words}</div>`;
+}
+
+function titleSVG() {
+  const pent = [0, 1, 2, 3, 4].map((i) => { const a = i * 2 * Math.PI / 5 - Math.PI / 2; return [197 + 42 * Math.cos(a), 232 + 42 * Math.sin(a)]; });
+  const pentD = [0, 2, 4, 1, 3, 0].map((i, k) => (k ? 'L' : 'M') + pent[i][0].toFixed(1) + ' ' + pent[i][1].toFixed(1)).join('');
+  const lines = [0, 1, 2].map((i) => `<line class="tline" data-l="${i}" x1="${TRAIL[i][0]}" y1="${TRAIL[i][1]}" x2="${TRAIL[i + 1][0]}" y2="${TRAIL[i + 1][1]}"/>`).join('');
+  const stars = TRAIL.map(([x, y], i) => `<g data-s="${i}"><circle class="halo" cx="${x}" cy="${y}" r="12" style="display:none"/><path class="tstar" d="${STAR_PATH(x, y, 8)}"/>
+      <g class="blank" transform="translate(${x + 12} ${y - 26})"><rect width="14" height="18" rx="2" fill="#eadcbc" opacity=".85"/><path d="M3 5h8M3 9h6M3 13h7" stroke="#b99f72" stroke-width="1.2"/></g></g>`).join('');
+  return `<svg width="394" height="780" viewBox="0 0 394 780" style="position:absolute;inset:0">
+    <circle class="sigil" cx="197" cy="232" r="132" stroke-dasharray="${2 * Math.PI * 132 - 35} 35" transform="rotate(${90 + 7.5} 197 232)"/>
+    <circle class="sigil" cx="197" cy="232" r="124" style="stroke:rgba(232,196,106,.14)"/>
+    <circle cx="197" cy="232" r="64" fill="#0b0f1c" stroke="rgba(232,196,106,.4)"/>
+    <path d="${pentD}" fill="none" stroke="rgba(255,210,122,.55)" stroke-width="1.2"/>
+    ${pent.map(([x, y], i) => `<path d="${STAR_PATH(x, y, i === 0 ? 6 : 4.5)}" fill="${i === 0 ? '#ffe7a8' : 'rgba(220,228,255,.55)'}"/>`).join('')}
+    ${[[197, 100], [329, 232], [65, 232]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="23" fill="#0b0f1c" stroke="rgba(232,196,106,.3)" stroke-dasharray="2 3"/>`).join('')}
+    <path d="M197 364 L197 404" class="tline"/>
+    ${lines}${stars}
+  </svg>`;
+}
+
+function setTrail(screen, state) {
+  // state: per star 'lit' | 'open' | 'socket'
+  state.forEach((s, i) => {
+    const g = screen.querySelector(`[data-s="${i}"]`);
+    const star = g.querySelector('.tstar');
+    star.setAttribute('class', 'tstar' + (s === 'lit' ? ' lit' : s === 'socket' ? ' socket' : ''));
+    g.querySelector('.halo').style.display = s === 'open' ? '' : 'none';
+    g.querySelector('.blank').classList.toggle('on', s === 'open' || s === 'socket');
+  });
+  [0, 1, 2].forEach((i) => screen.querySelector(`[data-l="${i}"]`).setAttribute('class', 'tline' + (state[i + 1] === 'lit' ? ' lit' : '')));
+}
+
+async function lightClearing(screen) {
+  const g = screen.querySelector('[data-s="1"]');
+  g.querySelector('.halo').style.display = 'none';
+  g.querySelector('.blank').classList.remove('on');
+  const star = g.querySelector('.tstar');
+  star.setAttribute('class', 'tstar charging');
+  await wait(800);
+  star.setAttribute('class', 'tstar lit');
+  const [x, y] = TRAIL[1];
+  const svg = screen.querySelector('svg');
+  const b = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  b.setAttribute('cx', x); b.setAttribute('cy', y); b.setAttribute('r', 10); b.setAttribute('class', 'burst');
+  svg.appendChild(b); setTimeout(() => b.remove(), 800);
+  screen.querySelector('[data-l="0"]').setAttribute('class', 'tline lit');
+  await wait(500);
+}
+
+async function wakeRoad(screen) {
+  screen.querySelector('[data-l="1"]').setAttribute('class', 'tline draw');
+  await wait(700);
+  const g = screen.querySelector('[data-s="2"]');
+  g.querySelector('.tstar').setAttribute('class', 'tstar');
+  g.querySelector('.halo').style.display = '';
+  g.querySelector('.blank').classList.add('on');
+}
+
+function phone(col, opts) {
+  col.innerHTML = `<h2>${opts.title}</h2><p>${opts.blurb}</p><div class="phone"><div class="screen">
+      ${titleSVG()}
+      <div class="wordmark">TITANPACT</div><div class="gear">⚙</div><div class="book">${BOOK_SVG}</div>
+      <div class="press">Play the next lesson</div>
+      <div class="ftr"><span>Collection</span><span>Observatory</span></div>
+      <div class="blip"></div>
+      <div class="layer"></div>
+      <div class="manual"><div class="bar"><span class="x">‹</span>How to Play</div><div class="body"></div><div class="reader"></div></div>
+    </div></div>
+    <div class="demo"><button class="play">Win the Clearing</button><button class="open">Open the manual</button><button class="reset">Reset</button></div>`;
+  const screen = col.querySelector('.screen');
+  const ctx = { screen, earned: new Set(['hunt']), fresh: new Set() };
+  const reset = () => {
+    ctx.earned = new Set(['hunt']); ctx.fresh = new Set();
+    setTrail(screen, ['lit', 'open', 'socket', 'socket']);
+    screen.querySelector('.layer').innerHTML = '';
+    screen.querySelector('.manual').classList.remove('on');
+    screen.querySelector('.blip').classList.remove('on');
+    screen.querySelector('.book').classList.remove('glow');
+    col.querySelector('.play').disabled = false;
+    opts.reset?.(ctx);
+  };
+  col.querySelector('.reset').onclick = reset;
+  col.querySelector('.play').onclick = async () => {
+    reset(); col.querySelector('.play').disabled = true;
+    await opts.play(ctx);
+  };
+  const openManual = () => { screen.querySelector('.manual').classList.add('on'); opts.manual(ctx, screen.querySelector('.manual .body'), screen.querySelector('.manual .reader')); };
+  col.querySelector('.open').onclick = openManual;
+  screen.querySelector('.book').onclick = openManual;
+  screen.querySelector('.manual .x').onclick = () => { screen.querySelector('.manual').classList.remove('on'); screen.querySelector('.book').classList.remove('glow'); };
+  reset();
+  return ctx;
+}
+
+const tapOnce = (el) => new Promise((r) => el.addEventListener('click', r, { once: true }));
+async function blip(screen, text) {
+  const b = screen.querySelector('.blip'); b.textContent = text; b.classList.add('on');
+  await wait(2600); b.classList.remove('on');
+}
+
+/* ---------- A: pages off the star ---------- */
+async function playA(ctx) {
+  const { screen } = ctx;
+  await lightClearing(screen);
+  const layer = screen.querySelector('.layer');
+  const [sx, sy] = TRAIL[1];
+  const cards = CLEARING.map((p, i) => {
+    const c = document.createElement('div');
+    c.className = 'card page'; c.innerHTML = pageHTML(p);
+    c.style.transform = `translate(${sx - 145}px, ${sy - 120}px) scale(.08)`; c.style.opacity = '0';
+    layer.appendChild(c); return c;
+  });
+  const ticks = document.createElement('div'); ticks.className = 'count-tick';
+  ticks.innerHTML = CLEARING.map(() => '<i></i>').join(''); layer.appendChild(ticks);
+  await wait(60);
+  const fan = (k) => cards.forEach((c, i) => {
+    if (i < k) return;
+    const d = i - k; c.style.zIndex = 50 - i;
+    c.style.opacity = d > 3 ? '0' : '1';
+    c.style.transform = `translate(${52 + d * 6}px, ${200 + d * 9}px) rotate(${d * 3}deg) scale(${1 - d * .04})`;
+  });
+  cards.forEach((c, i) => setTimeout(() => fan(0), i * 90));
+  await wait(500 + cards.length * 90);
+  ticks.classList.add('on');
+  const book = screen.querySelector('.book');
+  for (let k = 0; k < cards.length; k++) {
+    await tapOnce(cards[k]);
+    const c = cards[k];
+    c.classList.add('file');
+    c.style.transform = 'translate(-118px, -128px) rotate(-14deg) scale(.07)'; c.style.opacity = '0';
+    ticks.children[k].classList.add('on');
+    setTimeout(() => { book.classList.remove('catch'); void book.offsetWidth; book.classList.add('catch'); }, 420);
+    fan(k + 1);
+  }
+  ctx.earned.add('clearing'); ctx.fresh = new Set(CLEARING.map((p) => p[0]));
+  await wait(500); ticks.classList.remove('on');
+  book.classList.add('glow');
+  await wakeRoad(screen);
+  blip(screen, 'Six new pages! The next star has a blank one waiting.');
+}
+
+function manualA(ctx, body) {
+  body.innerHTML = LESSONS.filter((l) => ctx.earned.has(l.id)).map((l, li) => `
+    <div class="chap"><svg viewBox="0 0 22 22"><path d="${STAR_PATH(11, 11, 8)}" fill="#ffe7a8"/></svg></div>
+    ${l.pages.map((p) => `<div class="entry${ctx.fresh.has(p[0]) ? ' new' : ''}"><div class="pic">${PIC[p[1]]}</div><div><b>${p[0]}</b><div class="more">${p[2]}</div></div></div>`).join('')}`).join('');
+  body.querySelectorAll('.entry').forEach((e) => e.onclick = () => { e.classList.toggle('open'); e.classList.remove('new'); });
+}
+
+/* ---------- B: the book opens over the Pact ---------- */
+async function playB(ctx) {
+  const { screen } = ctx;
+  await lightClearing(screen);
+  const layer = screen.querySelector('.layer');
+  const tome = document.createElement('div'); tome.className = 'tome';
+  tome.innerHTML = CLEARING.map((p, i) => `<div class="leaf" style="z-index:${20 - i}"><h3>${p[0]}</h3><div class="pic">${PIC[p[1]]}</div>
+      <div class="ink">${p[2].split(' ').map((w) => `<span>${w} </span>`).join('')}</div><div class="folio">${'·'.repeat(i + 1)}</div></div>`).join('')
+    + `<div class="cover" style="z-index:30">${BOOK_SVG}</div>`;
+  layer.appendChild(tome);
+  const [sx, sy] = TRAIL[1];
+  tome.animate([
+    { opacity: 0, transform: `translate(${sx - 197}px, ${sy - 350}px) scale(.06)` },
+    { opacity: 1, transform: 'none' },
+  ], { duration: 700, easing: 'cubic-bezier(.3,.7,.2,1)', fill: 'forwards' });
+  await wait(800);
+  const cover = tome.querySelector('.cover');
+  cover.style.transformOrigin = '0 50%'; cover.style.transition = 'transform .7s cubic-bezier(.5,0,.3,1), opacity .3s .4s';
+  cover.style.transform = 'rotateY(-180deg)'; cover.style.opacity = '0';
+  await wait(600);
+  tome.classList.add('on');
+  const leaves = [...tome.querySelectorAll('.leaf')];
+  for (let k = 0; k < leaves.length; k++) {
+    const leaf = leaves[k];
+    leaf.classList.add('inked');
+    const words = [...leaf.querySelectorAll('.ink span')];
+    for (const w of words) { await wait(45); w.classList.add('on'); }
+    await tapOnce(tome);
+    if (k < leaves.length - 1) { leaf.classList.add('turned'); leaf.style.opacity = '0'; leaf.style.transition += ', opacity .2s .5s'; await wait(250); }
+  }
+  tome.animate([
+    { opacity: 1, transform: 'none' },
+    { opacity: 0, transform: 'translate(-180px, -195px) scale(.08)' },
+  ], { duration: 600, easing: 'cubic-bezier(.6,0,.8,.4)', fill: 'forwards' });
+  await wait(600); tome.remove();
+  ctx.earned.add('clearing'); ctx.fresh = new Set(CLEARING.map((p) => p[0]));
+  const book = screen.querySelector('.book'); book.classList.add('glow');
+  await wakeRoad(screen);
+  blip(screen, 'Six more pages written. Look how many are still blank!');
+}
+
+function manualB(ctx, body, reader) {
+  body.innerHTML = `<div class="shelf">${LESSONS.flatMap((l) => l.pages.map((p) => ctx.earned.has(l.id)
+    ? `<div class="leafthumb${ctx.fresh.has(p[0]) ? ' new' : ''}" data-p="${p[0]}"><div class="pic">${PIC[p[1]]}</div><b>${p[0]}</b></div>`
+    : `<div class="leafthumb locked"><div class="pic">${PIC[p[1]]}</div><b>?</b></div>`)).join('')}</div>`;
+  const all = LESSONS.flatMap((l) => l.pages);
+  body.querySelectorAll('.leafthumb:not(.locked)').forEach((t) => t.onclick = () => {
+    t.classList.remove('new');
+    reader.innerHTML = `<div class="page">${pageHTML(all.find((p) => p[0] === t.dataset.p))}</div>`;
+    reader.classList.add('on');
+    reader.onclick = () => reader.classList.remove('on');
+  });
+}
+
+/* ---------- C: learned on the victory screen ---------- */
+async function playC(ctx) {
+  const { screen } = ctx;
+  const layer = screen.querySelector('.layer');
+  const v = document.createElement('div'); v.className = 'victory on';
+  v.innerHTML = `<div class="head">VICTORY</div><div class="heroes"><i></i><i></i><i></i><i></i></div>
+    <div class="learned"><h4>Learned</h4><div class="grid">${CLEARING.map((p) => `<div class="tile"><div class="pic">${PIC[p[1]]}</div><b>${p[0]}</b></div>`).join('')}</div></div>
+    <div class="zoom"></div><div class="go">Continue</div>`;
+  layer.appendChild(v);
+  await wait(500);
+  const tiles = [...v.querySelectorAll('.tile')];
+  for (const t of tiles) { t.classList.add('on'); await wait(220); }
+  const zoom = v.querySelector('.zoom');
+  tiles.forEach((t, i) => t.onclick = () => { zoom.innerHTML = `<div class="page">${pageHTML(CLEARING[i])}</div>`; zoom.classList.add('on'); });
+  zoom.onclick = () => zoom.classList.remove('on');
+  const go = v.querySelector('.go'); go.classList.add('on');
+  await tapOnce(go);
+  v.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' });
+  await wait(400); v.remove();
+  ctx.earned.add('clearing'); ctx.fresh = new Set(CLEARING.map((p) => p[0]));
+  await lightClearing(screen);
+  screen.querySelector('.book').classList.add('glow');
+  await wakeRoad(screen);
+  blip(screen, "That's two stars of the book. The next one's still dark!");
+}
+
+function manualC(ctx, body) {
+  let sel = ctx.fresh.size ? 1 : 0;
+  const pos = [[40, 74], [96, 44], [168, 52], [228, 22]];
+  const render = () => {
+    const state = (i) => (i === 0 || (i === 1 && ctx.earned.has('clearing'))) ? 'lit' : 'dark';
+    body.innerHTML = `<svg class="sky" width="320" height="100" viewBox="0 0 300 96">
+        ${[0, 1, 2].map((i) => `<line x1="${pos[i][0]}" y1="${pos[i][1]}" x2="${pos[i + 1][0]}" y2="${pos[i + 1][1]}" stroke="${state(i + 1) === 'lit' ? 'rgba(255,210,122,.8)' : 'rgba(205,214,255,.16)'}"/>`).join('')}
+        ${pos.map(([x, y], i) => `<g class="s" data-i="${i}">${i === sel ? `<circle class="sel" cx="${x}" cy="${y}" r="15"/>` : ''}<circle cx="${x}" cy="${y}" r="16" fill="transparent"/>
+          <path d="${STAR_PATH(x, y, 9)}" fill="${state(i) === 'lit' ? '#ffe7a8' : 'rgba(205,214,255,.25)'}"/></g>`).join('')}
+        <g transform="translate(272 70)"><circle r="14" fill="none" stroke="rgba(232,196,106,.3)" stroke-dasharray="2 3"/></g>
+      </svg>
+      ${state(sel) === 'lit' ? LESSONS[sel].pages.map((p) => `<div class="entry${ctx.fresh.has(p[0]) ? ' new' : ''}"><div class="pic">${PIC[p[1]]}</div><div><b>${p[0]}</b><div class="more">${p[2]}</div></div></div>`).join('')
+        : `<div style="height:220px;display:grid;place-items:center;opacity:.35">${STAR_SVG_BIG}</div>`}`;
+    body.querySelectorAll('.s').forEach((s) => s.onclick = () => { sel = +s.dataset.i; render(); });
+    body.querySelectorAll('.entry').forEach((e) => e.onclick = () => { e.classList.toggle('open'); e.classList.remove('new'); ctx.fresh.delete(e.querySelector('b').textContent); });
+  };
+  render();
+}
+const STAR_SVG_BIG = `<svg width="60" height="60" viewBox="0 0 60 60"><path d="${STAR_PATH(30, 30, 24)}" fill="none" stroke="#cdd6ff" stroke-dasharray="3 3"/></svg>`;
+
+const row = document.getElementById('row');
+const OPTS = [
+  { title: 'A · Pages off the star', play: playA, manual: manualA,
+    blurb: 'On the title, the star lights and its pages rise off it as a fan of cards. Tap each to read it and file it into the book in the corner. The book shows only what you have, filed under the star that taught it.' },
+  { title: 'B · The book opens', play: playB, manual: manualB,
+    blurb: 'On the title, the star lights and the book itself rises and opens over the Pact; each new page inks in word by word, and a tap turns it. The book is a shelf of leaves: the ones still to come stand blank, their picture a faint ghost.' },
+  { title: 'C · Learned, then filed', play: playC, manual: manualC,
+    blurb: 'The pages land on the lesson\'s own victory screen, all six at a glance, any one tapped to read; the title then only lights the star. The book\'s contents are the trail itself: tap a star for its pages, a dark star is what is left.' },
+];
+OPTS.forEach((o) => { const col = document.createElement('div'); col.className = 'col'; row.appendChild(col); phone(col, o); });
+</script>
+</body>
+</html>
