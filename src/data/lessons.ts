@@ -1,7 +1,6 @@
 // First Light's lessons (docs/the-sky.md §3): the tutorial fights and acts that A Tale of Valor was
-// built on, with its scenes and its cast's lines cut. A lesson teaches by its guided taps, its control
-// tips and its numbers, and Blip, who has watched each guided fight before, says why each round's taps
-// are the ones. Ren and Will are recast with the base roster's Iron Warden and Raiju (2026-10-24, per
+// built on, with its scenes cut. A lesson teaches by its guided taps, its control tips (How to Play's
+// own pages) and its numbers, and the heroes on the field call each round's plan. Ren and Will are recast with the base roster's Iron Warden and Raiju (2026-10-24, per
 // user direction). Each lesson is a one-beat chapter in its own book, so the Story machinery plays it unchanged.
 
 import type { StoryAct, StoryDefinition, StoryFight } from '../run/story';
@@ -171,7 +170,10 @@ export const LESSONS: StoryDefinition = {
                     {
                       round: 1,
                       point: true,
-                      blip: ["Ooh, I've watched this telling before! I know what these two do next.", "The fox always leaps first. Hit it with both, and it never leaps again."],
+                      lines: [
+                        { by: 'valor', text: "That fox is quicker than us. It'll strike first, whatever we do." },
+                        { by: 'valor', text: "Both of us on it, Fang. It won't strike twice." },
+                      ],
                       tips: [
                         {
                           id: 'story.welcome',
@@ -186,9 +188,9 @@ export const LESSONS: StoryDefinition = {
                     {
                       round: 2,
                       point: true,
-                      blip: [
-                        "Its breath lowered both our Attacks! Fang's faster, so his Howl lifts them back before Valor swings.",
-                        "The stag's weak to Iron. If Valor's fist lands this round, it never breathes on us again.",
+                      lines: [
+                        { by: 'valor', text: "Its breath sapped us both. Fang, you're faster: howl us back up before I swing." },
+                        { by: 'valor', text: 'Iron splits ice. One clean hit, and that stag never breathes again.' },
                       ],
                       tips: [manualPage('howto.targets'), manualPage('howto.stages'), manualPage('howto.types')],
                     },
@@ -212,33 +214,39 @@ export const LESSONS: StoryDefinition = {
             {
               round: 1,
               point: true,
-              blip: ["I know this one too! The Ravager jumps Valor, and the Slabback throws a rock at Fang."],
+              lines: [{ by: 'valor', text: "The Ravager's eyeing me, and that Slabback has a rock for Fang. Hit them first!" }],
             },
             {
               round: 2,
               point: true,
-              blip: ["Next they both go for Valor. Swap her and Fang out for the two waiting on the bench."],
+              lines: [{ by: 'valor', text: "They're both coming for me now. Warden, Raiju: take our places!" }],
               tips: [manualPage('howto.bench')],
             },
             {
               round: 3,
               point: true,
-              blip: [
-                "The Warden's Gale Sever is physical: it swings at Defense, and the Slabback's is huge. But it hits both, and Iron splits stone.",
-                "Raiju's Zap is magic, so it goes at the Ravager's Wisdom instead. Keep it cheap: you'll want that Mana soon.",
+              lines: [
+                { by: 'warden', text: "My blade has to cut through that Slabback's hide. Good thing Iron splits stone, and I'll catch them both." },
+                { by: 'raiju', text: "My Zap is magic: it goes around the Ravager's hide, at its mind. And it's cheap. I'll need the Mana." },
               ],
               tips: [manualPage('howto.kinds')],
             },
             {
               round: 4,
               point: true,
-              blip: ["The Warden's run dry, and the Slabback's about to throw at it. Ice first, then Rest."],
+              lines: [
+                { by: 'warden', text: "I'm out of Mana, and that Slabback's winding up a throw at me." },
+                { by: 'raiju', text: "Then I'll coat you in ice, and you Rest behind it." },
+              ],
               tips: [manualPage('howto.rest'), manualPage('howto.statuses'), manualPage('howto.status.Shield')],
             },
             {
               round: 5,
               point: true,
-              blip: ["Raiju's quicker, so the mark lands before the Warden swings. Boom!", "And that's as far as I've seen. Out there, I won't know what they'll do either!"],
+              lines: [
+                { by: 'raiju', text: "I'm faster. I'll mark the Slabback, Warden, and you set it off!" },
+                { by: 'warden', text: 'Iron on a storm mark. Stand back.' },
+              ],
               tips: [manualPage('howto.status.Conduct')],
             },
           ],

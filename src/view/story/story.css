@@ -196,10 +196,67 @@
   height: 16px;
 }
 
-/* --- Blip watching a lesson fight (FightBlip): over the field, under the tips, catching only its own pokes --- */
-.fight-blip {
+/* --- A lesson hero calling the round's plan (HeroCallout): a bubble on the horizon, its tail at the speaker --- */
+.hero-callout {
   position: absolute;
-  inset: 0;
-  z-index: 54;
+  z-index: 6;
+  bottom: calc(50% + 6px);
+  left: 12px;
+  max-width: 80%;
+  padding: 7px 11px 8px;
+  border-radius: 10px;
+  background: #f3ecda;
+  box-shadow: 0 0 0 2px #3a2412, 0 6px 14px rgba(0, 0, 0, 0.5);
+  color: #2a1a0c;
+  font: 14px/1.35 Georgia, serif;
   pointer-events: none;
+  animation: hero-callout-in 0.22s ease-out;
+}
+
+.hero-callout.is-from-right {
+  left: auto;
+  right: 12px;
+}
+
+/* The tail points down at the speaker, on its side of the field. */
+.hero-callout::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 26px;
+  border: 9px solid transparent;
+  border-top-color: #f3ecda;
+  border-bottom: 0;
+  filter: drop-shadow(0 2px 0 #3a2412);
+}
+
+.hero-callout.is-from-right::after {
+  left: auto;
+  right: 26px;
+}
+
+.hero-callout-name {
+  display: block;
+  margin: 0 0 2px;
+  color: #8a3f10;
+  font: 800 10px/1 system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-callout-untyped {
+  visibility: hidden;
+}
+
+@keyframes hero-callout-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-callout {
+    animation: none;
+  }
 }

@@ -84,7 +84,7 @@ import { applyVersusReplacements, otherSide, placeVersusLeads, replacementsOwed,
 import { TurnClock, useTurnClock } from '../versus/TurnClock';
 import { cueFor, guidedAction, scriptedEnemyActions, withStoryEnds, type StoryCue, type StoryScript } from '../../run/story';
 import { GuideHand } from '../story/GuideHand';
-import { FightBlip } from '../story/FightBlip';
+import { HeroCallout } from '../story/HeroCallout';
 import type { VersusChannel } from '../versus/versusChannel';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
@@ -1880,6 +1880,19 @@ export function FightScreen({
         <OrderTrack entries={orderTrack} onInspect={resolving ? undefined : sayOrder} />
         <EnemyPips combat={combat} side={AI_SIDE} />
 
+        {/* A lesson's hero calls the round's plan, over its own side of the field. */}
+        {cueShown && canAct && storyCue?.lines && (
+          <HeroCallout
+            key={combat.round}
+            lines={storyCue.lines}
+            sideOf={(rosterId) => {
+              const slot = combat.active[PLAYER_SIDE].indexOf(combatantIdFor(PLAYER_SIDE, rosterId));
+              return slot < 0 ? null : slot === 0 ? 'left' : 'right';
+            }}
+            nameOf={(rosterId) => allCombatants[combat.combatants[combatantIdFor(PLAYER_SIDE, rosterId)]?.heroId]?.name ?? ''}
+          />
+        )}
+
         {/* What a tapped sprite says, for a moment, on the horizon — the band the Pact warning takes when it is due. */}
         {fieldNote && !resolving && (
           <div key={fieldNote.key} className="field-note" role="status" onAnimationEnd={() => setFieldNote(null)}>
@@ -2737,9 +2750,6 @@ export function FightScreen({
 
       {fightTip && tips && <TipOverlay key={fightTip.id} tip={fightTip} onDone={() => tips.onSeen(fightTip.id)} />}
       {storyTip && storyTips && <TipOverlay key={storyTip.id} tip={storyTip} onDone={() => storyTips.onSeen(storyTip.id)} />}
-      {storyCues?.some((cue) => cue.blip) && (
-        <FightBlip round={combat.round} lines={cueShown && canAct ? storyCue?.blip : undefined} won={winner === PLAYER_SIDE} />
-      )}
       {cueShown && storyCue?.point && guide && (
         <GuideHand
           selector={

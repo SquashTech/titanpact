@@ -81,15 +81,19 @@ test('lessons: every cue teaches, and the party is the base roster bar the lesso
   }
 });
 
-test('lessons: Blip says why on every guided round', () => {
+test('lessons: a hero on the field calls the plan on every guided round', () => {
   for (const chapter of LESSONS.chapters) {
     const beat = chapter.beats[0];
     const cues = beat.kind === 'fight' ? beat.cues ?? [] : beat.kind === 'act' ? beat.act.rows.flat().find((n) => n.script)?.cues ?? [] : [];
     if (beat.kind === 'act' && !beat.act.rows.flat().some((n) => n.script)) continue;
     const fight = fightOf(chapter.id);
+    const { boards } = play(fight);
     for (let round = 1; round <= fight.guide.length; round++) {
-      const blip = cues.find((cue) => cue.round === round)?.blip;
-      assert.ok(blip?.length, `${chapter.id} round ${round} is guided with no word from Blip`);
+      const lines = cues.find((cue) => cue.round === round)?.lines;
+      assert.ok(lines?.length, `${chapter.id} round ${round} is guided with no hero calling it`);
+      for (const line of lines) {
+        assert.ok(boards[round - 1].active.A.includes(`A:${line.by}`), `${chapter.id} round ${round}: ${line.by} speaks from off the field`);
+      }
     }
   }
 });

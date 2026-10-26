@@ -13,11 +13,10 @@
 >   for new ones. It **thinks**, and the player reads its thoughts: meta and fun, never serious.
 > - **The light lives outside runs.** It appears in the sky, while the player browses scenarios,
 >   and at the very beginning. Inside a run you're just playing Titanpact. Its thoughts appear
->   passively and are never tapped through. **One exception, the guided lessons** (2026-10-25, per
->   user direction): Blip has watched those tellings before, so it sits by the field and says what
->   the foes do next and why each round's guided taps are the ones (`StoryCue.blip`, `FightBlip`).
->   The Clearing's last round closes the frame, saying it won't know what foes do from here on,
->   so nobody expects a real fight to preview the enemy's moves.
+>   passively and are never tapped through. **Blip stays out of fights** (2026-10-26, per user
+>   direction, reversing the 2026-10-25 exception that had it narrate the guided lessons): in
+>   combat the heroes speak. A hero on the field calls each guided round's plan in a speech bubble
+>   over its side (`StoryCue.lines`, `HeroCallout`), reading the foes the way a fighter would.
 > - The currency is **Stardust**, in larger increments (100 a draw), never sold.
 
 ---
@@ -168,7 +167,7 @@ filed"). Content `src/data/howToPlay.ts`, mechanism `src/run/manual.ts`.
 - An account that played before the manual (`Profile.manualComplete`, set on decode) has every page.
 
 **Watch in playtest:** the Clearing teaches six pages, and the Hunt shows three tips at the top of
-its round 2. The Clearing's Physical and Magical is taught in Blip's words more than by its numbers:
+its round 2. The Clearing's Physical and Magical is taught in the heroes' words more than by its numbers:
 the Ravager's Defense and Wisdom are equal, and the Slabback resists Raiju's Storm. A foe whose
 Defense far outweighs its Wisdom would show it; that is a re-script of the fight.
 
