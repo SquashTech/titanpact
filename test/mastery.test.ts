@@ -121,17 +121,12 @@ test('mastery: the Gem Cache sits in the reward pool at the seat Ichor held, and
   assert.ok(availableEvolution(progressionTable, run.roster[0]));
 });
 
-test('mastery: the Scribe is a forced row every act, never in the reward pool', () => {
-  assert.ok(MAP_NODE_TYPES.includes('scribeReward'));
+test('mastery: the Lapidary has no row on the map and is never in the reward pool', () => {
+  assert.ok(MAP_NODE_TYPES.includes('scribeReward'), 'the type stays for an older save');
   assert.ok(!REWARD_WEIGHTS.some(([type]) => type === 'scribeReward'), 'absent from REWARD_WEIGHTS');
-  for (const act of [1, 2, 3, 4]) {
-    const map = generateMap(7, act);
-    const scribes = Object.values(map.nodes).filter((n) => n.type === 'scribeReward');
-    assert.strictEqual(scribes.length, 1, `act ${act}`);
-    const fork = map.rows[scribes[0].row + 1].map((id) => map.nodes[id].type).sort();
-    assert.deepStrictEqual(fork, ['elite', 'skirmish'], `act ${act}: the Scribe sits right above the fork`);
+  for (const act of [1, 2, 3, 4, FINALE_ACT]) {
+    assert.strictEqual(Object.values(generateMap(7, act).nodes).filter((n) => n.type === 'scribeReward').length, 0, `act ${act}`);
   }
-  assert.strictEqual(Object.values(generateMap(7, FINALE_ACT).nodes).filter((n) => n.type === 'scribeReward').length, 0, 'the finale has no Scribe');
 });
 
 test('mastery: pips round-trip through a save', () => {

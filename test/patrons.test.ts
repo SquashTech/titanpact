@@ -34,11 +34,11 @@ function mappedRun(seed = 7, actNumber = 1): RunState {
   return addRosterEntry(run, createRosterEntry('b', 'cinderKnight', heroes.cinderKnight.moveIds));
 }
 
-test('patrons: the seats are rows 2 and 6 of acts 1-4, numbered 0-7 down the run', () => {
-  assert.deepStrictEqual(PATRON_ROWS, [2, 6]);
+test('patrons: the seats are rows 2 and 5 of acts 1-4, numbered 0-7 down the run', () => {
+  assert.deepStrictEqual(PATRON_ROWS, [2, 5]);
   assert.strictEqual(seatIndexFor(1, 2, PATRON_ROWS), 0);
-  assert.strictEqual(seatIndexFor(1, 6, PATRON_ROWS), 1);
-  assert.strictEqual(seatIndexFor(4, 6, PATRON_ROWS), SEAT_COUNT - 1);
+  assert.strictEqual(seatIndexFor(1, 5, PATRON_ROWS), 1);
+  assert.strictEqual(seatIndexFor(4, 5, PATRON_ROWS), SEAT_COUNT - 1);
   assert.strictEqual(seatIndexFor(1, 3, PATRON_ROWS), null);
   assert.strictEqual(seatIndexFor(5, 2, PATRON_ROWS), null, 'the finale has no seat');
 });

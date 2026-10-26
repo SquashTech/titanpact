@@ -50,7 +50,7 @@ rest are lost and the screen says so.
 
 | Faucet | Pays | Was |
 |---|---|---|
-| **The Lapidary** (the forced row, `scribeReward`, every act 1–4) | **3 Gems** (`SCRIBE_GEMS`) | 2 heroes × 2 pips |
+| ~~**The Lapidary** (the forced row, `scribeReward`, every act 1–4)~~ **Off the map 2026-10-26** (per user direction, for playtest: its row is gone from every act, the node type kept for old saves) | ~~**3 Gems** (`SCRIBE_GEMS`)~~ | 2 heroes × 2 pips |
 | **Gem Cache** (`scrollReward`, weight **45**) | **3 Gems** (`GEM_CACHE_COUNT`; 4 until 2026-10-15, cut per user direction) | 3 pips |
 | **A won fight** (`GEM_DROP`, `rollGemDrop`) | **Elite and Guardian 2, always; opener / Skirmish 1 at 20%; the finale none** | never |
 | **The shelf** (Guild Hall and Vigil) | **6 single Gems, six different stats**, shown before the buy, each sold once a visit, **3g a point** (15g through Act 2, 30g after) | 2 pips |

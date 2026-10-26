@@ -1267,9 +1267,9 @@ export function App() {
     fallback.current = null;
     const base = createLevel4TestRun();
     // Stood on the fork, so the Academy right after it is the next step.
-    const run = { ...base, currentNodeId: base.map!.rows[5][0] };
+    const run = { ...base, currentNodeId: base.map!.rows[4][0] };
     setPlayerRun(run);
-    setScreen({ kind: 'academyNode', nodeId: run.map!.rows[6][0], seed: randomSeed() });
+    setScreen({ kind: 'academyNode', nodeId: run.map!.rows[5][0], seed: randomSeed() });
   }
 
   /** TEMPORARY DEV/TEST — see createTitanEyesTestRun. */

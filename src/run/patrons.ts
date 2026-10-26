@@ -57,7 +57,7 @@ export interface PatronState {
 }
 
 export const SEATS_PER_ACT = 2;
-/** The seats are rows 2 and 6 (run/map.ts PATRON_ROWS) of acts 1–4: eight a run. */
+/** The seats are rows 2 and 5 (run/map.ts PATRON_ROWS) of acts 1–4: eight a run. */
 export const SEAT_COUNT = 8;
 /** Trust a patron can reach on the road; the fifth is the capstone. */
 export const ROAD_TRUST_CAP = 4;
@@ -82,7 +82,7 @@ export function trustOf(run: Pick<RunState, 'patrons'>, patronId: string): numbe
   return patronStateOf(run).trust[patronId] ?? 0;
 }
 
-/** The seat a node is, or null: rows 2 and 6 of acts 1–4, numbered 0–7 down the run. */
+/** The seat a node is, or null: rows 2 and 5 of acts 1–4, numbered 0–7 down the run. */
 export function seatIndexFor(actNumber: number, row: number, patronRows: readonly number[]): number | null {
   const within = patronRows.indexOf(row);
   if (within < 0 || actNumber < 1 || actNumber > SEAT_COUNT / SEATS_PER_ACT) return null;
