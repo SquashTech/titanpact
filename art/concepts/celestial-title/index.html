@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Celestial Title</title>
+<style>
+  :root { color-scheme: dark; --bg: #07080c; --text: #e9dcc0; --dim: #8f8a7c; --gold: #e8c46a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 20px 16px 48px; background: var(--bg); color: var(--text); font: 13px/1.45 ui-sans-serif, system-ui, Segoe UI, sans-serif; }
+  h1 { text-align: center; font: 700 19px/1.2 Georgia, serif; letter-spacing: .12em; margin: 10px 0 6px; color: #f0e2bd; }
+  .lead { text-align: center; color: var(--dim); margin: 0 auto 18px; max-width: 760px; }
+  .row { display: flex; flex-wrap: wrap; gap: 22px; justify-content: center; margin-bottom: 40px; }
+  .col { width: 300px; }
+  .col h2 { margin: 0 0 2px; font-size: 15px; letter-spacing: .04em; }
+  .col p { margin: 0 0 10px; color: var(--dim); min-height: 76px; }
+  .phone { width: 300px; height: 618px; border-radius: 16px; border: 1px solid #262a33; overflow: hidden; position: relative; background: #05060a; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .ui { position: absolute; inset: 0; pointer-events: none; }
+  .logo { position: absolute; top: 34px; left: 0; right: 0; text-align: center; font: 900 30px/1 Georgia, serif; letter-spacing: .08em;
+    color: #f5cf73; text-shadow: 0 3px 0 #6b3d0f, 0 0 18px rgba(245, 180, 80, .45); }
+  .blip { position: absolute; top: 92px; left: 18px; width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 45% 40%, #fffbe6, #ffd98a 50%, #ffb84a00 75%);
+    box-shadow: 0 0 16px #ffd98a; }
+  .press { position: absolute; left: 30px; right: 30px; bottom: 82px; height: 44px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; letter-spacing: .14em;
+    font-size: 12px; text-transform: uppercase; color: #f6e6bf; background: linear-gradient(180deg, #4a3720, #2d200d); box-shadow: inset 0 0 0 1px #a07a3e; }
+  .hub { position: absolute; left: 0; right: 0; bottom: 0; height: 58px; background: linear-gradient(180deg, rgba(14,16,22,.96), rgba(6,7,10,.99)); box-shadow: 0 -1px 0 rgba(224,166,60,.45);
+    display: flex; justify-content: space-around; align-items: center; font-size: 9px; font-weight: 800; letter-spacing: .12em; color: #b8a77f; }
+  .hub b { width: 50px; height: 50px; margin-top: -26px; border-radius: 50%; background: radial-gradient(circle, #3a2a14, #160f06); box-shadow: 0 0 0 2px #c79a45; }
+
+  /* The Infinite, zoomed */
+  .cyc { position: absolute; top: 26px; left: 0; right: 0; text-align: center; pointer-events: auto; }
+  .cyc-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .cyc-arrow { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; color: #e8c46a; cursor: pointer; user-select: none;
+    background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(232,196,106,.35); }
+  .cyc-arrow.off { opacity: .25; cursor: default; }
+  .cyc-name { min-width: 170px; }
+  .cyc-num { font: 900 34px/1 Georgia, serif; color: #f5cf73; text-shadow: 0 0 16px rgba(245,180,80,.5); transition: color .3s; }
+  .cyc-title { margin-top: 6px; font-size: 11px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; color: #d9c7a0; }
+  .cyc.locked .cyc-num { color: #5c6170; text-shadow: none; }
+  .cyc.locked .cyc-title { color: #5c6170; }
+  .pips { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+  .pip { width: 7px; height: 7px; border-radius: 50%; background: rgba(205,214,255,.18); }
+  .pip.lit { background: #e8c46a; box-shadow: 0 0 6px #e8c46a; }
+  .pip.sel { outline: 1.5px solid #fff3cf; outline-offset: 2px; }
+  .zpress { position: absolute; left: 30px; right: 30px; bottom: 74px; height: 46px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; letter-spacing: .14em;
+    font-size: 12px; text-transform: uppercase; color: #f6e6bf; background: linear-gradient(180deg, #4a3720, #2d200d); box-shadow: inset 0 0 0 1px #a07a3e; }
+  .zpress.locked { color: #6b6558; background: #15161b; box-shadow: inset 0 0 0 1px #2c2f38; }
+  .back { position: absolute; left: 60px; right: 60px; bottom: 20px; height: 40px; display: grid; place-items: center; font-weight: 800; letter-spacing: .18em; font-size: 12px;
+    color: #d9c7a0; border-top: 1px solid rgba(232,196,106,.35); border-bottom: 1px solid rgba(232,196,106,.35); }
+  .note { max-width: 980px; margin: 0 auto; color: var(--dim); }
+  .note li { margin-bottom: 5px; }
+</style>
+</head>
+<body>
+<h1>The title, as sky</h1>
+<p class="lead">No ground under the Pact: Blip lives up here. Each phone is the title at its real proportions, the Pact drawn faintly over the new sky.</p>
+<div class="row" id="bgs"></div>
+
+<h1>The Infinite, tapped</h1>
+<p class="lead">No words but the Cycle's own. The Cycles sit at the top: arrows step through them, the pips are the five, and gold is cleared. The view below takes the chosen Cycle's colour. Enter starts that Cycle directly, so the separate <i>Which Cycle?</i> screen could go.</p>
+<div class="row" id="infs"></div>
+
+<div class="note">
+  <ul>
+    <li>Everything here is drawn in code (canvas), no new art: it scales to any phone and costs no PixelLab budget.</li>
+    <li>Strange Worlds, the Trials and the Gauntlet would each get their own treatment in the same spirit once a direction is picked.</li>
+    <li>Animations are slow on purpose: the title sits open for a long time, and a busy background tires the eye.</li>
+  </ul>
+</div>
+
+<script>
+const CYCLES = [
+  ['I', 'The Sealing', 42], ['II', 'The Remembered', 280], ['III', 'The Long Winter', 200], ['IV', 'The Gathering', 25], ['V', 'The Last Cycle', 330],
+];
+const CLEARED = 2; // two Cycles cleared: III is open, IV and V wait
+const W = 300, H = 618;
+
+function rand(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+function stars(n, seed) { const r = rand(seed); return Array.from({ length: n }, () => ({ x: r() * W, y: r() * H, s: r() * 1.3 + .3, p: r() * 6.28, sp: .5 + r() * 1.5 })); }
+function drawStars(c, list, t, alpha = 1) {
+  for (const s of list) { const a = (.45 + .55 * Math.sin(t * s.sp + s.p)) * alpha; c.fillStyle = `rgba(230,236,255,${a})`; c.fillRect(s.x, s.y, s.s, s.s); }
+}
+function pact(c, t) {
+  const cx = W / 2, cy = 262;
+  c.save(); c.strokeStyle = 'rgba(232,196,106,.45)'; c.lineWidth = 1.2;
+  c.beginPath(); c.arc(cx, cy, 102, Math.PI * .6, Math.PI * 2.4); c.stroke();
+  c.strokeStyle = 'rgba(232,196,106,.18)'; c.beginPath(); c.arc(cx, cy, 96, 0, 6.28); c.stroke();
+  [.8, .64, .48, .32, .18].forEach((k, i) => { c.strokeStyle = i < CLEARED ? 'rgba(255,210,122,.75)' : 'rgba(205,214,255,.18)'; c.beginPath(); c.arc(cx, cy, 46 * k, 0, 6.28); c.stroke(); });
+  c.fillStyle = 'rgba(11,15,28,.7)';
+  [[cx, cy - 102], [cx - 102, cy], [cx + 102, cy]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 24, 0, 6.28); c.fill(); c.strokeStyle = 'rgba(232,196,106,.35)'; c.stroke(); });
+  c.restore();
+}
+
+/* ---------- Backgrounds ---------- */
+const BGS = [
+  {
+    title: 'A · Nebula',
+    blurb: 'Slow clouds of colour drifting behind the Pact (violet, teal, a little gold) over a field of twinkling stars. Soft, and the most like a place Blip would live.',
+    init() { return { st: stars(170, 7), clouds: [[70, 150, 160, '120,80,200'], [230, 330, 190, '40,150,170'], [120, 470, 170, '200,140,60'], [250, 120, 120, '170,70,150']] }; },
+    draw(c, t, s) {
+      c.fillStyle = '#05060c'; c.fillRect(0, 0, W, H);
+      c.globalCompositeOperation = 'lighter';
+      s.clouds.forEach(([x, y, r, rgb], i) => {
+        const dx = Math.sin(t * .05 + i) * 18, dy = Math.cos(t * .04 + i * 2) * 14;
+        const g = c.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
+        g.addColorStop(0, `rgba(${rgb},.22)`); g.addColorStop(.5, `rgba(${rgb},.08)`); g.addColorStop(1, `rgba(${rgb},0)`);
+        c.fillStyle = g; c.fillRect(0, 0, W, H);
+      });
+      c.globalCompositeOperation = 'source-over';
+      drawStars(c, s.st, t);
+    },
+  },
+  {
+    title: 'B · The Rim',
+    blurb: "Deep space, and far below, the curved edge of the world the Pact protects, lit gold along its rim. The ground stays, but seen from the stars. Blip's view.",
+    init() { return { st: stars(150, 11) }; },
+    draw(c, t, s) {
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#03040a'); g.addColorStop(.7, '#0a0f22'); g.addColorStop(1, '#141024');
+      c.fillStyle = g; c.fillRect(0, 0, W, H);
+      drawStars(c, s.st.filter((p) => p.y < 470), t);
+      const R = 900, cy = H + R - 130;
+      const glow = c.createRadialGradient(W / 2, cy, R - 40, W / 2, cy, R + 70);
+      glow.addColorStop(0, 'rgba(255,190,90,0)'); glow.addColorStop(.36, `rgba(255,190,90,${.32 + .06 * Math.sin(t * .4)})`); glow.addColorStop(.5, 'rgba(120,150,255,.14)'); glow.addColorStop(1, 'rgba(120,150,255,0)');
+      c.fillStyle = glow; c.fillRect(0, 0, W, H);
+      c.fillStyle = '#04050a'; c.beginPath(); c.arc(W / 2, cy, R, 0, 6.28); c.fill();
+      c.strokeStyle = 'rgba(255,214,140,.7)'; c.lineWidth = 1.2; c.beginPath(); c.arc(W / 2, cy, R, Math.PI * 1.35, Math.PI * 1.65); c.stroke();
+    },
+  },
+  {
+    title: 'C · Galaxy',
+    blurb: "A slow spiral galaxy turning behind the Pact, its bright core sitting right behind the Infinite, so the heart of the sky and the heart of the game are one.",
+    init() { const r = rand(23); return { st: stars(120, 5), arms: Array.from({ length: 900 }, () => { const arm = Math.floor(r() * 3), d = Math.pow(r(), .7) * 230; return { a: arm * 2.09 + d * .022 + (r() - .5) * .5, d, s: r() * 1.4 + .3, h: r() }; }) }; },
+    draw(c, t, s) {
+      c.fillStyle = '#04050a'; c.fillRect(0, 0, W, H);
+      drawStars(c, s.st, t, .7);
+      const cx = W / 2, cy = 262;
+      const core = c.createRadialGradient(cx, cy, 0, cx, cy, 120); core.addColorStop(0, 'rgba(255,225,170,.35)'); core.addColorStop(.4, 'rgba(150,110,220,.12)'); core.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = core; c.fillRect(0, 0, W, H);
+      const rot = t * .03;
+      for (const p of s.arms) {
+        const a = p.a + rot, x = cx + Math.cos(a) * p.d, y = cy + Math.sin(a) * p.d * .55;
+        const warm = p.d < 70;
+        c.fillStyle = warm ? `rgba(255,220,160,${.7 - p.d / 200})` : p.h > .5 ? `rgba(170,150,255,${.55 - p.d / 600})` : `rgba(140,210,230,${.5 - p.d / 600})`;
+        c.fillRect(x, y, p.s, p.s);
+      }
+    },
+  },
+];
+
+/* ---------- The Infinite ---------- */
+const INFS = [
+  {
+    title: 'A · The Black Hole',
+    blurb: 'A dark heart with a burning disk turning round it and a thin ring of light at its edge. Each Cycle burns a different colour; a locked one is cold and grey.',
+    init() { const r = rand(31); return { st: stars(110, 17), disk: Array.from({ length: 700 }, () => ({ a: r() * 6.28, d: 52 + Math.pow(r(), 1.6) * 90, s: r() * 1.6 + .4, sp: .4 + r() * .6 })) }; },
+    draw(c, t, s, hue, locked) {
+      c.fillStyle = '#030308'; c.fillRect(0, 0, W, H); drawStars(c, s.st, t, .6);
+      const cx = W / 2, cy = 330, tilt = .32;
+      const col = (l, a) => locked ? `hsla(220,8%,${l}%,${a})` : `hsla(${hue},90%,${l}%,${a})`;
+      const halo = c.createRadialGradient(cx, cy, 30, cx, cy, 170); halo.addColorStop(0, col(60, .35)); halo.addColorStop(1, col(40, 0)); c.fillStyle = halo; c.fillRect(0, 0, W, H);
+      const back = [], front = [];
+      for (const p of s.disk) { const a = p.a + t * p.sp * (70 / p.d); const y = Math.sin(a) * p.d * tilt; (y < 0 ? back : front).push([cx + Math.cos(a) * p.d, cy + y, p]); }
+      const plot = ([x, y, p]) => { c.fillStyle = col(75 - (p.d - 52) * .25, .85 - (p.d - 52) / 130); c.fillRect(x, y, p.s, p.s); };
+      c.globalCompositeOperation = 'lighter'; back.forEach(plot); c.globalCompositeOperation = 'source-over';
+      // The far side of the disk, bent up over the top by the hole's pull.
+      c.globalCompositeOperation = 'lighter';
+      for (let k = 0; k < 18; k++) {
+        const r = 50 + k * 2.2, flick = .5 + .5 * Math.sin(t * 1.3 + k);
+        c.strokeStyle = col(70 - k, (.32 - k * .016) * (.8 + .2 * flick)); c.lineWidth = 1.6;
+        c.beginPath(); c.ellipse(cx, cy, r, r * .92, 0, Math.PI * 1.04, Math.PI * 1.96); c.stroke();
+      }
+      c.globalCompositeOperation = 'source-over';
+      c.fillStyle = '#000'; c.beginPath(); c.arc(cx, cy, 44, 0, 6.28); c.fill();
+      c.strokeStyle = col(85, .9); c.lineWidth = 2; c.shadowColor = col(70, 1); c.shadowBlur = 14; c.beginPath(); c.arc(cx, cy, 46, 0, 6.28); c.stroke(); c.shadowBlur = 0;
+      c.globalCompositeOperation = 'lighter'; front.forEach(plot); c.globalCompositeOperation = 'source-over';
+    },
+  },
+  {
+    title: 'B · The Tunnel',
+    blurb: "The Infinite's own rings, flying out toward you without end, as if falling into it. The Pact's rings become the way in; the chosen Cycle tints them.",
+    init() { return { st: stars(90, 41) }; },
+    draw(c, t, s, hue, locked) {
+      c.fillStyle = '#030308'; c.fillRect(0, 0, W, H); drawStars(c, s.st, t, .5);
+      const cx = W / 2, cy = 330;
+      const col = (a) => locked ? `hsla(220,8%,65%,${a})` : `hsla(${hue},85%,68%,${a})`;
+      const core = c.createRadialGradient(cx, cy, 0, cx, cy, 60); core.addColorStop(0, col(.55)); core.addColorStop(1, col(0)); c.fillStyle = core; c.fillRect(0, 0, W, H);
+      for (let i = 0; i < 14; i++) {
+        const k = ((t * .12 + i / 14) % 1); const r = 6 + Math.pow(k, 2.4) * 260;
+        c.strokeStyle = col(Math.min(1, k * 1.6) * (1 - k) * 1.4); c.lineWidth = .6 + k * 2.4;
+        c.beginPath(); c.arc(cx, cy + k * 18, r, 0, 6.28); c.stroke();
+        const a = i * 1.3 + t * .2; c.fillStyle = col((1 - k) * .9); c.fillRect(cx + Math.cos(a) * r - 1.5, cy + k * 18 + Math.sin(a) * r - 1.5, 3, 3);
+      }
+    },
+  },
+  {
+    title: 'C · The Maelstrom',
+    blurb: 'A whirl of light spiralling into one bright point, like water down a drain or a storm seen from above. The more Cycles cleared, the more arms it has.',
+    init() { const r = rand(59); return { st: stars(100, 3), p: Array.from({ length: 1800 }, () => ({ arm: Math.floor(r() * 5), d: r(), j: (r() - .5) * .35, s: r() * 1.8 + .6 })) }; },
+    draw(c, t, s, hue, locked, armsLit) {
+      c.fillStyle = '#030308'; c.fillRect(0, 0, W, H); drawStars(c, s.st, t, .5);
+      const cx = W / 2, cy = 330;
+      const col = (l, a) => locked ? `hsla(220,8%,${l}%,${a})` : `hsla(${hue},85%,${l}%,${a})`;
+      c.globalCompositeOperation = 'lighter';
+      for (const p of s.p) {
+        if (p.arm >= Math.max(1, armsLit)) continue;
+        const d = (p.d - t * .05) % 1, dd = d < 0 ? d + 1 : d;
+        const r = 6 + dd * 150, a = p.arm * (6.28 / Math.max(1, armsLit)) + dd * 5.2 + p.j - t * .25;
+        c.fillStyle = col(62 + (1 - dd) * 30, Math.min(1, (1 - dd) * 1.3));
+        c.fillRect(cx + Math.cos(a) * r, cy + Math.sin(a) * r * .8, p.s, p.s);
+      }
+      const core = c.createRadialGradient(cx, cy, 0, cx, cy, 30); core.addColorStop(0, 'rgba(255,255,240,.95)'); core.addColorStop(1, col(70, 0)); c.fillStyle = core; c.fillRect(cx - 40, cy - 40, 80, 80);
+      c.globalCompositeOperation = 'source-over';
+    },
+  },
+];
+
+function phone(container, opt, kind) {
+  const col = document.createElement('div'); col.className = 'col';
+  col.innerHTML = `<h2>${opt.title}</h2><p>${opt.blurb}</p><div class="phone"><canvas width="${W * 2}" height="${H * 2}"></canvas><div class="ui"></div></div>`;
+  container.appendChild(col);
+  const cv = col.querySelector('canvas'), c = cv.getContext('2d'); c.scale(2, 2);
+  const ui = col.querySelector('.ui');
+  const state = opt.init();
+  let sel = CLEARED; // the Cycle next to play
+  if (kind === 'bg') {
+    ui.innerHTML = `<div class="logo">TITANPACT</div><div class="blip"></div><div class="press">Enter the Infinite</div><div class="hub"><span>COLLECTION</span><b></b><span>OBSERVATORY</span></div>`;
+  } else {
+    const render = () => {
+      const [num, name] = CYCLES[sel]; const locked = sel > CLEARED;
+      ui.innerHTML = `<div class="cyc${locked ? ' locked' : ''}"><div class="cyc-row"><span class="cyc-arrow${sel === 0 ? ' off' : ''}" data-d="-1">‹</span>
+        <div class="cyc-name"><div class="cyc-num">${num}</div><div class="cyc-title">${locked ? '🔒 ' : ''}${name}</div></div>
+        <span class="cyc-arrow${sel === 4 ? ' off' : ''}" data-d="1">›</span></div>
+        <div class="pips">${CYCLES.map((_, i) => `<span class="pip${i < CLEARED ? ' lit' : ''}${i === sel ? ' sel' : ''}"></span>`).join('')}</div></div>
+        <div class="zpress${locked ? ' locked' : ''}">${locked ? 'Clear ' + CYCLES[sel - 1][0] + ' first' : 'Enter Cycle ' + num}</div><div class="back">‹ BACK</div>`;
+      ui.querySelectorAll('[data-d]').forEach((a) => a.onclick = () => { sel = Math.max(0, Math.min(4, sel + +a.dataset.d)); render(); });
+    };
+    render();
+  }
+  const start = performance.now();
+  const frame = (now) => {
+    const t = (now - start) / 1000;
+    if (kind === 'bg') { opt.draw(c, t, state); pact(c, t); }
+    else opt.draw(c, t, state, CYCLES[sel][2], sel > CLEARED, Math.min(5, CLEARED + 1));
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
+BGS.forEach((o) => phone(document.getElementById('bgs'), o, 'bg'));
+INFS.forEach((o) => phone(document.getElementById('infs'), o, 'inf'));
+</script>
+</body>
+</html>
