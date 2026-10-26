@@ -701,6 +701,12 @@ function SeatShape({ id, profile, state, starR }: { id: string; profile: Profile
   const lit = c.stars.map((star) => !profile || isStarLit(profile, c, star));
   return (
     <g className={`pact-shape is-${state}${c.uncharted && !lit.every(Boolean) ? ' is-uncharted' : ''}`}>
+      {c.rings &&
+        c.stars.map((star, i) => {
+          const p = seatPoint(id, star);
+          const o = SEATS[id];
+          return <circle key={`ring-${star.id}`} className={`pact-line pact-orbit${lit[i] ? ' is-lit' : ''}`} cx={o.x} cy={o.y} r={Math.hypot(p.x - o.x, p.y - o.y)} />;
+        })}
       {c.lines.map(([a, b]) => {
         const p = seatPoint(id, c.stars[a]);
         const q = seatPoint(id, c.stars[b]);
@@ -924,6 +930,11 @@ function ConstellationCard({ profile, constellation: c, state, disabled, pressHi
     <section className={`sky-band is-${state}${c.uncharted ? ' is-uncharted' : ''}${c.id === 'infinite' ? ' is-main' : ''}`}>
       <h2 className="sky-band-name">{c.name}</h2>
       <svg className="sky-band-shape" viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        {c.rings &&
+          c.stars.map((star, i) => {
+            const p = cardPoint(star);
+            return <circle key={`ring-${star.id}`} className={`sky-band-line sky-band-orbit${lit[i] ? ' is-lit' : ''}`} cx={CENTRE.x} cy={CENTRE.y} r={Math.hypot(p.x - CENTRE.x, p.y - CENTRE.y)} />;
+          })}
         {c.lines.map(([a, b]) => {
           const p = cardPoint(c.stars[a]);
           const q = cardPoint(c.stars[b]);

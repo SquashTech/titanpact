@@ -31,6 +31,8 @@ export interface ConstellationDefinition {
   stars: readonly SkyStar[];
   /** The shape drawn in when it is lit: pairs of indices into `stars`. */
   lines: readonly (readonly [number, number])[];
+  /** Drawn as nested rings round its centre instead of lines: each star on a ring of its own, a lit star lighting its ring. */
+  rings?: true;
   /** Star ids: any one of them lit opens it. None means it is open from the start. */
   after: readonly string[];
   /**

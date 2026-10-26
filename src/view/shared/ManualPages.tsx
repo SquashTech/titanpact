@@ -244,12 +244,14 @@ function starPath(cx: number, cy: number, r: number): string {
   return `${d}Z`;
 }
 
-function pentagramPath(cx: number, cy: number, r: number): string {
-  const points = [0, 1, 2, 3, 4].map((i) => {
-    const a = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
-  });
-  return [0, 2, 4, 1, 3, 0].map((i, k) => `${k ? 'L' : 'M'}${points[i][0].toFixed(1)} ${points[i][1].toFixed(1)}`).join('');
+/** The Infinite's mark: its nested rings. */
+function ringsPath(cx: number, cy: number, r: number): string {
+  return [1, 0.66, 0.32]
+    .map((k) => {
+      const rr = r * k;
+      return `M${(cx - rr).toFixed(1)} ${cy}a${rr} ${rr} 0 1 0 ${2 * rr} 0a${rr} ${rr} 0 1 0 ${-2 * rr} 0`;
+    })
+    .join('');
 }
 
 /**
@@ -314,14 +316,14 @@ export function ManualBook() {
         >
           <circle cx={runAt.x} cy={runAt.y} r={22} className="manual-sky-hit" />
           <circle cx={runAt.x} cy={runAt.y} r={19} className="manual-sky-ring" />
-          <path d={pentagramPath(runAt.x, runAt.y, 13)} className="manual-sky-pent" />
+          <path d={ringsPath(runAt.x, runAt.y, 13)} className="manual-sky-rings" />
         </g>
       </svg>
 
       {pages.length === 0 ? (
         <div className="manual-dark" aria-hidden="true">
           <svg viewBox="0 0 60 60">
-            <path d={chapter === RUN_CHAPTER ? pentagramPath(30, 30, 22) : starPath(30, 30, 24)} />
+            <path d={chapter === RUN_CHAPTER ? ringsPath(30, 30, 22) : starPath(30, 30, 24)} />
           </svg>
         </div>
       ) : (

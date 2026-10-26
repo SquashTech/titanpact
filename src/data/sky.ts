@@ -53,21 +53,22 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
   {
     id: 'infinite',
     name: 'The Infinite',
-    // A pentagram, Cycle I at its crown, drawn star to star the way it is cleared.
+    // Five nested rings, a star on each: Cycle I the outermost, Cycle V the innermost, each a step
+    // round and a ring closer to the heart (2026-10-26, per user direction, replacing the pentagram).
     stars: [
-      [0.5, 0.04],
-      [0.96, 0.38],
-      [0.78, 0.94],
-      [0.22, 0.94],
-      [0.04, 0.38],
-    ].map(([x, y], i) => ({ id: `cycles.${i + 1}`, x, y, light: { kind: 'cycleCleared', cycle: i + 1 } })),
-    lines: [
-      [0, 2],
-      [2, 4],
-      [4, 1],
-      [1, 3],
-      [3, 0],
-    ],
+      [0.46, -90],
+      [0.37, -18],
+      [0.28, 54],
+      [0.19, 126],
+      [0.1, 198],
+    ].map(([r, deg], i) => ({
+      id: `cycles.${i + 1}`,
+      x: 0.5 + r * Math.cos((deg * Math.PI) / 180),
+      y: 0.5 + r * Math.sin((deg * Math.PI) / 180),
+      light: { kind: 'cycleCleared', cycle: i + 1 },
+    })),
+    lines: [],
+    rings: true,
     // The two fights open it; the two acts stay First Light's to play, never a gate (2026-10-24, per user direction).
     after: ['firstLight.clearing'],
     rewards: [],

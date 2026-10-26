@@ -1011,3 +1011,9 @@
 .sky-band-hit {
   fill: transparent;
 }
+
+/* The Infinite's rings (ConstellationDefinition.rings): a star's own ring, lit with it. */
+.pact-orbit,
+.sky-band-orbit {
+  fill: none;
+}

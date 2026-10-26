@@ -252,13 +252,13 @@
   filter: drop-shadow(0 0 4px rgba(255, 207, 106, 0.8));
 }
 
-.manual-sky-pent {
+.manual-sky-rings {
   fill: none;
   stroke: rgba(205, 214, 255, 0.3);
   stroke-width: 1.4;
 }
 
-.manual-sky-star.is-run.is-lit .manual-sky-pent {
+.manual-sky-star.is-run.is-lit .manual-sky-rings {
   stroke: #ffe7a8;
   filter: drop-shadow(0 0 4px rgba(255, 207, 106, 0.7));
 }

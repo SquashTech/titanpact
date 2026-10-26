@@ -161,7 +161,7 @@ filed"). Content `src/data/howToPlay.ts`, mechanism `src/run/manual.ts`.
   act, a Cycle). A filed page waits (`Profile.manualUnshown`) and lands as a **Learned** row in the
   next won fight's result, last in its ledger.
 - **The book's contents are the sky.** The Reference's How to Play tab draws First Light's four
-  stars and the Infinite's pentagram. A lit star opens its lesson's pages; the pentagram holds what
+  stars and the Infinite's rings. A lit star opens its lesson's pages; the rings hold what
   runs have filed. A page not yet learned is not shown, and a dark star is what is left: a count
   drawn as the sky, never a number.
 - An account that played before the manual (`Profile.manualComplete`, set on decode) has every page.
@@ -478,7 +478,7 @@ it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own
   over a carousel and a scroll map). The first sky's small constellations, scattered about with Blip's
   bubble landing on them, didn't work. Now:
   - **Five constellations, one for each way to play:** First Light (the eight lessons, the three
-    rails merged), the Infinite (its five Cycles, a pentagram), the Trials (a ring of fourteen),
+    rails merged), the Infinite (its five Cycles, five nested rings since 2026-10-26), the Trials (a ring of fourteen),
     the Gauntlet (crossed blades, a star for each of the first five clears) and Strange Worlds
     (six named seats for §4's twisted runs, uncharted).
   - **"Enter the Infinite" sits under the Infinite**, one tap. A tap on any constellation zooms the
