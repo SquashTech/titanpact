@@ -97,12 +97,38 @@ The register, as samples rather than drafts:
   pays (§5).
 - **Lighting opens neighbours.** The sky is a graph: a lit constellation reveals the ones touching
   it. The rails come first (§3), and the sky branches after them (§4).
-- **The title IS the sky** (PROPOSED). There's no door into a mode. A tapped constellation is a mode,
+- **The title IS the sky** (built as the Pact, §2b). There's no door into a mode. A tapped constellation is a mode,
   and its stars are the ways to play it.
 - **An unlit neighbour shows its shape and its reward, not its scenarios** (PROPOSED). The player
   can see what they're reaching for, as with Balatro's locked list.
 - **A lost scenario costs nothing.** The star stays dark and can be retried, like Into the Breach's
   lost timeline.
+
+## 2b. The Pact (2026-10-25, per user direction)
+
+The title is ONE screen, replacing the stacked bands of 2026-10-24, which the player had to cycle
+through. Picked from a side-by-side page (`art/concepts/pact-circle/`, "B · The Path In"):
+
+- **The Infinite sits in the middle, inside a ring: the Pact.** The ring has a seat on three of its
+  points (Strange Worlds north, the Gauntlet east, the Trials west). A seat nothing has reached yet
+  is an empty dotted socket.
+- **First Light is not a seat.** It is a trail of four stars climbing from the foot of the screen
+  into a gap in the ring. The next lesson is awake and named. The ones after it are dim stars in
+  dotted sockets, nameless until they wake.
+- **A lesson won is played back on the title**, once an account (`skyLightingTipId`,
+  `unshownLightings`). The star charges and bursts gold, the line draws to the next star, and the
+  next star wakes with its name written in. A seat that opens on that star (the Infinite, after The
+  Clearing) pops in where it sits.
+- **The last lesson draws First Light in.** The trail flares gold, a crest shows its name and its
+  Stardust, and the Stardust flies as motes into the Observatory's badge, which counts it in. The
+  trail then folds into a small **clasp** at the ring's foot, the gap closes, and the Pact settles
+  to the middle of the screen. After that it reads as a plain ring, and the clasp still zooms in
+  to replay a lesson.
+- **A tapped seat zooms in** to its constellation: its stars named, its own press. A tap on the
+  sky backs out. There is one press under the Pact: the next lesson until First Light is sealed,
+  then *Enter the Infinite*.
+- The Stardust is the 300 First Light already paid (§10, still FLAGGED). Nothing about the payout
+  changed; it is only shown now.
 
 ## 3. The rails: tutorial constellations
 

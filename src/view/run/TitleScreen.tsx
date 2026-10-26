@@ -150,6 +150,8 @@ export function TitleScreen({
   // The weave is chosen as the tapestry opens and held, since marking it seen re-renders the profile.
   const [pickingCycle, setPickingCycle] = useState<{ weave?: number } | null>(null);
   const [staleNoteDismissed, setStaleNoteDismissed] = useState(false);
+  /** Stardust the sky is still flying to the Observatory, kept off its badge until it lands. */
+  const [heldDust, setHeldDust] = useState(0);
 
   // The sound already plays from the delegated pointerdown listener (audio/uiSfx.ts).
   function launch(action: () => void) {
@@ -252,6 +254,8 @@ export function TitleScreen({
         returned={skyReturn}
         onReturnedSeen={onSkyReturnSeen}
         onSeeThought={onSeeThought}
+        onSeeLighting={onSeeTip}
+        onHoldStardust={setHeldDust}
         onPlay={handleSkyPlay}
         onPlayLesson={(scenarioId) => onPlayLesson && launch(() => onPlayLesson(scenarioId))}
       />
@@ -403,7 +407,7 @@ export function TitleScreen({
         </div>
       )}
 
-      <HubNav tab={tab} onSelect={selectTab} balance={balance} collectionFresh={!collectionSeen} disabled={launching} />
+      <HubNav tab={tab} onSelect={selectTab} balance={balance - heldDust} collectionFresh={!collectionSeen} disabled={launching} />
 
       {/* Starting over with a run parked deletes it, so it asks — a sheet, not a
           re-labelled button, because a button that changes what it says under

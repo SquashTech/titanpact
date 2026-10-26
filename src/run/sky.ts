@@ -136,6 +136,30 @@ export function skyStardust(profile: Profile, sky: SkyContent): number {
   return total;
 }
 
+/** The tip id a star's lighting is kept under once the title has played it, so it plays once an account. */
+export function skyLightingTipId(starId: string): string {
+  return `sky.lit.${starId}`;
+}
+
+/** A constellation's stars won by play whose lighting the title has not played yet, by index, in order. */
+export function unshownLightings(profile: Profile, constellation: ConstellationDefinition): number[] {
+  return constellation.stars.flatMap((star, i) => (lightIsLit(profile, star.light) && !profile.seenTipIds.includes(skyLightingTipId(star.id)) ? [i] : []));
+}
+
+/** Every star of it lit by play: what pays its reward, and what the title draws in once (under the constellation's own id). */
+export function isDrawnInByPlay(profile: Profile, constellation: ConstellationDefinition): boolean {
+  return constellation.stars.every((star) => lightIsLit(profile, star.light));
+}
+
+export function isDrawInUnshown(profile: Profile, constellation: ConstellationDefinition): boolean {
+  return isDrawnInByPlay(profile, constellation) && !profile.seenTipIds.includes(skyLightingTipId(constellation.id));
+}
+
+/** The profile as the sky draws it while some lightings wait to be played: those scenarios not yet won. */
+export function profileBeforeLightings(profile: Profile, scenarioIds: readonly string[]): Profile {
+  return scenarioIds.length === 0 ? profile : { ...profile, litStars: profile.litStars.filter((id) => !scenarioIds.includes(id)) };
+}
+
 /** The scenario a star plays, when it is one. */
 export function starScenario(sky: SkyContent, star: SkyStar): ScenarioDefinition | null {
   return star.light.kind === 'scenario' ? sky.scenarios[star.light.scenarioId] ?? null : null;

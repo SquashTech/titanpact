@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pact Circle</title>
+<style>
+  :root { color-scheme: dark; --bg: #0b0d12; --text: #e9dcc0; --dim: #8f8a7c; --gold: #e8c46a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 20px 16px 48px; background: var(--bg); color: var(--text);
+    font: 13px/1.45 ui-sans-serif, system-ui, Segoe UI, sans-serif; }
+  .row { display: flex; flex-wrap: wrap; gap: 22px; justify-content: center; }
+  .col { width: 315px; }
+  .col h2 { margin: 0 0 2px; font-size: 15px; letter-spacing: .04em; }
+  .col p { margin: 0 0 10px; color: var(--dim); min-height: 96px; }
+  .switch { display: flex; gap: 8px; justify-content: center; margin: 0 0 18px; }
+  .switch button { background: #1a1d25; color: var(--text); border: 1px solid #39342a; padding: 6px 12px; border-radius: 4px; cursor: pointer; font: inherit; }
+  .switch button.on { border-color: var(--gold); color: var(--gold); }
+
+  /* A phone at 394x780, shown at 0.8 */
+  .phone { width: 315px; height: 624px; overflow: hidden; border-radius: 14px; border: 1px solid #262a33; position: relative; }
+  .screen { width: 394px; height: 780px; transform: scale(.8); transform-origin: 0 0; position: relative; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 45%, #18203a 0%, #0d1222 55%, #070910 100%); user-select: none; cursor: pointer; }
+  .dust { position: absolute; inset: 0; }
+  .world { position: absolute; left: 0; top: 0; width: 394px; height: 780px; transform-origin: 0 0;
+    transition: transform .75s cubic-bezier(.6, .05, .25, 1); }
+  .world svg { display: block; }
+  .settle { transition: transform 1.1s cubic-bezier(.45, 0, .2, 1) .5s; }
+
+  .wordmark { position: absolute; top: 46px; left: 0; right: 0; text-align: center; font: 700 22px/1 Georgia, serif;
+    letter-spacing: .32em; color: #f0e2bd; text-shadow: 0 0 18px #e8c46a55; transition: opacity .4s; pointer-events: none; }
+  .gear { position: absolute; top: 18px; right: 16px; width: 26px; height: 26px; border-radius: 50%; border: 1px solid #ffffff22;
+    display: grid; place-items: center; color: #ffffff66; font-size: 15px; }
+  .back { position: absolute; top: 16px; left: 14px; width: 34px; height: 34px; display: grid; place-items: center; font-size: 26px;
+    color: #f0e2bd; opacity: 0; pointer-events: none; transition: opacity .3s; }
+  .heading { position: absolute; top: 58px; left: 0; right: 0; text-align: center; font: 700 17px/1 Georgia, serif; letter-spacing: .22em;
+    text-transform: uppercase; color: #f0e2bd; opacity: 0; transition: opacity .35s .35s; pointer-events: none; }
+  .press { position: absolute; left: 67px; width: 260px; bottom: 112px; height: 48px; border-radius: 6px; background: #4a3720; border: 1px solid #a07a3e;
+    display: grid; place-items: center; font-weight: 700; letter-spacing: .14em; font-size: 12px; text-transform: uppercase; color: #f6e6bf;
+    opacity: 0; transform: translateY(8px); transition: opacity .3s, transform .3s; pointer-events: none; }
+  .ftr { position: absolute; left: 0; right: 0; bottom: 30px; display: flex; gap: 12px; justify-content: center; transition: opacity .3s; }
+  .ftr span { width: 150px; height: 44px; border-radius: 6px; background: #2a2118; border: 1px solid #5b4a33; display: grid; place-items: center;
+    font-weight: 700; letter-spacing: .14em; font-size: 11px; text-transform: uppercase; color: #d9c7a0; }
+
+  .screen.zoomed .wordmark { opacity: 0; }
+  .screen.zoomed .back { opacity: 1; }
+  .screen.zoomed .heading { opacity: 1; }
+  .screen.zoomed .press.has { opacity: 1; transform: none; transition-delay: .45s; }
+
+  /* The sigil and the seats */
+  .sigil { stroke: rgba(232, 196, 106, .34); fill: none; transition: opacity .5s; }
+  .sigil.faint { stroke: rgba(232, 196, 106, .16); }
+  .medallion { fill: #0b0f1c; stroke: rgba(232, 196, 106, .4); stroke-width: 1.2; transition: opacity .5s; }
+  .seat { transition: opacity .5s; }
+  .seat .name { fill: #e9dcc0; font-weight: 700; text-transform: uppercase; transition: opacity .3s; }
+  .seat.dark .name { fill: rgba(233, 220, 192, .38); }
+  .seat .starname { fill: rgba(240, 234, 214, .85); opacity: 0; transition: opacity .3s; }
+  .seat .starname.lit { fill: #ffe7a8; }
+  .line { stroke: rgba(205, 214, 255, .16); transition: opacity .3s; }
+  .flash { fill: none; stroke: #ffe7a8; stroke-width: 3; filter: drop-shadow(0 0 6px #ffd27a); animation: flash 1.6s ease-out forwards; }
+  @keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+  .demo { display: flex; justify-content: center; margin-top: 10px; }
+  .demo button { background: #1a1d25; color: var(--gold); border: 1px solid #6b5a33; padding: 6px 14px; border-radius: 4px; cursor: pointer; font: inherit; }
+  .demo button:disabled { opacity: .4; cursor: default; }
+  .line.lit { stroke: rgba(255, 210, 122, .8); }
+  .star { fill: rgba(220, 228, 255, .62); }
+  .star.lit { fill: #ffe7a8; }
+  .seat.dark .star { fill: rgba(205, 214, 255, .2); }
+  .seat.dark .line { stroke: rgba(205, 214, 255, .08); }
+  .halo { fill: rgba(255, 220, 140, .35); animation: pulse 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  @keyframes pulse { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: .9; transform: scale(1.25); } }
+
+  .screen.zoomed .sigil, .screen.zoomed .medallion { opacity: .1; }
+  .screen.zoomed .seat { opacity: .08; }
+  .screen.zoomed .seat.focus { opacity: 1; }
+  .screen.zoomed .seat .name { opacity: 0; }
+  .screen.zoomed .seat.focus .starname { opacity: 1; transition-delay: .5s; }
+  .screen.zoomed .seat.focus .medallion { opacity: 0; }
+
+  .note { max-width: 990px; margin: 28px auto 0; color: var(--dim); }
+  .note b { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="switch">
+  <button data-state="first" class="on">Day one</button>
+  <button data-state="later">Later</button>
+</div>
+<div class="row" id="row"></div>
+<p class="note">Tap a seat to zoom in. Tap the sky (or the arrow) to come back out. <b>Day one</b> is a new account: only First Light is lit, and the rest wait as dim shapes. <b>Later</b> is partway through: First Light done, two Cycles cleared, five Trials, one Gauntlet clear.</p>
+
+<script>
+const ring14 = Array.from({ length: 14 }, (_, i) => {
+  const a = (i / 14) * Math.PI * 2 - Math.PI / 2;
+  return [0.5 + 0.46 * Math.cos(a), 0.5 + 0.46 * Math.sin(a)];
+});
+const TRIALS = ['The Kindling', 'The Long Tide', 'The White Hold', 'The Front', 'The Return', 'The Undergrowth', 'The Sounding Bell',
+  'The Ill Omen', 'The Wellspring Court', 'The Unravelling', 'The Bound Choir', 'The Charged Line', 'The Wound Spring', 'The Blood Trail'];
+const chain = (n) => Array.from({ length: n - 1 }, (_, i) => [i, i + 1]);
+
+const C = {
+  firstLight: { name: 'First Light', stars: [[0.06, 0.82], [0.36, 0.56], [0.66, 0.64], [0.94, 0.2]], lines: chain(4),
+    names: ['The Hunt', 'The Clearing', 'The Road', 'The Fork'] },
+  infinite: { name: 'The Infinite', stars: [[0.5, 0.04], [0.96, 0.38], [0.78, 0.94], [0.22, 0.94], [0.04, 0.38]],
+    lines: [[0, 2], [2, 4], [4, 1], [1, 3], [3, 0]],
+    names: ['I · The Sealing', 'II · The Remembered', 'III · The Long Winter', 'IV · The Gathering', 'V · The Last Cycle'] },
+  trials: { name: 'The Trials', stars: ring14, lines: ring14.map((_, i) => [i, (i + 1) % 14]), names: TRIALS },
+  gauntlet: { name: 'The Gauntlet', stars: [[0.5, 0.5], [0.1, 0.1], [0.9, 0.9], [0.9, 0.1], [0.1, 0.9]], lines: [[1, 0], [0, 2], [3, 0], [0, 4]],
+    names: ['First clear', 'Second clear', 'Third clear', 'Fourth clear', 'Fifth clear'] },
+  strange: { name: 'Strange Worlds', stars: [[0.5, 0.5], [0.64, 0.4], [0.62, 0.66], [0.34, 0.62], [0.36, 0.26], [0.78, 0.2]], lines: chain(6),
+    names: ['One Type', 'A New Place', 'Strangers', 'One Guardian', 'A Fixed Band', 'Puzzles'] },
+};
+
+// How much of each is lit, and whether it is open, in each account state.
+const STATES = {
+  first: { firstLight: { lit: 0, open: true }, infinite: { lit: 0, open: false }, trials: { lit: 0, open: false },
+    gauntlet: { lit: 0, open: false }, strange: { lit: 0, open: false } },
+  later: { firstLight: { lit: 4, open: true, sealed: true }, infinite: { lit: 2, open: true }, trials: { lit: 5, open: true },
+    gauntlet: { lit: 1, open: true }, strange: { lit: 0, open: true } },
+};
+
+const PRESS = {
+  first: { firstLight: 'Play The Hunt' },
+  later: { infinite: 'Enter the Infinite', trials: 'Open the Trials', gauntlet: 'Enter the Gauntlet' },
+};
+
+const VARIANTS = [
+  {
+    id: 'ring', title: 'A · The Ring',
+    blurb: 'The Pact as a plain circle. The Infinite sits in the middle and four seats sit on the ring: Strange Worlds north, the Gauntlet east, First Light south, the Trials west. Every seat weighs the same.',
+    seats: { infinite: [197, 400, 108, { noMedallion: true, label: [197, 488] }], strange: [197, 255, 66], gauntlet: [342, 400, 66], firstLight: [197, 545, 66], trials: [52, 400, 66] },
+    sigil(s) {
+      const [cx, cy, R] = [197, 400, 145];
+      return circle(cx, cy, R, 1.4) + circle(cx, cy, R - 7, .6) + circle(cx, cy, 70, 1) + ticks(cx, cy, R, 24);
+    },
+  },
+  {
+    id: 'path', title: 'B · The Path In',
+    blurb: 'First Light starts as a trail of four stars climbing into a gap in the ring. Finish it and the trail folds into one small clasp at the bottom of the ring, and the ring closes. After that it reads like A, with the lessons as a quiet knot instead of a full seat.',
+    demo: 'Finish First Light',
+    settle: 50,
+    seats(st) {
+      const firstLight = st.firstLight.sealed
+        ? [197, 490, 34]
+        : [197, 590, 180, { stars: [[0.22, 0.95], [0.08, 0.58], [0.62, 0.5], [0.5, 0.05]], label: [306, 642], noMedallion: true }];
+      return { infinite: [197, 350, 104, { noMedallion: true, label: [197, 434] }], strange: [197, 210, 66], gauntlet: [337, 350, 66], trials: [57, 350, 66], firstLight };
+    },
+    sigil(s, opts = {}) {
+      const [cx, cy, R] = [197, 350, 140];
+      const closed = !!s.firstLight.sealed;
+      return (closed ? circle(cx, cy, R, 1.4) + circle(cx, cy, R - 7, .6) : arcGap(cx, cy, R, 1.4, 16) + arcGap(cx, cy, R - 7, .6, 18))
+        + circle(cx, cy, 68, 1) + ticks(cx, cy, R, 24, closed ? 0 : 16)
+        + (opts.justSealed ? arcFlash(cx, cy, R, 18) : '');
+    },
+  },
+  {
+    id: 'diamond', title: 'C · The Diamond',
+    blurb: 'The Pact stretched to fit a portrait screen. North and south get the most room, so the growing world (Strange Worlds) goes on top and First Light on the bottom. The Trials and the Gauntlet take the narrow east and west points.',
+    seats: { infinite: [197, 400, 108, { noMedallion: true, label: [197, 488] }], strange: [197, 195, 92], firstLight: [197, 605, 92], gauntlet: [337, 400, 66], trials: [57, 400, 66] },
+    sigil(s) {
+      const pts = [[197, 195], [337, 400], [197, 605], [57, 400]];
+      let d = '';
+      for (let i = 0; i < 4; i++) d += line(pts[i], pts[(i + 1) % 4], 1.4);
+      for (const p of pts) {
+        const dx = p[0] - 197, dy = p[1] - 400, len = Math.hypot(dx, dy);
+        d += line([197 + dx / len * 70, 400 + dy / len * 70], p, .7);
+      }
+      return d + circle(197, 400, 70, 1.2) + circle(197, 400, 77, .5);
+    },
+  },
+];
+
+const circle = (cx, cy, r, w) => `<circle class="sigil" cx="${cx}" cy="${cy}" r="${r}" stroke-width="${w}"/>`;
+const line = (a, b, w) => `<line class="sigil" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke-width="${w}"/>`;
+function arcGap(cx, cy, r, w, gapDeg) {
+  const a0 = (90 + gapDeg) * Math.PI / 180, a1 = (90 - gapDeg) * Math.PI / 180;
+  const p0 = [cx + r * Math.cos(a0), cy + r * Math.sin(a0)], p1 = [cx + r * Math.cos(a1), cy + r * Math.sin(a1)];
+  return `<path class="sigil" stroke-width="${w}" d="M${p0[0]} ${p0[1]} A${r} ${r} 0 1 1 ${p1[0]} ${p1[1]}"/>`;
+}
+function arcFlash(cx, cy, r, gapDeg) {
+  const a0 = (90 - gapDeg) * Math.PI / 180, a1 = (90 + gapDeg) * Math.PI / 180;
+  const p0 = [cx + r * Math.cos(a0), cy + r * Math.sin(a0)], p1 = [cx + r * Math.cos(a1), cy + r * Math.sin(a1)];
+  return `<path class="flash" d="M${p0[0]} ${p0[1]} A${r} ${r} 0 0 1 ${p1[0]} ${p1[1]}"/>`;
+}
+function ticks(cx, cy, r, n, gapDeg = 0) {
+  let d = '';
+  for (let i = 0; i < n; i++) {
+    const deg = (i / n) * 360;
+    if (gapDeg && Math.abs(deg - 90) <= gapDeg) continue;
+    const a = deg * Math.PI / 180;
+    d += line([cx + (r + 3) * Math.cos(a), cy + (r + 3) * Math.sin(a)], [cx + (r + 9) * Math.cos(a), cy + (r + 9) * Math.sin(a)], .8);
+  }
+  return d.replaceAll('class="sigil"', 'class="sigil faint"');
+}
+
+const ZOOM_SIZE = 220, ZOOM_AT = [197, 380];
+const zoomOf = ([, , size]) => ZOOM_SIZE / size;
+
+function seatSvg(id, seat, st) {
+  const [cx, cy, size, opt = {}] = seat;
+  const def = C[id];
+  const stars = opt.stars ?? def.stars;
+  const k = zoomOf(seat);
+  const pts = stars.map(([x, y]) => [cx - size / 2 + x * size, cy - size / 2 + y * size]);
+  const isLit = (i) => i < st.lit;
+  const dark = !st.open;
+  let g = `<g class="seat${dark ? ' dark' : ''}" data-id="${id}">`;
+  if (!opt.noMedallion) g += `<circle class="medallion" cx="${cx}" cy="${cy}" r="${size * 0.64}"/>`;
+  for (const [a, b] of def.lines) {
+    g += `<line class="line${isLit(a) && isLit(b) ? ' lit' : ''}" x1="${pts[a][0]}" y1="${pts[a][1]}" x2="${pts[b][0]}" y2="${pts[b][1]}" stroke-width="${1.6 / Math.sqrt(k)}"/>`;
+  }
+  const r = (id === 'trials' ? 1.6 : 2.4) * (size > 110 ? 1.3 : Math.min(1, size / 66));
+  pts.forEach(([x, y], i) => {
+    if (!dark && i === st.lit && st.lit < pts.length) g += `<circle class="halo" cx="${x}" cy="${y}" r="${r * 2.4}"/>`;
+    g += `<circle class="star${isLit(i) ? ' lit' : ''}" data-i="${i}" cx="${x}" cy="${y}" r="${r}"/>`;
+  });
+  // Names of the stars, read only once zoomed in; an unopened constellation shows its shape and nothing else.
+  if (!dark) {
+    const fs = 10 / k;
+    pts.forEach(([x, y], i) => {
+      const dx = x - cx, dy = y - cy, len = Math.hypot(dx, dy) || 1;
+      const out = 13 / k;
+      const lx = len < 4 ? x : x + dx / len * out, ly = len < 4 ? y + out * 1.3 : y + dy / len * out + fs * 0.35;
+      const anchor = Math.abs(dx) < size * 0.12 || len < 4 ? 'middle' : dx > 0 ? 'start' : 'end';
+      g += `<text class="starname${isLit(i) ? ' lit' : ''}" x="${lx}" y="${ly}" font-size="${fs}" text-anchor="${anchor}">${def.names[i]}</text>`;
+    });
+  }
+  const [nx, ny] = opt.label ?? [cx, cy + (opt.noMedallion ? size / 2 + 14 : size * 0.64 + 15)];
+  g += `<text class="name" x="${nx}" y="${ny}" font-size="${id === 'infinite' ? 10.5 : 9}" letter-spacing="1.4" text-anchor="middle">${def.name}</text>`;
+  return g + '</g>';
+}
+
+function dust(seed) {
+  let s = seed, out = '';
+  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 90; i++) {
+    out += `<circle cx="${(rnd() * 394).toFixed(1)}" cy="${(rnd() * 780).toFixed(1)}" r="${(rnd() * 0.9 + 0.2).toFixed(2)}" fill="rgba(220,228,255,${(rnd() * 0.35 + 0.05).toFixed(2)})"/>`;
+  }
+  return `<svg class="dust" viewBox="0 0 394 780" width="394" height="780">${out}</svg>`;
+}
+
+let state = 'first';
+const seatsOf = (v, st) => (typeof v.seats === 'function' ? v.seats(st) : v.seats);
+
+function fill(col, v, vi, st, opts = {}) {
+  const seats = seatsOf(v, st);
+  // Once B's ring has sealed it settles to the middle of the screen, where A's sits.
+  const shift = v.settle && st.firstLight.sealed ? v.settle : 0;
+  let svg = v.sigil(st, opts);
+  // The Infinite draws first, so a seat's medallion sits over the spokes and the ring.
+  for (const id of Object.keys(seats)) svg += seatSvg(id, seats[id], st[id]);
+  col.innerHTML = `<h2>${v.title}</h2><p>${v.blurb}</p>
+    <div class="phone"><div class="screen">
+      ${dust(7 + vi * 13)}
+      <div class="world"><svg viewBox="0 0 394 780" width="394" height="780" font-family="ui-sans-serif, system-ui, Segoe UI, sans-serif"><g class="settle" style="transform: translateY(${opts.justSealed ? 0 : shift}px)">${svg}</g></svg></div>
+      <div class="wordmark">TITANPACT</div>
+      <div class="gear">⚙</div>
+      <div class="back">‹</div>
+      <div class="heading"></div>
+      <div class="press"></div>
+      <div class="ftr"><span>Collection</span><span>Observatory</span></div>
+    </div></div>
+    ${v.demo ? `<div class="demo"><button>${v.demo}</button></div>` : ''}`;
+  wire(col.querySelector('.screen'), seats, shift, st);
+  if (opts.justSealed && shift) {
+    const g = col.querySelector('.settle');
+    requestAnimationFrame(() => requestAnimationFrame(() => (g.style.transform = `translateY(${shift}px)`)));
+  }
+  col.querySelector('.demo button')?.addEventListener('click', () => seal(col, v, vi));
+}
+
+function render() {
+  const row = document.getElementById('row');
+  row.innerHTML = '';
+  VARIANTS.forEach((v, vi) => {
+    const col = document.createElement('div');
+    col.className = 'col';
+    row.appendChild(col);
+    fill(col, v, vi, STATES[state]);
+  });
+}
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const placeAll = (seat, stars) => stars.map(([x, y]) => [seat[0] - seat[2] / 2 + x * seat[2], seat[1] - seat[2] / 2 + y * seat[2]]);
+
+// The moment the last lesson is won: the trail lit, then folded into the clasp as the ring closes.
+async function seal(col, v, vi) {
+  const before = { ...STATES.first, infinite: { lit: 0, open: true }, firstLight: { lit: 4, open: true } };
+  const after = { ...before, firstLight: { lit: 4, open: true, sealed: true } };
+  fill(col, v, vi, before);
+  col.querySelector('.demo button').disabled = true;
+  await wait(700);
+  const from = seatsOf(v, before).firstLight, to = seatsOf(v, after).firstLight;
+  const a = placeAll(from, from[3].stars), b = placeAll(to, C.firstLight.stars);
+  const g = col.querySelector('.seat[data-id="firstLight"]');
+  g.querySelectorAll('.line, .name').forEach((el) => (el.style.opacity = 0));
+  g.querySelectorAll('.star').forEach((el) => {
+    const i = +el.dataset.i;
+    el.style.transition = 'transform 1s cubic-bezier(.6, .05, .25, 1)';
+    el.style.transform = `translate(${b[i][0] - a[i][0]}px, ${b[i][1] - a[i][1]}px)`;
+  });
+  await wait(1000);
+  fill(col, v, vi, after, { justSealed: true });
+}
+
+function wire(screen, seats, shift, st) {
+  const world = screen.querySelector('.world');
+  const heading = screen.querySelector('.heading');
+  const press = screen.querySelector('.press');
+  let zoomed = null;
+  const out = () => {
+    zoomed = null;
+    screen.classList.remove('zoomed');
+    world.style.transform = '';
+    screen.querySelectorAll('.seat.focus').forEach((s) => s.classList.remove('focus'));
+  };
+  screen.addEventListener('click', (e) => {
+    const seatEl = e.target.closest('.seat');
+    if (zoomed || !seatEl) return out();
+    const id = seatEl.dataset.id;
+    const seat = seats[id];
+    const k = zoomOf(seat);
+    const [cx] = seat, cy = seat[1] + shift;
+    world.style.transform = `translate(${ZOOM_AT[0] - k * cx}px, ${ZOOM_AT[1] - k * cy}px) scale(${k})`;
+    seatEl.classList.add('focus');
+    screen.classList.add('zoomed');
+    heading.textContent = C[id].name;
+    const label = id === 'firstLight' && st.firstLight.sealed ? 'Replay a lesson' : PRESS[state][id];
+    press.textContent = label ?? '';
+    press.classList.toggle('has', !!label);
+    zoomed = id;
+  });
+}
+
+document.querySelectorAll('.switch button').forEach((b) => b.addEventListener('click', () => {
+  state = b.dataset.state;
+  document.querySelectorAll('.switch button').forEach((x) => x.classList.toggle('on', x === b));
+  render();
+}));
+render();
+</script>
+</body>
+</html>

@@ -38,6 +38,17 @@ export const THOUGHTS: readonly ThoughtDefinition[] = [
   { id: 'star.cycle2', moment: { kind: 'star', starId: 'cycles.2' }, once: true, lines: ['Wait... it came back? It came BACK. And it’s still mad about last time.'] },
   { id: 'star.cycle3', moment: { kind: 'star', starId: 'cycles.3' }, once: true, lines: ['Every time it comes back, it’s learned something. Kind of rude, honestly.'] },
 
+  {
+    id: 'drawnIn.firstLight',
+    moment: { kind: 'drawnIn', constellationId: 'firstLight' },
+    once: true,
+    lines: [
+      'That’s it! That’s their whole story. I cried a little. Don’t tell anyone.',
+      'See the circle? That’s the Pact. Every world where the heroes win holds it shut.',
+      'And there are SO many more out there. Come on, let’s go find one!',
+    ],
+  },
+
   { id: 'uncharted.a', moment: { kind: 'uncharted' }, lines: ['Hmm, I haven’t found this one yet. It’s around here somewhere...'] },
   { id: 'uncharted.b', moment: { kind: 'uncharted' }, lines: ['Nope, still dark. Give me a minute!'] },
 
