@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reference Window</title>
+<style>
+  :root { color-scheme: dark; --bg: #0b0d12; --text: #e9dcc0; --dim: #8f8a7c; --gold: #e8c46a; --gold-rgb: 232, 196, 106; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 20px 16px 48px; background: var(--bg); color: var(--text); font: 13px/1.45 ui-sans-serif, system-ui, Segoe UI, sans-serif; }
+  h1 { text-align: center; font: 700 18px/1.2 Georgia, serif; letter-spacing: .12em; margin: 0 0 18px; color: #f0e2bd; }
+  .row { display: flex; flex-wrap: wrap; gap: 22px; justify-content: center; }
+  .col { width: 315px; }
+  .col h2 { margin: 0 0 2px; font-size: 15px; letter-spacing: .04em; }
+  .col p { margin: 0 0 10px; color: var(--dim); min-height: 76px; }
+  .phone { width: 315px; height: 650px; overflow: hidden; border-radius: 14px; border: 1px solid #262a33; position: relative; }
+  .screen { width: 394px; height: 812px; transform: scale(.8); transform-origin: 0 0; position: relative; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 30%, #1b2340 0%, #0d1222 60%, #070910 100%); }
+  .behind { position: absolute; inset: 0; display: grid; place-items: start center; padding-top: 60px; font: 700 34px Georgia, serif; letter-spacing: .2em; color: #f0c56a; opacity: .5; }
+  .scrim { position: absolute; inset: 0; background: rgba(6, 7, 11, .62); backdrop-filter: blur(5px); }
+
+  /* Shared content pieces */
+  .sky { display: block; margin: 4px auto 10px; max-width: 100%; height: auto; }
+  .entry { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 10px; margin-bottom: 6px; background: rgba(255,255,255,.035); }
+  .entry .em { width: 38px; height: 38px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 17px;
+    background: radial-gradient(circle at 50% 38%, #2c2219, #15100b 75%); box-shadow: 0 0 0 1.5px #a07a3e; }
+  .entry b { font-size: 14.5px; }
+  .entry .chev { margin-left: auto; color: #6f6656; font-size: 18px; }
+  .open { background: rgba(var(--gold-rgb), .08); box-shadow: inset 0 0 0 1px rgba(var(--gold-rgb), .35); }
+  .open b { color: var(--gold); }
+  .body-text { margin: -2px 0 10px 12px; padding: 0 12px 6px 18px; font-size: 13.5px; color: #cfc4ab; }
+  .body-text li { margin-bottom: 4px; } .body-text li::marker { color: #c98a2c; }
+  .body-text strong { color: #f0b46a; }
+  .placeholder { padding: 30px 10px; text-align: center; color: #6f6656; font-style: italic; }
+
+  /* Tab glyphs */
+  .ico { width: 22px; height: 22px; display: block; }
+
+  /* The close press, shared */
+  .close { height: 52px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; letter-spacing: .16em; font-size: 13px;
+    text-transform: uppercase; color: #f6e6bf; cursor: pointer; user-select: none;
+    background: linear-gradient(180deg, #4a3720, #33250f); box-shadow: inset 0 0 0 1px #a07a3e, 0 6px 16px rgba(0,0,0,.5); }
+  .close:active { transform: translateY(1px); }
+
+  /* ---------- A: the sheet ---------- */
+  .a-sheet { position: absolute; left: 0; right: 0; bottom: 0; top: 70px; display: flex; flex-direction: column;
+    background: linear-gradient(180deg, #171a22, #0f1117); border-radius: 22px 22px 0 0;
+    box-shadow: 0 -1px 0 rgba(var(--gold-rgb), .5), 0 -18px 40px rgba(0,0,0,.6); }
+  .a-grip { width: 44px; height: 5px; border-radius: 3px; background: #3a3d47; margin: 10px auto 4px; }
+  .a-head { text-align: center; font: 700 20px Georgia, serif; letter-spacing: .08em; color: #f0e2bd; padding: 4px 0 10px; }
+  .a-tabs { display: flex; gap: 2px; padding: 0 12px 10px; border-bottom: 1px solid #262a33; }
+  .a-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 7px 0 6px; border-radius: 10px;
+    color: #7b7466; font-size: 10.5px; font-weight: 700; cursor: pointer; }
+  .a-tab.on { color: var(--gold); background: rgba(var(--gold-rgb), .1); }
+  .a-content { flex: 1; overflow-y: auto; padding: 12px 16px; }
+  .a-foot { padding: 10px 18px 22px; background: linear-gradient(0deg, #0f1117 70%, rgba(15,17,23,0)); }
+
+  /* ---------- B: the rail ---------- */
+  .b-win { position: absolute; inset: 40px 14px 18px; display: flex; flex-direction: column; border-radius: 18px; overflow: hidden;
+    background: rgba(16, 18, 25, .96); box-shadow: 0 0 0 1px rgba(var(--gold-rgb), .35), 0 20px 50px rgba(0,0,0,.7); }
+  .b-main { flex: 1; display: flex; min-height: 0; }
+  .b-rail { width: 62px; flex: none; display: flex; flex-direction: column; gap: 4px; padding: 12px 8px; background: rgba(0,0,0,.28); border-right: 1px solid #22252e; }
+  .b-tab { height: 50px; border-radius: 12px; display: grid; place-items: center; color: #6b6558; cursor: pointer; position: relative; }
+  .b-tab.on { color: var(--gold); background: rgba(var(--gold-rgb), .12); }
+  .b-tab.on::before { content: ''; position: absolute; left: -8px; top: 12px; bottom: 12px; width: 3px; border-radius: 2px; background: var(--gold); }
+  .b-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .b-head { padding: 16px 16px 8px; font: 700 19px Georgia, serif; color: #f0e2bd; letter-spacing: .05em; }
+  .b-content { flex: 1; overflow-y: auto; padding: 4px 12px 12px; }
+  .b-foot { padding: 10px 14px 14px; border-top: 1px solid #22252e; }
+
+  /* ---------- C: the dock ---------- */
+  .c-win { position: absolute; inset: 0; display: flex; flex-direction: column; background: linear-gradient(180deg, #121520 0%, #0b0d13 100%); }
+  .c-head { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 34px 0 12px; font: 700 21px Georgia, serif;
+    letter-spacing: .08em; color: #f0e2bd; }
+  .c-head .ico { width: 24px; height: 24px; color: var(--gold); }
+  .c-rule { height: 1px; margin: 0 40px; background: linear-gradient(90deg, transparent, rgba(var(--gold-rgb), .6), transparent); }
+  .c-content { flex: 1; overflow-y: auto; padding: 14px 16px; }
+  .c-dock { padding: 8px 14px 22px; background: #0b0d13; box-shadow: 0 -1px 0 #22252e; }
+  .c-tabs { display: flex; justify-content: space-between; margin-bottom: 10px; }
+  .c-tab { width: 54px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; border-radius: 12px; color: #6b6558;
+    font-size: 10px; font-weight: 700; cursor: pointer; }
+  .c-tab.on { color: var(--gold); }
+  .c-tab.on .ico { filter: drop-shadow(0 0 6px rgba(var(--gold-rgb), .7)); }
+  .c-tab .dot { width: 4px; height: 4px; border-radius: 50%; background: transparent; }
+  .c-tab.on .dot { background: var(--gold); }
+
+  .note { max-width: 990px; margin: 28px auto 0; color: var(--dim); }
+  .note li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<h1>The Reference, three ways</h1>
+<div class="row" id="row"></div>
+<div class="note">
+  <ul>
+    <li>All three: one always-on <b>Close</b> at the bottom, where the thumb is; no ✕ hunt in a corner. A tap outside still closes A and B.</li>
+    <li>Tabs become six <b>icons with short labels</b> (How to Play, Types, Statuses, Passives, Fields, Gear), one row instead of two rows of words.</li>
+    <li>The stone frame goes. Entries are soft rows with their emblem, a chevron, and a gold rim when open.</li>
+    <li>Tap the tabs and the How to Play entries to feel the navigation. Other tabs show a placeholder.</li>
+  </ul>
+</div>
+<script>
+const ICONS = {
+  howto: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5c3-1 6-1 8 1 2-2 5-2 8-1v14c-3-1-6-1-8 1-2-2-5-2-8-1z"/><path d="M12 6v14"/></svg>',
+  types: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17M6 6l12 12M18 6 6 18"/></svg>',
+  statuses: '<svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c2 3.5 5 5.5 5 9.5a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.8 1.2 2.6 2 3-.4-3 .4-5.6 1-8z"/></svg>',
+  passives: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>',
+  fields: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17c3-2 6-2 9 0s6 2 9 0M3 12c3-2 6-2 9 0s6 2 9 0"/><circle cx="12" cy="6" r="2.5"/></svg>',
+  gear: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 4l6 6-9 9H5v-6z"/><path d="M12 6l6 6"/></svg>',
+};
+const TABS = [['howto', 'How to Play'], ['types', 'Types'], ['statuses', 'Statuses'], ['passives', 'Passives'], ['fields', 'Fields'], ['gear', 'Gear']];
+const SHORT = { howto: 'Rules', types: 'Types', statuses: 'Status', passives: 'Passive', fields: 'Fields', gear: 'Gear' };
+const ENTRIES = [
+  ['🔥', 'Burn', ['Burns at each round end: <strong>15%</strong> of max HP, then <strong>8%</strong>, then <strong>4%</strong>.', 'Its pips are the rounds it has left.', '<strong>Rest</strong>, <strong>switching</strong> or <strong>Cleanse</strong> puts it out.']],
+  ['🩸', 'Bleed', ['Loses <strong>6%</strong> of max HP at every round end.', 'Switching doesn\'t clear it.']],
+  ['💚', 'Renew', ['Heals <strong>10%</strong> of max HP at each round end, for <strong>3 rounds</strong>.']],
+  ['☘', 'Poison', ['A <strong>timer</strong>: its pips fill once a round, then it goes off.', 'It only counts down while the hero is <strong>on the field</strong>.']],
+  ['⇄', 'Switching', ['<strong>Switch</strong> trades a hero on the field for one on the bench.', 'Benched heroes <strong>regain Mana</strong>.']],
+];
+const SKY = `<svg class="sky" width="300" height="86" viewBox="0 0 300 86"><path d="M18 68L90 40L162 48L232 16" stroke="rgba(255,210,122,.75)" fill="none"/><path d="M162 48L232 16" stroke="rgba(205,214,255,.18)" fill="none"/>
+  ${[[18,68,1],[90,40,1],[162,48,0],[232,16,0]].map(([x,y,l])=>`<path d="${star(x,y,8)}" fill="${l?'#ffe7a8':'rgba(205,214,255,.25)'}"/>`).join('')}
+  <circle cx="276" cy="44" r="17" fill="none" stroke="#e8c46a" stroke-width="1.4"/><path d="${pent(276,44,12)}" fill="none" stroke="#ffe7a8" stroke-width="1.3"/></svg>`;
+function star(cx, cy, r) { let d = ''; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 - Math.PI / 2, rr = i % 2 ? r * .38 : r; d += (i ? 'L' : 'M') + (cx + rr * Math.cos(a)).toFixed(1) + ' ' + (cy + rr * Math.sin(a)).toFixed(1); } return d + 'Z'; }
+function pent(cx, cy, r) { const p = [0,1,2,3,4].map(i => { const a = i * 2 * Math.PI / 5 - Math.PI / 2; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }); return [0,2,4,1,3,0].map((i,k)=>(k?'L':'M')+p[i][0].toFixed(1)+' '+p[i][1].toFixed(1)).join(''); }
+
+function content(tab, openIdx) {
+  if (tab !== 'howto') return `<div class="placeholder">${TABS.find(t => t[0] === tab)[1]} — the tab's own catalogue, unchanged</div>`;
+  return SKY + ENTRIES.map(([em, name, bullets], i) => `<div class="entry${i === openIdx ? ' open' : ''}" data-i="${i}"><span class="em">${em}</span><b>${name}</b><span class="chev">${i === openIdx ? '⌄' : '›'}</span></div>`
+    + (i === openIdx ? `<ul class="body-text">${bullets.map(b => `<li>${b}</li>`).join('')}</ul>` : '')).join('');
+}
+
+function make(col, kind, title, blurb) {
+  col.innerHTML = `<h2>${title}</h2><p>${blurb}</p><div class="phone"><div class="screen"><div class="behind">TITANPACT</div><div class="scrim"></div><div class="win"></div></div></div>`;
+  const win = col.querySelector('.win');
+  const state = { tab: 'howto', open: 3 };
+  const render = () => {
+    const name = TABS.find(t => t[0] === state.tab)[1];
+    if (kind === 'a') win.innerHTML = `<div class="a-sheet"><div class="a-grip"></div><div class="a-head">${name}</div>
+      <div class="a-tabs">${TABS.map(([id]) => `<div class="a-tab${id === state.tab ? ' on' : ''}" data-t="${id}">${ICONS[id]}${SHORT[id]}</div>`).join('')}</div>
+      <div class="a-content">${content(state.tab, state.open)}</div><div class="a-foot"><div class="close">Close</div></div></div>`;
+    if (kind === 'b') win.innerHTML = `<div class="b-win"><div class="b-main"><div class="b-rail">${TABS.map(([id]) => `<div class="b-tab${id === state.tab ? ' on' : ''}" data-t="${id}">${ICONS[id]}</div>`).join('')}</div>
+      <div class="b-pane"><div class="b-head">${name}</div><div class="b-content">${content(state.tab, state.open)}</div></div></div><div class="b-foot"><div class="close">Close</div></div></div>`;
+    if (kind === 'c') win.innerHTML = `<div class="c-win"><div class="c-head">${ICONS[state.tab]}${name}</div><div class="c-rule"></div>
+      <div class="c-content">${content(state.tab, state.open)}</div>
+      <div class="c-dock"><div class="c-tabs">${TABS.map(([id]) => `<div class="c-tab${id === state.tab ? ' on' : ''}" data-t="${id}">${ICONS[id]}${SHORT[id]}<span class="dot"></span></div>`).join('')}</div><div class="close">Close</div></div></div>`;
+    win.querySelectorAll('[data-t]').forEach(el => el.onclick = () => { state.tab = el.dataset.t; render(); });
+    win.querySelectorAll('.entry').forEach(el => el.onclick = () => { const i = +el.dataset.i; state.open = state.open === i ? -1 : i; render(); });
+    win.querySelector('.close').onclick = () => { win.style.opacity = .15; setTimeout(() => win.style.opacity = 1, 500); };
+  };
+  render();
+}
+
+const row = document.getElementById('row');
+[
+  ['a', 'A · The sheet', 'A sheet slides up from the bottom, the screen behind still showing at the top. Its section name, then a row of six icon tabs, the page, and Close pinned under it.'],
+  ['b', 'B · The rail', 'A floating window with the tabs as a slim icon rail down its left edge, the section name heading the page beside it, and Close across the foot.'],
+  ['c', 'C · The dock', 'Full screen. The section name and its icon at the top; the tabs live in a dock at the bottom, right above Close, so every press is under the thumb.'],
+].forEach(([k, t, b]) => { const col = document.createElement('div'); col.className = 'col'; row.appendChild(col); make(col, k, t, b); });
+</script>
+</body>
+</html>
