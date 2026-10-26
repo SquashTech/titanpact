@@ -156,6 +156,9 @@ export function guildHallLevel(actNumber: number): number {
  */
 export const ACT_ONE_ELITE_HERO_COUNT = 3;
 
+/** The Elite fields this many more bodies than the Skirmish beside it, Act 1's roster cap included (2026-10-26, per user direction). */
+export const ELITE_EXTRA_ENEMIES = 1;
+
 /**
  * Act 1 never fields more bodies than the player has (2026-09-10, Growth Overhaul phase 6).
  *

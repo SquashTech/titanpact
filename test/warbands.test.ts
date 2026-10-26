@@ -14,6 +14,7 @@ import { generateMap } from '../src/run/map';
 import { generateItinerary, locationForAct } from '../src/run/locations';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { nodeEncounter, type EncounterContext } from '../src/run/encounters';
+import { ELITE_EXTRA_ENEMIES } from '../src/run/difficulty';
 import { castHeroWarband, learnableIn, learnableMoves } from '../src/run/warbands';
 import { companionCallFor, companionTier, joinCompanion } from '../src/run/companion';
 import { levelAfterEncounters, levelOf } from '../src/run/growth';
@@ -62,7 +63,7 @@ test('warbands: a Gathering’s Elite is cast around one from the deck, its move
       const run = runAt(seed, act, 4);
       const elite = Object.values(run.map!.nodes).find((n) => n.type === 'elite')!;
       const gathering = nodeEncounter(elite, contextFor(run));
-      assert.strictEqual(gathering.run.roster.length, 4, 'a warband never shrinks the party');
+      assert.strictEqual(gathering.run.roster.length, 4 + ELITE_EXTRA_ENEMIES, 'a warband never shrinks the party');
       const withEngine = Object.values(warbands).some((w) =>
         w.slots.every((slot) => gathering.run.roster.some((r) => slot.moveIds.some((id) => r.unlockedMoveIds.includes(id))))
       );

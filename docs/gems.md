@@ -52,7 +52,7 @@ rest are lost and the screen says so.
 |---|---|---|
 | ~~**The Lapidary** (the forced row, `scribeReward`, every act 1–4)~~ **Off the map 2026-10-26** (per user direction, for playtest: its row is gone from every act, the node type kept for old saves) | ~~**3 Gems** (`SCRIBE_GEMS`)~~ | 2 heroes × 2 pips |
 | **Gem Cache** (`scrollReward`, weight **45**) | **3 Gems** (`GEM_CACHE_COUNT`; 4 until 2026-10-15, cut per user direction) | 3 pips |
-| **A won fight** (`GEM_DROP`, `rollGemDrop`) | **Elite and Skirmish 2, Guardian 3, always; opener 1 at 20%; the finale none** (2026-10-26, per user direction: Skirmish 1 at 20% → 2, Guardian 2 → 3, to pay back the Lapidary's row; the opener left alone so a new player's first fight isn't flooded) | never |
+| **A won fight** (`GEM_DROP`, `rollGemDrop`) | **Skirmish 2, Elite 3, Guardian 3, always; opener 1 at 20%; the finale none** (2026-10-26, per user direction: Skirmish 1 at 20% → 2, Elite 2 → 3, Guardian 2 → 3, to pay back the Lapidary's row; the opener left alone so a new player's first fight isn't flooded) | never |
 | **The shelf** (Guild Hall and Vigil) | **6 single Gems, six different stats**, shown before the buy, each sold once a visit, **3g a point** (15g through Act 2, 30g after) | 2 pips |
 | **MVP** | **+50% of the fight's XP** (`MVP_XP_SHARE`), on top of the roster's grant | 1 pip |
 

@@ -14,7 +14,7 @@ import type { MapNode, MapNodeType, RunMap } from './map';
 import type { RunState } from './state';
 import type { ProgressionTable } from './progression';
 import { rosterEntryTypes } from './progression';
-import { championGradeFor, encounterScaling, encounterHeroCountOverride, enemyLoadoutFor, guardianEscortCount } from './difficulty';
+import { championGradeFor, encounterScaling, encounterHeroCountOverride, ELITE_EXTRA_ENEMIES, enemyLoadoutFor, guardianEscortCount } from './difficulty';
 import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNodeType } from './enemyGen';
 import { locationBias } from './locations';
 import { guardiansWake, isGathering, isLongWinter, wardensHold, wokenChampion, wokenChampionMark, wokenEscortCount } from './cycles';
@@ -86,7 +86,7 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // Act 1 caps the enemy count at the roster (the companion is off it — docs/companion-call.md §6).
   const heroCountOverride =
     type === 'fight' || isSecondFight ? 2 : encounterHeroCountOverride(type, run.actNumber, run.roster.length, standardCount);
-  const heroCount = heroCountOverride ?? standardCount;
+  const heroCount = (heroCountOverride ?? standardCount) + (type === 'elite' ? ELITE_EXTRA_ENEMIES : 0);
   // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
   const bias = pool === heroes ? locationBias(location, heroes, heroCount) : undefined;
   // A Gathering's hero fight is cast around a warband from the deck (run/warbands.ts); the rest is drawn as ever.
@@ -94,7 +94,7 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
     pool === heroes && isGathering(run) ? castHeroWarband(seed, Object.keys(heroes).filter((id) => !excludeHeroIds.includes(id)), heroCount, learnableIn(heroes, progression)) : null;
   let encounter = generateEncounter(encounterKind, seed, pool, {
     forcedHeroIds: heroWarband ? [...heroWarband.cast.keys()] : undefined,
-    heroCount: heroCountOverride ?? (encounterKind === 'boss' || heroWarband ? standardCount : undefined),
+    heroCount,
     bias,
     excludeHeroIds,
     scaling,

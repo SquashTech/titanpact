@@ -46,7 +46,7 @@ export const GEM_DROP: Record<EncounterNodeKind, { chance: number; count: number
   fight: { chance: 0.2, count: 1 },
   battle: { chance: 0.2, count: 1 },
   skirmish: { chance: 1, count: 2 },
-  elite: { chance: 1, count: 2 },
+  elite: { chance: 1, count: 3 },
   boss: { chance: 1, count: 3 },
   finale: { chance: 0, count: 0 },
 };

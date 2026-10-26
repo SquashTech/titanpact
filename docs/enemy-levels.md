@@ -96,6 +96,11 @@ the act's tier of escorts, sitting a level under you. The Elite's contract outra
 level in every act; the Skirmish's ties it in Acts 2 and 4 and outranks it in 3 and 5 (Act 1's
 sits under, and is not the contract a hire competes with).
 
+**The Elite fields one more body than the Skirmish** (2026-10-26, per user direction, for playtest:
+players took the Elite every time). `ELITE_EXTRA_ENEMIES` = 1, on top of Act 1's roster cap: five
+against the Skirmish's four from Act 2, the roster plus one in Act 1. It pays 3 Gems to the
+Skirmish's 2 (`docs/gems.md` §4).
+
 **Why the Guardian sits under par.** The old curve paid Acts 1–2 *zero* steps and Act 2 was
 still the wall. A level cannot pay zero: the lowest honest reading of a Guardian is a few
 levels under the player, and that is where the fit landed (§6). The escort tier
