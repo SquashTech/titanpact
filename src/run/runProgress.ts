@@ -308,6 +308,82 @@ export function absorbItem(
   return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? { ...r, equipment: nextLoadout } : r)) };
 }
 
+// --- Moving gear between heroes (docs/gear-absorption.md §2b) ---
+
+/** What dropping a held piece on another hero's socket would do. */
+export type MoveReceipt =
+  | { kind: 'move' }
+  | { kind: 'merge'; resultId: string; resultRarity: EquipmentRarity }
+  | { kind: 'swap' }
+  | { kind: 'none' };
+
+/**
+ * A piece at `from` dropped on `to`'s socket `toIndex`: an empty socket takes it; the target's
+ * piece of the same family merges with it; any other piece trades places with it. A move that
+ * would leave either hero holding two of a family, or a merge past Mythic, is refused.
+ */
+export function moveReceiptFor(
+  run: RunState,
+  from: { rosterId: string; index: number },
+  to: { rosterId: string; index: number },
+  equipmentLookup: Record<string, EquipmentDefinition>,
+  heroLookup: Record<string, HeroDefinition>
+): MoveReceipt {
+  if (from.rosterId === to.rosterId) return { kind: 'none' };
+  const source = run.roster.find((r) => r.rosterId === from.rosterId);
+  const target = run.roster.find((r) => r.rosterId === to.rosterId);
+  const movingId = source?.equipment[from.index];
+  const moving = movingId ? equipmentLookup[movingId] : undefined;
+  const targetHero = target ? heroLookup[target.heroId] : undefined;
+  if (!source || !target || !moving || !targetHero) return { kind: 'none' };
+  const family = (id: string) => parseEquipmentId(id).base;
+  const heldId = target.equipment[to.index];
+
+  if (!heldId) {
+    if (to.index >= itemSlotsFor(targetHero, target)) return { kind: 'none' };
+    return target.equipment.some((id) => family(id) === family(moving.id)) ? { kind: 'none' } : { kind: 'move' };
+  }
+  const held = equipmentLookup[heldId];
+  if (!held) return { kind: 'none' };
+  if (family(heldId) === family(moving.id)) {
+    const result = equipmentLookup[mergeIntoHeld(held, moving) ?? ''];
+    return result ? { kind: 'merge', resultId: result.id, resultRarity: result.rarity } : { kind: 'none' };
+  }
+  const targetKeeps = target.equipment.filter((_, i) => i !== to.index);
+  const sourceKeeps = source.equipment.filter((_, i) => i !== from.index);
+  if (targetKeeps.some((id) => family(id) === family(moving.id))) return { kind: 'none' };
+  if (sourceKeeps.some((id) => family(id) === family(heldId))) return { kind: 'none' };
+  return { kind: 'swap' };
+}
+
+/** Carries out `moveReceiptFor`; throws where it would have refused. */
+export function moveItem(
+  run: RunState,
+  from: { rosterId: string; index: number },
+  to: { rosterId: string; index: number },
+  equipmentLookup: Record<string, EquipmentDefinition>,
+  heroLookup: Record<string, HeroDefinition>
+): RunState {
+  const receipt = moveReceiptFor(run, from, to, equipmentLookup, heroLookup);
+  if (receipt.kind === 'none') throw new RunProgressError(`That piece cannot go to ${to.rosterId} there`);
+  const source = run.roster.find((r) => r.rosterId === from.rosterId)!;
+  const target = run.roster.find((r) => r.rosterId === to.rosterId)!;
+  const movingId = source.equipment[from.index];
+  const heldId = target.equipment[to.index];
+  const sourceNext =
+    receipt.kind === 'swap' ? equipItem(source.equipment, heldId, from.index) : source.equipment.filter((_, i) => i !== from.index);
+  const targetNext =
+    receipt.kind === 'move'
+      ? equipItem(target.equipment, movingId)
+      : equipItem(target.equipment, receipt.kind === 'merge' ? receipt.resultId : movingId, to.index);
+  return {
+    ...run,
+    roster: run.roster.map((r) =>
+      r.rosterId === source.rosterId ? { ...r, equipment: sourceNext } : r.rosterId === target.rosterId ? { ...r, equipment: targetNext } : r
+    ),
+  };
+}
+
 /** The who-screen's one decline: the item becomes gold at `sellValueFor`, on the spot. */
 export function sellItem(run: RunState, itemId: string, equipmentLookup: Record<string, EquipmentDefinition>): RunState {
   const item = equipmentLookup[itemId];

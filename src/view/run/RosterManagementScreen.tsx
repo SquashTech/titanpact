@@ -18,29 +18,59 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
-import { ItemBox, slotBoxes } from '../shared/EquipmentBox';
+import { ItemBox, RARITY_COLOR_VARS, slotBoxes } from '../shared/EquipmentBox';
 import { MasteryPips } from '../shared/MasteryPips';
 import { WoundBar, entryHp } from '../shared/WoundBar';
 import { BlessingMark } from '../shared/BlessingMark';
 import { playSfx } from '../../audio/sfx';
+import { moveItem, moveReceiptFor, type MoveReceipt } from '../../run/runProgress';
+import { MergeBurst } from './MergeBurst';
 
 interface Props {
   run: RunState;
+  /** Given, a piece can be moved between heroes (docs/gear-absorption.md §2b); absent, the screen only reads. */
+  onRunChange?: (next: RunState) => void;
   onClose: () => void;
 }
 
+type Socket = { rosterId: string; index: number };
+
 /**
  * The Roster: the whole screen given to the squad, six heroes standing in six alcoves with what
- * the act has left them — level, HP, form, Mastery — and their sockets underneath, and nothing to
- * do to any of it (docs/gear-absorption.md §2). Tap a hero for the full sheet, a piece for what it
- * does.
+ * the act has left them — level, HP, form, Mastery — and their sockets underneath. Tap a hero for
+ * the full sheet. Tap a piece to lift it, then another hero's socket to move, swap or merge it
+ * there (docs/gear-absorption.md §2b); hold a piece for what it does.
  */
-export function RosterManagementScreen({ run, onClose }: Props) {
+export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [viewedItemId, setViewedItemId] = useState<string | null>(null);
   const [companionOpen, setCompanionOpen] = useState(false);
+  const [lifted, setLifted] = useState<Socket | null>(null);
+  const [burst, setBurst] = useState<string | null>(null);
   const companionId = companionHeroId(run);
   const callMoveId = companionCallMoveId(run);
+
+  function handleSocket(at: Socket) {
+    const heldHere = run.roster.find((r) => r.rosterId === at.rosterId)?.equipment[at.index];
+    if (!lifted || lifted.rosterId === at.rosterId) {
+      const same = lifted && lifted.rosterId === at.rosterId && lifted.index === at.index;
+      if (same || !heldHere) {
+        setLifted(null);
+        return;
+      }
+      playSfx('ui.pick');
+      setLifted(at);
+      return;
+    }
+    const receipt = moveReceiptFor(run, lifted, at, equipment, rosterHeroes);
+    if (receipt.kind === 'none') return;
+    onRunChange!(moveItem(run, lifted, at, equipment, rosterHeroes));
+    setLifted(null);
+    if (receipt.kind === 'merge') {
+      playSfx('discovery');
+      setBurst(receipt.resultId);
+    } else playSfx('equip');
+  }
 
   return (
     <div
@@ -53,10 +83,14 @@ export function RosterManagementScreen({ run, onClose }: Props) {
           setViewedItemId(null);
           return;
         }
+        if (lifted) {
+          setLifted(null);
+          return;
+        }
         onClose();
       }}
     >
-      <div className="log-panel roster-sheet" onClick={(e) => e.stopPropagation()}>
+      <div className="log-panel roster-sheet" onClick={(e) => { e.stopPropagation(); setLifted(null); }}>
         <div className="log-panel-header roster-sheet-header">
           <span>Roster</span>
         </div>
@@ -75,6 +109,9 @@ export function RosterManagementScreen({ run, onClose }: Props) {
                   setInspecting({ hero, entry });
                 }}
                 onItem={setViewedItemId}
+                lifted={lifted}
+                receiptAt={(index) => (lifted && lifted.rosterId !== entry.rosterId ? moveReceiptFor(run, lifted, { rosterId: entry.rosterId, index }, equipment, rosterHeroes) : null)}
+                onSocket={onRunChange ? (index) => handleSocket({ rosterId: entry.rosterId, index }) : undefined}
               />
             );
           })}
@@ -121,6 +158,7 @@ export function RosterManagementScreen({ run, onClose }: Props) {
 
       <ItemDetailOverlay item={viewedItemId ? (equipment[viewedItemId] ?? null) : null} onClose={() => setViewedItemId(null)} />
       {companionOpen && <CompanionDossier run={run} onClose={() => setCompanionOpen(false)} />}
+      {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}
     </div>
   );
 }
@@ -156,10 +194,30 @@ interface CardProps {
   relicIds: readonly string[];
   onInspect: () => void;
   onItem: (itemId: string) => void;
+  lifted: Socket | null;
+  /** What dropping the lifted piece on this hero's socket would do; null when nothing is lifted or it is this hero's own. */
+  receiptAt: (index: number) => MoveReceipt | null;
+  /** Absent on a read-only roster: a tap then shows the piece. */
+  onSocket?: (index: number) => void;
+}
+
+const MergeMark = () => (
+  <span className="item-box-merge" aria-hidden="true">
+    <svg viewBox="0 0 10 10" className="merge-mark">
+      <path d="M2 1.5 5 5l3-3.5M5 5v4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  </span>
+);
+
+function socketClass(receipt: MoveReceipt | null, isLifted: boolean): string | undefined {
+  if (isLifted) return 'selected';
+  if (!receipt) return undefined;
+  if (receipt.kind === 'merge') return 'merge-target';
+  return receipt.kind === 'none' ? 'is-refused' : 'drop-target';
 }
 
 /** One hero: the alcove it stands in (tap for the sheet), then its HP, Mastery and sockets. */
-function RosterSheetCard({ hero, entry, relicIds, onInspect, onItem }: CardProps) {
+function RosterSheetCard({ hero, entry, relicIds, onInspect, onItem, lifted, receiptAt, onSocket }: CardProps) {
   const level = levelOf(entry);
   const { hp, maxHp } = entryHp(hero, entry, relicIds);
   const form = chosenEvolutionPaths(progressionTable, entry).slice(-1)[0]?.name ?? null;
@@ -196,16 +254,23 @@ function RosterSheetCard({ hero, entry, relicIds, onInspect, onItem }: CardProps
           </span>
         </button>
 
-        <div className="equip-mount roster-sheet-mount">
+        <div className="equip-mount roster-sheet-mount" onClick={onSocket ? (e) => e.stopPropagation() : undefined}>
           {boxes.map((itemId, index) => {
             const item = itemId ? (equipment[itemId] ?? null) : null;
+            const receipt = receiptAt(index);
+            const isLifted = lifted?.rosterId === entry.rosterId && lifted.index === index;
             return (
               <ItemBox
                 key={index}
                 item={item}
-                onTap={item ? () => onItem(item.id) : undefined}
+                className={socketClass(receipt, isLifted)}
+                style={receipt?.kind === 'merge' ? ({ '--merge-color': RARITY_COLOR_VARS[receipt.resultRarity] } as CSSProperties) : undefined}
+                sfx={onSocket ? 'none' : undefined}
+                onTap={onSocket ? () => onSocket(index) : item ? () => onItem(item.id) : undefined}
                 onLongPress={item ? () => onItem(item.id) : undefined}
-              />
+              >
+                {receipt?.kind === 'merge' && <MergeMark />}
+              </ItemBox>
             );
           })}
           {Array.from({ length: locked }, (_, i) => (

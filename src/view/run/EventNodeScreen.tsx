@@ -207,6 +207,8 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
   /** recruit only, at the cap: the arriving hero, while the player names who leaves. */
   const [arriving, setArriving] = useState<RosterEntry | null>(null);
   const [leavingId, setLeavingId] = useState<string | null>(null);
+  /** A dismissed hero's gear, offered on through the item gate once the event is left. */
+  const [handOn, setHandOn] = useState<string[]>([]);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
 
@@ -259,6 +261,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
   }
 
   function recruit(entry: RosterEntry, terminatedRosterId?: string) {
+    setHandOn([...(run.roster.find((r) => r.rosterId === terminatedRosterId)?.equipment ?? [])]);
     commit(joinEventRecruit(run, entry, terminatedRosterId));
     setResolvedTo(entry.rosterId);
     setArriving(null);
@@ -652,7 +655,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
             Back
           </button>
         ) : (
-          <button className="resolve-button" disabled={!arrived || !canContinue} onClick={onContinue}>
+          <button className="resolve-button" disabled={!arrived || !canContinue} onClick={handOn.length > 0 ? () => onGrantEquipment(handOn) : onContinue}>
             Continue
           </button>
         ))}

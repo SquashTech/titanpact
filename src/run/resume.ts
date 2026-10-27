@@ -144,7 +144,7 @@ export type RunScreen =
   /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
   | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: RunScreen }
   /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
-  | { kind: 'recruit'; offers: RosterEntry[]; next: RunScreen; claimedRosterIds?: string[] }
+  | { kind: 'recruit'; offers: RosterEntry[]; next: RunScreen; claimedRosterIds?: string[]; handOn?: string[] }
   /** The Eyes have closed: the roster presented as the heroes of the land, then the summary. */
   | { kind: 'champions' }
   | { kind: 'runComplete' }

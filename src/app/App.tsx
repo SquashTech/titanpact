@@ -786,8 +786,13 @@ export function App() {
     return true;
   }
 
-  function recordClaim(offerRosterId: string) {
-    setScreen((at) => (at.kind === 'recruit' ? { ...at, claimedRosterIds: [...(at.claimedRosterIds ?? []), offerRosterId] } : at));
+  /** `handOn`: a dismissed hero's gear, offered on through the item gate when the screen is done. */
+  function recordClaim(offerRosterId: string, handOn: readonly string[] = []) {
+    setScreen((at) =>
+      at.kind === 'recruit'
+        ? { ...at, claimedRosterIds: [...(at.claimedRosterIds ?? []), offerRosterId], handOn: [...(at.handOn ?? []), ...handOn] }
+        : at
+    );
   }
 
   function handleClaimContractReplace(defeated: RosterEntry, terminatedRosterId: string): boolean {
@@ -795,8 +800,9 @@ export function App() {
     if (playerRun.recruitContracts <= 0) return false;
     const offer = deriveContractOffer(defeated);
     const rosterId = freshRosterId(playerRun, defeated.heroId);
+    const leavingGear = playerRun.roster.find((r) => r.rosterId === terminatedRosterId)?.equipment ?? [];
     setPlayerRun((run) => claimContractReplacing(run, offer, rosterId, terminatedRosterId));
-    recordClaim(defeated.rosterId);
+    recordClaim(defeated.rosterId, leavingGear);
     return true;
   }
 
@@ -1731,7 +1737,7 @@ export function App() {
           claimedRosterIds={screen.claimedRosterIds}
           onClaim={handleClaimContract}
           onClaimReplace={handleClaimContractReplace}
-          onDone={() => setScreen(screen.next)}
+          onDone={() => setScreen(whoScreensFor(playerRun, screen.handOn ?? [], screen.next))}
         />
       )}
 
@@ -1753,7 +1759,7 @@ export function App() {
                   ? recruitFromGuildHallReplacing(playerRun, candidate.offer, rosterId, terminatedRosterId)
                   : claimContractReplacing(playerRun, candidate.offer, rosterId, terminatedRosterId);
               setPlayerRun(nextRun);
-              setScreen(screen.next);
+              setScreen(whoScreensFor(nextRun, playerRun.roster.find((r) => r.rosterId === terminatedRosterId)?.equipment ?? [], screen.next));
               setRecruitFanfare({
                 heroId: candidate.offer.heroId,
                 source: candidate.source === 'guildHall' ? 'guild' : 'contract',

@@ -14,6 +14,8 @@ import {
   anyoneCanReceive,
   enchantItem,
   itemReceiptFor,
+  moveItem,
+  moveReceiptFor,
   reachableNodeIds,
   advanceToNode,
   grantCurrencyReward,
@@ -108,6 +110,35 @@ test('runProgress: absorbItem seats an item in a free socket, and it is on the h
   const next = absorbItem(run, 'cinderKnight', 'sword.common', equipment, heroes);
   assert.deepStrictEqual(next.roster[0].equipment, ['sword.common']);
   assert.strictEqual(next.gold, 0, 'nothing is sold on a take');
+});
+
+test('runProgress: moveItem carries a piece to an empty socket, swaps it with another, or merges it into its family', () => {
+  const run = gearedRun('cinderKnight', ['sword.common', 'staff.common'], 'valor', ['bow.rare', 'sword.epic', 'plate.common']);
+  const at = (rosterId: string, index: number) => ({ rosterId, index });
+
+  assert.deepStrictEqual(moveReceiptFor(run, at('cinderKnight', 1), at('valor', 0), equipment, heroes), { kind: 'swap' });
+  const swapped = moveItem(run, at('cinderKnight', 1), at('valor', 0), equipment, heroes);
+  assert.deepStrictEqual(swapped.roster[0].equipment, ['sword.common', 'bow.rare']);
+  assert.deepStrictEqual(swapped.roster[1].equipment, ['staff.common', 'sword.epic', 'plate.common']);
+
+  assert.deepStrictEqual(moveReceiptFor(run, at('cinderKnight', 0), at('valor', 1), equipment, heroes), { kind: 'merge', resultId: 'sword.legendary', resultRarity: 'legendary' });
+  const merged = moveItem(run, at('cinderKnight', 0), at('valor', 1), equipment, heroes);
+  assert.deepStrictEqual(merged.roster[0].equipment, ['staff.common']);
+  assert.deepStrictEqual(merged.roster[1].equipment, ['bow.rare', 'sword.legendary', 'plate.common']);
+
+  const moved = moveItem(run, at('valor', 2), at('cinderKnight', 2), equipment, heroes);
+  assert.deepStrictEqual(moved.roster[0].equipment, ['sword.common', 'staff.common', 'plate.common']);
+  assert.deepStrictEqual(moved.roster[1].equipment, ['bow.rare', 'sword.epic']);
+});
+
+test('runProgress: moveItem refuses a move that would leave a hero holding two of a family', () => {
+  const run = gearedRun('cinderKnight', ['sword.common', 'staff.common'], 'valor', ['staff.rare', 'bow.common']);
+  const at = (rosterId: string, index: number) => ({ rosterId, index });
+  // Trading Cinder's Sword for Valor's Staff would leave Cinder holding two Staffs.
+  assert.deepStrictEqual(moveReceiptFor(run, at('cinderKnight', 0), at('valor', 0), equipment, heroes), { kind: 'none' });
+  assert.deepStrictEqual(moveReceiptFor(run, at('cinderKnight', 0), at('valor', 1), equipment, heroes), { kind: 'swap' });
+  assert.deepStrictEqual(moveReceiptFor(run, at('cinderKnight', 0), at('cinderKnight', 1), equipment, heroes), { kind: 'none' });
+  assert.throws(() => moveItem(run, at('cinderKnight', 0), at('valor', 0), equipment, heroes), RunProgressError);
 });
 
 test('runProgress: a hero with three full sockets and no family match overwrites the socket it names, for nothing', () => {

@@ -12476,6 +12476,11 @@ button.star-shop-bundle-face {
   border-color: var(--accent);
 }
 
+/* A socket the lifted piece cannot go to: it would leave a hero holding two of a family. */
+.item-box.is-refused {
+  opacity: 0.35;
+}
+
 /* --- Carrying ------------------------------------------------------------
    The socket a piece was lifted OUT of stands open: the piece is gone from it (it is under
    the finger), and what is left is the hole plus a faint outline of what belongs there. */
@@ -44613,6 +44618,31 @@ img.smithy-service-art {
   inset: 3px;
   width: auto;
   height: auto;
+}
+
+/* Moving a piece (docs/gear-absorption.md §2b). The glow is a drop-shadow so it follows the
+   octagon cut, which has no border to light. */
+.roster-sheet-mount .item-box {
+  transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+
+.roster-sheet-mount .item-box.selected {
+  background: none;
+  transform: translateY(-3px) scale(1.14);
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 2px #ffe2a0) drop-shadow(0 0 8px rgba(255, 196, 92, 0.85));
+}
+
+.roster-sheet-mount .item-box.drop-target {
+  filter: drop-shadow(0 0 1.5px #ffd88a) drop-shadow(0 0 6px rgba(255, 196, 92, 0.55));
+}
+
+.roster-sheet-mount .item-box.drop-target.empty::before {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.2)), rgba(255, 200, 110, 0.32);
+}
+
+.roster-sheet-mount .item-box.merge-target {
+  box-shadow: none;
+  filter: drop-shadow(0 0 2px var(--merge-color)) drop-shadow(0 0 8px var(--merge-color));
 }
 
 /* Close: a word between two gilt rules, in thumb reach. */

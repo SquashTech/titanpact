@@ -300,7 +300,7 @@ export function eventRecruitEntry(
   return level <= 1 ? base : levelUpEntry(base, hero, level - 1, random).entry;
 }
 
-/** Joins outright below the cap; at it, `terminatedRosterId` leaves with its gear. */
+/** Joins outright below the cap; at it, `terminatedRosterId` leaves, its gear for the caller to hand on. */
 export function joinEventRecruit(run: RunState, entry: RosterEntry, terminatedRosterId?: string): RunState {
   if (run.roster.length < ROSTER_CAP) return addRosterEntry(run, entry);
   if (!terminatedRosterId) throw new RunEventError('The roster is full — someone has to leave');

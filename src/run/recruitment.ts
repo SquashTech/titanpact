@@ -117,7 +117,7 @@ export type RosterReplaceCandidate =
   | { source: 'guildHall'; offer: GuildHallOffer }
   | { source: 'contract'; offer: ContractOffer };
 
-/** Roster-full variant. The outgoing hero's gear goes with it — gear is absorbed, never handed on (docs/gear-absorption.md §7). */
+/** Roster-full variant. The outgoing hero leaves its gear for the caller to hand on (docs/gear-absorption.md §2b). */
 export function recruitFromGuildHallReplacing(
   run: RunState,
   offer: GuildHallOffer,

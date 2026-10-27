@@ -40,7 +40,7 @@ reads as more screens and is fewer.
 
 **An item is absorbed by the hero it is given to, the moment it is received, and never comes off.**
 (Since 2026-10-15 it can be *destroyed* by a newer piece written over its socket — see the status
-note. It still never moves, and never comes back.)
+note. Since 2026-10-27 it can be *moved* to another hero on the Roster screen — see §2b.)
 
 Everything below follows. A hero has three sockets, always; an item fills one for the run; there
 is nothing to swap, nothing to carry, nothing to sell later. The only question an item ever asks is
@@ -108,6 +108,31 @@ one).
 **Width.** The widest piece is an enchanted Crest or Crown: five stats and a Force, six columns.
 From four columns the figure and sockets shrink and the Force column narrows to its glyph; a
 roster of three or fewer keeps its rows at their own height rather than stretching them.
+
+## 2b. Moving gear between heroes
+
+**A piece can be moved from one hero to another on the Roster screen** (2026-10-27, per user
+direction: an exception to §1, asked for by players). The swap sheet of the old bag was
+clunky; this is socket to socket, with nothing in between. Tap a piece to lift it, then tap a
+socket on another hero:
+
+- **an empty socket** takes it;
+- **a piece of the same family** merges with it, a tier above the higher of the two, exactly as a
+  drop merges (the merge mark wears the tier it would reach);
+- **any other piece** trades places with it.
+
+A socket that would leave either hero holding two of a family is dimmed and refuses the drop;
+nothing cascades. Tapping the lifted piece again, or anywhere off the sockets, puts it down. A
+hold still shows what a piece does. Moving costs nothing and is open whenever the map is
+(`moveReceiptFor`, `moveItem` in `runProgress.ts`; `RosterManagementScreen.tsx`). The roster
+button on pick-a-hero screens stays read-only, so a decision on screen is never changed under it.
+
+**A dismissed hero's gear is handed on** (same day, per user direction). Terminating a hero to make
+room raises the who-screen for each piece it wore, Sell included, once the recruit screen or event
+is done, so nothing has to be stripped by hand first. Second-order: the who-screen's choice is no
+longer for the run, and a Sell on a dismissed hero's piece is gold the old rule never paid. Watch
+whether players treat the who-screen as provisional, and whether moving gear every few nodes
+becomes a chore of its own.
 
 ---
 
@@ -220,8 +245,8 @@ piece absorbed** — finished on a fourth axis (level, Evolution, kit, gear) aga
 one. The piece is rolled to fit the hero (`rollFittingGear`, `data/equipment.ts`: a family that
 suits its offensive stat, the node's rarity curve, an enchant only of a type it fields), so the
 piece the player saw it wearing is the piece they get; the recruit stage shows it as a veteran
-mark. No who-screen: it is already on the hero. Gear dies with a hero on termination or a
-companion's death — it always did; now there is no bag for it to fall into.
+mark. No who-screen: it is already on the hero. A dismissed hero's gear is handed on through the
+who-screen (§2b, since 2026-10-27; it used to die with the hero).
 
 ---
 

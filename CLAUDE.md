@@ -137,7 +137,7 @@ don't silently override it.
 > widens while a socket is free (§8). **Phase 3 is IN (same day): a contract arrives ARMED** —
 > the enemy's piece is rolled to fit it (`rollFittingGear`: a family suiting its offensive stat,
 > an enchant of a type it fields) and `claimContract` keeps it, the fifth finished axis against a
-> bare hire; a terminated hero's gear goes with it, never handed on. **Phase 4 is IN (same day):
+> bare hire; a terminated hero's gear is handed on since 2026-10-27. **Phase 4 is IN (same day):
 > the drop table was MEASURED** — every table without the opener's guaranteed item lost six to
 > eight points of full-clear, all in acts 1–2 — so `EQUIPMENT_DROP_CHANCE` is 1 / 0.6 / 1 / 1
 > (the Elite and Guardian always drop) and the Cache took the Forge's seat weight (40 → 78).
@@ -649,8 +649,8 @@ don't silently override it.
   a claim and a hire each spend ONE Recruit Contract, and gold never buys a hero — it buys a
   contract, at a price that rises with every one bought this run (40 +20). The run opens with one;
   the rest come from a `contractReward` seat in the reward rows, a won Elite (50%, paid before its
-  claim) or the Tavern, never free at an act's end. The roster cap still prices a swap (gaining requires terminating, and the terminated
-  hero's gear goes with it). **A contract arrives
+  claim) or the Tavern, never free at an act's end. The roster cap still prices a swap (gaining requires terminating; the terminated
+  hero's gear is handed on since 2026-10-27). **A contract arrives
   ARMED** (2026-09-15, `docs/gear-absorption.md` §7): the piece the enemy fought in — rolled to fit
   it — is absorbed on the contract hero, the fifth finished axis against a hire's bare sockets.
   The LEVEL axis points the right way: a contract hero arrives at its NODE's enemy level
@@ -672,7 +672,7 @@ don't silently override it.
   mend and a contract carry it); the finale's squad size is no longer special. 6v4 is a player
   buff to be measured and absorbed by `ACT_LEVEL_ADJUST`, not by a bigger enemy party
   (`docs/combat.md` "The fielded roster"). Gaining a hero
-  requires **terminating** an existing one. Equipment strips on termination; no gold refund.
+  requires **terminating** an existing one. Its equipment is handed on through the who-screen.
   **The companion is not on the roster** (2026-10-04, `docs/companion-call.md`, replacing the
   mortal slot-holder of 2026-09-13): after the run's first fight one of the Early spawn it beat
   joins — it cannot be declined — as `RunState.companion`, and once a fight it acts on its own,
@@ -686,7 +686,10 @@ don't silently override it.
   more (the Forge and `bonusItemSlots` are deleted). **An item is given to a hero the moment it
   is received and never comes off** — the who-screen (`ItemWhoScreen`) is the one screen gear
   ever gets, with take / merge / sell as its verbs; there is no bag, no swap, no move, no later
-  sale, and the Roster screen only reads. **A full hero may overwrite a socket** (2026-10-15, per
+  sale. **One named exception, 2026-10-27, per user direction** (`docs/gear-absorption.md` §2b):
+  on the map's Roster screen a piece can be moved socket to socket between heroes, merging into
+  its family or trading places, and a dismissed hero's gear is handed on through the who-screen.
+  **A full hero may overwrite a socket** (2026-10-15, per
   user direction, `docs/gear-absorption.md`): **Replace** on the who-screen and the Gear counter,
   the lost piece named on the confirm and destroyed for nothing — it never moves, so nothing cascades. Permanence is what makes an item matter; supply is
   the balance number. **No hero holds two of one family**: the second one MERGES (`mergeIntoHeld`

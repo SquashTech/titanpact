@@ -39,7 +39,7 @@ interface ReplaceHeroCardProps {
   onPreview: () => void;
 }
 
-/** Tap selects rather than acts — termination is permanent; the confirm button commits. The detail row shows the gear that goes with them. */
+/** Tap selects rather than acts — termination is permanent; the confirm button commits. The detail row shows the gear they would hand on. */
 function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: ReplaceHeroCardProps) {
   const equippedCount = entry.equipment.length;
   return (
@@ -104,8 +104,7 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
                 ))}
               </span>
               <span className="roster-replace-note">
-                Pick who {hero.name} replaces — hold one to look them over. Whatever that hero wears goes with them.
-                Permanent.
+                Pick who {hero.name} replaces — hold one to look them over. What they wear can be handed on. Permanent.
               </span>
             </>
           }

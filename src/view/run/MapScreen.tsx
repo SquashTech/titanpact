@@ -386,7 +386,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, quitL
         </div>
       )}
 
-      {rosterOpen && <RosterManagementScreen run={run} onClose={() => setRosterOpen(false)} />}
+      {rosterOpen && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setRosterOpen(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
       {companionOpen && <CompanionDossier run={run} onClose={() => setCompanionOpen(false)} />}
     </div>
