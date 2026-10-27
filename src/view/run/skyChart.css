@@ -1078,3 +1078,110 @@
 .title-screen.title-screen {
   overflow: clip;
 }
+
+/* ---- First Light's islands (Isle): a disc of light under each lesson's heroes ---- */
+
+.pact-isle {
+  transform-box: fill-box;
+  transform-origin: 50% 80%;
+  transition: opacity 0.5s, transform 0.6s;
+}
+
+.pact-isle-glow {
+  fill: rgba(255, 220, 150, 0);
+  transition: fill 0.6s;
+}
+
+.pact-isle-under {
+  fill: #0d0c18;
+  stroke: rgba(205, 214, 255, 0.18);
+  stroke-width: 0.8;
+}
+
+.pact-isle-top {
+  fill: #1e1c34;
+  stroke: rgba(205, 214, 255, 0.28);
+  stroke-width: 1;
+  transition: fill 0.6s, stroke 0.6s;
+}
+
+.pact-isle-hero {
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1.5px 1px rgba(0, 0, 0, 0.75));
+}
+
+.pact-isle-numeral {
+  font: 900 9px/1 Georgia, serif;
+  letter-spacing: 0.1em;
+  fill: rgba(205, 214, 255, 0.4);
+}
+
+/* Won: the disc burns gold. */
+.pact-trail-star.is-lit .pact-isle-top {
+  fill: #4a3a1c;
+  stroke: #e8c46a;
+}
+
+.pact-trail-star.is-lit .pact-isle-glow {
+  fill: rgba(255, 210, 122, 0.16);
+}
+
+.pact-trail-star.is-lit .pact-isle-numeral {
+  fill: #e8c46a;
+}
+
+/* Next: the disc glows and breathes, the heroes stand lit. */
+.pact-trail-star.is-next .pact-isle-top {
+  fill: #2e2c52;
+  stroke: #fff3cf;
+}
+
+.pact-trail-star.is-next .pact-isle-glow {
+  fill: rgba(255, 230, 170, 0.22);
+  animation: pact-isle-breathe 2.2s ease-in-out infinite;
+}
+
+.pact-trail-star.is-next .pact-isle-numeral {
+  fill: #fff3cf;
+}
+
+@keyframes pact-isle-breathe {
+  50% {
+    fill: rgba(255, 230, 170, 0.42);
+  }
+}
+
+/* Not reached: who stands there is a silhouette, rimmed in starlight. */
+.pact-trail-star.is-unknown .pact-isle-hero {
+  filter: brightness(0) drop-shadow(0 0 1px rgba(205, 214, 255, 0.55));
+  opacity: 0.6;
+}
+
+/* The island rises into place as its lesson wakes. */
+.pact-trail-star.is-waking .pact-isle {
+  animation: pact-isle-rise 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+
+@keyframes pact-isle-rise {
+  from {
+    opacity: 0.3;
+    transform: translateY(10px) scale(0.85);
+  }
+}
+
+/* Charging before it lights: the disc floods with light. */
+.pact-trail-star.is-charging .pact-isle-glow {
+  animation: pact-isle-charge 0.9s ease-in forwards;
+}
+
+@keyframes pact-isle-charge {
+  to {
+    fill: rgba(255, 240, 200, 0.6);
+  }
+}
+
+/* The fold: the islands sink away, and only their stars fly up into the clasp. */
+.pact-trail.is-folding .pact-isle {
+  opacity: 0;
+  transform: scale(0.4);
+}

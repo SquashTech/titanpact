@@ -25,6 +25,7 @@ import { Blip, type BlipHandle } from './Blip';
 import { BlipBeat } from './BlipBeat';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { InfiniteView } from './InfiniteView';
+import { heroArt } from '../shared/heroArt';
 import './skyChart.css';
 
 // The title as the Pact (docs/the-sky.md §2b): the Infinite in the middle, a ring round it with a seat
@@ -58,12 +59,12 @@ const SEATS: Record<string, { x: number; y: number; size: number }> = {
 };
 const RING_SEATS = ['strange', 'gauntlet', 'trials'] as const;
 
-/** First Light before it is sealed: its stars climbing from the foot of the screen to the ring's gap. */
+/** First Light before it is sealed: its islands climbing from the foot of the screen to the ring's gap, side to side. */
 const TRAIL = [
-  { x: 136, y: 528, side: 'start' },
-  { x: 92, y: 468, side: 'end' },
-  { x: 264, y: 452, side: 'start' },
-  { x: 197, y: 404, side: 'start' },
+  { x: 112, y: 520 },
+  { x: 282, y: 484 },
+  { x: 112, y: 448 },
+  { x: 278, y: 412 },
 ] as const;
 
 /** A detail card's own drawing box; the constellation sits in the middle with room round it for names. */
@@ -829,7 +830,39 @@ interface TrailProps {
   onPlayLesson: (scenarioId: string) => void;
 }
 
-/** First Light before it is sealed: four stars climbing to the gap, a lit one's page inked, the next one's blank, the rest unknown. */
+/** Who stands on each lesson's island: the heroes it is played with, a promise a name never made. */
+const LESSON_CAST: Readonly<Record<string, readonly string[]>> = {
+  'firstLight.hunt': ['valorPrologue', 'packAlpha'],
+  'firstLight.clearing': ['ironWarden', 'raiju'],
+  'firstLight.road': ['packAlpha', 'valor', 'ironWarden'],
+  'firstLight.fork': ['valor', 'dawnwarden'],
+};
+const NUMERALS = ['I', 'II', 'III', 'IV'];
+/** How far below an island's centre its star sits, on the front of its rim. */
+const ISLE_RIM = 13;
+
+/** A floating island of light, its lesson's heroes standing on it (silhouettes until the lesson is reached). */
+function Isle({ cast, numeral }: { cast: readonly string[]; numeral: string }) {
+  const size = cast.length > 2 ? 30 : 34;
+  const step = cast.length > 2 ? 22 : 26;
+  const left = -((cast.length - 1) * step) / 2 - size / 2;
+  return (
+    <g className="pact-isle">
+      <ellipse className="pact-isle-glow" cx={0} cy={4} rx={50} ry={20} />
+      <ellipse className="pact-isle-under" cx={0} cy={8} rx={40} ry={12} />
+      <ellipse className="pact-isle-top" cx={0} cy={4} rx={40} ry={10} />
+      {cast.map((heroId, k) => {
+        const href = heroArt[heroId];
+        return href ? <image key={heroId} className="pact-isle-hero" href={href} x={left + k * step} y={2 - size} width={size} height={size} /> : null;
+      })}
+      <text className="pact-isle-numeral" x={0} y={27} textAnchor="middle">
+        {numeral}
+      </text>
+    </g>
+  );
+}
+
+/** First Light before it is sealed: four floating islands climbing to the gap, each with its heroes; won ones burn gold, the next glows, the rest wait in shadow. */
 function Trail({ lit, fx, disabled, calling, onPlayLesson }: TrailProps) {
   const c = sky.constellations.firstLight;
   const nextIndex = lit.findIndex((l) => !l);
@@ -880,15 +913,16 @@ function Trail({ lit, fx, disabled, calling, onPlayLesson }: TrailProps) {
             style={{ '--fold-x': `${off.x}px`, '--fold-y': `${off.y}px`, '--fold-delay': `${(3 - i) * 0.06}s` } as CSSProperties}
           >
             <g className="pact-trail-body" transform={`translate(${p.x} ${p.y})`}>
-              <circle className="pact-trail-halo" r={isLit ? 16 : 12} />
-              {isNext && <circle className="pact-trail-pulse" r={9} />}
-              {!known && <circle className="pact-trail-socket" r={6} />}
-              <circle className="pact-trail-core" r={isLit ? 3.6 : known ? 3 : 2} />
-              {isLit && <path className="pact-trail-glint" d={glint(9)} />}
-              {fx.burst?.i === i && <Burst key={fx.burst.n} />}
+              <Isle cast={LESSON_CAST[scenarioIdOf(star)] ?? []} numeral={NUMERALS[i]} />
+              <g transform={`translate(0 ${ISLE_RIM})`}>
+                <circle className="pact-trail-halo" r={isLit ? 16 : 12} />
+                {isNext && <circle className="pact-trail-pulse" r={9} />}
+                <circle className="pact-trail-core" r={isLit ? 3.6 : 3} />
+                {isLit && <path className="pact-trail-glint" d={glint(9)} />}
+                {fx.burst?.i === i && <Burst key={fx.burst.n} />}
+              </g>
             </g>
-            {known && <PageMark x={p.x + (p.side === 'start' ? 16 : -16)} y={p.y - 2} inked={isLit} fresh={waking} />}
-            {playable && <circle className="pact-hit" cx={p.x} cy={p.y} r={22} onClick={() => onPlayLesson(scenarioIdOf(star))} />}
+            {playable && <circle className="pact-hit" cx={p.x} cy={p.y - 8} r={40} onClick={() => onPlayLesson(scenarioIdOf(star))} />}
           </g>
         );
       })}

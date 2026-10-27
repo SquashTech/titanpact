@@ -147,6 +147,11 @@ Picked from a side-by-side page (`art/concepts/celestial-title/`, "C · Galaxy" 
   title's *Enter the Infinite* press opens the Infinite once a Cycle past I is open, and starts
   Cycle I directly before that.
 - The Chronicle tapestry moved to Records' Chronicle tab, where a new clear's weave plays once (`cycles.md` §4).
+- **First Light is the Ascent** (same day, per user direction, from `art/concepts/first-light/`): four
+  floating islands of light climbing side to side to the ring's gap, each carrying the heroes its
+  lesson is played with (`LESSON_CAST` in `SkyChart.tsx`). Won islands burn gold, the next glows and
+  breathes, and the ones ahead hold their heroes as silhouettes. Each island's star sits on its rim,
+  so the lighting beats and the fold into the clasp play as before; the islands sink away as it folds.
 
 ## 2c. The manual (2026-10-26, per user direction)
 
