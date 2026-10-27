@@ -8,15 +8,10 @@ import { StarShopScreen } from './StarShopScreen';
 import { HUB_TABS, HubNav, type HubTab } from './HubNav';
 import { starShopCatalog } from '../../data/starShop';
 import { stardustBalance, type StarShopOffer } from '../../run/starShop';
-import { TitanRidge } from './titanArt';
-import titlePainting from '../../../art/title/fogBanks.png';
-import { NightSky } from './NightSky';
+import { GalaxySky } from './GalaxySky';
 import { TitleLogo } from './TitleLogo';
 import { HubGlyph } from '../shared/nodeIcons';
 import { FIRST_CYCLE } from '../../run/cycles';
-import { chronicleBand, chronicleLines, chronicleWovenTipId, pendingWeave } from '../../run/chronicle';
-import { heroes } from '../../data/heroes';
-import { CycleTapestry } from './CycleTapestry';
 import { AudioSettings } from '../shared/AudioSettings';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
@@ -82,24 +77,8 @@ interface Props {
   onStartTitanEyesTestRun: () => void;
 }
 
-const MOTE_COUNT = 26;
-
 /** Hold before handing off to the draft. Matched to `ui.launch` in sounds.ts — change either and re-check both. */
 const LAUNCH_ANIM_MS = 620;
-
-// Golden-angle scatter: stable across renders, no seed to store. Slow and long-lived — these
-// are drifting ash, not sparks; anything under ~12s reads as energy rather than as decay.
-const MOTES = Array.from({ length: MOTE_COUNT }, (_, i) => {
-  const seed = i * 137.51;
-  return {
-    left: seed % 100,
-    delay: (seed * 1.7) % 18,
-    duration: 14 + ((seed * 0.37) % 12),
-    size: 1.6 + ((seed * 0.13) % 3.4),
-    drift: ((seed * 0.53) % 60) - 30,
-    sway: ((seed * 0.29) % 34) - 17,
-  };
-});
 
 export function TitleScreen({
   profile,
@@ -147,8 +126,10 @@ export function TitleScreen({
   const [intentOn, setIntentOn] = useState(readEnemyIntent);
   const [launching, setLaunching] = useState(false);
   const [confirmingNewRun, setConfirmingNewRun] = useState(false);
-  // The weave is chosen as the tapestry opens and held, since marking it seen re-renders the profile.
-  const [pickingCycle, setPickingCycle] = useState<{ weave?: number } | null>(null);
+  /** The Cycle the Infinite's Enter chose, held while a parked run's deletion is confirmed. */
+  const [startCycle, setStartCycle] = useState(FIRST_CYCLE);
+  /** Bumped to send the sky into the Infinite, where a Cycle is chosen. */
+  const [infiniteRequest, setInfiniteRequest] = useState(0);
   const [staleNoteDismissed, setStaleNoteDismissed] = useState(false);
   /** Stardust the sky is still flying to the Observatory, kept off its badge until it lands. */
   const [heldDust, setHeldDust] = useState(0);
@@ -163,30 +144,30 @@ export function TitleScreen({
   }
 
   /** With a run parked, starting over deletes it — so it asks first. */
-  function handleStart() {
+  function handleStart(cycle: number) {
+    setStartCycle(cycle);
     if (parkedRun) {
       setConfirmingNewRun(true);
       return;
     }
-    startFresh();
+    startFresh(cycle);
   }
 
-  /** A constellation's press (SkyChart.tsx): the Infinite starts a run, past Cycle I by its Cycle picker; the modes open their own screens. */
-  function handleSkyPlay(play: SkyPlay) {
-    if (play === 'infinite') handleStart();
+  /** A new run beside a parked one: past Cycle I the Cycle is chosen in the Infinite first. */
+  function handleNewRun() {
+    if (openCycle > FIRST_CYCLE) setInfiniteRequest((n) => n + 1);
+    else handleStart(FIRST_CYCLE);
+  }
+
+  /** A constellation's press (SkyChart.tsx): the Infinite starts a run on the Cycle chosen in it; the modes open their own screens. */
+  function handleSkyPlay(play: SkyPlay, cycle: number = FIRST_CYCLE) {
+    if (play === 'infinite') handleStart(cycle);
     else if (play === 'trials') onOpenConstructed();
     else onOpenGauntlet();
   }
 
-  /** Nothing to ask until Cycle I is cleared; then the Cycle is the one question between the press and the draft. */
-  function startFresh() {
-    if (openCycle > FIRST_CYCLE) {
-      const weave = pendingWeave(profile);
-      if (weave) onSeeTip(chronicleWovenTipId(weave));
-      setPickingCycle({ weave });
-      return;
-    }
-    launch(() => onStartRun(FIRST_CYCLE));
+  function startFresh(cycle: number) {
+    launch(() => onStartRun(cycle));
   }
 
   function selectTab(next: HubTab) {
@@ -220,30 +201,7 @@ export function TitleScreen({
       {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
           back is instant, and display: contents keeps them in the screen's own flex and stacking. */}
       <div className="title-play">
-      <NightSky />
-      <img className="title-painting" src={titlePainting} alt="" draggable={false} />
-
-      <div className="title-motes" aria-hidden="true">
-        {MOTES.map((m, i) => (
-          <span
-            key={i}
-            className="title-mote"
-            style={
-              {
-                left: `${m.left}%`,
-                width: `${m.size}px`,
-                height: `${m.size}px`,
-                animationDelay: `${m.delay}s`,
-                animationDuration: `${m.duration}s`,
-                '--drift': `${m.drift}px`,
-                '--sway': `${m.sway}px`,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </div>
-
-      <TitanRidge />
+      <GalaxySky active={tab === 'play' && !launching} />
 
       <span className="title-grain" aria-hidden="true" />
       <span className="title-vignette" aria-hidden="true" />
@@ -259,6 +217,8 @@ export function TitleScreen({
         onSeeLighting={onSeeTip}
         onHoldStardust={setHeldDust}
         onZoomChange={setSkyZoomed}
+        openCycle={openCycle}
+        infiniteRequest={infiniteRequest}
         onPlay={handleSkyPlay}
         onPlayLesson={(scenarioId) => onPlayLesson && launch(() => onPlayLesson(scenarioId))}
       />
@@ -283,7 +243,7 @@ export function TitleScreen({
           {parkedRun && (
             <>
               <PactButton label="Continue Run" disabled={launching} onClick={() => launch(onContinueRun)} />
-              <button className="title-newrun-button" onClick={handleStart} disabled={launching}>
+              <button className="title-newrun-button" onClick={handleNewRun} disabled={launching}>
                 Start a New Run
               </button>
             </>
@@ -426,7 +386,7 @@ export function TitleScreen({
               className="options-item options-item-danger"
               onClick={() => {
                 setConfirmingNewRun(false);
-                startFresh();
+                startFresh(startCycle);
               }}
             >
               <span className="options-item-glyph" aria-hidden="true">
@@ -441,21 +401,6 @@ export function TitleScreen({
         </div>
       )}
 
-      {/* The Cycles (docs/cycles.md §4) as the Chronicle: every open one selectable, the rest woven ahead as bare warp. */}
-      {pickingCycle && (
-        <CycleTapestry
-          openCycle={openCycle}
-          cleared={profile.cyclesCleared}
-          wardens={chronicleBand(profile)}
-          chronicle={chronicleLines(profile, (id) => heroes[id]?.name)}
-          weaveCycle={pickingCycle.weave}
-          onBegin={(cycle) => {
-            setPickingCycle(null);
-            launch(() => onStartRun(cycle));
-          }}
-          onClose={() => setPickingCycle(null)}
-        />
-      )}
 
       {showLocations && <LocationSelectOverlay onPick={onVisitLocation} onClose={() => setShowLocations(false)} />}
       {showRecords && (

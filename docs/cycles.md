@@ -110,6 +110,10 @@ itself. Also a candidate: the Wardens stand with the player at the end.
   in Run History, an open one half-woven with its threads hanging, a locked one bare warp with its
   figure ghosted through. The newest clear weaves itself in once (`chronicle.cycle<N>` in `seenTipIds`),
   and the next open Cycle starts on the loom behind it. Frames are stitched in the star colours (§5).
+  **Replaced as the picker 2026-10-26 (per user direction, `docs/the-sky.md` §2d):** the Cycle is
+  chosen inside the Infinite itself, over a black hole burning in the chosen Cycle's colour. The
+  tapestry is no longer reached; `CycleTapestry.tsx` and `run/chronicle.ts` stay in the tree while
+  the Chronicle's lines and weave look for a new home.
 
 ## 5. Stars
 

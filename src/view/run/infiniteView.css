@@ -1,0 +1,121 @@
+/* The Infinite, tapped (InfiniteView.tsx): the Cycles at the top, the black hole, Enter under it. */
+
+.infinite-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 50%, #07081280 0%, #030308 75%);
+}
+
+.infinite-cycles {
+  flex: none;
+  padding-top: 6px;
+  text-align: center;
+}
+
+.infinite-cycles-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.infinite-step {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(232, 196, 106, 0.4);
+  color: #e8c46a;
+  font-size: 24px;
+  line-height: 36px;
+  cursor: pointer;
+}
+
+.infinite-step:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.infinite-cycle {
+  min-width: 190px;
+  animation: infinite-cycle-in 0.25s ease-out both;
+}
+
+@keyframes infinite-cycle-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.infinite-numeral {
+  font: 900 40px/1 Georgia, serif;
+  color: #f5cf73;
+  text-shadow: 0 0 18px rgba(245, 180, 80, 0.5);
+}
+
+.infinite-name {
+  margin-top: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #d9c7a0;
+}
+
+.infinite-view.is-locked :is(.infinite-numeral, .infinite-name) {
+  color: #5c6170;
+  text-shadow: none;
+}
+
+.infinite-pips {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.infinite-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(205, 214, 255, 0.18);
+}
+
+.infinite-pip.is-cleared {
+  background: #e8c46a;
+  box-shadow: 0 0 6px #e8c46a;
+}
+
+.infinite-pip.is-chosen {
+  outline: 1.5px solid #fff3cf;
+  outline-offset: 2px;
+}
+
+.infinite-hole {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.infinite-press {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+}
+
+.infinite-press .plate-socket {
+  width: 270px;
+}
+
+.infinite-press .plate-label {
+  white-space: nowrap;
+}

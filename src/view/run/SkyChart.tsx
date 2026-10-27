@@ -24,6 +24,7 @@ import { PlateButton } from '../shared/PlateButton';
 import { Blip, type BlipHandle } from './Blip';
 import { BlipBeat } from './BlipBeat';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
+import { InfiniteView } from './InfiniteView';
 import './skyChart.css';
 
 // The title as the Pact (docs/the-sky.md §2b): the Infinite in the middle, a ring round it with a seat
@@ -187,7 +188,11 @@ interface Props {
   onHoldStardust?: (amount: number) => void;
   /** A seat zoomed into or backed out of: the title clears the rest of the screen for it. */
   onZoomChange?: (zoomed: boolean) => void;
-  onPlay: (play: SkyPlay) => void;
+  /** The highest Cycle open to play: past I, the Infinite's press opens the Infinite to choose one. */
+  openCycle?: number;
+  /** Bumped to zoom into the Infinite from outside (the title's Start a New Run). */
+  infiniteRequest?: number;
+  onPlay: (play: SkyPlay, cycle?: number) => void;
   /** A First Light lesson, by its scenario id. */
   onPlayLesson?: (scenarioId: string) => void;
 }
@@ -203,6 +208,8 @@ export function SkyChart({
   onSeeLighting,
   onHoldStardust,
   onZoomChange,
+  openCycle = 1,
+  infiniteRequest = 0,
   onPlay,
   onPlayLesson,
 }: Props) {
@@ -507,6 +514,10 @@ export function SkyChart({
     onZoomChange?.(zoomed !== null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoomed]);
+  useEffect(() => {
+    if (infiniteRequest > 0) zoomTo('infinite');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [infiniteRequest]);
 
   const shift = settled ? SETTLE : 0;
   const worldStyle: CSSProperties | undefined = zoomed
@@ -524,7 +535,7 @@ export function SkyChart({
     !folded && nextLesson >= 0
       ? { label: lessonLabel(nextLesson), go:() => onPlayLesson?.(firstLight.stars[nextLesson].id) }
       : folded && !pressHidden && (states.infinite === 'open' || states.infinite === 'lit')
-        ? { label: PLAY_LABELS.infinite, go: () => onPlay('infinite') }
+        ? { label: PLAY_LABELS.infinite, go: () => (openCycle > 1 ? zoomTo('infinite') : onPlay('infinite', 1)) }
         : null;
 
   return (
@@ -612,7 +623,10 @@ export function SkyChart({
       {open && (
         <div className="sky-detail">
           <div className="sky-detail-card">
-            <ConstellationCard
+            {open === 'infinite' ? (
+              <InfiniteView openCycle={openCycle} cleared={profile.cyclesCleared} disabled={disabled} onEnter={(cycle) => onPlay('infinite', cycle)} />
+            ) : (
+              <ConstellationCard
               profile={shown}
               constellation={sky.constellations[open]}
               state={cardState(states[open])}
@@ -620,7 +634,8 @@ export function SkyChart({
               pressHidden={pressHidden && open === 'infinite'}
               onPlay={onPlay}
               onPlayLesson={onPlayLesson}
-            />
+              />
+            )}
           </div>
           <button type="button" className="sky-detail-back" data-sfx="ui.back" onClick={zoomOut}>
             <span className="sky-detail-back-arrow" aria-hidden="true">

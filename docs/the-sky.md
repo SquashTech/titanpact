@@ -131,6 +131,23 @@ through. Picked from a side-by-side page (`art/concepts/pact-circle/`, "B · The
 - **Revised by §2c (2026-10-26):** a lesson is never named. A woken star shows a blank page, not
   its name, and the press reads *Begin* then *Next Lesson*.
 
+## 2d. The sky, and the Infinite tapped (2026-10-26, per user direction)
+
+Picked from a side-by-side page (`art/concepts/celestial-title/`, "C · Galaxy" and "A · The Black Hole").
+
+- **No ground under the title.** The fog-bank painting, the treeline ridge and the rising motes are
+  gone. A slow spiral galaxy turns behind the Pact (`GalaxySky.tsx`), its bright core sitting
+  behind the Infinite: Blip is a celestial being, and the title is its sky.
+- **Tapping the Infinite** zooms into that core and lands on a black hole (`InfiniteView.tsx`): a
+  dark centre, a burning disk turning round it, its far side bent over the top. No words but the
+  Cycle's own. The Cycles sit above it: the numeral, its name, arrows to step through, five pips
+  with the cleared ones gold. The disk burns in the chosen Cycle's colour (near its star colour,
+  §5 of `cycles.md`; V turns through them all), and a locked Cycle is cold and grey.
+- **Enter starts the chosen Cycle**, replacing the *Which Cycle?* tapestry (`cycles.md` §4). The
+  title's *Enter the Infinite* press opens the Infinite once a Cycle past I is open, and starts
+  Cycle I directly before that.
+- **Open:** the Chronicle's captions and its once-a-clear weave have no home now.
+
 ## 2c. The manual (2026-10-26, per user direction)
 
 How to Play is a book the player fills by playing, the way Hades' Codex and Hollow Knight's Hunter's
