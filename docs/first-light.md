@@ -91,8 +91,17 @@ Patrons, the Guild Hall, the Academy, Gems.
 
 ## 4. Second-order questions
 
-- **The Ascent grows from four islands to ten.** That means a taller scroll, or smaller islands in
-  three groups (1–4, 5–8, 9–10). It needs a comparison page.
+- **The Ascent is a climb you scroll. DECIDED 2026-10-27, per user direction**, picked from
+  `art/concepts/first-light-climb/` (A, *The climb to the Pact*), replacing the squeezed trail. The
+  islands zigzag up a tall sky from the foot to the ring's gap, one lesson a step (`CLIMB_STEP`,
+  `SkyChart.tsx`). The Pact keeps its own box at the top, drawn at the scale it is sealed at, so the
+  climb's top is the title as it will be. The stage opens on the lesson about to light or play next,
+  and a lighting scrolls up the climb as it plays. The draw-in scrolls to the Pact before the trail
+  folds into it.
+  - The logo stays pinned above the scroll, where the mock had it scroll with the climb.
+  - The galaxy follows the ring.
+  - **Not yet played:** the draw-in and fold at the end. They need a sealed First Light, which no
+    longer exists until lessons 5–10 land.
 - **The tour after the finale** (`FIRST_LIGHT_TOUR`) is all Blip lines today. Silent, it is a
   pointing hand at *Call to the Stars*, then at the Pact and the Infinite.
 - **Time to the full game:** about a minute for each fight, plus the act, comes to roughly 12–15 minutes
@@ -128,8 +137,7 @@ cues' spoken lines, Blip's First Light thoughts and hello premise, `OpeningFall`
 
    They replace the Hunt. A file that lit the Hunt lights all four on decode (`RETIRED_LESSONS`,
    `run/profile.ts`). The Clearing, the Road and the Fork stay after them until lessons 5–10 land.
-   First Light is seven islands meanwhile, in an interim climb (`TRAIL`, `SkyChart.tsx`), each island's
-   tap area cut to 22 so they no longer overlap.
+   First Light is seven islands meanwhile, on the scrolling climb (§4).
 
    **Pages:** Turn by Turn files from lesson 1, Mana and Rest from 2, Types from 3, Single and Spread
    from 4. **FLAGGED:** Buffs and Debuffs moved to the Clearing as a stopgap, because no new lesson

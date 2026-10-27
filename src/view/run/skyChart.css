@@ -50,6 +50,24 @@
   overflow: visible;
 }
 
+/* First Light unsealed: a climb the player scrolls up to the Pact (docs/first-light.md), fading out at its foot under the press. */
+.pact-stage.is-climb {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, #000 82%, transparent);
+}
+
+.pact-stage.is-climb::-webkit-scrollbar {
+  display: none;
+}
+
+.pact-stage.is-climb .pact {
+  margin: 0 auto;
+}
+
 /* ---- The world: zooms toward a tapped seat and fades as the card takes over ---- */
 
 .pact-world {

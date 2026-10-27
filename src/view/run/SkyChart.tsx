@@ -59,16 +59,20 @@ const SEATS: Record<string, { x: number; y: number; size: number }> = {
 };
 const RING_SEATS = ['strange', 'gauntlet', 'trials'] as const;
 
-/** First Light before it is sealed: its islands climbing from the foot of the screen to the ring's gap, side to side. */
-const TRAIL = [
-  { x: 96, y: 524 },
-  { x: 298, y: 500 },
-  { x: 96, y: 476 },
-  { x: 298, y: 452 },
-  { x: 96, y: 428 },
-  { x: 298, y: 404 },
-  { x: 96, y: 380 },
-] as const;
+/**
+ * First Light before it is sealed (docs/first-light.md): a climb the player scrolls, its islands
+ * zigzagging up from the foot to the ring's gap, the first at the bottom. The Pact keeps its own box at
+ * the top, so the climb's top is the sealed title.
+ */
+const CLIMB_STEP = 130;
+const CLIMB_TOP = RING.y + RING.r + 128;
+const CLIMB_FOOT = 120;
+const ISLE_SCALE = 1.45;
+const TRAIL = sky.constellations.firstLight.stars.map((_, i, all) => ({
+  x: (all.length - 1 - i) % 2 ? 116 : 278,
+  y: CLIMB_TOP + (all.length - 1 - i) * CLIMB_STEP,
+}));
+const CLIMB_H = TRAIL[0].y + CLIMB_FOOT;
 
 /** A detail card's own drawing box; the constellation sits in the middle with room round it for names. */
 const VIEW_W = 360;
@@ -252,6 +256,32 @@ export function SkyChart({
   const crestDust = useRef<HTMLDivElement>(null);
   const motes = useRef<HTMLElement[]>([]);
 
+  // The climb is drawn at the scale the Pact fits the stage at, so its top is the title as it will be.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ fit: 1, top: 0 });
+  const fit = box.fit;
+  const fitRef = useRef(fit);
+  fitRef.current = fit;
+  useLayoutEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const measure = () => {
+      const k = Math.min(el.clientWidth / W, el.clientHeight / H) || 1;
+      setBox({ fit: k, top: Math.max(0, (el.clientHeight - H * k) / 2) });
+    };
+    measure();
+    const watch = new ResizeObserver(measure);
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, []);
+  /** Scrolls the climb so island `i` stands a little below the middle; -1 is the Pact at the top. */
+  const scrollToIsle = (i: number, smooth: boolean) => {
+    const el = stageRef.current;
+    if (!el || foldedRef.current) return;
+    const y = i < 0 ? 0 : TRAIL[i].y * fitRef.current - el.clientHeight * 0.55;
+    el.scrollTo({ top: Math.max(0, y), behavior: smooth ? 'smooth' : 'auto' });
+  };
+
   /** Held back from the Observatory until it has flown there. */
   const reward = firstLight.rewards.reduce((sum, r) => sum + r.amount, 0);
   useLayoutEffect(() => {
@@ -372,6 +402,8 @@ export function SkyChart({
 
     /** The trail drawn in, its Stardust paid, and the trail folded into the clasp as the ring closes. */
     const drawIn = async () => {
+      scrollToIsle(-1, true);
+      await wait(800);
       for (let k = 0; k < firstLight.lines.length; k++) {
         setFx({ flare: k + 1 });
         playSfx('star.tick', { pitch: 1 + k * 0.18, gain: 0.8 });
@@ -454,6 +486,18 @@ export function SkyChart({
   }, [active]);
 
   useEffect(() => () => motes.current.forEach((m) => m.remove()), []);
+
+  // The climb opens on the lesson it is about to play back or play next, and follows a lighting up it.
+  const opensOn = pending.length > 0 ? firstLight.stars.findIndex((s) => scenarioIdOf(s) === pending[0]) : trailLit.findIndex((l) => !l);
+  useLayoutEffect(() => {
+    scrollToIsle(opensOn < 0 ? -1 : opensOn, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fit]);
+  const following = fx.waking ?? fx.charging;
+  useEffect(() => {
+    if (following !== undefined) scrollToIsle(following, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [following]);
 
   /** The sky's states with these scenarios still waiting to be played back. */
   const statesOf = (waiting: readonly string[]) => {
@@ -578,8 +622,14 @@ export function SkyChart({
         />
       </div>
 
-      <div className="pact-stage" onClick={zoomed ? zoomOut : undefined}>
-        <svg className="pact" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <div ref={stageRef} className={`pact-stage${folded ? '' : ' is-climb'}`} onClick={zoomed ? zoomOut : undefined}>
+        <svg
+          className="pact"
+          viewBox={`0 0 ${W} ${folded ? H : CLIMB_H}`}
+          style={folded ? undefined : { width: W * fit, height: CLIMB_H * fit, marginTop: box.top }}
+          preserveAspectRatio="xMidYMid meet"
+          aria-hidden="true"
+        >
           <defs>
             <filter id="pact-glow" x="-100%" y="-100%" width="300%" height="300%">
               <feGaussianBlur stdDeviation="2.4" result="blur" />
@@ -859,7 +909,7 @@ const LESSON_CAST: Readonly<Record<string, readonly string[]>> = {
   'firstLight.road': ['packAlpha', 'valor', 'ironWarden'],
   'firstLight.fork': ['valor', 'dawnwarden'],
 };
-const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 /** How far below an island's centre its star sits, on the front of its rim. */
 const ISLE_RIM = 13;
 
@@ -935,8 +985,10 @@ function Trail({ lit, fx, disabled, calling, onPlayLesson }: TrailProps) {
             style={{ '--fold-x': `${off.x}px`, '--fold-y': `${off.y}px`, '--fold-delay': `${(TRAIL.length - 1 - i) * 0.06}s` } as CSSProperties}
           >
             <g className="pact-trail-body" transform={`translate(${p.x} ${p.y})`}>
-              <Isle cast={LESSON_CAST[scenarioIdOf(star)] ?? []} numeral={NUMERALS[i]} />
-              <g transform={`translate(0 ${ISLE_RIM})`}>
+              <g transform={`scale(${ISLE_SCALE})`}>
+                <Isle cast={LESSON_CAST[scenarioIdOf(star)] ?? []} numeral={NUMERALS[i]} />
+              </g>
+              <g transform={`translate(0 ${ISLE_RIM * ISLE_SCALE})`}>
                 <circle className="pact-trail-halo" r={isLit ? 16 : 12} />
                 {isNext && <circle className="pact-trail-pulse" r={9} />}
                 <circle className="pact-trail-core" r={isLit ? 3.6 : 3} />
@@ -944,7 +996,7 @@ function Trail({ lit, fx, disabled, calling, onPlayLesson }: TrailProps) {
                 {fx.burst?.i === i && <Burst key={fx.burst.n} />}
               </g>
             </g>
-            {playable && <circle className="pact-hit" cx={p.x} cy={p.y - 8} r={22} onClick={() => onPlayLesson(scenarioIdOf(star))} />}
+            {playable && <circle className="pact-hit" cx={p.x} cy={p.y - 16} r={56} onClick={() => onPlayLesson(scenarioIdOf(star))} />}
           </g>
         );
       })}
