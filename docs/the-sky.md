@@ -1,5 +1,9 @@
 # the-sky.md — The Sky: lighting the multiverse
 
+> **First Light's lessons are being redrafted: `docs/first-light.md`** (2026-10-27, DRAFT, per user
+> direction): ten one-concept lessons, a silent Blip, Valor and Fang deleted. Until it is built, §2c's
+> curriculum and §6's lessons below are what the game does.
+
 > **STATUS: DIRECTION DECIDED; PHASES 1–5 DONE (2026-10-24): Stardust is the currency, the title is a scroll of stacked bands (five constellations), and Blip lives in it, thinking and pokeable.** §1–§5 hold what is
 > decided; anything marked PROPOSED or OPEN is not. §10 is the build plan. If built, it replaces
 > Stories as the front door (§9).
