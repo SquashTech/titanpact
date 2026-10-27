@@ -6,7 +6,7 @@ import { evolutionArt } from '../shared/evolutionArt';
 import { titanspawnMarkup } from '../shared/titanspawnArt';
 import './cycleTapestry.css';
 
-// The Cycle picker as a woven chronicle (docs/cycles.md §4). Each Cycle is a panel cross-stitched
+// The Chronicle, a page of Records since the Cycle is chosen in the Infinite (docs/cycles.md §4). Each Cycle is a panel cross-stitched
 // from art the game already has: a cleared Cycle woven, an open one half-woven with its threads
 // hanging, a locked one bare warp with what it will hold ghosted through it.
 
@@ -46,8 +46,10 @@ export interface CycleTapestryProps {
   chronicle: Partial<Record<number, string>>;
   /** Play the weave: this Cycle finishes, then the next one starts if it is open. */
   weaveCycle?: number;
-  onBegin: (cycle: number) => void;
-  onClose: () => void;
+  /** Starts a Cycle from its panel; without it the Chronicle is read, not chosen from (Records). */
+  onBegin?: (cycle: number) => void;
+  /** Its own close in the corner; without it the Chronicle sits in a page (Records' Chronicle tab). */
+  onClose?: () => void;
 }
 
 function svgUrl(markup: string, viewBox: string): string {
@@ -381,22 +383,24 @@ export function CycleTapestry({ openCycle, cleared, wardens, chronicle, weaveCyc
   const pickedDef = picked ? CYCLES.find((c) => c.cycle === picked) : undefined;
 
   return (
-    <div className="tp-root">
+    <div className={`tp-root${onClose ? '' : ' is-embedded'}`}>
       <div className="tp-rod" aria-hidden="true">
         <span className="tp-finial tp-finial-l" />
         <span className="tp-rod-bar" />
         <span className="tp-finial tp-finial-r" />
       </div>
       <div className="tp-plaque">The Chronicle</div>
-      <button className="tp-close" onClick={onClose} aria-label="Close">
-        ✕
-      </button>
+      {onClose && (
+        <button className="tp-close" onClick={onClose} aria-label="Close">
+          ✕
+        </button>
+      )}
 
       <div className="tp-scroll" ref={scroller}>
         <div className="tp-cloth">
           {CYCLES.map((def, idx) => {
             const state = stateOf(def.cycle);
-            const selectable = def.cycle <= openCycle;
+            const selectable = !!onBegin && def.cycle <= openCycle;
             const said = state === 'woven' ? chronicle[def.cycle] : undefined;
             return (
               <div
@@ -443,7 +447,7 @@ export function CycleTapestry({ openCycle, cleared, wardens, chronicle, weaveCyc
               <span className="tp-sheet-bonus">Clear +✦ {pickedDef.clearBonus}</span>
             </div>
             <p className="tp-sheet-line">{pickedDef.line}</p>
-            <button className="tp-begin" onClick={() => onBegin(pickedDef.cycle)}>
+            <button className="tp-begin" onClick={() => onBegin?.(pickedDef.cycle)}>
               Begin the Year
             </button>
           </>

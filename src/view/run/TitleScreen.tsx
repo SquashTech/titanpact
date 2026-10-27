@@ -12,6 +12,7 @@ import { GalaxySky } from './GalaxySky';
 import { TitleLogo } from './TitleLogo';
 import { HubGlyph } from '../shared/nodeIcons';
 import { FIRST_CYCLE } from '../../run/cycles';
+import { pendingWeave } from '../../run/chronicle';
 import { AudioSettings } from '../shared/AudioSettings';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
@@ -260,7 +261,7 @@ export function TitleScreen({
 
       {/* Records, Reference and Options are corner glyphs: a ledger, a lookup and a dial, not places. */}
       <button
-        className="title-records-button"
+        className={`title-records-button${pendingWeave(profile) ? ' is-fresh' : ''}`}
         onClick={() => {
           onRefreshProfile();
           setShowRecords(true);
@@ -404,7 +405,7 @@ export function TitleScreen({
 
       {showLocations && <LocationSelectOverlay onPick={onVisitLocation} onClose={() => setShowLocations(false)} />}
       {showRecords && (
-        <RecordsScreen profile={profile} onEraseAllData={onEraseAllData} onClose={() => setShowRecords(false)} />
+        <RecordsScreen profile={profile} onEraseAllData={onEraseAllData} onSeeTip={onSeeTip} onClose={() => setShowRecords(false)} />
       )}
       {showReference && <ReferenceOverlay initialTab="howto" onClose={() => setShowReference(false)} />}
       {/* Same markup as the map's and FightScreen's Options panel, without the run rows. */}

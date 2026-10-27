@@ -312,3 +312,38 @@
     rgba(10, 12, 18, 0.9);
   filter: drop-shadow(0 0 10px rgba(224, 166, 60, 0.3));
 }
+
+/* In a page (Records' Chronicle tab): the hanging fills the page instead of the screen. */
+.tp-root.is-embedded {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  width: 100%;
+  height: 100%;
+  min-height: 460px;
+  border-radius: 8px;
+}
+
+.compendium-body.is-chronicle {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+}
+
+/* A weave waiting in Records: a quiet gold spark on the title's Records button. */
+.title-records-button.is-fresh::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffd98a;
+  box-shadow: 0 0 6px #ffd98a;
+}
+
+/* The hanging is cut for the full screen; a page is a little narrower. */
+.tp-root.is-embedded .tp-cloth {
+  zoom: 0.9;
+}

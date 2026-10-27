@@ -70,6 +70,13 @@ export const SECTION_PATHS = {
   // Records — the title hub's tile and the Records sheet's page. The handles are open stroke
   // rather than fill: at 16px a filled handle closes up against the bowl and the whole thing
   // becomes a goblet.
+  // A hanging on its rod, the Chronicle.
+  chronicle: (
+    <>
+      <rect x="3" y="2.5" width="18" height="2.2" rx="1.1" />
+      <path d="M5.5 4.7h13v15.5l-6.5-3.6-6.5 3.6Z" />
+    </>
+  ),
   records: (
     <>
       <path d="M6.4 2.2h11.2v6.2a5.6 5.6 0 0 1-11.2 0Z" />

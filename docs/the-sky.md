@@ -146,7 +146,7 @@ Picked from a side-by-side page (`art/concepts/celestial-title/`, "C · Galaxy" 
 - **Enter starts the chosen Cycle**, replacing the *Which Cycle?* tapestry (`cycles.md` §4). The
   title's *Enter the Infinite* press opens the Infinite once a Cycle past I is open, and starts
   Cycle I directly before that.
-- **Open:** the Chronicle's captions and its once-a-clear weave have no home now.
+- The Chronicle tapestry moved to Records' Chronicle tab, where a new clear's weave plays once (`cycles.md` §4).
 
 ## 2c. The manual (2026-10-26, per user direction)
 

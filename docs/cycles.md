@@ -112,8 +112,9 @@ itself. Also a candidate: the Wardens stand with the player at the end.
   and the next open Cycle starts on the loom behind it. Frames are stitched in the star colours (§5).
   **Replaced as the picker 2026-10-26 (per user direction, `docs/the-sky.md` §2d):** the Cycle is
   chosen inside the Infinite itself, over a black hole burning in the chosen Cycle's colour. The
-  tapestry is no longer reached; `CycleTapestry.tsx` and `run/chronicle.ts` stay in the tree while
-  the Chronicle's lines and weave look for a new home.
+  tapestry became **Records' Chronicle tab** the same day (per user direction): read, not chosen
+  from, shown once a Cycle is cleared. A newly cleared Cycle marks the title's Records button
+  with a gold spark, and Records then opens on the Chronicle and weaves the new panel in, once.
 
 ## 5. Stars
 
