@@ -101,6 +101,13 @@ players took the Elite every time). `ELITE_EXTRA_ENEMIES` = 1, on top of Act 1's
 against the Skirmish's four from Act 2, the roster plus one in Act 1. It pays 3 Gems to the
 Skirmish's 2 (`docs/gems.md` §4).
 
+**From Act 2 an Elite's enemies carry one more item** (2026-10-26, per user direction: the extra
+body measured −8 points of Elite wins in Act 1 and only −1 to −2.5 after). `ELITE_EXTRA_GEAR` = 1
+from `ELITE_EXTRA_GEAR_FROM_ACT` = 2, on the Elite's own curve a tier ahead, capped at the three
+sockets: 1 / 2 / 3 items in Acts 2 / 3 / 4. Chosen over a stat bonus, which the node kind no
+longer carries (below), and over a higher level offset. A contract keeps what it fought in, so an
+Elite's contract arrives better armed too.
+
 **Why the Guardian sits under par.** The old curve paid Acts 1–2 *zero* steps and Act 2 was
 still the wall. A level cannot pay zero: the lowest honest reading of a Guardian is a few
 levels under the player, and that is where the fit landed (§6). The escort tier

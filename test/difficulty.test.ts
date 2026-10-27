@@ -14,6 +14,8 @@ import {
   encounterScaling,
   enemyLevelFor,
   parLevelAtNode,
+  enemyGearCountFor,
+  enemyLoadoutFor,
   type EncounterNodeKind,
 } from '../src/run/difficulty';
 import { appendFinalEnemy, generateEncounter, generateSpawnEncounter } from '../src/run/enemyGen';
@@ -253,4 +255,14 @@ test('difficulty: Act 1 never fields more bodies than the player holds', () => {
 
   // An empty roster is a fixture, not a fight — it must not produce a zero-body encounter.
   assert.strictEqual(encounterHeroCountOverride('skirmish', 1, 0, 4), undefined);
+});
+
+test('difficulty: an Elite carries one item more than the act from Act 2, never past three; Act 1 and the Skirmish are untouched', () => {
+  assert.strictEqual(enemyLoadoutFor('elite', 1), undefined);
+  for (const act of [2, 3, 4]) {
+    const elite = enemyLoadoutFor('elite', act)?.gearCount ?? 0;
+    const skirmish = enemyLoadoutFor('skirmish', act)?.gearCount ?? 0;
+    assert.strictEqual(skirmish, enemyGearCountFor(act), `act ${act}: the Skirmish holds the act's count`);
+    assert.strictEqual(elite, Math.min(skirmish + 1, 3), `act ${act}: Elite ${elite}, Skirmish ${skirmish}`);
+  }
 });

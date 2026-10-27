@@ -5,7 +5,7 @@
 import type { SpawnTier } from '../data/titanspawn';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters, type GrowthGrade } from './growth';
 import { masteryForAct } from './mastery';
-import { LOOT_SOURCE, rarityWeightsFor } from './equipment';
+import { LOOT_SOURCE, MAX_ITEM_SLOTS, rarityWeightsFor } from './equipment';
 import type { EnemyLoadout } from './enemyGen';
 
 /**
@@ -244,8 +244,13 @@ export function enemyGearCountFor(actNumber: number): number {
   return ENEMY_GEAR_BY_ACT[Math.min(clampAct(actNumber), ENEMY_GEAR_BY_ACT.length - 1)];
 }
 
+/** An Elite's enemies carry one item more than the act's from Act 2 (2026-10-26, per user direction), never past the three sockets. */
+export const ELITE_EXTRA_GEAR = 1;
+export const ELITE_EXTRA_GEAR_FROM_ACT = 2;
+
 /** What a node's enemies arrive holding in this act; undefined in an act that fields them bare. */
 export function enemyLoadoutFor(kind: EncounterNodeKind, actNumber: number): EnemyLoadout | undefined {
-  const gearCount = enemyGearCountFor(actNumber);
+  const eliteExtra = kind === 'elite' && clampAct(actNumber) >= ELITE_EXTRA_GEAR_FROM_ACT ? ELITE_EXTRA_GEAR : 0;
+  const gearCount = Math.min(enemyGearCountFor(actNumber) + eliteExtra, MAX_ITEM_SLOTS);
   return gearCount > 0 ? { gear: rarityWeightsFor(actNumber, LOOT_SOURCE[kind]), gearCount } : undefined;
 }
