@@ -20,8 +20,8 @@
 - **One concept, one page, one fight.** A lesson teaches exactly one idea and files exactly one page.
   The page is shown before the fight and filed after it. Under the old curriculum a lesson filed
   five or six.
-- **Pictures first.** The picture is the fight demonstrating itself (§2), with one line. The page
-  filed to the manual is that line and a still of the demo's key frame. The rule that a page never
+- **Pictures first.** The picture is the guided fight itself (§2), with one line. The page
+  filed to the manual is that line and a still of the fight's key frame. The rule that a page never
   talks about this particular fight (`the-sky.md` §2c) stands.
 
 Reference games: **Plants vs. Zombies** (each level introduces one thing with a picture card,
@@ -34,16 +34,17 @@ text), **Into the Breach** (a small board, set up so the answer is findable) and
 `art/concepts/lesson-pages/` (*On the Field*). It replaces a separate picture card: a card, a plate
 or a manual leaf were tried there and read as unlike the game.
 
-1. **The demo.** The lesson opens on its own fight, laid out exactly as any fight is: the arena, the
-   nameplates, the strip, the move console and the Back / Switch / Rest / Bag row. A ghost finger
-   plays the concept once with real taps on the real controls, for example a move, then a target
-   card, then the round resolving. The one line sits on the top bar in place of the turn-order
-   track, so it covers nothing on the field. The demo uses the screen's own readouts wherever they
-   already teach the concept: lesson 3 points at the target cards' damage ranges, and lesson 2 shows a
-   move card greying out and Rest lighting up.
-2. **The fight.** The bottom says *Your turn*, the line clears, and the same fight goes live. It
-   lasts one to three rounds. The heroes hold only the moves the lesson needs, and the board is set so
-   the concept is the way to win.
+1. **The guided fight is the demo. DECIDED 2026-10-27, per user direction.** There is no ghost
+   finger playing ahead of the player. The lesson opens on its own fight, laid out exactly as any
+   fight is: the arena, the nameplates, the strip, the move console and the Back / Switch / Rest /
+   Bag row. The one line sits on the top bar in place of the turn-order track, so it covers nothing
+   on the field. The hand points and the player taps through the concept themselves, for example a
+   move, then a target card, then the round resolving. It uses the screen's own readouts wherever
+   they already teach the concept: lesson 3 points at the target cards' damage ranges, and lesson 2
+   greys out a move card and lights Rest. The comparison page's ghost finger stands in for the
+   player's own taps, and its *Your turn* hand-off is retired.
+2. **The fight is guided.** It lasts one to three rounds. The heroes hold only the moves the lesson
+   needs, and the board is set so the concept is the way to win.
 
 **Most lessons are GUIDED. DECIDED 2026-10-27, per user direction**, the way the Valor and Fang
 lessons were. The pointing hand leads the player's own taps, and every control but the one it points
@@ -57,11 +58,6 @@ and a round past the script is the player's own.
 | 9 Equipment | Guided: the who-screen's tap, then the fight's decisive hit. |
 | 10 The Road | Free: the act is the player's own, and its new screens get their picture card at the moment. |
 
-**OPEN, raised by the rule above: is the ghost-finger demo still needed?** A guided round shows the
-concept under the player's own finger, so the demo shows it a second time just before. Recommended:
-**the demo becomes the guided round.** The lesson opens on its fight with the line on the top bar, the
-hand points, and the player taps through what the ghost finger would have tapped. The *Your turn*
-hand-off, and the comparison page's ghost finger, then belong only to a round the player plays free.
 3. **Lost → replay.** **DRAFT CALL:** a lesson can be lost; a loss restarts it at once, with no
    result screen. A guided lesson can't be lost, so this applies only to lesson 10's act.
 4. **Won → the Learned screen.** The same page lands in the book (`src/run/manual.ts`), Blip
@@ -104,10 +100,7 @@ Patrons, the Guild Hall, the Academy, Gems.
 - **Stardust:** First Light pays 300 when sealed (`the-sky.md` §10, still FLAGGED). Spread over ten
   lessons, or still paid at the seal? Unchanged until decided.
 - **Pages are prose today** (`src/data/howToPlay.ts`). Each of the ten becomes its line and a still
-  of its demo's key frame. That frame is the real fight screen, so this needs no PixelLab spend.
-- **What does the demo play against?** It needs to be deterministic: either a scripted event stream
-  the view replays, or the engine run on a fixed seed with fixed choices. The second keeps the demo
-  honest to the rules.
+  of its guided fight's key frame. That frame is the real fight screen, so this needs no PixelLab spend.
 - **Old accounts.** An account with First Light lit keeps it lit and its pages (`manualComplete`);
   the ten new pages are filed for it on decode.
 
@@ -121,7 +114,8 @@ cues' spoken lines, Blip's First Light thoughts and hello premise, `OpeningFall`
 ## 6. Build order (proposed)
 
 1. ~~A comparison page for the lesson's picture, pages 1–3.~~ Done: On the Field (§2).
-2. The lesson machinery cut down to demo → fight → Learned, with a restart on a loss. The demo needs a
-   scripted ghost-finger player that drives the real fight screen; the engine stays untouched.
+2. The lesson machinery cut down to guided fight → Learned: the line on the top bar instead of the
+   cues' spoken lines, on Stories' `guidedAction` and `point` as they stand. Lesson 10's act restarts on
+   a loss.
 3. Lessons 1–4, then 5–8, then 9–10, each with its page.
 4. The Ascent at ten, the silent tour, the lore card restored, and the old lessons deleted.
