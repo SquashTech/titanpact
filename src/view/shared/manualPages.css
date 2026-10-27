@@ -125,23 +125,277 @@
   height: 40px;
 }
 
-/* The fight result's row (FightResultOverlay): the head over the tiles. */
-.fight-result-learned {
+/* --- The Learned book (LearnedBook): opens, takes each page onto its right side, turns it over with the next --- */
+
+.learned-book {
+  --book-w: 300px;
+  --book-h: 196px;
+  --leaf-w: calc(var(--book-w) / 2 - 12px);
+  position: relative;
+  width: var(--book-w);
+  height: var(--book-h);
+  margin: 0 auto;
+  perspective: 1100px;
+  transform: translateX(calc(var(--book-w) / -4)) scale(0.82);
+  transition: transform 0.6s cubic-bezier(0.3, 1.3, 0.5, 1);
+  animation: learned-book-arrive 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+.learned-book.is-open {
+  transform: none;
+}
+
+@keyframes learned-book-arrive {
+  from {
+    opacity: 0;
+    translate: 0 40px;
+  }
+}
+
+.learned-book-glow {
+  position: absolute;
+  inset: -40px -30px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 210, 120, 0.32), transparent);
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+  pointer-events: none;
+}
+
+.learned-book.is-open .learned-book-glow {
+  opacity: 0.6;
+}
+
+.learned-book.is-full .learned-book-glow {
+  opacity: 1;
+  animation: learned-book-pulse 2.4s ease-in-out 0.2s infinite alternate;
+}
+
+@keyframes learned-book-pulse {
+  to {
+    transform: scale(1.08);
+    opacity: 0.7;
+  }
+}
+
+/* The leather boards under both pages, shown once the book lies open. */
+.learned-book-board {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #4a2414, #6b3620 48%, #2c140a 50%, #6b3620 52%, #4a2414);
+  box-shadow: 0 0 0 2px #c79a4a, 0 0 0 4px #2a140a, 0 18px 30px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transition: opacity 0.2s ease-out 0.25s;
+}
+
+.learned-book-page {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  width: var(--leaf-w);
+  background: linear-gradient(90deg, #e8d6ad, #f6ebcf 30%, #f3e4c0);
+  box-shadow: inset 0 0 18px rgba(120, 80, 30, 0.35);
+}
+
+.learned-book-page.is-left {
+  left: 12px;
+  border-radius: 4px 0 0 4px;
+  background: linear-gradient(90deg, #f3e4c0, #f6ebcf 70%, #dcc597);
+  opacity: 0;
+  transition: opacity 0.2s ease-out 0.25s;
+}
+
+.learned-book-page.is-right {
+  left: 50%;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(90deg, #dcc597, #f6ebcf 30%, #f3e4c0);
+}
+
+.learned-book.is-open .learned-book-board,
+.learned-book.is-open .learned-book-page.is-left {
+  opacity: 1;
+}
+
+/* The front board: shut over the right page, it swings across the spine to open the book. */
+.learned-book-cover {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 50%;
+  z-index: 60;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.5, 0, 0.3, 1);
+}
+
+.learned-book.is-open .learned-book-cover {
+  transform: rotateY(-180deg);
+}
+
+.learned-book-cover-front,
+.learned-book-cover-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+
+.learned-book-cover-front {
+  border-radius: 0 8px 8px 0;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 22px, #c79a4a 23px, #c79a4a 25px, transparent 26px),
+    linear-gradient(135deg, #7a3e22, #4a2414);
+  box-shadow: inset 0 0 0 5px #4a2414, inset 0 0 0 7px #c79a4a;
+}
+
+.learned-book-cover-back {
+  border-radius: 8px 0 0 8px;
+  transform: rotateY(180deg);
+  background: linear-gradient(90deg, #4a2414, #6b3620);
+}
+
+/* Lying open, the cover is part of the board, under the pages. */
+.learned-book.is-open .learned-book-cover {
+  z-index: 0;
+  transition:
+    transform 0.65s cubic-bezier(0.5, 0, 0.3, 1),
+    z-index 0s 0.65s;
+}
+
+/* A page: two faces on a hinge at the spine. Waiting below the book until its turn. */
+.learned-leaf {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 50%;
+  width: var(--leaf-w);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.learned-leaf.is-in,
+.learned-leaf.is-turned {
+  opacity: 1;
+}
+
+.learned-leaf.is-in {
+  pointer-events: auto;
+  animation: learned-leaf-in 0.62s cubic-bezier(0.25, 1.2, 0.5, 1) both;
+}
+
+/* Every page after the first waits for the one before it to be turned. */
+.learned-leaf.is-in.is-after {
+  animation-delay: 0.22s;
+}
+
+@keyframes learned-leaf-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(40px, 230px, 160px) rotateZ(14deg) rotateY(-40deg) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+  }
+  65% {
+    transform: translate3d(-4px, -18px, 50px) rotateZ(-2deg) rotateY(6deg) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.learned-leaf.is-turned {
+  transform: rotateY(-180deg);
+  transition: transform 0.55s cubic-bezier(0.45, 0, 0.25, 1);
+}
+
+.learned-book.is-still .learned-leaf,
+.learned-book.is-still,
+.learned-book.is-still .learned-book-cover {
+  animation: none;
+  transition: none;
+}
+
+.learned-leaf-face {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  width: 100%;
+  padding: 10px 10px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(90deg, #d8c08f, #f8eed5 22%, #f5e7c6);
+  box-shadow: inset 0 0 14px rgba(120, 80, 30, 0.3), 2px 2px 6px rgba(0, 0, 0, 0.25);
+  backface-visibility: hidden;
 }
 
-.manual-learned-head {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: #e8c46a;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+.learned-leaf-face.is-back {
+  border-radius: 4px 0 0 4px;
+  background: linear-gradient(270deg, #d8c08f, #f8eed5 22%, #f5e7c6);
+  transform: rotateY(180deg);
+}
+
+.learned-leaf.is-in .learned-leaf-face:not(.is-back) .manual-emblem {
+  animation: manual-emblem-glint 0.9s ease-out 0.55s both;
+}
+
+.learned-leaf-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.1;
+  color: #5a2a0c;
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.learned-leaf-rule {
+  width: 46px;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, transparent, #a07a3e, transparent);
+}
+
+.learned-book-sparks {
+  position: absolute;
+  left: 75%;
+  top: 50%;
+  z-index: 70;
+  pointer-events: none;
+}
+
+.learned-book-sparks i {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: -3px;
+  border-radius: 50%;
+  background: #fff3cf;
+  box-shadow: 0 0 8px 2px rgba(255, 210, 120, 0.9);
+  opacity: 0;
+  animation: learned-book-spark 0.9s ease-out both;
+}
+
+@keyframes learned-book-spark {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateX(0) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateX(var(--reach)) scale(0.2);
+  }
 }
 
 /* --- A page read whole --- */
@@ -193,10 +447,20 @@
   background: #07080c;
 }
 
+.lesson-learned-book {
+  margin-top: 34px;
+}
+
 .lesson-learned-pages {
   width: 100%;
-  margin-top: 22px;
+  margin-top: 30px;
   padding: 0 4px;
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+
+.lesson-learned-pages.is-shown {
+  opacity: 1;
 }
 
 /* --- The book (the Reference's How to Play tab) --- */

@@ -153,7 +153,7 @@ two reds a shade apart on the act's one real difficulty choice, and was reverted
 | `elite` | As `skirmish`, one level over it (`ENEMY_LEVEL_OFFSET`), loot one tier ahead, XP ×1.5. |
 | `boss` | The Location's champion over Titanspawn escorts, all at the node's level (`docs/enemy-levels.md` §4). Pays the Guardian's Banner and ends the act (§3). It paid a Recruit Contract until 2026-10-05 ("Contracts" below). |
 | `shop` | The **Guild Hall** — Tavern, Gems and Gear (§1); the Vigil's is Gems, Gear and Smithy. Rolled once a visit (`rollGuildHallOffers`). |
-| `equipmentReward` ("Items") | `NodeRewardScreen` — pick 1 of 3 items on the act's curve; the pick goes straight to the who-screen (`docs/gear-absorption.md`). Weight 78. |
+| `equipmentReward` ("Items") | `NodeRewardScreen` — ONE random item on the act's curve, straight to the who-screen (`docs/gear-absorption.md`); it was pick 1 of 3 until 2026-10-27, per user direction — the choice of piece made the node too flexible. Weight 78. |
 | `currencyReward` | An instant gold grant (15–30 at Act 1, × `ACT_GOLD_SCALE`), paid on arrival and counted up into the purse. |
 | `contractReward` ("Contract") | One Recruit Contract, paid on arrival (`grantContract`). Weight 24. See "Contracts" below. |
 | `scrollReward` ("Scroll Cache") | `ScrollNodeScreen` — **`SCROLL_CACHE_COUNT` = 3 Mastery pips** in any split. Weight 20. See "Mastery Scrolls" below. |

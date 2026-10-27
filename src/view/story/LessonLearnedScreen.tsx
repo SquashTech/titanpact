@@ -1,30 +1,22 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import type { ManualPage } from '../../run/manual';
-import { LearnedTiles, LEARNED_STAGGER_MS } from '../shared/ManualPages';
+import { LearnedBook, LearnedTiles, learnedBookMs } from '../shared/ManualPages';
 import { NODE_TINT_GOLD, NodeMotes } from '../shared/NodeStage';
 import { PlateButton } from '../shared/PlateButton';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 
-/** The title strikes and is read before the first page lands. */
-const PAGES_LEAD_MS = 620;
-
 /**
- * A lesson won: the pages it taught, filed into How to Play (docs/the-sky.md §2c). The fight
- * result's own stage, with the pages where the ledger would be; a tap lands them all.
+ * The pages a lesson or a win taught, filed into How to Play (docs/the-sky.md §2c) as a beat of
+ * their own: the book takes them one by one, then every page sits below it to be read. A tap lands them all.
  */
 export function LessonLearnedScreen({ pages, onContinue }: { pages: readonly ManualPage[]; onContinue: () => void }) {
-  const [shown, setShown] = useState(false);
   const [landed, setLanded] = useState(prefersReducedMotion());
 
   useEffect(() => {
     playSfx('quill.scratch');
-    const show = window.setTimeout(() => setShown(true), PAGES_LEAD_MS);
-    const land = window.setTimeout(() => setLanded(true), PAGES_LEAD_MS + pages.length * LEARNED_STAGGER_MS + 200);
-    return () => {
-      window.clearTimeout(show);
-      window.clearTimeout(land);
-    };
+    const land = window.setTimeout(() => setLanded(true), learnedBookMs(pages.length) + 1100);
+    return () => window.clearTimeout(land);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -47,9 +39,14 @@ export function LessonLearnedScreen({ pages, onContinue }: { pages: readonly Man
             Learned
           </h2>
         </header>
-        <section className="lesson-learned-pages">
-          <LearnedTiles pages={pages} shown={shown || landed} landed={landed} />
+        <section className="lesson-learned-book">
+          <LearnedBook pages={pages} landed={landed} />
         </section>
+        {pages.length > 1 && (
+          <section className={`lesson-learned-pages${landed ? ' is-shown' : ''}`}>
+            <LearnedTiles pages={pages} shown={landed} landed={landed} />
+          </section>
+        )}
       </div>
       <PlateButton
         className={`fight-result-cta${landed ? ' is-lit' : ''}`}

@@ -2522,13 +2522,8 @@ export function FightScreen({
       {/* Options. Quitting parks the run at its map checkpoint; only abandoning destroys it, so only that one is a two-tap arm/confirm. */}
       {menuOpen && (
         <div className="log-overlay" onClick={() => setMenuOpen(false)}>
-          <div className="log-panel options-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="log-panel-header">
-              <span>Options</span>
-              <button className="log-close-button" onClick={() => setMenuOpen(false)}>
-                ✕
-              </button>
-            </div>
+          <div className="log-panel options-panel is-gilt-sheet" onClick={(e) => e.stopPropagation()}>
+            <h3 className="gilt-dialog-title">Options</h3>
             <div className="options-list">
               {/* The readers close the menu on the way out: both share the .log-overlay scrim, and stacking would leave Options visible behind. */}
               <button

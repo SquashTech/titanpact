@@ -229,6 +229,104 @@ export function LearnedTiles({ pages, shown, landed = false }: { pages: readonly
   );
 }
 
+/** The book swings open, then each page takes this long to fly in and be turned over by the next. */
+const BOOK_OPEN_MS = 700;
+const LEAF_MS = 950;
+
+/** Sparks off the book as the last page settles: angle (deg), reach (px), delay (s). */
+const BOOK_SPARKS = Array.from({ length: 10 }, (_, i) => [i * 36 + 8, 70 + ((i * 23) % 40), +((i * 0.07) % 0.3).toFixed(2)] as const);
+
+function LeafFace({ page, back }: { page: ManualPage; back?: boolean }) {
+  return (
+    <span className={`learned-leaf-face${back ? ' is-back' : ''}`}>
+      <PageEmblem page={page} />
+      <span className="learned-leaf-title">{page.title}</span>
+      <span className="learned-leaf-rule" aria-hidden="true" />
+    </span>
+  );
+}
+
+/**
+ * How to Play takes the pages a win filed: the book swings open, and each page flies up onto its
+ * right side and is turned over by the next, so the last lies open on top. `landed` puts it there at
+ * once. A tap on the open page reads it.
+ */
+export function LearnedBook({ pages, landed }: { pages: readonly ManualPage[]; landed: boolean }) {
+  const [open, setOpen] = useState(landed);
+  const [arrived, setArrived] = useState(landed ? pages.length : 0);
+  const [reading, setReading] = useState<ManualPage | null>(null);
+  const full = arrived >= pages.length;
+
+  useEffect(() => {
+    if (landed) {
+      setOpen(true);
+      setArrived(pages.length);
+      return;
+    }
+    const timers = [window.setTimeout(() => setOpen(true), 120)];
+    pages.forEach((_, i) =>
+      timers.push(
+        window.setTimeout(() => {
+          setArrived((n) => Math.max(n, i + 1));
+          playSfx('ui.page', { pitch: 1 + i * 0.07 });
+          if (i === pages.length - 1) playSfx('discovery');
+        }, BOOK_OPEN_MS + i * LEAF_MS)
+      )
+    );
+    return () => timers.forEach(window.clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [landed]);
+
+  const top = pages[arrived - 1];
+
+  return (
+    <>
+      <div className={`learned-book${open ? ' is-open' : ''}${full ? ' is-full' : ''}${landed ? ' is-still' : ''}`}>
+        <span className="learned-book-glow" aria-hidden="true" />
+        <span className="learned-book-board" aria-hidden="true" />
+        <span className="learned-book-page is-left" aria-hidden="true" />
+        <span className="learned-book-page is-right" aria-hidden="true" />
+        <span className="learned-book-cover" aria-hidden="true">
+          <span className="learned-book-cover-front" />
+          <span className="learned-book-cover-back" />
+        </span>
+        {pages.map((page, i) => (
+          <button
+            key={page.id}
+            type="button"
+            className={`learned-leaf${i < arrived - 1 ? ' is-turned' : i === arrived - 1 ? ' is-in' : ''}${i > 0 ? ' is-after' : ''}`}
+            style={{ zIndex: i === arrived - 1 ? 50 : i + 1 } as CSSProperties}
+            tabIndex={page === top ? 0 : -1}
+            aria-label={page.title}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (page !== top) return;
+              playSfx('ui.select');
+              setReading(page);
+            }}
+          >
+            <LeafFace page={page} />
+            <LeafFace page={page} back />
+          </button>
+        ))}
+        {full && !landed && (
+          <span className="learned-book-sparks" aria-hidden="true">
+            {BOOK_SPARKS.map(([a, reach, delay]) => (
+              <i key={a} style={{ '--a': `${a}deg`, '--reach': `${reach}px`, animationDelay: `${delay}s` } as CSSProperties} />
+            ))}
+          </span>
+        )}
+      </div>
+      {reading && <PageReader page={reading} onClose={() => setReading(null)} />}
+    </>
+  );
+}
+
+/** How long the book takes to file `count` pages, before the screen counts as landed. */
+export function learnedBookMs(count: number): number {
+  return BOOK_OPEN_MS + count * LEAF_MS;
+}
+
 /** The book's contents: First Light's trail, a star a lesson, then the Infinite's mark for what runs file. */
 const SKY_W = 300;
 const SKY_H = 92;

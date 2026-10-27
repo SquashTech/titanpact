@@ -443,8 +443,8 @@ export function TitleScreen({
           the thumb is the one that gets pressed twice by accident. */}
       {confirmingNewRun && (
         <div className="log-overlay" onClick={() => setConfirmingNewRun(false)}>
-          <div className="log-panel title-confirm-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="title-confirm-title">Start a new run?</div>
+          <div className="log-panel title-confirm-panel is-gilt-sheet" onClick={(e) => e.stopPropagation()}>
+            <h3 className="gilt-dialog-title">Start a new run?</h3>
             <p className="title-confirm-copy">
               The parked run is deleted — its roster, gear and progress are gone for good.
             </p>
@@ -461,6 +461,9 @@ export function TitleScreen({
               Discard it and start over
             </button>
             <button className="options-item" onClick={() => setConfirmingNewRun(false)}>
+              <span className="options-item-glyph" aria-hidden="true">
+                ▶
+              </span>
               Keep the run
             </button>
           </div>
@@ -476,13 +479,8 @@ export function TitleScreen({
       {/* Same markup as the map's and FightScreen's Options panel, without the run rows. */}
       {showOptions && (
         <div className="log-overlay" onClick={() => setShowOptions(false)}>
-          <div className="log-panel options-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="log-panel-header">
-              <span>Options</span>
-              <button className="log-close-button" onClick={() => setShowOptions(false)}>
-                ✕
-              </button>
-            </div>
+          <div className="log-panel options-panel is-gilt-sheet" onClick={(e) => e.stopPropagation()}>
+            <h3 className="gilt-dialog-title">Options</h3>
             <div className="options-list">
               <AudioSettings />
               <button className="options-item" onClick={() => setShowOptions(false)}>

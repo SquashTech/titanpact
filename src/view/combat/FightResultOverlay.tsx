@@ -26,7 +26,7 @@ import { gemAmount, type Gem } from '../../run/gems';
 import { GemIcon, GEM_STONES } from '../shared/GemIcon';
 import { GOOD_ART } from '../run/guildHallArt';
 import type { ManualPage } from '../../run/manual';
-import { LearnedTiles, LEARNED_STAGGER_MS } from '../shared/ManualPages';
+import { LessonLearnedScreen } from '../story/LessonLearnedScreen';
 
 /** A loss wears the enemy's red; a win, the run's gold — the Location's own tint stays on the field behind. */
 const TINT_LOSS = '217, 83, 79';
@@ -134,6 +134,7 @@ export function FightResultOverlay({
     [levelSeed, xpGained, mvp]
   );
   const [showingGains, setShowingGains] = useState(false);
+  const [filing, setFiling] = useState(false);
   const longestBar = barsByHero.reduce((best, bar) => (xpBarTotalMs(bar) > xpBarTotalMs(best) ? bar : best), barsByHero[0] ?? []);
 
   const ledger = useMemo(() => {
@@ -144,15 +145,8 @@ export function FightResultOverlay({
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
     const loot = lootPieces(equipmentReward, gemReward, consumableReward, contractReward, () => setInspecting(true));
     if (loot.length > 0) rows.push({ key: 'loot', render: (shown) => <LootPile pieces={loot} shown={shown} />, holdMs: loot.length * LOOT_STAGGER_MS });
-    if (learned.length > 0) {
-      rows.push({
-        key: 'learned',
-        render: (shown) => <LearnedRow pages={learned} shown={shown} />,
-        holdMs: learned.length * LEARNED_STAGGER_MS,
-      });
-    }
     return rows;
-  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, gemReward, contractReward, mvp, xpGained, learned]);
+  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, gemReward, contractReward, mvp, xpGained]);
 
   const stageDone = STAGE_LEDGER + ledger.length;
   const [stage, setStage] = useState(() => (prefersReducedMotion() ? stageDone : STAGE_TITLE));
@@ -284,7 +278,8 @@ export function FightResultOverlay({
         className={`fight-result-cta${landed ? ' is-lit' : ''}`}
         onClick={(e) => {
           e.stopPropagation();
-          onContinue();
+          if (won && learned.length > 0) setFiling(true);
+          else onContinue();
         }}
       >
         Continue
@@ -292,17 +287,8 @@ export function FightResultOverlay({
 
       {inspecting && <ItemDetailOverlay item={equipmentReward} onClose={() => setInspecting(false)} />}
       {showingGains && levelReport && <StatGainsSheet report={levelReport} roster={roster} onClose={() => setShowingGains(false)} />}
-    </div>
-  );
-}
-
-/** The pages this win filed: tiles that land one by one, or all at once when the screen is tapped through. */
-function LearnedRow({ pages, shown }: { pages: readonly ManualPage[]; shown: boolean }) {
-  const landed = useContext(LandedContext);
-  return (
-    <div className="fight-result-learned">
-      <h3 className="manual-learned-head">Learned</h3>
-      <LearnedTiles pages={pages} shown={shown} landed={landed} />
+      {/* The pages this win filed are a beat of their own, after the spoils. */}
+      {filing && <LessonLearnedScreen pages={learned} onContinue={onContinue} />}
     </div>
   );
 }

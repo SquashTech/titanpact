@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gear Pop Options</title>
+<style>
+  :root {
+    --page: #101217; --ink: #ece4d2; --muted: #958f84;
+    --common: #9aa0ab; --rare: #4a90d9; --epic: #a463d9; --legendary: #e0a63c; --mythic: #e0393f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; }
+  header { padding: 20px 16px 4px; max-width: 1320px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  header p { margin: 0; color: var(--muted); max-width: 860px; }
+  .grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; padding: 16px; max-width: 1320px; margin: 0 auto; }
+  @media (max-width: 1200px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  .opt h2 { font-size: 16px; margin: 0 0 4px; }
+  .opt > p { margin: 0 0 10px; color: var(--muted); font-size: 12.5px; min-height: 72px; }
+  .opt.is-now h2 { color: var(--muted); }
+
+  .stage { border-radius: 14px; overflow: hidden; padding: 10px 8px 12px; display: flex; flex-direction: column; gap: 10px; }
+  .stage.ledger { background: linear-gradient(#0d2524, #123129 60%, #0b1a14); }
+  .stage.roster { background: linear-gradient(#141a2e, #0d1020); }
+  .cap { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.35); text-align: center; }
+
+  /* the who-screen ledger row */
+  .row { display: grid; grid-template-columns: 50px 1fr; gap: 6px; align-items: center; background: rgba(20,24,30,.78); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 6px 8px; }
+  .row.lit { background: #1f1d24; border-color: rgba(255,255,255,.55); }
+  .row > img { width: 50px; height: 50px; image-rendering: pixelated; object-fit: contain; }
+  .row .nm { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .row .nm small { color: var(--muted); font-weight: 500; }
+  .socks { display: flex; gap: 6px; }
+
+  /* the roster card */
+  .card { position: relative; height: 150px; border-radius: 4px; background: linear-gradient(160deg, #2a2f3c, #12151f 70%); overflow: hidden; }
+  .card.beast { background: linear-gradient(160deg, #5a3b1c, #1a1410 70%); }
+  .card > img.hero { position: absolute; left: 6px; bottom: 26px; width: 104px; height: 104px; image-rendering: pixelated; object-fit: contain; }
+  .card .cn { position: absolute; left: 10px; bottom: 6px; font-weight: 800; font-size: 15px; }
+  .card .col { position: absolute; right: 8px; top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .s img { image-rendering: pixelated; display: block; }
+
+  /* ---------- NOW: the current socket ---------- */
+  .now .s { width: 38px; height: 38px; display: grid; place-items: center; background: #0d0f14; box-shadow: inset 0 0 0 2px #2b313a, inset 0 3px 6px rgba(0,0,0,.7); }
+  .now .s.f { background: #1a1d24; clip-path: polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%); box-shadow: inset 0 0 0 2px var(--r); }
+  .now .s img { width: 22px; height: 22px; }
+  .now .card .s { width: 30px; height: 30px; border-radius: 50%; }
+  .now .card .s.f { border-radius: 0; }
+  .now .card .s img { width: 18px; height: 18px; }
+
+  /* ---------- A: Jewel ---------- */
+  .jewel .s { position: relative; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px;
+    background: radial-gradient(circle at 50% 120%, rgba(255,255,255,.06), transparent 60%), #0b0d12;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.06); }
+  .jewel .s.f { background:
+      radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--r) 70%, #fff) 0%, var(--r) 28%, color-mix(in srgb, var(--r) 40%, #000) 70%);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--r) 55%, #000), 0 0 0 3px color-mix(in srgb, var(--r) 70%, #fff), 0 0 14px color-mix(in srgb, var(--r) 70%, transparent), inset 0 -6px 10px rgba(0,0,0,.45); }
+  .jewel .s.f::before { content: ''; position: absolute; left: 6px; top: 4px; width: 14px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.45); filter: blur(1px); }
+  .jewel .s img { width: 34px; height: 34px; filter: drop-shadow(0 2px 0 rgba(0,0,0,.7)) drop-shadow(0 0 1px #000); position: relative; }
+  .jewel .card .s { width: 34px; height: 34px; border-radius: 8px; }
+  .jewel .card .s img { width: 28px; height: 28px; }
+
+  /* ---------- B: Loot card ---------- */
+  .lootc .s { position: relative; width: 40px; height: 52px; border-radius: 6px; display: grid; place-items: center;
+    border: 1.5px dashed rgba(255,255,255,.14); background: rgba(0,0,0,.25); }
+  .lootc .s.f { border: 0; background:
+      linear-gradient(180deg, color-mix(in srgb, var(--r) 55%, #111) 0%, #15161c 75%);
+    box-shadow: 0 0 0 1.5px var(--r), 0 4px 10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.25); }
+  .lootc .s.f::after { content: ''; position: absolute; left: 50%; bottom: 4px; width: 0; height: 0; translate: -50% 0;
+    border: 4px solid transparent; border-bottom-color: var(--r); border-top-width: 0; filter: drop-shadow(0 0 3px var(--r)); }
+  .lootc .s img { width: 36px; height: 36px; margin-top: -8px; filter: drop-shadow(0 3px 2px rgba(0,0,0,.8)); }
+  .lootc .s.f.big { animation: shine 2.6s ease-in-out infinite; }
+  @keyframes shine { 50% { box-shadow: 0 0 0 1.5px var(--r), 0 0 16px var(--r), inset 0 1px 0 rgba(255,255,255,.25); } }
+  .lootc .card .col { gap: 5px; top: 6px; }
+  .lootc .card .s { width: 30px; height: 40px; }
+  .lootc .card .s img { width: 28px; height: 28px; margin-top: -6px; }
+
+  /* ---------- C: Aura (frameless) ---------- */
+  .aura .s { position: relative; width: 44px; height: 44px; display: grid; place-items: center; }
+  .aura .s:not(.f)::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; border: 1.5px dashed rgba(255,255,255,.18); }
+  .aura .s.f::before { content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--r) 85%, #fff) 0%, color-mix(in srgb, var(--r) 60%, transparent) 45%, transparent 100%);
+    animation: breathe 2.8s ease-in-out infinite; }
+  .aura .s.f::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 2px; height: 5px; border-radius: 50%; background: rgba(0,0,0,.55); filter: blur(1.5px); }
+  .aura .s img { position: relative; z-index: 1; width: 40px; height: 40px; filter: drop-shadow(0 0 1px #000) drop-shadow(0 2px 0 rgba(0,0,0,.6)); animation: bob 2.8s ease-in-out infinite; }
+  @keyframes breathe { 50% { transform: scale(1.12); opacity: .8; } }
+  @keyframes bob { 50% { translate: 0 -2px; } }
+  .aura .card .s { width: 36px; height: 36px; }
+  .aura .card .s img { width: 32px; height: 32px; }
+
+  /* ---------- D: Diamond plaque (Hades boon) ---------- */
+  .plaque .s { position: relative; width: 44px; height: 44px; display: grid; place-items: center; }
+  .plaque .s::before { content: ''; position: absolute; inset: 7px; rotate: 45deg; border-radius: 4px;
+    background: #0b0d12; box-shadow: inset 0 2px 4px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.1); }
+  .plaque .s.f::before { background: linear-gradient(135deg, color-mix(in srgb, var(--r) 75%, #fff), var(--r) 40%, color-mix(in srgb, var(--r) 35%, #000));
+    box-shadow: 0 0 0 2px #0b0d12, 0 0 0 3.5px color-mix(in srgb, var(--r) 60%, #fff), 0 0 12px var(--r); }
+  .plaque .s img { position: relative; width: 38px; height: 38px; filter: drop-shadow(0 0 1px #000) drop-shadow(0 2px 1px rgba(0,0,0,.8)); }
+  .plaque .card .s { width: 36px; height: 36px; }
+  .plaque .card .s img { width: 30px; height: 30px; }
+
+  /* tier pips, shared */
+  .pips { position: absolute; bottom: -5px; left: 50%; translate: -50% 0; display: flex; gap: 1.5px; z-index: 2; }
+  .pips i { width: 4px; height: 4px; rotate: 45deg; background: var(--r); box-shadow: 0 0 0 1px #000; }
+  .lootc .pips { bottom: 3px; } .lootc .s.f::after { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gear pop: five looks, one row and one roster card each</h1>
+  <p>The same pieces in every column: a Common Feral Dagger, a Rare Spear, an Epic Ring, a Legendary Plate and a Mythic Worldbreaker. The tier pips sit under each filled piece in A–D. Pick one, or name what to take from two.</p>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<script>
+const ART = '../../equipment/';
+const HERO = '../../heroes/starters/';
+const OPTIONS = [
+  { cls: 'now is-now', name: 'Now', blurb: 'For reference: a 22px sprite in a dark octagon, the tier as a thin rim. The piece is smaller than the socket it sits in.' },
+  { cls: 'jewel', name: 'A · Jewel', blurb: 'Each filled socket is a cut gem in the tier\'s colour, lit from inside, with a highlight. The sprite fills it at 34px. Empty sockets read as carved holes.' },
+  { cls: 'lootc', name: 'B · Loot card', blurb: 'A small upright card per piece, washed in the tier\'s colour, the sprite breaking out of its top. Epic and up breathe a glow. Empty sockets are dashed outlines.' },
+  { cls: 'aura', name: 'C · Aura', blurb: 'No box at all: the sprite floats at 40px over a soft tier-coloured halo, with a ground shadow and a slow bob. The loudest option; empty sockets are a faint ring.' },
+  { cls: 'plaque', name: 'D · Plaque', blurb: 'A Hades-boon diamond in the tier\'s colour behind the sprite, ringed in gilt. Reads as a reward, stays tidy in a column. Empty sockets are a dark diamond.' },
+];
+const R = { common: 'var(--common)', rare: 'var(--rare)', epic: 'var(--epic)', legendary: 'var(--legendary)', mythic: 'var(--mythic)' };
+const PIPS = { common: 1, rare: 2, epic: 3, legendary: 4, mythic: 5 };
+
+function sock(item) {
+  if (!item) return '<span class="s"></span>';
+  const [art, tier] = item;
+  const pips = '<span class="pips">' + '<i></i>'.repeat(PIPS[tier]) + '</span>';
+  const big = PIPS[tier] >= 3 ? ' big' : '';
+  return `<span class="s f${big}" style="--r:${R[tier]}"><img src="${ART}${art}.png" alt="">${pips}</span>`;
+}
+function row(hero, name, lv, items, lit) {
+  return `<div class="row${lit ? ' lit' : ''}"><img src="${HERO}${hero}.png" alt=""><div><div class="nm">${name} <small>Lv ${lv}</small></div><div class="socks">${items.map(sock).join('')}</div></div></div>`;
+}
+function card(hero, name, items, beast) {
+  return `<div class="card${beast ? ' beast' : ''}"><img class="hero" src="${HERO}${hero}.png" alt=""><span class="cn">${name}</span><div class="col">${items.map(sock).join('')}</div></div>`;
+}
+const grid = document.getElementById('grid');
+for (const o of OPTIONS) {
+  const el = document.createElement('section');
+  el.className = 'opt ' + o.cls;
+  el.innerHTML = `<h2>${o.name}</h2><p>${o.blurb}</p>
+    <div class="stage ledger"><div class="cap">New gear</div>
+      ${row('valor', 'Valor', 5, [null, null, null])}
+      ${row('fang', 'Fang', 6, [['dagger', 'common'], ['ring', 'epic'], null], true)}
+      ${row('revenant', 'Revenant', 7, [['spear', 'rare'], ['plate', 'legendary'], ['worldbreaker', 'mythic']])}
+    </div>
+    <div class="stage roster" style="margin-top:10px"><div class="cap">Roster</div>
+      <div class="pair">${card('fang', 'Fang', [['dagger', 'common'], ['leathers', 'rare'], null], true)}${card('revenant', 'Revenant', [['ring', 'epic'], ['plate', 'legendary'], ['worldbreaker', 'mythic']])}</div>
+    </div>`;
+  grid.appendChild(el);
+}
+</script>
+</body>
+</html>

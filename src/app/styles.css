@@ -22126,12 +22126,6 @@ button.star-shop-bundle-face {
   gap: 10px;
 }
 
-.title-confirm-title {
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
 .title-confirm-copy {
   margin: 0 0 4px;
   font-size: 13px;
@@ -33909,16 +33903,6 @@ button.evo-gift-card {
   --rite-glow-far: rgba(200, 130, 40, 0.35);
 }
 
-.cache-ground {
-  position: absolute;
-  inset: calc(var(--shell-pad) * -1);
-  background:
-    radial-gradient(ellipse 80% 30% at 50% 12%, rgba(240, 190, 80, 0.3), transparent 70%),
-    radial-gradient(ellipse 100% 40% at 50% 100%, rgba(100, 70, 20, 0.28), transparent 72%),
-    linear-gradient(180deg, #060504, #110d07 50%, #1b140a);
-  pointer-events: none;
-}
-
 .tutor-fit {
   font-size: 10px;
   color: var(--text-dim);
@@ -34852,20 +34836,21 @@ button.evo-gift-card {
   min-width: 0;
 }
 
+/* A long name keeps every letter: the tier drops under it rather than cutting it short. */
 .equip-showcase-title {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 8px;
+  gap: 2px 8px;
   min-width: 0;
 }
 
 .equip-showcase-name {
-  overflow: hidden;
+  min-width: 0;
   font-family: var(--font-display);
   font-size: 20px;
   line-height: 1.05;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  text-wrap: balance;
 }
 
 .equip-showcase-tier {
@@ -41616,8 +41601,7 @@ img.smithy-service-art {
   white-space: nowrap;
 }
 
-/* -- The Cache and the who-screen as Gear counters (NodeRewardScreen.tsx, ItemWhoScreen.tsx): builds above, the pieces below. -- */
-.cache-counter-screen > .hall-counter-room,
+/* -- The who-screen as a Gear counter (ItemWhoScreen.tsx): the piece above, the builds below. -- */
 .item-who-screen > .hall-counter-room {
   position: relative;
   /* Clears the roster button in the top corner. */
@@ -41626,33 +41610,14 @@ img.smithy-service-art {
 
 /* The Sell sits lower and slimmer here, which pays for the grid starting under the roster button;
    the Continue that replaces it takes the same box, so the screen never hops when they swap. */
-.cache-counter-screen .sell-press,
 .item-who-screen .sell-press,
-.cache-counter-screen > .resolve-button,
 .item-who-screen > .resolve-button {
   min-height: 60px;
   margin-bottom: 2px;
 }
 
-.cache-counter-screen > .resolve-button,
 .item-who-screen > .resolve-button {
   padding-block: 16px;
-}
-
-/* Three pieces at most, not six: each gets the room for a bigger icon. */
-.hall-counter-room.is-cache .counter-good {
-  min-height: 104px;
-  padding-top: 6px;
-}
-
-.hall-counter-room.is-cache .counter-good-art,
-.hall-counter-room.is-cache .counter-good-art.is-piece .item-piece {
-  width: 56px;
-  height: 56px;
-}
-
-.hall-counter-room.is-cache .counter-good.is-gear .counter-good-name {
-  font-size: 12px;
 }
 
 .counter-good-tier {
@@ -52689,6 +52654,90 @@ img.smithy-service-art {
     linear-gradient(180deg, #1a1d25, #121419 60%);
   box-shadow: 0 0 0 1px #000, 0 18px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   image-rendering: auto;
+}
+
+/* A small dialog on the same frame (Options, a confirm): lit gold from the top, its rows gilt-ruled. */
+.log-panel.is-gilt-sheet {
+  position: relative;
+  max-width: 330px;
+  padding: 18px 16px 16px;
+  gap: 12px;
+  border: 1px solid rgba(224, 166, 60, 0.55);
+  border-image: none;
+  border-radius: 16px;
+  background:
+    radial-gradient(110% 46% at 50% -8%, rgba(224, 166, 60, 0.22), transparent 64%),
+    linear-gradient(180deg, #1a1d25, #121419 60%);
+  box-shadow: 0 0 0 1px #000, 0 18px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  image-rendering: auto;
+  animation: gilt-dialog-in 0.22s var(--ease-out) both;
+}
+
+@keyframes gilt-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+}
+
+.gilt-dialog-title {
+  margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(224, 166, 60, 0.28);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  text-align: center;
+  color: #f4e6c4;
+  text-shadow: 0 2px 0 #000, 0 0 14px rgba(224, 166, 60, 0.35);
+}
+
+.is-gilt-sheet .title-confirm-copy {
+  margin: 0;
+  text-align: center;
+}
+
+.is-gilt-sheet .options-item {
+  min-height: 48px;
+  border: 1px solid rgba(224, 166, 60, 0.2);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)), #14161d;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  filter: none;
+}
+
+.is-gilt-sheet .options-item:hover {
+  border-color: rgba(224, 166, 60, 0.55);
+  filter: none;
+}
+
+.is-gilt-sheet .options-item-glyph {
+  color: #e0a63c;
+  opacity: 1;
+}
+
+.is-gilt-sheet .options-item-danger {
+  border-color: rgba(217, 83, 79, 0.45);
+  background: linear-gradient(180deg, rgba(217, 83, 79, 0.14), rgba(217, 83, 79, 0.04)), #14161d;
+}
+
+.is-gilt-sheet .options-item-danger .options-item-glyph {
+  color: inherit;
+}
+
+.is-gilt-sheet .options-item-danger.armed {
+  border-color: rgba(217, 83, 79, 0.95);
+  background: linear-gradient(180deg, rgba(217, 83, 79, 0.42), rgba(217, 83, 79, 0.18)), #14161d;
+  box-shadow: 0 0 16px rgba(217, 83, 79, 0.4);
+  filter: none;
+}
+
+.is-gilt-sheet .audio-faders {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-image: none;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px 14px;
 }
 
 .is-gilt-sheet::after {

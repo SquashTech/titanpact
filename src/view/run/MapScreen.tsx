@@ -340,13 +340,8 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, quitL
       {/* Same markup as FightScreen's Options panel. */}
       {showMenu && (
         <div className="log-overlay" onClick={() => setShowMenu(false)}>
-          <div className="log-panel options-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="log-panel-header">
-              <span>Options</span>
-              <button className="log-close-button" onClick={() => setShowMenu(false)}>
-                ✕
-              </button>
-            </div>
+          <div className="log-panel options-panel is-gilt-sheet" onClick={(e) => e.stopPropagation()}>
+            <h3 className="gilt-dialog-title">Options</h3>
             <div className="options-list">
               <AudioSettings />
               <button className="options-item" onClick={() => setShowMenu(false)}>

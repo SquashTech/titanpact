@@ -186,7 +186,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
         odds: null,
       };
     case 'equipmentReward':
-      return { about: null, facts: [{ glyph: 'item', label: 'Item', value: '1 of 3' }], odds: odds('cache') };
+      return { about: null, facts: [{ glyph: 'item', label: 'Item', value: '1' }], odds: odds('cache') };
     case 'scrollReward':
       return { about: null, facts: [{ glyph: 'scroll', label: 'Gems', value: `${GEM_CACHE_COUNT}`, note: gemNote(actNumber) }], odds: null };
     case 'scribeReward':
