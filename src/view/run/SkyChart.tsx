@@ -497,19 +497,26 @@ export function SkyChart({
   };
 
   // A tapped seat zooms in; the card opens once the Pact has flown past it, and Blip says its piece.
+  // Held so a back-out mid-flight cancels them: a card opening after its zoom was undone would sit over the title.
+  const zoomTimers = useRef<number[]>([]);
   const zoomTo = (id: string) => {
     if (beating || zoomed) return;
     setZoomed(id);
     setFx((f) => ({ ...f, calling: undefined }));
-    window.setTimeout(() => setOpen(id), ZOOM_MS * 0.55);
-    window.setTimeout(() => {
-      if (!beatRef.current && !blip.current?.busy()) sayThought(zoomThought(profile, sky, THOUGHTS, id, Math.random()));
-    }, ZOOM_MS + 300);
+    zoomTimers.current.push(
+      window.setTimeout(() => setOpen(id), ZOOM_MS * 0.55),
+      window.setTimeout(() => {
+        if (!beatRef.current && !blip.current?.busy()) sayThought(zoomThought(profile, sky, THOUGHTS, id, Math.random()));
+      }, ZOOM_MS + 300)
+    );
   };
   const zoomOut = () => {
+    zoomTimers.current.forEach(window.clearTimeout);
+    zoomTimers.current = [];
     setOpen(null);
-    window.setTimeout(() => setZoomed(null), 120);
+    zoomTimers.current.push(window.setTimeout(() => setZoomed(null), 120));
   };
+  useEffect(() => () => zoomTimers.current.forEach(window.clearTimeout), []);
   useEffect(() => {
     onZoomChange?.(zoomed !== null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
