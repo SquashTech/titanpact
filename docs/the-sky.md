@@ -490,8 +490,13 @@ it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own
   gives the premise in Blip's voice: it watches over one world in many versions, a Titan ends most
   of them, the few the heroes win become its stars, and the player is here to help find them.
   **The fall came back as its scene** (2026-10-25, per user direction): after *This one starts the
-  way they always do...* Blip flies up out of frame, the Titan falls across the title's night onto
-  the land (`OpeningFall`, a thought's `scene: 'fall'`), and the view pulls back to a painted ridge
+  way they always do...* Blip flies up out of frame and a comic page lands one panel at a time in
+  the ridge painting's own pixel style — the sky cracks magenta, the Titan falls burning, it strikes
+  the land and the page shakes (`OpeningFall`, a thought's `scene: 'fall'`; PixelLab pro_flash with
+  the ridge as style ref, `art/title/opening/`, a horned roll of the fall in
+  `art/concepts/opening-comic/`; 2026-10-26, per user direction, replacing the sprite falling over
+  the title's sky, which read as janky against the painting) — and the page falls away into the
+  glow as the view pulls back to a painted ridge
   where Valor and Fang stand watching the glow (`art/title/openingRidge.png`, Pixen seed 8; the
   other rolls are in `art/concepts/opening-ridge/`). Blip drifts back and says the First Light
   first over it, then the ridge goes to black and The Hunt starts. The scene plays on its own; no
