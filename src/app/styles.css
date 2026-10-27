@@ -41329,55 +41329,270 @@ img.smithy-service-art {
   gap: 4px;
 }
 
-/* The incoming piece's grants on each hero: lit where it leans on them, a hollow outline where not. */
-.item-fit-chips {
+/* -- The item who-screen's ledger (ItemLedger.tsx): the piece's grants as columns, a row a hero. -- */
+.item-ledger-piece {
+  gap: 8px;
+}
+
+.item-ledger-piece .equip-cache-card {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-ledger-next {
   display: flex;
-  gap: 3px;
-  justify-content: center;
-  margin: 1px 0 2px;
-}
-
-.item-fit-chip {
-  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-width: 24px;
-  height: 20px;
+  gap: 4px;
+  opacity: 0.55;
+}
+
+.item-ledger-next .item-box {
+  --item-box-size: 36px;
+}
+
+.item-ledger {
+  --ledger-who: minmax(156px, 1fr);
+  --ledger-col: 38px;
+  --ledger-force: 30px;
+  --ledger-cta: 66px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-height: 0;
   padding: 0 4px;
-  border-radius: 4px;
-  color: rgba(255, 255, 255, 0.28);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
 }
 
-.item-fit-chip svg {
-  width: 14px;
-  height: 14px;
+.item-ledger-head,
+.item-ledger-row {
+  display: grid;
+  grid-template-columns: var(--ledger-template);
+  align-items: center;
+  column-gap: 2px;
 }
 
-.pick-cols-3 .item-fit-chip {
-  min-width: 20px;
-  height: 17px;
-  padding: 0 3px;
+.item-ledger-head {
+  padding: 0 7px;
 }
 
-.pick-cols-3 .item-fit-chip svg {
-  width: 12px;
-  height: 12px;
+.item-ledger-colhead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-.item-fit-chip.is-lit {
-  color: #12100c;
-  background: var(--fit-color);
-  box-shadow: none;
+.item-ledger-colhead svg {
+  width: 16px;
+  height: 16px;
 }
 
-.item-fit-chip.is-speed {
-  color: var(--fit-color);
-  box-shadow: inset 0 0 0 1px var(--fit-color);
-  font-size: 12px;
+.item-ledger-colhead em {
+  font-style: normal;
+}
+
+.item-ledger-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-height: 0;
+}
+
+.item-ledger-row {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 96px;
+  padding: 3px 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--type-rgb), 0.32);
+  background:
+    linear-gradient(90deg, rgba(var(--type-rgb), 0.2), transparent 60%),
+    var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
+  color: var(--text);
+  cursor: pointer;
+  overflow: hidden;
+  transition: opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
+}
+
+.item-ledger-row.is-locked {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.item-ledger-row.is-blessed {
+  border-color: rgba(var(--node-rgb), 0.85);
+  box-shadow: 0 0 0 1px rgba(var(--node-rgb), 0.7), 0 0 22px rgba(var(--node-rgb), 0.35), var(--elev-2);
+}
+
+.item-ledger-who {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.item-ledger-portrait {
+  flex: none;
+  width: 48px;
+  height: 48px;
+}
+
+.item-ledger-name {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.item-ledger-name b {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-ledger-name small {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.item-ledger-name .item-who-sockets {
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 3px;
+}
+
+.item-ledger-name .item-box {
+  --item-box-size: 32px;
+}
+
+.item-ledger-cell {
+  text-align: center;
+  font-size: 15px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.item-ledger-cell svg {
+  width: 16px;
+  height: 16px;
+}
+
+.item-ledger-cell.is-used {
+  color: var(--text);
+}
+
+.item-ledger-cell.is-force.is-used,
+.item-ledger-cell.is-best {
+  color: var(--cell-color);
+}
+
+.item-ledger-cell.is-best {
+  text-shadow: 0 0 8px color-mix(in srgb, var(--cell-color) 60%, transparent);
+}
+
+.item-ledger-cta {
+  padding: 8px 0;
+  border-radius: var(--radius-sm);
+  background: #e3b45e;
+  box-shadow: inset 0 -2px 0 rgba(90, 52, 8, 0.45);
+  color: #2a1a06;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.item-ledger-cta.is-merge {
+  font-size: 9.5px;
+  letter-spacing: -0.02em;
+}
+
+.item-ledger-cta.is-off {
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: none;
+  color: var(--text-dim);
+}
+
+.item-ledger-cta.is-done {
+  background: none;
+  box-shadow: none;
+  color: rgb(var(--node-rgb));
+}
+
+.item-ledger-cta:empty {
+  visibility: hidden;
+}
+
+/* Four columns or more (a Crest): a smaller figure and smaller sockets give the figures the width. */
+.item-ledger.is-wide {
+  --ledger-who: 126px;
+  --ledger-col: 1fr;
+  --ledger-force: 18px;
+  --ledger-cta: 58px;
+}
+
+.item-ledger.is-wide .item-ledger-portrait {
+  width: 36px;
+  height: 36px;
+}
+
+.item-ledger.is-wide .item-ledger-name b {
+  font-size: 11px;
+}
+
+.item-ledger.is-wide .item-ledger-name small {
+  display: none;
+}
+
+.item-ledger.is-wide .item-who-sockets {
+  gap: 2px;
+}
+
+.item-ledger.is-wide .item-ledger-name .item-box {
+  --item-box-size: 25px;
+  --item-box-pip: 2.5px;
+}
+
+.item-ledger.is-wide .item-ledger-cell {
+  font-size: 13px;
+}
+
+.item-ledger.is-wide .item-ledger-name .item-box.empty::before {
+  display: none;
+}
+
+.item-ledger.is-wide .item-ledger-cta {
+  font-size: 11px;
+}
+
+/* A short roster keeps its rows at their own height and spends the room on the figure. */
+.item-ledger.is-roomy .item-ledger-rows {
+  flex: none;
+}
+
+.item-ledger.is-roomy .item-ledger-row {
+  flex: none;
+  max-height: none;
+  padding-block: 6px;
+}
+
+.item-ledger.is-roomy:not(.is-wide) {
+  --ledger-who: minmax(164px, 1fr);
+}
+
+.item-ledger.is-roomy:not(.is-wide) .item-ledger-portrait {
+  width: 56px;
+  height: 56px;
 }
 
 /* Armed: the next tap on this hero pays. */
@@ -41420,22 +41635,18 @@ img.smithy-service-art {
 }
 
 /* Three pieces at most, not six: each gets the room for a bigger icon. */
-.hall-counter-room.is-cache .counter-good,
-.hall-counter-room.is-who .counter-good {
+.hall-counter-room.is-cache .counter-good {
   min-height: 104px;
   padding-top: 6px;
 }
 
 .hall-counter-room.is-cache .counter-good-art,
-.hall-counter-room.is-cache .counter-good-art.is-piece .item-piece,
-.hall-counter-room.is-who .counter-good-art,
-.hall-counter-room.is-who .counter-good-art.is-piece .item-piece {
+.hall-counter-room.is-cache .counter-good-art.is-piece .item-piece {
   width: 56px;
   height: 56px;
 }
 
-.hall-counter-room.is-cache .counter-good.is-gear .counter-good-name,
-.hall-counter-room.is-who .counter-good.is-gear .counter-good-name {
+.hall-counter-room.is-cache .counter-good.is-gear .counter-good-name {
   font-size: 12px;
 }
 

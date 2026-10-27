@@ -36,10 +36,10 @@ test('itemFit: a healer lights Wisdom off its heal', () => {
   assert.ok(lit(chipsFor('dawnwarden')).includes('wisdom'));
 });
 
-test('itemFit: a Speed grant shows the hero\'s Speed rather than a lit read', () => {
+test('itemFit: Speed and HP are lit for every hero', () => {
   const chips = chipsFor('valor', { id: 'b', name: 'B', rarity: 'common', statGrants: { speed: 10, hp: 30 } });
   assert.deepStrictEqual(chips, [
-    { kind: 'speed', value: heroes.valor.baseStats.speed },
+    { kind: 'stat', stat: 'speed', lit: true },
     { kind: 'stat', stat: 'hp', lit: true },
   ]);
 });

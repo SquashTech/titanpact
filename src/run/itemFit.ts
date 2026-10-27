@@ -4,11 +4,7 @@
 import { statusApplicationsOf, type MoveDefinition, type StatKey, type StatusDefinition, type StatusId } from '../engine/content';
 import type { EquipmentDefinition } from './equipment';
 
-export type ItemFitChip =
-  | { kind: 'stat'; stat: StatKey; lit: boolean }
-  | { kind: 'force'; statusId: StatusId; lit: boolean }
-  /** Speed pays only at a threshold, so the card shows the hero's own figure instead of a lit/dim read. */
-  | { kind: 'speed'; value: number };
+export type ItemFitChip = { kind: 'stat'; stat: StatKey; lit: boolean } | { kind: 'force'; statusId: StatusId; lit: boolean };
 
 const RANKED: readonly StatKey[] = ['attack', 'defense', 'intelligence', 'wisdom'];
 
@@ -48,8 +44,7 @@ export function itemFitChips(
   const chips: ItemFitChip[] = [];
   for (const [stat, amount] of Object.entries(item.statGrants) as [StatKey, number][]) {
     if (!amount || amount < 0) continue;
-    if (stat === 'speed') chips.push({ kind: 'speed', value: stats.speed });
-    else chips.push({ kind: 'stat', stat, lit: !RANKED.includes(stat) || top.has(stat) || kitReads(stat, kit) });
+    chips.push({ kind: 'stat', stat, lit: !RANKED.includes(stat) || top.has(stat) || kitReads(stat, kit) });
   }
   for (const { statusId } of item.grantsStatusIds ?? []) chips.push({ kind: 'force', statusId, lit: forceFits(statusDefs[statusId], kit) });
   return chips;

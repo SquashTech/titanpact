@@ -66,9 +66,11 @@ so a Wisdom piece dropping on six physical attackers never has to eat a socket f
 NO hero can take the item at all, the screen is skipped and the item converts to gold on the
 spot; the victory overlay or cache reveal has already shown it, so nothing is hidden.
 
-**It is laid out as the Guild Hall's Gear counter** (2026-10-13, per user direction): the
-roster's sockets above, the piece read whole under them, Sell (two taps) at the foot. A Loot
-Pile's haul shows as a row of icons under the piece, the pieces still to come marked Next.
+**It is laid out as a ledger** (2026-10-27, per user direction, replacing the Gear-counter
+layout of 2026-10-13; options compared in `art/concepts/item-stats/`): the piece read whole on
+top, its grants as column heads under it, one row a hero holding its sockets and its own figure
+in each column, Sell (two taps) at the foot. A Loot Pile's haul shows as dim icons beside the
+piece.
 
 **Where it fires.** After a fight, first in the post-fight chain behind the level report — the
 fight's own consequence, ahead of the Banner and everything under it. **Not on the Equipment
@@ -79,17 +81,18 @@ stays the decline (`NodeRewardScreen.tsx` `CacheCounter`). On a Loot Pile event,
 (§6). A contract hero arriving with a piece (§7) does not raise it — the piece is already on the
 hero.
 
-**Numbers are hidden at the decision.** The card shows the family glyph, the tier pips and the
-enchant; the item's stat line is on the item card at the top, once. The full compare — what this
-hero's sheet becomes — is a long-press preview, as on every who-screen. The monotonicity rule
-(`equipment.md` §3) is what makes this honest: a higher tier of the same family is strictly
-better, so the only real question is a family-to-hero fit, which is an identity read, not a
-numbers read.
+**Numbers are shown at the decision** (2026-10-27, per user direction, reversing "numbers are
+hidden at the decision"). The fit chips of 2026-10-16 lit or dimmed each grant with no number,
+and new players could not tell what a lit chip meant. A lone figure does not answer the question
+either, so **the ledger's columns do the comparing**: a player reads down the Attack column and
+sees whose Attack is biggest. The whole compare (what this hero's sheet becomes) stays a
+long-press preview, as on every who-screen.
 
-**Fit chips** (2026-10-16, per user direction, from a first-time tester who could not tell
-whether an Umbral Bow belonged on Marrow or Valor; mock in `art/concepts/item-fit/`). Each
-hero card repeats the item's grants as small chips, **lit where the stat is one this hero leans
-on, dim where it is not**. No words, no numbers. A chip lights when either holds:
+**Which figures are bright** (the fit read, first shipped 2026-10-16 as chips; mock in
+`art/concepts/item-fit/`). A hero's figure is **bright where the stat is one this hero leans on,
+grey where it is not**, and the biggest bright figure in a column, when two or more are bright,
+glows in the stat's colour. A Force column holds the Force's glyph where the hero has a move of
+its type and a dash where it has none. A figure is bright when either holds:
 
 - **the kit reads it** — Attack for a physical attack, Intelligence for a magical one, Wisdom
   for a heal (heal power is the caster's Wisdom), Defense for a Shield (cast off Defense), a
@@ -97,12 +100,14 @@ on, dim where it is not**. No words, no numbers. A chip lights when either holds
 - **it is one of the hero's top two of Attack, Defense, Intelligence and Wisdom**, on current
   stats — the tank's Defense, which no move reads.
 
-HP and Mana are always lit. **Speed is not a chip: when the item grants Speed, every card shows
-that hero's Speed value**, because Speed pays only at a threshold and the number is the
-decision — which of the six it would carry past which. A dim chip means *not where this hero
-shines*, not *wasted*: Valor's Wisdom still cuts magic damage. Watch whether the top-two read
-pulls a roster toward stacking one stat (a Wisdom piece can lift Wisdom into a hero's top two
-and light the next one).
+HP, Mana and Speed are always bright. A grey figure means *not where this hero shines*, not
+*wasted*: Valor's Wisdom still cuts magic damage. Watch whether the top-two read pulls a roster
+toward stacking one stat (a Wisdom piece can lift Wisdom into a hero's top two and light the next
+one).
+
+**Width.** The widest piece is an enchanted Crest or Crown: five stats and a Force, six columns.
+From four columns the figure and sockets shrink and the Force column narrows to its glyph; a
+roster of three or fewer keeps its rows at their own height rather than stretching them.
 
 ---
 

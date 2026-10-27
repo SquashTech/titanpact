@@ -2,18 +2,16 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
-import { itemSlotsFor } from '../../run/progression';
 import { absorbItem, sellItem, type ItemReceipt } from '../../run/runProgress';
 import { sellValueFor } from '../../run/shop';
 import type { RosterEntry, RunState } from '../../run/state';
-import { RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
-import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
+import { ItemBox, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { SellPress } from '../shared/SellPress';
 import { useArmedTap } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
-import { GearGood, GearSockets, Preview, ReplaceSheet, useItemReceipts, type PreviewState } from './HallCounters';
-import { ItemFitChips } from './ItemFitChips';
+import { Preview, ReplaceSheet, useItemReceipts, type PreviewState } from './HallCounters';
+import { ItemLedger } from './ItemLedger';
 import { MergeBurst } from './MergeBurst';
 import { RosterPeek } from './RosterPeek';
 
@@ -33,8 +31,8 @@ interface Props {
 }
 
 /**
- * Every item that arrives off a fight or a Loot Pile lands here (docs/gear-absorption.md §2), laid
- * out as the Guild Hall's Gear counter: the roster's builds above, the piece read whole below them.
+ * Every item that arrives off a fight or a Loot Pile lands here (docs/gear-absorption.md §2): the
+ * piece on top, the roster below as a ledger of what each hero holds in the stats it grants.
  * A hero tap seats it — into a free socket, MERGED into the family the hero holds a tier up, or over
  * a piece a full hero picks to lose. Sell is the one decline.
  */
@@ -90,7 +88,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
 
   function ctaFor(entry: RosterEntry, receipt: ItemReceipt | undefined): string {
     if (takenBy === entry.rosterId) return mergeResult ? `${RARITY_LABELS[mergeResult.rarity]}!` : 'Taken';
-    if (done) return `${entry.equipment.length}/${itemSlotsFor(rosterHeroes[entry.heroId], entry)}`;
+    if (done) return '';
     if (!receipt || receipt.kind === 'none') return receipt?.reason === 'ceiling' ? 'At its peak' : 'Full';
     if (receipt.kind === 'merge') return `Merge → ${RARITY_LABELS[receipt.resultRarity]}`;
     if (receipt.kind === 'replace') return 'Replace';
@@ -107,59 +105,40 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
 
       <NodeHeader compact title={title} />
 
-      <div className="hall-counter-room is-gear is-who">
-        <HeroPickGrid count={run.roster.length} columns={run.roster.length > 4 ? 3 : 2} fill className="counter-roster">
-          {run.roster.map((entry) => {
+      <div className="hall-counter-room is-who">
+        <div className="counter-focus item-ledger-piece">
+          <EquipChoiceCard key={shownItem.id} item={shownItem} revealDelayMs={0} labelled showcase onInspect={() => setInspecting(shownItem.id)} />
+          {/* A Loot Pile's haul: the pieces still to come, dim beside this one. */}
+          {upcoming.length > 0 && (
+            <span className="item-ledger-next">
+              {upcoming.map((id, i) => (
+                <ItemBox key={`${id}:${i}`} item={equipment[id] ?? null} onTap={() => setInspecting(id)} onLongPress={() => setInspecting(id)} />
+              ))}
+            </span>
+          )}
+        </div>
+
+        <ItemLedger
+          run={run}
+          item={shownItem}
+          rows={run.roster.map((entry) => {
             const hero = rosterHeroes[entry.heroId];
             const receipt = receipts.get(entry.rosterId);
             const open = !done && !!receipt && receipt.kind !== 'none' && (!onlyRosterIds || onlyRosterIds.includes(entry.rosterId));
             const isTaker = takenBy === entry.rosterId;
-            const cta = ctaFor(entry, receipt);
-            return (
-              <HeroPickCard
-                key={entry.rosterId}
-                hero={hero}
-                entry={entry}
-                disabled={!open && !isTaker}
-                className={[open ? 'is-offered' : '', isTaker ? 'is-blessed' : ''].filter(Boolean).join(' ') || undefined}
-                onActivate={open ? () => handleGive(entry) : () => setPreview({ hero, entry })}
-                onPreview={() => setPreview({ hero, entry })}
-                ariaLabel={`${hero.name} — ${cta}`}
-                ctaClassName={isTaker ? 'is-done' : receipt?.kind === 'merge' && open ? 'is-accent is-merge' : open ? 'is-accent' : undefined}
-                overlay={isTaker ? <span className="blessing-flare" aria-hidden="true" /> : undefined}
-                detail={
-                  <>
-                    <ItemFitChips run={run} hero={hero} entry={entry} item={item} />
-                    <GearSockets hero={hero} entry={entry} receipt={receipt} open={open} />
-                  </>
-                }
-                cta={cta}
-              />
-            );
+            return {
+              hero,
+              entry,
+              receipt,
+              open,
+              isTaker,
+              cta: ctaFor(entry, receipt),
+              ctaClassName: isTaker ? 'is-done' : receipt?.kind === 'merge' && open ? 'is-merge' : open ? undefined : 'is-off',
+            };
           })}
-        </HeroPickGrid>
-
-        <div className="counter-focus">
-          <EquipChoiceCard key={shownItem.id} item={shownItem} revealDelayMs={0} labelled showcase onInspect={() => setInspecting(shownItem.id)} />
-        </div>
-
-        {/* A Loot Pile's haul: this piece lit, the ones still to come beside it. */}
-        {upcoming.length > 0 && (
-          <div className="counter-stock is-gear">
-            {[itemId, ...upcoming].map((id, i) => (
-              <GearGood
-                key={`${id}:${i}`}
-                itemId={id}
-                picked={i === 0}
-                isSold={i > 0}
-                soldNote="Next"
-                label={<span className="counter-good-tier" style={{ color: RARITY_COLOR_VARS[equipment[id].rarity] }}>{RARITY_LABELS[equipment[id].rarity]}</span>}
-                onPick={() => {}}
-                onInspect={() => setInspecting(id)}
-              />
-            ))}
-          </div>
-        )}
+          onGive={(entry) => handleGive(entry)}
+          onPreview={(row) => setPreview({ hero: row.hero, entry: row.entry })}
+        />
       </div>
 
       {done ? (
