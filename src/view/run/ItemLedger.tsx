@@ -30,8 +30,8 @@ export interface LedgerRow {
   receipt: ItemReceipt | undefined;
   open: boolean;
   isTaker: boolean;
-  cta: ReactNode;
-  ctaClassName?: string;
+  /** What a tap on the row does, for a screen reader: the row itself carries no button. */
+  label: string;
 }
 
 const forceColor = (statusId: string) => {
@@ -63,7 +63,7 @@ export function ItemLedger({ run, item, rows, onGive, onPreview }: { run: RunSta
   });
   const wide = columns.length > 3;
   const roomy = rows.length <= 3;
-  const template = ['var(--ledger-who)', ...columns.map((col) => (col.kind === 'force' ? 'var(--ledger-force)' : 'var(--ledger-col)')), 'var(--ledger-cta)'].join(' ');
+  const template = ['var(--ledger-who)', ...columns.map((col) => (col.kind === 'force' ? 'var(--ledger-force)' : 'var(--ledger-col)'))].join(' ');
 
   return (
     <div className={['item-ledger', wide ? 'is-wide' : '', roomy ? 'is-roomy' : ''].filter(Boolean).join(' ')} style={{ '--ledger-template': template } as CSSProperties}>
@@ -81,7 +81,6 @@ export function ItemLedger({ run, item, rows, onGive, onPreview }: { run: RunSta
             </span>
           )
         )}
-        <span />
       </div>
       <div className="item-ledger-rows">
         {reads.map(({ row, stats, chips }) => (
@@ -117,7 +116,7 @@ function LedgerRowView({ row, onGive, onPreview, children }: { row: LedgerRow; o
       style={{ '--type-rgb': getTypeColorRgb(row.hero.types[0]) } as CSSProperties}
       role="button"
       tabIndex={row.open ? 0 : -1}
-      aria-label={`${row.hero.name} — ${typeof row.cta === 'string' ? row.cta : ''}`}
+      aria-label={`${row.hero.name} — ${row.label}`}
       data-sfx="none"
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && row.open) {
@@ -138,7 +137,6 @@ function LedgerRowView({ row, onGive, onPreview, children }: { row: LedgerRow; o
         </span>
       </span>
       {children}
-      <span className={`item-ledger-cta${row.ctaClassName ? ` ${row.ctaClassName}` : ''}`}>{row.cta}</span>
     </div>
   );
 }

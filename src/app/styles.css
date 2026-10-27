@@ -41342,9 +41342,8 @@ img.smithy-service-art {
 
 .item-ledger {
   --ledger-who: minmax(156px, 1fr);
-  --ledger-col: 38px;
-  --ledger-force: 30px;
-  --ledger-cta: 66px;
+  --ledger-col: 50px;
+  --ledger-force: 36px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -41490,45 +41489,11 @@ img.smithy-service-art {
   text-shadow: 0 0 8px color-mix(in srgb, var(--cell-color) 60%, transparent);
 }
 
-.item-ledger-cta {
-  padding: 8px 0;
-  border-radius: var(--radius-sm);
-  background: #e3b45e;
-  box-shadow: inset 0 -2px 0 rgba(90, 52, 8, 0.45);
-  color: #2a1a06;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.item-ledger-cta.is-merge {
-  font-size: 9.5px;
-  letter-spacing: -0.02em;
-}
-
-.item-ledger-cta.is-off {
-  background: rgba(255, 255, 255, 0.07);
-  box-shadow: none;
-  color: var(--text-dim);
-}
-
-.item-ledger-cta.is-done {
-  background: none;
-  box-shadow: none;
-  color: rgb(var(--node-rgb));
-}
-
-.item-ledger-cta:empty {
-  visibility: hidden;
-}
-
 /* Four columns or more (a Crest): a smaller figure and smaller sockets give the figures the width. */
 .item-ledger.is-wide {
-  --ledger-who: 126px;
+  --ledger-who: 140px;
   --ledger-col: 1fr;
-  --ledger-force: 18px;
-  --ledger-cta: 58px;
+  --ledger-force: 24px;
 }
 
 .item-ledger.is-wide .item-ledger-portrait {
@@ -41559,10 +41524,6 @@ img.smithy-service-art {
 
 .item-ledger.is-wide .item-ledger-name .item-box.empty::before {
   display: none;
-}
-
-.item-ledger.is-wide .item-ledger-cta {
-  font-size: 11px;
 }
 
 /* A short roster keeps its rows at their own height and spends the room on the figure. */
@@ -53234,4 +53195,147 @@ img.smithy-service-art {
   .bag-potion-glow {
     animation: none;
   }
+}
+
+/* ==========================================================================
+   The plaque (2026-10-27, per user direction, art/concepts/gear-pop option D): on the new-gear ledger
+   and the Roster screen a piece is its sprite, large, over a diamond in its tier's colour ringed in gilt.
+   An empty socket is the diamond, dark.
+   ========================================================================== */
+:is(.item-ledger-name, .roster-sheet-mount) .item-box {
+  --item-box-size: 36px;
+  --plaque-inset: 18%;
+  border: 0;
+  border-image: none;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.item-ledger-name .item-box {
+  --item-box-size: 34px;
+}
+
+.item-ledger-name .item-who-sockets {
+  gap: 1px;
+}
+
+.item-ledger.is-wide .item-ledger-name .item-box {
+  --item-box-size: 26px;
+}
+
+:is(.item-ledger-name, .roster-sheet-mount) .item-box .item-piece {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  clip-path: none;
+  background: none;
+  filter: none;
+}
+
+:is(.item-ledger-name, .roster-sheet-mount) .item-box .item-piece::after {
+  display: none;
+}
+
+/* The diamond: the facet span, turned and lit in the tier's colour. */
+:is(.item-ledger-name, .roster-sheet-mount) .item-box .item-piece-facet,
+:is(.item-ledger-name, .roster-sheet-mount) .item-box.empty::before {
+  inset: var(--plaque-inset);
+  border-radius: 3px;
+  rotate: 45deg;
+}
+
+:is(.item-ledger-name, .roster-sheet-mount) .item-box .item-piece-facet {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--rarity-color, var(--border)) 72%, #ffffff),
+    var(--rarity-color, var(--border)) 45%,
+    color-mix(in srgb, var(--rarity-color, var(--border)) 38%, #000000)
+  );
+  box-shadow:
+    0 0 0 2px #0b0d12,
+    0 0 0 3.5px color-mix(in srgb, var(--rarity-color, var(--border)) 55%, #f6dfa2),
+    0 0 12px color-mix(in srgb, var(--rarity-color, transparent) 85%, transparent);
+}
+
+/* An enchant rings the diamond in its element, outside the gilt. */
+:is(.item-ledger-name, .roster-sheet-mount) .item-box .item-piece.is-enchanted::before {
+  inset: calc(var(--plaque-inset) - 4px);
+  z-index: 0;
+  clip-path: none;
+  border-radius: 4px;
+  rotate: 45deg;
+  background: none;
+  box-shadow: 0 0 0 2px var(--enchant-color);
+}
+
+:is(.item-ledger-name, .roster-sheet-mount) .item-box.empty::before {
+  border: 0;
+  border-image: none;
+  -webkit-mask: none;
+  mask: none;
+  clip-path: none;
+  opacity: 1;
+  background: #0b0d12;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.item-ledger.is-wide .item-ledger-name .item-box.empty::before {
+  display: block;
+}
+
+/* The sprite breaks out of the diamond: bigger than it, outlined and shadowed so it stands off the colour. */
+:is(.item-ledger-name, .roster-sheet-mount) .item-box .item-piece .item-box-icon.is-pixel {
+  position: relative;
+  z-index: 1;
+  width: 88%;
+  height: 88%;
+  transform: none;
+  filter: drop-shadow(0 0 1px #000) drop-shadow(0 2px 1px rgba(0, 0, 0, 0.8));
+}
+
+:is(.item-ledger-name, .roster-sheet-mount) .item-box .item-box-pips {
+  bottom: -3px;
+  z-index: 2;
+  gap: 1.5px;
+}
+
+:is(.item-ledger-name, .roster-sheet-mount) .item-box .item-box-pips i {
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 0;
+  rotate: 45deg;
+  background: var(--rarity-color, var(--border));
+  box-shadow: 0 0 0 1px #000;
+}
+
+:is(.item-ledger-name, .roster-sheet-mount) .item-box .item-box-enchant {
+  z-index: 2;
+  top: -2px;
+  right: -2px;
+}
+
+/* A socket the piece in hand would land in: the diamond lit gold, as the Roster's targets are. */
+.item-ledger-name .item-box.target {
+  border: 0;
+  box-shadow: none;
+  filter: drop-shadow(0 0 1.5px #ffd88a) drop-shadow(0 0 6px rgba(255, 196, 92, 0.6));
+}
+
+.item-ledger-name .item-box.target.empty::before,
+.roster-sheet-mount .item-box.drop-target.empty::before {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.15)), rgba(255, 200, 110, 0.4);
+}
+
+/* A socket the piece would merge into: lit in the tier the merge makes, the arrow beating on its corner. */
+.item-ledger-name .item-box.target:has(.item-box-merge) {
+  filter: drop-shadow(0 0 2px var(--merge-color)) drop-shadow(0 0 8px var(--merge-color));
+}
+
+.item-ledger-name .item-box .item-box-merge {
+  z-index: 3;
+  right: -5px;
+  bottom: -5px;
+  animation: merge-mark-beat 0.9s var(--ease-out) infinite;
 }

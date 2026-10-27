@@ -450,3 +450,12 @@ export function ItemReadout({ item }: { item: EquipmentDefinition }) {
     </div>
   );
 }
+
+/** The merge arrow on a socket a piece would merge into, lit in the tier the merge makes (--merge-color). */
+export const MergeMark = () => (
+  <span className="item-box-merge" aria-hidden="true">
+    <svg viewBox="0 0 10 10" className="merge-mark">
+      <path d="M2 1.5 5 5l3-3.5M5 5v4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  </span>
+);

@@ -86,7 +86,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
     }
   }
 
-  function ctaFor(entry: RosterEntry, receipt: ItemReceipt | undefined): string {
+  function labelFor(entry: RosterEntry, receipt: ItemReceipt | undefined): string {
     if (takenBy === entry.rosterId) return mergeResult ? `${RARITY_LABELS[mergeResult.rarity]}!` : 'Taken';
     if (done) return '';
     if (!receipt || receipt.kind === 'none') return receipt?.reason === 'ceiling' ? 'At its peak' : 'Full';
@@ -132,8 +132,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
               receipt,
               open,
               isTaker,
-              cta: ctaFor(entry, receipt),
-              ctaClassName: isTaker ? 'is-done' : receipt?.kind === 'merge' && open ? 'is-merge' : open ? undefined : 'is-off',
+              label: labelFor(entry, receipt),
             };
           })}
           onGive={(entry) => handleGive(entry)}

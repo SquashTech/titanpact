@@ -12,7 +12,7 @@ import { shopItemPrice } from '../../run/shop';
 import type { EquipmentDefinition } from '../../run/equipment';
 import type { RosterEntry, RunState } from '../../run/state';
 import { statScaleFor } from '../../run/statScale';
-import { ItemBox, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS, slotBoxes } from '../shared/EquipmentBox';
+import { ItemBox, ItemPiece, MergeMark, RARITY_COLOR_VARS, RARITY_LABELS, slotBoxes } from '../shared/EquipmentBox';
 import { GemIcon, GEM_STONES } from '../shared/GemIcon';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { MasteryPips } from '../shared/MasteryPips';
@@ -261,13 +261,16 @@ export function GearSockets({ hero, entry, receipt, open }: { hero: HeroDefiniti
     <span className="equip-slot-row item-who-sockets">
       {slotBoxes(entry.equipment, itemSlotsFor(hero, entry)).map((heldId, index) => {
         const target = open && (receipt?.kind === 'replace' || index === mergeIndex || index === freeIndex);
+        const merging = target && receipt?.kind === 'merge' ? receipt : null;
         return (
           <ItemBox
             key={index}
             item={heldId ? (equipment[heldId] ?? null) : null}
             className={target ? 'target' : undefined}
-            style={target && receipt?.kind === 'merge' ? ({ '--rarity-color': RARITY_COLOR_VARS[receipt.resultRarity] } as CSSProperties) : undefined}
-          />
+            style={merging ? ({ '--rarity-color': RARITY_COLOR_VARS[merging.resultRarity], '--merge-color': RARITY_COLOR_VARS[merging.resultRarity] } as CSSProperties) : undefined}
+          >
+            {merging && <MergeMark />}
+          </ItemBox>
         );
       })}
     </span>

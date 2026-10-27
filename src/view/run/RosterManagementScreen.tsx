@@ -18,7 +18,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { ItemDetailOverlay } from '../shared/ItemDossier';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
-import { ItemBox, RARITY_COLOR_VARS, slotBoxes } from '../shared/EquipmentBox';
+import { ItemBox, MergeMark, RARITY_COLOR_VARS, slotBoxes } from '../shared/EquipmentBox';
 import { MasteryPips } from '../shared/MasteryPips';
 import { WoundBar, entryHp } from '../shared/WoundBar';
 import { BlessingMark } from '../shared/BlessingMark';
@@ -200,14 +200,6 @@ interface CardProps {
   /** Absent on a read-only roster: a tap then shows the piece. */
   onSocket?: (index: number) => void;
 }
-
-const MergeMark = () => (
-  <span className="item-box-merge" aria-hidden="true">
-    <svg viewBox="0 0 10 10" className="merge-mark">
-      <path d="M2 1.5 5 5l3-3.5M5 5v4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  </span>
-);
 
 function socketClass(receipt: MoveReceipt | null, isLifted: boolean): string | undefined {
   if (isLifted) return 'selected';

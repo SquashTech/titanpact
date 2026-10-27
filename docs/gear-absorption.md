@@ -70,14 +70,15 @@ spot; the victory overlay or cache reveal has already shown it, so nothing is hi
 layout of 2026-10-13; options compared in `art/concepts/item-stats/`): the piece read whole on
 top, its grants as column heads under it, one row a hero holding its sockets and its own figure
 in each column, Sell (two taps) at the foot. A Loot Pile's haul shows as dim icons beside the
-piece.
+piece. **A row is the button, and it carries none** (2026-10-27, per user direction): the socket the
+piece would land in is lit gold, a merge target in the tier the merge makes with the merge arrow on
+it, a hero who cannot take it dimmed; a full hero's tap opens the Replace sheet, which names the
+loss. Each piece wears the plaque (`art/concepts/gear-pop/` option D, same day): its sprite over a
+diamond in its tier, here and on the Roster screen.
 
 **Where it fires.** After a fight, first in the post-fight chain behind the level report — the
-fight's own consequence, ahead of the Banner and everything under it. **Not on the Equipment
-Cache** (2026-10-13, per user direction): the opened chest is laid out as the Guild Hall's Gear
-counter — the roster's sockets above, the three pieces below as icons, the one picked read whole
-between them — and a hero tap seats the piece there, so which piece and who are one screen; Sell
-stays the decline (`NodeRewardScreen.tsx` `CacheCounter`). On a Loot Pile event, once per item, in sequence. Never from the Guild Hall
+fight's own consequence, ahead of the Banner and everything under it. **On the Equipment Cache too** since
+2026-10-27 (per user direction): the chest holds one random piece, not a pick of three. On a Loot Pile event, once per item, in sequence. Never from the Guild Hall
 (§6). A contract hero arriving with a piece (§7) does not raise it — the piece is already on the
 hero.
 
