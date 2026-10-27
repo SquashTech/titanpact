@@ -88,7 +88,7 @@ test('thoughts: the first sky leads to First Light and says it once', () => {
   const hello = thoughtFor(profile, THOUGHTS, { kind: 'firstSky' }, 0)!;
   assert.strictEqual(hello.showsNext, 'firstLight');
   assert.ok(hello.forced, 'the hello is a beat the player taps through');
-  assert.strictEqual(hello.plays, 'firstLight.hunt');
+  assert.strictEqual(hello.plays, 'firstLight.move');
   const shown = revealedFirst(profile, THOUGHTS, 'firstLight');
   assert.ok(shown, 'First Light has a first to show');
   profile = recordThoughtSeen(profile, shown!);

@@ -1,38 +1,87 @@
-// First Light's lessons (docs/the-sky.md §3): the tutorial fights and acts that A Tale of Valor was
-// built on, with its scenes cut. A lesson teaches by its guided taps, its control tips (How to Play's
-// own pages) and its numbers, and the heroes on the field call each round's plan. Ren and Will are recast with the base roster's Iron Warden and Raiju (2026-10-24, per
-// user direction). Each lesson is a one-beat chapter in its own book, so the Story machinery plays it unchanged.
+// First Light's lessons (docs/first-light.md): one concept a lesson, each a guided fight with one line
+// on the top bar, then the Clearing, the Road and the Fork until lessons 5–10 replace them. A lesson
+// teaches by its guided taps, and the older three by their control tips and the heroes' calls too.
+// Each lesson is a one-beat chapter in its own book, so the Story machinery plays it unchanged.
 
-import type { StoryAct, StoryDefinition, StoryFight } from '../run/story';
+import type { StoryAct, StoryChapter, StoryDefinition, StoryFight } from '../run/story';
 import { STORY_CAST_IDS as CAST } from './storyCast';
 import { manualPage } from './howToPlay';
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
 const ally = (rosterId: string) => ({ side: 'A' as const, rosterId });
 
-/** Picking a move and a target, Mana, one target or both, a debuff answered by a buff, matchups: two hunters, both guided. */
-const hunt: StoryFight = {
-  id: 'lesson-hunt',
-  seed: 1701,
+/** A move, then who it hits: each hero takes down its own foe. */
+const moveAndTarget: StoryFight = {
+  id: 'lesson-move',
+  seed: 1801,
   player: [
-    { rosterId: 'valor', heroId: CAST.valor, level: 2 },
-    { rosterId: 'fang', heroId: 'packAlpha', level: 2 },
+    { rosterId: 'crag', heroId: 'crag', level: 3, moveIds: ['rockToss'] },
+    { rosterId: 'ursa', heroId: 'ursa', level: 3, moveIds: ['claw'] },
   ],
-  playerLeads: ['valor', 'fang'],
+  playerLeads: ['crag', 'ursa'],
   enemy: [
-    { rosterId: 'stag', heroId: CAST.stag, level: 1 },
-    { rosterId: 'fox', heroId: CAST.fox, level: 1 },
+    { rosterId: 'arc', heroId: 'arcling', level: 2 },
+    { rosterId: 'cub', heroId: 'cubling', level: 2 },
   ],
-  enemyLeads: ['stag', 'fox'],
-  enemyScript: [
-    [{ actor: 'stag', moveId: 'wintersBreath' }, { actor: 'fox', moveId: 'pounce', target: ally('valor') }],
-    [{ actor: 'stag', moveId: 'wintersBreath' }],
-  ],
+  enemyLeads: ['arc', 'cub'],
+  enemyScript: [[{ actor: 'arc', moveId: 'zap', target: ally('crag') }, { actor: 'cub', moveId: 'claw', target: ally('ursa') }]],
+  guide: [[{ actor: 'crag', moveId: 'rockToss', target: foe('arc') }, { actor: 'ursa', moveId: 'claw', target: foe('cub') }]],
+};
+
+/** One cast empties Riptide's Mana, the Rest refills it, and the second cast finishes the foe. */
+const mana: StoryFight = {
+  id: 'lesson-mana',
+  seed: 1802,
+  player: [{ rosterId: 'riptide', heroId: 'tidecaller', level: 3, moveIds: ['torrent'] }],
+  playerLeads: ['riptide'],
+  enemy: [{ rosterId: 'cub', heroId: 'cubling', level: 14 }],
+  enemyLeads: ['cub'],
+  enemyScript: [1, 2, 3].map(() => [{ actor: 'cub', moveId: 'claw', target: ally('riptide') }]),
   guide: [
-    [{ actor: 'valor', moveId: 'ironFist', target: foe('fox') }, { actor: 'fang', moveId: 'claw', target: foe('fox') }],
-    [{ actor: 'valor', moveId: 'ironFist', target: foe('stag') }, { actor: 'fang', moveId: 'howl' }],
+    [{ actor: 'riptide', moveId: 'torrent', target: foe('cub') }],
+    [{ actor: 'riptide', rest: true }],
+    [{ actor: 'riptide', moveId: 'torrent', target: foe('cub') }],
   ],
 };
+
+/** Fire on Nature and Storm on Water: each hero aims at the foe its type hits hardest. */
+const types: StoryFight = {
+  id: 'lesson-types',
+  seed: 1803,
+  player: [
+    { rosterId: 'cinder', heroId: 'cinderKnight', level: 3, moveIds: ['singe'] },
+    { rosterId: 'raiju', heroId: 'raiju', level: 3, moveIds: ['thunderclap'] },
+  ],
+  playerLeads: ['cinder', 'raiju'],
+  enemy: [
+    { rosterId: 'sprout', heroId: 'sproutling', level: 6 },
+    { rosterId: 'pud', heroId: 'puddling', level: 6 },
+  ],
+  enemyLeads: ['sprout', 'pud'],
+  enemyScript: [[{ actor: 'sprout', moveId: 'vineLash', target: ally('cinder') }, { actor: 'pud', moveId: 'splash', target: ally('cinder') }]],
+  guide: [[{ actor: 'cinder', moveId: 'singe', target: foe('sprout') }, { actor: 'raiju', moveId: 'thunderclap', target: foe('pud') }]],
+};
+
+/** One spread move takes both foes at once. */
+const spread: StoryFight = {
+  id: 'lesson-spread',
+  seed: 1804,
+  player: [{ rosterId: 'cairn', heroId: 'cairn', level: 3, moveIds: ['tremor'] }],
+  playerLeads: ['cairn'],
+  enemy: [
+    { rosterId: 'arc', heroId: 'arcling', level: 2 },
+    { rosterId: 'cog', heroId: 'cogling', level: 2 },
+  ],
+  enemyLeads: ['arc', 'cog'],
+  enemyScript: [[{ actor: 'arc', moveId: 'zap', target: ally('cairn') }, { actor: 'cog', moveId: 'cogBop', target: ally('cairn') }]],
+  guide: [[{ actor: 'cairn', moveId: 'tremor' }]],
+};
+
+/** A guided fight as a lesson: its line on the top bar, the hand on every round. */
+function lessonChapter(id: string, title: string, fight: StoryFight, line: string): StoryChapter {
+  const cues = fight.guide.map((_, i) => ({ round: i + 1, point: true as const }));
+  return { id, title, beats: [{ kind: 'fight', fight, locationId: 'wildsEdge', cues, line }] };
+}
 
 /** The bench: switching, the two kinds of attack, Rest, a Shield and a Conduct setup, four heroes against the first spawn out of the fall. */
 const clearing: StoryFight = {
@@ -150,58 +199,10 @@ export const LESSONS: StoryDefinition = {
   id: 'firstLight',
   name: 'First Light',
   chapters: [
-    {
-      id: 'firstLight.hunt',
-      title: 'The Hunt',
-      beats: [
-        {
-          kind: 'act',
-          act: {
-            locationId: 'wildsEdge',
-            party: hunt.player,
-            rows: [
-              [
-                {
-                  type: 'fight',
-                  enemy: hunt.enemy,
-                  enemyLeads: hunt.enemyLeads,
-                  script: hunt,
-                  cues: [
-                    {
-                      round: 1,
-                      point: true,
-                      lines: [
-                        { by: 'valor', text: "That fox is quicker than us. It'll strike first, whatever we do." },
-                        { by: 'valor', text: "Both of us on it, Fang. It won't strike twice." },
-                      ],
-                      tips: [
-                        {
-                          id: 'story.welcome',
-                          title: 'Welcome to',
-                          pages: ['Battles are *turn-based*. Select *moves* for your heroes, then watch the round play out.'],
-                          look: 'welcome',
-                        },
-                        manualPage('howto.combat'),
-                        manualPage('howto.mana'),
-                      ],
-                    },
-                    {
-                      round: 2,
-                      point: true,
-                      lines: [
-                        { by: 'valor', text: "Its breath sapped us both. Fang, you're faster: howl us back up before I swing." },
-                        { by: 'valor', text: 'Iron splits ice. One clean hit, and that stag never breathes again.' },
-                      ],
-                      tips: [manualPage('howto.targets'), manualPage('howto.stages'), manualPage('howto.types')],
-                    },
-                  ],
-                },
-              ],
-            ],
-          },
-        },
-      ],
-    },
+    lessonChapter('firstLight.move', 'Move and Target', moveAndTarget, 'Pick a move, then pick who it hits.'),
+    lessonChapter('firstLight.mana', 'Mana', mana, 'Moves cost Mana. Rest fills it back up.'),
+    lessonChapter('firstLight.types', 'Types', types, 'Some types hit harder than others.'),
+    lessonChapter('firstLight.spread', 'Spread', spread, 'Some moves hit both foes at once.'),
     {
       id: 'firstLight.clearing',
       title: 'The Clearing',
@@ -238,7 +239,7 @@ export const LESSONS: StoryDefinition = {
                 { by: 'warden', text: "I'm out of Mana, and that Slabback's winding up a throw at me." },
                 { by: 'raiju', text: "Then I'll coat you in ice, and you Rest behind it." },
               ],
-              tips: [manualPage('howto.rest'), manualPage('howto.statuses'), manualPage('howto.status.Shield')],
+              tips: [manualPage('howto.statuses'), manualPage('howto.status.Shield')],
             },
             {
               round: 5,

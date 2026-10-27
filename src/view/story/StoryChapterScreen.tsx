@@ -55,6 +55,7 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, start
       equipmentReward={null}
       story={beat.fight}
       storyCues={beat.cues}
+      storyLine={beat.line}
       storyTips={tips}
       cinematicWin
       onResolved={(outcome) => (outcome === 'win' ? next() : setAttempt((n) => n + 1))}

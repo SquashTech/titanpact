@@ -114,8 +114,28 @@ cues' spoken lines, Blip's First Light thoughts and hello premise, `OpeningFall`
 ## 6. Build order (proposed)
 
 1. ~~A comparison page for the lesson's picture, pages 1–3.~~ Done: On the Field (§2).
-2. The lesson machinery cut down to guided fight → Learned: the line on the top bar instead of the
-   cues' spoken lines, on Stories' `guidedAction` and `point` as they stand. Lesson 10's act restarts on
-   a loss.
-3. Lessons 1–4, then 5–8, then 9–10, each with its page.
+2. ~~The lesson machinery.~~ Done 2026-10-27: a fight beat's `line` (`run/story.ts`) shows on the top
+   bar in the order track's place while the player commands, and the track returns while the round
+   resolves. Lesson 10's act restart is still to do.
+3. Lessons 1–4 DONE 2026-10-27 (`data/lessons.ts`, pinned in `test/lessons.test.ts`). Each is one
+   guided round unless noted, at Wild's Edge against early spawn:
+   - **Move & target**: Crag and Ursa, one attack each, drop an Arcling and a Cubling.
+   - **Mana & Rest**: Riptide alone. Torrent costs 40 of a 68 pool. Round 2 holds only Rest, and
+     round 3's Torrent finishes a level-14 Cubling. Three rounds.
+   - **Types**: Cinder's Fire on a Sproutling, Raiju's Storm on a Puddling. Swapped, both foes stand.
+     The target cards' *Bonus!* and *Resist* ranges carry the lesson.
+   - **Spread**: Cairn alone. Tremor drops both foes.
+
+   They replace the Hunt. A file that lit the Hunt lights all four on decode (`RETIRED_LESSONS`,
+   `run/profile.ts`). The Clearing, the Road and the Fork stay after them until lessons 5–10 land.
+   First Light is seven islands meanwhile, in an interim climb (`TRAIL`, `SkyChart.tsx`), each island's
+   tap area cut to 22 so they no longer overlap.
+
+   **Pages:** Turn by Turn files from lesson 1, Mana and Rest from 2, Types from 3, Single and Spread
+   from 4. **FLAGGED:** Buffs and Debuffs moved to the Clearing as a stopgap, because no new lesson
+   teaches it. The curriculum leaves it for runs to file, but runs file a page only when a status,
+   fight event or screen triggers it, and nothing does for a stat stage. It needs a trigger, or a
+   lesson.
+
+   Then 5–8, then 9–10.
 4. The Ascent at ten, the silent tour, the lore card restored, and the old lessons deleted.

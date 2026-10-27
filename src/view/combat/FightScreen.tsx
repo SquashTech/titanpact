@@ -594,6 +594,8 @@ interface Props {
   story?: StoryScript;
   /** Its lines over the stage, one a scripted round. */
   storyCues?: readonly StoryCue[];
+  /** A lesson's one line, on the top bar in the order track's place while the player commands. */
+  storyLine?: string;
   /** The account's seen tips, for a cue's control tip (shown once). Omitted: no cue tips. */
   storyTips?: { seenIds: readonly string[]; onSeen: (id: string) => void };
 }
@@ -629,6 +631,7 @@ export function FightScreen({
   versus,
   story,
   storyCues,
+  storyLine,
   storyTips,
   mvpRules,
   onPagesLearned,
@@ -1877,7 +1880,11 @@ export function FightScreen({
         )}
 
         {/* The round's order, across the top of the arena (OrderTrack; styles.css .order-track). */}
-        <OrderTrack entries={orderTrack} onInspect={resolving ? undefined : sayOrder} />
+        {storyLine && canAct && winner === null ? (
+          <div className="lesson-line">{storyLine}</div>
+        ) : (
+          <OrderTrack entries={orderTrack} onInspect={resolving ? undefined : sayOrder} />
+        )}
         <EnemyPips combat={combat} side={AI_SIDE} />
 
         {/* A lesson's hero calls the round's plan, over its own side of the field. */}

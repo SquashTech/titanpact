@@ -196,40 +196,6 @@ test('story: every catalog fight scripts only moves its actors hold, and leads a
   }
 });
 
-test("story lesson: the Hunt's lessons hold — the fox takes both hunters, and the White Stag falls to Iron Fist only after Howl", () => {
-  const hunt = LESSONS.chapters.find((c) => c.id === 'firstLight.hunt')?.beats[0];
-  assert.ok(hunt && hunt.kind === 'act', 'the Hunt is played off the map');
-  const fight = storyNodeFight(hunt.act, hunt.act.rows[0][0], 'hunt');
-  assert.ok(fight, "the Hunt's tile is guided");
-  /** Plays the script's rounds with the named hero, in the named round, Resting or Clawing the White Stag instead of following the guide. */
-  const play = (swaps: Record<number, { hero: string; does: 'rest' | 'claw' }>) => {
-    let state = openStoryFight(fight);
-    const after: CombatState[] = [];
-    while (state.round <= fight.guide.length && fightWinner(state) === null) {
-      const swap = swaps[state.round];
-      const player = state.active[STORY_PLAYER_SIDE].flatMap((id): Action[] =>
-        !id
-          ? []
-          : id !== `A:${swap?.hero}`
-            ? [guidedAction(fight, state, id)!]
-            : swap.does === 'rest'
-              ? [{ kind: 'rest', combatantId: id }]
-              : [{ kind: 'move', combatantId: id, moveId: 'claw', declaredTarget: 'B:stag' }]
-      );
-      state = resolveRound(state, [...player, ...scriptedEnemyActions(fight, state)!], config).state;
-      after.push(state);
-    }
-    return after;
-  };
-  const down = (state: CombatState, rosterId: string) => state.combatants[`B:${rosterId}`].fainted;
-  assert.ok(down(play({})[0], 'fox'), 'both hunters on the fox drop it');
-  assert.ok(!down(play({ 1: { hero: 'fang', does: 'rest' } })[0], 'fox'), "Valor's Iron Fist alone leaves the fox standing");
-  assert.ok(!down(play({ 1: { hero: 'valor', does: 'rest' } })[0], 'fox'), "Fang's Claw alone leaves the fox standing");
-  assert.ok(down(play({})[1], 'stag'), 'Howl, then Iron Fist, drops the White Stag');
-  assert.ok(!down(play({ 2: { hero: 'fang', does: 'rest' } })[1], 'stag'), 'Iron Fist without the Howl leaves it standing');
-  assert.ok(!down(play({ 2: { hero: 'fang', does: 'claw' } })[1], 'stag'), 'Claw, then Iron Fist, leaves it standing too: the Howl is the only way');
-});
-
 const actBeats = STORY_BOOKS.flatMap((story) =>
   story.chapters.flatMap((chapter) => chapter.beats.map((beat, index) => ({ chapter, beat, index }))).filter((b) => b.beat.kind === 'act')
 );

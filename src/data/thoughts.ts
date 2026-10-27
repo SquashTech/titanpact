@@ -10,7 +10,7 @@ export const THOUGHTS: readonly ThoughtDefinition[] = [
     once: true,
     forced: true,
     showsNext: 'firstLight',
-    plays: 'firstLight.hunt',
+    plays: 'firstLight.move',
     scene: 'fall',
     lines: [
       'Oh, hi! Sorry, I would’ve cleaned up a bit, but I wasn’t expecting company.',

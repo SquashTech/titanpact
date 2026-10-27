@@ -8,7 +8,10 @@ import type { ManualPage, ManualSource, ManualTrigger } from '../run/manual';
 import { statuses } from './statuses';
 
 const lesson = (scenarioId: string): ManualSource => ({ kind: 'lesson', scenarioId });
-const HUNT = lesson('firstLight.hunt');
+const MOVE = lesson('firstLight.move');
+const MANA = lesson('firstLight.mana');
+const TYPES = lesson('firstLight.types');
+const SPREAD = lesson('firstLight.spread');
 const CLEARING = lesson('firstLight.clearing');
 const ROAD = lesson('firstLight.road');
 const FORK = lesson('firstLight.fork');
@@ -90,17 +93,17 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'combat',
     'Turn by Turn',
-    HUNT,
+    MOVE,
     ['stat:speed'],
     'Each round, choose a move and a target for both heroes on the field. Then the round plays out in *Speed* order.',
     '- *Tap* any fighter to read its stats, moves and passive.\n- *Hold* a move to read all of it.',
     'A passive works on its own, and affects each hero at most once a round.'
   ),
-  page('mana', 'Mana', HUNT, ['stat:manaPool'], '- A move costs the *Mana* in its gem, paid from the blue bar.\n- Every hero regains some Mana each round.'),
+  page('mana', 'Mana', MANA, ['stat:manaPool'], '- A move costs the *Mana* in its gem, paid from the blue bar.\n- Every hero regains some Mana each round.'),
   page(
     'targets',
     'Single and Spread',
-    HUNT,
+    SPREAD,
     ['glyph:spread'],
     'The bars under a move show who it hits:\n- [single] A bar under each enemy: the *one* you pick.\n- [spread] One long bar under both: it hits *both*, each at full power.',
     'Figures show who an effect reaches:\n- [self] the hero using it\n- [ally] your side\n- [foe] an enemy',
@@ -109,7 +112,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'stages',
     'Buffs and Debuffs',
-    HUNT,
+    CLEARING,
     ['kind:buff', 'kind:debuff'],
     "- [buff] A *buff* raises a stat for the rest of the fight.\n- [debuff] A *debuff* lowers an enemy's.",
     '- An arrow beside a stat shows it was raised or lowered.\n- Arrows stay through a switch.',
@@ -118,7 +121,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'types',
     'Types',
-    HUNT,
+    TYPES,
     ['arrow:super', 'arrow:resist'],
     'The arrows under a move show how it hits each enemy:\n- [super] *double* damage\n- [resist] *half* damage\n- two arrows: *four times*, or a *quarter*',
     "- The icon before a move's name is its type.\n- A move that shares a type with the hero using it deals *25%* more."
@@ -140,7 +143,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     '- [physical] *Physical*: Attack against Defense.\n- [magical] *Magical*: Intelligence against Wisdom.',
     'A foe with thick armour may have a thin mind. Tap it, and strike the defense it lacks.'
   ),
-  page('rest', 'Rest', CLEARING, ['node:restReward'], '- A hero short of Mana can *Rest*.\n- It skips its turn and *refills all of its Mana*.'),
+  page('rest', 'Rest', MANA, ['node:restReward'], '- A hero short of Mana can *Rest*.\n- It skips its turn and *refills all of its Mana*.'),
   page(
     'statuses',
     'Status Effects',

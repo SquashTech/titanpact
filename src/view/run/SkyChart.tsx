@@ -61,10 +61,13 @@ const RING_SEATS = ['strange', 'gauntlet', 'trials'] as const;
 
 /** First Light before it is sealed: its islands climbing from the foot of the screen to the ring's gap, side to side. */
 const TRAIL = [
-  { x: 112, y: 520 },
-  { x: 282, y: 484 },
-  { x: 112, y: 448 },
-  { x: 278, y: 412 },
+  { x: 96, y: 524 },
+  { x: 298, y: 500 },
+  { x: 96, y: 476 },
+  { x: 298, y: 452 },
+  { x: 96, y: 428 },
+  { x: 298, y: 404 },
+  { x: 96, y: 380 },
 ] as const;
 
 /** A detail card's own drawing box; the constellation sits in the middle with room round it for names. */
@@ -848,12 +851,15 @@ interface TrailProps {
 
 /** Who stands on each lesson's island: the heroes it is played with, a promise a name never made. */
 const LESSON_CAST: Readonly<Record<string, readonly string[]>> = {
-  'firstLight.hunt': ['valorPrologue', 'packAlpha'],
+  'firstLight.move': ['crag', 'ursa'],
+  'firstLight.mana': ['tidecaller'],
+  'firstLight.types': ['cinderKnight', 'raiju'],
+  'firstLight.spread': ['cairn'],
   'firstLight.clearing': ['ironWarden', 'raiju'],
   'firstLight.road': ['packAlpha', 'valor', 'ironWarden'],
   'firstLight.fork': ['valor', 'dawnwarden'],
 };
-const NUMERALS = ['I', 'II', 'III', 'IV'];
+const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 /** How far below an island's centre its star sits, on the front of its rim. */
 const ISLE_RIM = 13;
 
@@ -891,7 +897,7 @@ function Trail({ lit, fx, disabled, calling, onPlayLesson }: TrailProps) {
   return (
     <g className={`pact-trail${fx.folding ? ' is-folding' : ''}${calling ? ' is-calling' : ''}`}>
       {/* The thread from the last star up into the gap: where the trail is going. */}
-      <line className={`pact-thread${lit.every(Boolean) ? ' is-lit' : ''}`} x1={TRAIL[3].x} y1={TRAIL[3].y - 6} x2={gate.x} y2={gate.y + 4} />
+      <line className={`pact-thread${lit.every(Boolean) ? ' is-lit' : ''}`} x1={TRAIL[TRAIL.length - 1].x} y1={TRAIL[TRAIL.length - 1].y - 6} x2={gate.x} y2={gate.y + 4} />
       {c.lines.map(([a, b], k) => {
         const p = TRAIL[a];
         const q = TRAIL[b];
@@ -926,7 +932,7 @@ function Trail({ lit, fx, disabled, calling, onPlayLesson }: TrailProps) {
           <g
             key={star.id}
             className={`pact-trail-star${isLit ? ' is-lit' : ''}${isNext ? ' is-next' : ''}${known ? '' : ' is-unknown'}${fx.charging === i ? ' is-charging' : ''}${waking ? ' is-waking' : ''}`}
-            style={{ '--fold-x': `${off.x}px`, '--fold-y': `${off.y}px`, '--fold-delay': `${(3 - i) * 0.06}s` } as CSSProperties}
+            style={{ '--fold-x': `${off.x}px`, '--fold-y': `${off.y}px`, '--fold-delay': `${(TRAIL.length - 1 - i) * 0.06}s` } as CSSProperties}
           >
             <g className="pact-trail-body" transform={`translate(${p.x} ${p.y})`}>
               <Isle cast={LESSON_CAST[scenarioIdOf(star)] ?? []} numeral={NUMERALS[i]} />
@@ -938,7 +944,7 @@ function Trail({ lit, fx, disabled, calling, onPlayLesson }: TrailProps) {
                 {fx.burst?.i === i && <Burst key={fx.burst.n} />}
               </g>
             </g>
-            {playable && <circle className="pact-hit" cx={p.x} cy={p.y - 8} r={40} onClick={() => onPlayLesson(scenarioIdOf(star))} />}
+            {playable && <circle className="pact-hit" cx={p.x} cy={p.y - 8} r={22} onClick={() => onPlayLesson(scenarioIdOf(star))} />}
           </g>
         );
       })}

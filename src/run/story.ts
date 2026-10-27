@@ -144,8 +144,8 @@ export interface CueLine {
 }
 
 export type StoryBeat =
-  /** A scripted fight, stood on `locationId`'s ground (unset: the plain arena). */
-  | { kind: 'fight'; fight: StoryFight; locationId?: string; cues?: readonly StoryCue[] }
+  /** A scripted fight, stood on `locationId`'s ground (unset: the plain arena). `line` is a lesson's one line, on the top bar while it commands. */
+  | { kind: 'fight'; fight: StoryFight; locationId?: string; cues?: readonly StoryCue[]; line?: string }
   /** One Act of a run on the real map (docs/stories.md §14), a fixed party and fixed fights, ending at its last row. */
   | { kind: 'act'; act: StoryAct };
 

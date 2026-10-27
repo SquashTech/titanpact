@@ -47,12 +47,15 @@ test('manual: ids are unique, and every page has words and an emblem the view ca
 test('manual: every lesson files pages, and every page a lesson shows in a fight is one of its own', () => {
   for (const chapter of LESSONS.chapters) {
     const own = lessonPages(MANUAL_PAGES, chapter.id).map((p) => p.id);
-    assert.ok(own.length >= 4 && own.length <= 6, `${chapter.id} files ${own.length} pages`);
+    assert.ok(own.length >= 1 && own.length <= 6, `${chapter.id} files ${own.length} pages`);
     for (const id of cueTipIds(chapter.id).filter((id) => id.startsWith('howto.'))) assert.ok(own.includes(id), `${chapter.id} shows ${id}, another lesson's page`);
   }
-  // Mana is taught before Switching, and one target or both in the very first fight.
-  const hunt = lessonPages(MANUAL_PAGES, 'firstLight.hunt').map((p) => p.id);
-  for (const id of ['howto.combat', 'howto.mana', 'howto.targets', 'howto.stages', 'howto.types']) assert.ok(hunt.includes(id), `the Hunt teaches ${id}`);
+  // One concept a lesson, and Mana before Switching.
+  const first = (id: string) => lessonPages(MANUAL_PAGES, id).map((p) => p.id);
+  assert.deepStrictEqual(first('firstLight.move'), ['howto.combat']);
+  assert.deepStrictEqual(first('firstLight.mana'), ['howto.mana', 'howto.rest']);
+  assert.deepStrictEqual(first('firstLight.types'), ['howto.types']);
+  assert.deepStrictEqual(first('firstLight.spread'), ['howto.targets']);
 });
 
 test('manual: a status has a page, and a page the lessons do not teach is met in a run', () => {
@@ -66,8 +69,8 @@ test('manual: a lesson won learns its pages; a run files the rest once, and the 
   const mana = manualPage('howto.mana');
   const burn = manualPage('howto.status.Burn');
   assert.ok(!isPageLearned(profile, mana) && !isPageLearned(profile, burn));
-  profile = recordScenarioLit(profile, sky, 'firstLight.hunt');
-  assert.ok(isPageLearned(profile, mana), 'the Hunt won, its pages are in the book');
+  profile = recordScenarioLit(profile, sky, 'firstLight.mana');
+  assert.ok(isPageLearned(profile, mana), 'the Mana lesson won, its pages are in the book');
   assert.strictEqual(fileRunPages(profile, MANUAL_PAGES, [mana.id]), profile, 'a lesson page is never filed by a run');
   profile = fileRunPages(profile, MANUAL_PAGES, [burn.id, burn.id]);
   assert.deepStrictEqual(profile.manualPages, [burn.id]);

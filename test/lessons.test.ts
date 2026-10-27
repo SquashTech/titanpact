@@ -13,6 +13,7 @@ import { resolveRound } from '../src/engine/combat/resolveRound';
 import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import { fightWinner, getMaxMana, type CombatState } from '../src/engine/state';
 import type { CombatEvent } from '../src/engine/events';
+import type { Action } from '../src/engine/combat/actions';
 import { guidedAction, scriptedEnemyActions, storyNodeFight, storySides, withStoryEnds, STORY_ENEMY_SIDE, STORY_PLAYER_SIDE, type StoryFight } from '../src/run/story';
 import { LESSONS } from '../src/data/lessons';
 import { sky } from '../src/data/sky';
@@ -35,13 +36,13 @@ function open(fight: StoryFight): CombatState {
   return resolveBattleStartEntries(withStoryEnds(built, fight), 1, allCombatants, statuses, passives, fieldEffects).state;
 }
 
-/** Plays the guide against the script, round by round: the events of each round, and the board after it. */
-function play(fight: StoryFight): { rounds: CombatEvent[][]; boards: CombatState[] } {
+/** Plays the guide against the script, round by round: the events of each round, and the board after it. `instead` swaps a hero's guided action. */
+function play(fight: StoryFight, instead: (round: number, combatantId: string) => Action | null = () => null): { rounds: CombatEvent[][]; boards: CombatState[] } {
   let state = open(fight);
   const rounds: CombatEvent[][] = [];
   const boards: CombatState[] = [state];
   while (state.round <= fight.guide.length && fightWinner(state) === null) {
-    const player = state.active[STORY_PLAYER_SIDE].flatMap((id) => (id ? [guidedAction(fight, state, id)!] : []));
+    const player = state.active[STORY_PLAYER_SIDE].flatMap((id) => (id ? [instead(state.round, id) ?? guidedAction(fight, state, id)!] : []));
     const result = resolveRound(state, [...player, ...scriptedEnemyActions(fight, state)!], config);
     rounds.push(result.events);
     state = result.state;
@@ -81,9 +82,13 @@ test('lessons: every cue teaches, and the party is the base roster bar the lesso
   }
 });
 
-test('lessons: a hero on the field calls the plan on every guided round', () => {
+test('lessons: a lesson with a line points on every guided round; an older one has a hero on the field call it', () => {
   for (const chapter of LESSONS.chapters) {
     const beat = chapter.beats[0];
+    if (beat.kind === 'fight' && beat.line) {
+      for (let round = 1; round <= beat.fight.guide.length; round++) assert.ok(beat.cues?.some((cue) => cue.round === round && cue.point), `${chapter.id} round ${round} is guided with no hand`);
+      continue;
+    }
     const cues = beat.kind === 'fight' ? beat.cues ?? [] : beat.kind === 'act' ? beat.act.rows.flat().find((n) => n.script)?.cues ?? [] : [];
     if (beat.kind === 'act' && !beat.act.rows.flat().some((n) => n.script)) continue;
     const fight = fightOf(chapter.id);
@@ -99,7 +104,7 @@ test('lessons: a hero on the field calls the plan on every guided round', () => 
 });
 
 test('lessons: each guided fight ends inside its script, won, with nobody down', () => {
-  for (const id of ['firstLight.hunt', 'firstLight.clearing']) {
+  for (const id of ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread', 'firstLight.clearing']) {
     const fight = fightOf(id);
     const { boards } = play(fight);
     const last = boards[boards.length - 1];
@@ -124,4 +129,40 @@ test('lessons: in the clearing, the Warden runs dry and Rests under a Shield, th
   assert.ok(rounds[4].some((e) => e.type === 'StatusDetonated' && e.statusId === 'Conduct'), "the Warden's Gale Sever sets it off in the same round");
   const foes = Object.values(boards[boards.length - 1].combatants).filter((c) => c.side === 'B');
   assert.ok(foes.every((c) => c.fainted), 'both spawn fall in round 5');
+});
+
+const foesDown = (board: CombatState) => Object.values(board.combatants).filter((c) => c.side === 'B' && c.fainted).length;
+
+test('lessons: each hero drops the foe it is pointed at, both in the first round', () => {
+  const { boards } = play(fightOf('firstLight.move'));
+  assert.strictEqual(boards.length, 2, 'one round');
+  assert.strictEqual(foesDown(boards[1]), 2);
+});
+
+test('lessons: one Torrent empties Riptide, so it Rests, and the second Torrent finishes the foe', () => {
+  const fight = fightOf('firstLight.mana');
+  const { boards } = play(fight);
+  assert.strictEqual(boards.length, 4, 'three rounds');
+  const before2 = boards[1].combatants['A:riptide'];
+  assert.ok(before2.currentMana < moves.torrent.manaCost, `Riptide can still afford Torrent in round 2 (Mana ${before2.currentMana})`);
+  assert.strictEqual(foesDown(boards[1]), 0, 'one Torrent is not enough');
+  const before3 = boards[2].combatants['A:riptide'];
+  assert.strictEqual(before3.currentMana, getMaxMana(allCombatants[before3.heroId], before3), 'the Rest refills it');
+  assert.strictEqual(foesDown(boards[3]), 1);
+});
+
+test('lessons: each type finds the foe it hits hardest, and the other way round leaves both standing', () => {
+  const fight = fightOf('firstLight.types');
+  assert.strictEqual(foesDown(play(fight).boards[1]), 2, 'Fire on Nature and Storm on Water drop both');
+  const swapped = play(fight, (_, id) => {
+    const target = id === 'A:cinder' ? 'B:pud' : 'B:sprout';
+    return { kind: 'move', combatantId: id, moveId: id === 'A:cinder' ? 'singe' : 'thunderclap', declaredTarget: target };
+  });
+  assert.strictEqual(foesDown(swapped.boards[1]), 0, 'Fire on Water and Storm on Nature drop neither');
+});
+
+test('lessons: one spread move drops both foes', () => {
+  const { boards } = play(fightOf('firstLight.spread'));
+  assert.strictEqual(boards.length, 2, 'one round');
+  assert.strictEqual(foesDown(boards[1]), 2);
 });

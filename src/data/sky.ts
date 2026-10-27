@@ -13,7 +13,10 @@ const scenario = (id: string, name: string): ScenarioDefinition => ({ id, name, 
 const lesson = (id: string, name: string): ScenarioDefinition => ({ ...scenario(id, name), lesson: id });
 
 const SCENARIOS: readonly ScenarioDefinition[] = [
-  lesson('firstLight.hunt', 'The Hunt'),
+  lesson('firstLight.move', 'Move and Target'),
+  lesson('firstLight.mana', 'Mana'),
+  lesson('firstLight.types', 'Types'),
+  lesson('firstLight.spread', 'Spread'),
   lesson('firstLight.clearing', 'The Clearing'),
   lesson('firstLight.road', 'The Road'),
   lesson('firstLight.fork', 'The Fork'),
@@ -38,14 +41,17 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
   {
     id: 'firstLight',
     name: 'First Light',
-    // The two guided fights rise to the two acts, played in that order.
+    // The guided fights rise to the two acts, played in that order.
     stars: [
-      scenarioStar('firstLight.hunt', 0.06, 0.82),
-      scenarioStar('firstLight.clearing', 0.36, 0.56),
-      scenarioStar('firstLight.road', 0.66, 0.64),
-      scenarioStar('firstLight.fork', 0.94, 0.2),
+      scenarioStar('firstLight.move', 0.08, 0.94),
+      scenarioStar('firstLight.mana', 0.4, 0.82),
+      scenarioStar('firstLight.types', 0.72, 0.7),
+      scenarioStar('firstLight.spread', 0.36, 0.56),
+      scenarioStar('firstLight.clearing', 0.06, 0.42),
+      scenarioStar('firstLight.road', 0.5, 0.3),
+      scenarioStar('firstLight.fork', 0.94, 0.14),
     ],
-    lines: chain(4),
+    lines: chain(7),
     after: [],
     rail: true,
     rewards: [{ kind: 'stardust', amount: 300 }],

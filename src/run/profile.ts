@@ -486,6 +486,11 @@ function stringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : [];
 }
 
+/** A lesson First Light no longer holds, and the lessons that took its place, lit for a file that had lit it. */
+const RETIRED_LESSONS: Readonly<Record<string, readonly string[]>> = {
+  'firstLight.hunt': ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread'],
+};
+
 /**
  * A record is kept if its outcome and act are readable — a line with no outcome says nothing.
  * Its roster keeps every hero with an id: a companion's body is not in `knownHeroIds`, and a
@@ -612,7 +617,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Absent on every profile written before Stories.
     storyChaptersDone: [...new Set(stringList(value.storyChaptersDone))],
     // Absent on every file written before the sky.
-    litStars: [...new Set(stringList(value.litStars))],
+    litStars: [...new Set(stringList(value.litStars).flatMap((id) => RETIRED_LESSONS[id] ?? [id]))],
     seenThoughtIds: [...new Set(stringList(value.seenThoughtIds))],
     manualPages: [...new Set(stringList(value.manualPages))],
     manualUnshown: [...new Set(stringList(value.manualUnshown))],
