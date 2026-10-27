@@ -32482,11 +32482,8 @@ button.evo-gift-card {
 }
 
 /* --- What a merge MADE (MergeBurst.tsx) ------------------------------------------------------
-   Two pieces go in and one comes out, and the whole event used to be the bag quietly reshuffling
-   by one box — the strongest thing a player can do to an item, and the least legible. So the
-   result gets a beat: the inputs fly together, the new piece is struck out of them, and it states
-   the tier it climbed to and everything it grants. Nothing waits on it; it clears itself, and a
-   tap skips it. */
+   The two pieces square up in their own tiers, spiral into each other and strike; the new piece rises
+   out of the flash on rays in its tier, the new pip stamped last. Clears itself; a tap skips it. */
 .merge-burst {
   position: fixed;
   inset: 0;
@@ -32495,110 +32492,238 @@ button.evo-gift-card {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 22px;
-  /* Nearly opaque. The result and its caption are the only things on the screen for a second and
-     a half, and a bag grid legible behind the words is a bag grid the eye reads instead of them. */
-  background: radial-gradient(ellipse 80% 45% at 50% 44%, color-mix(in srgb, var(--rarity-color) 14%, #0a0c12), #04050a 96%);
-  animation: merge-burst-fade 0.18s var(--ease-out);
+  gap: 26px;
+  cursor: pointer;
+  animation: merge-burst-out 0.35s ease-in 3.85s forwards;
+}
+
+.merge-burst-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--rarity-color) 22%, rgba(4, 5, 8, 0.82)), rgba(2, 3, 5, 0.94) 70%);
+  animation: merge-burst-fade 0.3s var(--ease-out) both;
 }
 
 .merge-burst-stage {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 116px;
-  height: 116px;
+  width: 260px;
+  height: 230px;
+  animation: merge-burst-shake 0.42s linear 1.25s;
 }
 
-/* The two inputs, thrown in from either side. They are the same piece drawn twice, because a
-   merge takes two of one thing — and drawing both is what makes the flash read as a collision
-   rather than as a reveal. */
-.merge-burst-input {
+/* The two pieces, a plaque each in its own tier. */
+.merge-plaque {
   position: absolute;
-  --item-box-size: 46px;
-  --item-box-pip: 3.5px;
-  width: 46px;
-  height: 46px;
-  animation: merge-burst-close 0.42s cubic-bezier(0.55, 0, 0.85, 0.4) forwards;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  margin: -42px 0 0 -42px;
+}
+
+.merge-plaque-diamond {
+  position: absolute;
+  inset: 17%;
+  border-radius: 6px;
+  rotate: 45deg;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rarity-color) 72%, #ffffff), var(--rarity-color) 45%, color-mix(in srgb, var(--rarity-color) 38%, #000000));
+  box-shadow:
+    0 0 0 3px #0b0d12,
+    0 0 0 5px color-mix(in srgb, var(--rarity-color) 55%, #f6dfa2),
+    0 0 26px color-mix(in srgb, var(--rarity-color) 85%, transparent);
+}
+
+.merge-plaque .merge-plaque-art {
+  position: relative;
+  width: 86%;
+  height: 86%;
+  image-rendering: pixelated;
+  object-fit: contain;
+  filter: drop-shadow(0 0 1px #000) drop-shadow(0 3px 2px rgba(0, 0, 0, 0.8));
+}
+
+/* Square up, tremble, then the orbit spins them into each other. */
+.merge-burst-orbit {
+  position: absolute;
+  inset: 0;
+  animation: merge-burst-orbit 0.6s cubic-bezier(0.6, 0, 0.9, 0.5) 0.65s forwards, merge-burst-out 0.01s linear 1.25s forwards;
+}
+
+.merge-burst-input {
+  animation:
+    merge-burst-enter 0.55s cubic-bezier(0.2, 1.3, 0.5, 1) both,
+    merge-burst-tremble 0.08s linear 0.45s 3,
+    merge-burst-close 0.6s cubic-bezier(0.6, 0, 0.9, 0.5) 0.65s forwards;
 }
 
 .merge-burst-input.is-left {
-  --from-x: -74px;
+  --side: -1;
 }
 
 .merge-burst-input.is-right {
-  --from-x: 74px;
+  --side: 1;
 }
 
-/* The struck piece. Nothing until the inputs land on it, then it is hammered out at size. */
-.merge-burst-piece {
-  position: relative;
-  --item-box-size: 76px;
-  --item-box-pip: 5px;
-  width: 72px;
-  height: 72px;
+.merge-burst-input .merge-plaque-diamond {
+  animation: merge-burst-charge 0.6s ease-in 0.65s forwards;
+}
+
+/* The rays behind the result: a slow turn of the tier's light. */
+.merge-burst-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 520px;
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rarity-color) 55%, transparent) 0deg 7deg, transparent 7deg 22deg);
+  -webkit-mask: radial-gradient(closest-side, #000 20%, transparent 100%);
+  mask: radial-gradient(closest-side, #000 20%, transparent 100%);
   opacity: 0;
-  animation: merge-burst-strike 0.6s var(--ease-out) 0.4s forwards;
+  animation:
+    merge-burst-rays-in 0.5s var(--ease-out) 1.25s forwards,
+    merge-burst-spin 14s linear 1.25s infinite;
 }
 
 .merge-burst-flash {
   position: absolute;
-  width: 12px;
-  height: 12px;
+  left: 50%;
+  top: 50%;
+  width: 320px;
+  height: 320px;
+  margin: -160px 0 0 -160px;
   border-radius: 50%;
-  background: #ffffff;
+  background: radial-gradient(closest-side, #ffffff, color-mix(in srgb, var(--rarity-color) 70%, #ffffff) 35%, transparent 70%);
   opacity: 0;
-  animation: merge-burst-flash 0.34s var(--ease-out) 0.38s forwards;
+  animation: merge-burst-flash 0.55s var(--ease-out) 1.25s forwards;
 }
 
-/* Two rings off the strike point, the second late, so the shock reads as having a front. */
 .merge-burst-ring {
   position: absolute;
-  width: 40px;
-  height: 40px;
+  left: 50%;
+  top: 50%;
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
   border-radius: 50%;
-  border: 2px solid var(--rarity-color, var(--accent));
+  border: 3px solid color-mix(in srgb, var(--rarity-color) 60%, #ffffff);
   opacity: 0;
-  animation: merge-burst-ring 0.7s var(--ease-out) 0.4s forwards;
+  animation: merge-burst-ring 0.8s var(--ease-out) 1.25s forwards;
 }
 
 .merge-burst-ring.is-late {
-  animation-delay: 0.54s;
+  border-width: 2px;
+  animation-delay: 1.4s;
+}
+
+.merge-burst-sparks {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.merge-burst-sparks i {
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  margin: calc(var(--size) / -2);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--rarity-color) 40%, #ffffff);
+  box-shadow: 0 0 8px 2px var(--rarity-color);
+  opacity: 0;
+  animation: merge-burst-spark 0.9s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+/* The new piece, out of the flash: overshoots, settles, then breathes. */
+.merge-burst-piece {
+  width: 116px;
+  height: 116px;
+  margin: -58px 0 0 -58px;
+  opacity: 0;
+  animation:
+    merge-burst-strike 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) 1.3s forwards,
+    merge-burst-float 2.4s ease-in-out 2s infinite;
+}
+
+.merge-burst-pips {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  display: flex;
+  gap: 6px;
+  translate: -50% 0;
+}
+
+.merge-burst-pips i {
+  width: 9px;
+  height: 9px;
+  rotate: 45deg;
+  background: var(--rarity-color);
+  box-shadow: 0 0 0 1.5px #000, 0 0 8px var(--rarity-color);
+  opacity: 0;
+  animation: merge-burst-pip 0.3s var(--ease-out) calc(1.6s + var(--pip-i) * 0.06s) forwards;
+}
+
+.merge-burst-pips i.is-new {
+  animation: merge-burst-pip-new 0.5s cubic-bezier(0.2, 1.8, 0.4, 1) 2.05s forwards;
 }
 
 .merge-burst-caption {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  padding: 0 20px;
+  text-align: center;
   opacity: 0;
-  animation: merge-burst-caption 0.34s var(--ease-out) 0.62s forwards;
+  animation: merge-burst-caption 0.4s var(--ease-out) 1.6s forwards;
 }
 
 .merge-burst-name {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: color-mix(in srgb, var(--rarity-color, var(--text)) 45%, #ffffff);
-  text-shadow: 0 0 14px color-mix(in srgb, var(--rarity-color, transparent) 55%, transparent);
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.05;
+  color: #fff6e2;
+  text-shadow: 0 2px 0 #000, 0 0 18px color-mix(in srgb, var(--rarity-color) 70%, transparent);
+}
+
+.merge-burst-climb {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.merge-burst-from {
+  opacity: 0.6;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.merge-burst-arrow {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .merge-burst-rarity {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--rarity-color, var(--text-dim));
+  color: var(--rarity-color);
+  font-size: 17px;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--rarity-color) 80%, transparent);
+  animation: merge-burst-slam 0.45s cubic-bezier(0.2, 1.8, 0.4, 1) 2.05s both;
 }
 
 .merge-burst-chips {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 9px;
-  max-width: 250px;
-  margin-top: 3px;
+  gap: 4px 10px;
+  margin-top: 4px;
 }
 
 @keyframes merge-burst-fade {
@@ -32607,78 +32732,207 @@ button.evo-gift-card {
   }
 }
 
-@keyframes merge-burst-close {
-  from {
-    transform: translateX(var(--from-x)) scale(1);
-    opacity: 1;
-  }
-  85% {
-    opacity: 1;
-  }
+@keyframes merge-burst-out {
   to {
-    transform: translateX(0) scale(0.5);
     opacity: 0;
   }
 }
 
-@keyframes merge-burst-strike {
-  0% {
+@keyframes merge-burst-enter {
+  from {
     opacity: 0;
-    transform: scale(0.3);
-  }
-  38% {
-    opacity: 1;
-    transform: scale(1.22);
+    transform: translateX(calc(var(--side) * 220px)) scale(0.6);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateX(calc(var(--side) * 72px));
+  }
+}
+
+@keyframes merge-burst-tremble {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -2px;
+  }
+}
+
+@keyframes merge-burst-close {
+  from {
+    transform: translateX(calc(var(--side) * 72px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(0.55);
+  }
+}
+
+@keyframes merge-burst-orbit {
+  to {
+    transform: rotate(540deg);
+  }
+}
+
+@keyframes merge-burst-charge {
+  to {
+    filter: brightness(2.2) saturate(0.4);
+    box-shadow: 0 0 0 3px #0b0d12, 0 0 0 5px #ffffff, 0 0 40px 10px #ffffff;
+  }
+}
+
+@keyframes merge-burst-shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  15% {
+    transform: translate(-7px, 4px);
+  }
+  30% {
+    transform: translate(6px, -5px);
+  }
+  50% {
+    transform: translate(-4px, 3px);
+  }
+  70% {
+    transform: translate(3px, -2px);
+  }
+  85% {
+    transform: translate(-1px, 1px);
   }
 }
 
 @keyframes merge-burst-flash {
   0% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(0.2);
   }
-  to {
+  40% {
+    opacity: 1;
+  }
+  100% {
     opacity: 0;
-    transform: scale(11);
+    transform: scale(1.3);
   }
 }
 
 @keyframes merge-burst-ring {
   0% {
-    opacity: 0.9;
-    transform: scale(0.35);
+    opacity: 1;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(4.2);
+  }
+}
+
+@keyframes merge-burst-spark {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateX(var(--reach)) scale(0.3);
+  }
+}
+
+@keyframes merge-burst-rays-in {
+  to {
+    opacity: 0.55;
+  }
+}
+
+@keyframes merge-burst-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes merge-burst-strike {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-25deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.3) rotate(6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes merge-burst-float {
+  50% {
+    translate: 0 -5px;
+  }
+}
+
+@keyframes merge-burst-pip {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
   }
   to {
+    opacity: 1;
+  }
+}
+
+@keyframes merge-burst-pip-new {
+  0% {
     opacity: 0;
-    transform: scale(2.5);
+    transform: scale(3);
+    filter: brightness(3);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes merge-burst-slam {
+  0% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
   }
 }
 
 @keyframes merge-burst-caption {
   from {
     opacity: 0;
-    transform: translateY(7px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
-/* The whole beat is decoration over a change that has already landed, so a reduced-motion
-   reader gets the readout and none of the flight. */
+/* The merge has already landed, so a reduced-motion beat is the result alone. */
 @media (prefers-reduced-motion: reduce) {
-  .merge-burst-input,
+  .merge-burst-orbit,
   .merge-burst-flash,
-  .merge-burst-ring {
+  .merge-burst-ring,
+  .merge-burst-sparks,
+  .merge-burst-rays {
     display: none;
   }
 
+  .merge-burst,
+  .merge-burst-stage,
   .merge-burst-piece,
+  .merge-burst-pips i,
+  .merge-burst-rarity,
   .merge-burst-caption {
     opacity: 1;
     animation: none;

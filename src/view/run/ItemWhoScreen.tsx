@@ -12,7 +12,7 @@ import { useArmedTap } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { Preview, ReplaceSheet, useItemReceipts, type PreviewState } from './HallCounters';
 import { ItemLedger } from './ItemLedger';
-import { MergeBurst } from './MergeBurst';
+import { MergeBurst, type MergeEvent } from './MergeBurst';
 import { RosterPeek } from './RosterPeek';
 
 interface Props {
@@ -39,7 +39,7 @@ interface Props {
 export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone, onlyRosterIds, afterTake, title: arrivalTitle }: Props) {
   const item = equipment[itemId];
   const [outcome, setOutcome] = useState<{ rosterId: string; mergeId?: string; replaced?: boolean } | { gold: number } | null>(null);
-  const [burst, setBurst] = useState<string | null>(null);
+  const [burst, setBurst] = useState<MergeEvent | null>(null);
   const [inspecting, setInspecting] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [replacing, setReplacing] = useState<RosterEntry | null>(null);
@@ -77,8 +77,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
     const taken = absorbItem(run, entry.rosterId, itemId, equipment, rosterHeroes, replaceIndex);
     onRunChange(afterTake ? afterTake(taken, entry.rosterId) : taken);
     if (receipt.kind === 'merge') {
-      playSfx('discovery');
-      setBurst(receipt.resultId);
+      setBurst({ resultId: receipt.resultId, inputIds: [receipt.heldItemId, itemId] });
       setOutcome({ rosterId: entry.rosterId, mergeId: receipt.resultId });
     } else {
       playSfx('equip');
@@ -148,7 +147,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
         <SellPress gold={sellGold} purse={run.gold} armed={sell.armed} buttonRef={sell.ref} onClick={sell.onClick} className="item-who-sell" />
       )}
 
-      {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}
+      {burst && equipment[burst.resultId] && <MergeBurst merge={burst} onDone={() => setBurst(null)} />}
       {inspecting && equipment[inspecting] && <EquipInspectOverlay item={equipment[inspecting]} onClose={() => setInspecting(null)} />}
       {preview && <Preview run={run} preview={preview} onClose={() => setPreview(null)} />}
       {replacing && <ReplaceSheet entry={replacing} onReplace={(index) => handleGive(replacing, index)} onClose={() => setReplacing(null)} />}

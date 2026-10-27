@@ -23,7 +23,7 @@ import { entryStatTotals } from '../shared/entryStatTotals';
 import { CONFIRM_PURCHASE_FROM } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { MergeBurst } from './MergeBurst';
+import { MergeBurst, type MergeEvent } from './MergeBurst';
 
 // The Guild Hall's Gem and Gear counters (docs/run-loop.md "The Guild Hall"): the whole roster above,
 // the stock along the bottom, each hero showing what the choice reads off it — Mastery pips at the Gems,
@@ -334,7 +334,7 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
   const [pick, setPick] = useState<number | null>(initialPick ?? null);
   const [armed, setArmed] = useArmedHero(pick);
   const [inspecting, setInspecting] = useState<string | null>(null);
-  const [burst, setBurst] = useState<string | null>(null);
+  const [burst, setBurst] = useState<MergeEvent | null>(null);
   const [flare, setFlare] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [replacing, setReplacing] = useState<RosterEntry | null>(null);
@@ -367,8 +367,7 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
     if (!onBuy(pick, entry.rosterId, replaceIndex)) return;
     playSfx('gold.coin');
     if (receipt.kind === 'merge') {
-      playSfx('discovery');
-      setBurst(receipt.resultId);
+      setBurst({ resultId: receipt.resultId, inputIds: [receipt.heldItemId, item.id] });
     } else {
       playSfx('equip');
     }
@@ -437,7 +436,7 @@ export function GearCounter({ run, itemIds, sold, onBuy, initialPick }: GearCoun
       {/* Portalled: the counter sits inside the hall's .screen-scroll, a stacking context of its own. */}
       {createPortal(
         <>
-          {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}
+          {burst && equipment[burst.resultId] && <MergeBurst merge={burst} onDone={() => setBurst(null)} />}
           {inspecting && equipment[inspecting] && <EquipInspectOverlay item={equipment[inspecting]} onClose={() => setInspecting(null)} />}
           {preview && <Preview run={run} preview={preview} onClose={() => setPreview(null)} />}
           {replacing && (

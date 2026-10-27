@@ -24,7 +24,7 @@ import { WoundBar, entryHp } from '../shared/WoundBar';
 import { BlessingMark } from '../shared/BlessingMark';
 import { playSfx } from '../../audio/sfx';
 import { moveItem, moveReceiptFor, type MoveReceipt } from '../../run/runProgress';
-import { MergeBurst } from './MergeBurst';
+import { MergeBurst, type MergeEvent } from './MergeBurst';
 
 interface Props {
   run: RunState;
@@ -46,7 +46,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   const [viewedItemId, setViewedItemId] = useState<string | null>(null);
   const [companionOpen, setCompanionOpen] = useState(false);
   const [lifted, setLifted] = useState<Socket | null>(null);
-  const [burst, setBurst] = useState<string | null>(null);
+  const [burst, setBurst] = useState<MergeEvent | null>(null);
   const companionId = companionHeroId(run);
   const callMoveId = companionCallMoveId(run);
 
@@ -64,11 +64,11 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
     }
     const receipt = moveReceiptFor(run, lifted, at, equipment, rosterHeroes);
     if (receipt.kind === 'none') return;
+    const liftedId = run.roster.find((r) => r.rosterId === lifted.rosterId)?.equipment[lifted.index];
     onRunChange!(moveItem(run, lifted, at, equipment, rosterHeroes));
     setLifted(null);
     if (receipt.kind === 'merge') {
-      playSfx('discovery');
-      setBurst(receipt.resultId);
+      setBurst({ resultId: receipt.resultId, inputIds: [liftedId ?? receipt.resultId, heldHere ?? receipt.resultId] });
     } else playSfx('equip');
   }
 
@@ -158,7 +158,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
 
       <ItemDetailOverlay item={viewedItemId ? (equipment[viewedItemId] ?? null) : null} onClose={() => setViewedItemId(null)} />
       {companionOpen && <CompanionDossier run={run} onClose={() => setCompanionOpen(false)} />}
-      {burst && equipment[burst] && <MergeBurst result={equipment[burst]} onDone={() => setBurst(null)} />}
+      {burst && equipment[burst.resultId] && <MergeBurst merge={burst} onDone={() => setBurst(null)} />}
     </div>
   );
 }
