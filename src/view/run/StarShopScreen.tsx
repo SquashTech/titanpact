@@ -30,6 +30,8 @@ interface Props {
   onStarfall: (count: 1 | 10) => string[];
   /** A Starfall's hero once its scene closes — the hub marks it new in the Collection. */
   onHeroFallen: (heroId: string) => void;
+  /** First Light's tour is here for the first Starfall: the call is the one thing on the page. */
+  guided?: boolean;
   /** The last hero fallen this session; its star flares in the sky. */
   freshHeroId: string | null;
 }
@@ -51,7 +53,7 @@ export interface OfferPurchase {
  * Spawn chart where stars were earned. Nothing on a Market row spends anything: rows open the
  * offer's own screen, where the one Purchase button is.
  */
-export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, freshHeroId }: Props) {
+export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, freshHeroId, guided = false }: Props) {
   const earned = stardustEarned(profile);
   const spent = stardustSpent(profile, starShopCatalog);
   const balance = stardustBalance(profile, starShopCatalog);
@@ -107,7 +109,7 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
       </div>
 
       <HubPageHead title={STAR_SHOP_NAME} balance={balance} />
-      <HubSubtabs tabs={sections} active={section} onSelect={setSection} />
+      {!guided && <HubSubtabs tabs={sections} active={section} onSelect={setSection} />}
 
       <div key={section} className={`hub-body sky-body is-${section}`}>
         {section === 'sky' && (
@@ -161,7 +163,7 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
                   : 'A hero you don’t own falls into your Collection.'}
             </p>
 
-            {pool.length > 0 && (
+            {pool.length > 0 && !guided && (
               <button type="button" className="sky-pool-toggle" aria-expanded={showPool} onClick={() => setShowPool((v) => !v)}>
                 {showPool ? 'Hide who is left' : `Still undiscovered · ${pool.length}`}
                 <span className={`sky-pool-chevron${showPool ? ' is-open' : ''}`} aria-hidden="true">

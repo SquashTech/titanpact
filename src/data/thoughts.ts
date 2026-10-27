@@ -38,17 +38,6 @@ export const THOUGHTS: readonly ThoughtDefinition[] = [
   { id: 'star.cycle2', moment: { kind: 'star', starId: 'cycles.2' }, once: true, lines: ['Wait... it came back? It came BACK. And it’s still mad about last time.'] },
   { id: 'star.cycle3', moment: { kind: 'star', starId: 'cycles.3' }, once: true, lines: ['Every time it comes back, it’s learned something. Kind of rude, honestly.'] },
 
-  {
-    id: 'drawnIn.firstLight',
-    moment: { kind: 'drawnIn', constellationId: 'firstLight' },
-    once: true,
-    lines: [
-      'That’s it! That’s their whole story. I cried a little. Don’t tell anyone.',
-      'See the circle? That’s the Pact. Every world where the heroes win holds it shut.',
-      'And there are SO many more out there. Come on, let’s go find one!',
-    ],
-  },
-
   { id: 'uncharted.a', moment: { kind: 'uncharted' }, lines: ['Hmm, I haven’t found this one yet. It’s around here somewhere...'] },
   { id: 'uncharted.b', moment: { kind: 'uncharted' }, lines: ['Nope, still dark. Give me a minute!'] },
 
@@ -72,3 +61,21 @@ export const THOUGHTS: readonly ThoughtDefinition[] = [
   { id: 'pokedLots.a', moment: { kind: 'pokedLots' }, lines: ['Okay, okay! Everything’s spinning...'] },
   { id: 'pokedLots.b', moment: { kind: 'pokedLots' }, lines: ['You found my one weak spot. It’s... all of me.'] },
 ];
+
+/**
+ * First Light's end (docs/the-sky.md §2e): Blip takes the player to the Observatory for their first
+ * Starfall, then back to the Pact to show them the Infinite. Each part is a forced beat, a bubble a tap.
+ */
+export const FIRST_LIGHT_TOUR = {
+  toObservatory: [
+    'That’s it! That’s their whole story. I cried a little. Don’t tell anyone.',
+    'And look at all that Stardust! It calls heroes down from the stars. Come on, I’ll show you!',
+  ],
+  pull: ['Tap Call to the Stars. Go on, go on!'],
+  fallen: ['Look at them! A new hero, just for you. They’re waiting in your Collection.', 'Okay, back to the Pact. There’s one more thing I have to show you!'],
+  infinite: [
+    'See the circle? That’s the Pact. Every world where the heroes win holds it shut.',
+    'And right in the middle: the Infinite. A new world every run, and the Titan waiting at the end of it.',
+    'Win, and the stars pay you. Lose, and you try again. Let’s go find one!',
+  ],
+} as const;

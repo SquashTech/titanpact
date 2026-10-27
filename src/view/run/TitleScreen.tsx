@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { CollectionScreen } from './CollectionScreen';
 import type { Deck } from '../../run/deck';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
@@ -7,7 +7,12 @@ import { RecordsScreen } from './RecordsScreen';
 import { StarShopScreen } from './StarShopScreen';
 import { HUB_TABS, HubNav, type HubTab } from './HubNav';
 import { starShopCatalog } from '../../data/starShop';
-import { stardustBalance, type StarShopOffer } from '../../run/starShop';
+import { canCallStarfall, stardustBalance, type StarShopOffer } from '../../run/starShop';
+import { isConstellationLit, isDrawnInByPlay, skyLightingTipId } from '../../run/sky';
+import { sky } from '../../data/sky';
+import { FIRST_LIGHT_TOUR } from '../../data/thoughts';
+import { BlipBeat } from './BlipBeat';
+import { GuideHand } from '../story/GuideHand';
 import { GalaxySky } from './GalaxySky';
 import { TitleLogo } from './TitleLogo';
 import { HubGlyph } from '../shared/nodeIcons';
@@ -21,6 +26,18 @@ import { PactButton } from './PactButton';
 import { SkyChart, type SkyPlay } from './SkyChart';
 import type { ThoughtDefinition } from '../../run/thoughts';
 import { readEnemyIntent, writeEnemyIntent } from '../combat/enemyIntent';
+
+/** First Light's tour (docs/the-sky.md §2e), each step remembered once an account. */
+const TOUR_STARFALL = 'tour.firstLight.starfall';
+const TOUR_DONE = 'tour.firstLight.done';
+type TourStep = 'toObservatory' | 'pull' | 'pulling' | 'fallen' | 'infinite';
+
+/** Owed once First Light is drawn in by play and its finale has played; the Starfall is skipped when it cannot be afforded. */
+function owedTour(profile: Profile): TourStep | null {
+  const firstLight = sky.constellations.firstLight;
+  if (!isDrawnInByPlay(profile, firstLight) || !profile.seenTipIds.includes(skyLightingTipId(firstLight.id)) || profile.seenTipIds.includes(TOUR_DONE)) return null;
+  return profile.seenTipIds.includes(TOUR_STARFALL) ? 'infinite' : 'toObservatory';
+}
 
 interface Props {
   /** Lifetime figures and hero stars. Re-read by App whenever this screen is entered. */
@@ -115,6 +132,16 @@ export function TitleScreen({
 }: Props) {
   const [showRecords, setShowRecords] = useState(false);
   const [tab, setTab] = useState<HubTab>('play');
+  // A new account sees First Light and nothing else until it is won; then Blip shows it the Observatory and the Infinite.
+  const inFirstLight = !isConstellationLit(profile, sky.constellations.firstLight);
+  const [tour, setTour] = useState<TourStep | null>(() => owedTour(profile));
+  useEffect(() => {
+    if (tour === 'toObservatory' && !canCallStarfall(profile, starShopCatalog)) {
+      onSeeTip(TOUR_STARFALL);
+      setTour('infinite');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tour]);
   /** Which way the page slid in: +1 from the left, -1 from the right. */
   const [slide, setSlide] = useState(0);
   /** Heroes fallen this session the player has not yet tapped in the Collection. */
@@ -197,7 +224,7 @@ export function TitleScreen({
 
   return (
     <div
-      className={`title-screen is-${tone}${pressRow ? ' has-parked-run' : ''}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}${skyZoomed ? ' is-sky-zoomed' : ''}`}
+      className={`title-screen is-${tone}${pressRow ? ' has-parked-run' : ''}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}${skyZoomed ? ' is-sky-zoomed' : ''}${inFirstLight ? ' is-first-light' : ''}${tour && tour !== 'pulling' ? ' is-touring' : ''}`}
     >
       {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
           back is instant, and display: contents keeps them in the screen's own flex and stacking. */}
@@ -218,6 +245,9 @@ export function TitleScreen({
         onSeeLighting={onSeeTip}
         onHoldStardust={setHeldDust}
         onZoomChange={setSkyZoomed}
+        onlyFirstLight={inFirstLight}
+        quiet={tour !== null}
+        onFirstLightDone={() => setTour(owedTour(profile) ?? 'toObservatory')}
         openCycle={openCycle}
         infiniteRequest={infiniteRequest}
         onPlay={handleSkyPlay}
@@ -363,7 +393,12 @@ export function TitleScreen({
             onBuy={onBuyOffer}
             onStarfall={onStarfall}
             freshHeroId={freshHeroIds[freshHeroIds.length - 1] ?? null}
+            guided={tour === 'pulling'}
             onHeroFallen={(heroId) => {
+              if (tour === 'pulling') {
+                onSeeTip(TOUR_STARFALL);
+                setTour('fallen');
+              }
               setFreshHeroIds((ids) => [...ids.filter((id) => id !== heroId), heroId]);
               setCollectionSeen(false);
             }}
@@ -371,7 +406,37 @@ export function TitleScreen({
         </div>
       )}
 
-      <HubNav tab={tab} onSelect={selectTab} balance={balance - heldDust} collectionFresh={!collectionSeen} disabled={launching} />
+      <HubNav tab={tab} onSelect={selectTab} balance={balance - heldDust} collectionFresh={!collectionSeen} disabled={launching || tour !== null} />
+
+      {tour === 'toObservatory' && (
+        <BlipBeat
+          lines={FIRST_LIGHT_TOUR.toObservatory}
+          onDone={() => {
+            selectTab('constellation');
+            setTour('pull');
+          }}
+        />
+      )}
+      {tour === 'pull' && <BlipBeat lines={FIRST_LIGHT_TOUR.pull} onDone={() => setTour('pulling')} />}
+      {tour === 'pulling' && <GuideHand selector=".sky-call" />}
+      {tour === 'fallen' && (
+        <BlipBeat
+          lines={FIRST_LIGHT_TOUR.fallen}
+          onDone={() => {
+            selectTab('play');
+            setTour('infinite');
+          }}
+        />
+      )}
+      {tour === 'infinite' && tab === 'play' && (
+        <BlipBeat
+          lines={FIRST_LIGHT_TOUR.infinite}
+          onDone={() => {
+            onSeeTip(TOUR_DONE);
+            setTour(null);
+          }}
+        />
+      )}
 
       {/* Starting over with a run parked deletes it, so it asks — a sheet, not a
           re-labelled button, because a button that changes what it says under

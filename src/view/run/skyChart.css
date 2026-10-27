@@ -1185,3 +1185,15 @@
   opacity: 0;
   transform: scale(0.4);
 }
+
+/* A new account mid First Light (docs/the-sky.md §2e): the lessons and nothing else. Options and the
+   Reference stay, being settings and the manual the lessons fill. */
+.title-screen.is-first-light :is(.hub-nav, .title-records-button) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Blip has come forward for First Light's tour: its seat stands empty until it is done. */
+.title-screen.is-touring .sky-seat {
+  visibility: hidden;
+}

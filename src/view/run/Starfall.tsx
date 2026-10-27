@@ -267,7 +267,7 @@ export function StarfallScreen({ heroId, balanceBefore, joinsDeck, onClose }: Sc
 
       {locked && !past('reveal') && (
         <div className="summon-omen" aria-hidden="true">
-          <span className="summon-omen-line">{`A ${type} hero answers`}</span>
+          <span className="summon-omen-line">{`${/^[AEIOU]/.test(type) ? 'An' : 'A'} ${type} hero answers`}</span>
         </div>
       )}
 

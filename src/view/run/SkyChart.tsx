@@ -193,6 +193,12 @@ interface Props {
   openCycle?: number;
   /** Bumped to zoom into the Infinite from outside (the title's Start a New Run). */
   infiniteRequest?: number;
+  /** A new account mid First Light: the Pact shows the lessons and nothing else. */
+  onlyFirstLight?: boolean;
+  /** Something else has the screen (First Light's tour): Blip keeps its thoughts to itself. */
+  quiet?: boolean;
+  /** First Light has just been drawn in and folded on the title: the tour that follows is the title's. */
+  onFirstLightDone?: () => void;
   onPlay: (play: SkyPlay, cycle?: number) => void;
   /** A First Light lesson, by its scenario id. */
   onPlayLesson?: (scenarioId: string) => void;
@@ -211,6 +217,9 @@ export function SkyChart({
   onZoomChange,
   openCycle = 1,
   infiniteRequest = 0,
+  onlyFirstLight = false,
+  quiet = false,
+  onFirstLightDone,
   onPlay,
   onPlayLesson,
 }: Props) {
@@ -233,6 +242,8 @@ export function SkyChart({
   const [beating, setBeating] = useState(() => pending.length > 0 || paysNow);
   const beatingRef = useRef(beating);
   beatingRef.current = beating;
+  const quietRef = useRef(quiet);
+  quietRef.current = quiet;
   const [zoomed, setZoomed] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const crestDust = useRef<HTMLDivElement>(null);
@@ -310,6 +321,7 @@ export function SkyChart({
       new Promise<void>((resolve, reject) => timers.push(window.setTimeout(() => (alive ? resolve() : reject(new Error('left'))), ms)));
 
     const arrive = () => {
+      if (quietRef.current) return;
       if (returned) {
         blip.current?.react(returned === 'win' ? 'win' : 'lose');
         at(700, () => say({ kind: 'returned', outcome: returned }));
@@ -405,7 +417,7 @@ export function SkyChart({
         await drawIn();
         setBeating(false);
         await wait(400);
-        say({ kind: 'drawnIn', constellationId: 'firstLight' });
+        onFirstLightDone?.();
         return;
       }
       setBeating(false);
@@ -418,7 +430,7 @@ export function SkyChart({
     const next = () =>
       at(IDLE_MS[0] + Math.random() * (IDLE_MS[1] - IDLE_MS[0]), () => {
         // Never cut a thought short.
-        if (!beatRef.current && !beatingRef.current && !blip.current?.busy() && idle < IDLE_THOUGHTS_A_VISIT) {
+        if (!beatRef.current && !beatingRef.current && !blip.current?.busy() && idle < IDLE_THOUGHTS_A_VISIT && !quietRef.current) {
           idle++;
           say({ kind: 'idle' });
         }
@@ -593,11 +605,15 @@ export function SkyChart({
             <g className="pact-settle" style={{ transform: `translateY(${shift}px)` }}>
               <Sigil folded={folded} closing={!!fx.closing} flash={!!fx.flash} states={states} />
 
+              {!onlyFirstLight && (
+                <>
               {RING_SEATS.map((id) => (
                 <Seat key={id} id={id} state={states[id]} calling={fx.calling === id} stirring={fx.stirring === id} profile={shown} onTap={() => zoomTo(id)} />
               ))}
 
               <Infinite state={states.infinite} profile={shown} calling={fx.calling === 'infinite'} stirring={fx.stirring === 'infinite'} onTap={() => zoomTo('infinite')} />
+                </>
+              )}
 
               {folded ? (
                 <Clasp onTap={() => zoomTo('firstLight')} />

@@ -19,8 +19,6 @@ export type ThoughtMoment =
   | { kind: 'star'; starId: string }
   /** A constellation zoomed into whose stars are not authored yet. */
   | { kind: 'uncharted' }
-  /** A constellation drawn in by play, the moment its last star lights on the title. */
-  | { kind: 'drawnIn'; constellationId: string }
   /** Back in the sky after an Infinite run ended. */
   | { kind: 'returned'; outcome: 'win' | 'loss' }
   | { kind: 'poked' }
@@ -46,7 +44,7 @@ export interface ThoughtDefinition {
 
 function sameMoment(a: ThoughtMoment, b: ThoughtMoment): boolean {
   if (a.kind !== b.kind) return false;
-  if ((a.kind === 'revealed' || a.kind === 'opened' || a.kind === 'drawnIn') && (b.kind === 'revealed' || b.kind === 'opened' || b.kind === 'drawnIn')) return a.constellationId === b.constellationId;
+  if ((a.kind === 'revealed' || a.kind === 'opened') && (b.kind === 'revealed' || b.kind === 'opened')) return a.constellationId === b.constellationId;
   if (a.kind === 'returned' && b.kind === 'returned') return a.outcome === b.outcome;
   if (a.kind === 'star' && b.kind === 'star') return a.starId === b.starId;
   return true;

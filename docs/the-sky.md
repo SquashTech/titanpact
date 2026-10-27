@@ -153,6 +153,21 @@ Picked from a side-by-side page (`art/concepts/celestial-title/`, "C · Galaxy" 
   breathes, and the ones ahead hold their heroes as silhouettes. Each island's star sits on its rim,
   so the lighting beats and the fold into the clasp play as before; the islands sink away as it folds.
 
+## 2e. First Light alone, then the tour (2026-10-26, per user direction)
+
+- **A new account sees First Light and nothing else until it is won.** The Pact's seats and the
+  Infinite are not drawn, and the hub's bar (Collection, Play, Observatory) and Records are hidden;
+  Options and the Reference stay, being settings and the manual the lessons fill. This **reverses**
+  §3's "the two fights open the Infinite; the two acts stay First Light's to play, never a gate":
+  the Infinite still opens after the Clearing underneath, but is not shown until the Fork is won.
+  An account that played before the sky has First Light lit and never sees the gate.
+- **After the finale, Blip gives the tour** (`TitleScreen.tsx`, lines in `FIRST_LIGHT_TOUR`,
+  `data/thoughts.ts`), each step a forced beat: it takes the player to the Observatory, where only
+  *Call to the Stars* stands and a hand points at it; the first Starfall is a forced pull, paid from
+  First Light's Stardust. Then back to Play, where Blip shows the Pact and the Infinite. Each part is
+  remembered once (`tour.firstLight.starfall`, `tour.firstLight.done`) and resumes if left; an account
+  that cannot afford the Starfall skips straight to the Infinite. It replaces the `drawnIn` thought.
+
 ## 2c. The manual (2026-10-26, per user direction)
 
 How to Play is a book the player fills by playing, the way Hades' Codex and Hollow Knight's Hunter's
