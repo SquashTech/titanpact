@@ -56,7 +56,6 @@ test('manual: every lesson files pages, and every page a lesson shows in a fight
   assert.deepStrictEqual(first('firstLight.mana'), ['howto.mana', 'howto.rest']);
   assert.deepStrictEqual(first('firstLight.types'), ['howto.types']);
   assert.deepStrictEqual(first('firstLight.spread'), ['howto.targets']);
-  assert.deepStrictEqual(first('firstLight.order'), ['howto.order']);
   assert.deepStrictEqual(first('firstLight.kinds'), ['howto.kinds']);
   assert.deepStrictEqual(first('firstLight.burn'), ['howto.statuses', 'howto.status.Burn']);
   assert.deepStrictEqual(first('firstLight.switch'), ['howto.bench']);

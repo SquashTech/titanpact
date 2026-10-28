@@ -75,24 +75,6 @@ const spread: StoryFight = {
   guide: [[{ actor: 'cairn', moveId: 'tremor' }]],
 };
 
-/** The faster hero strikes first: Skyshear drops the Cubling before it can swing at Hollowbark, and the Arcling outruns Hollowbark. */
-const turnOrder: StoryFight = {
-  id: 'lesson-order',
-  seed: 1805,
-  player: [
-    { rosterId: 'skyshear', heroId: 'skyshear', level: 3, moveIds: ['jolt'] },
-    { rosterId: 'hollowbark', heroId: 'hollowbark', level: 3, moveIds: ['ivySpike'] },
-  ],
-  playerLeads: ['skyshear', 'hollowbark'],
-  enemy: [
-    { rosterId: 'cub', heroId: 'cubling', level: 6 },
-    { rosterId: 'arc', heroId: 'arcling', level: 2 },
-  ],
-  enemyLeads: ['cub', 'arc'],
-  enemyScript: [[{ actor: 'cub', moveId: 'claw', target: ally('hollowbark') }, { actor: 'arc', moveId: 'zap', target: ally('hollowbark') }]],
-  guide: [[{ actor: 'skyshear', moveId: 'jolt', target: foe('cub') }, { actor: 'hollowbark', moveId: 'ivySpike', target: foe('arc') }]],
-};
-
 /** The same move in each hand: Nightshade's physical Nightfall goes through Rillfin's thin hide, Glyph's magical one past Ingot's low Wisdom. */
 const kinds: StoryFight = {
   id: 'lesson-kinds',
@@ -203,7 +185,6 @@ export const LESSONS: StoryDefinition = {
     lessonChapter('firstLight.mana', 'Mana', mana, 'Moves cost Mana. Rest fills it back up.'),
     lessonChapter('firstLight.types', 'Types', types, 'Some types hit harder than others.'),
     lessonChapter('firstLight.spread', 'Spread', spread, 'Some moves hit both foes at once.'),
-    lessonChapter('firstLight.order', 'Turn Order', turnOrder, 'Faster heroes move first.'),
     lessonChapter('firstLight.kinds', 'Physical and Magical', kinds, 'Defense stops physical hits. Wisdom stops magic.'),
     lessonChapter('firstLight.burn', 'Status Effects', burn, 'A Burn keeps hurting after the hit.'),
     lessonChapter('firstLight.switch', 'Switching', switching, 'Switch in a hero from the bench.'),

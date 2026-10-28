@@ -8,6 +8,7 @@ import { lessonPages } from '../../run/manual';
 import { LessonLearnedScreen } from './LessonLearnedScreen';
 import { ItemWhoScreen } from '../run/ItemWhoScreen';
 import { GuideHand } from './GuideHand';
+import { TipOverlay } from '../run/TipOverlay';
 
 interface Props {
   chapter: StoryChapter;
@@ -17,13 +18,16 @@ interface Props {
   onQuit: () => void;
   /** The ground a fight beat stands on, for the arena and the music; null for the plain arena. */
   onPlace: (locationId: string | null) => void;
-  /** The tips already shown, for the control tips on a fight's cues. */
+  /** The tips already shown this play: the lesson's own pages, and the control tips on a fight's cues. */
   tips: { seenIds: readonly string[]; onSeen: (id: string) => void };
   /** What leaving a fight is called. */
   exitLabel: string;
 }
 
-/** Plays a chapter's beats in order, a First Light lesson's among them. A lost fight is played again from its start. */
+/**
+ * Plays a chapter's beats in order, a First Light lesson's among them, each opening on the lesson's
+ * How to Play pages before its first tap. A lost fight is played again from its start.
+ */
 export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips, exitLabel }: Props) {
   const [index, setIndex] = useState(0);
   const [attempt, setAttempt] = useState(0);
@@ -33,6 +37,9 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips,
   // A beat's hand-over: the party as the item screen leaves it, and whether it has been handed. Kept across a replay.
   const [given, setGiven] = useState<{ index: number; run: RunState; done: boolean } | null>(null);
   const handed = given?.index === index ? given : null;
+  const pages = useMemo(() => lessonPages(MANUAL_PAGES, chapter.id), [chapter.id]);
+  const page = beat ? pages.find((p) => !tips.seenIds.includes(p.id)) ?? null : null;
+  const pageUp = page && <TipOverlay key={page.id} tip={page} onDone={() => tips.onSeen(page.id)} />;
 
   useEffect(() => {
     if (beat) onPlace(beat.locationId ?? null);
@@ -40,7 +47,6 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips,
   }, [index]);
 
   if (!beat) {
-    const pages = lessonPages(MANUAL_PAGES, chapter.id);
     return pages.length > 0 ? <LessonLearnedScreen pages={pages} onContinue={onFinished} /> : <Finish onFinished={onFinished} />;
   }
   if (beat.handOver && !handed?.done) {
@@ -55,29 +61,32 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips,
           onRunChange={(run) => setGiven({ index, run, done: false })}
           onDone={() => setGiven((g) => ({ index, run: g?.run ?? sides!.player.run, done: true }))}
         />
-        <GuideHand selector={handed ? '.item-who-screen .resolve-button' : '.item-ledger-row.is-offered'} />
+        {page ? pageUp : <GuideHand selector={handed ? '.item-who-screen .resolve-button' : '.item-ledger-row.is-offered'} />}
       </>
     );
   }
   return (
-    <FightScreen
-      key={`${index}:${attempt}`}
-      playerRun={handed?.run ?? sides!.player.run}
-      playerSquad={sides!.player.squad}
-      aiRun={sides!.ai.run}
-      aiSquad={sides!.ai.squad}
-      goldReward={0}
-      xpGained={0}
-      equipmentReward={null}
-      story={beat.fight}
-      storyCues={beat.cues}
-      storyLine={beat.line}
-      storyTips={tips}
-      cinematicWin
-      onResolved={(outcome) => (outcome === 'win' ? next() : setAttempt((n) => n + 1))}
-      onExitToTitle={onQuit}
-      exitLabel={exitLabel}
-    />
+    <>
+      <FightScreen
+        key={`${index}:${attempt}`}
+        playerRun={handed?.run ?? sides!.player.run}
+        playerSquad={sides!.player.squad}
+        aiRun={sides!.ai.run}
+        aiSquad={sides!.ai.squad}
+        goldReward={0}
+        xpGained={0}
+        equipmentReward={null}
+        story={beat.fight}
+        storyCues={page ? undefined : beat.cues}
+        storyLine={beat.line}
+        storyTips={tips}
+        cinematicWin
+        onResolved={(outcome) => (outcome === 'win' ? next() : setAttempt((n) => n + 1))}
+        onExitToTitle={onQuit}
+        exitLabel={exitLabel}
+      />
+      {pageUp}
+    </>
   );
 }
 

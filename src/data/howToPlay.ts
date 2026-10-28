@@ -12,7 +12,6 @@ const MOVE = lesson('firstLight.move');
 const MANA = lesson('firstLight.mana');
 const TYPES = lesson('firstLight.types');
 const SPREAD = lesson('firstLight.spread');
-const ORDER = lesson('firstLight.order');
 const KINDS = lesson('firstLight.kinds');
 const BURN = lesson('firstLight.burn');
 const SWITCH = lesson('firstLight.switch');
@@ -98,7 +97,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Turn by Turn',
     MOVE,
     ['stat:speed'],
-    'Each round, choose a move and a target for both heroes on the field. Then the round plays out in *Speed* order.',
+    'Each round, choose a move and a target for both heroes on the field. Then the round plays out *fastest first*: the track across the top shows the order.',
     '- *Tap* any fighter to read its stats, moves and passive.\n- *Hold* a move to read all of it.',
     'A passive works on its own, and affects each hero at most once a round.'
   ),
@@ -130,14 +129,6 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     "- The icon before a move's name is its type.\n- A move that shares a type with the hero using it deals *25%* more."
   ),
 
-  page(
-    'order',
-    'Turn Order',
-    ORDER,
-    ['stat:speed'],
-    '- Each round, the *fastest* hero moves first, by *Speed*.\n- The track across the top shows the order.',
-    '- A hero knocked out before its turn never moves.\n- A move with *priority* goes ahead of faster heroes.'
-  ),
   page(
     'bench',
     'Switching',

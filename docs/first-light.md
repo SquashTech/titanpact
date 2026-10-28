@@ -30,6 +30,21 @@ text), **Into the Breach** (a small board, set up so the answer is findable) and
 
 ## 2. The shape of a lesson
 
+> **Revised after the first full playtest, 2026-10-27, per user direction.**
+> - **A lesson opens on its How to Play page.** The page shows in the tip box, with its picture,
+>   before the first tap: over the field, over the item screen in lesson 8, and over the lead pick in
+>   lesson 9. The hand waits behind it. The line on the top bar alone was easy to miss; it stays as a
+>   reminder. The same page lands on the Learned screen after the win. (`StoryChapterScreen`; the
+>   page shows each time a lesson is played.)
+> - **Turn order is no longer its own lesson.** Lesson 1's Turn by Turn page now says the round plays
+>   out fastest first and that the track across the top shows the order. The Turn Order lesson and
+>   its page are deleted, and First Light is **nine** lessons. Lesson numbers below that say 6–10 are
+>   now 5–9.
+> - **A won run fight shows one How to Play page at most** (`LEARNED_A_WIN`, `FightScreen`). This
+>   fight's first meeting comes before anything a screen filed earlier, and the rest wait for later wins.
+>   A run's first map and fight used to land four or more pages at once.
+> - **Open:** the Items and Leads pages still have no picture.
+
 **The lesson's picture is its own fight. DECIDED 2026-10-27, per user direction**, picked from
 `art/concepts/lesson-pages/` (*On the Field*). It replaces a separate picture card: a card, a plate
 or a manual leaf were tried there and read as unlike the game.
@@ -140,7 +155,7 @@ cues' spoken lines, Blip's First Light thoughts and hello premise, `OpeningFall`
    | 2 | *Moves cost Mana. Rest fills it back up.* | Riptide | Torrent (40 of a 68 pool), then a round holding only Rest, then a second Torrent finishes a level-14 Cubling. |
    | 3 | *Some types hit harder than others.* | Crimson, Raiju | Fire on a Sproutling, Storm on a Puddling; swapped, both foes stand. The target cards' *Bonus!* and *Resist* ranges carry it. |
    | 4 | *Some moves hit both foes at once.* | Cairn | Tremor drops both. |
-   | 5 | *Faster heroes move first.* | Skyshear, Hollowbark | Skyshear drops a Cubling before it can swing; aimed the other way, it gets its hit in on slow Hollowbark. |
+   | ~~5~~ | *Deleted: folded into lesson 1.* | Skyshear, Hollowbark | Skyshear drops a Cubling before it can swing; aimed the other way, it gets its hit in on slow Hollowbark. |
    | 6 | *Defense stops physical hits. Wisdom stops magic.* | Nightshade, Glyph | The same move in each hand: physical Nightfall through Rillfin's thin hide, magical Nightfall (off-type for Glyph) past Ingot's low Wisdom. Every pairing is neutral; crossed, neither foe falls. |
    | 7 | *A Burn keeps hurting after the hit.* | Cinder | Set Alight, then a Singe that leaves a level-13 Rivetling standing; the round-end Burn tick lands the KO. A full Burn is only 27% of max HP over three rounds, less than one hit, so the lesson shows it finishing a foe. |
    | 8 | *Switch in a hero from the bench.* | Cinder, Clockwork, Raiju (bench) | Cinder steps back from a Puddling; Raiju takes under half the splash. The switch panel's *deals 2× / takes 0.5×* readout carries it. |
@@ -155,11 +170,11 @@ cues' spoken lines, Blip's First Light thoughts and hello premise, `OpeningFall`
 
    **Retired: the Hunt, the Clearing, the Road and the Fork** (the last two 2026-10-27, per user
    direction, when lesson 10 became the open fight). A file that lit one lights the lessons that
-   replaced it (`RETIRED_LESSONS`, `run/profile.ts`). First Light is ten islands and ends on the open
+   replaced it (`RETIRED_LESSONS`, `run/profile.ts`). First Light is nine islands (since the Turn Order fold) and ends on the open
    fight. The Infinite opens on lesson 8.
 
    **Pages, one concept a lesson:** Turn by Turn (1), Mana and Rest (2), Types (3), Single and Spread
-   (4), a new Turn Order page (5), Physical and Magical (6), Status Effects and Burn (7), Switching (8),
+   (4), Physical and Magical (6), Status Effects and Burn (7), Switching (8),
    Items (9), Leads (10). Everything else is filed by a run the first time it meets it:
    - **Fight triggers:** a stat moving a step files Buffs and Debuffs (`stage`, `run/manual.ts`); a
      heal files Heals (`heal`).

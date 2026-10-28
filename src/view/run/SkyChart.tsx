@@ -872,14 +872,13 @@ const LESSON_CAST: Readonly<Record<string, readonly string[]>> = {
   'firstLight.mana': ['tidecaller'],
   'firstLight.types': ['crimson', 'raiju'],
   'firstLight.spread': ['cairn'],
-  'firstLight.order': ['skyshear', 'hollowbark'],
   'firstLight.kinds': ['nightshade', 'runescribe'],
   'firstLight.burn': ['cinderKnight'],
   'firstLight.switch': ['cinderKnight', 'forgewright', 'raiju'],
   'firstLight.gear': ['ursa', 'drift'],
   'firstLight.open': ['rime', 'revenant', 'runescribe'],
 };
-const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 /** How far below an island's centre its star sits, on the front of its rim. */
 const ISLE_RIM = 13;
 

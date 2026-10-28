@@ -351,6 +351,8 @@ const ARENA_MOTE_DENSITY = 0.45;
 const SUMMON_MS = 700;
 /** How long a switch beat holds the outgoing hero on the field for its recall (styles.css .recalling) before the swap lands. */
 const RECALL_MS = 440;
+/** How to Play pages a won fight shows at most; a run's first act meets far more than that at once. */
+const LEARNED_A_WIN = 1;
 
 /**
  * The act's place, standing behind the fight (docs/locations.md §5.5). Memoised because the
@@ -848,15 +850,17 @@ export function FightScreen({
     }, 650);
     return () => window.clearTimeout(t);
   }, [skipResult]);
-  // Read once the fight is won: what a screen filed since the last win, then what this fight met for the first time.
+  // Read once the fight is won: one page a win, this fight's first meeting before what a screen filed earlier; the rest wait for later wins.
   const profile = useProfile();
   const learnedPages = useMemo((): ManualPage[] => {
     if (winner !== PLAYER_SIDE || resolving || !onPagesLearned) return [];
-    const ids = [...new Set([...profile.manualUnshown, ...metPages.current])];
-    return ids.flatMap((id) => {
-      const page = MANUAL_PAGES.find((p) => p.id === id);
-      return page && page.source.kind === 'run' && (profile.manualUnshown.includes(id) || !isPageLearned(profile, page)) ? [page] : [];
-    });
+    const ids = [...new Set([...metPages.current, ...profile.manualUnshown])];
+    return ids
+      .flatMap((id) => {
+        const page = MANUAL_PAGES.find((p) => p.id === id);
+        return page && page.source.kind === 'run' && (profile.manualUnshown.includes(id) || !isPageLearned(profile, page)) ? [page] : [];
+      })
+      .slice(0, LEARNED_A_WIN);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [winner, resolving]);
   const resultRoster = playerRun.roster;
@@ -2752,7 +2756,8 @@ export function FightScreen({
           mvp={mvp}
           learned={learnedPages}
           onContinue={() => {
-            onPagesLearned?.([...metPages.current, ...learnedPages.map((p) => p.id)], winner === PLAYER_SIDE);
+            onPagesLearned?.([...metPages.current], false);
+            if (winner === PLAYER_SIDE) onPagesLearned?.(learnedPages.map((p) => p.id), true);
             onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat, usedConsumables, mvp);
           }}
         />

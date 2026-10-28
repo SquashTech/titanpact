@@ -139,17 +139,6 @@ test('lessons: one spread move drops both foes', () => {
   assert.strictEqual(foesDown(boards[1]), 2);
 });
 
-const acted = (events: readonly CombatEvent[], id: string) => events.some((e) => e.type === 'MoveUsed' && e.combatantId === id);
-
-test('lessons: Skyshear outruns the Cubling and drops it before it swings; aimed the other way, the Cubling hits Hollowbark first', () => {
-  const fight = fightOf('firstLight.order');
-  const { rounds, boards } = play(fight);
-  assert.ok(!acted(rounds[0], 'B:cub'), 'the Cubling never moves');
-  assert.strictEqual(foesDown(boards[1]), 2);
-  const swapped = play(fight, (_, id) => ({ kind: 'move', combatantId: id, moveId: id === 'A:skyshear' ? 'jolt' : 'ivySpike', declaredTarget: id === 'A:skyshear' ? 'B:arc' : 'B:cub' }));
-  assert.ok(acted(swapped.rounds[0], 'B:cub'), 'Hollowbark is too slow to stop it');
-});
-
 test('lessons: physical Nightfall through thin hide and magical Nightfall past low Wisdom drop both; crossed, neither falls', () => {
   const fight = fightOf('firstLight.kinds');
   assert.strictEqual(foesDown(play(fight).boards[1]), 2);
