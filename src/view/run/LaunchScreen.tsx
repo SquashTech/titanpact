@@ -5,6 +5,7 @@ import { TitanRidge } from './titanArt';
 import titlePainting from '../../../art/title/fogBanks.png';
 import { NightSky } from './NightSky';
 import { launchArtUrls, preloadImages } from '../shared/preload';
+import { canvasPoint } from '../shared/overlayHost';
 
 interface Props {
   /** Mount the title under this screen; it fades out over the top of it. */
@@ -26,6 +27,30 @@ const ART_WAIT_MS = 4000;
 
 type LaunchPhase = 'rise' | 'wake' | 'reveal';
 
+/** The seal's gold ring (`.title-seal-ring.is-inner`, px), laid on the Pact's rune ring. */
+const SEAL_GOLD_RING = 168;
+/** Frames to wait for the title underneath to lay its Pact out. */
+const FIND_FRAMES = 12;
+
+/** Glides the seal onto the title's Pact as the fade runs, so the one circle becomes the other. */
+function landOnPact(seat: HTMLElement | null) {
+  let frames = 0;
+  const find = () => {
+    const runes = document.querySelector('.title-screen .pact-runes');
+    const r = runes?.getBoundingClientRect();
+    if (!seat || !r || r.width === 0) {
+      if (seat && ++frames < FIND_FRAMES) requestAnimationFrame(find);
+      return;
+    }
+    const from = seat.getBoundingClientRect();
+    const scale = canvasPoint(0, 0).scale;
+    const dx = (r.left + r.width / 2 - from.left) / scale;
+    const dy = (r.top + r.height / 2 - from.top) / scale;
+    seat.style.transform = `translate(${dx}px, ${dy}px) scale(${r.width / scale / SEAL_GOLD_RING})`;
+  };
+  requestAnimationFrame(find);
+}
+
 /**
  * The cold launch (2026-09-25, per user direction, replacing the Tap to begin gate): a loading
  * screen that plays on its own. The pact's seal — the title's own, type wheel and all — spins up
@@ -46,11 +71,14 @@ export function LaunchScreen({ onReveal, onDone }: Props) {
   done.current = onDone;
   const revealed = useRef(false);
 
+  const seatRef = useRef<HTMLDivElement>(null);
+
   const startReveal = () => {
     if (revealed.current) return;
     revealed.current = true;
     setPhase('reveal');
     reveal.current();
+    landOnPact(seatRef.current);
     window.setTimeout(() => done.current(), FADE_MS);
   };
   const skip = useRef(startReveal);
@@ -83,9 +111,11 @@ export function LaunchScreen({ onReveal, onDone }: Props) {
       <TitanRidge />
       <span className="launch-vignette" aria-hidden="true" />
 
-      <div className="launch-mark" aria-hidden="true">
-        <SealArt />
-        <span className="launch-core" />
+      <div ref={seatRef} className="launch-seat" aria-hidden="true">
+        <div className="launch-mark">
+          <SealArt />
+          <span className="launch-core" />
+        </div>
       </div>
 
       <div className="launch-foot">
