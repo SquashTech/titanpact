@@ -105,8 +105,11 @@ Skirmish, Patrons, Recruiting, the Guild Hall, the Academy, Gems.
     longer exists until lessons 5–10 land.
 - **The tour after the finale** (`FIRST_LIGHT_TOUR`) is all Blip lines today. Silent, it is a
   pointing hand at *Call to the Stars*, then at the Pact and the Infinite.
-- **Time to the full game:** about a minute for each fight, plus the act, comes to roughly 12–15 minutes
-  before the Infinite opens. Watch it in playtest; cutting lessons is the dial.
+- **Time to the full game:** estimated (not measured) at about 13–17 minutes: roughly 8 minutes of
+  guided fights, 3–5 for the open fight, and the rest the stops between lessons. **Trimmed 2026-10-27,
+  per user direction:** a lesson skips the VS card, and the lighting playback between lessons is about
+  half as long (charge, burst, path and wake all faster). Cut stops before cutting lessons; if lesson 10
+  plays long, drop it to three foes.
 - **Stardust:** First Light pays 300 when sealed (`the-sky.md` §10, still FLAGGED). Spread over ten
   lessons, or still paid at the seal? Unchanged until decided.
 - **Pages are prose today** (`src/data/howToPlay.ts`). Each of the ten becomes its line and a still

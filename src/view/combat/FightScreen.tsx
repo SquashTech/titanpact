@@ -798,11 +798,19 @@ export function FightScreen({
   // auto-play — so the fight's first input teaches the input every round after it wants.
   useEffect(() => {
     if (!opening) return;
-    startBeatPlayback(opening.start, opening.events, opening.final, [
-      versus
-        ? { ...openingBeat(opening.start, allCombatants, AI_SIDE, location), bannerRoster: [{ name: 'Your friend', colors: [] }] }
-        : openingBeat(opening.start, allCombatants, AI_SIDE, location),
-    ]);
+    // A lesson skips the VS card: its fight is the lesson, and it is one of ten in a row.
+    startBeatPlayback(
+      opening.start,
+      opening.events,
+      opening.final,
+      story
+        ? []
+        : [
+            versus
+              ? { ...openingBeat(opening.start, allCombatants, AI_SIDE, location), bannerRoster: [{ name: 'Your friend', colors: [] }] }
+              : openingBeat(opening.start, allCombatants, AI_SIDE, location),
+          ]
+    );
   }, []);
 
   /** The board is waiting on the player: hand the caller what a resume carries on from. */

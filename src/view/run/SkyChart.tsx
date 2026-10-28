@@ -364,23 +364,23 @@ export function SkyChart({
       const before = statesOf(pendingRef.current);
       setFx({ charging: i });
       playSfx('star.charge');
-      await wait(900);
+      await wait(500);
       const left = pendingRef.current.filter((id) => id !== scenarioIdOf(star));
       pendingRef.current = left;
       setPending(left);
       onSeeLighting?.(skyLightingTipId(star.id));
       setFx({ burst: { i, n: Date.now() } });
       playSfx('star.earn');
-      await wait(750);
+      await wait(450);
       const next = i + 1 < firstLight.stars.length ? i + 1 : null;
       if (next !== null) {
         setFx((f) => ({ ...f, drawing: i }));
         playSfx('map.path');
-        await wait(700);
+        await wait(400);
         setFx((f) => ({ ...f, waking: next }));
         playSfx('star.lock', { gain: 0.55 });
-        playSfx('ui.page', { delay: 0.3, gain: 0.8 });
-        await wait(1100);
+        playSfx('ui.page', { delay: 0.15, gain: 0.8 });
+        await wait(650);
       }
       // A seat that opens on this star wakes where it sits.
       const after = statesOf(left);
@@ -427,7 +427,8 @@ export function SkyChart({
     };
 
     const run = async () => {
-      await wait(ARRIVE_MS);
+      // A lesson just won plays back sooner than the sky settles for anything else.
+      await wait(pendingRef.current.length > 0 ? ARRIVE_MS / 2 : ARRIVE_MS);
       if (pendingRef.current.length === 0 && !finaleRef.current) {
         arrive();
         return;
@@ -438,7 +439,7 @@ export function SkyChart({
       while (pendingRef.current.length > 0) {
         const id = pendingRef.current[0];
         await lightStar(firstLight.stars.findIndex((s) => scenarioIdOf(s) === id));
-        await wait(250);
+        await wait(150);
       }
       if (finaleRef.current) {
         await drawIn();

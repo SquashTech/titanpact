@@ -403,7 +403,7 @@
 .pact-trail-line.is-drawing {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: pact-draw 0.7s ease-in-out forwards;
+  animation: pact-draw 0.4s ease-in-out forwards;
 }
 
 .pact-trail-line.is-flared {
@@ -489,11 +489,11 @@
 
 /* Charging before it lights: the halo swells and the core shivers bright. */
 .pact-trail-star.is-charging .pact-trail-halo {
-  animation: pact-swell 0.9s ease-in forwards;
+  animation: pact-swell 0.5s ease-in forwards;
 }
 
 .pact-trail-star.is-charging .pact-trail-core {
-  animation: pact-shiver 0.9s ease-in forwards;
+  animation: pact-shiver 0.5s ease-in forwards;
 }
 
 @keyframes pact-swell {
@@ -519,11 +519,11 @@
 
 /* Waking: the next star swells up out of nothing and settles. */
 .pact-trail-star.is-waking .pact-trail-core {
-  animation: pact-wake 1s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  animation: pact-wake 0.6s cubic-bezier(0.3, 1.5, 0.5, 1) both;
 }
 
 .pact-trail-star.is-waking .pact-trail-halo {
-  animation: pact-wake-halo 1.3s ease-out both;
+  animation: pact-wake-halo 0.8s ease-out both;
 }
 
 @keyframes pact-wake {
@@ -574,13 +574,13 @@
   stroke-width: 2;
   transform-box: fill-box;
   transform-origin: center;
-  animation: pact-burst-ring 0.8s ease-out forwards;
+  animation: pact-burst-ring 0.5s ease-out forwards;
 }
 
 .pact-burst-ring.is-late {
   stroke: #ffc95e;
-  animation-delay: 0.12s;
-  animation-duration: 1s;
+  animation-delay: 0.08s;
+  animation-duration: 0.6s;
 }
 
 @keyframes pact-burst-ring {
@@ -616,7 +616,7 @@
 .pact-burst-spark {
   fill: #fff1c4;
   transform-box: view-box;
-  animation: pact-spark 1s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+  animation: pact-spark 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
 }
 
 @keyframes pact-spark {
@@ -1063,7 +1063,7 @@
 }
 
 .pact-page.is-fresh .pact-page-body {
-  animation: pact-page-in 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) 0.3s both;
+  animation: pact-page-in 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) 0.15s both;
 }
 
 @keyframes pact-page-in {
@@ -1177,7 +1177,7 @@
 
 /* The island rises into place as its lesson wakes. */
 .pact-trail-star.is-waking .pact-isle {
-  animation: pact-isle-rise 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  animation: pact-isle-rise 0.6s cubic-bezier(0.3, 1.5, 0.5, 1) both;
 }
 
 @keyframes pact-isle-rise {
@@ -1189,7 +1189,7 @@
 
 /* Charging before it lights: the disc floods with light. */
 .pact-trail-star.is-charging .pact-isle-glow {
-  animation: pact-isle-charge 0.9s ease-in forwards;
+  animation: pact-isle-charge 0.5s ease-in forwards;
 }
 
 @keyframes pact-isle-charge {
