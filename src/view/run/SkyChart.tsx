@@ -178,14 +178,14 @@ interface Fx {
 interface Props {
   profile: Profile;
   disabled?: boolean;
-  /** Off, the sky is not on screen (another page, a launch): Blip stops and says nothing. */
+  /** Off, the sky is not on screen (another page, a launch): Blip stops. */
   active?: boolean;
   /** A parked run's own presses stand under the sky; the Infinite's would say the same thing again. */
   pressHidden?: boolean;
   /** How the last run or lesson ended, when the player has just come back from it; Blip reacts once. */
   returned?: 'win' | 'loss' | null;
   onReturnedSeen?: () => void;
-  /** A first Blip has thought, to keep once an account. */
+  /** One of Blip's firsts played, to keep once an account. */
   onSeeThought?: (thought: ThoughtDefinition) => void;
   /** A lighting played, to keep once an account (`skyLightingTipId`). */
   onSeeLighting?: (tipId: string) => void;
@@ -199,7 +199,7 @@ interface Props {
   infiniteRequest?: number;
   /** A new account mid First Light: the Pact shows the lessons and nothing else. */
   onlyFirstLight?: boolean;
-  /** Something else has the screen (First Light's tour): Blip keeps its thoughts to itself. */
+  /** Something else has the screen (First Light's tour): Blip's firsts wait. */
   quiet?: boolean;
   /** First Light has just been drawn in and folded on the title: the tour that follows is the title's. */
   onFirstLightDone?: () => void;
@@ -291,15 +291,15 @@ export function SkyChart({
   const trailLit = firstLight.stars.map((star) => isStarLit(shown, firstLight, star));
 
   const blip = useRef<BlipHandle>(null);
-  // A forced thought's beat standing over the sky; the first its showsNext leads to is kept with it. Blip never speaks.
+  // A first's scene standing over the sky; the first its showsNext leads to is kept with it.
   const [beat, setBeat] = useState<{ thought: ThoughtDefinition; next: ThoughtDefinition | null } | null>(null);
   const sayThought = (thought: ThoughtDefinition | null, onDone?: () => void) => {
     if (!thought) return false;
-    if (thought.forced) {
+    if (thought.scene) {
       setBeat({ thought, next: thought.showsNext ? revealedFirst(profile, THOUGHTS, thought.showsNext) : null });
       return true;
     }
-    if (thought.once) onSeeThought?.(thought);
+    onSeeThought?.(thought);
     onDone?.();
     return true;
   };
@@ -316,8 +316,8 @@ export function SkyChart({
     if (!beat) return;
     const { thought, next } = beat;
     setBeat(null);
-    if (thought.once) onSeeThought?.(thought);
-    if (next?.once) onSeeThought?.(next);
+    onSeeThought?.(thought);
+    if (next) onSeeThought?.(next);
     const lesson = thought.plays ? findStar(sky, thought.plays) : null;
     if (lesson && !isStarLit(profile, lesson.constellation, lesson.star)) onPlayLesson?.(lesson.star.id);
     else if (thought.showsNext) callTo(thought.showsNext);
@@ -331,7 +331,7 @@ export function SkyChart({
     });
   };
   const say = (moment: ThoughtMoment, later?: (ms: number, fn: () => void) => void) => {
-    const thought = thoughtFor(profile, THOUGHTS, moment, Math.random());
+    const thought = thoughtFor(profile, THOUGHTS, moment);
     const next = thought?.showsNext && later ? revealedFirst(profile, THOUGHTS, thought.showsNext) : null;
     return sayThought(thought, next && later ? () => show(thought!.showsNext!, next, later) : undefined);
   };

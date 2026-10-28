@@ -70,7 +70,6 @@ export type SfxId =
   | 'patron.hexwright'
   | 'patron.headmaster'
   // Blip (docs/the-sky.md §1): a babble a syllable at a time, and its reactions
-  | 'blip.syllable'
   | 'blip.chirp'
   | 'blip.giggle'
   | 'blip.win'
@@ -1041,16 +1040,6 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 112, freqEnd: 58, gain: 0.32, attack: 0.002, decay: 0.16, delay: 0.29 },
       { wave: 'sine', freq: 1760, detune: 12, gain: 0.11, attack: 0.001, decay: 0.6, delay: 0.26 },
       { wave: 'sine', freq: 2637, detune: -8, gain: 0.07, attack: 0.001, decay: 0.45, delay: 0.26 },
-    ],
-  },
-
-  /** Blip's voice as a line types, one blip a syllable: a soft square with a lift, jittered like speech. */
-  'blip.syllable': {
-    gain: 0.3,
-    jitter: 0.12,
-    voices: [
-      { wave: 'square', freq: 640, freqEnd: 700, gain: 0.42, attack: 0.004, hold: 0.018, decay: 0.045, filter: { type: 'lowpass', freq: 2200, q: 0.8 } },
-      { wave: 'sine', freq: 1280, freqEnd: 1400, gain: 0.18, attack: 0.004, decay: 0.05 },
     ],
   },
 

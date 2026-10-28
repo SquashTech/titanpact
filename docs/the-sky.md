@@ -465,6 +465,12 @@ on the title's Play page in place of the seal, the Seal the Pact press and the t
 - The poke (§1): a squash and spring-back on tap, with the face reacting. Skins come later, once
   a constellation or the shop has a seat to pay one.
 
+**Blip is SILENT since 2026-10-27** (per user direction): it no longer speaks anywhere, and every
+line below is deleted. What stands is wordless — the face, the poke, the win and loss reactions,
+the first sky's fall scene leading into the first lesson, a newly opened constellation pointed out
+once, and First Light's tour walking to the Observatory and back on its own. `data/thoughts.ts`
+keeps only those firsts, with no lines.
+
 **DONE 2026-10-24.** `Blip.tsx` is the little face on a canvas: it springs toward its home, bobs,
 looks along its motion, blinks, and goes happy, sad, surprised or dizzy. Thoughts type out beside
 it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own.
