@@ -154,6 +154,8 @@ export function TitleScreen({
   }, [tour]);
   /** Which way the page slid in: +1 from the left, -1 from the right. */
   const [slide, setSlide] = useState(0);
+  /** Play has just come back from another page: its layers fade in as the other pages do. */
+  const [backToPlay, setBackToPlay] = useState(false);
   /** Heroes fallen this session the player has not yet tapped in the Collection. */
   const [freshHeroIds, setFreshHeroIds] = useState<readonly string[]>([]);
   const [collectionSeen, setCollectionSeen] = useState(true);
@@ -213,6 +215,7 @@ export function TitleScreen({
     setTab(next);
     if (next === 'constellation') onRefreshProfile();
     if (next === 'collection') setCollectionSeen(true);
+    setBackToPlay(next === 'play' && tab !== 'play');
     if (tour === 'toObservatory' && next === 'constellation') setTour('pulling');
     if (tour === 'fallen' && next === 'play') setTour('home');
   }
@@ -236,7 +239,7 @@ export function TitleScreen({
 
   return (
     <div
-      className={`title-screen is-${tone}${pressRow ? ' has-parked-run' : ''}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}${skyZoomed ? ' is-sky-zoomed' : ''}${inFirstLight ? ' is-first-light' : ''}${tour ? ' is-touring' : ''}`}
+      className={`title-screen is-${tone}${pressRow ? ' has-parked-run' : ''}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}${skyZoomed ? ' is-sky-zoomed' : ''}${inFirstLight ? ' is-first-light' : ''}${tour ? ' is-touring' : ''}${backToPlay ? ' is-back' : ''}`}
     >
       {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
           back is instant, and display: contents keeps them in the screen's own flex and stacking. */}

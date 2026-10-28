@@ -16,7 +16,7 @@ const SQUISH_DAMP = 9;
 const POKE_RUN_MS = 1200;
 const DIZZY_AT = 5;
 /** Room the canvas keeps past the stage on every side, so the glow and a jump are never clipped square. */
-const BLEED = 90;
+const BLEED = 140;
 
 type Mood = 'idle' | 'happy' | 'sad' | 'dizzy' | 'surprised';
 

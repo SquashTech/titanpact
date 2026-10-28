@@ -22439,7 +22439,7 @@ button.star-shop-bundle-face {
   z-index: 3;
   display: flex;
   gap: 10px;
-  animation: title-icon-row-fade 0.7s ease 0.8s both;
+  animation: title-icon-row-fade 0.5s ease-out both;
 }
 
 .title-icon-button {
@@ -22476,11 +22476,6 @@ button.star-shop-bundle-face {
 @keyframes title-icon-row-fade {
   from {
     opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -22499,7 +22494,7 @@ button.star-shop-bundle-face {
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
-  animation: title-icon-row-fade 0.7s ease 0.8s both;
+  animation: title-icon-row-fade 0.5s ease-out both;
 }
 
 .title-dev-button {
@@ -45120,6 +45115,17 @@ img.smithy-service-art {
   animation-play-state: paused !important;
 }
 
+/* Back on Play: its layers come in the way the other pages do, not in one frame. */
+.title-screen.is-back :is(.title-galaxy, .sky-chart, .title-logo.is-top) {
+  animation: title-play-back 0.32s ease-out both;
+}
+
+@keyframes title-play-back {
+  from {
+    opacity: 0.4;
+  }
+}
+
 .title-icon-row {
   top: 10px;
   right: 10px;
@@ -45138,7 +45144,7 @@ img.smithy-service-art {
   border: 0;
   background: radial-gradient(circle, rgba(224, 166, 60, 0.26), rgba(224, 166, 60, 0.05) 55%, transparent 70%);
   cursor: pointer;
-  animation: title-icon-row-fade 0.7s ease 0.8s both;
+  animation: title-icon-row-fade 0.5s ease-out both;
   transition: transform var(--dur-mid) var(--ease-out);
 }
 
