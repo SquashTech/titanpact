@@ -118,7 +118,7 @@ import { grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableK
 import { guildHallEntry } from '../run/guildRecruit';
 import { generateMap, PATRON_ROWS, type MapNodeType, type RewardNodeType } from '../run/map';
 import { firstUnseenTip, type ScreenTipId } from '../run/tips';
-import { FIGHT_BASICS_TIP_ID, SCREEN_TIPS } from '../data/tips';
+import { FIGHT_BASICS_TIP_ID, SCREEN_TIPS, WELCOME_TIP } from '../data/tips';
 import { TipOverlay } from '../view/run/TipOverlay';
 import { SaveTroubleBanner } from '../view/run/SaveTroubleBanner';
 import { InstallOverlay } from '../view/run/InstallOverlay';
@@ -126,7 +126,7 @@ import { currentInstallPlatform } from './installPrompt';
 import { INSTALL_TIP_ID } from '../run/installHint';
 import { LoreScreen } from '../view/run/LoreScreen';
 import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
-import { STORY_BOOKS } from '../data/lessons';
+import { LESSONS, STORY_BOOKS } from '../data/lessons';
 import { sky } from '../data/sky';
 import { recordScenarioLit } from '../run/sky';
 import { fileRunPages, markPagesShown, pagesMetOnScreen } from '../run/manual';
@@ -1545,6 +1545,11 @@ export function App() {
           onQuit={() => setScreen({ kind: 'title' })}
           onPlace={setStoryPlaceId}
           tips={{ seenIds: lessonTips, onSeen: markLessonTipSeen }}
+          welcome={
+            screen.chapterId === LESSONS.chapters[0].id && !profile.seenTipIds.includes(WELCOME_TIP.id)
+              ? { tip: WELCOME_TIP, onSeen: () => markTipSeen(WELCOME_TIP.id) }
+              : undefined
+          }
         />
       )}
 

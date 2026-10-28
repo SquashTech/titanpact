@@ -9,10 +9,10 @@
 /* Wider than the stage by Blip.tsx's BLEED on every side, so the glow fades out instead of meeting an edge. */
 .blip-canvas {
   position: absolute;
-  top: -140px;
-  left: -140px;
-  width: calc(100% + 280px);
-  height: calc(100% + 280px);
+  top: -90px;
+  left: -90px;
+  width: calc(100% + 180px);
+  height: calc(100% + 180px);
 }
 
 .blip-hit {

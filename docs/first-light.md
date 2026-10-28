@@ -43,7 +43,14 @@ text), **Into the Breach** (a small board, set up so the answer is findable) and
 > - **A won run fight shows one How to Play page at most** (`LEARNED_A_WIN`, `FightScreen`). This
 >   fight's first meeting comes before anything a screen filed earlier, and the rest wait for later wins.
 >   A run's first map and fight used to land four or more pages at once.
-> - **Open:** the Items and Leads pages still have no picture.
+> - **Pictures for every lesson page.** Items shows the Gear counter's roster, each hero marked
+>   with what the piece would do there: take it, merge it, or replace a piece. Leads shows the open
+>   fight's six, then Raiju against its two leads with a green arrow and a red.
+> - **A Welcome before the first lesson, once an account** (`WELCOME_TIP`, per user direction): four
+>   lines in the welcome look. A Titan has woken; heroes rise against it; a run is the road to it;
+>   First Light teaches the fight. The device install card is retitled *Install Titanpact* so the
+>   game says welcome once. It still comes first, because on iOS the browser's progress doesn't carry
+>   to the installed app.
 
 **The lesson's picture is its own fight. DECIDED 2026-10-27, per user direction**, picked from
 `art/concepts/lesson-pages/` (*On the Field*). It replaces a separate picture card: a card, a plate

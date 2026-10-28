@@ -35,8 +35,6 @@ import './skyChart.css';
 // its constellation, drawn big with its stars named and its own press.
 
 export const SEAT = { x: 26, y: 28 };
-/** Zoomed in, Blip flies up to the top edge: the seat holds still 116px down (skyChart.css). */
-const PERCH = { x: SEAT.x, y: SEAT.y - 116 };
 
 /** The Pact's drawing box. */
 const W = 394;
@@ -588,7 +586,7 @@ export function SkyChart({
       <div ref={seatRef} className={`sky-seat${beat ? ' is-empty' : ''}`}>
         <Blip
           ref={blip}
-          home={zoomed ? PERCH : SEAT}
+          home={SEAT}
           active={active && !beat}
         />
       </div>

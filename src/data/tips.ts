@@ -29,6 +29,19 @@ export const LORE_LINES: readonly string[] = [
   'This is the story of how they sealed the Titan.',
 ];
 
+/** What the game is and why the lessons, once an account, right before the first lesson (docs/first-light.md §1). */
+export const WELCOME_TIP: Tip = {
+  id: 'firstLight.welcome',
+  title: 'Welcome to',
+  look: 'welcome',
+  pages: [
+    'A *Titan* has woken. Wherever it walks, the land turns to ruin.',
+    'Heroes from every corner of the world rise to stand against it.',
+    'Each *run* is the road to the Titan: lead a team of heroes through fight after fight, two at a time, growing stronger on the way.',
+    '*First Light* teaches you to fight, one idea a lesson. Win them all to begin your first run.',
+  ],
+};
+
 function tip(id: string, title: string, ...pages: string[]): Tip {
   return { id, title, pages };
 }
@@ -78,18 +91,18 @@ export const FIGHT_TIPS: readonly FightTip[] = [
  */
 export const INSTALL_CARD: Readonly<Record<InstallPlatform, { title: string; lead: string; steps: readonly string[]; note?: string }>> = {
   ios: {
-    title: 'Welcome to Titanpact!',
+    title: 'Install Titanpact',
     lead: 'Titanpact plays best installed as a full screen app.',
     steps: ['Tap [share] Share in the browser bar.', 'Scroll down and tap Add to Home Screen.', 'Open Titanpact from the new icon.'],
     note: "Progress in the browser doesn't carry over to the Home Screen app, so add it before you play.",
   },
   android: {
-    title: 'Welcome to Titanpact!',
+    title: 'Install Titanpact',
     lead: 'Titanpact plays best installed as a full screen app.',
     steps: ['Tap [menu] at the top right of the browser.', 'Tap Install app or Add to Home screen.', 'Open Titanpact from the new icon.'],
   },
   inApp: {
-    title: 'Welcome to Titanpact!',
+    title: 'Open in Your Browser',
     lead: "This page is open inside another app, which can't save Titanpact to your home screen.",
     steps: ['Tap [menu] or [share] in this app.', 'Choose Open in browser (Safari or Chrome).'],
   },

@@ -9,6 +9,7 @@ import { LessonLearnedScreen } from './LessonLearnedScreen';
 import { ItemWhoScreen } from '../run/ItemWhoScreen';
 import { GuideHand } from './GuideHand';
 import { TipOverlay } from '../run/TipOverlay';
+import type { Tip } from '../../run/tips';
 
 interface Props {
   chapter: StoryChapter;
@@ -22,13 +23,15 @@ interface Props {
   tips: { seenIds: readonly string[]; onSeen: (id: string) => void };
   /** What leaving a fight is called. */
   exitLabel: string;
+  /** Shown ahead of everything else, once: the game's welcome before its first lesson. */
+  welcome?: { tip: Tip; onSeen: () => void };
 }
 
 /**
  * Plays a chapter's beats in order, a First Light lesson's among them, each opening on the lesson's
  * How to Play pages before its first tap. A lost fight is played again from its start.
  */
-export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips, exitLabel }: Props) {
+export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips, exitLabel, welcome }: Props) {
   const [index, setIndex] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const beat = chapter.beats[index];
@@ -38,8 +41,21 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips,
   const [given, setGiven] = useState<{ index: number; run: RunState; done: boolean } | null>(null);
   const handed = given?.index === index ? given : null;
   const pages = useMemo(() => lessonPages(MANUAL_PAGES, chapter.id), [chapter.id]);
-  const page = beat ? pages.find((p) => !tips.seenIds.includes(p.id)) ?? null : null;
-  const pageUp = page && <TipOverlay key={page.id} tip={page} onDone={() => tips.onSeen(page.id)} />;
+  const [welcomed, setWelcomed] = useState(false);
+  const opening = welcome && !welcomed ? welcome.tip : null;
+  const page = beat ? opening ?? pages.find((p) => !tips.seenIds.includes(p.id)) ?? null : null;
+  const pageUp = page && (
+    <TipOverlay
+      key={page.id}
+      tip={page}
+      onDone={() => {
+        if (page === opening) {
+          setWelcomed(true);
+          welcome!.onSeen();
+        } else tips.onSeen(page.id);
+      }}
+    />
+  );
 
   useEffect(() => {
     if (beat) onPlace(beat.locationId ?? null);

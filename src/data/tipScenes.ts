@@ -255,6 +255,26 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
   // Raiju's Storm Lash, its Conduct named in place, against the Clearing's Slabback.
   'howto.status.Conduct': [{ foes: [{ heroId: 'slabback', level: 12 }], hero: { heroId: 'raiju', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
   'howto.bag': [{ hero: { heroId: 'cinderKnight' }, bar: true, focus: ['bag'] }],
+  // Each hero's sockets, the pieces it already holds in them: the Gear counter's own roster.
+  'howto.items': [
+    {
+      hall: 'gear',
+      roster: [
+        { heroId: 'ursa', items: ['dagger.common.feral'] },
+        { heroId: 'drift', items: ['robe.common', 'ring.common'] },
+        { heroId: 'cairn', items: ['shield.common', 'plate.common', 'crest.common'] },
+      ],
+      items: ['dagger.common', 'robe.rare', 'boots.common'],
+      pick: 0,
+      gold: 120,
+      focus: ['heroCards'],
+    },
+  ],
+  // The open fight's six, then one of them read against that fight's two leads.
+  'howto.leads': [
+    { roll: ['rime', 'raiju', 'revenant', 'wildOracle', 'runescribe', 'cairn'] },
+    { foes: [{ heroId: 'ravager' }, { heroId: 'bramblehide' }], hero: { heroId: 'raiju' }, heroFigure: true, moves: ['thunderclap'], focus: ['matchups'], expect: { thunderclap: [2, 0.5] } },
+  ],
   'howto.field': [{ hero: { heroId: 'cinderKnight' }, field: 'scorchedLand', focus: ['field'] }],
   'howto.ancient': [
     { ...ANCIENT_CAST, moves: [], focus: ['foeTypes'] },
