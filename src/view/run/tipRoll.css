@@ -1,4 +1,4 @@
-/* A tip's roll call of the types: a small sprite over each type's badge, five to a row. */
+/* A tip's roll call of the types: a small sprite over each type's badge, up to five a row (TipScene sets the count). */
 .tip-roll {
   display: grid;
   grid-template-columns: repeat(5, 1fr);

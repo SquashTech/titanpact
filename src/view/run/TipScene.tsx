@@ -274,8 +274,11 @@ function StatusStripScene({ scene }: { scene: TipStatusScene }) {
 
 /** Every type at a glance: a hero of each, standing over its type's badge. */
 function RollScene({ scene }: { scene: TipRollScene }) {
+  // Up to five a row, the rows evened out: six stand three and three, not five and one.
+  const rows = Math.ceil(scene.roll.length / 5);
+  const columns = Math.ceil(scene.roll.length / rows);
   return (
-    <div className="tip-roll" aria-hidden="true">
+    <div className="tip-roll" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }} aria-hidden="true">
       {scene.roll.map((heroId) => {
         const hero = allCombatants[heroId];
         if (!hero) return null;
