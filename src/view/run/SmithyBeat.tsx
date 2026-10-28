@@ -2,444 +2,286 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import type { SfxId } from '../../audio/sounds';
-import type { EquipmentDefinition } from '../../run/equipment';
+import { RARITY_ORDER, parseEquipmentId, type EquipmentDefinition } from '../../run/equipment';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { enchantTypeOf, ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { ElementGlyph } from '../shared/elementIcons';
+import { enchantArt, equipmentArt } from '../shared/equipmentArt';
 import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { AnvilFigure, HammerFigure, RuneRing } from './smithyArt';
-import { enchantArt, equipmentArt } from '../shared/equipmentArt';
-import { parseEquipmentId } from '../../run/equipment';
-import sparkBurst from '../../../art/smithy/sparks.png';
-import magicBurst from '../../../art/smithy/magic.png';
-
-/**
- * The piece as the thing itself on the anvil or in the circle: its pixel art at 2x, lit in its
- * tier's colour, the enchant's gem on its shoulder. A piece with no art keeps its chit.
- */
-function BeatPiece({ item }: { item: EquipmentDefinition }) {
-  const art = equipmentArt(item);
-  if (!art) return <ItemPiece item={item} />;
-  const { enchantId } = parseEquipmentId(item.id);
-  const gem = enchantId ? enchantArt(enchantId) : undefined;
-  return (
-    <span className="smithy-beat-sprite" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
-      <img src={art} alt="" draggable={false} />
-      {gem && <img src={gem} className="smithy-beat-gem" alt="" draggable={false} />}
-    </span>
-  );
-}
-
-/** One strike's pixel spark burst, keyed per strike by the caller so it replays. */
-function StrikeBurst() {
-  return <span className="smithy-beat-burst" style={{ '--burst-art': `url(${sparkBurst})` } as CSSProperties} aria-hidden="true" />;
-}
-
-/** The bind's burst, cut from the element's own colour. */
-function BindBurst() {
-  return <span className="smithy-beat-magic" style={{ '--burst-art': `url(${magicBurst})` } as CSSProperties} aria-hidden="true" />;
-}
 
 export type SmithyWork =
   | { kind: 'anvil' | 'enchant'; before: EquipmentDefinition; after: EquipmentDefinition }
   /** The Forge node: the hammer, then the circle. `lifted` is what comes off the anvil, null when the act gave no lift. */
   | { kind: 'forge'; before: EquipmentDefinition; lifted: EquipmentDefinition | null; after: EquipmentDefinition };
 
-/** The hammer's three strikes, from mount (ms). The CSS swing is keyed to the same figures. */
-const STRIKE_AT = [420, 800, 1180] as const;
-/** When the Enchanter's circle closes on the piece (ms). */
-const BIND_AT = 1050;
-/**
- * The Forge's two acts (ms): the circle opens round the piece where it lies on the anvil, then the
- * element binds on the fourth and heaviest hit of the whole beat.
- */
-const FORGE_RISE_AT = 1600;
-const FORGE_BIND_AT = 2900;
-/** How long each beat holds before it clears itself. A tap anywhere skips it. */
-export const SMITHY_BEAT_MS = { anvil: 2700, enchant: 2600, forge: 4800 } as const;
+type Cue = 'heat' | 'swing1' | 'hit1' | 'swing2' | 'hit2' | 'swing3' | 'hit3' | 'quench' | 'cooled' | 'draw' | 'pour' | 'bound' | 'done';
 
-// Golden-angle scatter, as CacheReveal's: stable, never symmetrical.
-const SPARKS = Array.from({ length: 14 }, (_, i) => {
-  const seed = i * 137.51;
-  return {
-    angle: -20 - ((seed * 0.53) % 140), // upward fan, off the face
-    distance: 44 + ((seed * 0.31) % 50),
-    size: 2 + ((seed * 0.13) % 2.5),
-    delay: (seed * 0.4) % 60,
-  };
-});
-/** The Forge's closing burst: shards in both colours, the tier's and the element's, flung wide. */
-const SHARDS = Array.from({ length: 22 }, (_, i) => {
-  const seed = i * 137.51;
-  return {
-    angle: seed % 360,
-    distance: 90 + ((seed * 0.37) % 70),
-    size: 3 + ((seed * 0.17) % 4),
-    delay: (seed * 0.3) % 90,
-    tone: i % 2 === 0 ? 'is-type' : 'is-rarity',
-  };
-});
-const MOTES = Array.from({ length: 16 }, (_, i) => {
-  const seed = i * 137.51;
-  return { angle: seed % 360, distance: 84 + ((seed * 0.29) % 30), size: 2.5 + ((seed * 0.11) % 3), delay: (seed * 0.9) % 420 };
-});
+/** One act's cues (ms from the act's start). The third swing is the slow one: the camera leans in for it. */
+const ANVIL: readonly (readonly [Cue, number])[] = [
+  ['heat', 0],
+  ['swing1', 700],
+  ['hit1', 1000],
+  ['swing2', 1150],
+  ['hit2', 1450],
+  ['swing3', 1650],
+  ['hit3', 2350],
+  ['quench', 2900],
+  ['cooled', 3400],
+];
+const ANVIL_MS = 3900;
+const ENCHANT: readonly (readonly [Cue, number])[] = [
+  ['draw', 0],
+  ['pour', 1000],
+  ['bound', 2500],
+];
+const ENCHANT_MS = 2700;
+/** The caption holds this long after the last act before the beat clears itself. */
+const CAPTION_HOLD_MS = 2600;
+const HITSTOP_MS = 80;
+
+const ORDER: readonly Cue[] = ['heat', 'swing1', 'hit1', 'swing2', 'hit2', 'swing3', 'hit3', 'quench', 'cooled', 'draw', 'pour', 'bound', 'done'];
+
+/** Golden-angle scatter: stable, never symmetrical. */
+const scatter = (n: number, fn: (seed: number, i: number) => Record<string, number>) => Array.from({ length: n }, (_, i) => fn(i * 137.51, i));
+const SPARKS = scatter(18, (s) => ({ vx: -120 + (s * 0.61) % 240, h: 50 + (s * 0.29) % 70, fall: 60 + (s * 0.17) % 60, size: 2 + (s * 0.13) % 3, delay: (s * 0.2) % 50 }));
+const EMBERS = scatter(16, (s) => ({ x: -90 + (s * 0.53) % 180, rise: 140 + (s * 0.31) % 120, drift: -20 + (s * 0.23) % 40, size: 2 + (s * 0.11) % 3, delay: (s * 0.7) % 1600 }));
+const STEAM = scatter(9, (s, i) => ({ x: -70 + i * 17 + (s * 0.1) % 8, size: 46 + (s * 0.37) % 40, rise: 90 + (s * 0.41) % 70, delay: (s * 0.3) % 160 }));
+const MOTES = scatter(30, (s) => ({ angle: s % 360, from: 190 + (s * 0.29) % 90, size: 3 + (s * 0.11) % 4, delay: (s * 1.1) % 1300 }));
+const SHARDS = scatter(22, (s, i) => ({ angle: s % 360, reach: 100 + (s * 0.37) % 80, size: 3 + (s * 0.17) % 4, delay: (s * 0.3) % 80, tone: i % 2 }));
+const RUNES = Array.from({ length: 8 }, (_, i) => i * 45);
+
+/** The piece itself: its pixel art at 2x, lit in its tier's colour, the enchant's gem on its shoulder. A piece with no art keeps its chit. */
+function BeatPiece({ item }: { item: EquipmentDefinition }) {
+  const art = equipmentArt(item);
+  if (!art) return <ItemPiece item={item} />;
+  const { enchantId } = parseEquipmentId(item.id);
+  const gem = enchantId ? enchantArt(enchantId) : undefined;
+  return (
+    <span className="cine-sprite" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
+      <img src={art} alt="" draggable={false} />
+      {gem && <img src={gem} className="cine-gem" alt="" draggable={false} />}
+    </span>
+  );
+}
+
+function Burst<T extends Record<string, number>>({ className, items, vars }: { className: string; items: T[]; vars: (item: T) => Record<string, string | number> }) {
+  return (
+    <span className={className} aria-hidden="true">
+      {items.map((item, i) => (
+        <i key={i} className={item.tone ? 'is-alt' : undefined} style={vars(item) as CSSProperties} />
+      ))}
+    </span>
+  );
+}
 
 /**
- * What the Smithy MADE (2026-09-16, per user direction). The Anvil and the Enchanter were two
- * price buttons on a list row, and the tier changing under the finger was the whole of it — the
- * dearest things the Guild Hall sells, and the least seen.
- *
- * So each gets a beat: the piece on the anvil under three hammer strikes, the third of which
- * takes it up a tier; or the piece inside the Enchanter's circle as the element draws in and
- * binds. Both state what the piece now IS. Neither is a decision: it clears itself, a tap skips
- * it, and the change has already landed before it plays.
+ * What the Smithy MADE, as a cutscene (2026-10-27, per user direction). The bars come down and the
+ * work plays out: on the Anvil the piece heats in the fire, takes two strikes and a third the camera
+ * leans into, and is quenched in a burst of steam to come out in its new tier; at the Enchanter the
+ * circle draws itself, the element pours in from the edges while the piece turns in the air, and the
+ * binding wipes it over into its enchanted form as its new name writes itself. The Forge plays both,
+ * one after the other. Neither is a decision: the change has landed before it plays, it clears
+ * itself, and a tap skips it.
  */
 export function SmithyBeat({ work, onDone }: { work: SmithyWork; onDone: () => void }) {
   const reduced = prefersReducedMotion();
-  const [strikes, setStrikes] = useState(reduced ? 3 : 0);
-  const [bound, setBound] = useState(reduced);
-  /** The Forge only: the anvil has done its work and the circle has opened round the piece. */
-  const [risen, setRisen] = useState(reduced);
-  const enchantType = enchantTypeOf(work.after);
-  // Read through a ref: the timeline runs once per piece of work, and a parent re-render handing
-  // over a fresh callback must not restart it (it did — the bench's own highlight timer re-rendered
-  // the parent mid-beat, and the hammer started over).
+  const acts: ('anvil' | 'enchant')[] = work.kind === 'forge' ? ['anvil', 'enchant'] : [work.kind];
+  const [cue, setCue] = useState<Cue>(reduced ? 'done' : acts[0] === 'anvil' ? 'heat' : 'draw');
+  const [hitstop, setHitstop] = useState(false);
+  // Read through a ref: a parent re-render handing over a fresh callback must not restart the beat.
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
 
+  const enchantType = enchantTypeOf(work.after);
+  const lifted = work.kind === 'forge' ? (work.lifted ?? work.before) : work.kind === 'anvil' ? work.after : work.before;
+
   useEffect(() => {
     const done = () => onDoneRef.current();
-    const enchantType = enchantTypeOf(work.after);
     if (reduced) {
-      const timer = window.setTimeout(done, 900);
+      playSfx('anvil.ring');
+      const timer = window.setTimeout(done, 1600);
       return () => window.clearTimeout(timer);
     }
     const timers: number[] = [];
-    if (work.kind === 'forge') {
-      // A piece the act would not lift still takes the hammer — the strikes are the Forge's — but
-      // only a real lift rings the anvil on the third.
-      STRIKE_AT.forEach((at, i) => {
-        timers.push(
-          window.setTimeout(() => {
-            setStrikes(i + 1);
-            playSfx('anvil.strike', { pitch: 1 + i * 0.07 });
-            if (i === STRIKE_AT.length - 1 && work.lifted) playSfx('anvil.ring', { delay: 0.03 });
-          }, at)
-        );
-      });
-      timers.push(
-        window.setTimeout(() => {
-          setRisen(true);
-          playSfx('enchant.bind');
-        }, FORGE_RISE_AT)
-      );
-      timers.push(
-        window.setTimeout(() => {
-          setBound(true);
-          setStrikes(4);
-          playSfx((enchantType ? `cast.${enchantType}` : 'cast') as SfxId);
-          playSfx('anvil.ring', { pitch: 0.7, gain: 1.2, delay: 0.02 });
-        }, FORGE_BIND_AT)
-      );
-    } else if (work.kind === 'anvil') {
-      STRIKE_AT.forEach((at, i) => {
-        timers.push(
-          window.setTimeout(() => {
-            setStrikes(i + 1);
-            playSfx('anvil.strike', { pitch: 1 + i * 0.07 });
-            if (i === STRIKE_AT.length - 1) playSfx('anvil.ring', { delay: 0.03 });
-          }, at)
-        );
-      });
-    } else {
-      playSfx('enchant.bind');
-      timers.push(
-        window.setTimeout(() => {
-          setBound(true);
-          playSfx((enchantType ? `cast.${enchantType}` : 'cast') as SfxId);
-        }, BIND_AT)
-      );
+    const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
+    const hit = (pitch: number) => {
+      setHitstop(true);
+      at(HITSTOP_MS, () => setHitstop(false));
+      playSfx('anvil.strike', { pitch });
+    };
+    let t = 0;
+    for (const act of acts) {
+      const start = t;
+      for (const [name, ms] of act === 'anvil' ? ANVIL : ENCHANT) {
+        at(start + ms, () => {
+          setCue(name);
+          if (name === 'heat') playSfx('forge.roar');
+          if (name === 'hit1') hit(1);
+          if (name === 'hit2') hit(1.07);
+          if (name === 'hit3') {
+            hit(0.9);
+            playSfx('anvil.ring', { pitch: 0.85, gain: 1.2, delay: 0.03 });
+          }
+          if (name === 'quench') playSfx('forge.quench');
+          if (name === 'cooled') playSfx('anvil.ring', { pitch: 1.2, gain: 0.7 });
+          if (name === 'draw') playSfx('quill.scratch', { pitch: 0.7 });
+          if (name === 'pour') playSfx('enchant.bind');
+          if (name === 'bound') {
+            playSfx((enchantType ? `cast.${enchantType}` : 'cast') as SfxId);
+            playSfx('evolve.fanfare', { delay: 0.08 });
+          }
+        });
+      }
+      t += act === 'anvil' ? ANVIL_MS : ENCHANT_MS;
     }
-    timers.push(window.setTimeout(done, SMITHY_BEAT_MS[work.kind]));
-    return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [work, reduced]);
+    at(t, () => setCue('done'));
+    at(t + CAPTION_HOLD_MS, done);
+    return () => timers.forEach(window.clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  if (work.kind === 'forge') return <ForgeBeat work={work} strikes={strikes} risen={risen} bound={bound} reduced={reduced} onDone={onDone} />;
+  const reached = (c: Cue) => ORDER.indexOf(cue) >= ORDER.indexOf(c);
+  const inEnchant = acts.includes('enchant') && (reached('draw') || (cue === 'done' && acts[acts.length - 1] === 'enchant'));
+  const scene = inEnchant ? 'enchant' : 'anvil';
+  const strikes = reached('hit3') ? 3 : reached('hit2') ? 2 : reached('hit1') ? 1 : 0;
+  const swing = reached('swing3') ? 3 : reached('swing2') ? 2 : reached('swing1') ? 1 : 0;
+  const finished = cue === 'done';
+  const bound = reached('bound') && acts.includes('enchant');
 
-  const done = work.kind === 'anvil' ? strikes >= STRIKE_AT.length : bound;
-  const shown = done ? work.after : work.before;
-  const tint = work.kind === 'enchant' && enchantType ? getTypeColor(enchantType) : RARITY_COLOR_VARS[work.after.rarity];
+  const fromRarity = work.before.rarity;
+  const climbed = RARITY_ORDER.indexOf(work.after.rarity) > RARITY_ORDER.indexOf(fromRarity);
+  const pips = RARITY_ORDER.indexOf(work.after.rarity) + 1;
+  const tint = enchantType ? getTypeColor(enchantType) : RARITY_COLOR_VARS[work.after.rarity];
+
   const style = {
     '--rarity-color': RARITY_COLOR_VARS[work.after.rarity],
     '--beat-color': tint,
     ...(enchantType ? { '--type-rgb': getTypeColorRgb(enchantType) } : null),
   } as CSSProperties;
 
-  // `is-strike-N` re-runs the screen shake on every hit: three keyframe names, since a class swap
-  // to the same animation would not restart it.
   return createPortal(
     <div
-      className={`smithy-beat is-${work.kind}${done ? ' is-done' : ''}${strikes > 0 && !reduced ? ` is-strike-${strikes}` : ''}`}
+      className={['cine', `is-${work.kind}`, `is-${scene}`, `cue-${cue}`, hitstop ? 'is-hitstop' : '', finished ? 'is-done' : ''].filter(Boolean).join(' ')}
+      data-el={enchantType ?? undefined}
       style={style}
-      onClick={onDone}
+      onClick={() => onDoneRef.current()}
     >
-      <div className="smithy-beat-stage">
-        {work.kind === 'anvil' ? (
-          <>
-            <span className="smithy-beat-heat" aria-hidden="true" />
-            <AnvilFigure key={`anvil-${strikes}`} className={`smithy-beat-anvil${strikes > 0 ? ' is-rung' : ''}`} />
-            {/* Keyed on the strike count so every jolt, flash and spark fan restarts on the hit. */}
-            <span key={`piece-${strikes}`} className={`smithy-beat-piece${strikes > 0 ? ' is-struck' : ''}`}>
-              <BeatPiece item={shown} />
-            </span>
-            {strikes > 0 && (
-              <span key={`sparks-${strikes}`} className="smithy-beat-sparks" aria-hidden="true">
-                {SPARKS.map((s, i) => (
-                  <i
-                    key={i}
-                    style={
-                      {
-                        '--spark-angle': `${s.angle}deg`,
-                        '--spark-distance': `${s.distance}px`,
-                        width: `${s.size}px`,
-                        height: `${s.size}px`,
-                        animationDelay: `${s.delay}ms`,
-                      } as CSSProperties
-                    }
-                  />
-                ))}
+      <span className="cine-veil" aria-hidden="true" />
+      <span className="cine-bar is-top" aria-hidden="true" />
+      <span className="cine-bar is-bottom" aria-hidden="true" />
+
+      <div className="cine-stage">
+        <div className={`cine-camera${cue === 'swing3' || cue === 'hit3' ? ' is-leaning' : ''}`}>
+          {scene === 'anvil' ? (
+            <div className={`cine-anvil${strikes ? ` is-struck-${strikes}` : ''}`}>
+              <span className="cine-fire" aria-hidden="true" />
+              {!reached('cooled') && (
+                <Burst className="cine-embers" items={EMBERS} vars={(e) => ({ '--x': `${e.x}px`, '--rise': `${e.rise}px`, '--drift': `${e.drift}px`, '--size': `${e.size}px`, animationDelay: `${e.delay}ms` })} />
+              )}
+              <AnvilFigure key={`anvil-${strikes}`} className={`cine-anvil-art${strikes ? ' is-rung' : ''}`} />
+              <span className={`cine-trough${reached('quench') && !reached('cooled') ? ' is-up' : ''}`} aria-hidden="true" />
+              <span
+                className={['cine-piece', reached('quench') ? (reached('cooled') ? 'is-cooled' : 'is-quenched') : `is-heat-${strikes}`].join(' ')}
+                key={reached('cooled') ? 'cooled' : 'hot'}
+              >
+                <BeatPiece item={reached('hit3') ? lifted : work.before} />
               </span>
-            )}
-            {strikes > 0 && <StrikeBurst key={`burst-${strikes}`} />}
-            {strikes > 0 && <span key={`flash-${strikes}`} className={`smithy-beat-flash${done ? ' is-final' : ''}`} aria-hidden="true" />}
-            {done && (
-              <>
-                <span className="smithy-beat-ring" aria-hidden="true" />
-                <span className="smithy-beat-ring is-late" aria-hidden="true" />
-              </>
-            )}
-            {!reduced && <HammerFigure className="smithy-beat-hammer" />}
-          </>
-        ) : (
-          <>
-            <span className="smithy-beat-aura" aria-hidden="true" />
-            <RuneRing className="smithy-beat-runes" />
-            {enchantType && <ElementGlyph type={enchantType} className="smithy-beat-sigil" />}
-            {!bound && (
-              <span className="smithy-beat-motes" aria-hidden="true">
-                {MOTES.map((m, i) => (
-                  <i
-                    key={i}
-                    style={
-                      {
-                        '--mote-angle': `${m.angle}deg`,
-                        '--mote-distance': `${m.distance}px`,
-                        width: `${m.size}px`,
-                        height: `${m.size}px`,
-                        animationDelay: `${m.delay}ms`,
-                      } as CSSProperties
-                    }
-                  />
-                ))}
-              </span>
-            )}
-            <span key={bound ? 'after' : 'before'} className={`smithy-beat-piece${bound ? ' is-bound' : ''}`}>
-              <BeatPiece item={shown} />
-            </span>
-            {bound && (
-              <>
-                <BindBurst />
-                <span className="smithy-beat-flash is-final" aria-hidden="true" />
-                <span className="smithy-beat-ring" aria-hidden="true" />
-                <span className="smithy-beat-ring is-late" aria-hidden="true" />
-              </>
-            )}
-          </>
-        )}
-      </div>
-
-      <div className={`smithy-beat-caption${done ? ' is-shown' : ''}`}>
-        <span className="smithy-beat-verb">{work.kind === 'anvil' ? 'Forged up' : 'Bound'}</span>
-        <span className="smithy-beat-name">{work.after.name}</span>
-        <span className="smithy-beat-rarity">
-          {RARITY_LABELS[work.after.rarity]}
-          {work.kind === 'enchant' && enchantType ? ` · ${enchantType}` : ''}
-        </span>
-        <span className="smithy-beat-chips">
-          <ItemEffectChips item={work.after} labelled />
-        </span>
-      </div>
-    </div>,
-    overlayHost()
-  );
-}
-
-function Sparks() {
-  return (
-    <span className="smithy-beat-sparks" aria-hidden="true">
-      {SPARKS.map((s, i) => (
-        <i
-          key={i}
-          style={
-            {
-              '--spark-angle': `${s.angle}deg`,
-              '--spark-distance': `${s.distance}px`,
-              width: `${s.size}px`,
-              height: `${s.size}px`,
-              animationDelay: `${s.delay}ms`,
-            } as CSSProperties
-          }
-        />
-      ))}
-    </span>
-  );
-}
-
-function Motes() {
-  return (
-    <span className="smithy-beat-motes" aria-hidden="true">
-      {MOTES.map((m, i) => (
-        <i
-          key={i}
-          style={
-            {
-              '--mote-angle': `${m.angle}deg`,
-              '--mote-distance': `${m.distance}px`,
-              width: `${m.size}px`,
-              height: `${m.size}px`,
-              animationDelay: `${m.delay}ms`,
-            } as CSSProperties
-          }
-        />
-      ))}
-    </span>
-  );
-}
-
-/**
- * The Forge's beat (2026-09-24, per user direction — "we want this to feel awesome"): both of the
- * Smithy's verbs in one piece of work, played as one. Three strikes on the anvil take the tier;
- * the anvil dims and the Enchanter's circle opens round the piece where it lies, still glowing
- * from the hammer; the element draws in, and the binding lands as the heaviest hit of the beat — a
- * shake, a white-out, rays, both colours' rings and a shard burst — before the caption names what
- * it is. The piece never moves between the two.
- */
-function ForgeBeat({
-  work,
-  strikes,
-  risen,
-  bound,
-  reduced,
-  onDone,
-}: {
-  work: Extract<SmithyWork, { kind: 'forge' }>;
-  strikes: number;
-  risen: boolean;
-  bound: boolean;
-  reduced: boolean;
-  onDone: () => void;
-}) {
-  const enchantType = enchantTypeOf(work.after);
-  const lifted = work.lifted ?? work.before;
-  const struck = Math.min(strikes, STRIKE_AT.length);
-  const onAnvil = struck >= STRIKE_AT.length ? lifted : work.before;
-  const style = {
-    '--rarity-color': RARITY_COLOR_VARS[work.after.rarity],
-    '--beat-color': enchantType ? getTypeColor(enchantType) : RARITY_COLOR_VARS[work.after.rarity],
-    ...(enchantType ? { '--type-rgb': getTypeColorRgb(enchantType) } : null),
-  } as CSSProperties;
-
-  const phase = bound ? 'is-bound' : risen ? 'is-risen' : 'is-striking';
-  return createPortal(
-    <div
-      className={`smithy-beat is-forge ${phase}${bound ? ' is-done' : ''}${strikes > 0 && !reduced ? ` is-strike-${strikes}` : ''}`}
-      style={style}
-      onClick={onDone}
-    >
-      <div className="smithy-beat-stage">
-        {/* Act one: the anvil. Dims under the circle once it opens; its own is-done rests the hammer. */}
-        {!reduced && (
-          <div className={`smithy-beat-layer is-anvil${struck >= STRIKE_AT.length ? ' is-done' : ''}${risen ? ' is-leaving' : ''}`}>
-            <span className="smithy-beat-heat" aria-hidden="true" />
-            <AnvilFigure key={`anvil-${struck}`} className={`smithy-beat-anvil${struck > 0 ? ' is-rung' : ''}`} />
-            <span key={`piece-${struck}`} className={`smithy-beat-piece${struck > 0 ? ' is-struck' : ''}`}>
-              <BeatPiece item={onAnvil} />
-            </span>
-            {struck > 0 && !risen && <Sparks key={`sparks-${struck}`} />}
-            {struck > 0 && !risen && <StrikeBurst key={`burst-${struck}`} />}
-            {struck > 0 && !risen && (
-              <span key={`flash-${struck}`} className={`smithy-beat-flash${struck >= STRIKE_AT.length ? ' is-final' : ''}`} aria-hidden="true" />
-            )}
-            {struck >= STRIKE_AT.length && !risen && (
-              <>
-                <span className="smithy-beat-ring is-tier" aria-hidden="true" />
-                <span className="smithy-beat-ring is-tier is-late" aria-hidden="true" />
-              </>
-            )}
-            <HammerFigure className="smithy-beat-hammer" />
-          </div>
-        )}
-
-        {/* Act two: the circle, opened round the piece on the anvil's face, where it binds. */}
-        {(risen || reduced) && (
-          <div className={`smithy-beat-layer is-enchant${bound ? ' is-done' : ''}`}>
-            {bound && !reduced && <span className="smithy-beat-rays" aria-hidden="true" />}
-            <span className="smithy-beat-aura" aria-hidden="true" />
-            <RuneRing className="smithy-beat-runes" />
-            {enchantType && <ElementGlyph type={enchantType} className="smithy-beat-sigil" />}
-            {!bound && <Motes />}
-            <span key={bound ? 'after' : 'before'} className={`smithy-beat-piece${bound ? ' is-bound' : ' is-rising'}`}>
-              <BeatPiece item={bound ? work.after : lifted} />
-            </span>
-            {bound && !reduced && (
-              <>
-                <BindBurst />
-                <span className="smithy-beat-flash is-final is-forge-final" aria-hidden="true" />
-                <span className="smithy-beat-ring" aria-hidden="true" />
-                <span className="smithy-beat-ring is-tier is-late" aria-hidden="true" />
-                <span className="smithy-beat-ring is-wide" aria-hidden="true" />
-                <span className="smithy-beat-shards" aria-hidden="true">
-                  {SHARDS.map((shard, i) => (
-                    <i
-                      key={i}
-                      className={shard.tone}
-                      style={
-                        {
-                          '--shard-angle': `${shard.angle}deg`,
-                          '--shard-distance': `${shard.distance}px`,
-                          width: `${shard.size}px`,
-                          height: `${shard.size * 2.4}px`,
-                          animationDelay: `${shard.delay}ms`,
-                        } as CSSProperties
-                      }
-                    />
-                  ))}
+              {strikes > 0 && !reached('quench') && (
+                <span key={`hit-${strikes}`}>
+                  <Burst className="cine-sparks" items={SPARKS} vars={(s) => ({ '--vx': `${s.vx}px`, '--h': `${s.h}px`, '--fall': `${s.fall}px`, '--size': `${s.size}px`, animationDelay: `${s.delay}ms` })} />
+                  <span className={`cine-flash${strikes === 3 ? ' is-white' : ''}`} aria-hidden="true" />
+                  {strikes === 3 && <span className="cine-ring is-hot" aria-hidden="true" />}
                 </span>
-              </>
-            )}
-          </div>
-        )}
+              )}
+              {reached('quench') && !reached('cooled') && (
+                <Burst className="cine-steam" items={STEAM} vars={(s) => ({ '--x': `${s.x}px`, '--size': `${s.size}px`, '--rise': `${s.rise}px`, animationDelay: `${s.delay}ms` })} />
+              )}
+              {reached('cooled') && (
+                <>
+                  <span className="cine-rays" aria-hidden="true" />
+                  <span className="cine-ring" aria-hidden="true" />
+                </>
+              )}
+              {!reached('quench') && <HammerFigure key={`swing-${swing}`} className={`cine-hammer${swing ? ` is-swing${swing === 3 ? ' is-slow' : ''}` : ''}`} />}
+            </div>
+          ) : (
+            <div className={`cine-enchant${bound ? ' is-bound' : ''}`}>
+              <span className="cine-aura" aria-hidden="true" />
+              <svg className="cine-circle" viewBox="0 0 240 240" aria-hidden="true">
+                <circle className="cine-stroke" cx="120" cy="120" r="104" />
+                <circle className="cine-stroke is-inner" cx="120" cy="120" r="86" />
+                {RUNES.map((a, i) => (
+                  <g key={a} transform={`rotate(${a} 120 120)`}>
+                    <path className="cine-rune" d="M120 9 l6 6 -6 6 -6 -6z" style={{ animationDelay: `${0.45 + i * 0.07}s` } as CSSProperties} />
+                  </g>
+                ))}
+              </svg>
+              <RuneRing className="cine-runes" />
+              {enchantType && <ElementGlyph type={enchantType} className="cine-sigil" />}
+              {reached('pour') && !bound && (
+                <Burst className="cine-motes" items={MOTES} vars={(m) => ({ '--a': `${m.angle}deg`, '--from': `${m.from}px`, '--size': `${m.size}px`, animationDelay: `${m.delay}ms` })} />
+              )}
+              <span className={`cine-piece is-floating${reached('pour') ? ' is-turning' : ''}`}>
+                <BeatPiece item={lifted} />
+                {bound && (
+                  <span className="cine-wipe">
+                    <BeatPiece item={work.after} />
+                  </span>
+                )}
+              </span>
+              {bound && (
+                <>
+                  <span className="cine-rays" aria-hidden="true" />
+                  <span className="cine-flash is-white" aria-hidden="true" />
+                  <span className="cine-ring" aria-hidden="true" />
+                  <span className="cine-ring is-late" aria-hidden="true" />
+                  <Burst className="cine-shards" items={SHARDS} vars={(s) => ({ '--a': `${s.angle}deg`, '--reach': `${s.reach}px`, '--size': `${s.size}px`, animationDelay: `${s.delay}ms` })} />
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className={`smithy-beat-caption${bound ? ' is-shown' : ''}`}>
-        <span className="smithy-beat-verb">Forged &amp; Bound</span>
-        <span className="smithy-beat-name">{work.after.name}</span>
-        <span className="smithy-beat-rarity">
-          {work.lifted ? (
-            <>
-              <span style={{ color: RARITY_COLOR_VARS[work.before.rarity] }}>{RARITY_LABELS[work.before.rarity]}</span>
-              {' ➜ '}
-              <span style={{ color: RARITY_COLOR_VARS[work.after.rarity] }}>{RARITY_LABELS[work.after.rarity]}</span>
-            </>
-          ) : (
-            <span style={{ color: RARITY_COLOR_VARS[work.after.rarity] }}>{RARITY_LABELS[work.after.rarity]}</span>
-          )}
-          {enchantType ? ` · ${enchantType}` : ''}
-        </span>
-        <span className="smithy-beat-chips">
-          <ItemEffectChips item={work.after} labelled />
-        </span>
+      <div className={`cine-caption${finished ? ' is-shown' : ''}`}>
+        {finished && (
+          <>
+            <span className="cine-pips" aria-hidden="true">
+              {Array.from({ length: pips }, (_, i) => (
+                <i key={i} className={climbed && i === pips - 1 ? 'is-new' : undefined} style={{ '--pip-i': i } as CSSProperties} />
+              ))}
+            </span>
+            <span className={`cine-name${acts.includes('enchant') ? ' is-written' : ''}`} aria-label={work.after.name}>
+              {[...work.after.name].map((ch, i) => (
+                <span key={i} style={{ '--ch-i': i } as CSSProperties} aria-hidden="true">
+                  {ch}
+                </span>
+              ))}
+            </span>
+            <span className="cine-climb">
+              {climbed && (
+                <>
+                  <span className="cine-from" style={{ color: RARITY_COLOR_VARS[fromRarity] }}>
+                    {RARITY_LABELS[fromRarity]}
+                  </span>
+                  <span className="cine-arrow">→</span>
+                </>
+              )}
+              <span className="cine-rarity">{RARITY_LABELS[work.after.rarity]}</span>
+              {acts.includes('enchant') && enchantType && (
+                <span className="cine-element" style={{ color: getTypeColor(enchantType) }}>
+                  <ElementGlyph type={enchantType} />
+                  {enchantType}
+                </span>
+              )}
+            </span>
+            <span className="cine-chips">
+              <ItemEffectChips item={work.after} labelled />
+            </span>
+          </>
+        )}
       </div>
     </div>,
     overlayHost()

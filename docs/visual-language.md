@@ -3016,6 +3016,20 @@ sheet's body scrolls under its head, and the two slabs are `flex: none` — thei
 hidden` (for the corner glow) would otherwise let flex shrink them and clip the grid, which it
 did on the first capture.
 
+**The cinematic** (2026-10-27, per user direction, replacing the beat described next): bars come
+down top and bottom, and every impact holds an 80ms hitstop. **The Anvil** (~3.9s): the piece heats
+in the forge's glow from dull red to orange, embers rising (`forge.roar`); two strikes and a slow
+third the camera leans into, the piece hotter after each (white-hot at the third), sparks falling
+under gravity, the shake growing; then the anvil drops out of frame, the piece plunges into a
+trough with a burst of steam (`forge.quench`) and rises cooled in its new tier on turning rays.
+**The Enchanter** (~2.7s): the circle draws itself stroke by stroke and its eight runes light in
+turn; the element pours in from the edges (Fire rising, Frost drifting, Storm flickering, the rest
+a glow) while the piece lifts and turns and the circle tightens; the binding wipes the piece over
+into its enchanted art behind an edge of the element, under a white-out, rings and shards. **The
+Forge** plays both in sequence. The caption is the merge's: tier pips (the new one stamped last),
+the name (written in letter by letter when enchanted), *~~RARE~~ → EPIC* and the element. The
+paragraphs below describe the beat it replaced.
+
 **The beat** (`SmithyBeat`, the merge burst's shape: full-screen, nearly opaque, self-clearing, a
 tap skips it, the change already landed before it plays). **The Anvil:** the piece sits on the
 anvil's face over the forge's heat, and the hammer — pivoted at the foot of its haft, up and to

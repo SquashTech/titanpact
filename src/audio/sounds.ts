@@ -45,6 +45,8 @@ export type SfxId =
   | 'anvil.strike'
   | 'anvil.ring'
   | 'enchant.bind'
+  | 'forge.quench'
+  | 'forge.roar'
   | 'gold.coin'
   | 'gold.purse'
   | 'xp.orb'
@@ -619,6 +621,29 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 2637, detune: -7, gain: 0.1, attack: 0.004, decay: 1.3, delay: 0.02 },
       { wave: 'noise', gain: 0.12, attack: 0.12, decay: 0.7, delay: 0.08, filter: { type: 'bandpass', freq: 1200, freqEnd: 7000, q: 0.9 } },
       { wave: 'sine', freq: 3136, gain: 0.08, attack: 0.05, decay: 1.2, delay: 0.16 },
+    ],
+  },
+
+  /** Hot metal into the trough (SmithyBeat): a hard spit, then steam hissing off and thinning out as it cools. */
+  'forge.quench': {
+    gain: 0.5,
+    jitter: 0.03,
+    voices: [
+      { wave: 'noise', gain: 0.34, attack: 0.002, decay: 0.09, filter: { type: 'bandpass', freq: 1100, q: 2.2 } },
+      { wave: 'noise', gain: 0.3, attack: 0.03, hold: 0.25, decay: 0.9, filter: { type: 'highpass', freq: 3800, freqEnd: 6500, q: 0.7 } },
+      { wave: 'noise', gain: 0.16, attack: 0.05, decay: 1.1, delay: 0.05, filter: { type: 'bandpass', freq: 7000, freqEnd: 2600, q: 1.4 } },
+      { wave: 'sine', freq: 120, freqEnd: 70, gain: 0.18, attack: 0.002, decay: 0.16 },
+    ],
+  },
+
+  /** The forge breathing up as the piece heats (SmithyBeat): a low, rising roar of fire under a crackle. */
+  'forge.roar': {
+    gain: 0.36,
+    jitter: 0.02,
+    voices: [
+      { wave: 'noise', gain: 0.3, attack: 0.35, hold: 0.25, decay: 0.5, filter: { type: 'lowpass', freq: 300, freqEnd: 1400, q: 1.5 } },
+      { wave: 'noise', gain: 0.12, attack: 0.2, hold: 0.3, decay: 0.4, filter: { type: 'bandpass', freq: 2400, q: 3 } },
+      { wave: 'sine', freq: 55, freqEnd: 82, gain: 0.16, attack: 0.3, hold: 0.2, decay: 0.5 },
     ],
   },
 
