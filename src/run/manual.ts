@@ -14,7 +14,7 @@ const PLAYER: Side = 'A';
 /** What files a run's page: a status landing, something a fight did, or a screen first reached. */
 export type ManualTrigger =
   | { kind: 'status'; statusId: string }
-  | { kind: 'fight'; what: 'lockIn' | 'pactClock' | 'field' | 'ancient' | 'stage' }
+  | { kind: 'fight'; what: 'lockIn' | 'pactClock' | 'field' | 'ancient' | 'stage' | 'heal' }
   | { kind: 'screen'; screen: string };
 
 export type ManualSource = { kind: 'lesson'; scenarioId: string } | { kind: 'run'; met: ManualTrigger };
@@ -62,7 +62,7 @@ export function pagesMetOnScreen(pages: readonly ManualPage[], screen: string): 
 }
 
 /**
- * The run pages a stretch of a fight meets: a status landing on anyone, a Field Effect set, a stat raised or lowered a step. `typesOf`
+ * The run pages a stretch of a fight meets: a status landing on anyone, a Field Effect set, a stat raised or lowered a step, a heal. `typesOf`
  * reads a combatant's typing for the Ancient page; the board after the stretch says whether a side
  * is locked in or an Ancient stands in it.
  */
@@ -75,6 +75,7 @@ export function pagesMetInFight(
   const statusIds = new Set(events.flatMap((e) => (e.type === 'StatusApplied' ? [e.statusId] : [])));
   const fieldSet = events.some((e) => e.type === 'FieldEffectSet');
   const staged = events.some((e) => e.type === 'StatChanged' && e.stages && e.delta !== 0);
+  const healed = events.some((e) => e.type === 'Healed');
   // Lock-in is the player's to meet: their side can't switch while a hero still waits on its bench.
   const lockedIn = isLockedIn(board, PLAYER) && board.bench[PLAYER].some((id) => !board.combatants[id]?.fainted);
   const clock = events.some((e) => e.type === 'PactTicked');
@@ -87,6 +88,7 @@ export function pagesMetInFight(
       if (trigger.kind !== 'fight') return false;
       if (trigger.what === 'field') return fieldSet;
       if (trigger.what === 'stage') return staged;
+      if (trigger.what === 'heal') return healed;
       if (trigger.what === 'lockIn') return lockedIn;
       if (trigger.what === 'pactClock') return clock;
       return ancient;

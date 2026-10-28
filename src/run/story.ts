@@ -137,6 +137,12 @@ export interface StoryCue {
   lines?: readonly CueLine[];
 }
 
+/** An item a lesson hands over before its fight, and the roster id of the one hero who may take it. */
+export interface StoryHandOver {
+  itemId: string;
+  to: string;
+}
+
 /** One line of a hero's call, by the roster id of a hero standing on the player's side. */
 export interface CueLine {
   by: string;
@@ -144,8 +150,12 @@ export interface CueLine {
 }
 
 export type StoryBeat =
-  /** A scripted fight, stood on `locationId`'s ground (unset: the plain arena). `line` is a lesson's one line, on the top bar while it commands. */
-  | { kind: 'fight'; fight: StoryFight; locationId?: string; cues?: readonly StoryCue[]; line?: string }
+  /**
+   * A scripted fight, stood on `locationId`'s ground (unset: the plain arena). `line` is a lesson's one
+   * line, on the top bar while it commands; `handOver` is a piece the party is given before it, on the
+   * item screen, to the one hero it names.
+   */
+  | { kind: 'fight'; fight: StoryFight; locationId?: string; cues?: readonly StoryCue[]; line?: string; handOver?: StoryHandOver }
   /** One Act of a run on the real map (docs/stories.md §14), a fixed party and fixed fights, ending at its last row. */
   | { kind: 'act'; act: StoryAct };
 

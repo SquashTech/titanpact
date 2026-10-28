@@ -28,6 +28,8 @@ interface Props {
   afterTake?: (run: RunState, rosterId: string) => RunState;
   /** A patron's piece, or a gift: the title before anything is chosen. */
   title?: string;
+  /** A lesson's piece is given, never sold. */
+  noSell?: boolean;
 }
 
 /**
@@ -36,7 +38,7 @@ interface Props {
  * A hero tap seats it — into a free socket, MERGED into the family the hero holds a tier up, or over
  * a piece a full hero picks to lose. Sell is the one decline.
  */
-export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone, onlyRosterIds, afterTake, title: arrivalTitle }: Props) {
+export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone, onlyRosterIds, afterTake, title: arrivalTitle, noSell = false }: Props) {
   const item = equipment[itemId];
   const [outcome, setOutcome] = useState<{ rosterId: string; mergeId?: string; replaced?: boolean } | { gold: number } | null>(null);
   const [burst, setBurst] = useState<MergeEvent | null>(null);
@@ -143,7 +145,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
         <button className="resolve-button" onClick={onDone}>
           Continue
         </button>
-      ) : (
+      ) : noSell ? null : (
         <SellPress gold={sellGold} purse={run.gold} armed={sell.armed} buttonRef={sell.ref} onClick={sell.onClick} className="item-who-sell" />
       )}
 

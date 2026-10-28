@@ -490,6 +490,8 @@ function stringList(value: unknown): string[] {
 const RETIRED_LESSONS: Readonly<Record<string, readonly string[]>> = {
   'firstLight.hunt': ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread'],
   'firstLight.clearing': ['firstLight.order', 'firstLight.kinds', 'firstLight.burn', 'firstLight.switch'],
+  'firstLight.road': ['firstLight.gear'],
+  'firstLight.fork': ['firstLight.open'],
 };
 
 /**

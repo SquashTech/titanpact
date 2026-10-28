@@ -56,15 +56,16 @@ and a round past the script is the player's own.
 |---|---|
 | 1–8 | Guided throughout: every round the hand points and the player taps. |
 | 9 Equipment | Guided: the who-screen's tap, then the fight's decisive hit. |
-| 10 The Road | Free: the act is the player's own, and its new screens get their picture card at the moment. |
+| 10 The first fight | Free: a full team of six, the leads the player's to pick, nothing guided. |
 
 3. **Lost → replay.** **DRAFT CALL:** a lesson can be lost; a loss restarts it at once, with no
-   result screen. A guided lesson can't be lost, so this applies only to lesson 10's act.
+   result screen. A guided lesson can't be lost, so this applies only to lesson 10.
 4. **Won → the Learned screen.** The same page lands in the book (`src/run/manual.ts`), Blip
    cheers, the island lights, and the sky moves on to the next one.
 
-**Cast. DRAFT CALL:** heroes from the base 28, picked per concept rather than one recurring pair, so
-ten lessons double as a first look at the roster. Blip, on the sky between lessons, is the thread
+**Cast. DECIDED 2026-10-27, per user direction:** heroes from the base 28, picked per concept rather
+than one recurring pair, so ten lessons double as a first look at the roster. No team fields two heroes
+of one type (§6). Blip, on the sky between lessons, is the thread
 that runs through them.
 
 ## 3. The curriculum
@@ -80,14 +81,14 @@ that runs through them.
 | 7 | **Status effects** | Burn's three pips running out | One status, Burn, on a foe that would otherwise outlast you. |
 | 8 | **Switching** | a hero stepping back, the bench refilling mana | The lead is in a bad matchup; swap in the benched hero, who comes in with full mana. |
 | 9 | **Equipment** | a piece going into a socket, and its Force on a hit | **DRAFT CALL:** a who-screen with one piece, then a fight where that piece's Force tips the decisive hit. Elemental Force is taught here, not on its own. |
-| 10 | **The Road** | the map's row of tiles | One short act: the opener, a reward row, a Skirmish, and its **Recruit Contract** claimed. The map, Contracts and level-ups each get their picture card at the moment they happen. **DRAFT CALL:** Contracts are taught here and not as a lesson of their own. |
+| 10 | **The first fight** | the lead pick | **DECIDED 2026-10-27, per user direction:** the first truly open fight, a full team of six against four, nothing guided. The Road act it replaced is retired; the map, Recruit Contracts and level-ups are taught by a run's own screens the first time it reaches them (§6). |
 
 **Order.** Each lesson leans only on the ones before it: 1–4 are what every fight needs, 5–8 are what
-makes doubles deep, and 9–10 are the run.
+makes doubles deep, 9 is the run's gear, and 10 is all of it at once.
 
 **Left for runs to file** (the existing "a run files the rest", `the-sky.md` §2c): Shield, Conduct,
-heals, Daze, buffs and debuffs, lock-in, potions, Leads, Wounds, the Pact Clock, Elite or Skirmish,
-Patrons, the Guild Hall, the Academy, Gems.
+heals, Daze, buffs and debuffs, lock-in, potions, the map, Wounds, levels, the Pact Clock, Elite or
+Skirmish, Patrons, Recruiting, the Guild Hall, the Academy, Gems.
 
 ## 4. Second-order questions
 
@@ -125,44 +126,47 @@ cues' spoken lines, Blip's First Light thoughts and hello premise, `OpeningFall`
 1. ~~A comparison page for the lesson's picture, pages 1–3.~~ Done: On the Field (§2).
 2. ~~The lesson machinery.~~ Done 2026-10-27: a fight beat's `line` (`run/story.ts`) shows on the top
    bar in the order track's place while the player commands, and the track returns while the round
-   resolves. Lesson 10's act restart is still to do.
-3. Lessons 1–4 DONE 2026-10-27 (`data/lessons.ts`, pinned in `test/lessons.test.ts`). Each is one
-   guided round unless noted, at Wild's Edge against early spawn:
-   - **Move & target**: Crag and Ursa, one attack each, drop an Arcling and a Cubling.
-   - **Mana & Rest**: Riptide alone. Torrent costs 40 of a 68 pool. Round 2 holds only Rest, and
-     round 3's Torrent finishes a level-14 Cubling. Three rounds.
-   - **Types**: Cinder's Fire on a Sproutling, Raiju's Storm on a Puddling. Swapped, both foes stand.
-     The target cards' *Bonus!* and *Resist* ranges carry the lesson.
-   - **Spread**: Cairn alone. Tremor drops both foes.
+   resolves. A beat's `handOver` plays the real item screen before its fight: only the named hero can
+   take the piece, Sell is hidden, and the hand points at the hero and then *Continue*.
+3. ~~All ten lessons.~~ DONE 2026-10-27 (`data/lessons.ts`, pinned in `test/lessons.test.ts`), at
+   Wild's Edge. Lessons 1–9 are guided; each has a test that the concept is what wins.
 
-   They replace the Hunt. A file that lit the Hunt lights all four on decode (`RETIRED_LESSONS`,
-   `run/profile.ts`).
+   | # | Line | Cast | What happens |
+   |---|---|---|---|
+   | 1 | *Pick a move, then pick who it hits.* | Crag, Ursa | Each drops its own foe. |
+   | 2 | *Moves cost Mana. Rest fills it back up.* | Riptide | Torrent (40 of a 68 pool), then a round holding only Rest, then a second Torrent finishes a level-14 Cubling. |
+   | 3 | *Some types hit harder than others.* | Crimson, Raiju | Fire on a Sproutling, Storm on a Puddling; swapped, both foes stand. The target cards' *Bonus!* and *Resist* ranges carry it. |
+   | 4 | *Some moves hit both foes at once.* | Cairn | Tremor drops both. |
+   | 5 | *Faster heroes move first.* | Skyshear, Hollowbark | Skyshear drops a Cubling before it can swing; aimed the other way, it gets its hit in on slow Hollowbark. |
+   | 6 | *Defense stops physical hits. Wisdom stops magic.* | Nightshade, Glyph | The same move in each hand: physical Nightfall through Rillfin's thin hide, magical Nightfall (off-type for Glyph) past Ingot's low Wisdom. Every pairing is neutral; crossed, neither foe falls. |
+   | 7 | *A Burn keeps hurting after the hit.* | Cinder | Set Alight, then a Singe that leaves a level-13 Rivetling standing; the round-end Burn tick lands the KO. A full Burn is only 27% of max HP over three rounds, less than one hit, so the lesson shows it finishing a foe. |
+   | 8 | *Switch in a hero from the bench.* | Cinder, Clockwork, Raiju (bench) | Cinder steps back from a Puddling; Raiju takes under half the splash. The switch panel's *deals 2× / takes 0.5×* readout carries it. |
+   | 9 | *A piece of gear makes its hero stronger.* | Ursa, Drift | The Feral Dagger (Attack +15, Speed +15, Beast Force 5) goes to Ursa on the item screen; her Claw then knocks out a level-13 Cubling that the bare Claw leaves at 24 HP. The target card shows the knockout. |
+   | 10 | *Six heroes now. Win it your way.* | Rime, Raiju, Revenant, Sylva, Glyph, Cairn | **The first open fight** (2026-10-27, per user direction): six heroes of six types, nothing guided, the leads the player's to pick on the real lead pick, against four mid-tier spawn (Ravager, Bramblehide, Rillfin, Kindlehide) at level 4 on the enemy AI. It can be lost, and a loss replays it. Measured (directional): an AI-piloted team wins 40 of 40 in about 8 rounds, with about 4 heroes standing. |
 
-   Lessons 5–8 DONE 2026-10-27. Each has a test that the concept is what wins:
-   - **Turn order**: Skyshear and Ursa. Skyshear drops a Cubling before it can swing, while an
-     Arcling outruns Ursa. Aimed the other way, the Cubling gets its hit in.
-   - **Physical vs magical**: Nightshade and Marrow hold the same move, Nightfall, one physical and
-     one magical (`nightfall` / `nightfallRewired`). Against Pincer (thick hide, low Wisdom) and Pixie
-     (the reverse), every type pairing is neutral. Aimed right, both drop; crossed, neither does.
-   - **Status effects**: Cinder alone, Set Alight then Singe. The Singe leaves a level-13 Rivetling
-     standing, and the round-end Burn tick lands the KO. A full Burn is only 27% of max HP over three
-     rounds, less than one hit, so the lesson shows it finishing a foe rather than beating a hit.
-   - **Switching**: Cinder and Ursa, with Raiju on the bench, against a Puddling and a Cubling. Cinder
-     steps back for Raiju, who takes the splash at under half what Cinder would have. The switch panel's
-     *deals 2× / takes 0.5×* readout carries the lesson.
+   **Casts. DECIDED 2026-10-27, per user direction:** no team fields two heroes of one type (pinned
+   by test), and the casts spread across the base roster rather than leaning on a few heroes.
 
-   **A lesson with a bench needs two leads.** With one lead the game opens on *Choose a
-   replacement* to fill the empty slot. This is pinned by a test.
+   **A lesson with a bench needs two leads, or none.** With one lead the game opens on *Choose a
+   replacement* to fill the empty slot. Pinned by test.
 
-   **The Clearing is retired** too. Its switching, the two kinds of attack and statuses are taught by
-   5–8, and a file that lit it lights all four. First Light is now **ten islands**: lessons 1–8, then the
-   Road and the Fork until 9–10 replace them. The Infinite opens on lesson 8.
+   **Retired: the Hunt, the Clearing, the Road and the Fork** (the last two 2026-10-27, per user
+   direction, when lesson 10 became the open fight). A file that lit one lights the lessons that
+   replaced it (`RETIRED_LESSONS`, `run/profile.ts`). First Light is ten islands and ends on the open
+   fight. The Infinite opens on lesson 8.
 
-   **Pages:** Turn by Turn (1), Mana and Rest (2), Types (3), Single and Spread (4), a new **Turn Order**
-   page (5), Physical and Magical (6), Status Effects and Burn (7), Switching (8).
-   - **Buffs and Debuffs** is filed by a run the first time a stat moves a step in a fight (a new
-     `stage` trigger, `run/manual.ts`), which resolves the earlier flag.
-   - **Shield** and **Conduct** are filed when first met, like every other status.
+   **Pages, one concept a lesson:** Turn by Turn (1), Mana and Rest (2), Types (3), Single and Spread
+   (4), a new Turn Order page (5), Physical and Magical (6), Status Effects and Burn (7), Switching (8),
+   Items (9), Leads (10). Everything else is filed by a run the first time it meets it:
+   - **Fight triggers:** a stat moving a step files Buffs and Debuffs (`stage`, `run/manual.ts`); a
+     heal files Heals (`heal`).
+   - **Statuses:** Shield, Conduct and Daze are filed when first met, like every other status.
+   - **Screens:** the first map files The Map, Wounds and Elite or Skirmish; the first run fight files
+     The Bag; the first level-up, patron screen and recruit screen file Levels and Moves, Patrons and
+     Recruiting.
 
-   Then 9–10.
+   **Dead now, delete in step 4:** the Story *act* machinery (`StoryAct`, `storyActRun`,
+   `storyActMap`, `onStartAct`, and its use in `MapScreen` and `NodeDossier`). No content plays an act
+   any more, and its content tests went with the Road and the Fork. The Story cast (`data/storyCast.ts`:
+   the lesson Valor, the stag and the fox) is unused too.
 4. The Ascent at ten, the silent tour, the lore card restored, and the old lessons deleted.

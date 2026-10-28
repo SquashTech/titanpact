@@ -21,8 +21,8 @@ const SCENARIOS: readonly ScenarioDefinition[] = [
   lesson('firstLight.kinds', 'Physical and Magical'),
   lesson('firstLight.burn', 'Status Effects'),
   lesson('firstLight.switch', 'Switching'),
-  lesson('firstLight.road', 'The Road'),
-  lesson('firstLight.fork', 'The Fork'),
+  lesson('firstLight.gear', 'Equipment'),
+  lesson('firstLight.open', 'The First Fight'),
   scenario('strange.monotype', 'One Type'),
   scenario('strange.newPlace', 'A New Place'),
   scenario('strange.strangers', 'Strangers'),
@@ -44,7 +44,7 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
   {
     id: 'firstLight',
     name: 'First Light',
-    // The guided fights rise to the two acts, played in that order.
+    // The guided fights rise to the open one, played in that order.
     stars: [
       scenarioStar('firstLight.move', 0.1, 0.96),
       scenarioStar('firstLight.mana', 0.42, 0.88),
@@ -54,8 +54,8 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
       scenarioStar('firstLight.kinds', 0.4, 0.5),
       scenarioStar('firstLight.burn', 0.76, 0.4),
       scenarioStar('firstLight.switch', 0.5, 0.3),
-      scenarioStar('firstLight.road', 0.16, 0.2),
-      scenarioStar('firstLight.fork', 0.9, 0.06),
+      scenarioStar('firstLight.gear', 0.16, 0.2),
+      scenarioStar('firstLight.open', 0.9, 0.06),
     ],
     lines: chain(10),
     after: [],
@@ -81,7 +81,7 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
     })),
     lines: [],
     rings: true,
-    // The guided fights open it; the two acts stay First Light's to play, never a gate (2026-10-24, per user direction).
+    // The guided fights open it; the open fight stays First Light's to play, never a gate (2026-10-24, per user direction).
     after: ['firstLight.switch'],
     rewards: [],
   },

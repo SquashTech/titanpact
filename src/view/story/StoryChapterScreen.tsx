@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { allCombatants } from '../../data/content';
 import { storySides, type StoryAct, type StoryChapter } from '../../run/story';
+import type { RunState } from '../../run/state';
 import { FightScreen } from '../combat/FightScreen';
 import { MANUAL_PAGES } from '../../data/howToPlay';
 import { lessonPages } from '../../run/manual';
 import { LessonLearnedScreen } from './LessonLearnedScreen';
+import { ItemWhoScreen } from '../run/ItemWhoScreen';
+import { GuideHand } from './GuideHand';
 
 interface Props {
   chapter: StoryChapter;
@@ -31,6 +34,9 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, start
   const beat = chapter.beats[index];
   const next = () => setIndex((i) => i + 1);
   const sides = useMemo(() => (beat?.kind === 'fight' ? storySides(beat.fight, allCombatants) : null), [beat]);
+  // A beat's hand-over: the party as the item screen leaves it, and whether it has been handed. Kept across a replay.
+  const [given, setGiven] = useState<{ index: number; run: RunState; done: boolean } | null>(null);
+  const handed = given?.index === index ? given : null;
 
   useEffect(() => {
     if (beat?.kind === 'fight') onPlace(beat.locationId ?? null);
@@ -43,10 +49,26 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, start
     return pages.length > 0 ? <LessonLearnedScreen pages={pages} onContinue={onFinished} /> : <Finish onFinished={onFinished} />;
   }
   if (beat.kind === 'act') return null;
+  if (beat.handOver && !handed?.done) {
+    const { itemId, to } = beat.handOver;
+    return (
+      <>
+        <ItemWhoScreen
+          run={handed?.run ?? sides!.player.run}
+          itemId={itemId}
+          onlyRosterIds={[to]}
+          noSell
+          onRunChange={(run) => setGiven({ index, run, done: false })}
+          onDone={() => setGiven((g) => ({ index, run: g?.run ?? sides!.player.run, done: true }))}
+        />
+        <GuideHand selector={handed ? '.item-who-screen .resolve-button' : '.item-ledger-row.is-offered'} />
+      </>
+    );
+  }
   return (
     <FightScreen
       key={`${index}:${attempt}`}
-      playerRun={sides!.player.run}
+      playerRun={handed?.run ?? sides!.player.run}
       playerSquad={sides!.player.squad}
       aiRun={sides!.ai.run}
       aiSquad={sides!.ai.squad}

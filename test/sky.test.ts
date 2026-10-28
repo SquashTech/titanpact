@@ -52,16 +52,16 @@ test('sky: a new account sees the lessons first and the Infinite past them', () 
   assert.deepStrictEqual(Object.values(sky.constellations).filter((c) => c.uncharted).map((c) => c.id), ['strange'], 'only Strange Worlds waits on scenarios');
 });
 
-test('sky: the guided fights open the Infinite; the two acts stay lessons, and every lesson pays once', () => {
+test('sky: the guided fights open the Infinite; the open fight stays a lesson, and every lesson pays once', () => {
   let profile = ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread'].reduce((p, id) => recordScenarioLit(p, sky, id), createProfile());
   assert.strictEqual(constellationState(profile, sky, 'infinite'), 'glimpsed', 'the first four are not enough');
   profile = ['firstLight.order', 'firstLight.kinds', 'firstLight.burn'].reduce((p, id) => recordScenarioLit(p, sky, id), profile);
   assert.strictEqual(constellationState(profile, sky, 'infinite'), 'glimpsed', 'nor seven');
   profile = recordScenarioLit(profile, sky, 'firstLight.switch');
-  assert.strictEqual(constellationState(profile, sky, 'infinite'), 'open', 'Switching, the last guided fight, opens the Infinite');
-  assert.strictEqual(constellationState(profile, sky, 'firstLight'), 'open', 'the acts are still to play');
+  assert.strictEqual(constellationState(profile, sky, 'infinite'), 'open', 'Switching opens the Infinite');
+  assert.strictEqual(constellationState(profile, sky, 'firstLight'), 'open', 'Equipment and the open fight are still to play');
   assert.strictEqual(skyStardust(profile, sky), 0, 'paid only when every lesson is lit');
-  profile = recordScenarioLit(recordScenarioLit(profile, sky, 'firstLight.road'), sky, 'firstLight.fork');
+  profile = recordScenarioLit(recordScenarioLit(profile, sky, 'firstLight.gear'), sky, 'firstLight.open');
   assert.strictEqual(constellationState(profile, sky, 'firstLight'), 'lit');
   const paid = skyStardust(profile, sky);
   assert.strictEqual(paid, 300);
@@ -112,9 +112,9 @@ test('sky: lit scenarios survive a round trip and decode deduplicated', () => {
   const profile = recordScenarioLit(createProfile(), sky, 'firstLight.move');
   assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile))).litStars, ['firstLight.move']);
   assert.deepStrictEqual(
-    decodeProfile({ litStars: ['firstLight.hunt', 'firstLight.clearing'] }).litStars,
-    ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread', 'firstLight.order', 'firstLight.kinds', 'firstLight.burn', 'firstLight.switch'],
-    'the Hunt and the Clearing lit light the lessons that replaced them'
+    decodeProfile({ litStars: ['firstLight.hunt', 'firstLight.clearing', 'firstLight.road', 'firstLight.fork'] }).litStars,
+    sky.constellations.firstLight.stars.map((star) => star.id),
+    'the four old lessons lit light the ten that replaced them'
   );
   assert.deepStrictEqual(decodeProfile({ litStars: ['a', 'a', 3, ''] }).litStars, ['a']);
   assert.deepStrictEqual(decodeProfile({}).litStars, []);

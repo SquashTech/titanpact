@@ -1,10 +1,9 @@
-// First Light's lessons (docs/first-light.md): one concept a lesson, each a guided fight with one line
-// on the top bar, then the Road and the Fork until lessons 9–10 replace them. A lesson teaches by its
-// guided taps, and the two acts by their control tips too.
+// First Light's lessons (docs/first-light.md): one concept a lesson, each a fight with one line on the
+// top bar. The first nine are guided, the hand on every tap; the tenth is the first open fight, a full
+// team the player commands alone. Each casts heroes the others don't, so the roster shows itself.
 // Each lesson is a one-beat chapter in its own book, so the Story machinery plays it unchanged.
 
-import type { StoryAct, StoryChapter, StoryDefinition, StoryFight } from '../run/story';
-import { manualPage } from './howToPlay';
+import type { StoryChapter, StoryDefinition, StoryFight, StoryHandOver } from '../run/story';
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
 const ally = (rosterId: string) => ({ side: 'A' as const, rosterId });
@@ -48,17 +47,17 @@ const types: StoryFight = {
   id: 'lesson-types',
   seed: 1803,
   player: [
-    { rosterId: 'cinder', heroId: 'cinderKnight', level: 3, moveIds: ['singe'] },
+    { rosterId: 'crimson', heroId: 'crimson', level: 3, moveIds: ['ember'] },
     { rosterId: 'raiju', heroId: 'raiju', level: 3, moveIds: ['thunderclap'] },
   ],
-  playerLeads: ['cinder', 'raiju'],
+  playerLeads: ['crimson', 'raiju'],
   enemy: [
     { rosterId: 'sprout', heroId: 'sproutling', level: 6 },
     { rosterId: 'pud', heroId: 'puddling', level: 6 },
   ],
   enemyLeads: ['sprout', 'pud'],
-  enemyScript: [[{ actor: 'sprout', moveId: 'vineLash', target: ally('cinder') }, { actor: 'pud', moveId: 'splash', target: ally('cinder') }]],
-  guide: [[{ actor: 'cinder', moveId: 'singe', target: foe('sprout') }, { actor: 'raiju', moveId: 'thunderclap', target: foe('pud') }]],
+  enemyScript: [[{ actor: 'sprout', moveId: 'vineLash', target: ally('crimson') }, { actor: 'pud', moveId: 'splash', target: ally('crimson') }]],
+  guide: [[{ actor: 'crimson', moveId: 'ember', target: foe('sprout') }, { actor: 'raiju', moveId: 'thunderclap', target: foe('pud') }]],
 };
 
 /** One spread move takes both foes at once. */
@@ -76,40 +75,40 @@ const spread: StoryFight = {
   guide: [[{ actor: 'cairn', moveId: 'tremor' }]],
 };
 
-/** The faster hero strikes first: Skyshear drops the Cubling before it can swing at Ursa, and the Arcling outruns Ursa. */
+/** The faster hero strikes first: Skyshear drops the Cubling before it can swing at Hollowbark, and the Arcling outruns Hollowbark. */
 const turnOrder: StoryFight = {
   id: 'lesson-order',
   seed: 1805,
   player: [
     { rosterId: 'skyshear', heroId: 'skyshear', level: 3, moveIds: ['jolt'] },
-    { rosterId: 'ursa', heroId: 'ursa', level: 3, moveIds: ['claw'] },
+    { rosterId: 'hollowbark', heroId: 'hollowbark', level: 3, moveIds: ['ivySpike'] },
   ],
-  playerLeads: ['skyshear', 'ursa'],
+  playerLeads: ['skyshear', 'hollowbark'],
   enemy: [
     { rosterId: 'cub', heroId: 'cubling', level: 6 },
     { rosterId: 'arc', heroId: 'arcling', level: 2 },
   ],
   enemyLeads: ['cub', 'arc'],
-  enemyScript: [[{ actor: 'cub', moveId: 'claw', target: ally('ursa') }, { actor: 'arc', moveId: 'zap', target: ally('ursa') }]],
-  guide: [[{ actor: 'skyshear', moveId: 'jolt', target: foe('cub') }, { actor: 'ursa', moveId: 'claw', target: foe('arc') }]],
+  enemyScript: [[{ actor: 'cub', moveId: 'claw', target: ally('hollowbark') }, { actor: 'arc', moveId: 'zap', target: ally('hollowbark') }]],
+  guide: [[{ actor: 'skyshear', moveId: 'jolt', target: foe('cub') }, { actor: 'hollowbark', moveId: 'ivySpike', target: foe('arc') }]],
 };
 
-/** The same move in each hand: Nightshade's physical Nightfall goes through Pixie's thin hide, Marrow's magical one past Pincer's low Wisdom. */
+/** The same move in each hand: Nightshade's physical Nightfall goes through Rillfin's thin hide, Glyph's magical one past Ingot's low Wisdom. */
 const kinds: StoryFight = {
   id: 'lesson-kinds',
   seed: 1806,
   player: [
-    { rosterId: 'nightshade', heroId: 'nightshade', level: 3, moveIds: ['nightfall'] },
-    { rosterId: 'marrow', heroId: 'marrow', level: 3, moveIds: ['nightfallRewired'] },
+    { rosterId: 'nightshade', heroId: 'nightshade', level: 4, moveIds: ['nightfall'] },
+    { rosterId: 'glyph', heroId: 'runescribe', level: 4, moveIds: ['nightfallRewired'] },
   ],
-  playerLeads: ['nightshade', 'marrow'],
+  playerLeads: ['nightshade', 'glyph'],
   enemy: [
-    { rosterId: 'pincer', heroId: 'pincer', level: 4 },
-    { rosterId: 'pixie', heroId: 'pixie', level: 4 },
+    { rosterId: 'ingot', heroId: 'ingot', level: 4 },
+    { rosterId: 'rillfin', heroId: 'rillfin', level: 4 },
   ],
-  enemyLeads: ['pincer', 'pixie'],
-  enemyScript: [[{ actor: 'pincer', moveId: 'undertow', target: ally('nightshade') }, { actor: 'pixie', moveId: 'resonantBolt', target: ally('marrow') }]],
-  guide: [[{ actor: 'nightshade', moveId: 'nightfall', target: foe('pixie') }, { actor: 'marrow', moveId: 'nightfallRewired', target: foe('pincer') }]],
+  enemyLeads: ['ingot', 'rillfin'],
+  enemyScript: [[{ actor: 'rillfin', moveId: 'crest', target: ally('glyph') }]],
+  guide: [[{ actor: 'nightshade', moveId: 'nightfall', target: foe('rillfin') }, { actor: 'glyph', moveId: 'nightfallRewired', target: foe('ingot') }]],
 };
 
 /** Set Alight, then Singe: the hit leaves the Rivetling standing, and the Burn at the round's end puts it down. */
@@ -130,104 +129,70 @@ const switching: StoryFight = {
   seed: 1808,
   player: [
     { rosterId: 'cinder', heroId: 'cinderKnight', level: 3, moveIds: ['singe'] },
-    { rosterId: 'ursa', heroId: 'ursa', level: 3, moveIds: ['claw'] },
+    { rosterId: 'clockwork', heroId: 'forgewright', level: 3, moveIds: ['pistonPunch'] },
     { rosterId: 'raiju', heroId: 'raiju', level: 3, moveIds: ['thunderclap'] },
   ],
-  playerLeads: ['cinder', 'ursa'],
+  playerLeads: ['cinder', 'clockwork'],
   enemy: [
     { rosterId: 'pud', heroId: 'puddling', level: 10 },
     { rosterId: 'cub', heroId: 'cubling', level: 4 },
   ],
   enemyLeads: ['pud', 'cub'],
-  enemyScript: [1, 2].map(() => [{ actor: 'pud', moveId: 'splash', target: ally('cinder') }, { actor: 'cub', moveId: 'claw', target: ally('ursa') }]),
+  enemyScript: [1, 2].map(() => [{ actor: 'pud', moveId: 'splash', target: ally('cinder') }, { actor: 'cub', moveId: 'claw', target: ally('clockwork') }]),
   guide: [
-    [{ actor: 'cinder', switchTo: 'raiju' }, { actor: 'ursa', moveId: 'claw', target: foe('cub') }],
-    [{ actor: 'raiju', moveId: 'thunderclap', target: foe('pud') }, { actor: 'ursa', moveId: 'claw', target: foe('pud') }],
+    [{ actor: 'cinder', switchTo: 'raiju' }, { actor: 'clockwork', moveId: 'pistonPunch', target: foe('cub') }],
+    [{ actor: 'raiju', moveId: 'thunderclap', target: foe('pud') }, { actor: 'clockwork', moveId: 'pistonPunch', target: foe('pud') }],
   ],
 };
 
-/** A guided fight as a lesson: its line on the top bar, the hand on every round. */
-function lessonChapter(id: string, title: string, fight: StoryFight, line: string): StoryChapter {
+/** Ursa takes the Feral Dagger, and its Attack and Beast Force turn her Claw into a knockout the bare Claw is not. */
+const gear: StoryFight = {
+  id: 'lesson-gear',
+  seed: 1809,
+  player: [
+    { rosterId: 'ursa', heroId: 'ursa', level: 3, moveIds: ['claw'] },
+    { rosterId: 'drift', heroId: 'drift', level: 3, moveIds: ['psiBolt'] },
+  ],
+  playerLeads: ['ursa', 'drift'],
+  enemy: [
+    { rosterId: 'cub', heroId: 'cubling', level: 13 },
+    { rosterId: 'arc', heroId: 'arcling', level: 2 },
+  ],
+  enemyLeads: ['cub', 'arc'],
+  enemyScript: [[{ actor: 'cub', moveId: 'claw', target: ally('ursa') }]],
+  guide: [[{ actor: 'ursa', moveId: 'claw', target: foe('cub') }, { actor: 'drift', moveId: 'psiBolt', target: foe('arc') }]],
+};
+const GEAR_HAND_OVER: StoryHandOver = { itemId: 'dagger.common.feral', to: 'ursa' };
+
+/** The first open fight: six heroes of six types, the leads the player's to pick, and nothing guided. */
+const open: StoryFight = {
+  id: 'lesson-open',
+  seed: 1810,
+  player: [
+    { rosterId: 'rime', heroId: 'rime', level: 6 },
+    { rosterId: 'raiju', heroId: 'raiju', level: 6 },
+    { rosterId: 'revenant', heroId: 'revenant', level: 6 },
+    { rosterId: 'sylva', heroId: 'wildOracle', level: 6 },
+    { rosterId: 'glyph', heroId: 'runescribe', level: 6 },
+    { rosterId: 'cairn', heroId: 'cairn', level: 6 },
+  ],
+  playerLeads: [],
+  enemy: [
+    { rosterId: 'ravager', heroId: 'ravager', level: 4 },
+    { rosterId: 'bramble', heroId: 'bramblehide', level: 4 },
+    { rosterId: 'rillfin', heroId: 'rillfin', level: 4 },
+    { rosterId: 'kindle', heroId: 'kindlehide', level: 4 },
+  ],
+  enemyLeads: ['ravager', 'bramble'],
+  enemyScript: [],
+  guide: [],
+};
+
+/** A fight as a lesson: its line on the top bar, the hand on every guided round. */
+function lessonChapter(id: string, title: string, fight: StoryFight, line: string, handOver?: StoryHandOver): StoryChapter {
   const cues = fight.guide.map((_, i) => ({ round: i + 1, point: true as const }));
-  return { id, title, beats: [{ kind: 'fight', fight, locationId: 'wildsEdge', cues, line }] };
+  return { id, title, beats: [{ kind: 'fight', fight, locationId: 'wildsEdge', cues, line, handOver }] };
 }
-
-/** The map, a pick from three, an item, a level, the Rest: one short act at Wild's Edge. */
-const road: StoryAct = {
-  locationId: 'wildsEdge',
-  party: [
-    { rosterId: 'valor', heroId: 'valor', level: 4 },
-    { rosterId: 'fang', heroId: 'packAlpha', level: 4 },
-    { rosterId: 'warden', heroId: 'ironWarden', level: 6 },
-  ],
-  rows: [
-    [
-      {
-        type: 'fight',
-        enemy: [{ rosterId: 'ravager', heroId: 'cubling', level: 6 }, { rosterId: 'sprout', heroId: 'sproutling', level: 6 }],
-        // The lead pick's own first-time tip teaches the leads, at the moment they are picked.
-        drop: 'dagger.common.feral',
-      },
-    ],
-    [{ type: 'equipmentReward', items: ['greataxe.common', 'leathers.common.feral', 'shield.common'] }, { type: 'restReward' }, { type: 'passiveReward' }],
-    [{ type: 'fight', enemy: [{ rosterId: 'rivet', heroId: 'rivetling', level: 8 }, { rosterId: 'ravager', heroId: 'cubling', level: 8 }, { rosterId: 'sprout', heroId: 'sproutling', level: 7 }], drop: 'spear.common.tempered' }],
-    [{ type: 'restReward' }, { type: 'equipmentReward', items: ['boots.common', 'plate.common', 'dagger.common.tempered'] }, { type: 'manaWellReward' }],
-    [
-      {
-        type: 'elite',
-        enemy: [
-          { rosterId: 'bear', heroId: 'ursa', level: 15, moveIds: ['claw', 'maul', 'prowl'] },
-          { rosterId: 'sprout', heroId: 'sproutling', level: 12 },
-          { rosterId: 'ravager', heroId: 'cubling', level: 12 },
-        ],
-        drop: 'sword.rare.tempered',
-        cues: [
-          {
-            round: 2,
-            tips: [manualPage('howto.bag')],
-          },
-        ],
-      },
-    ],
-  ],
-};
-
-/**
- * Matchups (the opener favours Fang, the fork's Elite the Iron pair and Solace's Light, its
- * Skirmish hits everyone double), the Swordsman's seat with Valor his student, and Solace, the
- * roster's own Light caster: magic against Wisdom, a heal, a status, an innate.
- */
-const fork: StoryAct = {
-  locationId: 'forbiddenForest',
-  party: [
-    { rosterId: 'valor', heroId: 'valor', level: 8 },
-    { rosterId: 'fang', heroId: 'packAlpha', level: 8 },
-    { rosterId: 'warden', heroId: 'ironWarden', level: 9 },
-    { rosterId: 'solace', heroId: 'dawnwarden', level: 8, moveIds: ['glimmer', 'mend', 'blind'] },
-  ],
-  students: { swordsman: 'valor' },
-  rows: [
-    [
-      {
-        type: 'fight',
-        enemy: [{ rosterId: 'sprout', heroId: 'sproutling', level: 9 }, { rosterId: 'whim', heroId: 'whimling', level: 9 }],
-        drop: 'dagger.rare.feral',
-        cues: [
-          { round: 1, tips: [manualPage('howto.heals')] },
-          { round: 2, tips: [manualPage('howto.status.Daze')] },
-        ],
-      },
-    ],
-    [{ type: 'equipmentReward', items: ['greataxe.rare', 'leathers.rare.feral', 'boots.rare'] }, { type: 'restReward' }, { type: 'passiveReward' }],
-    [{ type: 'patronSeat', patrons: ['swordsman'] }],
-    [
-      { type: 'elite', enemy: [{ rosterId: 'hoar', heroId: 'hoarfang', level: 11 }, { rosterId: 'slabback', heroId: 'pebbling', level: 10 }, { rosterId: 'sleet', heroId: 'sleetling', level: 10 }], drop: 'spear.rare.tempered' },
-      { type: 'skirmish', enemy: [{ rosterId: 'volt', heroId: 'voltail', level: 7 }, { rosterId: 'gear', heroId: 'gearhound', level: 7 }], drop: 'plate.rare' },
-    ],
-    [{ type: 'restReward' }, { type: 'equipmentReward', items: ['shield.rare', 'plate.rare', 'greataxe.rare.tempered'] }, { type: 'manaWellReward' }],
-    [{ type: 'elite', enemy: [{ rosterId: 'bramble', heroId: 'bramblehide', level: 11 }, { rosterId: 'gear', heroId: 'gearhound', level: 11 }, { rosterId: 'whim', heroId: 'whimling', level: 10 }], drop: 'greataxe.rare.tempered' }],
-  ],
-};
 
 /** The lessons as a book of one-beat chapters; a chapter's id is its scenario's (data/sky.ts). */
 export const LESSONS: StoryDefinition = {
@@ -242,8 +207,8 @@ export const LESSONS: StoryDefinition = {
     lessonChapter('firstLight.kinds', 'Physical and Magical', kinds, 'Defense stops physical hits. Wisdom stops magic.'),
     lessonChapter('firstLight.burn', 'Status Effects', burn, 'A Burn keeps hurting after the hit.'),
     lessonChapter('firstLight.switch', 'Switching', switching, 'Switch in a hero from the bench.'),
-    { id: 'firstLight.road', title: 'The Road', beats: [{ kind: 'act', act: road }] },
-    { id: 'firstLight.fork', title: 'The Fork', beats: [{ kind: 'act', act: fork }] },
+    lessonChapter('firstLight.gear', 'Equipment', gear, 'A piece of gear makes its hero stronger.', GEAR_HAND_OVER),
+    lessonChapter('firstLight.open', 'The First Fight', open, 'Six heroes now. Win it your way.'),
   ],
 };
 

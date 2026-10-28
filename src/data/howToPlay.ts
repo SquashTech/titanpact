@@ -16,8 +16,8 @@ const ORDER = lesson('firstLight.order');
 const KINDS = lesson('firstLight.kinds');
 const BURN = lesson('firstLight.burn');
 const SWITCH = lesson('firstLight.switch');
-const ROAD = lesson('firstLight.road');
-const FORK = lesson('firstLight.fork');
+const GEAR = lesson('firstLight.gear');
+const OPEN = lesson('firstLight.open');
 const met = (trigger: ManualTrigger): ManualSource => ({ kind: 'run', met: trigger });
 
 function page(id: string, title: string, source: ManualSource, emblem: readonly string[], ...pages: string[]): ManualPage {
@@ -25,7 +25,7 @@ function page(id: string, title: string, source: ManualSource, emblem: readonly 
 }
 
 /** The lesson that teaches a status, where one does. */
-const TAUGHT_BY: Readonly<Record<string, ManualSource>> = { Burn: BURN, Daze: FORK };
+const TAUGHT_BY: Readonly<Record<string, ManualSource>> = { Burn: BURN };
 
 /** A status's page, in bullets. A status not here reads its own description, a bullet a sentence. */
 const STATUS_WORDS: Readonly<Record<string, readonly string[]>> = {
@@ -168,7 +168,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'leads',
     'Leads',
-    ROAD,
+    OPEN,
     ['glyph:leads'],
     '- The enemy sends out its *leads* first.\n- Tap two heroes to answer them. The rest wait on the bench.',
     '- A *green* arrow: your hero has the type advantage over the enemy above it.\n- A *red* arrow: the enemy has it.'
@@ -176,7 +176,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'map',
     'The Map',
-    ROAD,
+    met({ kind: 'screen', screen: 'map' }),
     ['node:fight'],
     '- Tap a place ahead to read what happens there.\n- Tap it again to go.',
     'The track across the top shows the way to the Guardian, and how many stops are left before it.'
@@ -184,7 +184,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'items',
     'Items',
-    ROAD,
+    GEAR,
     ['node:equipmentReward'],
     'An item goes to a hero the moment it arrives, and stays.',
     '- Each hero holds *three*.\n- A second item of the same kind *merges* into a stronger one.',
@@ -193,7 +193,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'levels',
     'Levels and Moves',
-    ROAD,
+    met({ kind: 'screen', screen: 'levelUp' }),
     ['resource:xp'],
     '- Every hero on your roster gains XP from each won fight, *benched heroes too*.',
     "- Each level can raise a hero's stats.\n- Some levels offer a new move: take it or pass.\n- A hero knows *four* moves at most."
@@ -201,7 +201,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'wounds',
     'Wounds',
-    ROAD,
+    met({ kind: 'screen', screen: 'map' }),
     ['stat:hp'],
     '- *HP* carries over from fight to fight within an act.\n- *Mana* refills before every fight.',
     '- A knocked-out hero sits out.\n- It stands again at a *Rest* site, the *Guild Hall*, or the *next act*.'
@@ -209,17 +209,16 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'bag',
     'The Bag',
-    ROAD,
+    met({ kind: 'screen', screen: 'fight' }),
     ['resource:hpPotion', 'resource:mpPotion'],
     "- Drinking a potion *doesn't use a turn*: drink, then choose a move.\n- A potion restores *half* of a hero's HP or Mana.\n- Hold up to *three* of each."
   ),
 
-  page('heals', 'Heals', FORK, ['kind:heal'], "- [heal] A *heal* restores an ally's HP.\n- It grows with the healer's *Wisdom*.\n- It can't raise a hero who has been knocked out."),
-  ...taughtIn(FORK),
+  page('heals', 'Heals', met({ kind: 'fight', what: 'heal' }), ['kind:heal'], "- [heal] A *heal* restores an ally's HP.\n- It grows with the healer's *Wisdom*.\n- It can't raise a hero who has been knocked out."),
   page(
     'patrons',
     'Patrons',
-    FORK,
+    met({ kind: 'screen', screen: 'patronNode' }),
     ['node:mentorReward'],
     '- At a patron seat, choose who to meet.\n- Each patron gives one of your heroes something of their own.',
     'The more often you choose a patron, the more they *trust* you, and the better their help.'
@@ -227,7 +226,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'fork',
     'Elite or Skirmish',
-    FORK,
+    met({ kind: 'screen', screen: 'map' }),
     ['node:elite', 'node:skirmish'],
     'At the fork, an *Elite*, against a Skirmish:\n- is a *level higher*\n- *always* drops an item\n- pays *more XP*',
     'Tap a tile to see the types it fields against your roster.'
@@ -235,7 +234,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'recruit',
     'Recruiting',
-    FORK,
+    met({ kind: 'screen', screen: 'recruit' }),
     ['resource:contract'],
     '- Skirmishes and Elites are fought against other heroes.\n- After a win, a *Recruit Contract* adds one of them to your roster, with its moves and its item.',
     '- Your roster holds *six*.\n- Past that, a hero must leave to make room.'

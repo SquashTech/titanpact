@@ -24,25 +24,12 @@ import {
   withStoryEnds,
   STORY_ENEMY_SIDE,
   STORY_PLAYER_SIDE,
-  endsStoryAct,
-  storyActMap,
-  storyActRun,
-  storyNodeEncounter,
   storyNodeFight,
-  type StoryAct,
-  type StoryActNode,
   type StoryFight,
 } from '../src/run/story';
-import { LESSONS, STORY_BOOKS } from '../src/data/lessons';
+import { STORY_BOOKS } from '../src/data/lessons';
 import { TIP_STAGING } from '../src/view/run/tipStaging';
 import { TIP_SCENES } from '../src/data/tipScenes';
-import { rosterHeroes } from '../src/data/content';
-import { MAP_NODE_TYPES } from '../src/run/map';
-import { levelOf } from '../src/run/growth';
-import { patrons } from '../src/data/patrons';
-import { patronAtSeat, seatIndexFor, studentOf } from '../src/run/patrons';
-import { PATRON_ROWS } from '../src/run/map';
-import { withReachableSeatOffers } from '../src/run/runProgress';
 
 const UNBREAKABLE = 'storyTestUnbreakable';
 const testPassives: Record<string, PassiveDefinition> = {
@@ -196,106 +183,6 @@ test('story: every catalog fight scripts only moves its actors hold, and leads a
   }
 });
 
-const actBeats = STORY_BOOKS.flatMap((story) =>
-  story.chapters.flatMap((chapter) => chapter.beats.map((beat, index) => ({ chapter, beat, index }))).filter((b) => b.beat.kind === 'act')
-);
-
-test('story act: the map is the authored rows, every row fully connected to the next, the last row its end', () => {
-  for (const { beat } of actBeats) {
-    if (beat.kind !== 'act') continue;
-    const map = storyActMap(beat.act, 9);
-    assert.strictEqual(map.rows.length, beat.act.rows.length);
-    map.rows.forEach((row, r) => {
-      assert.deepStrictEqual(row.map((id) => map.nodes[id].type), beat.act.rows[r].map((n) => n.type));
-      for (const id of row) assert.deepStrictEqual(map.nodes[id].nextIds, r + 1 < map.rows.length ? map.rows[r + 1] : []);
-    });
-    assert.deepStrictEqual(map.startNodeIds, map.rows[0]);
-    assert.strictEqual(map.bossNodeId, map.rows[map.rows.length - 1][0]);
-    for (const id of Object.keys(map.nodes)) assert.ok((MAP_NODE_TYPES as readonly string[]).includes(map.nodes[id].type), `${id} is not a map node type`);
-  }
-});
-
-test('story act: the run holds the party at its levels, no contract, no companion, and the marker back to its chapter', () => {
-  const { chapter, beat, index } = actBeats[0];
-  assert.ok(beat.kind === 'act');
-  const run = storyActRun(beat.act, { chapterId: chapter.id, beat: index }, rosterHeroes, 3);
-  assert.deepStrictEqual(run.story, { chapterId: chapter.id, beat: index });
-  assert.strictEqual(run.recruitContracts, 0);
-  assert.strictEqual(run.companion, null);
-  assert.deepStrictEqual(run.locationIds, [beat.act.locationId]);
-  assert.deepStrictEqual(
-    run.roster.map((entry) => [entry.rosterId, levelOf(entry)]),
-    beat.act.party.map((spec) => [spec.rosterId, spec.level])
-  );
-});
-
-test('story act: a fight node fields its authored party, a reward node none, and only the last row ends the act', () => {
-  for (const { chapter, beat, index } of actBeats) {
-    if (beat.kind !== 'act') continue;
-    const run = storyActRun(beat.act, { chapterId: chapter.id, beat: index }, rosterHeroes, 3);
-    for (const node of Object.values(run.map!.nodes)) {
-      const spec: StoryActNode = beat.act.rows[node.row][node.col];
-      const encounter = storyNodeEncounter(run, STORY_BOOKS, node.id, allCombatants);
-      if (spec.enemy) assert.deepStrictEqual(encounter!.run.roster.map((e) => e.heroId), spec.enemy.map((e) => e.heroId), `${node.id}`);
-      else assert.strictEqual(encounter, null, `${node.id} is a reward and fields nobody`);
-      assert.strictEqual(endsStoryAct(run, node.id), node.row === beat.act.rows.length - 1);
-    }
-    const lastRow = beat.act.rows[beat.act.rows.length - 1];
-    assert.ok(lastRow.length === 1 && lastRow[0].enemy, `${chapter.id}: an act ends on one fight`);
-  }
-  const classic = { ...storyActRun((actBeats[0].beat as { act: StoryAct }).act, { chapterId: 'x', beat: 0 }, rosterHeroes, 3), story: undefined };
-  assert.strictEqual(storyNodeEncounter(classic, STORY_BOOKS, 'r0-c0', allCombatants), null);
-  assert.strictEqual(endsStoryAct(classic, classic.map!.bossNodeId), false);
-});
-
-test('story act: every fight names its drop and every Items chest its three, each a real piece that suits a party stat', () => {
-  for (const { chapter, beat } of actBeats) {
-    if (beat.kind !== 'act') continue;
-    const swings = new Set<string>();
-    for (const spec of beat.act.party) {
-      const stats = rosterHeroes[spec.heroId].baseStats;
-      swings.add(stats.attack >= stats.intelligence ? 'attack' : 'intelligence');
-      for (const stat of ['defense', 'speed', 'hp'] as const) swings.add(stat);
-    }
-    for (const row of beat.act.rows) {
-      for (const node of row) {
-        // A guided tile is a lesson fight, not a road one: it drops nothing.
-        const ids = node.enemy && !node.script ? [node.drop] : node.type === 'equipmentReward' ? node.items ?? [] : [];
-        if (node.enemy && !node.script) assert.ok(node.drop, `${chapter.id}: a fight with no drop`);
-        if (node.type === 'equipmentReward') assert.strictEqual(node.items?.length, 3, `${chapter.id}: a chest holds three`);
-        for (const id of ids) {
-          const item = equipment[id!];
-          assert.ok(item, `${chapter.id}: ${id} is not an item`);
-          const grants = Object.keys(item.statGrants ?? {});
-          assert.ok(grants.some((stat) => swings.has(stat)), `${chapter.id}: ${id} suits nobody in the party`);
-        }
-      }
-    }
-  }
-});
-
-test('story act: a patron seat seats the patron it names, on a patron row, teaching a student in the party', () => {
-  let seated = 0;
-  for (const { chapter, beat, index } of actBeats) {
-    if (beat.kind !== 'act') continue;
-    const run = storyActRun(beat.act, { chapterId: chapter.id, beat: index }, rosterHeroes, 3);
-    for (const [patronId, rosterId] of Object.entries(beat.act.students ?? {})) {
-      assert.ok(patrons[patronId], `${chapter.id}: no patron ${patronId}`);
-      assert.ok(run.roster.some((entry) => entry.rosterId === rosterId), `${chapter.id}: ${rosterId} is not in the party`);
-      assert.strictEqual(studentOf(run, patronId), rosterId);
-    }
-    for (const node of Object.values(run.map!.nodes)) {
-      if (node.type !== 'patronSeat') continue;
-      const seat = seatIndexFor(run.actNumber, node.row, PATRON_ROWS);
-      assert.notStrictEqual(seat, null, `${chapter.id}: a seat off the patron rows`);
-      assert.strictEqual(patronAtSeat(run, seat!, node.col), beat.act.rows[node.row][node.col].patrons![0]);
-      assert.deepStrictEqual(withReachableSeatOffers(run).patrons, run.patrons, 'the authored seat is never redrawn');
-      seated++;
-    }
-  }
-  assert.ok(seated > 0, 'some chapter seats a patron');
-});
-
 test('story tips: every control tip is short, unique, and lights something', () => {
   const seen = new Set<string>();
   for (const story of STORY_BOOKS) {
@@ -312,6 +199,5 @@ test('story tips: every control tip is short, unique, and lights something', () 
       }
     }
   }
-  assert.ok(seen.size > 0);
 });
 
