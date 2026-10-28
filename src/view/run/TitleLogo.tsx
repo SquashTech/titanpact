@@ -1,5 +1,5 @@
 // The wordmark (2026-10-14, per user direction): TITANPACT in a bold pixel alphabet, nine pixels
-// tall, gold lit from above falling to bronze, a dark outline and drop under it. Drawn in grid units
+// tall, magenta lit from above falling to plum, a dark outline and drop under it. Drawn in grid units
 // and scaled by a whole number so every pixel lands square.
 
 /** Each letter as rows of its grid: '#' is a pixel. */
@@ -17,12 +17,12 @@ const ROWS = 9;
 /** Screen px per grid pixel. */
 const SCALE = 5;
 
-/** Gold by row: pale where the light strikes the top, down through gold to bronze at the foot. */
+/** Magenta by row, the Titan's eye: pale where the light strikes the top, down to plum at the foot. */
 function rowFill(y: number): string {
-  if (y <= 1) return '#fff4cc';
-  if (y <= 3) return '#f1c45e';
-  if (y <= 6) return '#d59a36';
-  return '#8e5c1d';
+  if (y <= 1) return '#ffd6f6';
+  if (y <= 3) return '#f670e2';
+  if (y <= 6) return '#d23cbd';
+  return '#7a1a6e';
 }
 
 const PIXELS: readonly (readonly [number, number])[] = (() => {
@@ -54,7 +54,7 @@ export function TitleLogo() {
       <defs>
         <filter id="title-wordmark-edge" x="-5%" y="-20%" width="110%" height="150%">
           <feMorphology in="SourceAlpha" operator="dilate" radius="0.6" result="grown" />
-          <feFlood floodColor="#140c05" />
+          <feFlood floodColor="#14051a" />
           <feComposite in2="grown" operator="in" result="edge" />
           <feOffset in="edge" dy="0.6" result="drop" />
           <feMerge>

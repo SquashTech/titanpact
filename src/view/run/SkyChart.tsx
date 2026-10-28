@@ -19,7 +19,7 @@ import {
   type ConstellationState,
   type SkyStar,
 } from '../../run/sky';
-import { revealedFirst, revealedThought, thoughtFor, zoomThought, type ThoughtDefinition, type ThoughtMoment } from '../../run/thoughts';
+import { revealedFirst, revealedThought, thoughtFor, type ThoughtDefinition, type ThoughtMoment } from '../../run/thoughts';
 import { PlateButton } from '../shared/PlateButton';
 import { Blip, type BlipHandle } from './Blip';
 import { BlipBeat } from './BlipBeat';
@@ -151,10 +151,7 @@ const cardState = (state: ConstellationState): Exclude<ConstellationState, 'hidd
 
 const scenarioIdOf =(star: SkyStar) => (star.light.kind === 'scenario' ? star.light.scenarioId : star.id);
 
-/** Idle thoughts a visit, at most: Blip leans on firsts and keeps its pool small (docs/the-sky.md §7). */
-const IDLE_THOUGHTS_A_VISIT = 3;
 const ARRIVE_MS = 900;
-const IDLE_MS = [9000, 16000] as const;
 const ZOOM_MS = 650;
 /** Motes a constellation's Stardust flies to the Observatory in. */
 const DUST_MOTES = 18;
@@ -247,8 +244,6 @@ export function SkyChart({
   const [settled, setSettled] = useState(folded);
   const [fx, setFx] = useState<Fx>({});
   const [beating, setBeating] = useState(() => pending.length > 0 || paysNow);
-  const beatingRef = useRef(beating);
-  beatingRef.current = beating;
   const quietRef = useRef(quiet);
   quietRef.current = quiet;
   const [zoomed, setZoomed] = useState<string | null>(null);
@@ -296,18 +291,16 @@ export function SkyChart({
   const trailLit = firstLight.stars.map((star) => isStarLit(shown, firstLight, star));
 
   const blip = useRef<BlipHandle>(null);
-  // A forced thought standing over the sky; the first its showsNext leads to rides in the same beat.
+  // A forced thought's beat standing over the sky; the first its showsNext leads to is kept with it. Blip never speaks.
   const [beat, setBeat] = useState<{ thought: ThoughtDefinition; next: ThoughtDefinition | null } | null>(null);
-  const beatRef = useRef(beat);
-  beatRef.current = beat;
   const sayThought = (thought: ThoughtDefinition | null, onDone?: () => void) => {
     if (!thought) return false;
     if (thought.forced) {
       setBeat({ thought, next: thought.showsNext ? revealedFirst(profile, THOUGHTS, thought.showsNext) : null });
       return true;
     }
-    blip.current?.think(thought.lines, onDone, { guarded: !!thought.once });
     if (thought.once) onSeeThought?.(thought);
+    onDone?.();
     return true;
   };
   const seatRef = useRef<HTMLDivElement>(null);
@@ -329,7 +322,7 @@ export function SkyChart({
     if (lesson && !isStarLit(profile, lesson.constellation, lesson.star)) onPlayLesson?.(lesson.star.id);
     else if (thought.showsNext) callTo(thought.showsNext);
   };
-  /** Point at a constellation and say its first from the seat. */
+  /** Point at a constellation, Blip chirping at it from the seat. */
   const show = (constellationId: string, thought: ThoughtDefinition, later: (ms: number, fn: () => void) => void) => {
     callTo(constellationId);
     later(600, () => {
@@ -343,8 +336,8 @@ export function SkyChart({
     return sayThought(thought, next && later ? () => show(thought!.showsNext!, next, later) : undefined);
   };
 
-  // On arriving: the lessons won are played back first, then one thing to say — an Infinite run's end,
-  // the first sky, a constellation seen open for the first time — then a few idle thoughts, spaced out.
+  // On arriving: the lessons won are played back first, then one beat — an Infinite run's end, the
+  // first sky, a constellation seen open for the first time.
   useEffect(() => {
     if (!active) return;
     let alive = true;
@@ -357,7 +350,6 @@ export function SkyChart({
       if (quietRef.current) return;
       if (returned) {
         blip.current?.react(returned === 'win' ? 'win' : 'lose');
-        at(700, () => say({ kind: 'returned', outcome: returned }));
         onReturnedSeen?.();
         return;
       }
@@ -456,22 +448,10 @@ export function SkyChart({
         return;
       }
       setBeating(false);
-      const next = firstLight.stars.find((star) => !isStarLit(profile, firstLight, star));
-      if (!(next && say({ kind: 'star', starId: next.id }))) arrive();
+      arrive();
     };
     run().catch(() => undefined);
 
-    let idle = 0;
-    const next = () =>
-      at(IDLE_MS[0] + Math.random() * (IDLE_MS[1] - IDLE_MS[0]), () => {
-        // Never cut a thought short.
-        if (!beatRef.current && !beatingRef.current && !blip.current?.busy() && idle < IDLE_THOUGHTS_A_VISIT && !quietRef.current) {
-          idle++;
-          say({ kind: 'idle' });
-        }
-        next();
-      });
-    next();
     return () => {
       alive = false;
       timers.forEach(window.clearTimeout);
@@ -556,19 +536,14 @@ export function SkyChart({
     });
   };
 
-  // A tapped seat zooms in; the card opens once the Pact has flown past it, and Blip says its piece.
-  // Held so a back-out mid-flight cancels them: a card opening after its zoom was undone would sit over the title.
+  // A tapped seat zooms in; the card opens once the Pact has flown past it.
+  // Held so a back-out mid-flight cancels it: a card opening after its zoom was undone would sit over the title.
   const zoomTimers = useRef<number[]>([]);
   const zoomTo = (id: string) => {
     if (beating || zoomed) return;
     setZoomed(id);
     setFx((f) => ({ ...f, calling: undefined }));
-    zoomTimers.current.push(
-      window.setTimeout(() => setOpen(id), ZOOM_MS * 0.55),
-      window.setTimeout(() => {
-        if (!beatRef.current && !blip.current?.busy()) sayThought(zoomThought(profile, sky, THOUGHTS, id, Math.random()));
-      }, ZOOM_MS + 300)
-    );
+    zoomTimers.current.push(window.setTimeout(() => setOpen(id), ZOOM_MS * 0.55));
   };
   const zoomOut = () => {
     zoomTimers.current.forEach(window.clearTimeout);
@@ -612,13 +587,6 @@ export function SkyChart({
           ref={blip}
           home={SEAT}
           active={active && !beat}
-          bubbleAt="beside"
-          onPoke={(inARow) => {
-            // A poke mid-first only giggles, so it never cuts one short.
-            if (blip.current?.guarded()) return;
-            if (inARow >= 5) say({ kind: 'pokedLots' });
-            else if (inARow === 1 || inARow === 3) say({ kind: 'poked' });
-          }}
         />
       </div>
 
@@ -733,9 +701,7 @@ export function SkyChart({
 
       {beat && active && (
         <BlipBeat
-          lines={beat.thought.scene ? beat.thought.lines : [...beat.thought.lines, ...(beat.next?.lines ?? [])]}
           scene={beat.thought.scene}
-          sceneLines={beat.next?.lines}
           onDone={endBeat}
           from={blipPoint()}
         />

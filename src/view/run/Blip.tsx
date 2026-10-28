@@ -3,8 +3,7 @@ import { playSfx } from '../../audio/sfx';
 import './blip.css';
 
 // Blip (docs/the-sky.md §1): the little face, a soft glow with two eyes that look where it is going.
-// It springs toward its home, bobs while it waits, babbles as a thought types out and squishes when
-// poked. Drawn on a canvas each frame; nothing here is a control except the poke, which opens nothing.
+// It springs toward its home, bobs while it waits and squishes when poked; it never speaks. Drawn on a canvas each frame; nothing here is a control except the poke, which opens nothing.
 
 const TAU = Math.PI * 2;
 const RADIUS = 12.5;
@@ -16,38 +15,22 @@ const SQUISH_DAMP = 9;
 /** Pokes closer together than this count as a run of them. */
 const POKE_RUN_MS = 1200;
 const DIZZY_AT = 5;
+/** Room the canvas keeps past the stage on every side, so the glow and a jump are never clipped square. */
+const BLEED = 90;
 
 type Mood = 'idle' | 'happy' | 'sad' | 'dizzy' | 'surprised';
 
 export interface BlipHandle {
   /** Fly to a point in the stage's own pixels, and run `onArrive` once there. */
   goTo(x: number, y: number, onArrive?: () => void): void;
-  /**
-   * Type a thought beside Blip a bubble at a time, babbling, then let it fade; `onDone` once the last
-   * has gone. A `guarded` thought (a first) is never cut short by a poke; a `forced` one holds each
-   * bubble until `advance`; a `linger` one leaves its last bubble up until `quiet`.
-   */
-  think(lines: readonly string[], onDone?: () => void, options?: { guarded?: boolean; forced?: boolean; linger?: boolean }): void;
-  /** Stop talking: the bubble fades, mid-line or not. */
-  quiet(): void;
-  /** A forced thought: finish the line being typed, or move on from the one that waits. */
-  advance(): void;
   react(kind: 'win' | 'lose' | 'chirp'): void;
-  /** Mid-thought or mid-flight: an idle thought waits rather than cut in. */
-  busy(): boolean;
-  /** Mid-flight, or saying a first: even a poke's thought waits. */
-  guarded(): boolean;
 }
 
 interface Props {
   /** Where Blip rests, in the stage's pixels. */
   home: { x: number; y: number };
-  /** Off, Blip stops drawing and says nothing: the page is hidden or something stands over it. */
+  /** Off, Blip stops drawing: the page is hidden or something stands over it. */
   active: boolean;
-  /** A poke landed; `inARow` counts a quick run of them. */
-  onPoke?: (inARow: number) => void;
-  /** `beside`: to Blip's right, into the band it sits in; `below`: under it, centred; else above it. */
-  bubbleAt?: 'beside' | 'below';
 }
 
 interface Body {
@@ -82,10 +65,9 @@ interface Spark {
   max: number;
 }
 
-export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, onPoke, bubbleAt }, ref) {
+export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active }, ref) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const bubbleRef = useRef<HTMLDivElement>(null);
   const hitRef = useRef<HTMLButtonElement>(null);
   const body = useRef<Body>({
     x: home.x,
@@ -111,22 +93,7 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
   });
   const sparks = useRef<Spark[]>([]);
   const clock = useRef(0);
-  const typing = useRef<number[]>([]);
   const pokes = useRef({ count: 0, at: 0 });
-  const guarding = useRef(false);
-  /** A forced thought's next step: finish the line, or go on from it. */
-  const held = useRef<(() => void) | null>(null);
-
-  function clearTyping() {
-    typing.current.forEach(window.clearTimeout);
-    typing.current = [];
-  }
-
-  function hideBubble() {
-    clearTyping();
-    held.current = null;
-    bubbleRef.current?.classList.remove('is-on', 'is-waiting', 'is-forced');
-  }
 
   function spark(power: number, angle = Math.random() * TAU) {
     const b = body.current;
@@ -138,79 +105,6 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
     goTo(x, y, onArrive) {
       Object.assign(body.current, { homeX: x, homeY: y, travelling: true, onArrive: onArrive ?? null });
       playSfx('blip.chirp');
-    },
-    think(lines, onDone, { guarded = false, forced = false, linger = false } = {}) {
-      const bubble = bubbleRef.current;
-      if (!bubble || !active) return;
-      clearTyping();
-      held.current = null;
-      guarding.current = guarded || forced;
-      const later = (ms: number, fn: () => void) => typing.current.push(window.setTimeout(fn, ms));
-      bubble.classList.toggle('is-forced', forced);
-      const say = (i: number) => {
-        const line = lines[i];
-        // The whole line is laid out from the first letter, the untyped rest hidden, so the bubble never grows as it types.
-        const typed = document.createElement('span');
-        const rest = document.createElement('span');
-        rest.className = 'blip-untyped';
-        rest.textContent = line;
-        bubble.replaceChildren(typed, rest);
-        bubble.classList.remove('is-waiting');
-        bubble.classList.add('is-on');
-        let n = 0;
-        const wait = () => {
-          clearTyping();
-          typed.textContent = line;
-          rest.textContent = '';
-          bubble.classList.add('is-waiting');
-          held.current = () => {
-            held.current = null;
-            if (i + 1 < lines.length) {
-              say(i + 1);
-              return;
-            }
-            bubble.classList.remove('is-on', 'is-waiting', 'is-forced');
-            guarding.current = false;
-            onDone?.();
-          };
-        };
-        const type = () => {
-          n++;
-          typed.textContent = line.slice(0, n);
-          rest.textContent = line.slice(n);
-          if (n % 2 === 0 && line[n - 1] !== ' ') playSfx('blip.syllable');
-          if (n < line.length) later(34, type);
-          else if (forced) wait();
-          else if (i + 1 < lines.length) later(900 + line.length * 25, () => say(i + 1));
-          else if (linger) typing.current = [];
-          else
-            later(1800 + line.length * 35, () => {
-              bubble.classList.remove('is-on');
-              if (onDone)
-                later(400, () => {
-                  typing.current = [];
-                  onDone();
-                });
-              else typing.current = [];
-            });
-        };
-        if (forced) held.current = wait;
-        type();
-      };
-      if (lines.length > 0) say(0);
-    },
-    advance() {
-      held.current?.();
-    },
-    quiet() {
-      hideBubble();
-      guarding.current = false;
-    },
-    busy() {
-      return typing.current.length > 0 || held.current !== null || body.current.travelling;
-    },
-    guarded() {
-      return (guarding.current && (typing.current.length > 0 || held.current !== null)) || body.current.travelling;
     },
     react(kind) {
       const b = body.current;
@@ -237,10 +131,7 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
   }, [home.x, home.y]);
 
   useEffect(() => {
-    if (!active) {
-      hideBubble();
-      return;
-    }
+    if (!active) return;
     const stage = stageRef.current;
     const canvas = canvasRef.current;
     const g = canvas?.getContext('2d');
@@ -252,9 +143,9 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
       const dpr = window.devicePixelRatio || 1;
       width = stage.clientWidth;
       height = stage.clientHeight;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      canvas.width = (width + BLEED * 2) * dpr;
+      canvas.height = (height + BLEED * 2) * dpr;
+      g.setTransform(dpr, 0, 0, dpr, BLEED * dpr, BLEED * dpr);
     };
     const observer = new ResizeObserver(resize);
     observer.observe(stage);
@@ -268,7 +159,7 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
       clock.current += dt;
       step(clock.current, dt);
       draw(g, width, height, clock.current);
-      place(width);
+      place();
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -278,8 +169,6 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
-
-  useEffect(() => () => clearTyping(), []);
 
   function step(t: number, dt: number) {
     const b = body.current;
@@ -325,7 +214,7 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
 
   function draw(g: CanvasRenderingContext2D, width: number, height: number, t: number) {
     const b = body.current;
-    g.clearRect(0, 0, width, height);
+    g.clearRect(-BLEED, -BLEED, width + BLEED * 2, height + BLEED * 2);
 
     for (const s of sparks.current) glow(g, s.x, s.y, 5 * (1 - s.life / s.max), 0.8 * (1 - s.life / s.max));
     glow(g, b.x, b.y, 34 * b.bright, 0.45 * b.bright);
@@ -386,29 +275,11 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
     g.restore();
   }
 
-  /**
-   * The bubble sits above Blip (below it near the top), kept inside the stage. It is pinned to where
-   * Blip rests, not to the bob, so it holds still to be read; the poke target rides on Blip itself.
-   */
-  function place(width: number) {
+  /** The poke target rides on Blip itself. */
+  function place() {
     const b = body.current;
     const hit = hitRef.current;
     if (hit) hit.style.transform = `translate(${b.x - 22}px, ${b.y - 22}px)`;
-    const bubble = bubbleRef.current;
-    if (!bubble) return;
-    const at = b.travelling ? { x: b.x, y: b.y } : { x: b.homeX, y: b.homeY };
-    if (bubbleAt === 'beside') {
-      const left = at.x + 24;
-      bubble.style.maxWidth = `${Math.max(120, width - left - 6)}px`;
-      bubble.classList.add('is-beside');
-      bubble.style.transform = `translate(${left}px, ${at.y - bubble.offsetHeight / 2}px)`;
-      return;
-    }
-    const half = bubble.offsetWidth / 2;
-    const x = Math.max(half + 4, Math.min(width - half - 4, at.x));
-    const below = bubbleAt === 'below' || at.y < 80;
-    bubble.classList.toggle('is-below', below);
-    bubble.style.transform = `translate(${x - half}px, ${below ? at.y + 24 : at.y - 24}px) translateY(${below ? '0' : '-100%'})`;
   }
 
   function poke() {
@@ -426,13 +297,11 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active, 
       b.spin += TAU;
     } else Object.assign(b, { mood: run.count === 1 ? 'surprised' : 'happy', moodUntil: t + (run.count === 1 ? 0.35 : 1.2) });
     for (let i = 0; i < 6; i++) spark(0.7);
-    onPoke?.(run.count);
   }
 
   return (
     <div ref={stageRef} className="blip-stage">
       <canvas ref={canvasRef} className="blip-canvas" aria-hidden="true" />
-      <div ref={bubbleRef} className="blip-bubble" aria-live="polite" />
       {/* A toy, not a control: a poke opens nothing, and a tap here never reaches the sky under it. */}
       <button
         ref={hitRef}

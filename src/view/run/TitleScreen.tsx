@@ -10,8 +10,6 @@ import { starShopCatalog } from '../../data/starShop';
 import { canCallStarfall, stardustBalance, type StarShopOffer } from '../../run/starShop';
 import { isConstellationLit, isDrawnInByPlay, skyLightingTipId } from '../../run/sky';
 import { sky } from '../../data/sky';
-import { FIRST_LIGHT_TOUR } from '../../data/thoughts';
-import { BlipBeat } from './BlipBeat';
 import { GuideHand } from '../story/GuideHand';
 import { GalaxySky } from './GalaxySky';
 import { TitleLogo } from './TitleLogo';
@@ -30,7 +28,7 @@ import { readEnemyIntent, writeEnemyIntent } from '../combat/enemyIntent';
 /** First Light's tour (docs/the-sky.md §2e), each step remembered once an account. */
 const TOUR_STARFALL = 'tour.firstLight.starfall';
 const TOUR_DONE = 'tour.firstLight.done';
-type TourStep = 'toObservatory' | 'pull' | 'pulling' | 'fallen' | 'infinite';
+type TourStep = 'toObservatory' | 'pulling' | 'fallen' | 'infinite';
 
 /** Owed once First Light is drawn in by play and its finale has played; the Starfall is skipped when it cannot be afforded. */
 function owedTour(profile: Profile): TourStep | null {
@@ -132,13 +130,25 @@ export function TitleScreen({
 }: Props) {
   const [showRecords, setShowRecords] = useState(false);
   const [tab, setTab] = useState<HubTab>('play');
-  // A new account sees First Light and nothing else until it is won; then Blip shows it the Observatory and the Infinite.
+  // A new account sees First Light and nothing else until it is won; then the tour shows it the Observatory and the Infinite.
   const inFirstLight = !isConstellationLit(profile, sky.constellations.firstLight);
   const [tour, setTour] = useState<TourStep | null>(() => owedTour(profile));
+  // Wordless: the Observatory opens on the Call for the first Starfall, and the fallen hero sends it back to the Pact.
   useEffect(() => {
-    if (tour === 'toObservatory' && !canCallStarfall(profile, starShopCatalog)) {
-      onSeeTip(TOUR_STARFALL);
+    if (tour === 'toObservatory') {
+      if (canCallStarfall(profile, starShopCatalog)) {
+        selectTab('constellation');
+        setTour('pulling');
+      } else {
+        onSeeTip(TOUR_STARFALL);
+        setTour('infinite');
+      }
+    } else if (tour === 'fallen') {
+      selectTab('play');
       setTour('infinite');
+    } else if (tour === 'infinite') {
+      onSeeTip(TOUR_DONE);
+      setTour(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tour]);
@@ -408,35 +418,7 @@ export function TitleScreen({
 
       <HubNav tab={tab} onSelect={selectTab} balance={balance - heldDust} collectionFresh={!collectionSeen} disabled={launching || tour !== null} />
 
-      {tour === 'toObservatory' && (
-        <BlipBeat
-          lines={FIRST_LIGHT_TOUR.toObservatory}
-          onDone={() => {
-            selectTab('constellation');
-            setTour('pull');
-          }}
-        />
-      )}
-      {tour === 'pull' && <BlipBeat lines={FIRST_LIGHT_TOUR.pull} onDone={() => setTour('pulling')} />}
       {tour === 'pulling' && <GuideHand selector=".sky-call" />}
-      {tour === 'fallen' && (
-        <BlipBeat
-          lines={FIRST_LIGHT_TOUR.fallen}
-          onDone={() => {
-            selectTab('play');
-            setTour('infinite');
-          }}
-        />
-      )}
-      {tour === 'infinite' && tab === 'play' && (
-        <BlipBeat
-          lines={FIRST_LIGHT_TOUR.infinite}
-          onDone={() => {
-            onSeeTip(TOUR_DONE);
-            setTour(null);
-          }}
-        />
-      )}
 
       {/* Starting over with a run parked deletes it, so it asks — a sheet, not a
           re-labelled button, because a button that changes what it says under
