@@ -463,6 +463,20 @@
   opacity: 1;
 }
 
+.lesson-learned-back {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: auto;
+  margin: -2px auto 14px;
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+
+.lesson-learned-back.is-lit {
+  opacity: 1;
+}
+
 /* --- The book (the Reference's How to Play tab) --- */
 
 .manual-book {

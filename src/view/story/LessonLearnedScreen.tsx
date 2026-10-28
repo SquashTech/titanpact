@@ -10,7 +10,7 @@ import { prefersReducedMotion } from '../shared/reducedMotion';
  * The pages a lesson or a win taught, filed into How to Play (docs/the-sky.md §2c) as a beat of
  * their own: the book takes them one by one, then every page sits below it to be read. A tap lands them all.
  */
-export function LessonLearnedScreen({ pages, onContinue }: { pages: readonly ManualPage[]; onContinue: () => void }) {
+export function LessonLearnedScreen({ pages, onContinue, onNext }: { pages: readonly ManualPage[]; onContinue: () => void; onNext?: () => void }) {
   const [landed, setLanded] = useState(prefersReducedMotion());
 
   useEffect(() => {
@@ -52,11 +52,23 @@ export function LessonLearnedScreen({ pages, onContinue }: { pages: readonly Man
         className={`fight-result-cta${landed ? ' is-lit' : ''}`}
         onClick={(e) => {
           e.stopPropagation();
-          onContinue();
+          (onNext ?? onContinue)();
         }}
       >
-        Continue
+        {onNext ? 'Next Lesson' : 'Continue'}
       </PlateButton>
+      {onNext && (
+        <button
+          type="button"
+          className={`secondary-button lesson-learned-back${landed ? ' is-lit' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onContinue();
+          }}
+        >
+          Back to the Sky
+        </button>
+      )}
     </div>
   );
 }

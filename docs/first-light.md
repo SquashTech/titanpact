@@ -51,6 +51,10 @@ text), **Into the Breach** (a small board, set up so the answer is findable) and
 >   First Light teaches the fight. The device install card is retitled *Install Titanpact* so the
 >   game says welcome once. It still comes first, because on iOS the browser's progress doesn't carry
 >   to the installed app.
+> - **Next Lesson on the Learned screen** (2026-10-28, per user direction). The main button plays
+>   the next lesson at once; *Back to the Sky* is the second. The island still lights, and the sky
+>   plays every lighting it hasn't shown on the next visit. The last lesson offers only the way back,
+>   since First Light's finale plays on the sky.
 
 **The lesson's picture is its own fight. DECIDED 2026-10-27, per user direction**, picked from
 `art/concepts/lesson-pages/` (*On the Field*). It replaces a separate picture card: a card, a plate

@@ -1192,10 +1192,21 @@ export function App() {
 
   /** A tip or the lore card dismissed: account-wide, so it is written straight to storage. */
   /** A lesson won lights its star and hands back to the sky, where Blip cheers it (docs/the-sky.md §3). Its fights taught the round, so the round's tip would only say it again. */
-  function handleStoryChapterDone(chapterId: string) {
+  function handleStoryChapterDone(chapterId: string, nextChapterId?: string) {
     setProfile(updateProfile((current) => recordTipSeen(recordScenarioLit(current, sky, chapterId), FIGHT_BASICS_TIP_ID)));
+    if (nextChapterId) {
+      setLessonTips([]);
+      setScreen({ kind: 'storyChapter', chapterId: nextChapterId });
+      return;
+    }
     setSkyReturn('win');
     setScreen({ kind: 'title' });
+  }
+
+  /** The lesson after this one, or null on the last: its finale plays on the sky. */
+  function nextLessonId(chapterId: string): string | null {
+    const at = LESSONS.chapters.findIndex((c) => c.id === chapterId);
+    return at >= 0 ? LESSONS.chapters[at + 1]?.id ?? null : null;
   }
 
   /** A First Light lesson from the sky: its chapter of data/lessons.ts, played by the Story machinery. */
@@ -1542,6 +1553,7 @@ export function App() {
           chapter={chapterById(STORY_BOOKS, screen.chapterId)!.chapter}
           exitLabel={LESSON_EXIT}
           onFinished={() => handleStoryChapterDone(screen.chapterId)}
+          onNext={nextLessonId(screen.chapterId) ? () => handleStoryChapterDone(screen.chapterId, nextLessonId(screen.chapterId)!) : undefined}
           onQuit={() => setScreen({ kind: 'title' })}
           onPlace={setStoryPlaceId}
           tips={{ seenIds: lessonTips, onSeen: markLessonTipSeen }}

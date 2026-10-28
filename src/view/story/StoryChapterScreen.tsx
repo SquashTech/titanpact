@@ -25,13 +25,15 @@ interface Props {
   exitLabel: string;
   /** Shown ahead of everything else, once: the game's welcome before its first lesson. */
   welcome?: { tip: Tip; onSeen: () => void };
+  /** The chapter over, straight into the next lesson; unset, the Learned screen only goes back. */
+  onNext?: () => void;
 }
 
 /**
  * Plays a chapter's beats in order, a First Light lesson's among them, each opening on the lesson's
  * How to Play pages before its first tap. A lost fight is played again from its start.
  */
-export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips, exitLabel, welcome }: Props) {
+export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips, exitLabel, welcome, onNext }: Props) {
   const [index, setIndex] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const beat = chapter.beats[index];
@@ -63,7 +65,7 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips,
   }, [index]);
 
   if (!beat) {
-    return pages.length > 0 ? <LessonLearnedScreen pages={pages} onContinue={onFinished} /> : <Finish onFinished={onFinished} />;
+    return pages.length > 0 ? <LessonLearnedScreen pages={pages} onContinue={onFinished} onNext={onNext} /> : <Finish onFinished={onFinished} />;
   }
   if (beat.handOver && !handed?.done) {
     const { itemId, to } = beat.handOver;
