@@ -104,7 +104,7 @@ test('lessons: a lesson with a line points on every guided round; an older one h
 });
 
 test('lessons: each guided fight ends inside its script, won, with nobody down', () => {
-  for (const id of ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread', 'firstLight.clearing']) {
+  for (const id of LESSONS.chapters.filter((c) => c.beats[0].kind === 'fight').map((c) => c.id)) {
     const fight = fightOf(id);
     const { boards } = play(fight);
     const last = boards[boards.length - 1];
@@ -112,23 +112,6 @@ test('lessons: each guided fight ends inside its script, won, with nobody down',
     const down = Object.values(last.combatants).filter((c) => c.side === 'A' && c.fainted);
     assert.deepStrictEqual(down.map((c) => c.combatantId), [], `${id} knocks out the party`);
   }
-});
-
-test('lessons: in the clearing, the Warden runs dry and Rests under a Shield, then the Raiju marks the Slabback for the Warden to set off', () => {
-  const fight = fightOf('firstLight.clearing');
-  const { rounds, boards } = play(fight);
-  assert.strictEqual(rounds.length, 5, 'the spawn stand into round 5');
-  const before4 = boards[3].combatants['A:warden'];
-  const kit = fight.player.find((spec) => spec.rosterId === 'warden')!.moveIds!;
-  const affordable = kit.filter((moveId) => moves[moveId].manaCost <= before4.currentMana);
-  assert.deepStrictEqual(affordable, [], `the Warden can still afford ${affordable.join(', ')} (Mana ${before4.currentMana}/${getMaxMana(allCombatants[before4.heroId], before4)})`);
-  const soaked = rounds[3].find((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'A:warden');
-  assert.ok(soaked && soaked.type === 'DamageDealt' && (soaked.absorbed ?? 0) > 0, "Rime Coat's Shield takes a hit on the Resting Warden");
-  const planted = rounds[4].find((e) => e.type === 'StatusApplied' && e.statusId === 'Conduct');
-  assert.ok(planted && planted.type === 'StatusApplied' && planted.sourceCombatantId === 'A:raiju', 'Storm Lash plants Conduct');
-  assert.ok(rounds[4].some((e) => e.type === 'StatusDetonated' && e.statusId === 'Conduct'), "the Warden's Gale Sever sets it off in the same round");
-  const foes = Object.values(boards[boards.length - 1].combatants).filter((c) => c.side === 'B');
-  assert.ok(foes.every((c) => c.fainted), 'both spawn fall in round 5');
 });
 
 const foesDown = (board: CombatState) => Object.values(board.combatants).filter((c) => c.side === 'B' && c.fainted).length;
@@ -165,4 +148,51 @@ test('lessons: one spread move drops both foes', () => {
   const { boards } = play(fightOf('firstLight.spread'));
   assert.strictEqual(boards.length, 2, 'one round');
   assert.strictEqual(foesDown(boards[1]), 2);
+});
+
+const acted = (events: readonly CombatEvent[], id: string) => events.some((e) => e.type === 'MoveUsed' && e.combatantId === id);
+
+test('lessons: Skyshear outruns the Cubling and drops it before it swings; aimed the other way, the Cubling hits Ursa first', () => {
+  const fight = fightOf('firstLight.order');
+  const { rounds, boards } = play(fight);
+  assert.ok(!acted(rounds[0], 'B:cub'), 'the Cubling never moves');
+  assert.strictEqual(foesDown(boards[1]), 2);
+  const swapped = play(fight, (_, id) => ({ kind: 'move', combatantId: id, moveId: id === 'A:skyshear' ? 'jolt' : 'claw', declaredTarget: id === 'A:skyshear' ? 'B:arc' : 'B:cub' }));
+  assert.ok(acted(swapped.rounds[0], 'B:cub'), 'Ursa is too slow to stop it');
+});
+
+test('lessons: physical Nightfall through thin hide and magical Nightfall past low Wisdom drop both; crossed, neither falls', () => {
+  const fight = fightOf('firstLight.kinds');
+  assert.strictEqual(foesDown(play(fight).boards[1]), 2);
+  const crossed = play(fight, (_, id) => ({ kind: 'move', combatantId: id, moveId: id === 'A:nightshade' ? 'nightfall' : 'nightfallRewired', declaredTarget: id === 'A:nightshade' ? 'B:pincer' : 'B:pixie' }));
+  assert.strictEqual(foesDown(crossed.boards[1]), 0);
+});
+
+test('lessons: Singe leaves the burning Rivetling standing, and the Burn at the round end puts it down', () => {
+  const { rounds, boards } = play(fightOf('firstLight.burn'));
+  assert.strictEqual(rounds.length, 2);
+  const last = rounds[1];
+  const hit = last.findIndex((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'B:rivet');
+  const tick = last.findIndex((e) => e.type === 'StatusTicked' && e.combatantId === 'B:rivet');
+  const fell = last.findIndex((e) => e.type === 'Fainted' && e.combatantId === 'B:rivet');
+  assert.ok(hit >= 0 && tick > hit && fell > tick, 'the Burn, not the Singe, lands the knockout');
+  assert.strictEqual(foesDown(boards[2]), 1);
+});
+
+test('lessons: switching to Raiju takes the splash lightly, where Cinder would have taken it hard', () => {
+  const fight = fightOf('firstLight.switch');
+  const { boards } = play(fight);
+  const lost = (b: CombatState[], id: string) => b[0].combatants[id].currentHp - b[1].combatants[id].currentHp;
+  assert.strictEqual(foesDown(boards[2]), 2, 'Thunderclap and Claw finish the Puddling');
+  const stayed = play(fight, (_, id) => (id === 'A:cinder' ? { kind: 'move', combatantId: id, moveId: 'singe', declaredTarget: 'B:pud' } : null));
+  assert.ok(lost(boards, 'A:raiju') * 2 < lost(stayed.boards, 'A:cinder'), `Raiju lost ${lost(boards, 'A:raiju')}, Cinder would lose ${lost(stayed.boards, 'A:cinder')}`);
+});
+
+test('lessons: a lesson with a bench fields two leads, or the game asks to fill the empty slot first', () => {
+  for (const chapter of LESSONS.chapters) {
+    const beat = chapter.beats[0];
+    if (beat.kind !== 'fight') continue;
+    const benched = beat.fight.player.length > beat.fight.playerLeads.length;
+    assert.ok(!benched || beat.fight.playerLeads.length === 2, `${chapter.id} has a bench and one lead`);
+  }
 });

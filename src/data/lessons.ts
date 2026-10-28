@@ -1,10 +1,9 @@
 // First Light's lessons (docs/first-light.md): one concept a lesson, each a guided fight with one line
-// on the top bar, then the Clearing, the Road and the Fork until lessons 5–10 replace them. A lesson
-// teaches by its guided taps, and the older three by their control tips and the heroes' calls too.
+// on the top bar, then the Road and the Fork until lessons 9–10 replace them. A lesson teaches by its
+// guided taps, and the two acts by their control tips too.
 // Each lesson is a one-beat chapter in its own book, so the Story machinery plays it unchanged.
 
 import type { StoryAct, StoryChapter, StoryDefinition, StoryFight } from '../run/story';
-import { STORY_CAST_IDS as CAST } from './storyCast';
 import { manualPage } from './howToPlay';
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
@@ -77,45 +76,81 @@ const spread: StoryFight = {
   guide: [[{ actor: 'cairn', moveId: 'tremor' }]],
 };
 
+/** The faster hero strikes first: Skyshear drops the Cubling before it can swing at Ursa, and the Arcling outruns Ursa. */
+const turnOrder: StoryFight = {
+  id: 'lesson-order',
+  seed: 1805,
+  player: [
+    { rosterId: 'skyshear', heroId: 'skyshear', level: 3, moveIds: ['jolt'] },
+    { rosterId: 'ursa', heroId: 'ursa', level: 3, moveIds: ['claw'] },
+  ],
+  playerLeads: ['skyshear', 'ursa'],
+  enemy: [
+    { rosterId: 'cub', heroId: 'cubling', level: 6 },
+    { rosterId: 'arc', heroId: 'arcling', level: 2 },
+  ],
+  enemyLeads: ['cub', 'arc'],
+  enemyScript: [[{ actor: 'cub', moveId: 'claw', target: ally('ursa') }, { actor: 'arc', moveId: 'zap', target: ally('ursa') }]],
+  guide: [[{ actor: 'skyshear', moveId: 'jolt', target: foe('cub') }, { actor: 'ursa', moveId: 'claw', target: foe('arc') }]],
+};
+
+/** The same move in each hand: Nightshade's physical Nightfall goes through Pixie's thin hide, Marrow's magical one past Pincer's low Wisdom. */
+const kinds: StoryFight = {
+  id: 'lesson-kinds',
+  seed: 1806,
+  player: [
+    { rosterId: 'nightshade', heroId: 'nightshade', level: 3, moveIds: ['nightfall'] },
+    { rosterId: 'marrow', heroId: 'marrow', level: 3, moveIds: ['nightfallRewired'] },
+  ],
+  playerLeads: ['nightshade', 'marrow'],
+  enemy: [
+    { rosterId: 'pincer', heroId: 'pincer', level: 4 },
+    { rosterId: 'pixie', heroId: 'pixie', level: 4 },
+  ],
+  enemyLeads: ['pincer', 'pixie'],
+  enemyScript: [[{ actor: 'pincer', moveId: 'undertow', target: ally('nightshade') }, { actor: 'pixie', moveId: 'resonantBolt', target: ally('marrow') }]],
+  guide: [[{ actor: 'nightshade', moveId: 'nightfall', target: foe('pixie') }, { actor: 'marrow', moveId: 'nightfallRewired', target: foe('pincer') }]],
+};
+
+/** Set Alight, then Singe: the hit leaves the Rivetling standing, and the Burn at the round's end puts it down. */
+const burn: StoryFight = {
+  id: 'lesson-burn',
+  seed: 1807,
+  player: [{ rosterId: 'cinder', heroId: 'cinderKnight', level: 3, moveIds: ['setAlight', 'singe'] }],
+  playerLeads: ['cinder'],
+  enemy: [{ rosterId: 'rivet', heroId: 'rivetling', level: 13 }],
+  enemyLeads: ['rivet'],
+  enemyScript: [1, 2].map(() => [{ actor: 'rivet', moveId: 'ironFist', target: ally('cinder') }]),
+  guide: [[{ actor: 'cinder', moveId: 'setAlight', target: foe('rivet') }], [{ actor: 'cinder', moveId: 'singe', target: foe('rivet') }]],
+};
+
+/** Cinder faces a Puddling's water: it steps back for Raiju off the bench, who takes the splash lightly and answers with Storm. */
+const switching: StoryFight = {
+  id: 'lesson-switch',
+  seed: 1808,
+  player: [
+    { rosterId: 'cinder', heroId: 'cinderKnight', level: 3, moveIds: ['singe'] },
+    { rosterId: 'ursa', heroId: 'ursa', level: 3, moveIds: ['claw'] },
+    { rosterId: 'raiju', heroId: 'raiju', level: 3, moveIds: ['thunderclap'] },
+  ],
+  playerLeads: ['cinder', 'ursa'],
+  enemy: [
+    { rosterId: 'pud', heroId: 'puddling', level: 10 },
+    { rosterId: 'cub', heroId: 'cubling', level: 4 },
+  ],
+  enemyLeads: ['pud', 'cub'],
+  enemyScript: [1, 2].map(() => [{ actor: 'pud', moveId: 'splash', target: ally('cinder') }, { actor: 'cub', moveId: 'claw', target: ally('ursa') }]),
+  guide: [
+    [{ actor: 'cinder', switchTo: 'raiju' }, { actor: 'ursa', moveId: 'claw', target: foe('cub') }],
+    [{ actor: 'raiju', moveId: 'thunderclap', target: foe('pud') }, { actor: 'ursa', moveId: 'claw', target: foe('pud') }],
+  ],
+};
+
 /** A guided fight as a lesson: its line on the top bar, the hand on every round. */
 function lessonChapter(id: string, title: string, fight: StoryFight, line: string): StoryChapter {
   const cues = fight.guide.map((_, i) => ({ round: i + 1, point: true as const }));
   return { id, title, beats: [{ kind: 'fight', fight, locationId: 'wildsEdge', cues, line }] };
 }
-
-/** The bench: switching, the two kinds of attack, Rest, a Shield and a Conduct setup, four heroes against the first spawn out of the fall. */
-const clearing: StoryFight = {
-  id: 'lesson-clearing',
-  seed: 1702,
-  player: [
-    { rosterId: 'valor', heroId: CAST.valor, level: 3 },
-    { rosterId: 'fang', heroId: 'packAlpha', level: 3 },
-    { rosterId: 'warden', heroId: 'ironWarden', level: 12, moveIds: ['heavyBlow', 'galeSever'] },
-    // Zap is cheap enough to leave Storm Lash's Mana for round 5, and Rime Coat shields the Warden while it Rests.
-    { rosterId: 'raiju', heroId: 'raiju', level: 4, moveIds: ['zap', 'rimeCoat', 'stormLash'] },
-  ],
-  playerLeads: ['valor', 'fang'],
-  enemy: [
-    { rosterId: 'ravager', heroId: 'ravager', level: 12, moveIds: ['pounce'] },
-    { rosterId: 'slabback', heroId: 'slabback', level: 12, moveIds: ['rockToss'] },
-  ],
-  enemyLeads: ['ravager', 'slabback'],
-  enemyScript: [
-    [{ actor: 'ravager', moveId: 'pounce', target: ally('valor') }, { actor: 'slabback', moveId: 'rockToss', target: ally('fang') }],
-    [{ actor: 'ravager', moveId: 'pounce', target: ally('valor') }, { actor: 'slabback', moveId: 'rockToss', target: ally('valor') }],
-    [{ actor: 'ravager', moveId: 'pounce', target: ally('raiju') }, { actor: 'slabback', moveId: 'rockToss', target: ally('warden') }],
-    // Pounce goes first, so it leaves the Warden to Rock Toss and Rime Coat's Shield.
-    [{ actor: 'ravager', moveId: 'pounce', target: ally('raiju') }, { actor: 'slabback', moveId: 'rockToss', target: ally('warden') }],
-    [{ actor: 'ravager', moveId: 'pounce', target: ally('raiju') }, { actor: 'slabback', moveId: 'rockToss', target: ally('warden') }],
-  ],
-  guide: [
-    [{ actor: 'valor', moveId: 'ironFist', target: foe('slabback') }, { actor: 'fang', moveId: 'claw', target: foe('ravager') }],
-    [{ actor: 'valor', switchTo: 'warden' }, { actor: 'fang', switchTo: 'raiju' }],
-    [{ actor: 'warden', moveId: 'galeSever' }, { actor: 'raiju', moveId: 'zap', target: foe('ravager') }],
-    [{ actor: 'warden', rest: true }, { actor: 'raiju', moveId: 'rimeCoat', target: ally('warden') }],
-    [{ actor: 'warden', moveId: 'galeSever' }, { actor: 'raiju', moveId: 'stormLash', target: foe('slabback') }],
-  ],
-};
 
 /** The map, a pick from three, an item, a level, the Rest: one short act at Wild's Edge. */
 const road: StoryAct = {
@@ -203,57 +238,10 @@ export const LESSONS: StoryDefinition = {
     lessonChapter('firstLight.mana', 'Mana', mana, 'Moves cost Mana. Rest fills it back up.'),
     lessonChapter('firstLight.types', 'Types', types, 'Some types hit harder than others.'),
     lessonChapter('firstLight.spread', 'Spread', spread, 'Some moves hit both foes at once.'),
-    {
-      id: 'firstLight.clearing',
-      title: 'The Clearing',
-      beats: [
-        {
-          kind: 'fight',
-          fight: clearing,
-          locationId: 'wildsEdge',
-          cues: [
-            {
-              round: 1,
-              point: true,
-              lines: [{ by: 'valor', text: "The Ravager's eyeing me, and that Slabback has a rock for Fang. Hit them first!" }],
-            },
-            {
-              round: 2,
-              point: true,
-              lines: [{ by: 'valor', text: "They're both coming for me now. Warden, Raiju: take our places!" }],
-              tips: [manualPage('howto.bench')],
-            },
-            {
-              round: 3,
-              point: true,
-              lines: [
-                { by: 'warden', text: "My blade has to cut through that Slabback's hide. Good thing Iron splits stone, and I'll catch them both." },
-                { by: 'raiju', text: "My Zap is magic: it goes around the Ravager's hide, at its mind. And it's cheap. I'll need the Mana." },
-              ],
-              tips: [manualPage('howto.kinds')],
-            },
-            {
-              round: 4,
-              point: true,
-              lines: [
-                { by: 'warden', text: "I'm out of Mana, and that Slabback's winding up a throw at me." },
-                { by: 'raiju', text: "Then I'll coat you in ice, and you Rest behind it." },
-              ],
-              tips: [manualPage('howto.statuses'), manualPage('howto.status.Shield')],
-            },
-            {
-              round: 5,
-              point: true,
-              lines: [
-                { by: 'raiju', text: "I'm faster. I'll mark the Slabback, Warden, and you set it off!" },
-                { by: 'warden', text: 'Iron on a storm mark. Stand back.' },
-              ],
-              tips: [manualPage('howto.status.Conduct')],
-            },
-          ],
-        },
-      ],
-    },
+    lessonChapter('firstLight.order', 'Turn Order', turnOrder, 'Faster heroes move first.'),
+    lessonChapter('firstLight.kinds', 'Physical and Magical', kinds, 'Defense stops physical hits. Wisdom stops magic.'),
+    lessonChapter('firstLight.burn', 'Status Effects', burn, 'A Burn keeps hurting after the hit.'),
+    lessonChapter('firstLight.switch', 'Switching', switching, 'Switch in a hero from the bench.'),
     { id: 'firstLight.road', title: 'The Road', beats: [{ kind: 'act', act: road }] },
     { id: 'firstLight.fork', title: 'The Fork', beats: [{ kind: 'act', act: fork }] },
   ],

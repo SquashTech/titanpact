@@ -56,6 +56,10 @@ test('manual: every lesson files pages, and every page a lesson shows in a fight
   assert.deepStrictEqual(first('firstLight.mana'), ['howto.mana', 'howto.rest']);
   assert.deepStrictEqual(first('firstLight.types'), ['howto.types']);
   assert.deepStrictEqual(first('firstLight.spread'), ['howto.targets']);
+  assert.deepStrictEqual(first('firstLight.order'), ['howto.order']);
+  assert.deepStrictEqual(first('firstLight.kinds'), ['howto.kinds']);
+  assert.deepStrictEqual(first('firstLight.burn'), ['howto.statuses', 'howto.status.Burn']);
+  assert.deepStrictEqual(first('firstLight.switch'), ['howto.bench']);
 });
 
 test('manual: a status has a page, and a page the lessons do not teach is met in a run', () => {
@@ -67,19 +71,19 @@ test('manual: a status has a page, and a page the lessons do not teach is met in
 test('manual: a lesson won learns its pages; a run files the rest once, and the next win shows them once', () => {
   let profile = createProfile();
   const mana = manualPage('howto.mana');
-  const burn = manualPage('howto.status.Burn');
-  assert.ok(!isPageLearned(profile, mana) && !isPageLearned(profile, burn));
+  const poison = manualPage('howto.status.Poison');
+  assert.ok(!isPageLearned(profile, mana) && !isPageLearned(profile, poison));
   profile = recordScenarioLit(profile, sky, 'firstLight.mana');
   assert.ok(isPageLearned(profile, mana), 'the Mana lesson won, its pages are in the book');
   assert.strictEqual(fileRunPages(profile, MANUAL_PAGES, [mana.id]), profile, 'a lesson page is never filed by a run');
-  profile = fileRunPages(profile, MANUAL_PAGES, [burn.id, burn.id]);
-  assert.deepStrictEqual(profile.manualPages, [burn.id]);
-  assert.deepStrictEqual(profile.manualUnshown, [burn.id]);
-  assert.strictEqual(fileRunPages(profile, MANUAL_PAGES, [burn.id]), profile, 'filed once');
-  profile = markPagesShown(profile, [burn.id]);
+  profile = fileRunPages(profile, MANUAL_PAGES, [poison.id, poison.id]);
+  assert.deepStrictEqual(profile.manualPages, [poison.id]);
+  assert.deepStrictEqual(profile.manualUnshown, [poison.id]);
+  assert.strictEqual(fileRunPages(profile, MANUAL_PAGES, [poison.id]), profile, 'filed once');
+  profile = markPagesShown(profile, [poison.id]);
   assert.deepStrictEqual(profile.manualUnshown, []);
-  assert.ok(isPageLearned(profile, burn));
-  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile))).manualPages, [burn.id], 'survives a round trip');
+  assert.ok(isPageLearned(profile, poison));
+  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile))).manualPages, [poison.id], 'survives a round trip');
   assert.deepStrictEqual(resetTips(profile).manualPages, [], 'Reset Tips empties the book of what runs filed');
 });
 
@@ -100,7 +104,10 @@ test('manual: a screen files its page, and a fight its statuses, fields and lock
     { type: 'StatusApplied', combatantId: 'B:x', statusId: 'Burn' },
     { type: 'StatusApplied', combatantId: 'A:y', statusId: 'Shield' },
     { type: 'FieldEffectSet', fieldEffectId: 'scorchedLand', previousFieldEffectId: null },
+    { type: 'StatChanged', combatantId: 'A:y', stat: 'attack', delta: 10, newValue: 70 },
   ] as unknown as CombatEvent[];
   const met = pagesMetInFight(MANUAL_PAGES, events, board, () => []);
-  assert.deepStrictEqual(met.sort(), ['howto.field', 'howto.status.Burn'], 'a lesson status (Shield) is never met in a fight, and a wiped foe is no lock-in');
+  assert.deepStrictEqual(met.sort(), ['howto.field', 'howto.status.Shield'], 'a lesson status (Burn) is never met in a fight, a flat change is no step, and a wiped foe is no lock-in');
+  const staged = [{ type: 'StatChanged', combatantId: 'B:x', stat: 'defense', delta: -1, stages: true, newValue: -1 }] as unknown as CombatEvent[];
+  assert.deepStrictEqual(pagesMetInFight(MANUAL_PAGES, staged, board, () => []), ['howto.stages'], 'a stat moved a step files Buffs and Debuffs');
 });

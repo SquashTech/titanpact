@@ -12,7 +12,10 @@ const MOVE = lesson('firstLight.move');
 const MANA = lesson('firstLight.mana');
 const TYPES = lesson('firstLight.types');
 const SPREAD = lesson('firstLight.spread');
-const CLEARING = lesson('firstLight.clearing');
+const ORDER = lesson('firstLight.order');
+const KINDS = lesson('firstLight.kinds');
+const BURN = lesson('firstLight.burn');
+const SWITCH = lesson('firstLight.switch');
 const ROAD = lesson('firstLight.road');
 const FORK = lesson('firstLight.fork');
 const met = (trigger: ManualTrigger): ManualSource => ({ kind: 'run', met: trigger });
@@ -22,7 +25,7 @@ function page(id: string, title: string, source: ManualSource, emblem: readonly 
 }
 
 /** The lesson that teaches a status, where one does. */
-const TAUGHT_BY: Readonly<Record<string, ManualSource>> = { Shield: CLEARING, Conduct: CLEARING, Daze: FORK };
+const TAUGHT_BY: Readonly<Record<string, ManualSource>> = { Burn: BURN, Daze: FORK };
 
 /** A status's page, in bullets. A status not here reads its own description, a bullet a sentence. */
 const STATUS_WORDS: Readonly<Record<string, readonly string[]>> = {
@@ -112,7 +115,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'stages',
     'Buffs and Debuffs',
-    CLEARING,
+    met({ kind: 'fight', what: 'stage' }),
     ['kind:buff', 'kind:debuff'],
     "- [buff] A *buff* raises a stat for the rest of the fight.\n- [debuff] A *debuff* lowers an enemy's.",
     '- An arrow beside a stat shows it was raised or lowered.\n- Arrows stay through a switch.',
@@ -128,9 +131,17 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   ),
 
   page(
+    'order',
+    'Turn Order',
+    ORDER,
+    ['stat:speed'],
+    '- Each round, the *fastest* hero moves first, by *Speed*.\n- The track across the top shows the order.',
+    '- A hero knocked out before its turn never moves.\n- A move with *priority* goes ahead of faster heroes.'
+  ),
+  page(
     'bench',
     'Switching',
-    CLEARING,
+    SWITCH,
     ['glyph:switch'],
     '- *Switch* trades a hero on the field for one on the *bench*, before anyone moves.\n- The one coming in uses its turn arriving.',
     '- Heroes on the bench *regain Mana* every round.\n- Switch out a hero that is hurt, out of Mana, or weak to the enemy.'
@@ -138,7 +149,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'kinds',
     'Physical and Magical',
-    CLEARING,
+    KINDS,
     ['kind:physical', 'kind:magical'],
     '- [physical] *Physical*: Attack against Defense.\n- [magical] *Magical*: Intelligence against Wisdom.',
     'A foe with thick armour may have a thin mind. Tap it, and strike the defense it lacks.'
@@ -147,12 +158,12 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'statuses',
     'Status Effects',
-    CLEARING,
+    BURN,
     ['status:Burn', 'status:Shield'],
     '- A *status* is an effect that lasts, marked beside a fighter.\n- Some help, some harm.',
     '- *Tap* a fighter to read its statuses.\n- *Pips* count rounds. A *number* is how strong it is.'
   ),
-  ...taughtIn(CLEARING),
+  ...taughtIn(BURN),
 
   page(
     'leads',

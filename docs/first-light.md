@@ -136,14 +136,33 @@ cues' spoken lines, Blip's First Light thoughts and hello premise, `OpeningFall`
    - **Spread**: Cairn alone. Tremor drops both foes.
 
    They replace the Hunt. A file that lit the Hunt lights all four on decode (`RETIRED_LESSONS`,
-   `run/profile.ts`). The Clearing, the Road and the Fork stay after them until lessons 5–10 land.
-   First Light is seven islands meanwhile, on the scrolling climb (§4).
+   `run/profile.ts`).
 
-   **Pages:** Turn by Turn files from lesson 1, Mana and Rest from 2, Types from 3, Single and Spread
-   from 4. **FLAGGED:** Buffs and Debuffs moved to the Clearing as a stopgap, because no new lesson
-   teaches it. The curriculum leaves it for runs to file, but runs file a page only when a status,
-   fight event or screen triggers it, and nothing does for a stat stage. It needs a trigger, or a
-   lesson.
+   Lessons 5–8 DONE 2026-10-27. Each has a test that the concept is what wins:
+   - **Turn order**: Skyshear and Ursa. Skyshear drops a Cubling before it can swing, while an
+     Arcling outruns Ursa. Aimed the other way, the Cubling gets its hit in.
+   - **Physical vs magical**: Nightshade and Marrow hold the same move, Nightfall, one physical and
+     one magical (`nightfall` / `nightfallRewired`). Against Pincer (thick hide, low Wisdom) and Pixie
+     (the reverse), every type pairing is neutral. Aimed right, both drop; crossed, neither does.
+   - **Status effects**: Cinder alone, Set Alight then Singe. The Singe leaves a level-13 Rivetling
+     standing, and the round-end Burn tick lands the KO. A full Burn is only 27% of max HP over three
+     rounds, less than one hit, so the lesson shows it finishing a foe rather than beating a hit.
+   - **Switching**: Cinder and Ursa, with Raiju on the bench, against a Puddling and a Cubling. Cinder
+     steps back for Raiju, who takes the splash at under half what Cinder would have. The switch panel's
+     *deals 2× / takes 0.5×* readout carries the lesson.
 
-   Then 5–8, then 9–10.
+   **A lesson with a bench needs two leads.** With one lead the game opens on *Choose a
+   replacement* to fill the empty slot. This is pinned by a test.
+
+   **The Clearing is retired** too. Its switching, the two kinds of attack and statuses are taught by
+   5–8, and a file that lit it lights all four. First Light is now **ten islands**: lessons 1–8, then the
+   Road and the Fork until 9–10 replace them. The Infinite opens on lesson 8.
+
+   **Pages:** Turn by Turn (1), Mana and Rest (2), Types (3), Single and Spread (4), a new **Turn Order**
+   page (5), Physical and Magical (6), Status Effects and Burn (7), Switching (8).
+   - **Buffs and Debuffs** is filed by a run the first time a stat moves a step in a fight (a new
+     `stage` trigger, `run/manual.ts`), which resolves the earlier flag.
+   - **Shield** and **Conduct** are filed when first met, like every other status.
+
+   Then 9–10.
 4. The Ascent at ten, the silent tour, the lore card restored, and the old lessons deleted.

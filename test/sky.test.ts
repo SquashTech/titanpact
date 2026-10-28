@@ -55,8 +55,10 @@ test('sky: a new account sees the lessons first and the Infinite past them', () 
 test('sky: the guided fights open the Infinite; the two acts stay lessons, and every lesson pays once', () => {
   let profile = ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread'].reduce((p, id) => recordScenarioLit(p, sky, id), createProfile());
   assert.strictEqual(constellationState(profile, sky, 'infinite'), 'glimpsed', 'the first four are not enough');
-  profile = recordScenarioLit(profile, sky, 'firstLight.clearing');
-  assert.strictEqual(constellationState(profile, sky, 'infinite'), 'open', 'the Clearing opens the Infinite');
+  profile = ['firstLight.order', 'firstLight.kinds', 'firstLight.burn'].reduce((p, id) => recordScenarioLit(p, sky, id), profile);
+  assert.strictEqual(constellationState(profile, sky, 'infinite'), 'glimpsed', 'nor seven');
+  profile = recordScenarioLit(profile, sky, 'firstLight.switch');
+  assert.strictEqual(constellationState(profile, sky, 'infinite'), 'open', 'Switching, the last guided fight, opens the Infinite');
   assert.strictEqual(constellationState(profile, sky, 'firstLight'), 'open', 'the acts are still to play');
   assert.strictEqual(skyStardust(profile, sky), 0, 'paid only when every lesson is lit');
   profile = recordScenarioLit(recordScenarioLit(profile, sky, 'firstLight.road'), sky, 'firstLight.fork');
@@ -109,7 +111,11 @@ test('sky: the Gauntlet lights a star a clear, up to five', () => {
 test('sky: lit scenarios survive a round trip and decode deduplicated', () => {
   const profile = recordScenarioLit(createProfile(), sky, 'firstLight.move');
   assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile))).litStars, ['firstLight.move']);
-  assert.deepStrictEqual(decodeProfile({ litStars: ['firstLight.hunt', 'firstLight.clearing'] }).litStars, ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread', 'firstLight.clearing'], 'the Hunt lit lights the four lessons that replaced it');
+  assert.deepStrictEqual(
+    decodeProfile({ litStars: ['firstLight.hunt', 'firstLight.clearing'] }).litStars,
+    ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread', 'firstLight.order', 'firstLight.kinds', 'firstLight.burn', 'firstLight.switch'],
+    'the Hunt and the Clearing lit light the lessons that replaced them'
+  );
   assert.deepStrictEqual(decodeProfile({ litStars: ['a', 'a', 3, ''] }).litStars, ['a']);
   assert.deepStrictEqual(decodeProfile({}).litStars, []);
 });
@@ -117,14 +123,14 @@ test('sky: lit scenarios survive a round trip and decode deduplicated', () => {
 test('sky: a lesson won plays its lighting on the title once, and the sky draws it unwon until then', () => {
   const firstLight = sky.constellations.firstLight;
   assert.deepStrictEqual(unshownLightings(createProfile(), firstLight), [], 'nothing won, nothing to play');
-  const won = recordScenarioLit(recordScenarioLit(createProfile(), sky, 'firstLight.move'), sky, 'firstLight.clearing');
-  assert.deepStrictEqual(unshownLightings(won, firstLight), [0, 4]);
-  const before = profileBeforeLightings(won, ['firstLight.clearing']);
-  assert.deepStrictEqual(firstLight.stars.map((star) => isStarLit(before, firstLight, star)), [true, false, false, false, false, false, false]);
-  assert.strictEqual(constellationState(before, sky, 'infinite'), 'glimpsed', 'the Infinite waits on the Clearing being shown');
+  const won = ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread', 'firstLight.order', 'firstLight.kinds', 'firstLight.burn', 'firstLight.switch'].reduce((p, id) => recordScenarioLit(p, sky, id), createProfile());
+  assert.deepStrictEqual(unshownLightings(won, firstLight), [0, 1, 2, 3, 4, 5, 6, 7]);
+  const before = profileBeforeLightings(won, ['firstLight.switch']);
+  assert.deepStrictEqual(firstLight.stars.map((star) => isStarLit(before, firstLight, star)), [true, true, true, true, true, true, true, false, false, false]);
+  assert.strictEqual(constellationState(before, sky, 'infinite'), 'glimpsed', 'the Infinite waits on Switching being shown');
   assert.strictEqual(constellationState(won, sky, 'infinite'), 'open');
   const shown = recordTipSeen(won, skyLightingTipId('firstLight.move'));
-  assert.deepStrictEqual(unshownLightings(shown, firstLight), [4]);
+  assert.deepStrictEqual(unshownLightings(shown, firstLight), [1, 2, 3, 4, 5, 6, 7]);
   const veteran = recordRunEnded(createProfile(), end(1, 'win'), 1);
   assert.deepStrictEqual(unshownLightings(veteran, firstLight), [], 'a rail lit by an earlier run has nothing to play');
   assert.strictEqual(isDrawInUnshown(veteran, firstLight), false, 'nor anything to draw in');

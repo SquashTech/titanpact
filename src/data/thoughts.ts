@@ -33,7 +33,7 @@ export const THOUGHTS: readonly ThoughtDefinition[] = [
   { id: 'opened.trials', moment: { kind: 'opened', constellationId: 'trials' }, once: true, lines: ['Each team’s all one type. Like matching outfits, but for fighting.'] },
   { id: 'opened.gauntlet', moment: { kind: 'opened', constellationId: 'gauntlet' }, once: true, lines: ['Five wins before two losses! I’ll be cheering. Loudly. Sorry in advance.'] },
 
-  { id: 'star.bench', moment: { kind: 'star', starId: 'firstLight.clearing' }, once: true, lines: ['Sometimes, the groups are more than two. But they always fight two against two anyway. Strange...'] },
+  { id: 'star.bench', moment: { kind: 'star', starId: 'firstLight.switch' }, once: true, lines: ['Sometimes, the groups are more than two. But they always fight two against two anyway. Strange...'] },
   { id: 'star.road', moment: { kind: 'star', starId: 'firstLight.road' }, once: true, lines: ['It’s a long journey to the Titan, and they search for loot along the way.'] },
   { id: 'star.cycle2', moment: { kind: 'star', starId: 'cycles.2' }, once: true, lines: ['Wait... it came back? It came BACK. And it’s still mad about last time.'] },
   { id: 'star.cycle3', moment: { kind: 'star', starId: 'cycles.3' }, once: true, lines: ['Every time it comes back, it’s learned something. Kind of rude, honestly.'] },

@@ -489,6 +489,7 @@ function stringList(value: unknown): string[] {
 /** A lesson First Light no longer holds, and the lessons that took its place, lit for a file that had lit it. */
 const RETIRED_LESSONS: Readonly<Record<string, readonly string[]>> = {
   'firstLight.hunt': ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread'],
+  'firstLight.clearing': ['firstLight.order', 'firstLight.kinds', 'firstLight.burn', 'firstLight.switch'],
 };
 
 /**

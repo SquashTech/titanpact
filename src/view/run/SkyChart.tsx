@@ -905,7 +905,10 @@ const LESSON_CAST: Readonly<Record<string, readonly string[]>> = {
   'firstLight.mana': ['tidecaller'],
   'firstLight.types': ['cinderKnight', 'raiju'],
   'firstLight.spread': ['cairn'],
-  'firstLight.clearing': ['ironWarden', 'raiju'],
+  'firstLight.order': ['skyshear', 'ursa'],
+  'firstLight.kinds': ['nightshade', 'marrow'],
+  'firstLight.burn': ['cinderKnight'],
+  'firstLight.switch': ['cinderKnight', 'raiju'],
   'firstLight.road': ['packAlpha', 'valor', 'ironWarden'],
   'firstLight.fork': ['valor', 'dawnwarden'],
 };
