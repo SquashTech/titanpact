@@ -2,7 +2,6 @@
 // state is built FROM this (buildCombatState.ts) and never writes back.
 
 import { createPatronState, type PatronState } from './patrons';
-import type { StoryActMarker } from './story';
 import type { CompanionState } from './companion';
 import type { PassiveId, StatKey, StatusId, TypeId } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
@@ -179,8 +178,6 @@ export interface RunState {
   lastMvpRosterId: string | null;
   /** Trust, students, the Promise and each seat's offer (run/patrons.ts). Absent on a run that never met one. */
   patrons?: PatronState;
-  /** A Story act (run/story.ts): the chapter and beat it belongs to. Never saved; unset for every other run. */
-  story?: StoryActMarker;
 }
 
 export function createRunState(gold = 0, recruitContracts = 1, cycle = 1): RunState {

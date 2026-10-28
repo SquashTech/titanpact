@@ -27,7 +27,6 @@ import type { MoveDefinition, StatKey } from '../engine/content';
 import { classMoves } from './classes';
 import { patronMoves } from './patrons';
 import { signatureMoves } from './signatures';
-import { storyMoves } from './storyCast';
 
 // The reel Mech's random-stat moves draw from, and the set Overdrive grants at
 // once. Combat stats only: +20 HP / Mana / MP Regen are not worth the same thing.
@@ -4652,6 +4651,4 @@ export const moves: Record<string, MoveDefinition> = {
   ...patronMoves,
   // The signature moves (signatures.ts): untiered, in no pool — the hero's own signatureLevel is their only source.
   ...signatureMoves,
-  // The Story cast's moves (storyCast.ts): untiered, in no pool — a Story creature is their only holder.
-  ...storyMoves,
 };

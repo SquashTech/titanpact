@@ -85,8 +85,6 @@ import mellowArt from '../../../art/heroes/unlocks/mellow.png';
 import heraldArt from '../../../art/heroes/titan/herald.png';
 import leftEyeArt from '../../../art/heroes/titan/eye.png';
 import rightEyeArt from '../../../art/heroes/titan/righteye.png';
-import story_stagArt from '../../../art/heroes/story/stag.png';
-import story_foxArt from '../../../art/heroes/story/fox.png';
 import manticoreGuardianArt from '../../../art/heroes/guardians/manticore.png';
 import yugzulachGuardianArt from '../../../art/heroes/guardians/yugzulach.png';
 import elderBoughGuardianArt from '../../../art/heroes/guardians/elderBough.png';
@@ -201,10 +199,6 @@ export const heroArt: Partial<Record<string, string>> = {
   mellow: mellowArt,
   // --- The Titan's own (pixel, as the Threshold paints it; what it turned stays geometric) ---
   endbringer: heraldArt,
-  // --- The lessons' cast (data/storyCast.ts) ---
-  valorPrologue: valorArt,
-  stag: story_stagArt,
-  fox: story_foxArt,
   leftEye: leftEyeArt,
   rightEye: rightEyeArt,
 };

@@ -24,7 +24,6 @@ import {
   withStoryEnds,
   STORY_ENEMY_SIDE,
   STORY_PLAYER_SIDE,
-  storyNodeFight,
   type StoryFight,
 } from '../src/run/story';
 import { STORY_BOOKS } from '../src/data/lessons';
@@ -157,9 +156,7 @@ test('story: a fight ends on its trigger, and a wiped side still ends it first',
 test('story: every catalog fight scripts only moves its actors hold, and leads and targets are in the parties', () => {
   for (const story of STORY_BOOKS) {
     for (const chapter of story.chapters) {
-      const fights = chapter.beats.flatMap((beat) =>
-        beat.kind === 'fight' ? [beat.fight] : beat.act.rows.flat().flatMap((node, i) => storyNodeFight(beat.act, node, `${chapter.id}#${i}`) ?? [])
-      );
+      const fights = chapter.beats.map((beat) => beat.fight);
       for (const fight of fights) {
         const sides = storySides(fight, allCombatants);
         const kit = (side: 'A' | 'B', rosterId: string) =>
@@ -188,8 +185,7 @@ test('story tips: every control tip is short, unique, and lights something', () 
   for (const story of STORY_BOOKS) {
     for (const chapter of story.chapters) {
       for (const beat of chapter.beats) {
-        const cues =
-          beat.kind === 'fight' ? beat.cues ?? [] : beat.kind === 'act' ? beat.act.rows.flatMap((row) => row.flatMap((node) => node.cues ?? [])) : [];
+        const cues = beat.cues ?? [];
         for (const tip of cues.flatMap((cue) => cue.tips ?? [])) {
           assert.ok(!seen.has(tip.id), `${tip.id} is used twice`);
           seen.add(tip.id);

@@ -38,8 +38,6 @@ import { useProfile } from '../shared/ProfileContext';
 import { enemies } from '../../data/enemies';
 import { FIRST_CYCLE, cycleOf } from '../../run/cycles';
 import { allCombatants } from '../../data/content';
-import { STORY_BOOKS } from '../../data/lessons';
-import { storyNodeEncounter } from '../../run/story';
 import type { TypeId } from '../../engine/content';
 import partyArt from '../../../art/ui/party.png';
 
@@ -57,7 +55,7 @@ function scoutChoices(run: RunState, choiceIds: readonly string[], purchases: re
   for (const id of choiceIds) {
     const node = map.nodes[id];
     if (!node || (node.type !== 'skirmish' && node.type !== 'elite')) continue;
-    const encounter = storyNodeEncounter(run, STORY_BOOKS, id, allCombatants) ?? nodeEncounter(node, { run, location, heroes: pools.heroes, strangers: pools.strangers, allCombatants, enemies, progression: progressionTable });
+    const encounter = nodeEncounter(node, { run, location, heroes: pools.heroes, strangers: pools.strangers, allCombatants, enemies, progression: progressionTable });
     scouted[id] = scoutedParty(encounter, allCombatants);
   }
   return scouted;
@@ -69,8 +67,6 @@ interface Props {
   onSelectNode: (nodeId: string) => void;
   /** Leave to the title with the run saved here. Omit and the pause menu drops both quit entries. */
   onSaveAndQuit?: () => void;
-  /** What the quit entry says, where the run is not saved (a Story act). */
-  quitLabel?: string;
   /** Discard the run and its save (two-tap armed). */
   onAbandonRun?: () => void;
   /** Set while saves are not landing whole: the menu key wears a mark and the menu says why. */
@@ -173,7 +169,7 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 
 // The run's hub (docs/run-loop.md). Levels are automatic (run/growth.ts) and pay out on the
 // level-up report, not here.
-export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, quitLabel, onAbandonRun, saveTrouble = null }: Props) {
+export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAbandonRun, saveTrouble = null }: Props) {
   const [rosterOpen, setRosterOpen] = useState(false);
   const companionId = companionHeroId(run);
   const callMoveId = companionCallMoveId(run);
@@ -355,7 +351,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, quitL
                   <span className="options-item-glyph" aria-hidden="true">
                     <HubGlyph name="door" />
                   </span>
-                  {quitLabel ?? 'Save & Quit to Title'}
+                  Save & Quit to Title
                 </button>
               )}
               {onAbandonRun && (

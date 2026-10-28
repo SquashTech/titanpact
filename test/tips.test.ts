@@ -32,7 +32,7 @@ import { STORY_BOOKS } from '../src/data/lessons';
 const storyTips: Tip[] = STORY_BOOKS.flatMap((story) =>
   story.chapters.flatMap((chapter) =>
     chapter.beats.flatMap((beat) => {
-      const cues = beat.kind === 'fight' ? beat.cues ?? [] : beat.act.rows.flatMap((row) => row.flatMap((node) => node.cues ?? []));
+      const cues = beat.cues ?? [];
       return cues.flatMap((cue) => cue.tips ?? []);
     })
   )

@@ -47,7 +47,7 @@ export type LevelUpQuestion =
 export type RunScreen =
   | { kind: 'title' }
   /** A First Light lesson playing (data/lessons.ts), from `beat` on. */
-  | { kind: 'storyChapter'; chapterId: string; beat?: number }
+  | { kind: 'storyChapter'; chapterId: string }
   /** The lore card, ahead of the first draft on an account (docs/tutorial.md). */
   | { kind: 'lore'; next: RunScreen; lines: readonly string[]; tipId: string }
   | { kind: 'draft'; optionIds: string[] }

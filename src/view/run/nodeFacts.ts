@@ -18,7 +18,6 @@ import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
 import { smithyPrice } from '../../run/cycles';
 import { CONTRACT_BASE_PRICE, CONTRACT_DROP_CHANCE } from '../../run/recruitment';
 import { MEND_PRICE_PER_HERO } from '../../run/wounds';
-import type { StoryActNode } from '../../run/story';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
 export type NodeFactGlyph =
@@ -106,34 +105,6 @@ function spawnFacts(type: 'fight' | 'battle', actNumber: number, shapeAct: numbe
 }
 
 const gemNote = (actNumber: number) => `+${gemPointsForAct(actNumber)} to a stat each`;
-
-/**
- * A Story act's node (docs/stories.md §14): its fight at the levels it was authored at and its one
- * named item, or its chest's three. A Story pays no Gem, recruit or Contract, so none is promised.
- * Null for a node the Story leaves to the ordinary card.
- */
-export function storyNodeDossier(spec: StoryActNode, actNumber: number): NodeDossier | null {
-  if (spec.enemy) {
-    const kind = spec.type as EncounterNodeKind;
-    const gold = goldRangeFor(kind, actNumber);
-    const xp = Math.round(encounterXpForAct(actNumber) * ENCOUNTER_XP_MULTIPLIER[encounterXpKind(kind)]);
-    const levels = spec.enemy.map((enemy) => enemy.level);
-    const low = Math.min(...levels);
-    const high = Math.max(...levels);
-    return {
-      about: null,
-      facts: [
-        { glyph: 'enemy', label: 'Enemies', threat: true, value: low === high ? `Lv ${high}` : `Lv ${low}–${high}` },
-        { glyph: 'xp', label: 'XP', value: `${xp}` },
-        { glyph: 'gold', label: 'Gold', value: gold[1] > 0 ? range(gold) : null },
-        { glyph: 'item', label: 'Item', value: spec.drop ? '1' : null },
-      ],
-      odds: null,
-    };
-  }
-  if (spec.items) return { about: null, facts: [{ glyph: 'item', label: 'Item', value: '1 of 3' }], odds: null };
-  return null;
-}
 
 export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): NodeDossier {
   const odds = (kind: EncounterNodeKind | 'standard' | 'cache') =>

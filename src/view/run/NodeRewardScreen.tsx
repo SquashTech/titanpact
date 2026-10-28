@@ -10,7 +10,6 @@ import { prefersReducedMotion } from '../shared/reducedMotion';
 import { seededRandom, withSeededRandom } from '../shared/seededRandom';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { useCoinCount } from '../shared/useCoinCount';
-import { equipment } from '../../data/equipment';
 import { ItemWhoScreen } from './ItemWhoScreen';
 import { mapNodeIcon } from './mapNodeArt';
 import { RoadScene } from './RoadEncounter';
@@ -44,8 +43,6 @@ interface Props {
   onContinue: () => void;
   /** Fixes what the purse or the chest holds, so a resumed run finds the same (docs/save-system.md D2). */
   seed: number;
-  /** A Story act's chest (docs/stories.md §14): the pieces it may hold, one drawn in place of the roll. */
-  items?: readonly string[];
 }
 
 /**
@@ -54,10 +51,10 @@ interface Props {
  * and swings open on one piece. The Gem nodes are not here: which hero takes a Gem IS
  * a decision (GemNodeScreen).
  */
-export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, seed, items }: Props) {
+export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, seed }: Props) {
   if (nodeType === 'currencyReward') return <GoldOnTheRoad run={run} onRunChange={onRunChange} onContinue={onContinue} seed={seed} />;
   if (nodeType === 'contractReward') return <ContractOnTheRoad run={run} onRunChange={onRunChange} onContinue={onContinue} />;
-  return <EquipmentCache run={run} onRunChange={onRunChange} onContinue={onContinue} seed={seed} items={items} />;
+  return <EquipmentCache run={run} onRunChange={onRunChange} onContinue={onContinue} seed={seed} />;
 }
 
 /** Coins out of the pouch: x drift (px), peak height (px), delay (s). Golden-ratio spread, so no two land together. */
@@ -166,14 +163,8 @@ function ContractOnTheRoad({ run, onRunChange, onContinue }: Pick<Props, 'run' |
 }
 
 /** Chest on the road, then the one piece it held, on the who-screen. A tap on the road skips straight to it. */
-function EquipmentCache({ run, onRunChange, onContinue, seed, items }: Pick<Props, 'run' | 'onRunChange' | 'onContinue' | 'seed' | 'items'>) {
-  const [itemId] = useState(() =>
-    withSeededRandom(seed, () => {
-      if (!items) return rollEquipmentDrops(1, rarityWeightsFor(run.actNumber, 'cache'))[0].id;
-      const held = items.filter((id) => equipment[id]);
-      return held[Math.floor(Math.random() * held.length)];
-    })
-  );
+function EquipmentCache({ run, onRunChange, onContinue, seed }: Pick<Props, 'run' | 'onRunChange' | 'onContinue' | 'seed'>) {
+  const [itemId] = useState(() => withSeededRandom(seed, () => rollEquipmentDrops(1, rarityWeightsFor(run.actNumber, 'cache'))[0].id));
   const [phase, setPhase] = useState<'road' | 'flash' | 'burst' | 'open'>(() => (prefersReducedMotion() ? 'open' : 'road'));
 
   // One timer a phase, so a tap that skips ahead re-times everything after it.

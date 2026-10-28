@@ -20,7 +20,7 @@ const DRAWN = ['spread', 'switch', 'leads', 'lock', 'clock', 'banner', 'road', '
 function cueTipIds(chapterId: string): string[] {
   const chapter = LESSONS.chapters.find((c) => c.id === chapterId)!;
   return chapter.beats.flatMap((beat) => {
-    const cues = beat.kind === 'fight' ? beat.cues ?? [] : beat.act.rows.flat().flatMap((node) => node.cues ?? []);
+    const cues = beat.cues ?? [];
     return cues.flatMap((cue) => (cue.tips ?? []).map((tip) => tip.id));
   });
 }

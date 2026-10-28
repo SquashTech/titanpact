@@ -24,7 +24,7 @@ const config = { heroes: allCombatants, moves, typeChart, statuses, passives, fi
 type FightBeat = Extract<StoryBeat, { kind: 'fight' }>;
 const beats: FightBeat[] = LESSONS.chapters.map((c) => {
   const beat = c.beats[0];
-  assert.ok(c.beats.length === 1 && beat.kind === 'fight', `${c.id} is not one fight`);
+  assert.strictEqual(c.beats.length, 1, `${c.id} is not one fight`);
   return beat;
 });
 const beatOf = (chapterId: string): FightBeat => beats[LESSONS.chapters.findIndex((c) => c.id === chapterId)];

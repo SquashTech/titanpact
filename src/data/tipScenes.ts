@@ -185,18 +185,18 @@ const TARGETS_SCENE: TipScene = {
 
 const SWITCH_SCENE: TipScene = { hero: { heroId: 'cinderKnight' }, bar: true, focus: ['switch'] };
 
-/** The Story prologue's second round: the White Stag, which Iron cuts and Beast glances off. */
-const HUNT_FOES = [{ heroId: 'stag', level: 1 }] as const;
-const HUNT_VALOR = { heroId: 'valorPrologue', level: 2 } as const;
+/** The first lesson's Crag and its Arcling, which Stone hits double. */
+const LESSON_FOES = [{ heroId: 'arcling', level: 2 }] as const;
+const LESSON_CRAG = { heroId: 'crag', level: 3 } as const;
 
 /** Per tip or How to Play page, per page: the picture above the words, or null for none. */
 export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>> = {
   'fight.basics': [null, MANA_SCENE, { ...TARGETS_SCENE, moves: ['ember', 'firestorm'] }],
   bench: [null, null, SWITCH_SCENE],
-  // Valor's Iron Fist against the Hunt's stag, every part of the row named in place.
+  // Crag's Rock Toss against the first lesson's Arcling, every part of the row named in place.
   'howto.combat': [
     null,
-    { foes: HUNT_FOES, hero: HUNT_VALOR, moves: ['ironFist'], callouts: ['mana', 'type', 'kind', 'power', 'matchup'], expect: { ironFist: [2] } },
+    { foes: LESSON_FOES, hero: LESSON_CRAG, moves: ['rockToss'], callouts: ['mana', 'type', 'kind', 'power', 'matchup'], expect: { rockToss: [2] } },
   ],
   'howto.mana': [MANA_SCENE],
   'howto.rest': [{ hero: { heroId: 'cinderKnight', mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],

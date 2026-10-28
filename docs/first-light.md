@@ -165,8 +165,9 @@ cues' spoken lines, Blip's First Light thoughts and hello premise, `OpeningFall`
      The Bag; the first level-up, patron screen and recruit screen file Levels and Moves, Patrons and
      Recruiting.
 
-   **Dead now, delete in step 4:** the Story *act* machinery (`StoryAct`, `storyActRun`,
-   `storyActMap`, `onStartAct`, and its use in `MapScreen` and `NodeDossier`). No content plays an act
-   any more, and its content tests went with the Road and the Fork. The Story cast (`data/storyCast.ts`:
-   the lesson Valor, the stag and the fox) is unused too.
-4. The Ascent at ten, the silent tour, the lore card restored, and the old lessons deleted.
+   **Deleted 2026-10-27, per user direction:** the Story *act* machinery (`StoryAct`, its map and run,
+   `RunState.story`, the chapter's resume beat, and every branch that switched a run feature off during
+   an act) and the Story cast (`data/storyCast.ts`: the lesson Valor, the stag, the fox and Winter's
+   Breath). A Story is now fight beats only. Their art is archived in `art/archive/story-cast/`. The Turn by
+   Turn page's picture was recast from the lesson Valor to lesson 1's Crag and Arcling.
+4. The Ascent at ten (DONE, §4), the silent tour, the lore card restored. The old lessons are deleted.
