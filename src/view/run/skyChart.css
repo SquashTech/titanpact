@@ -7,17 +7,17 @@
   left: 0;
   right: 0;
   bottom: calc(var(--hub-nav-h, 64px) + var(--sky-chart-foot, 12px));
-  animation: sky-chart-in 0.9s ease-out both;
+  animation: sky-chart-in 0.5s ease-out both;
 }
 
 .title-screen.has-parked-run .sky-chart {
   --sky-chart-foot: 132px;
 }
 
+/* Opacity only: anything that moved here would carry the Pact, Blip and the galaxy's core with it. */
 @keyframes sky-chart-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
 }
 
@@ -808,6 +808,17 @@
   bottom: 0;
   /* The zoomed world spills far past the screen; clipped, or the title scrolls to chase it. */
   overflow: hidden;
+}
+
+/* The chart rises 116px and reaches the floor, but the Pact and Blip's seat hold where they stood:
+   a box that moved would re-fit the Pact and jump it before the zoom began. */
+.title-screen.is-sky-zoomed .pact-stage {
+  top: calc(30px + 116px);
+  bottom: calc(62px + var(--hub-nav-h, 64px) + var(--sky-chart-foot, 12px));
+}
+
+.title-screen.is-sky-zoomed .sky-seat {
+  top: 116px;
 }
 
 /* The ground the hub's bar stood on sinks into the dark under the Back. */
