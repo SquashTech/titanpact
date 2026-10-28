@@ -39,7 +39,7 @@ const AIM_Y = 0.42;
  * spreading from its fingertip on each press, found by `selector` and re-found as the console
  * changes under it. Above everything, catching nothing.
  */
-export function GuideHand({ selector }: { selector: string }) {
+export function GuideHand({ selector, raised = false }: { selector: string; /** Over the full-screen scenes too. */ raised?: boolean }) {
   const [at, setAt] = useState<{ x: number; y: number } | null>(null);
   useEffect(() => {
     const find = () => {
@@ -56,8 +56,8 @@ export function GuideHand({ selector }: { selector: string }) {
   if (!at) return null;
   return createPortal(
     <>
-      <span className="guide-hand-ring" style={{ left: at.x, top: at.y }} aria-hidden="true" />
-      <div className="guide-hand" style={{ left: at.x - TIP_X, top: at.y }} aria-hidden="true">
+      <span className={`guide-hand-ring${raised ? ' is-raised' : ''}`} style={{ left: at.x, top: at.y }} aria-hidden="true" />
+      <div className={`guide-hand${raised ? ' is-raised' : ''}`} style={{ left: at.x - TIP_X, top: at.y }} aria-hidden="true">
         <svg width={HAND[0].length * PIXEL} height={HAND.length * PIXEL} viewBox={`0 0 ${HAND[0].length} ${HAND.length}`} shapeRendering="crispEdges">
           {CELLS.map(({ x, y, c }) => (
             <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill={COLORS[c]} />

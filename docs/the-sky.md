@@ -171,6 +171,10 @@ Picked from a side-by-side page (`art/concepts/celestial-title/`, "C · Galaxy" 
   First Light's Stardust. Then back to Play, where Blip shows the Pact and the Infinite. Each part is
   remembered once (`tour.firstLight.starfall`, `tour.firstLight.done`) and resumes if left; an account
   that cannot afford the Starfall skips straight to the Infinite. It replaces the `drawnIn` thought.
+  **Wordless and forced since 2026-10-27** (per user direction): Blip leaves its seat and flies to
+  each thing to tap (`BlipGuide.tsx`) with the hand on it — the Observatory's tab, *Call to the
+  Stars*, the reveal's *Awesome!*, then Play — and nothing else answers (`HubNav`'s `only`, the
+  sky's press held). Once back on Play it flies home to its seat and the tour is done.
 
 ## 2c. The manual (2026-10-26, per user direction)
 

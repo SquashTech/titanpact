@@ -21,14 +21,22 @@ import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
 import recordsArt from '../../../art/ui/records.png';
 import { PactButton } from './PactButton';
-import { SkyChart, type SkyPlay } from './SkyChart';
+import { SEAT, SkyChart, type SkyPlay } from './SkyChart';
+import { BlipGuide } from './BlipGuide';
 import type { ThoughtDefinition } from '../../run/thoughts';
 import { readEnemyIntent, writeEnemyIntent } from '../combat/enemyIntent';
 
 /** First Light's tour (docs/the-sky.md §2e), each step remembered once an account. */
 const TOUR_STARFALL = 'tour.firstLight.starfall';
 const TOUR_DONE = 'tour.firstLight.done';
-type TourStep = 'toObservatory' | 'pulling' | 'fallen' | 'infinite';
+/** To the Observatory's tab, its Call, the Starfall playing, back to Play, Blip home to its seat; `infinite` closes it. */
+type TourStep = 'toObservatory' | 'pulling' | 'falling' | 'fallen' | 'home' | 'infinite';
+/** Where Blip and the hand point at each step that waits on a tap. */
+const TOUR_TARGETS: Partial<Record<TourStep, string>> = {
+  toObservatory: '.hub-nav-tab.is-sky',
+  pulling: '.sky-call',
+  fallen: '.hub-nav-play',
+};
 
 /** Owed once First Light is drawn in by play and its finale has played; the Starfall is skipped when it cannot be afforded. */
 function owedTour(profile: Profile): TourStep | null {
@@ -133,18 +141,10 @@ export function TitleScreen({
   // A new account sees First Light and nothing else until it is won; then the tour shows it the Observatory and the Infinite.
   const inFirstLight = !isConstellationLit(profile, sky.constellations.firstLight);
   const [tour, setTour] = useState<TourStep | null>(() => owedTour(profile));
-  // Wordless: the Observatory opens on the Call for the first Starfall, and the fallen hero sends it back to the Pact.
+  // Wordless and forced: Blip flies to each thing to tap, the hand on it, and nothing else answers.
   useEffect(() => {
-    if (tour === 'toObservatory') {
-      if (canCallStarfall(profile, starShopCatalog)) {
-        selectTab('constellation');
-        setTour('pulling');
-      } else {
-        onSeeTip(TOUR_STARFALL);
-        setTour('infinite');
-      }
-    } else if (tour === 'fallen') {
-      selectTab('play');
+    if (tour === 'toObservatory' && !canCallStarfall(profile, starShopCatalog)) {
+      onSeeTip(TOUR_STARFALL);
       setTour('infinite');
     } else if (tour === 'infinite') {
       onSeeTip(TOUR_DONE);
@@ -213,6 +213,8 @@ export function TitleScreen({
     setTab(next);
     if (next === 'constellation') onRefreshProfile();
     if (next === 'collection') setCollectionSeen(true);
+    if (tour === 'toObservatory' && next === 'constellation') setTour('pulling');
+    if (tour === 'fallen' && next === 'play') setTour('home');
   }
 
   /** Every Dev row leaves the title, so none of them needs the menu left standing. */
@@ -234,7 +236,7 @@ export function TitleScreen({
 
   return (
     <div
-      className={`title-screen is-${tone}${pressRow ? ' has-parked-run' : ''}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}${skyZoomed ? ' is-sky-zoomed' : ''}${inFirstLight ? ' is-first-light' : ''}${tour && tour !== 'pulling' ? ' is-touring' : ''}`}
+      className={`title-screen is-${tone}${pressRow ? ' has-parked-run' : ''}${launching ? ' is-launching' : ''}${tab !== 'play' ? ' is-away' : ''}${skyZoomed ? ' is-sky-zoomed' : ''}${inFirstLight ? ' is-first-light' : ''}${tour ? ' is-touring' : ''}`}
     >
       {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
           back is instant, and display: contents keeps them in the screen's own flex and stacking. */}
@@ -246,7 +248,7 @@ export function TitleScreen({
 
       <SkyChart
         profile={profile}
-        disabled={launching}
+        disabled={launching || tour !== null}
         active={tab === 'play' && !launching}
         pressHidden={!!parkedRun}
         returned={skyReturn}
@@ -401,11 +403,14 @@ export function TitleScreen({
           <StarShopScreen
             profile={profile}
             onBuy={onBuyOffer}
-            onStarfall={onStarfall}
+            onStarfall={(count) => {
+              if (tour === 'pulling') setTour('falling');
+              return onStarfall(count);
+            }}
             freshHeroId={freshHeroIds[freshHeroIds.length - 1] ?? null}
-            guided={tour === 'pulling'}
+            guided={tour === 'pulling' || tour === 'falling' || tour === 'fallen'}
             onHeroFallen={(heroId) => {
-              if (tour === 'pulling') {
+              if (tour === 'falling') {
                 onSeeTip(TOUR_STARFALL);
                 setTour('fallen');
               }
@@ -416,9 +421,32 @@ export function TitleScreen({
         </div>
       )}
 
-      <HubNav tab={tab} onSelect={selectTab} balance={balance - heldDust} collectionFresh={!collectionSeen} disabled={launching || tour !== null} />
+      <HubNav
+        tab={tab}
+        onSelect={selectTab}
+        balance={balance - heldDust}
+        collectionFresh={!collectionSeen}
+        disabled={launching || tour !== null}
+        only={tour === 'toObservatory' ? 'constellation' : tour === 'fallen' ? 'play' : undefined}
+      />
 
-      {tour === 'pulling' && <GuideHand selector=".sky-call" />}
+      {tour && tour !== 'infinite' && (
+        <BlipGuide
+          target={tour === 'home' ? { selector: '.sky-seat', at: 'seat' } : { selector: TOUR_TARGETS[tour] ?? '.sky-call' }}
+          seat={SEAT}
+          hidden={tour === 'falling'}
+          onArrive={
+            tour === 'home'
+              ? () => {
+                  onSeeTip(TOUR_DONE);
+                  setTour(null);
+                }
+              : undefined
+          }
+        />
+      )}
+      {tour && TOUR_TARGETS[tour] && <GuideHand key={tour} selector={TOUR_TARGETS[tour]!} />}
+      {tour === 'falling' && <GuideHand selector=".summon.is-settled .summon-cheer" raised />}
 
       {/* Starting over with a run parked deletes it, so it asks — a sheet, not a
           re-labelled button, because a button that changes what it says under

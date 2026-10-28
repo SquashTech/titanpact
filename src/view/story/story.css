@@ -34,6 +34,11 @@
   45% { transform: translate(0, 0); }
   55% { transform: translate(0, 1px) scale(0.94); }
 }
+/* Over a full-screen scene (the Starfall's reveal sits at 60). */
+.guide-hand.is-raised,
+.guide-hand-ring.is-raised {
+  z-index: 61;
+}
 /* The press: a ring spreading from the fingertip, in time with the hand's tap. */
 .guide-hand-ring {
   position: absolute;

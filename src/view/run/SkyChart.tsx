@@ -34,7 +34,7 @@ import './skyChart.css';
 // into a clasp, pays its Stardust into the Observatory and closes the ring. A tapped seat zooms in to
 // its constellation, drawn big with its stars named and its own press.
 
-const SEAT = { x: 26, y: 28 };
+export const SEAT = { x: 26, y: 28 };
 
 /** The Pact's drawing box. */
 const W = 394;

@@ -16,15 +16,17 @@ interface Props {
   /** Something new waits in the Collection (a hero just fallen). */
   collectionFresh: boolean;
   disabled?: boolean;
+  /** A guided step: this tab is the one that answers, the others are held. */
+  only?: HubTab;
 }
 
 /**
  * The title hub's bottom bar (Clash Royale / Marvel Snap): the Collection and the Observatory
  * either side of Play, which is raised out of the bar as the seal it leaves through.
  */
-export function HubNav({ tab, onSelect, balance, collectionFresh, disabled }: Props) {
+export function HubNav({ tab, onSelect, balance, collectionFresh, disabled, only }: Props) {
   function select(next: HubTab) {
-    if (next === tab || disabled) return;
+    if (next === tab || (only ? next !== only : disabled)) return;
     playSfx('ui.tab');
     onSelect(next);
   }

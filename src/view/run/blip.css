@@ -37,6 +37,19 @@
   filter: none;
 }
 
+/* Blip guiding (BlipGuide.tsx): over the page and the bar, letting every tap through to them. */
+.blip-guide {
+  position: fixed;
+  inset: 0;
+  z-index: 54;
+  pointer-events: none;
+  transition: opacity 0.3s ease-out;
+}
+
+.blip-guide.is-hidden {
+  opacity: 0;
+}
+
 /* A scene over the sky (BlipBeat.tsx): the sky dims while it plays. */
 .blip-beat {
   position: fixed;
