@@ -871,14 +871,14 @@ interface TrailProps {
 /** Who stands on each lesson's island: the heroes it is played with, a promise a name never made. */
 const LESSON_CAST: Readonly<Record<string, readonly string[]>> = {
   'firstLight.move': ['crag', 'ursa'],
-  'firstLight.mana': ['tidecaller'],
+  'firstLight.mana': ['pixie'],
   'firstLight.types': ['crimson', 'raiju'],
   'firstLight.spread': ['cairn'],
   'firstLight.kinds': ['nightshade', 'runescribe'],
   'firstLight.burn': ['cinderKnight'],
   'firstLight.switch': ['cinderKnight', 'forgewright', 'raiju'],
-  'firstLight.gear': ['ursa', 'drift'],
-  'firstLight.open': ['rime', 'revenant', 'runescribe'],
+  'firstLight.gear': ['ursa'],
+  'firstLight.open': ['crimson', 'cairn', 'ursa'],
 };
 const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 /** How far below an island's centre its star sits, on the front of its rim. */

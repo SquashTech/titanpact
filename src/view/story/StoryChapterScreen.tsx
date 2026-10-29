@@ -45,7 +45,9 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips,
   const pages = useMemo(() => lessonPages(MANUAL_PAGES, chapter.id), [chapter.id]);
   const [welcomed, setWelcomed] = useState(false);
   const opening = welcome && !welcomed ? welcome.tip : null;
-  const page = beat ? opening ?? pages.find((p) => !tips.seenIds.includes(p.id)) ?? null : null;
+  // The pages open the beat that hands a piece over, where there is one: the lesson is that screen.
+  const pageBeat = Math.max(0, chapter.beats.findIndex((b) => b.handOver));
+  const page = beat ? opening ?? (index === pageBeat ? pages.find((p) => !tips.seenIds.includes(p.id)) : null) ?? null : null;
   const pageUp = page && (
     <TipOverlay
       key={page.id}

@@ -321,7 +321,7 @@ export function TipOverlay({ tip, onDone }: Props) {
           <p className="tip-welcome-line">
             <TipText text={tip.pages[index]} />
           </p>
-          <span className="tip-welcome-advance">Tap to begin</span>
+          <span className="tip-welcome-advance">{last ? 'Tap to begin' : 'Tap to continue'}</span>
         </div>
       ) : (
         <div className="tip-box">

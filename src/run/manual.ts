@@ -27,6 +27,8 @@ export interface ManualPage extends Tip {
    * `type:<type>`, `field:<field>`, `glyph:<drawn mark>`.
    */
   emblem: readonly string[];
+  /** A screen page the player needs to make the choice on that screen: it opens over the screen the first time, rather than waiting for a won fight. */
+  atDecision?: true;
 }
 
 /** Whether this page is in the player's book. An account that played before the manual has every page. */
@@ -54,6 +56,14 @@ export function fileRunPages(profile: Profile, pages: readonly ManualPage[], ids
 export function markPagesShown(profile: Profile, ids: readonly string[]): Profile {
   if (!ids.some((id) => profile.manualUnshown.includes(id))) return profile;
   return { ...profile, manualUnshown: profile.manualUnshown.filter((id) => !ids.includes(id)) };
+}
+
+/** Of the pages a screen has just filed, those that open over it now: the ones its choice needs, not yet in the book before. */
+export function pagesForDecision(profile: Profile, pages: readonly ManualPage[], ids: readonly string[]): string[] {
+  return ids.filter((id) => {
+    const page = pages.find((p) => p.id === id);
+    return !!page?.atDecision && !isPageLearned(profile, page);
+  });
 }
 
 /** The run pages a screen files when it is first reached. */

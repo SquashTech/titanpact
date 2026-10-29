@@ -22,12 +22,16 @@ import { sky } from '../src/data/sky';
 const config = { heroes: allCombatants, moves, typeChart, statuses, passives, fieldEffects, benchHpRegenFlat: 10 };
 
 type FightBeat = Extract<StoryBeat, { kind: 'fight' }>;
-const beats: FightBeat[] = LESSONS.chapters.map((c) => {
-  const beat = c.beats[0];
-  assert.strictEqual(c.beats.length, 1, `${c.id} is not one fight`);
-  return beat;
+/** Every lesson's beats, in play order; a lesson is one fight but Equipment, which is two. */
+const beats: FightBeat[] = LESSONS.chapters.flatMap((c) => {
+  assert.strictEqual(c.beats.length, c.id === 'firstLight.gear' ? 2 : 1, `${c.id} has the wrong number of fights`);
+  return c.beats;
 });
-const beatOf = (chapterId: string): FightBeat => beats[LESSONS.chapters.findIndex((c) => c.id === chapterId)];
+/** A lesson's last beat: the one it is won on. */
+const beatOf = (chapterId: string): FightBeat => {
+  const chapter = LESSONS.chapters.find((c) => c.id === chapterId)!;
+  return chapter.beats[chapter.beats.length - 1];
+};
 const fightOf = (chapterId: string): StoryFight => beatOf(chapterId).fight;
 
 /** The board a lesson opens on, its hand-over seated as the item screen seats it unless `bare`. */
@@ -76,21 +80,21 @@ test('lessons: every lesson is a scenario star of First Light, and every First L
 });
 
 test('lessons: every lesson has its line, casts base heroes, and points on every guided round', () => {
-  LESSONS.chapters.forEach((chapter, i) => {
-    const beat = beats[i];
-    assert.ok(beat.line, `${chapter.id} has no line`);
-    for (const spec of beat.fight.player) assert.ok(heroes[spec.heroId] && !heroes[spec.heroId].unlock, `${chapter.id}: ${spec.heroId} is not a base hero`);
+  for (const beat of beats) {
+    const id = beat.fight.id;
+    assert.ok(beat.line, `${id} has no line`);
+    for (const spec of beat.fight.player) assert.ok(heroes[spec.heroId] && !heroes[spec.heroId].unlock, `${id}: ${spec.heroId} is not a base hero`);
     for (let round = 1; round <= beat.fight.guide.length; round++) {
-      assert.ok(beat.cues?.some((cue) => cue.round === round && cue.point), `${chapter.id} round ${round} is guided with no hand`);
+      assert.ok(beat.cues?.some((cue) => cue.round === round && cue.point), `${id} round ${round} is guided with no hand`);
     }
-  });
+  }
 });
 
 test('lessons: no team fields two heroes of one type', () => {
-  beats.forEach((beat, i) => {
+  for (const beat of beats) {
     const types = beat.fight.player.map((spec) => heroes[spec.heroId].types[0]);
-    assert.strictEqual(new Set(types).size, types.length, `${LESSONS.chapters[i].id} fields ${types.join(', ')}`);
-  });
+    assert.strictEqual(new Set(types).size, types.length, `${beat.fight.id} fields ${types.join(', ')}`);
+  }
 });
 
 test('lessons: each guided fight ends inside its script, won, with nobody down', () => {
@@ -111,16 +115,19 @@ test('lessons: each hero drops the foe it is pointed at, both in the first round
   assert.strictEqual(foesDown(boards[1]), 2);
 });
 
-test('lessons: one Torrent empties Riptide, so it Rests, and the second Torrent finishes the foe', () => {
+test('lessons: one Arcane Blast empties Pixie, so it Rests, and the second Blast finishes the foe', () => {
   const fight = fightOf('firstLight.mana');
-  const { boards } = play(fight);
+  const { rounds, boards } = play(fight);
   assert.strictEqual(boards.length, 4, 'three rounds');
-  const before2 = boards[1].combatants['A:riptide'];
-  assert.ok(before2.currentMana < moves.torrent.manaCost, `Riptide can still afford Torrent in round 2 (Mana ${before2.currentMana})`);
-  assert.strictEqual(foesDown(boards[1]), 0, 'one Torrent is not enough');
-  const before3 = boards[2].combatants['A:riptide'];
+  const before2 = boards[1].combatants['A:pixie'];
+  assert.ok(before2.currentMana < moves.arcaneBlast.manaCost, `Pixie can still afford Arcane Blast in round 2 (Mana ${before2.currentMana})`);
+  assert.strictEqual(foesDown(boards[1]), 0, 'one Blast is not enough');
+  assert.ok(boards[1].combatants['B:peb'].currentHp > 20, 'and plainly not: the foe stands well up');
+  const before3 = boards[2].combatants['A:pixie'];
   assert.strictEqual(before3.currentMana, getMaxMana(allCombatants[before3.heroId], before3), 'the Rest refills it');
   assert.strictEqual(foesDown(boards[3]), 1);
+  const noise = rounds.flat().filter((e) => e.type === 'StatChanged' || (e.type === 'StatusApplied' && e.combatantId === 'A:pixie'));
+  assert.deepStrictEqual(noise, [], 'no stat moves and nothing lands on Pixie: the lesson is Mana alone');
 });
 
 test('lessons: each type finds the foe it hits hardest, and the other way round leaves both standing', () => {
@@ -175,18 +182,29 @@ test('lessons: a lesson with a bench fields two leads or none, or the game asks 
   }
 });
 
-test('lessons: the Feral Dagger turns Ursa\'s Claw into a knockout; bare, the Cubling stands', () => {
-  const fight = fightOf('firstLight.gear');
-  const handOver = beatOf('firstLight.gear').handOver;
-  assert.ok(handOver && fight.player.some((spec) => spec.rosterId === handOver.to), 'the piece goes to a hero in the party');
-  assert.strictEqual(play(fight).boards[1].combatants['B:cub'].fainted, true, 'armed, the Claw drops it');
-  assert.strictEqual(play(fight, () => null, true).boards[1].combatants['B:cub'].fainted, false, 'bare, it stands');
+test('lessons: bare, Ursa\'s Claw takes two hits; given the Feral Dagger, one', () => {
+  const [bare, armed] = LESSONS.chapters.find((c) => c.id === 'firstLight.gear')!.beats;
+  assert.ok(!bare.handOver && armed.handOver, 'the piece arrives between the two fights');
+  assert.ok(armed.fight.player.some((spec) => spec.rosterId === armed.handOver!.to), 'the piece goes to a hero in the party');
+  const first = play(bare.fight);
+  assert.strictEqual(first.boards[1].combatants['B:cub'].fainted, false, 'bare, one Claw leaves it standing');
+  assert.strictEqual(first.boards[2].combatants['B:cub'].fainted, true, 'bare, the second Claw drops it');
+  assert.strictEqual(play(armed.fight).boards[1].combatants['B:cub'].fainted, true, 'armed, one Claw drops it');
 });
 
-test('lessons: the last lesson is the first open fight, a full team of six whose leads the player picks', () => {
+test('lessons: the last lesson is the first open fight, a party of four holding only moves the lessons taught', () => {
   const last = beats[beats.length - 1].fight;
-  assert.strictEqual(last.player.length, 6);
+  assert.strictEqual(last.player.length, 4);
   assert.deepStrictEqual([last.playerLeads, last.guide, last.enemyScript], [[], [], []], 'nothing picked, guided or scripted for the player');
-  assert.ok(last.enemy.length >= 4, 'a side worth switching against');
-  assert.deepStrictEqual(LESSONS.chapters.slice(0, -1).map((c, i) => beats[i].fight.guide.length > 0), LESSONS.chapters.slice(0, -1).map(() => true), 'every lesson before it is guided');
+  assert.ok(last.enemy.length > 2, 'a foe waits on the bench');
+  const taught = new Set(beats.slice(0, -1).flatMap((b) => b.fight.player.flatMap((spec) => spec.moveIds ?? [])));
+  for (const spec of last.player) for (const id of spec.moveIds ?? []) assert.ok(taught.has(id), `${spec.heroId} holds ${id}, which no lesson used`);
+  for (const spec of last.enemy) {
+    assert.ok(spec.moveIds && spec.moveIds.length > 0, `${spec.heroId} fights with its whole kit`);
+    for (const id of spec.moveIds) {
+      const move = moves[id];
+      assert.ok(move.kind === 'damage' && !move.statusApplication && !move.statDeltas && !move.fieldEffectApplication, `${spec.heroId}'s ${id} is not a plain hit`);
+    }
+  }
+  assert.ok(beats.slice(0, -1).every((b) => b.fight.guide.length > 0), 'every lesson before it is guided');
 });

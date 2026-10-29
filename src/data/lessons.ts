@@ -1,9 +1,9 @@
 // First Light's lessons (docs/first-light.md): one concept a lesson, each a fight with one line on the
-// top bar. The first nine are guided, the hand on every tap; the tenth is the first open fight, a full
-// team the player commands alone. Each casts heroes the others don't, so the roster shows itself.
-// Each lesson is a one-beat chapter in its own book, so the Story machinery plays it unchanged.
+// top bar. The first eight are guided, the hand on every tap; the last is the first open fight, a team
+// the player commands alone. Each lesson is a chapter in its own book, so the Story machinery plays it
+// unchanged: one fight beat, or Equipment's two, bare and then armed.
 
-import type { StoryChapter, StoryDefinition, StoryFight, StoryHandOver } from '../run/story';
+import type { StoryBeat, StoryChapter, StoryDefinition, StoryFight, StoryHandOver } from '../run/story';
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
 const ally = (rosterId: string) => ({ side: 'A' as const, rosterId });
@@ -26,19 +26,19 @@ const moveAndTarget: StoryFight = {
   guide: [[{ actor: 'crag', moveId: 'rockToss', target: foe('arc') }, { actor: 'ursa', moveId: 'claw', target: foe('cub') }]],
 };
 
-/** One cast empties Riptide's Mana, the Rest refills it, and the second cast finishes the foe. */
+/** One Arcane Blast empties Pixie's Mana, the Rest refills it, and the second cast finishes the foe. Pixie's innate is quiet alone. */
 const mana: StoryFight = {
   id: 'lesson-mana',
   seed: 1802,
-  player: [{ rosterId: 'riptide', heroId: 'tidecaller', level: 3, moveIds: ['torrent'] }],
-  playerLeads: ['riptide'],
-  enemy: [{ rosterId: 'cub', heroId: 'cubling', level: 14 }],
-  enemyLeads: ['cub'],
-  enemyScript: [1, 2, 3].map(() => [{ actor: 'cub', moveId: 'claw', target: ally('riptide') }]),
+  player: [{ rosterId: 'pixie', heroId: 'pixie', level: 3, moveIds: ['arcaneBlast'] }],
+  playerLeads: ['pixie'],
+  enemy: [{ rosterId: 'peb', heroId: 'pebbling', level: 15 }],
+  enemyLeads: ['peb'],
+  enemyScript: [1, 2, 3].map(() => [{ actor: 'peb', moveId: 'rockToss', target: ally('pixie') }]),
   guide: [
-    [{ actor: 'riptide', moveId: 'torrent', target: foe('cub') }],
-    [{ actor: 'riptide', rest: true }],
-    [{ actor: 'riptide', moveId: 'torrent', target: foe('cub') }],
+    [{ actor: 'pixie', moveId: 'arcaneBlast', target: foe('peb') }],
+    [{ actor: 'pixie', rest: true }],
+    [{ actor: 'pixie', moveId: 'arcaneBlast', target: foe('peb') }],
   ],
 };
 
@@ -127,53 +127,56 @@ const switching: StoryFight = {
   ],
 };
 
-/** Ursa takes the Feral Dagger, and its Attack and Beast Force turn her Claw into a knockout the bare Claw is not. */
-const gear: StoryFight = {
-  id: 'lesson-gear',
+const URSA: StoryFight['player'] = [{ rosterId: 'ursa', heroId: 'ursa', level: 3, moveIds: ['claw'] }];
+const GEAR_CUB: StoryFight['enemy'] = [{ rosterId: 'cub', heroId: 'cubling', level: 13 }];
+const cubClaws = (rounds: number) => Array.from({ length: rounds }, () => [{ actor: 'cub', moveId: 'claw', target: ally('ursa') }]);
+const ursaClaws = (rounds: number) => Array.from({ length: rounds }, () => [{ actor: 'ursa', moveId: 'claw', target: foe('cub') }]);
+
+/** Bare, Ursa's Claw takes two hits to drop the Cubling. */
+const gearBare: StoryFight = {
+  id: 'lesson-gear-bare',
   seed: 1809,
-  player: [
-    { rosterId: 'ursa', heroId: 'ursa', level: 3, moveIds: ['claw'] },
-    { rosterId: 'drift', heroId: 'drift', level: 3, moveIds: ['psiBolt'] },
-  ],
-  playerLeads: ['ursa', 'drift'],
-  enemy: [
-    { rosterId: 'cub', heroId: 'cubling', level: 13 },
-    { rosterId: 'arc', heroId: 'arcling', level: 2 },
-  ],
-  enemyLeads: ['cub', 'arc'],
-  enemyScript: [[{ actor: 'cub', moveId: 'claw', target: ally('ursa') }]],
-  guide: [[{ actor: 'ursa', moveId: 'claw', target: foe('cub') }, { actor: 'drift', moveId: 'psiBolt', target: foe('arc') }]],
+  player: URSA,
+  playerLeads: ['ursa'],
+  enemy: GEAR_CUB,
+  enemyLeads: ['cub'],
+  enemyScript: cubClaws(2),
+  guide: ursaClaws(2),
 };
+
+/** The same Cubling, and the Feral Dagger's Attack and Beast Force turn one Claw into a knockout. */
+const gearArmed: StoryFight = { ...gearBare, id: 'lesson-gear', enemyScript: cubClaws(1), guide: ursaClaws(1) };
 const GEAR_HAND_OVER: StoryHandOver = { itemId: 'dagger.common.feral', to: 'ursa' };
 
-/** The first open fight: six heroes of six types, the leads the player's to pick, and nothing guided. */
+/** The open fight's party: heroes the lessons cast, each holding the one move it was taught with. */
+export const OPEN_FIGHT_PARTY = ['crimson', 'raiju', 'cairn', 'ursa'] as const;
+const OPEN_MOVES: Readonly<Record<(typeof OPEN_FIGHT_PARTY)[number], string>> = { crimson: 'ember', raiju: 'thunderclap', cairn: 'tremor', ursa: 'claw' };
+
+/** The first open fight: four heroes, the leads the player's to pick, and nothing guided. */
 const open: StoryFight = {
   id: 'lesson-open',
   seed: 1810,
-  player: [
-    { rosterId: 'rime', heroId: 'rime', level: 6 },
-    { rosterId: 'raiju', heroId: 'raiju', level: 6 },
-    { rosterId: 'revenant', heroId: 'revenant', level: 6 },
-    { rosterId: 'sylva', heroId: 'wildOracle', level: 6 },
-    { rosterId: 'glyph', heroId: 'runescribe', level: 6 },
-    { rosterId: 'cairn', heroId: 'cairn', level: 6 },
-  ],
+  player: OPEN_FIGHT_PARTY.map((heroId) => ({ rosterId: heroId, heroId, level: 6, moveIds: [OPEN_MOVES[heroId]] })),
   playerLeads: [],
+  // Plain hits only, so the fight holds nothing a lesson has not shown: no status, field or stat step.
   enemy: [
-    { rosterId: 'ravager', heroId: 'ravager', level: 4 },
-    { rosterId: 'bramble', heroId: 'bramblehide', level: 4 },
-    { rosterId: 'rillfin', heroId: 'rillfin', level: 4 },
-    { rosterId: 'kindle', heroId: 'kindlehide', level: 4 },
+    { rosterId: 'ravager', heroId: 'ravager', level: 4, moveIds: ['pounce'] },
+    { rosterId: 'bramble', heroId: 'bramblehide', level: 4, moveIds: ['rockToss'] },
+    { rosterId: 'rillfin', heroId: 'rillfin', level: 4, moveIds: ['splash'] },
   ],
   enemyLeads: ['ravager', 'bramble'],
   enemyScript: [],
   guide: [],
 };
 
-/** A fight as a lesson: its line on the top bar, the hand on every guided round. */
-function lessonChapter(id: string, title: string, fight: StoryFight, line: string, handOver?: StoryHandOver): StoryChapter {
+/** A fight as a lesson beat: its line on the top bar, the hand on every guided round. */
+function lessonBeat(fight: StoryFight, line: string, handOver?: StoryHandOver): StoryBeat {
   const cues = fight.guide.map((_, i) => ({ round: i + 1, point: true as const }));
-  return { id, title, beats: [{ kind: 'fight', fight, locationId: 'wildsEdge', cues, line, handOver }] };
+  return { kind: 'fight', fight, locationId: 'wildsEdge', cues, line, handOver };
+}
+
+function lessonChapter(id: string, title: string, fight: StoryFight, line: string): StoryChapter {
+  return { id, title, beats: [lessonBeat(fight, line)] };
 }
 
 /** The lessons as a book of one-beat chapters; a chapter's id is its scenario's (data/sky.ts). */
@@ -188,8 +191,12 @@ export const LESSONS: StoryDefinition = {
     lessonChapter('firstLight.kinds', 'Physical and Magical', kinds, 'Defense stops physical hits. Wisdom stops magic.'),
     lessonChapter('firstLight.burn', 'Status Effects', burn, 'A Burn keeps hurting after the hit.'),
     lessonChapter('firstLight.switch', 'Switching', switching, 'Switch in a hero from the bench.'),
-    lessonChapter('firstLight.gear', 'Equipment', gear, 'A piece of gear makes its hero stronger.', GEAR_HAND_OVER),
-    lessonChapter('firstLight.open', 'The First Fight', open, 'Six heroes now. Win it your way.'),
+    {
+      id: 'firstLight.gear',
+      title: 'Equipment',
+      beats: [lessonBeat(gearBare, 'Without gear, it takes two hits.'), lessonBeat(gearArmed, 'A piece of gear makes its hero stronger.', GEAR_HAND_OVER)],
+    },
+    lessonChapter('firstLight.open', 'The First Fight', open, 'Four heroes now. Win it your way.'),
   ],
 };
 

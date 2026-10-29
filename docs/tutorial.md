@@ -1,38 +1,44 @@
 # tutorial.md — First-Time Tips
 
-> Module of the Titanpact `/docs` suite. Companion to `lore.md` (whose premise the lore card
-> states in four lines) and `run-loop.md`.
+> Module of the Titanpact `/docs` suite. Companion to `first-light.md` (the lessons), `the-sky.md`
+> §2c (the manual) and `run-loop.md`.
 >
-> Decided 2026-09-24, per user direction, **replacing the scripted first run** of 2026-09-05
-> (Valor-narrated, Valor + Fang forced, a one-node-per-row Act 1 with curated fights, pinned
-> payouts and three locks — turned off 2026-09-10 and now deleted whole).
+> **The tutorial is First Light** (`docs/first-light.md`, since 2026-10-27): nine one-concept lessons
+> a new account plays before its first run. This file is what is left beside them: the first-time
+> tips, the pages a run opens at a choice, and How to Play. Reconciled with the build 2026-10-29.
 >
-> **Cut to three tips 2026-10-13, per user direction** (§3): the number of interruptions was the
-> problem, and most cards explained a screen that already said it. Everything they said moved to
-> the Reference's **How to Play** page (§5), a backstop for the player who goes looking.
+> History: the scripted first run of 2026-09-05 was deleted 2026-09-24 (§7); the tips were cut to
+> three 2026-10-13, per user direction, because the number of interruptions was the problem.
 
 ## 1. What it is
 
-There is **no tutorial run**. A player's first run is an ordinary run — the draft rolls, the map
-branches, the fights are drawn, the payouts roll — exactly as every later run is.
+A new account sees, in order: the install card (once a device), the fall (wordless panels), a
+two-page **Welcome** (what a run is, what First Light is), then First Light's lessons, each opening
+on its own How to Play page. The first run after them is an ordinary run.
 
 What a first run adds is information, not structure:
 
-- **The lore card** — four lines, one a tap, ahead of the first draft on an account.
-- **Three first-time tips** — the first fight, the first fight with a bench, the first item.
-  **Once per account**, never again.
+- **Three first-time tips**: the first fight, the first fight with a bench, the first item, **once
+  per account**. A lesson that taught one retires it (§3), so after First Light none of the three
+  fires.
+- **Three pages at a choice**: The Map, Levels and Moves, and Recruiting open over their screen the
+  first time it is reached (`ManualPage.atDecision`). Every other run page files quietly and lands
+  on the next won fight's Learned row.
 
 Everything else is taught by the screen it happens on: a label, a button that names what it does,
 a quiet mark for a state that lasts, and a line at the moment a state changes. The test for a new
-tip is whether the player cannot make the decision in front of them without it. The audience is
-mostly experienced players, who get the gist fast; the inquisitive minority has How to Play.
+tip or a new page at a choice is whether the player cannot make the decision in front of them
+without it. The inquisitive minority has How to Play.
 
 **Voice.** Tips are plain game-UI text — *video-gamey information*, brief and to the point. Nobody
 is speaking: no portrait, no name, no "we", no in-world framing (`test/tips.test.ts` fails on
 "we / us / our" in a tip or a How to Play section). One or two sentences a page, at most three
 pages, 180 characters a page. The lore card is the one place the game speaks as a legend.
 
-## 2. The lore card
+## 2. The lore card — NOT PLAYED
+
+Nothing plays it since A Tale of Valor was deleted (2026-10-24); the fall and the Welcome carry the
+premise. `LORE_LINES` holds six lines, kept as content. What it was:
 
 ```
 A Titan cannot be killed.
@@ -63,6 +69,10 @@ swallows input until dismissed).
 `bench` merges the old `squad` and `fight.switching` cards so the bench is explained once, at the
 decision it governs. Its third page draws the command bar's Switch key, which the lead pick does
 not show.
+
+**A lesson retires what it taught** (App.tsx): winning any lesson marks `fight.basics` seen,
+Equipment marks `item`, and the open fight marks `bench` (`TIPS_A_LESSON_RETIRES`). The three stay
+for an account that played before First Light.
 
 ### What replaced the rest (2026-10-13)
 
@@ -188,4 +198,5 @@ first run. Cut to three on 2026-10-13 (§3).
 - **A first run is the real Act 1.** A new player meets the same Act 1 wall a veteran does
   (measured 58–68% cleared under the sim's pilots). Whether that needs a first-run softening is
   for playtest.
-- **Veterans** on an existing profile see the three tips once (`bench` is a new id). Deliberate.
+- **Pages at a choice are three.** The Map, Levels and Moves, and Recruiting. Whether the fork
+  (Elite or Skirmish) or the Guild Hall earns one is for playtest; each added one is an interruption.

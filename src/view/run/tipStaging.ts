@@ -31,7 +31,8 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   // The pages the lessons show as control tips (data/lessons.ts cues): each lights the control it
   // names on the live board, beside its drawn scene. The welcome lights nothing: it is the fight's title card.
   'story.welcome': {},
-  'howto.combat': { pages: [['.order-track'], null, null] },
+  'howto.items': { pages: [['.item-ledger-piece', '.item-ledger-rows'], ['.item-who-sockets'], ['.item-who-sockets']] },
+  'howto.leads': { pages: [['.lead-pick-grid'], ['.lead-pick-grid .squad-slot-matchups', '.team-row.enemy .combatant-card']] },
   'howto.status.Conduct': { pages: [null, ['.order-track']] },
   'howto.statuses': { pages: [['.status-badge'], ['.status-badge']] },
   'howto.status.Daze': {},

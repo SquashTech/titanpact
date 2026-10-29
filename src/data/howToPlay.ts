@@ -18,6 +18,8 @@ const SWITCH = lesson('firstLight.switch');
 const GEAR = lesson('firstLight.gear');
 const OPEN = lesson('firstLight.open');
 const met = (trigger: ManualTrigger): ManualSource => ({ kind: 'run', met: trigger });
+/** A screen page its screen's choice needs, opened over that screen the first time (run/manual.ts). */
+const atDecision = (p: ManualPage): ManualPage => ({ ...p, atDecision: true });
 
 function page(id: string, title: string, source: ManualSource, emblem: readonly string[], ...pages: string[]): ManualPage {
   return { id: `howto.${id}`, title, source, emblem, pages };
@@ -97,9 +99,8 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Turn by Turn',
     MOVE,
     ['stat:speed'],
-    'Each round, choose a move and a target for both heroes on the field. Then the round plays out *fastest first*: the track across the top shows the order.',
-    '- *Tap* any fighter to read its stats, moves and passive.\n- *Hold* a move to read all of it.',
-    'A passive works on its own, and affects each hero at most once a round.'
+    'Each round, pick a *move* for each hero on the field, then pick *who it hits*.',
+    '- The round then plays out *fastest first*.\n- *Tap* any fighter to read its stats, moves and passive.\n- *Hold* a move to read all of it.'
   ),
   page('mana', 'Mana', MANA, ['stat:manaPool'], '- A move costs the *Mana* in its gem, paid from the blue bar.\n- Every hero regains some Mana each round.'),
   page(
@@ -118,7 +119,8 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     ['kind:buff', 'kind:debuff'],
     "- [buff] A *buff* raises a stat for the rest of the fight.\n- [debuff] A *debuff* lowers an enemy's.",
     '- An arrow beside a stat shows it was raised or lowered.\n- Arrows stay through a switch.',
-    '[stages]'
+    '[stages]',
+    'A passive works on its own, and affects each hero at most once a round.'
   ),
   page(
     'types',
@@ -164,13 +166,15 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     '- The enemy sends out its *leads* first.\n- Tap two heroes to answer them. The rest wait on the bench.',
     '- A *green* arrow: your hero has the type advantage over the enemy above it.\n- A *red* arrow: the enemy has it.'
   ),
-  page(
-    'map',
-    'The Map',
-    met({ kind: 'screen', screen: 'map' }),
-    ['node:fight'],
-    '- Tap a place ahead to read what happens there.\n- Tap it again to go.',
-    'The track across the top shows the way to the Guardian, and how many stops are left before it.'
+  atDecision(
+    page(
+      'map',
+      'The Map',
+      met({ kind: 'screen', screen: 'map' }),
+      ['node:fight'],
+      '- Tap a place ahead to read what happens there.\n- Tap it again to go.',
+      'The track across the top shows the way to the Guardian, and how many stops are left before it.'
+    )
   ),
   page(
     'items',
@@ -179,15 +183,17 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     ['node:equipmentReward'],
     'An item goes to a hero the moment it arrives, and stays.',
     '- Each hero holds *three*.\n- A second item of the same kind *merges* into a stronger one.',
-    '- A hero holding three can *replace* one: the old one is lost.\n- Or *sell* the new one for gold.'
+    '- A hero holding three can *replace* one: the old one is lost.\n- Or *sell* the new one instead.'
   ),
-  page(
-    'levels',
-    'Levels and Moves',
-    met({ kind: 'screen', screen: 'levelUp' }),
-    ['resource:xp'],
-    '- Every hero on your roster gains XP from each won fight, *benched heroes too*.',
-    "- Each level can raise a hero's stats.\n- Some levels offer a new move: take it or pass.\n- A hero knows *four* moves at most."
+  atDecision(
+    page(
+      'levels',
+      'Levels and Moves',
+      met({ kind: 'screen', screen: 'levelUp' }),
+      ['resource:xp'],
+      '- Every hero on your roster gains XP from each won fight, *benched heroes too*.',
+      "- Each level can raise a hero's stats.\n- Some levels offer a new move: take it or pass.\n- A hero knows *four* moves at most."
+    )
   ),
   page(
     'wounds',
@@ -222,13 +228,15 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'At the fork, an *Elite*, against a Skirmish:\n- is a *level higher*\n- *always* drops an item\n- pays *more XP*',
     'Tap a tile to see the types it fields against your roster.'
   ),
-  page(
-    'recruit',
-    'Recruiting',
-    met({ kind: 'screen', screen: 'recruit' }),
-    ['resource:contract'],
-    '- Skirmishes and Elites are fought against other heroes.\n- After a win, a *Recruit Contract* adds one of them to your roster, with its moves and its item.',
-    '- Your roster holds *six*.\n- Past that, a hero must leave to make room.'
+  atDecision(
+    page(
+      'recruit',
+      'Recruiting',
+      met({ kind: 'screen', screen: 'recruit' }),
+      ['resource:contract'],
+      '- Skirmishes and Elites are fought against other heroes.\n- After a win, a *Recruit Contract* adds one of them to your roster, with its moves and its item.',
+      '- Your roster holds *six*.\n- Past that, a hero must leave to make room.'
+    )
   ),
 
   page(

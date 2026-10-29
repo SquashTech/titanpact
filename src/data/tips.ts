@@ -29,15 +29,13 @@ export const LORE_LINES: readonly string[] = [
   'This is the story of how they sealed the Titan.',
 ];
 
-/** What the game is and why the lessons, once an account, right before the first lesson (docs/first-light.md §1). */
+/** What a run is and why the lessons, once an account, right after the fall and before the first lesson (docs/first-light.md §1). */
 export const WELCOME_TIP: Tip = {
   id: 'firstLight.welcome',
   title: 'Welcome to',
   look: 'welcome',
   pages: [
-    'A *Titan* has woken. Wherever it walks, the land turns to ruin.',
-    'Heroes from every corner of the world rise to stand against it.',
-    'Each *run* is the road to the Titan: lead a team of heroes through fight after fight, two at a time, growing stronger on the way.',
+    'Each *run* is the road to the *Titan*: lead a team of heroes through fight after fight, two at a time, growing stronger on the way.',
     '*First Light* teaches you to fight, one idea a lesson. Win them all to begin your first run.',
   ],
 };

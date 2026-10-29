@@ -6,6 +6,7 @@
 
 import type { StatKey } from '../engine/content';
 import type { Gem } from '../run/gems';
+import { OPEN_FIGHT_PARTY } from './lessons';
 
 /** A fighter in a scene. */
 export interface TipSceneFighter {
@@ -193,13 +194,11 @@ const LESSON_CRAG = { heroId: 'crag', level: 3 } as const;
 export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>> = {
   'fight.basics': [null, MANA_SCENE, { ...TARGETS_SCENE, moves: ['ember', 'firestorm'] }],
   bench: [null, null, SWITCH_SCENE],
-  // Crag's Rock Toss against the first lesson's Arcling, every part of the row named in place.
-  'howto.combat': [
-    null,
-    { foes: LESSON_FOES, hero: LESSON_CRAG, moves: ['rockToss'], callouts: ['mana', 'type', 'kind', 'power', 'matchup'], expect: { rockToss: [2] } },
-  ],
-  'howto.mana': [MANA_SCENE],
-  'howto.rest': [{ hero: { heroId: 'cinderKnight', mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],
+  // Crag's Rock Toss and the first lesson's Arcling it is aimed at.
+  'howto.combat': [{ foes: LESSON_FOES, hero: LESSON_CRAG, moves: ['rockToss'], focus: ['move', 'foe'], expect: { rockToss: [2] } }, null],
+  // The Mana lesson's Pixie, its one Arcane Blast and the bar that pays for it.
+  'howto.mana': [{ hero: { heroId: 'pixie', level: 3 }, heroFigure: true, moves: ['arcaneBlast'], focus: ['manaGem', 'mpBar'] }],
+  'howto.rest': [{ hero: { heroId: 'pixie', level: 3, mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],
   'howto.types': [
     MATCHUP_SCENE,
     {
@@ -255,26 +254,8 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
   // Raiju's Storm Lash, its Conduct named in place, against the Clearing's Slabback.
   'howto.status.Conduct': [{ foes: [{ heroId: 'slabback', level: 12 }], hero: { heroId: 'raiju', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
   'howto.bag': [{ hero: { heroId: 'cinderKnight' }, bar: true, focus: ['bag'] }],
-  // Each hero's sockets, the pieces it already holds in them: the Gear counter's own roster.
-  'howto.items': [
-    {
-      hall: 'gear',
-      roster: [
-        { heroId: 'ursa', items: ['dagger.common.feral'] },
-        { heroId: 'drift', items: ['robe.common', 'ring.common'] },
-        { heroId: 'cairn', items: ['shield.common', 'plate.common', 'crest.common'] },
-      ],
-      items: ['dagger.common', 'robe.rare', 'boots.common'],
-      pick: 0,
-      gold: 120,
-      focus: ['heroCards'],
-    },
-  ],
-  // The open fight's six, then one of them read against that fight's two leads.
-  'howto.leads': [
-    { roll: ['rime', 'raiju', 'revenant', 'wildOracle', 'runescribe', 'cairn'] },
-    { foes: [{ heroId: 'ravager' }, { heroId: 'bramblehide' }], hero: { heroId: 'raiju' }, heroFigure: true, moves: ['thunderclap'], focus: ['matchups'], expect: { thunderclap: [2, 0.5] } },
-  ],
+  // The open fight's party; its arrows are the live lead pick's, lit behind the page (tipStaging.ts).
+  'howto.leads': [{ roll: [...OPEN_FIGHT_PARTY] }, null],
   'howto.field': [{ hero: { heroId: 'cinderKnight' }, field: 'scorchedLand', focus: ['field'] }],
   'howto.ancient': [
     { ...ANCIENT_CAST, moves: [], focus: ['foeTypes'] },

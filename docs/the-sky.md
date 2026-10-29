@@ -1,8 +1,8 @@
 # the-sky.md — The Sky: lighting the multiverse
 
-> **First Light's lessons are being redrafted: `docs/first-light.md`** (2026-10-27, DRAFT, per user
-> direction): ten one-concept lessons, a silent Blip, Valor and Fang deleted. Until it is built, §2c's
-> curriculum and §6's lessons below are what the game does.
+> **First Light's lessons are `docs/first-light.md`** (built 2026-10-27, revised 2026-10-29, per user
+> direction): nine one-concept lessons, a silent Blip, Valor and Fang deleted. It supersedes §2c's
+> curriculum table and every lesson named below (the Hunt, the Clearing, the Road, the Fork).
 
 > **STATUS: DIRECTION DECIDED; PHASES 1–5 DONE (2026-10-24): Stardust is the currency, the title is a scroll of stacked bands (five constellations), and Blip lives in it, thinking and pokeable.** §1–§5 hold what is
 > decided; anything marked PROPOSED or OPEN is not. §10 is the build plan. If built, it replaces
@@ -163,7 +163,7 @@ Picked from a side-by-side page (`art/concepts/celestial-title/`, "C · Galaxy" 
   Infinite are not drawn, and the hub's bar (Collection, Play, Observatory) and Records are hidden;
   Options and the Reference stay, being settings and the manual the lessons fill. This **reverses**
   §3's "the two fights open the Infinite; the two acts stay First Light's to play, never a gate":
-  the Infinite still opens after the Clearing underneath, but is not shown until the Fork is won.
+  the Infinite still opens underneath, but is not shown until First Light's last lesson is won.
   An account that played before the sky has First Light lit and never sees the gate.
 - **After the finale, Blip gives the tour** (`TitleScreen.tsx`, lines in `FIRST_LIGHT_TOUR`,
   `data/thoughts.ts`), each step a forced beat: it takes the player to the Observatory, where only
@@ -189,32 +189,22 @@ filed"). Content `src/data/howToPlay.ts`, mechanism `src/run/manual.ts`.
   page, the act screen says *First Light*.
 - **Pages land on a Learned screen.** A lesson won ends on its own screen: the fight result's stage,
   its pages as tiles landing one by one, any one opened by a tap. Then the title lights the star.
-- **The curriculum** (per user direction: what every fight needs comes first, so Mana before
-  Switching, and one target or both in the first fight):
-
-  | Lesson | Pages it files |
-  |---|---|
-  | First (2v2, guided) | Turn by Turn · Mana · Single and Spread · Buffs and Debuffs · Types |
-  | Second (the bench, guided) | Switching · Physical and Magical · Rest · Status Effects · Shield · Conduct |
-  | Third (an act) | Leads · The Map · Items · Levels and Moves · Wounds · The Bag |
-  | Fourth (an act) | Heals · Daze · Patrons · Elite or Skirmish · Recruiting |
+- **The curriculum** is `docs/first-light.md` §3: one page a lesson (Mana's two), nine lessons.
 
 - **Status Effects is the general page, then one page a status.** The lessons teach Shield,
   Conduct and Daze; every other status is filed the first time it lands in any fight.
 - **A run files the rest** the first time it meets the thing: a status, a Field Effect, lock-in, the
   Pact Clock, an Ancient foe, or a screen (the Guild Hall, the Academy, Gems, a Banner, the next
   act, a Cycle). A filed page waits (`Profile.manualUnshown`) and lands as a **Learned** row in the
-  next won fight's result, last in its ledger.
+  next won fight's result, last in its ledger. **Except a page the screen's choice needs** (2026-10-29,
+  per user direction): The Map, Levels and Moves, and Recruiting open over their screen the first time
+  (`ManualPage.atDecision`, `docs/first-light.md` §0.4).
 - **The book's contents are the sky.** The Reference's How to Play tab draws First Light's four
   stars and the Infinite's rings. A lit star opens its lesson's pages; the rings hold what
   runs have filed. A page not yet learned is not shown, and a dark star is what is left: a count
   drawn as the sky, never a number.
 - An account that played before the manual (`Profile.manualComplete`, set on decode) has every page.
 
-**Watch in playtest:** the Clearing teaches six pages, and the Hunt shows three tips at the top of
-its round 2. The Clearing's Physical and Magical is taught in the heroes' words more than by its numbers:
-the Ravager's Defense and Wisdom are equal, and the Slabback resists Raiju's Storm. A foe whose
-Defense far outweighs its Wisdom would show it; that is a re-script of the fight.
 
 ## 3. The rails: tutorial constellations
 

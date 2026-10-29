@@ -1,11 +1,48 @@
 # First Light — the curriculum
 
-> **STATUS: DRAFT (2026-10-27, per user direction), not built.** Replaces the four lessons of
-> `docs/the-sky.md` §2c and §6 (`src/data/lessons.ts`): Valor and Fang, the guided Hunt and Clearing,
-> and the Road and Fork acts are deleted and started over. Kept: First Light as the gate before the
-> full game (§2e), the Ascent, the manual's pages filed by playing (§2c), and Blip.
-> Recommended answers to the four open questions are written in as decided-for-draft; each is marked
-> **DRAFT CALL** so it can be moved.
+> **STATUS: BUILT (2026-10-27), nine lessons; reviewed and revised 2026-10-29 (§0).** Replaces the
+> four lessons of `docs/the-sky.md` §2c and §6 (`src/data/lessons.ts`): Valor and Fang, the guided
+> Hunt and Clearing, and the Road and Fork acts are deleted. Kept: First Light as the gate before the
+> full game (§2e), the Ascent, the manual's pages filed by playing (§2c), and Blip. Where §1–§6 below
+> disagree with §0, §0 is what the game does.
+
+## 0. The review pass (2026-10-29, per user direction)
+
+A play-through as a new account found the lessons themselves working and the material around them
+not. All eight findings were fixed:
+
+1. **Lesson 1's page is about lesson 1.** Turn by Turn is two pages: pick a move, then who it hits
+   (Crag's Rock Toss and the Arcling, the move and the foe ringed); then fastest first, tap a
+   fighter, hold a move. The once-a-round passive rule moved to Buffs and Debuffs, filed the first
+   time a stat moves, since most passives move a stat. The five-label move picture is gone.
+2. **The opening says it once.** The fall (`OpeningFall`, wordless panels) stays, and the Welcome
+   is two pages that no longer retell it: what a run is, then what First Light is. A welcome page
+   says *Tap to continue* until its last, which says *Tap to begin*. The six-line lore card stays unplayed.
+3. **A lesson retires the run tip it taught.** Winning Equipment marks the `item` tip seen, and the
+   open fight marks `bench` (`TIPS_A_LESSON_RETIRES`, App.tsx), as every lesson already did for `fight.basics`.
+4. **A page a choice needs opens at the choice.** The Map, Levels and Moves, and Recruiting
+   (`ManualPage.atDecision`) open over their screen the first time it is reached, instead of landing
+   on a later fight's Learned row after the choice is made. Every other run page still waits for a
+   won fight. Kept to three on purpose: the rest of a run's screens label themselves (`docs/tutorial.md` §1).
+5. **Equipment shows the difference.** Two fights: bare, Ursa's Claw takes two hits to drop a
+   level-13 Cubling; the Feral Dagger goes on; armed, the same Claw takes one. The page opens over
+   the item screen, the beat the lesson is about.
+6. **The pictures match.** Items has no drawn picture; it lights the live item screen behind it
+   (the piece, the heroes, the sockets). Leads keeps the party roll and lights the live lead pick's
+   arrows on its second page, not a move's.
+7. **Docs.** This section, `docs/tutorial.md` and `docs/the-sky.md` say what is built.
+8. **Small edges.** Mana is Pixie's Arcane Blast (60 of a ~74 pool) on a level-15 Pebbling throwing
+   plain Rock Tosses: Riptide's Drag lowered Speed on every Water hit, an arrow nothing had taught.
+   Pixie's innate is quiet alone, and a test pins that the lesson moves no stat and lands no status.
+   A tap swallowed while the hand flew in did not reproduce on a second play-through.
+
+**The open fight is smaller** (same day, per user direction): four heroes the lessons cast, each
+holding only the move it was taught with (Crimson's Ember, Raiju's Thunderclap, Cairn's Tremor,
+Ursa's Claw), against three foes at level 4 that each throw one plain hit (Ravager's Pounce,
+Bramblehide's Rock Toss, Rillfin's Splash): on their own kits they Poisoned the party and laid a
+field in the first rounds. Its line is *Four heroes now. Win it your way.* Measured (directional):
+every lead pair wins 30 of 30 under both sim pilots, in 2–5 rounds, against about 8 for the
+six-hero version.
 
 ## 1. What changes
 
@@ -13,10 +50,8 @@
   stays on the sky as a wordless companion: it bounces at a win, shows a "!" as a page lands,
   flinches at a KO, squishes when poked. That keeps the skin cosmetic (`docs/cosmetics.md`) alive.
   Blip's idle thoughts on the sky outside First Light are a separate call, not made here.
-- **The opening is the lore card again.** `LORE_LINES` (`src/data/tips.ts`), one line a tap, before the
-  first lesson. **DRAFT CALL:** the plain card, with the comic page of the fall (`OpeningFall`)
-  deleted with it, because it is framed by Blip's narration and ends on Valor and Fang.
-  **FLAGGED:** the user remembers four lines; `LORE_LINES` holds six. Cut to four, or keep six?
+- **The opening** was drafted as the lore card in place of the fall. Not built: the fall stays and
+  the Welcome follows it (§0.2).
 - **One concept, one page, one fight.** A lesson teaches exactly one idea and files exactly one page.
   The page is shown before the fight and filed after it. Under the old curriculum a lesson filed
   five or six.
@@ -163,15 +198,15 @@ cues' spoken lines, Blip's First Light thoughts and hello premise, `OpeningFall`
    | # | Line | Cast | What happens |
    |---|---|---|---|
    | 1 | *Pick a move, then pick who it hits.* | Crag, Ursa | Each drops its own foe. |
-   | 2 | *Moves cost Mana. Rest fills it back up.* | Riptide | Torrent (40 of a 68 pool), then a round holding only Rest, then a second Torrent finishes a level-14 Cubling. |
+   | 2 | *Moves cost Mana. Rest fills it back up.* | Pixie | Arcane Blast (60 of a ~74 pool), then a round holding only Rest, then a second Blast finishes a level-15 Pebbling (§0.8; it was Riptide's Torrent). |
    | 3 | *Some types hit harder than others.* | Crimson, Raiju | Fire on a Sproutling, Storm on a Puddling; swapped, both foes stand. The target cards' *Bonus!* and *Resist* ranges carry it. |
    | 4 | *Some moves hit both foes at once.* | Cairn | Tremor drops both. |
    | ~~5~~ | *Deleted: folded into lesson 1.* | Skyshear, Hollowbark | Skyshear drops a Cubling before it can swing; aimed the other way, it gets its hit in on slow Hollowbark. |
    | 6 | *Defense stops physical hits. Wisdom stops magic.* | Nightshade, Glyph | The same move in each hand: physical Nightfall through Rillfin's thin hide, magical Nightfall (off-type for Glyph) past Ingot's low Wisdom. Every pairing is neutral; crossed, neither foe falls. |
    | 7 | *A Burn keeps hurting after the hit.* | Cinder | Set Alight, then a Singe that leaves a level-13 Rivetling standing; the round-end Burn tick lands the KO. A full Burn is only 27% of max HP over three rounds, less than one hit, so the lesson shows it finishing a foe. |
    | 8 | *Switch in a hero from the bench.* | Cinder, Clockwork, Raiju (bench) | Cinder steps back from a Puddling; Raiju takes under half the splash. The switch panel's *deals 2× / takes 0.5×* readout carries it. |
-   | 9 | *A piece of gear makes its hero stronger.* | Ursa, Drift | The Feral Dagger (Attack +15, Speed +15, Beast Force 5) goes to Ursa on the item screen; her Claw then knocks out a level-13 Cubling that the bare Claw leaves at 24 HP. The target card shows the knockout. |
-   | 10 | *Six heroes now. Win it your way.* | Rime, Raiju, Revenant, Sylva, Glyph, Cairn | **The first open fight** (2026-10-27, per user direction): six heroes of six types, nothing guided, the leads the player's to pick on the real lead pick, against four mid-tier spawn (Ravager, Bramblehide, Rillfin, Kindlehide) at level 4 on the enemy AI. It can be lost, and a loss replays it. Measured (directional): an AI-piloted team wins 40 of 40 in about 8 rounds, with about 4 heroes standing. |
+   | 9 | *Without gear, it takes two hits.* then *A piece of gear makes its hero stronger.* | Ursa | Two fights (§0.5): bare, two Claws drop a level-13 Cubling; the Feral Dagger (Attack +15, Speed +15, Beast Force 5) goes to Ursa on the item screen; armed, one Claw does. |
+   | 10 | *Four heroes now. Win it your way.* | Crimson, Raiju, Cairn, Ursa | **The first open fight**: nothing guided, the leads the player's to pick on the real lead pick, each hero holding only the move a lesson taught it, against Ravager, Bramblehide and Rillfin at level 4 on the enemy AI, each holding one plain hit. It can be lost, and a loss replays it. Was six heroes against four (2026-10-27); cut to four against three on 2026-10-29 (§0). |
 
    **Casts. DECIDED 2026-10-27, per user direction:** no team fields two heroes of one type (pinned
    by test), and the casts spread across the base roster rather than leaning on a few heroes.

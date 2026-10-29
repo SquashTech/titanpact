@@ -129,8 +129,8 @@ import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
 import { LESSONS, STORY_BOOKS } from '../data/lessons';
 import { sky } from '../data/sky';
 import { recordScenarioLit } from '../run/sky';
-import { fileRunPages, markPagesShown, pagesMetOnScreen } from '../run/manual';
-import { MANUAL_PAGES } from '../data/howToPlay';
+import { fileRunPages, markPagesShown, pagesForDecision, pagesMetOnScreen } from '../run/manual';
+import { MANUAL_PAGES, manualPage } from '../data/howToPlay';
 import { chapterById } from '../run/story';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
@@ -419,6 +419,9 @@ function screenTipIds(screen: Screen): readonly ScreenTipId[] {
   return screen.kind === 'itemWho' ? ['item'] : [];
 }
 
+/** The run tips a lesson's own pages already taught, by lesson. */
+const TIPS_A_LESSON_RETIRES: Readonly<Record<string, readonly ScreenTipId[]>> = { 'firstLight.gear': ['item'], 'firstLight.open': ['bench'] };
+
 /** What leaving a First Light lesson is called. */
 const LESSON_EXIT = 'Back to the Sky';
 
@@ -432,6 +435,8 @@ export function App() {
   const [skyReturn, setSkyReturn] = useState<'win' | 'loss' | null>(null);
   // The control tips shown in the lesson being played, which shows them all again next time.
   const [lessonTips, setLessonTips] = useState<readonly string[]>([]);
+  // How to Play pages opened over the screen whose choice they explain, first to last (run/manual.ts pagesForDecision).
+  const [decisionPages, setDecisionPages] = useState<readonly string[]>([]);
   // Read once: a device does not change platform mid-session, and installing reopens the game.
   const [installPlatform] = useState(currentInstallPlatform);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -595,12 +600,16 @@ export function App() {
     updateProfile((current) => recordActReached(current, playerRun.actNumber));
   }, [playerRun.actNumber, playerRun.map]);
 
-  // A run's screen files its How to Play page the first time it is reached; the next won fight shows it.
+  // A run's screen files its How to Play page the first time it is reached. A page its choice needs
+  // opens over it now; the rest wait for the next won fight.
   useEffect(() => {
     if (!playerRun.map) return;
     const key = screen.kind === 'actIntro' ? (playerRun.actNumber === 1 ? 'actIntro:first' : 'actIntro:later') : screen.kind;
     const ids = pagesMetOnScreen(MANUAL_PAGES, key);
-    if (ids.length > 0) setProfile(updateProfile((current) => fileRunPages(current, MANUAL_PAGES, ids)));
+    if (ids.length === 0) return;
+    const now = pagesForDecision(readProfile(), MANUAL_PAGES, ids);
+    setProfile(updateProfile((current) => fileRunPages(current, MANUAL_PAGES, ids)));
+    if (now.length > 0) setDecisionPages(now);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen.kind]);
 
@@ -1191,9 +1200,10 @@ export function App() {
   }
 
   /** A tip or the lore card dismissed: account-wide, so it is written straight to storage. */
-  /** A lesson won lights its star and hands back to the sky, where Blip cheers it (docs/the-sky.md §3). Its fights taught the round, so the round's tip would only say it again. */
+  /** A lesson won lights its star and hands back to the sky, where Blip cheers it (docs/the-sky.md §3). What it taught retires the run tip that would only say it again. */
   function handleStoryChapterDone(chapterId: string, nextChapterId?: string) {
-    setProfile(updateProfile((current) => recordTipSeen(recordScenarioLit(current, sky, chapterId), FIGHT_BASICS_TIP_ID)));
+    const retired = [FIGHT_BASICS_TIP_ID, ...(TIPS_A_LESSON_RETIRES[chapterId] ?? [])];
+    setProfile(updateProfile((current) => retired.reduce(recordTipSeen, recordScenarioLit(current, sky, chapterId))));
     if (nextChapterId) {
       setLessonTips([]);
       setScreen({ kind: 'storyChapter', chapterId: nextChapterId });
@@ -1938,6 +1948,19 @@ export function App() {
       )}
       {(() => {
         if (recruitFanfare) return null;
+        if (decisionPages.length > 0) {
+          const page = manualPage(decisionPages[0]);
+          return (
+            <TipOverlay
+              key={page.id}
+              tip={page}
+              onDone={() => {
+                setProfile(updateProfile((current) => markPagesShown(current, [page.id])));
+                setDecisionPages((ids) => ids.slice(1));
+              }}
+            />
+          );
+        }
         const tip = firstUnseenTip(SCREEN_TIPS, screenTipIds(screen), profile.seenTipIds);
         if (!tip) return null;
         return <TipOverlay key={tip.id} tip={tip} onDone={() => markTipSeen(tip.id)} />;
