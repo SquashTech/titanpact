@@ -4179,6 +4179,53 @@ textarea,
   margin: -24px -16px 8px;
 }
 
+/* A boss's figure stands taller than its stage and fills the MP slot, so the bar is hidden there and
+   its space kept. The pool is still real: the hero sheet shows it. */
+.team-row .combatant-card.is-guardian .resource + .resource,
+.team-row .combatant-card.is-titans-own .resource + .resource {
+  visibility: hidden;
+}
+
+/* A boss's HP is a gilt-framed gauge poured in the Titan's colours, darkening as it falls. */
+.team-row .combatant-card:is(.is-guardian, .is-titans-own) .resource:first-child .bar-track {
+  margin: 0 4px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 0 1px #2a1f0c, 0 0 0 2px #d9a947, 0 0 0 3px #5c4214;
+}
+
+.team-row .combatant-card:is(.is-guardian, .is-titans-own) .resource:first-child::before,
+.team-row .combatant-card:is(.is-guardian, .is-titans-own) .resource:first-child::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--figure-bar-h) / 2);
+  z-index: 2;
+  width: 6px;
+  height: 6px;
+  background: #e8bd5c;
+  box-shadow: 0 0 0 1px #3a2a0c;
+  transform: translateY(-50%) rotate(45deg);
+  pointer-events: none;
+}
+
+.team-row .combatant-card:is(.is-guardian, .is-titans-own) .resource:first-child::before {
+  left: -2px;
+}
+
+.team-row .combatant-card:is(.is-guardian, .is-titans-own) .resource:first-child::after {
+  right: -2px;
+}
+
+.team-row .combatant-card:is(.is-guardian, .is-titans-own) .bar-fill.hp-high {
+  background-color: #c4307e;
+}
+
+.team-row .combatant-card:is(.is-guardian, .is-titans-own) .bar-fill.hp-mid {
+  background-color: #a72c5a;
+}
+
+.team-row .combatant-card:is(.is-guardian, .is-titans-own) .bar-fill.hp-low {
+  background-color: #8a1e2c;
+}
+
 /* Per-hero type identity (CombatantCard sets --type-color/--type-rgb inline
    from typeColors.ts) — a soft type-tinted wash behind the portrait plus a
    type-colored top edge, so each box reads as "whose power this is" at a

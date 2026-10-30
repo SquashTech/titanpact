@@ -412,7 +412,9 @@ export function CombatantCard({
     return () => observer.disconnect();
   }, [hasStatusChips]);
 
+  const bossClass = hero.id === ENDBRINGER_ID || isTitanEye(hero.id) ? 'is-titans-own' : isGuardianId(hero.id) ? 'is-guardian' : null;
   const classes = ['combatant-card'];
+  if (bossClass) classes.push(bossClass);
   if (compact) classes.push('compact');
   if (combatant.fainted) classes.push('fainted');
   if (combatant.blessed && !combatant.fainted) classes.push('is-blessed');
@@ -480,7 +482,7 @@ export function CombatantCard({
           heroId={hero.id}
           pathId={combatant.formPathId}
           seed={combatant.combatantId}
-          className={hero.id === ENDBRINGER_ID || isTitanEye(hero.id) ? 'combatant-portrait is-titans-own' : isGuardianId(hero.id) ? 'combatant-portrait is-guardian' : 'combatant-portrait'}
+          className={bossClass ? `combatant-portrait ${bossClass}` : 'combatant-portrait'}
           pose={pose}
         />
         {aimedBy && aimedBy.length > 0 && !combatant.fainted && (
