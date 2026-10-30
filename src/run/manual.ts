@@ -24,11 +24,13 @@ export interface ManualPage extends Tip {
   /**
    * What the page's tile wears, one or two marks the view draws: `node:<map node>`, `status:<id>`,
    * `kind:<move kind>`, `stat:<stat>`, `resource:<run resource>`, `arrow:super|resist`,
-   * `type:<type>`, `field:<field>`, `glyph:<drawn mark>`.
+   * `type:<type>`, `field:<field>`, `passive:<id>`, `glyph:<drawn mark>`.
    */
   emblem: readonly string[];
   /** A screen page the player needs to make the choice on that screen: it opens over the screen the first time, rather than waiting for a won fight. */
   atDecision?: true;
+  /** A lesson page that names what its fight showed: it opens over the Learned screen once the fight is won, not before the first tap. */
+  afterFight?: true;
 }
 
 /** Whether this page is in the player's book. An account that played before the manual has every page. */

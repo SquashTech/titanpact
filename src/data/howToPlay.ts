@@ -119,8 +119,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     ['kind:buff', 'kind:debuff'],
     "- [buff] A *buff* raises a stat for the rest of the fight.\n- [debuff] A *debuff* lowers an enemy's.",
     '- An arrow beside a stat shows it was raised or lowered.\n- Arrows stay through a switch.',
-    '[stages]',
-    'A passive works on its own, and affects each hero at most once a round.'
+    '[stages]'
   ),
   page(
     'types',
@@ -166,6 +165,17 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     '- The enemy sends out its *leads* first.\n- Tap two heroes to answer them. The rest wait on the bench.',
     '- A *green* arrow: your hero has the type advantage over the enemy above it.\n- A *red* arrow: the enemy has it.'
   ),
+  {
+    ...page(
+      'passives',
+      'Passives',
+      OPEN,
+      ['passive:waystone'],
+      "- Every hero has a *passive* of its own.\n- It works *by itself*: you never pick it.\n- Its name shows whenever it fires.",
+      '- *Tap* a hero to read its passive.\n- A passive affects each hero at most *once a round*.'
+    ),
+    afterFight: true,
+  },
   atDecision(
     page(
       'map',

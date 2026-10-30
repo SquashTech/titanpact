@@ -10,6 +10,7 @@ import { MoveKindGlyph, StatGlyph, STAT_COLORS } from './statIcons';
 import type { MoveKindGlyphKind } from './moveKind';
 import { StatusGlyph, statusColor } from './statusIcons';
 import { FieldGlyph } from './fieldIcons';
+import { PassiveGlyph, passiveColor } from './passiveIcons';
 import { SeatArrow } from './MoveStrip';
 import { TypeBadge } from './TypeBadge';
 import { mapNodeArt, mapNodeIcon } from '../run/mapNodeArt';
@@ -109,6 +110,8 @@ function EmblemMark({ mark }: { mark: string }) {
       return <span className="manual-mark manual-mark-type"><TypeBadge type={value} iconOnly /></span>;
     case 'field':
       return tint('#e8a46a', <FieldGlyph fieldEffectId={value} className="manual-mark-glyph" />);
+    case 'passive':
+      return tint(passiveColor(value), <PassiveGlyph passiveId={value} className="manual-mark-glyph" />);
     case 'glyph':
       return tint(
         '#e9dcc0',

@@ -13,8 +13,8 @@ not. All eight findings were fixed:
 
 1. **Lesson 1's page is about lesson 1.** Turn by Turn is two pages: pick a move, then who it hits
    (Crag's Rock Toss and the Arcling, the move and the foe ringed); then fastest first, tap a
-   fighter, hold a move. The once-a-round passive rule moved to Buffs and Debuffs, filed the first
-   time a stat moves, since most passives move a stat. The five-label move picture is gone.
+   fighter, hold a move. The once-a-round passive rule moved out (now on Passives, below). The
+   five-label move picture is gone.
 2. **The opening says it once.** The fall (`OpeningFall`, wordless panels) stays, and the Welcome
    is two pages that no longer retell it: what a run is, then what First Light is. A welcome page
    says *Tap to continue* until its last, which says *Tap to begin*. The six-line lore card stays unplayed.
@@ -43,6 +43,15 @@ Bramblehide's Rock Toss, Rillfin's Splash): on their own kits they Poisoned the 
 field in the first rounds. Its line is *Four heroes now. Win it your way.* Measured (directional):
 every lead pair wins 30 of 30 under both sim pilots, in 2–5 rounds, against about 8 for the
 six-hero version.
+
+**Passives are named after the open fight** (same day, per user direction). Cairn's Waystone (Shield
+10 on his partner at each round end) is the one thing in the open fight no lesson had shown. Cairn
+stays: seeing a passive fire by name, as a Pokémon ability announces itself, is the right first
+meeting, and a lesson built on it would teach two things, the passive and Shield. The open fight
+files a second page, **Passives** (every hero has one, it works by itself, its name shows when it
+fires; tap a hero to read it; once a round), which opens over the Learned screen after the win
+(`ManualPage.afterFight`) rather than before the first tap, and wears Waystone's mark. The
+once-a-round line moved there from Buffs and Debuffs. Shield's own page still waits for a run.
 
 ## 1. What changes
 

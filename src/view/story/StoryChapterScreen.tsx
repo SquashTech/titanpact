@@ -47,7 +47,8 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips,
   const opening = welcome && !welcomed ? welcome.tip : null;
   // The pages open the beat that hands a piece over, where there is one: the lesson is that screen.
   const pageBeat = Math.max(0, chapter.beats.findIndex((b) => b.handOver));
-  const page = beat ? opening ?? (index === pageBeat ? pages.find((p) => !tips.seenIds.includes(p.id)) : null) ?? null : null;
+  const unseen = (after: boolean) => pages.find((p) => !!p.afterFight === after && !tips.seenIds.includes(p.id)) ?? null;
+  const page = beat ? opening ?? (index === pageBeat ? unseen(false) : null) : unseen(true);
   const pageUp = page && (
     <TipOverlay
       key={page.id}
@@ -67,7 +68,14 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips,
   }, [index]);
 
   if (!beat) {
-    return pages.length > 0 ? <LessonLearnedScreen pages={pages} onContinue={onFinished} onNext={onNext} /> : <Finish onFinished={onFinished} />;
+    return pages.length > 0 ? (
+      <>
+        <LessonLearnedScreen pages={pages} onContinue={onFinished} onNext={onNext} />
+        {pageUp}
+      </>
+    ) : (
+      <Finish onFinished={onFinished} />
+    );
   }
   if (beat.handOver && !handed?.done) {
     const { itemId, to } = beat.handOver;
