@@ -171,6 +171,8 @@ function measureHoles(selectors: readonly string[]): Hole[] {
   for (const selector of selectors) {
     for (const el of Array.from(document.querySelectorAll(selector))) {
       if (holes.length >= MAX_HOLES) return holes;
+      // The page's own picture draws the same pieces; only the screen behind it is lit.
+      if (el.closest('.tip-overlay')) continue;
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) continue;
       const a = canvasPoint(rect.left, rect.top);

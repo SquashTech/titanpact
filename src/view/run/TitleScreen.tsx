@@ -77,6 +77,8 @@ interface Props {
   onSeeThought?: (thought: ThoughtDefinition) => void;
   /** A First Light lesson, by its scenario id (data/sky.ts). */
   onPlayLesson?: (scenarioId: string) => void;
+  /** A card is up over the title: the sky holds its beats, the opening among them, until it closes. */
+  held?: boolean;
   /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
   onResetTips: () => void;
   /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +2,500 Stardust to test the Observatory and the stakes. */
@@ -122,6 +124,7 @@ export function TitleScreen({
   onSkyReturnSeen,
   onSeeThought,
   onPlayLesson,
+  held = false,
   onResetTips,
   onGrantDevStars,
   onQuickBattle,
@@ -252,7 +255,7 @@ export function TitleScreen({
       <SkyChart
         profile={profile}
         disabled={launching || tour !== null}
-        active={tab === 'play' && !launching}
+        active={tab === 'play' && !launching && !held}
         pressHidden={!!parkedRun}
         returned={skyReturn}
         onReturnedSeen={onSkyReturnSeen}

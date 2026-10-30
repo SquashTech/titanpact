@@ -148,7 +148,9 @@ test('lessons: one spread move drops both foes', () => {
 
 test('lessons: physical Nightfall through thin hide and magical Nightfall past low Wisdom drop both; crossed, neither falls', () => {
   const fight = fightOf('firstLight.kinds');
-  assert.strictEqual(foesDown(play(fight).boards[1]), 2);
+  const { rounds, boards } = play(fight);
+  assert.strictEqual(foesDown(boards[1]), 2);
+  assert.ok(!rounds.flat().some((e) => e.type === 'StatusApplied' && e.statusId === 'Shield'), 'no Shield stands between the hit and the lesson');
   const crossed = play(fight, (_, id) => ({ kind: 'move', combatantId: id, moveId: id === 'A:nightshade' ? 'nightfall' : 'nightfallRewired', declaredTarget: id === 'A:nightshade' ? 'B:ingot' : 'B:rillfin' }));
   assert.strictEqual(foesDown(crossed.boards[1]), 0);
 });
@@ -190,6 +192,8 @@ test('lessons: bare, Ursa\'s Claw takes two hits; given the Feral Dagger, one', 
   assert.strictEqual(first.boards[1].combatants['B:cub'].fainted, false, 'bare, one Claw leaves it standing');
   assert.strictEqual(first.boards[2].combatants['B:cub'].fainted, true, 'bare, the second Claw drops it');
   assert.strictEqual(play(armed.fight).boards[1].combatants['B:cub'].fainted, true, 'armed, one Claw drops it');
+  const bled = [...first.rounds, ...play(armed.fight).rounds].flat().some((e) => e.type === 'StatusApplied' && e.statusId === 'Bleed');
+  assert.ok(!bled, 'no Bleed chips in: the Claw alone is the difference');
 });
 
 test('lessons: the last lesson is the first open fight, a party of four holding only moves the lessons taught', () => {

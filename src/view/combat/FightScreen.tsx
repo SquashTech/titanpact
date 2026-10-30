@@ -8,6 +8,7 @@ import { equipment } from '../../data/equipment';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
 import { kitForRound } from '../../run/metamorphic';
+import { MOVE_CAP } from '../../run/progression';
 import { fieldEffects } from '../../data/fieldEffects';
 import { relics } from '../../data/relics';
 import type { Combatant, CombatState, Side } from '../../engine/state';
@@ -2369,7 +2370,7 @@ export function FightScreen({
                   </div>
                 )}
                 {canAffordAnyMove && (
-                <div className="move-list">
+                <div className={`move-list${kitOf(id).length < MOVE_CAP ? ' is-short-kit' : ''}`}>
                   {kitOf(id).map((moveId) => {
                     const move = moveForHero(moves[moveId], hero);
                     const trick = entry.unlockedMoveIds.includes(moveId) ? undefined : entry.unlockedMoveIds.map((kitId) => moves[kitId]).find((m) => m?.metamorphic);

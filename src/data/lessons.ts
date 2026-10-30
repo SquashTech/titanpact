@@ -86,10 +86,10 @@ const kinds: StoryFight = {
   playerLeads: ['nightshade', 'glyph'],
   enemy: [
     { rosterId: 'ingot', heroId: 'ingot', level: 4 },
-    { rosterId: 'rillfin', heroId: 'rillfin', level: 4 },
+    { rosterId: 'rillfin', heroId: 'rillfin', level: 4, moveIds: ['splash'] },
   ],
   enemyLeads: ['ingot', 'rillfin'],
-  enemyScript: [[{ actor: 'rillfin', moveId: 'crest', target: ally('glyph') }]],
+  enemyScript: [[{ actor: 'rillfin', moveId: 'splash', target: ally('glyph') }]],
   guide: [[{ actor: 'nightshade', moveId: 'nightfall', target: foe('rillfin') }, { actor: 'glyph', moveId: 'nightfallRewired', target: foe('ingot') }]],
 };
 
@@ -135,7 +135,7 @@ const ursaClaws = (rounds: number) => Array.from({ length: rounds }, () => [{ ac
 /** Bare, Ursa's Claw takes two hits to drop the Cubling. */
 const gearBare: StoryFight = {
   id: 'lesson-gear-bare',
-  seed: 1809,
+  seed: 1826,
   player: URSA,
   playerLeads: ['ursa'],
   enemy: GEAR_CUB,

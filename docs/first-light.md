@@ -53,6 +53,26 @@ fires; tap a hero to read it; once a round), which opens over the Learned screen
 (`ManualPage.afterFight`) rather than before the first tap, and wears Waystone's mark. The
 once-a-round line moved there from Buffs and Debuffs. Shield's own page still waits for a run.
 
+**Second play-through** (2026-10-30, per user direction). Fixed:
+- **The install card holds the sky.** On a phone the card used to land a second into the fall, which
+  then started lesson 1 by itself and took the card away unread; the card came back over lesson 1's
+  lighting. The sky now waits while the card is up (`TitleScreen`'s `held`), so the fall plays after it.
+- **A page's spotlight lights the screen, never its own picture.** Status Effects and Switching
+  drew their `.status-badge` / switch button inside the picture, which drew rings over empty
+  mid-screen and pushed the card over the lesson's line.
+- **Lesson 5 throws Splash**, not Crest: Crest's self-Shield read *Rillfin's Shield breaks*.
+- **Equipment's seed is 1826**: on 1809 the bare Claw landed a Bleed and left the Cubling on 1 HP,
+  so the Dagger read as one point of damage. Now no Bleed, and the bare Claw leaves it on 25.
+- **A kit under four moves is drawn at a full kit's size** (per user direction), as Rest-only now
+  is too: the console's rows are always four, the empty ones bare stone. The guide hand re-measures
+  its target and lands on the smaller card unchanged.
+
+Open, for the designer: every lesson foe is a Titanspawn and wears its Mark, a number chip that
+grows each round; innates fire untaught (Cinder's Kindling, Nightshade's Ambush on entry, Crimson's
+Stoke, Raiju's Conducting in the open fight); lesson 6's Burn finish leans on a seeded Singe crit;
+Single and Spread's second and third pages teach effect figures, Shield and random damage that the
+lesson never uses; lesson 1's hits overkill fourfold and show *Bonus!* before Types.
+
 ## 1. What changes
 
 - **Blip stops talking.** No thought bubbles anywhere in First Light or the tour after it. Blip

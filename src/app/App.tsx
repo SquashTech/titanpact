@@ -1418,6 +1418,7 @@ export function App() {
           onSkyReturnSeen={() => setSkyReturn(null)}
           onSeeThought={markThoughtSeen}
           onPlayLesson={handlePlayLesson}
+          held={!!installPlatform && !profile.seenTipIds.includes(INSTALL_TIP_ID)}
           onResetTips={handleResetTips}
           onGrantDevStars={handleGrantDevStars}
           onQuickBattle={handleQuickBattle}

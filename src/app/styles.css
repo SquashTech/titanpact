@@ -52334,9 +52334,10 @@ img.smithy-service-art {
   padding: 14px 12px 12px;
 }
 
-/* -- Rest, when it is all a hero can do: one move in the list, sized like a kit's, its gem a moon. -- */
-.move-list.is-rest-only {
-  grid-template-rows: repeat(3, minmax(0, 1fr));
+/* -- A kit short of four, and Rest when it is all a hero can do: each move the size it is in a full kit, its gem a moon for Rest. -- */
+.move-list.is-rest-only,
+.move-list.is-short-kit {
+  grid-template-rows: repeat(4, minmax(0, 1fr));
 }
 
 .move-button.rest-move {
