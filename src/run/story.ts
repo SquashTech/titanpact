@@ -47,13 +47,16 @@ export interface StoryFight {
   /** The one command the player is guided to each round, by hero. A round past the end is the player's own. */
   guide: readonly (readonly StoryCommand[])[];
   endsWhen?: readonly StoryEnd[];
+  /** The sides whose heroes fight without their innates, a Titanspawn's Mark among them. */
+  quietSides?: readonly Side[];
 }
 
 /** What holds a guided fight to its lesson, wherever its two sides come from. */
 export type StoryScript = Pick<StoryFight, 'seed' | 'enemyScript' | 'guide' | 'endsWhen'>;
 
-export function storyEntry(spec: StoryHeroSpec, hero: HeroDefinition): RosterEntry {
+export function storyEntry(spec: StoryHeroSpec, hero: HeroDefinition, quiet = false): RosterEntry {
   return {
+    ...(quiet ? { innateQuiet: true as const } : {}),
     ...createRosterEntry(spec.rosterId, spec.heroId, spec.moveIds ?? hero.moveIds),
     xp: xpForLevel(spec.level),
     growthStatGrants: expectedGrowthAt(hero, spec.level),
@@ -61,11 +64,11 @@ export function storyEntry(spec: StoryHeroSpec, hero: HeroDefinition): RosterEnt
   };
 }
 
-function storySide(specs: readonly StoryHeroSpec[], leads: readonly string[], heroes: Record<string, HeroDefinition>): Encounter {
+function storySide(specs: readonly StoryHeroSpec[], leads: readonly string[], heroes: Record<string, HeroDefinition>, quiet: boolean): Encounter {
   const roster = specs.map((spec) => {
     const hero = heroes[spec.heroId];
     if (!hero) throw new Error(`story: unknown hero ${spec.heroId}`);
-    return storyEntry(spec, hero);
+    return storyEntry(spec, hero, quiet);
   });
   for (const id of leads) if (!roster.some((r) => r.rosterId === id)) throw new Error(`story: lead ${id} is not in the party`);
   return {
@@ -76,7 +79,11 @@ function storySide(specs: readonly StoryHeroSpec[], leads: readonly string[], he
 
 /** Both sides of a Story fight, leads placed, as FightScreen's player and AI encounters. */
 export function storySides(fight: StoryFight, heroes: Record<string, HeroDefinition>): { player: Encounter; ai: Encounter } {
-  return { player: storySide(fight.player, fight.playerLeads, heroes), ai: storySide(fight.enemy, fight.enemyLeads, heroes) };
+  const quiet = (side: Side) => fight.quietSides?.includes(side) ?? false;
+  return {
+    player: storySide(fight.player, fight.playerLeads, heroes, quiet(STORY_PLAYER_SIDE)),
+    ai: storySide(fight.enemy, fight.enemyLeads, heroes, quiet(STORY_ENEMY_SIDE)),
+  };
 }
 
 export function storyEndTriggers(fight: StoryScript): FightEndTrigger[] {

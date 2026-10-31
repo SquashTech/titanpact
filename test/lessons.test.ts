@@ -196,6 +196,18 @@ test('lessons: bare, Ursa\'s Claw takes two hits; given the Feral Dagger, one', 
   assert.ok(!bled, 'no Bleed chips in: the Claw alone is the difference');
 });
 
+test('lessons: no passive fires in a guided lesson, and no foe in First Light wears the Mark', () => {
+  for (const beat of beats) {
+    const board = open(beat.fight);
+    const quiet = Object.values(board.combatants).filter((c) => c.side === 'B' || beat.fight.guide.length > 0);
+    for (const c of quiet) assert.deepStrictEqual(Object.keys(c.passives), [], `${beat.fight.id}: ${c.combatantId} fights with a passive`);
+  }
+  for (const beat of guided) {
+    const fired = play(beat.fight).rounds.flat().filter((e) => e.type === 'PassiveTriggered');
+    assert.deepStrictEqual(fired, [], `${beat.fight.id} fires a passive`);
+  }
+});
+
 test('lessons: the last lesson is the first open fight, a party of four holding only moves the lessons taught', () => {
   const last = beats[beats.length - 1].fight;
   assert.strictEqual(last.player.length, 4);

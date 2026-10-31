@@ -3,14 +3,17 @@
 // the player commands alone. Each lesson is a chapter in its own book, so the Story machinery plays it
 // unchanged: one fight beat, or Equipment's two, bare and then armed.
 
-import type { StoryBeat, StoryChapter, StoryDefinition, StoryFight, StoryHandOver } from '../run/story';
+import { STORY_ENEMY_SIDE, STORY_PLAYER_SIDE, type StoryBeat, type StoryChapter, type StoryDefinition, type StoryFight, type StoryHandOver } from '../run/story';
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
 const ally = (rosterId: string) => ({ side: 'A' as const, rosterId });
+// No innate fires in a guided lesson, and no foe wears the Titan's Mark; the open fight lets the heroes' own fire, for the Passives page after it.
+const QUIET = [STORY_PLAYER_SIDE, STORY_ENEMY_SIDE] as const;
 
 /** A move, then who it hits: each hero takes down its own foe. */
 const moveAndTarget: StoryFight = {
   id: 'lesson-move',
+  quietSides: QUIET,
   seed: 1801,
   player: [
     { rosterId: 'crag', heroId: 'crag', level: 3, moveIds: ['rockToss'] },
@@ -29,6 +32,7 @@ const moveAndTarget: StoryFight = {
 /** One Arcane Blast empties Pixie's Mana, the Rest refills it, and the second cast finishes the foe. Pixie's innate is quiet alone. */
 const mana: StoryFight = {
   id: 'lesson-mana',
+  quietSides: QUIET,
   seed: 1802,
   player: [{ rosterId: 'pixie', heroId: 'pixie', level: 3, moveIds: ['arcaneBlast'] }],
   playerLeads: ['pixie'],
@@ -45,6 +49,7 @@ const mana: StoryFight = {
 /** Fire on Nature and Storm on Water: each hero aims at the foe its type hits hardest. */
 const types: StoryFight = {
   id: 'lesson-types',
+  quietSides: QUIET,
   seed: 1803,
   player: [
     { rosterId: 'crimson', heroId: 'crimson', level: 3, moveIds: ['ember'] },
@@ -63,6 +68,7 @@ const types: StoryFight = {
 /** One spread move takes both foes at once. */
 const spread: StoryFight = {
   id: 'lesson-spread',
+  quietSides: QUIET,
   seed: 1804,
   player: [{ rosterId: 'cairn', heroId: 'cairn', level: 3, moveIds: ['tremor'] }],
   playerLeads: ['cairn'],
@@ -78,6 +84,7 @@ const spread: StoryFight = {
 /** The same move in each hand: Nightshade's physical Nightfall goes through Rillfin's thin hide, Glyph's magical one past Ingot's low Wisdom. */
 const kinds: StoryFight = {
   id: 'lesson-kinds',
+  quietSides: QUIET,
   seed: 1806,
   player: [
     { rosterId: 'nightshade', heroId: 'nightshade', level: 4, moveIds: ['nightfall'] },
@@ -96,6 +103,7 @@ const kinds: StoryFight = {
 /** Set Alight, then Singe: the hit leaves the Rivetling standing, and the Burn at the round's end puts it down. */
 const burn: StoryFight = {
   id: 'lesson-burn',
+  quietSides: QUIET,
   seed: 1807,
   player: [{ rosterId: 'cinder', heroId: 'cinderKnight', level: 3, moveIds: ['setAlight', 'singe'] }],
   playerLeads: ['cinder'],
@@ -108,6 +116,7 @@ const burn: StoryFight = {
 /** Cinder faces a Puddling's water: it steps back for Raiju off the bench, who takes the splash lightly and answers with Storm. */
 const switching: StoryFight = {
   id: 'lesson-switch',
+  quietSides: QUIET,
   seed: 1808,
   player: [
     { rosterId: 'cinder', heroId: 'cinderKnight', level: 3, moveIds: ['singe'] },
@@ -135,6 +144,7 @@ const ursaClaws = (rounds: number) => Array.from({ length: rounds }, () => [{ ac
 /** Bare, Ursa's Claw takes two hits to drop the Cubling. */
 const gearBare: StoryFight = {
   id: 'lesson-gear-bare',
+  quietSides: QUIET,
   seed: 1826,
   player: URSA,
   playerLeads: ['ursa'],
@@ -155,6 +165,7 @@ const OPEN_MOVES: Readonly<Record<(typeof OPEN_FIGHT_PARTY)[number], string>> = 
 /** The first open fight: four heroes, the leads the player's to pick, and nothing guided. */
 const open: StoryFight = {
   id: 'lesson-open',
+  quietSides: [STORY_ENEMY_SIDE],
   seed: 1810,
   player: OPEN_FIGHT_PARTY.map((heroId) => ({ rosterId: heroId, heroId, level: 6, moveIds: [OPEN_MOVES[heroId]] })),
   playerLeads: [],

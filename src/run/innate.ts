@@ -34,8 +34,9 @@ export function titansMarkOf(hero: Pick<HeroDefinition, 'passiveIds'>): PassiveD
 /** The passive ids this hero fights with as its own: the mastered set once the tenth pip has landed, the born set before. */
 export function innatePassiveIdsFor(
   hero: Pick<HeroDefinition, 'passiveIds' | 'masteredPassiveIds'>,
-  entry: (Pick<RosterEntry, 'mastery'> & Partial<Pick<RosterEntry, 'curseId' | 'curseTurned'>>) | undefined
+  entry: (Pick<RosterEntry, 'mastery'> & Partial<Pick<RosterEntry, 'curseId' | 'curseTurned' | 'innateQuiet'>>) | undefined
 ): readonly PassiveId[] | undefined {
+  if (entry?.innateQuiet) return [];
   // A Turned curse (Werewolf Bite) replaces the innate outright, and masters into its own upgrade.
   const cursed = entry ? curseInnateIds(entry) : null;
   if (cursed) return cursed;

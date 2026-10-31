@@ -67,9 +67,11 @@ once-a-round line moved there from Buffs and Debuffs. Shield's own page still wa
   is too: the console's rows are always four, the empty ones bare stone. The guide hand re-measures
   its target and lands on the smaller card unchanged.
 
-Open, for the designer: every lesson foe is a Titanspawn and wears its Mark, a number chip that
-grows each round; innates fire untaught (Cinder's Kindling, Nightshade's Ambush on entry, Crimson's
-Stoke, Raiju's Conducting in the open fight); lesson 6's Burn finish leans on a seeded Singe crit;
+**Lessons are quiet** (same day, per user direction): a guided lesson fights with no innate on either
+side and no foe wears the Titan's Mark (`StoryFight.quietSides`, `RosterEntry.innateQuiet`). The open
+fight quiets its foes only, so the heroes' own innates fire there for the Passives page after it.
+
+Open, for the designer: lesson 6's Burn finish leans on a seeded Singe crit;
 Single and Spread's second and third pages teach effect figures, Shield and random damage that the
 lesson never uses; lesson 1's hits overkill fourfold and show *Bonus!* before Types.
 

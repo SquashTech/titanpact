@@ -89,6 +89,8 @@ export interface RosterEntry {
    * the curse's pip raises, or on the spot when the hero was already past it.
    */
   curseTurned: boolean;
+  /** Fights without its innate, a Titanspawn's Mark among them: a lesson's fighters, so nothing fires that it has not taught. */
+  innateQuiet?: true;
   /** One Class per run holds structurally — a single slot, and classes.ts grantClass replaces. */
   classId: string | null;
   /** The Class's passive, when it grants one — recorded so entryStats.ts can count it without the Class catalog. Written only by grantClass. */
