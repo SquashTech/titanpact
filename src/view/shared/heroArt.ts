@@ -96,8 +96,9 @@ import sphinxGuardianArt from '../../../art/heroes/guardians/sphinx.png';
 import rocGuardianArt from '../../../art/heroes/guardians/roc.png';
 import wendigoGuardianArt from '../../../art/heroes/guardians/wendigo.png';
 import { unsealedIdFor } from '../../data/enemies';
+import { titanspawn } from '../../data/titanspawn';
 
-/** Portraits keyed by hero id (heroes.ts order). A missing entry renders text-only; a Titanspawn id never reaches this — HeroPortrait draws it. */
+/** Portraits keyed by hero id (heroes.ts order). A missing entry renders text-only. */
 export const heroArt: Partial<Record<string, string>> = {
   // --- Fire ---
   cinderKnight: cinderKnightArt,
@@ -197,7 +198,7 @@ export const heroArt: Partial<Record<string, string>> = {
   vex: vexArt,
   kong: kongArt,
   mellow: mellowArt,
-  // --- The Titan's own (pixel, as the Threshold paints it; what it turned stays geometric) ---
+  // --- The Titan's own (pixel, as the Threshold paints it) ---
   endbringer: heraldArt,
   leftEye: leftEyeArt,
   rightEye: rightEyeArt,
@@ -246,6 +247,9 @@ const spriteFiles = import.meta.glob<string>('../../../art/heroes/**/*.png', {
   query: '?url',
   import: 'default',
 });
+
+// The Titanspawn, one sprite each at art/heroes/titanspawn/<id>.png (64px for a Late, drawn at 2x like a Guardian).
+for (const id of Object.keys(titanspawn)) heroArt[id] = spriteFiles[`../../../art/heroes/titanspawn/${id}.png`];
 
 /**
  * ── TO GIVE A HERO ITS FRAMES ────────────────────────────────────────────

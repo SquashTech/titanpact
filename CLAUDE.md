@@ -28,7 +28,7 @@ don't silently override it.
 
 > **A second overhaul is DECIDED and PARTLY BUILT: `docs/titanspawn-overhaul.md`** (2026-09-13).
 > Location factions are replaced by **Titanspawn** — one mob line per mortal type in three tiers
-> (Early/Mid/Late), geometric SVG art against the heroes' pixel art, kits from the type slates;
+> (Early/Mid/Late), pixel art made of the element (geometric until 2026-10-31), kits from the type slates;
 > locations **partition** the fourteen types (Necropolis at two); the fork becomes a previewed
 > Elite-or-Skirmish; a **mortal companion** joins after the first fight (a hero in every respect
 > except that a KO removes it from the run — off the roster as a Call since the twelfth); and the **Pact Clock comes off the bench**. Its §11
@@ -41,7 +41,10 @@ don't silently override it.
 > pixel art, "Touched"** (2026-10-18, per user direction, §2 "Guardian art", replacing the
 > geometric figures of 2026-09-16): each is its own mortal creature in its type's colours with
 > ONE magenta slit-eye where no eye belongs and one thin magenta crack, the same in every act,
-> 64px drawn at 2× (`art/heroes/guardians/`). **The Titanspawn stay geometric; the Titan's own
+> 64px drawn at 2× (`art/heroes/guardians/`). **The Titanspawn are pixel art too** (2026-10-31, per
+> user direction, §2 "Art"): each body is its element, with the Titan's magenta slit eye — one at
+> Early, two at Mid, a Late's two in the wrong places — 48px, a Late 64px at 2×
+> (`art/heroes/titanspawn/`). **The Titan's own
 > pieces are pixel art in the Threshold painting's fog and magenta** (2026-10-14, per user
 > direction, `docs/titan-eyes.md` §12): the Endbringer is the
 > Titan's **Herald**, an eldritch faceless figure split by one magenta seam

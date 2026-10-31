@@ -3,7 +3,7 @@ import { CYCLES, type CycleDefinition } from '../../run/cycles';
 import { locationBackdrop } from '../shared/locationBackdrops';
 import { heroArt } from '../shared/heroArt';
 import { evolutionArt } from '../shared/evolutionArt';
-import { titanspawnMarkup } from '../shared/titanspawnArt';
+import { spawnId, spawnLineOf } from '../../data/titanspawn';
 import './cycleTapestry.css';
 
 // The Chronicle, a page of Records since the Cycle is chosen in the Infinite (docs/cycles.md §4). Each Cycle is a panel cross-stitched
@@ -52,14 +52,8 @@ export interface CycleTapestryProps {
   onClose?: () => void;
 }
 
-function svgUrl(markup: string, viewBox: string): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="216" height="216">${markup}</svg>`;
-  return URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
-}
-
 /** Cycle IV: three warbands marching as one host (data/warbands.ts), each a column of its type in three ranks, Earlies at the back. */
 const GATHERING_TYPES = ['Fire', 'Light', 'Nature'] as const;
-const SPAWN_VIEW_BOX = '-4 -20 108 108';
 const GATHERING_RANKS = [
   { tier: 'early', foot: 45, h: 11, dx: [-17, -6, 6, 17], tint: 'rgba(14, 8, 6, 0.45)' },
   { tier: 'mid', foot: 61, h: 15, dx: [-12, 12], tint: 'rgba(14, 8, 6, 0.2)' },
@@ -68,10 +62,10 @@ const GATHERING_RANKS = [
 
 function gatheringFigures(): FigureSpec[] {
   const centres = [26, 75, 124];
-  return GATHERING_RANKS.flatMap((rank, r) =>
+  return GATHERING_RANKS.flatMap((rank) =>
     GATHERING_TYPES.flatMap((type, i) =>
-      rank.dx.map((dx, j) => ({
-        src: svgUrl(titanspawnMarkup(type, rank.tier, 'idle', `tpG${r}${i}${j}`), SPAWN_VIEW_BOX),
+      rank.dx.map((dx) => ({
+        src: heroArt[spawnId(spawnLineOf(type)!, rank.tier)] ?? '',
         tint: 'tint' in rank ? rank.tint : undefined,
         at: { cx: centres[i] + dx, foot: rank.foot, h: rank.h },
       }))

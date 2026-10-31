@@ -79,7 +79,19 @@ ambusher, Beast the **HP/Atk** brawler. Fire's Late *is* the Burn, Mech's *pays*
 *root* with a move in its own slate (Emberling/Ember) is allowed for the approved names and avoided
 for the next one.
 
-**Art.** Heroes stay 48px pixel art; spawn are **geometric SVG**, generated per line from one
+**Art, made of the element** (2026-10-31, per user direction, replacing the geometric figures below).
+The spawn are pixel art at the heroes' density (`art/heroes/titanspawn/<id>.png`, PixelLab Pro
+Flash, chosen from a side-by-side, `art/concepts/spawn-sprites/compare.html`, over a fog-flesh
+body in the Herald's language and a "Touched" animal like the Guardians). Every body IS its
+type's matter — a coal, a bead of water, a walking standing stone — and the geometric rules that
+carry over are the ones below: **the Titan's eye is the family tell**, now magenta, one at Early,
+two at Mid, a Late's two in the wrong places; the element is a feature, then a tool, then the body.
+Early and Mid are 48px; **a Late is 64px drawn at 2× in a fight, a Guardian's size**
+(`is-late-spawn`). The eye is what keeps a spawn from reading as a hero, and the companion with
+it. Attack and hurt frames are still to draw; until then a spawn holds its idle sprite through
+every pose. The bestiary is `art/concepts/spawn-sprites/bestiary.html`.
+
+*Superseded, kept for the record:* **Art.** Heroes stay 48px pixel art; spawn are **geometric SVG**, generated per line from one
 `(tier, pose)` function (`src/view/shared/titanspawnArt.tsx`) — flat fills in three tones of the
 type hue, primitives only. The two styles are meant to be *obviously* different. Rules:
 

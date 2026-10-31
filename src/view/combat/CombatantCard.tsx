@@ -7,6 +7,7 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { isWardenCombatant } from '../../run/wardens';
 import { ENDBRINGER_ID, isGuardianId, isTitanEye } from '../../data/enemies';
+import { titanspawn } from '../../data/titanspawn';
 import { STAT_ORDER, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
 import { STAT_LABELS } from '../shared/moveKind';
 import { shieldHeld } from '../../engine/status/shield';
@@ -482,7 +483,7 @@ export function CombatantCard({
           heroId={hero.id}
           pathId={combatant.formPathId}
           seed={combatant.combatantId}
-          className={bossClass ? `combatant-portrait ${bossClass}` : 'combatant-portrait'}
+          className={['combatant-portrait', bossClass, titanspawn[hero.id]?.tier === 'late' && 'is-late-spawn'].filter(Boolean).join(' ')}
           pose={pose}
         />
         {aimedBy && aimedBy.length > 0 && !combatant.fainted && (

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Titanspawn Bestiary</title>
+<style>
+  body { margin:0; background:#14121a; color:#ece6f2; font:13px/1.4 system-ui, sans-serif; padding:20px 16px; }
+  h1 { font-size:18px; margin:0 0 14px; }
+  .grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
+  .line { display:flex; align-items:flex-end; gap:4px; background:#1e1b26; border:1px solid #332e3e; border-radius:8px; padding:8px 8px 4px; }
+  .type { width:56px; font-weight:700; align-self:center; }
+  .cell { flex:1; display:flex; flex-direction:column; align-items:center; }
+  .cell img { image-rendering:pixelated; width:96px; height:96px; }
+  .cell.late img { width:128px; height:128px; }
+  .cap { font-size:11px; color:#bdb4c9; }
+</style>
+</head>
+<body>
+<h1>Titanspawn, made of the element</h1>
+<div class="grid" id="grid"></div>
+<script>
+  const LINES = [
+    ['Fire', 'emberling', 'kindlehide', 'pyroclast'], ['Water', 'puddling', 'rillfin', 'breakwater'],
+    ['Frost', 'sleetling', 'hoarfang', 'frostheave'], ['Storm', 'arcling', 'voltail', 'stormfront'],
+    ['Stone', 'pebbling', 'slabback', 'monolith'], ['Nature', 'sproutling', 'bramblehide', 'wildwood'],
+    ['Light', 'gleamling', 'lanternmoth', 'dawnwing'], ['Shadow', 'duskling', 'gloomfang', 'nocturne'],
+    ['Arcane', 'runeling', 'sigilwing', 'armillary'], ['Mind', 'whimling', 'mesmerid', 'cerebra'],
+    ['Spirit', 'wispling', 'shroudkin', 'threnody'], ['Iron', 'rivetling', 'ingot', 'siegework'],
+    ['Mech', 'cogling', 'gearhound', 'dynamo'], ['Beast', 'cubling', 'ravager', 'behemoth'],
+  ];
+  const cap = (n) => n[0].toUpperCase() + n.slice(1);
+  document.getElementById('grid').innerHTML = LINES.map(([type, ...ids]) =>
+    `<div class="line"><div class="type">${type}</div>${ids.map((id, i) =>
+      `<div class="cell${i === 2 ? ' late' : ''}"><img src="../../heroes/titanspawn/${id}.png"><div class="cap">${cap(id)}</div></div>`).join('')}</div>`).join('');
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@ import { moves } from '../../data/moves';
 import { calledMove, moveForHero, type CombatState, type Side } from '../../engine/state';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { overlayHost } from '../shared/overlayHost';
-import { EYE_GRADIENT, makeEye } from '../shared/figurePrimitives';
+import { EYE_GRADIENT, makeEye } from '../shared/titanEye';
 import { MoveDetailCard } from './MoveDetailOverlay';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { companionCallMoveId, companionHeroId, companionTier } from '../../run/companion';

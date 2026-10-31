@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Titanspawn Sprites</title>
+<style>
+  :root { --bg:#14121a; --panel:#1e1b26; --ink:#ece6f2; --dim:#9a92a8; --line:#332e3e; --magenta:#e0359c; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 system-ui, sans-serif; padding:24px 16px 48px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  h2 { font-size:15px; margin:0 0 2px; }
+  .sub { color:var(--dim); margin:0 0 20px; max-width:760px; }
+  .dir { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 14px 10px; margin:0 0 16px; }
+  .dir p { color:var(--dim); margin:0 0 10px; max-width:760px; }
+  .row { display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+  .line { display:flex; gap:6px; align-items:flex-end; padding:10px 8px 6px; border-radius:8px; background-size:cover; background-position:center 70%; position:relative; overflow:hidden; }
+  .line::before { content:''; position:absolute; inset:0; background:rgba(10,8,14,.55); }
+  .line.fire { background-image:url(../../locations/battle/moltenFoundry.png); }
+  .line.stone { background-image:url(../../locations/battle/stormCoast.png); }
+  .cell { position:relative; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-height:150px; }
+  .cell img { image-rendering:pixelated; width:96px; height:96px; }
+  .cell.late img { width:128px; height:128px; }
+  .cell svg { width:96px; height:96px; overflow:visible; }
+  .cell.late svg { width:112px; height:112px; }
+  .cap { font-size:11px; color:#d8d0e2; margin-top:2px; text-shadow:0 1px 2px #000; }
+  .tag { display:inline-block; font-weight:700; color:var(--magenta); margin-right:6px; }
+  @media (max-width:720px) { .row { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<h1>Titanspawn as sprites</h1>
+<p class="sub">Fire and Stone lines, Early · Mid · Late, at fight scale (heroes 2×, Late 64px at 2× like a Guardian). One PixelLab pass each, no rerolls. The context row is what they share the field with.</p>
+
+<section class="dir">
+  <h2>On the field with them</h2>
+  <div class="row">
+    <div class="line fire">
+      <div class="cell"><img src="../../heroes/unlocks/tusk.png" onerror="this.src='../../heroes/tusk.png'"><div class="cap">Tusk · hero</div></div>
+      <div class="cell"><img src="../../heroes/starters/valor.png"><div class="cap">Valor · hero</div></div>
+      <div class="cell late"><img src="../../heroes/guardians/dragon.png"><div class="cap">Dragon · Guardian</div></div>
+    </div>
+    <div class="line stone">
+      <div class="cell"><img src="../../heroes/starters/Crag.png"><div class="cap">Crag · hero</div></div>
+      <div class="cell late"><img src="../../heroes/guardians/manticore.png"><div class="cap">Manticore · Guardian</div></div>
+      <div class="cell late"><img src="../../heroes/titan/herald.png"><div class="cap">Herald</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="dir">
+  <h2><span class="tag">Now</span>Geometric</h2>
+  <p>The shipped figures, from the approved gallery (its eyes are the old gold; the game draws them magenta).</p>
+  <div class="row">
+    <div class="line fire" id="geo-fire"></div>
+    <div class="line stone" id="geo-stone"></div>
+  </div>
+</section>
+
+<section class="dir">
+  <h2><span class="tag">A</span>Made of the element</h2>
+  <p>The gallery's bodies translated to pixel: the creature IS its type's matter. The eye rule carries over whole — one at Early, two at Mid, a Late's two in the wrong places.</p>
+  <div class="row">
+    <div class="line fire" data-dir="A" data-names="emberling,kindlehide,pyroclast"></div>
+    <div class="line stone" data-dir="A" data-names="pebbling,slabback,monolith"></div>
+  </div>
+</section>
+
+<section class="dir">
+  <h2><span class="tag">B</span>The Titan's flesh</h2>
+  <p>Faceless near-black and fog-grey bodies in the Herald's language, the element worn on them in its colour. Same eye rule. Reads as the Titan's own.</p>
+  <div class="row">
+    <div class="line fire" data-dir="B" data-names="emberling,kindlehide,pyroclast"></div>
+    <div class="line stone" data-dir="B" data-names="pebbling,slabback,monolith"></div>
+  </div>
+</section>
+
+<section class="dir">
+  <h2><span class="tag">C</span>Touched creatures</h2>
+  <p>Ordinary animals of the type with the Guardians' two marks: one magenta slit-eye where no eye belongs, one magenta crack. Closest to heroes and Guardians.</p>
+  <div class="row">
+    <div class="line fire" data-dir="C" data-names="emberling,kindlehide,pyroclast"></div>
+    <div class="line stone" data-dir="C" data-names="pebbling,slabback,monolith"></div>
+  </div>
+</section>
+
+<script src="geo.js"></script>
+<script>
+  const label = (n) => n[0].toUpperCase() + n.slice(1);
+  document.querySelectorAll('[data-dir]').forEach((el) => {
+    el.innerHTML = el.dataset.names.split(',').map((n, i) =>
+      `<div class="cell${i === 2 ? ' late' : ''}"><img src="${el.dataset.dir}-${n}.png"><div class="cap">${label(n)}</div></div>`).join('');
+  });
+  const geo = (type, id) => {
+    const line = LINES.find((l) => l.type === type);
+    document.getElementById(id).innerHTML = [0, 1, 2].map((i) =>
+      `<div class="cell${i === 2 ? ' late' : ''}">${figure(line, i, 'idle')}<div class="cap">${line.tiers[i].name}</div></div>`).join('');
+  };
+  geo('Fire', 'geo-fire');
+  geo('Stone', 'geo-stone');
+</script>
+</body>
+</html>

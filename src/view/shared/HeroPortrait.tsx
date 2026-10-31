@@ -1,8 +1,6 @@
 import type { CSSProperties } from 'react';
 import { heroArt, heroPoses } from './heroArt';
 import { evolutionArt, evolutionPoses } from './evolutionArt';
-import { TitanspawnGlyph } from './titanspawnArt';
-import { isTitanspawn } from '../../data/titanspawn';
 import { isGuardianId } from '../../data/enemies';
 
 interface Props {
@@ -27,9 +25,7 @@ function hashSeed(key: string): number {
 }
 
 /**
- * Renders nothing for heroes without art, so callers can place it unconditionally. A Titanspawn
- * (data/titanspawn.ts) has no sprite: its figure is generated (titanspawnArt.tsx) and takes the
- * same class, seed and pose, so every screen that shows a hero shows a spawn with no other change.
+ * Renders nothing for heroes without art, so callers can place it unconditionally.
  */
 export function HeroPortrait({ heroId, className, seed, pose = 'idle', pathId }: Props) {
   const h = hashSeed(seed ?? heroId);
@@ -37,7 +33,6 @@ export function HeroPortrait({ heroId, className, seed, pose = 'idle', pathId }:
     '--idle-phase': ((h % 97) / 97).toFixed(3),
     '--idle-rate': (0.85 + ((h >>> 7) % 31) / 100).toFixed(2),
   } as CSSProperties;
-  if (isTitanspawn(heroId)) return <TitanspawnGlyph heroId={heroId} className={className} pose={pose === 'closed' ? 'idle' : pose} style={idleStyle} />;
   // A form draws its own frame, then the hero's (a flash of the old look beats a pose that never moves), then its idle.
   const posed = pose === 'attack' || pose === 'hurt' || pose === 'closed' ? (pathId && pose !== 'closed' ? evolutionPoses[pathId]?.[pose] : undefined) ?? heroPoses[heroId]?.[pose] : undefined;
   const src = posed ?? (pathId ? evolutionArt[pathId] : undefined) ?? heroArt[heroId];

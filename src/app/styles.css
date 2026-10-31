@@ -4171,9 +4171,10 @@ textarea,
     drop-shadow(0 3px 5px rgba(0, 0, 0, 0.7));
 }
 
-/* A Guardian: its 64px sprite at exactly 2x, so it stands a third taller than a hero and breaks the frame
+/* A Guardian or a Late Titanspawn: its 64px sprite at exactly 2x, so it stands a third taller than a hero and breaks the frame
    upward while its feet stay on the platform. */
-.team-row .combatant-portrait.is-guardian {
+.team-row .combatant-portrait.is-guardian,
+.team-row .combatant-portrait.is-late-spawn {
   width: 128px;
   height: 128px;
   margin: -24px -16px 8px;
