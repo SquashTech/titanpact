@@ -7,7 +7,7 @@ import { STORY_ENEMY_SIDE, STORY_PLAYER_SIDE, type StoryBeat, type StoryChapter,
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
 const ally = (rosterId: string) => ({ side: 'A' as const, rosterId });
-// No innate fires in a guided lesson, and no foe wears the Titan's Mark; the open fight lets the heroes' own fire, for the Passives page after it.
+// No innate fires in a guided lesson, and no foe wears the Titan's Mark; the open fight lets Cairn's fire, for the Passives page after it.
 const QUIET = [STORY_PLAYER_SIDE, STORY_ENEMY_SIDE] as const;
 
 /** A move, then who it hits: each hero takes down its own foe, both foes neutral to both moves so no arrow shows before Types. */
@@ -167,7 +167,8 @@ const open: StoryFight = {
   id: 'lesson-open',
   quietSides: [STORY_ENEMY_SIDE],
   seed: 1810,
-  player: OPEN_FIGHT_PARTY.map((heroId) => ({ rosterId: heroId, heroId, level: 6, moveIds: [OPEN_MOVES[heroId]] })),
+  // Cairn's Waystone alone fires, the one the Passives page after it is built on.
+  player: OPEN_FIGHT_PARTY.map((heroId) => ({ rosterId: heroId, heroId, level: 6, moveIds: [OPEN_MOVES[heroId]], ...(heroId === 'cairn' ? {} : { quiet: true as const }) })),
   playerLeads: [],
   // Plain hits only, so the fight holds nothing a lesson has not shown: no status, field or stat step.
   enemy: [

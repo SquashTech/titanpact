@@ -69,7 +69,8 @@ once-a-round line moved there from Buffs and Debuffs. Shield's own page still wa
 
 **Lessons are quiet** (same day, per user direction): a guided lesson fights with no innate on either
 side and no foe wears the Titan's Mark (`StoryFight.quietSides`, `RosterEntry.innateQuiet`). The open
-fight quiets its foes only, so the heroes' own innates fire there for the Passives page after it.
+fight quiets its foes and every hero but Cairn (`StoryHeroSpec.quiet`, 2026-11-01, per user direction),
+so the one innate that fires is Waystone, the one the Passives page after it is built on.
 
 **Three lessons reworked** (2026-10-31, per user direction):
 - **Status Effects is a combo.** Cinder holds Set Alight and Immolate against a level-4 Rivetling: the

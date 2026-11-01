@@ -227,6 +227,12 @@ test('lessons: no passive fires in a guided lesson, and no foe in First Light we
   }
 });
 
+test('lessons: in the open fight only Cairn holds a passive, the one the Passives page is built on', () => {
+  const board = open(beats[beats.length - 1].fight);
+  const holders = Object.values(board.combatants).filter((c) => Object.keys(c.passives).length > 0).map((c) => c.combatantId);
+  assert.deepStrictEqual(holders, ['A:cairn']);
+});
+
 test('lessons: the last lesson is the first open fight, a party of four holding only moves the lessons taught', () => {
   const last = beats[beats.length - 1].fight;
   assert.strictEqual(last.player.length, 4);

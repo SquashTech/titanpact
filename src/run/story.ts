@@ -21,6 +21,8 @@ export interface StoryHeroSpec {
   moveIds?: readonly string[];
   /** Passives beyond its innate, a Story's own. */
   passiveIds?: readonly string[];
+  /** Fights without its innate, on a side that otherwise keeps them. */
+  quiet?: true;
 }
 
 /** What one hero does in a scripted round. Ids are roster ids on the hero's own side; a target names either side's. */
@@ -68,7 +70,7 @@ function storySide(specs: readonly StoryHeroSpec[], leads: readonly string[], he
   const roster = specs.map((spec) => {
     const hero = heroes[spec.heroId];
     if (!hero) throw new Error(`story: unknown hero ${spec.heroId}`);
-    return storyEntry(spec, hero, quiet);
+    return storyEntry(spec, hero, quiet || spec.quiet === true);
   });
   for (const id of leads) if (!roster.some((r) => r.rosterId === id)) throw new Error(`story: lead ${id} is not in the party`);
   return {
