@@ -155,15 +155,34 @@ test('lessons: physical Nightfall through thin hide and magical Nightfall past l
   assert.strictEqual(foesDown(crossed.boards[1]), 0);
 });
 
-test('lessons: Singe leaves the burning Rivetling standing, and the Burn at the round end puts it down', () => {
-  const { rounds, boards } = play(fightOf('firstLight.burn'));
+test('lessons: Set Alight burns the Rivetling, and Immolate on the Burning foe triples and drops it; without the Burn, two Immolates do not', () => {
+  const fight = fightOf('firstLight.burn');
+  const { rounds, boards } = play(fight);
   assert.strictEqual(rounds.length, 2);
-  const last = rounds[1];
-  const hit = last.findIndex((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'B:rivet');
-  const tick = last.findIndex((e) => e.type === 'StatusTicked' && e.combatantId === 'B:rivet');
-  const fell = last.findIndex((e) => e.type === 'Fainted' && e.combatantId === 'B:rivet');
-  assert.ok(hit >= 0 && tick > hit && fell > tick, 'the Burn, not the Singe, lands the knockout');
-  assert.strictEqual(foesDown(boards[2]), 1);
+  assert.ok(rounds[0].some((e) => e.type === 'StatusTicked' && e.combatantId === 'B:rivet'), 'the Burn ticks at the first round end');
+  assert.strictEqual(foesDown(boards[1]), 0);
+  const hit = rounds[1].find((e) => e.type === 'DamageDealt' && e.moveId === 'immolate');
+  assert.ok(hit && hit.type === 'DamageDealt' && hit.basePowerMultiplier === 3 && hit.finishing, 'Immolate, tripled, lands the knockout');
+  const crits = rounds.flat().filter((e) => e.type === 'DamageDealt' && e.isCrit);
+  assert.deepStrictEqual(crits, [], 'no critical hit steals the moment');
+  const plain = play(fight, (_, id) => ({ kind: 'move', combatantId: id, moveId: 'immolate', declaredTarget: 'B:rivet' }));
+  assert.strictEqual(foesDown(plain.boards[2]), 0, 'two Immolates on a foe that is not Burning leave it standing');
+});
+
+test('lessons: the first lesson shows no type arrow, and neither hit overkills its foe twice over', () => {
+  const fight = fightOf('firstLight.move');
+  const { rounds, boards } = play(fight);
+  for (const e of rounds.flat()) if (e.type === 'DamageDealt') assert.strictEqual(e.typeMult, 1, `${e.moveId} on ${e.targetCombatantId} is not neutral`);
+  for (const spec of fight.player) for (const id of spec.moveIds ?? []) for (const f of fight.enemy) {
+    const mult = allCombatants[f.heroId].types.reduce((m, t) => m * (typeChart[moves[id].type]?.[t] ?? 1), 1);
+    assert.strictEqual(mult, 1, `${id} on ${f.heroId} would show an arrow`);
+  }
+  for (const e of rounds[0]) {
+    if (e.type !== 'DamageDealt' || !e.targetCombatantId.startsWith('B')) continue;
+    const hp = boards[0].combatants[e.targetCombatantId].currentHp;
+    const raw = (e.basePower * e.basePowerMultiplier + e.elementalForceBonus) * e.ratio * e.stab * e.typeMult * e.variance * e.critMultiplier;
+    assert.ok(raw < 2 * hp, `${e.moveId} hits ${Math.round(raw)} on ${hp} HP`);
+  }
 });
 
 test('lessons: switching to Raiju takes the splash lightly, where Cinder would have taken it hard', () => {

@@ -10,23 +10,23 @@ const ally = (rosterId: string) => ({ side: 'A' as const, rosterId });
 // No innate fires in a guided lesson, and no foe wears the Titan's Mark; the open fight lets the heroes' own fire, for the Passives page after it.
 const QUIET = [STORY_PLAYER_SIDE, STORY_ENEMY_SIDE] as const;
 
-/** A move, then who it hits: each hero takes down its own foe. */
+/** A move, then who it hits: each hero takes down its own foe, both foes neutral to both moves so no arrow shows before Types. */
 const moveAndTarget: StoryFight = {
   id: 'lesson-move',
   quietSides: QUIET,
-  seed: 1801,
+  seed: 1805,
   player: [
     { rosterId: 'crag', heroId: 'crag', level: 3, moveIds: ['rockToss'] },
     { rosterId: 'ursa', heroId: 'ursa', level: 3, moveIds: ['claw'] },
   ],
   playerLeads: ['crag', 'ursa'],
   enemy: [
-    { rosterId: 'arc', heroId: 'arcling', level: 2 },
-    { rosterId: 'cub', heroId: 'cubling', level: 2 },
+    { rosterId: 'cub', heroId: 'cubling', level: 4, moveIds: ['claw'] },
+    { rosterId: 'peb', heroId: 'pebbling', level: 4, moveIds: ['rockToss'] },
   ],
-  enemyLeads: ['arc', 'cub'],
-  enemyScript: [[{ actor: 'arc', moveId: 'zap', target: ally('crag') }, { actor: 'cub', moveId: 'claw', target: ally('ursa') }]],
-  guide: [[{ actor: 'crag', moveId: 'rockToss', target: foe('arc') }, { actor: 'ursa', moveId: 'claw', target: foe('cub') }]],
+  enemyLeads: ['cub', 'peb'],
+  enemyScript: [[{ actor: 'cub', moveId: 'claw', target: ally('crag') }, { actor: 'peb', moveId: 'rockToss', target: ally('ursa') }]],
+  guide: [[{ actor: 'crag', moveId: 'rockToss', target: foe('cub') }, { actor: 'ursa', moveId: 'claw', target: foe('peb') }]],
 };
 
 /** One Arcane Blast empties Pixie's Mana, the Rest refills it, and the second cast finishes the foe. Pixie's innate is quiet alone. */
@@ -100,17 +100,17 @@ const kinds: StoryFight = {
   guide: [[{ actor: 'nightshade', moveId: 'nightfall', target: foe('rillfin') }, { actor: 'glyph', moveId: 'nightfallRewired', target: foe('ingot') }]],
 };
 
-/** Set Alight, then Singe: the hit leaves the Rivetling standing, and the Burn at the round's end puts it down. */
+/** Set Alight, then Immolate: the Burn ticks at the round's end, and Immolate on a Burning foe hits three times as hard and puts it down. */
 const burn: StoryFight = {
   id: 'lesson-burn',
   quietSides: QUIET,
-  seed: 1807,
-  player: [{ rosterId: 'cinder', heroId: 'cinderKnight', level: 3, moveIds: ['setAlight', 'singe'] }],
+  seed: 1811,
+  player: [{ rosterId: 'cinder', heroId: 'cinderKnight', level: 3, moveIds: ['setAlight', 'immolate'] }],
   playerLeads: ['cinder'],
-  enemy: [{ rosterId: 'rivet', heroId: 'rivetling', level: 13 }],
+  enemy: [{ rosterId: 'rivet', heroId: 'rivetling', level: 4, moveIds: ['ironFist'] }],
   enemyLeads: ['rivet'],
   enemyScript: [1, 2].map(() => [{ actor: 'rivet', moveId: 'ironFist', target: ally('cinder') }]),
-  guide: [[{ actor: 'cinder', moveId: 'setAlight', target: foe('rivet') }], [{ actor: 'cinder', moveId: 'singe', target: foe('rivet') }]],
+  guide: [[{ actor: 'cinder', moveId: 'setAlight', target: foe('rivet') }], [{ actor: 'cinder', moveId: 'immolate', target: foe('rivet') }]],
 };
 
 /** Cinder faces a Puddling's water: it steps back for Raiju off the bench, who takes the splash lightly and answers with Storm. */
@@ -200,7 +200,7 @@ export const LESSONS: StoryDefinition = {
     lessonChapter('firstLight.types', 'Types', types, 'Some types hit harder than others.'),
     lessonChapter('firstLight.spread', 'Spread', spread, 'Some moves hit both foes at once.'),
     lessonChapter('firstLight.kinds', 'Physical and Magical', kinds, 'Defense stops physical hits. Wisdom stops magic.'),
-    lessonChapter('firstLight.burn', 'Status Effects', burn, 'A Burn keeps hurting after the hit.'),
+    lessonChapter('firstLight.burn', 'Status Effects', burn, 'Burn a foe, then Immolate hits it three times as hard.'),
     lessonChapter('firstLight.switch', 'Switching', switching, 'Switch in a hero from the bench.'),
     {
       id: 'firstLight.gear',

@@ -71,9 +71,16 @@ once-a-round line moved there from Buffs and Debuffs. Shield's own page still wa
 side and no foe wears the Titan's Mark (`StoryFight.quietSides`, `RosterEntry.innateQuiet`). The open
 fight quiets its foes only, so the heroes' own innates fire there for the Passives page after it.
 
-Open, for the designer: lesson 6's Burn finish leans on a seeded Singe crit;
-Single and Spread's second and third pages teach effect figures, Shield and random damage that the
-lesson never uses; lesson 1's hits overkill fourfold and show *Bonus!* before Types.
+**Three lessons reworked** (2026-10-31, per user direction):
+- **Status Effects is a combo.** Cinder holds Set Alight and Immolate against a level-4 Rivetling: the
+  Burn ticks at the first round end, and Immolate on the Burning foe hits three times as hard and
+  drops it. Without the Burn, two Immolates leave it standing; no critical hit. Its line is *Burn a
+  foe, then Immolate hits it three times as hard.*, and the Status Effects page gains a third page
+  saying so.
+- **Single and Spread is one page.** The effect figures and the everyone-move moved to their own page,
+  **Who It Reaches**, filed the first time a run moves a stat a step, beside Buffs and Debuffs.
+- **Lesson 1 shows no arrow.** A Cubling and a Pebbling at level 4, both neutral to Rock Toss and Claw;
+  each hit lands about 1.3–1.5× its foe's HP, where the Arcling took 284 on 63 and read *Bonus!*.
 
 ## 1. What changes
 

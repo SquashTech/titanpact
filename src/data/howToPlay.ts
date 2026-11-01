@@ -108,7 +108,13 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Single and Spread',
     SPREAD,
     ['glyph:spread'],
-    'The bars under a move show who it hits:\n- [single] A bar under each enemy: the *one* you pick.\n- [spread] One long bar under both: it hits *both*, each at full power.',
+    'The bars under a move show who it hits:\n- [single] A bar under each enemy: the *one* you pick.\n- [spread] One long bar under both: it hits *both*, each at full power.'
+  ),
+  page(
+    'reach',
+    'Who It Reaches',
+    met({ kind: 'fight', what: 'stage' }),
+    ['glyph:spread'],
     'Figures show who an effect reaches:\n- [self] the hero using it\n- [ally] your side\n- [foe] an enemy',
     'A move that hits everyone also shows [ally]: it hits your partner too.'
   ),
@@ -153,7 +159,8 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     BURN,
     ['status:Burn', 'status:Shield'],
     '- A *status* is an effect that lasts, marked beside a fighter.\n- Some help, some harm.',
-    '- *Tap* a fighter to read its statuses.\n- *Pips* count rounds. A *number* is how strong it is.'
+    '- *Tap* a fighter to read its statuses.\n- *Pips* count rounds. A *number* is how strong it is.',
+    '- Some moves hit harder against a status.\n- *Immolate* hits a Burning foe *three times* as hard.'
   ),
   ...taughtIn(BURN),
 

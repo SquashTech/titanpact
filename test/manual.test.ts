@@ -113,5 +113,5 @@ test('manual: a screen files its page, and a fight its statuses, fields and lock
   const met = pagesMetInFight(MANUAL_PAGES, events, board, () => []);
   assert.deepStrictEqual(met.sort(), ['howto.field', 'howto.status.Shield'], 'a lesson status (Burn) is never met in a fight, a flat change is no step, and a wiped foe is no lock-in');
   const staged = [{ type: 'StatChanged', combatantId: 'B:x', stat: 'defense', delta: -1, stages: true, newValue: -1 }] as unknown as CombatEvent[];
-  assert.deepStrictEqual(pagesMetInFight(MANUAL_PAGES, staged, board, () => []), ['howto.stages'], 'a stat moved a step files Buffs and Debuffs');
+  assert.deepStrictEqual(pagesMetInFight(MANUAL_PAGES, staged, board, () => []).sort(), ['howto.reach', 'howto.stages'], 'a stat moved a step files Buffs and Debuffs, and who an effect reaches');
 });

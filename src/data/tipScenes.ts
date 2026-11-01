@@ -187,15 +187,15 @@ const TARGETS_SCENE: TipScene = {
 const SWITCH_SCENE: TipScene = { hero: { heroId: 'cinderKnight' }, bar: true, focus: ['switch'] };
 
 /** The first lesson's Crag and its Arcling, which Stone hits double. */
-const LESSON_FOES = [{ heroId: 'arcling', level: 2 }] as const;
+const LESSON_FOES = [{ heroId: 'cubling', level: 4 }] as const;
 const LESSON_CRAG = { heroId: 'crag', level: 3 } as const;
 
 /** Per tip or How to Play page, per page: the picture above the words, or null for none. */
 export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>> = {
   'fight.basics': [null, MANA_SCENE, { ...TARGETS_SCENE, moves: ['ember', 'firestorm'] }],
   bench: [null, null, SWITCH_SCENE],
-  // Crag's Rock Toss and the first lesson's Arcling it is aimed at.
-  'howto.combat': [{ foes: LESSON_FOES, hero: LESSON_CRAG, moves: ['rockToss'], focus: ['move', 'foe'], expect: { rockToss: [2] } }, null],
+  // Crag's Rock Toss and the first lesson's Cubling it is aimed at.
+  'howto.combat': [{ foes: LESSON_FOES, hero: LESSON_CRAG, moves: ['rockToss'], focus: ['move', 'foe'], expect: { rockToss: [1] } }, null],
   // The Mana lesson's Pixie, its one Arcane Blast and the bar that pays for it.
   'howto.mana': [{ hero: { heroId: 'pixie', level: 3 }, heroFigure: true, moves: ['arcaneBlast'], focus: ['manaGem', 'mpBar'] }],
   'howto.rest': [{ hero: { heroId: 'pixie', level: 3, mana: 0 }, heroFigure: true, rest: true, focus: ['rest', 'mpBar'] }],
@@ -209,8 +209,8 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
       focus: ['typeIcon', 'heroTypes'],
     },
   ],
-  'howto.targets': [
-    TARGETS_SCENE,
+  'howto.targets': [TARGETS_SCENE],
+  'howto.reach': [
     { ...TYPES_CAST, moves: ['ironFist', 'tideGuard'], focus: ['reach'] },
     { ...TYPES_CAST, moves: ['snowBlast'], focus: ['reach'] },
   ],
