@@ -88,8 +88,8 @@ carry over are the ones below: **the Titan's eye is the family tell**, now magen
 two at Mid, a Late's two in the wrong places; the element is a feature, then a tool, then the body.
 Early and Mid are 48px; **a Late is 64px drawn at 2× in a fight, a Guardian's size**
 (`is-late-spawn`). The eye is what keeps a spawn from reading as a hero, and the companion with
-it. Attack and hurt frames are still to draw; until then a spawn holds its idle sprite through
-every pose. The bestiary is `art/concepts/spawn-sprites/bestiary.html`.
+it. Every spawn has its attack and hurt frames (`<id>attack.png`, `<id>damaged.png`, drawn
+2026-10-31): the strike throws the element ahead of it and the hurt frame squeezes the eye. The bestiary is `art/concepts/spawn-sprites/bestiary.html`.
 
 *Superseded, kept for the record:* **Art.** Heroes stay 48px pixel art; spawn are **geometric SVG**, generated per line from one
 `(tier, pose)` function (`src/view/shared/titanspawnArt.tsx`) — flat fills in three tones of the
