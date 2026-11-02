@@ -8,7 +8,7 @@
 
 import type { GrowthStatKey, HeroDefinition } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
-import { HERALDS_STANDARD_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID } from './passives';
+import { HERALDS_STANDARD_ID, LAID_BARE_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID } from './passives';
 import type { GrowthGrade } from '../run/growth';
 
 /**
@@ -243,8 +243,8 @@ export const enemies: Record<string, HeroDefinition> = {
  * a roster arrives at the Eyes worn from the Herald, so the pair last longer and hit a little
  * softer. Every number is a first pass for the sim.
  */
-/** Every Eye sets Withering Gaze as it opens and again every third round (docs/titan-eyes.md §10). */
-const TITAN_EYE_PASSIVES: readonly string[] = [WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID];
+/** Every Eye lays bare the other side's raised stats as it opens, and sets Withering Gaze then and every third round (docs/titan-eyes.md §10). */
+const TITAN_EYE_PASSIVES: readonly string[] = [LAID_BARE_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID];
 
 export const titanEyes: Record<string, HeroDefinition> = {
   leftEye: {

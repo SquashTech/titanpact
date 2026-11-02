@@ -155,3 +155,27 @@ test('beats: Conduct going off is its own beat after the hit that set it off, ho
   assert.strictEqual(beats[2].holdsKo, true);
   assert.ok(beats[2].bannerKo);
 });
+
+test("beats: an Eye laying bare the player's raised stats is one beat, a drop on each hero it reached", () => {
+  const field = {
+    ...combatants,
+    a2: { combatantId: 'a2', heroId: 'crag', side: 'A' },
+    e1: { combatantId: 'e1', heroId: 'leftEye', side: 'B' },
+  } as unknown as CombatState['combatants'];
+  const beats = buildBeats(
+    [
+      { type: 'SwitchedIn', round: 4, side: 'B', slot: 0, outCombatantId: null, inCombatantId: 'e1' },
+      { type: 'PassiveTriggered', round: 4, combatantId: 'e1', passiveId: 'laidBare' },
+      { type: 'StatChanged', round: 4, combatantId: 'a1', sourceCombatantId: 'e1', stat: 'attack', delta: -5, stages: true, newValue: 0 },
+      { type: 'StatChanged', round: 4, combatantId: 'a2', sourceCombatantId: 'e1', stat: 'defense', delta: -2, stages: true, newValue: 0 },
+    ],
+    allCombatants,
+    moves,
+    field,
+    'A'
+  );
+  const bare = beats.find((b) => b.bannerLead?.startsWith('Laid Bare'));
+  assert.ok(bare, `no Laid Bare beat in ${JSON.stringify(beats.map((b) => b.bannerLead))}`);
+  assert.strictEqual(bare.bannerFocus, 'Every buff undone');
+  assert.deepStrictEqual(bare.popups.map((p) => [p.combatantId, p.className]), [['a1', 'popup-debuff'], ['a2', 'popup-debuff']]);
+});

@@ -273,6 +273,22 @@ kit, gear and Act 4 level changes, `enemy-levels.md`):
 
 The company's gear is the lever; the re-fit's numbers are the next notch if play still finds it soft.
 
+### 10.6 Laid Bare (2026-11-02, per user direction)
+
+Play saw a carry built to ▲▲▲▲▲ against the Herald sweep the Eyes untouched. **Each Eye now opens
+with Laid Bare** (`LAID_BARE_ID`, `src/data/passives.ts`): on its SwitchedIn, every RAISED stage on
+the player's side drops to 0 — the field and the bench, since stages survive a switch and a parked
+carry would otherwise walk back in whole. Lowered stages stay, the Eyes' own side is untouched, and
+it fires once (the second Eye in finds nothing to undo). It is a new effect verb,
+`clearRaisedStages`, the passive twin of the move flag of the same name, with a new passive target,
+`everyEnemy` (the opposing side's standing heroes, field and bench). The beat reads *Laid Bare ·
+Left Eye — Every buff undone*, a drop popup on each hero it reached.
+
+Left alone on purpose, open if play wants them: flat gains (Stampede's Speed, a permanent bank,
+Banners and gear are loadout and never touched), Shield pools, Renew, Blessings and mana overflow.
+The player can still build stages again under the Gaze; whether that is too quick is for play.
+Not measured: the sim pilot rarely stacks stages, so it would say little.
+
 ## 11. The ending sequence (2026-10-14, per user direction)
 
 The ask: the finale's introduction and its close read as thin, and the Titan being sealed was not

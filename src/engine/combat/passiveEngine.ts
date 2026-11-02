@@ -268,6 +268,12 @@ function resolveTargetIds(
       // dropped there and only there, so an existing group target keeps its slot-order semantics.
       return target === 'randomEnemy' ? active.filter((id) => !state.combatants[id]?.fainted) : active;
     }
+    case 'everyEnemy': {
+      const ownerSide = state.combatants[ownerId]?.side;
+      if (!ownerSide) return [];
+      const enemySide: Side = ownerSide === 'A' ? 'B' : 'A';
+      return [...state.active[enemySide], ...state.bench[enemySide]].filter((id): id is string => id !== null && !state.combatants[id]?.fainted);
+    }
   }
 }
 
@@ -304,6 +310,15 @@ function resolveEffectOn(
   moves?: Record<string, MoveDefinition>
 ): { state: CombatState; events: CombatEvent[] } {
   switch (effect.kind) {
+    case 'clearRaisedStages': {
+      const raised = Object.entries(target.statStages ?? {}).filter(([, n]) => (n ?? 0) > 0) as [StatKey, number][];
+      if (raised.length === 0) return { state, events: [] };
+      const statStages = { ...target.statStages, ...Object.fromEntries(raised.map(([stat]) => [stat, 0])) };
+      return {
+        state: { ...state, combatants: { ...state.combatants, [targetId]: { ...target, statStages } } },
+        events: raised.map(([stat, n]): CombatEvent => ({ type: 'StatChanged', round, combatantId: targetId, sourceCombatantId: ownerId, stat, delta: -n, stages: true, newValue: 0 })),
+      };
+    }
     case 'damage': {
       const maxHp = getMaxHp(heroes[target.heroId], target);
       const owner = state.combatants[ownerId];

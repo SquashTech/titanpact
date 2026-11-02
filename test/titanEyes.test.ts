@@ -14,7 +14,7 @@ import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { ENDBRINGER_ID, EYE_IDS, EYE_PHASES, LEFT_EYE_ID, RIGHT_EYE_ID, finaleEnemies, isGuardianId, titanEyes, enemies } from '../src/data/enemies';
-import { HERALDS_STANDARD_ID, WITHERING_GAZE_CADENCE, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID, boonPassives } from '../src/data/passives';
+import { HERALDS_STANDARD_ID, LAID_BARE_ID, WITHERING_GAZE_CADENCE, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID, boonPassives } from '../src/data/passives';
 import { WITHERING_GAZE_FRACTION } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import { applyStatus, selectableTargets } from '../src/engine/combat/statusEngine';
@@ -251,11 +251,11 @@ test('titanEyes: the finale encounter fields the Herald and its spawn, then the 
   // The innate passives are held at fight build: the Titan's pieces theirs, a spawn its type's Mark (docs/innate-passives.md §3).
   const held = (rosterId: string) => Object.keys(state.combatants[Object.keys(state.combatants).find((k) => k.endsWith(rosterId))!].passives);
   assert.deepStrictEqual(held(ENDBRINGER_ID), [HERALDS_STANDARD_ID]);
-  assert.deepStrictEqual(held(LEFT_EYE_ID), [WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID]);
+  assert.deepStrictEqual(held(LEFT_EYE_ID), [LAID_BARE_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID]);
   const spawnHeld = held(encounter.squad.benchIds[0]);
   assert.strictEqual(spawnHeld.length, 1);
   assert.ok(spawnHeld[0].startsWith('markOf'), `a finale spawn carries its Mark, not ${spawnHeld[0]}`);
-  for (const id of [HERALDS_STANDARD_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID]) assert.ok(!(id in boonPassives), `${id} is in the Boon pool`);
+  for (const id of [HERALDS_STANDARD_ID, LAID_BARE_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID]) assert.ok(!(id in boonPassives), `${id} is in the Boon pool`);
   assert.strictEqual(cinematicEntranceFor(LEFT_EYE_ID), 'titanRise', 'the first Eye in brings the scene');
   assert.strictEqual(cinematicEntranceFor(RIGHT_EYE_ID), null);
 });
@@ -382,4 +382,21 @@ test('titanEyes: every Eye is pixel art with all four frames', () => {
     }
   }
   for (const id of EYE_IDS) assert.ok(!isGuardianId(id), `${id} is drawn as a Guardian`);
+});
+
+// --- Laid Bare ---
+
+test('laid bare: an Eye opening drops every raised stage on the other side, field and bench, and leaves drops and its own side alone', () => {
+  let state = down(down(down(heraldFixture(41), 's1'), 's2'), 'h');
+  const raise = (s: CombatState, id: string, stages: CombatState['combatants'][string]['statStages']) => ({ ...s, combatants: { ...s.combatants, [id]: { ...s.combatants[id], statStages: stages } } });
+  state = raise(state, 'a1', { attack: 5, speed: 2, defense: -1 });
+  state = raise(state, 'a3', { intelligence: 3 });
+  state = raise(state, 'e2', { wisdom: 2 });
+  const entered = applyForcedReplacement(state, 5, 'B', 0, 'e1', statuses);
+  const opened = resolvePassiveReactions(entered.state, 5, entered.events, allCombatants, statuses, passives, fieldEffects);
+  assert.deepStrictEqual(opened.state.combatants.a1.statStages, { attack: 0, speed: 0, defense: -1 }, 'raised gone, the drop kept');
+  assert.deepStrictEqual(opened.state.combatants.a3.statStages, { intelligence: 0 }, 'the bench too');
+  assert.deepStrictEqual(opened.state.combatants.e2.statStages, { wisdom: 2 }, 'its own side untouched');
+  assert.ok(opened.events.some((e) => e.type === 'PassiveTriggered' && e.passiveId === LAID_BARE_ID));
+  assert.ok(opened.events.some((e) => e.type === 'StatChanged' && e.combatantId === 'a1' && e.stat === 'attack' && e.delta === -5 && e.newValue === 0));
 });

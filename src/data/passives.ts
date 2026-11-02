@@ -2665,6 +2665,7 @@ export const HERALDS_STANDARD_ID = 'heraldsStandard';
 export const TITANS_WARD_ID = 'titansWard';
 export const WITHERING_GAZE_FALLS_ID = 'witheringGazeFalls';
 export const WITHERING_GAZE_RETURNS_ID = 'witheringGazeReturns';
+export const LAID_BARE_ID = 'laidBare';
 
 /** Every third round: the Gaze lasts five, so a player's field is overwritten inside it (never refreshed — re-setting the active field is a no-op). */
 export const WITHERING_GAZE_CADENCE = 3;
@@ -2690,6 +2691,17 @@ const titanPassives: Record<string, PassiveDefinition> = {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
       effect: { kind: 'setFieldEffect', fieldEffectId: 'witheringGaze' },
+    },
+  },
+
+  [LAID_BARE_ID]: {
+    id: LAID_BARE_ID,
+    name: 'Laid Bare',
+    description: "Every raised stat on the other side, field and bench, falls back to normal.",
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'clearRaisedStages', target: 'everyEnemy' },
     },
   },
 

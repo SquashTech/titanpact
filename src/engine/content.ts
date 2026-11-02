@@ -245,7 +245,8 @@ export type PassiveAmount =
  * and it draws nothing unless a passive actually asks for it. Never the bench: an entry
  * passive must not tax uncommitted heroes.
  */
-export type PassiveEffectTarget = 'self' | 'ally' | 'bothAllies' | 'triggerSubject' | 'triggerTarget' | 'triggerTargetPartner' | 'activeEnemies' | 'randomEnemy';
+/** 'everyEnemy' is the opposing side's standing heroes, field and bench. */
+export type PassiveEffectTarget = 'self' | 'ally' | 'bothAllies' | 'triggerSubject' | 'triggerTarget' | 'triggerTargetPartner' | 'activeEnemies' | 'everyEnemy' | 'randomEnemy';
 
 /** The reactive effect primitives. */
 export type PassiveEffect =
@@ -300,6 +301,8 @@ export type PassiveEffect =
     }
   /** Strips non-`positive` statuses, same rules as a move's `cleanses`; `count` omitted = all. */
   | { kind: 'cleanse'; target: PassiveEffectTarget; count?: number }
+  /** Every raised stage on the target falls to 0; lowered ones stay (the Eyes opening, docs/titan-eyes.md). */
+  | { kind: 'clearRaisedStages'; target: PassiveEffectTarget }
   /** UNCAPPED, like a move's `manaGrant` — overflow past the pool is the point (docs/mana.md). */
   | { kind: 'manaGrant'; target: PassiveEffectTarget; amount: PassiveAmount; /** Morning Dew: never past the pool, and never lowers an overflow. */ capped?: true }
   /** Refills the target to its pool, as a Rest does: never past it, and never lowers an overflow (Carillon's The Bell Tolls). */

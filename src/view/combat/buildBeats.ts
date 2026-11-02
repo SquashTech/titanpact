@@ -1018,6 +1018,23 @@ export function buildBeats(
             },
             { source }
           );
+        } else if (effectKind === 'clearRaisedStages' && events[i]?.type === 'StatChanged') {
+          // Every hero it reached, field and bench, in one beat.
+          const changes: StatChangedEvent[] = [];
+          while (events[i]?.type === 'StatChanged') {
+            const changed = events[i++] as StatChangedEvent;
+            changes.push(changed);
+            applied.push(changed);
+          }
+          const groups = groupByCombatant(changes);
+          const who = joinNames(groups.map((g) => name(g.combatantId)));
+          push(
+            applied,
+            `${label} undoes ${who}'s raised stats`,
+            groups.map((g) => ({ combatantId: g.combatantId, text: deltaSummary(g.changes), className: 'popup-debuff' })),
+            { bannerLead: `${label} · ${ownerName}`, bannerFocus: 'Every buff undone', bannerFocusKind: 'debuff' },
+            { source }
+          );
         } else if (effectKind === 'manaSurcharge' && events[i]?.type === 'ManaSurcharged') {
           const taxed = events[i++] as ManaSurchargedEvent;
           applied.push(taxed);

@@ -79,6 +79,7 @@ function reactiveArt(effect: PassiveEffect): PassiveArt | undefined {
     case 'manaSurcharge':
       return statArt('manaPool');
     case 'cleanse':
+    case 'clearRaisedStages':
       return { path: CLEANSE_SPARKLE, color: STAT_COLORS.wisdom };
     case 'setFieldEffect':
       return elementArt(fieldEffects[effect.fieldEffectId]?.flavorType);
