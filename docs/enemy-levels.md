@@ -17,6 +17,17 @@
 > Early moves), gear is `ENEMY_GEAR_BY_ACT` = one item in Act 3 and two in Act 4, and Act 4's term
 > is +2. Measured (2000 runs, seed 1): full-clear 90.8 → 88.7% skilled, 49.3 → 45.3% chart; Act 4
 > 99.5 → 97.7 / 98.1 → 89.2%; the finale unmoved.
+> **2026-11-02 (per user direction, Cycle I "slightly harder"): an enemy picks its offers like a
+> player.** Each schedule offer rolls `ENEMY_OFFER_CHOICES` = 3 moves from the band and takes the
+> best by `enemyOfferScore`: power × STAB, ×0.7 for a move off the hero's offensive stat (none for a
+> mixed attacker within 10), ×1.2 a spread, ×0.8 a second attack in the same type and category;
+> one support move for an attacker, two for a hero whose Wisdom tops both offensive stats. It was
+> one random move, so kits held off-stat moves, three support moves, and Early filler into Act 4.
+> The protected starting attack is kept (pruning it was offered and not taken). Measured (1000
+> runs, seed 7): greedy 67.4 → 67.5% full-clear (Act 2 95.4 → 92.9, Act 4 92.2 → 93.7, finale
+> 84.9 → 87.0); chart 22.0 → 17.9% (Act 2 75.0 → 70.9, Act 4 80.6 → 77.2, finale 56.4 → 51.3).
+> The skilled pilot's late gain is likely the contract hero, which is the enemy beaten and so
+> arrives with the better kit too. It reaches every Cycle; Cycle IV's warbands still force theirs.
 
 ---
 

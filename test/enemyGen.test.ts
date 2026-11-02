@@ -135,3 +135,21 @@ test('enemyGen: a late enemy fields its later bands — a full kit swaps an Earl
     }
   }
 });
+
+test('enemyGen: an enemy takes the offer a player would — its own type on its own stat over an off-stat move of the same power', () => {
+  const { enemyOfferScore } = require('../src/run/enemyGen') as typeof import('../src/run/enemyGen');
+  const hero = Object.values(heroes).find((h) => h.baseStats.attack > h.baseStats.intelligence + 20)!;
+  const attacks = Object.values(moves).filter((m) => m.kind === 'damage' && m.basePower === 50 && m.target === 'singleEnemy' && !m.hitCount);
+  const own = attacks.find((m) => m.category === 'physical' && hero.types.includes(m.type))!;
+  const off = attacks.find((m) => m.category === 'magical' && !hero.types.includes(m.type))!;
+  assert.ok(own && off, 'fixture moves exist');
+  assert.ok(enemyOfferScore(own.id, hero, []) > enemyOfferScore(off.id, hero, []));
+});
+
+test('enemyGen: an attacker holding a support move ranks a second one below any attack', () => {
+  const { enemyOfferScore } = require('../src/run/enemyGen') as typeof import('../src/run/enemyGen');
+  const hero = Object.values(heroes).find((h) => h.baseStats.wisdom < Math.max(h.baseStats.attack, h.baseStats.intelligence))!;
+  const supports = Object.values(moves).filter((m) => m.kind !== 'damage');
+  const weakest = Object.values(moves).filter((m) => m.kind === 'damage' && m.basePower != null).sort((a, b) => a.basePower! - b.basePower!)[0];
+  assert.ok(enemyOfferScore(supports[1].id, hero, [supports[0].id]) < enemyOfferScore(weakest.id, hero, [supports[0].id]));
+});

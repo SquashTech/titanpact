@@ -244,10 +244,11 @@ export function rollLevelProgression(
     if (step.level > level) break;
     const entry = next.roster.find((r) => r.rosterId === rosterId)!;
     const atLevel = { ...entry, xp: xpForLevel(step.level) };
-    const { picked, nextState } = shuffledPick(state, levelMovePool(table, moves, hero, atLevel), 1);
+    const { picked, nextState } = shuffledPick(state, levelMovePool(table, moves, hero, atLevel), ENEMY_OFFER_CHOICES);
     state = nextState;
-    const moveId = picked[0];
-    const kit = moveId ? enemyKitWithOffer(entry.unlockedMoveIds, moveId, kept) : null;
+    const choice = bestOffer(picked, hero, entry.unlockedMoveIds, kept);
+    const moveId = choice?.moveId;
+    const kit = choice?.kit;
     if (moveId && kit) {
       next = {
         ...next,
@@ -257,6 +258,57 @@ export function rollLevelProgression(
     next = takeScheduleEntry(next, rosterId);
   }
   return { run: next, nextState: state };
+}
+
+// An enemy sees a few offers and takes the one a player would (docs/enemy-levels.md "Kits").
+export const ENEMY_OFFER_CHOICES = 3;
+const SUPPORT_VALUE = 45;
+const SUPPORT_HERO_VALUE = 80;
+const OFF_STAT_FACTOR = 0.7;
+const SPREAD_FACTOR = 1.2;
+const SAME_JOB_FACTOR = 0.5;
+const SAME_COLUMN_FACTOR = 0.8;
+// Within this much, Attack and Intelligence are both a hero's swing (a mixed attacker).
+const MIXED_MARGIN = 10;
+
+const isAttack = (moveId: string) => moves[moveId]?.kind === 'damage';
+
+/** How much a hero building like a player would want this move in this kit. */
+export function enemyOfferScore(moveId: string, hero: HeroLookup[string], kit: readonly string[]): number {
+  const move = moves[moveId];
+  if (!move) return 0;
+  const { attack, intelligence, wisdom } = hero.baseStats;
+  if (move.kind === 'damage') {
+    const power =
+      (move.basePower ?? (move.randomBasePower ? (move.randomBasePower.min + move.randomBasePower.max) / 2 : 40)) * (move.hitCount ?? 1);
+    const swings = Math.abs(attack - intelligence) <= MIXED_MARGIN || (move.category === 'physical') === attack > intelligence;
+    const stab = hero.types.includes(move.type) ? 1.25 : 1;
+    const spread = move.target === 'bothEnemies' || move.target === 'allOthers' ? SPREAD_FACTOR : 1;
+    const sameColumn = kit.some((id) => isAttack(id) && moves[id].type === move.type && moves[id].category === move.category) ? SAME_COLUMN_FACTOR : 1;
+    return power * stab * (swings ? 1 : OFF_STAT_FACTOR) * spread * sameColumn;
+  }
+  const supportHero = wisdom > Math.max(attack, intelligence);
+  const supports = kit.filter((id) => !isAttack(id));
+  if (supports.length >= (supportHero ? 2 : 1)) return 10;
+  const sameJob = supports.some((id) => moves[id].kind === move.kind) ? SAME_JOB_FACTOR : 1;
+  return (supportHero ? SUPPORT_HERO_VALUE : SUPPORT_VALUE) * sameJob;
+}
+
+/** The offer that scores best among those the kit can take, with the kit it leaves. */
+function bestOffer(
+  offers: readonly string[],
+  hero: HeroLookup[string],
+  kit: readonly string[],
+  kept: ReadonlySet<string>
+): { moveId: string; kit: string[] } | null {
+  let best: { moveId: string; kit: string[]; score: number } | null = null;
+  for (const moveId of offers) {
+    const next = enemyKitWithOffer(kit, moveId, kept);
+    if (!next) continue;
+    const score = enemyOfferScore(moveId, hero, kit);
+    if (!best || score > best.score) best = { moveId, kit: next, score };
+  }
+  return best;
 }
 
 const TIER_RANK: Record<MoveTier, number> = { early: 0, mid: 1, late: 2 };
