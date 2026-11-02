@@ -17,6 +17,7 @@ import { HubGlyph } from '../shared/nodeIcons';
 import { FIRST_CYCLE } from '../../run/cycles';
 import { pendingWeave } from '../../run/chronicle';
 import { AudioSettings } from '../shared/AudioSettings';
+import { OfflineStatus } from '../shared/OfflineStatus';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
 import recordsArt from '../../../art/ui/records.png';
@@ -499,6 +500,7 @@ export function TitleScreen({
             <h3 className="gilt-dialog-title">Options</h3>
             <div className="options-list">
               <AudioSettings />
+              <OfflineStatus />
               <button className="options-item" onClick={() => setShowOptions(false)}>
                 <span className="options-item-glyph" aria-hidden="true">
                   ▶

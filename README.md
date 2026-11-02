@@ -285,8 +285,10 @@ The pieces, should any of this need changing:
 - `public/sw.js` — the service worker. **Network-first for the HTML entry, cache-first
   for `assets/`.** That split is deliberate: hashed asset URLs are immutable so they're
   safe to pin forever, while a cached HTML shell would silently pin an installed phone to
-  a stale build and make mobile playtesting lie to you. Offline play works off the cache
-  once the app has been opened at least once. Bump `VERSION` to force every install to
+  a stale build and make mobile playtesting lie to you. On install the worker saves every
+  built file listed in `precache.json` (written by the plugin in `vite.config.mts`), art
+  first, music after, and drops an old build's files; the title's Options shows **Offline
+  play: Ready** once all of it is on the device. Bump `VERSION` to force every install to
   drop its caches.
 - `src/app/registerServiceWorker.ts` — registration, **production builds only** (a worker
   intercepting module requests under `vite dev` fights HMR).

@@ -33,6 +33,10 @@ const PRECACHE = [
   scoped('./icons/apple-touch-icon-180.png'),
 ];
 
+// Every built file, written by the precache-list plugin in vite.config.mts. Absent under `vite dev`.
+const MANIFEST_URL = scoped('./precache.json');
+const FETCH_WORKERS = 4;
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
@@ -48,6 +52,8 @@ self.addEventListener('install', (event) => {
           }
         })
       );
+      // The art before the new build takes over; the music follows on activate.
+      await fill({ withMusic: false });
       await self.skipWaiting();
     })()
   );
@@ -59,9 +65,83 @@ self.addEventListener('activate', (event) => {
       const names = await caches.keys();
       await Promise.all(names.filter((n) => n.startsWith('titanpact-') && !OWNED.includes(n)).map((n) => caches.delete(n)));
       await self.clients.claim();
+      await fill({ withMusic: true });
     })()
   );
 });
+
+// The page asks how much of the game is saved for offline play, and so restarts a fill the OS cut short.
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'offline-status') return;
+  event.waitUntil(fill({ withMusic: true }));
+});
+
+let filling = null;
+
+function fill(options) {
+  // A music fill asked for during an art-only one waits for it, then runs.
+  const next = (filling ?? Promise.resolve()).then(() => runFill(options)).catch(() => {});
+  filling = next.finally(() => {
+    if (filling === next) filling = null;
+  });
+  return next;
+}
+
+async function readManifest() {
+  const shell = await caches.open(SHELL_CACHE);
+  try {
+    const res = await fetch(MANIFEST_URL, { cache: 'reload' });
+    if (res.ok) {
+      await shell.put(MANIFEST_URL, res.clone());
+      return { manifest: await res.json(), fresh: true };
+    }
+  } catch {
+    /* offline: fall back to the saved copy */
+  }
+  const saved = await shell.match(MANIFEST_URL);
+  return saved ? { manifest: await saved.json(), fresh: false } : null;
+}
+
+async function runFill({ withMusic }) {
+  const read = await readManifest();
+  if (!read) return broadcast({ saved: 0, total: 0 });
+  const { manifest, fresh } = read;
+  const wanted = [...manifest.core, ...manifest.music].map(scoped);
+  const cache = await caches.open(ASSET_CACHE);
+
+  // A fresh list is the whole build: anything else in the cache is an old build's and only takes room.
+  if (fresh) {
+    const keep = new Set(wanted);
+    const keys = await cache.keys();
+    await Promise.all(keys.filter((r) => !keep.has(r.url)).map((r) => cache.delete(r)));
+  }
+
+  const present = new Set((await cache.keys()).map((r) => r.url));
+  const queue = (withMusic ? wanted : manifest.core.map(scoped)).filter((u) => !present.has(u));
+  let saved = wanted.length - wanted.filter((u) => !present.has(u)).length;
+  broadcast({ saved, total: wanted.length });
+
+  const worker = async () => {
+    for (let url = queue.shift(); url; url = queue.shift()) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          await cache.put(url, res);
+          saved += 1;
+          broadcast({ saved, total: wanted.length });
+        }
+      } catch {
+        /* offline or a dropped connection: the next status request picks it up */
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: FETCH_WORKERS }, worker));
+}
+
+async function broadcast(progress) {
+  const clients = await self.clients.matchAll({ includeUncontrolled: true });
+  for (const client of clients) client.postMessage({ type: 'offline-progress', ...progress });
+}
 
 /**
  * `fetchRequest` is what actually goes to the network and is not always
@@ -75,7 +155,7 @@ async function networkFirst(request, cacheName, { fetchRequest = request, cacheK
     if (fresh && fresh.ok) cache.put(cacheKey, fresh.clone());
     return fresh;
   } catch (err) {
-    const cached = await cache.match(cacheKey);
+    const cached = await cache.match(cacheKey, { ignoreVary: true });
     if (cached) return cached;
     throw err;
   }
@@ -83,7 +163,8 @@ async function networkFirst(request, cacheName, { fetchRequest = request, cacheK
 
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
+  // ignoreVary: a precached copy was fetched without the page's Origin header, and a hashed file never differs by it.
+  const cached = await cache.match(request, { ignoreVary: true });
   if (cached) return cached;
   const fresh = await fetch(request);
   if (fresh && fresh.ok) cache.put(request, fresh.clone());
