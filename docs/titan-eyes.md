@@ -287,7 +287,24 @@ Left Eye — Every buff undone*, a drop popup on each hero it reached.
 Left alone on purpose, open if play wants them: flat gains (Stampede's Speed, a permanent bank,
 Banners and gear are loadout and never touched), Shield pools, Renew, Blessings and mana overflow.
 The player can still build stages again under the Gaze; whether that is too quick is for play.
-Not measured: the sim pilot rarely stacks stages, so it would say little.
+Measured with §10.7 below.
+
+### 10.7 The re-fit undone (2026-11-02, per user direction)
+
+The four-act re-fit's cut came back, the notch §10.5 named: the Herald Attack 80 → 100 and
+Intelligence 115 → 135 (900 total again), the Eyes Intelligence 115 → 135 and 85 → 105, and
+`WITHERING_GAZE_FRACTION` 0.04 → 0.05. Measured (1000 runs, seed 7, on the same day's enemy kits,
+`enemy-levels.md`), finale won / full-clear:
+
+| Build | Skilled | Chart |
+|---|---|---|
+| Kits only | 87.0 / 67.5% | 51.3 / 17.9% |
+| + Laid Bare | 83.5 / 64.8% | 44.4 / 15.5% |
+| **+ re-fit undone (shipped)** | **78.0 / 60.5%** | **38.4 / 13.4%** |
+
+Laid Bare moved the pilot more than expected for a pilot that rarely stacks stages. Together the
+day's three changes took the finale 9 points off the skilled pilot and 13 off the chart one; the
+finale is where an hour is lost, so it is the first place to ease if play finds it too much.
 
 ## 11. The ending sequence (2026-10-14, per user direction)
 

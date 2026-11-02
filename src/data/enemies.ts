@@ -223,7 +223,7 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'endbringer',
     name: 'Endbringer',
     types: ['Ancient'],
-    baseStats: { hp: 680, attack: 80, defense: 115, intelligence: 115, wisdom: 115, speed: 95, manaPool: 200, mpRegen: 25 },
+    baseStats: { hp: 680, attack: 100, defense: 115, intelligence: 135, wisdom: 115, speed: 95, manaPool: 200, mpRegen: 25 },
     moveIds: ['raiseTheStandard', 'erode', 'transfix', 'oblivion'],
     passiveIds: [HERALDS_STANDARD_ID],
     growthGrades: CHAMPION_GRADES,
@@ -239,9 +239,8 @@ export const enemies: Record<string, HeroDefinition> = {
  * is physical.
  *
  * The Left Eye hurts (Archon Blast, Erode beside the gaze); the Right Eye holds (Forgotten Curse,
- * Lidded). Speed 92/82: the fastest hero is 90. The lines are §4's with HP ×1.5 and Int −20 (§10):
- * a roster arrives at the Eyes worn from the Herald, so the pair last longer and hit a little
- * softer. Every number is a first pass for the sim.
+ * Lidded). Speed 92/82: the fastest hero is 90. The lines are §4's with HP ×1.5 (§10), so the pair
+ * last longer; the Int cut of §10 was undone in §10.7. Every number is a first pass for the sim.
  */
 /** Every Eye lays bare the other side's raised stats as it opens, and sets Withering Gaze then and every third round (docs/titan-eyes.md §10). */
 const TITAN_EYE_PASSIVES: readonly string[] = [LAID_BARE_ID, WITHERING_GAZE_FALLS_ID, WITHERING_GAZE_RETURNS_ID];
@@ -251,7 +250,7 @@ export const titanEyes: Record<string, HeroDefinition> = {
     id: 'leftEye',
     name: 'Left Eye',
     types: ['Ancient'],
-    baseStats: { hp: 810, attack: 40, defense: 105, intelligence: 115, wisdom: 105, speed: 92, manaPool: 220, mpRegen: 28 },
+    baseStats: { hp: 810, attack: 40, defense: 105, intelligence: 135, wisdom: 105, speed: 92, manaPool: 220, mpRegen: 28 },
     moveIds: ['gaze', 'regard', 'archonBlast', 'erode'],
     passiveIds: TITAN_EYE_PASSIVES,
     growthGrades: CHAMPION_GRADES,
@@ -260,7 +259,7 @@ export const titanEyes: Record<string, HeroDefinition> = {
     id: 'rightEye',
     name: 'Right Eye',
     types: ['Ancient'],
-    baseStats: { hp: 945, attack: 40, defense: 125, intelligence: 85, wisdom: 125, speed: 82, manaPool: 220, mpRegen: 28 },
+    baseStats: { hp: 945, attack: 40, defense: 125, intelligence: 105, wisdom: 125, speed: 82, manaPool: 220, mpRegen: 28 },
     moveIds: ['gaze', 'regard', 'forgottenCurse', 'lidded'],
     passiveIds: TITAN_EYE_PASSIVES,
     growthGrades: CHAMPION_GRADES,

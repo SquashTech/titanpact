@@ -62,9 +62,9 @@ test('endbringer: mono-Ancient, and therefore the only thing on the board nothin
   }
 });
 
-test('endbringer: 860 stats — a step above the champions, not a different number class', () => {
-  // 900 until 2026-10-02: the four-act finale re-fit took 20 Attack and 20 Intelligence (docs/xp-overhaul.md §5).
-  assert.strictEqual(statTotal(ENDBRINGER_ID), 860);
+test('endbringer: 900 stats — a step above the champions, not a different number class', () => {
+  // 860 from 2026-10-02 to 2026-11-02: the four-act re-fit's Attack and Intelligence cut, undone in docs/titan-eyes.md §10.7.
+  assert.strictEqual(statTotal(ENDBRINGER_ID), 900);
   for (const id of CHAMPION_IDS) {
     assert.ok(statTotal(ENDBRINGER_ID) > statTotal(id), `${id} matches the Titan`);
   }
