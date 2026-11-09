@@ -541,21 +541,6 @@
   filter: drop-shadow(0 0 4px rgba(255, 207, 106, 0.7));
 }
 
-.manual-dark {
-  display: grid;
-  place-items: center;
-  height: 180px;
-}
-
-.manual-dark svg {
-  width: 60px;
-  height: 60px;
-  fill: none;
-  stroke: rgba(205, 214, 255, 0.28);
-  stroke-width: 1.2;
-  stroke-dasharray: 3 3;
-}
-
 .manual-entries {
   display: flex;
   flex-direction: column;

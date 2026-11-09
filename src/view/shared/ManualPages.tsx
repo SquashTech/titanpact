@@ -21,7 +21,7 @@ import { overlayHost } from './overlayHost';
 import { useProfile } from './ProfileContext';
 import { MANUAL_PAGES } from '../../data/howToPlay';
 import { sky } from '../../data/sky';
-import { isPageLearned } from '../../run/manual';
+import { isConstellationLit } from '../../run/sky';
 import './manualPages.css';
 
 const KIND_COLORS: Record<MoveKindGlyphKind, string> = {
@@ -356,23 +356,18 @@ function ringsPath(cx: number, cy: number, r: number): string {
 }
 
 /**
- * How to Play as the player has filled it (docs/the-sky.md §2c): the contents are the sky they
- * already know — a lit star opens the pages its lesson taught, a dark one is what is still to come —
- * and the Infinite's mark holds the pages runs have filed. A page not yet learned is not shown.
+ * How to Play (docs/the-sky.md §2c), whole from the start: the contents are the sky the player
+ * already knows, a star a lesson's pages, and the Infinite's mark the pages about a run.
  */
 export function ManualBook() {
   const profile = useProfile();
   const firstLight = sky.constellations.firstLight;
   const chapters = [...firstLight.stars.map((star) => star.id), RUN_CHAPTER];
-  const learned = (id: string) => MANUAL_PAGES.filter((p) => (id === RUN_CHAPTER ? p.source.kind === 'run' : p.source.kind === 'lesson' && p.source.scenarioId === id)).filter((p) => isPageLearned(profile, p));
-  const lit = (id: string) => learned(id).length > 0;
-  // Opens where the player is: the last lesson won, or what runs have filed once the lessons are done.
-  const lessons = chapters.slice(0, -1);
-  const [chapter, setChapter] = useState(() =>
-    lessons.every(lit) && lit(RUN_CHAPTER) ? RUN_CHAPTER : [...lessons].reverse().find(lit) ?? (lit(RUN_CHAPTER) ? RUN_CHAPTER : chapters[0])
-  );
+  const pagesOf = (id: string) => MANUAL_PAGES.filter((p) => (id === RUN_CHAPTER ? !p.lesson : p.lesson === id));
+  // Opens on the lessons until they are done, then on the run.
+  const [chapter, setChapter] = useState(() => (isConstellationLit(profile, firstLight) ? RUN_CHAPTER : chapters[0]));
   const [openId, setOpenId] = useState<string | null>(null);
-  const pages = learned(chapter);
+  const pages = pagesOf(chapter);
 
   const at = (x: number, y: number) => ({ x: 14 + x * (SKY_W - 74), y: 10 + y * (SKY_H - 20) });
   const runAt = { x: SKY_W - 26, y: SKY_H / 2 };
@@ -383,14 +378,14 @@ export function ManualBook() {
         {firstLight.lines.map(([a, b]) => {
           const p = at(firstLight.stars[a].x, firstLight.stars[a].y);
           const q = at(firstLight.stars[b].x, firstLight.stars[b].y);
-          return <line key={`${a}-${b}`} x1={p.x} y1={p.y} x2={q.x} y2={q.y} className={`manual-sky-line${lit(firstLight.stars[b].id) ? ' is-lit' : ''}`} />;
+          return <line key={`${a}-${b}`} x1={p.x} y1={p.y} x2={q.x} y2={q.y} className="manual-sky-line is-lit" />;
         })}
         {firstLight.stars.map((star) => {
           const p = at(star.x, star.y);
           return (
             <g
               key={star.id}
-              className={`manual-sky-star${lit(star.id) ? ' is-lit' : ''}${chapter === star.id ? ' is-chosen' : ''}`}
+              className={`manual-sky-star is-lit${chapter === star.id ? ' is-chosen' : ''}`}
               role="tab"
               aria-selected={chapter === star.id}
               onClick={() => {
@@ -406,7 +401,7 @@ export function ManualBook() {
           );
         })}
         <g
-          className={`manual-sky-star is-run${lit(RUN_CHAPTER) ? ' is-lit' : ''}${chapter === RUN_CHAPTER ? ' is-chosen' : ''}`}
+          className={`manual-sky-star is-run is-lit${chapter === RUN_CHAPTER ? ' is-chosen' : ''}`}
           role="tab"
           aria-selected={chapter === RUN_CHAPTER}
           onClick={() => {
@@ -421,28 +416,20 @@ export function ManualBook() {
         </g>
       </svg>
 
-      {pages.length === 0 ? (
-        <div className="manual-dark" aria-hidden="true">
-          <svg viewBox="0 0 60 60">
-            <path d={chapter === RUN_CHAPTER ? ringsPath(30, 30, 22) : starPath(30, 30, 24)} />
-          </svg>
-        </div>
-      ) : (
-        <div className="manual-entries">
-          {pages.map((page) => {
-            const open = page.id === openId;
-            return (
-              <section key={page.id} className={`manual-entry${open ? ' is-open' : ''}`}>
-                <button type="button" className="manual-entry-head" aria-expanded={open} data-sfx="ui.select" onClick={() => setOpenId(open ? null : page.id)}>
-                  <PageEmblem page={page} />
-                  <span className="manual-entry-title">{page.title}</span>
-                </button>
-                {open && <PageBody page={page} />}
-              </section>
-            );
-          })}
-        </div>
-      )}
+      <div className="manual-entries">
+        {pages.map((page) => {
+          const open = page.id === openId;
+          return (
+            <section key={page.id} className={`manual-entry${open ? ' is-open' : ''}`}>
+              <button type="button" className="manual-entry-head" aria-expanded={open} data-sfx="ui.select" onClick={() => setOpenId(open ? null : page.id)}>
+                <PageEmblem page={page} />
+                <span className="manual-entry-title">{page.title}</span>
+              </button>
+              {open && <PageBody page={page} />}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

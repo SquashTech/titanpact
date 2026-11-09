@@ -25,8 +25,6 @@ import { getTypeColor } from './typeColors';
 import { gemAmount, type Gem } from '../../run/gems';
 import { GemIcon, GEM_STONES } from '../shared/GemIcon';
 import { GOOD_ART } from '../run/guildHallArt';
-import type { ManualPage } from '../../run/manual';
-import { LessonLearnedScreen } from '../story/LessonLearnedScreen';
 
 /** A loss wears the enemy's red; a win, the run's gold — the Location's own tint stays on the field behind. */
 const TINT_LOSS = '217, 83, 79';
@@ -48,7 +46,6 @@ const STAGE_CAPTION = 2;
 const STAGE_LEDGER = 3;
 
 const NO_GEMS: readonly Gem[] = [];
-const NO_PAGES: readonly ManualPage[] = [];
 
 /** Whether the whole sequence has landed, played out or tapped through — read by the loot pile. */
 const LandedContext = createContext(false);
@@ -85,8 +82,6 @@ export interface FightResultProps {
   hpAfter?: ReadonlyMap<string, { hp: number; maxHp: number }>;
   /** The fight's MVP (run/mvp.ts) and the bonus XP it takes. Null when nobody qualified. */
   mvp?: MvpPick | null;
-  /** How to Play pages this win files (run/manual.ts), shown last in the ledger. */
-  learned?: readonly ManualPage[];
   onContinue: () => void;
 }
 
@@ -115,7 +110,6 @@ export function FightResultOverlay({
   gemReward = NO_GEMS,
   hpAfter,
   mvp = null,
-  learned = NO_PAGES,
   onContinue,
 }: FightResultProps) {
   const won = outcome === 'win';
@@ -134,7 +128,6 @@ export function FightResultOverlay({
     [levelSeed, xpGained, mvp]
   );
   const [showingGains, setShowingGains] = useState(false);
-  const [filing, setFiling] = useState(false);
   const longestBar = barsByHero.reduce((best, bar) => (xpBarTotalMs(bar) > xpBarTotalMs(best) ? bar : best), barsByHero[0] ?? []);
 
   const ledger = useMemo(() => {
@@ -278,8 +271,7 @@ export function FightResultOverlay({
         className={`fight-result-cta${landed ? ' is-lit' : ''}`}
         onClick={(e) => {
           e.stopPropagation();
-          if (won && learned.length > 0) setFiling(true);
-          else onContinue();
+          onContinue();
         }}
       >
         Continue
@@ -287,8 +279,6 @@ export function FightResultOverlay({
 
       {inspecting && <ItemDetailOverlay item={equipmentReward} onClose={() => setInspecting(false)} />}
       {showingGains && levelReport && <StatGainsSheet report={levelReport} roster={roster} onClose={() => setShowingGains(false)} />}
-      {/* The pages this win filed are a beat of their own, after the spoils. */}
-      {filing && <LessonLearnedScreen pages={learned} onContinue={onContinue} />}
     </div>
   );
 }

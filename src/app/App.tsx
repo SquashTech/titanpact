@@ -129,8 +129,6 @@ import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
 import { LESSONS, STORY_BOOKS } from '../data/lessons';
 import { sky } from '../data/sky';
 import { recordScenarioLit } from '../run/sky';
-import { fileRunPages, markPagesShown, pagesForDecision, pagesMetOnScreen } from '../run/manual';
-import { MANUAL_PAGES, manualPage } from '../data/howToPlay';
 import { chapterById } from '../run/story';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
@@ -433,8 +431,6 @@ export function App() {
   const [skyReturn, setSkyReturn] = useState<'win' | 'loss' | null>(null);
   // The control tips shown in the lesson being played, which shows them all again next time.
   const [lessonTips, setLessonTips] = useState<readonly string[]>([]);
-  // How to Play pages opened over the screen whose choice they explain, first to last (run/manual.ts pagesForDecision).
-  const [decisionPages, setDecisionPages] = useState<readonly string[]>([]);
   // Read once: a device does not change platform mid-session, and installing reopens the game.
   const [installPlatform] = useState(currentInstallPlatform);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -597,19 +593,6 @@ export function App() {
     if (!playerRun.map) return;
     updateProfile((current) => recordActReached(current, playerRun.actNumber));
   }, [playerRun.actNumber, playerRun.map]);
-
-  // A run's screen files its How to Play page the first time it is reached. A page its choice needs
-  // opens over it now; the rest wait for the next won fight.
-  useEffect(() => {
-    if (!playerRun.map) return;
-    const key = screen.kind === 'actIntro' ? (playerRun.actNumber === 1 ? 'actIntro:first' : 'actIntro:later') : screen.kind;
-    const ids = pagesMetOnScreen(MANUAL_PAGES, key);
-    if (ids.length === 0) return;
-    const now = pagesForDecision(readProfile(), MANUAL_PAGES, ids);
-    setProfile(updateProfile((current) => fileRunPages(current, MANUAL_PAGES, ids)));
-    if (now.length > 0) setDecisionPages(now);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen.kind]);
 
   // A finished run has nothing left to resume; the save would otherwise re-offer the map of a
   // run the player already lost or cleared. `playerRun` is final here: the handler that set this
@@ -1241,14 +1224,6 @@ export function App() {
     markTipSeen(id);
   }
 
-  /** A fight's How to Play pages: filed, and marked shown when a win's Learned row showed them. */
-  function handlePagesLearned(ids: readonly string[], shown: boolean) {
-    setProfile(updateProfile((current) => {
-      const filed = fileRunPages(current, MANUAL_PAGES, ids);
-      return shown ? markPagesShown(filed, ids) : filed;
-    }));
-  }
-
   /** One of Blip's firsts: account-wide, written straight to storage like a tip. */
   function markThoughtSeen(thought: ThoughtDefinition) {
     setProfile(updateProfile((current) => recordThoughtSeen(current, thought)));
@@ -1694,7 +1669,6 @@ export function App() {
                   lastMvpRosterId: playerRun.lastMvpRosterId ?? undefined,
                 }
           }
-          onPagesLearned={handlePagesLearned}
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}
           saveTrouble={saveTrouble === 'ok' ? null : SAVE_TROUBLE_LINES[saveTrouble]}
@@ -1952,19 +1926,6 @@ export function App() {
       )}
       {(() => {
         if (recruitFanfare) return null;
-        if (decisionPages.length > 0) {
-          const page = manualPage(decisionPages[0]);
-          return (
-            <TipOverlay
-              key={page.id}
-              tip={page}
-              onDone={() => {
-                setProfile(updateProfile((current) => markPagesShown(current, [page.id])));
-                setDecisionPages((ids) => ids.slice(1));
-              }}
-            />
-          );
-        }
         const tip = firstUnseenTip(SCREEN_TIPS, screenTipIds(screen), profile.seenTipIds);
         if (!tip) return null;
         return <TipOverlay key={tip.id} tip={tip} onDone={() => markTipSeen(tip.id)} />;

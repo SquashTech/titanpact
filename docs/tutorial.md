@@ -3,9 +3,9 @@
 > Module of the Titanpact `/docs` suite. Companion to `first-light.md` (the lessons), `the-sky.md`
 > §2c (the manual) and `run-loop.md`.
 >
-> **The tutorial is First Light** (`docs/first-light.md`, since 2026-10-27): nine one-concept lessons
+> **The tutorial is First Light** (`docs/first-light.md`, since 2026-10-27): eleven one-concept lessons
 > a new account plays before its first run. This file is what is left beside them: the first-time
-> tips, the pages a run opens at a choice, and How to Play. Reconciled with the build 2026-10-29.
+> tips and How to Play. Reconciled with the build 2026-11-09.
 >
 > History: the scripted first run of 2026-09-05 was deleted 2026-09-24 (§7); the tips were cut to
 > three 2026-10-13, per user direction, because the number of interruptions was the problem.
@@ -21,13 +21,13 @@ What a first run adds is information, not structure:
 - **Three first-time tips**: the first fight, the first fight with a bench, the first item, **once
   per account**. A lesson that taught one retires it (§3), so after First Light none of the three
   fires.
-- **Three pages at a choice**: The Map, Levels and Moves, and Recruiting open over their screen the
-  first time it is reached (`ManualPage.atDecision`). Every other run page files quietly and lands
-  on the next won fight's Learned row.
+- **Nothing else opens over a run.** How to Play is whole from the start and lives in the Reference.
+  No page opens at a choice and no won fight lands a Learned row (2026-11-09, per user direction:
+  the filing added taps and taught nothing the lessons don't).
 
 Everything else is taught by the screen it happens on: a label, a button that names what it does,
 a quiet mark for a state that lasts, and a line at the moment a state changes. The test for a new
-tip or a new page at a choice is whether the player cannot make the decision in front of them
+tip is whether the player cannot make the decision in front of them
 without it. The inquisitive minority has How to Play.
 
 **Voice.** Tips are plain game-UI text — *video-gamey information*, brief and to the point. Nobody

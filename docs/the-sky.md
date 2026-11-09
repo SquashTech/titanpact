@@ -178,6 +178,14 @@ Picked from a side-by-side page (`art/concepts/celestial-title/`, "C · Galaxy" 
 
 ## 2c. The manual (2026-10-26, per user direction)
 
+> **The book stops filling in (2026-11-09, per user direction).** Filing added taps and taught
+> nothing the lessons don't. How to Play stays in the Reference and is **whole from the start**:
+> every star and the Infinite's rings open their pages on any account. Deleted: a run filing pages
+> (`fileRunPages`, `pagesMetOnScreen`, `pagesMetInFight`), the won fight's Learned row, the pages that
+> opened at a choice (`ManualPage.atDecision`), and `Profile.manualPages` / `manualUnshown` /
+> `manualComplete` (an old file still decodes; the fields are dropped). A lesson still opens on its
+> own page and ends on its Learned screen. The bullets below are history wherever they disagree.
+
 How to Play is a book the player fills by playing, the way Hades' Codex and Hollow Knight's Hunter's
 Journal fill. Picked from a side-by-side page (`art/concepts/manual-pages/`, "C · Learned, then
 filed"). Content `src/data/howToPlay.ts`, mechanism `src/run/manual.ts`.
