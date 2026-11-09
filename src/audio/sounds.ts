@@ -73,6 +73,7 @@ export type SfxId =
   | 'blip.chirp'
   | 'blip.giggle'
   | 'blip.win'
+  | 'trust.capstone'
   | 'blip.lose'
   | 'trust.rise'
   | 'star.rise'
@@ -999,11 +1000,11 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'triangle', freq: 233, freqEnd: 208, gain: 0.16, attack: 0.002, decay: 0.22 },
       { wave: 'sine', freq: 699, gain: 0.05, attack: 0.002, decay: 0.09 },
       { wave: 'noise', gain: 0.24, attack: 0.02, decay: 0.15, filter: { type: 'bandpass', freq: 5200, freqEnd: 1800, q: 2.2 } },
-      { wave: 'noise', gain: 0.36, attack: 0.001, decay: 0.09, delay: 0.17, filter: { type: 'lowpass', freq: 760, freqEnd: 150, q: 1.1 } },
-      { wave: 'sine', freq: 150, freqEnd: 72, gain: 0.3, attack: 0.002, decay: 0.12, delay: 0.17 },
-      { wave: 'noise', gain: 0.2, attack: 0.09, decay: 0.24, delay: 0.24, filter: { type: 'bandpass', freq: 800, freqEnd: 3200, q: 1.1 } },
-      { wave: 'noise', gain: 0.22, attack: 0.002, decay: 0.1, delay: 0.56, filter: { type: 'lowpass', freq: 420, q: 1 } },
-      { wave: 'sine', freq: 96, freqEnd: 62, gain: 0.18, attack: 0.002, decay: 0.1, delay: 0.56 },
+      { wave: 'noise', gain: 0.36, attack: 0.001, decay: 0.09, delay: 0.298, filter: { type: 'lowpass', freq: 760, freqEnd: 150, q: 1.1 } },
+      { wave: 'sine', freq: 150, freqEnd: 72, gain: 0.3, attack: 0.002, decay: 0.12, delay: 0.298 },
+      { wave: 'noise', gain: 0.2, attack: 0.09, decay: 0.24, delay: 0.42, filter: { type: 'bandpass', freq: 800, freqEnd: 3200, q: 1.1 } },
+      { wave: 'noise', gain: 0.22, attack: 0.002, decay: 0.1, delay: 0.98, filter: { type: 'lowpass', freq: 420, q: 1 } },
+      { wave: 'sine', freq: 96, freqEnd: 62, gain: 0.18, attack: 0.002, decay: 0.1, delay: 0.98 },
     ],
   },
 
@@ -1016,16 +1017,16 @@ export const sounds: Record<SfxId, SoundSpec> = {
     jitter: 0.015,
     voices: [
       { wave: 'noise', gain: 0.12, attack: 0.2, decay: 0.06, filter: { type: 'bandpass', freq: 380, freqEnd: 1500, q: 1 } },
-      { wave: 'noise', gain: 0.42, attack: 0.001, decay: 0.07, delay: 0.24, filter: { type: 'bandpass', freq: 2900, q: 7 } },
-      { wave: 'noise', gain: 0.24, attack: 0.001, decay: 0.18, delay: 0.24, filter: { type: 'lowpass', freq: 900, freqEnd: 150, q: 1.1 } },
-      { wave: 'sine', freq: 90, freqEnd: 52, gain: 0.38, attack: 0.002, decay: 0.24, delay: 0.24 },
-      { wave: 'sine', freq: 1244, gain: 0.16, attack: 0.001, decay: 0.7, delay: 0.244 },
-      { wave: 'sine', freq: 2093, detune: 14, gain: 0.11, attack: 0.001, decay: 0.5, delay: 0.244 },
-      { wave: 'sine', freq: 3322, detune: -9, gain: 0.06, attack: 0.001, decay: 0.3, delay: 0.244 },
-      { wave: 'noise', gain: 0.12, attack: 0.001, decay: 0.03, delay: 0.29, filter: { type: 'bandpass', freq: 6200, q: 3 } },
-      { wave: 'noise', gain: 0.1, attack: 0.001, decay: 0.03, delay: 0.34, filter: { type: 'bandpass', freq: 7400, q: 3 } },
-      { wave: 'noise', gain: 0.09, attack: 0.001, decay: 0.03, delay: 0.41, filter: { type: 'bandpass', freq: 5600, q: 3 } },
-      { wave: 'noise', gain: 0.07, attack: 0.001, decay: 0.03, delay: 0.5, filter: { type: 'bandpass', freq: 6800, q: 3 } },
+      { wave: 'noise', gain: 0.42, attack: 0.001, decay: 0.07, delay: 0.42, filter: { type: 'bandpass', freq: 2900, q: 7 } },
+      { wave: 'noise', gain: 0.24, attack: 0.001, decay: 0.18, delay: 0.42, filter: { type: 'lowpass', freq: 900, freqEnd: 150, q: 1.1 } },
+      { wave: 'sine', freq: 90, freqEnd: 52, gain: 0.38, attack: 0.002, decay: 0.24, delay: 0.42 },
+      { wave: 'sine', freq: 1244, gain: 0.16, attack: 0.001, decay: 0.7, delay: 0.427 },
+      { wave: 'sine', freq: 2093, detune: 14, gain: 0.11, attack: 0.001, decay: 0.5, delay: 0.427 },
+      { wave: 'sine', freq: 3322, detune: -9, gain: 0.06, attack: 0.001, decay: 0.3, delay: 0.427 },
+      { wave: 'noise', gain: 0.12, attack: 0.001, decay: 0.03, delay: 0.507, filter: { type: 'bandpass', freq: 6200, q: 3 } },
+      { wave: 'noise', gain: 0.1, attack: 0.001, decay: 0.03, delay: 0.595, filter: { type: 'bandpass', freq: 7400, q: 3 } },
+      { wave: 'noise', gain: 0.09, attack: 0.001, decay: 0.03, delay: 0.717, filter: { type: 'bandpass', freq: 5600, q: 3 } },
+      { wave: 'noise', gain: 0.07, attack: 0.001, decay: 0.03, delay: 0.875, filter: { type: 'bandpass', freq: 6800, q: 3 } },
     ],
   },
 
@@ -1035,11 +1036,11 @@ export const sounds: Record<SfxId, SoundSpec> = {
     jitter: 0.02,
     voices: [
       { wave: 'noise', gain: 0.22, attack: 0.06, decay: 0.2, filter: { type: 'bandpass', freq: 2600, freqEnd: 600, q: 1.4 } },
-      { wave: 'noise', gain: 0.2, attack: 0.002, decay: 0.1, delay: 0.25, filter: { type: 'bandpass', freq: 7200, freqEnd: 3000, q: 4 } },
-      { wave: 'noise', gain: 0.34, attack: 0.001, decay: 0.12, delay: 0.29, filter: { type: 'lowpass', freq: 900, freqEnd: 160, q: 1.1 } },
-      { wave: 'sine', freq: 112, freqEnd: 58, gain: 0.32, attack: 0.002, decay: 0.16, delay: 0.29 },
-      { wave: 'sine', freq: 1760, detune: 12, gain: 0.11, attack: 0.001, decay: 0.6, delay: 0.26 },
-      { wave: 'sine', freq: 2637, detune: -8, gain: 0.07, attack: 0.001, decay: 0.45, delay: 0.26 },
+      { wave: 'noise', gain: 0.2, attack: 0.002, decay: 0.1, delay: 0.438, filter: { type: 'bandpass', freq: 7200, freqEnd: 3000, q: 4 } },
+      { wave: 'noise', gain: 0.34, attack: 0.001, decay: 0.12, delay: 0.507, filter: { type: 'lowpass', freq: 900, freqEnd: 160, q: 1.1 } },
+      { wave: 'sine', freq: 112, freqEnd: 58, gain: 0.32, attack: 0.002, decay: 0.16, delay: 0.507 },
+      { wave: 'sine', freq: 1760, detune: 12, gain: 0.11, attack: 0.001, decay: 0.6, delay: 0.455 },
+      { wave: 'sine', freq: 2637, detune: -8, gain: 0.07, attack: 0.001, decay: 0.45, delay: 0.455 },
     ],
   },
 
@@ -1093,11 +1094,11 @@ export const sounds: Record<SfxId, SoundSpec> = {
     jitter: 0.02,
     voices: [
       { wave: 'sawtooth', freq: 220, freqEnd: 880, gain: 0.12, attack: 0.25, decay: 0.12, filter: { type: 'lowpass', freq: 600, freqEnd: 3400, q: 2.2 } },
-      { wave: 'sine', freq: 1047, gain: 0.1, attack: 0.01, decay: 0.3, delay: 0.08 },
-      { wave: 'sine', freq: 1319, detune: 8, gain: 0.1, attack: 0.01, decay: 0.3, delay: 0.18 },
-      { wave: 'sine', freq: 1568, gain: 0.1, attack: 0.01, decay: 0.35, delay: 0.28 },
-      { wave: 'sine', freq: 1760, freqEnd: 440, gain: 0.16, attack: 0.002, decay: 0.14, delay: 0.34 },
-      { wave: 'noise', gain: 0.16, attack: 0.001, decay: 0.06, delay: 0.34, filter: { type: 'bandpass', freq: 5200, q: 2 } },
+      { wave: 'sine', freq: 1047, gain: 0.1, attack: 0.01, decay: 0.3, delay: 0.14 },
+      { wave: 'sine', freq: 1319, detune: 8, gain: 0.1, attack: 0.01, decay: 0.3, delay: 0.315 },
+      { wave: 'sine', freq: 1568, gain: 0.1, attack: 0.01, decay: 0.35, delay: 0.49 },
+      { wave: 'sine', freq: 1760, freqEnd: 440, gain: 0.16, attack: 0.002, decay: 0.14, delay: 0.595 },
+      { wave: 'noise', gain: 0.16, attack: 0.001, decay: 0.06, delay: 0.595, filter: { type: 'bandpass', freq: 5200, q: 2 } },
     ],
   },
 
@@ -1109,11 +1110,11 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'triangle', freq: 392, gain: 0.06, attack: 0.25, decay: 0.6 },
       { wave: 'triangle', freq: 494, gain: 0.05, attack: 0.25, decay: 0.6 },
       { wave: 'triangle', freq: 587, gain: 0.05, attack: 0.25, decay: 0.6 },
-      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.04, delay: 0.22, filter: { type: 'bandpass', freq: 3000, q: 5 } },
-      { wave: 'sine', freq: 523, gain: 0.2, attack: 0.002, decay: 1.2, delay: 0.22 },
-      { wave: 'sine', freq: 1046, detune: 6, gain: 0.12, attack: 0.002, decay: 0.9, delay: 0.22 },
-      { wave: 'sine', freq: 1414, gain: 0.08, attack: 0.002, decay: 0.6, delay: 0.22 },
-      { wave: 'sine', freq: 2093, detune: -5, gain: 0.05, attack: 0.002, decay: 0.4, delay: 0.22 },
+      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.04, delay: 0.385, filter: { type: 'bandpass', freq: 3000, q: 5 } },
+      { wave: 'sine', freq: 523, gain: 0.2, attack: 0.002, decay: 1.2, delay: 0.385 },
+      { wave: 'sine', freq: 1046, detune: 6, gain: 0.12, attack: 0.002, decay: 0.9, delay: 0.385 },
+      { wave: 'sine', freq: 1414, gain: 0.08, attack: 0.002, decay: 0.6, delay: 0.385 },
+      { wave: 'sine', freq: 2093, detune: -5, gain: 0.05, attack: 0.002, decay: 0.4, delay: 0.385 },
     ],
   },
 
@@ -1122,11 +1123,29 @@ export const sounds: Record<SfxId, SoundSpec> = {
     gain: 0.46,
     jitter: 0.02,
     voices: [
-      { wave: 'sine', freq: 73, freqEnd: 82, gain: 0.26, attack: 0.18, hold: 0.2, decay: 0.4 },
-      { wave: 'sawtooth', freq: 110, detune: 18, gain: 0.07, attack: 0.18, hold: 0.15, decay: 0.35, filter: { type: 'lowpass', freq: 420, q: 2 } },
-      { wave: 'noise', gain: 0.12, attack: 0.12, decay: 0.24, delay: 0.04, filter: { type: 'bandpass', freq: 2600, freqEnd: 1200, q: 6 } },
-      { wave: 'noise', gain: 0.1, attack: 0.1, decay: 0.24, delay: 0.28, filter: { type: 'bandpass', freq: 3300, freqEnd: 1800, q: 6 } },
-      { wave: 'sine', freq: 988, gain: 0.05, attack: 0.01, decay: 0.22, delay: 0.44 },
+      { wave: 'sine', freq: 73, freqEnd: 82, gain: 0.26, attack: 0.18, hold: 0.35, decay: 0.4 },
+      { wave: 'sawtooth', freq: 110, detune: 18, gain: 0.07, attack: 0.18, hold: 0.263, decay: 0.35, filter: { type: 'lowpass', freq: 420, q: 2 } },
+      { wave: 'noise', gain: 0.12, attack: 0.12, decay: 0.24, delay: 0.07, filter: { type: 'bandpass', freq: 2600, freqEnd: 1200, q: 6 } },
+      { wave: 'noise', gain: 0.1, attack: 0.1, decay: 0.24, delay: 0.49, filter: { type: 'bandpass', freq: 3300, freqEnd: 1800, q: 6 } },
+      { wave: 'sine', freq: 988, gain: 0.05, attack: 0.01, decay: 0.22, delay: 0.77 },
+    ],
+  },
+
+  /** The fifth Trust pip igniting (PatronNodeScreen CapstoneOath): a swell that breaks into a boom and a held major chord. */
+  'trust.capstone': {
+    gain: 0.6,
+    jitter: 0,
+    voices: [
+      { wave: 'noise', gain: 0.1, attack: 0.9, decay: 0.08, filter: { type: 'bandpass', freq: 600, freqEnd: 5000, q: 0.8 } },
+      { wave: 'sine', freq: 98, freqEnd: 196, gain: 0.12, attack: 0.9, decay: 0.05 },
+      { wave: 'sine', freq: 82, freqEnd: 41, gain: 0.5, attack: 0.004, decay: 0.9, delay: 0.92 },
+      { wave: 'noise', gain: 0.32, attack: 0.002, decay: 0.5, delay: 0.92, filter: { type: 'lowpass', freq: 1800, freqEnd: 240, q: 0.9 } },
+      { wave: 'triangle', freq: 262, gain: 0.12, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.92 },
+      { wave: 'triangle', freq: 330, gain: 0.1, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.95 },
+      { wave: 'triangle', freq: 392, gain: 0.1, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.98 },
+      { wave: 'sine', freq: 1047, detune: 6, gain: 0.1, attack: 0.004, decay: 1.6, delay: 1.02 },
+      { wave: 'sine', freq: 1568, gain: 0.07, attack: 0.004, decay: 1.8, delay: 1.1 },
+      { wave: 'noise', gain: 0.08, attack: 0.2, decay: 1.4, delay: 1.0, filter: { type: 'bandpass', freq: 6000, freqEnd: 9000, q: 1 } },
     ],
   },
 
@@ -1136,12 +1155,12 @@ export const sounds: Record<SfxId, SoundSpec> = {
     jitter: 0.02,
     voices: [
       { wave: 'noise', gain: 0.12, attack: 0.005, decay: 0.05, filter: { type: 'bandpass', freq: 3400, q: 1.6 } },
-      { wave: 'noise', gain: 0.11, attack: 0.005, decay: 0.05, delay: 0.07, filter: { type: 'bandpass', freq: 3900, q: 1.6 } },
-      { wave: 'noise', gain: 0.12, attack: 0.005, decay: 0.05, delay: 0.14, filter: { type: 'bandpass', freq: 3100, q: 1.6 } },
-      { wave: 'noise', gain: 0.11, attack: 0.005, decay: 0.05, delay: 0.21, filter: { type: 'bandpass', freq: 3700, q: 1.6 } },
-      { wave: 'noise', gain: 0.1, attack: 0.005, decay: 0.05, delay: 0.29, filter: { type: 'bandpass', freq: 3300, q: 1.6 } },
-      { wave: 'noise', gain: 0.46, attack: 0.001, decay: 0.12, delay: 0.42, filter: { type: 'lowpass', freq: 1300, freqEnd: 200, q: 1 } },
-      { wave: 'sine', freq: 124, freqEnd: 60, gain: 0.3, attack: 0.002, decay: 0.15, delay: 0.42 },
+      { wave: 'noise', gain: 0.11, attack: 0.005, decay: 0.05, delay: 0.123, filter: { type: 'bandpass', freq: 3900, q: 1.6 } },
+      { wave: 'noise', gain: 0.12, attack: 0.005, decay: 0.05, delay: 0.245, filter: { type: 'bandpass', freq: 3100, q: 1.6 } },
+      { wave: 'noise', gain: 0.11, attack: 0.005, decay: 0.05, delay: 0.367, filter: { type: 'bandpass', freq: 3700, q: 1.6 } },
+      { wave: 'noise', gain: 0.1, attack: 0.005, decay: 0.05, delay: 0.507, filter: { type: 'bandpass', freq: 3300, q: 1.6 } },
+      { wave: 'noise', gain: 0.46, attack: 0.001, decay: 0.12, delay: 0.735, filter: { type: 'lowpass', freq: 1300, freqEnd: 200, q: 1 } },
+      { wave: 'sine', freq: 124, freqEnd: 60, gain: 0.3, attack: 0.002, decay: 0.15, delay: 0.735 },
     ],
   },
 

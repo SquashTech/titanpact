@@ -19641,11 +19641,11 @@ button.star-shop-bundle-face {
 
 .map-route.is-revealing .map-choice.is-patron .map-choice-label,
 .map-route.is-revealing .map-choice.is-patron .map-medallion-trust {
-  animation: patron-label-in 260ms var(--ease-out) calc(var(--land-delay) + 560ms) both;
+  animation: patron-label-in 460ms var(--ease-out) calc(var(--land-delay) + 980ms) both;
 }
 
 .map-route.is-revealing .map-choice.is-patron .map-medallion::before {
-  animation: patron-ring-in 320ms var(--ease-out) calc(var(--land-delay) + var(--ring-at, 520ms)) both;
+  animation: patron-ring-in 560ms var(--ease-out) calc(var(--land-delay) + var(--ring-at, 910ms)) both;
 }
 
 @keyframes patron-label-in {
@@ -19715,19 +19715,19 @@ button.star-shop-bundle-face {
 }
 
 .map-route.is-revealing .patron-entrance.is-huntress .patron-entrance-arrow {
-  animation: huntress-arrow 420ms cubic-bezier(0.5, 0, 0.9, 0.4) var(--land-delay) both;
+  animation: huntress-arrow 740ms cubic-bezier(0.5, 0, 0.9, 0.4) var(--land-delay) both;
 }
 
 .map-route.is-revealing .patron-entrance.is-huntress .patron-entrance-dust {
-  animation: huntress-dust 420ms var(--ease-out) calc(var(--land-delay) + 170ms) both;
+  animation: huntress-dust 740ms var(--ease-out) calc(var(--land-delay) + 300ms) both;
 }
 
 .map-route.is-revealing .patron-entrance.is-huntress .patron-entrance-trail {
-  animation: huntress-trail 380ms var(--ease-out) calc(var(--land-delay) + 230ms) both;
+  animation: huntress-trail 670ms var(--ease-out) calc(var(--land-delay) + 400ms) both;
 }
 
 .map-route.is-revealing .map-choice[data-patron='huntress'] .map-medallion-patron {
-  animation: huntress-swoop 380ms cubic-bezier(0.2, 0.9, 0.3, 1.2) calc(var(--land-delay) + 230ms) both;
+  animation: huntress-swoop 670ms cubic-bezier(0.2, 0.9, 0.3, 1.2) calc(var(--land-delay) + 400ms) both;
 }
 
 @keyframes huntress-arrow {
@@ -19811,19 +19811,19 @@ button.star-shop-bundle-face {
 }
 
 .map-route.is-revealing .patron-entrance.is-huntress .patron-entrance-pose {
-  animation: huntress-pose 270ms ease-out calc(var(--land-delay) + 230ms) both;
+  animation: huntress-pose 470ms ease-out calc(var(--land-delay) + 400ms) both;
 }
 
 .map-route.is-revealing .map-choice.has-pose[data-patron='huntress'] .map-medallion-patron {
-  animation: patron-land-in 160ms ease-out calc(var(--land-delay) + 500ms) both;
+  animation: patron-land-in 280ms ease-out calc(var(--land-delay) + 880ms) both;
 }
 
 .map-route.is-revealing .patron-entrance.is-swordsman .patron-entrance-pose {
-  animation: sword-pose 270ms cubic-bezier(0.55, 0, 0.85, 0.4) var(--land-delay) both;
+  animation: sword-pose 470ms cubic-bezier(0.55, 0, 0.85, 0.4) var(--land-delay) both;
 }
 
 .map-route.is-revealing .map-choice.has-pose[data-patron='swordsman'] .map-medallion-patron {
-  animation: patron-land-in 160ms ease-out calc(var(--land-delay) + 270ms) both;
+  animation: patron-land-in 280ms ease-out calc(var(--land-delay) + 470ms) both;
 }
 
 @keyframes huntress-pose {
@@ -19864,43 +19864,43 @@ button.star-shop-bundle-face {
 
 /* The Forgemistress's hammer is up while the ground heats; she stands on the blow. */
 .map-route.is-revealing .patron-entrance.is-forgemistress .patron-entrance-pose {
-  animation: forge-pose 250ms ease-out var(--land-delay) both;
+  animation: forge-pose 440ms ease-out var(--land-delay) both;
 }
 
 /* The Archmage blinks in arms flung wide, and settles. */
 .map-route.is-revealing .patron-entrance.is-archmage .patron-entrance-pose {
-  animation: mage-pose 300ms var(--ease-out) calc(var(--land-delay) + 340ms) both;
+  animation: mage-pose 530ms var(--ease-out) calc(var(--land-delay) + 600ms) both;
 }
 
 .map-route.is-revealing .map-choice.has-pose[data-patron='archmage'] .map-medallion-patron {
-  animation: patron-settle-in 200ms ease-out calc(var(--land-delay) + 640ms) both;
+  animation: patron-settle-in 350ms ease-out calc(var(--land-delay) + 1120ms) both;
 }
 
 /* The Priest comes down the light with his arms raised. */
 .map-route.is-revealing .patron-entrance.is-priest .patron-entrance-pose {
-  animation: priest-pose 460ms var(--ease-out) calc(var(--land-delay) + 200ms) both;
+  animation: priest-pose 810ms var(--ease-out) calc(var(--land-delay) + 350ms) both;
 }
 
 .map-route.is-revealing .map-choice.has-pose[data-patron='priest'] .map-medallion-patron {
-  animation: patron-settle-in 200ms ease-out calc(var(--land-delay) + 660ms) both;
+  animation: patron-settle-in 350ms ease-out calc(var(--land-delay) + 1160ms) both;
 }
 
 /* The Hexwright rises clawed out of the smoke, then straightens. */
 .map-route.is-revealing .patron-entrance.is-hexwright .patron-entrance-pose {
-  animation: hex-pose 480ms ease-out calc(var(--land-delay) + 240ms) both;
+  animation: hex-pose 840ms ease-out calc(var(--land-delay) + 420ms) both;
 }
 
 .map-route.is-revealing .map-choice.has-pose[data-patron='hexwright'] .map-medallion-patron {
-  animation: patron-settle-in 200ms ease-out calc(var(--land-delay) + 720ms) both;
+  animation: patron-settle-in 350ms ease-out calc(var(--land-delay) + 1260ms) both;
 }
 
 /* The Headmaster raises the book over the swirling pages, and stands on the slam. */
 .map-route.is-revealing .patron-entrance.is-headmaster .patron-entrance-pose {
-  animation: head-pose 170ms cubic-bezier(0.2, 1.4, 0.4, 1) calc(var(--land-delay) + 270ms) both;
+  animation: head-pose 300ms cubic-bezier(0.2, 1.4, 0.4, 1) calc(var(--land-delay) + 470ms) both;
 }
 
 .map-route.is-revealing .map-choice.has-pose[data-patron='headmaster'] .map-medallion-patron {
-  animation: patron-land-in 160ms ease-out calc(var(--land-delay) + 440ms) both;
+  animation: patron-land-in 280ms ease-out calc(var(--land-delay) + 770ms) both;
 }
 
 @keyframes forge-pose {
@@ -20026,7 +20026,7 @@ button.star-shop-bundle-face {
 /* The Forgemistress: the ground heats where she will stand, one hammer blow flashes and throws
    sparks, and she is standing in the shower. */
 .map-choice[data-patron='forgemistress'] {
-  --ring-at: 300ms;
+  --ring-at: 530ms;
 }
 
 .patron-entrance.is-forgemistress .patron-entrance-glow {
@@ -20060,23 +20060,23 @@ button.star-shop-bundle-face {
 }
 
 .map-route.is-revealing .patron-entrance.is-forgemistress .patron-entrance-glow {
-  animation: forge-glow 900ms ease-in-out var(--land-delay) both;
+  animation: forge-glow 1580ms ease-in-out var(--land-delay) both;
 }
 
 .map-route.is-revealing .patron-entrance.is-forgemistress .patron-entrance-flash {
-  animation: forge-flash 340ms var(--ease-out) calc(var(--land-delay) + 240ms) both;
+  animation: forge-flash 600ms var(--ease-out) calc(var(--land-delay) + 420ms) both;
 }
 
 .map-route.is-revealing .patron-entrance.is-forgemistress .patron-entrance-bit.is-spark {
-  animation: forge-spark 520ms cubic-bezier(0.15, 0.8, 0.4, 1) calc(var(--land-delay) + 240ms) both;
+  animation: forge-spark 910ms cubic-bezier(0.15, 0.8, 0.4, 1) calc(var(--land-delay) + 420ms) both;
 }
 
 .map-route.is-revealing .map-choice[data-patron='forgemistress'] .map-medallion-patron {
-  animation: forge-appear 360ms var(--ease-out) calc(var(--land-delay) + 240ms) both;
+  animation: forge-appear 630ms var(--ease-out) calc(var(--land-delay) + 420ms) both;
 }
 
 .map-route.is-revealing .map-choice[data-patron='forgemistress'] .map-medallion {
-  animation: forge-shake 220ms linear calc(var(--land-delay) + 240ms) both;
+  animation: forge-shake 390ms linear calc(var(--land-delay) + 420ms) both;
 }
 
 @keyframes forge-glow {
@@ -20153,7 +20153,7 @@ button.star-shop-bundle-face {
 
 /* The Swordsman: he drops from a leap, a blade flash cuts across as he lands, and the dust kicks up. */
 .map-choice[data-patron='swordsman'] {
-  --ring-at: 300ms;
+  --ring-at: 530ms;
 }
 
 .patron-entrance.is-swordsman .patron-entrance-slash {
@@ -20179,19 +20179,19 @@ button.star-shop-bundle-face {
 }
 
 .map-route.is-revealing .patron-entrance.is-swordsman .patron-entrance-slash {
-  animation: sword-slash 280ms var(--ease-out) calc(var(--land-delay) + 240ms) both;
+  animation: sword-slash 490ms var(--ease-out) calc(var(--land-delay) + 420ms) both;
 }
 
 .map-route.is-revealing .patron-entrance.is-swordsman .patron-entrance-dust {
-  animation: huntress-dust 420ms var(--ease-out) calc(var(--land-delay) + 290ms) both;
+  animation: huntress-dust 740ms var(--ease-out) calc(var(--land-delay) + 510ms) both;
 }
 
 .map-route.is-revealing .map-choice[data-patron='swordsman'] .map-medallion-patron {
-  animation: sword-drop 330ms cubic-bezier(0.55, 0, 0.85, 0.4) var(--land-delay) both;
+  animation: sword-drop 580ms cubic-bezier(0.55, 0, 0.85, 0.4) var(--land-delay) both;
 }
 
 .map-route.is-revealing .map-choice[data-patron='swordsman'] .map-medallion {
-  animation: forge-shake 200ms linear calc(var(--land-delay) + 290ms) both;
+  animation: forge-shake 350ms linear calc(var(--land-delay) + 510ms) both;
 }
 
 @keyframes sword-slash {
@@ -20230,7 +20230,7 @@ button.star-shop-bundle-face {
 
 /* The Archmage: a rune circle draws itself on the ground and a column of light blinks him into it. */
 .map-choice[data-patron='archmage'] {
-  --ring-at: 380ms;
+  --ring-at: 670ms;
 }
 
 .patron-entrance.is-archmage .patron-entrance-circle {
@@ -20256,15 +20256,15 @@ button.star-shop-bundle-face {
 }
 
 .map-route.is-revealing .patron-entrance.is-archmage .patron-entrance-circle {
-  animation: mage-circle 900ms var(--ease-out) var(--land-delay) both;
+  animation: mage-circle 1580ms var(--ease-out) var(--land-delay) both;
 }
 
 .map-route.is-revealing .patron-entrance.is-archmage .patron-entrance-column {
-  animation: mage-column 380ms var(--ease-out) calc(var(--land-delay) + 320ms) both;
+  animation: mage-column 670ms var(--ease-out) calc(var(--land-delay) + 560ms) both;
 }
 
 .map-route.is-revealing .map-choice[data-patron='archmage'] .map-medallion-patron {
-  animation: mage-blink 300ms var(--ease-out) calc(var(--land-delay) + 340ms) both;
+  animation: mage-blink 530ms var(--ease-out) calc(var(--land-delay) + 600ms) both;
 }
 
 @keyframes mage-circle {
@@ -20318,7 +20318,7 @@ button.star-shop-bundle-face {
 
 /* The Priest: a shaft of light comes down and he descends in it, a halo settling over him. */
 .map-choice[data-patron='priest'] {
-  --ring-at: 520ms;
+  --ring-at: 910ms;
 }
 
 .patron-entrance.is-priest .patron-entrance-beam {
@@ -20344,15 +20344,15 @@ button.star-shop-bundle-face {
 }
 
 .map-route.is-revealing .patron-entrance.is-priest .patron-entrance-beam {
-  animation: priest-beam 900ms ease-in-out var(--land-delay) both;
+  animation: priest-beam 1580ms ease-in-out var(--land-delay) both;
 }
 
 .map-route.is-revealing .patron-entrance.is-priest .patron-entrance-halo {
-  animation: priest-halo 560ms var(--ease-out) calc(var(--land-delay) + 340ms) both;
+  animation: priest-halo 980ms var(--ease-out) calc(var(--land-delay) + 600ms) both;
 }
 
 .map-route.is-revealing .map-choice[data-patron='priest'] .map-medallion-patron {
-  animation: priest-descend 440ms var(--ease-out) calc(var(--land-delay) + 200ms) both;
+  animation: priest-descend 770ms var(--ease-out) calc(var(--land-delay) + 350ms) both;
 }
 
 @keyframes priest-beam {
@@ -20403,7 +20403,7 @@ button.star-shop-bundle-face {
 /* The Hexwright: smoke in its colour boils up out of the ground and he resolves out of it, a
    silhouette first. */
 .map-choice[data-patron='hexwright'] {
-  --ring-at: 480ms;
+  --ring-at: 840ms;
 }
 
 .patron-entrance.is-hexwright [class^='patron-entrance-smoke'] {
@@ -20429,19 +20429,19 @@ button.star-shop-bundle-face {
 }
 
 .map-route.is-revealing .patron-entrance.is-hexwright .patron-entrance-smoke-a {
-  animation: hex-smoke 820ms var(--ease-out) var(--land-delay) both;
+  animation: hex-smoke 1440ms var(--ease-out) var(--land-delay) both;
 }
 
 .map-route.is-revealing .patron-entrance.is-hexwright .patron-entrance-smoke-b {
-  animation: hex-smoke 820ms var(--ease-out) calc(var(--land-delay) + 70ms) both;
+  animation: hex-smoke 1440ms var(--ease-out) calc(var(--land-delay) + 120ms) both;
 }
 
 .map-route.is-revealing .patron-entrance.is-hexwright .patron-entrance-smoke-c {
-  animation: hex-smoke 820ms var(--ease-out) calc(var(--land-delay) + 140ms) both;
+  animation: hex-smoke 1440ms var(--ease-out) calc(var(--land-delay) + 250ms) both;
 }
 
 .map-route.is-revealing .map-choice[data-patron='hexwright'] .map-medallion-patron {
-  animation: hex-emerge 460ms ease-out calc(var(--land-delay) + 240ms) both;
+  animation: hex-emerge 810ms ease-out calc(var(--land-delay) + 420ms) both;
 }
 
 @keyframes hex-smoke {
@@ -20476,7 +20476,7 @@ button.star-shop-bundle-face {
 
 /* The Headmaster: loose pages spiral in to where he stands, and he arrives on the slam of a book. */
 .map-choice[data-patron='headmaster'] {
-  --ring-at: 460ms;
+  --ring-at: 810ms;
 }
 
 .patron-entrance.is-headmaster .patron-entrance-bit.is-page {
@@ -20490,19 +20490,19 @@ button.star-shop-bundle-face {
 }
 
 .map-route.is-revealing .patron-entrance.is-headmaster .patron-entrance-bit.is-page {
-  animation: head-page 460ms cubic-bezier(0.4, 0, 0.8, 0.6) var(--land-delay) both;
+  animation: head-page 810ms cubic-bezier(0.4, 0, 0.8, 0.6) var(--land-delay) both;
 }
 
 .map-route.is-revealing .patron-entrance.is-headmaster .patron-entrance-dust {
-  animation: huntress-dust 420ms var(--ease-out) calc(var(--land-delay) + 430ms) both;
+  animation: huntress-dust 740ms var(--ease-out) calc(var(--land-delay) + 750ms) both;
 }
 
 .map-route.is-revealing .map-choice[data-patron='headmaster'] .map-medallion-patron {
-  animation: head-pop 300ms cubic-bezier(0.2, 1.4, 0.4, 1) calc(var(--land-delay) + 420ms) both;
+  animation: head-pop 530ms cubic-bezier(0.2, 1.4, 0.4, 1) calc(var(--land-delay) + 740ms) both;
 }
 
 .map-route.is-revealing .map-choice[data-patron='headmaster'] .map-medallion {
-  animation: forge-shake 200ms linear calc(var(--land-delay) + 430ms) both;
+  animation: forge-shake 350ms linear calc(var(--land-delay) + 750ms) both;
 }
 
 @keyframes head-page {
@@ -35390,6 +35390,235 @@ button.evo-gift-card {
   100% {
     opacity: 0;
     scale: 2.6;
+  }
+}
+
+/* The capstone's oath (PatronNodeScreen CapstoneOath): the patron rises, the pips fill one by one,
+   and the fifth ignites the screen in the patron's colour; the gift is set down in its light. */
+.capstone-oath {
+  overflow: hidden;
+  animation: capstone-shake 420ms linear var(--oath-burst-ms) both;
+}
+
+.capstone-rays {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  width: 180vmax;
+  height: 180vmax;
+  margin: -90vmax 0 0 -90vmax;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--rite-color) 34%, transparent) 0deg 7deg,
+    transparent 7deg 22deg
+  );
+  mask-image: radial-gradient(circle, #000 0%, transparent 46%);
+  pointer-events: none;
+  opacity: 0;
+  animation:
+    capstone-rays-in 900ms var(--ease-out) var(--oath-burst-ms) forwards,
+    capstone-rays-turn 40s linear infinite;
+}
+
+.capstone-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: radial-gradient(circle at 50% 30%, #fff 0%, var(--rite-color) 38%, transparent 80%);
+  pointer-events: none;
+  opacity: 0;
+  animation: capstone-flash 900ms ease-out var(--oath-burst-ms) both;
+}
+
+.capstone-patron .trust-rise-figure .patron-art {
+  animation:
+    capstone-rise 900ms cubic-bezier(0.2, 0.9, 0.3, 1) both,
+    hero-idle-breath 3.4s ease-in-out 900ms infinite;
+}
+
+.capstone-patron .trust-rise-figure .rite-pool {
+  animation: capstone-pool 600ms ease-out var(--oath-burst-ms) both;
+}
+
+.capstone-patron .rite-eyebrow,
+.capstone-patron .patron-name {
+  animation: patron-label-in 460ms var(--ease-out) 260ms both;
+}
+
+.capstone-meter {
+  align-self: center;
+  margin-top: 8px;
+}
+
+.capstone-pip {
+  animation: trust-pip-fill 520ms cubic-bezier(0.2, 1.5, 0.4, 1) calc(var(--oath-first-ms) + var(--pip-i) * var(--oath-pip-ms)) both;
+}
+
+.capstone-pip,
+.capstone-pip.is-last {
+  background: var(--rite-color);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--rite-color) 70%, transparent);
+}
+
+.capstone-pip.is-last {
+  animation: capstone-last-pip 900ms cubic-bezier(0.2, 1.5, 0.4, 1) var(--oath-burst-ms) both;
+}
+
+.capstone-pip.is-last::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 3px solid var(--rite-color);
+  border-radius: 50%;
+  opacity: 0;
+  animation: capstone-shockwave 900ms var(--ease-out) var(--oath-burst-ms) both;
+}
+
+.capstone-gift {
+  width: 100%;
+  margin-top: 22px;
+  animation: capstone-gift-in 620ms cubic-bezier(0.2, 1.2, 0.4, 1) calc(var(--oath-burst-ms) + 260ms) both;
+}
+
+.capstone-accept {
+  animation: patron-label-in 420ms var(--ease-out) calc(var(--oath-burst-ms) + 700ms) both;
+}
+
+@keyframes capstone-rise {
+  0% {
+    opacity: 0;
+    translate: 0 40px;
+    scale: 0.7;
+    filter: brightness(0) drop-shadow(0 0 0 transparent);
+  }
+  60% {
+    opacity: 1;
+    filter: brightness(2.2) drop-shadow(0 0 18px var(--rite-color));
+  }
+  100% {
+    translate: 0 0;
+    scale: 1;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+  }
+}
+
+@keyframes capstone-pool {
+  0% {
+    scale: 1;
+  }
+  40% {
+    scale: 1.8;
+    filter: brightness(2);
+  }
+  100% {
+    scale: 1.25;
+  }
+}
+
+@keyframes capstone-last-pip {
+  0% {
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: none;
+    scale: 1;
+  }
+  35% {
+    background: #fff;
+    box-shadow: 0 0 40px 14px var(--rite-color);
+    scale: 2;
+  }
+  100% {
+    box-shadow: 0 0 22px 4px var(--rite-color);
+    scale: 1.2;
+  }
+}
+
+@keyframes capstone-shockwave {
+  0% {
+    opacity: 1;
+    scale: 0.8;
+  }
+  100% {
+    opacity: 0;
+    scale: 9;
+  }
+}
+
+@keyframes capstone-flash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes capstone-rays-in {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes capstone-rays-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes capstone-gift-in {
+  0% {
+    opacity: 0;
+    translate: 0 26px;
+    scale: 0.92;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes capstone-shake {
+  0%, 100% {
+    translate: 0 0;
+  }
+  15% {
+    translate: -5px 3px;
+  }
+  30% {
+    translate: 4px -3px;
+  }
+  45% {
+    translate: -3px 2px;
+  }
+  60% {
+    translate: 2px -1px;
+  }
+  80% {
+    translate: -1px 1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capstone-oath,
+  .capstone-rays,
+  .capstone-flash,
+  .capstone-pip,
+  .capstone-pip::after,
+  .capstone-gift,
+  .capstone-accept,
+  .capstone-patron * {
+    animation: none !important;
+  }
+  .capstone-rays {
+    opacity: 1;
   }
 }
 

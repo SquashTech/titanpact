@@ -94,6 +94,10 @@ export function PatronNodeScreen({ run, patronId, rung, stepsDone, seed, onStep,
     </header>
   );
 
+  if (!greeted && rung === CAPSTONE_TRUST) {
+    return <CapstoneOath run={run} patronId={patronId} voice={voice} style={style} onAccept={() => setGreeted(true)} />;
+  }
+
   if (!greeted) {
     return (
       <div className="node-screen rite-screen patron-screen" style={style}>
@@ -112,6 +116,8 @@ export function PatronNodeScreen({ run, patronId, rung, stepsDone, seed, onStep,
   }
 
   if (stepsDone >= steps.length) {
+    // The oath already filled the last pip; a second Trust screen would only repeat it.
+    if (rung === CAPSTONE_TRUST) return <AutoContinue onContinue={onContinue} />;
     return <TrustRise run={run} patronId={patronId} rung={rung} style={style} onContinue={onContinue} />;
   }
 
@@ -126,6 +132,81 @@ export function PatronNodeScreen({ run, patronId, rung, stepsDone, seed, onStep,
       style={style}
       onDone={(next) => onStep(next, stepsDone + 1)}
     />
+  );
+}
+
+function AutoContinue({ onContinue }: { onContinue: () => void }) {
+  useEffect(onContinue, []);
+  return null;
+}
+
+// The fifth pip ignites at this point in the oath; each pip before it lands this far apart.
+const OATH_PIP_MS = 240;
+const OATH_FIRST_PIP_MS = 500;
+const OATH_BURST_MS = OATH_FIRST_PIP_MS + (CAPSTONE_TRUST - 1) * OATH_PIP_MS;
+// The capstone sound's boom sits this far into it.
+const CAPSTONE_SFX_BOOM_MS = 920;
+
+/**
+ * The capstone's greeting: the patron rises, Trust fills pip by pip, the fifth ignites the screen,
+ * and what it gives is set down in that light. One screen, one tap.
+ */
+function CapstoneOath({
+  run,
+  patronId,
+  voice,
+  style,
+  onAccept,
+}: {
+  run: RunState;
+  patronId: string;
+  voice: string;
+  style: CSSProperties;
+  onAccept: () => void;
+}) {
+  const patron = patrons[patronId];
+  const color = patronColor(patronId);
+  useEffect(() => {
+    const timers = [
+      ...Array.from({ length: CAPSTONE_TRUST - 1 }, (_, i) =>
+        window.setTimeout(() => playSfx('trust.rise', { pitch: 1 + 0.06 * i, gain: 0.5 }), OATH_FIRST_PIP_MS + i * OATH_PIP_MS)
+      ),
+      window.setTimeout(() => playSfx('trust.capstone'), OATH_BURST_MS - CAPSTONE_SFX_BOOM_MS),
+    ];
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, []);
+  const oathStyle = { ...style, '--oath-pip-ms': `${OATH_PIP_MS}ms`, '--oath-first-ms': `${OATH_FIRST_PIP_MS}ms`, '--oath-burst-ms': `${OATH_BURST_MS}ms` } as CSSProperties;
+  return (
+    <div className="node-screen rite-screen patron-screen capstone-oath" style={oathStyle}>
+      <span className="node-sky" aria-hidden="true" />
+      <span className="capstone-rays is-floating" aria-hidden="true" />
+      <NodeMotes count={24} />
+      <span className="capstone-flash is-floating" aria-hidden="true" />
+      <div className="node-spacer" />
+      <div className="trust-rise-patron capstone-patron">
+        <span className="trust-rise-figure">
+          <span className="rite-pool" aria-hidden="true" />
+          <PatronFigure patronId={patronId} />
+        </span>
+        <span className="rite-eyebrow">{patron.title}, before the Last Seal</span>
+        <h2 className="rite-name patron-name">{patron.name}</h2>
+        <KeeperVoice line={voice} />
+      </div>
+      <span className="trust-rise-meter capstone-meter" role="img" aria-label={`Trust ${CAPSTONE_TRUST} of ${CAPSTONE_TRUST}`}>
+        {Array.from({ length: CAPSTONE_TRUST }, (_, i) => (
+          <span key={i} className={`trust-rise-pip capstone-pip${i === CAPSTONE_TRUST - 1 ? ' is-last' : ''}`} style={{ '--pip-i': i } as CSSProperties} />
+        ))}
+      </span>
+      <div className="capstone-gift">
+        <PatronOffer run={run} patron={patron} steps={patron.rungs[CAPSTONE_TRUST - 1]} />
+      </div>
+      <div className="node-spacer" />
+      <div className="capstone-accept">
+        <PlateButton tint={color} onClick={onAccept}>
+          Accept
+        </PlateButton>
+      </div>
+    </div>
   );
 }
 

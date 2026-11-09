@@ -53,8 +53,8 @@ const PATH_DRAW_MS = 420;
 const PATH_STAGGER_MS = 130;
 const LAND_MS = 340;
 // A patron's entrance (patronView ENTRANCES) runs this long, and two in a row start this far apart so they never land together.
-const ENTRANCE_MS = 900;
-const PATRON_STAGGER_MS = 520;
+const ENTRANCE_MS = 1580;
+const PATRON_STAGGER_MS = 910;
 
 /**
  * Nodes a tap enters at once, with no preview (2026-10-13, per user direction): the gates and the

@@ -147,6 +147,11 @@ Shielded; **Strategist**, a move — a priority swap, or a reset of an ally's st
   forced seat survive only for a save that still holds one.
 - **The capstone** is a beat on entering the Act 4 Guardian's gate (App.tsx `handleEnterFight`), not a
   map row: one patron at Trust 4 comes straight in; two raise `PatronCapstoneScreen` first.
+  **Its greeting is an oath** (2026-11-09, per user direction, "much more epic"): `CapstoneOath`
+  fills the pips one by one, and the fifth ignites the screen (a flash in the patron's colour,
+  a shockwave, rays, a shake and `trust.capstone`), with the gift set down in that light. The
+  meeting's closing Trust screen is skipped at the capstone, since the oath already filled it.
+  The map entrances were slowed ×1.75 the same day so each one reads.
 - **The screen** (`PatronNodeScreen`): the patron greets and says what the rung pays, then pays it a
   step at a time — the item who-screen restricted to the student (its taker becomes the student), a
   lift or a Unique in place, a move or passive taught straight to the student (no tap when there is

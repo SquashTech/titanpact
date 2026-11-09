@@ -111,7 +111,8 @@ export function statusFactsLine(def: StatusDefinition): string {
   if (tick) parts.push(tick.replace(/^Deals its magnitude$/, 'ticks its magnitude').replace(/^Heals its magnitude$/, 'heals its magnitude'));
   if (def.shape === 'magnitude' && def.decay === 'halve') parts.push('halves each round');
   if (def.blocksIncomingMoves) parts.push('turns enemy moves away');
-  if (def.pipeline === 'shield') parts.push('absorbs hits before HP', 'Burn, Bleed, Poison and the Pact Clock go through');
+  // What goes through a Shield is the status dossier's to say; the move card keeps the headline.
+  if (def.pipeline === 'shield') parts.push('blocks hits');
   if (def.onShieldBroken) parts.push(`${def.onShieldBroken.statusId}s whoever breaks the Shield`);
   if (def.redirectsSingleTargetEnemyMoves) parts.push('pulls single-target enemy moves');
   if (def.triggerTypes && def.detonateBonusPercentMaxHp != null) {
