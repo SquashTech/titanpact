@@ -14,6 +14,8 @@ const KINDS = 'firstLight.kinds';
 const BURN = 'firstLight.burn';
 const SWITCH = 'firstLight.switch';
 const GEAR = 'firstLight.gear';
+const GEMS = 'firstLight.gems';
+const CONTRACTS = 'firstLight.contracts';
 const OPEN = 'firstLight.open';
 /** A page about a run, taught by no lesson. */
 const RUN = null;
@@ -241,7 +243,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'recruit',
     'Recruiting',
-    RUN,
+    CONTRACTS,
     ['resource:contract'],
     '- Skirmishes and Elites are fought against other heroes.\n- After a win, a *Recruit Contract* adds one of them to your roster, with its moves and its item.',
     '- Your roster holds *six*.\n- Past that, a hero must leave to make room.'
@@ -266,7 +268,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'gems',
     'Gems and Mastery',
-    RUN,
+    GEMS,
     ['resource:scroll'],
     '- Tap a hero to set a *Gem* in it.\n- The stat it raises is theirs for the run.',
     'Every Gem is also a *Mastery* pip:\n- at *5*, a hero Evolves into a new form\n- at *10*, their innate power grows'

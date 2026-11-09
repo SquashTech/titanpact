@@ -9,36 +9,37 @@ import { equipment } from '../src/data/equipment';
 import { allCombatants } from '../src/data/content';
 import { heroes } from '../src/data/heroes';
 import { buildCombatState } from '../src/run/buildCombatState';
-import { absorbItem } from '../src/run/runProgress';
+import { absorbItem, itemReceiptFor } from '../src/run/runProgress';
+import { GEM_ORDER, placeGem } from '../src/run/gems';
+import { claimContract, deriveContractOffer } from '../src/run/recruitment';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import { fightWinner, getMaxMana, type CombatState } from '../src/engine/state';
 import type { CombatEvent } from '../src/engine/events';
 import type { Action } from '../src/engine/combat/actions';
-import { guidedAction, scriptedEnemyActions, storySides, withStoryEnds, STORY_ENEMY_SIDE, STORY_PLAYER_SIDE, type StoryBeat, type StoryFight } from '../src/run/story';
+import { guidedAction, scriptedEnemyActions, storyEntry, storyParty, storySides, withStoryEnds, STORY_ENEMY_SIDE, STORY_PLAYER_SIDE, type StoryBeat, type StoryChapter, type StoryFight, type StoryScreen } from '../src/run/story';
 import { LESSONS } from '../src/data/lessons';
 import { sky } from '../src/data/sky';
 
 const config = { heroes: allCombatants, moves, typeChart, statuses, passives, fieldEffects, benchHpRegenFlat: 10 };
 
 type FightBeat = Extract<StoryBeat, { kind: 'fight' }>;
-/** Every lesson's beats, in play order; a lesson is one fight but Equipment, which is two. */
-const beats: FightBeat[] = LESSONS.chapters.flatMap((c) => {
-  assert.strictEqual(c.beats.length, c.id === 'firstLight.gear' ? 2 : 1, `${c.id} has the wrong number of fights`);
-  return c.beats;
-});
-/** A lesson's last beat: the one it is won on. */
-const beatOf = (chapterId: string): FightBeat => {
+type ScreenBeat = Extract<StoryBeat, { kind: 'screen' }>;
+/** The lessons played on a run's own screens, with no fight. */
+const SCREEN_LESSONS = ['firstLight.gear', 'firstLight.gems', 'firstLight.contracts'];
+/** Every fight lesson's beat, in play order: a fight lesson is one fight. */
+const beats: FightBeat[] = LESSONS.chapters.flatMap((c) => c.beats.filter((b): b is FightBeat => b.kind === 'fight'));
+const fightOf = (chapterId: string): StoryFight => {
   const chapter = LESSONS.chapters.find((c) => c.id === chapterId)!;
-  return chapter.beats[chapter.beats.length - 1];
+  return (chapter.beats[0] as FightBeat).fight;
 };
-const fightOf = (chapterId: string): StoryFight => beatOf(chapterId).fight;
+const chapterOf = (id: string): StoryChapter => LESSONS.chapters.find((c) => c.id === id)!;
+const screensOf = (id: string): StoryScreen[] => chapterOf(id).beats.map((b) => (b as ScreenBeat).screen);
 
-/** The board a lesson opens on, its hand-over seated as the item screen seats it unless `bare`. */
-function open(fight: StoryFight, bare = false): CombatState {
+/** The board a lesson opens on. */
+function open(fight: StoryFight): CombatState {
   const sides = storySides(fight, allCombatants);
-  const handOver = beats.find((b) => b.fight === fight)?.handOver;
-  const roster = handOver && !bare ? absorbItem(sides.player.run, handOver.to, handOver.itemId, equipment, allCombatants).roster : sides.player.run.roster;
+  const roster = sides.player.run.roster;
   const built = buildCombatState(
     fight.seed,
     allCombatants,
@@ -53,12 +54,8 @@ function open(fight: StoryFight, bare = false): CombatState {
 }
 
 /** Plays the guide against the script, round by round: the events of each round, and the board after it. `instead` swaps a hero's guided action. */
-function play(
-  fight: StoryFight,
-  instead: (round: number, combatantId: string) => Action | null = () => null,
-  bare = false
-): { rounds: CombatEvent[][]; boards: CombatState[] } {
-  let state = open(fight, bare);
+function play(fight: StoryFight, instead: (round: number, combatantId: string) => Action | null = () => null): { rounds: CombatEvent[][]; boards: CombatState[] } {
+  let state = open(fight);
   const rounds: CombatEvent[][] = [];
   const boards: CombatState[] = [state];
   while (state.round <= fight.guide.length && fightWinner(state) === null) {
@@ -72,6 +69,16 @@ function play(
 }
 
 const guided = beats.filter((b) => b.fight.guide.length > 0);
+
+test('lessons: a fight lesson is one fight; a screen lesson has no fight and a party to act on', () => {
+  for (const chapter of LESSONS.chapters) {
+    if (SCREEN_LESSONS.includes(chapter.id)) {
+      assert.ok(chapter.party && chapter.party.length > 0, `${chapter.id} has no party`);
+      for (const beat of chapter.beats) assert.ok(beat.kind === 'screen' && beat.line, `${chapter.id} holds a fight or a beat with no line`);
+      for (const spec of chapter.party) assert.ok(heroes[spec.heroId] && !heroes[spec.heroId].unlock, `${chapter.id}: ${spec.heroId} is not a base hero`);
+    } else assert.deepStrictEqual(chapter.beats.map((b) => b.kind), ['fight'], chapter.id);
+  }
+});
 
 test('lessons: every lesson is a scenario star of First Light, and every First Light star a lesson', () => {
   const stars = sky.constellations.firstLight.stars.map((star) => (star.light.kind === 'scenario' ? star.light.scenarioId : null));
@@ -203,16 +210,43 @@ test('lessons: a lesson with a bench fields two leads or none, or the game asks 
   }
 });
 
-test('lessons: bare, Ursa\'s Claw takes two hits; given the Feral Dagger, one', () => {
-  const [bare, armed] = LESSONS.chapters.find((c) => c.id === 'firstLight.gear')!.beats;
-  assert.ok(!bare.handOver && armed.handOver, 'the piece arrives between the two fights');
-  assert.ok(armed.fight.player.some((spec) => spec.rosterId === armed.handOver!.to), 'the piece goes to a hero in the party');
-  const first = play(bare.fight);
-  assert.strictEqual(first.boards[1].combatants['B:cub'].fainted, false, 'bare, one Claw leaves it standing');
-  assert.strictEqual(first.boards[2].combatants['B:cub'].fainted, true, 'bare, the second Claw drops it');
-  assert.strictEqual(play(armed.fight).boards[1].combatants['B:cub'].fainted, true, 'armed, one Claw drops it');
-  const bled = [...first.rounds, ...play(armed.fight).rounds].flat().some((e) => e.type === 'StatusApplied' && e.statusId === 'Bleed');
-  assert.ok(!bled, 'no Bleed chips in: the Claw alone is the difference');
+test('lessons: Equipment gives Ursa the Feral Dagger, and a second Dagger merges into it a tier up', () => {
+  const [take, merge] = screensOf('firstLight.gear');
+  assert.ok(take.kind === 'item' && merge.kind === 'item');
+  let run = storyParty(chapterOf('firstLight.gear').party!, allCombatants);
+  const ursa = () => run.roster.find((r) => r.rosterId === 'ursa')!;
+  assert.strictEqual(itemReceiptFor(ursa(), equipment[take.itemId], heroes.ursa, equipment).kind, 'take');
+  run = absorbItem(run, take.to, take.itemId, equipment, allCombatants);
+  const receipt = itemReceiptFor(ursa(), equipment[merge.itemId], heroes.ursa, equipment);
+  assert.ok(receipt.kind === 'merge' && receipt.resultRarity === 'rare', 'the second piece merges, a Rare');
+  run = absorbItem(run, merge.to, merge.itemId, equipment, allCombatants);
+  assert.deepStrictEqual(ursa().equipment, [receipt.resultId], 'one piece, merged');
+});
+
+test('lessons: Gems go in the order the screen hands them out, each a stat and a Mastery pip on the hero it names', () => {
+  const [screen] = screensOf('firstLight.gems');
+  assert.ok(screen.kind === 'gems');
+  const order = screen.gems.map((g) => GEM_ORDER.indexOf(g.gem.stat));
+  assert.deepStrictEqual(order, [...order].sort((x, y) => x - y), 'in the fixed order');
+  let run = storyParty(chapterOf('firstLight.gems').party!, allCombatants);
+  for (const { gem, to } of screen.gems) {
+    const before = run.roster.find((r) => r.rosterId === to)!.mastery;
+    run = placeGem(run, to, gem);
+    assert.strictEqual(run.roster.find((r) => r.rosterId === to)!.mastery, before + 1, `${to} takes a pip`);
+  }
+});
+
+test('lessons: Contracts signs a beaten base hero with the party\'s one Recruit Contract', () => {
+  const [screen] = screensOf('firstLight.contracts');
+  assert.ok(screen.kind === 'contract');
+  const party = chapterOf('firstLight.contracts').party!;
+  assert.ok(heroes[screen.offer.heroId] && !heroes[screen.offer.heroId].unlock, 'a base hero');
+  assert.ok(!party.some((spec) => spec.heroId === screen.offer.heroId), 'not one the party already holds');
+  const run = storyParty(party, allCombatants);
+  assert.strictEqual(run.recruitContracts, 1);
+  const offer = storyEntry(screen.offer, heroes[screen.offer.heroId]);
+  const signed = claimContract(run, deriveContractOffer(offer), offer.rosterId);
+  assert.deepStrictEqual([signed.roster.length, signed.recruitContracts], [party.length + 1, 0]);
 });
 
 test('lessons: no passive fires in a guided lesson, and no foe in First Light wears the Mark', () => {

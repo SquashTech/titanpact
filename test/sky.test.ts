@@ -59,9 +59,9 @@ test('sky: the guided fights open the Infinite; the open fight stays a lesson, a
   assert.strictEqual(constellationState(profile, sky, 'infinite'), 'glimpsed', 'nor six');
   profile = recordScenarioLit(profile, sky, 'firstLight.switch');
   assert.strictEqual(constellationState(profile, sky, 'infinite'), 'open', 'Switching opens the Infinite');
-  assert.strictEqual(constellationState(profile, sky, 'firstLight'), 'open', 'Equipment and the open fight are still to play');
+  assert.strictEqual(constellationState(profile, sky, 'firstLight'), 'open', 'the screen lessons and the open fight are still to play');
   assert.strictEqual(skyStardust(profile, sky), 0, 'paid only when every lesson is lit');
-  profile = recordScenarioLit(recordScenarioLit(profile, sky, 'firstLight.gear'), sky, 'firstLight.open');
+  profile = ['firstLight.gear', 'firstLight.gems', 'firstLight.contracts', 'firstLight.open'].reduce((p, id) => recordScenarioLit(p, sky, id), profile);
   assert.strictEqual(constellationState(profile, sky, 'firstLight'), 'lit');
   const paid = skyStardust(profile, sky);
   assert.strictEqual(paid, 300);
@@ -114,8 +114,11 @@ test('sky: lit scenarios survive a round trip and decode deduplicated', () => {
   assert.deepStrictEqual(
     decodeProfile({ litStars: ['firstLight.hunt', 'firstLight.clearing', 'firstLight.road', 'firstLight.fork'] }).litStars,
     sky.constellations.firstLight.stars.map((star) => star.id),
-    'the four old lessons lit light the ten that replaced them'
+    'the four old lessons lit light the ones that replaced them'
   );
+  const sealed = decodeProfile({ litStars: ['firstLight.gear', 'firstLight.open'], seenTipIds: [skyLightingTipId('firstLight.open')] });
+  assert.deepStrictEqual(sealed.litStars, ['firstLight.gear', 'firstLight.gems', 'firstLight.contracts', 'firstLight.open'], 'a file that won the open fight has the lessons added before it');
+  assert.ok(sealed.seenTipIds.includes(skyLightingTipId('firstLight.contracts')), 'and their lightings count as played');
   assert.deepStrictEqual(decodeProfile({ litStars: ['a', 'a', 3, ''] }).litStars, ['a']);
   assert.deepStrictEqual(decodeProfile({}).litStars, []);
 });
@@ -126,7 +129,7 @@ test('sky: a lesson won plays its lighting on the title once, and the sky draws 
   const won = ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread', 'firstLight.kinds', 'firstLight.burn', 'firstLight.switch'].reduce((p, id) => recordScenarioLit(p, sky, id), createProfile());
   assert.deepStrictEqual(unshownLightings(won, firstLight), [0, 1, 2, 3, 4, 5, 6]);
   const before = profileBeforeLightings(won, ['firstLight.switch']);
-  assert.deepStrictEqual(firstLight.stars.map((star) => isStarLit(before, firstLight, star)), [true, true, true, true, true, true, false, false, false]);
+  assert.deepStrictEqual(firstLight.stars.map((star) => isStarLit(before, firstLight, star)), [true, true, true, true, true, true, false, false, false, false, false]);
   assert.strictEqual(constellationState(before, sky, 'infinite'), 'glimpsed', 'the Infinite waits on Switching being shown');
   assert.strictEqual(constellationState(won, sky, 'infinite'), 'open');
   const shown = recordTipSeen(won, skyLightingTipId('firstLight.move'));

@@ -17,7 +17,7 @@ const DRAWN = ['spread', 'switch', 'leads', 'lock', 'clock', 'banner', 'road', '
 function cueTipIds(chapterId: string): string[] {
   const chapter = LESSONS.chapters.find((c) => c.id === chapterId)!;
   return chapter.beats.flatMap((beat) => {
-    const cues = beat.cues ?? [];
+    const cues = beat.kind === 'fight' ? beat.cues ?? [] : [];
     return cues.flatMap((cue) => (cue.tips ?? []).map((tip) => tip.id));
   });
 }
@@ -57,6 +57,9 @@ test('manual: every lesson has its pages, and every page a lesson shows in a fig
   assert.deepStrictEqual(first('firstLight.kinds'), ['howto.kinds']);
   assert.deepStrictEqual(first('firstLight.burn'), ['howto.statuses', 'howto.status.Burn']);
   assert.deepStrictEqual(first('firstLight.switch'), ['howto.bench']);
+  assert.deepStrictEqual(first('firstLight.gear'), ['howto.items']);
+  assert.deepStrictEqual(first('firstLight.gems'), ['howto.gems']);
+  assert.deepStrictEqual(first('firstLight.contracts'), ['howto.recruit']);
   assert.deepStrictEqual(first('firstLight.open'), ['howto.leads', 'howto.passives']);
   // Only a page naming what its fight showed waits for the win, and it is the open fight's last.
   assert.deepStrictEqual(MANUAL_PAGES.filter((p) => p.afterFight).map((p) => p.id), ['howto.passives']);

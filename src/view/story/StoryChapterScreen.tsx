@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { allCombatants } from '../../data/content';
-import { storySides, type StoryChapter } from '../../run/story';
+import { storyParty, storySides, type StoryChapter } from '../../run/story';
 import type { RunState } from '../../run/state';
 import { FightScreen } from '../combat/FightScreen';
 import { MANUAL_PAGES } from '../../data/howToPlay';
 import { lessonPages } from '../../run/manual';
 import { LessonLearnedScreen } from './LessonLearnedScreen';
-import { ItemWhoScreen } from '../run/ItemWhoScreen';
-import { GuideHand } from './GuideHand';
+import { LessonLine, LessonScreen } from './LessonScreen';
 import { TipOverlay } from '../run/TipOverlay';
 import type { Tip } from '../../run/tips';
 
@@ -30,25 +29,22 @@ interface Props {
 }
 
 /**
- * Plays a chapter's beats in order, a First Light lesson's among them, each opening on the lesson's
- * How to Play pages before its first tap. A lost fight is played again from its start.
+ * Plays a chapter's beats in order, a First Light lesson's among them, opening on the lesson's How to
+ * Play pages before its first tap. A lost fight is played again from its start; a screen beat acts on
+ * the chapter's party, carried from one beat to the next.
  */
 export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips, exitLabel, welcome, onNext }: Props) {
   const [index, setIndex] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const beat = chapter.beats[index];
   const next = () => setIndex((i) => i + 1);
-  const sides = useMemo(() => (beat ? storySides(beat.fight, allCombatants) : null), [beat]);
-  // A beat's hand-over: the party as the item screen leaves it, and whether it has been handed. Kept across a replay.
-  const [given, setGiven] = useState<{ index: number; run: RunState; done: boolean } | null>(null);
-  const handed = given?.index === index ? given : null;
+  const sides = useMemo(() => (beat?.kind === 'fight' ? storySides(beat.fight, allCombatants) : null), [beat]);
+  const [party, setParty] = useState<RunState | null>(() => (chapter.party ? storyParty(chapter.party, allCombatants) : null));
   const pages = useMemo(() => lessonPages(MANUAL_PAGES, chapter.id), [chapter.id]);
   const [welcomed, setWelcomed] = useState(false);
   const opening = welcome && !welcomed ? welcome.tip : null;
-  // The pages open the beat that hands a piece over, where there is one: the lesson is that screen.
-  const pageBeat = Math.max(0, chapter.beats.findIndex((b) => b.handOver));
   const unseen = (after: boolean) => pages.find((p) => !!p.afterFight === after && !tips.seenIds.includes(p.id)) ?? null;
-  const page = beat ? opening ?? (index === pageBeat ? unseen(false) : null) : unseen(true);
+  const page = beat ? opening ?? (index === 0 ? unseen(false) : null) : unseen(true);
   const pageUp = page && (
     <TipOverlay
       key={page.id}
@@ -77,19 +73,11 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips,
       <Finish onFinished={onFinished} />
     );
   }
-  if (beat.handOver && !handed?.done) {
-    const { itemId, to } = beat.handOver;
+  if (beat.kind === 'screen') {
     return (
       <>
-        <ItemWhoScreen
-          run={handed?.run ?? sides!.player.run}
-          itemId={itemId}
-          onlyRosterIds={[to]}
-          noSell
-          onRunChange={(run) => setGiven({ index, run, done: false })}
-          onDone={() => setGiven((g) => ({ index, run: g?.run ?? sides!.player.run, done: true }))}
-        />
-        {page ? pageUp : <GuideHand selector={handed ? '.item-who-screen .resolve-button' : '.item-ledger-row.is-offered'} />}
+        <LessonScreen key={index} screen={beat.screen} run={party!} onRunChange={setParty} onDone={next} guided={!page} />
+        {page ? pageUp : <LessonLine text={beat.line} />}
       </>
     );
   }
@@ -97,7 +85,7 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips,
     <>
       <FightScreen
         key={`${index}:${attempt}`}
-        playerRun={handed?.run ?? sides!.player.run}
+        playerRun={sides!.player.run}
         playerSquad={sides!.player.squad}
         aiRun={sides!.ai.run}
         aiSquad={sides!.ai.squad}

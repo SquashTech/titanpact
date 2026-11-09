@@ -1,9 +1,9 @@
-// First Light's lessons (docs/first-light.md): one concept a lesson, each a fight with one line on the
-// top bar. The first eight are guided, the hand on every tap; the last is the first open fight, a team
-// the player commands alone. Each lesson is a chapter in its own book, so the Story machinery plays it
-// unchanged: one fight beat, or Equipment's two, bare and then armed.
+// First Light's lessons (docs/first-light.md): one concept a lesson, each with one line across the top.
+// The fights are guided, the hand on every tap; Equipment, Gems and Contracts are a run's own screens
+// with no fight; the last is the first open fight, a team the player commands alone. Each lesson is a
+// chapter in its own book, so the Story machinery plays it unchanged.
 
-import { STORY_ENEMY_SIDE, STORY_PLAYER_SIDE, type StoryBeat, type StoryChapter, type StoryDefinition, type StoryFight, type StoryHandOver } from '../run/story';
+import { STORY_ENEMY_SIDE, STORY_PLAYER_SIDE, type StoryBeat, type StoryChapter, type StoryDefinition, type StoryFight, type StoryHeroSpec, type StoryScreen } from '../run/story';
 
 const foe = (rosterId: string) => ({ side: 'B' as const, rosterId });
 const ally = (rosterId: string) => ({ side: 'A' as const, rosterId });
@@ -136,27 +136,26 @@ const switching: StoryFight = {
   ],
 };
 
-const URSA: StoryFight['player'] = [{ rosterId: 'ursa', heroId: 'ursa', level: 3, moveIds: ['claw'] }];
-const GEAR_CUB: StoryFight['enemy'] = [{ rosterId: 'cub', heroId: 'cubling', level: 13 }];
-const cubClaws = (rounds: number) => Array.from({ length: rounds }, () => [{ actor: 'cub', moveId: 'claw', target: ally('ursa') }]);
-const ursaClaws = (rounds: number) => Array.from({ length: rounds }, () => [{ actor: 'ursa', moveId: 'claw', target: foe('cub') }]);
+const URSA: StoryHeroSpec = { rosterId: 'ursa', heroId: 'ursa', level: 3, moveIds: ['claw'] };
+const CRIMSON: StoryHeroSpec = { rosterId: 'crimson', heroId: 'crimson', level: 3, moveIds: ['ember'] };
+const RAIJU: StoryHeroSpec = { rosterId: 'raiju', heroId: 'raiju', level: 3, moveIds: ['thunderclap'] };
+const PIXIE: StoryHeroSpec = { rosterId: 'pixie', heroId: 'pixie', level: 3, moveIds: ['arcaneBlast'] };
 
-/** Bare, Ursa's Claw takes two hits to drop the Cubling. */
-const gearBare: StoryFight = {
-  id: 'lesson-gear-bare',
-  quietSides: QUIET,
-  seed: 1826,
-  player: URSA,
-  playerLeads: ['ursa'],
-  enemy: GEAR_CUB,
-  enemyLeads: ['cub'],
-  enemyScript: cubClaws(2),
-  guide: ursaClaws(2),
+/** The Feral Dagger goes into a socket; a second Dagger merges into it, a Rare. */
+const GEAR_TAKE: StoryScreen = { kind: 'item', itemId: 'dagger.common.feral', to: 'ursa' };
+const GEAR_MERGE: StoryScreen = { kind: 'item', itemId: 'dagger.common', to: 'ursa' };
+
+/** Attack to the hero who hits with it, Intelligence to the one who casts. */
+const GEMS: StoryScreen = {
+  kind: 'gems',
+  gems: [
+    { gem: { stat: 'attack', points: 5 }, to: 'ursa' },
+    { gem: { stat: 'intelligence', points: 5 }, to: 'pixie' },
+  ],
 };
 
-/** The same Cubling, and the Feral Dagger's Attack and Beast Force turn one Claw into a knockout. */
-const gearArmed: StoryFight = { ...gearBare, id: 'lesson-gear', enemyScript: cubClaws(1), guide: ursaClaws(1) };
-const GEAR_HAND_OVER: StoryHandOver = { itemId: 'dagger.common.feral', to: 'ursa' };
+/** A hero beaten in a Skirmish, signed onto the roster. */
+const CONTRACT: StoryScreen = { kind: 'contract', offer: { rosterId: 'hollowbark', heroId: 'hollowbark', level: 4 } };
 
 /** The open fight's party: heroes the lessons cast, each holding the one move it was taught with. */
 export const OPEN_FIGHT_PARTY = ['crimson', 'raiju', 'cairn', 'ursa'] as const;
@@ -182,10 +181,13 @@ const open: StoryFight = {
 };
 
 /** A fight as a lesson beat: its line on the top bar, the hand on every guided round. */
-function lessonBeat(fight: StoryFight, line: string, handOver?: StoryHandOver): StoryBeat {
+function lessonBeat(fight: StoryFight, line: string): StoryBeat {
   const cues = fight.guide.map((_, i) => ({ round: i + 1, point: true as const }));
-  return { kind: 'fight', fight, locationId: 'wildsEdge', cues, line, handOver };
+  return { kind: 'fight', fight, locationId: 'wildsEdge', cues, line };
 }
+
+/** A run's screen as a lesson beat, with no fight. */
+const screenBeat = (screen: StoryScreen, line: string): StoryBeat => ({ kind: 'screen', screen, locationId: 'wildsEdge', line });
 
 function lessonChapter(id: string, title: string, fight: StoryFight, line: string): StoryChapter {
   return { id, title, beats: [lessonBeat(fight, line)] };
@@ -206,8 +208,11 @@ export const LESSONS: StoryDefinition = {
     {
       id: 'firstLight.gear',
       title: 'Equipment',
-      beats: [lessonBeat(gearBare, 'Without gear, it takes two hits.'), lessonBeat(gearArmed, 'A piece of gear makes its hero stronger.', GEAR_HAND_OVER)],
+      party: [URSA, CRIMSON],
+      beats: [screenBeat(GEAR_TAKE, 'Give the piece to a hero. It stays there.'), screenBeat(GEAR_MERGE, 'Two of a kind merge into a stronger piece.')],
     },
+    { id: 'firstLight.gems', title: 'Gems', party: [URSA, PIXIE], beats: [screenBeat(GEMS, 'Each Gem raises a stat and fills a Mastery pip.')] },
+    { id: 'firstLight.contracts', title: 'Contracts', party: [CRIMSON, RAIJU], beats: [screenBeat(CONTRACT, 'Sign a hero you beat with a Recruit Contract.')] },
     lessonChapter('firstLight.open', 'The First Fight', open, 'Four heroes now. Win it your way.'),
   ],
 };

@@ -17,6 +17,18 @@
   pointer-events: none;
 }
 
+/* A screen lesson's line (LessonScreen): low, in the lane above the screen's own button, so its title keeps the top. */
+.lesson-line.is-screen {
+  position: absolute;
+  top: auto;
+  bottom: 112px;
+  left: 32px;
+  right: 32px;
+  z-index: 54;
+  transform: none;
+  font-size: 14px;
+}
+
 /* --- The tap guide (GuideHand): a pixel glove bobbing at the next tap --- */
 .guide-hand {
   position: absolute;

@@ -1,10 +1,37 @@
 # First Light — the curriculum
 
-> **STATUS: BUILT (2026-10-27), nine lessons; reviewed and revised 2026-10-29 (§0).** Replaces the
-> four lessons of `docs/the-sky.md` §2c and §6 (`src/data/lessons.ts`): Valor and Fang, the guided
-> Hunt and Clearing, and the Road and Fork acts are deleted. Kept: First Light as the gate before the
-> full game (§2e), the Ascent, the manual's pages filed by playing (§2c), and Blip. Where §1–§6 below
-> disagree with §0, §0 is what the game does.
+> **STATUS: BUILT (2026-10-27), eleven lessons since 2026-11-09 (§00); reviewed and revised
+> 2026-10-29 (§0).** Replaces the four lessons of `docs/the-sky.md` §2c and §6 (`src/data/lessons.ts`):
+> Valor and Fang, the guided Hunt and Clearing, and the Road and Fork acts are deleted. Kept: First
+> Light as the gate before the full game (§2e), the Ascent, and Blip. Where §1–§6 below disagree with
+> §00 or §0, those are what the game does.
+
+## 00. Screen lessons, and a book that no longer fills (2026-11-09, per user direction)
+
+**How to Play stops filling in.** It added taps and taught nothing the lessons don't. The book stays
+in the Reference, whole from the start; a run files nothing, a won fight lands no Learned row, and no
+page opens over a run's screen (`docs/the-sky.md` §2c). A lesson still opens on its own page and ends
+on its Learned screen.
+
+**Three screen lessons before the open fight: Equipment, Gems, Contracts**, the things a run needs
+that a fight can't show. A screen lesson has **no fight**: it is a run's own screen with the hand on
+every tap and only the hero the tap names open (`StoryBeat` kind `'screen'`, `StoryScreen` in
+`run/story.ts`; the chapter's `party` carries from beat to beat). Each opens on its page over the live
+screen, its line pinned across the top.
+
+| # | Lesson | Party | Taps |
+|---|---|---|---|
+| 8 | **Equipment** | Ursa, Crimson | *Give the piece to a hero. It stays there.* Tap Ursa's row (the Feral Dagger goes into a socket), Continue. *Two of a kind merge into a stronger piece.* Tap Ursa's row (a plain Dagger merges into the Feral one, a Rare), Continue. Sell, the decline, is on the page. |
+| 9 | **Gems** | Ursa, Pixie | *Each Gem raises a stat and fills a Mastery pip.* Tap Ursa (an Attack Gem), tap Pixie (an Intelligence Gem); the screen leaves by itself. |
+| 10 | **Contracts** | Crimson, Raiju | *Sign a hero you beat with a Recruit Contract.* Tap Sign Hollowbark (the one Contract spent), Continue. The six-hero roster and letting one go are on the page. |
+
+**Equipment's screen lesson replaces the old one.** The old lesson was the who-screen plus two fights
+(bare, then armed: about eight taps). The screen lesson is four taps and adds the merge. What it drops
+is the fight where the Dagger's Beast Force tipped the hit; Force is read on the item card. Fewer
+taps was the call.
+
+An account that won the open fight before these shipped has Gems and Contracts lit, their lightings
+counted as played (`run/profile.ts` decode), so First Light stays sealed.
 
 ## 0. The review pass (2026-10-29, per user direction)
 
@@ -180,15 +207,17 @@ that runs through them.
 | 6 | **Physical vs Magical** | Attack → Defense, Intelligence → Wisdom | A foe with a wall of Defense and paper Wisdom; the Int move is the answer. A foe built for this fixes the playtest note at the end of `the-sky.md` §2c. |
 | 7 | **Status effects** | Burn's three pips running out | One status, Burn, on a foe that would otherwise outlast you. |
 | 8 | **Switching** | a hero stepping back, the bench refilling mana | The lead is in a bad matchup; swap in the benched hero, who comes in with full mana. |
-| 9 | **Equipment** | a piece going into a socket, and its Force on a hit | **DRAFT CALL:** a who-screen with one piece, then a fight where that piece's Force tips the decisive hit. Elemental Force is taught here, not on its own. |
+| 9 | **Equipment** | a piece going into a socket, and its Force on a hit | **Replaced 2026-11-09 by a screen lesson, take then merge, no fight (§00).** Was: **DRAFT CALL:** a who-screen with one piece, then a fight where that piece's Force tips the decisive hit. Elemental Force is taught here, not on its own. |
+| 9b | **Gems** | a Gem going into a hero, a stat and a pip | **Screen lesson, 2026-11-09, per user direction (§00):** no fight. |
+| 9c | **Contracts** | a beaten hero signed | **Screen lesson, 2026-11-09, per user direction (§00):** no fight. |
 | 10 | **The first fight** | the lead pick | **DECIDED 2026-10-27, per user direction:** the first truly open fight, a full team of six against four, nothing guided. The Road act it replaced is retired; the map, Recruit Contracts and level-ups are taught by a run's own screens the first time it reaches them (§6). |
 
 **Order.** Each lesson leans only on the ones before it: 1–4 are what every fight needs, 5–8 are what
 makes doubles deep, 9 is the run's gear, and 10 is all of it at once.
 
-**Left for runs to file** (the existing "a run files the rest", `the-sky.md` §2c): Shield, Conduct,
-heals, Daze, buffs and debuffs, lock-in, potions, the map, Wounds, levels, the Pact Clock, Elite or
-Skirmish, Patrons, Recruiting, the Guild Hall, the Academy, Gems.
+**Left for the book** (since 2026-11-09 nothing is filed; every page is in How to Play from the start):
+Shield, Conduct, heals, Daze, buffs and debuffs, lock-in, potions, the map, Wounds, levels, the Pact
+Clock, Elite or Skirmish, Patrons, the Guild Hall, the Academy.
 
 ## 4. Second-order questions
 

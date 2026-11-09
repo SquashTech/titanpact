@@ -454,6 +454,11 @@ const RETIRED_LESSONS: Readonly<Record<string, readonly string[]>> = {
   'firstLight.fork': ['firstLight.open'],
 };
 
+/** Lessons added ahead of the open fight after it shipped: a file that won it has them lit, their lightings played. */
+const LESSONS_BEFORE_OPEN = ['firstLight.gems', 'firstLight.contracts'];
+const withLessonsBeforeOpen = (ids: readonly string[], prefix = ''): string[] =>
+  ids.flatMap((id) => (id === `${prefix}firstLight.open` ? [...LESSONS_BEFORE_OPEN.map((lesson) => prefix + lesson), id] : [id]));
+
 /**
  * A record is kept if its outcome and act are readable — a line with no outcome says nothing.
  * Its roster keeps every hero with an id: a hero this build no
@@ -566,7 +571,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     lastPlayedAt: count(value.lastPlayedAt),
     // Absent on every profile written before the tips; such a player sees each one once. A
     // pre-tips `tutorialDone` is dropped — the scripted run it recorded no longer exists.
-    seenTipIds: [...new Set(stringList(value.seenTipIds))],
+    seenTipIds: [...new Set(withLessonsBeforeOpen(stringList(value.seenTipIds), 'sky.lit.'))],
     // Absent on every profile written before Constructed.
     constructedTeams: decodeTeams(value.constructedTeams),
     trialsCleared: [...new Set(stringList(value.trialsCleared))],
@@ -579,7 +584,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Absent on every profile written before Stories.
     storyChaptersDone: [...new Set(stringList(value.storyChaptersDone))],
     // Absent on every file written before the sky.
-    litStars: [...new Set(stringList(value.litStars).flatMap((id) => RETIRED_LESSONS[id] ?? [id]))],
+    litStars: [...new Set(withLessonsBeforeOpen(stringList(value.litStars).flatMap((id) => RETIRED_LESSONS[id] ?? [id])))],
     seenThoughtIds: [...new Set(stringList(value.seenThoughtIds))],
   };
 }

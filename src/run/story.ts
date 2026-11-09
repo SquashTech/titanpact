@@ -1,13 +1,15 @@
 // Story fights (docs/stories.md §5): fixed parties at fixed levels, a fixed seed, and a script for
-// what both sides do, so a lesson plays out the same way every time.
+// what both sides do, so a lesson plays out the same way every time; and a run's screens played
+// with no fight, the hand on each tap.
 
 import type { HeroDefinition } from '../engine/content';
 import type { Action } from '../engine/combat/actions';
 import type { CombatState, FightEndTrigger, Side } from '../engine/state';
 import { combatantIdFor } from './combatantIds';
 import type { Encounter } from './enemyGen';
+import type { Gem } from './gems';
 import { expectedGrowthAt, xpForLevel } from './growth';
-import { createRosterEntry, createRunState, type RosterEntry } from './state';
+import { createRosterEntry, createRunState, type RosterEntry, type RunState } from './state';
 import type { Tip } from './tips';
 
 export const STORY_PLAYER_SIDE: Side = 'A';
@@ -79,6 +81,11 @@ function storySide(specs: readonly StoryHeroSpec[], leads: readonly string[], he
   };
 }
 
+/** A chapter's party as a run, holding the one Recruit Contract a run opens with. */
+export function storyParty(specs: readonly StoryHeroSpec[], heroes: Record<string, HeroDefinition>): RunState {
+  return { ...storySide(specs, [], heroes, false).run, recruitContracts: 1 };
+}
+
 /** Both sides of a Story fight, leads placed, as FightScreen's player and AI encounters. */
 export function storySides(fight: StoryFight, heroes: Record<string, HeroDefinition>): { player: Encounter; ai: Encounter } {
   const quiet = (side: Side) => fight.quietSides?.includes(side) ?? false;
@@ -144,31 +151,43 @@ export interface StoryCue {
   lines?: readonly CueLine[];
 }
 
-/** An item a lesson hands over before its fight, and the roster id of the one hero who may take it. */
-export interface StoryHandOver {
-  itemId: string;
-  to: string;
-}
-
 /** One line of a hero's call, by the roster id of a hero standing on the player's side. */
 export interface CueLine {
   by: string;
   text: string;
 }
 
+/** A Gem a lesson hands over, and the roster id of the hero it goes to. */
+export interface StoryGem {
+  gem: Gem;
+  to: string;
+}
+
+/** One of a run's own screens, played with no fight: only the hero each tap names is open. */
+export type StoryScreen =
+  /** The item screen: the piece goes to `to`, into a socket or merged into what it holds. */
+  | { kind: 'item'; itemId: string; to: string }
+  /** The Gem screen: each Gem in turn, to the hero it names. */
+  | { kind: 'gems'; gems: readonly StoryGem[] }
+  /** The recruit screen: `offer` is a beaten hero, signed with a Recruit Contract. */
+  | { kind: 'contract'; offer: StoryHeroSpec };
+
 export type StoryBeat =
   /**
    * A scripted fight, stood on `locationId`'s ground (unset: the plain arena). `line` is a lesson's one
-   * line, on the top bar while it commands; `handOver` is a piece the party is given before it, on the
-   * item screen, to the one hero it names.
+   * line, on the top bar while it commands.
    */
-  | { kind: 'fight'; fight: StoryFight; locationId?: string; cues?: readonly StoryCue[]; line?: string; handOver?: StoryHandOver };
+  | { kind: 'fight'; fight: StoryFight; locationId?: string; cues?: readonly StoryCue[]; line?: string }
+  /** A run's screen with no fight, acting on the chapter's party; `line` is the lesson's one line, across its top. */
+  | { kind: 'screen'; screen: StoryScreen; locationId?: string; line: string };
 
-/** A run of beats played in order; a First Light lesson is a chapter of one (data/lessons.ts). */
+/** A run of beats played in order; a First Light lesson is a chapter of one or a few (data/lessons.ts). */
 export interface StoryChapter {
   id: string;
   title: string;
   beats: readonly StoryBeat[];
+  /** The roster its screen beats act on, carried from one beat to the next. */
+  party?: readonly StoryHeroSpec[];
 }
 
 export interface StoryDefinition {

@@ -33,6 +33,8 @@ interface Props {
   /** The Gems still to place, held by App so a reload neither repays nor forgets them. Omitted = none placed yet. */
   progress?: ScrollProgress;
   onProgress: (progress: ScrollProgress) => void;
+  /** Only these heroes may take the Gem in hand: a lesson's. */
+  onlyRosterIds?: readonly string[];
 }
 
 /** A beat between the last Gem landing and the screen leaving, so the last burst is seen. */
@@ -56,7 +58,7 @@ export function GemNodeScreen(props: Props) {
   return <GemPlacement {...props} />;
 }
 
-function GemPlacement({ run, onRunChange, plan, onDone, progress, onProgress }: Props) {
+function GemPlacement({ run, onRunChange, plan, onDone, progress, onProgress, onlyRosterIds }: Props) {
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [burst, setBurst] = useState<{ rosterId: string; key: number } | null>(null);
   const flow = useMasteryFlow(run, onRunChange);
@@ -86,7 +88,7 @@ function GemPlacement({ run, onRunChange, plan, onDone, progress, onProgress }: 
   }, [burst]);
 
   function handleTap(entry: RosterEntry) {
-    if (!gem || flow.busy || !canTakeMastery(entry)) return;
+    if (!gem || flow.busy || !canTakeMastery(entry) || (onlyRosterIds && !onlyRosterIds.includes(entry.rosterId))) return;
     const next = placeGem(run, entry.rosterId, gem);
     onRunChange(next);
     const milestone = crossesMastery(entry, 1, MASTERY_EVOLUTION) || crossesMastery(entry, 1, MASTERY_CAP);
@@ -156,7 +158,7 @@ function GemPlacement({ run, onRunChange, plan, onDone, progress, onProgress }: 
       <HeroPickGrid count={run.roster.length} fill>
         {run.roster.map((entry) => {
           const hero = rosterHeroes[entry.heroId];
-          const open = !finished && canTakeMastery(entry);
+          const open = !finished && canTakeMastery(entry) && (!onlyRosterIds || onlyRosterIds.includes(entry.rosterId));
           const evolves = crossesMastery(entry, 1, MASTERY_EVOLUTION);
           const masters = crossesMastery(entry, 1, MASTERY_CAP) && !!hero.masteredPassiveIds?.length;
           const now = entryStatTotals(hero, entry, run.relics, run.gold)[shown.stat];
