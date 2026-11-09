@@ -33,36 +33,6 @@ export function sellValueFor(item: EquipmentDefinition): number {
   return Math.floor(EQUIPMENT_PRICE_BY_RARITY[item.rarity] * EQUIPMENT_SELL_SHARE);
 }
 
-/**
- * The Anvil: gold to lift an item to the keyed tier, repeatable and unbounded (docs/equipment.md
- * §5). Keyed by TARGET, so `ANVIL_PRICE_BY_TARGET.epic` is what Rare -> Epic costs; `common` is
- * unreachable and priced at 0 only so the record is total.
- *
- * The shelf it used to be priced against is gone (docs/gear-absorption.md §6), so the basis is
- * the run's other purchases now: Rare → Epic, the step that Awakens a family, costs about a hire
- * (50g); Legendary → Mythic about two and a half. Merging is the free route up a tier and the
- * Anvil is the paid one for a piece with no duplicate coming — deliberately dearer than the shelf
- * ever was, per tier, so gold is spent to keep THIS piece rather than to farm power. Untuned
- * against play (2026-09-15; the numbers stand from the shelf era). What is NOT free to retune is
- * the inequality in test/shop.test.ts: a lift must cost more than the tier it reaches sells for.
- */
-export const ANVIL_PRICE_BY_TARGET: Record<EquipmentRarity, number> = {
-  common: 0,
-  rare: 25,
-  epic: 45,
-  legendary: 75,
-  mythic: 130,
-};
-
-/** The Enchanter, priced by the item's own tier — a Mythic's enchant is worth more Force, so it costs more. Re-enchanting costs the same, and overwrites. */
-export const ENCHANT_PRICE_BY_RARITY: Record<EquipmentRarity, number> = {
-  common: 20,
-  rare: 35,
-  epic: 55,
-  legendary: 80,
-  mythic: 120,
-};
-
 export interface GuildHallOffers {
   /** GuildHallOffer.id values, 2 or 3 of them. */
   heroOfferIds: string[];
@@ -101,13 +71,10 @@ function sample<T>(pool: readonly T[], count: number): T[] {
 /** 2-3 heroes not already on the roster, the shelf's Gems and the gear shelf's pieces. */
 export function rollGuildHallOffers(
   run: RunState,
-  heroPool: readonly GuildHallOffer[],
-  /** Act 6's Vigil recruits nobody: the finale is fought by the roster the run kept. */
-  muster = false
+  heroPool: readonly GuildHallOffer[]
 ): GuildHallOffers {
   const itemIds = rollEquipmentDrops(SHOP_ITEM_COUNT, rarityWeightsFor(run.actNumber, 'standard')).map((item) => item.id);
   const gems = rollShelfGems(run.actNumber);
-  if (muster) return { heroOfferIds: [], itemIds, gems };
   const rosterHeroIds = new Set(run.roster.map((r) => r.heroId));
   const availableHeroes = heroPool.filter((o) => !rosterHeroIds.has(o.heroId));
   const hires = (Math.random() < 0.5 ? 2 : 3) + (isGathering(run) ? GATHERING_EXTRA_HIRES : 0);

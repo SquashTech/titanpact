@@ -56,10 +56,6 @@ import {
   purseRangeFor,
   rollGoldRange,
   grantManaWell,
-  anvilQuote,
-  anvilUpgrade,
-  enchantItem,
-  enchantPrice,
   forgeItem,
   forgeTarget,
   grantLeyLine,
@@ -95,7 +91,6 @@ import {
   LOOT_SOURCE,
   ENCHANTMENT_IDS,
   ENCHANTMENTS,
-  equipmentIdFor,
   parseEquipmentId,
   type EnchantmentId,
   type EquipmentDefinition,
@@ -202,7 +197,7 @@ export interface RunRecord {
   goldEnd: number;
   rosterLevelEnd: number;
   rosterSizeEnd: number;
-  /** Heroes standing when the finale was entered (null = never reached it). The Vigil recruits nobody, so this is the side the run kept. */
+  /** Heroes standing when the finale was entered (null = never reached it). Nothing is hired after act 4, so this is the side the run kept. */
   finaleRoster: number | null;
   /** heroId -> best level reached this run, for every hero that was ever on the roster. */
   heroLevels: Record<string, number>;
@@ -224,7 +219,7 @@ export interface RunRecord {
   signatures: Record<string, { reached: number; taken: number }>;
   /** Every rolled move offer (schedule, Mentor, Tutor, signature) by move id: times on the table, times the kit took it. */
   moveOffers: Record<string, { offered: number; taken: number }>;
-  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, `act:spent:<mend|hire|scroll|gear|anvil|enchant|contract>`, and `act:hall` (the purse on entering the Guild Hall, with `act:hallVisits` counting it). */
+  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, `act:spent:<mend|hire|scroll|gear|contract>`, and `act:hall` (the purse on entering the Guild Hall, with `act:hallVisits` counting it). */
   goldFlow: Record<string, number>;
   /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
   recruitsBySource: Record<string, number>;
@@ -807,7 +802,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return target ? grantBlessing(run, target.rosterId) : run;
     }
     case 'forgeReward':
-      // The Anvil's pick with no price on it: the most valuable liftable piece on the strongest hero.
+      // The piece where the lift and the binding gain most.
       return resolveForge(run);
     case 'leyLineReward': {
       // Force pays only on the hero's own type's hits, so it goes to the strongest hero — the one
@@ -849,14 +844,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     case 'event':
       return resolveEvent(run, locationId, rng, record);
     case 'shop':
-    case 'muster': {
-      // Diagnostic (SIM_VIGIL_XP): the XP a lost act paid, granted at the Vigil — stats only, no schedule payout.
-      const vigilXp = nodeType === 'muster' ? Number(process.env.SIM_VIGIL_XP ?? 0) : 0;
-      // Diagnostic (SIM_VIGIL_BANNER=1): the lost act's Banner, claimed at the Vigil.
-      if (nodeType === 'muster' && process.env.SIM_VIGIL_BANNER === '1') run = claimBanner(run, rng, record);
-      const grown = vigilXp > 0 ? { ...run, roster: run.roster.map((e) => grantXp(e, rosterHeroes[e.heroId], vigilXp, rng).entry) } : run;
-      return resolveShop(grown, nodeType === 'muster', rng, record, options);
-    }
+      return resolveShop(run, rng, record, options);
     default:
       return run;
   }
@@ -977,35 +965,9 @@ function resolveTutor(run: RunState, _rng: Rng, record: RunRecord): RunState {
 }
 
 /**
- * The Vigil's Anvil: one lift a visit, the most valuable item on the strongest hero that can
- * afford it.
- */
-function resolveAnvil(run: RunState): RunState {
-  let next = run;
-  for (const entry of policy.byPower(next.roster)) {
-    let bestIndex = -1;
-    let bestValue = -Infinity;
-    entry.equipment.forEach((itemId, index) => {
-      const quote = anvilQuote(next, itemId, equipment);
-      if (!quote || quote.cost > next.gold) return;
-      const value = policy.itemValueFor(entry, equipment[itemId] ?? null);
-      if (value > bestValue) {
-        bestValue = value;
-        bestIndex = index;
-      }
-    });
-    if (bestIndex >= 0) {
-      next = anvilUpgrade(next, { rosterId: entry.rosterId, index: bestIndex }, equipment);
-      break;
-    }
-  }
-  return next;
-}
-
-/**
  * The Forge node (2026-09-24): the lift and the binding, free. The piece is the one where the work
- * gains most (`itemValueFor` after minus before), bound to its holder's innate primary — the
- * Enchanter pilot's own read — or, for a hero whose primary has no enchant, left as it is bound.
+ * gains most (`itemValueFor` after minus before), bound to its holder's innate primary — the one
+ * read a player makes without a team model — or, for a hero whose primary has no enchant, left as it is bound.
  */
 function resolveForge(run: RunState): RunState {
   let best: { rosterId: string; index: number; enchantId: EnchantmentId; gain: number } | null = null;
@@ -1024,33 +986,6 @@ function resolveForge(run: RunState): RunState {
     }
   }
   return best ? forgeItem(run, { rosterId: best.rosterId, index: best.index }, best.enchantId, equipment) : run;
-}
-
-/**
- * The Vigil's Enchanter (2026-09-17): one binding a visit. An Elemental Force pays its
- * magnitude only to a hero that casts the type, so the only element ever bought for a piece is its
- * holder's innate primary — the one read a player makes without a team model — and the piece bound
- * is the one where that gains most (`itemValueFor` after minus before, so a piece already bound to
- * its holder's type is never re-bought). Left alone until the gold ledger showed the pilot walking
- * out of Acts 4–5 with 70g it had no verb for.
- */
-function resolveEnchanter(run: RunState): RunState {
-  let best: { rosterId: string; index: number; enchantId: EnchantmentId; gain: number } | null = null;
-  for (const entry of policy.byPower(run.roster)) {
-    const primary = heroes[entry.heroId]?.types[0];
-    const enchantId = ENCHANTMENT_IDS.find((id) => ENCHANTMENTS[id] === primary);
-    if (!enchantId) continue;
-    for (let index = 0; index < entry.equipment.length; index++) {
-      const item = equipment[entry.equipment[index]];
-      if (!item || item.enchantId === enchantId || enchantPrice(run, item.rarity) > run.gold) continue;
-      const parsed = parseEquipmentId(item.id);
-      const target = equipment[equipmentIdFor(parsed.base, parsed.rarity, enchantId)];
-      if (!target) continue;
-      const gain = policy.itemValueFor(entry, target) - policy.itemValueFor(entry, item);
-      if (gain > 0 && (!best || gain > best.gain)) best = { rosterId: entry.rosterId, index, enchantId, gain };
-    }
-  }
-  return best ? enchantItem(run, { rosterId: best.rosterId, index: best.index }, best.enchantId, equipment) : run;
 }
 
 
@@ -1138,10 +1073,10 @@ function resolveEventOutcome(run: RunState, outcome: ResolvableOutcome, cost: Ev
   return next;
 }
 
-/** Guild Hall: fill empty roster slots first, then Gems, then Gear (then the Smithy at the Vigil), then bank the rest. */
-function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord, options: RunOptions): RunState {
+/** Guild Hall: fill empty roster slots first, then Gems, then Gear, then bank the rest. */
+function resolveShop(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   let next = run;
-  const offers = rollGuildHallOffers(next, guildHallOffers, muster);
+  const offers = rollGuildHallOffers(next, guildHallOffers);
   const act = run.actNumber;
   ledger(record, act, 'hall', run.gold);
   ledger(record, act, 'hallVisits', 1);
@@ -1151,42 +1086,40 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     ledger(record, act, `spent:${key}`, before - next.gold);
   };
 
-  // The Tavern — the mend and the hires. The Vigil has none (2026-10-08).
-  if (!muster) {
-    // The mend first, when the roster is hurt enough for it to be worth its price — which now
-    // rises with the hurt (run/wounds.ts mendPrice), so the pilot's threshold is the same read.
-    const mendCost = mendPrice(next, (entry) => policy.effectiveStats(entry).hp);
-    if (canBuyMend(next, mendCost) && policy.rosterHpFraction(next.roster) < 0.6) {
-      if (anyDown(next)) record.knockouts.mendsWhileDown += 1;
-      spend('mend', () => buyMend(next, mendCost));
-    }
+  // The Tavern — the mend and the hires.
+  // The mend first, when the roster is hurt enough for it to be worth its price — which now
+  // rises with the hurt (run/wounds.ts mendPrice), so the pilot's threshold is the same read.
+  const mendCost = mendPrice(next, (entry) => policy.effectiveStats(entry).hp);
+  if (canBuyMend(next, mendCost) && policy.rosterHpFraction(next.roster) < 0.6) {
+    if (anyDown(next)) record.knockouts.mendsWhileDown += 1;
+    spend('mend', () => buyMend(next, mendCost));
+  }
 
-    // A hire is one contract (docs/run-loop.md "Contracts"): a held one first, else one bought on the
-    // spot while the gold is there. The Hall sits after the act's fork, so a contract held here has no
-    // claim to wait for before the next act's.
-    const contractInHand = (): boolean => {
-      if (next.recruitContracts > 0) return true;
-      if (next.gold < contractPrice(next)) return false;
-      spend('contract', () => buyContract(next));
-      return true;
-    };
-    for (const offerId of offers.heroOfferIds) {
-      const offer = guildHallOffers.find((o) => o.id === offerId);
-      if (!offer) continue;
-      const rosterId = freshRosterId(next, offer.heroId);
-      if (next.roster.length < ROSTER_CAP) {
-        if (!contractInHand()) break;
-        record.recruitsBySource.hire = (record.recruitsBySource.hire ?? 0) + 1;
-        next = recruitFromGuildHall(next, offer, rosterId);
-        continue;
-      }
-      // A hire arrives raw and one act behind (guildHallEntry), so it replaces only a hero it outscores as-is.
-      const weakest = policy.byPower(next.roster)[next.roster.length - 1];
-      if (policy.powerScore(weakest) < policy.powerScore(guildHallEntry(next, offer, rosterId))) {
-        if (!contractInHand()) break;
-        record.recruitsBySource.hireReplacing = (record.recruitsBySource.hireReplacing ?? 0) + 1;
-        next = recruitFromGuildHallReplacing(next, offer, rosterId, weakest.rosterId);
-      }
+  // A hire is one contract (docs/run-loop.md "Contracts"): a held one first, else one bought on the
+  // spot while the gold is there. The Hall sits after the act's fork, so a contract held here has no
+  // claim to wait for before the next act's.
+  const contractInHand = (): boolean => {
+    if (next.recruitContracts > 0) return true;
+    if (next.gold < contractPrice(next)) return false;
+    spend('contract', () => buyContract(next));
+    return true;
+  };
+  for (const offerId of offers.heroOfferIds) {
+    const offer = guildHallOffers.find((o) => o.id === offerId);
+    if (!offer) continue;
+    const rosterId = freshRosterId(next, offer.heroId);
+    if (next.roster.length < ROSTER_CAP) {
+      if (!contractInHand()) break;
+      record.recruitsBySource.hire = (record.recruitsBySource.hire ?? 0) + 1;
+      next = recruitFromGuildHall(next, offer, rosterId);
+      continue;
+    }
+    // A hire arrives raw and one act behind (guildHallEntry), so it replaces only a hero it outscores as-is.
+    const weakest = policy.byPower(next.roster)[next.roster.length - 1];
+    if (policy.powerScore(weakest) < policy.powerScore(guildHallEntry(next, offer, rosterId))) {
+      if (!contractInHand()) break;
+      record.recruitsBySource.hireReplacing = (record.recruitsBySource.hireReplacing ?? 0) + 1;
+      next = recruitFromGuildHallReplacing(next, offer, rosterId, weakest.rosterId);
     }
   }
 
@@ -1209,14 +1142,8 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     spend('gear', () => absorbItem(buyShopItem(next, item), target.rosterId, itemId, equipment, rosterHeroes));
   }
 
-  // The Vigil's Smithy: what gold is left goes into the gear already worn.
-  if (muster) {
-    spend('anvil', () => resolveAnvil(next));
-    spend('enchant', () => resolveEnchanter(next));
-  }
-
   // Spare gold at the last shop before a Guardian buys a contract rather than rusting.
-  if (!muster && next.gold >= contractPrice(next) && next.roster.length < ROSTER_CAP) {
+  if (next.gold >= contractPrice(next) && next.roster.length < ROSTER_CAP) {
     spend('contract', () => buyContract(next));
   }
   return next;

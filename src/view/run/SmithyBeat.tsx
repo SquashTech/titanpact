@@ -11,10 +11,8 @@ import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { AnvilFigure, HammerFigure, RuneRing } from './smithyArt';
 
-export type SmithyWork =
-  | { kind: 'anvil' | 'enchant'; before: EquipmentDefinition; after: EquipmentDefinition }
-  /** The Forge node: the hammer, then the circle. `lifted` is what comes off the anvil, null when the act gave no lift. */
-  | { kind: 'forge'; before: EquipmentDefinition; lifted: EquipmentDefinition | null; after: EquipmentDefinition };
+/** The Forge node's work: the hammer, then the circle. `lifted` is what comes off the anvil, null when the act gave no lift. */
+export type SmithyWork = { kind: 'forge'; before: EquipmentDefinition; lifted: EquipmentDefinition | null; after: EquipmentDefinition };
 
 type Cue = 'heat' | 'swing1' | 'hit1' | 'swing2' | 'hit2' | 'swing3' | 'hit3' | 'quench' | 'cooled' | 'draw' | 'pour' | 'bound' | 'done';
 
@@ -77,17 +75,16 @@ function Burst<T extends Record<string, number>>({ className, items, vars }: { c
 }
 
 /**
- * What the Smithy MADE, as a cutscene (2026-10-27, per user direction). The bars come down and the
- * work plays out: on the Anvil the piece heats in the fire, takes two strikes and a third the camera
- * leans into, and is quenched in a burst of steam to come out in its new tier; at the Enchanter the
- * circle draws itself, the element pours in from the edges while the piece turns in the air, and the
- * binding wipes it over into its enchanted form as its new name writes itself. The Forge plays both,
- * one after the other. Neither is a decision: the change has landed before it plays, it clears
- * itself, and a tap skips it.
+ * What the Forge MADE, as a cutscene (2026-10-27, per user direction). The bars come down and the
+ * work plays out: the piece heats in the fire, takes two strikes and a third the camera leans into,
+ * and is quenched in a burst of steam to come out in its new tier; then the circle draws itself, the
+ * element pours in from the edges while the piece turns in the air, and the binding wipes it over
+ * into its enchanted form as its new name writes itself. Not a decision: the change has landed
+ * before it plays, it clears itself, and a tap skips it.
  */
 export function SmithyBeat({ work, onDone }: { work: SmithyWork; onDone: () => void }) {
   const reduced = prefersReducedMotion();
-  const acts: ('anvil' | 'enchant')[] = work.kind === 'forge' ? ['anvil', 'enchant'] : [work.kind];
+  const acts: ('anvil' | 'enchant')[] = ['anvil', 'enchant'];
   const [cue, setCue] = useState<Cue>(reduced ? 'done' : acts[0] === 'anvil' ? 'heat' : 'draw');
   const [hitstop, setHitstop] = useState(false);
   // Read through a ref: a parent re-render handing over a fresh callback must not restart the beat.
@@ -95,7 +92,7 @@ export function SmithyBeat({ work, onDone }: { work: SmithyWork; onDone: () => v
   onDoneRef.current = onDone;
 
   const enchantType = enchantTypeOf(work.after);
-  const lifted = work.kind === 'forge' ? (work.lifted ?? work.before) : work.kind === 'anvil' ? work.after : work.before;
+  const lifted = work.lifted ?? work.before;
 
   useEffect(() => {
     const done = () => onDoneRef.current();

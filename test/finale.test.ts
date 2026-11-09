@@ -1,4 +1,4 @@
-// The finale act — the Vigil and the final battle (docs/run-loop.md §4, docs/lore.md). The
+// The finale act — the final battle (docs/run-loop.md §4, docs/lore.md). The
 // decided shape a later pass could move without noticing: what the finale fields, in
 // what order, at what power, and the three windows 6v6 actually opens.
 
@@ -218,39 +218,27 @@ test('finale: the Threshold is a real location the draw can never produce', () =
 
 // --- The map ---
 
-test('finale: the finale act is a corridor — the Vigil, then the one fight the Herald and the Eyes share, no branch', () => {
+test('finale: the finale act is one node — the one fight the Herald and the Eyes share', () => {
   const map = generateMap(1234, FINALE_ACT);
   assert.deepStrictEqual(
     map.rows.map((row) => row.map((id) => map.nodes[id].type)),
-    [['muster'], ['finale']]
+    [['finale']]
   );
-  assert.strictEqual(map.nodes[map.startNodeIds[0]].nextIds.length, 1);
+  assert.deepStrictEqual(map.startNodeIds, [map.bossNodeId]);
   assert.strictEqual(map.nodes[map.bossNodeId].type, 'finale');
-  // Seedless in effect: the corridor is the same map whatever the run rolled.
+  // Seedless in effect: the same map whatever the run rolled.
   assert.deepStrictEqual(generateMap(9, FINALE_ACT).nodes, generateMap(1234, FINALE_ACT).nodes);
 });
 
-test('finale: the seal acts still get the branching map — act 6 is the only corridor', () => {
+test('finale: the seal acts still get the branching map — only the finale is one node', () => {
   for (let act = 1; act <= SEAL_ACTS; act++) {
     const map = generateMap(5, act);
-    assert.ok(map.rows.length > 2, `act ${act} collapsed to a corridor`);
+    assert.ok(map.rows.length > 2, `act ${act} collapsed`);
     assert.strictEqual(map.nodes[map.bossNodeId].type, 'boss');
   }
 });
 
-// --- The Vigil ---
-
-test('vigil: it recruits nobody — the finale is fought by the roster the run kept', () => {
-  for (const rosterSize of [2, 4, 6]) {
-    let run = { ...createRunState(), actNumber: FINALE_ACT };
-    for (let i = 0; i < rosterSize; i++) {
-      run = addRosterEntry(run, createRosterEntry(`r${i}`, 'cinderKnight', []));
-    }
-    assert.deepStrictEqual(rollGuildHallOffers(run, guildHallOffers, true).heroOfferIds, []);
-  }
-});
-
-test('vigil: a plain Guild Hall still offers 2-3', () => {
+test('finale: a Guild Hall offers 2-3', () => {
   const run = { ...createRunState(), actNumber: 3 };
   for (let i = 0; i < 20; i++) {
     const offers = rollGuildHallOffers(run, guildHallOffers);

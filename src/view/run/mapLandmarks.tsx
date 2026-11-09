@@ -38,7 +38,6 @@ const KIND: Partial<Record<MapNodeType, LandmarkKind>> = {
   scribeReward: 'npc',
   academyReward: 'building',
   shop: 'building',
-  muster: 'building',
   boss: 'gate',
   finale: 'titanGate',
 };

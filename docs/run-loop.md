@@ -86,9 +86,12 @@ choice): **`SHELF_GEM_COUNT` = 5, five different stats, so a visit is missing tw
 counter's stock one row, the roster above it drawn at the item who-screen's 96px figure (the Gear
 counter's shrinks to fit the piece in hand). A Gem pick fills the stat row in on every card; the
 row is always laid out, so the cards never grow under the tap.
-**The Vigil trades the Tavern for the Smithy**: Gems, Gear, and the Anvil and Enchanter over worn
-gear — nobody joins for the finale, and with no bar no mend is sold there.
-Cycle III's "the Smithy ×1.5" (`smithyPrice`) now prices only the Vigil's Smithy.
+**The Smithy is DELETED (2026-11-09, per user direction)** — the Anvil and the Enchanter, their
+prices (`ANVIL_PRICE_BY_TARGET`, `ENCHANT_PRICE_BY_RARITY`), Cycle III's ×1.5 (`smithyPrice`) and
+the tab. Its only home since 2026-10-08 was the Vigil, which went the same day (§4 "The finale's
+shape"). A worn piece is lifted and bound only at the **Forge** node now ("The Forge and the Ley
+Line"), whose lift reads `liftTarget`. **Open:** gold no longer has a sink after Act 4's Guild
+Hall, and `ACT_GOLD_SCALE` was sized against Smithy jobs — watch whether late gold piles up.
 **The call** (2026-10-12, per user direction, replacing the reroll — another random shelf of raw,
 act-behind hires was a buy nobody made) is the Tavern's one lever on WHO shows up: name a TYPE, and
 one of the run's pool of that innate type — not on the roster, not already posted, which one rolled —
@@ -101,7 +104,7 @@ and that is to be watched in play. Untuned, and the sim never calls.
 
 **The Blacksmith — deleted 2026-09-15** (`docs/gear-absorption.md` §6). From act 3 the funnel was
 a pick of Guild Hall or Blacksmith (item slots, the Anvil, the Enchanter). With gear absorbed the
-funnel is one forced Guild Hall every act; nothing is sold back. Its Smithy went to the Vigil alone on 2026-10-08.
+funnel is one forced Guild Hall every act; nothing is sold back. Its Smithy went to the Vigil alone on 2026-10-08, and was deleted with it on 2026-11-09.
 
 **The map is a scene, not a graph (2026-09-08).** It shows where the player is standing and the
 two or three places they may go (`MapRoute`); the whole-act grid is gone. Across 40 seeds only
@@ -152,13 +155,13 @@ two reds a shade apart on the act's one real difficulty choice, and was reverted
 | `skirmish` | Four heroes from the **recruitable pool**, at par. The fork's plain option; a Recruit Contract shot. |
 | `elite` | As `skirmish`, one level over it (`ENEMY_LEVEL_OFFSET`), loot one tier ahead, XP ×1.5. |
 | `boss` | The Location's champion over Titanspawn escorts, all at the node's level (`docs/enemy-levels.md` §4). Pays the Guardian's Banner and ends the act (§3). It paid a Recruit Contract until 2026-10-05 ("Contracts" below). |
-| `shop` | The **Guild Hall** — Tavern, Gems and Gear (§1); the Vigil's is Gems, Gear and Smithy. Rolled once a visit (`rollGuildHallOffers`). |
+| `shop` | The **Guild Hall** — Tavern, Gems and Gear (§1). Rolled once a visit (`rollGuildHallOffers`). |
 | `equipmentReward` ("Items") | `NodeRewardScreen` — ONE random item on the act's curve, straight to the who-screen (`docs/gear-absorption.md`); it was pick 1 of 3 until 2026-10-27, per user direction — the choice of piece made the node too flexible. Weight 78. |
 | `currencyReward` | An instant gold grant (15–30 at Act 1, × `ACT_GOLD_SCALE`), paid on arrival and counted up into the purse. |
 | `contractReward` ("Contract") | One Recruit Contract, paid on arrival (`grantContract`). Weight 24. See "Contracts" below. |
 | `scrollReward` ("Scroll Cache") | `ScrollNodeScreen` — **`SCROLL_CACHE_COUNT` = 3 Mastery pips** in any split. Weight 20. See "Mastery Scrolls" below. |
 | `scribeReward` ("Scribe") | `ScrollNodeScreen` — pick TWO heroes, **2 pips each** (`SCRIBE_PICKS`, `SCRIBE_PIPS_EACH`). Not in `REWARD_WEIGHTS`: a forced row every act (§1). |
-| `forgeReward` ("Forge") | The Smithy's Anvil AND Enchanter, free, once. See "The Forge and the Ley Line". Weight 25. |
+| `forgeReward` ("Forge") | One worn piece lifted a tier AND bound to an element, free, once. See "The Forge and the Ley Line". Weight 25. |
 | `leyLineReward` ("Attunement") | Pick a hero: +`LEY_LINE_FORCE` = 10 Force at its innate primary, for the run. See "The Forge and the Ley Line". Weight 25. |
 | `manaWellReward` ("Mana Well") | Pick a hero: +`MANA_WELL_AMOUNT` = 40 max Mana and +`MANA_WELL_REGEN` = 5 MP Regen, for the run. See "The Mana Well". Weight 20. |
 | `restReward` ("Rest") | The whole roster made whole, the downed stood up. See "Wounds". Weight 30. |
@@ -288,8 +291,8 @@ the consequence — the hero's own element hits harder — where *Ley Line* name
 
 **The Forge** (`forgeReward`, `ForgeNodeScreen`, `forgeItem`): the roster as benches
 (`SmithyBenches`); tap a worn piece, pick an element, and it comes off the anvil **a tier up AND
-bound** (2026-09-24 — the lift alone read as a trap pick). The lift is the paid Anvil's quote
-(`anvilQuote`): a Unique, a Mythic or a tier the act's window has not reached gets no lift, but is
+bound** (2026-09-24 — the lift alone read as a trap pick). The lift is `liftTarget` (the paid
+Anvil's quote until the Smithy was deleted, 2026-11-09): a Unique, a Mythic or a tier the act's window has not reached gets no lift, but is
 still bound, so the node is dead only for a roster that wears nothing. Played on `SmithyBeat`'s
 `forge` beat. Watch it: a free lift an act eats about one paid one, and gold already pools.
 
@@ -642,18 +645,19 @@ Broken or Holds.
 
 ### The finale's shape
 
-The finale act is not another act of the §1 shape; it is a corridor of two nodes at a **fixed
-location** the itinerary can never draw, the way Act 1 is fixed to Wild's Edge — where the binding
-was made.
+The finale act is not another act of the §1 shape; it is **one node, the finale fight**, at a
+**fixed location** the itinerary can never draw, the way Act 1 is fixed to Wild's Edge — where the
+binding was made.
 
-- **Row 0: the Vigil** (`muster`) — a Guild Hall variant and the run's last node of any kind. **It
-  recruits NOBODY** (2026-09-24): no hires, no Contract, no reroll; its Tavern holds the mend alone
-  and it opens on the Shop. The finale is fought by the roster the run kept, so arriving short is
-  the run's own result. It used to fill the roster free; measured, removing that was noise at both
-  rungs (Base 73.7 → 74.0%, A1 31.2 → 31.3%), since at Base every run already arrived six strong.
-  The finale by heroes standing on entry, A1: six 91%, five 65%, four 49%, three 16%. Its shelf is
-  the run's last place to spend gold.
-- **Row 1: the finale** — no branch and no choice; drawing it as a corridor is the point.
+**The Vigil is DELETED (2026-11-09, per user direction):** a shop between the last seal and the
+Herald killed the final act's momentum. It was the corridor's first node (`muster`), a Guild Hall
+of Gems, Gear and the Smithy that recruited nobody. Now the last seal's chain runs straight on:
+the Act 4 Guardian's post-fight chain → the Pact Seal ("Walk to the Threshold") → the Threshold's
+arrival screen → **the Herald's announcement** → the fight. The finale map still exists as one
+node (`finaleMap`), so a run resumed at the map stands before the one tile, but the arrival
+screen's Enter skips the map and opens the Herald (`handleEnterAct`, App.tsx). An old save on the
+Vigil loads standing before the fight (`holdsVigil`, run/save.ts). The finale is still fought by
+the roster the run kept, and Act 4's Guild Hall is now the run's last place to spend gold.
 
 ### The finale
 

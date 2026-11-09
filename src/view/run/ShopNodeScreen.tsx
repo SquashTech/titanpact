@@ -34,8 +34,6 @@ interface Props {
   onBuyMend: () => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
-  /** The Vigil: the last node of the run — the Gems, the Gear and the Smithy, and nobody hired. */
-  muster?: boolean;
 }
 
 // The `shop` node. Continue stands down while the panel has a modal open —
@@ -59,13 +57,12 @@ export function ShopNodeScreen({
   onBuyMend,
   onRequestRosterReplace,
   onContinue,
-  muster = false,
 }: Props) {
   const [overlayOpen, setOverlayOpen] = useState(false);
   // The counter the player was last at this visit, across a who-screen's unmount; a visit opens on the Tavern.
   const location = useAmbientLocation();
   const hall = location ? locationBackdrop(location.id, 'hall') : undefined;
-  const tabs = guildHallTabs(run, offers, muster);
+  const tabs = guildHallTabs(run, offers);
   const [tab, setTab] = useState<GuildHallTab>(() => {
     const held = readGuildHallTab(tabs[0].id);
     return tabs.some((t) => t.id === held) ? held : tabs[0].id;
@@ -105,13 +102,9 @@ export function ShopNodeScreen({
         </>
       )}
       <RosterPeek run={run} />
-      {/* Contracts beside the gold wherever one can be bought or spent — every hall but the Vigil's, which has no Tavern. */}
-      <NodePurse gold={run.gold} contracts={muster ? undefined : run.recruitContracts} />
+      <NodePurse gold={run.gold} contracts={run.recruitContracts} />
 
-      {/* The Smithy's own forge is its sign: six benches fit under the anvil only once the hall's is off the top. */}
-      {tab !== 'smithy' && (
-        <NodeHeader compact eyebrow={muster ? 'Before the Threshold' : 'Welcome to'} title={muster ? 'The Vigil' : 'The Guild Hall'} />
-      )}
+      <NodeHeader compact eyebrow="Welcome to" title="The Guild Hall" />
 
       <div className="screen-scroll">
         <GuildHallPanel
@@ -138,7 +131,7 @@ export function ShopNodeScreen({
       <HallSigns tabs={tabs} active={tab} onSelect={selectTab} />
       {!overlayOpen && !flow.busy && (
         <button className="resolve-button" onClick={onContinue}>
-          {muster ? 'Walk on' : 'Continue'}
+          Continue
         </button>
       )}
 

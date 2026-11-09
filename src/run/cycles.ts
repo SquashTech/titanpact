@@ -2,7 +2,7 @@
 // on `RunState.cycle`, 1-based. Cycle I is the base game. In Cycle II the Wardens hold the seals
 // (run/wardens.ts) and the Guardians wake (docs/ascension.md §2a): the champion
 // wears its type's Mark and grows on hero grades, and the escorts rise to three from Act 3. Cycle III, the Long Winter, wards every
-// Guardian while its company stands, frays the Banners to half, prices the Smithy half again and
+// Guardian while its company stands, frays the Banners to half and
 // loses Wild's Edge (docs/cycles.md §3). Cycle IV, the Gathering, casts the enemy as warbands
 // (run/warbands.ts) and trains the companion and the Guild. Cycle V is not built; the picker greys it.
 
@@ -29,11 +29,8 @@ export const GUARDIANS_WAKE_FROM_CYCLE = 2;
 /** The Cycle the Wardens first hold the seals (run/wardens.ts), and every Cycle after it. */
 export const WARDENS_FROM_CYCLE = 2;
 
-/** The Long Winter (docs/cycles.md §3): from here the Guardians are warded, the Banners fray and the Smithy costs more. */
+/** The Long Winter (docs/cycles.md §3): from here the Guardians are warded and the Banners fray. */
 export const LONG_WINTER_FROM_CYCLE = 3;
-
-/** What the Smithy charges in a Long Winter, on its Cycle I price, rounded to 5 gold. */
-export const LONG_WINTER_SMITHY_MULTIPLIER = 1.5;
 
 /** The Gathering (docs/cycles.md §3): from here the enemy fields warbands, and the survivors have prepared. */
 export const GATHERING_FROM_CYCLE = 4;
@@ -109,11 +106,6 @@ export function isLongWinter(run: Pick<RunState, 'cycle'>): boolean {
 
 export function isGathering(run: Pick<RunState, 'cycle'>): boolean {
   return run.cycle >= GATHERING_FROM_CYCLE;
-}
-
-/** A Smithy price in this run's Cycle: the Long Winter's ×1.5, rounded to 5 gold. */
-export function smithyPrice(run: Pick<RunState, 'cycle'>, base: number): number {
-  return isLongWinter(run) ? Math.round((base * LONG_WINTER_SMITHY_MULTIPLIER) / 5) * 5 : base;
 }
 
 /**

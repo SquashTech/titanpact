@@ -11,7 +11,7 @@ import { relics } from '../src/data/relics';
 import { passives } from '../src/data/passives';
 import { TYPES } from '../src/data/typechart';
 import { generateMap } from '../src/run/map';
-import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
+import { addRosterEntry, createRosterEntry, createRunState, FINALE_ACT, type RunState } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
 import { buildContentIndex, decodeSave, encodeSave, saveSummary, SAVE_VERSION } from '../src/run/save';
 import { xpForLevel } from '../src/run/growth';
@@ -137,6 +137,32 @@ test('save: a currentNodeId or visited id off the map is refused', () => {
 
 test('save: a run with no map is refused — no checkpoint is written without one', () => {
   assert.ok(rejectionOf((raw) => (raw.run.map = null)).includes('map'));
+});
+
+test('save: a finale saved on the deleted Vigil loads standing before the one fight', () => {
+  const vigilMap = {
+    seed: 9,
+    nodes: {
+      'r0-c0': { id: 'r0-c0', type: 'muster', row: 0, col: 0, nextIds: ['r1-c0'] },
+      'r1-c0': { id: 'r1-c0', type: 'finale', row: 1, col: 0, nextIds: [] },
+    },
+    rows: [['r0-c0'], ['r1-c0']],
+    startNodeIds: ['r0-c0'],
+    bossNodeId: 'r1-c0',
+  };
+  for (const walked of [null, 'r0-c0']) {
+    const raw = JSON.parse(JSON.stringify({ ...encodeSave({ ...sampleRun(), actNumber: FINALE_ACT }, 'map'), resume: { screen: { kind: 'shop' } } }));
+    raw.run.map = vigilMap;
+    raw.run.currentNodeId = walked;
+    raw.run.visitedNodeIds = walked ? [walked] : [];
+    const result = decodeSave(raw, index);
+    assert.ok(result.ok, result.ok ? '' : result.reason);
+    const { map, currentNodeId, visitedNodeIds } = result.save.run;
+    assert.deepStrictEqual(map!.startNodeIds.map((id) => map!.nodes[id].type), ['finale']);
+    assert.strictEqual(currentNodeId, null);
+    assert.deepStrictEqual(visitedNodeIds, []);
+    assert.strictEqual(result.save.resume, undefined, 'a screen saved over the Vigil is dropped');
+  }
 });
 
 test('save: an over-cap or duplicated roster is refused', () => {

@@ -85,7 +85,7 @@ export function enchantLabel(enchantId: EnchantmentId): string {
 /**
  * Elemental Force an enchant grants, by the item's tier. The ONE thing besides stats that still
  * scales with rarity — Awakenings are flat (§3) — which is what makes enchanting a Mythic worth
- * more than enchanting a Common, and what the Enchanter's tier-priced fee is charging for.
+ * more than enchanting a Common.
  *
  * Budgeted SEPARATELY from RARITY_BUDGET: an enchanted item is a base item plus a bolt-on, so
  * `equipmentBudgetProblems` still audits the base exactly as it always did.
@@ -129,7 +129,7 @@ export function parseEquipmentId(id: string): ParsedEquipmentId {
   return { base, rarity: null, ...(parts[1] ? { enchantId: parts[1] as EnchantmentId } : {}) };
 }
 
-/** The same item without its enchant — the identity a merge and an Anvil upgrade are measured on. */
+/** The same item without its enchant — the identity a merge and a Forge lift are measured on. */
 export function unenchantedIdOf(id: string): string {
   const parsed = parseEquipmentId(id);
   return equipmentIdFor(parsed.base, parsed.rarity);
@@ -350,7 +350,7 @@ export type LootSource = 'standard' | 'elite' | 'cache';
 
 /**
  * The best tier an act allows, whatever the path. `ACT_RARITY_WINDOW` began life capping DROPS
- * only; with a purchasable Anvil and a free merge, a rich or lucky player would simply buy or
+ * only; with a free lift and a free merge, a lucky player would simply lift or
  * merge past it, so every path is measured against this one rule instead of three new ones
  * (docs/equipment.md §5). Holding a pair of Legendaries through Act 2 waiting for the window to
  * open is anticipation, not a bug.
@@ -359,7 +359,7 @@ export function maxRarityForAct(actNumber: number): EquipmentRarity {
   return ACT_RARITY_WINDOW[clamp(actNumber, 1, ACT_RARITY_WINDOW.length - 1)][1];
 }
 
-/** Whether an act permits an item to reach `rarity` at all — the gate on the Anvil and on a merge. */
+/** Whether an act permits an item to reach `rarity` at all — the gate on the Forge's lift and on a merge. */
 export function actAllowsRarity(actNumber: number, rarity: EquipmentRarity): boolean {
   return RARITY_ORDER.indexOf(rarity) <= RARITY_ORDER.indexOf(maxRarityForAct(actNumber));
 }
@@ -515,7 +515,7 @@ export function holdsItem(loadout: EquipmentLoadout, itemId: string): boolean {
  *
  * Null when the pair cannot merge: different families, a Unique (no ladder), or the higher of
  * the two already Mythic (nothing above it). The act window does NOT cap a merge — it caps what
- * drops and what the Anvil lifts to; a merge is a finite roll meeting a finite roster and cannot
+ * drops and what the Forge lifts to; a merge is a finite roll meeting a finite roster and cannot
  * be bought or hoarded past it.
  */
 export function mergeIntoHeld(held: EquipmentDefinition, drop: EquipmentDefinition): string | null {

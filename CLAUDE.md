@@ -84,7 +84,7 @@ don't silently override it.
 > (`docs/authoring-moves.md`). Late is still cast 1.6 times a fight in Act 5. Measured: full-clear 57%, Late casts 19 / 29 / 36% of Acts 4 / 5 /
 > finale (was 11 / 18 / 23), the Act 1 wall at 76% untouched by every non-design lever (§8).
 > **Phase 5 is IN (2026-10-02, per user direction, §5): FOUR ACTS.** Act 5 is deleted, not
-> compressed — Wild's Edge, three chosen Locations, then the Vigil → Herald → Eyes as act 5
+> compressed — Wild's Edge, three chosen Locations, then Herald → Eyes as act 5 (the Vigil before them was deleted 2026-11-09)
 > (`TOTAL_ACTS` = 5, `SEAL_ACTS` = 4; two seals stay shut). Acts 1–4 are untouched (par 8/14/19/24,
 > the finale at par 24). Act 4's Guardian, the last seal, grows on C; the finale is re-fitted —
 > Eyes Int −20 with their HP kept, Herald Atk/Int −20, Withering Gaze 4%. **The MVP pip**
@@ -133,7 +133,7 @@ don't silently override it.
 > window not consulted (`mergeIntoHeld`); **Sell** is the who-screen's one decline, and a drop
 > nobody can receive is gold on the spot. The bag, its marks and the footer label, the swap
 > sheet, the Blacksmith node, the Guild Hall's item shelf and its Sell are DELETED; the funnel is
-> a forced Guild Hall every act with the Anvil and Enchanter on its **Smithy** tab; the spliced
+> a forced Guild Hall every act (its **Smithy** tab deleted 2026-11-09); the spliced
 > row is the Tutor in act 4 (the in-row act-4 seat retired with the Forge; act 5's went with the fifth act). Its §9 lists the invariants below it reverses. Measured
 > (sim, 3000 runs): full-clear 12.0 → 18.8% on the same seed — three sockets are a player buff
 > — 17.2 items a completed run, a merge OFFERED 4.7 times a run and TAKEN 0.6 by a pilot that
@@ -616,7 +616,7 @@ don't silently override it.
   designer's screen on one of a new player's first nodes; the roll keeps the payoff and leaves
   WHO as the only decision. With the Tutor it is the only way to a move AHEAD of its schedule.
   **Act 4's spliced row is a forced Tutor** (2026-09-15; it was the Forge until gear was
-  absorbed — `docs/gear-absorption.md` §4). Act 5 is the finale, Vigil → fight, with no Tutor.
+  absorbed — `docs/gear-absorption.md` §4). Act 5 is the finale, one fight, with no Tutor.
 - **Evolutions are authored branch points**, each option carrying a **single
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
   **Every path pays ONE move and ONE passive, and never a stat line** (2026-10-10, per user
@@ -735,10 +735,10 @@ don't silently override it.
   primary, for the run, held on `RosterEntry.bonusStatusGrants` and summed with its gear's at
   fight build. Allowed because Force is not a stat: a typed BasePower term paid per hit, per
   target, only on the hero's own element, so it is read on every hit rather than on a sheet.
-  Its sibling **the Forge** (`forgeReward`, `forgeItem`) is the Smithy's Anvil AND Enchanter free,
+  Its sibling **the Forge** (`forgeReward`, `forgeItem`) lifts and binds free,
   once (2026-09-24, per user direction — the lift alone read as a trap pick) — one worn piece a
-  tier up on the paid Anvil's own quote, so the act window still caps it, and bound to an element
-  the player picks — and needs no exception. Together they are the Smithy's two verbs given map seats (25 each), which
+  tier up (`liftTarget`, so the act window still caps it) and bound to an element
+  the player picks — and needs no exception; since the Smithy's deletion (2026-11-09) it is the only lift and binding. Together they hold map seats (25 each), which
   took the Scroll Cache from 59% of reward rows to 48% without its weight flowing into Equipment
   (`docs/run-loop.md` "The Forge and the Ley Line"); **the Cache's weight then came down 46 → 20**
   (same day, per user direction — two Caches an act was 47% of acts and, with the Scribe's 2, an
@@ -880,8 +880,8 @@ what's still unimplemented:
   and the mend), **Gems** (9: every stat once and two seconds) and
   **Gear** (6 pieces on the act's standard curve, at `shopItemPrice`). The Gem and Gear counters
   show the whole roster — pips, sockets — and a pick lands straight on the hero tapped, no
-  who-screen. **The Smithy (Anvil, Enchanter) is the VIGIL's alone**, which has no Tavern: no
-  hire or mend is sold before the finale. Map tiles
+  who-screen. **The Smithy (Anvil, Enchanter) is DELETED with the Vigil** (2026-11-09, per user
+  direction): the Forge node is the only lift and binding. Map tiles
   **dropped their labels** to pay for the extra row — glyph, silhouette and colour carry
   what the words did, a tile previews before it commits (below), and this supersedes the
   two-word Monsters/Skirmish vocabulary below. **Labels came back 2026-10-02** (per user
@@ -905,8 +905,10 @@ what's still unimplemented:
   on screen to be read; it does not survive the map becoming a scene, where a reward two
   rows back quietly closing an encounter is a rule held in the head rather than seen. The
   lead-on markers came off that row with it, being derived. **5 acts of that shape,
-  then a finale act** (2026-09-05, `docs/lore.md` + `run-loop.md` §4; **the finale corridor is
-  Vigil → ONE fight since 2026-09-18, `docs/titan-eyes.md` §10** — the Herald leading one Late
+  then a finale act** (2026-09-05, `docs/lore.md` + `run-loop.md` §4; **the finale act is
+  ONE fight since 2026-09-18, `docs/titan-eyes.md` §10; the Vigil before it DELETED 2026-11-09, per user
+  direction, so Act 4's seal leads through the Pact Seal and the Threshold's arrival straight to the
+  Herald** — the Herald leading one Late
   Titanspawn per broken seal, **armed with Act 4's two items since 2026-10-05**, **warded while any of its company stands** (`wardedWhileCompanyStands`,
   bench included, so it falls last), then two mono-Ancient Eyes whose Gaze marks a hero Beheld
   and whose Regard can only be aimed at one — a `reserves` PHASE that enters once the Herald's

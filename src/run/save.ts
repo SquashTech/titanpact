@@ -18,10 +18,10 @@ import { STAT_ORDER } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
 import { MAX_ITEM_SLOTS } from './equipment';
 import type { MapNode, MapNodeType, RunMap } from './map';
-import { MAP_NODE_TYPES } from './map';
+import { MAP_NODE_TYPES, generateMap } from './map';
 import type { ProgressionTable } from './progression';
 import type { BrokenSeal, RosterEntry, RunState } from './state';
-import { ROSTER_CAP, TOTAL_ACTS } from './state';
+import { FINALE_ACT, ROSTER_CAP, TOTAL_ACTS } from './state';
 import { CONSUMABLE_HOLD_CAP, CONSUMABLE_KINDS, type ConsumablePurse } from './consumables';
 import { MAX_XP, xpForLevel } from './growth';
 import { MASTERY_CAP } from './mastery';
@@ -465,6 +465,12 @@ export function decodeConsumables(value: unknown): ConsumablePurse {
   return purse;
 }
 
+/** True for a run saved in the finale act while its map still held the Vigil (deleted 2026-11-09). */
+function holdsVigil(run: unknown): boolean {
+  if (!isObject(run) || run.actNumber !== FINALE_ACT || !isObject(run.map) || !isObject(run.map.nodes)) return false;
+  return Object.values(run.map.nodes).some((node) => isObject(node) && node.type === 'muster');
+}
+
 function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (!isObject(value)) reject('run is not an object');
   if (!Array.isArray(value.roster)) reject('run.roster is not a list');
@@ -492,16 +498,19 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
 
   // A checkpoint is only ever written from the map or an act intro, both of which have one.
   if (value.map === null || value.map === undefined) reject('run.map is missing');
-  const map = decodeMap(value.map);
+  // A finale saved on or before the deleted Vigil stands in front of the one fight instead.
+  const vigil = holdsVigil(value);
+  const map = vigil ? generateMap(isObject(value.map) && typeof value.map.seed === 'number' ? value.map.seed : 0, FINALE_ACT) : decodeMap(value.map);
 
-  const currentNodeId = value.currentNodeId ?? null;
+  const currentNodeId = vigil ? null : value.currentNodeId ?? null;
   if (currentNodeId !== null) {
     if (typeof currentNodeId !== 'string') reject('run.currentNodeId is not an id');
     if (!map.nodes[currentNodeId]) reject(`run.currentNodeId names missing node "${currentNodeId}"`);
   }
 
-  if (!isStringArray(value.visitedNodeIds)) reject('run.visitedNodeIds is not a list of ids');
-  for (const id of value.visitedNodeIds) if (!map.nodes[id]) reject(`run.visitedNodeIds names missing node "${id}"`);
+  const visitedNodeIds = vigil ? [] : value.visitedNodeIds;
+  if (!isStringArray(visitedNodeIds)) reject('run.visitedNodeIds is not a list of ids');
+  for (const id of visitedNodeIds) if (!map.nodes[id]) reject(`run.visitedNodeIds names missing node "${id}"`);
 
   // A file written before the Cycles holds an Ascension rung (0 = Cycle I); one before the
   // ladder holds neither, and was Cycle I.
@@ -523,7 +532,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     companion: decodeCompanion(value, decodedRoster),
     map,
     currentNodeId,
-    visitedNodeIds: [...value.visitedNodeIds],
+    visitedNodeIds: [...visitedNodeIds],
     fightsStarted: value.fightsStarted,
     encountersWon: value.encountersWon,
     actNumber: value.actNumber,
@@ -567,7 +576,8 @@ export function decodeSave(raw: unknown, index: SaveContentIndex): LoadResult {
     if (raw.checkpoint !== 'map' && raw.checkpoint !== 'actIntro') reject(`save has unknown checkpoint "${String(raw.checkpoint)}"`);
     const savedAt = isInt(raw.savedAt, 0) ? raw.savedAt : 0;
     const base = { version: SAVE_VERSION, savedAt, checkpoint: raw.checkpoint as SaveCheckpoint };
-    const resume = !legacy && raw.resume !== undefined ? { resume: raw.resume } : {};
+    // A screen saved over the Vigil's map names nodes the rebuilt finale map does not have.
+    const resume = !legacy && raw.resume !== undefined && !holdsVigil(raw.run) ? { resume: raw.resume } : {};
     if (legacy || raw.fallbackRun === undefined) return { ok: true, save: { ...base, run: decodeRun(raw.run, index), ...resume } };
     const fallbackRun = decodeRun(raw.fallbackRun, index);
     try {

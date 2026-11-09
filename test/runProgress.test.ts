@@ -6,13 +6,11 @@ import { createRunState, createRosterEntry, addRosterEntry, type RunState } from
 import { generateMap } from '../src/run/map';
 import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, mergeIntoHeld } from '../src/run/equipment';
 import { itemSlotsFor } from '../src/run/progression';
-import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY, sellValueFor } from '../src/run/shop';
+import { sellValueFor } from '../src/run/shop';
 import {
   absorbItem,
-  anvilQuote,
-  anvilUpgrade,
   anyoneCanReceive,
-  enchantItem,
+  liftTarget,
   itemReceiptFor,
   moveItem,
   moveReceiptFor,
@@ -237,31 +235,21 @@ test("runProgress: a Ley Line grants one hero LEY_LINE_FORCE of its innate prima
   assert.throws(() => grantLeyLine(run, 'nobody', heroes), RunProgressError);
 });
 
-// --- The Anvil and the Enchanter (docs/equipment.md §5) ---
+// --- The Forge (docs/equipment.md §5) ---
 
-/** A run in `actNumber` with `gold`, its one hero wearing `worn`. Act matters: the window caps the Anvil. */
+/** A run in `actNumber` with `gold`, its one hero wearing `worn`. Act matters: the window caps the lift. */
 function shopRun(gold: number, worn: string[], actNumber = 3): RunState {
   return { ...gearedRun('cinderKnight', worn), gold, actNumber };
 }
 
 const SOCKET_0 = { rosterId: 'cinderKnight', index: 0 };
 
-test('runProgress: the Anvil lifts a worn item a tier for gold, in place, keeping its family and its enchant', () => {
-  const run = shopRun(200, ['spear.rare.blazing']);
-  const quote = anvilQuote(run, 'spear.rare.blazing', equipment)!;
-  assert.strictEqual(quote.targetId, 'spear.epic.blazing');
-  assert.strictEqual(quote.cost, ANVIL_PRICE_BY_TARGET.epic);
-
-  const next = anvilUpgrade(run, SOCKET_0, equipment);
-  assert.deepStrictEqual(next.roster[0].equipment, ['spear.epic.blazing']);
-  assert.strictEqual(next.gold, 200 - ANVIL_PRICE_BY_TARGET.epic);
-});
-
-test('runProgress: the Anvil is refused without the gold, above Mythic, on a Unique, and on an empty socket', () => {
-  assert.throws(() => anvilUpgrade(shopRun(1, ['spear.rare']), SOCKET_0, equipment), RunProgressError);
-  assert.strictEqual(anvilQuote(shopRun(999, []), 'spear.mythic', equipment), null, 'nothing above Mythic');
-  assert.strictEqual(anvilQuote(shopRun(999, []), 'worldbreaker', equipment), null, 'a Unique has no ladder');
-  assert.throws(() => anvilUpgrade(shopRun(999, []), SOCKET_0, equipment), RunProgressError);
+test('runProgress: a lift keeps the family and the enchant, and there is none above Mythic or on a Unique', () => {
+  const lift = liftTarget(shopRun(0, ['spear.rare.blazing']), 'spear.rare.blazing', equipment)!;
+  assert.strictEqual(lift.targetId, 'spear.epic.blazing');
+  assert.strictEqual(lift.targetRarity, 'epic');
+  assert.strictEqual(liftTarget(shopRun(0, []), 'spear.mythic', equipment), null, 'nothing above Mythic');
+  assert.strictEqual(liftTarget(shopRun(0, []), 'worldbreaker', equipment), null, 'a Unique has no ladder');
 });
 
 test('runProgress: the Forge lifts a tier AND binds the picked element, free', () => {
@@ -272,7 +260,7 @@ test('runProgress: the Forge lifts a tier AND binds the picked element, free', (
   assert.deepStrictEqual(
     forgeItem(shopRun(0, ['spear.rare.blazing']), SOCKET_0, 'tidal', equipment).roster[0].equipment,
     ['spear.epic.tidal'],
-    'a rebinding overwrites, as the Enchanter does'
+    'a rebinding overwrites'
   );
   assert.deepStrictEqual(
     forgeItem(shopRun(0, ['spear.rare.blazing']), SOCKET_0, 'blazing', equipment).roster[0].equipment,
@@ -281,7 +269,7 @@ test('runProgress: the Forge lifts a tier AND binds the picked element, free', (
   );
 });
 
-test('runProgress: the Forge binds what the Anvil would refuse, and refuses only work that changes nothing', () => {
+test('runProgress: the Forge binds what it cannot lift, and refuses only work that changes nothing', () => {
   assert.deepStrictEqual(forgeItem(shopRun(0, ['spear.mythic']), SOCKET_0, 'blazing', equipment).roster[0].equipment, ['spear.mythic.blazing'], 'nothing above Mythic — bound only');
   assert.deepStrictEqual(forgeItem(shopRun(0, ['spear.epic'], 1), SOCKET_0, 'blazing', equipment).roster[0].equipment, ['spear.epic.blazing'], 'the act window caps the lift, not the binding');
   assert.throws(() => forgeItem(shopRun(0, ['spear.mythic.blazing']), SOCKET_0, 'blazing', equipment), RunProgressError, 'no lift and the same element: nothing to do');
@@ -289,28 +277,12 @@ test('runProgress: the Forge binds what the Anvil would refuse, and refuses only
   assert.ok(forgeable(shopRun(0, ['spear.mythic.blazing']), 'spear.mythic.blazing', equipment), 'another element is still work');
 });
 
-test("runProgress: the act window caps the Anvil, not just drops", () => {
-  // With a purchasable Anvil a rich Act-1 player would otherwise simply buy past the window.
-  const act1 = shopRun(999, ['spear.epic'], 1);
-  assert.strictEqual(anvilQuote(act1, 'spear.epic', equipment), null, 'Act 1 reaches Epic and no further');
-  assert.throws(() => anvilUpgrade(act1, SOCKET_0, equipment), RunProgressError);
+test("runProgress: the act window caps the lift, not just drops", () => {
+  assert.strictEqual(liftTarget(shopRun(0, ['spear.epic'], 1), 'spear.epic', equipment), null, 'Act 1 reaches Epic and no further');
   // Act 3 opens Mythic, so the same item is liftable there.
-  assert.ok(anvilQuote(shopRun(999, ['spear.epic'], 3), 'spear.epic', equipment));
+  assert.ok(liftTarget(shopRun(0, ['spear.epic'], 3), 'spear.epic', equipment));
 });
 
-test('runProgress: the Enchanter binds an element, and overwrites rather than stacking', () => {
-  const run = shopRun(300, ['spear.epic']);
-  const enchanted = enchantItem(run, SOCKET_0, 'blazing', equipment);
-  assert.deepStrictEqual(enchanted.roster[0].equipment, ['spear.epic.blazing']);
-  assert.strictEqual(enchanted.gold, 300 - ENCHANT_PRICE_BY_RARITY.epic);
-
-  // One enchant per item, always: re-enchanting replaces the one it carries.
-  const rebound = enchantItem(enchanted, SOCKET_0, 'tidal', equipment);
-  assert.deepStrictEqual(rebound.roster[0].equipment, ['spear.epic.tidal']);
-  assert.throws(() => enchantItem(rebound, SOCKET_0, 'tidal', equipment), RunProgressError);
-});
-
-test('runProgress: a Unique is enchantable even though it cannot be upgraded', () => {
-  const run = shopRun(300, ['worldbreaker']);
-  assert.deepStrictEqual(enchantItem(run, SOCKET_0, 'feral', equipment).roster[0].equipment, ['worldbreaker.feral']);
+test('runProgress: the Forge binds a Unique even though it cannot lift it', () => {
+  assert.deepStrictEqual(forgeItem(shopRun(0, ['worldbreaker']), SOCKET_0, 'feral', equipment).roster[0].equipment, ['worldbreaker.feral']);
 });

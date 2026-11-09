@@ -4,7 +4,7 @@ import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { guildHallOffers } from '../src/data/recruitment';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
-import { rollGuildHallOffers, callForType, callableTypes, TAVERN_CALL_PRICE, TavernCallError, ANVIL_PRICE_BY_TARGET, EQUIPMENT_PRICE_BY_RARITY, EQUIPMENT_SELL_SHARE, sellValueFor, SHOP_ITEM_COUNT, shopItemPrice, buyShopItem, ShopItemError } from '../src/run/shop';
+import { rollGuildHallOffers, callForType, callableTypes, TAVERN_CALL_PRICE, TavernCallError, EQUIPMENT_PRICE_BY_RARITY, EQUIPMENT_SELL_SHARE, sellValueFor, SHOP_ITEM_COUNT, shopItemPrice, buyShopItem, ShopItemError } from '../src/run/shop';
 import { RARITY_ORDER } from '../src/run/equipment';
 
 function seedRoster(heroIds: string[], gold = 0) {
@@ -26,14 +26,11 @@ test('shop: sellValueFor pays the sell share of the tier\'s value, rising with t
   assert.strictEqual(sellValueFor(equipment['sword.common']), Math.floor(EQUIPMENT_PRICE_BY_RARITY.common * EQUIPMENT_SELL_SHARE));
 });
 
-test('shop: the gear shelf holds SHOP_ITEM_COUNT real items, the Vigil included, and a Tavern call keeps them', () => {
+test('shop: the gear shelf holds SHOP_ITEM_COUNT real items, and a Tavern call keeps them', () => {
   const run = seedRoster(['ironWarden'], 1000);
-  for (const muster of [false, true]) {
-    const offers = rollGuildHallOffers(run, guildHallOffers, muster);
-    assert.strictEqual(offers.itemIds.length, SHOP_ITEM_COUNT);
-    assert.ok(offers.itemIds.every((id) => equipment[id]));
-  }
   const offers = rollGuildHallOffers(run, guildHallOffers);
+  assert.strictEqual(offers.itemIds.length, SHOP_ITEM_COUNT);
+  assert.ok(offers.itemIds.every((id) => equipment[id]));
   assert.deepStrictEqual(callForType(run, guildHallOffers, offers, callableTypes(run, guildHallOffers, offers)[0]).offers.itemIds, offers.itemIds);
 });
 
@@ -99,19 +96,4 @@ test('shop: a call to an empty board posts the hero rather than replacing a hire
   const offers = { heroOfferIds: [offer.id], itemIds: [], gems: [] };
   const called = callForType(run, guildHallOffers, offers, 'Fire');
   assert.deepStrictEqual(called.offers.heroOfferIds, [offer.id, called.offerId]);
-});
-
-// --- No gold printer (docs/equipment.md §5) ---
-//
-// With no sale of held gear there is no path from gold back to gold at all: the Anvil and the
-// shelf spend, and the only sale is an unheld piece on the who-screen, at half its tier's value.
-// What survives is the shape of the Anvil table — a lift must cost more than the tier it reaches
-// would sell for, so a Sell can never read as the Anvil undone at a profit.
-
-test('shop: an Anvil lift always costs more than the tier it reaches sells for', () => {
-  for (let i = 0; i + 1 < RARITY_ORDER.length; i++) {
-    const to = RARITY_ORDER[i + 1];
-    const proceeds = Math.floor(EQUIPMENT_PRICE_BY_RARITY[to] * EQUIPMENT_SELL_SHARE);
-    assert.ok(ANVIL_PRICE_BY_TARGET[to] > proceeds, `lifting to ${to} (${ANVIL_PRICE_BY_TARGET[to]}) costs less than a ${to} sells for (${proceeds})`);
-  }
 });

@@ -29,7 +29,6 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   academyReward: 'The Academy',
   patronSeat: 'Patron',
   event: 'Event',
-  muster: 'The Vigil',
   finale: 'The Titan',
 };
 
@@ -58,7 +57,6 @@ export const NODE_LABELS: Record<MapNodeType, string> = {
   academyReward: 'Academy',
   patronSeat: 'Patron',
   event: 'Event',
-  muster: 'Vigil',
   finale: 'The Titan',
 };
 
@@ -87,7 +85,7 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   manaWellReward: '#8fb4ff',
   // The HP bar's own green: a Rest reads as the bar it refills.
   restReward: 'var(--hp-high)',
-  // The Guild Hall's hearth amber: the Forge is the Smithy's Anvil, out on the road and free.
+  // The Guild Hall's hearth amber: the Forge is a smith's work, out on the road and free.
   forgeReward: '#ec9640',
   // Ember red, the Force chip's family colour (statusIcons FORCE): Attunement grants that chip.
   leyLineReward: '#e8643c',
@@ -102,7 +100,6 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   academyReward: '#b8c95a',
   patronSeat: '#d8b46a',
   event: 'var(--tier-common)',
-  muster: 'var(--accent)',
   // The one node in a run that wears the mythic red: the Herald, and what looks down once it falls.
   finale: 'var(--tier-mythic)',
 };
@@ -133,6 +130,5 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   academyReward: 'reward',
   patronSeat: 'reward',
   event: 'reward',
-  muster: 'landmark',
   finale: 'ancient',
 };

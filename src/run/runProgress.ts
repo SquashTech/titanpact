@@ -12,8 +12,7 @@ import type { EnchantmentId, EquipmentDefinition, EquipmentRarity } from './equi
 import { actAllowsRarity, ENCHANTMENT_IDS, equipItem, equipmentIdFor, holdsItem, mergeIntoHeld, nextRarity, parseEquipmentId } from './equipment';
 import { generateMap } from './map';
 import { itemSlotsFor } from './progression';
-import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY, sellValueFor } from './shop';
-import { smithyPrice } from './cycles';
+import { sellValueFor } from './shop';
 import { mergeStatMods } from './statMods';
 import { mendRoster } from './wounds';
 import { rosterIdOfCombatant } from './combatantIds';
@@ -204,7 +203,7 @@ export function grantManaWell(run: RunState, rosterId: string): RunState {
 /**
  * The Ley Line (docs/run-loop.md "The Forge and the Ley Line", 2026-09-17, per user direction):
  * one hero draws LEY_LINE_FORCE of Elemental Force at its innate primary type, for the run — the
- * Enchanter's binding, free, and on the hero rather than a piece, so it sums with any enchant of
+ * Forge's binding, and on the hero rather than a piece, so it sums with any enchant of
  * the type. A Rare enchant's figure: +20-25% on every hit of the type at Early BasePower, and
  * flat, so Late moves outgrow it. Never refused — Force has no cap.
  */
@@ -391,9 +390,9 @@ export function sellItem(run: RunState, itemId: string, equipmentLookup: Record<
   return { ...run, gold: run.gold + sellValueFor(item) };
 }
 
-// --- The Anvil, the Enchanter and merging (docs/equipment.md §5) ---
+// --- The Forge and merging (docs/equipment.md §5) ---
 
-/** Where an item the player owns is sitting: on a hero, in a socket. Both services work on it in place. */
+/** Where an item the player owns is sitting: on a hero, in a socket. The Forge works on it in place. */
 export type ItemRef = { rosterId: string; index: number };
 
 function readItemRef(run: RunState, ref: ItemRef): string {
@@ -414,52 +413,24 @@ function writeItemRef(run: RunState, ref: ItemRef, itemId: string): RunState {
   };
 }
 
-function spend(run: RunState, cost: number, what: string): RunState {
-  if (run.gold < cost) throw new RunProgressError(`${what} costs ${cost} gold, only ${run.gold} available`);
-  return { ...run, gold: run.gold - cost };
-}
-
-/** What the Anvil would charge, or null if this item cannot be lifted right now. */
-export function anvilQuote(
+/** The tier one owned item can be lifted to here, or null: a Unique has no ladder, nothing stands above Mythic, and the act's window caps the target. */
+export function liftTarget(
   run: RunState,
   itemId: string,
   equipmentLookup: Record<string, EquipmentDefinition>
-): { targetId: string; targetRarity: EquipmentRarity; cost: number } | null {
+): { targetId: string; targetRarity: EquipmentRarity } | null {
   const item = equipmentLookup[itemId];
-  if (!item || item.familyId === undefined) return null; // a Unique has no ladder
+  if (!item || item.familyId === undefined) return null;
   const target = nextRarity(item.rarity);
   if (target === null || !actAllowsRarity(run.actNumber, target)) return null;
-  return {
-    targetId: equipmentIdFor(item.familyId, target, item.enchantId),
-    targetRarity: target,
-    cost: smithyPrice(run, ANVIL_PRICE_BY_TARGET[target]),
-  };
-}
-
-/** What the Enchanter charges for an item of this tier in this run's Cycle. */
-export function enchantPrice(run: Pick<RunState, 'cycle'>, rarity: EquipmentRarity): number {
-  return smithyPrice(run, ENCHANT_PRICE_BY_RARITY[rarity]);
-}
-
-/** Lifts one owned item a tier for gold, keeping its family and its enchant. */
-export function anvilUpgrade(
-  run: RunState,
-  ref: ItemRef,
-  equipmentLookup: Record<string, EquipmentDefinition>
-): RunState {
-  const itemId = readItemRef(run, ref);
-  const quote = anvilQuote(run, itemId, equipmentLookup);
-  if (!quote) throw new RunProgressError(`${itemId} cannot be upgraded here`);
-  if (!equipmentLookup[quote.targetId]) throw new RunProgressError(`Unknown equipment ${quote.targetId}`);
-  return writeItemRef(spend(run, quote.cost, 'That upgrade'), ref, quote.targetId);
+  return { targetId: equipmentIdFor(item.familyId, target, item.enchantId), targetRarity: target };
 }
 
 /**
  * The Forge node (docs/run-loop.md "The Forge and the Ley Line"; 2026-09-24, per user direction:
  * "Upgrade and Enchant an item"): one worn piece, free, lifted a tier AND bound to the element the
- * player picks, in one piece of work. The lift reads the paid Anvil's quote — a Unique has no
- * ladder, nothing stands above Mythic, and the act's window still caps the target — and a piece
- * the Anvil would refuse is still bound, so the node is only dead for a roster that wears nothing.
+ * player picks, in one piece of work. The lift reads `liftTarget`, and a piece that cannot be
+ * lifted is still bound, so the node is only dead for a roster that wears nothing.
  * Returns the piece it would make, or null when the work would change nothing.
  */
 export function forgeTarget(
@@ -470,7 +441,7 @@ export function forgeTarget(
 ): string | null {
   if (!equipmentLookup[itemId]) return null;
   const parsed = parseEquipmentId(itemId);
-  const quote = anvilQuote(run, itemId, equipmentLookup);
+  const quote = liftTarget(run, itemId, equipmentLookup);
   const targetId = equipmentIdFor(parsed.base, quote ? quote.targetRarity : parsed.rarity, enchantId);
   if (targetId === itemId || !equipmentLookup[targetId]) return null;
   return targetId;
@@ -481,7 +452,7 @@ export function forgeable(run: RunState, itemId: string, equipmentLookup: Record
   return ENCHANTMENT_IDS.some((enchantId) => forgeTarget(run, itemId, enchantId, equipmentLookup) !== null);
 }
 
-/** The Forge's work: the lift (where the Anvil would give one) and the binding, free, once. */
+/** The Forge's work: the lift (where there is one) and the binding, free, once. */
 export function forgeItem(
   run: RunState,
   ref: ItemRef,
@@ -492,21 +463,4 @@ export function forgeItem(
   const targetId = forgeTarget(run, itemId, enchantId, equipmentLookup);
   if (!targetId) throw new RunProgressError(`${itemId} cannot be forged with ${enchantId}`);
   return writeItemRef(run, ref, targetId);
-}
-
-/** Binds an element to one owned item, overwriting any enchant already on it. One enchant per item, always. */
-export function enchantItem(
-  run: RunState,
-  ref: ItemRef,
-  enchantId: EnchantmentId,
-  equipmentLookup: Record<string, EquipmentDefinition>
-): RunState {
-  const itemId = readItemRef(run, ref);
-  const item = equipmentLookup[itemId];
-  if (!item) throw new RunProgressError(`Unknown equipment ${itemId}`);
-  if (item.enchantId === enchantId) throw new RunProgressError(`${item.name} already carries that enchantment`);
-  const parsed = parseEquipmentId(itemId);
-  const targetId = equipmentIdFor(parsed.base, parsed.rarity, enchantId);
-  if (!equipmentLookup[targetId]) throw new RunProgressError(`Unknown equipment ${targetId}`);
-  return writeItemRef(spend(run, enchantPrice(run, item.rarity), 'That enchantment'), ref, targetId);
 }

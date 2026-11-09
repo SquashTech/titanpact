@@ -13,7 +13,7 @@ import { locations } from '../src/data/locations';
 import { CHAMPION_IDS } from '../src/data/enemies';
 import { TYPES } from '../src/data/typechart';
 import { progressionTable } from '../src/data/progression';
-import { CYCLES, FULL_DECK_CYCLE, MAX_BUILT_CYCLE, cycleOf, openCycle, smithyPrice } from '../src/run/cycles';
+import { CYCLES, FULL_DECK_CYCLE, MAX_BUILT_CYCLE, cycleOf, openCycle } from '../src/run/cycles';
 import { starfallLedgerId } from '../src/run/recruitment';
 import { actOneLocationFor, generateItinerary, locationForAct, locationPool } from '../src/run/locations';
 import { bannerArtId, guardianBannersFor } from '../src/data/relics';
@@ -122,7 +122,7 @@ test('cycles: a star is coloured by the highest Cycle it was earned on, never wa
   assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(raised))).starCycles, raised.starCycles);
 });
 
-test('cycles: the Long Winter loses Wild’s Edge, frays the Banners and prices the Smithy half again', () => {
+test('cycles: the Long Winter loses Wild’s Edge and frays the Banners', () => {
   assert.ok(locationPool(2).includes('wildsEdge'));
   assert.ok(!locationPool(3).includes('wildsEdge'), 'Wild’s Edge is lost from Cycle III');
   assert.strictEqual(actOneLocationFor(2), 'wildsEdge');
@@ -143,9 +143,6 @@ test('cycles: the Long Winter loses Wild’s Edge, frays the Banners and prices 
     assert.strictEqual(bannerArtId(relic.id), relic.frayedOf, 'a frayed Banner wears its original’s art');
   }
 
-  assert.strictEqual(smithyPrice({ cycle: 2 }, 45), 45);
-  assert.strictEqual(smithyPrice({ cycle: 3 }, 45), 70, '×1.5, rounded to 5 gold');
-  assert.strictEqual(smithyPrice({ cycle: 3 }, 20), 30);
 });
 
 test('cycles: a Long Winter wards the Guardian while its company stands', () => {

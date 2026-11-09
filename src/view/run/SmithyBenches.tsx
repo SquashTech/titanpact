@@ -30,9 +30,8 @@ interface Props {
 
 /**
  * The roster as benches (2026-09-16, per user direction): each hero, the hero on it, and its
- * three sockets — the same sockets the who-screen fills. The Guild Hall's Smithy tab
- * (ItemServicesSection) and the Forge node (ForgeNodeScreen) are the same room with one
- * difference in what a tap does, so the room is drawn once.
+ * three sockets — the same sockets the who-screen fills. The Forge node (ForgeNodeScreen) works
+ * on them.
  */
 export function SmithyBenches({ run, liftFor, pickable, onPick, fresh }: Props) {
   return (

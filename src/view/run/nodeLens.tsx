@@ -27,7 +27,6 @@ const LENS: Record<MapNodeType, Lens> = {
   boss: 'level',
   finale: 'level',
   shop: 'hp',
-  muster: 'hp',
   restReward: 'hp',
   equipmentReward: 'gear',
   forgeReward: 'gear',

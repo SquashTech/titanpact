@@ -305,8 +305,8 @@ function createLevel4TestRun(): RunState {
  * TEMPORARY DEV/TEST — the final battle, repeatedly (docs/titan-eyes.md §10): a finale-act run with
  * six random heroes at the cap, each FINISHED the way a contract hero is (its Evolution walked,
  * its signature in the kit — generateEncounter's own progression walk), wearing three items on
- * Act 5's elite curve in three distinct families, under five Banners, the Vigil already behind it
- * so the only node open is the Herald and the Eyes behind it. Remove with its TitleScreen row.
+ * Act 5's elite curve in three distinct families, under five Banners, so the only node open is the
+ * Herald and the Eyes behind it. Remove with its TitleScreen row.
  */
 function createTitanEyesTestRun(): RunState {
   const seed = randomSeed();
@@ -338,8 +338,6 @@ function createTitanEyesTestRun(): RunState {
     run = recordBrokenSeal(run, { actNumber: act, locationId: location.id, championId, level: enemyLevelFor('boss', act) + CHAMPION_LEVEL_BONUS, statGrants: {}, growthStatGrants: {} });
     run = grantRelicReward(run, bannerIds[Math.floor(Math.random() * bannerIds.length)]);
   }
-  // The corridor is Vigil → the final battle; stand past the Vigil so the fight is what is open.
-  for (const row of run.map!.rows.slice(0, 1)) run = advanceToNode(run, row[0]);
   return run;
 }
 
@@ -864,12 +862,12 @@ export function App() {
       }
       // Leads are picked in the fight, once the enemy's are on the field (FightScreen's lead pick).
       handleEnterFight(openingSquad(playerRun.roster), nodeId, encounterKind, encounter);
-    } else if (node.type === 'shop' || node.type === 'muster') {
+    } else if (node.type === 'shop') {
       clearGuildHallTab();
       setScreen({
         kind: 'shop',
         nodeId,
-        offers: rollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool), node.type === 'muster'),
+        offers: rollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool)),
         gemsBought: [],
         called: false,
         itemsBought: [],
@@ -1099,6 +1097,13 @@ export function App() {
     setScreen(isFinale ? { kind: 'titanBound', next: afterLoss } : afterLoss);
   }
 
+  /** Off the arrival screen: onto the act's map, or — the finale act being one fight — straight to the Herald. */
+  function handleEnterAct() {
+    const finaleId = playerRun.actNumber === FINALE_ACT ? playerRun.map?.startNodeIds[0] : undefined;
+    if (finaleId && playerRun.map!.nodes[finaleId].type === 'finale' && !playerRun.visitedNodeIds.includes(finaleId)) handleSelectNode(finaleId);
+    else setScreen({ kind: 'map' });
+  }
+
   function handleNodeContinue(nodeId: string) {
     setPlayerRun((run) => advanceToNode(run, nodeId));
     setScreen({ kind: 'map' });
@@ -1119,8 +1124,7 @@ export function App() {
 
   /** The Tavern's call (run/shop.ts): word sent for a type, once a visit; the offer id of who answered, or null. */
   function handleCallTavern(type: TypeId): string | null {
-    // The Vigil has no Tavern to call from.
-    if (screen.kind !== 'shop' || screen.called || playerRun.map?.nodes[screen.nodeId]?.type === 'muster') return null;
+    if (screen.kind !== 'shop' || screen.called) return null;
     let called: ReturnType<typeof callForType>;
     try {
       called = callForType(playerRun, guildHallOffersFor(recruitPool), screen.offers, type);
@@ -1634,7 +1638,7 @@ export function App() {
         <ActIntroScreen
           run={playerRun}
           location={locationForAct(playerRun.locationIds, playerRun.actNumber)}
-          onEnter={() => setScreen({ kind: 'map' })}
+          onEnter={handleEnterAct}
         />
       )}
 
@@ -1729,7 +1733,6 @@ export function App() {
           onBuyMend={handleBuyGuildMend}
           onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}
-          muster={playerRun.map?.nodes[screen.nodeId]?.type === 'muster'}
         />
       )}
 

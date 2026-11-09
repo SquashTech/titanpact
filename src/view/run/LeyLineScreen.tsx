@@ -35,7 +35,7 @@ function movesAtElement(entry: RosterEntry, element: string): number {
 /**
  * Attunement, the Ley Line node (docs/run-loop.md "The Forge and the Ley Line", 2026-09-17, per user direction):
  * one hero draws LEY_LINE_FORCE of Elemental Force at its own element, for the run — the
- * Enchanter's binding, free, and on the hero rather than a piece. Staged as a rite:
+ * Forge's binding, and on the hero rather than a piece. Staged as a rite:
  * what it gives on one card, and every hero's card saying the Force it would hold at its
  * element and how many of its moves that Force is added to — a second Attunement and an enchant of
  * the same type all sum onto one figure, and a hero with none of its element's moves gains nothing.

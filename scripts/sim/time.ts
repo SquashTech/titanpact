@@ -37,8 +37,7 @@ export type ScreenKind =
   | 'patronSeat'
   | 'blacksmith'
   | 'event'
-  | 'shop'
-  | 'muster';
+  | 'shop';
 
 /**
  * Seconds a player spends on each screen, for a player reading at a normal pace and making the
@@ -74,7 +73,7 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   restReward: 6,
   equipmentReward: 25,
   passiveReward: 20,
-  // One tap on a bench of pieces, the beat over it: the Smithy's Anvil without the price to read.
+  // One tap on a bench of pieces, then an element, the beat over it.
   forgeReward: 10,
   // A pick-a-hero screen, the Mana Well's price.
   leyLineReward: 10,
@@ -89,7 +88,6 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   blacksmith: 30,
   event: 15,
   shop: 45,
-  muster: 45,
 };
 
 export interface PaceProfile {

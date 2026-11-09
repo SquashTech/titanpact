@@ -30,7 +30,7 @@ import {
 
 /**
  * Stat points a tier spends: the whole budget below Mythic, and room for the flat 20-point
- * Awakening at Mythic (docs/equipment.md §3). Monotone, so an Anvil upgrade never lowers a number.
+ * Awakening at Mythic (docs/equipment.md §3). Monotone, so a lift never lowers a number.
  */
 const STAT_POINTS_BY_RARITY: Record<EquipmentRarity, number> = {
   common: 30,

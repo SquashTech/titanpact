@@ -5,7 +5,7 @@
 
 import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
-import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, RARITY_ORDER, rarityWeightsFor } from '../../run/equipment';
+import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, rarityWeightsFor } from '../../run/equipment';
 import { goldRangeFor, purseRangeFor } from '../../run/runProgress';
 import { GEM_CACHE_COUNT, GEM_DROP, SCRIBE_GEMS, SHELF_GEM_PRICE_PER_POINT, gemPointsForAct } from '../../run/gems';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
@@ -14,8 +14,6 @@ import { BOON_OFFER_COUNT } from '../../run/boons';
 import { mentorXpFor } from '../../run/mentor';
 import { championLevel, enemyLevelFor, guildHallLevel, openerEscortTiersFor, type EncounterNodeKind } from '../../run/difficulty';
 import { SEAL_ACTS } from '../../run/state';
-import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
-import { smithyPrice } from '../../run/cycles';
 import { CONTRACT_BASE_PRICE, CONTRACT_DROP_CHANCE } from '../../run/recruitment';
 import { MEND_PRICE_PER_HERO } from '../../run/wounds';
 
@@ -69,12 +67,6 @@ function percent(chance: number): string {
   return `${Math.round(chance * 100)}%`;
 }
 
-/** A Smithy price band as a figure and its note: the cheapest work large, the dearest beside it. */
-function priceBand(table: Record<EquipmentRarity, number>, cycle: number): { value: string; note: string } {
-  const prices = RARITY_ORDER.map((r) => smithyPrice({ cycle }, table[r])).filter((p) => p > 0);
-  return { value: `${Math.min(...prices)}g`, note: `to ${Math.max(...prices)}g` };
-}
-
 /** The lanes every fight is compared on, in one order, so Elite and Skirmish read as two columns of one table. */
 function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] {
   const gold = goldRangeFor(type, actNumber);
@@ -106,7 +98,7 @@ function spawnFacts(type: 'fight' | 'battle', actNumber: number, shapeAct: numbe
 
 const gemNote = (actNumber: number) => `+${gemPointsForAct(actNumber)} to a stat each`;
 
-export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): NodeDossier {
+export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
   const odds = (kind: EncounterNodeKind | 'standard' | 'cache') =>
     rarityWeightsFor(actNumber, kind === 'standard' || kind === 'cache' ? kind : LOOT_SOURCE[kind]);
 
@@ -143,16 +135,6 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
           { glyph: 'contract', label: 'Contract', value: `${CONTRACT_BASE_PRICE}g`, note: 'more each time' },
           { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g` },
           { glyph: 'hp', label: 'Meal', value: `${MEND_PRICE_PER_HERO}g`, note: 'per hero hurt' },
-        ],
-        odds: null,
-      };
-    case 'muster':
-      return {
-        about: null,
-        facts: [
-          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g` },
-          { glyph: 'anvil', label: 'Anvil', ...priceBand(ANVIL_PRICE_BY_TARGET, cycle) },
-          { glyph: 'enchant', label: 'Enchanter', ...priceBand(ENCHANT_PRICE_BY_RARITY, cycle) },
         ],
         odds: null,
       };
@@ -214,8 +196,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number, cycle = 1): No
 }
 
 /** The ledger as one line, for an aria-label: `Skirmish — Gold 15–25, Item 60%`. */
-export function nodeFactsLine(name: string, type: MapNodeType, actNumber: number, cycle = 1): string {
-  const parts = nodeDossier(type, actNumber, cycle)
+export function nodeFactsLine(name: string, type: MapNodeType, actNumber: number): string {
+  const parts = nodeDossier(type, actNumber)
     .facts.filter((fact) => fact.value !== null)
     .map((fact) => {
       const asides = [fact.who === 'one' ? 'one hero' : fact.who === 'team' ? 'whole team' : '', fact.note ?? ''].filter(Boolean);

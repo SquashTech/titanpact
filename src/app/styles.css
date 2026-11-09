@@ -19437,7 +19437,7 @@ button.star-shop-bundle-face {
   height: 128px !important;
 }
 
-/* The Guild Hall (and the Vigil): a 96px building at 2x, doors open. */
+/* The Guild Hall: a 96px building at 2x, doors open. */
 .map-medallion.is-building {
   width: 192px !important;
   height: 192px !important;
@@ -38195,118 +38195,10 @@ button.evo-gift-card {
 }
 
 /* =========================================================================
-   The Smithy (ItemServicesSection, SmithyWorkSheet, SmithyBeat) — 2026-09-16, per user direction.
-   The Guild Hall's gear counter as a ROOM: the forge as its sign, a bench per hero with the hero
-   on it and its three sockets, a work sheet per piece with the Anvil and the Enchanter as two
-   slabs, and a beat for what each one makes. Replaces the `.item-service-*` list above, which put
-   eighteen identical rows under two price buttons each.
+   The Forge's room (ForgeNodeScreen, SmithyBenches, SmithyBeat) — 2026-09-16, per user direction:
+   a bench per hero with the hero on it and its three sockets, a work sheet per piece with the lift
+   and the binding as two slabs, and a beat for what it makes.
    ========================================================================= */
-
-.smithy {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* --- The forge -------------------------------------------------------------
-   The anvil lit from below, embers rising off it. Ambient, like the hall's lanterns: it paints
-   under the section head rather than taking a row of its own. */
-.smithy-forge {
-  position: relative;
-  /* It heads a scrolling flex column; without this a full roster of benches squeezes it to 0. */
-  flex-shrink: 0;
-  height: 74px;
-  margin: -4px 0 -10px;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.smithy-forge-glow {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse 46% 70% at 50% 100%, rgba(255, 150, 60, 0.42), rgba(224, 90, 30, 0.14) 48%, transparent 74%);
-  animation: smithy-forge-breathe 3.6s ease-in-out infinite;
-}
-
-.smithy-forge-anvil {
-  position: absolute;
-  left: 50%;
-  bottom: 2px;
-  width: 92px;
-  height: 64px;
-  transform: translateX(-50%);
-  filter: drop-shadow(0 0 10px rgba(255, 140, 50, 0.35)) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.6));
-}
-
-.smithy-forge-embers {
-  position: absolute;
-  inset: 0;
-}
-
-.smithy-forge-embers i {
-  position: absolute;
-  bottom: 8px;
-  border-radius: 50%;
-  background: #ffcf7a;
-  box-shadow: 0 0 6px 1px rgba(255, 170, 70, 0.8);
-  opacity: 0;
-  animation: smithy-ember-rise 3s ease-out infinite;
-}
-
-@keyframes smithy-forge-breathe {
-  0%,
-  100% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes smithy-ember-rise {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0) scale(1);
-  }
-  12% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(calc(var(--drift, 1) * 10px), -64px) scale(0.4);
-  }
-}
-
-.smithy-forge-embers i:nth-child(even) {
-  --drift: -1;
-}
-
-/* The Guild Hall's Smithy tab, fitted to one screen (2026-09-25, per user direction): the hall's
-   sign comes off on this tab (ShopNodeScreen) and the forge stands in for it, and the benches
-   tighten so a full roster of six fits over the counters on a phone without a scroll. The Forge
-   node keeps the roomier benches — it has no tab strip under it. */
-.shop-node-screen.is-smithy .smithy {
-  gap: 4px;
-}
-
-.shop-node-screen.is-smithy .smithy-forge {
-  height: 62px;
-  margin: 0 0 -8px;
-}
-
-.shop-node-screen.is-smithy .smithy-benches {
-  gap: 5px;
-}
-
-.shop-node-screen.is-smithy .smithy-bench {
-  padding-top: 3px;
-  padding-bottom: 3px;
-}
-
-.shop-node-screen.is-smithy .smithy-socket {
-  padding: 1px 0 0;
-  gap: 2px;
-}
 
 /* --- The benches ------------------------------------------------------------
    One per hero: the hero on the left on its own type-coloured ground, the three sockets on the
@@ -38665,13 +38557,6 @@ button.evo-gift-card {
   color: var(--rarity-color);
 }
 
-.smithy-work-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 1px;
-}
-
 /* The two slabs, in a page well that scrolls under the head. */
 .smithy-work-body {
   display: flex;
@@ -38870,24 +38755,7 @@ button.evo-gift-card {
   text-align: left;
 }
 
-.smithy-commit-price {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 8px;
-  border-radius: var(--radius-pill);
-  background: rgba(0, 0, 0, 0.4);
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  color: rgb(255, 214, 120);
-  font-variant-numeric: tabular-nums;
-}
-
-.smithy-commit-price.is-short {
-  color: rgb(255, 130, 120);
-}
-
-/* The Enchanter's fourteen elements. Big enough to be picked with a thumb, each in its own
+/* The fourteen elements. Big enough to be picked with a thumb, each in its own
    colour, the one bound already marked as such. */
 .smithy-elements {
   position: relative;
@@ -39038,10 +38906,6 @@ button.evo-gift-card {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .smithy-forge-embers {
-    display: none;
-  }
-
   .smithy-rune-outer,
   .smithy-rune-inner,
   .smithy-socket.is-fresh .smithy-socket-box,

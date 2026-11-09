@@ -65,7 +65,7 @@ test('equipment: every family exists at every tier, and nothing else does', () =
 });
 
 test('equipment: a tier upgrade never lowers a number — the monotonicity rule', () => {
-  // The load-bearing rule of the rework (docs/equipment.md §3). The Anvil, the merge and the drop
+  // The load-bearing rule of the rework (docs/equipment.md §3). The Forge, the merge and the drop
   // curve all exist to move an item UP, so if the tier that gains the Awakening funded it by
   // shedding stats, every upgrade reward would read as a bait-and-switch.
   for (const familyId of EQUIPMENT_FAMILIES) {
@@ -186,7 +186,7 @@ test('equipment: a Unique is enchantable but has no ladder', () => {
     const enchanted = equipment[`${unique.id}.feral`];
     assert.ok(enchanted, `${unique.id} has no enchanted variant`);
     assert.deepStrictEqual(equipmentBudgetProblems(enchanted, PASSIVE_ITEM_COST), []);
-    // No ladder to climb: nothing merges it and the Anvil has nothing above Mythic to sell.
+    // No ladder to climb: nothing merges it and the Forge has nothing above Mythic to lift to.
     assert.strictEqual(mergeIntoHeld(unique, unique), null);
   }
 });

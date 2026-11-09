@@ -346,8 +346,8 @@ export function MapRoute({
   useEffect(() => setPreviewId(null), [choiceKey]);
   const showLeadOn = leadOnsDiffer(map, choiceIds);
   const patronRow = choiceIds.some((id) => map.nodes[id]?.type === 'patronSeat');
-  // Gated on the node kind, not just on being row 0: act 6 opens on the Vigil, and an omen
-  // over a muster would be naming enemies that are not there — nor does a camp sit before it.
+  // Gated on the node kind, not just on being row 0: the finale act opens on its one fight,
+  // where an omen would name enemies that are not there — nor does a camp sit before it.
   const originLandmark = originNode ? landmarkKind(originNode.type) : undefined;
   const originTile = originNode && !originLandmark ? mapNodeIcon(originNode.type) : undefined;
   const originArt = originNode && !originTile ? mapNodeArt(originNode.type) : undefined;

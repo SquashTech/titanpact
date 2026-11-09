@@ -5,7 +5,7 @@ import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { EnchantmentId, EquipmentDefinition } from '../../run/equipment';
 import { ENCHANTMENT_IDS, ENCHANTMENTS, enchantLabel, ENCHANT_FORCE_BY_RARITY, parseEquipmentId } from '../../run/equipment';
-import { anvilQuote, forgeable, forgeItem, forgeTarget, RunProgressError, type ItemRef } from '../../run/runProgress';
+import { forgeable, forgeItem, forgeTarget, liftTarget, RunProgressError, type ItemRef } from '../../run/runProgress';
 import type { RunState } from '../../run/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { enchantTypeOf, ItemEffectChips, ItemPiece, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
@@ -38,9 +38,9 @@ function defaultEnchant(run: RunState, ref: ItemRef, itemId: string): Enchantmen
 
 /**
  * The Forge (docs/run-loop.md "The Forge and the Ley Line"; 2026-09-24, per user direction:
- * "Upgrade and Enchant an item"). The Smithy's two verbs, free, on one worn piece: tap it, pick an
- * element, and it comes off the anvil a tier up AND bound (`forgeItem`). The lift is the paid
- * Anvil's quote, so the act window still caps it; a piece the Anvil would refuse is still bound.
+ * "Upgrade and Enchant an item"). Two verbs, free, on one worn piece: tap it, pick an element, and
+ * it comes off the anvil a tier up AND bound (`forgeItem`). The act window still caps the lift; a
+ * piece that cannot be lifted is still bound.
  * It was the lift alone, which read as the weakest seat on a reward row.
  */
 export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
@@ -58,7 +58,7 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
 
   function handleForge(ref: ItemRef, before: EquipmentDefinition, enchantId: EnchantmentId) {
     try {
-      const quote = anvilQuote(run, before.id, equipment);
+      const quote = liftTarget(run, before.id, equipment);
       const next = forgeItem(run, ref, enchantId, equipment);
       const after = equipment[next.roster.find((r) => r.rosterId === ref.rosterId)!.equipment[ref.index]!]!;
       const lifted = quote ? (equipment[quote.targetId] ?? null) : null;
@@ -126,7 +126,7 @@ export function ForgeNodeScreen({ run, onRunChange, onContinue }: Props) {
         <SmithyBenches
           run={run}
           liftFor={(item) => {
-            const quote = anvilQuote(run, item.id, equipment);
+            const quote = liftTarget(run, item.id, equipment);
             return quote && !done ? { targetRarity: quote.targetRarity, label: `Forges to ${RARITY_LABELS[quote.targetRarity]}` } : null;
           }}
           pickable={(item) => !done && forgeable(run, item.id, equipment)}
@@ -177,7 +177,7 @@ function ForgeSheet({
   const [picked, setPicked] = useState<EnchantmentId | null>(() => defaultEnchant(run, itemRef, item.id));
   const entry = run.roster.find((r) => r.rosterId === itemRef.rosterId);
   const hero = entry ? rosterHeroes[entry.heroId] : undefined;
-  const quote = anvilQuote(run, item.id, equipment);
+  const quote = liftTarget(run, item.id, equipment);
   const targetId = picked ? forgeTarget(run, item.id, picked, equipment) : null;
   const target = targetId ? (equipment[targetId] ?? null) : null;
   const heldEnchant = parseEquipmentId(item.id).enchantId ?? null;

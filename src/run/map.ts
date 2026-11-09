@@ -33,9 +33,8 @@ export const MAP_NODE_TYPES = [
   // A patron seat (run/patrons.ts, docs/patrons.md): one patron a tile, two tiles a seat.
   'patronSeat',
   'event',
-  // Act 6 only (docs/run-loop.md §4). `muster` is the Vigil, `finale` the Herald and, behind it
-  // in the same fight, the Titan's Eyes (docs/titan-eyes.md §10).
-  'muster',
+  // The finale act only (docs/run-loop.md §4): the Herald and, behind it in the same fight, the
+  // Titan's Eyes (docs/titan-eyes.md §10).
   'finale',
 ] as const;
 
@@ -126,8 +125,8 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // so it is usually somewhere in an act and never in every row; the walk floor and the Guild
   // Hall's mend are the other two answers to a wound, and this is the one that costs power.
   ['restReward', 30],
-  // The Forge and the Ley Line (2026-09-17, per user direction): the Smithy's two verbs, the
-  // Anvil's and the Enchanter's, each given a free seat on the map — one lift of one worn piece,
+  // The Forge and the Ley Line (2026-09-17, per user direction): a lift-and-bind and a binding,
+  // each a free seat on the map — one worn piece lifted and bound,
   // one hero drawing LEY_LINE_FORCE of its own element's Force for the run. Weighted level with
   // each other, under Rest and over the Cache: neither is the axis you plan around. Nine types into nine
   // seats an act is what makes a reward row a draw again; seven into nine showed every type every
@@ -173,21 +172,17 @@ function nodeId(row: number, col: number): string {
 }
 
 /**
- * Act 6 is a corridor, not a map (docs/run-loop.md §4): the Vigil, then the one fight — the
- * Herald, and the Titan's Eyes once it falls (docs/titan-eyes.md §10). No branch and no RNG —
- * the seed is kept only so a RunMap stays reproducible from it.
+ * The finale act is not a map (docs/run-loop.md §4): one node, the one fight — the Herald, and
+ * the Titan's Eyes once it falls (docs/titan-eyes.md §10). The seed is kept only so a RunMap
+ * stays reproducible from it.
  */
 function finaleMap(seed: number): RunMap {
-  const musterId = nodeId(0, 0);
-  const finaleId = nodeId(1, 0);
+  const finaleId = nodeId(0, 0);
   return {
     seed,
-    nodes: {
-      [musterId]: { id: musterId, type: 'muster', row: 0, col: 0, nextIds: [finaleId] },
-      [finaleId]: { id: finaleId, type: 'finale', row: 1, col: 0, nextIds: [] },
-    },
-    rows: [[musterId], [finaleId]],
-    startNodeIds: [musterId],
+    nodes: { [finaleId]: { id: finaleId, type: 'finale', row: 0, col: 0, nextIds: [] } },
+    rows: [[finaleId]],
+    startNodeIds: [finaleId],
     bossNodeId: finaleId,
   };
 }

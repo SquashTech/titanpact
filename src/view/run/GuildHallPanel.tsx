@@ -34,10 +34,9 @@ import { RecruitFanfare } from './RecruitFanfare';
 import { GOOD_ART, HALL_ART, HallGood } from './guildHallArt';
 import { CONFIRM_PURCHASE_FROM } from '../shared/useArmedTap';
 import { GearCounter, GemCounter } from './HallCounters';
-import { ItemServicesSection } from './ItemServicesSection';
 import { Keyed } from '../shared/Keyed';
 
-export type GuildHallTab = 'tavern' | 'gems' | 'gear' | 'smithy';
+export type GuildHallTab = 'tavern' | 'gems' | 'gear';
 
 /** Every hire the game holds, bundles included: the roll already read the run's pool, so the lookup must not read it again. */
 const allGuildHallOffers = guildHallOffersFor(heroes);
@@ -49,19 +48,13 @@ export function guildHeroOffers(run: RunState, offers: GuildHallOffers): GuildHa
     .filter((o): o is GuildHallOffer => !!o && !run.roster.some((r) => r.heroId === o.heroId));
 }
 
-/**
- * The three counters (2026-10-08, per user direction): people and provisions at the Tavern, Gems and
- * Gear each a counter of their own. The Vigil trades the Tavern for the Smithy — nobody joins for
- * the finale, and the last gold goes into the gear the roster already wears.
- */
-export function guildHallTabs(run: RunState, offers: GuildHallOffers, vigil: boolean): readonly TabSpec<GuildHallTab>[] {
-  const goods: TabSpec<GuildHallTab>[] = [
+/** The three counters (2026-10-08, per user direction): people and provisions at the Tavern, Gems and Gear each a counter of their own. */
+export function guildHallTabs(run: RunState, offers: GuildHallOffers): readonly TabSpec<GuildHallTab>[] {
+  return [
+    { id: 'tavern', label: 'Tavern', glyph: 'heroes', count: guildHeroOffers(run, offers).length },
     { id: 'gems', label: 'Gems', glyph: 'shop' },
     { id: 'gear', label: 'Gear', glyph: 'equipment' },
   ];
-  return vigil
-    ? [...goods, { id: 'smithy', label: 'Smithy', glyph: 'equipment' }]
-    : [{ id: 'tavern', label: 'Tavern', glyph: 'heroes', count: guildHeroOffers(run, offers).length }, ...goods];
 }
 
 interface Props {
@@ -270,12 +263,6 @@ export function GuildHallPanel({
       {tab === 'gems' && <GemCounter run={run} gems={offers.gems} sold={gemsBought} onBuy={onBuyGem} onPlaced={onGemPlaced} />}
 
       {tab === 'gear' && <GearCounter run={run} itemIds={offers.itemIds} sold={itemsBought} onBuy={onBuyItem} />}
-
-      {tab === 'smithy' && (
-        <div className="guild-hall-section is-smithy">
-          <ItemServicesSection run={run} onRunChange={onRunChange} />
-        </div>
-      )}
 
       {fanfareHeroId && (
         <RecruitFanfare heroId={fanfareHeroId} source="guild" onDone={() => setFanfareHeroId(null)} />

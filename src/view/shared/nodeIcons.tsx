@@ -76,7 +76,7 @@ const OPEN_BOOK = (
   </>
 );
 
-// Anvil on its stump: the Forge tile and the Guild Hall's Anvil service wear one glyph.
+// Anvil on its stump: the Forge tile's glyph, and its lift wherever one is offered.
 const ANVIL = (
   <>
     <path d="M2 6.6h9.6c1.6 2.6 4 4.2 7.2 4.8l3.2-3.4v4.4c0 2.4-1.6 4-4.4 4.6H8.2C4.8 16.4 2.6 14 2 10.6Z" />
@@ -146,7 +146,7 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   ),
   // The Mana stat's own drop: a stat reward reuses the exact glyph of what it grants.
   manaWellReward: STAT_PATHS.manaPool,
-  // The Smithy's anvil, back on a tile (it was the Forge node's before item slots went): one free lift.
+  // One free lift.
   forgeReward: ANVIL,
   // Attunement: a bolt of power rising, the Force chip's arrow said large.
   leyLineReward: (
@@ -200,15 +200,6 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
     <>
       <path d="M12 2.2c-3.7 0-6.4 2.4-6.6 6h4.2c.2-1.4 1.1-2.2 2.4-2.2 1.3 0 2.2.8 2.2 2 0 .9-.4 1.5-1.7 2.5-2 1.5-2.8 2.8-2.6 5.3h4.1c0-1.2.3-1.7 1.6-2.7 2-1.5 3-2.9 3-5 0-3.4-2.8-5.9-6.6-5.9Z" />
       <circle cx="12" cy="19.6" r="2.4" />
-    </>
-  ),
-  // The Vigil: a brazier kept lit through the last night before the Threshold.
-  muster: (
-    <>
-      <path d="M12 1.8c2.2 2.7 3.3 4.7 3.3 6.2a3.3 3.3 0 0 1-6.6 0c0-1.5 1.1-3.5 3.3-6.2Z" />
-      <path d="M4.4 11.4h15.2l-2.2 7.2H6.6Z" />
-      <path d="M11 18.6h2v2.2h-2Z" />
-      <path d="M7 20.6h10v1.6H7Z" />
     </>
   ),
   // A broken ring, split top and bottom by what came through it. The only glyph on the
@@ -327,7 +318,7 @@ const HUB_PATHS = {
   // The Elite's crown on its own, for the badge over a tile whose face is its enemy typing.
   crown: <g transform="translate(12 12) scale(1.4) translate(-12 -4.9)">{CROWN}</g>,
   // A hero's Class. A fluted column — the discipline they were taught in, not a thing they carry.
-  // The Guild Hall's Anvil service, the Forge tile's own glyph.
+  // The Forge tile's own glyph.
   anvil: ANVIL,
   hall: (
     <>

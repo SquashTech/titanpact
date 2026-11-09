@@ -12,7 +12,6 @@ import bellArt from '../../../art/guild/good-bell.png';
 import stewArt from '../../../art/guild/good-stew.png';
 import tankardArt from '../../../art/guild/good-tankard.png';
 import swordArt from '../../../art/equipment/sword.png';
-import anvilArt from '../../../art/smithy/anvil.png';
 import { GemIcon } from '../shared/GemIcon';
 
 // The Guild Hall as a room rather than a form (art/guild): the Tavern's recruits are posters on the
@@ -29,11 +28,10 @@ export const GOOD_ART = {
   mend: stewArt,
 } as const;
 
-export const COUNTER_SIGN_ART: Record<'tavern' | 'gems' | 'gear' | 'smithy', string | ReactNode> = {
+export const COUNTER_SIGN_ART: Record<'tavern' | 'gems' | 'gear', string | ReactNode> = {
   tavern: tankardArt,
   gems: <GemIcon stat="attack" size={26} />,
   gear: swordArt,
-  smithy: anvilArt,
 };
 
 /**

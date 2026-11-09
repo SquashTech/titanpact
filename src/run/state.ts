@@ -19,7 +19,7 @@ export const TOTAL_ACTS = 5;
 /** Acts that break a seal — the ones with a Guardian, a location draw and a §1 map. */
 export const SEAL_ACTS = 4;
 
-/** Act 5: the Vigil and the final battle (docs/run-loop.md §4). */
+/** Act 5: the final battle, the one node of its map (docs/run-loop.md §4). */
 export const FINALE_ACT = TOTAL_ACTS;
 
 export interface RosterEntry {

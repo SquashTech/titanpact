@@ -65,7 +65,7 @@ that is not a piece of the Titan is mono-Ancient.
 ## 3. Structure — where the fight sits
 
 **Superseded by §10.2 item 1.** The first build was a third node (`muster → finale → titan`) with
-a free mend between; the finale is now `muster → finale`, one fight, and nothing mends between the
+a free mend between; the finale is now one fight (`finale` alone since the Vigil was deleted, 2026-11-09), and nothing mends between the
 phases.
 
 ## 4. The two combatants
@@ -184,7 +184,7 @@ uses the telegraph does better than any figure below.)
 
 ### 10.2 What was decided
 
-1. **One fight, two phases.** `finaleMap` is `muster → finale`. The enemy side is the Herald and the
+1. **One fight, two phases.** `finaleMap` is `finale` alone (it was `muster → finale` until the Vigil was deleted, 2026-11-09, per user direction). The enemy side is the Herald and the
    seals' Late spawn (phase 0), then the Eyes (phase 1). `Squad.reserves` is an ordered list of
    phases; `replacementCandidates` lets a body in only when nothing of an earlier phase stands, and
    only the NEXT phase when the field is empty — generic, and `test/titanEyes` proves it past two.
@@ -324,7 +324,7 @@ shown. The fight is untouched; every change is presentation.
   written round the rim, then the lock. A tap goes straight to the end (it was the one cinematic
   that could not be skipped).
 - **The hall's line** counts the seals the run never stood in instead of saying "two".
-- **The Vigil** says so on its header; the Herald's banner carries four shackles, not five.
+- ~~**The Vigil** says so on its header~~ (the Vigil is deleted, 2026-11-09); the Herald's banner carries four shackles, not five.
 
 Still to come: a Threshold track (the act has no music — the designer is writing one), and the
 title's Titan keeping its eyes shut after a clear until the next Cycle opens.
