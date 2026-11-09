@@ -21,8 +21,8 @@ screen, its line pinned across the top.
 
 | # | Lesson | Party | Taps |
 |---|---|---|---|
-| 8 | **Equipment** | Ursa, Crimson | *Give the piece to a hero. It stays there.* Tap Ursa's row (the Feral Dagger goes into a socket), Continue. *Two of a kind merge into a stronger piece.* Tap Ursa's row (a plain Dagger merges into the Feral one, a Rare), Continue. Sell, the decline, is on the page. |
-| 9 | **Gems** | Ursa, Pixie | *Each Gem raises a stat and fills a Mastery pip.* Tap Ursa (an Attack Gem), tap Pixie (an Intelligence Gem); the screen leaves by itself. |
+| 8 | **Equipment** | Ursa, Crimson | *Gear goes to one hero, for good.* Tap Ursa's row (the Feral Dagger goes into a socket), Continue. *Two of a kind merge into a stronger piece.* Tap Ursa's row (a plain Dagger merges into the Feral one, a Rare), Continue. Sell, the decline, is on the page. |
+| 9 | **Gems** | Ursa, Pixie | *A Gem raises a stat and fills a Mastery pip.* Tap Ursa (an Attack Gem), tap Pixie (an Intelligence Gem); the screen leaves by itself. |
 | 10 | **Contracts** | Crimson, Raiju | *Sign a hero you beat with a Recruit Contract.* Tap Sign Hollowbark (the one Contract spent), Continue. The six-hero roster and letting one go are on the page. |
 
 **Equipment's screen lesson replaces the old one.** The old lesson was the who-screen plus two fights
@@ -32,6 +32,20 @@ taps was the call.
 
 An account that won the open fight before these shipped has Gems and Contracts lit, their lightings
 counted as played (`run/profile.ts` decode), so First Light stays sealed.
+
+**Copy pass** (same day, per user direction): fewer words, one idea a line, the consequence not the
+mechanism, and no tap that isn't a decision. Eight taps cut from the run of lessons:
+- The **Welcome** is one page, not two.
+- **Physical and Magical**, **Switching** and **Passives** are one leaf each, not two.
+- **Status Effects** is one leaf, not three (the Immolate leaf was about one fight; the line says it),
+  and **Burn** one, not two: five taps before the Burn lesson are now two.
+- **Items** is two leaves, not three.
+- Lines: *Pick a move, then who it hits.* · *Moves cost Mana. Rest refills it.* · *Hit each foe with
+  the type it is weak to.* · *Some moves hit both foes.* · *Switch in a hero who takes the hit
+  better.* · *Gear goes to one hero, for good.* · *A Gem raises a stat and fills a Mastery pip.* ·
+  *Four heroes. Win it your way.*
+- Leads names what an arrow does (*your hero hits the foe above it hard*), not *type advantage*; Gems
+  says *its passive grows stronger*, not *innate power*.
 
 ## 0. The review pass (2026-10-29, per user direction)
 

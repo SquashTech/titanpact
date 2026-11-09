@@ -30,8 +30,7 @@ const TAUGHT_BY: Readonly<Record<string, string>> = { Burn: BURN };
 /** A status's page, in bullets. A status not here reads its own description, a bullet a sentence. */
 const STATUS_WORDS: Readonly<Record<string, readonly string[]>> = {
   Burn: [
-    '- Burns at each round end: *15%* of max HP, then *8%*, then *4%*. Then it goes out.\n- Its pips are the rounds it has left.',
-    '- Another Burn lights it again at *15%*.\n- *Rest*, *switching* or *Cleanse* puts it out.',
+    '- At each round end: *15%* of max HP, then *8%*, then *4%*, then out.\n- Another Burn lights it again.\n- *Rest*, *switching* or *Cleanse* puts it out.',
   ],
   Poison: [
     "- A *timer*. Its pips fill once a round, and when they are full it goes off: the badge's number, as % of max HP.\n- It only counts down while the hero is *on the field*.",
@@ -98,16 +97,16 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Turn by Turn',
     MOVE,
     ['stat:speed'],
-    'Each round, pick a *move* for each hero on the field, then pick *who it hits*.',
-    '- The round then plays out *fastest first*.\n- *Tap* any fighter to read its stats, moves and passive.\n- *Hold* a move to read all of it.'
+    'Each round, pick a *move* for each hero, then *who it hits*.',
+    '- The round plays out *fastest first*.\n- *Tap* a fighter to read it.\n- *Hold* a move to read all of it.'
   ),
-  page('mana', 'Mana', MANA, ['stat:manaPool'], '- A move costs the *Mana* in its gem, paid from the blue bar.\n- Every hero regains some Mana each round.'),
+  page('mana', 'Mana', MANA, ['stat:manaPool'], '- A move costs the *Mana* in its gem.\n- Every hero regains some each round.'),
   page(
     'targets',
     'Single and Spread',
     SPREAD,
     ['glyph:spread'],
-    'The bars under a move show who it hits:\n- [single] A bar under each enemy: the *one* you pick.\n- [spread] One long bar under both: it hits *both*, each at full power.'
+    'The bars under a move show who it hits:\n- [single] the *one* foe you pick\n- [spread] *both* foes, each at full power'
   ),
   page(
     'reach',
@@ -131,8 +130,8 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Types',
     TYPES,
     ['arrow:super', 'arrow:resist'],
-    'The arrows under a move show how it hits each enemy:\n- [super] *double* damage\n- [resist] *half* damage\n- two arrows: *four times*, or a *quarter*',
-    "- The icon before a move's name is its type.\n- A move that shares a type with the hero using it deals *25%* more."
+    'The arrows under a move show how hard it hits each foe:\n- [super] *double*\n- [resist] *half*\n- two arrows: *four times*, or a *quarter*',
+    "- The icon before a move's name is its type.\n- A move of the hero's own type hits *25%* harder."
   ),
 
   page(
@@ -140,26 +139,22 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Switching',
     SWITCH,
     ['glyph:switch'],
-    '- *Switch* trades a hero on the field for one on the *bench*, before anyone moves.\n- The one coming in uses its turn arriving.',
-    '- Heroes on the bench *regain Mana* every round.\n- Switch out a hero that is hurt, out of Mana, or weak to the enemy.'
+    '- *Switch* brings in a hero from the *bench*, before anyone moves.\n- Arriving uses its turn.\n- Benched heroes *regain Mana* every round.'
   ),
   page(
     'kinds',
     'Physical and Magical',
     KINDS,
     ['kind:physical', 'kind:magical'],
-    '- [physical] *Physical*: Attack against Defense.\n- [magical] *Magical*: Intelligence against Wisdom.',
-    'A foe with thick armour may have a thin mind. Tap it, and strike the defense it lacks.'
+    '- [physical] *Physical*: Attack against Defense.\n- [magical] *Magical*: Intelligence against Wisdom.\n- Tap a foe to find the defense it lacks.'
   ),
-  page('rest', 'Rest', MANA, ['node:restReward'], '- A hero short of Mana can *Rest*.\n- It skips its turn and *refills all of its Mana*.'),
+  page('rest', 'Rest', MANA, ['node:restReward'], '- Short of Mana? *Rest*.\n- It skips the turn and *refills all its Mana*.'),
   page(
     'statuses',
     'Status Effects',
     BURN,
     ['status:Burn', 'status:Shield'],
-    '- A *status* is an effect that lasts, marked beside a fighter.\n- Some help, some harm.',
-    '- *Tap* a fighter to read its statuses.\n- *Pips* count rounds. A *number* is how strong it is.',
-    '- Some moves hit harder against a status.\n- *Immolate* hits a Burning foe *three times* as hard.'
+    '- A *status* lasts, marked beside a fighter. Some help, some harm.\n- *Pips* count its rounds. A *number* is its strength.\n- *Tap* a fighter to read them.'
   ),
   ...taughtIn(BURN),
 
@@ -168,8 +163,8 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Leads',
     OPEN,
     ['glyph:leads'],
-    '- The enemy sends out its *leads* first.\n- Tap two heroes to answer them. The rest wait on the bench.',
-    '- A *green* arrow: your hero has the type advantage over the enemy above it.\n- A *red* arrow: the enemy has it.'
+    '- The enemy sends out two *leads* first.\n- Tap two heroes to answer. The rest wait on the bench.',
+    '- A *green* arrow: your hero hits the foe above it hard.\n- A *red* arrow: that foe hits your hero hard.'
   ),
   {
     ...page(
@@ -177,8 +172,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
       'Passives',
       OPEN,
       ['passive:waystone'],
-      "- Every hero has a *passive* of its own.\n- It works *by itself*: you never pick it.\n- Its name shows whenever it fires.",
-      '- *Tap* a hero to read its passive.\n- A passive affects each hero at most *once a round*.'
+      '- Every hero has a *passive*. It works *by itself*, and its name shows when it fires.\n- *Tap* a hero to read it.\n- It affects each hero at most *once a round*.'
     ),
     afterFight: true,
   },
@@ -195,9 +189,8 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Items',
     GEAR,
     ['node:equipmentReward'],
-    'An item goes to a hero the moment it arrives, and stays.',
-    '- Each hero holds *three*.\n- A second item of the same kind *merges* into a stronger one.',
-    '- A hero holding three can *replace* one: the old one is lost.\n- Or *sell* the new one instead.'
+    '- An item goes to one hero and *stays* there.\n- Each hero holds *three*.',
+    '- A second of the same kind *merges* into a stronger one.\n- A full hero can *replace* one: the old one is lost.\n- Or *sell* the new one.'
   ),
   page(
     'levels',
@@ -245,8 +238,8 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Recruiting',
     CONTRACTS,
     ['resource:contract'],
-    '- Skirmishes and Elites are fought against other heroes.\n- After a win, a *Recruit Contract* adds one of them to your roster, with its moves and its item.',
-    '- Your roster holds *six*.\n- Past that, a hero must leave to make room.'
+    '- Win a Skirmish or an Elite, and a *Recruit Contract* signs a hero you beat.\n- It joins with its moves and its item.',
+    '- Your roster holds *six*.\n- To sign a seventh, one has to leave.'
   ),
 
   page(
@@ -270,8 +263,8 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Gems and Mastery',
     GEMS,
     ['resource:scroll'],
-    '- Tap a hero to set a *Gem* in it.\n- The stat it raises is theirs for the run.',
-    'Every Gem is also a *Mastery* pip:\n- at *5*, a hero Evolves into a new form\n- at *10*, their innate power grows'
+    '- Tap a hero to set the *Gem* in it.\n- Its stat is theirs for the run.',
+    'Every Gem is also a *Mastery* pip:\n- at *5*, the hero Evolves\n- at *10*, its passive grows stronger'
   ),
   page(
     'academy',

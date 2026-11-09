@@ -34,10 +34,7 @@ export const WELCOME_TIP: Tip = {
   id: 'firstLight.welcome',
   title: 'Welcome to',
   look: 'welcome',
-  pages: [
-    'Each *run* is the road to the *Titan*: lead a team of heroes through fight after fight, two at a time, growing stronger on the way.',
-    '*First Light* teaches you to fight, one idea a lesson. Win them all to begin your first run.',
-  ],
+  pages: ['A *run* is the road to the *Titan*, fight after fight. *First Light* teaches you to fight first, one idea a lesson.'],
 };
 
 function tip(id: string, title: string, ...pages: string[]): Tip {

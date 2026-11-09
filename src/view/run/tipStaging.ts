@@ -31,14 +31,14 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   // The pages the lessons show as control tips (data/lessons.ts cues): each lights the control it
   // names on the live board, beside its drawn scene. The welcome lights nothing: it is the fight's title card.
   'story.welcome': {},
-  'howto.items': { pages: [['.item-ledger-piece', '.item-ledger-rows'], ['.item-who-sockets'], ['.item-who-sockets']] },
+  'howto.items': { pages: [['.item-ledger-piece', '.item-ledger-rows'], ['.item-ledger-rows']] },
   'howto.gems': { pages: [['.gem-hand', '.gem-card-stat'], ['.gem-screen .mastery-pips']] },
   'howto.recruit': { pages: [['.recruit-contracts', '.recruit-sign'], ['.roster-peek-button']] },
   'howto.leads': { pages: [['.lead-pick-grid'], ['.lead-pick-grid .squad-slot-matchups', '.team-row.enemy .combatant-card']] },
   'howto.status.Conduct': { pages: [null, ['.order-track']] },
-  'howto.statuses': { pages: [['.status-badge'], ['.status-badge']] },
+  'howto.statuses': { pages: [['.status-badge']] },
   'howto.status.Daze': {},
-  'howto.bench': { pages: [['.bottom-action-switch'], ['.team-row.ally .resource-row']] },
+  'howto.bench': { pages: [['.bottom-action-switch']] },
   'howto.rest': { pages: [['.rest-move']] },
   'howto.bag': { pages: [['.bottom-action-bag'], null] },
 };

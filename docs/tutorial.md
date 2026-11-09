@@ -13,7 +13,7 @@
 ## 1. What it is
 
 A new account sees, in order: the install card (once a device), the fall (wordless panels), a
-two-page **Welcome** (what a run is, what First Light is), then First Light's lessons, each opening
+one-page **Welcome** (what a run is, what First Light is), then First Light's lessons, each opening
 on its own How to Play page. The first run after them is an ordinary run.
 
 What a first run adds is information, not structure:

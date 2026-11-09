@@ -186,7 +186,7 @@ const TARGETS_SCENE: TipScene = {
 
 const SWITCH_SCENE: TipScene = { hero: { heroId: 'cinderKnight' }, bar: true, focus: ['switch'] };
 
-/** The first lesson's Crag and its Arcling, which Stone hits double. */
+/** The first lesson's Crag and the Cubling it is aimed at. */
 const LESSON_FOES = [{ heroId: 'cubling', level: 4 }] as const;
 const LESSON_CRAG = { heroId: 'crag', level: 3 } as const;
 
