@@ -1,7 +1,6 @@
 import type { CSSProperties, Ref } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { locations } from '../../data/locations';
-import { companionHeroId } from '../../run/companion';
 import { cycleOf } from '../../run/cycles';
 import { levelOf } from '../../run/growth';
 import { formatPlaytime, type Profile } from '../../run/profile';
@@ -28,7 +27,6 @@ export function VictoryCard({ run, profileAfter, stars, onInspect, ref }: Props)
   const cycle = cycleOf(run.cycle);
   const record = profileAfter.runHistory[0];
   const route = run.locationIds.slice(0, SEAL_ACTS).map((id) => locations[id]?.name).filter(Boolean);
-  const companionId = companionHeroId(run);
   const earned = stars.balanceAfter - stars.balanceBefore;
   const facts = [record?.durationMs != null ? formatPlaytime(record.durationMs) : null, record ? DATE.format(record.endedAt) : null].filter(Boolean);
 
@@ -93,11 +91,6 @@ export function VictoryCard({ run, profileAfter, stars, onInspect, ref }: Props)
       )}
 
       <div className="vcard-foot">
-        {companionId && run.companion && (
-          <span className="vcard-companion" style={{ '--pact-rgb': getTypeColorRgb(run.companion.type) } as CSSProperties}>
-            <HeroPortrait heroId={companionId} className="vcard-companion-figure" />
-          </span>
-        )}
         {earned > 0 && (
           <span className="vcard-stars">
             <span className="vcard-stars-glyph">✦</span>+{earned}

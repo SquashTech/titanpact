@@ -31,8 +31,6 @@ import {
   moveForHero,
   derivedRandom,
   fightWinner,
-  callIntent,
-  calledMove,
 } from '../../engine/state';
 import { fieldHealMultiplier, resolveHealForceBonus, type HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
@@ -47,7 +45,7 @@ import { EnemyPips } from './EnemyPips';
 import { aimedAt, readEnemyIntent } from './enemyIntent';
 import { Coin } from '../shared/Coin';
 import { ConsoleGlyph } from './consoleGlyphs';
-import { companionActions, previewOrder } from '../../engine/combat/priority';
+import { previewOrder } from '../../engine/combat/priority';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../../engine/combat/passiveEngine';
@@ -70,8 +68,6 @@ import { overlayHost } from '../shared/overlayHost';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState } from '../../run/buildCombatState';
-import { ANCIENT, companionCallFor } from '../../run/companion';
-import { CallSheet, CompanionFigure, type CompanionState } from './CompanionFigure';
 import { combatantIdFor } from '../../run/combatantIds';
 import { chooseMvp, emptyMvpTally, tallyMvpEvents, type MvpPick, type MvpRules, type MvpTally } from '../../run/mvp';
 import type { CombatSnapshot } from '../../run/resume';
@@ -281,15 +277,12 @@ function ActionStrip({
   combatant,
   move,
   caster,
-  free,
 }: {
   name: string;
   enemy: boolean;
   combatant: Combatant;
   move: MoveDefinition;
   caster: HealCaster;
-  /** The companion's act: no Mana paid. */
-  free?: boolean;
 }) {
   return (
     <div className={`combat-banner-declare${enemy ? ' is-enemy' : ' is-ally'}`}>
@@ -297,7 +290,7 @@ function ActionStrip({
       <div className="combat-banner-declare-body">
         <span className="combat-banner-declare-name">{name}</span>
         <div className="combat-banner-declare-move">
-          <MoveButtonReplica move={move} caster={caster} chargeHolder={combatant} free={free} />
+          <MoveButtonReplica move={move} caster={caster} chargeHolder={combatant} />
         </div>
       </div>
     </div>
@@ -676,7 +669,6 @@ export function FightScreen({
           teamPassiveGrants,
           teamStatusGrants,
           gold: playerRun.gold,
-          call: companionCallFor(playerRun, allCombatants),
         },
         { side: AI_SIDE, squad: aiSquad, roster: aiRun.roster },
       ],
@@ -696,8 +688,6 @@ export function FightScreen({
   const [fieldNote, setFieldNote] = useState<{ key: number; text: string } | null>(null);
   /** The Bag, open in the move area: `'open'` shows the pouch, a potion kind is aiming it at a hero. */
   const [bag, setBag] = useState<'open' | PotionKind | null>(null);
-  /** The companion's Call card, open off its figure on the field (CompanionFigure). */
-  const [callSheetOpen, setCallSheetOpen] = useState(false);
   /** Potions drunk this fight. The run's purse is only debited at resolve, so a replayed fight refunds them. */
   const [usedConsumables, setUsedConsumables] = useState<ConsumablePurse>(() => initialSnapshot?.usedConsumables ?? { hpPotion: 0, mpPotion: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
@@ -911,21 +901,6 @@ export function FightScreen({
   // The pouch belongs to whoever opened it: command passing on closes it.
   useEffect(() => setBag(null), [actingId]);
 
-  // The companion (docs/companion-call.md §12): it acts on its own, and the round it does is
-  // telegraphed from the top of that round's command phase — the ! on its figure and its seat on the track.
-  const playerCall = combat.calls?.[PLAYER_SIDE];
-  const companionCaster = playerCall ? combat.combatants[playerCall.combatantId] : undefined;
-  const companionIntends = !resolving && !winner && callIntent(combat, PLAYER_SIDE) !== null;
-  const companionState: CompanionState | null = !playerCall
-    ? null
-    : resolving && beat?.strikeCombatantId === playerCall.combatantId
-      ? 'acting'
-      : companionIntends
-        ? 'intends'
-        : playerCall.remaining <= 0
-          ? 'spent'
-          : 'waiting';
-
   /**
    * The first-time tip for this moment of the fight, if any (docs/tutorial.md). Evaluated only at
    * the TOP of a command phase — nothing declared yet — so a tip never lands between two orders
@@ -1008,13 +983,11 @@ export function FightScreen({
       if (p!.kind === 'rest') return [{ kind: 'rest', combatantId: id }];
       return [{ kind: 'move', combatantId: id, moveId: p!.moveId!, declaredTarget: p!.declaredTarget }];
     });
-    // A companion whose act falls this round takes its seat on the track before anyone commands.
-    const companions = companionActions(combat);
     return previewOrder(
       combat,
       allCombatants,
-      [...enemyActiveAlive, ...playerActiveAlive, ...companions.map((a) => a.combatantId)],
-      [...declared, ...companions],
+      [...enemyActiveAlive, ...playerActiveAlive],
+      declared,
       moves,
       fieldEffects,
       passives,
@@ -1062,7 +1035,7 @@ export function FightScreen({
     const c = combat.combatants[source.combatantId];
     const mark = orderMarks[source.combatantId];
     return c && mark
-      ? [{ combatantId: c.combatantId, heroId: c.heroId, formPathId: c.formPathId, side: c.side === PLAYER_SIDE ? 'ally' : 'enemy', mark, ...(c.called ? { companion: true } : {}) }]
+      ? [{ combatantId: c.combatantId, heroId: c.heroId, formPathId: c.formPathId, side: c.side === PLAYER_SIDE ? 'ally' : 'enemy', mark }]
       : [];
   });
 
@@ -1951,15 +1924,6 @@ export function FightScreen({
         <div className="team-row ally">
           {renderActiveSlot(PLAYER_SIDE, 0)}
           {renderActiveSlot(PLAYER_SIDE, 1)}
-          {playerCall && companionCaster && companionState && (
-            <CompanionFigure
-              heroId={companionCaster.heroId}
-              state={companionState}
-              moveType={calledMove(playerCall, moves)?.type ?? 'Arcane'}
-              awakened={playerCall.moveType === ANCIENT}
-              onTap={resolving || winner || pickingLeads ? undefined : () => setCallSheetOpen(true)}
-            />
-          )}
         </div>
 
 
@@ -2012,9 +1976,8 @@ export function FightScreen({
                 name={allCombatants[combat.combatants[bannerAction.casterId].heroId]?.name ?? ''}
                 enemy={bannerAction.enemy}
                 combatant={combat.combatants[bannerAction.casterId]}
-                move={bannerAction.calledType ? { ...moves[bannerAction.moveId], type: bannerAction.calledType } : moves[bannerAction.moveId]}
+                move={moves[bannerAction.moveId]}
                 caster={healCasterOf(bannerAction.casterId)}
-                free={bannerAction.calledType !== undefined}
               />
             )}
             <div className="combat-banner-current" key={beatSeq}>
@@ -2087,22 +2050,16 @@ export function FightScreen({
               {beat.bannerCast && (
                 <span
                   className="combat-banner-cast"
-                  aria-label={beat.bannerCast.called ? `${beat.bannerCast.label}, free` : `${beat.bannerCast.label}, ${beat.bannerCast.cost} mana`}
+                  aria-label={`${beat.bannerCast.label}, ${beat.bannerCast.cost} mana`}
                 >
                   <span className={`combat-banner-cast-kind is-${beat.bannerCast.kind}`}>
                     <MoveKindGlyph kind={beat.bannerCast.kind} className="combat-banner-cast-glyph" />
                     {beat.bannerCast.label}
                   </span>
-                  {beat.bannerCast.called ? (
-                    <span className="combat-banner-cast-cost">
-                      <span className="combat-banner-cast-unit">Free</span>
-                    </span>
-                  ) : (
-                    <span className="combat-banner-cast-cost">
-                      <ManaCost cost={beat.bannerCast.cost} />
-                      <span className="combat-banner-cast-unit">Mana</span>
-                    </span>
-                  )}
+                  <span className="combat-banner-cast-cost">
+                    <ManaCost cost={beat.bannerCast.cost} />
+                    <span className="combat-banner-cast-unit">Mana</span>
+                  </span>
                 </span>
               )}
               </>
@@ -2640,15 +2597,6 @@ export function FightScreen({
           );
         })()}
 
-      {callSheetOpen && !resolving && (
-        <CallSheet
-          combat={combat}
-          side={PLAYER_SIDE}
-          defenderIds={enemyActiveAlive}
-          intends={companionIntends}
-          onClose={() => setCallSheetOpen(false)}
-        />
-      )}
       {movePopup && (
         <MoveDetailOverlay
           move={movePopup.move}

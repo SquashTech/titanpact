@@ -11,7 +11,7 @@ import { fieldEffects } from '../../src/data/fieldEffects';
 import { equipment } from '../../src/data/equipment';
 import { relics } from '../../src/data/relics';
 import type { CombatState, Side } from '../../src/engine/state';
-import { getMaxHp, getEffectiveStat, isFighter, sideDefeated } from '../../src/engine/state';
+import { getMaxHp, getEffectiveStat, sideDefeated } from '../../src/engine/state';
 import type { CombatEvent } from '../../src/engine/events';
 import type { StatKey } from '../../src/engine/content';
 import { STAT_CEILING_MULTIPLE } from '../../src/engine/state';
@@ -20,7 +20,7 @@ import { resolveRound } from '../../src/engine/combat/resolveRound';
 import { applyForcedReplacement, replacementCandidates } from '../../src/engine/combat/switching';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../../src/engine/combat/passiveEngine';
 import { DEFAULT_PACT_CLOCK } from '../../src/engine/combat/pactClock';
-import { buildCombatState, rosterIdOfCombatant, type CallPlacement } from '../../src/run/buildCombatState';
+import { buildCombatState, rosterIdOfCombatant } from '../../src/run/buildCombatState';
 import { pickAiAction, type AiContext } from '../../src/run/ai';
 import { canSwitchOut, hasAffordableMoveInFight, isLockedIn } from '../../src/engine/state';
 import { relicTeamStatModifiers } from '../../src/run/relics';
@@ -116,10 +116,6 @@ export interface FightOutcome {
   /** Player-side turns taken, and how many were spent Resting or cycling out. */
   playerTurns: number;
   playerRests: number;
-  /** The companion (docs/companion-call.md §12): whether the fight had one, the acts that resolved, and the HP they took. */
-  callable: boolean;
-  playerCalls: number;
-  callDamage: number;
   playerSwitches: number;
   /** The player side lost 2+ heroes, so voluntary switching was locked out. */
   lockedIn: boolean;
@@ -174,7 +170,7 @@ const STAT_TOTAL_KEYS = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 's
 function squadStatTotal(state: CombatState, side: Side): number {
   let total = 0;
   for (const combatant of Object.values(state.combatants)) {
-    if (combatant.side !== side || !isFighter(combatant)) continue;
+    if (combatant.side !== side) continue;
     const hero = allCombatants[combatant.heroId];
     for (const stat of STAT_TOTAL_KEYS) total += getEffectiveStat(hero, combatant, stat);
   }
@@ -466,13 +462,11 @@ export interface FightInput {
   pilot?: PilotKind;
   /** 'greedy' flies the ENEMY with src/run/pilot.ts — the Trials' AI (docs/constructed.md §8). Default: run/ai.ts, Classic's enemy. */
   aiPilot?: PilotKind;
-  /** The player's companion, seated off the field (run/companion.ts companionCallFor). Default none. */
-  playerCall?: CallPlacement | null;
   /** A Gathering's enemy plays its warband's engine (run/ai.ts AiContext.playsEngines). Default off. */
   aiPlaysEngines?: boolean;
 }
 
-/** The original player side: run/ai.ts plus the reactive mana cycle. The companion acts on its own. */
+/** The original player side: run/ai.ts plus the reactive mana cycle. */
 function chartPilotActions(state: CombatState, playerCtx: AiContext, playerActive: readonly string[], switching: boolean): Action[] {
   const switches = switching ? manaCycleSwitches(state, PLAYER_SIDE, playerCtx, playerActive) : {};
   return playerActive.map((id): Action =>
@@ -481,7 +475,7 @@ function chartPilotActions(state: CombatState, playerCtx: AiContext, playerActiv
 }
 
 export function simulateFight(input: FightInput): FightOutcome {
-  const { seed, playerRoster, playerSquad, playerRelicIds, playerGold, aiRoster, aiSquad, rng, playerCall } = input;
+  const { seed, playerRoster, playerSquad, playerRelicIds, playerGold, aiRoster, aiSquad, rng } = input;
 
   const start = buildCombatState(
     seed,
@@ -496,7 +490,6 @@ export function simulateFight(input: FightInput): FightOutcome {
         teamPassiveGrants: relicTeamPassiveGrants(playerRelicIds, relics),
         teamStatusGrants: relicTeamStatusGrants(playerRelicIds, relics),
         gold: playerGold,
-        call: playerCall ?? null,
       },
       { side: AI_SIDE, squad: aiSquad, roster: aiRoster },
     ],
@@ -505,7 +498,6 @@ export function simulateFight(input: FightInput): FightOutcome {
 
   const telemetry: Record<string, CombatantTelemetry> = {};
   for (const combatant of Object.values(start.combatants)) {
-    if (!isFighter(combatant)) continue;
     telemetry[combatant.combatantId] = {
       heroId: combatant.heroId,
       rosterId: rosterIdOfCombatant(combatant.combatantId),
@@ -536,8 +528,6 @@ export function simulateFight(input: FightInput): FightOutcome {
   let pactTicked = false;
   let playerTurns = 0;
   let playerRests = 0;
-  let playerCalls = 0;
-  let callDamage = 0;
   let playerSwitches = 0;
   const casts = { byTier: {} as Record<string, number>, byManaBand: {} as Record<string, number>, byMove: {} as Record<string, number> };
   const deltas = { count: 0, authored: 0, landed: 0, enemyCount: 0, enemyAuthored: 0, enemyLanded: 0, held: 0, enemyHeld: 0 };
@@ -591,10 +581,6 @@ export function simulateFight(input: FightInput): FightOutcome {
     state = fillOpenSlots(state, AI_SIDE, replacementEvents);
     roundEvents.push(...replacementEvents);
 
-    for (const e of roundEvents) {
-      if (e.type === 'Called' && state.combatants[e.combatantId]?.side === PLAYER_SIDE) playerCalls += 1;
-      else if (e.type === 'DamageDealt' && state.combatants[e.sourceCombatantId]?.called) callDamage += e.amount + (e.absorbed ?? 0);
-    }
     allEvents.push(...roundEvents);
     recordEvents(roundEvents, telemetry, casts, deltas, shield, field, moveTallies, dots);
     beats += countBeats(roundEvents, state.combatants);
@@ -626,7 +612,7 @@ export function simulateFight(input: FightInput): FightOutcome {
   let hp = 0;
   let maxHp = 0;
   for (const combatant of Object.values(state.combatants)) {
-    if (combatant.side !== PLAYER_SIDE || !isFighter(combatant)) continue;
+    if (combatant.side !== PLAYER_SIDE) continue;
     hp += Math.max(0, combatant.currentHp);
     maxHp += getMaxHp(allCombatants[combatant.heroId], combatant);
   }
@@ -639,9 +625,6 @@ export function simulateFight(input: FightInput): FightOutcome {
     pactTicked,
     playerTurns,
     playerRests,
-    callable: !!playerCall,
-    playerCalls,
-    callDamage,
     playerSwitches,
     lockedIn: state.koCount[PLAYER_SIDE] >= 2,
     playerSquadStats: squadStatTotal(opening.state, PLAYER_SIDE),

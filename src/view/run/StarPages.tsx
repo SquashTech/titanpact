@@ -3,12 +3,11 @@ import { heroes } from '../../data/heroes';
 import { TYPES } from '../../data/typechart';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, TypeId } from '../../engine/content';
-import { companionStarId, curseStarId, hasCompanionStar, hasCurseStar, isSpawnAscended, starCycleOf, type Profile } from '../../run/profile';
+import { curseStarId, hasCurseStar, starCycleOf, type Profile } from '../../run/profile';
 import { starCycleClass } from '../shared/ProfileContext';
 import { curses, type CurseDefinition } from '../../data/curses';
 import { passives } from '../../data/passives';
 import { heroPool } from '../../run/recruitment';
-import { ANCIENT } from '../../run/companion';
 import { SPAWN_TIERS, spawnId, titanspawnLines, type SpawnTier, type TitanspawnLine } from '../../data/titanspawn';
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
@@ -18,8 +17,8 @@ import { pathTintStyle } from '../shared/pathTint';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 
 // The Observatory's star pages: where every star the account has earned is charted — a hero's
-// three Evolution paths, a curse's one (docs/wild-innates-and-events.md §3.3), and a Titanspawn
-// line's companion star (docs/collection.md §2).
+// three Evolution paths and a curse's one (docs/wild-innates-and-events.md §3.3); beside them, the
+// Titanspawn bestiary.
 
 // Primary type in type-chart order (TYPES); a stable sort keeps same-type heroes in authoring order.
 function byPrimaryType(a: HeroDefinition, b: HeroDefinition): number {
@@ -167,20 +166,16 @@ const TIER_LABELS: Record<SpawnTier, string> = {
   late: 'Late',
 };
 
-/**
- * One Titanspawn line: hidden until a run has been cleared with its companion alive (profile.ts
- * `companionStars`), then drawn in its Late body with its star lit and its three bodies named
- * under it — and Ancient beside its type once one of the line has woken in the finale.
- */
+/** One Titanspawn line: hidden until a won fight has beaten one of it, then drawn in its Late body with its three bodies named under it. */
 function SpawnStarRow({ line, profile }: { line: TitanspawnLine; profile: Profile }) {
-  const known = hasCompanionStar(profile, line.type);
-  const types: TypeId[] = known && isSpawnAscended(profile, line.type) ? [line.type, ANCIENT] : [line.type];
+  const known = profile.spawnFought.includes(line.type);
+  const types: TypeId[] = [line.type];
   const lead = getTypeColor(line.type);
   return (
     <div
       className={`compendium-row compendium-spawn-row${known ? '' : ' is-unknown'}`}
       style={{ '--type-rgb': getTypeColorRgb(line.type) } as CSSProperties}
-      aria-label={known ? `${line.names.late}: star earned` : `An unknown ${line.type} Titanspawn`}
+      aria-label={known ? line.names.late : `An unknown ${line.type} Titanspawn`}
     >
       <span className="compendium-row-head">
         <span className="compendium-row-figure">
@@ -198,13 +193,6 @@ function SpawnStarRow({ line, profile }: { line: TitanspawnLine; profile: Profil
             ))}
           </span>
         </span>
-        <span
-          className={`evo-star compendium-spawn-star ${known ? 'is-earned' : 'is-empty'}${starCycleClass(starCycleOf(profile, companionStarId(line.type), known))}`}
-          title={known ? 'Star earned' : 'Clear a run with this Titanspawn at your side to earn'}
-          aria-hidden="true"
-        >
-          {known ? '★' : '☆'}
-        </span>
       </span>
       <span className="compendium-row-paths">
         {SPAWN_TIERS.map((tier) => (
@@ -218,7 +206,7 @@ function SpawnStarRow({ line, profile }: { line: TitanspawnLine; profile: Profil
   );
 }
 
-/** The bestiary: one Titanspawn line a type, revealed by its companion star. */
+/** The bestiary: one Titanspawn line a type, revealed once fought. */
 export function SpawnStarsPage({ profile }: { profile: Profile }) {
   return (
     <div className="compendium-list">

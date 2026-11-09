@@ -61,7 +61,7 @@ export function crossesMastery(entry: Pick<RosterEntry, 'mastery'>, pips: number
   return entry.mastery < milestone && entry.mastery + masteryRoom(entry, pips) >= milestone;
 }
 
-/** The pips, landed. What a crossed milestone pays — the Evolution, the mastered innate, the companion's tier-step — is the caller's to raise. */
+/** The pips, landed. What a crossed milestone pays — the Evolution, the mastered innate — is the caller's to raise. */
 export function grantMastery(run: RunState, rosterId: string, pips: number): RunState {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new MasteryError(`${rosterId} is not on the roster`);

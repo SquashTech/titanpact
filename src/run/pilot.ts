@@ -16,8 +16,7 @@
 // never read as worthless, or the sim would report every support hero weak.
 //
 // It is still a ONE-PLY greedy pilot: no lookahead, no reading the opponent's
-// declaration, no baiting — except the far side's companion, whose act is
-// telegraphed and counted into what each body stands to take this round.
+// declaration, no baiting.
 // It is a better floor, not a ceiling.
 
 import type { MoveDefinition, StatKey, StatusApplication, StatusDefinition, TargetMode } from '../engine/content';
@@ -27,8 +26,6 @@ import type { CombatState, FieldEffectContext, Side } from '../engine/state';
 import {
   stageDeltaPoints,
   activePartnerTypes,
-  callIntent,
-  calledMove,
   effectiveTypes,
   getEffectiveStat,
   getMaxHp,
@@ -272,19 +269,6 @@ function threatOf(state: CombatState, ctx: AiContext, combatantId: string, cache
   return best;
 }
 
-/**
- * What the far side's companion stands to land on `holderId` this round, when its act is
- * telegraphed (docs/companion-call.md §12.3): the whole hit, or half of it when it rolls one of two.
- */
-function telegraphedHitOn(state: CombatState, holderId: string): number {
-  const holder = state.combatants[holderId];
-  const call = holder && callIntent(state, otherSide(holder.side));
-  if (!call) return 0;
-  const move = calledMove(call, moves);
-  if (!move || !isDamaging(move)) return 0;
-  const hit = expectedHit(state, call.combatantId, move, holderId);
-  return resolveTargetMode(state, move) === 'randomEnemy' ? hit / 2 : hit;
-}
 
 /** The hardest hit `attackerId` could land on `targetId` this round, over the moves it can pay for. */
 function bestHitOn(state: CombatState, ctx: AiContext, attackerId: string, targetId: string, cache: Map<string, number>): number {
@@ -388,7 +372,7 @@ function lethalSaveValue(state: CombatState, ctx: AiContext, holderId: string, b
   const holder = state.combatants[holderId];
   if (!holder || buffer <= 0) return 0;
   const biggest = aliveActiveIdsOn(state, otherSide(holder.side)).reduce((max, foeId) => Math.max(max, bestHitOn(state, ctx, foeId, holderId, cache)), 0);
-  const through = biggest + telegraphedHitOn(state, holderId) - statusMagnitude(holder, shieldStatusId);
+  const through = biggest - statusMagnitude(holder, shieldStatusId);
   if (through < holder.currentHp || through - buffer >= holder.currentHp) return 0;
   return threatOf(state, ctx, holderId, cache) * HORIZON * 0.5;
 }
@@ -421,7 +405,7 @@ function riderValue(
       (sum, foeId) => sum + threatOf(state, ctx, foeId, cache),
       0
     );
-    return Math.min(incoming * 0.5 + telegraphedHitOn(state, holderId), holder.currentHp);
+    return Math.min(incoming * 0.5, holder.currentHp);
   }
 
   switch (def.pipeline) {
@@ -436,7 +420,7 @@ function riderValue(
       // the horizon (2026-09-29 — at the default duration of 1 every Shield read as half a round's
       // damage and the replace-at-cap rule never kept one).
       const rounds = app.duration ?? HORIZON;
-      let value = Math.min(magnitude, room, incoming * rounds * 0.5 + telegraphedHitOn(state, holderId));
+      let value = Math.min(magnitude, room, incoming * rounds * 0.5);
       // The KO it refuses is priced as a KO landed is: the holder's output over the horizon, halved
       // because the far side may swing at the other body.
       return value + lethalSaveValue(state, ctx, holderId, Math.min(magnitude, room), cache);

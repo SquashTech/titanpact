@@ -1,6 +1,6 @@
 import { currentEvolutionPathId } from '../../run/progression';
 import { turnedCurse } from '../../run/curse';
-import { companionStarId, curseStarId, hasCompanionStar, hasCurseStar, hasEvolutionStar, starCycleOf, type Profile } from '../../run/profile';
+import { curseStarId, hasCurseStar, hasEvolutionStar, starCycleOf, type Profile } from '../../run/profile';
 import { stardustBalance } from '../../run/starShop';
 import { starShopCatalog } from '../../data/starShop';
 import type { RosterEntry, RunState } from '../../run/state';
@@ -14,7 +14,6 @@ export interface EarnedStar {
 
 export interface VictoryStars {
   byRosterId: Record<string, EarnedStar[]>;
-  companion: (EarnedStar & { type: string }) | null;
   clearBonus: number;
   balanceBefore: number;
   balanceAfter: number;
@@ -39,17 +38,8 @@ export function victoryStars(run: RunState, before: Profile, after: Profile): Vi
       .filter((star) => star.cycle > star.fromCycle);
     if (earned.length > 0) byRosterId[entry.rosterId] = earned;
   }
-  const type = run.companion?.type ?? null;
-  let companion: VictoryStars['companion'] = null;
-  if (type) {
-    const id = companionStarId(type);
-    const fromCycle = starCycleOf(before, id, hasCompanionStar(before, type));
-    const cycle = starCycleOf(after, id, hasCompanionStar(after, type));
-    if (cycle > fromCycle) companion = { id, type, cycle, fromCycle };
-  }
   return {
     byRosterId,
-    companion,
     clearBonus: after.bonusStardust - before.bonusStardust,
     balanceBefore: stardustBalance(before, starShopCatalog),
     balanceAfter: stardustBalance(after, starShopCatalog),

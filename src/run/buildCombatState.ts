@@ -3,13 +3,13 @@
 // from statModifiers, which is reserved for in-combat deltas).
 
 import type { HeroLookup, CombatState, Side, Combatant, StatModifiers } from '../engine/state';
-import { createCombatant, getMaxHp, getMaxMana, withCalledCaster } from '../engine/state';
+import { createCombatant, getMaxHp, getMaxMana } from '../engine/state';
 import { combatantIdFor, koRosterIdsOf, rosterIdOfCombatant } from './combatantIds';
 import { woundedHp } from './wounds';
 
 export { koRosterIdsOf, rosterIdOfCombatant };
 import { createRng } from '../engine/rng/seededRng';
-import type { PassiveDefinition, PassiveId, StatusId, TypeId } from '../engine/content';
+import type { PassiveDefinition, PassiveId, StatusId } from '../engine/content';
 import type { RosterEntry } from './state';
 import type { Squad } from './squad';
 import type { EquipmentDefinition } from './equipment';
@@ -36,20 +36,6 @@ export interface SquadPlacement {
   teamStatusGrants?: Record<StatusId, number>;
   /** The side's purse, for a goldStatGrants passive (Gilded Mane). Omitted = none: the AI holds no gold. */
   gold?: number;
-  /** The side's companion, seated off the field (run/companion.ts companionCallFor). Omitted = none. */
-  call?: CallPlacement | null;
-}
-
-/** A side's companion (docs/companion-call.md §12): the entry it is built from, its one move, and when it acts. */
-export interface CallPlacement {
-  entry: RosterEntry;
-  moveId: string;
-  /** Rounds into the fight (or a phase) it may act in, inclusive. */
-  window: readonly [number, number];
-  /** Acts again in each later phase (the woken companion in the finale). */
-  perPhase?: boolean;
-  /** Its move resolves as this type (the woken companion's Ancient). */
-  moveType?: TypeId;
 }
 
 // Mana starts full (docs/mana.md); HP starts where the act's wounds left it (run/wounds.ts).
@@ -132,10 +118,7 @@ export function buildCombatState(
   const active: CombatState['active'] = { A: [null, null], B: [null, null] };
   const bench: CombatState['bench'] = { A: [], B: [] };
 
-  const calls: { combatant: Combatant; placement: CallPlacement }[] = [];
-  for (const { side, squad, roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants, gold, call } of placements) {
-    // Built bare — no gear, no team grants, no purse: the Call is the line at par, nothing the roster carries.
-    if (call) calls.push({ combatant: placeEntry(call.entry, side, heroes, equipmentLookup, passiveDefs, {}, {}, {}, 0), placement: call });
+  for (const { side, squad, roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants, gold } of placements) {
     active[side] = squad.activeIds.map((id) => (id ? combatantIdFor(side, id) : null)) as [string | null, string | null];
     const phaseOf = new Map<string, number>();
     (squad.reserves ?? []).forEach((phase, i) => phase.forEach((id) => phaseOf.set(id, i + 1)));
@@ -166,7 +149,7 @@ export function buildCombatState(
     }
   }
 
-  const built: CombatState = {
+  return {
     seed,
     rngState: createRng(seed),
     round: 1,
@@ -176,8 +159,4 @@ export function buildCombatState(
     koCount: { A: 0, B: 0 },
     activeFieldEffect: null,
   };
-  return calls.reduce(
-    (state, { combatant, placement }) => withCalledCaster(state, combatant, placement.moveId, { window: placement.window, perPhase: placement.perPhase, moveType: placement.moveType }),
-    built
-  );
 }

@@ -13,7 +13,6 @@ import { CONSUMABLE_KINDS } from './consumables';
 import type { Encounter, EncounterNodeType } from './enemyGen';
 import type { GauntletResult } from './gauntlet';
 import type { HeroLevelUp } from './growth';
-import type { CompanionBeat } from './companion';
 import type { RewardNodeType } from './map';
 import { GEM_ORDER, rollGems, rollShelfGems, type Gem, type GemPlan } from './gems';
 import type { GrowthStatKey } from '../engine/content';
@@ -58,8 +57,6 @@ export type RunScreen =
   | { kind: 'actIntro' }
   /** The Herald announced before its fight; `next` is the fight. */
   | { kind: 'herald'; next: RunScreen }
-  /** The companion, brought to the finale, wakes to Ancient; `next` is the fight. */
-  | { kind: 'companionAwakens'; heroId: string; next: RunScreen }
   /** The Eyes have closed: the collapse and the re-binding, ahead of everything the fight pays. */
   | { kind: 'titanBound'; next: RunScreen }
   | { kind: 'map' }
@@ -137,8 +134,6 @@ export type RunScreen =
   | { kind: 'event'; nodeId: string; eventId: string; seed: number; settled?: boolean }
   /** What the fight just did to the roster. `taken` is who has already taken a schedule entry this report; `asking` the replace-or-decline still open. */
   | { kind: 'levelUp'; report: readonly HeroLevelUp[]; next: RunScreen; seed: number; taken?: string[]; asking?: LevelUpQuestion }
-  /** The companion's beats (run/companion.ts): the join after the level report; the tier-step at the act boundary, before the seal. */
-  | { kind: 'companion'; beat: CompanionBeat; next: RunScreen }
   /** Guardian's Banner after a Guardian win. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: RunScreen; settled?: boolean }
   /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
@@ -179,7 +174,6 @@ const RESUMABLE: ReadonlySet<RunScreenKind> = new Set<RunScreenKind>([
   'blessing',
   'actIntro',
   'herald',
-  'companionAwakens',
   'titanBound',
   'map',
   'fight',
@@ -200,7 +194,6 @@ const RESUMABLE: ReadonlySet<RunScreenKind> = new Set<RunScreenKind>([
   'patronCapstone',
   'event',
   'levelUp',
-  'companion',
   'guardianBanner',
   'rosterReplace',
   'recruit',
@@ -376,14 +369,6 @@ function decodeCandidate(value: unknown, ctx: Ctx): RosterReplaceCandidate {
   reject('rosterReplace.candidate has an unknown source');
 }
 
-function decodeBeat(value: unknown, ctx: Ctx): CompanionBeat {
-  if (!isObject(value)) reject('companion.beat is not an object');
-  if (value.kind === 'join') return { kind: 'join', heroId: heroId(value.heroId, ctx, 'companion.beat.heroId') };
-  if (value.kind === 'grown') {
-    return { kind: 'grown', fromHeroId: heroId(value.fromHeroId, ctx, 'companion.beat.fromHeroId'), toHeroId: heroId(value.toHeroId, ctx, 'companion.beat.toHeroId') };
-  }
-  reject('companion.beat has an unknown kind');
-}
 
 function decodeGems(value: unknown, label: string): Gem[] {
   if (!Array.isArray(value)) reject(`${label} is not a list of Gems`);
@@ -420,6 +405,8 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
   if (raw.kind === 'fallen') return decodeScreen(raw.next, ctx, depth + 1);
   // A run saved on the Location pick (deleted 2026-10-16) reopens on the seal, which draws the place.
   if (raw.kind === 'locationChoice') return { kind: 'pactSeal' };
+  // A run saved on a companion beat (deleted 2026-11-09) walks on past it.
+  if (raw.kind === 'companion' || raw.kind === 'companionAwakens') return decodeScreen(raw.next, ctx, depth + 1);
   const kind = raw.kind as RunScreenKind;
   if (!isResumable(kind)) reject(`screen "${kind}" is not one a run is saved on`);
   const next = () => decodeScreen(raw.next, ctx, depth + 1);
@@ -453,8 +440,6 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
       if (!Array.isArray(raw.candidates) || !raw.candidates.every((id) => typeof id === 'string' && id in patrons)) reject('patronCapstone.candidates is unknown');
       return { kind, candidates: [...(raw.candidates as string[])], next: next() };
     }
-    case 'companionAwakens':
-      return { kind, heroId: heroId(raw.heroId, ctx, 'companionAwakens.heroId'), next: next() };
     case 'fight': {
       if (raw.nodeType !== 'fight' && raw.nodeType !== 'elite' && raw.nodeType !== 'boss') reject('fight.nodeType is unknown');
       const reward = raw.equipmentRewardId === null || raw.equipmentRewardId === undefined ? null : itemId(raw.equipmentRewardId, ctx, 'fight.equipmentRewardId');
@@ -534,8 +519,6 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
         ...(raw.taken !== undefined ? { taken: rosterIds(raw.taken, ctx, 'levelUp.taken') } : {}),
         ...(raw.asking !== undefined ? { asking: decodeLevelUpQuestion(raw.asking, ctx) } : {}),
       };
-    case 'companion':
-      return { kind, beat: decodeBeat(raw.beat, ctx), next: next() };
     case 'guardianBanner':
       return { kind, next: next(), ...settled(raw) };
     case 'rosterReplace':

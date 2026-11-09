@@ -1,7 +1,5 @@
 import { patronColor, patronOfNode } from './patronView';
 import { trustOf } from '../../run/patrons';
-import { companionCallMoveId, companionHeroId } from '../../run/companion';
-import { CompanionDossier } from '../combat/CompanionFigure';
 import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
@@ -21,12 +19,11 @@ import { BannerShelf } from './BannerShelf';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { NodeDossier } from './NodeDossier';
 import { nodeLensMark } from './nodeLens';
-import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { locationForAct } from '../../run/locations';
 import { locationDomains, type LocationDefinition } from '../../data/locations';
 import { ElementGlyph } from '../shared/elementIcons';
-import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { getTypeColor } from '../combat/typeColors';
 import { LocationAmbience } from '../shared/LocationSky';
 import { mapSpots } from '../shared/locationBackdrops';
 import { AudioSettings } from '../shared/AudioSettings';
@@ -171,9 +168,6 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 // level-up report, not here.
 export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAbandonRun, saveTrouble = null }: Props) {
   const [rosterOpen, setRosterOpen] = useState(false);
-  const companionId = companionHeroId(run);
-  const callMoveId = companionCallMoveId(run);
-  const [companionOpen, setCompanionOpen] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
@@ -283,20 +277,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
               : null;
           }}
           onPreviewChange={(node) => setReading(node?.type ?? null)}
-          companion={
-            // The companion walks the road beside the party, not in the footer the six fill.
-            companionId && callMoveId ? (
-              <button
-                type="button"
-                className="map-companion"
-                style={{ '--hero-rgb': getTypeColorRgb(moves[callMoveId].type) } as CSSProperties}
-                onClick={() => setCompanionOpen(true)}
-                aria-label={`${rosterHeroes[companionId].name}, your companion — view its Call`}
-              >
-                <HeroPortrait heroId={companionId} className="map-companion-portrait" />
-              </button>
-            ) : null
-          }
         />
       </div>
 
@@ -379,7 +359,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
 
       {rosterOpen && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setRosterOpen(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
-      {companionOpen && <CompanionDossier run={run} onClose={() => setCompanionOpen(false)} />}
     </div>
   );
 }

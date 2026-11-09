@@ -22,7 +22,6 @@ export function applyManaRegen(
   const statCtx = { active: state.activeFieldEffect, defs: fieldEffects, board: { state, passives, heroes } };
 
   for (const id of Object.keys(state.combatants)) {
-    if (state.combatants[id].called) continue; // a Called caster's cost is waived; it has no pool to fill
     const combatant = combatants[id];
     if (!combatant || combatant.fainted) continue;
 

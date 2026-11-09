@@ -44,7 +44,7 @@ export const STARFALL_UNLOCK = 'starfall';
 
 /** Every Stardust the profile has been paid: its lit stars, clear bonuses, Trials and lit constellations. */
 export function stardustEarned(profile: Profile): number {
-  return totalStars(profile) * STARDUST_PER_STAR + profile.bonusStardust + trialStardust(profile) + skyStardust(profile, sky);
+  return (totalStars(profile) + profile.companionStars.length) * STARDUST_PER_STAR + profile.bonusStardust + trialStardust(profile) + skyStardust(profile, sky);
 }
 
 /**

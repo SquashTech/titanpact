@@ -8,8 +8,8 @@
 // ships are dropped rather than taken as proof the file is bad. A profile is a record of what
 // the player did, not state the engine runs on, so a partially-read one is still true.
 
-import { spawnPosition } from '../data/titanspawn';
 import { cycleOf } from './cycles';
+import { spawnPosition } from '../data/titanspawn';
 import { grantLedgerId } from './recruitment';
 import { TEAM_SIZE, unenchanted, type Team, type TeamSlot } from './constructed';
 import { GEM_ORDER } from './gems';
@@ -50,13 +50,12 @@ export interface Profile {
    */
   evolutionStars: Record<string, string[]>;
   /**
-   * The Titanspawn lines (by type) a run has been cleared with the companion still on the roster —
-   * one star a type, fourteen to collect, on the Observatory's Spawn page (docs/ascension.md §7).
-   * Alive is the condition, not the body it reached.
+   * The companion stars lit before the companion was deleted (2026-11-09): never shown, still paid
+   * in Stardust so no balance drops. Nothing adds to it.
    */
   companionStars: string[];
   /**
-   * Star id (a path id, `companion:<type>`, `curse:<id>`) -> the highest Cycle it was earned on
+   * Star id (a path id, `curse:<id>`) -> the highest Cycle it was earned on
    * (docs/cycles.md §5): what colours the star. Absent for a held star = Cycle I, so every star
    * earned before the Cycles reads as one. Max-only, never walked back.
    */
@@ -67,11 +66,8 @@ export interface Profile {
    * a hero only bitten has not become the thing the star is for.
    */
   curseStars: string[];
-  /**
-   * The Titanspawn lines (by type) whose companion reached the finale and woke to Ancient. Every
-   * later companion of that line joins with Ancient in its secondary slot (run/companion.ts).
-   */
-  ascendedSpawnTypes: string[];
+  /** The Titanspawn lines (by type) the account has beaten in a won fight: the Spawn bestiary. */
+  spawnFought: string[];
   /**
    * Every run that ENDED — cleared or wiped — newest first, at most RUN_HISTORY_CAP. An
    * abandoned run is not here for the same reason it is neither a clear nor a loss: the player
@@ -165,9 +161,7 @@ export interface RunRecord {
   cycle: number;
   /** The roster at the end, in roster order. */
   roster: RunRecordHero[];
-  /** The companion's line (run/companion.ts), or null for a run that never took one; absent on records before the Call. */
-  companionType?: string | null;
-  /** The Evolution path ids — and `companion:<type>` — this run's clear starred for the first time; a loss stars nothing. */
+  /** The Evolution path ids this run's clear starred for the first time; a loss stars nothing. */
   starsEarned: string[];
   /** The Cycle's clear bonus this run paid, in Stardust; 0 on a loss and on every record written before the stakes. */
   clearBonus: number;
@@ -190,7 +184,7 @@ export function createProfile(): Profile {
     companionStars: [],
     starCycles: {},
     curseStars: [],
-    ascendedSpawnTypes: [],
+    spawnFought: [],
     runHistory: [],
     runStartedAtPlaytimeMs: null,
     bonusStardust: 0,
@@ -244,7 +238,6 @@ export function recordRunStarted(profile: Profile, now: number): Profile {
  */
 export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Profile {
   const evolutionStars = { ...profile.evolutionStars };
-  const companionStars = [...profile.companionStars];
   const curseStars = [...profile.curseStars];
   const starsEarned: string[] = [];
   const starCycles = { ...profile.starCycles };
@@ -268,13 +261,6 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
       starsEarned.push(evolutionPathId);
     }
   }
-  // A clear with the companion's line along: it cannot be lost, so a clear is the whole condition.
-  const companionType = end.outcome === 'win' ? end.companionType : null;
-  if (companionType) raise(companionStarId(companionType), companionStars.includes(companionType));
-  if (companionType && !companionStars.includes(companionType)) {
-    companionStars.push(companionType);
-    starsEarned.push(companionStarId(companionType));
-  }
   const record: RunRecord = {
     ...end,
     roster: end.roster.map((hero) => ({ ...hero })),
@@ -289,7 +275,6 @@ export function recordRunEnded(profile: Profile, end: RunEnd, now: number): Prof
     runsFailed: profile.runsFailed + (end.outcome === 'loss' ? 1 : 0),
     cyclesCleared: end.outcome === 'win' ? Math.max(profile.cyclesCleared, end.cycle) : profile.cyclesCleared,
     evolutionStars,
-    companionStars,
     curseStars,
     starCycles,
     bonusStardust: profile.bonusStardust + record.clearBonus,
@@ -310,9 +295,10 @@ export function resetTips(profile: Profile): Profile {
   return { ...profile, seenTipIds: [] };
 }
 
-/** The companion reached the finale and woke: its line joins with Ancient on every later run. Idempotent. */
-export function recordSpawnAscended(profile: Profile, type: string): Profile {
-  return profile.ascendedSpawnTypes.includes(type) ? profile : { ...profile, ascendedSpawnTypes: [...profile.ascendedSpawnTypes, type] };
+/** The Titanspawn lines a won fight beat, by type — what the bestiary reveals. Idempotent. */
+export function recordSpawnFought(profile: Profile, heroIds: readonly string[]): Profile {
+  const types = heroIds.map((id) => spawnPosition(id)?.line.type).filter((type): type is string => !!type && !profile.spawnFought.includes(type));
+  return types.length === 0 ? profile : { ...profile, spawnFought: [...new Set([...profile.spawnFought, ...types])] };
 }
 
 /** Monotonic: reaching Act 2 after a run that reached Act 4 does not walk the record back. */
@@ -327,16 +313,6 @@ export function hasEvolutionStar(profile: Profile, heroId: string, pathId: strin
   return profile.evolutionStars[heroId]?.includes(pathId) ?? false;
 }
 
-/** The Titanspawn line a body belongs to, or null for a hero. */
-export function companionTypeOf(heroId: string): string | null {
-  return spawnPosition(heroId)?.line.type ?? null;
-}
-
-/** A companion star as `RunRecord.starsEarned` names it, beside the path ids. */
-export function companionStarId(type: string): string {
-  return `companion:${type}`;
-}
-
 /** A curse star as `RunRecord.starsEarned` names it. */
 export function curseStarId(curseId: string): string {
   return `curse:${curseId}`;
@@ -346,21 +322,13 @@ export function hasCurseStar(profile: Profile, curseId: string): boolean {
   return profile.curseStars.includes(curseId);
 }
 
-export function hasCompanionStar(profile: Profile, type: string): boolean {
-  return profile.companionStars.includes(type);
-}
-
 /** The Cycle a star was earned on at its highest (docs/cycles.md §5), or 0 for a star not held. */
 export function starCycleOf(profile: Profile, starId: string, held: boolean): number {
   return held ? profile.starCycles[starId] ?? 1 : 0;
 }
 
-export function isSpawnAscended(profile: Profile, type: string): boolean {
-  return profile.ascendedSpawnTypes.includes(type);
-}
-
 export function totalStars(profile: Profile): number {
-  let total = profile.companionStars.length + profile.curseStars.length;
+  let total = profile.curseStars.length;
   for (const paths of Object.values(profile.evolutionStars)) total += paths.length;
   return total;
 }
@@ -488,8 +456,8 @@ const RETIRED_LESSONS: Readonly<Record<string, readonly string[]>> = {
 
 /**
  * A record is kept if its outcome and act are readable — a line with no outcome says nothing.
- * Its roster keeps every hero with an id: a companion's body is not in `knownHeroIds`, and a
- * hero this build no longer ships is still what the run was played with (the view skips what
+ * Its roster keeps every hero with an id: a hero this build no
+ * longer ships is still what the run was played with (the view skips what
  * it cannot draw). Path ids are checked against `knownPathIds` where given, as the stars are.
  */
 function decodeRunRecord(raw: unknown, dustScale: number, knownPathIds?: ReadonlySet<string>): RunRecord | null {
@@ -521,8 +489,7 @@ function decodeRunRecord(raw: unknown, dustScale: number, knownPathIds?: Readonl
     // A record from before the Cycles holds an Ascension rung, 0 being Cycle I.
     cycle: raw.cycle !== undefined ? Math.max(1, count(raw.cycle, 1)) : count(raw.ascension) + 1,
     roster,
-    ...(typeof raw.companionType === 'string' && raw.companionType.length > 0 ? { companionType: raw.companionType } : {}),
-    starsEarned: stringList(raw.starsEarned).filter((id) => id.startsWith('companion:') || id.startsWith('curse:') || knownPath(id) !== null),
+    starsEarned: stringList(raw.starsEarned).filter((id) => id.startsWith('curse:') || knownPath(id) !== null),
     clearBonus: count(raw.clearBonus) * dustScale,
   };
 }
@@ -579,13 +546,13 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     cyclesCleared: value.cyclesCleared !== undefined ? count(value.cyclesCleared) : count(value.runsCompleted) > 0 ? count(value.ascensionCleared) + 1 : 0,
     wardens: decodeWardens(value.wardens, knownHeroIds, knownPathIds),
     evolutionStars,
-    // Absent on every file written before the bestiary; such a player starts both empty.
     companionStars: [...new Set(stringList(value.companionStars))],
     // Absent on every file written before the Cycles: every star reads as Cycle I.
     starCycles: decodeStarCycles(value.starCycles),
     // Absent on every file written before curses.
     curseStars: [...new Set(stringList(value.curseStars))],
-    ascendedSpawnTypes: [...new Set(stringList(value.ascendedSpawnTypes))],
+    // A companion's line was fought before it joined.
+    spawnFought: [...new Set([...stringList(value.spawnFought), ...stringList(value.companionStars)])],
     runHistory,
     runStartedAtPlaytimeMs: typeof value.runStartedAtPlaytimeMs === 'number' && Number.isFinite(value.runStartedAtPlaytimeMs) ? Math.max(0, Math.floor(value.runStartedAtPlaytimeMs)) : null,
     // Deduplicated: an offer is held once. An id this build no longer sells is kept — it costs

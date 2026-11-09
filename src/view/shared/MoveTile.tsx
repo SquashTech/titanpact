@@ -453,7 +453,6 @@ export function MoveButtonReplica({
   matchups,
   caster,
   chargeHolder,
-  free,
   onClick,
   onLongPress,
 }: {
@@ -469,8 +468,6 @@ export function MoveButtonReplica({
   caster?: HealCaster;
   /** The live holder, for spent Charge pips; omitted, a charged move's pips are drawn full. */
   chargeHolder?: Pick<Combatant, 'chargesSpent'>;
-  /** Cast without Mana (the companion's act): no gem. */
-  free?: boolean;
   onClick?: () => void;
   onLongPress?: () => void;
 }) {
@@ -494,7 +491,7 @@ export function MoveButtonReplica({
       {...longPress}
     >
       <div className="move-row-top">
-        {!free && <ManaCost cost={move.manaCost} />}
+        <ManaCost cost={move.manaCost} />
         <span className="move-type-code" title={move.type}>
           <ElementGlyph type={move.type} />
         </span>

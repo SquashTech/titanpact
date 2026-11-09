@@ -9,12 +9,10 @@ import type { StatKey, TypeId } from '../engine/content';
 import { saveSummary, type SaveCheckpoint, type SavedRun } from '../run/save';
 import { isResumable, resumeTarget, type CombatSnapshot, type ResumePayload, type RunScreen, type ScrollProgress } from '../run/resume';
 import {
-  companionTypeOf,
-  isSpawnAscended,
   recordActReached,
   recordRunEnded,
-  recordSpawnAscended,
   recordRunStarted,
+  recordSpawnFought,
   recordTipSeen,
   recordTrialCleared,
   TRIAL_CLEAR_STARDUST,
@@ -66,8 +64,6 @@ import { victoryStars } from '../view/run/victoryStars';
 import { heroes } from '../data/heroes';
 import { moves } from '../data/moves';
 import { allCombatants, rosterHeroes } from '../data/content';
-import { CompanionScreen } from '../view/run/CompanionScreen';
-import { awakenCompanion, companionCandidate, companionGrowth, companionHeroId, companionJoinDue, companionToAwaken, joinCompanion } from '../run/companion';
 import { FIRST_CYCLE, cycleLoreTipId, cycleOf, openCycle } from '../run/cycles';
 import { isWarden, recordWardens, wardensFromRun } from '../run/wardens';
 import type { CombatState } from '../engine/state';
@@ -79,7 +75,6 @@ import { relics } from '../data/relics';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
 import { HeraldScreen, type HeraldCompanion } from '../view/run/HeraldScreen';
-import { CompanionAwakensScreen } from '../view/run/CompanionAwakensScreen';
 import { TitanBoundScreen } from '../view/run/TitanBoundScreen';
 import { PactForging } from '../view/run/PactForging';
 import { equipment, EQUIPMENT_DROP_POOL, rollEquipmentDrops } from '../data/equipment';
@@ -294,8 +289,6 @@ function createLevel4TestRun(): RunState {
     }),
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
-    // A companion along, so it acts from the first fight.
-    companion: { type: 'Fire', ascended: false },
   };
 }
 
@@ -327,8 +320,7 @@ function createTitanEyesTestRun(): RunState {
     run = addRosterEntry(run, { ...entry, equipment: loadout });
   }
   const locationIds = generateItinerary(seed);
-  // Unwoken, so the Herald's announcement wakes it and its Call refreshes for the Eyes.
-  run = { ...run, actNumber: FINALE_ACT, map: generateMap(seed, FINALE_ACT), locationIds, encountersWon: SEAL_ACTS * ENCOUNTERS_PER_ACT, companion: { type: 'Storm', ascended: false } };
+  run = { ...run, actNumber: FINALE_ACT, map: generateMap(seed, FINALE_ACT), locationIds, encountersWon: SEAL_ACTS * ENCOUNTERS_PER_ACT };
   const bannerIds = Object.keys(relics);
   for (let act = 1; act <= SEAL_ACTS; act++) {
     const location = locationForAct(locationIds, act);
@@ -406,7 +398,6 @@ function runEndOf(run: RunState, outcome: RunEnd['outcome']): RunEnd {
       evolutionPathId: currentEvolutionPathId(entry),
       ...(turnedCurse(entry) ? { curseId: turnedCurse(entry)!.id } : {}),
     })),
-    companionType: run.companion?.type ?? null,
   };
 }
 
@@ -617,7 +608,6 @@ export function App() {
     setSkyReturn(end.outcome);
     telemetryRunEnded({
       ...end,
-      companionType: end.companionType ?? null,
       durationMs: after.runHistory[0]?.durationMs ?? null,
       locationIds: [...playerRun.locationIds],
     });
@@ -917,23 +907,14 @@ export function App() {
       gemReward: rollGemDrop(mapNodeType, playerRun.actNumber),
       levelSeed: randomSeed(),
     };
-    // The Herald is announced before the fight — and a
-    // companion brought this far answers it: it wakes to Ancient for the fight, and its line joins
-    // Ancient on every run after (profile.ts `ascendedSpawnTypes`).
-    const waking = mapNodeType === 'finale' ? companionToAwaken(playerRun) : null;
-    const wakingHeroId = waking ? companionHeroId(playerRun) : null;
-    if (waking) {
-      setPlayerRun((run) => awakenCompanion(run));
-      setProfile(updateProfile((current) => recordSpawnAscended(current, waking.type)));
-    }
-    const afterHerald: Screen = wakingHeroId ? { kind: 'companionAwakens', heroId: wakingHeroId, next: fight } : fight;
+    // The Herald is announced before the fight.
     if (mapNodeType === 'boss' && playerRun.actNumber === SEAL_ACTS) {
       // The capstone (docs/patrons.md): a patron at Trust 4 comes as the last seal's gate opens.
       const owed = capstoneCandidates(playerRun, patrons);
       if (owed.length > 1) return setScreen({ kind: 'patronCapstone', candidates: owed, next: fight });
       if (owed.length === 1) return startCapstone(owed[0], fight);
     }
-    setScreen(mapNodeType === 'finale' ? { kind: 'herald', next: afterHerald } : fight);
+    setScreen(mapNodeType === 'finale' ? { kind: 'herald', next: fight } : fight);
   }
 
   function startCapstone(patronId: string, next: Screen) {
@@ -951,7 +932,7 @@ export function App() {
     contractReward: boolean,
     /** The fight's Gem drop, placed after the item's who-screen. */
     gemReward: readonly Gem[],
-    /** This fight's enemy side — the beaten builds a Recruit Contract can claim, and the Early that asks to join. */
+    /** This fight's enemy side — the beaten builds a Recruit Contract can claim. */
     encounter: Encounter,
     outcome: 'win' | 'loss',
     /** What the fight drank; debited here, so a fight quit and replayed refunds it. */
@@ -979,6 +960,7 @@ export function App() {
       return;
     }
     const defeatedRoster = encounter.run.roster;
+    setProfile(updateProfile((current) => recordSpawnFought(current, defeatedRoster.map((entry) => entry.heroId))));
     const mapNodeType = playerRun.map!.nodes[nodeId].type;
     const isGuardian = mapNodeType === 'boss';
     const isFinale = mapNodeType === 'finale';
@@ -1003,10 +985,6 @@ export function App() {
     // recovered from the roster afterwards.
     const levelled = applySeededEncounterLevels(next, rosterHeroes, levelSeed, encounterXpKind(mapNodeType), mvpEntry?.rosterId);
     next = levelled.run;
-    // The run's first fight is won: one of the Earlies it beat asks to come along, and it does.
-    // Joined after the levels roll so the report is the fight's and the newcomer arrives at par.
-    const companionId = companionJoinDue(playerRun, mapNodeType) ? companionCandidate(encounter) : null;
-    if (companionId) next = joinCompanion(next, companionId, isSpawnAscended(readProfile(), companionTypeOf(companionId) ?? ''));
 
     let afterScreen: Screen;
     if (isFinale) {
@@ -1028,13 +1006,11 @@ export function App() {
         });
       }
       if (next.actNumber < TOTAL_ACTS) {
-        const grown = companionGrowth(next, next.actNumber, next.actNumber + 1);
         next = advanceToNextAct(next, randomSeed());
         setActBreak(true);
         // The seal grants nothing, so it goes last in the chain — the socket fills, then
         // you arrive somewhere new. The opposite of the Banner's placement, for the same reason.
-        // The companion's tier-step rides the act boundary just ahead of it (docs/companion-call.md §4).
-        afterScreen = grown ? { kind: 'companion', beat: { kind: 'grown', ...grown }, next: { kind: 'pactSeal' } } : { kind: 'pactSeal' };
+        afterScreen = { kind: 'pactSeal' };
       } else {
         afterScreen = { kind: 'runComplete' };
       }
@@ -1063,10 +1039,7 @@ export function App() {
       gemReward.length > 0 && anyMasteryEligible(next.roster)
         ? { kind: 'scrolls', plan: { source: 'drop', gems: [...gemReward] }, nodeId: null, bought: false, next: afterBanner }
         : afterBanner;
-    const afterDrop: Screen = dropId ? { kind: 'itemWho', itemId: dropId, next: afterGems } : afterGems;
-    // The join beat sits between the level report and the drop: the run state already holds the
-    // newcomer, so it must be met before the who-screen can offer it the item.
-    const afterLevels: Screen = companionId ? { kind: 'companion', beat: { kind: 'join', heroId: companionId }, next: afterDrop } : afterDrop;
+    const afterLevels: Screen = dropId ? { kind: 'itemWho', itemId: dropId, next: afterGems } : afterGems;
     // What the levels PAY goes first, ahead of the Banner and everything under it: they are what
     // this fight did, and the rest of the chain is what the ACT pays. The report itself lives on
     // the victory screen (FightResultOverlay, stat gains a tap away), so this beat only exists when
@@ -1605,7 +1578,6 @@ export function App() {
 
       {screen.kind === 'herald' && <HeraldScreen company={heraldCompany(screen.next, playerRun.brokenSeals)} onContinue={() => setScreen(screen.next)} />}
 
-      {screen.kind === 'companionAwakens' && <CompanionAwakensScreen heroId={screen.heroId} onContinue={() => setScreen(screen.next)} />}
 
       {screen.kind === 'titanBound' && <TitanBoundScreen run={playerRun} onContinue={() => setScreen(screen.next)} />}
 
@@ -1863,7 +1835,6 @@ export function App() {
       )}
 
 
-      {screen.kind === 'companion' && <CompanionScreen run={playerRun} beat={screen.beat} onContinue={() => setScreen(screen.next)} />}
 
       {screen.kind === 'guardianBanner' && (
         <GuardianBannerScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => setScreen(screen.next)} />

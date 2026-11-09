@@ -76,13 +76,9 @@ test('resume: every resumable kind round trips, nested chains included', () => {
       taken: ['rime-1'],
       asking: { kind: 'signature', rosterId: 'rime-1', moveId: heroes.rime.signatureMoveId! },
       next: {
-        kind: 'companion',
-        beat: { kind: 'join', heroId: 'rime' },
-        next: {
-          kind: 'itemWho',
-          itemId: item,
-          next: { kind: 'guardianBanner', next: { kind: 'recruit', offers: enemy.run.roster, claimedRosterIds: [], next: { kind: 'pactSeal' } } },
-        },
+        kind: 'itemWho',
+        itemId: item,
+        next: { kind: 'guardianBanner', next: { kind: 'recruit', offers: enemy.run.roster, claimedRosterIds: [], next: { kind: 'pactSeal' } } },
       },
   };
   const screens: RunScreen[] = [
@@ -168,6 +164,14 @@ test('resume: a run saved on the old Fallen beat walks on to what followed it', 
   const run = sampleRun();
   const back = roundTrip({ screen: { kind: 'fallen', rosterIds: ['rime-1'], next: { kind: 'map' } } as unknown as RunScreen }, run);
   assert.strictEqual(back?.screen.kind, 'map');
+});
+
+test('resume: a run saved on an old companion beat walks on to what followed it', () => {
+  const run = sampleRun();
+  const join = roundTrip({ screen: { kind: 'companion', beat: { kind: 'join', heroId: 'cubling' }, next: { kind: 'map' } } as unknown as RunScreen }, run);
+  assert.strictEqual(join?.screen.kind, 'map');
+  const woken = roundTrip({ screen: { kind: 'companionAwakens', heroId: 'cubling', next: { kind: 'pactSeal' } } as unknown as RunScreen }, run);
+  assert.strictEqual(woken?.screen.kind, 'pactSeal');
 });
 
 test('resume: a run saved on the old Location pick reopens on the seal', () => {

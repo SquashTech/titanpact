@@ -297,7 +297,6 @@ export function MapRoute({
   onSelectNode,
   renderDossier,
   onPreviewChange,
-  companion,
   patronFor,
   spots,
 }: {
@@ -305,8 +304,6 @@ export function MapRoute({
   spots?: MapSpots;
   /** The patron a seat tile holds, or null (MapScreen reads it off the run). */
   patronFor?: (node: MapNode) => PatronTile | null;
-  /** The companion, drawn walking beside wherever the party stands. */
-  companion?: ReactNode;
   map: RunMap;
   /** The act's Guardian (LocationDefinition.guardianFinalEnemyId), for the Guardian node's face. */
   guardianId: string | null;
@@ -596,7 +593,6 @@ export function MapRoute({
           <span className="map-origin-mark is-start" ref={originRef} aria-hidden="true">
             <img src={campArt} className="map-origin-camp" alt="" draggable={false} />
           </span>
-          {companion}
         </div>
       )}
 
@@ -618,7 +614,6 @@ export function MapRoute({
               <NodeGlyph type={originNode.type} className="map-origin-glyph" />
             )}
           </span>
-          {companion}
         </div>
       )}
 

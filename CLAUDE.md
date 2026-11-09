@@ -30,8 +30,8 @@ don't silently override it.
 > Location factions are replaced by **Titanspawn** — one mob line per mortal type in three tiers
 > (Early/Mid/Late), pixel art made of the element (geometric until 2026-10-31), kits from the type slates;
 > locations **partition** the fourteen types (Necropolis at two); the fork becomes a previewed
-> Elite-or-Skirmish; a **mortal companion** joins after the first fight (a hero in every respect
-> except that a KO removes it from the run — off the roster as a Call since the twelfth); and the **Pact Clock comes off the bench**. Its §11
+> Elite-or-Skirmish; a **mortal companion** joined after the first fight (DELETED 2026-11-09, per user
+> direction, with the twelfth); and the **Pact Clock comes off the bench**. Its §11
 > lists the invariants below it reverses; until the phase in its §9 that replaces each one lands,
 > the rule below is still the rule in force. **Phases 1-2 are IN (2026-09-13):** the 42 spawn
 > exist and render, the factions are deleted, `LocationDefinition.spawnTypes` is the mob layer's
@@ -53,7 +53,7 @@ don't silently override it.
 > **Kraken**, the Lava Beast **Dragon** and the Goblin Lord **Manticore**.
 > **Phases 3–5 are IN too:** the fork is Elite-or-Skirmish with the enemy typing previewed on the
 > tile's tap card (off the tile since 2026-10-16, per user direction) from a draw seeded off the map (`src/run/encounters.ts`), the Pact Clock takes the field
-> only, and the mortal companion joins after the first fight. **Phase 6 measured (sim pass 8) and
+> only (the companion is deleted, 2026-11-09). **Phase 6 measured (sim pass 8) and
 > left two balance dials for playtest** — the overhaul is built in full; its §11 table is now the
 > rule in force wherever it disagrees with a line below.
 
@@ -106,7 +106,7 @@ don't silently override it.
 > the Evolution opens at 5 pips and at no level (`evolutionLevel` is gone from every schedule),
 > the Scribe is a forced row every act 1–5 (`ScrollNodeScreen`, the Evolution raised over it),
 > the Guild Hall shelf sells a Scroll (25g, 2 a visit), enemies / contracts / hires hold
-> `masteryForAct` (**`2N−2`** since phase 5, hires `2N−3` — enemies evolve from Act 4), and the companion stepped at 5 / 10 (by act since the Call). **Phase 2 is IN
+> `masteryForAct` (**`2N−2`** since phase 5, hires `2N−3` — enemies evolve from Act 4). **Phase 2 is IN
 > (same day): Ichor is RETIRED** — `src/run/ichor.ts`, both nodes, the screen and the shelf's Drops
 > are gone; the **Scroll Cache** (`scrollReward`, 3 pips in any split) sits in the reward pool at
 > the 46 it held before Ichor. Measured: 35 pips a completed run, every hero evolved 64%, full-clear
@@ -197,9 +197,8 @@ don't silently override it.
 > wrong for this game; the Revive was finicky and padded the loot table. No Fallen beat, no
 > `isPermadeath`, no Revive verb; a downed hero stands at a Rest, the mend or the act's end. What
 > stands from the ladder: **the woken Guardians** (Cycle II on, §2a — the champion waits on the
-> bench like any Guardian since 2026-10-16, wears its type's Mark, grows on hero grades, escorts 2/2/3/3/3 by act), the Spawn bestiary,
-> the `companion:<type>` star, the companion exempt from Withering Gaze, and the companion
-> **awakening** at the finale (Ancient in its secondary slot, `Profile.ascendedSpawnTypes`).
+> bench like any Guardian since 2026-10-16, wears its type's Mark, grows on hero grades, escorts 2/2/3/3/3 by act) and the Spawn bestiary, revealed by
+> fighting a line (`Profile.spawnFought`) since the companion, its star and its awakening were deleted (2026-11-09).
 
 > **The Ascension ladder is REPLACED: `docs/cycles.md`** (2026-10-06, per user direction;
 > phase 1 IN — `src/run/cycles.ts`, `RunState.cycle` 1-based, the *Which Cycle?* picker once
@@ -259,18 +258,10 @@ don't silently override it.
 > a `curse` that MARKS a hero, which Turns at Mastery 5 (at once if past it) into pure Beast on a
 > 650 base line (`data/curses.ts`, `run/curse.ts`). Seven more innates there are PROPOSED.
 
-> **A twelfth is BUILT IN FULL: `docs/companion-call.md`** (2026-10-04, per user direction). **The
-> companion is a summon, not a party member**: `RunState.companion` (its line, and whether it has
-> woken), never a roster slot, never fielded, cannot be lost, no XP / pips / offers / items, its tier
-> read off the act. **Once a fight it ACTS ON ITS OWN** (§12, 2026-10-11, per user direction,
-> replacing the hero-spent Call): the off-field caster (`Combatant.called`, `CombatState.calls`)
-> casts its tier's ONE move — a whole-side move, or for Spirit one heavy hit on a random foe rolled
-> at resolution — free, costing no turn, its own costs dropped, its stats the line's at par on the
-> expected line (`TitanspawnLine.callMoveIds`), in a round rolled inside its line's window
-> (`callTiming`: rounds 1–2 or 3–5) and **telegraphed from the top of that round's command phase**
-> — a ! on its figure and a seat on the order track; the enemy AI reads it too. **Woken, in the
-> finale, it acts once in EACH phase and its move resolves as Ancient** — the one thing the Eyes'
-> resistances do not halve. Its §9 and §12.5 list what it reverses.
+> **A twelfth, the companion's Call (`docs/companion-call.md`, 2026-10-04), is DELETED 2026-11-09,
+> per user direction**: it added taps and did not help. No spawn joins the run, nothing acts from off
+> the field (`Combatant.called` and `CombatState.calls` are gone), and the finale awakening and the
+> companion stars went with it; stars already lit stay in the save for their Stardust, unseen.
 
 > **A thirteenth is BUILT, not measured: `docs/status-ladders-and-fields.md`** (2026-10-06, per user
 > direction). Its Burn levels and Renew count are **superseded by `docs/timed-statuses.md`**
@@ -564,7 +555,7 @@ don't silently override it.
   fatigue) every hero makes FIVE offers — two Early, two Mid, one Late** (the Act 5 Late offer was
   cut: the most crowded band, beside the signature, the Evolution's move and two Tutors) — the
   first Mid at the Mid opening (or the fight after the second Early), the rest ~every 2–3 fights
-  with the last by the end of Act 4; `DEFAULT_SCHEDULE`, which the companion reads, went from nine
+  with the last by the end of Act 4; `DEFAULT_SCHEDULE`, which the Titanspawn read, went from nine
   offers to the same five — and **a hero starts with TWO moves**
   (`HeroDefinition.moveIds`; the third authored move went into its own Early pool, chosen so the
   innate still fires off the kit; **one attack and one move that is not** since 2026-10-02, per user direction — Widow the named exception, whose innate needs a Bleed and a Poison), so both Early offers land as receipts below `MOVE_CAP`. Three groups by `evolutionLevel`: **early turners** (10–12, the
@@ -676,12 +667,8 @@ don't silently override it.
   buff to be measured and absorbed by `ACT_LEVEL_ADJUST`, not by a bigger enemy party
   (`docs/combat.md` "The fielded roster"). Gaining a hero
   requires **terminating** an existing one. Its equipment is handed on through the who-screen.
-  **The companion is not on the roster** (2026-10-04, `docs/companion-call.md`, replacing the
-  mortal slot-holder of 2026-09-13): after the run's first fight one of the Early spawn it beat
-  joins — it cannot be declined — as `RunState.companion`, and once a fight it acts on its own,
-  telegraphed (`src/run/companion.ts`, `docs/companion-call.md` §12). There is no exception to the cap, and the
-  Act 1 Skirmish is 2v2. `rosterHeroes` (`data/content.ts`) still holds the spawn bodies, for the
-  screens that draw the companion; `heroes` stays the recruitable pool.
+  **There is no companion** (deleted 2026-11-09, per user direction, `docs/companion-call.md`). There
+  is no exception to the cap, and the Act 1 Skirmish is 2v2.
 - **Items are uncategorised, and ABSORBED** (2026-09-06 for the first half, replacing the
   weapon/armor/accessory split, which playtested as fiddly and unintuitive; 2026-09-15 for the
   second, `docs/gear-absorption.md`, per user direction). Any item goes in any socket; **every

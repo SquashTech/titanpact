@@ -21,16 +21,14 @@ import { TITANS_WARD_ID } from '../src/data/passives';
 import { allCombatants } from '../src/data/content';
 import { enemies } from '../src/data/enemies';
 import { nodeEncounter } from '../src/run/encounters';
-import { joinCompanion } from '../src/run/companion';
 import { generateMap } from '../src/run/map';
-import { companionStarId, createProfile, decodeProfile, recordRunEnded, starCycleOf } from '../src/run/profile';
+import { createProfile, decodeProfile, recordRunEnded, starCycleOf } from '../src/run/profile';
 import { buildContentIndex, decodeSave, encodeSave } from '../src/run/save';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 
 function run(cycle: number): RunState {
   let next = createRunState(50, 1, cycle);
   for (const id of ['valor', 'packAlpha', 'rime']) next = addRosterEntry(next, createRosterEntry(id, id, heroes[id].moveIds));
-  next = joinCompanion({ ...next, fightsStarted: 1 }, 'cubling');
   return next;
 }
 
@@ -103,11 +101,9 @@ test('cycles: a star is coloured by the highest Cycle it was earned on, never wa
     encountersWon: 12,
     cycle,
     roster: [{ heroId: 'valor', level: 24, evolutionPathId: pathId }],
-    companionType: 'Fire',
   });
   const first = recordRunEnded(createProfile(), end(1), 1);
   assert.strictEqual(starCycleOf(first, pathId, true), 1);
-  assert.strictEqual(starCycleOf(first, companionStarId('Fire'), true), 1, 'the companion star takes a Cycle the same way');
   const raised = recordRunEnded(first, end(2), 2);
   assert.strictEqual(starCycleOf(raised, pathId, true), 2, 'a clear on a higher Cycle raises it');
   assert.deepStrictEqual(raised.runHistory[0].starsEarned, [], 'a raised star is not a new star');

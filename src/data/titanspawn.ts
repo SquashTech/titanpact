@@ -7,8 +7,7 @@
 // stat within 1.3× of the others), Mid grows the type's pair, Late spikes the type's primary stat
 // past the hero roster's maximum for it. Kits are the type's own slate read at the tier's band,
 // 3 / 4 / 4 moves. Growth grades are authored once per LINE on the hero budget (GRADE_BUDGET):
-// the companion (§5) levels roster-wide like anyone, and an enemy spawn rolls them up to its
-// node's level on arrival (docs/enemy-levels.md).
+// an enemy spawn rolls them up to its node's level on arrival (docs/enemy-levels.md).
 // Every figure is pinned by test/titanspawn.test.ts.
 
 import type { GrowthStatKey, HeroDefinition, MoveTier, StatLine, TypeId } from '../engine/content';
@@ -48,59 +47,8 @@ export interface TitanspawnLine {
   names: Record<SpawnTier, string>;
   stats: Record<SpawnTier, StatLine>;
   moveIds: Record<SpawnTier, readonly string[]>;
-  /** The one move the companion casts at each tier (docs/companion-call.md §3.2): it never asks for a target. */
-  callMoveIds: Record<SpawnTier, string>;
-  /** When in a fight the companion acts on its own (docs/companion-call.md §12.2). */
-  callTiming: CallTiming;
   growthGrades: Record<GrowthStatKey, GrowthGrade>;
 }
-
-/** A line's temperament as the companion: `early` acts in a fight's opening rounds, `mid` in its middle. */
-export type CallTiming = 'early' | 'mid';
-
-/**
- * Setters, guards and debuffers open; healers, cleansers and finishers wait for something to fix
- * or finish (docs/companion-call.md §12.2). First pass, for playtest.
- */
-const CALL_TIMING: Partial<Record<TypeId, CallTiming>> = {
-  Fire: 'early',
-  Water: 'mid',
-  Frost: 'early',
-  Storm: 'early',
-  Stone: 'early',
-  Nature: 'mid',
-  Light: 'mid',
-  Shadow: 'early',
-  Arcane: 'mid',
-  Mind: 'early',
-  Spirit: 'mid',
-  Iron: 'mid',
-  Mech: 'mid',
-  Beast: 'early',
-};
-
-/**
- * The Call table (docs/companion-call.md §3.2), in TYPES order: every entry `bothEnemies`,
- * `bothAllies` or — Spirit, whose slate never spreads — `randomEnemy`; of the line's type and the
- * tier's band, on the stat the line spikes, with no cost on the caster — test/companionCall.test.ts.
- */
-const CALL_MOVE_IDS: Partial<Record<TypeId, [string, string, string]>> = {
-  Fire: ['sparkFlash', 'backdraft', 'firestorm'],
-  Water: ['tideGuard', 'oasis', 'highTide'],
-  Frost: ['rimeWind', 'blindingSnow', 'avalanche'],
-  Storm: ['arcFlash', 'chainLightning', 'ionCascade'],
-  Stone: ['gravelSpray', 'bastion', 'rampart'],
-  Nature: ['regrowth', 'wildBloom', 'greenwood'],
-  Light: ['dawnlight', 'benediction', 'divineGrace'],
-  Shadow: ['knifeFan', 'smokeBomb', 'shadowsweep'],
-  Arcane: ['manaFont', 'arcPulse', 'cataclysm'],
-  Mind: ['psiPulse', 'disorient', 'psionicWave'],
-  Spirit: ['willOWisp', 'unquiet', 'requiem'],
-  Iron: ['shrapnel', 'reinforce', 'swingingChain'],
-  Mech: ['overclock', 'whirlingBlades', 'salvo'],
-  Beast: ['howl', 'thrash', 'packLeader'],
-};
-
 const line = (
   type: TypeId,
   primaryStat: TitanspawnLine['primaryStat'],
@@ -114,16 +62,8 @@ const line = (
   names: { early: names[0], mid: names[1], late: names[2] },
   stats: { early: stats[0], mid: stats[1], late: stats[2] },
   moveIds: { early: moveIds[0], mid: moveIds[1], late: moveIds[2] },
-  callMoveIds: callMovesFor(type),
-  callTiming: CALL_TIMING[type] ?? 'mid',
   growthGrades,
 });
-
-function callMovesFor(type: TypeId): Record<SpawnTier, string> {
-  const ids = CALL_MOVE_IDS[type];
-  if (!ids) throw new Error(`${type} spawns but has no Call table`);
-  return { early: ids[0], mid: ids[1], late: ids[2] };
-}
 
 const st = (hp: number, attack: number, defense: number, intelligence: number, wisdom: number, speed: number, manaPool: number, mpRegen: number): StatLine =>
   ({ hp, attack, defense, intelligence, wisdom, speed, manaPool, mpRegen });
@@ -258,9 +198,7 @@ export function spawnPool(types: readonly TypeId[] | null, tier: SpawnTier): Rec
 
 /**
  * A type's authored slate — every tiered move of the type, class moves excluded (they carry
- * no tier and wear their holder's type). What a spawn's kit is read from, and what the
- * companion's Scroll pool is (docs/titanspawn-overhaul.md §5): the ladder gates it by band
- * exactly as it gates a hero's authored pool.
+ * no tier and wear their holder's type). What a spawn's kit is read from.
  */
 export function spawnSlate(type: TypeId): string[] {
   return Object.values(moves)
@@ -273,6 +211,3 @@ export function spawnSlate(type: TypeId): string[] {
 export const spawnMoveTiers: Record<string, string[]> = Object.fromEntries(
   titanspawnLines.flatMap((line) => SPAWN_TIERS.map((tier) => [spawnId(line, tier), spawnSlate(line.type)]))
 );
-
-/** Every move some line casts when Called — a holder in its own right, beside the hero pools and the kits. */
-export const callMoveIdSet: ReadonlySet<string> = new Set(titanspawnLines.flatMap((line) => SPAWN_TIERS.map((tier) => line.callMoveIds[tier])));

@@ -27,8 +27,7 @@ import { MAX_XP, xpForLevel } from './growth';
 import { MASTERY_CAP } from './mastery';
 import { GEM_ORDER, type Gem } from './gems';
 import { curses } from '../data/curses';
-import { spawnLineOf, spawnPosition } from '../data/titanspawn';
-import type { CompanionState } from './companion';
+import { spawnPosition } from '../data/titanspawn';
 
 /**
  * Bump whenever a change to RunState or RunMap makes older files unreadable. Older versions
@@ -81,9 +80,8 @@ import type { CompanionState } from './companion';
  * v21 (2026-10-03): a save on every screen (docs/save-system.md) — the file carries the screen it
  * was written on (`resume`, run/resume.ts) and the last map or act-intro state to fall back to.
  * RunState did not change, so a v20 file is still read, as its checkpoint (LEGACY_VERSIONS).
- * (2026-10-04, no bump): the companion left the roster (docs/companion-call.md) — RunState holds
- * `companion` where it held `companionHeroId`, and entries lost `mortal`. An older file still
- * decodes: a spawn on its roster is the companion, read off into `companion` (decodeCompanion).
+ * (2026-11-09, no bump): the companion is deleted — an older file's `companion` is ignored, and a
+ * spawn on its roster is dropped.
  */
 export const SAVE_VERSION = 21;
 
@@ -372,21 +370,6 @@ export function decodeRosterEntry(value: unknown, index: SaveContentIndex, label
   };
 }
 
-/**
- * The run's companion: `companion` as written, or — on a file from before the Call — the spawn the
- * roster held, woken if it carried Ancient. A file with neither has none.
- */
-function decodeCompanion(value: Record<string, unknown>, roster: readonly RosterEntry[]): CompanionState | null {
-  const written = value.companion;
-  if (isObject(written) && typeof written.type === 'string' && spawnLineOf(written.type as TypeId)) {
-    return { type: written.type as TypeId, ascended: written.ascended === true };
-  }
-  const onRoster = roster.find((entry) => spawnPosition(entry.heroId));
-  const joined = onRoster?.heroId ?? (typeof value.companionHeroId === 'string' ? value.companionHeroId : null);
-  const position = joined ? spawnPosition(joined) : undefined;
-  return position ? { type: position.line.type, ascended: onRoster?.evolutionTypeGraft === 'Ancient' } : null;
-}
-
 function decodeMap(value: unknown): RunMap {
   if (!isObject(value)) reject('map is not an object');
   if (typeof value.seed !== 'number' || !Number.isFinite(value.seed)) reject('map.seed is not a number');
@@ -477,7 +460,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (value.roster.length > ROSTER_CAP) reject(`run.roster holds ${value.roster.length} heroes, over the ${ROSTER_CAP} cap`);
 
   const decodedRoster = value.roster.map((entry, at) => decodeRosterEntry(entry, index, `roster[${at}]`));
-  // A file written while the companion stood on the roster: it leaves it (decodeCompanion reads it).
+  // A file written while the companion (deleted 2026-11-09) stood on the roster: it leaves it.
   const roster = decodedRoster.filter((entry) => !spawnPosition(entry.heroId));
   const seen = new Set<string>();
   for (const entry of roster) {
@@ -529,7 +512,6 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     recruitContracts: value.recruitContracts,
     contractsBought,
     consumables,
-    companion: decodeCompanion(value, decodedRoster),
     map,
     currentNodeId,
     visitedNodeIds: [...visitedNodeIds],

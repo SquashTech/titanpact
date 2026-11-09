@@ -4,7 +4,7 @@
 // wears its type's Mark and grows on hero grades, and the escorts rise to three from Act 3. Cycle III, the Long Winter, wards every
 // Guardian while its company stands, frays the Banners to half and
 // loses Wild's Edge (docs/cycles.md §3). Cycle IV, the Gathering, casts the enemy as warbands
-// (run/warbands.ts) and trains the companion and the Guild. Cycle V is not built; the picker greys it.
+// (run/warbands.ts) and trains the Guild. Cycle V is not built; the picker greys it.
 
 import type { HeroDefinition } from '../engine/content';
 import { titansMarkFor } from '../data/passives';
@@ -34,9 +34,6 @@ export const LONG_WINTER_FROM_CYCLE = 3;
 
 /** The Gathering (docs/cycles.md §3): from here the enemy fields warbands, and the survivors have prepared. */
 export const GATHERING_FROM_CYCLE = 4;
-
-/** Levels over the run's par the companion's Call is cast at in a Gathering — the survivors trained it. */
-export const GATHERING_COMPANION_LEVEL_BONUS = 5;
 
 /** More hires on the Tavern's board a visit in a Gathering. */
 export const GATHERING_EXTRA_HIRES = 1;
@@ -77,7 +74,7 @@ export const CYCLES: readonly CycleDefinition[] = [
     name: 'The Gathering',
     line: 'The Titan knows your shape. Its servants fight as one.',
     clearBonus: 2000,
-    lore: ['A fourth year, and the Titan has been watching.', 'Its servants no longer gather at random.', 'Neither do we. The Guild has grown, and our companion with it.', 'We must seal the pact again.'],
+    lore: ['A fourth year, and the Titan has been watching.', 'Its servants no longer gather at random.', 'Neither do we. The Guild has grown.', 'We must seal the pact again.'],
   },
   { cycle: 5, numeral: 'V', name: 'The Last Cycle', line: '', clearBonus: 0 },
 ];

@@ -5,10 +5,10 @@
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatDelta, StatKey, StatusDefinition, StatusId } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
-import { activePartnerTypes, callIntent, calledMove, chargeRidersOn, chargesLeft, faceLockFor, hitCountFor, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta, applyStageDelta } from '../state';
+import { activePartnerTypes, chargeRidersOn, chargesLeft, faceLockFor, hitCountFor, isMoveUsable, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus, moveForHero, applyStatModifierDelta, applyStageDelta } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
-import { companionActions, orderActions } from './priority';
+import { orderActions } from './priority';
 import { resolveTargets, resolveTargetsRolled, rollRiderTarget, slotOfActiveCombatant, TargetNoLongerValidError } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
 import { applyManaRegen } from './manaRegen';
@@ -109,9 +109,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     events.push(...reactions.events);
   };
 
-  // A hero never declares a companion act; the engine adds one on each side whose act falls this round.
-  const roundActions = [...actions.filter((a) => a.kind !== 'call'), ...companionActions(working)];
-  const { ordered, keys, reversedSpeed, nextRngState } = orderActions(working, heroes, roundActions, moves, working.rngState, fieldEffects, passives, statuses);
+  const { ordered, keys, reversedSpeed, nextRngState } = orderActions(working, heroes, actions, moves, working.rngState, fieldEffects, passives, statuses);
   working = { ...working, rngState: nextRngState };
   if (keys.length > 0) {
     events.push({
@@ -122,27 +120,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     });
   }
 
-  for (const declared of ordered) {
+  for (const action of ordered) {
     sweepPassing();
-    const caller = working.combatants[declared.combatantId];
-    if (!caller || caller.fainted) continue;
-
-    // The companion's act (docs/companion-call.md §12): its one move off the field, telegraphed
-    // since the round was commanded, cost waived and every caster-side cost dropped.
-    let action: Action = declared;
-    let called = false;
-    let calledType: MoveDefinition['type'] | undefined;
-    if (declared.kind === 'call') {
-      const call = callIntent(working, caller.side);
-      if (!call) continue;
-      working = { ...working, calls: { ...working.calls, [caller.side]: { ...call, remaining: call.remaining - 1 } } };
-      const move = calledMove(call, moves);
-      events.push({ type: 'Called', round, combatantId: call.combatantId, moveId: call.moveId, moveType: move.type, callsRemaining: call.remaining - 1 });
-      action = { kind: 'move', combatantId: call.combatantId, moveId: call.moveId, declaredTarget: null };
-      called = true;
-      calledType = call.moveType;
-    }
-
     const actor = working.combatants[action.combatantId];
     if (!actor || actor.fainted) continue;
 
@@ -192,19 +171,16 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       continue;
     }
 
-    if (action.kind === 'call') continue; // turned into the caster's move above
-
     // action.kind === 'move'. Resolved for the actor once, here: a typeFollowsUser move is the
     // actor's type for every read below — STAB, the chart, Force, Conduct, the events' moveType.
-    const authored = moveForHero(moves[action.moveId], heroes[actor.heroId]);
-    const move = calledType ? { ...authored, type: calledType } : authored;
+    const move = moveForHero(moves[action.moveId], heroes[actor.heroId]);
 
-    if (!called && hasStatus(actor, 'Daze')) {
+    if (hasStatus(actor, 'Daze')) {
       events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'dazed' });
       continue;
     }
 
-    if (!called) events.push({ type: 'TurnStarted', round, combatantId: action.combatantId });
+    events.push({ type: 'TurnStarted', round, combatantId: action.combatantId });
 
     // A once-a-fight move already cast, or a first-turn move past its turn: the view must prevent it, so this is the backstop.
     if (!isMoveUsable(working, action.combatantId, move)) {
@@ -213,7 +189,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     }
 
     // Live cost and live target mode, read off `working` so a faster action this round already counts.
-    const manaCost = called ? 0 : resolveManaCost(working, action.combatantId, move, heroes);
+    const manaCost = resolveManaCost(working, action.combatantId, move, heroes);
     if (actor.currentMana < manaCost) continue; // engine-level legality guard; view must already prevent this
 
     const targetMode = resolveTargetMode(working, move);
@@ -322,20 +298,18 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       combatantId: action.combatantId,
       moveId: move.id,
       manaSpent: manaCost,
-      ...(!called && manaCost !== move.manaCost ? { manaDiscount: move.manaCost - manaCost } : {}),
+      ...(manaCost !== move.manaCost ? { manaDiscount: move.manaCost - manaCost } : {}),
       damaging: move.kind === 'damage',
     };
     events.push(moveUsed);
-    if (!called) {
-      events.push({
-        type: 'ManaChanged',
-        round,
-        combatantId: action.combatantId,
-        previousMana,
-        newMana,
-        maxMana: maxManaOf(action.combatantId),
-      });
-    }
+    events.push({
+      type: 'ManaChanged',
+      round,
+      combatantId: action.combatantId,
+      previousMana,
+      newMana,
+      maxMana: maxManaOf(action.combatantId),
+    });
 
     const attackerHero = heroes[actor.heroId];
     const attackerTypes = effectiveTypes(attackerHero, actor);
@@ -505,7 +479,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             const fieldDef = activeFieldDef(working, fieldEffects);
             const lifesteal = fieldDef?.lifestealAgainst && hasStatus(target, fieldDef.lifestealAgainst.statusId) ? fieldDef.lifestealAgainst.percent : 0;
             const drainPercent = (move.drainPercent ?? 0) + lifesteal;
-            if (drainPercent > 0 && !called && !healBlocked(working, action.combatantId, fieldDef)) {
+            if (drainPercent > 0 && !healBlocked(working, action.combatantId, fieldDef)) {
               const drained = Math.round(removed * drainPercent);
               const drainer = working.combatants[action.combatantId];
               if (drained > 0 && drainer && !drainer.fainted) {
@@ -597,7 +571,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         }
 
         // Recoil: no 1 HP floor; a self-KO goes through applyHpDelta like any other, lock-in included.
-        if (move.recoilPercent && recoilBase > 0 && !called) {
+        if (move.recoilPercent && recoilBase > 0) {
           const recoilAmount = Math.round(recoilBase * move.recoilPercent);
           const user = working.combatants[action.combatantId];
           if (recoilAmount > 0 && user && !user.fainted) {
@@ -737,7 +711,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     const statDeltaTargets = !authoredDeltas.length && !flatDeltas.length && !move.randomStatDeltas && !move.clearsRaisedStages && !move.doublesStages
       ? []
       : move.statDeltaTarget === 'self'
-        ? (called ? [] : [action.combatantId])
+        ? [action.combatantId]
         : move.statDeltaTarget === 'bothAllies'
           ? working.active[actor.side].filter(
               (id): id is string => id !== null && !working.combatants[id]?.fainted
@@ -873,7 +847,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       if (def) {
         let applyTargets: string[];
         if (app.target === 'self') {
-          applyTargets = called ? [] : [action.combatantId];
+          applyTargets = [action.combatantId];
         } else if (app.target === 'randomAlly' || app.target === 'randomEnemy') {
           const rolledRider = rollRiderTarget(working, action.combatantId, app.target, working.rngState);
           working = { ...working, rngState: rolledRider.nextRngState };
@@ -956,7 +930,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     }
 
     // Self HP cost is paid after the whole payload lands and before the pivot; it can faint the user (no floor).
-    if (move.selfHpCost && !called) {
+    if (move.selfHpCost) {
       const user = working.combatants[action.combatantId];
       if (user && !user.fainted) {
         const userMaxHp = getMaxHp(attackerHero, user);
@@ -1006,7 +980,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     // The pivot runs dead last and through applyVoluntarySwitch so lock-in applies.
     // A block does not fizzle the move — payload and mana are already spent.
-    if (move.switchesUserOut && !called) {
+    if (move.switchesUserOut) {
       const incoming = action.switchToCombatantId;
       const stillStanding = working.combatants[action.combatantId];
       const incomingOk =

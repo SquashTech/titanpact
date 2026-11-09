@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { heroes } from '../src/data/heroes';
-import { rosterHeroes } from '../src/data/content';
+import { allCombatants, rosterHeroes } from '../src/data/content';
 import { progressionTable } from '../src/data/progression';
 import {
   MASTERY_CAP,
@@ -202,7 +202,7 @@ test('signature: owed at its level and not before — below the cap it lands, at
   run = { ...run, roster: [{ ...run.roster[0], xp: xpForLevel(at) }] };
   assert.strictEqual(pendingSignature(hero, run.roster[0]), 'lizardRush');
   assert.strictEqual(pendingSignature(hero, { ...run.roster[0], xp: 0, mastery: MASTERY_CAP }), null, 'Mastery no longer teaches it');
-  assert.strictEqual(pendingSignature(rosterHeroes.cubling, { ...run.roster[0], heroId: 'cubling' }), null, 'a definition with none — a spawn — owes nothing');
+  assert.strictEqual(pendingSignature(allCombatants.cubling, { ...run.roster[0], heroId: 'cubling' }), null, 'a definition with none — a spawn — owes nothing');
   // Below the cap: granted, and the offer is spent.
   const landed = grantOfferedMove(run, 'tidecaller', 'lizardRush');
   assert.ok(landed.roster[0].unlockedMoveIds.includes('lizardRush'));
@@ -318,7 +318,7 @@ test('mastered innate: the tenth pip REPLACES the innate in the fight build — 
   // A two-card upgrade arrives whole; Scallywag's keeps Broadside's firing card.
   assert.deepStrictEqual([...innatePassiveIdsFor(heroes.scallywag, { mastery: MASTERY_CAP })!], ['grandBroadside']);
   // A definition with none (a spawn) keeps its Mark at ten.
-  assert.deepStrictEqual(innatePassiveIdsFor(rosterHeroes.cubling, { mastery: MASTERY_CAP }), rosterHeroes.cubling.passiveIds);
+  assert.deepStrictEqual(innatePassiveIdsFor(allCombatants.cubling, { mastery: MASTERY_CAP }), allCombatants.cubling.passiveIds);
 });
 
 test('mastered innate: the fight build fields the mastered cards at ten on either side, keeps a Burden locked, and a pip short fields the born card', () => {

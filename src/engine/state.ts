@@ -109,8 +109,6 @@ export interface Combatant {
    * Set at fight build from Squad.reserves — the Titan's Eyes, docs/titan-eyes.md §6, §10.
    */
   reservePhase?: number;
-  /** A side's off-field caster for the companion's Call (withCalledCaster): never active, benched, targeted or counted. */
-  called?: boolean;
 }
 
 /** The one global Field Effect (docs/field-effects.md). */
@@ -139,8 +137,6 @@ export interface CombatState {
   phaseStartedRound?: number;
   /** A passesOnFaint status with no partner free to take it, waiting for the next hero to enter on that side (statusEngine.ts passFaintedStatuses, switching.ts performSwitch). */
   pendingSideStatuses?: Partial<Record<Side, StatusId[]>>;
-  /** Each side's off-field companion and when it acts (docs/companion-call.md §12). Unset = none. */
-  calls?: Partial<Record<Side, SideCall>>;
   /** Ways a scripted fight ends besides a wiped side (docs/stories.md §5). Unset = none. */
   endsWhen?: readonly FightEndTrigger[];
 }
@@ -153,97 +149,9 @@ export type FightEndTrigger =
   | { kind: 'afterRound'; round: number; winner: Side }
   | { kind: 'hpAtMost'; combatantId: string; hp: number; winner: Side };
 
-/**
- * A side's companion: the off-field caster (in `combatants`, `called` set), its one move, whether
- * its act is still to come, and the round it acts in — rolled inside `window` when the fight (or,
- * for a `perPhase` companion, each phase) begins, so it is known before that round is commanded.
- */
-export interface SideCall {
-  combatantId: string;
-  moveId: string;
-  /** Acts left: 1 until it has acted, 0 after. */
-  remaining: number;
-  /** The round it acts in. */
-  actRound: number;
-  /** Rounds into a fight or phase it may act in, inclusive — [1, 2] is the opening two. */
-  window: readonly [number, number];
-  /** Acts again in each later phase of the fight (the woken companion, the Herald then the Eyes). */
-  perPhase?: boolean;
-  /** Its move resolves as this type (the woken companion's Ancient). Unset = the move's own. */
-  moveType?: TypeId;
-}
-
-/** A combatant that fights — every one but a Called caster, which is never fielded, targeted or counted. */
-export function isFighter(combatant: Combatant): boolean {
-  return !combatant.called;
-}
-
-/** The side's companion when it acts THIS round — the telegraph the view and the AI read. */
-export function callIntent(state: CombatState, side: Side): SideCall | null {
-  const call = state.calls?.[side];
-  return call && call.remaining > 0 && call.actRound <= state.round && state.combatants[call.combatantId] ? call : null;
-}
-
-/** The companion's move as it resolves: its own, or retyped by the awakening. */
-export function calledMove(call: SideCall, moves: Record<string, MoveDefinition>): MoveDefinition {
-  const move = moves[call.moveId];
-  return call.moveType && move ? { ...move, type: call.moveType } : move;
-}
-
-/** The round a companion acts in: `base` + an offset rolled inside its window. */
-function rollActRound(rng: RngState, base: number, window: readonly [number, number]): { round: number; rng: RngState } {
-  const { value, nextState } = nextRange(rng, window[0], window[1] + 1);
-  return { round: base + Math.min(window[1], Math.floor(value)), rng: nextState };
-}
-
-export interface CalledCasterOptions {
-  window: readonly [number, number];
-  perPhase?: boolean;
-  moveType?: TypeId;
-}
-
-/**
- * Seats a side's companion: `combatant` joins `combatants` marked `called`, with no passives (it
- * carries no Mark and no innate), and its act round is rolled off the fight's RNG.
- */
-export function withCalledCaster(state: CombatState, combatant: Combatant, moveId: string, options: CalledCasterOptions): CombatState {
-  const caster: Combatant = { ...combatant, called: true, passives: {} };
-  const rolled = rollActRound(state.rngState, 0, options.window);
-  const call: SideCall = {
-    combatantId: caster.combatantId,
-    moveId,
-    remaining: 1,
-    actRound: rolled.round,
-    window: options.window,
-    ...(options.perPhase ? { perPhase: true } : {}),
-    ...(options.moveType ? { moveType: options.moveType } : {}),
-  };
-  return {
-    ...state,
-    rngState: rolled.rng,
-    combatants: { ...state.combatants, [caster.combatantId]: caster },
-    calls: { ...state.calls, [caster.side]: call },
-  };
-}
-
-/**
- * A later phase begins with round `round` as its first (its reserves enter between rounds): every
- * `perPhase` companion has its act back, rolled inside its window counted from there.
- */
-export function rearmCallsForPhase(state: CombatState, round: number): CombatState {
-  let next = state;
-  for (const side of ['A', 'B'] as const) {
-    const call = next.calls?.[side];
-    if (!call?.perPhase) continue;
-    const rolled = rollActRound(next.rngState, round - 1, call.window);
-    next = { ...next, rngState: rolled.rng, calls: { ...next.calls, [side]: { ...call, remaining: 1, actRound: rolled.round } } };
-  }
-  return next;
-}
-
-/** A side is beaten when every combatant that fights has fallen. */
+/** A side is beaten when every combatant has fallen. */
 export function sideDefeated(state: CombatState, side: Side): boolean {
-  const fighters = Object.values(state.combatants).filter((c) => c.side === side && isFighter(c));
+  const fighters = Object.values(state.combatants).filter((c) => c.side === side);
   return fighters.length > 0 && fighters.every((c) => c.fainted);
 }
 
@@ -273,7 +181,7 @@ export function lockInThreshold(state: CombatState, side: Side): number {
   let size = 0;
   for (const id in state.combatants) {
     const c = state.combatants[id];
-    if (c.side === side && !c.enteredDown && isFighter(c)) size++;
+    if (c.side === side && !c.enteredDown) size++;
   }
   return Math.max(2, Math.ceil(size / 2));
 }

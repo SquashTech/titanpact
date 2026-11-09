@@ -1151,9 +1151,7 @@ const moveTiers: ProgressionTable['moveTiers'] = {
       'bodyguard', 'washAway', 'oasis', 'cleansingRain', 'bastion', 'wildBloom', 'packHunt',
       'highTide', 'rampart', 'overgrowth', 'seawall', 'gash', 'bloodFrenzy',
     ],
-    // The companion's bodies (run/companion.ts): a spawn's pool is its type's whole slate, so
-    // the schedule gates it by band like anyone's. No Evolution node — its Mastery pips are its
-    // tier-steps instead.
+    // A spawn's pool is its type's whole slate, so the schedule gates it by band like anyone's.
     ...spawnMoveTiers,
 };
 

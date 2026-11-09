@@ -1,5 +1,11 @@
 # companion-call.md — The companion off the roster: a Call
 
+> **DELETED 2026-11-09, per user direction**: the companion added taps and did not help. It no
+> longer joins, acts, grows or wakes; the awakening, the `companion:<type>` stars and their Victory
+> and Run History marks went with it. Stars already lit stay in the save, unseen, and still count
+> toward Stardust; the Spawn bestiary now reveals a line once a won fight beats one of it
+> (`Profile.spawnFought`). Old saves drop the companion silently. What follows is history.
+
 > **STATUS: BUILT IN FULL 2026-10-04, per user direction** (content, engine, run, view, sim, docs). The companion still joins
 > after the run's first fight, but it **never takes one of the six roster slots**: it travels with
 > the party, and **once a fight an active hero can spend its turn to Call it** — the companion

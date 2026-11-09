@@ -103,7 +103,7 @@ test('storm: every damage move in the slate carries Conduct detonation for free 
   const detonators = statuses.Conduct.triggerTypes ?? [];
   assert.ok(detonators.includes('Storm'));
   const damage = Object.values(moves).filter((m) => m.type === 'Storm' && !signatureMoves[m.id] && !m.tags?.includes('arrow') && m.kind === 'damage');
-  assert.strictEqual(damage.length, 16); // Ionize deals damage since 2026-09-29; Arc Flash is the Call's (docs/companion-call.md)
+  assert.strictEqual(damage.length, 16); // Ionize deals damage since 2026-09-29
   assert.strictEqual(damage.some((m) => firstStatusApplication(m)?.statusId === 'Conduct' && m.id === 'thunderbolt'), true);
 });
 

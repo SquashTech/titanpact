@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { curses } from '../../data/curses';
 import { heroes } from '../../data/heroes';
 import { progressionTable } from '../../data/progression';
-import { titanspawnLines } from '../../data/titanspawn';
 import { formatPlaytime, starredHeroCount, totalStars, type Profile } from '../../run/profile';
 import { SEAL_ACTS } from '../../run/state';
 import { HubGlyph } from '../shared/nodeIcons';
@@ -33,10 +32,9 @@ const TABS: readonly TabSpec<RecordsTab>[] = [
 ];
 
 const HERO_COUNT = Object.keys(heroes).length;
-/** Every Evolution path in the game, a companion star a Titanspawn line, and a star a curse — the ceiling on stars. */
+/** Every Evolution path in the game and a star a curse — the ceiling on stars. */
 const STAR_COUNT =
   Object.values(progressionTable.evolutions).reduce((n, nodes) => n + nodes.reduce((m, node) => m + node.paths.length, 0), 0) +
-  titanspawnLines.length +
   Object.keys(curses).length;
 
 /**

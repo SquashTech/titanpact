@@ -19,7 +19,7 @@ function isBoss(heroId: string): boolean {
 export function EnemyPips({ combat, side }: Props) {
   const ids = Object.keys(combat.combatants).filter((id) => {
     const c = combat.combatants[id];
-    return c.side === side && !c.called && !c.enteredDown;
+    return c.side === side && !c.enteredDown;
   });
   const phase = Math.max(0, ...combat.active[side].flatMap((id) => (id ? [phaseOf(combat.combatants[id])] : [])));
   const shown = ids.filter((id) => phaseOf(combat.combatants[id]) <= phase);

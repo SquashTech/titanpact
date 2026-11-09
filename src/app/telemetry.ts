@@ -39,7 +39,6 @@ export interface RunSummary {
   durationMs: number | null;
   locationIds: string[];
   roster: { heroId: string; level: number; evolutionPathId: string | null; curseId?: string | null }[];
-  companionType: string | null;
 }
 
 const enabled = (): boolean => SUPABASE_URL !== '' && SUPABASE_ANON_KEY !== '';
@@ -116,7 +115,6 @@ function rowFor(log: RunLog, summary: RunSummary | null): Record<string, unknown
     location_ids: summary?.locationIds ?? null,
     drafted: log.drafted,
     roster: summary?.roster ?? null,
-    companion_type: summary?.companionType ?? null,
     fights: log.fights,
   };
 }

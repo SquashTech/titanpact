@@ -4250,9 +4250,8 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'bothAllies',
   },
-  // --- Companion Calls (docs/companion-call.md §3.2) ---
-  // The ten seats in the Call table no slate filled: never asking for a target, on the line's own stat, no cost on
-  // the caster. Ordinary tiered slate moves; every one also sits in two heroes' level-up pools.
+  // --- Spread and team moves ---
+  // Moves that never ask for a target; every one also sits in two heroes' level-up pools.
   arcFlash: {
     id: 'arcFlash',
     name: 'Arc Flash',
@@ -4333,7 +4332,7 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'bothAllies',
   },
   // Spirit keeps its slate's rule — no damage spread, Haunt is how it spreads (per user direction):
-  // its Calls are one heavy hit on a foe the spirit picks, so they still never ask for a target.
+  // these are one heavy hit on a foe the spirit picks, so they still never ask for a target.
   willOWisp: {
     id: 'willOWisp',
     name: 'Will-o’-Wisp',

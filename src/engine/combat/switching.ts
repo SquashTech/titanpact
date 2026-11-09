@@ -2,7 +2,7 @@
 // 2+ KOs disables voluntary switching; forced replacement still happens.
 
 import type { CombatState, Side } from '../state';
-import { canSwitchOut, isLockedIn, phaseOf, rearmCallsForPhase } from '../state';
+import { canSwitchOut, isLockedIn, phaseOf } from '../state';
 import type { CombatEvent, BenchRegenTickedEvent } from '../events';
 import type { StatusDefinition } from '../content';
 import { applyStatus, clearOnSwitch } from './statusEngine';
@@ -108,10 +108,7 @@ function performSwitch(
   };
   // A later phase's first body on the field begins the phase: the Pact Clock counts from here.
   const incomingPhase = phaseOf(state.combatants[inCombatantId]);
-  if (incomingPhase > currentPhase(state)) {
-    // A woken companion acts again in the new phase (state.ts SideCall.perPhase).
-    nextState = rearmCallsForPhase({ ...nextState, phaseStartedRound: round }, round);
-  }
+  if (incomingPhase > currentPhase(state)) nextState = { ...nextState, phaseStartedRound: round };
 
   const events: CombatEvent[] = [{ type: 'SwitchedIn', round, side, slot, outCombatantId, inCombatantId }];
 

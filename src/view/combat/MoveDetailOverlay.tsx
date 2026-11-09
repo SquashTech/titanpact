@@ -177,12 +177,10 @@ interface CardProps {
   caster?: HealCaster;
   /** Payload rows keep their one-line claim and drop the rule sentence under it — for a screen that has to fit a decision beneath the card. */
   terse?: boolean;
-  /** Cast by the companion's Call (docs/companion-call.md §3.1): it costs no mana, so no price and no mana left is shown. */
-  free?: boolean;
 }
 
 /** The move dossier: a live damage band, the priority bracket, and the mana left after casting. */
-export function MoveDetailCard({ move: authored, context, caster, terse, free }: CardProps) {
+export function MoveDetailCard({ move: authored, context, caster, terse }: CardProps) {
   const attacker = context ? context.combat.combatants[context.attackerId] : undefined;
   const attackerHero = attacker ? allCombatants[attacker.heroId] : undefined;
   // A Class move wears its holder's type (state.ts): the live attacker's, else the caster's.
@@ -317,7 +315,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
       {/* The combat row itself, drawn as a band of the card; everything under it explains it. */}
       <div className="move-button has-stub move-dossier-row">
         <div className="move-row-top">
-          {!free && <ManaCost cost={liveCost} />}
+          <ManaCost cost={liveCost} />
           <span className="move-type-code" title={move.type}>
             <ElementGlyph type={move.type} />
           </span>
@@ -712,7 +710,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse, free }:
             <span className="move-detail-unit">{livePriority > 0 ? 'Strikes first' : 'Strikes last'}</span>
           </span>
         )}
-        {!free && manaAfter !== null && manaPool !== null && (
+        {manaAfter !== null && manaPool !== null && (
           <span className="move-detail-stat move-detail-stat-mana">
             <StatGlyph stat="manaPool" tone="inherit" />
             <strong>{Math.max(0, manaAfter)}</strong>
@@ -742,15 +740,12 @@ export function MoveDetailOverlay({
   move,
   context,
   caster,
-  free,
   onClose,
 }: {
   move: MoveDefinition;
   context?: MoveDossierContext;
   /** Who is casting, for screens that hold a hero but no live fight. Superseded by `context`. */
   caster?: HealCaster;
-  /** Cast without Mana (the companion's act): no gem. */
-  free?: boolean;
   onClose: () => void;
 }) {
   function closeAndStop(e: { stopPropagation: () => void }) {
@@ -766,7 +761,7 @@ export function MoveDetailOverlay({
         style={{ borderTopColor: getTypeColor(move.type), '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
         onClick={closeAndStop}
       >
-        <MoveDetailCard move={move} context={context} caster={caster} free={free} />
+        <MoveDetailCard move={move} context={context} caster={caster} />
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,

@@ -5,7 +5,6 @@
 import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
-import { companionCallFor, companionCandidate, companionJoinDue, joinCompanion } from '../../src/run/companion';
 import { isGathering, isLongWinter } from '../../src/run/cycles';
 import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, standingRoster } from '../../src/run/wounds';
 import { grantConsumable, rollConsumableDrop } from '../../src/run/consumables';
@@ -147,9 +146,6 @@ export interface FightRecord {
   playerHpFrac: number;
   playerTurns: number;
   playerRests: number;
-  callable: boolean;
-  playerCalls: number;
-  callDamage: number;
   playerSwitches: number;
   lockedIn: boolean;
   playerSquadStats: number;
@@ -192,8 +188,6 @@ export interface RunRecord {
   deathAct: number;
   deathNodeType: string | null;
   encountersWon: number;
-  /** The companion this run took, by the body it joined as. */
-  companionHeroId: string | null;
   goldEnd: number;
   rosterLevelEnd: number;
   rosterSizeEnd: number;
@@ -322,7 +316,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     actsCleared: [],
     deathAct: 0,
     deathNodeType: null,
-    companionHeroId: null,
     encountersWon: 0,
     goldEnd: 0,
     goldFlow: {},
@@ -416,13 +409,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       run = grantEncounterLevels(run, rosterHeroes, rng, encounterXpKind(node.type));
       run = paySchedule(run, rng, record);
       record.encountersWon = run.encountersWon;
-      // The run's first fight: one of the Earlies it beat joins, and there is no declining.
-      const companionId = companionJoinDue(run, node.type) && outcome.encounter ? companionCandidate(outcome.encounter) : null;
-      if (companionId) {
-        run = joinCompanion(run, companionId);
-        record.companionHeroId = companionId;
-        tally(record, run.actNumber, 'companion');
-      }
 
       if (node.type === 'boss') {
         record.actsCleared.push(run.actNumber);
@@ -522,9 +508,9 @@ interface EncounterOutcome {
   won: boolean;
   defeatedRoster: readonly RosterEntry[];
   drop: EquipmentDefinition | null;
-  /** The enemy side as fielded — what the companion's join beat reads. */
+  /** The enemy side as fielded. */
   encounter: Encounter | null;
-  /** The player's roster ids that ended the fight KO'd — what the companion's mortality reads. */
+  /** The player's roster ids that ended the fight KO'd. */
   koRosterIds: readonly string[];
 }
 
@@ -589,7 +575,6 @@ function resolveEncounterNode(
     rng,
     playerSwitching: options.playerSwitching,
     pilot: options.pilot,
-    playerCall: companionCallFor(workingRun, allCombatants),
     aiPlaysEngines: isGathering(workingRun),
   });
 
@@ -627,9 +612,6 @@ function resolveEncounterNode(
     playerHpFrac: fight.playerHpFrac,
     playerTurns: fight.playerTurns,
     playerRests: fight.playerRests,
-    callable: fight.callable,
-    playerCalls: fight.playerCalls,
-    callDamage: fight.callDamage,
     playerSwitches: fight.playerSwitches,
     lockedIn: fight.lockedIn,
     playerSquadStats: fight.playerSquadStats,

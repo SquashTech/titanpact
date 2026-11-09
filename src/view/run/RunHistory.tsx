@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { rosterHeroes } from '../../data/content';
 import { locations } from '../../data/locations';
 import { progressionTable } from '../../data/progression';
-import { companionStarId, companionTypeOf, curseStarId, formatPlaytime, type RunRecord, type RunRecordHero } from '../../run/profile';
+import { curseStarId, formatPlaytime, type RunRecord, type RunRecordHero } from '../../run/profile';
 import { SEAL_ACTS } from '../../run/state';
 import { HeroPortrait } from '../shared/HeroPortrait';
 
@@ -22,11 +22,9 @@ function formatRunDate(ms: number): string {
   return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) });
 }
 
-/** The stars this hero could have earned on the run: its form's (or its line's, for a companion), and its curse's. */
+/** The stars this hero could have earned on the run: its form's and its curse's. */
 function starIdsOf(hero: RunRecordHero): string[] {
-  const type = companionTypeOf(hero.heroId);
-  const own = type ? companionStarId(type) : hero.evolutionPathId;
-  return [own, hero.curseId ? curseStarId(hero.curseId) : null].filter((id): id is string => !!id);
+  return [hero.evolutionPathId, hero.curseId ? curseStarId(hero.curseId) : null].filter((id): id is string => !!id);
 }
 
 function earnedOn(record: RunRecord, hero: RunRecordHero): boolean {

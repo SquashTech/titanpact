@@ -264,14 +264,6 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'The first time a Blessed hero would be knocked out, the blow is turned aside and the Blessing is used up.'
   ),
   page(
-    'companion',
-    'Your Companion',
-    RUN,
-    ['glyph:paw'],
-    'After the first fight of a run, one of the creatures you beat joins you as a companion.',
-    '- It acts on its own, *once a fight*.\n- It costs no Mana and no hero\'s turn.\n- A *!* and a place in the turn order show when.'
-  ),
-  page(
     'gems',
     'Gems and Mastery',
     RUN,

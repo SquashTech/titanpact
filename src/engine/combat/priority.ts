@@ -3,28 +3,13 @@
 
 import type { Action } from './actions';
 import type { CombatState, HeroLookup } from '../state';
-import { callIntent, chargeRidersOn, getEffectiveStat, hasStatus } from '../state';
+import { chargeRidersOn, getEffectiveStat, hasStatus } from '../state';
 
-/**
- * Which move an action casts, and who casts it: the declarer, or for a companion's act the off-field
- * caster, whose side's SideCall holds its one move (docs/companion-call.md §12). Null for a switch
- * or a Rest.
- */
-export function castOf(state: CombatState, action: Action): { combatantId: string; moveId: string } | null {
-  if (action.kind === 'move') return { combatantId: action.combatantId, moveId: action.moveId };
-  if (action.kind !== 'call') return null;
-  const caster = state.combatants[action.combatantId];
-  const call = caster && state.calls?.[caster.side];
-  return call ? { combatantId: call.combatantId, moveId: call.moveId } : null;
+/** Which move an action casts, and who casts it. Null for a switch or a Rest. */
+export function castOf(_state: CombatState, action: Action): { combatantId: string; moveId: string } | null {
+  return action.kind === 'move' ? { combatantId: action.combatantId, moveId: action.moveId } : null;
 }
 
-/** The companion acts this round on each side whose act falls in it, appended to what was declared. */
-export function companionActions(state: CombatState): Action[] {
-  return (['A', 'B'] as const).flatMap((side): Action[] => {
-    const call = callIntent(state, side);
-    return call ? [{ kind: 'call', combatantId: call.combatantId }] : [];
-  });
-}
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
 import { nextInt, type RngState } from '../rng/seededRng';
 

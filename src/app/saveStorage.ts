@@ -10,6 +10,7 @@ import { classes } from '../data/classes';
 import { CHAMPION_IDS } from '../data/enemies';
 import { equipment } from '../data/equipment';
 import { allCombatants, rosterHeroes } from '../data/content';
+import { titanspawn } from '../data/titanspawn';
 import { runEvents } from '../data/events';
 import { locations } from '../data/locations';
 import { moves } from '../data/moves';
@@ -27,8 +28,8 @@ const NEXT_KEY = `${STORAGE_KEY}.next`;
 const BACKUP_KEY = `${STORAGE_KEY}.bak`;
 
 const contentIndex = buildContentIndex({
-  // The roster may hold the companion, whose body is a spawn, so the catalog is the roster's.
-  heroes: rosterHeroes,
+  // An old save's roster may hold the deleted companion's spawn body; decodeRun drops it.
+  heroes: { ...rosterHeroes, ...titanspawn },
   moves,
   equipment,
   relics,

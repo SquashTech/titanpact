@@ -159,7 +159,7 @@ test('titanspawn: kits are 3 / 4 / 4, from the type\'s own slate at the tier\'s 
   }
 });
 
-test('titanspawn: one grade line per type, on the hero budget, so the companion levels like anyone', () => {
+test('titanspawn: one grade line per type, on the hero budget, so a spawn levels like anyone', () => {
   for (const line of titanspawnLines) {
     assert.strictEqual(gradeBudgetOf(line.growthGrades), GRADE_BUDGET, `${line.type} grades sum to ${gradeBudgetOf(line.growthGrades)}`);
     for (const tier of SPAWN_TIERS) {

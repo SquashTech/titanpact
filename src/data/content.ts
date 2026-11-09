@@ -11,10 +11,5 @@ import { titanspawn } from './titanspawn';
 // and nowhere the run pools draw from.
 export const allCombatants: Record<string, HeroDefinition> = { ...heroes, ...enemies, ...unsealedChampions, ...titanEyes, ...titanspawn };
 
-/**
- * Everything a ROSTER entry may name: the recruitable pool plus the companion's bodies
- * (run/companion.ts). The roster-facing screens and helpers read this; the pools a run draws
- * from (draft, Guild Hall, contracts, encounters) still read `heroes`, which is what keeps a
- * spawn out of them.
- */
-export const rosterHeroes: Record<string, HeroDefinition> = { ...heroes, ...titanspawn };
+/** Everything a ROSTER entry may name — the recruitable pool, now that no spawn joins one. */
+export const rosterHeroes: Record<string, HeroDefinition> = heroes;

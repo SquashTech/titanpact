@@ -90,7 +90,6 @@ function heldLine(held: number): string {
 
 type TallyStep =
   | { kind: 'hero'; rosterId: string; add: number }
-  | { kind: 'companion'; type: string; add: number }
   | { kind: 'bonus'; add: number };
 
 function tallySteps(run: RunState, stars: VictoryStars): TallyStep[] {
@@ -99,7 +98,6 @@ function tallySteps(run: RunState, stars: VictoryStars): TallyStep[] {
     const earned = stars.byRosterId[entry.rosterId];
     if (earned) steps.push({ kind: 'hero', rosterId: entry.rosterId, add: earned.filter((s) => s.fromCycle === 0).length * STARDUST_PER_STAR });
   }
-  if (stars.companion) steps.push({ kind: 'companion', type: stars.companion.type, add: stars.companion.fromCycle === 0 ? STARDUST_PER_STAR : 0 });
   if (stars.clearBonus > 0) steps.push({ kind: 'bonus', add: stars.clearBonus });
   return steps;
 }
@@ -180,16 +178,6 @@ function useTally(run: RunState, stars: VictoryStars | null, active: boolean) {
             setShown(from + step.add);
             playSfx('star.tick', { pitch: 1.1 + i * 0.08, gain: 1 });
           }, FLY_MS);
-          return;
-        }
-        if (step.kind === 'companion') {
-          playSfx('star.rise', { pitch: 1.2 });
-          if (step.add > 0) {
-            window.setTimeout(() => {
-              setShown(from + step.add);
-              playSfx('star.tick', { pitch: 1.4 });
-            }, 240);
-          }
           return;
         }
         // The clear bonus counts in rather than jumping: twelve ticks at most, however large.
@@ -362,7 +350,7 @@ export function ChampionScreen({ run, stars, onContinue }: Props) {
                 {tally.steps.map((step, i) =>
                   step.kind === 'hero' || i > tally.reached ? null : (
                     <span key={step.kind} className="champion-tally-chip">
-                      {step.kind === 'bonus' ? `Cycle ${cycleOf(run.cycle).numeral} cleared` : 'Companion'}
+                      {`Cycle ${cycleOf(run.cycle).numeral} cleared`}
                       {step.add > 0 && <b> +{step.add}</b>}
                     </span>
                   ),

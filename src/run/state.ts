@@ -2,7 +2,6 @@
 // state is built FROM this (buildCombatState.ts) and never writes back.
 
 import { createPatronState, type PatronState } from './patrons';
-import type { CompanionState } from './companion';
 import type { PassiveId, StatKey, StatusId, TypeId } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
 import { createEmptyLoadout } from './equipment';
@@ -144,11 +143,6 @@ export interface RunState {
   contractsBought: number;
   /** The potions, a TEAM purse capped per kind (run/consumables.ts). Spent only in a fight. */
   consumables: ConsumablePurse;
-  /**
-   * The companion this run took (run/companion.ts, docs/companion-call.md): its line and whether it
-   * has woken. Off the roster — a summon a hero Calls, never a party member. Null until the join beat.
-   */
-  companion: CompanionState | null;
   /** Null for a RunState that never gets a map (enemyGen.ts throwaway rosters). */
   map: RunMap | null;
   /** Null = map generated but not yet entered. */
@@ -190,7 +184,6 @@ export function createRunState(gold = 0, recruitContracts = 1, cycle = 1): RunSt
     recruitContracts,
     contractsBought: 0,
     consumables: { ...STARTING_CONSUMABLES },
-    companion: null,
     map: null,
     currentNodeId: null,
     visitedNodeIds: [],

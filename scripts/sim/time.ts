@@ -11,7 +11,6 @@ export type ScreenKind =
   | 'fightOpen'
   | 'fightResult'
   | 'levelUp'
-  | 'companion'
   | 'contract'
   | 'drop'
   | 'offer'
@@ -51,7 +50,6 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   fightOpen: 5,
   fightResult: 6,
   levelUp: 6,
-  companion: 8,
   contract: 15,
   drop: 12,
   // A schedule offer at the cap is the replace-or-decline question; below it the move simply

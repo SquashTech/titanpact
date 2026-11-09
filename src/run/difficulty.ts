@@ -206,8 +206,8 @@ export function spawnLeaderTierFor(actNumber: number): SpawnTier {
  * Earlies in every act, and an Early is a knockout for any hero, so the opener cost the act
  * nothing: 86–97% HP left, one fight in three that could never set up a short-handed fork).
  * Earlies are phased out escort by escort — 2 / 2 / 1 / 0 / 0 — so the silhouette, which is the
- * difficulty gauge, says the act got harder. Act 1 stays two bare Earlies: the on-ramp, and the
- * companion is drawn from them. Index = act; acts past the table hold at its last entry.
+ * difficulty gauge, says the act got harder. Act 1 stays two bare Earlies, the on-ramp.
+ * Index = act; acts past the table hold at its last entry.
  */
 export const OPENER_ESCORT_TIERS_BY_ACT: readonly (readonly SpawnTier[])[] = [
   [],

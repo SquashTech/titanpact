@@ -244,9 +244,6 @@ export function formatEvents(
           className: 'log-heal',
         });
         break;
-      case 'Called':
-        // Its own MoveDeclared line follows and names it.
-        break;
       case 'ActionBlocked': {
         const reasonText =
           e.reason === 'dazed'

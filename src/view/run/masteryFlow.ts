@@ -38,7 +38,7 @@ export interface Mastered {
 
 /**
  * What a hero's Mastery pips owe it, paid one screen at a time (docs/mastery.md §2): the
- * Evolution as a screen of its own, the companion's tier-step as its plate, the granted move's
+ * Evolution as a screen of its own, the granted move's
  * overflow as the replace-or-decline a level makes, and the mastered innate at ten as a reveal.
  * Raised on the node that landed the pip, and — for a hire that arrived past a pip unpaid — on
  * its next level-up report (the Evolution only: the innate needs no beat to be held).

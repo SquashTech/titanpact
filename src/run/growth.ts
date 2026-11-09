@@ -122,7 +122,7 @@ export function gradesFor(hero: HeroDefinition | undefined): GrowthGrades {
   return hero?.growthGrades ?? DEFAULT_GRADES;
 }
 
-/** Every roll from level 1 to `level` at its grade's mean, rounded once — a line nobody rolled (Constructed, the companion's Call). */
+/** Every roll from level 1 to `level` at its grade's mean, rounded once — a line nobody rolled (Constructed). */
 export function expectedGrowthAt(hero: HeroDefinition | undefined, level: number): Partial<Record<StatKey, number>> {
   const grades = gradesFor(hero);
   const levels = Math.max(0, level - 1);
@@ -312,8 +312,8 @@ export function grantXp(
 }
 
 /**
- * `levels` whole levels onto one hero — what a generated hero takes on arrival (a Guild hire, the
- * companion), landing it exactly ON a level rather than part-way to the next.
+ * `levels` whole levels onto one hero — what a generated hero takes on arrival (a Guild hire),
+ * landing it exactly ON a level rather than part-way to the next.
  */
 export function levelUpEntry(
   entry: RosterEntry,
@@ -400,7 +400,7 @@ export function previewLevelUp(entry: RosterEntry, hero: HeroDefinition | undefi
 
 /**
  * A hero's own stream off a fight's seed, keyed by roster id rather than drawn in roster order —
- * so a companion leaving the roster between the Victory screen and the resolve moves nobody's roll.
+ * so a hero leaving the roster between the Victory screen and the resolve moves nobody's roll.
  */
 export function levelRandomFor(seed: number, rosterId: string): () => number {
   let h = 0x811c9dc5 ^ seed;

@@ -17,7 +17,7 @@ import type {
 } from '../../engine/events';
 import type { CombatState, Side } from '../../engine/state';
 import { moveForHero, STAGE_LIMIT } from '../../engine/state';
-import type { HeroDefinition, MoveDefinition, StatKey, TypeId } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition, StatKey } from '../../engine/content';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
@@ -85,12 +85,11 @@ export interface BeatRosterEntry {
   pathId?: string;
 }
 
-/** A declared move as the console draws it, against its live caster. `calledType`: the companion's act, free, cast at the type it resolves as. */
+/** A declared move as the console draws it, against its live caster. */
 export interface BeatMove {
   moveId: string;
   casterId: string;
   enemy: boolean;
-  calledType?: TypeId;
   /** Who it was aimed at, as declared. */
   targetIds: readonly string[];
 }
@@ -129,8 +128,7 @@ export interface BeatFlavor {
    * and what it cost, as the same objects the move tile wears — the kind glyph and the mana gem —
    * rather than "20 MP" in small type. FightScreen draws it; buildBeats only says what it is.
    */
-  /** `called`: cast by the companion on its own (docs/companion-call.md §12) — no mana, so the strip says Free. */
-  bannerCast?: { kind: MoveKindGlyphKind; label: string; cost: number; called?: true };
+  bannerCast?: { kind: MoveKindGlyphKind; label: string; cost: number };
   /**
    * A declaration drawn as the move bar the player presses in combat, beside the caster's sprite,
    * the caster's name in its side's colour — a move is read by the same object that offers it,
@@ -473,8 +471,6 @@ export function buildBeats(
   let landed = new Set<string>();
   // The round's end beat (regen and ticks), so a field lapsing right behind it can ride on it.
   let roundEndBeat = null as Beat | null;
-  // The companion act whose declaration comes next (Called rides into its beat), and the type it resolves as.
-  let calledBy: { casterId: string; moveType: TypeId } | null = null;
   // The action, switch or run of reactions being narrated (BeatMeta.group); `fold` makes each one beat.
   let group: number | null = null;
   let groupSeq = 0;
@@ -731,12 +727,6 @@ export function buildBeats(
         i++;
         break;
 
-      case 'Called':
-        calledBy = { casterId: e.combatantId, moveType: e.moveType };
-        carry.push(e);
-        i++;
-        break;
-
       case 'MoveDeclared': {
         striker = e.combatantId;
         landed = new Set();
@@ -751,19 +741,15 @@ export function buildBeats(
         }
         if (events[i]?.type === 'ManaChanged') applied.push(events[i++]);
 
-        // The companion's act is cast at the type it resolves as (the woken companion's Ancient).
-        const call = calledBy?.casterId === e.combatantId ? calledBy : null;
-        calledBy = null;
         const actorHero = heroes[combatants[e.combatantId]?.heroId];
-        const authored = actorHero ? moveForHero(moves[e.moveId], actorHero) : moves[e.moveId];
-        const move = call ? { ...authored, type: call.moveType } : authored;
+        const move = actorHero ? moveForHero(moves[e.moveId], actorHero) : moves[e.moveId];
         strikerMove = move;
         const actorSide = combatants[e.combatantId]?.side;
         const actorName = `${actorSide && actorSide !== playerSide ? 'Enemy ' : ''}${name(e.combatantId)}`;
         const clause = targetClause(e.targetCombatantIds, e.combatantId, name);
         const cost = manaSpent ?? move.manaCost;
         const lead = name(e.combatantId);
-        strikerAction = { moveId: e.moveId, casterId: e.combatantId, enemy: !!actorSide && actorSide !== playerSide, targetIds: e.targetCombatantIds, ...(call ? { calledType: call.moveType } : {}) };
+        strikerAction = { moveId: e.moveId, casterId: e.combatantId, enemy: !!actorSide && actorSide !== playerSide, targetIds: e.targetCombatantIds };
         push(
           applied,
           `${actorName} uses ${move.name}${clause}`,
@@ -778,7 +764,6 @@ export function buildBeats(
               kind: moveKindGlyph(move),
               label: castLabel(move),
               cost,
-              ...(call ? { called: true as const } : {}),
             },
             bannerMove: strikerAction,
           },

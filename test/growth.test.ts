@@ -246,7 +246,7 @@ test('growth: the report says what each hero actually rolled, and matches the ro
 
 test('growth: the victory screen reads the same roll the resolve lands, even with a hero gone from the roster between', () => {
   // FightResultOverlay shows the stat gains before handleFightResolved rolls them; both read a
-  // hero's own stream off the fight's seed, so the companion leaving the roster moves nobody's roll.
+  // hero's own stream off the fight's seed, so a hero leaving the roster moves nobody's roll.
   let run = soloRun();
   run = addRosterEntry(run, createRosterEntry('crimson', 'crimson', heroes.crimson.moveIds));
   run = addRosterEntry(run, createRosterEntry('gone', 'crimson', heroes.crimson.moveIds));

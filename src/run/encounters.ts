@@ -83,7 +83,7 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // From Cycle II the Guardians wake (run/cycles.ts): the escorts climb with the act, the champion wears its Mark.
   const woken = type === 'boss' && guardiansWake(run);
   const standardCount = encounterKind === 'boss' ? (woken ? wokenEscortCount(run.actNumber) : guardianEscortCount(run.actNumber)) : 4;
-  // Act 1 caps the enemy count at the roster (the companion is off it — docs/companion-call.md §6).
+  // Act 1 caps the enemy count at the roster.
   const heroCountOverride =
     type === 'fight' || isSecondFight ? 2 : encounterHeroCountOverride(type, run.actNumber, run.roster.length, standardCount);
   const heroCount = (heroCountOverride ?? standardCount) + (type === 'elite' ? ELITE_EXTRA_ENEMIES : 0);

@@ -2,22 +2,20 @@ import * as assert from 'assert';
 import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { progressionTable } from '../src/data/progression';
+import { spawnPosition } from '../src/data/titanspawn';
 import {
   addPlaytime,
-  companionStarId,
   createProfile,
   curseStarId,
   decodeProfile,
   hasCurseStar,
   formatPlaytime,
-  hasCompanionStar,
   hasEvolutionStar,
-  isSpawnAscended,
   PROFILE_VERSION,
   recordActReached,
   recordRunEnded,
   recordRunStarted,
-  recordSpawnAscended,
+  recordSpawnFought,
   RUN_HISTORY_CAP,
   starredHeroCount,
   totalStars,
@@ -264,7 +262,7 @@ test('profile: a history line with no outcome is dropped; a readable one keeps w
   assert.strictEqual(record.durationMs, null);
   assert.deepStrictEqual(record.roster, [
     { heroId: 'rime', level: 1, evolutionPathId: null },
-    // A companion's body is not a recruitable hero, and it still finished the run.
+    // A body this build does not recruit still finished the run.
     { heroId: 'goblin', level: 2, evolutionPathId: null },
   ]);
   assert.deepStrictEqual(record.starsEarned, ['rime-snowbound']);
@@ -285,31 +283,26 @@ test('profile: every path in the game is a star, and every hero has exactly thre
   }
 });
 
-test('profile: a clear with a companion stars its line, once, and a loss or a run without one stars nothing', () => {
-  let profile = recordRunEnded(createProfile(), { ...wiped(6, [finished('cinderKnight', 'explosive')]), companionType: 'Beast' }, 1_000);
-  assert.deepStrictEqual(profile.companionStars, [], 'a loss');
-  profile = recordRunEnded(profile, cleared([finished('cinderKnight', 'explosive')]), 2_000);
-  assert.deepStrictEqual(profile.companionStars, [], 'no companion this run');
-  profile = recordRunEnded(profile, { ...cleared([finished('rime', 'snowbound')]), companionType: 'Beast' }, 3_000);
-  assert.ok(hasCompanionStar(profile, 'Beast'), 'it cannot be lost, so the clear is the whole condition');
-  assert.deepStrictEqual(profile.runHistory[0].starsEarned, ['rime-snowbound', companionStarId('Beast')]);
-  assert.strictEqual(totalStars(profile), 3);
-  profile = recordRunEnded(profile, { ...cleared([finished('rime', 'snowbound')]), companionType: 'Beast' }, 4_000);
-  assert.deepStrictEqual(profile.companionStars, ['Beast'], 'the same line twice is the same star');
-  assert.deepStrictEqual(profile.runHistory[0].starsEarned, []);
-  const decoded = decodeProfile(JSON.parse(JSON.stringify(profile)), knownHeroIds, knownPathIds);
+test('profile: a companion star lit before the companion was deleted is kept for its Stardust, never shown as a star', () => {
+  const decoded = decodeProfile(
+    { runsStarted: 3, companionStars: ['Beast'], ascendedSpawnTypes: ['Fire'], runHistory: [{ outcome: 'win', actReached: 5, roster: [], companionType: 'Beast', starsEarned: ['companion:Beast'] }] },
+    knownHeroIds,
+    knownPathIds
+  );
   assert.deepStrictEqual(decoded.companionStars, ['Beast']);
-  assert.deepStrictEqual(decoded.runHistory[1].starsEarned, ['rime-snowbound', companionStarId('Beast')], 'a companion star survives the path filter');
-  assert.strictEqual(decoded.runHistory[1].companionType, 'Beast');
+  assert.strictEqual(totalStars(decoded), 0);
+  assert.deepStrictEqual(decoded.runHistory[0].starsEarned, [], 'a companion star leaves the history');
+  assert.ok(!('companionType' in decoded.runHistory[0]) && !('ascendedSpawnTypes' in decoded));
+  assert.deepStrictEqual(decoded.spawnFought, ['Beast'], "a companion's line was fought");
 });
 
-test('profile: a line woken in the finale stays woken, idempotently, and survives a round trip', () => {
-  let profile = recordSpawnAscended(createProfile(), 'Fire');
-  profile = recordSpawnAscended(profile, 'Fire');
-  assert.deepStrictEqual(profile.ascendedSpawnTypes, ['Fire']);
-  assert.ok(isSpawnAscended(profile, 'Fire') && !isSpawnAscended(profile, 'Water'));
-  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile))).ascendedSpawnTypes, ['Fire']);
-  assert.deepStrictEqual(decodeProfile({ runsStarted: 3 }).ascendedSpawnTypes, [], 'absent on an older file');
+test('profile: a won fight reveals the Titanspawn lines it beat, idempotently, and survives a round trip', () => {
+  let profile = recordSpawnFought(createProfile(), ['cubling', 'valor']);
+  profile = recordSpawnFought(profile, ['cubling']);
+  const line = spawnPosition('cubling')!.line.type;
+  assert.deepStrictEqual(profile.spawnFought, [line]);
+  assert.deepStrictEqual(decodeProfile(JSON.parse(JSON.stringify(profile))).spawnFought, [line]);
+  assert.deepStrictEqual(decodeProfile({ runsStarted: 3 }).spawnFought, [], 'absent on an older file');
 });
 
 test('profile: a clear with a Turned werewolf on the final roster stars the curse, once — a loss, or a hero only bitten, stars nothing', () => {

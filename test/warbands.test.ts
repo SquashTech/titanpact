@@ -1,5 +1,4 @@
-// The Gathering (docs/cycles.md §3, Cycle IV): warbands cast around an engine, the companion a tier
-// ahead, and a bigger Tavern board.
+// The Gathering (docs/cycles.md §3, Cycle IV): warbands cast around an engine, and a bigger Tavern board.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -16,8 +15,6 @@ import { addRosterEntry, createRosterEntry, createRunState, type RunState } from
 import { nodeEncounter, type EncounterContext } from '../src/run/encounters';
 import { ELITE_EXTRA_ENEMIES } from '../src/run/difficulty';
 import { castHeroWarband, learnableIn, learnableMoves } from '../src/run/warbands';
-import { companionCallFor, companionTier, joinCompanion } from '../src/run/companion';
-import { levelAfterEncounters, levelOf } from '../src/run/growth';
 import { rollGuildHallOffers } from '../src/run/shop';
 import { guildHallOffersFor } from '../src/data/recruitment';
 
@@ -102,16 +99,9 @@ test('warbands: a Gathering’s Guardian fields its escorts as an engine', () =>
   assert.ok(fitted >= 10, `only ${fitted} of 20 Gathering Guardians fitted a warband`);
 });
 
-test('warbands: the Gathering trains the companion a tier ahead and five levels up, and widens the Tavern', () => {
-  assert.strictEqual(companionTier(1, 3), 'early');
-  assert.strictEqual(companionTier(1, 4), 'mid');
-  assert.strictEqual(companionTier(4, 4), 'late', 'the top tier holds');
-  const base = joinCompanion({ ...runAt(1, 2, 3), fightsStarted: 1 }, 'cubling');
+test('warbands: the Gathering widens the Tavern', () => {
+  const base = runAt(1, 2, 3);
   const trained = { ...base, cycle: 4 };
-  const at = (run: RunState) => levelOf(companionCallFor(run, allCombatants)!.entry);
-  assert.strictEqual(at(base), levelAfterEncounters(base.encountersWon));
-  assert.strictEqual(at(trained), at(base) + 5);
-
   const pool = guildHallOffersFor(heroes);
   for (let i = 0; i < 20; i++) {
     assert.ok(rollGuildHallOffers(trained, pool).heroOfferIds.length >= 3, 'a Gathering Tavern offers three or four');

@@ -60,8 +60,6 @@ import './beats.test';
 import './guardians.test';
 import './mobLayer.test';
 import './encounters.test';
-import './companion.test';
-import './companionCall.test';
 import './cycles.test';
 import './chronicle.test';
 import './wardens.test';

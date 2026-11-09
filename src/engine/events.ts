@@ -15,7 +15,7 @@ export interface RoundStartedEvent extends BaseEvent {
 /** One declared action in the order the round resolves it; a switch or a Rest carries its own bracket (priority.ts). */
 export interface RoundOrderEntry {
   combatantId: string;
-  kind: 'move' | 'switch' | 'rest' | 'call';
+  kind: 'move' | 'switch' | 'rest';
   /** The bracket sorted on — a random bracket already rolled, a switch +Infinity, a Rest -Infinity. */
   priority: number;
   speed: number;
@@ -230,20 +230,6 @@ export interface ActionBlockedEvent extends BaseEvent {
   reason: 'dazed' | 'noValidTarget' | 'targetStatusMissing' | 'switchBlocked' | 'moveUnavailable';
 }
 
-/**
- * A side's companion acts (docs/companion-call.md §12): its own MoveDeclared / MoveUsed follow
- * under the same `combatantId`. Ahead of them so the view can bring it in before its move plays.
- */
-export interface CalledEvent extends BaseEvent {
-  type: 'Called';
-  /** The companion — the off-field caster. */
-  combatantId: string;
-  moveId: string;
-  /** The type its move resolves as — the woken companion's Ancient, else the move's own. */
-  moveType: TypeId;
-  callsRemaining: number;
-}
-
 export interface FaintedEvent extends BaseEvent {
   type: 'Fainted';
   combatantId: string;
@@ -414,7 +400,6 @@ export type CombatEvent =
   | StatusDetonatedEvent
   | PassiveTriggeredEvent
   | ActionBlockedEvent
-  | CalledEvent
   | MoveGuardedEvent
   | StatusRefusedEvent
   | FaintedEvent

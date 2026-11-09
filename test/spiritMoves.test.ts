@@ -7,7 +7,6 @@ import { createFightState, landedDelta, withFullPools, stagesOf, stagesRecordOf 
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { signatureMoves } from '../src/data/signatures';
-import { callMoveIdSet } from '../src/data/titanspawn';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
@@ -244,7 +243,7 @@ test('spirit: every damage move in the slate is single-target, and Haunt is what
   assert.strictEqual(spirit.length, 22);
   assert.strictEqual(damage.length, 16);
   for (const move of damage) {
-    // The Call's three roll their one target (docs/companion-call.md §3.2) — still one foe, still no spread.
+    // Will-o'-Wisp, Unquiet and Requiem roll their one target — still one foe, still no spread.
     assert.ok(move.target === 'singleEnemy' || move.target === 'randomEnemy', `${move.id} is a spread move in a slate that has none`);
   }
   assert.ok(statuses.Haunt.spreadTriggerTypes?.includes('Spirit'));
@@ -316,9 +315,9 @@ test('spirit: Revenant holds the magical line and Sorrow the physical one — sp
   ];
   const revenant = reachableBy('revenant');
   const sorrow = reachableBy('sorrow');
-  // The Call holds its own three (docs/companion-call.md §3.2) until a hero pool takes them.
   // Lantern Light is Kite's Lantern Kite's alone (docs/hero-audit.md), swung with Wisdom.
-  const spiritMoves = Object.values(moves).filter((m) => m.type === 'Spirit' && !signatureMoves[m.id] && !callMoveIdSet.has(m.id) && m.id !== 'lanternLight');
+  // Will-o'-Wisp, Unquiet and Requiem sit in other heroes' pools.
+  const spiritMoves = Object.values(moves).filter((m) => m.type === 'Spirit' && !signatureMoves[m.id] && !['lanternLight', 'willOWisp', 'unquiet', 'requiem'].includes(m.id));
 
   for (const move of spiritMoves) {
     if (move.category === 'physical') {
