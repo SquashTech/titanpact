@@ -71,9 +71,9 @@ export type SfxId =
   | 'blip.chirp'
   | 'blip.giggle'
   | 'blip.win'
-  | 'trust.capstone'
   | 'blip.lose'
   | 'trust.rise'
+  | 'trust.capstone'
   | 'star.rise'
   | 'star.fall'
   | 'star.land'
@@ -1102,24 +1102,6 @@ export const sounds: Record<SfxId, SoundSpec> = {
     ],
   },
 
-  /** The fifth Trust pip igniting (PatronNodeScreen CapstoneOath): a swell that breaks into a boom and a held major chord. */
-  'trust.capstone': {
-    gain: 0.6,
-    jitter: 0,
-    voices: [
-      { wave: 'noise', gain: 0.1, attack: 0.9, decay: 0.08, filter: { type: 'bandpass', freq: 600, freqEnd: 5000, q: 0.8 } },
-      { wave: 'sine', freq: 98, freqEnd: 196, gain: 0.12, attack: 0.9, decay: 0.05 },
-      { wave: 'sine', freq: 82, freqEnd: 41, gain: 0.5, attack: 0.004, decay: 0.9, delay: 0.92 },
-      { wave: 'noise', gain: 0.32, attack: 0.002, decay: 0.5, delay: 0.92, filter: { type: 'lowpass', freq: 1800, freqEnd: 240, q: 0.9 } },
-      { wave: 'triangle', freq: 262, gain: 0.12, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.92 },
-      { wave: 'triangle', freq: 330, gain: 0.1, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.95 },
-      { wave: 'triangle', freq: 392, gain: 0.1, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.98 },
-      { wave: 'sine', freq: 1047, detune: 6, gain: 0.1, attack: 0.004, decay: 1.6, delay: 1.02 },
-      { wave: 'sine', freq: 1568, gain: 0.07, attack: 0.004, decay: 1.8, delay: 1.1 },
-      { wave: 'noise', gain: 0.08, attack: 0.2, decay: 1.4, delay: 1.0, filter: { type: 'bandpass', freq: 6000, freqEnd: 9000, q: 1 } },
-    ],
-  },
-
   /** The Headmaster arriving: pages fluttering in around him, then a book slammed shut. */
   'patron.headmaster': {
     gain: 0.48,
@@ -1146,6 +1128,24 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 988, detune: 6, gain: 0.14, attack: 0.004, decay: 0.7, delay: 0.09 },
       { wave: 'sine', freq: 1319, gain: 0.13, attack: 0.004, decay: 0.9, delay: 0.18 },
       { wave: 'noise', gain: 0.08, attack: 0.12, decay: 0.6, delay: 0.1, filter: { type: 'bandpass', freq: 2200, freqEnd: 8000, q: 1 } },
+    ],
+  },
+
+  /** The fifth Trust pip igniting (PatronNodeScreen CapstoneOath): a swell that breaks into a boom and a held major chord. */
+  'trust.capstone': {
+    gain: 0.6,
+    jitter: 0,
+    voices: [
+      { wave: 'noise', gain: 0.1, attack: 0.9, decay: 0.08, filter: { type: 'bandpass', freq: 600, freqEnd: 5000, q: 0.8 } },
+      { wave: 'sine', freq: 98, freqEnd: 196, gain: 0.12, attack: 0.9, decay: 0.05 },
+      { wave: 'sine', freq: 82, freqEnd: 41, gain: 0.5, attack: 0.004, decay: 0.9, delay: 0.92 },
+      { wave: 'noise', gain: 0.32, attack: 0.002, decay: 0.5, delay: 0.92, filter: { type: 'lowpass', freq: 1800, freqEnd: 240, q: 0.9 } },
+      { wave: 'triangle', freq: 262, gain: 0.12, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.92 },
+      { wave: 'triangle', freq: 330, gain: 0.1, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.95 },
+      { wave: 'triangle', freq: 392, gain: 0.1, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.98 },
+      { wave: 'sine', freq: 1047, detune: 6, gain: 0.1, attack: 0.004, decay: 1.6, delay: 1.02 },
+      { wave: 'sine', freq: 1568, gain: 0.07, attack: 0.004, decay: 1.8, delay: 1.1 },
+      { wave: 'noise', gain: 0.08, attack: 0.2, decay: 1.4, delay: 1.0, filter: { type: 'bandpass', freq: 6000, freqEnd: 9000, q: 1 } },
     ],
   },
 
