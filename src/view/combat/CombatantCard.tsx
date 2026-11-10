@@ -23,7 +23,6 @@ import { statusHeldText } from '../shared/statusFacts';
 import { MAX_POPUPS_PER_FIGURE, POPUP_STAGGER_MS } from './buildBeats';
 import { koLabel, type MoveForecast } from './forecast';
 import { ForecastBite } from './ForecastBite';
-import { GroundGauge } from './GroundGauge';
 
 export interface Popup {
   key: number;
@@ -60,6 +59,11 @@ export interface FigureFx {
 // no animation of its own to hide it.
 const HIT_REACT_MS = 460;
 const POSE_RELEASE_MS = 240;
+/** styles.css .name-bar-trail's hold and drain, with a frame to spare. */
+const TRAIL_MS = 1120;
+const SHAKE_MS = 320;
+/** A hit this big a share of max HP shakes the bar. */
+const HEAVY_HIT = 0.25;
 
 /**
  * Sprite-level reaction per popup class. A blow knocks the figure back; a DoT
@@ -101,6 +105,20 @@ function useOneShot(key: number | null | undefined, ms: number): boolean {
     };
   }, [key, ms]);
   return live;
+}
+
+/** Each fall in HP, keyed so the same size of hit twice running replays, and whether it was heavy. */
+function useHpDrop(hp: number, maxHp: number): { key: number; heavy: boolean } | null {
+  const prev = useRef(hp);
+  const [drop, setDrop] = useState<{ key: number; heavy: boolean } | null>(null);
+  useEffect(() => {
+    if (hp < prev.current) {
+      const heavy = maxHp > 0 && (prev.current - hp) / maxHp >= HEAVY_HIT;
+      setDrop((d) => ({ key: (d?.key ?? 0) + 1, heavy }));
+    }
+    prev.current = hp;
+  }, [hp, maxHp]);
+  return drop;
 }
 
 /** Card-level flash class per popup class (styles.css). */
@@ -362,6 +380,9 @@ export function CombatantCard({
   const manaFraction = maxMana > 0 ? Math.max(0, Math.min(1, combatant.currentMana / maxMana)) : 0;
   const manaOverFraction = maxMana > 0 ? Math.max(0, Math.min(1, (combatant.currentMana - maxMana) / maxMana)) : 0;
   const activeMods = compact || combatant.fainted ? [] : activeStatMods(hero, combatant, statCtx);
+  const drop = useHpDrop(combatant.currentHp, maxHp);
+  const draining = useOneShot(drop ? drop.key : null, TRAIL_MS);
+  const shaking = useOneShot(drop?.heavy ? drop.key : null, SHAKE_MS);
 
   const statusChips = [
     ...(warded
@@ -437,6 +458,13 @@ export function CombatantCard({
   const types = effectiveTypes(hero, combatant);
   const primaryType = types[0];
   const typeStyle = { '--type-color': getTypeColor(primaryType), '--type-rgb': getTypeColorRgb(primaryType) } as CSSProperties;
+  const typeChips = (
+    <span className="combatant-types">
+      {types.map((t) => (
+        <TypeBadge key={t} type={t} iconOnly />
+      ))}
+    </span>
+  );
 
   // Targeting always wins; otherwise tapping the figure opens its detail sheet.
   const canTarget = Boolean(targetable && !combatant.fainted);
@@ -463,19 +491,10 @@ export function CombatantCard({
           {popup.text}
         </div>
       ))}
+      {/* Off the name row, which positions the bar inside it: the chips hang at the figure's shoulder. */}
+      {!compact && typeChips}
       <div className="combatant-stage">
         <span className="combatant-platform" aria-hidden="true" />
-        {!compact && (
-          <GroundGauge
-            hpFraction={hpFraction}
-            shieldFraction={maxHp > 0 ? Math.min(1, shield / maxHp) : 0}
-            manaFraction={manaFraction}
-            manaOverFraction={manaOverFraction}
-            boss={bossClass !== null}
-            fainted={combatant.fainted}
-            forecast={forecast}
-          />
-        )}
         <HeroPortrait
           heroId={hero.id}
           pathId={combatant.formPathId}
@@ -503,8 +522,16 @@ export function CombatantCard({
       {/* Name and the two bars are one object — the nameplate. Grouped in the markup
           rather than by CSS `order` so the DOM sequence stays the reading sequence on
           both sides of the field, where the battlefield mirrors the far side's card. */}
-      <div className="combatant-plate">
+      <div className={`combatant-plate${shaking ? ' is-shaken' : ''}`}>
         <div className="combatant-name">
+          {!compact && (
+            <div className="name-bar" aria-hidden="true">
+              <div className={`name-bar-trail${draining ? ' is-draining' : ''}`} style={{ width: `${hpFraction * 100}%` }} />
+              <div className={`bar-fill name-bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
+              <ShieldFill currentHp={combatant.currentHp} maxHp={maxHp} shield={shield} />
+              {forecast && !combatant.fainted && <ForecastFill forecast={forecast} />}
+            </div>
+          )}
           {level !== undefined && (
             <span className="combatant-level" aria-label={`Level ${level}`}>
               {level}
@@ -516,14 +543,15 @@ export function CombatantCard({
             <span className="plate-numbers">
               <span className={`plate-hp ${hpTier(hpFraction)}`}>{combatant.fainted ? 'KO' : Math.max(0, combatant.currentHp)}</span>
               {shield > 0 && !combatant.fainted && <span className="plate-shield">+{shield}</span>}
-              {!bossClass && !combatant.fainted && <span className={`plate-mp${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>{combatant.currentMana}</span>}
             </span>
           )}
-          <span className="combatant-types">
-            {types.map((t) => (
-              <TypeBadge key={t} type={t} iconOnly />
-            ))}
-          </span>
+          {!compact && (
+            <div className="name-bar-mp" aria-hidden="true">
+              <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
+              {manaOverFraction > 0 && <div className="bar-fill mana-over" style={{ width: `${manaOverFraction * 100}%` }} />}
+            </div>
+          )}
+          {compact && typeChips}
         </div>
         {!compact && (
           <div className="resource-row">

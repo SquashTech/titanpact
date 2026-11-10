@@ -3483,27 +3483,26 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   labels its parts **Becomes**, **Passive** and **Move**; a mastered innate's source reads "Mastered
   innate"; the Class badge lost its "Hold to view details" tooltip.
 
-## The ground gauge (2026-11-09)
+## The name bar (2026-11-09)
 
-Per user direction, tried as an experiment and open to reverting. A Guardian, a Late Titanspawn
-and the Titan's own pieces stood taller than their frame and ran up behind their own HP and MP
-bars. Five layouts were drawn at the fight's real size (`art/concepts/boss-bars`), then the
-chosen one was drawn in eight real fights (`art/concepts/ground-gauge`).
+Per user direction. A Guardian, a Late Titanspawn and the Titan's own pieces stood taller than their
+frame and ran up behind their own HP and MP bars. Five layouts were drawn at the fight's real size
+(`art/concepts/boss-bars`), and a crescent of HP and MP round each figure's feet shipped first
+(`art/concepts/ground-gauge`). In play it cost readability and made a big hit look like a chip, so
+four ways of putting a straight bar back were drawn with the same hits landing on each
+(`art/concepts/bar-return`), and the user picked the name in the bar.
 
-- **HP and MP are a crescent round the ground at each figure's feet** (`GroundGauge.tsx`). HP is
-  the outer arc and MP the inner one, and both empty right to left like a bar. A full ring was tried
-  and dropped: it emptied from the front, so a hero at low HP kept only the arc at the back, which
-  its own figure covers.
-- **A Shield** is a pale arc outside HP, as long as the pool against max HP. **Overflow Mana**
-  runs a second, bright arc over the inner one. **A forecast** eats HP the way the bar's bite did,
-  solid for the sure part and breathing for the roll.
-- **A boss** (Guardian, Herald, Eyes) gets a wider crescent in the Titan's colours, a gilt rim and
-  two gems, and no MP arc.
-- **The plate is the name row alone**: level, name, then HP, any Shield and MP as numerals. The
-  shoulder's KO tag is gone, since the plate says KO.
-- **Stat stages join the status band** instead of the card's top corners, which a big figure
-  covered. At the ring's ends they collided with a boss's wide ring next door.
-- **Both rows now read the same way up**: figure, gauge, name, statuses. The far side packs at the
-  horizon, so its figures have open sky above them.
+- **The space came from the layout, not the crescent.** Both rows read the same way up: figure,
+  readout, statuses. The far side packs at the horizon, so its figures have open sky above them.
+- **The name row is the HP bar**: level and name on the left, HP on the right, graduated at the
+  quarters, with MP a thin thread under it. Any Shield is a pale band past the fill and a "+N" beside
+  the HP. A forecast eats the bar as the old one's bite did.
+- **A hit drops the fill at once and leaves a trail**: white the moment it lands, held for a beat,
+  then drained in red. The old bar only eased its width, so a crit and a chip looked the same. A hit
+  of a quarter of max HP or more also shakes the plate.
+- **A boss** (Guardian, Herald, Eyes) has a bar in the Titan's magenta and no MP thread.
+- **Type chips hang at the figure's shoulder** on both sides, off the bar. The shoulder's KO tag is
+  gone, since the bar says KO.
+- **Stat stages join the status band** instead of the card's top corners, which a big figure covered.
 
 The target picker and the bench keep their bars; only the field changed.
