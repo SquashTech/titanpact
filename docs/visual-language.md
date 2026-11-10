@@ -3482,3 +3482,28 @@ Round End, Rest, Healed** (`src/data/keywords.ts`).
   lower/higher" words for a wordless mark (its rim lights in its own colour); an Evolution path card
   labels its parts **Becomes**, **Passive** and **Move**; a mastered innate's source reads "Mastered
   innate"; the Class badge lost its "Hold to view details" tooltip.
+
+## The ground gauge (2026-11-09)
+
+Per user direction, tried as an experiment and open to reverting. A Guardian, a Late Titanspawn
+and the Titan's own pieces stood taller than their frame and ran up behind their own HP and MP
+bars. Five layouts were drawn at the fight's real size (`art/concepts/boss-bars`), then the
+chosen one was drawn in eight real fights (`art/concepts/ground-gauge`).
+
+- **HP and MP are a crescent round the ground at each figure's feet** (`GroundGauge.tsx`). HP is
+  the outer arc and MP the inner one, and both empty right to left like a bar. A full ring was tried
+  and dropped: it emptied from the front, so a hero at low HP kept only the arc at the back, which
+  its own figure covers.
+- **A Shield** is a pale arc outside HP, as long as the pool against max HP. **Overflow Mana**
+  runs a second, bright arc over the inner one. **A forecast** eats HP the way the bar's bite did,
+  solid for the sure part and breathing for the roll.
+- **A boss** (Guardian, Herald, Eyes) gets a wider crescent in the Titan's colours, a gilt rim and
+  two gems, and no MP arc.
+- **The plate is the name row alone**: level, name, then HP, any Shield and MP as numerals. The
+  shoulder's KO tag is gone, since the plate says KO.
+- **Stat stages join the status band** instead of the card's top corners, which a big figure
+  covered. At the ring's ends they collided with a boss's wide ring next door.
+- **Both rows now read the same way up**: figure, gauge, name, statuses. The far side packs at the
+  horizon, so its figures have open sky above them.
+
+The target picker and the bench keep their bars; only the field changed.

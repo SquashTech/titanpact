@@ -23,6 +23,7 @@ import { statusHeldText } from '../shared/statusFacts';
 import { MAX_POPUPS_PER_FIGURE, POPUP_STAGGER_MS } from './buildBeats';
 import { koLabel, type MoveForecast } from './forecast';
 import { ForecastBite } from './ForecastBite';
+import { GroundGauge } from './GroundGauge';
 
 export interface Popup {
   key: number;
@@ -361,9 +362,6 @@ export function CombatantCard({
   const manaFraction = maxMana > 0 ? Math.max(0, Math.min(1, combatant.currentMana / maxMana)) : 0;
   const manaOverFraction = maxMana > 0 ? Math.max(0, Math.min(1, (combatant.currentMana - maxMana) / maxMana)) : 0;
   const activeMods = compact || combatant.fainted ? [] : activeStatMods(hero, combatant, statCtx);
-  const modSplit = Math.ceil(activeMods.length / 2);
-  const leftMods = activeMods.slice(0, modSplit);
-  const rightMods = activeMods.slice(modSplit);
 
   const statusChips = [
     ...(warded
@@ -384,6 +382,7 @@ export function CombatantCard({
       if (shown <= 0) return [];
       return [<StatusChip key={s.statusId} instance={{ ...s, magnitude: shown }} onInspect={() => setInspectingStatus(s.statusId)} />];
     }),
+    ...activeMods.map(({ stat, mod, stages, tier, held }) => <StatModBadge key={stat} stat={stat} mod={mod} stages={stages} tier={tier} held={held} />),
   ];
 
   // On the battlefield the status strip is held to ONE line and scaled down to the card's width
@@ -416,6 +415,7 @@ export function CombatantCard({
   const bossClass = hero.id === ENDBRINGER_ID || isTitanEye(hero.id) ? 'is-titans-own' : isGuardianId(hero.id) ? 'is-guardian' : null;
   const classes = ['combatant-card'];
   if (bossClass) classes.push(bossClass);
+  if (titanspawn[hero.id]?.tier === 'late') classes.push('is-late-spawn');
   if (compact) classes.push('compact');
   if (combatant.fainted) classes.push('fainted');
   if (combatant.blessed && !combatant.fainted) classes.push('is-blessed');
@@ -451,20 +451,6 @@ export function CombatantCard({
       role={canTarget || onInspect ? 'button' : undefined}
       data-sfx={canTarget ? 'ui.target' : undefined}
     >
-      {leftMods.length > 0 && (
-        <div className="stat-mod-corner stat-mod-corner-left">
-          {leftMods.map(({ stat, mod, stages, tier, held }) => (
-            <StatModBadge key={stat} stat={stat} mod={mod} stages={stages} tier={tier} held={held} />
-          ))}
-        </div>
-      )}
-      {rightMods.length > 0 && (
-        <div className="stat-mod-corner stat-mod-corner-right">
-          {rightMods.map(({ stat, mod, stages, tier, held }) => (
-            <StatModBadge key={stat} stat={stat} mod={mod} stages={stages} tier={tier} held={held} />
-          ))}
-        </div>
-      )}
       {combatant.fainted && <span className="fainted-tag">KO</span>}
       {shown.map((popup, i) => (
         <div
@@ -479,6 +465,17 @@ export function CombatantCard({
       ))}
       <div className="combatant-stage">
         <span className="combatant-platform" aria-hidden="true" />
+        {!compact && (
+          <GroundGauge
+            hpFraction={hpFraction}
+            shieldFraction={maxHp > 0 ? Math.min(1, shield / maxHp) : 0}
+            manaFraction={manaFraction}
+            manaOverFraction={manaOverFraction}
+            boss={bossClass !== null}
+            fainted={combatant.fainted}
+            forecast={forecast}
+          />
+        )}
         <HeroPortrait
           heroId={hero.id}
           pathId={combatant.formPathId}
@@ -515,6 +512,13 @@ export function CombatantCard({
           )}
           {combatant.blessed && !combatant.fainted && <BlessingMark className="combatant-blessing" />}
           <span className="hero-name-text">{hero.name}</span>
+          {!compact && (
+            <span className="plate-numbers">
+              <span className={`plate-hp ${hpTier(hpFraction)}`}>{combatant.fainted ? 'KO' : Math.max(0, combatant.currentHp)}</span>
+              {shield > 0 && !combatant.fainted && <span className="plate-shield">+{shield}</span>}
+              {!bossClass && !combatant.fainted && <span className={`plate-mp${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>{combatant.currentMana}</span>}
+            </span>
+          )}
           <span className="combatant-types">
             {types.map((t) => (
               <TypeBadge key={t} type={t} iconOnly />

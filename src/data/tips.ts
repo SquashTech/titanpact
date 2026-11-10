@@ -73,7 +73,7 @@ export const FIGHT_TIPS: readonly FightTip[] = [
     when: {},
     pages: [
       'Each round, choose a move and a target for both heroes on the field. Then the round plays out in Speed order.',
-      'A move costs the Mana in its gem, paid from the blue bar. Everyone regains some each round, and Rest recovers all of it.',
+      'A move costs the Mana in its gem, paid from the blue arc under the hero. Everyone regains some each round, and Rest recovers all of it.',
       "The arrows under a move's number show how it hits each enemy: [super] double, [resist] half. [single] hits one enemy, [spread] hits both. Hold a move to read what it does.",
     ],
   },

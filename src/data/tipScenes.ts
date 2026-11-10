@@ -171,7 +171,7 @@ const ANCIENT_CAST = {
 /** The same three heroes at every counter, so the pages read as one visit. */
 const HALL_ROSTER = ['cinderKnight', 'wildOracle', 'leviathan'] as const;
 
-/** Cinder over two moves, part-way down the blue bar. */
+/** Cinder over two moves, part-way down its blue arc. */
 const MANA_SCENE: TipScene = { hero: { heroId: 'cinderKnight', mana: 0.6 }, heroFigure: true, moves: ['singe', 'kindle'], focus: ['manaGem', 'mpBar'] };
 
 const MATCHUP_SCENE: TipScene = { ...TYPES_CAST, moves: ['ember'], focus: ['matchups'], expect: { ember: [2, 0.5] } };
