@@ -21,7 +21,7 @@ import { addRosterEntry, createRosterEntry, replaceRosterEntry, ROSTER_CAP } fro
 import { mergeStatMods } from './statMods';
 import { statGrantCost } from './equipment';
 import { levelAfterEncounters, levelUpEntry } from './growth';
-import { guildHallMastery } from './mastery';
+import { recruitMastery } from './mastery';
 import { lookupOf } from './deck';
 import { signatureMoves } from '../data/signatures';
 import { classMoves } from '../data/classes';
@@ -295,7 +295,7 @@ export function eventRecruitEntry(
   rosterId: string,
   random: () => number = Math.random
 ): RosterEntry {
-  const base = { ...createRosterEntry(rosterId, hero.id, hero.moveIds), mastery: guildHallMastery(run.actNumber) };
+  const base = { ...createRosterEntry(rosterId, hero.id, hero.moveIds), mastery: recruitMastery(run.actNumber) };
   const level = levelAfterEncounters(run.encountersWon);
   return level <= 1 ? base : levelUpEntry(base, hero, level - 1, random).entry;
 }

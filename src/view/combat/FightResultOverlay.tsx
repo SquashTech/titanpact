@@ -70,8 +70,6 @@ export interface FightResultProps {
   equipmentReward: EquipmentDefinition | null;
   /** A potion drop (run/consumables.ts). Null on the common no-drop win. */
   consumableReward?: ConsumableKind | null;
-  /** The Elite's Recruit Contract drop, landed before the claim screen that follows. */
-  contractReward?: boolean;
   /** The fight's Gem drop (run/gems.ts rollGemDrop), placed on the who-screen that follows. */
   gemReward?: readonly Gem[];
   /**
@@ -106,7 +104,6 @@ export function FightResultOverlay({
   goldReward,
   equipmentReward,
   consumableReward = null,
-  contractReward = false,
   gemReward = NO_GEMS,
   hpAfter,
   mvp = null,
@@ -136,10 +133,10 @@ export function FightResultOverlay({
     const mvpEntry = mvp ? roster.find((entry) => entry.rosterId === mvp.rosterId) : undefined;
     if (mvp && mvpEntry) rows.push({ key: 'mvp', render: () => <MvpRow heroId={mvpEntry.heroId} pathId={formIdFor(mvpEntry)} pick={mvp} bonusXp={fightXpFor(xpGained, mvp.rosterId, mvp.rosterId) - xpGained} /> });
     if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
-    const loot = lootPieces(equipmentReward, gemReward, consumableReward, contractReward, () => setInspecting(true));
+    const loot = lootPieces(equipmentReward, gemReward, consumableReward, () => setInspecting(true));
     if (loot.length > 0) rows.push({ key: 'loot', render: (shown) => <LootPile pieces={loot} shown={shown} />, holdMs: loot.length * LOOT_STAGGER_MS });
     return rows;
-  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, gemReward, contractReward, mvp, xpGained]);
+  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, gemReward, mvp, xpGained]);
 
   const stageDone = STAGE_LEDGER + ledger.length;
   const [stage, setStage] = useState(() => (prefersReducedMotion() ? stageDone : STAGE_TITLE));
@@ -456,12 +453,11 @@ interface LootPiece {
   item?: EquipmentDefinition;
 }
 
-/** What the fight dropped, as things rather than lines: the piece of gear, each Gem, the flask, the Contract. */
+/** What the fight dropped, as things rather than lines: the piece of gear, each Gem, the flask. */
 function lootPieces(
   item: EquipmentDefinition | null,
   gems: readonly Gem[],
   potion: ConsumableKind | null,
-  contract: boolean,
   onInspectItem: () => void
 ): LootPiece[] {
   const pieces: LootPiece[] = [];
@@ -492,9 +488,6 @@ function lootPieces(
       art: <img src={GOOD_ART[potion === 'hpPotion' ? 'hp' : 'mp']} alt="" draggable={false} />,
       label: CONSUMABLE_NAMES[potion],
     });
-  }
-  if (contract) {
-    pieces.push({ key: 'contract', color: RESOURCE_COLORS.contract, art: <img src={GOOD_ART.contract} alt="" draggable={false} />, label: 'Contract' });
   }
   return pieces;
 }

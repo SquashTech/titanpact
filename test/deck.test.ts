@@ -17,7 +17,6 @@ import { addRosterEntry, createRosterEntry, createRunState, type RunState } from
 import { nodeEncounter } from '../src/run/encounters';
 import { generateEncounter } from '../src/run/enemyGen';
 import {
-  DECK_HEROES_PER_FIGHT,
   DECK_ROW_SIZE,
   DeckError,
   defaultDeck,
@@ -103,7 +102,7 @@ function deckRun(seed: number, act: number, deck: readonly string[] | null): Run
   return { ...run, map: generateMap(seed, act), locationIds: generateItinerary(seed), actNumber: act, fightsStarted: 2, encountersWon: 4, deck };
 }
 
-test('deck: a recruitable fight fields at least two deck heroes, strangers past them, and the preview agrees', () => {
+test('deck: a hero fight draws deck and strangers together, never a roster hero, and the preview agrees', () => {
   // A thin deck, so strangers have somewhere to come from.
   const deck = defaultDeck(heroes);
   const thin = Object.values(deck).map((row) => row[0]);
@@ -116,7 +115,6 @@ test('deck: a recruitable fight fields at least two deck heroes, strangers past 
       const encounter = nodeEncounter(node, ctx);
       const ids = encounter.run.roster.map((r) => r.heroId);
       const decked = ids.filter((id) => isRecruitable(id, pools.heroes));
-      assert.ok(decked.length >= Math.min(DECK_HEROES_PER_FIGHT, ids.length), `seed ${seed} ${node.id}: ${decked.length} deck heroes in ${ids.join(', ')}`);
       strangersSeen += ids.length - decked.length;
       for (const id of ids) assert.ok(!run.roster.some((r) => r.heroId === id), `${id} is on the roster`);
       assert.deepStrictEqual(nodeEncounter(node, ctx).run.roster, encounter.run.roster, 'the draw is deterministic');
@@ -133,7 +131,7 @@ test('deck: a run saved before decks reads its fallback whole and fields no stra
   assert.strictEqual(pools.strangers, undefined);
   // And a draw handed an empty stranger table is the plain draw, seed for seed.
   const plain = generateEncounter('fight', 99, owned, { heroCount: 4 });
-  const withNone = generateEncounter('fight', 99, owned, { heroCount: 4, strangers: {}, deckFloor: DECK_HEROES_PER_FIGHT });
+  const withNone = generateEncounter('fight', 99, owned, { heroCount: 4, strangers: {} });
   assert.deepStrictEqual(withNone.run.roster, plain.run.roster);
   assert.deepStrictEqual(lookupOf(heroes, ['valor', 'nobody']), { valor: heroes.valor });
 });

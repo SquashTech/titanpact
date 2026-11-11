@@ -1,7 +1,8 @@
 # guild-hall-overhaul.md — No Guild Hall, no gold, recruits off the map
 
-> **STATUS: DECIDED 2026-11-11 (per user direction); NOT BUILT.** The shape is decided; every
-> number marked *first pass* is a placeholder for playtest. §7 lists the invariants it reverses.
+> **STATUS: DECIDED 2026-11-11 (per user direction); PHASE 1 IN (same day).** The shape is
+> decided; every number marked *first pass* is a placeholder for playtest. §7 lists the invariants
+> it reverses; §8 records what phase 1 built and measured.
 
 ---
 
@@ -191,3 +192,34 @@ Each per user direction, 2026-11-11:
 - **The Guild Hall's mend as a Wounds faucet** (`run-loop.md` "Wounds") — the Camp's Mend door, the
   Rest seat and the act's end are the three.
 - **Gold**, everywhere it is named, and the `currencyReward` purse.
+
+---
+
+## 8. Phase 1, built (2026-11-11)
+
+The Recruit node is `recruitReward` (`src/run/recruitNode.ts`, `RecruitNodeScreen`), weight 40, and
+Act 1's first reward row always holds one. A map saved with the Contract node reads it as a Recruit;
+a save sitting on a claim or a Tavern swap walks on past it.
+
+Deleted: the post-fight claim screen, Recruit Contracts and their price, the Contract node, the
+Elite's contract drop, the Tavern's hires and its call, the deck floor on a hero fight (enemy parties
+now draw from the deck and strangers together), `guildRecruit.ts` and `data/recruitment.ts`. The
+Tavern keeps its meal until phase 2 deletes the Hall. A dismissed hero is recorded on
+`RunState.departedHeroIds`, and the Recruit never rolls one again.
+
+Decided in the build, each the existing precedent, **open for review**:
+
+- **The Evolution of a recruit at 5 pips** comes on its next level-up report, as a raw hire's did,
+  not on arrival as §2.2 says. Raising it on the Recruit screen itself is a small follow-up.
+- **The Gathering (Cycle IV)** lost its player-side help with the Tavern: one more hire a visit. It
+  is carried over as **one more type at every Recruit** (`GATHERING_EXTRA_RECRUIT_TYPES`).
+- **First Light's Contracts lesson** is now *Recruits* on the new screen: three types, the hand on
+  Nature, Hollowbark answers. Its scenario id stays `firstLight.contracts`, so a lit star stays lit.
+- **The Recruit's tile and art** reuse the old Contract's quill until it has its own.
+- **At a full roster** the arriving hero is named in the title but has no card to inspect before
+  someone is dismissed — the event recruit's gap too.
+
+**Measured (sim, 200 runs, seed 1, faults only):** no crash or stranded run. The sim walks reward
+rows at random, so it took 1.09 recruits a run against ~2.9 under contracts, and the Recruit showed
+the largest node lift in the batch (+1.05, z 3.5). A player who plans takes it far more often; the
+weight in §2.3 is the dial, and the call is made by playing.

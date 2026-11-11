@@ -22,7 +22,7 @@ const SCENARIOS: readonly ScenarioDefinition[] = [
   lesson('firstLight.switch', 'Switching'),
   lesson('firstLight.gear', 'Equipment'),
   lesson('firstLight.gems', 'Gems'),
-  lesson('firstLight.contracts', 'Contracts'),
+  lesson('firstLight.contracts', 'Recruits'),
   lesson('firstLight.open', 'The First Fight'),
   scenario('strange.monotype', 'One Type'),
   scenario('strange.newPlace', 'A New Place'),

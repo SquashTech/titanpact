@@ -15,11 +15,10 @@ import { addRosterEntry, createRosterEntry, createRunState, type RunState } from
 import { nodeEncounter, type EncounterContext } from '../src/run/encounters';
 import { ELITE_EXTRA_ENEMIES } from '../src/run/difficulty';
 import { castHeroWarband, learnableIn, learnableMoves } from '../src/run/warbands';
-import { rollGuildHallOffers } from '../src/run/shop';
-import { guildHallOffersFor } from '../src/data/recruitment';
+import { RECRUIT_TYPE_COUNT, recruitTypeOffers } from '../src/run/recruitNode';
 
 function runAt(seed: number, act: number, cycle: number): RunState {
-  let run = createRunState(50, 1, cycle);
+  let run = createRunState(50, cycle);
   for (const id of ['packAlpha', 'crimson']) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
   return { ...run, map: generateMap(seed, act), locationIds: generateItinerary(seed), actNumber: act, fightsStarted: 2, encountersWon: 3 * act };
 }
@@ -99,12 +98,12 @@ test('warbands: a Gathering’s Guardian fields its escorts as an engine', () =>
   assert.ok(fitted >= 10, `only ${fitted} of 20 Gathering Guardians fitted a warband`);
 });
 
-test('warbands: the Gathering widens the Tavern', () => {
-  const base = runAt(1, 2, 3);
+test('warbands: the Gathering widens the Recruit', () => {
+  const base = { ...runAt(1, 2, 3), deck: null };
   const trained = { ...base, cycle: 4 };
-  const pool = guildHallOffersFor(heroes);
-  for (let i = 0; i < 20; i++) {
-    assert.ok(rollGuildHallOffers(trained, pool).heroOfferIds.length >= 3, 'a Gathering Tavern offers three or four');
-    assert.ok(rollGuildHallOffers(base, pool).heroOfferIds.length <= 3);
+  for (let i = 1; i <= 20; i++) {
+    const random = () => (i * 0.618) % 1;
+    assert.strictEqual(recruitTypeOffers(trained, heroes, [], random).length, RECRUIT_TYPE_COUNT + 1, 'a Gathering Recruit offers four types');
+    assert.strictEqual(recruitTypeOffers(base, heroes, [], random).length, RECRUIT_TYPE_COUNT);
   }
 });

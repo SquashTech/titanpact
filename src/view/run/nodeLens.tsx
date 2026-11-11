@@ -41,7 +41,7 @@ const LENS: Record<MapNodeType, Lens> = {
   academyReward: 'moves',
   patronSeat: null,
   currencyReward: null,
-  contractReward: null,
+  recruitReward: null,
   event: null,
 };
 

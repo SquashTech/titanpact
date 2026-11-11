@@ -7,15 +7,12 @@ import counterArt from '../../../art/guild/counter.png';
 import signArt from '../../../art/guild/sign-board.png';
 import hpArt from '../../../art/guild/good-hp.png';
 import mpArt from '../../../art/guild/good-mp.png';
-import contractArt from '../../../art/guild/good-contract.png';
-import bellArt from '../../../art/guild/good-bell.png';
 import stewArt from '../../../art/guild/good-stew.png';
 import tankardArt from '../../../art/guild/good-tankard.png';
 import swordArt from '../../../art/equipment/sword.png';
 import { GemIcon } from '../shared/GemIcon';
 
-// The Guild Hall as a room rather than a form (art/guild): the Tavern's recruits are posters on the
-// notice board and its services and flasks sit on the bar, and the
+// The Guild Hall as a room rather than a form (art/guild): the Tavern's meal sits on the bar, and the
 // counters are signs hung from a beam. Every piece is 1x pixel art drawn at a clean multiple.
 
 export const HALL_ART = { board: boardArt, counter: counterArt, sign: signArt };
@@ -23,8 +20,6 @@ export const HALL_ART = { board: boardArt, counter: counterArt, sign: signArt };
 export const GOOD_ART = {
   hp: hpArt,
   mp: mpArt,
-  contract: contractArt,
-  call: bellArt,
   mend: stewArt,
 } as const;
 

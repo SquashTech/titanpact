@@ -63,9 +63,6 @@ export function RosterPeek({ run, className }: Props) {
               <span className="roster-peek-resource" title="Gold">
                 <ResourceGlyph kind="gold" /> {run.gold}
               </span>
-              <span className="roster-peek-resource" title="Recruit Contracts">
-                <ResourceGlyph kind="contract" /> {run.recruitContracts}
-              </span>
             </div>
 
             {ownedRelics.length > 0 && (

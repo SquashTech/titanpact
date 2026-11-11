@@ -35,8 +35,8 @@ export const LONG_WINTER_FROM_CYCLE = 3;
 /** The Gathering (docs/cycles.md §3): from here the enemy fields warbands, and the survivors have prepared. */
 export const GATHERING_FROM_CYCLE = 4;
 
-/** More hires on the Tavern's board a visit in a Gathering. */
-export const GATHERING_EXTRA_HIRES = 1;
+/** More types on offer at a Recruit node in a Gathering. */
+export const GATHERING_EXTRA_RECRUIT_TYPES = 1;
 
 export interface CycleDefinition {
   cycle: number;

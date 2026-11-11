@@ -1,5 +1,5 @@
 // First Light's lessons (docs/first-light.md): one concept a lesson, each with one line across the top.
-// The fights are guided, the hand on every tap; Equipment, Gems and Contracts are a run's own screens
+// The fights are guided, the hand on every tap; Equipment, Gems and the Recruit are a run's own screens
 // with no fight; the last is the first open fight, a team the player commands alone. Each lesson is a
 // chapter in its own book, so the Story machinery plays it unchanged.
 
@@ -154,8 +154,8 @@ const GEMS: StoryScreen = {
   ],
 };
 
-/** A hero beaten in a Skirmish, signed onto the roster. */
-const CONTRACT: StoryScreen = { kind: 'contract', offer: { rosterId: 'hollowbark', heroId: 'hollowbark', level: 4 } };
+/** Three types on offer; Nature answers with Hollowbark. */
+const RECRUIT: StoryScreen = { kind: 'recruit', types: ['Water', 'Stone', 'Nature'], type: 'Nature', offer: { rosterId: 'hollowbark', heroId: 'hollowbark', level: 3 } };
 
 /** The open fight's party: heroes the lessons cast, each holding the one move it was taught with. */
 export const OPEN_FIGHT_PARTY = ['crimson', 'raiju', 'cairn', 'ursa'] as const;
@@ -212,7 +212,7 @@ export const LESSONS: StoryDefinition = {
       beats: [screenBeat(GEAR_TAKE, 'Gear goes to one hero, for good.'), screenBeat(GEAR_MERGE, 'Two of a kind merge into a stronger piece.')],
     },
     { id: 'firstLight.gems', title: 'Gems', party: [URSA, PIXIE], beats: [screenBeat(GEMS, 'A Gem raises a stat and fills a Mastery pip.')] },
-    { id: 'firstLight.contracts', title: 'Contracts', party: [CRIMSON, RAIJU], beats: [screenBeat(CONTRACT, 'Sign a hero you beat with a Recruit Contract.')] },
+    { id: 'firstLight.contracts', title: 'Recruits', party: [CRIMSON, RAIJU], beats: [screenBeat(RECRUIT, 'Pick a type. A hero of it joins.')] },
     lessonChapter('firstLight.open', 'The First Fight', open, 'Four heroes. Win it your way.'),
   ],
 };

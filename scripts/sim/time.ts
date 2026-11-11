@@ -11,7 +11,6 @@ export type ScreenKind =
   | 'fightOpen'
   | 'fightResult'
   | 'levelUp'
-  | 'contract'
   | 'drop'
   | 'offer'
   | 'moveLearned'
@@ -21,7 +20,7 @@ export type ScreenKind =
   | 'actIntro'
   | 'scrollReward'
   | 'currencyReward'
-  | 'contractReward'
+  | 'recruitReward'
   | 'manaWellReward'
   | 'blessingReward'
   | 'restReward'
@@ -50,7 +49,6 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   fightOpen: 5,
   fightResult: 6,
   levelUp: 6,
-  contract: 15,
   drop: 12,
   // A schedule offer at the cap is the replace-or-decline question; below it the move simply
   // lands and the screen is a receipt — one look, one tap.
@@ -63,7 +61,8 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   // Three taps on a pick-a-hero screen, no comparison asked: the Forge's price.
   scrollReward: 10,
   currencyReward: 4,
-  contractReward: 4,
+  // Three types read, one tap, the arrival's beat.
+  recruitReward: 12,
   // A pick-a-hero screen, the Forge's price.
   manaWellReward: 10,
   blessingReward: 8,

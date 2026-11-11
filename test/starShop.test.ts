@@ -6,7 +6,6 @@ import { STAR_SHOP_OFFERS, starShopCatalog } from '../src/data/starShop';
 import { locations } from '../src/data/locations';
 import { locationPool, unvisitedLocationIds } from '../src/run/locations';
 import { heroes } from '../src/data/heroes';
-import { guildHallOffers, guildHallOffersFor } from '../src/data/recruitment';
 import { heroPool, isRecruitable, starfallLedgerId } from '../src/run/recruitment';
 import { deckHeroIds, draftableTypes, profileDeck, shortTypes } from '../src/run/deck';
 import { STARFALL_PRICE, STARFALL_TEN, STARFALL_UNLOCK, buyOffer, bundleOwnedHeroIds, canBuy, canCallStarfall, canCallStarfallTen, isPurchased, offerHeld, offerPrice, starfall, starfallPool, starfallTen, stardustBalance, stardustSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
@@ -131,8 +130,7 @@ test('star shop: a Cycle grants its Location from that Cycle on, and nothing is 
 test('star shop: a bought bundle puts its heroes in the recruit pool, and only then', () => {
   const base = heroPool(heroes);
   assert.ok(!('drake' in base), 'Drake is in the base pool');
-  assert.ok(!isRecruitable('drake', base), 'a fight cannot hand over a contract for him');
-  assert.ok(!guildHallOffers.some((o) => o.heroId === 'drake'), 'the base Guild Hall shelf sells him');
+  assert.ok(!isRecruitable('drake', base), 'a Recruit cannot roll him');
   for (const hero of Object.values(base)) assert.strictEqual(hero.unlock, undefined, `${hero.id} is in the base pool with an unlock`);
 
   const bundle = starShopCatalog['bundle.tallGrass'].grant as { kind: 'heroBundle'; heroIds: readonly string[] };
@@ -140,7 +138,6 @@ test('star shop: a bought bundle puts its heroes in the recruit pool, and only t
   for (const id of bundle.heroIds) assert.ok(id in held, `${id} is held and not in the pool`);
   assert.strictEqual(Object.keys(held).length, Object.keys(base).length + bundle.heroIds.length, 'a purchase adds its heroes, never replaces one');
   assert.ok(isRecruitable('drake', held));
-  assert.ok(guildHallOffersFor(held).some((o) => o.heroId === 'drake'), 'the Guild Hall shelf sells him once the bundle is held');
 });
 
 test('star shop: a clear pays its Cycle bonus every time, and no Cycle costs a star to enter', () => {

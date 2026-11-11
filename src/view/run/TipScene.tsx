@@ -59,7 +59,7 @@ const noop = () => {};
 
 /** The made-up visit a hall scene stands on: its roster, its purse, nothing else. */
 function stagedRun(scene: TipHallScene): RunState {
-  const run = createRunState(scene.gold, 1);
+  const run = createRunState(scene.gold);
   run.roster = scene.roster
     .filter((h) => rosterHeroes[h.heroId])
     .map((h, i) => {
@@ -84,19 +84,14 @@ function HallScene({ scene }: { scene: TipHallScene }) {
         {scene.hall === 'tavern' && (
           <GuildHallPanel
             run={run}
-            offers={{ heroOfferIds: (scene.hires ?? []).map((id) => `guild-${id}`), itemIds: [], gems: [] }}
+            offers={{ itemIds: [], gems: [] }}
             tab="tavern"
             gemsBought={[]}
-            called={false}
-            callTypes={[]}
             itemsBought={[]}
-            onRunChange={noop}
             onBuyGem={() => null}
             onGemPlaced={noop}
             onBuyItem={() => null}
-            onCall={() => null}
             onBuyMend={noop}
-            onRequestRosterReplace={noop}
           />
         )}
         {scene.hall === 'gems' && (

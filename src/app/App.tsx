@@ -46,8 +46,8 @@ import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { levelPayoffOwed } from '../view/run/levelUpFlow';
 import { AcademyNodeScreen } from '../view/run/AcademyNodeScreen';
-import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
-import { RecruitScreen } from '../view/run/RecruitScreen';
+import { RecruitNodeScreen, type RecruitOffer } from '../view/run/RecruitNodeScreen';
+import { seededRandom } from '../view/shared/seededRandom';
 import { RecruitFanfare } from '../view/run/RecruitFanfare';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
 import { runEvents } from '../data/events';
@@ -90,27 +90,15 @@ import {
 import { createRunState, createRosterEntry, addRosterEntry, FINALE_ACT, ROSTER_CAP, SEAL_ACTS, TOTAL_ACTS } from '../run/state';
 import { blessOpeningPair } from '../run/blessings';
 import {
-  deriveContractOffer,
-  claimContract,
-  claimContractReplacing,
-  recruitFromGuildHallReplacing,
-  grantContract,
-  rollContractDrop,
   freshRosterId,
   heroPool,
-  isRecruitable,
-  pickContractOffers,
-  RecruitmentError,
-  type GuildHallOffer,
-  type RosterReplaceCandidate,
 } from '../run/recruitment';
-import { guildHallOffersFor } from '../data/recruitment';
+import { recruitNodeEntry, recruitTypeOffers, recruitableOfType, rollRecruitHero } from '../run/recruitNode';
 import { MASTERY_CAP, MasteryError, anyMasteryEligible } from '../run/mastery';
 import { GEM_CACHE_COUNT, SCRIBE_GEMS, buyShelfGem, canBuyShelfGem, placeGem, rollGemDrop, rollGems, type Gem } from '../run/gems';
 import type { MvpPick } from '../run/mvp';
-import { ShopItemError, TavernCallError, buyShopItem, callForType, callableTypes, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
+import { ShopItemError, buyShopItem, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
-import { guildHallEntry } from '../run/guildRecruit';
 import { generateMap, PATRON_ROWS, type MapNodeType, type RewardNodeType } from '../run/map';
 import { firstUnseenTip, type ScreenTipId } from '../run/tips';
 import { FIGHT_BASICS_TIP_ID, SCREEN_TIPS, WELCOME_TIP } from '../data/tips';
@@ -246,7 +234,7 @@ function addHeroes(run: RunState, heroIds: readonly string[], level?: number): R
  */
 function createStartingRun(heroIds: readonly string[], cycle: number): RunState {
   return {
-    ...blessOpeningPair(addHeroes(createRunState(40, 1, cycle), heroIds)),
+    ...blessOpeningPair(addHeroes(createRunState(40, cycle), heroIds)),
     map: generateMap(randomSeed()),
     locationIds: [actOneLocationFor(cycle)],
   };
@@ -484,7 +472,7 @@ export function App() {
   }, [screen.kind]);
 
   /** The joining cinematic for the one recruit path that resolves here: terminating a hero to make room. */
-  const [recruitFanfare, setRecruitFanfare] = useState<{ heroId: string; source: 'contract' | 'guild' | 'event' } | null>(null);
+  const [recruitFanfare, setRecruitFanfare] = useState<{ heroId: string; source: 'recruit' | 'event' } | null>(null);
 
   // Owned here rather than in SandboxBattleScreen, which unmounts during a sandbox fight.
   const [sandboxSideA, setSandboxSideA] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
@@ -754,39 +742,19 @@ export function App() {
     setScreen(target.screen);
   }
 
-  function handleClaimContract(defeated: RosterEntry): boolean {
-    if (!isRecruitable(defeated.heroId, recruitPool)) return false;
-    if (playerRun.roster.length >= ROSTER_CAP) return false;
-    if (playerRun.recruitContracts <= 0) return false;
-    const offer = deriveContractOffer(defeated);
-    const rosterId = freshRosterId(playerRun, defeated.heroId);
-    setPlayerRun((run) => claimContract(run, offer, rosterId));
-    recordClaim(defeated.rosterId);
-    return true;
+  /** The Recruit's types and who could answer each, off the run as the node stands (run/recruitNode.ts). */
+  function recruitOffers(seed: number): RecruitOffer[] {
+    const location = locationForAct(playerRun.locationIds, playerRun.actNumber);
+    return recruitTypeOffers(playerRun, recruitPool, location.spawnTypes ?? [], seededRandom(seed, 'types')).map((type) => ({
+      type,
+      heroIds: recruitableOfType(playerRun, recruitPool, type),
+    }));
   }
 
-  /** `handOn`: a dismissed hero's gear, offered on through the item gate when the screen is done. */
-  function recordClaim(offerRosterId: string, handOn: readonly string[] = []) {
-    setScreen((at) =>
-      at.kind === 'recruit'
-        ? { ...at, claimedRosterIds: [...(at.claimedRosterIds ?? []), offerRosterId], handOn: [...(at.handOn ?? []), ...handOn] }
-        : at
-    );
-  }
-
-  function handleClaimContractReplace(defeated: RosterEntry, terminatedRosterId: string): boolean {
-    if (!isRecruitable(defeated.heroId, recruitPool)) return false;
-    if (playerRun.recruitContracts <= 0) return false;
-    const offer = deriveContractOffer(defeated);
-    const rosterId = freshRosterId(playerRun, defeated.heroId);
-    const leavingGear = playerRun.roster.find((r) => r.rosterId === terminatedRosterId)?.equipment ?? [];
-    setPlayerRun((run) => claimContractReplacing(run, offer, rosterId, terminatedRosterId));
-    recordClaim(defeated.rosterId, leavingGear);
-    return true;
-  }
-
-  function handleRequestRosterReplace(offer: GuildHallOffer) {
-    setScreen({ kind: 'rosterReplace', candidate: { source: 'guildHall', offer }, next: screen });
+  /** Who answers a pick of `type` at the Recruit seeded `seed`: the same hero, at the same build, every time it is asked. */
+  function recruitEntryFor(seed: number, type: TypeId): RosterEntry | null {
+    const heroId = rollRecruitHero(playerRun, recruitPool, type, seededRandom(seed, `hero:${type}`));
+    return heroId ? recruitNodeEntry(playerRun, recruitPool[heroId], freshRosterId(playerRun, heroId), seededRandom(seed, `entry:${type}`)) : null;
   }
 
   function handleSelectNode(nodeId: string) {
@@ -840,11 +808,12 @@ export function App() {
       setScreen({
         kind: 'shop',
         nodeId,
-        offers: rollGuildHallOffers(playerRun, guildHallOffersFor(recruitPool)),
+        offers: rollGuildHallOffers(playerRun),
         gemsBought: [],
-        called: false,
         itemsBought: [],
       });
+    } else if (node.type === 'recruitReward') {
+      setScreen({ kind: 'recruitNode', nodeId, seed: randomSeed() });
     } else if (node.type === 'manaWellReward') {
       setScreen({ kind: 'manaWell', nodeId });
     } else if (node.type === 'blessingReward') {
@@ -903,7 +872,6 @@ export function App() {
       xpGained: xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),
       equipmentRewardId: equipmentReward?.id ?? null,
       consumableReward: rollConsumableDrop(mapNodeType),
-      contractReward: rollContractDrop(mapNodeType),
       gemReward: rollGemDrop(mapNodeType, playerRun.actNumber),
       levelSeed: randomSeed(),
     };
@@ -928,11 +896,9 @@ export function App() {
     goldReward: number,
     equipmentReward: EquipmentDefinition | null,
     consumableReward: ConsumableKind | null,
-    /** The Elite's contract drop, paid before the claim so it can sign one of the beaten. */
-    contractReward: boolean,
     /** The fight's Gem drop, placed after the item's who-screen. */
     gemReward: readonly Gem[],
-    /** This fight's enemy side — the beaten builds a Recruit Contract can claim. */
+    /** This fight's enemy side. */
     encounter: Encounter,
     outcome: 'win' | 'loss',
     /** What the fight drank; debited here, so a fight quit and replayed refunds it. */
@@ -974,7 +940,6 @@ export function App() {
     if (finalState) next = recordPermanentStatGains(recordWounds(next, finalState, 'A', rosterHeroes), finalState, 'A');
     // Onto the purse, clamped at the cap — a full flask spills the drop rather than banking it.
     if (consumableReward) next = grantConsumable(next, consumableReward);
-    if (contractReward) next = grantContract(next);
     // Every node kind, unlike `fightsStarted` — this one is the run summary's tally, and since
     // 2026-09-10 it is also what the level curve reads (run/growth.ts).
     next = { ...next, encountersWon: next.encountersWon + 1 };
@@ -1024,13 +989,7 @@ export function App() {
 
     setPlayerRun(next);
 
-    // Gate order is deliberate: banner, then recruit — so a hero recruited this beat already
-    // stands under the Banner.
-    // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
-    const recruitable = defeatedRoster.filter((entry) => !isWarden(entry) && isRecruitable(entry.heroId, recruitPool));
-    const contractOffers = next.recruitContracts > 0 ? pickContractOffers(recruitable) : [];
-    const afterRecruit: Screen = contractOffers.length > 0 ? { kind: 'recruit', offers: contractOffers, next: afterScreen } : afterScreen;
-    const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
+    const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterScreen } : afterScreen;
 
     // The drop asks who carries it right behind the levels — the fight's own consequence, ahead of
     // the Banner and everything under it (docs/gear-absorption.md §2).
@@ -1076,22 +1035,6 @@ export function App() {
     }
     playSfx('blessing');
     setPlayerRun(next);
-  }
-
-  /** The Tavern's call (run/shop.ts): word sent for a type, once a visit; the offer id of who answered, or null. */
-  function handleCallTavern(type: TypeId): string | null {
-    if (screen.kind !== 'shop' || screen.called) return null;
-    let called: ReturnType<typeof callForType>;
-    try {
-      called = callForType(playerRun, guildHallOffersFor(recruitPool), screen.offers, type);
-    } catch (err) {
-      if (!(err instanceof TavernCallError)) throw err;
-      return null;
-    }
-    playSfx('gold.coin');
-    setPlayerRun(called.run);
-    setScreen({ ...screen, offers: called.offers, called: true });
-    return called.offerId;
   }
 
   /** The Gem counter: the Gem is paid for and set on the hero picked, in one tap. The caller raises what the pip opened. */
@@ -1612,7 +1555,6 @@ export function App() {
           levelSeed={screen.levelSeed}
           equipmentReward={screen.equipmentRewardId ? equipment[screen.equipmentRewardId] ?? null : null}
           consumableReward={screen.consumableReward}
-          contractReward={screen.contractReward}
           gemReward={screen.gemReward}
           initialSnapshot={resumedCombat?.screen === screen ? resumedCombat.snapshot : undefined}
           onCommandPhase={handleCommandPhase}
@@ -1622,7 +1564,6 @@ export function App() {
               screen.goldReward,
               screen.equipmentRewardId ? equipment[screen.equipmentRewardId] ?? null : null,
               screen.consumableReward,
-              screen.contractReward,
               screen.gemReward,
               screen.encounter,
               outcome,
@@ -1669,60 +1610,30 @@ export function App() {
           run={playerRun}
           offers={screen.offers}
           gemsBought={screen.gemsBought}
-          called={screen.called}
-          callTypes={callableTypes(playerRun, guildHallOffersFor(recruitPool), screen.offers)}
           itemsBought={screen.itemsBought}
           onRunChange={setPlayerRun}
           onBuyGem={handleBuyShelfGem}
           onBuyItem={handleBuyGuildItem}
-          onCall={handleCallTavern}
           onBuyMend={handleBuyGuildMend}
-          onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}
         />
       )}
 
-      {screen.kind === 'recruit' && (
-        <RecruitScreen
+      {screen.kind === 'recruitNode' && (
+        <RecruitNodeScreen
+          key={screen.seed}
           run={playerRun}
-          offers={screen.offers}
-          claimedRosterIds={screen.claimedRosterIds}
-          onClaim={handleClaimContract}
-          onClaimReplace={handleClaimContractReplace}
-          onDone={() => setScreen(whoScreensFor(playerRun, screen.handOn ?? [], screen.next))}
-        />
-      )}
-
-      {screen.kind === 'rosterReplace' && (
-        <RosterReplaceScreen
-          roster={playerRun.roster}
-          candidate={screen.candidate}
-          incomingEntry={
-            screen.candidate.source === 'guildHall' ? guildHallEntry(playerRun, screen.candidate.offer, 'preview') : undefined
-          }
-          relicIds={playerRun.relics}
-          scale={statScaleFor(playerRun)}
-          onConfirm={(terminatedRosterId) => {
-            const { candidate } = screen;
-            try {
-              const rosterId = freshRosterId(playerRun, candidate.offer.heroId);
-              const nextRun =
-                candidate.source === 'guildHall'
-                  ? recruitFromGuildHallReplacing(playerRun, candidate.offer, rosterId, terminatedRosterId)
-                  : claimContractReplacing(playerRun, candidate.offer, rosterId, terminatedRosterId);
-              setPlayerRun(nextRun);
-              setScreen(whoScreensFor(nextRun, playerRun.roster.find((r) => r.rosterId === terminatedRosterId)?.equipment ?? [], screen.next));
-              setRecruitFanfare({
-                heroId: candidate.offer.heroId,
-                source: candidate.source === 'guildHall' ? 'guild' : 'contract',
-              });
-              return true;
-            } catch (err) {
-              if (!(err instanceof RecruitmentError)) throw err;
-              return false;
-            }
+          offers={recruitOffers(screen.seed)}
+          entryFor={(type) => recruitEntryFor(screen.seed, type)}
+          pickedType={screen.pickedType ?? null}
+          onPick={(type) => setScreen((at) => (at.kind === 'recruitNode' ? { ...at, pickedType: type } : at))}
+          onRunChange={(next) => {
+            setPlayerRun(next);
+            setScreen((at) => (at.kind === 'recruitNode' ? { ...at, settled: true } : at));
           }}
-          onCancel={() => setScreen(screen.next)}
+          onRecruited={(heroId) => setRecruitFanfare({ heroId, source: 'recruit' })}
+          onGrantEquipment={(itemIds) => handleClaimEquipment(screen.nodeId, itemIds)}
+          onContinue={() => handleNodeContinue(screen.nodeId)}
         />
       )}
 

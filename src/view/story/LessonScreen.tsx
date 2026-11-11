@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { allCombatants } from '../../data/content';
-import { claimContract, deriveContractOffer } from '../../run/recruitment';
+import { allCombatants, rosterHeroes } from '../../data/content';
+import { deckRowOf } from '../../run/deck';
 import type { ScrollProgress } from '../../run/resume';
 import type { RunState } from '../../run/state';
 import { storyEntry, type StoryScreen } from '../../run/story';
 import { GemNodeScreen } from '../run/GemNodeScreen';
 import { ItemWhoScreen } from '../run/ItemWhoScreen';
-import { RecruitScreen } from '../run/RecruitScreen';
+import { RecruitNodeScreen, type RecruitOffer } from '../run/RecruitNodeScreen';
 import { overlayHost } from '../shared/overlayHost';
 import { GuideHand } from './GuideHand';
 
@@ -24,7 +24,22 @@ interface LessonScreenProps {
 export function LessonScreen({ screen, run, onRunChange, onDone, guided }: LessonScreenProps) {
   const [acted, setActed] = useState(false);
   const [gems, setGems] = useState<ScrollProgress | undefined>(undefined);
-  const offer = useMemo(() => (screen.kind === 'contract' ? storyEntry(screen.offer, allCombatants[screen.offer.heroId]) : null), [screen]);
+  const offer = useMemo(() => (screen.kind === 'recruit' ? storyEntry(screen.offer, allCombatants[screen.offer.heroId]) : null), [screen]);
+  // Who could answer each type: the base heroes of it the party does not hold.
+  const offers = useMemo<RecruitOffer[]>(
+    () =>
+      screen.kind === 'recruit'
+        ? screen.types.map((type) => ({
+            type,
+            heroIds: Object.values(rosterHeroes)
+              .filter((hero) => !hero.unlock && deckRowOf(hero) === type && !run.roster.some((entry) => entry.heroId === hero.id))
+              .map((hero) => hero.id),
+          }))
+        : [],
+    // The party at the lesson's start; Hollowbark joining must not reshuffle the tiles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [screen]
+  );
   const act = (next: RunState) => {
     setActed(true);
     onRunChange(next);
@@ -58,18 +73,18 @@ export function LessonScreen({ screen, run, onRunChange, onDone, guided }: Lesso
   }
   return (
     <>
-      <RecruitScreen
+      <RecruitNodeScreen
         run={run}
-        offers={[offer!]}
-        mustSign
-        onClaim={(defeated) => {
-          act(claimContract(run, deriveContractOffer(defeated), defeated.rosterId));
-          return true;
-        }}
-        onClaimReplace={() => false}
-        onDone={onDone}
+        offers={offers}
+        entryFor={(type) => (type === screen.type ? offer : null)}
+        pickedType={null}
+        onPick={() => {}}
+        onlyType={screen.type}
+        onRunChange={act}
+        onGrantEquipment={onDone}
+        onContinue={onDone}
       />
-      {guided && <GuideHand selector={acted ? '.recruit-leave' : '.recruit-sign'} />}
+      {guided && <GuideHand selector={acted ? '.recruit-node-screen .resolve-button' : '.recruit-type:not(:disabled)'} />}
     </>
   );
 }

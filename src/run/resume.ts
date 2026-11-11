@@ -15,9 +15,8 @@ import type { GauntletResult } from './gauntlet';
 import type { HeroLevelUp } from './growth';
 import type { RewardNodeType } from './map';
 import { GEM_ORDER, rollGems, rollShelfGems, type Gem, type GemPlan } from './gems';
-import type { GrowthStatKey } from '../engine/content';
+import type { GrowthStatKey, TypeId } from '../engine/content';
 import type { MvpLedger, MvpTally } from './mvp';
-import type { GuildHallOffer, RosterReplaceCandidate } from './recruitment';
 import type { GuildHallOffers } from './shop';
 import type { Squad } from './squad';
 import type { RosterEntry, RunState } from './state';
@@ -72,8 +71,6 @@ export type RunScreen =
       equipmentRewardId: string | null;
       /** The potion drop, rolled and carried the same way. */
       consumableReward: ConsumableKind | null;
-      /** The Elite's Recruit Contract drop (run/recruitment.ts rollContractDrop). */
-      contractReward: boolean;
       /** The fight's Gem drop (run/gems.ts rollGemDrop), placed after the item's who-screen. */
       gemReward: Gem[];
       /** Seeds the level roll, so the victory screen shows the growth handleFightResolved will land (run/growth.ts previewLevelUp). */
@@ -98,7 +95,7 @@ export type RunScreen =
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; gemsBought: number[]; called: boolean; itemsBought: number[] }
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; gemsBought: number[]; itemsBought: number[] }
   /** `seed` fixes what the chest holds, so a reload opens the same one. */
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType; seed: number; settled?: boolean }
   /** An item has arrived and asks who carries it (docs/gear-absorption.md §2). `next` is where the run goes once it is absorbed or sold. */
@@ -132,14 +129,12 @@ export type RunScreen =
   | { kind: 'patronCapstone'; candidates: readonly string[]; next: RunScreen }
   /** Which event this node is gets rolled ONCE at node-select time; `seed` fixes what its options hold. */
   | { kind: 'event'; nodeId: string; eventId: string; seed: number; settled?: boolean }
+  /** A Recruit (run/recruitNode.ts): `seed` fixes the types on offer and who answers; `pickedType` is set once one is chosen. */
+  | { kind: 'recruitNode'; nodeId: string; seed: number; pickedType?: TypeId; settled?: boolean }
   /** What the fight just did to the roster. `taken` is who has already taken a schedule entry this report; `asking` the replace-or-decline still open. */
   | { kind: 'levelUp'; report: readonly HeroLevelUp[]; next: RunScreen; seed: number; taken?: string[]; asking?: LevelUpQuestion }
   /** Guardian's Banner after a Guardian win. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: RunScreen; settled?: boolean }
-  /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
-  | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: RunScreen }
-  /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
-  | { kind: 'recruit'; offers: RosterEntry[]; next: RunScreen; claimedRosterIds?: string[]; handOn?: string[] }
   /** The Eyes have closed: the roster presented as the heroes of the land, then the summary. */
   | { kind: 'champions' }
   | { kind: 'runComplete' }
@@ -195,8 +190,7 @@ const RESUMABLE: ReadonlySet<RunScreenKind> = new Set<RunScreenKind>([
   'event',
   'levelUp',
   'guardianBanner',
-  'rosterReplace',
-  'recruit',
+  'recruitNode',
   'champions',
 ]);
 
@@ -348,27 +342,6 @@ function decodeLevelUps(value: unknown, ctx: Ctx): HeroLevelUp[] {
   });
 }
 
-function decodeGuildOffer(value: unknown, ctx: Ctx, label: string): GuildHallOffer {
-  if (!isObject(value)) reject(`${label} is not an object`);
-  if (!isStringArray(value.startingMoveIds)) reject(`${label}.startingMoveIds is not a list`);
-  for (const id of value.startingMoveIds) if (!ctx.index.moveIds.has(id)) reject(`${label} references unknown move "${id}"`);
-  return {
-    id: str(value.id, `${label}.id`),
-    heroId: heroId(value.heroId, ctx, `${label}.heroId`),
-    startingMoveIds: [...value.startingMoveIds],
-  };
-}
-
-function decodeCandidate(value: unknown, ctx: Ctx): RosterReplaceCandidate {
-  if (!isObject(value)) reject('rosterReplace.candidate is not an object');
-  if (value.source === 'guildHall') return { source: 'guildHall', offer: decodeGuildOffer(value.offer, ctx, 'rosterReplace.offer') };
-  if (value.source === 'contract' && isObject(value.offer)) {
-    const { rosterId: _drop, ...offer } = decodeRosterEntry({ ...value.offer, rosterId: 'offer' }, ctx.enemyIndex, 'rosterReplace.offer');
-    return { source: 'contract', offer };
-  }
-  reject('rosterReplace.candidate has an unknown source');
-}
-
 
 function decodeGems(value: unknown, label: string): Gem[] {
   if (!Array.isArray(value)) reject(`${label} is not a list of Gems`);
@@ -407,6 +380,8 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
   if (raw.kind === 'locationChoice') return { kind: 'pactSeal' };
   // A run saved on a companion beat (deleted 2026-11-09) walks on past it.
   if (raw.kind === 'companion' || raw.kind === 'companionAwakens') return decodeScreen(raw.next, ctx, depth + 1);
+  // A run saved on a contract claim or a Tavern hire's swap (deleted 2026-11-11) walks on past it.
+  if (raw.kind === 'recruit' || raw.kind === 'rosterReplace') return decodeScreen(raw.next, ctx, depth + 1);
   const kind = raw.kind as RunScreenKind;
   if (!isResumable(kind)) reject(`screen "${kind}" is not one a run is saved on`);
   const next = () => decodeScreen(raw.next, ctx, depth + 1);
@@ -460,34 +435,42 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
         xpGained: int(raw.xpGained, 'fight.xpGained'),
         equipmentRewardId: reward,
         consumableReward: drop as ConsumableKind | null,
-        // Absent on a fight saved before the Elite dropped contracts.
-        contractReward: raw.contractReward === true,
         // Absent on a fight saved before fights dropped Gems.
         gemReward: raw.gemReward === undefined ? [] : decodeGems(raw.gemReward, 'fight.gemReward'),
         levelSeed: int(raw.levelSeed, 'fight.levelSeed'),
       };
     }
     case 'shop': {
-      if (!isObject(raw.offers) || !isStringArray(raw.offers.heroOfferIds)) reject('shop.offers is not a shelf');
+      if (!isObject(raw.offers)) reject('shop.offers is not a shelf');
       if (!Array.isArray(raw.itemsBought) || !raw.itemsBought.every((slot) => isInt(slot, 0))) reject('shop.itemsBought is not a list of slots');
       return {
         kind,
         nodeId: nodeId(raw.nodeId, ctx, 'shop.nodeId'),
         offers: {
-          heroOfferIds: [...raw.offers.heroOfferIds],
           itemIds: (Array.isArray(raw.offers.itemIds) ? raw.offers.itemIds : []).map((id, at) => itemId(id, ctx, `shop.offers.itemIds[${at}]`)),
           // A shelf saved while it sold packs stocks single Gems now.
           gems: raw.offers.gems === undefined ? rollShelfGems(ctx.run.actNumber) : decodeGems(raw.offers.gems, 'shop.offers.gems'),
         },
         gemsBought: Array.isArray(raw.gemsBought) && raw.gemsBought.every((slot) => isInt(slot, 0)) ? [...(raw.gemsBought as number[])] : [],
-        // A visit saved while the Tavern rerolled has made no call.
-        called: raw.called === true,
         itemsBought: [...(raw.itemsBought as number[])],
       };
     }
     case 'reward':
-      if (raw.nodeType !== 'currencyReward' && raw.nodeType !== 'contractReward' && raw.nodeType !== 'equipmentReward') reject('reward.nodeType is unknown');
+      // The Contract node's chest (deleted 2026-11-11) is a Recruit now.
+      if (raw.nodeType === 'contractReward') return { kind: 'recruitNode', nodeId: nodeId(raw.nodeId, ctx, 'reward.nodeId'), seed: int(raw.seed, 'reward.seed'), ...settled(raw) };
+      if (raw.nodeType !== 'currencyReward' && raw.nodeType !== 'equipmentReward') reject('reward.nodeType is unknown');
       return { kind, nodeId: nodeId(raw.nodeId, ctx, 'reward.nodeId'), nodeType: raw.nodeType, seed: int(raw.seed, 'reward.seed'), ...settled(raw) };
+    case 'recruitNode': {
+      const picked = raw.pickedType;
+      if (picked !== undefined && (typeof picked !== 'string' || !ctx.index.typeIds.has(picked as TypeId))) reject('recruitNode.pickedType is unknown');
+      return {
+        kind,
+        nodeId: nodeId(raw.nodeId, ctx, 'recruitNode.nodeId'),
+        seed: int(raw.seed, 'recruitNode.seed'),
+        ...(picked !== undefined ? { pickedType: picked as TypeId } : {}),
+        ...settled(raw),
+      };
+    }
     case 'itemWho':
       return { kind, itemId: itemId(raw.itemId, ctx, 'itemWho.itemId'), next: next(), ...settled(raw) };
     case 'scrolls': {
@@ -521,14 +504,6 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
       };
     case 'guardianBanner':
       return { kind, next: next(), ...settled(raw) };
-    case 'rosterReplace':
-      return { kind, candidate: decodeCandidate(raw.candidate, ctx), next: next() };
-    case 'recruit': {
-      if (!Array.isArray(raw.offers)) reject('recruit.offers is not a list');
-      const offers = raw.offers.map((entry, at) => decodeRosterEntry(entry, ctx.enemyIndex, `recruit.offers[${at}]`));
-      const claimed = raw.claimedRosterIds === undefined ? undefined : isStringArray(raw.claimedRosterIds) ? [...raw.claimedRosterIds] : reject('recruit.claimedRosterIds is not a list');
-      return { kind, offers, next: next(), ...(claimed ? { claimedRosterIds: claimed } : {}) };
-    }
     default:
       reject(`screen "${kind}" has no reader`);
   }

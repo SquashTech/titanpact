@@ -1,8 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
-import type { TypeId } from '../../engine/content';
 import type { GuildHallOffers } from '../../run/shop';
-import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel, guildHallTabs, type GuildHallTab } from './GuildHallPanel';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { locationBackdrop } from '../shared/locationBackdrops';
@@ -21,23 +19,16 @@ interface Props {
   offers: GuildHallOffers;
   /** Shelf Gems sold this visit (offers.gems indices), carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the who screen. */
   gemsBought: readonly number[];
-  /** Whether the Tavern's call has been made this visit (run/shop.ts callForType). */
-  called: boolean;
-  /** The types a call can be sent for (run/shop.ts callableTypes). */
-  callTypes: readonly TypeId[];
   /** Gear-counter slots sold this visit. */
   itemsBought: readonly number[];
   onRunChange: (next: RunState) => void;
   onBuyGem: (slot: number, rosterId: string) => RunState | null;
   onBuyItem: (slot: number, rosterId: string, replaceIndex?: number) => RunState | null;
-  onCall: (type: TypeId) => string | null;
   onBuyMend: () => void;
-  onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
 }
 
-// The `shop` node. Continue stands down while the panel has a modal open —
-// otherwise two identical gold CTAs sit on screen for two different commitments.
+// The `shop` node. Continue stands down while a Gem's payoff is up.
 //
 // The header names the place and nothing else (2026-09-11, per user direction): the keeper, the
 // name, and lantern light (the keeper replaced a hung sign 2026-09-27). "Who Will You Take" / "People and gear — for gold" were a question and
@@ -47,22 +38,17 @@ export function ShopNodeScreen({
   run,
   offers,
   gemsBought,
-  called,
-  callTypes,
   itemsBought,
   onRunChange,
   onBuyGem,
   onBuyItem,
-  onCall,
   onBuyMend,
-  onRequestRosterReplace,
   onContinue,
 }: Props) {
-  const [overlayOpen, setOverlayOpen] = useState(false);
   // The counter the player was last at this visit, across a who-screen's unmount; a visit opens on the Tavern.
   const location = useAmbientLocation();
   const hall = location ? locationBackdrop(location.id, 'hall') : undefined;
-  const tabs = guildHallTabs(run, offers);
+  const tabs = guildHallTabs();
   const [tab, setTab] = useState<GuildHallTab>(() => {
     const held = readGuildHallTab(tabs[0].id);
     return tabs.some((t) => t.id === held) ? held : tabs[0].id;
@@ -102,7 +88,7 @@ export function ShopNodeScreen({
         </>
       )}
       <RosterPeek run={run} />
-      <NodePurse gold={run.gold} contracts={run.recruitContracts} />
+      <NodePurse gold={run.gold} />
 
       <NodeHeader compact eyebrow="Welcome to" title="The Guild Hall" />
 
@@ -111,17 +97,11 @@ export function ShopNodeScreen({
           run={run}
           offers={offers}
           gemsBought={gemsBought}
-          called={called}
-          callTypes={callTypes}
           itemsBought={itemsBought}
-          onRunChange={onRunChange}
           onBuyGem={onBuyGem}
           onGemPlaced={(rosterId, landed, fromMastery) => flow.raise(rosterId, landed, fromMastery)}
           onBuyItem={onBuyItem}
-          onCall={onCall}
           onBuyMend={onBuyMend}
-          onRequestRosterReplace={onRequestRosterReplace}
-          onOverlayChange={setOverlayOpen}
           tab={tab}
         />
       </div>
@@ -129,7 +109,7 @@ export function ShopNodeScreen({
       {/* At the foot, over Continue (2026-09-11, per user direction): the counters are the
           control the thumb comes back to, and the foot is where the thumb already is. */}
       <HallSigns tabs={tabs} active={tab} onSelect={selectTab} />
-      {!overlayOpen && !flow.busy && (
+      {!flow.busy && (
         <button className="resolve-button" onClick={onContinue}>
           Continue
         </button>

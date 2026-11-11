@@ -41,7 +41,7 @@ const REWARD_TYPES = new Set([
   'scrollReward',
   'passiveReward',
   'currencyReward',
-  'contractReward',
+  'recruitReward',
   'manaWellReward',
   'restReward',
   'forgeReward',

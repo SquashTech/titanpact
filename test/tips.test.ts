@@ -16,7 +16,6 @@ import { createProfile, decodeProfile, recordTipSeen, resetTips } from '../src/r
 import { isHallScene, isRollScene, isStatusScene, TIP_SCENES, TYPE_ROLL, type TipHallScene, type TipScene } from '../src/data/tipScenes';
 import { TYPES } from '../src/data/typechart';
 import { equipment } from '../src/data/equipment';
-import { guildHallOffersFor } from '../src/data/recruitment';
 import { heroes } from '../src/data/heroes';
 import { itemReceiptFor } from '../src/run/runProgress';
 import { createRosterEntry } from '../src/run/state';
@@ -138,15 +137,13 @@ test('tips: every hero, move and field a scene draws exists', () => {
   }
 });
 
-test('tips: every hero, hire, Gem and item a Guild Hall scene draws exists', () => {
-  const hires = new Set(guildHallOffersFor(heroes).map((o) => o.heroId));
+test('tips: every hero, Gem and item a Guild Hall scene draws exists', () => {
   for (const { id, page, scene } of hallPages) {
     const where = `${id} page ${page + 1}`;
     for (const h of scene.roster) {
       assert.ok(allCombatants[h.heroId], `${where}: hero ${h.heroId}`);
       for (const itemId of h.items ?? []) assert.ok(equipment[itemId], `${where}: item ${itemId}`);
     }
-    for (const heroId of scene.hires ?? []) assert.ok(hires.has(heroId), `${where}: hire ${heroId}`);
     for (const itemId of scene.items ?? []) assert.ok(equipment[itemId], `${where}: item ${itemId}`);
     const stock = scene.hall === 'gems' ? scene.gems : scene.items;
     if (scene.pick !== undefined) assert.ok(stock && scene.pick < stock.length, `${where}: pick in stock`);

@@ -1,6 +1,6 @@
 // Per-node encounter scaling (docs/enemy-levels.md). Pure (node kind, act) -> numbers;
 // enemyGen.ts applies the result. An enemy's ONE stat axis is its level, rolled through its
-// growth grades exactly as a Guild hire's is — no act-steps, no node-kind stat bonus.
+// growth grades exactly as a recruit's is — no act-steps, no node-kind stat bonus.
 
 import type { SpawnTier } from '../data/titanspawn';
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters, type GrowthGrade } from './growth';
@@ -125,29 +125,6 @@ export function encounterScaling(kind: EncounterNodeKind, actNumber: number): Ac
 /** Authored content as written, level 1, no pips — the default for Quick Battle, Sandbox and tests. */
 export const NO_SCALING: ActScaling = { level: 1, mastery: 0 };
 
-/**
- * Level a Guild Hall hire arrives at, by act (1-indexed). DERIVED from the level curve rather
- * than authored beside it, so a retune of `ENCOUNTER_XP_BY_ACT` moves par once and this follows.
- *
- * **A hire arrives one act behind**, at the level the roster held when this act began, plus one.
- * That is the whole of what "decaying runway value" means: the gap is a fixed act, so it is worth
- * most early — when one act is most of the run — and least at the end.
- */
-export const GUILD_HALL_ACT_LAG = 1;
-
-/**
- * Act 1 has no act behind it, so its hire is ONE FIGHT behind instead — par after the opener. The
- * named exception to "a contract never trails a hire": Act 1's contracts sit under it.
- */
-export const GUILD_HALL_FIRST_ACT_FIGHTS = 1;
-
-export function guildHallLevel(actNumber: number): number {
-  const act = clampAct(actNumber);
-  if (act === 1) return levelAfterEncounters(GUILD_HALL_FIRST_ACT_FIGHTS);
-  const behind = levelAfterEncounters(Math.max(0, act - GUILD_HALL_ACT_LAG) * ENCOUNTERS_PER_ACT);
-  // `clampAct` has no upper bound and the +1 can reach past the cap on its own.
-  return Math.min(MAX_LEVEL, behind + 1);
-}
 
 /**
  * What Act 1's Elite fielded before `encounterHeroCountOverride` became a rule rather than a

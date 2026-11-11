@@ -8,8 +8,6 @@ import type { HeroLookup } from '../engine/state';
 import { heroPool } from './recruitment';
 
 export const DECK_ROW_SIZE = 3;
-/** A recruitable fight fields at least this many deck heroes; the rest may be strangers (§3). */
-export const DECK_HEROES_PER_FIGHT = 2;
 
 /** type → up to three hero ids. A row is short while the account owns fewer of the type. */
 export type Deck = Readonly<Record<TypeId, readonly string[]>>;

@@ -18,7 +18,6 @@ import { enemies, finaleEnemies, ENDBRINGER_ID, titanEyes, EYE_PHASES } from '..
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../../src/run/encounters';
 import { wardensFromRun, type Warden } from '../../src/run/wardens';
 import { allCombatants } from '../../src/data/content';
-import { guildHallOffersFor } from '../../src/data/recruitment';
 import { chooseMvp, mvpLedgersFromEvents } from '../../src/run/mvp';
 import { statuses } from '../../src/data/statuses';
 import type { CombatEvent } from '../../src/engine/events';
@@ -61,7 +60,8 @@ import {
   recordPermanentStatGains,
 } from '../../src/run/runProgress';
 import { MOVE_CAP, recordMoveOffer, grantOfferedMove, grantMove } from '../../src/run/progression';
-import { claimContract, claimContractReplacing, deriveContractOffer, heroPool, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract, contractPrice, grantContract, rollContractDrop } from '../../src/run/recruitment';
+import { heroPool, freshRosterId } from '../../src/run/recruitment';
+import { recruitNodeEntry, recruitTypeOffers, rollRecruitHero } from '../../src/run/recruitNode';
 
 // The run's pool (run/recruitment.ts heroPool): the base game, plus whatever SIM_PURCHASES names —
 // a comma-separated list of Constellation offer ids, so a batch can hold a bundle.
@@ -74,8 +74,6 @@ export const SIM_PURCHASES: readonly string[] = SIM_ALL_HEROES
 // SIM_NO_BLESSING=1 opens the run without the opening pair's Blessings, the A/B for docs/blessings-and-statuses.md.
 export const SIM_NO_BLESSING = process.env.SIM_NO_BLESSING === '1';
 const heroes = heroPool(allHeroes, SIM_PURCHASES);
-const guildHallOffers = guildHallOffersFor(heroes);
-import { guildHallEntry } from '../../src/run/guildRecruit';
 import { buyShopItem, rollGuildHallOffers, sellValueFor, shopItemPrice } from '../../src/run/shop';
 import { tutorMovePool } from '../../src/run/tutor';
 import { canTrain, mentorXpFor } from '../../src/run/mentor';
@@ -213,11 +211,11 @@ export interface RunRecord {
   signatures: Record<string, { reached: number; taken: number }>;
   /** Every rolled move offer (schedule, Mentor, Tutor, signature) by move id: times on the table, times the kit took it. */
   moveOffers: Record<string, { offered: number; taken: number }>;
-  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, `act:spent:<mend|hire|scroll|gear|contract>`, and `act:hall` (the purse on entering the Guild Hall, with `act:hallVisits` counting it). */
+  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, `act:spent:<mend|scroll|gear>`, and `act:hall` (the purse on entering the Guild Hall, with `act:hallVisits` counting it). */
   goldFlow: Record<string, number>;
-  /** Heroes joining after the draft: `contract` (claimed or bought), `hire` (Guild Hall). */
+  /** Heroes joining at the Recruit node: `recruit` below the cap, `recruitReplacing` at it. */
   recruitsBySource: Record<string, number>;
-  /** Items obtained, keyed `act:source` — `drop` (a fight), `node` (Equipment Cache), `event` (a loot pile), `contract` (worn in by a claimed hero). */
+  /** Items obtained, keyed `act:source` — `drop` (a fight), `node` (Equipment Cache), `event` (a loot pile), `shop`. */
   itemsBySource: Record<string, number>;
   /** Drops that merged into a held piece rather than taking a socket, and drops that COULD have (somebody held the family). */
   merges: number;
@@ -346,7 +344,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
   record.choices.push({ bucket: 'draft', offered: draftOptions, picked: drafted, encountersWonAtChoice: 0 });
   tally(record, 1, 'draft');
 
-  let run: RunState = createRunState(40, 1, options.cycle);
+  let run: RunState = createRunState(40, options.cycle);
   for (const heroId of drafted) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
@@ -438,7 +436,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         }
       }
 
-      run = tryRecruitContracts(run, outcome.defeatedRoster, rng, record);
       if (outcome.drop) {
         tally(record, foughtAct, 'drop');
         run = resolveDrop(run, outcome.drop.id, record, foughtAct, 'drop');
@@ -668,7 +665,6 @@ function resolveEncounterNode(
   if (MVP_ON && mapNodeType !== 'finale') workingRun = awardMvp(workingRun, fight.events, fight.final, mapNodeType, record);
   const consumableDrop = rollConsumableDrop(kindKey, rng);
   if (consumableDrop) workingRun = grantConsumable(workingRun, consumableDrop);
-  if (rollContractDrop(kindKey, rng)) workingRun = grantContract(workingRun);
   workingRun = landGems(workingRun, rollGemDrop(kindKey, workingRun.actNumber, rng), 'drop', rng, record, options);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop, encounter, koRosterIds };
 }
@@ -703,32 +699,26 @@ function claimBanner(run: RunState, rng: Rng, record: RunRecord): RunState {
   return grantRelicReward(run, picked);
 }
 
-/** A beaten hero-pool enemy can be claimed with a contract. Free power below the cap; above it, only for a real upgrade. */
-function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry[], rng: Rng, record: RunRecord): RunState {
-  if (run.recruitContracts <= 0) return run;
-  const eligible = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes));
-  const offers = pickContractOffers(eligible);
-  if (offers.length === 0) return run;
-  tally(record, run.actNumber, 'contract');
-  const best = policy.byPower(offers)[0];
-  const offer = deriveContractOffer(best);
-  const rosterId = freshRosterId(run, best.heroId);
-  // A contract arrives armed (docs/gear-absorption.md §7): its gear counts as obtained and worn.
-  for (const itemId of offer.equipment) {
-    const item = equipment[itemId];
-    if (!item) continue;
-    record.itemsBySource[`${run.actNumber}:contract`] = (record.itemsBySource[`${run.actNumber}:contract`] ?? 0) + 1;
-    record.equipped.push(`${run.actNumber}:${item.rarity}`);
-  }
-
+/**
+ * The Recruit (run/recruitNode.ts): the type whose answer the policy scores highest. Free power below
+ * the cap; above it, only for a real upgrade on the weakest.
+ */
+function resolveRecruit(run: RunState, locationId: string, rng: Rng, record: RunRecord): RunState {
+  const types = recruitTypeOffers(run, heroes, locations[locationId]?.spawnTypes ?? [], rng);
+  const arrivals = types
+    .map((type) => rollRecruitHero(run, heroes, type, rng))
+    .filter((heroId): heroId is string => heroId !== null)
+    .map((heroId) => recruitNodeEntry(run, heroes[heroId], freshRosterId(run, heroId), rng));
+  if (arrivals.length === 0) return run;
+  const best = policy.byPower(arrivals)[0];
   if (run.roster.length < ROSTER_CAP) {
-    record.recruitsBySource.contract = (record.recruitsBySource.contract ?? 0) + 1;
-    return claimContract(run, offer, rosterId);
+    record.recruitsBySource.recruit = (record.recruitsBySource.recruit ?? 0) + 1;
+    return joinEventRecruit(run, best);
   }
   const weakest = policy.byPower(run.roster)[run.roster.length - 1];
   if (policy.powerScore(best) <= policy.powerScore(weakest)) return run;
-  record.recruitsBySource.contractReplacing = (record.recruitsBySource.contractReplacing ?? 0) + 1;
-  return claimContractReplacing(run, offer, rosterId, weakest.rosterId);
+  record.recruitsBySource.recruitReplacing = (record.recruitsBySource.recruitReplacing ?? 0) + 1;
+  return joinEventRecruit(run, best, weakest.rosterId);
 }
 
 /**
@@ -768,8 +758,8 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       ledger(record, run.actNumber, 'earned:purse', purse);
       return grantCurrencyReward(run, purse);
     }
-    case 'contractReward':
-      return grantContract(run);
+    case 'recruitReward':
+      return resolveRecruit(run, locationId, rng, record);
     case 'restReward':
       if (anyDown(run)) record.knockouts.restsWhileDown += 1;
       return mendRoster(run);
@@ -1055,10 +1045,10 @@ function resolveEventOutcome(run: RunState, outcome: ResolvableOutcome, cost: Ev
   return next;
 }
 
-/** Guild Hall: fill empty roster slots first, then Gems, then Gear, then bank the rest. */
+/** Guild Hall: the mend, then Gems, then Gear, then bank the rest. */
 function resolveShop(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   let next = run;
-  const offers = rollGuildHallOffers(next, guildHallOffers);
+  const offers = rollGuildHallOffers(next);
   const act = run.actNumber;
   ledger(record, act, 'hall', run.gold);
   ledger(record, act, 'hallVisits', 1);
@@ -1068,41 +1058,13 @@ function resolveShop(run: RunState, rng: Rng, record: RunRecord, options: RunOpt
     ledger(record, act, `spent:${key}`, before - next.gold);
   };
 
-  // The Tavern — the mend and the hires.
+  // The Tavern — the mend.
   // The mend first, when the roster is hurt enough for it to be worth its price — which now
   // rises with the hurt (run/wounds.ts mendPrice), so the pilot's threshold is the same read.
   const mendCost = mendPrice(next, (entry) => policy.effectiveStats(entry).hp);
   if (canBuyMend(next, mendCost) && policy.rosterHpFraction(next.roster) < 0.6) {
     if (anyDown(next)) record.knockouts.mendsWhileDown += 1;
     spend('mend', () => buyMend(next, mendCost));
-  }
-
-  // A hire is one contract (docs/run-loop.md "Contracts"): a held one first, else one bought on the
-  // spot while the gold is there. The Hall sits after the act's fork, so a contract held here has no
-  // claim to wait for before the next act's.
-  const contractInHand = (): boolean => {
-    if (next.recruitContracts > 0) return true;
-    if (next.gold < contractPrice(next)) return false;
-    spend('contract', () => buyContract(next));
-    return true;
-  };
-  for (const offerId of offers.heroOfferIds) {
-    const offer = guildHallOffers.find((o) => o.id === offerId);
-    if (!offer) continue;
-    const rosterId = freshRosterId(next, offer.heroId);
-    if (next.roster.length < ROSTER_CAP) {
-      if (!contractInHand()) break;
-      record.recruitsBySource.hire = (record.recruitsBySource.hire ?? 0) + 1;
-      next = recruitFromGuildHall(next, offer, rosterId);
-      continue;
-    }
-    // A hire arrives raw and one act behind (guildHallEntry), so it replaces only a hero it outscores as-is.
-    const weakest = policy.byPower(next.roster)[next.roster.length - 1];
-    if (policy.powerScore(weakest) < policy.powerScore(guildHallEntry(next, offer, rosterId))) {
-      if (!contractInHand()) break;
-      record.recruitsBySource.hireReplacing = (record.recruitsBySource.hireReplacing ?? 0) + 1;
-      next = recruitFromGuildHallReplacing(next, offer, rosterId, weakest.rosterId);
-    }
   }
 
   // The shelf's single Gems, bought in shelf order while somebody can still take one and the gold
@@ -1124,9 +1086,5 @@ function resolveShop(run: RunState, rng: Rng, record: RunRecord, options: RunOpt
     spend('gear', () => absorbItem(buyShopItem(next, item), target.rosterId, itemId, equipment, rosterHeroes));
   }
 
-  // Spare gold at the last shop before a Guardian buys a contract rather than rusting.
-  if (next.gold >= contractPrice(next) && next.roster.length < ROSTER_CAP) {
-    spend('contract', () => buyContract(next));
-  }
   return next;
 }

@@ -32,8 +32,8 @@ export function masteryForAct(actNumber: number): number {
   return act >= FINALE_ACT ? MASTERY_CAP : Math.min(MASTERY_CAP, 2 * act - 2);
 }
 
-/** A Guild hire arrives one pip behind a contract (both raw at 0 in Act 1) — raw: its Evolution, when it has the pips for one, is still the player's to choose. */
-export function guildHallMastery(actNumber: number): number {
+/** A recruit arrives one pip behind the act's enemies (0 in Act 1) — raw: its Evolution, when it has the pips for one, is still the player's to choose. */
+export function recruitMastery(actNumber: number): number {
   return Math.max(0, masteryForAct(actNumber) - 1);
 }
 

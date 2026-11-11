@@ -133,14 +133,12 @@ export interface BrokenSeal {
 
 export interface RunState {
   roster: RosterEntry[];
-  /** Spent at a Guild Hall. Never on a hero directly: gold buys a contract, a contract buys a hero. */
+  /** Spent at a Guild Hall. */
   gold: number;
   /** Owned relic ids — duplicates stack. */
   relics: string[];
-  /** Starts at 1. Every recruit spends one, a claim or a Tavern hire; the map's Contract node and the Tavern sell them (docs/run-loop.md "Contracts"). */
-  recruitContracts: number;
-  /** Contracts bought at the Tavern this run: each raises the next one's price (`contractPrice`). */
-  contractsBought: number;
+  /** Heroes dismissed from the roster this run: the Recruit node never rolls them again (run/recruitNode.ts). */
+  departedHeroIds?: readonly string[];
   /** The potions, a TEAM purse capped per kind (run/consumables.ts). Spent only in a fight. */
   consumables: ConsumablePurse;
   /** Null for a RunState that never gets a map (enemyGen.ts throwaway rosters). */
@@ -176,13 +174,11 @@ export interface RunState {
   patrons?: PatronState;
 }
 
-export function createRunState(gold = 0, recruitContracts = 1, cycle = 1): RunState {
+export function createRunState(gold = 0, cycle = 1): RunState {
   return {
     roster: [],
     gold,
     relics: [],
-    recruitContracts,
-    contractsBought: 0,
     consumables: { ...STARTING_CONSUMABLES },
     map: null,
     currentNodeId: null,
@@ -244,7 +240,7 @@ export function addRosterEntry(run: RunState, entry: RosterEntry): RunState {
 
 /** Equipment lives on the entry, so dropping it IS "strips equipment". */
 export function terminateRosterEntry(run: RunState, rosterId: string): RunState {
-  return { ...run, roster: run.roster.filter((r) => r.rosterId !== rosterId) };
+  return { ...withDeparted(run, rosterId), roster: run.roster.filter((r) => r.rosterId !== rosterId) };
 }
 
 /**
@@ -259,7 +255,12 @@ export function replaceRosterEntry(run: RunState, terminatedRosterId: string, ne
   if (newEntry.rosterId !== terminatedRosterId && run.roster.some((r) => r.rosterId === newEntry.rosterId)) {
     throw new Error(`rosterId ${newEntry.rosterId} already exists on the roster`);
   }
-  return { ...run, roster: run.roster.map((r) => (r.rosterId === terminatedRosterId ? newEntry : r)) };
+  return { ...withDeparted(run, terminatedRosterId), roster: run.roster.map((r) => (r.rosterId === terminatedRosterId ? newEntry : r)) };
+}
+
+function withDeparted(run: RunState, rosterId: string): RunState {
+  const heroId = run.roster.find((r) => r.rosterId === rosterId)?.heroId;
+  return heroId ? { ...run, departedHeroIds: [...(run.departedHeroIds ?? []), heroId] } : run;
 }
 
 /**

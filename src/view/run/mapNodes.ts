@@ -18,7 +18,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   passiveReward: 'Boon',
   blessingReward: "Pactwarden's Shrine",
   currencyReward: 'Gold',
-  contractReward: 'Recruit Contract',
+  recruitReward: 'Recruit',
   manaWellReward: 'Mana Well',
   forgeReward: 'Forge',
   leyLineReward: 'Attunement',
@@ -46,7 +46,7 @@ export const NODE_LABELS: Record<MapNodeType, string> = {
   passiveReward: 'Boon',
   blessingReward: 'Blessing',
   currencyReward: 'Gold',
-  contractReward: 'Contract',
+  recruitReward: 'Recruit',
   manaWellReward: 'Mana Well',
   forgeReward: 'Forge',
   leyLineReward: 'Attune',
@@ -80,7 +80,7 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   blessingReward: 'var(--blessing)',
   currencyReward: 'var(--accent)',
   // The contract counter's own blue (RunGlyph RESOURCE_COLORS): the tile reads as what it adds to.
-  contractReward: '#9bc9ff',
+  recruitReward: '#9bc9ff',
   // The MP gauge's own blue (RunGlyph RESOURCE_COLORS mpPotion): a Mana Well reads as the bar it deepens.
   manaWellReward: '#8fb4ff',
   // The HP bar's own green: a Rest reads as the bar it refills.
@@ -119,7 +119,7 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   passiveReward: 'reward',
   blessingReward: 'reward',
   currencyReward: 'reward',
-  contractReward: 'reward',
+  recruitReward: 'reward',
   manaWellReward: 'reward',
   forgeReward: 'reward',
   leyLineReward: 'reward',

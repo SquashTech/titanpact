@@ -36,7 +36,6 @@ const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
   scroll: <ResourceGlyph kind="scroll" tone="inherit" />,
   mana: <StatGlyph stat="manaPool" tone="inherit" />,
   hp: <StatGlyph stat="hp" tone="inherit" />,
-  contract: <ResourceGlyph kind="contract" tone="inherit" />,
   item: <SectionGlyph name="equipment" />,
   banner: (
     <svg className="relic-glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
@@ -58,7 +57,6 @@ const FACT_COLORS: Record<NodeFactGlyph, string> = {
   gold: RESOURCE_COLORS.gold,
   xp: RESOURCE_COLORS.xp,
   scroll: RESOURCE_COLORS.scroll,
-  contract: RESOURCE_COLORS.contract,
   mana: RESOURCE_COLORS.mpPotion,
   hp: RESOURCE_COLORS.hpPotion,
   item: '#f0a35a',

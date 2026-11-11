@@ -1,0 +1,76 @@
+/* The Recruit node (RecruitNodeScreen): three type tiles, each holding who could answer it, dimmed. */
+
+.recruit-types {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 360px);
+  margin: 18px auto 0;
+  padding: 0 16px;
+}
+
+.recruit-type {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, rgba(var(--type-rgb), 0.24), rgba(var(--type-rgb), 0.06)), var(--surface-sunken);
+  border: 1px solid color-mix(in srgb, var(--type-color) 45%, var(--border));
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.recruit-type:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.recruit-type:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.recruit-type-glyph {
+  width: 36px;
+  height: 36px;
+  color: var(--type-color);
+}
+
+.recruit-type-name {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.recruit-type-faces {
+  display: flex;
+  gap: 2px;
+}
+
+.recruit-type-face {
+  width: 34px;
+  height: 34px;
+  opacity: 0.45;
+  filter: saturate(0.4);
+  image-rendering: pixelated;
+}
+
+.pick-grid.recruit-arrival {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 18px;
+}
+
+.pick-grid.recruit-arrival > .pick-card {
+  width: 180px;
+  height: 190px;
+}

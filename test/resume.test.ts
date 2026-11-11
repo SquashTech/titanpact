@@ -63,6 +63,15 @@ const anyNode = (run: RunState) => run.map!.rows[0][0];
 
 // --- Screens ---
 
+test('resume: a run saved on a contract claim or the Contract node walks on to what replaced it', () => {
+  const run = sampleRun();
+  const nodeId = anyNode(run);
+  const old = (screen: unknown) => roundTrip({ screen: screen as RunScreen }, run)?.screen;
+  assert.deepStrictEqual(old({ kind: 'recruit', offers: [], next: { kind: 'map' } }), { kind: 'map' });
+  assert.deepStrictEqual(old({ kind: 'rosterReplace', candidate: { source: 'guildHall' }, next: { kind: 'map' } }), { kind: 'map' });
+  assert.deepStrictEqual(old({ kind: 'reward', nodeId, nodeType: 'contractReward', seed: 4 }), { kind: 'recruitNode', nodeId, seed: 4 });
+});
+
 test('resume: every resumable kind round trips, nested chains included', () => {
   const run = sampleRun();
   const nodeId = anyNode(run);
@@ -78,7 +87,7 @@ test('resume: every resumable kind round trips, nested chains included', () => {
       next: {
         kind: 'itemWho',
         itemId: item,
-        next: { kind: 'guardianBanner', next: { kind: 'recruit', offers: enemy.run.roster, claimedRosterIds: [], next: { kind: 'pactSeal' } } },
+        next: { kind: 'guardianBanner', next: { kind: 'pactSeal' } },
       },
   };
   const screens: RunScreen[] = [
@@ -86,7 +95,8 @@ test('resume: every resumable kind round trips, nested chains included', () => {
     chain,
     { kind: 'actIntro' },
     { kind: 'herald', next: { kind: 'titanBound', next: { kind: 'champions' } } },
-    { kind: 'shop', nodeId, offers: { heroOfferIds: ['a'], itemIds: [item], gems: [{ stat: 'wisdom', points: 10 }] }, gemsBought: [0], called: true, itemsBought: [0] },
+    { kind: 'shop', nodeId, offers: { itemIds: [item], gems: [{ stat: 'wisdom', points: 10 }] }, gemsBought: [0], itemsBought: [0] },
+    { kind: 'recruitNode', nodeId, seed: 12, pickedType: 'Fire' },
     { kind: 'reward', nodeId, nodeType: 'currencyReward', seed: 11 },
     { kind: 'boonNode', nodeId, seed: 1 },
     { kind: 'mentorNode', nodeId, seed: 2 },
@@ -97,7 +107,6 @@ test('resume: every resumable kind round trips, nested chains included', () => {
     { kind: 'levelUp', report: [], seed: 8, asking: { kind: 'overflow', rosterId: 'rime-1', queue: [heroes.rime.moveIds[0]], eyebrow: 'e' }, next: map },
     { kind: 'rest', nodeId },
     { kind: 'scrolls', plan: { source: 'scribe', gems: [{ stat: 'attack', points: 5 }, { stat: 'speed', points: 5 }] }, nodeId, bought: false, next: map, progress: { remaining: 1, pickedIds: ['rime-1'] } },
-    { kind: 'rosterReplace', candidate: { source: 'guildHall', offer: { id: 'o', heroId: 'rime', startingMoveIds: heroes.rime.moveIds } }, next: map },
     {
       kind: 'fight',
       nodeId,
@@ -108,7 +117,6 @@ test('resume: every resumable kind round trips, nested chains included', () => {
       xpGained: 100,
       equipmentRewardId: item,
       consumableReward: 'hpPotion',
-      contractReward: true,
       gemReward: [{ stat: 'hp', points: 5 }, { stat: 'speed', points: 5 }],
       levelSeed: 9,
     },
@@ -138,7 +146,6 @@ test('resume: the finale party and every act a Guardian brings decode', () => {
       xpGained: 0,
       equipmentRewardId: null,
       consumableReward: null,
-      contractReward: false,
       gemReward: [],
       levelSeed: 1,
     };
@@ -353,7 +360,6 @@ test('combatSnapshot: a board naming a combatant the run does not hold costs the
     xpGained: 0,
     equipmentRewardId: null,
     consumableReward: null,
-    contractReward: false,
     gemReward: [],
     levelSeed: 1,
   };

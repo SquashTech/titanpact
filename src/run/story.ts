@@ -2,7 +2,7 @@
 // what both sides do, so a lesson plays out the same way every time; and a run's screens played
 // with no fight, the hand on each tap.
 
-import type { HeroDefinition } from '../engine/content';
+import type { HeroDefinition, TypeId } from '../engine/content';
 import type { Action } from '../engine/combat/actions';
 import type { CombatState, FightEndTrigger, Side } from '../engine/state';
 import { combatantIdFor } from './combatantIds';
@@ -76,14 +76,14 @@ function storySide(specs: readonly StoryHeroSpec[], leads: readonly string[], he
   });
   for (const id of leads) if (!roster.some((r) => r.rosterId === id)) throw new Error(`story: lead ${id} is not in the party`);
   return {
-    run: { ...createRunState(0, 0), roster },
+    run: { ...createRunState(0), roster },
     squad: { activeIds: [leads[0] ?? null, leads[1] ?? null], benchIds: roster.map((r) => r.rosterId).filter((id) => !leads.includes(id)) },
   };
 }
 
-/** A chapter's party as a run, holding the one Recruit Contract a run opens with. */
+/** A chapter's party as a run. */
 export function storyParty(specs: readonly StoryHeroSpec[], heroes: Record<string, HeroDefinition>): RunState {
-  return { ...storySide(specs, [], heroes, false).run, recruitContracts: 1 };
+  return storySide(specs, [], heroes, false).run;
 }
 
 /** Both sides of a Story fight, leads placed, as FightScreen's player and AI encounters. */
@@ -169,8 +169,8 @@ export type StoryScreen =
   | { kind: 'item'; itemId: string; to: string }
   /** The Gem screen: each Gem in turn, to the hero it names. */
   | { kind: 'gems'; gems: readonly StoryGem[] }
-  /** The recruit screen: `offer` is a beaten hero, signed with a Recruit Contract. */
-  | { kind: 'contract'; offer: StoryHeroSpec };
+  /** The Recruit node: `types` on offer, the hand on `type`, and `offer` the hero who answers it. */
+  | { kind: 'recruit'; types: readonly TypeId[]; type: TypeId; offer: StoryHeroSpec };
 
 export type StoryBeat =
   /**

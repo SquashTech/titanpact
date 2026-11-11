@@ -12,9 +12,9 @@ import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../
 import { LEY_LINE_FORCE, MANA_WELL_AMOUNT, MANA_WELL_REGEN } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
 import { mentorXpFor } from '../../run/mentor';
-import { championLevel, enemyLevelFor, guildHallLevel, openerEscortTiersFor, type EncounterNodeKind } from '../../run/difficulty';
+import { championLevel, enemyLevelFor, openerEscortTiersFor, type EncounterNodeKind } from '../../run/difficulty';
 import { SEAL_ACTS } from '../../run/state';
-import { CONTRACT_BASE_PRICE, CONTRACT_DROP_CHANCE } from '../../run/recruitment';
+import { RECRUIT_TYPE_COUNT } from '../../run/recruitNode';
 import { MEND_PRICE_PER_HERO } from '../../run/wounds';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
@@ -24,7 +24,6 @@ export type NodeFactGlyph =
   | 'scroll'
   | 'mana'
   | 'hp'
-  | 'contract'
   | 'item'
   | 'banner'
   | 'move'
@@ -57,8 +56,6 @@ export interface NodeDossier {
   odds: Record<EquipmentRarity, number> | null;
 }
 
-const RECRUITABLE: readonly MapNodeType[] = ['skirmish', 'elite', 'boss'];
-
 function range([min, max]: readonly [number, number]): string {
   return min === max ? `${min}` : `${min}–${max}`;
 }
@@ -79,7 +76,6 @@ function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] 
     { glyph: 'gold', label: 'Gold', value: gold[1] > 0 ? range(gold) : null },
     { glyph: 'item', label: 'Item', value: drop > 0 ? percent(drop) : null, note: drop > 0 && LOOT_SOURCE[type] === 'elite' ? 'rarer' : undefined },
     gemFact(type),
-    { glyph: 'contract', label: 'Recruit', value: RECRUITABLE.includes(type) ? '1' : null },
   ];
 }
 
@@ -112,7 +108,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
     case 'elite':
       return {
         about: null,
-        facts: [...encounterFacts('elite', actNumber), { glyph: 'contract', label: 'Contract', value: percent(CONTRACT_DROP_CHANCE.elite ?? 0) }],
+        facts: encounterFacts('elite', actNumber),
         odds: odds('elite'),
       };
     case 'boss':
@@ -131,8 +127,6 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return {
         about: null,
         facts: [
-          { glyph: 'hero', label: 'Hire', value: `Lv ${guildHallLevel(actNumber)}`, note: '1 Contract' },
-          { glyph: 'contract', label: 'Contract', value: `${CONTRACT_BASE_PRICE}g`, note: 'more each time' },
           { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g` },
           { glyph: 'hp', label: 'Meal', value: `${MEND_PRICE_PER_HERO}g`, note: 'per hero hurt' },
         ],
@@ -172,8 +166,8 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       return { about: null, facts: [{ glyph: 'hp', label: 'Heal', value: 'Everyone' }], odds: null };
     case 'currencyReward':
       return { about: null, facts: [{ glyph: 'gold', label: 'Gold', value: range(purseRangeFor(actNumber)) }], odds: null };
-    case 'contractReward':
-      return { about: null, facts: [{ glyph: 'contract', label: 'Contract', value: '+1' }], odds: null };
+    case 'recruitReward':
+      return { about: null, facts: [{ glyph: 'hero', label: 'Recruit', value: `1 of ${RECRUIT_TYPE_COUNT}`, note: 'types' }], odds: null };
     case 'passiveReward':
       return { about: null, facts: [{ glyph: 'passive', label: 'Boon', value: `1 of ${BOON_OFFER_COUNT}`, who: 'one' }], odds: null };
     case 'blessingReward':

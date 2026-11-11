@@ -580,7 +580,7 @@ export function formatReport(
   }
   out.push('');
   out.push('  items obtained per run by source and act (all = per run that ENTERED the act; won = completed runs):');
-  const itemSources = ['drop', 'node', 'event', 'contract', 'shop'];
+  const itemSources = ['drop', 'node', 'event', 'shop'];
   const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
   out.push(`  ${pad('act', 6)}${itemSources.map((s) => padStart(s, 10)).join('')}${padStart('total', 8)}   ${itemSources.map((s) => padStart(`won:${s}`, 13)).join('')}${padStart('total', 8)}`);
   const itemTotals = { all: 0, won: 0 };
@@ -599,7 +599,7 @@ export function formatReport(
   out.push('');
   out.push('  gold per run that entered the act — earned by source, the purse on entering the Guild Hall, spent by sink:');
   const earnedKeys = ['fight', 'purse', 'sell'];
-  const spentKeys = ['mend', 'hire', 'scroll', 'gear', 'contract'];
+  const spentKeys = ['mend', 'scroll', 'gear'];
   out.push(`  ${pad('act', 6)}${earnedKeys.map((k) => padStart(k, 8)).join('')}${padStart('earned', 9)}${padStart('at hall', 10)}   ${spentKeys.map((k) => padStart(k, 9)).join('')}${padStart('spent', 8)}`);
   for (let act = 1; act <= TOTAL_ACTS; act++) {
     const entered = agg.actEntered[act] || 1;

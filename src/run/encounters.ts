@@ -21,7 +21,6 @@ import { guardiansWake, isGathering, isLongWinter, wardensHold, wokenChampion, w
 import { castEscortWarband, castHeroWarband, forceWarbandMoves, learnableIn } from './warbands';
 import { TITANS_WARD_ID } from '../data/passives';
 import { guardianEscortPool, mobEncounter } from './spawn';
-import { DECK_HEROES_PER_FIGHT } from './deck';
 import { appendWarden, buildWarden, wardenAt, type Warden } from './wardens';
 
 export type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss';
@@ -45,9 +44,9 @@ export function encounterSeedFor(map: RunMap, nodeId: string, salt = 0): number 
 export interface EncounterContext {
   run: RunState;
   location: LocationDefinition;
-  /** The recruitable pool — the run's deck (run/deck.ts `encounterPools`). */
+  /** The run's deck (run/deck.ts `encounterPools`): the Location's bias reads it. */
   heroes: HeroLookup;
-  /** Heroes that may fill a recruitable party past its deck floor, never offered a contract (docs/collection.md §3). */
+  /** The rest of the catalog, drawn beside the deck (docs/collection.md §3). */
   strangers?: HeroLookup;
   /** Every combatant, for reading a drawn squad's types — `allCombatants`. */
   allCombatants: HeroLookup;
@@ -76,9 +75,8 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   const loadout = enemyLoadoutFor(type, run.actNumber);
   // A Guardian's escorts are the act's tier of the Location's spawn.
   const pool = type === 'boss' ? guardianEscortPool(location, run.actNumber) : heroes;
-  // A hero already on the roster is barred from the recruitable draw, so two copies can never
-  // reach one roster via a contract claim (mirrors rollGuildHallOffers). Passed unconditionally:
-  // enemy and hero ids never collide (test/recruitment.test.ts), so it is inert on a mob pool.
+  // A hero on the roster never stands on the other side. Passed unconditionally: enemy and hero ids
+  // never collide, so it is inert on a mob pool.
   const excludeHeroIds = run.roster.map((r) => r.heroId);
   // From Cycle II the Guardians wake (run/cycles.ts): the escorts climb with the act, the champion wears its Mark.
   const woken = type === 'boss' && guardiansWake(run);
@@ -102,7 +100,6 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
     // A spawn has no progression data; only the hero pool cashes a level in.
     progression: pool === heroes ? progression : undefined,
     strangers: pool === heroes ? strangers : undefined,
-    deckFloor: DECK_HEROES_PER_FIGHT,
   });
   // The Location's held-back champion arrives benched, so the first enemy KO brings him in.
   const finalEnemyId = type === 'boss' ? location.guardianFinalEnemyId : null;

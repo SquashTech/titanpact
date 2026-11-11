@@ -25,7 +25,7 @@ export const MAP_NODE_TYPES = [
   'passiveReward',
   'blessingReward',
   'currencyReward',
-  'contractReward',
+  'recruitReward',
   'mentorReward',
   'tutorReward',
   'scribeReward',
@@ -83,6 +83,11 @@ export const PATRON_ROWS: readonly number[] = [SPLICED_ROW, ACADEMY_ROW];
 const MENTOR_WEIGHT = 25;
 const TUTOR_WEIGHT = 25;
 
+export const RECRUIT_WEIGHT = 40;
+
+/** Act 1's first reward row always holds a Recruit: a two-hero draft does not wait on the dice for its third. */
+const GUARANTEED_RECRUIT = { act: 1, row: 1 } as const;
+
 export function rewardWeightsFor(actNumber: number): readonly [MapNodeType, number][] {
   return [...REWARD_WEIGHTS, actNumber <= LAST_MENTOR_ACT ? ['mentorReward', MENTOR_WEIGHT] : ['tutorReward', TUTOR_WEIGHT]];
 }
@@ -108,10 +113,9 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // rather than how big its numbers are.
   ['passiveReward', 22],
   ['currencyReward', 20],
-  // The Contract (2026-10-05, per user direction, docs/run-loop.md "Contracts"): one Recruit
-  // Contract, priced against the two rewards beside it. Every hire spends one and the act's end no
-  // longer grants one, so this seat and the Tavern's rising price are the whole supply.
-  ['contractReward', 24],
+  // The Recruit (docs/guild-hall-overhaul.md §2.3): the only way a hero joins but an event, priced
+  // against the two rewards beside it. Weighted to show about twice an act; first pass.
+  ['recruitReward', RECRUIT_WEIGHT],
   // 16 → 30 when the slate grew from six to twenty-six, two thirds Location-gated (docs/wild-innates-and-events.md
   // §3.4): about five events offered a run where there were three. Still an inference, not a measured figure.
   ['event', 30],
@@ -223,9 +227,16 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     const rewardRow = isRewardRow(row);
     let rewardTypes: MapNodeType[] = [];
     if (rewardRow) {
-      const picked = pickWeightedDistinct(rng, rewardWeightsFor(actNumber), rowWidths[row]);
+      const guaranteed = actNumber === GUARANTEED_RECRUIT.act && row === GUARANTEED_RECRUIT.row;
+      const weights = rewardWeightsFor(actNumber).filter(([type]) => !guaranteed || type !== 'recruitReward');
+      const picked = pickWeightedDistinct(rng, weights, rowWidths[row] - (guaranteed ? 1 : 0));
       rewardTypes = picked.values;
       rng = picked.nextState;
+      if (guaranteed) {
+        const { value, nextState } = nextFloat(rng);
+        rng = nextState;
+        rewardTypes.splice(Math.floor(value * rowWidths[row]), 0, 'recruitReward');
+      }
     }
     for (let col = 0; col < rowWidths[row]; col++) {
       const type = rewardRow ? rewardTypes[col] : fixedNodeType(row, col);
@@ -304,4 +315,4 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
 }
 
 /** The two reward nodes that open on the road's chest (NodeRewardScreen). */
-export type RewardNodeType = 'currencyReward' | 'contractReward' | 'equipmentReward';
+export type RewardNodeType = 'currencyReward' | 'equipmentReward';

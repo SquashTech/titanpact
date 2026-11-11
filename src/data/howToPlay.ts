@@ -15,7 +15,7 @@ const BURN = 'firstLight.burn';
 const SWITCH = 'firstLight.switch';
 const GEAR = 'firstLight.gear';
 const GEMS = 'firstLight.gems';
-const CONTRACTS = 'firstLight.contracts';
+const RECRUITS = 'firstLight.contracts';
 const OPEN = 'firstLight.open';
 /** A page about a run, taught by no lesson. */
 const RUN = null;
@@ -236,10 +236,10 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
   page(
     'recruit',
     'Recruiting',
-    CONTRACTS,
-    ['resource:contract'],
-    '- Win a Skirmish or an Elite, and a *Recruit Contract* signs a hero you beat.\n- It joins with its moves and its item.',
-    '- Your roster holds *six*.\n- To sign a seventh, one has to leave.'
+    RECRUITS,
+    ['node:recruitReward'],
+    '- At a *Recruit*, pick one of three types.\n- A hero of that type from your deck joins, at your level.',
+    '- Your roster holds *six*.\n- For a seventh, one has to leave.'
   ),
 
   page(
@@ -279,7 +279,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'The Guild Hall',
     RUN,
     ['node:shop'],
-    'The *Tavern* hires heroes for a Recruit Contract. Its bar sells Contracts, a fresh shelf of faces, and a meal that heals your whole roster.',
+    'The *Tavern* serves a meal that heals your whole roster.',
     'The *Gem* counter sells single Gems. Pick one, then the hero to set it in.',
     'The *Gear* counter sells items. Pick one, then the hero to wear it.'
   ),

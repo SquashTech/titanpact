@@ -13,11 +13,11 @@ import { prefersReducedMotion } from '../shared/reducedMotion';
 
 interface Props {
   heroId: string;
-  /** How the hero was got — only the kicker differs; every way in is a contract signed. */
-  source: 'contract' | 'guild' | 'event';
-  /** The typing the hero actually arrives with — a contract veteran may already be grafted. */
+  /** How the hero was got — only the kicker differs. */
+  source: 'recruit' | 'event';
+  /** The typing the hero actually arrives with, if not its own. */
   types?: readonly TypeId[];
-  /** The form a contract veteran arrives in, if it evolved before it was beaten. */
+  /** The form the hero arrives in, if it has evolved. */
   pathId?: string | null;
   onDone: () => void;
 }
@@ -30,8 +30,7 @@ const STAMP_LAND_MS = 230;
 type Beat = 'unfurl' | 'sign' | 'stamp' | 'bind' | 'sworn';
 
 const SOURCE_KICKER: Record<Props['source'], string> = {
-  contract: 'Contract Sealed',
-  guild: 'Hired at the Guild Hall',
+  recruit: 'Answered the Call',
   event: 'Joined on the Road',
 };
 
@@ -42,11 +41,10 @@ const EMBERS = Array.from({ length: 18 }, (_, i) => {
 });
 
 /**
- * A hero joining the pact, as a contract signed (2026-10-07, per user direction — every recruit
- * spends a Recruit Contract, so the moment is that document). The page UNFURLS with the hero's
+ * A hero joining the pact, as a pact signed (2026-10-07, per user direction). The page UNFURLS with the hero's
  * cameo on it, the name is SIGNED across the line, the wax STAMPS down in the hero's colour, and
  * the page BURNS into the seal — the chart locking behind — and the hero steps out of the light,
- * SWORN. Tap skips: four hires in one Guild Hall visit must not be four times this.
+ * SWORN. Tap skips.
  */
 export function RecruitFanfare({ heroId, source, types, pathId, onDone }: Props) {
   const [beat, setBeat] = useState<Beat>('unfurl');

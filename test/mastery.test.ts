@@ -17,7 +17,7 @@ import {
   canTakeMastery,
   crossesMastery,
   grantMastery,
-  guildHallMastery,
+  recruitMastery,
   masteryForAct,
   isInnateMastered,
   masteryRoom,
@@ -94,14 +94,14 @@ test('mastery: the fifth pip opens the Evolution, at any level, and the Evolutio
   for (const h of Object.values(heroes)) assert.ok(scheduleEntries(scheduleFor(h)).every((e) => e.kind === 'offer'), h.id);
 });
 
-test('mastery: enemies, contracts and hires read their pips off the act — one model for everybody', () => {
+test('mastery: enemies and recruits read their pips off the act — one model for everybody', () => {
   // Four acts, then the finale at the cap (docs/xp-overhaul.md §5).
   assert.deepStrictEqual([1, 2, 3, 4, 5].map(masteryForAct), [0, 2, 4, 6, MASTERY_CAP]);
-  assert.deepStrictEqual([1, 2, 3, 4, 5].map(guildHallMastery), [0, 1, 3, 5, MASTERY_CAP - 1]);
+  assert.deepStrictEqual([1, 2, 3, 4, 5].map(recruitMastery), [0, 1, 3, 5, MASTERY_CAP - 1]);
   assert.strictEqual(masteryForAct(0), 0, 'clamped below');
   assert.strictEqual(masteryForAct(99), MASTERY_CAP, 'clamped above');
-  for (let act = 2; act <= 5; act++) assert.ok(masteryForAct(act) > guildHallMastery(act), `act ${act}: a contract is a pip ahead of a hire`);
-  assert.strictEqual(guildHallMastery(1), 0, 'and both are raw in Act 1');
+  for (let act = 2; act <= 5; act++) assert.ok(masteryForAct(act) > recruitMastery(act), `act ${act}: an enemy is a pip ahead of a recruit`);
+  assert.strictEqual(recruitMastery(1), 0, 'and both are raw in Act 1');
 });
 
 test('mastery: the Gem Cache sits in the reward pool at the seat Ichor held, and Ichor is gone', () => {

@@ -11,7 +11,8 @@ import { heroes } from '../src/data/heroes';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { absorbItem, itemReceiptFor } from '../src/run/runProgress';
 import { GEM_ORDER, placeGem } from '../src/run/gems';
-import { claimContract, deriveContractOffer } from '../src/run/recruitment';
+import { joinEventRecruit } from '../src/run/events';
+import { deckRowOf } from '../src/run/deck';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import { resolveBattleStartEntries } from '../src/engine/combat/passiveEngine';
 import { fightWinner, getMaxMana, type CombatState } from '../src/engine/state';
@@ -236,17 +237,19 @@ test('lessons: Gems go in the order the screen hands them out, each a stat and a
   }
 });
 
-test('lessons: Contracts signs a beaten base hero with the party\'s one Recruit Contract', () => {
+test('lessons: Recruits offers three types, and the one the hand is on answers with a base hero of it', () => {
   const [screen] = screensOf('firstLight.contracts');
-  assert.ok(screen.kind === 'contract');
+  assert.ok(screen.kind === 'recruit');
   const party = chapterOf('firstLight.contracts').party!;
-  assert.ok(heroes[screen.offer.heroId] && !heroes[screen.offer.heroId].unlock, 'a base hero');
+  const hero = heroes[screen.offer.heroId];
+  assert.ok(hero && !hero.unlock, 'a base hero');
+  assert.strictEqual(new Set(screen.types).size, 3, 'three types');
+  assert.ok(screen.types.includes(screen.type), 'the hand is on one of them');
+  assert.strictEqual(deckRowOf(hero), screen.type, 'and it answers with a hero of that type');
   assert.ok(!party.some((spec) => spec.heroId === screen.offer.heroId), 'not one the party already holds');
   const run = storyParty(party, allCombatants);
-  assert.strictEqual(run.recruitContracts, 1);
-  const offer = storyEntry(screen.offer, heroes[screen.offer.heroId]);
-  const signed = claimContract(run, deriveContractOffer(offer), offer.rosterId);
-  assert.deepStrictEqual([signed.roster.length, signed.recruitContracts], [party.length + 1, 0]);
+  const joined = joinEventRecruit(run, storyEntry(screen.offer, hero));
+  assert.strictEqual(joined.roster.length, party.length + 1);
 });
 
 test('lessons: no passive fires in a guided lesson, and no foe in First Light wears the Mark', () => {

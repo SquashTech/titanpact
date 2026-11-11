@@ -46,7 +46,6 @@ export type TipSceneFocus =
   | 'switch'
   | 'bag'
   | 'field'
-  | 'posters'
   | 'bar'
   | 'stock'
   | 'heroCards'
@@ -94,8 +93,6 @@ export interface TipHallHero {
 export interface TipHallScene {
   hall: 'tavern' | 'gems' | 'gear';
   roster: readonly TipHallHero[];
-  /** Tavern hires, by hero id. */
-  hires?: readonly string[];
   gems?: readonly Gem[];
   items?: readonly string[];
   /** The stock slot already picked (Gems, Gear). */
@@ -265,9 +262,8 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
     {
       hall: 'tavern',
       roster: [{ heroId: HALL_ROSTER[0] }, { heroId: HALL_ROSTER[1], wounded: 0.4 }, { heroId: HALL_ROSTER[2] }],
-      hires: ['crimson', 'sentinel'],
       gold: 120,
-      focus: ['posters', 'bar'],
+      focus: ['bar'],
     },
     {
       hall: 'gems',

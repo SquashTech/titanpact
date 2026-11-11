@@ -537,8 +537,6 @@ interface Props {
   equipmentReward: EquipmentDefinition | null;
   /** A potion this win drops (run/consumables.ts), rolled up front like the item. Displayed only. */
   consumableReward?: ConsumableKind | null;
-  /** The Elite's Recruit Contract drop (run/recruitment.ts rollContractDrop). Displayed only. */
-  contractReward?: boolean;
   /** The fight's Gem drop (run/gems.ts rollGemDrop). Displayed only. */
   gemReward?: readonly Gem[];
   /**
@@ -605,7 +603,6 @@ export function FightScreen({
   levelSeed,
   equipmentReward,
   consumableReward = null,
-  contractReward = false,
   gemReward,
   onResolved,
   onSaveAndQuit,
@@ -2660,7 +2657,6 @@ export function FightScreen({
           goldReward={goldReward}
           equipmentReward={equipmentReward}
           consumableReward={consumableReward}
-          contractReward={contractReward}
           gemReward={gemReward}
           hpAfter={hpAfter}
           mvp={mvp}

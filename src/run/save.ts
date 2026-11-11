@@ -379,11 +379,13 @@ function decodeMap(value: unknown): RunMap {
   for (const [id, raw] of Object.entries(value.nodes)) {
     if (!isObject(raw)) reject(`map.nodes.${id} is not an object`);
     if (raw.id !== id) reject(`map.nodes.${id} is keyed under a different id`);
-    if (typeof raw.type !== 'string' || !NODE_TYPES.has(raw.type)) reject(`map.nodes.${id} has unknown type "${String(raw.type)}"`);
+    // The Contract node (deleted 2026-11-11) stands where a Recruit now does.
+    const type = raw.type === 'contractReward' ? 'recruitReward' : raw.type;
+    if (typeof type !== 'string' || !NODE_TYPES.has(type)) reject(`map.nodes.${id} has unknown type "${String(raw.type)}"`);
     if (!isInt(raw.row, 0)) reject(`map.nodes.${id}.row is not a row`);
     if (!isInt(raw.col, 0)) reject(`map.nodes.${id}.col is not a column`);
     if (!isStringArray(raw.nextIds)) reject(`map.nodes.${id}.nextIds is not a list of ids`);
-    nodes[id] = { id, type: raw.type as MapNodeType, row: raw.row, col: raw.col, nextIds: [...raw.nextIds] };
+    nodes[id] = { id, type: type as MapNodeType, row: raw.row, col: raw.col, nextIds: [...raw.nextIds] };
   }
 
   if (!Array.isArray(value.rows) || !value.rows.every(isStringArray)) reject('map.rows is not a list of rows');
@@ -470,10 +472,9 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
 
 
   if (!isInt(value.gold, 0)) reject('run.gold is not a count');
-  if (!isInt(value.recruitContracts, 0)) reject('run.recruitContracts is not a count');
-  // Absent on a file written before the Tavern's price rose with each purchase.
-  const contractsBought = value.contractsBought === undefined ? 0 : value.contractsBought;
-  if (!isInt(contractsBought, 0)) reject('run.contractsBought is not a count');
+  // Absent on a file written before the Recruit node; a hero this build no longer ships just drops off the list.
+  if (value.departedHeroIds !== undefined && !isStringArray(value.departedHeroIds)) reject('run.departedHeroIds is not a list of ids');
+  const departedHeroIds = isStringArray(value.departedHeroIds) ? value.departedHeroIds.filter((id) => index.heroIds.has(id)) : [];
   const consumables = decodeConsumables(value.consumables);
   if (!isInt(value.fightsStarted, 0)) reject('run.fightsStarted is not a count');
   if (!isInt(value.encountersWon, 0)) reject('run.encountersWon is not a count');
@@ -509,8 +510,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     roster,
     gold: value.gold,
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
-    recruitContracts: value.recruitContracts,
-    contractsBought,
+    ...(departedHeroIds.length > 0 ? { departedHeroIds } : {}),
     consumables,
     map,
     currentNodeId,
