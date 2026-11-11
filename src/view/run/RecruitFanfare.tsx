@@ -14,7 +14,7 @@ import { prefersReducedMotion } from '../shared/reducedMotion';
 interface Props {
   heroId: string;
   /** How the hero was got — only the kicker differs. */
-  source: 'recruit' | 'event';
+  source: 'event';
   /** The typing the hero actually arrives with, if not its own. */
   types?: readonly TypeId[];
   /** The form the hero arrives in, if it has evolved. */
@@ -30,7 +30,6 @@ const STAMP_LAND_MS = 230;
 type Beat = 'unfurl' | 'sign' | 'stamp' | 'bind' | 'sworn';
 
 const SOURCE_KICKER: Record<Props['source'], string> = {
-  recruit: 'Answered the Call',
   event: 'Joined on the Road',
 };
 

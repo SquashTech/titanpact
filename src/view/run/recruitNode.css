@@ -60,17 +60,225 @@
   image-rendering: pixelated;
 }
 
-.pick-grid.recruit-arrival {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  margin-top: 18px;
+/* ---- The oath (RecruitOath): a sigil, a beam, the hero out of silhouette, then its kit ---- */
+
+.recruit-oath {
+  background: #08090c;
 }
 
-.pick-grid.recruit-arrival > .pick-card {
-  width: 180px;
-  height: 190px;
+.recruit-oath-sky {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 75% 38% at 50% 22%, rgba(var(--oath-rgb), 0.3), transparent 72%), #08090c;
+  pointer-events: none;
+}
+
+.recruit-oath .screen-scroll {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 16px 96px;
+}
+
+.recruit-oath-stage {
+  position: relative;
+  width: 230px;
+  height: 210px;
+  flex: none;
+}
+
+.recruit-oath-sigil {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 210px;
+  height: 210px;
+  margin: -105px 0 0 -105px;
+  border-radius: 50%;
+  border: 2px solid rgba(var(--oath-rgb), 0.6);
+  box-shadow: inset 0 0 36px rgba(var(--oath-rgb), 0.25), 0 0 36px rgba(var(--oath-rgb), 0.2);
+  animation: oath-ring 1s cubic-bezier(0.2, 0.9, 0.3, 1) both 0.15s, oath-spin 40s linear infinite;
+}
+
+.recruit-oath-sigil::before,
+.recruit-oath-sigil::after {
+  content: '';
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  border: 1px dashed rgba(var(--oath-rgb), 0.55);
+}
+
+.recruit-oath-sigil::after {
+  inset: 38px;
+  border: 1px solid rgba(var(--oath-rgb), 0.35);
+}
+
+.recruit-oath-sigil i {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--oath-color);
+  box-shadow: 0 0 10px var(--oath-color);
+  transform: rotate(45deg);
+}
+
+.recruit-oath-sigil i:nth-child(1) { left: calc(50% - 7px); top: -8px; }
+.recruit-oath-sigil i:nth-child(2) { left: calc(50% - 7px); bottom: -8px; }
+.recruit-oath-sigil i:nth-child(3) { top: calc(50% - 7px); left: -8px; }
+.recruit-oath-sigil i:nth-child(4) { top: calc(50% - 7px); right: -8px; }
+
+.recruit-oath-beam {
+  position: absolute;
+  left: 50%;
+  top: -60px;
+  width: 80px;
+  height: 250px;
+  margin-left: -40px;
+  background: linear-gradient(180deg, rgba(255, 250, 230, 0.9), rgba(var(--oath-rgb), 0.4) 70%, transparent);
+  filter: blur(6px);
+  opacity: 0;
+  animation: oath-beam 1.4s ease both 0.6s;
+}
+
+.recruit-oath-hero {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 168px;
+  height: 168px;
+  margin: -84px 0 0 -84px;
+  image-rendering: pixelated;
+  opacity: 0;
+  animation: oath-hero 1.1s cubic-bezier(0.2, 0.9, 0.3, 1) both 0.8s;
+}
+
+.recruit-oath-name {
+  margin: 8px 0 0;
+  font: 900 44px/1 Georgia, 'Times New Roman', serif;
+  letter-spacing: 0.03em;
+  color: #fff1cf;
+  text-shadow: 0 0 24px rgba(var(--oath-rgb), 0.95), 0 3px 0 #000;
+  opacity: 0;
+  animation: oath-stamp 0.6s cubic-bezier(0.2, 0.9, 0.3, 1) both 1.6s;
+}
+
+.recruit-oath-kicker {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--oath-color);
+  opacity: 0;
+  animation: oath-fade 0.4s both 2s;
+}
+
+.recruit-oath-rule {
+  display: block;
+  width: 0;
+  height: 1px;
+  margin: 10px 0 14px;
+  background: linear-gradient(90deg, transparent, var(--oath-color), transparent);
+  animation: oath-rule 0.6s both 2s;
+}
+
+.recruit-oath-sheet {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.recruit-oath-sheet > * {
+  opacity: 0;
+  animation: oath-rise 0.35s both;
+}
+
+.recruit-oath-sheet > :nth-child(1) { animation-delay: 2.15s; }
+.recruit-oath-sheet > :nth-child(2) { animation-delay: 2.3s; }
+.recruit-oath-sheet > :nth-child(3) { animation-delay: 2.45s; }
+
+.recruit-oath-meta {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.recruit-oath-level {
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #e9e2cf;
+}
+
+.recruit-oath-innate {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--passive-color) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--passive-color) 45%, transparent);
+}
+
+.recruit-oath-innate-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--passive-color);
+}
+
+.recruit-oath-innate-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.recruit-oath-moves {
+  display: grid;
+  gap: 6px;
+}
+
+.recruit-oath-continue {
+  transition: opacity 0.3s;
+}
+
+.recruit-oath:not(.is-settled) .recruit-oath-continue {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* A tap skips the reveal: everything lands at once. */
+.recruit-oath.is-settled * {
+  animation-delay: 0s !important;
+  animation-duration: 0.01s !important;
+}
+
+.recruit-oath.is-settled .recruit-oath-sigil {
+  animation: oath-spin 40s linear infinite !important;
+}
+
+@keyframes oath-ring { from { opacity: 0; transform: scale(0.3); } to { opacity: 1; transform: none; } }
+@keyframes oath-spin { to { rotate: 360deg; } }
+@keyframes oath-beam { 0% { opacity: 0; transform: scaleX(0.05); } 25% { opacity: 1; transform: scaleX(1.3); } 100% { opacity: 0.35; transform: none; } }
+@keyframes oath-hero {
+  0% { opacity: 0; filter: brightness(0); transform: scale(0.9); }
+  45% { opacity: 1; filter: brightness(0) drop-shadow(0 0 12px rgba(255, 240, 200, 0.9)); }
+  100% { opacity: 1; filter: drop-shadow(0 0 14px rgba(var(--oath-rgb), 0.6)); transform: none; }
+}
+@keyframes oath-stamp { 0% { opacity: 0; transform: scale(2); } 60% { opacity: 1; transform: scale(0.96); } 100% { opacity: 1; transform: none; } }
+@keyframes oath-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes oath-rule { to { width: 240px; } }
+@keyframes oath-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .recruit-oath * {
+    animation-delay: 0s !important;
+    animation-duration: 0.01s !important;
+  }
 }

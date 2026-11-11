@@ -17,6 +17,7 @@ import { mapNodeIcon } from './mapNodeArt';
 import { EvolutionScreen } from './EvolutionScreen';
 import { useMasteryFlow } from './masteryFlow';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
+import { RecruitOath } from './RecruitOath';
 import { RosterPeek } from './RosterPeek';
 import './recruitNode.css';
 
@@ -35,7 +36,6 @@ interface Props {
   pickedType: TypeId | null;
   onPick: (type: TypeId) => void;
   onRunChange: (next: RunState) => void;
-  onRecruited?: (heroId: string) => void;
   /** A dismissed hero's gear, handed on through the item gate. Advances the node itself. */
   onGrantEquipment: (itemIds: string[]) => void;
   onContinue: () => void;
@@ -51,7 +51,7 @@ const RECRUIT_RGB = '155, 201, 255';
  * dimmed. A tap sends word; one of them joins at the player's par, and at a full roster someone
  * leaves first.
  */
-export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, onRunChange, onRecruited, onGrantEquipment, onContinue, onlyType }: Props) {
+export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, onRunChange, onGrantEquipment, onContinue, onlyType }: Props) {
   // Read once: after the join, the roster it was rolled against has changed.
   const [arriving, setArriving] = useState<RosterEntry | null>(() => (pickedType ? entryFor(pickedType) : null));
   const [leavingId, setLeavingId] = useState<string | null>(null);
@@ -72,8 +72,6 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
     const landed = joinEventRecruit(run, entry, terminatedRosterId);
     onRunChange(landed);
     setLeavingId(null);
-    onRecruited?.(entry.heroId);
-    flow.raise(entry.rosterId, landed);
   }
 
   const evolvingEntry = flow.evolving ? (run.roster.find((r) => r.rosterId === flow.evolving!.rosterId) ?? null) : null;
@@ -81,6 +79,34 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
     return <EvolutionScreen hero={rosterHeroes[evolvingEntry.heroId]} entry={evolvingEntry} node={flow.evolving.node} run={run} onChoose={flow.chooseEvolution} />;
   }
   const overflowEntry = flow.overflow ? (run.roster.find((r) => r.rosterId === flow.overflow!.rosterId) ?? null) : null;
+
+  // Sworn: the reveal, then whatever its pips owe, then on. The reveal plays again in its new form after an Evolution.
+  const sworn = joined && arriving ? run.roster.find((r) => r.rosterId === arriving.rosterId) : undefined;
+  if (sworn) {
+    return (
+      <>
+        <RecruitOath
+          key={sworn.chosenPathIds.length}
+          run={run}
+          entry={sworn}
+          onContinue={() => {
+            if (flow.busy || flow.raise(sworn.rosterId)) return;
+            if (handOn.length > 0) onGrantEquipment(handOn);
+            else onContinue();
+          }}
+        />
+        {flow.overflow && overflowEntry && (
+          <MoveOfferOverlay
+            run={run}
+            entry={overflowEntry}
+            moveId={flow.overflow.queue[0]}
+            eyebrow={flow.overflow.eyebrow ?? 'The Evolution grants a move, and the kit is full'}
+            onResolve={flow.resolveOverflow}
+          />
+        )}
+      </>
+    );
+  }
 
   function pick(type: TypeId) {
     const entry = entryFor(type);
@@ -96,7 +122,7 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
         <span className="rite-pool" aria-hidden="true" />
         <img src={mapNodeIcon('recruitReward')} className="rite-place-art is-icon" alt="" draggable={false} />
       </span>
-      <span className="rite-eyebrow">{joined ? 'Joined the Pact' : arriving ? 'The roster is full' : 'Word Goes Out'}</span>
+      <span className="rite-eyebrow">{arriving ? 'The roster is full' : 'Word Goes Out'}</span>
       <h2 className="rite-name">{arriving ? rosterHeroes[arriving.heroId].name : 'Recruit'}</h2>
     </header>
   );
@@ -140,19 +166,7 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
         </div>
       )}
 
-      {arriving && (joined || run.roster.length < ROSTER_CAP) && (
-        <div className="pick-grid pick-cols-2 recruit-arrival">
-          <HeroPickCard
-            hero={rosterHeroes[arriving.heroId]}
-            entry={run.roster.find((r) => r.rosterId === arriving.rosterId) ?? arriving}
-            onPreview={() => setPreviewEntry({ hero: rosterHeroes[arriving.heroId], entry: arriving })}
-            ctaClassName="is-done"
-            cta="Joined"
-          />
-        </div>
-      )}
-
-      {arriving && !joined && run.roster.length >= ROSTER_CAP && (
+      {arriving && (
         <HeroPickGrid count={run.roster.length} fill columns={3} className="is-waking">
           {run.roster.map((entry) => {
             const hero = rosterHeroes[entry.heroId];
@@ -173,7 +187,7 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
         </HeroPickGrid>
       )}
 
-      {arriving && !joined && run.roster.length >= ROSTER_CAP ? (
+      {arriving && (
         <div className="reward-panel-actions moveoffer-actions event-leave-actions">
           <button className="moveoffer-button moveoffer-decline" onClick={onContinue}>
             <span className="moveoffer-label">Send away</span>
@@ -186,23 +200,6 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
             </span>
           </button>
         </div>
-      ) : (
-        joined &&
-        !flow.busy && (
-          <button className="resolve-button" onClick={handOn.length > 0 ? () => onGrantEquipment(handOn) : onContinue}>
-            Continue
-          </button>
-        )
-      )}
-
-      {flow.overflow && overflowEntry && (
-        <MoveOfferOverlay
-          run={run}
-          entry={overflowEntry}
-          moveId={flow.overflow.queue[0]}
-          eyebrow={flow.overflow.eyebrow ?? 'The Evolution grants a move, and the kit is full'}
-          onResolve={flow.resolveOverflow}
-        />
       )}
 
       {previewEntry && (

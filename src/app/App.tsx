@@ -472,7 +472,7 @@ export function App() {
   }, [screen.kind]);
 
   /** The joining cinematic for the one recruit path that resolves here: terminating a hero to make room. */
-  const [recruitFanfare, setRecruitFanfare] = useState<{ heroId: string; source: 'recruit' | 'event' } | null>(null);
+  const [recruitFanfare, setRecruitFanfare] = useState<{ heroId: string; source: 'event' } | null>(null);
 
   // Owned here rather than in SandboxBattleScreen, which unmounts during a sandbox fight.
   const [sandboxSideA, setSandboxSideA] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
@@ -1631,7 +1631,6 @@ export function App() {
             setPlayerRun(next);
             setScreen((at) => (at.kind === 'recruitNode' ? { ...at, settled: true } : at));
           }}
-          onRecruited={(heroId) => setRecruitFanfare({ heroId, source: 'recruit' })}
           onGrantEquipment={(itemIds) => handleClaimEquipment(screen.nodeId, itemIds)}
           onContinue={() => handleNodeContinue(screen.nodeId)}
         />
