@@ -209,8 +209,9 @@ Tavern keeps its meal until phase 2 deletes the Hall. A dismissed hero is record
 
 Decided in the build, each the existing precedent, **open for review**:
 
-- **The Evolution of a recruit at 5 pips** comes on its next level-up report, as a raw hire's did,
-  not on arrival as §2.2 says. Raising it on the Recruit screen itself is a small follow-up.
+- **The Evolution of a recruit at 5 pips** is raised on the Recruit screen the moment it joins, as
+  §2.2 says (settled same day, per user direction), with the path's move offered as replace-or-decline
+  at a full kit. A reload before the path is chosen falls back to the next level-up report.
 - **The Gathering (Cycle IV)** lost its player-side help with the Tavern: one more hire a visit. It
   is carried over as **one more type at every Recruit** (`GATHERING_EXTRA_RECRUIT_TYPES`).
 - **First Light's Contracts lesson** is now *Recruits* on the new screen: three types, the hand on

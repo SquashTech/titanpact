@@ -14,6 +14,9 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { NodeMotes } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { mapNodeIcon } from './mapNodeArt';
+import { EvolutionScreen } from './EvolutionScreen';
+import { useMasteryFlow } from './masteryFlow';
+import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { RosterPeek } from './RosterPeek';
 import './recruitNode.css';
 
@@ -61,12 +64,23 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
 
   const joined = arriving ? run.roster.some((r) => r.rosterId === arriving.rosterId && r.heroId === arriving.heroId) : false;
 
+  // A recruit that arrives with the pips for its Evolution chooses its path here, as it joins.
+  const flow = useMasteryFlow(run, onRunChange);
+
   function join(entry: RosterEntry, terminatedRosterId?: string) {
     setHandOn([...(run.roster.find((r) => r.rosterId === terminatedRosterId)?.equipment ?? [])]);
-    onRunChange(joinEventRecruit(run, entry, terminatedRosterId));
+    const landed = joinEventRecruit(run, entry, terminatedRosterId);
+    onRunChange(landed);
     setLeavingId(null);
     onRecruited?.(entry.heroId);
+    flow.raise(entry.rosterId, landed);
   }
+
+  const evolvingEntry = flow.evolving ? (run.roster.find((r) => r.rosterId === flow.evolving!.rosterId) ?? null) : null;
+  if (flow.evolving && evolvingEntry) {
+    return <EvolutionScreen hero={rosterHeroes[evolvingEntry.heroId]} entry={evolvingEntry} node={flow.evolving.node} run={run} onChoose={flow.chooseEvolution} />;
+  }
+  const overflowEntry = flow.overflow ? (run.roster.find((r) => r.rosterId === flow.overflow!.rosterId) ?? null) : null;
 
   function pick(type: TypeId) {
     const entry = entryFor(type);
@@ -173,11 +187,22 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
           </button>
         </div>
       ) : (
-        joined && (
+        joined &&
+        !flow.busy && (
           <button className="resolve-button" onClick={handOn.length > 0 ? () => onGrantEquipment(handOn) : onContinue}>
             Continue
           </button>
         )
+      )}
+
+      {flow.overflow && overflowEntry && (
+        <MoveOfferOverlay
+          run={run}
+          entry={overflowEntry}
+          moveId={flow.overflow.queue[0]}
+          eyebrow={flow.overflow.eyebrow ?? 'The Evolution grants a move, and the kit is full'}
+          onResolve={flow.resolveOverflow}
+        />
       )}
 
       {previewEntry && (
