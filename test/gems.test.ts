@@ -11,17 +11,12 @@ import {
   GEM_DROP,
   GEM_ORDER,
   SCRIBE_GEMS,
-  SHELF_GEM_COUNT,
-  buyShelfGem,
-  canBuyShelfGem,
   gemAmount,
   gemPointsForAct,
   gemStatModifiers,
   placeGem,
   rollGemDrop,
   rollGems,
-  rollShelfGems,
-  shelfGemPrice,
 } from '../src/run/gems';
 import { MASTERY_CAP, MasteryError } from '../src/run/mastery';
 import { addRosterEntry, createRosterEntry, createRunState } from '../src/run/state';
@@ -85,23 +80,3 @@ test('gems: the Skirmish always drops two, the Elite and the Guardian three, the
   assert.strictEqual(rollGemDrop('finale', 4, () => 0).length, 0);
 });
 
-test('gems: the shelf sells single Gems, priced by their points, while somebody can take one', () => {
-  assert.ok(SHELF_GEM_COUNT >= 4 && SHELF_GEM_COUNT <= 6, 'a counter read at a glance');
-  const stock = rollShelfGems(3);
-  assert.strictEqual(stock.length, SHELF_GEM_COUNT);
-  assert.strictEqual(new Set(stock.map((g) => g.stat)).size, SHELF_GEM_COUNT, 'no stat twice');
-  assert.ok(stock.every((g) => g.points === 10), 'sized by the act');
-  const small = { stat: 'attack' as const, points: 5 };
-  const large = { stat: 'attack' as const, points: 10 };
-  assert.strictEqual(shelfGemPrice(large), shelfGemPrice(small) * 2, 'the price walks with the act');
-  let run = { ...seed('cinderKnight'), gold: shelfGemPrice(small) };
-  assert.ok(canBuyShelfGem(run, small, false));
-  assert.ok(!canBuyShelfGem(run, small, true), 'each sold once a visit');
-  assert.ok(!canBuyShelfGem(run, large, false), 'gold');
-  run = buyShelfGem(run, small);
-  assert.strictEqual(run.gold, 0, 'the gold is the whole price');
-  assert.strictEqual(run.roster[0].mastery, 0, 'the Gem lands through placeGem, once the player has said who');
-  const capped = { ...run, gold: 99, roster: [{ ...run.roster[0], mastery: MASTERY_CAP }] };
-  assert.ok(!canBuyShelfGem(capped, small, false), 'nobody to take it');
-  assert.throws(() => buyShelfGem(capped, small), MasteryError);
-});

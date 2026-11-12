@@ -13,7 +13,7 @@ import {
   type Tip,
 } from '../src/run/tips';
 import { createProfile, decodeProfile, recordTipSeen, resetTips } from '../src/run/profile';
-import { isHallScene, isRollScene, isStatusScene, TIP_SCENES, TYPE_ROLL, type TipHallScene, type TipScene } from '../src/data/tipScenes';
+import { isRollScene, isStatusScene, TIP_SCENES, TYPE_ROLL, type TipScene } from '../src/data/tipScenes';
 import { TYPES } from '../src/data/typechart';
 import { equipment } from '../src/data/equipment';
 import { heroes } from '../src/data/heroes';
@@ -109,8 +109,7 @@ test('tips: the first command phase of the first fight is the basics, and nothin
 // --- Scenes ---
 
 const allPictures = Object.entries(TIP_SCENES).flatMap(([id, pages]) => pages.flatMap((scene, page) => (scene ? [{ id, page, scene }] : [])));
-const scenePages = allPictures.filter((p) => !isHallScene(p.scene) && !isRollScene(p.scene) && !isStatusScene(p.scene)) as { id: string; page: number; scene: TipScene }[];
-const hallPages = allPictures.filter((p) => isHallScene(p.scene)) as { id: string; page: number; scene: TipHallScene }[];
+const scenePages = allPictures.filter((p) => !isRollScene(p.scene) && !isStatusScene(p.scene)) as { id: string; page: number; scene: TipScene }[];
 
 test('tips: the type roll shows one hero of every draftable type, in the chart\'s order', () => {
   const rolled = TYPE_ROLL.map((id) => allCombatants[id]?.types[0]);
@@ -135,30 +134,6 @@ test('tips: every hero, move and field a scene draws exists', () => {
     }
     if (scene.field) assert.ok(fieldEffects[scene.field], `${where}: field ${scene.field}`);
   }
-});
-
-test('tips: every hero, Gem and item a Guild Hall scene draws exists', () => {
-  for (const { id, page, scene } of hallPages) {
-    const where = `${id} page ${page + 1}`;
-    for (const h of scene.roster) {
-      assert.ok(allCombatants[h.heroId], `${where}: hero ${h.heroId}`);
-      for (const itemId of h.items ?? []) assert.ok(equipment[itemId], `${where}: item ${itemId}`);
-    }
-    for (const itemId of scene.items ?? []) assert.ok(equipment[itemId], `${where}: item ${itemId}`);
-    const stock = scene.hall === 'gems' ? scene.gems : scene.items;
-    if (scene.pick !== undefined) assert.ok(stock && scene.pick < stock.length, `${where}: pick in stock`);
-  }
-});
-
-test('tips: the Gear counter scene shows a merge, a take and a full hero replacing', () => {
-  const gear = hallPages.find((p) => p.scene.hall === 'gear')!.scene;
-  const item = equipment[gear.items![gear.pick!]];
-  const kinds = gear.roster.map((h, i) => {
-    const entry = createRosterEntry(`t${i}`, h.heroId, []);
-    entry.equipment = [...(h.items ?? [])];
-    return itemReceiptFor(entry, item, allCombatants[h.heroId], equipment).kind;
-  });
-  assert.deepStrictEqual(kinds, ['merge', 'take', 'replace']);
 });
 
 test('tips: a scene shows the matchups its words promise', () => {

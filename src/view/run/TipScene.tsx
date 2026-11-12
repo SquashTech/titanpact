@@ -8,15 +8,12 @@ import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
 import { fieldEffects } from '../../data/fieldEffects';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
-import { isHallScene, isRollScene, isStatusScene, type TipRollScene, type TipHallScene, type TipPicture, type TipScene as Scene, type TipSceneCallout, type TipSceneFighter, type TipStatusScene } from '../../data/tipScenes';
+import { isRollScene, isStatusScene, type TipRollScene, type TipPicture, type TipScene as Scene, type TipSceneCallout, type TipSceneFighter, type TipStatusScene } from '../../data/tipScenes';
 import { StatusGlyph, StatusPips, statusColor, statusTint } from '../shared/statusIcons';
 import { createRosterEntry, createRunState, type RunState } from '../../run/state';
 import { xpForLevel } from '../../run/growth';
 import { rosterHeroes } from '../../data/content';
 import { entryHp } from '../shared/WoundBar';
-import { GuildHallPanel } from './GuildHallPanel';
-import { GearCounter, GemCounter } from './HallCounters';
-import { HallSigns } from './guildHallArt';
 import { CombatantCard } from '../combat/CombatantCard';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { MoveButtonReplica } from '../shared/MoveTile';
@@ -49,60 +46,7 @@ function build(fighter: TipSceneFighter, id: string, side: Side): Built | null {
   return { hero, combatant, level: fighter.level ?? SCENE_LEVEL };
 }
 
-const HALL_SIGNS = [
-  { id: 'tavern', label: 'Tavern' },
-  { id: 'gems', label: 'Gems' },
-  { id: 'gear', label: 'Gear' },
-] as const;
-
 const noop = () => {};
-
-/** The made-up visit a hall scene stands on: its roster, its purse, nothing else. */
-function stagedRun(scene: TipHallScene): RunState {
-  const run = createRunState(scene.gold);
-  run.roster = scene.roster
-    .filter((h) => rosterHeroes[h.heroId])
-    .map((h, i) => {
-      const hero = rosterHeroes[h.heroId];
-      const entry = createRosterEntry(`scene-${i}`, hero.id, hero.moveIds);
-      entry.xp = xpForLevel(SCENE_LEVEL);
-      entry.mastery = h.mastery ?? 0;
-      entry.equipment = [...(h.items ?? [])];
-      if (h.wounded) entry.wounds = Math.round(entryHp(hero, entry, run.relics).maxHp * h.wounded);
-      return entry;
-    });
-  return run;
-}
-
-/** A Guild Hall counter mid-visit, drawn by the hall's own panel. */
-function HallScene({ scene }: { scene: TipHallScene }) {
-  const run = stagedRun(scene);
-  const classes = ['tip-scene', 'is-hall', `is-${scene.hall}`, ...(scene.focus ?? []).map((f) => `focus-${f}`)];
-  return (
-    <div className={classes.join(' ')} aria-hidden="true">
-      <div className="tip-scene-hall">
-        {scene.hall === 'tavern' && (
-          <GuildHallPanel
-            run={run}
-            offers={{ itemIds: [], gems: [] }}
-            tab="tavern"
-            gemsBought={[]}
-            itemsBought={[]}
-            onBuyGem={() => null}
-            onGemPlaced={noop}
-            onBuyItem={() => null}
-            onBuyMend={noop}
-          />
-        )}
-        {scene.hall === 'gems' && (
-          <GemCounter run={run} gems={scene.gems ?? []} sold={[]} onBuy={() => null} onPlaced={noop} initialPick={scene.pick} />
-        )}
-        {scene.hall === 'gear' && <GearCounter run={run} itemIds={scene.items ?? []} sold={[]} onBuy={() => null} initialPick={scene.pick} />}
-      </div>
-      <HallSigns tabs={HALL_SIGNS} active={scene.hall} onSelect={noop} />
-    </div>
-  );
-}
 
 /**
  * Each callout's mark on the move row: whether its label sits above the row or below it, how far its
@@ -235,7 +179,7 @@ function CalloutLayer({ placed }: { placed: readonly PlacedCallout[] }) {
 export function TipPictureView({ scene }: { scene: TipPicture }) {
   if (isRollScene(scene)) return <RollScene scene={scene} />;
   if (isStatusScene(scene)) return <StatusStripScene scene={scene} />;
-  return isHallScene(scene) ? <HallScene scene={scene} /> : <TipScene scene={scene} />;
+  return <TipScene scene={scene} />;
 }
 
 /** A status round by round: its fight badge, drawn large, at each step, a note under each. */

@@ -17,33 +17,6 @@ import type { RosterEntry, RunState } from './state';
 
 export class WoundsError extends Error {}
 
-/**
- * The Guild Hall's mend is priced by what is missing (2026-09-18, per user direction): gold per
- * hero's worth of missing HP across the roster, a downed hero counting as a whole one, rounded to
- * the coin and never under the floor. Six heroes at half cost 45 — about the old flat 40, at the
- * point that price was worth paying — and a scratch costs a scratch. Still a pure gold sink.
- */
-export const MEND_PRICE_PER_HERO = 15;
-export const MEND_PRICE_FLOOR = 5;
-/** Prices are struck in fives, as the shelf's are. */
-const MEND_PRICE_STEP = 5;
-
-/** How much of the roster is missing, in heroes' worth: each hero's wounds over its max, a downed hero 1. */
-export function rosterMissing(run: RunState, maxHpOf: (entry: RosterEntry) => number): number {
-  let missing = 0;
-  for (const entry of run.roster) {
-    if (entry.down) missing += 1;
-    else if (entry.wounds > 0) missing += Math.min(1, entry.wounds / Math.max(1, maxHpOf(entry)));
-  }
-  return missing;
-}
-
-/** What the mend costs right now — `maxHpOf` because what a hero's max IS is the run side's to read. */
-export function mendPrice(run: RunState, maxHpOf: (entry: RosterEntry) => number): number {
-  const priced = Math.round((MEND_PRICE_PER_HERO * rosterMissing(run, maxHpOf)) / MEND_PRICE_STEP) * MEND_PRICE_STEP;
-  return Math.max(MEND_PRICE_FLOOR, priced);
-}
-
 /** The HP a hero with `wounds` missing stands at against `maxHp`. */
 export function woundedHp(maxHp: number, wounds: number): number {
   return Math.max(0, maxHp - wounds);
@@ -109,18 +82,7 @@ export function recordWounds(run: RunState, state: CombatState, side: Side, hero
   };
 }
 
-/** The whole roster made whole, the downed stood up — the act's end, the Rest seat, the Guild Hall's mend. */
+/** The whole roster made whole, the downed stood up — the act's end, the Rest seat, the Camp's Mend. */
 export function mendRoster(run: RunState): RunState {
   return { ...run, roster: run.roster.map((entry) => (isWounded(entry) ? { ...entry, wounds: 0, down: false } : entry)) };
-}
-
-/** `cost` is mendPrice(run, maxHpOf), computed by the caller that can read max HP. */
-export function canBuyMend(run: RunState, cost: number): boolean {
-  return anyWounded(run) && run.gold >= cost;
-}
-
-export function buyMend(run: RunState, cost: number): RunState {
-  if (!anyWounded(run)) throw new WoundsError('Nobody is wounded');
-  if (run.gold < cost) throw new WoundsError(`Mending costs ${cost} gold, only ${run.gold} available`);
-  return mendRoster({ ...run, gold: run.gold - cost });
 }

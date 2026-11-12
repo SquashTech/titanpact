@@ -1,8 +1,8 @@
 # guild-hall-overhaul.md — No Guild Hall, no gold, recruits off the map
 
-> **STATUS: DECIDED 2026-11-11 (per user direction); PHASE 1 IN (same day).** The shape is
+> **STATUS: DECIDED 2026-11-11 (per user direction); PHASES 1–2 IN (same day).** The shape is
 > decided; every number marked *first pass* is a placeholder for playtest. §7 lists the invariants
-> it reverses; §8 records what phase 1 built and measured.
+> it reverses; §8 and §9 record what phases 1 and 2 built and measured.
 
 ---
 
@@ -229,3 +229,33 @@ Decided in the build, each the existing precedent, **open for review**:
 rows at random, so it took 1.09 recruits a run against ~2.9 under contracts, and the Recruit showed
 the largest node lift in the batch (+1.05, z 3.5). A player who plans takes it far more often; the
 weight in §2.3 is the dial, and the call is made by playing.
+
+---
+
+## 9. Phase 2, built (2026-11-11)
+
+The funnel is the `camp` node (`src/run/camp.ts`, `CampNodeScreen`), drawn on the map as a tent
+and fire (`art/map-nodes/landmarks/camp.png`). Its screen is the Rest's scene in firelight: the
+company round the fire with every bar where the act left it, three doors under it, one chosen and
+then committed.
+
+- **Mend** plays on the Camp's own figures, the Rest's beat, and leaves only Continue. It is shut
+  while nobody is hurt.
+- **Gems** opens the Gem screen with `CAMP_GEMS` = the Cache's count, **3**, not the 4 this doc's
+  §3 named: the Cache holds 3 now. Shut while every hero is mastered.
+- **Gear** opens `CampGearScreen`: three pieces on the act's standard curve, one taken, then its
+  who-screen.
+
+Deleted: the Guild Hall screen, its three counters and its tab memory, the shelf Gems
+(`rollShelfGems`, their price and purchase), the shelf gear and its price, the priced mend
+(`mendPrice`, `buyMend`), the Guild Hall How to Play scenes, and the Guild Hall's map art. A map
+saved with a `shop` node reads it as a Camp; a run saved inside the Hall opens on the Camp; a shelf
+Gem still being placed lands as the Camp's would. Gold, the purse and Sell stay until phase 3.
+
+**Left for later:** the Guild Hall's CSS in `styles.css` and the unused `art/guild` pieces, the
+Location `hall` backdrops, and Rest's pool weight beside a guaranteed Mend (§3 "Watch").
+
+**Measured (sim, 200 runs, seed 1, faults only):** no crash, stall or stranded run. The pilot takes
+the Mend when the roster is under 60% or anyone is down, the Gems while anyone can take one, else
+the Gear: Mend 39 / 52 / 57 / 53% of visits by act, the Gear only once the roster is mastered. Win
+rates are directional; the call is made by playing.

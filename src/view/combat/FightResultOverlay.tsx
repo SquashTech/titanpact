@@ -24,7 +24,8 @@ import { playXpBar, xpBarSegments, xpBarTickTimes, xpBarTotalMs } from '../share
 import { getTypeColor } from './typeColors';
 import { gemAmount, type Gem } from '../../run/gems';
 import { GemIcon, GEM_STONES } from '../shared/GemIcon';
-import { GOOD_ART } from '../run/guildHallArt';
+import hpPotionArt from '../../../art/guild/good-hp.png';
+import mpPotionArt from '../../../art/guild/good-mp.png';
 
 /** A loss wears the enemy's red; a win, the run's gold — the Location's own tint stays on the field behind. */
 const TINT_LOSS = '217, 83, 79';
@@ -485,7 +486,7 @@ function lootPieces(
     pieces.push({
       key: 'potion',
       color: RESOURCE_COLORS[potion],
-      art: <img src={GOOD_ART[potion === 'hpPotion' ? 'hp' : 'mp']} alt="" draggable={false} />,
+      art: <img src={potion === 'hpPotion' ? hpPotionArt : mpPotionArt} alt="" draggable={false} />,
       label: CONSUMABLE_NAMES[potion],
     });
   }

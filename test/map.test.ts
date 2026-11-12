@@ -14,7 +14,7 @@ test('map: different seeds produce different maps', () => {
   assert.notStrictEqual(JSON.stringify(a), JSON.stringify(b));
 });
 
-test('map: row 0 is a single plain fight, the funnel row is a single shop, the boss row is a single boss', () => {
+test('map: row 0 is a single plain fight, the funnel row is a single Camp, the boss row is a single boss', () => {
   const map = generateMap(7);
   const rows = map.rows;
   const rowTypes = (r: number) => rows[r].map((id) => map.nodes[id].type);
@@ -25,7 +25,7 @@ test('map: row 0 is a single plain fight, the funnel row is a single shop, the b
   const funnelRow = rows.length - 2;
   const bossRow = rows.length - 1;
   assert.strictEqual(rows[funnelRow].length, 1);
-  assert.deepStrictEqual(rowTypes(funnelRow), ['shop']);
+  assert.deepStrictEqual(rowTypes(funnelRow), ['camp']);
   assert.strictEqual(rows[bossRow].length, 1);
   assert.deepStrictEqual(rowTypes(bossRow), ['boss']);
 
@@ -72,7 +72,7 @@ test('map: the per-act shape — Fight, pick-3 reward, patron seat, pick-3 rewar
       assert.deepStrictEqual(rowTypes(5), ['patronSeat', 'patronSeat'], `${where}: the second patron seat`);
       assert.ok(rowTypes(6).every((t) => REWARD_TYPES.has(t)), `${where} row 6 has a non-reward type: ${rowTypes(6)}`);
       assert.strictEqual(rows[6].length, 3, 'the third reward row sits between the second seat and the funnel');
-      assert.deepStrictEqual(rowTypes(7), ['shop'], `${where}: the funnel is one forced Guild Hall (docs/gear-absorption.md §6)`);
+      assert.deepStrictEqual(rowTypes(7), ['camp'], `${where}: the funnel is one forced Camp (docs/guild-hall-overhaul.md §3)`);
       assert.deepStrictEqual(rowTypes(8), ['boss']);
       // No un-forked Skirmish anywhere: the fork is the only one.
       const skirmishes = Object.values(map.nodes).filter((n) => n.type === 'skirmish');
@@ -92,11 +92,11 @@ test('map: the funnel is one Guild Hall in every act, and a Guild Hall is never 
     for (const actNumber of [1, 2, 3, 4]) {
       const map = generateMap(seed, actNumber);
       const funnelRow = map.rows.length - 2;
-      assert.deepStrictEqual(map.rows[funnelRow].map((id) => map.nodes[id].type), ['shop'], `act ${actNumber} seed ${seed}`);
+      assert.deepStrictEqual(map.rows[funnelRow].map((id) => map.nodes[id].type), ['camp'], `act ${actNumber} seed ${seed}`);
       for (let r = 0; r < map.rows.length; r++) {
         if (r === funnelRow) continue;
         for (const nodeId of map.rows[r]) {
-          assert.notStrictEqual(map.nodes[nodeId].type, 'shop', `act ${actNumber} seed ${seed} row ${r}`);
+          assert.notStrictEqual(map.nodes[nodeId].type, 'camp', `act ${actNumber} seed ${seed} row ${r}`);
         }
       }
     }

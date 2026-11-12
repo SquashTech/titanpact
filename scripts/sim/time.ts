@@ -35,7 +35,7 @@ export type ScreenKind =
   | 'patronSeat'
   | 'blacksmith'
   | 'event'
-  | 'shop';
+  | 'camp';
 
 /**
  * Seconds a player spends on each screen, for a player reading at a normal pace and making the
@@ -84,7 +84,8 @@ export const SCREEN_SECONDS: Record<ScreenKind, number> = {
   patronSeat: 25,
   blacksmith: 30,
   event: 15,
-  shop: 45,
+  // Three doors, then the door's own screen.
+  camp: 15,
 };
 
 export interface PaceProfile {

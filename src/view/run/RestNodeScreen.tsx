@@ -23,7 +23,7 @@ interface Props {
 }
 
 /** One hero at rest: its figure, its name, and its bar where the act left it. A hold reads its sheet. */
-function CampFigure({
+export function CampFigure({
   hero,
   entry,
   hp,

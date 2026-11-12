@@ -275,13 +275,12 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Choose a Class first, then a hero to learn it.'
   ),
   page(
-    'guildHall',
-    'The Guild Hall',
+    'camp',
+    'The Camp',
     RUN,
-    ['node:shop'],
-    'The *Tavern* serves a meal that heals your whole roster.',
-    'The *Gem* counter sells single Gems. Pick one, then the hero to set it in.',
-    'The *Gear* counter sells items. Pick one, then the hero to wear it.'
+    ['node:camp'],
+    'The last stop before every *Guardian*. Pick one of three:\n- *Mend*: your whole roster healed, the downed back on their feet\n- *Gems*: a handful to set in your heroes\n- *Gear*: one item of three',
+    'Whatever you pass up, you face the Guardian without.'
   ),
   page(
     'ancient',

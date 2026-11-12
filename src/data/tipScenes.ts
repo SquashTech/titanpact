@@ -80,27 +80,6 @@ export interface TipScene {
   expect?: Readonly<Record<string, readonly number[]>>;
 }
 
-/** A roster hero at a Guild Hall counter. */
-export interface TipHallHero {
-  heroId: string;
-  mastery?: number;
-  items?: readonly string[];
-  /** HP missing, as a fraction of max. */
-  wounded?: number;
-}
-
-/** A Guild Hall counter, staged: the hall's own panel on a made-up visit, with a piece already picked. */
-export interface TipHallScene {
-  hall: 'tavern' | 'gems' | 'gear';
-  roster: readonly TipHallHero[];
-  gems?: readonly Gem[];
-  items?: readonly string[];
-  /** The stock slot already picked (Gems, Gear). */
-  pick?: number;
-  gold: number;
-  focus?: readonly TipSceneFocus[];
-}
-
 /**
  * One status, drawn as its badge round by round (the badge a fight draws, larger), each step with a
  * short note under it: how a Burn dies down, how a Poison's timer fills.
@@ -115,11 +94,7 @@ export interface TipRollScene {
   roll: readonly string[];
 }
 
-export type TipPicture = TipScene | TipHallScene | TipRollScene | TipStatusScene;
-
-export function isHallScene(scene: TipPicture): scene is TipHallScene {
-  return 'hall' in scene;
-}
+export type TipPicture = TipScene | TipRollScene | TipStatusScene;
 
 export function isRollScene(scene: TipPicture): scene is TipRollScene {
   return 'roll' in scene;
@@ -164,9 +139,6 @@ const ANCIENT_CAST = {
   foes: [{ heroId: 'dragon' }],
   moves: ['siphon', 'jolt'],
 } as const;
-
-/** The same three heroes at every counter, so the pages read as one visit. */
-const HALL_ROSTER = ['cinderKnight', 'wildOracle', 'leviathan'] as const;
 
 /** Cinder over two moves, part-way down its blue line. */
 const MANA_SCENE: TipScene = { hero: { heroId: 'cinderKnight', mana: 0.6 }, heroFigure: true, moves: ['singe', 'kindle'], focus: ['manaGem', 'mpBar'] };
@@ -257,41 +229,5 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
   'howto.ancient': [
     { ...ANCIENT_CAST, moves: [], focus: ['foeTypes'] },
     { ...ANCIENT_CAST, focus: ['matchups'], expect: { siphon: [1], jolt: [0.5] } },
-  ],
-  'howto.guildHall': [
-    {
-      hall: 'tavern',
-      roster: [{ heroId: HALL_ROSTER[0] }, { heroId: HALL_ROSTER[1], wounded: 0.4 }, { heroId: HALL_ROSTER[2] }],
-      gold: 120,
-      focus: ['bar'],
-    },
-    {
-      hall: 'gems',
-      roster: [
-        { heroId: HALL_ROSTER[0], mastery: 2 },
-        { heroId: HALL_ROSTER[1], mastery: 4 },
-        { heroId: HALL_ROSTER[2], mastery: 1 },
-      ],
-      gems: [
-        { stat: 'attack', points: 5 },
-        { stat: 'hp', points: 5 },
-        { stat: 'speed', points: 5 },
-      ],
-      pick: 0,
-      gold: 120,
-      focus: ['stock', 'heroCards'],
-    },
-    {
-      hall: 'gear',
-      roster: [
-        { heroId: HALL_ROSTER[0], items: ['sword.common'] },
-        { heroId: HALL_ROSTER[1] },
-        { heroId: HALL_ROSTER[2], items: ['dagger.common', 'bow.common', 'spear.common'] },
-      ],
-      items: ['sword.common', 'greataxe.rare', 'bow.rare'],
-      pick: 0,
-      gold: 120,
-      focus: ['stock', 'heroCards'],
-    },
   ],
 };

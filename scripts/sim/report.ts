@@ -580,7 +580,7 @@ export function formatReport(
   }
   out.push('');
   out.push('  items obtained per run by source and act (all = per run that ENTERED the act; won = completed runs):');
-  const itemSources = ['drop', 'node', 'event', 'shop'];
+  const itemSources = ['drop', 'node', 'event', 'camp'];
   const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
   out.push(`  ${pad('act', 6)}${itemSources.map((s) => padStart(s, 10)).join('')}${padStart('total', 8)}   ${itemSources.map((s) => padStart(`won:${s}`, 13)).join('')}${padStart('total', 8)}`);
   const itemTotals = { all: 0, won: 0 };
@@ -597,18 +597,17 @@ export function formatReport(
   out.push(`  merge offered (somebody held the family)  ${num(agg.mergeOffers / R, 2)} /run  (completed runs ${agg.wins > 0 ? num(agg.mergeOffersWon / agg.wins, 2) : '-'})`);
   out.push(`  merge taken by the pilot                  ${num(agg.merges / R, 2)} /run  (completed runs ${agg.wins > 0 ? num(agg.mergesWon / agg.wins, 2) : '-'})`);
   out.push('');
-  out.push('  gold per run that entered the act — earned by source, the purse on entering the Guild Hall, spent by sink:');
+  out.push('  gold earned per run that entered the act, and the Camp door taken (share of visits):');
   const earnedKeys = ['fight', 'purse', 'sell'];
-  const spentKeys = ['mend', 'scroll', 'gear'];
-  out.push(`  ${pad('act', 6)}${earnedKeys.map((k) => padStart(k, 8)).join('')}${padStart('earned', 9)}${padStart('at hall', 10)}   ${spentKeys.map((k) => padStart(k, 9)).join('')}${padStart('spent', 8)}`);
+  const doors = ['mend', 'gems', 'gear'];
+  out.push(`  ${pad('act', 6)}${earnedKeys.map((k) => padStart(k, 8)).join('')}${padStart('earned', 9)}   ${doors.map((d) => padStart(d, 8)).join('')}`);
   for (let act = 1; act <= TOTAL_ACTS; act++) {
     const entered = agg.actEntered[act] || 1;
     const earned = earnedKeys.map((k) => (agg.goldFlow[`${act}:earned:${k}`] ?? 0) / entered);
-    const visits = agg.goldFlow[`${act}:hallVisits`] ?? 0;
-    const atHall = visits > 0 ? (agg.goldFlow[`${act}:hall`] ?? 0) / visits : 0;
-    const spent = spentKeys.map((k) => (agg.goldFlow[`${act}:spent:${k}`] ?? 0) / entered);
+    const taken = doors.map((d) => agg.goldFlow[`${act}:camp:${d}`] ?? 0);
+    const visits = sum(taken);
     if (sum(earned) === 0 && visits === 0) continue;
-    out.push(`  ${pad(String(act), 6)}${earned.map((v) => padStart(num(v, 1), 8)).join('')}${padStart(num(sum(earned), 1), 9)}${padStart(visits > 0 ? num(atHall, 1) : '-', 10)}   ${spent.map((v) => padStart(num(v, 1), 9)).join('')}${padStart(num(sum(spent), 1), 8)}`);
+    out.push(`  ${pad(String(act), 6)}${earned.map((v) => padStart(num(v, 1), 8)).join('')}${padStart(num(sum(earned), 1), 9)}   ${taken.map((t) => padStart(visits > 0 ? pct(t, visits) : '-', 8)).join('')}`);
   }
   out.push('');
   const totalFights = agg.roundHistogram.reduce((a, b) => a + (b ?? 0), 0);

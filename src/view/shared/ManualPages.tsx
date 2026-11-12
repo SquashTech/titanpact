@@ -14,6 +14,7 @@ import { PassiveGlyph, passiveColor } from './passiveIcons';
 import { SeatArrow } from './MoveStrip';
 import { TypeBadge } from './TypeBadge';
 import { mapNodeArt, mapNodeIcon } from '../run/mapNodeArt';
+import { landmarkStillArt } from '../run/mapLandmarks';
 import { TipPictureView } from '../run/TipScene';
 import { PageText } from '../run/TipOverlay';
 import { TIP_SCENES } from '../../data/tipScenes';
@@ -93,7 +94,7 @@ function EmblemMark({ mark }: { mark: string }) {
   );
   switch (kind) {
     case 'node': {
-      const art = mapNodeArt(value as MapNodeType) ?? mapNodeIcon(value as MapNodeType);
+      const art = mapNodeArt(value as MapNodeType) ?? mapNodeIcon(value as MapNodeType) ?? landmarkStillArt(value as MapNodeType);
       return art ? <img className="manual-mark manual-mark-art" src={art} alt="" draggable={false} /> : null;
     }
     case 'status':

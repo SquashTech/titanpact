@@ -22,7 +22,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { STAT_FULL_LABELS } from '../shared/relicStacks';
 import { STAT_COLORS, StatGlyph } from '../shared/statIcons';
 import { StatusGlyph } from '../shared/statusIcons';
-import { GearSockets } from './HallCounters';
+import { GearSockets } from './gearShared';
 
 export interface LedgerRow {
   hero: HeroDefinition;

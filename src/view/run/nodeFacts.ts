@@ -7,7 +7,8 @@ import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, rarityWeightsFor } from '../../run/equipment';
 import { goldRangeFor, purseRangeFor } from '../../run/runProgress';
-import { GEM_CACHE_COUNT, GEM_DROP, SCRIBE_GEMS, SHELF_GEM_PRICE_PER_POINT, gemPointsForAct } from '../../run/gems';
+import { GEM_CACHE_COUNT, GEM_DROP, SCRIBE_GEMS, gemPointsForAct } from '../../run/gems';
+import { CAMP_GEAR_COUNT, CAMP_GEMS } from '../../run/camp';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { LEY_LINE_FORCE, MANA_WELL_AMOUNT, MANA_WELL_REGEN } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
@@ -15,7 +16,6 @@ import { mentorXpFor } from '../../run/mentor';
 import { championLevel, enemyLevelFor, openerEscortTiersFor, type EncounterNodeKind } from '../../run/difficulty';
 import { SEAL_ACTS } from '../../run/state';
 import { RECRUIT_TYPE_COUNT } from '../../run/recruitNode';
-import { MEND_PRICE_PER_HERO } from '../../run/wounds';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
 export type NodeFactGlyph =
@@ -123,14 +123,15 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         facts: [{ glyph: 'enemy', label: 'The Herald', value: `Lv ${enemyLevelFor('finale', actNumber)}`, note: `${SEAL_ACTS} Titanspawn with it` }],
         odds: null,
       };
-    case 'shop':
+    case 'camp':
       return {
-        about: null,
+        about: 'The last stop before the Guardian.',
         facts: [
-          { glyph: 'scroll', label: 'Gem', value: `${gemPointsForAct(actNumber) * SHELF_GEM_PRICE_PER_POINT}g` },
-          { glyph: 'hp', label: 'Meal', value: `${MEND_PRICE_PER_HERO}g`, note: 'per hero hurt' },
+          { glyph: 'hp', label: 'Mend', value: 'All', who: 'team' },
+          { glyph: 'scroll', label: 'Gems', value: `${CAMP_GEMS}`, note: gemNote(actNumber) },
+          { glyph: 'item', label: 'Gear', value: `1 of ${CAMP_GEAR_COUNT}` },
         ],
-        odds: null,
+        odds: odds('standard'),
       };
     case 'equipmentReward':
       return { about: null, facts: [{ glyph: 'item', label: 'Item', value: '1' }], odds: odds('cache') };

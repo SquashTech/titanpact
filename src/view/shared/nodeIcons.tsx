@@ -109,13 +109,8 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       <rect x="14.7" y="18.2" width="2.6" height="3.4" rx="0.9" />
     </>
   ),
-  // Guild Hall: roof over an arched doorway.
-  shop: (
-    <>
-      <path d="M12 2.2 22.6 9.4H1.4Z" />
-      <path fillRule="evenodd" d="M3.4 11.2h17.2v10.6H3.4Zm8.6 2.8a3.2 3.2 0 0 0-3.2 3.2v4.6h6.4v-4.6a3.2 3.2 0 0 0-3.2-3.2Z" />
-    </>
-  ),
+  // The Camp: a tent, its flap open.
+  camp: <path fillRule="evenodd" d="M12 2.4 22.6 21.6H1.4ZM12 10.4l-4 11.2h8Z" />,
   equipmentReward: SECTION_PATHS.equipment,
   // The Gem Cache: three small gems in a heap, against the Lapidary's one large.
   scrollReward: (

@@ -14,10 +14,9 @@ import type { Encounter, EncounterNodeType } from './enemyGen';
 import type { GauntletResult } from './gauntlet';
 import type { HeroLevelUp } from './growth';
 import type { RewardNodeType } from './map';
-import { GEM_ORDER, rollGems, rollShelfGems, type Gem, type GemPlan } from './gems';
+import { GEM_ORDER, rollGems, type Gem, type GemPlan } from './gems';
 import type { GrowthStatKey, TypeId } from '../engine/content';
 import type { MvpLedger, MvpTally } from './mvp';
-import type { GuildHallOffers } from './shop';
 import type { Squad } from './squad';
 import type { RosterEntry, RunState } from './state';
 import { createRunState } from './state';
@@ -94,8 +93,10 @@ export type RunScreen =
   | { kind: 'gauntletFight'; player: Encounter; ai: Encounter; locationId?: string | null; aiPilot: boolean }
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
-  /** `offers` lives on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; gemsBought: number[]; itemsBought: number[] }
+  /** The Camp's three doors (run/camp.ts); a door taken is its own screen. */
+  | { kind: 'camp'; nodeId: string; settled?: boolean }
+  /** The Camp's Gear door: `seed` fixes the three pieces, so a reload lays out the same ones. */
+  | { kind: 'campGear'; nodeId: string; seed: number; settled?: boolean }
   /** `seed` fixes what the chest holds, so a reload opens the same one. */
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType; seed: number; settled?: boolean }
   /** An item has arrived and asks who carries it (docs/gear-absorption.md §2). `next` is where the run goes once it is absorbed or sold. */
@@ -107,8 +108,7 @@ export type RunScreen =
   | { kind: 'rest'; nodeId: string; settled?: boolean }
   /**
    * Gems to whoever the player taps (run/gems.ts, docs/gems.md): the Scribe's
-   * forced row, the Gem Cache's reward seat, and the Guild Hall shelf (`bought`, `nodeId` null,
-   * the gold already charged). `progress` is the pips still to land and the heroes already paid,
+   * forced row, the Gem Cache's reward seat, and the Camp's Gems door. `progress` is the pips still to land and the heroes already paid,
    * kept here so a reload neither repays nor forgets them.
    */
   | { kind: 'scrolls'; plan: GemPlan; nodeId: string | null; bought: boolean; next: RunScreen; progress?: ScrollProgress }
@@ -172,7 +172,8 @@ const RESUMABLE: ReadonlySet<RunScreenKind> = new Set<RunScreenKind>([
   'titanBound',
   'map',
   'fight',
-  'shop',
+  'camp',
+  'campGear',
   'reward',
   'itemWho',
   'manaWell',
@@ -353,8 +354,9 @@ function decodeGems(value: unknown, label: string): Gem[] {
 }
 
 function decodePlan(value: unknown, ctx: Ctx): GemPlan {
-  if (isObject(value) && (value.source === 'scribe' || value.source === 'cache' || value.source === 'shelf' || value.source === 'drop') && Array.isArray(value.gems)) {
-    return { source: value.source, gems: decodeGems(value.gems, 'scrolls.plan.gems') };
+  if (isObject(value) && (value.source === 'scribe' || value.source === 'cache' || value.source === 'camp' || value.source === 'shelf' || value.source === 'drop') && Array.isArray(value.gems)) {
+    // A shelf Gem bought in the Guild Hall (deleted 2026-11-11) places as the Camp's do.
+    return { source: value.source === 'shelf' ? 'camp' : value.source, gems: decodeGems(value.gems, 'scrolls.plan.gems') };
   }
   // A screen saved before Gems: its Scrolls arrive as Gems, rolled now.
   if (isObject(value) && value.kind === 'scribe') return { source: 'scribe', gems: rollGems(4, ctx.run.actNumber) };
@@ -362,8 +364,8 @@ function decodePlan(value: unknown, ctx: Ctx): GemPlan {
   reject('scrolls.plan is unknown');
 }
 
-const NODE_SCREENS = ['manaWell', 'blessingShrine', 'forge', 'leyLine', 'rest'] as const;
-const SEEDED_NODE_SCREENS = ['boonNode', 'mentorNode', 'tutorNode', 'academyNode'] as const;
+const NODE_SCREENS = ['manaWell', 'blessingShrine', 'forge', 'leyLine', 'rest', 'camp'] as const;
+const SEEDED_NODE_SCREENS = ['boonNode', 'mentorNode', 'tutorNode', 'academyNode', 'campGear'] as const;
 const PASS_THROUGH = ['pactSeal', 'blessing', 'actIntro', 'map', 'champions'] as const;
 
 function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
@@ -382,6 +384,8 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
   if (raw.kind === 'companion' || raw.kind === 'companionAwakens') return decodeScreen(raw.next, ctx, depth + 1);
   // A run saved on a contract claim or a Tavern hire's swap (deleted 2026-11-11) walks on past it.
   if (raw.kind === 'recruit' || raw.kind === 'rosterReplace') return decodeScreen(raw.next, ctx, depth + 1);
+  // A run saved in the Guild Hall (deleted 2026-11-11) opens on the Camp in its place.
+  if (raw.kind === 'shop') return { kind: 'camp', nodeId: nodeId(raw.nodeId, ctx, 'shop.nodeId') };
   const kind = raw.kind as RunScreenKind;
   if (!isResumable(kind)) reject(`screen "${kind}" is not one a run is saved on`);
   const next = () => decodeScreen(raw.next, ctx, depth + 1);
@@ -438,21 +442,6 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
         // Absent on a fight saved before fights dropped Gems.
         gemReward: raw.gemReward === undefined ? [] : decodeGems(raw.gemReward, 'fight.gemReward'),
         levelSeed: int(raw.levelSeed, 'fight.levelSeed'),
-      };
-    }
-    case 'shop': {
-      if (!isObject(raw.offers)) reject('shop.offers is not a shelf');
-      if (!Array.isArray(raw.itemsBought) || !raw.itemsBought.every((slot) => isInt(slot, 0))) reject('shop.itemsBought is not a list of slots');
-      return {
-        kind,
-        nodeId: nodeId(raw.nodeId, ctx, 'shop.nodeId'),
-        offers: {
-          itemIds: (Array.isArray(raw.offers.itemIds) ? raw.offers.itemIds : []).map((id, at) => itemId(id, ctx, `shop.offers.itemIds[${at}]`)),
-          // A shelf saved while it sold packs stocks single Gems now.
-          gems: raw.offers.gems === undefined ? rollShelfGems(ctx.run.actNumber) : decodeGems(raw.offers.gems, 'shop.offers.gems'),
-        },
-        gemsBought: Array.isArray(raw.gemsBought) && raw.gemsBought.every((slot) => isInt(slot, 0)) ? [...(raw.gemsBought as number[])] : [],
-        itemsBought: [...(raw.itemsBought as number[])],
       };
     }
     case 'reward':

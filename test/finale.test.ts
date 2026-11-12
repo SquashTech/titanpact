@@ -21,7 +21,6 @@ import { MASTERY_CAP } from '../src/run/mastery';
 import { generateItinerary, unbrokenSealLocationIds } from '../src/run/locations';
 import { generateMap } from '../src/run/map';
 import { recordBrokenSeal } from '../src/run/runProgress';
-import { SHOP_ITEM_COUNT, rollGuildHallOffers } from '../src/run/shop';
 import { equipment } from '../src/data/equipment';
 import { requiredSquadSize, STANDARD_SQUAD_SIZE } from '../src/run/squad';
 import {
@@ -235,11 +234,6 @@ test('finale: the seal acts still get the branching map — only the finale is o
     assert.ok(map.rows.length > 2, `act ${act} collapsed`);
     assert.strictEqual(map.nodes[map.bossNodeId].type, 'boss');
   }
-});
-
-test('finale: a Guild Hall stocks its Gear counter', () => {
-  const run = { ...createRunState(), actNumber: 3 };
-  for (let i = 0; i < 20; i++) assert.strictEqual(rollGuildHallOffers(run).itemIds.length, SHOP_ITEM_COUNT);
 });
 
 // --- The 6v6 windows ---

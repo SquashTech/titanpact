@@ -147,6 +147,6 @@ test('encounters: a hero on the roster is never drawn against the player', () =>
 
 test('encounters: a non-encounter node is refused rather than drawn', () => {
   const run = runAt(3, 2);
-  const [reward] = Object.values(run.map!.nodes).filter((n) => n.type === 'shop');
+  const [reward] = Object.values(run.map!.nodes).filter((n) => n.type === 'camp');
   assert.throws(() => nodeEncounter(reward, contextFor(run)));
 });

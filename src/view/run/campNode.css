@@ -1,0 +1,92 @@
+/* The Camp (CampNodeScreen, CampGearScreen): the Rest's scene in firelight, three doors under the company. */
+
+.rite-screen.is-camp.camp-node-screen {
+  --rite-ink: #f2b26a;
+  --rite-title: #fff1d8;
+  --rite-glow: rgba(236, 150, 64, 0.6);
+  --rite-glow-far: rgba(160, 80, 30, 0.35);
+}
+
+.camp-node-screen .camp-ground {
+  background:
+    radial-gradient(ellipse 85% 38% at 50% 16%, rgba(236, 150, 64, 0.26), transparent 70%),
+    radial-gradient(ellipse 100% 45% at 50% 100%, rgba(120, 60, 20, 0.3), transparent 72%),
+    linear-gradient(180deg, #050403, #100a06, #1c120b);
+}
+
+.camp-node-screen .camp-flare {
+  background: radial-gradient(ellipse, rgba(255, 240, 210, 0.85), rgba(236, 150, 64, 0.4) 35%, transparent 68%);
+}
+
+.camp-node-art {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+}
+
+.camp-doors {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+
+.camp-door {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 4px 9px;
+  border-radius: var(--radius-sm);
+  background: rgba(20, 14, 9, 0.85);
+  border: 1px solid rgba(236, 150, 64, 0.28);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.1s;
+}
+
+.camp-door:not(:disabled):active {
+  transform: scale(0.96);
+}
+
+.camp-door.is-chosen {
+  border-color: #f2b26a;
+  box-shadow:
+    0 0 0 1px #f2b26a,
+    0 0 18px rgba(236, 150, 64, 0.45);
+  background: rgba(48, 30, 14, 0.92);
+}
+
+.camp-door:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.camp-door-art {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+.camp-door-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--rite-title);
+}
+
+.camp-door-words {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.camp-gear-list {
+  padding: 12px 16px 0;
+}

@@ -310,7 +310,7 @@ don't silently override it.
 > before the Act 4 Guardian. Classes are optional. Its "What it reverses" lists the rules above it
 > replaces — the forced Mentor, Tutor and Academy rows among them.
 
-> **The Guild Hall and gold are DECIDED OUT, PHASE 1 IN: `docs/guild-hall-overhaul.md`** (2026-11-11,
+> **The Guild Hall and gold are DECIDED OUT, PHASES 1–2 IN: `docs/guild-hall-overhaul.md`** (2026-11-11,
 > per user direction). **Gold is deleted**; the Guild Hall becomes **the Camp**, one door of three
 > before the Guardian (Mend, Gems, Gear); **nothing recruits after a fight** — a **Recruit** node in
 > the reward rows shows three types (one of the Location's), rolls a hero of the one picked from the
@@ -319,6 +319,9 @@ don't silently override it.
 > until its §5 phase lands, the rule below stands. **Phase 1 is IN (same day):** the Recruit node
 > (`src/run/recruitNode.ts`, guaranteed in Act 1's first reward row) is the only way a hero joins but
 > an event; claims, Recruit Contracts, Tavern hires and the deck floor on a hero fight are deleted.
+> **Phase 2 is IN (same day): the Camp** (`camp` node, `src/run/camp.ts`) is the funnel — Mend in
+> place, a Gem Cache, or one piece of three — and the Guild Hall, its counters, the shelf Gems and
+> the priced mend are deleted; gold stays until phase 3.
 
 ---
 

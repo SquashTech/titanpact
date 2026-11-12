@@ -15,7 +15,7 @@ export const MAP_NODE_TYPES = [
   'battle',
   'elite',
   'boss',
-  'shop',
+  'camp',
   'equipmentReward',
   'scrollReward',
   'manaWellReward',
@@ -92,7 +92,7 @@ export function rewardWeightsFor(actNumber: number): readonly [MapNodeType, numb
   return [...REWARD_WEIGHTS, actNumber <= LAST_MENTOR_ACT ? ['mentorReward', MENTOR_WEIGHT] : ['tutorReward', TUTOR_WEIGHT]];
 }
 
-/** Every act's rows are the same width: the funnel is one Guild Hall, forced (docs/gear-absorption.md §6). */
+/** Every act's rows are the same width: the funnel is one Camp, forced (docs/guild-hall-overhaul.md §3). */
 function rowWidthsFor(actNumber: number): number[] {
   void actNumber;
   return [...ROW_WIDTHS];
@@ -126,8 +126,8 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   ['manaWellReward', 20],
   // The Rest (2026-09-15, per user direction, docs/run-loop.md "Wounds"): the roster made whole,
   // priced the only way a reward row prices anything — against the two rewards beside it. Weighted
-  // so it is usually somewhere in an act and never in every row; the walk floor and the Guild
-  // Hall's mend are the other two answers to a wound, and this is the one that costs power.
+  // so it is usually somewhere in an act and never in every row; the Camp's Mend
+  // and the act's end are the other two answers to a wound, and this is the one that costs power.
   ['restReward', 30],
   // The Forge and the Ley Line (2026-09-17, per user direction): a lift-and-bind and a binding,
   // each a free seat on the map — one worn piece lifted and bound,
@@ -212,7 +212,7 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     // Elite-or-Skirmish since 2026-09-13 — both hero pool, both recruitable, and the two
     // preview their typing on the tile (run/encounters.ts guarantees they differ in a type).
     if (row === eliteRow) return col === 0 ? 'elite' : 'skirmish';
-    if (row === funnelRow) return 'shop';
+    if (row === funnelRow) return 'camp';
     return 'boss';
   }
 
@@ -253,8 +253,8 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
 
     // The two forks every path arrives at holding BOTH options.
     //
-    // The funnel has always been one: from act 3 it is a Guild Hall/Blacksmith choice, and it is
-    // the act's ONLY guaranteed spend, so a map that decided it would be deciding the run.
+    // The funnel has always been one: the Camp, the last stop before the Guardian, so a map that
+    // decided it would be deciding the run.
     //
     // Elite-or-Battle joined it on 2026-09-08 (per user direction). It used to STEER — the reward
     // row above it sent left to the Elite, right to the Battle and middle to both — which priced

@@ -10,7 +10,7 @@ import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { SellPress } from '../shared/SellPress';
 import { useArmedTap } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
-import { Preview, ReplaceSheet, useItemReceipts, type PreviewState } from './HallCounters';
+import { Preview, ReplaceSheet, useItemReceipts, type PreviewState } from './gearShared';
 import { ItemLedger } from './ItemLedger';
 import { MergeBurst, type MergeEvent } from './MergeBurst';
 import { RosterPeek } from './RosterPeek';

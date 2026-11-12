@@ -6,7 +6,7 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes as allHeroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
 import { isGathering, isLongWinter } from '../../src/run/cycles';
-import { anyDown, canBuyMend, buyMend, mendPrice, mendRoster, recordWounds, standingRoster } from '../../src/run/wounds';
+import { anyDown, anyWounded, mendRoster, recordWounds, standingRoster } from '../../src/run/wounds';
 import { grantConsumable, rollConsumableDrop } from '../../src/run/consumables';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
@@ -22,7 +22,9 @@ import { chooseMvp, mvpLedgersFromEvents } from '../../src/run/mvp';
 import { statuses } from '../../src/data/statuses';
 import type { CombatEvent } from '../../src/engine/events';
 import type { CombatState } from '../../src/engine/state';
-import { GEM_CACHE_COUNT, SCRIBE_GEMS, buyShelfGem, canBuyShelfGem, placeGem, rollGemDrop, rollGems, type Gem } from '../../src/run/gems';
+import { GEM_CACHE_COUNT, SCRIBE_GEMS, placeGem, rollGemDrop, rollGems, type Gem } from '../../src/run/gems';
+import { CAMP_GEMS, rollCampGear } from '../../src/run/camp';
+import { anyMasteryEligible } from '../../src/run/mastery';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, SEAL_ACTS, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
 import { patrons } from '../../src/data/patrons';
@@ -74,7 +76,7 @@ export const SIM_PURCHASES: readonly string[] = SIM_ALL_HEROES
 // SIM_NO_BLESSING=1 opens the run without the opening pair's Blessings, the A/B for docs/blessings-and-statuses.md.
 export const SIM_NO_BLESSING = process.env.SIM_NO_BLESSING === '1';
 const heroes = heroPool(allHeroes, SIM_PURCHASES);
-import { buyShopItem, rollGuildHallOffers, sellValueFor, shopItemPrice } from '../../src/run/shop';
+import { sellValueFor } from '../../src/run/shop';
 import { tutorMovePool } from '../../src/run/tutor';
 import { canTrain, mentorXpFor } from '../../src/run/mentor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
@@ -211,7 +213,7 @@ export interface RunRecord {
   signatures: Record<string, { reached: number; taken: number }>;
   /** Every rolled move offer (schedule, Mentor, Tutor, signature) by move id: times on the table, times the kit took it. */
   moveOffers: Record<string, { offered: number; taken: number }>;
-  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, `act:spent:<mend|scroll|gear>`, and `act:hall` (the purse on entering the Guild Hall, with `act:hallVisits` counting it). */
+  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, and the Camp's door taken, `act:camp:<mend|gems|gear>`. */
   goldFlow: Record<string, number>;
   /** Heroes joining at the Recruit node: `recruit` below the cap, `recruitReplacing` at it. */
   recruitsBySource: Record<string, number>;
@@ -265,7 +267,7 @@ function resolveAcademy(run: RunState, rng: Rng, choices: ChoiceEvent[], count?:
  * gains most, sold when nobody gains. A merge counts as an item obtained and an item worn, at
  * the tier it reached.
  */
-function resolveDrop(run: RunState, itemId: string, record: RunRecord, actNumber: number, source: 'drop' | 'node' | 'event'): RunState {
+function resolveDrop(run: RunState, itemId: string, record: RunRecord, actNumber: number, source: 'drop' | 'node' | 'event' | 'camp'): RunState {
   const item = equipment[itemId];
   if (!item || run.roster.length === 0) return run;
   record.itemsBySource[`${actNumber}:${source}`] = (record.itemsBySource[`${actNumber}:${source}`] ?? 0) + 1;
@@ -815,8 +817,8 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return resolveAcademy(run, rng, record.choices);
     case 'event':
       return resolveEvent(run, locationId, rng, record);
-    case 'shop':
-      return resolveShop(run, rng, record, options);
+    case 'camp':
+      return resolveCamp(run, rng, record, options);
     default:
       return run;
   }
@@ -1045,46 +1047,21 @@ function resolveEventOutcome(run: RunState, outcome: ResolvableOutcome, cost: Ev
   return next;
 }
 
-/** Guild Hall: the mend, then Gems, then Gear, then bank the rest. */
-function resolveShop(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
-  let next = run;
-  const offers = rollGuildHallOffers(next);
+/** The Camp: the Mend when the roster is hurt enough, else the Gems while anyone can take one, else the Gear. */
+function resolveCamp(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   const act = run.actNumber;
-  ledger(record, act, 'hall', run.gold);
-  ledger(record, act, 'hallVisits', 1);
-  const spend = (key: string, fn: () => RunState) => {
-    const before = next.gold;
-    next = fn();
-    ledger(record, act, `spent:${key}`, before - next.gold);
-  };
-
-  // The Tavern — the mend.
-  // The mend first, when the roster is hurt enough for it to be worth its price — which now
-  // rises with the hurt (run/wounds.ts mendPrice), so the pilot's threshold is the same read.
-  const mendCost = mendPrice(next, (entry) => policy.effectiveStats(entry).hp);
-  if (canBuyMend(next, mendCost) && policy.rosterHpFraction(next.roster) < 0.6) {
-    if (anyDown(next)) record.knockouts.mendsWhileDown += 1;
-    spend('mend', () => buyMend(next, mendCost));
+  if (anyWounded(run) && (anyDown(run) || policy.rosterHpFraction(run.roster) < 0.6)) {
+    if (anyDown(run)) record.knockouts.mendsWhileDown += 1;
+    ledger(record, act, 'camp:mend', 1);
+    return mendRoster(run);
   }
-
-  // The shelf's single Gems, bought in shelf order while somebody can still take one and the gold
-  // is there, to the hero the policy names.
-  for (const gem of offers.gems) {
-    if (!canBuyShelfGem(next, gem, false)) continue;
-    spend('scroll', () => landGems(buyShelfGem(next, gem), [gem], 'shelf', rng, record, options));
+  if (anyMasteryEligible(run.roster)) {
+    ledger(record, act, 'camp:gems', 1);
+    return landGems(run, rollGems(CAMP_GEMS, act, rng), 'camp', rng, record, options);
   }
-
-  // The Gear counter, in stock order: a piece the gold covers, bought onto the hero it helps most.
-  for (const itemId of offers.itemIds) {
-    const item = equipment[itemId];
-    if (!item || next.gold < shopItemPrice(item)) continue;
-    const target = policy.bestReceiver(next.roster, item);
-    if (!target || target.gain <= 0) continue;
-    if (target.receipt.kind === 'merge') record.merges += 1;
-    record.itemsBySource[`${act}:shop`] = (record.itemsBySource[`${act}:shop`] ?? 0) + 1;
-    record.equipped.push(`${act}:${target.receipt.kind === 'merge' ? target.receipt.resultRarity : item.rarity}`);
-    spend('gear', () => absorbItem(buyShopItem(next, item), target.rosterId, itemId, equipment, rosterHeroes));
-  }
-
-  return next;
+  ledger(record, act, 'camp:gear', 1);
+  const choices = rollCampGear(act, rng).map((id) => equipment[id]).filter(Boolean);
+  if (choices.length === 0) return run;
+  const best = choices.reduce((a, b) => ((policy.bestReceiver(run.roster, b)?.gain ?? 0) > (policy.bestReceiver(run.roster, a)?.gain ?? 0) ? b : a));
+  return resolveDrop(run, best.id, record, act, 'camp');
 }

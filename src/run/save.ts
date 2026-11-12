@@ -379,8 +379,8 @@ function decodeMap(value: unknown): RunMap {
   for (const [id, raw] of Object.entries(value.nodes)) {
     if (!isObject(raw)) reject(`map.nodes.${id} is not an object`);
     if (raw.id !== id) reject(`map.nodes.${id} is keyed under a different id`);
-    // The Contract node (deleted 2026-11-11) stands where a Recruit now does.
-    const type = raw.type === 'contractReward' ? 'recruitReward' : raw.type;
+    // The Contract node stands where a Recruit now does, and the Guild Hall where the Camp does (both 2026-11-11).
+    const type = raw.type === 'contractReward' ? 'recruitReward' : raw.type === 'shop' ? 'camp' : raw.type;
     if (typeof type !== 'string' || !NODE_TYPES.has(type)) reject(`map.nodes.${id} has unknown type "${String(raw.type)}"`);
     if (!isInt(raw.row, 0)) reject(`map.nodes.${id}.row is not a row`);
     if (!isInt(raw.col, 0)) reject(`map.nodes.${id}.col is not a column`);

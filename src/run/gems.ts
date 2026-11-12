@@ -57,42 +57,9 @@ export function rollGemDrop(nodeKind: EncounterNodeKind, actNumber: number, rand
   return random() < drop.chance ? rollGems(drop.count, actNumber, random) : [];
 }
 
-/** The Guild Hall's Gem counter: single Gems, their stats shown, each sold once a visit. */
-export const SHELF_GEM_COUNT = 5;
-
-/** The counter's stock: distinct stats, so a visit is missing some and which ones is part of the choice. */
-export function rollShelfGems(actNumber: number, random: () => number = Math.random): Gem[] {
-  const points = gemPointsForAct(actNumber);
-  const stats = [...GEM_ORDER];
-  const picked: Gem[] = [];
-  while (picked.length < SHELF_GEM_COUNT && stats.length > 0) {
-    picked.push({ stat: stats.splice(Math.floor(random() * stats.length), 1)[0], points });
-  }
-  return sortGems(picked);
-}
-/** Gold a point, so a shelf Gem's price walks with the act's gold (5 points 15g, 10 points 30g). */
-export const SHELF_GEM_PRICE_PER_POINT = 3;
-
-export function shelfGemPrice(gem: Gem): number {
-  return gem.points * SHELF_GEM_PRICE_PER_POINT;
-}
-
-/** Whether the shelf will sell this Gem right now: not sold this visit, the gold, and somebody to take it. */
-export function canBuyShelfGem(run: RunState, gem: Gem, sold: boolean): boolean {
-  return !sold && run.gold >= shelfGemPrice(gem) && anyMasteryEligible(run.roster);
-}
-
-/** The shelf's charge — the Gem itself lands through placeGem once the player has said who. */
-export function buyShelfGem(run: RunState, gem: Gem): RunState {
-  const price = shelfGemPrice(gem);
-  if (run.gold < price) throw new MasteryError(`need ${price} gold, have ${run.gold}`);
-  if (!anyMasteryEligible(run.roster)) throw new MasteryError('every hero is already mastered');
-  return { ...run, gold: run.gold - price };
-}
-
 /** What a Gem screen hands out, already rolled and in `GEM_ORDER`. */
 export interface GemPlan {
-  source: 'scribe' | 'cache' | 'shelf' | 'drop';
+  source: 'scribe' | 'cache' | 'camp' | 'drop';
   gems: Gem[];
 }
 

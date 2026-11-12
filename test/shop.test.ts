@@ -1,20 +1,20 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
-import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
-import { rollGuildHallOffers, EQUIPMENT_PRICE_BY_RARITY, EQUIPMENT_SELL_SHARE, sellValueFor, SHOP_ITEM_COUNT, shopItemPrice, buyShopItem, ShopItemError } from '../src/run/shop';
-import { RARITY_ORDER } from '../src/run/equipment';
+import { EQUIPMENT_PRICE_BY_RARITY, EQUIPMENT_SELL_SHARE, sellValueFor } from '../src/run/shop';
+import { RARITY_ORDER, rarityWeightsFor } from '../src/run/equipment';
+import { CAMP_DOORS, CAMP_GEAR_COUNT, CAMP_GEMS, rollCampGear } from '../src/run/camp';
+import { GEM_CACHE_COUNT } from '../src/run/gems';
+import { createRng, nextFloat, type RngState } from '../src/engine/rng/seededRng';
 
-function seedRoster(heroIds: string[], gold = 0) {
-  let run = createRunState(gold);
-  for (const heroId of heroIds) {
-    run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
-  }
-  return run;
+function seeded(seed: number): () => number {
+  let state: RngState = createRng(seed);
+  return () => {
+    const { value, nextState } = nextFloat(state);
+    state = nextState;
+    return value;
+  };
 }
-
-// --- Gear is valued, and the Shop's bottom plank sells two pieces a visit ---
 
 test('shop: sellValueFor pays the sell share of the tier\'s value, rising with the tier', () => {
   for (let i = 0; i + 1 < RARITY_ORDER.length; i++) {
@@ -25,17 +25,24 @@ test('shop: sellValueFor pays the sell share of the tier\'s value, rising with t
   assert.strictEqual(sellValueFor(equipment['sword.common']), Math.floor(EQUIPMENT_PRICE_BY_RARITY.common * EQUIPMENT_SELL_SHARE));
 });
 
-test('shop: the gear shelf holds SHOP_ITEM_COUNT real items', () => {
-  const run = seedRoster(['ironWarden'], 1000);
-  const offers = rollGuildHallOffers(run);
-  assert.strictEqual(offers.itemIds.length, SHOP_ITEM_COUNT);
-  assert.ok(offers.itemIds.every((id) => equipment[id]));
+// --- The Camp (docs/guild-hall-overhaul.md §3) ---
+
+test('camp: three doors, Mend, Gems and Gear, and the Gems door pays a Gem Cache', () => {
+  assert.deepStrictEqual(CAMP_DOORS, ['mend', 'gems', 'gear']);
+  assert.strictEqual(CAMP_GEMS, GEM_CACHE_COUNT);
 });
 
-test('shop: a shelf piece costs its price, and never sells back for as much', () => {
-  const item = equipment['sword.rare'];
-  assert.ok(shopItemPrice(item) > sellValueFor(item));
-  assert.strictEqual(buyShopItem(seedRoster([], 100), item).gold, 100 - shopItemPrice(item));
-  assert.throws(() => buyShopItem(seedRoster([], shopItemPrice(item) - 1), item), ShopItemError);
+test('camp: the Gear door lays out real pieces on the act\'s standard curve, the same for the same seed', () => {
+  for (let act = 1; act <= 4; act++) {
+    const weights = rarityWeightsFor(act, 'standard');
+    for (let seed = 1; seed <= 10; seed++) {
+      const ids = rollCampGear(act, seeded(seed));
+      assert.strictEqual(ids.length, CAMP_GEAR_COUNT);
+      for (const id of ids) {
+        assert.ok(equipment[id], `${id} is a piece`);
+        assert.ok(weights[equipment[id].rarity] > 0, `act ${act}: ${id} is off the curve`);
+      }
+      assert.deepStrictEqual(rollCampGear(act, seeded(seed)), ids);
+    }
+  }
 });
-

@@ -26,7 +26,8 @@ import { TitleScreen } from '../view/run/TitleScreen';
 import { LaunchScreen } from '../view/run/LaunchScreen';
 import { DraftScreen } from '../view/run/DraftScreen';
 import { MapScreen } from '../view/run/MapScreen';
-import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
+import { CampNodeScreen } from '../view/run/CampNodeScreen';
+import { CampGearScreen } from '../view/run/CampGearScreen';
 import { BoonNodeScreen } from '../view/run/BoonNodeScreen';
 import { TutorNodeScreen } from '../view/run/TutorNodeScreen';
 import { MentorNodeScreen } from '../view/run/MentorNodeScreen';
@@ -35,7 +36,6 @@ import { patrons } from '../data/patrons';
 import { capstoneCandidates, meetPatron, patronAtSeat, seatIndexFor } from '../run/patrons';
 import { NodeRewardScreen } from '../view/run/NodeRewardScreen';
 import { ItemWhoScreen } from '../view/run/ItemWhoScreen';
-import { clearGuildHallTab } from '../view/run/guildHallTabMemory';
 import { GemNodeScreen } from '../view/run/GemNodeScreen';
 import { ManaWellScreen } from '../view/run/ManaWellScreen';
 import { BlessingShrineScreen } from '../view/run/BlessingShrineScreen';
@@ -68,7 +68,7 @@ import { FIRST_CYCLE, cycleLoreTipId, cycleOf, openCycle } from '../run/cycles';
 import { isWarden, recordWardens, wardensFromRun } from '../run/wardens';
 import type { CombatState } from '../engine/state';
 import { koRosterIdsOf } from '../run/buildCombatState';
-import { WoundsError, buyMend, mendPrice, recordWounds, mendRoster } from '../run/wounds';
+import { recordWounds, mendRoster } from '../run/wounds';
 import { entryHp } from '../view/shared/WoundBar';
 import { enemies, finaleEnemies, ENDBRINGER_ID, MANTICORE_ID, titanEyes, EYE_PHASES } from '../data/enemies';
 import { relics } from '../data/relics';
@@ -95,9 +95,9 @@ import {
 } from '../run/recruitment';
 import { recruitNodeEntry, recruitTypeOffers, recruitableOfType, rollRecruitHero } from '../run/recruitNode';
 import { MASTERY_CAP, MasteryError, anyMasteryEligible } from '../run/mastery';
-import { GEM_CACHE_COUNT, SCRIBE_GEMS, buyShelfGem, canBuyShelfGem, placeGem, rollGemDrop, rollGems, type Gem } from '../run/gems';
+import { GEM_CACHE_COUNT, SCRIBE_GEMS, placeGem, rollGemDrop, rollGems, type Gem } from '../run/gems';
+import { CAMP_GEMS } from '../run/camp';
 import type { MvpPick } from '../run/mvp';
-import { ShopItemError, buyShopItem, rollGuildHallOffers, type GuildHallOffers } from '../run/shop';
 import { grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { generateMap, PATRON_ROWS, type MapNodeType, type RewardNodeType } from '../run/map';
 import { firstUnseenTip, type ScreenTipId } from '../run/tips';
@@ -485,7 +485,7 @@ export function App() {
   // Every run screen is saved now, so a new build may reload anywhere but where it would cost a
   // moment the save does not hold: a fight's playback between command phases, and the Guild Hall's
   // open tab (docs/save-system.md §4).
-  useReloadOnNewBuild(screen.kind === 'title' || (isResumable(screen.kind) && screen.kind !== 'fight' && screen.kind !== 'shop'));
+  useReloadOnNewBuild(screen.kind === 'title' || (isResumable(screen.kind) && screen.kind !== 'fight'));
 
   // The last map or act intro, which a save written anywhere else falls back to when its screen
   // cannot be restored. Null until the run has stood on one; the run's start falls back to its intro.
@@ -803,15 +803,8 @@ export function App() {
       }
       // Leads are picked in the fight, once the enemy's are on the field (FightScreen's lead pick).
       handleEnterFight(openingSquad(playerRun.roster), nodeId, encounterKind, encounter);
-    } else if (node.type === 'shop') {
-      clearGuildHallTab();
-      setScreen({
-        kind: 'shop',
-        nodeId,
-        offers: rollGuildHallOffers(playerRun),
-        gemsBought: [],
-        itemsBought: [],
-      });
+    } else if (node.type === 'camp') {
+      setScreen({ kind: 'camp', nodeId });
     } else if (node.type === 'recruitReward') {
       setScreen({ kind: 'recruitNode', nodeId, seed: randomSeed() });
     } else if (node.type === 'manaWellReward') {
@@ -1022,53 +1015,6 @@ export function App() {
   function handleNodeContinue(nodeId: string) {
     setPlayerRun((run) => advanceToNode(run, nodeId));
     setScreen({ kind: 'map' });
-  }
-
-  /** The Guild Hall's mend (run/wounds.ts): the whole roster whole, for what is missing. */
-  function handleBuyGuildMend() {
-    let next: RunState;
-    try {
-      next = buyMend(playerRun, mendPrice(playerRun, (entry) => entryHp(rosterHeroes[entry.heroId], entry, playerRun.relics).maxHp));
-    } catch (err) {
-      if (!(err instanceof WoundsError)) throw err;
-      return;
-    }
-    playSfx('blessing');
-    setPlayerRun(next);
-  }
-
-  /** The Gem counter: the Gem is paid for and set on the hero picked, in one tap. The caller raises what the pip opened. */
-  function handleBuyShelfGem(slot: number, rosterId: string): RunState | null {
-    if (screen.kind !== 'shop') return null;
-    const gem = screen.offers.gems[slot];
-    if (!gem || !canBuyShelfGem(playerRun, gem, screen.gemsBought.includes(slot))) return null;
-    let next: RunState;
-    try {
-      next = placeGem(buyShelfGem(playerRun, gem), rosterId, gem);
-    } catch (err) {
-      if (!(err instanceof MasteryError)) throw err;
-      return null;
-    }
-    setPlayerRun(next);
-    setScreen({ ...screen, gemsBought: [...screen.gemsBought, slot] });
-    return next;
-  }
-
-  /** The Gear counter: the piece is paid for and absorbed by the hero picked, in one tap. */
-  function handleBuyGuildItem(slot: number, rosterId: string, replaceIndex?: number): RunState | null {
-    if (screen.kind !== 'shop' || screen.itemsBought.includes(slot)) return null;
-    const item = equipment[screen.offers.itemIds[slot]];
-    if (!item) return null;
-    let next: RunState;
-    try {
-      next = absorbItem(buyShopItem(playerRun, item), rosterId, item.id, equipment, rosterHeroes, replaceIndex);
-    } catch (err) {
-      if (!(err instanceof ShopItemError) && !(err instanceof RunProgressError)) throw err;
-      return null;
-    }
-    setPlayerRun(next);
-    setScreen({ ...screen, itemsBought: [...screen.itemsBought, slot] });
-    return next;
   }
 
   /**
@@ -1605,18 +1551,24 @@ export function App() {
         />
       )}
 
-      {screen.kind === 'shop' && (
-        <ShopNodeScreen
+      {screen.kind === 'camp' && (
+        <CampNodeScreen
           run={playerRun}
-          offers={screen.offers}
-          gemsBought={screen.gemsBought}
-          itemsBought={screen.itemsBought}
-          onRunChange={setPlayerRun}
-          onBuyGem={handleBuyShelfGem}
-          onBuyItem={handleBuyGuildItem}
-          onBuyMend={handleBuyGuildMend}
+          settled={screen.settled}
+          onRunChange={settlingRunChange(screen)}
+          onOpen={(door) =>
+            setScreen(
+              door === 'gems'
+                ? { kind: 'scrolls', plan: { source: 'camp', gems: rollGems(CAMP_GEMS, playerRun.actNumber) }, nodeId: screen.nodeId, bought: false, next: { kind: 'map' } }
+                : { kind: 'campGear', nodeId: screen.nodeId, seed: randomSeed() }
+            )
+          }
           onContinue={() => handleNodeContinue(screen.nodeId)}
         />
+      )}
+
+      {screen.kind === 'campGear' && (
+        <CampGearScreen key={screen.seed} run={playerRun} seed={screen.seed} onTake={(itemId) => handleClaimEquipment(screen.nodeId, itemId)} />
       )}
 
       {screen.kind === 'recruitNode' && (
