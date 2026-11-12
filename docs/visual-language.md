@@ -3495,8 +3495,10 @@ four ways of putting a straight bar back were drawn with the same hits landing o
 - **The space came from the layout, not the crescent.** Both rows read the same way up: figure,
   readout, statuses. The far side packs at the horizon, so its figures have open sky above them.
 - **The name row is the HP bar**: level and name on the left, HP on the right, graduated at the
-  quarters, with MP a thin thread under it and its number in a dark well at the bar's right end
-  (2026-11-12, per user direction: without the number a player could not tell what a hero could cast). Any Shield is a pale band past the fill and a "+N" beside
+  quarters, with MP a thin thread under it that rises and falls, and its figure in the cut gem every move's
+  cost wears, hung off the bar's right end (2026-11-12, per user direction, `art/concepts/mp-readout`:
+  a second bare number beside HP read as unlabelled, and the gem says Mana by being the thing a move
+  is paid in, so a hero's 20 against a move's 40 reads as "can't cast" without a word). Any Shield is a pale band past the fill and a "+N" beside
   the HP. A forecast eats the bar as the old one's bite did.
 - **A hit drops the fill at once and leaves a trail**: white the moment it lands, held for a beat,
   then drained in red. The old bar only eased its width, so a crit and a chip looked the same. A hit

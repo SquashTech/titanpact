@@ -4264,7 +4264,7 @@ textarea,
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95), 0 0 3px rgba(0, 0, 0, 0.8);
 }
 
-.team-row .combatant-name > :not(.name-bar, .name-bar-mp) {
+.team-row .combatant-name > :not(.name-bar, .name-bar-mp, .plate-mp-gem) {
   position: relative;
   z-index: 1;
 }
@@ -4400,24 +4400,22 @@ textarea,
   color: var(--shield);
 }
 
-/* MP rides the bar's right end in its own dark well, so the blue reads over any fill. */
-.plate-mp {
-  min-width: 18px;
-  padding: 0 3px;
-  border-radius: 2px;
-  background: rgba(8, 14, 30, 0.82);
-  box-shadow: inset 0 0 0 1px rgba(140, 188, 240, 0.35);
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 11px;
-  text-align: center;
-  color: #9cc8f6;
+/* The hero's Mana hangs off the bar's right end in a move's cost gem; the MP line under the bar still rises and falls. */
+.team-row .combatant-card:not(.empty-slot):not(.fainted) .combatant-name {
+  padding-right: 15px;
+}
+
+.team-row .plate-mp-gem {
+  position: absolute;
+  right: -12px;
+  top: calc(50% - 2px);
+  z-index: 3;
+  transform: translateY(-50%);
   text-shadow: none;
 }
 
-.plate-mp.is-overcharged {
+.team-row .plate-mp-gem.is-overcharged .mana-gem-value {
   color: var(--mana-over);
-  box-shadow: inset 0 0 0 1px var(--mana-over);
 }
 
 /* The plate says KO now; the shoulder tag would say it twice. */

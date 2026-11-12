@@ -23,6 +23,7 @@ import { statusHeldText } from '../shared/statusFacts';
 import { MAX_POPUPS_PER_FIGURE, POPUP_STAGGER_MS } from './buildBeats';
 import { koLabel, type MoveForecast } from './forecast';
 import { ForecastBite } from './ForecastBite';
+import { ManaCost } from '../shared/ManaCost';
 
 export interface Popup {
   key: number;
@@ -543,8 +544,11 @@ export function CombatantCard({
             <span className="plate-numbers">
               <span className={`plate-hp ${hpTier(hpFraction)}`}>{combatant.fainted ? 'KO' : Math.max(0, combatant.currentHp)}</span>
               {shield > 0 && !combatant.fainted && <span className="plate-shield">+{shield}</span>}
-              {!combatant.fainted && <span className={`plate-mp${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>{combatant.currentMana}</span>}
             </span>
+          )}
+          {/* The hero's Mana in the gem every move's cost wears, so the two compare at a glance. */}
+          {!compact && !combatant.fainted && (
+            <ManaCost cost={combatant.currentMana} className={`plate-mp-gem${manaOverFraction > 0 ? ' is-overcharged' : ''}`} />
           )}
           {!compact && (
             <div className="name-bar-mp" aria-hidden="true">
