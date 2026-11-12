@@ -3508,6 +3508,8 @@ four ways of putting a straight bar back were drawn with the same hits landing o
   (2026-11-12, per user direction: the bar no longer costs a boss the room it did).
 - **Type chips hang at the figure's shoulder** on both sides, off the bar. The shoulder's KO tag is
   gone, since the bar says KO.
-- **Stat stages join the status band** instead of the card's top corners, which a big figure covered.
+- **Stat stages join the status band** instead of the card's top corners, which a big figure covered. A
+  stage chip wears the stat's own glyph (sword, shield, spark…) tinted by its sign, not "ATK" (2026-11-12,
+  per user direction): half the width, and it cannot be mistaken for a status's name.
 
 The target picker and the bench keep their bars; only the field changed.

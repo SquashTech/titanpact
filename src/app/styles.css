@@ -4449,8 +4449,9 @@ textarea,
   border-radius: var(--radius-pill);
 }
 
-.team-row .status-badge-fit .stat-mod-label {
-  font-size: 10px;
+.team-row .status-badge-fit .stat-mod-glyph {
+  width: 14px;
+  height: 14px;
 }
 
 .team-row .status-badge-fit .stat-mod-pip {
@@ -5388,9 +5389,11 @@ textarea,
   color: #85b7eb;
 }
 
-.stat-mod-label {
-  font-size: 9px;
-  letter-spacing: 0.02em;
+/* The stat's own glyph, tinted by the badge's sign: gold up, slate down. */
+.stat-mod-glyph {
+  width: 11px;
+  height: 11px;
+  vertical-align: 0;
 }
 
 .stat-mod-arrow {

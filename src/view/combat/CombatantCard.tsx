@@ -10,6 +10,7 @@ import { ENDBRINGER_ID, isGuardianId, isTitanEye } from '../../data/enemies';
 import { titanspawn } from '../../data/titanspawn';
 import { STAT_ORDER, hpTier, ShieldFill, ShieldLabel } from '../shared/StatBars';
 import { STAT_LABELS } from '../shared/moveKind';
+import { StatGlyph } from '../shared/statIcons';
 import { shieldHeld } from '../../engine/status/shield';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -327,7 +328,7 @@ function StatModBadge({ stat, mod, stages, tier, held }: { stat: StatKey; mod: n
       className={`stat-mod-badge ${mod > 0 ? 'stat-buff' : 'stat-debuff'}${held ? ' stat-held' : ''}`}
       title={`${reading}${held ? (mod > 0 ? " — can't go any higher" : " — can't go any lower") : ''}`}
     >
-      <span className="stat-mod-label">{STAT_LABELS[stat]}</span>
+      <StatGlyph stat={stat} tone="inherit" className="stat-mod-glyph" />
       <span className="stat-mod-arrow" aria-hidden="true">{mod > 0 ? '▲' : '▼'}</span>
       <span className="stat-mod-pips" aria-hidden="true">
         {Array.from({ length: tier }, (_, i) => (
