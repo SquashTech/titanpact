@@ -216,6 +216,11 @@
   color: #e9e2cf;
 }
 
+.recruit-oath-passives {
+  display: grid;
+  gap: 6px;
+}
+
 .recruit-oath-innate {
   display: grid;
   gap: 3px;

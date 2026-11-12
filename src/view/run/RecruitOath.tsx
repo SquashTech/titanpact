@@ -33,7 +33,8 @@ export function RecruitOath({ run, entry, onContinue }: { run: RunState; entry: 
   const hero = rosterHeroes[entry.heroId];
   const types = rosterEntryTypes(hero, entry);
   const caster = healCasterForEntry(hero, entry, run.relics);
-  const innate = (innatePassiveIdsFor(hero, entry) ?? []).map((id) => passives[id]).filter(Boolean);
+  const innateIds = innatePassiveIdsFor(hero, entry) ?? [];
+  const innate = [...new Set([...innateIds, ...entry.evolutionPassiveGrants])].map((id) => passives[id]).filter(Boolean);
   const [reading, setReading] = useState<MoveDefinition | null>(null);
   const [settled, setSettled] = useState(() => prefersReducedMotion());
 
@@ -76,17 +77,19 @@ export function RecruitOath({ run, entry, onContinue }: { run: RunState; entry: 
             <span className="recruit-oath-level">Lv {levelOf(entry)}</span>
             <MasteryPips mastery={entry.mastery} />
           </div>
-          {innate.map((passive) => (
-            <div key={passive.id} className="recruit-oath-innate" style={{ '--passive-color': passiveColor(passive.id) } as CSSProperties}>
-              <span className="recruit-oath-innate-name">
-                <PassiveGlyph passiveId={passive.id} />
-                {passive.name}
-              </span>
-              <span className="recruit-oath-innate-desc">
-                <PassiveText passive={passive} />
-              </span>
-            </div>
-          ))}
+          <div className="recruit-oath-passives">
+            {innate.map((passive) => (
+              <div key={passive.id} className="recruit-oath-innate" style={{ '--passive-color': passiveColor(passive.id) } as CSSProperties}>
+                <span className="recruit-oath-innate-name">
+                  <PassiveGlyph passiveId={passive.id} />
+                  {passive.name}
+                </span>
+                <span className="recruit-oath-innate-desc">
+                  <PassiveText passive={passive} />
+                </span>
+              </div>
+            ))}
+          </div>
           <div className="move-list recruit-oath-moves">
             {entry.unlockedMoveIds
               .map((id) => moves[id])
