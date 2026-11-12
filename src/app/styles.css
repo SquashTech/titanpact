@@ -43227,25 +43227,18 @@ img.smithy-service-art {
 
 /* -- The console is the Sky's night (2026-11-09, per user direction, art/concepts/console-ground B).
    Its top edge is a band of night between two hairlines, starlight above and the commander's colour
-   below, and the command crest is set into it. -- */
+   below, and the command crest is set into it. No stars under it (2026-11-12, art/concepts/console-sky):
+   points at the scale of a button's text read as detail on the buttons, so the night is two soft clouds,
+   the commander's colour and a deep violet. -- */
 .action-area {
   --console-beam-h: 38px;
   padding-top: calc(var(--console-beam-h) + 6px);
   background:
     radial-gradient(ellipse 62% 26% at 50% 34px, rgba(var(--console-rgb, 224, 166, 60), 0.16), transparent 70%),
-    var(--console-stars),
+    radial-gradient(ellipse 70% 45% at 18% 55%, rgba(var(--console-rgb, 224, 166, 60), 0.1), transparent 70%),
+    radial-gradient(ellipse 80% 50% at 85% 80%, rgba(120, 80, 200, 0.14), transparent 70%),
     radial-gradient(ellipse 90% 70% at 50% 0, #1d2338, #0b0c14 75%),
     #0b0c14;
-}
-
-/* The night under the console: the Sky's own stars, scattered at two scales so no tile repeats read. */
-.action-area {
-  --console-stars:
-    radial-gradient(circle at 8% 22%, #fff 0 0.7px, transparent 1.3px) 0 0 / 120px 90px,
-    radial-gradient(circle at 63% 71%, #cfe0ff 0 0.7px, transparent 1.3px) 0 0 / 120px 90px,
-    radial-gradient(circle at 37% 48%, rgba(255, 255, 255, 0.6) 0 0.5px, transparent 1.1px) 0 0 / 70px 55px,
-    radial-gradient(circle at 88% 12%, #ffd86a 0 0.8px, transparent 1.4px) 0 0 / 190px 140px,
-    radial-gradient(circle at 21% 83%, #c9a2ff 0 0.8px, transparent 1.4px) 0 0 / 230px 170px;
 }
 
 .action-area::before {
