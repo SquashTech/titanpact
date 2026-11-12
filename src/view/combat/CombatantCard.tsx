@@ -526,14 +526,6 @@ export function CombatantCard({
           both sides of the field, where the battlefield mirrors the far side's card. */}
       <div className={`combatant-plate${shaking ? ' is-shaken' : ''}`}>
         <div className="combatant-name">
-          {!compact && (
-            <div className="name-bar" aria-hidden="true">
-              <div className={`name-bar-trail${draining ? ' is-draining' : ''}`} style={{ width: `${hpFraction * 100}%` }} />
-              <div className={`bar-fill name-bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
-              <ShieldFill currentHp={combatant.currentHp} maxHp={maxHp} shield={shield} />
-              {forecast && !combatant.fainted && <ForecastFill forecast={forecast} />}
-            </div>
-          )}
           {level !== undefined && (
             <span className="combatant-level" aria-label={`Level ${level}`}>
               {level}
@@ -541,24 +533,30 @@ export function CombatantCard({
           )}
           {combatant.blessed && !combatant.fainted && <BlessingMark className="combatant-blessing" />}
           <span className="hero-name-text">{hero.name}</span>
-          {!compact && (
+          {compact && typeChips}
+        </div>
+        {/* HP leads the bar and the hero's Mana sits in a move's cost gem at the MP line's end, so the two read apart. */}
+        {!compact && (
+          <div className="combatant-gauge">
+            <div className="name-bar" aria-hidden="true">
+              <div className={`name-bar-trail${draining ? ' is-draining' : ''}`} style={{ width: `${hpFraction * 100}%` }} />
+              <div className={`bar-fill name-bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
+              <ShieldFill currentHp={combatant.currentHp} maxHp={maxHp} shield={shield} />
+              {forecast && !combatant.fainted && <ForecastFill forecast={forecast} />}
+            </div>
             <span className="plate-numbers">
               <span className={`plate-hp ${hpTier(hpFraction)}`}>{combatant.fainted ? 'KO' : Math.max(0, combatant.currentHp)}</span>
               {shield > 0 && !combatant.fainted && <span className="plate-shield">+{shield}</span>}
             </span>
-          )}
-          {/* The hero's Mana in the gem every move's cost wears, so the two compare at a glance. */}
-          {!compact && !combatant.fainted && (
-            <ManaCost cost={combatant.currentMana} className={`plate-mp-gem${manaOverFraction > 0 ? ' is-overcharged' : ''}`} />
-          )}
-          {!compact && (
+            {!combatant.fainted && (
+              <ManaCost cost={combatant.currentMana} className={`plate-mp-gem${manaOverFraction > 0 ? ' is-overcharged' : ''}`} />
+            )}
             <div className="name-bar-mp" aria-hidden="true">
               <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
               {manaOverFraction > 0 && <div className="bar-fill mana-over" style={{ width: `${manaOverFraction * 100}%` }} />}
             </div>
-          )}
-          {compact && typeChips}
-        </div>
+          </div>
+        )}
         {!compact && (
           <div className="resource-row">
             <div className="resource">

@@ -4224,9 +4224,12 @@ textarea,
 
 .team-row {
   --plate-drop: 4px;
+  --figure-label-h: 13px;
+  --figure-label-gap: 1px;
   /* Everything a figure carries under its stage: what the far side's absolute marks measure past. */
   --figure-under: calc(
-    var(--plate-drop) + var(--figure-plate-pad) + var(--figure-name-h) + var(--figure-name-gap) + var(--figure-status-gap) +
+    var(--plate-drop) + var(--figure-plate-pad) + var(--figure-label-h) + var(--figure-label-gap) + var(--figure-name-h) +
+      var(--figure-name-gap) + var(--figure-status-gap) +
       var(--figure-status-h)
   );
 }
@@ -4256,22 +4259,36 @@ textarea,
   height: var(--platform-h);
 }
 
+/* Level and name centred under the figure's feet, a line of their own over the bar. */
 .team-row .combatant-card:not(.empty-slot) .combatant-name {
-  position: relative;
-  justify-content: flex-start;
-  /* The bar fills the row above the thread; the words ride it. */
-  padding: 0 6px 4px;
+  height: var(--figure-label-h);
+  margin-bottom: var(--figure-label-gap);
+  gap: 4px;
+  line-height: var(--figure-label-h);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95), 0 0 3px rgba(0, 0, 0, 0.8);
 }
 
-.team-row .combatant-name > :not(.name-bar, .name-bar-mp, .plate-mp-gem) {
-  position: relative;
-  z-index: 1;
+.combatant-gauge {
+  display: none;
 }
 
-.team-row .combatant-name .hero-name-text {
-  flex: 1;
-  min-width: 0;
+/* The bar fills the gauge above the MP thread; HP's number rides its left end. */
+.team-row .combatant-gauge {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: var(--figure-name-h);
+  margin: 0 0 var(--figure-name-gap);
+  padding: 0 20px 4px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95), 0 0 3px rgba(0, 0, 0, 0.8);
+}
+
+.team-row .combatant-gauge > :not(.name-bar, .name-bar-mp, .plate-mp-gem) {
+  position: relative;
+  z-index: 1;
 }
 
 .team-row .combatant-level {
@@ -4401,10 +4418,6 @@ textarea,
 }
 
 /* The hero's Mana in a move's cost gem, seated on the MP line's end so it reads as that line's, clear of HP. */
-.team-row .combatant-card:not(.empty-slot):not(.fainted) .combatant-name {
-  padding-right: 20px;
-}
-
 .team-row .plate-mp-gem {
   position: absolute;
   right: -12px;

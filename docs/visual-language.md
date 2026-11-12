@@ -3494,13 +3494,15 @@ four ways of putting a straight bar back were drawn with the same hits landing o
 
 - **The space came from the layout, not the crescent.** Both rows read the same way up: figure,
   readout, statuses. The far side packs at the horizon, so its figures have open sky above them.
-- **The name row is the HP bar**: level and name on the left, HP on the right, graduated at the
-  quarters, with MP a thin thread under it that rises and falls, and its figure in the cut gem every move's
-  cost wears, seated on that line's right end (2026-11-12, per user direction, `art/concepts/mp-readout`:
-  a second bare number beside HP read as unlabelled, and the gem says Mana by being the thing a move
-  is paid in, so a hero's 20 against a move's 40 reads as "can't cast" without a word). Level with the
-  HP figure it read as a pair with it, so it sits on the blue line, as that line's end. Any Shield is a pale band past the fill and a "+N" beside
-  the HP. A forecast eats the bar as the old one's bite did.
+- **Level and name sit centred under the figure's feet**, a line of their own, and **the bar under
+  them is HP alone**: its number leads the bar on the left, graduated at the quarters, with MP a thin
+  thread under it that rises and falls. MP's figure is in the cut gem every move's cost wears, seated
+  on the thread's right end, so a hero's 20 against a move's 40 reads as "can't cast" without a word.
+  Any Shield is a pale band past the fill and a "+N" beside HP; a forecast eats the bar.
+  (2026-11-12, per user direction, `art/concepts/mp-readout`, `hp-mp-gap`, `name-place`: a second
+  bare number beside HP read as unlabelled, and with the gem beside HP the two still read as a pair, so
+  they sit at opposite ends. The name line fits the height the old two bars still reserved; nothing
+  else on the field moved.)
 - **A hit drops the fill at once and leaves a trail**: white the moment it lands, held for a beat,
   then drained in red. The old bar only eased its width, so a crit and a chip looked the same. A hit
   of a quarter of max HP or more also shakes the plate.
