@@ -1,63 +1,248 @@
-/* The Recruit node (RecruitNodeScreen): three type tiles, each holding who could answer it, dimmed. */
+/* The Recruit node (RecruitNodeScreen, RecruitWheel): the oath's ring split into the types on offer. */
 
-.recruit-types {
+.recruit-wheel {
   position: relative;
   z-index: 1;
+  flex: none;
+  width: 100%;
+  height: 340px;
+  margin-top: 4px;
+}
+
+.recruit-wheel-hub {
+  position: absolute;
+  left: 50%;
+  top: 170px;
+  width: 0;
+  height: 0;
+}
+
+.recruit-wheel-ring {
+  position: absolute;
+  left: -126px;
+  top: -126px;
+  width: 252px;
+  height: 252px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 230, 180, 0.35);
+  box-shadow: 0 0 30px rgba(155, 201, 255, 0.15);
+  pointer-events: none;
+}
+
+.recruit-wheel-ring::after {
+  content: '';
+  position: absolute;
+  inset: 60px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 230, 180, 0.3);
+}
+
+.recruit-wheel-turn {
+  position: absolute;
+  left: 0;
+  top: 0;
+  rotate: var(--wheel-rot);
+  transition: rotate 0.9s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.recruit-wheel-disc {
+  position: absolute;
+  left: -120px;
+  top: -120px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  -webkit-mask: radial-gradient(circle, transparent 62px, #000 63px);
+  mask: radial-gradient(circle, transparent 62px, #000 63px);
+  transition: opacity 0.5s;
+}
+
+.recruit-wheel-seg {
+  transition: opacity 0.5s;
+}
+
+.recruit-wheel-type,
+.recruit-wheel-face {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: rotate(var(--at)) translateY(calc(-1 * var(--radius))) rotate(calc(-1 * var(--at)));
+}
+
+/* Turned back against the wheel, so a face never tips over as it rotates. */
+.recruit-wheel-upright {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: min(100%, 360px);
-  margin: 18px auto 0;
-  padding: 0 16px;
-}
-
-.recruit-type {
-  display: grid;
-  grid-template-columns: 40px 1fr auto;
   align-items: center;
-  gap: 12px;
-  min-height: 64px;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(90deg, rgba(var(--type-rgb), 0.24), rgba(var(--type-rgb), 0.06)), var(--surface-sunken);
-  border: 1px solid color-mix(in srgb, var(--type-color) 45%, var(--border));
-  color: var(--text);
+  rotate: calc(-1 * var(--wheel-rot));
+  transition: rotate 0.9s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.recruit-wheel-type {
+  width: 84px;
+  height: 84px;
+  margin: -42px 0 0 -42px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: #fff;
   font: inherit;
-  text-align: left;
   cursor: pointer;
+  display: grid;
+  place-items: center;
 }
 
-.recruit-type:not(:disabled):active {
-  transform: scale(0.97);
-}
-
-.recruit-type:disabled {
+.recruit-wheel-type:disabled {
   cursor: default;
+}
+
+.recruit-wheel.is-idle .recruit-wheel-type:disabled {
   opacity: 0.3;
 }
 
-.recruit-type-glyph {
+.recruit-wheel-type:not(:disabled):active .recruit-wheel-upright {
+  scale: 0.92;
+}
+
+.recruit-wheel-glyph {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 0 6px rgb(var(--type-rgb)));
+}
+
+.recruit-wheel-name {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.recruit-wheel-face {
   width: 36px;
   height: 36px;
-  color: var(--type-color);
+  margin: -18px 0 0 -18px;
+  cursor: pointer;
+  transition:
+    transform 0.6s cubic-bezier(0.5, 0, 0.3, 1),
+    opacity 0.2s 0.45s;
 }
 
-.recruit-type-name {
-  font-size: 17px;
-  font-weight: 800;
-}
-
-.recruit-type-faces {
-  display: flex;
-  gap: 2px;
-}
-
-.recruit-type-face {
-  width: 34px;
-  height: 34px;
-  opacity: 0.45;
-  filter: saturate(0.4);
+.recruit-wheel-face-art {
+  width: 36px;
+  height: 36px;
   image-rendering: pixelated;
+  filter: brightness(0.55) saturate(0.4);
+}
+
+.recruit-wheel-beam {
+  position: absolute;
+  left: 50%;
+  top: -160px;
+  width: 90px;
+  height: 420px;
+  margin-left: -45px;
+  opacity: 0;
+  background: linear-gradient(180deg, rgba(255, 250, 230, 0.9), rgba(var(--oath-rgb), 0.4) 70%, transparent);
+  filter: blur(7px);
+  transition: opacity 0.6s;
+  pointer-events: none;
+}
+
+.recruit-wheel-orbit {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.recruit-wheel-orbiter {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  transition:
+    opacity 0.4s,
+    width 0.6s,
+    height 0.6s,
+    margin 0.6s;
+}
+
+.recruit-wheel-orbiter-art {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  transition: filter 0.6s;
+}
+
+.recruit-wheel:not(.is-idle) .recruit-wheel-seg:not(.is-chosen) {
+  opacity: 0.12;
+}
+
+.recruit-wheel.is-drawing .is-chosen .recruit-wheel-face,
+.recruit-wheel.is-spinning .is-chosen .recruit-wheel-face,
+.recruit-wheel.is-landed .is-chosen .recruit-wheel-face {
+  transform: rotate(var(--at)) translateY(0) rotate(calc(-1 * var(--at)));
+  opacity: 0;
+}
+
+.recruit-wheel.is-drawing .is-chosen .recruit-wheel-type,
+.recruit-wheel.is-spinning .is-chosen .recruit-wheel-type,
+.recruit-wheel.is-landed .is-chosen .recruit-wheel-type {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.recruit-wheel.is-spinning .recruit-wheel-disc,
+.recruit-wheel.is-landed .recruit-wheel-disc {
+  opacity: 0.25;
+}
+
+.recruit-wheel.is-landed .recruit-wheel-beam {
+  opacity: 0.6;
+}
+
+.recruit-wheel.is-landed .recruit-wheel-orbiter {
+  transition:
+    opacity 0.4s,
+    width 0.6s,
+    height 0.6s,
+    margin 0.6s,
+    transform 0.6s;
+}
+
+.recruit-wheel.is-landed .recruit-wheel-orbiter:not(.is-winner) {
+  opacity: 0;
+}
+
+.recruit-wheel.is-landed .recruit-wheel-orbiter.is-winner {
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+}
+
+.recruit-wheel.is-landed .is-winner .recruit-wheel-orbiter-art {
+  filter: drop-shadow(0 0 14px rgb(var(--oath-rgb)));
+}
+
+.recruit-node-screen .recruit-leave {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  height: auto;
+  min-height: 48px;
+  width: min(100% - 32px, 220px);
+  margin: 0 auto;
+  transition: opacity 0.3s;
+}
+
+.recruit-node-screen:has(.recruit-wheel:not(.is-idle)) .recruit-leave,
+.recruit-node-screen:has(.recruit-wheel:not(.is-idle)) .rite-head {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
 }
 
 /* ---- The oath (RecruitOath): a sigil, a beam, the hero out of silhouette, then its kit ---- */

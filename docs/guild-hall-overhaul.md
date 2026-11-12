@@ -212,6 +212,11 @@ Decided in the build, each the existing precedent, **open for review**:
 - **The Evolution of a recruit at 5 pips** is raised on the Recruit screen the moment it joins, as
   §2.2 says (settled same day, per user direction), with the path's move offered as replace-or-decline
   at a full kit. A reload before the path is chosen falls back to the next level-up report.
+- **The pick is a wheel** (same day, per user direction, chosen from three concepts): the oath's
+  sigil ring split into the types on offer, the heroes who could answer circling it, dimmed. The
+  picked arc turns to the top, its heroes are drawn in and spin, and the spin slows on the one
+  already rolled (`RecruitWheel`); the oath follows, listing the innate and any Evolution path
+  passives beside the kit.
 - **The Gathering (Cycle IV)** lost its player-side help with the Tavern: one more hire a visit. It
   is carried over as **one more type at every Recruit** (`GATHERING_EXTRA_RECRUIT_TYPES`).
 - **First Light's Contracts lesson** is now *Recruits* on the new screen: three types, the hand on

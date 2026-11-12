@@ -7,10 +7,7 @@ import { joinEventRecruit } from '../../run/events';
 import { levelOf } from '../../run/growth';
 import { ROSTER_CAP, type RosterEntry, type RunState } from '../../run/state';
 import { statScaleFor } from '../../run/statScale';
-import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
-import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
-import { HeroPortrait } from '../shared/HeroPortrait';
 import { NodeMotes } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { mapNodeIcon } from './mapNodeArt';
@@ -18,6 +15,7 @@ import { EvolutionScreen } from './EvolutionScreen';
 import { useMasteryFlow } from './masteryFlow';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { RecruitOath } from './RecruitOath';
+import { RecruitWheel } from './RecruitWheel';
 import { RosterPeek } from './RosterPeek';
 import './recruitNode.css';
 
@@ -60,6 +58,9 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
 
   useEffect(() => {
     playSfx('discovery', { pitch: 0.9 });
+    // Reloaded mid-spin with a seat free: the pick already stands, so the hero joins.
+    if (arriving && run.roster.length < ROSTER_CAP && !run.roster.some((r) => r.heroId === arriving.heroId)) join(arriving);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const joined = arriving ? run.roster.some((r) => r.rosterId === arriving.rosterId && r.heroId === arriving.heroId) : false;
@@ -108,11 +109,11 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
     );
   }
 
-  function pick(type: TypeId) {
+  // The wheel has landed on whoever answers the picked type.
+  function land(type: TypeId) {
     const entry = entryFor(type);
     if (!entry) return;
     setArriving(entry);
-    onPick(type);
     if (run.roster.length < ROSTER_CAP) join(entry);
   }
 
@@ -135,35 +136,14 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
       {head}
 
       {!arriving && (
-        <div className="recruit-types">
-          {offers.map(({ type, heroIds }) => {
-            const open = !onlyType || onlyType === type;
-            return (
-              <button
-                key={type}
-                type="button"
-                className="recruit-type"
-                style={{ '--type-color': getTypeColor(type), '--type-rgb': getTypeColorRgb(type) } as CSSProperties}
-                disabled={!open}
-                aria-label={`${type}: ${heroIds.map((id) => rosterHeroes[id]?.name).join(', ')}`}
-                onClick={() => pick(type)}
-              >
-                <ElementGlyph type={type} className="recruit-type-glyph" />
-                <span className="recruit-type-name">{type}</span>
-                <span className="recruit-type-faces" aria-hidden="true">
-                  {heroIds.map((id) => (
-                    <HeroPortrait key={id} heroId={id} className="recruit-type-face" />
-                  ))}
-                </span>
-              </button>
-            );
-          })}
+        <>
+          <RecruitWheel offers={offers} onlyType={onlyType} winnerOf={(type) => entryFor(type)?.heroId ?? null} onPick={onPick} onLanded={land} />
           {!onlyType && (
-            <button className="moveoffer-button moveoffer-decline event-option" onClick={onContinue}>
+            <button className="moveoffer-button moveoffer-decline recruit-leave" onClick={onContinue}>
               <span className="moveoffer-label">Leave</span>
             </button>
           )}
-        </div>
+        </>
       )}
 
       {arriving && (
