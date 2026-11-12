@@ -4357,10 +4357,6 @@ textarea,
   background-color: #8a1e2c;
 }
 
-.team-row .combatant-card:is(.is-guardian, .is-titans-own) .name-bar-mp {
-  visibility: hidden;
-}
-
 .team-row .combatant-card.fainted .name-bar {
   opacity: 0.5;
 }
@@ -4388,7 +4384,7 @@ textarea,
 
 .team-row .plate-numbers {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 3px;
   flex: none;
   font-variant-numeric: tabular-nums;
@@ -4402,6 +4398,26 @@ textarea,
 .plate-shield {
   font-size: 9px;
   color: var(--shield);
+}
+
+/* MP rides the bar's right end in its own dark well, so the blue reads over any fill. */
+.plate-mp {
+  min-width: 18px;
+  padding: 0 3px;
+  border-radius: 2px;
+  background: rgba(8, 14, 30, 0.82);
+  box-shadow: inset 0 0 0 1px rgba(140, 188, 240, 0.35);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 11px;
+  text-align: center;
+  color: #9cc8f6;
+  text-shadow: none;
+}
+
+.plate-mp.is-overcharged {
+  color: var(--mana-over);
+  box-shadow: inset 0 0 0 1px var(--mana-over);
 }
 
 /* The plate says KO now; the shoulder tag would say it twice. */

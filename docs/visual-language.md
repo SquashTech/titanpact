@@ -3495,12 +3495,14 @@ four ways of putting a straight bar back were drawn with the same hits landing o
 - **The space came from the layout, not the crescent.** Both rows read the same way up: figure,
   readout, statuses. The far side packs at the horizon, so its figures have open sky above them.
 - **The name row is the HP bar**: level and name on the left, HP on the right, graduated at the
-  quarters, with MP a thin thread under it. Any Shield is a pale band past the fill and a "+N" beside
+  quarters, with MP a thin thread under it and its number in a dark well at the bar's right end
+  (2026-11-12, per user direction: without the number a player could not tell what a hero could cast). Any Shield is a pale band past the fill and a "+N" beside
   the HP. A forecast eats the bar as the old one's bite did.
 - **A hit drops the fill at once and leaves a trail**: white the moment it lands, held for a beat,
   then drained in red. The old bar only eased its width, so a crit and a chip looked the same. A hit
   of a quarter of max HP or more also shakes the plate.
-- **A boss** (Guardian, Herald, Eyes) has a bar in the Titan's magenta and no MP thread.
+- **A boss** (Guardian, Herald, Eyes) has a bar in the Titan's magenta, and its MP like anyone's
+  (2026-11-12, per user direction: the bar no longer costs a boss the room it did).
 - **Type chips hang at the figure's shoulder** on both sides, off the bar. The shoulder's KO tag is
   gone, since the bar says KO.
 - **Stat stages join the status band** instead of the card's top corners, which a big figure covered.

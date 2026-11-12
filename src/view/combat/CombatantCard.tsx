@@ -543,6 +543,7 @@ export function CombatantCard({
             <span className="plate-numbers">
               <span className={`plate-hp ${hpTier(hpFraction)}`}>{combatant.fainted ? 'KO' : Math.max(0, combatant.currentHp)}</span>
               {shield > 0 && !combatant.fainted && <span className="plate-shield">+{shield}</span>}
+              {!combatant.fainted && <span className={`plate-mp${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>{combatant.currentMana}</span>}
             </span>
           )}
           {!compact && (
