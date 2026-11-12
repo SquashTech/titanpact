@@ -4400,15 +4400,15 @@ textarea,
   color: var(--shield);
 }
 
-/* The hero's Mana hangs off the bar's right end in a move's cost gem; the MP line under the bar still rises and falls. */
+/* The hero's Mana in a move's cost gem, seated on the MP line's end so it reads as that line's, clear of HP. */
 .team-row .combatant-card:not(.empty-slot):not(.fainted) .combatant-name {
-  padding-right: 15px;
+  padding-right: 20px;
 }
 
 .team-row .plate-mp-gem {
   position: absolute;
   right: -12px;
-  top: calc(50% - 2px);
+  top: calc(100% - 1.5px);
   z-index: 3;
   transform: translateY(-50%);
   text-shadow: none;
