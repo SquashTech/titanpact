@@ -105,7 +105,7 @@ import { getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { FieldGlyph } from '../shared/fieldIcons';
 import { MoveButtonReplica, TARGET_MODE_LABELS, healReadout, riderMagnitude, useLongPress } from '../shared/MoveTile';
-import { MoveName, MoveStrip, MoveStub } from '../shared/MoveStrip';
+import { MoveName, MoveStrip, MoveStub, withoutCrit } from '../shared/MoveStrip';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
@@ -2276,7 +2276,7 @@ export function FightScreen({
                     return (
                       <MoveRow
                         key={moveId}
-                        move={move}
+                        move={withoutCrit(move, combat.fixedRolls)}
                         affordable={combatant.currentMana >= cost}
                         gateUnmet={!hasLegalTarget(move, id) || !isMoveUsable(combat, id, move)}
                         chargeHolder={combatant}

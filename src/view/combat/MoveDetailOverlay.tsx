@@ -28,7 +28,7 @@ import { overlayHost } from '../shared/overlayHost';
 import { ChargePips } from '../shared/ChargePips';
 import { forecastDamage, koLabel } from './forecast';
 import { ForecastBite } from './ForecastBite';
-import { Glyph, MoveName, MoveStrip, MoveStub, SeatArrow, TargetFigures } from '../shared/MoveStrip';
+import { Glyph, MoveName, MoveStrip, MoveStub, SeatArrow, TargetFigures, withoutCrit } from '../shared/MoveStrip';
 import { IconText } from '../shared/IconText';
 import { typeChart } from '../../data/typechart';
 import { moveKeywords, type MoveKeywordId } from '../../data/keywords';
@@ -184,7 +184,7 @@ export function MoveDetailCard({ move: authored, context, caster, terse }: CardP
   const attacker = context ? context.combat.combatants[context.attackerId] : undefined;
   const attackerHero = attacker ? allCombatants[attacker.heroId] : undefined;
   // A Class move wears its holder's type (state.ts): the live attacker's, else the caster's.
-  const move = attackerHero ? moveForHero(authored, attackerHero) : caster ? moveForPrimaryType(authored, caster.types[0]) : authored;
+  const move = withoutCrit(attackerHero ? moveForHero(authored, attackerHero) : caster ? moveForPrimaryType(authored, caster.types[0]) : authored, context?.combat.fixedRolls);
   const typeColor = getTypeColor(move.type);
   const statCtx = { active: context?.combat.activeFieldEffect ?? null, defs: fieldEffects, board: context ? { state: context.combat, passives } : undefined };
 

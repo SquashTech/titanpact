@@ -30,6 +30,13 @@ export const TARGET_MODE_LABELS: Record<TargetMode, string> = {
 const ENEMY_TARGETS: ReadonlySet<TargetMode> = new Set(['singleEnemy', 'bothEnemies', 'randomEnemy', 'allOthers']);
 
 /** Whether a move's strip ends in the enemy seats (it aims at the enemy row) or in figures. */
+/** The move as a fixed-roll fight draws it: nothing there crits (docs/the-tutorial.md §2). */
+export function withoutCrit(move: MoveDefinition, fixedRolls: boolean | undefined): MoveDefinition {
+  if (!fixedRolls || move.critChance == null) return move;
+  const { critChance: _, ...rest } = move;
+  return rest;
+}
+
 export function aimsAtEnemies(target: TargetMode): boolean {
   return ENEMY_TARGETS.has(target);
 }
