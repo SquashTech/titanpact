@@ -373,16 +373,6 @@ const ArenaLocation = memo(function ArenaLocation({ location }: { location: Loca
   );
 });
 
-// Same golden-angle scatter as the title's useEmbers / draft's useMotes; stable across renders.
-const CONSOLE_EMBERS = Array.from({ length: 9 }, (_, i) => {
-  const seed = i * 137.51;
-  return {
-    left: seed % 100,
-    delay: (seed * 1.3) % 8,
-    duration: 6.5 + ((seed * 0.29) % 4),
-    size: 2 + ((seed * 0.17) % 2),
-  };
-});
 const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 10 };
 
 // Hold-to-auto-play: hold length before auto-play engages. The hold is transient — it plays
@@ -1945,21 +1935,6 @@ export function FightScreen({
 
       <div className="action-area" style={consoleStyle}>
         <TurnClock left={clockLeft} total={clockSeconds} className="vs-fight-clock" />
-        <div className="console-embers" aria-hidden="true">
-          {CONSOLE_EMBERS.map((e, i) => (
-            <span
-              key={i}
-              className="console-ember"
-              style={{
-                left: `${e.left}%`,
-                width: `${e.size}px`,
-                height: `${e.size}px`,
-                animationDelay: `${e.delay}s`,
-                animationDuration: `${e.duration}s`,
-              }}
-            />
-          ))}
-        </div>
         {resolving && beat && (
           /* The beat's color sits on the OUTER element: the inner one remounts every beat, and a remounting background cannot cross-fade. */
           <div

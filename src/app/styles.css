@@ -7732,44 +7732,7 @@ textarea,
   background: linear-gradient(90deg, rgba(var(--console-rgb, 224, 166, 60), 0.3), transparent);
 }
 
-/* Ambient embers rising through the console — the same field the title screen,
-   the draft and the level-up screen carry (@keyframes title-ember-rise), tinted
-   to whoever is commanding. Those three screens feel like places partly because
-   something is moving in the air; the fight screen had ambience in the arena
-   (the Field Effect sweep, the acting platform's pulse) and none at all below
-   the horizon, which is half of what made the console read as a control panel
-   bolted under a picture.
-
-   Nine, not the draft's sixteen: this field is a third of the height and sits
-   behind text the player is reading under time pressure, not behind a figure
-   they are admiring. */
-.console-embers {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-  /* Halved against the draft's field. There the motes drift behind a figure
-     and empty ground; here they pass behind move names and damage numbers the
-     player is reading against a clock, and at full strength they read as specks
-     on the text rather than as air in the room. */
-  opacity: 0.45;
-}
-
-.console-ember {
-  position: absolute;
-  bottom: -4%;
-  border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 0%, rgba(var(--console-rgb, 224, 166, 60), 0.9) 55%, transparent 75%);
-  box-shadow: 0 0 6px 1px rgba(var(--console-rgb, 224, 166, 60), 0.4);
-  opacity: 0;
-  animation-name: title-ember-rise;
-  animation-timing-function: ease-in;
-  animation-iteration-count: infinite;
-  --drift: 0px;
-}
-
-/* Everything the player actually reads or presses sits above the ember field. */
+/* Everything the player reads or presses sits above the console's own layers. */
 .action-panel,
 .combat-banner {
   position: relative;
