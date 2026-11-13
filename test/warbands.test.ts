@@ -18,7 +18,7 @@ import { castHeroWarband, learnableIn, learnableMoves } from '../src/run/warband
 import { RECRUIT_TYPE_COUNT, recruitTypeOffers } from '../src/run/recruitNode';
 
 function runAt(seed: number, act: number, cycle: number): RunState {
-  let run = createRunState(50, cycle);
+  let run = createRunState(cycle);
   for (const id of ['packAlpha', 'crimson']) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
   return { ...run, map: generateMap(seed, act), locationIds: generateItinerary(seed), actNumber: act, fightsStarted: 2, encountersWon: 3 * act };
 }

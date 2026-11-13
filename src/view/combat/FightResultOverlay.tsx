@@ -18,7 +18,6 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { PlateButton } from '../shared/PlateButton';
 import { NODE_TINT_GOLD, NodeMotes } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
-import { useCoinCount } from '../shared/useCoinCount';
 import { RESOURCE_COLORS, ResourceGlyph } from '../shared/RunGlyph';
 import { playXpBar, xpBarSegments, xpBarTickTimes, xpBarTotalMs } from '../shared/xpBar';
 import { getTypeColor } from './typeColors';
@@ -65,9 +64,7 @@ export interface FightResultProps {
    * stat gains are read here, a tap away, and no separate report screen follows the fight.
    */
   levelSeed?: number;
-  /** The purse before this fight paid, so the ledger can show where it lands. */
-  goldFrom: number;
-  goldReward: number;
+  /** The fight's item drop, laid out on the who-screen that follows. */
   equipmentReward: EquipmentDefinition | null;
   /** A potion drop (run/consumables.ts). Null on the common no-drop win. */
   consumableReward?: ConsumableKind | null;
@@ -101,8 +98,6 @@ export function FightResultOverlay({
   fieldedIds,
   xpGained,
   levelSeed,
-  goldFrom,
-  goldReward,
   equipmentReward,
   consumableReward = null,
   gemReward = NO_GEMS,
@@ -133,11 +128,10 @@ export function FightResultOverlay({
     if (!won) return rows;
     const mvpEntry = mvp ? roster.find((entry) => entry.rosterId === mvp.rosterId) : undefined;
     if (mvp && mvpEntry) rows.push({ key: 'mvp', render: () => <MvpRow heroId={mvpEntry.heroId} pathId={formIdFor(mvpEntry)} pick={mvp} bonusXp={fightXpFor(xpGained, mvp.rosterId, mvp.rosterId) - xpGained} /> });
-    if (goldReward > 0) rows.push({ key: 'gold', render: (shown) => <GoldRow from={goldFrom} amount={goldReward} shown={shown} /> });
     const loot = lootPieces(equipmentReward, gemReward, consumableReward, () => setInspecting(true));
     if (loot.length > 0) rows.push({ key: 'loot', render: (shown) => <LootPile pieces={loot} shown={shown} />, holdMs: loot.length * LOOT_STAGGER_MS });
     return rows;
-  }, [won, goldFrom, goldReward, equipmentReward, consumableReward, gemReward, mvp, xpGained]);
+  }, [won, equipmentReward, consumableReward, gemReward, mvp, xpGained]);
 
   const stageDone = STAGE_LEDGER + ledger.length;
   const [stage, setStage] = useState(() => (prefersReducedMotion() ? stageDone : STAGE_TITLE));
@@ -389,24 +383,6 @@ function PartyMember({ entry, index, xp, fielded, filling, landed, hpAfter }: Me
       {hpAfter && <WoundBar hp={hpAfter.hp} maxHp={hpAfter.maxHp} className="fight-result-hp" />}
 
       {!fielded && <span className="fight-result-reserve-tag">Reserve</span>}
-    </div>
-  );
-}
-
-/** The count starts when the row lands, not when the overlay does — so it is heard where it is seen. */
-function GoldRow({ from, amount, shown }: { from: number; amount: number; shown: boolean }) {
-  const counted = useCoinCount(amount, shown);
-  const settled = counted >= amount;
-  return (
-    <div className={`fight-result-row${settled ? ' is-settled' : ''}`}>
-      <span className="fight-result-row-glyph">
-        <ResourceGlyph kind="gold" />
-      </span>
-      <span className="fight-result-row-text">
-        <span className="fight-result-row-label">Gold</span>
-        <span className="fight-result-row-sub">Purse {from + counted}g</span>
-      </span>
-      <span className="fight-result-row-value">+{counted}g</span>
     </div>
   );
 }

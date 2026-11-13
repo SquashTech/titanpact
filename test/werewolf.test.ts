@@ -31,7 +31,7 @@ const WOLF = curses.werewolf;
 
 function seed(heroId = 'cinderKnight', moveIds: readonly string[] = heroes[heroId].moveIds, mastery = 0): RunState {
   const entry = { ...createRosterEntry(heroId, heroId, moveIds), mastery };
-  return addRosterEntry(createRunState(0), entry);
+  return addRosterEntry(createRunState(), entry);
 }
 
 test('werewolf: the event marks with the werewolf curse, and the curse is the 650 body the user asked for', () => {

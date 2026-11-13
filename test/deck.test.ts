@@ -97,7 +97,7 @@ test('deck: the draft draws one hero a row, four rows shown, and every decked he
 });
 
 function deckRun(seed: number, act: number, deck: readonly string[] | null): RunState {
-  let run = createRunState(50);
+  let run = createRunState();
   for (const id of ['valor', 'packAlpha', 'crimson', 'tidecaller']) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
   return { ...run, map: generateMap(seed, act), locationIds: generateItinerary(seed), actNumber: act, fightsStarted: 2, encountersWon: 4, deck };
 }

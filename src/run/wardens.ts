@@ -188,7 +188,7 @@ export function buildWarden(warden: Warden, heroes: HeroLookup, table: Progressi
   const rosterId = wardenRosterId(warden.heroId);
   const level = build.level + WARDEN_LEVEL_BONUS;
   const { entry: grown } = growTo(createRosterEntry(rosterId, warden.heroId, hero.moveIds), hero, level, createRng(build.seed));
-  let run = addRosterEntry(createRunState(0), { ...grown, mastery: build.mastery });
+  let run = addRosterEntry(createRunState(), { ...grown, mastery: build.mastery });
 
   const entryOf = () => run.roster[0];
   if (warden.pathId && availableEvolution(table, entryOf())?.paths.some((p) => p.id === warden.pathId)) {

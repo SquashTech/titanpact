@@ -337,7 +337,7 @@ export function generateEncounter(
   const heroIds = [...forced, ...drawn];
   rng = afterPick;
 
-  let run = createRunState(0);
+  let run = createRunState();
   for (const heroId of heroIds) {
     let startingMoveIds: readonly string[] = heroPool[heroId].moveIds;
     const movepool = movepools?.[heroId];
@@ -446,7 +446,7 @@ export function generateFinaleEncounter(
 ): Encounter {
   const ordered = [...brokenSeals].sort((a, b) => a.actNumber - b.actNumber);
 
-  let run = createRunState(0);
+  let run = createRunState();
   const orderedIds: string[] = [];
   let rng = createRng(seed);
   if (escorts) {
@@ -568,7 +568,7 @@ export function generateSpawnEncounter(seed: number, options: SpawnEncounterOpti
   }
   const escortIds = escortTiers.map((tier) => drawnByTier.get(tier)!.shift()!);
 
-  let run = createRunState(0);
+  let run = createRunState();
   const rosterIds: string[] = [];
   const seen = new Map<string, number>();
   for (const [i, heroId] of [...leaderIds, ...escortIds].entries()) {

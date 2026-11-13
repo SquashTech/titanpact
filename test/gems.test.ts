@@ -23,7 +23,7 @@ import { addRosterEntry, createRosterEntry, createRunState } from '../src/run/st
 import { fightXpFor, MVP_XP_SHARE } from '../src/run/growth';
 
 function seed(id: string) {
-  return addRosterEntry(createRunState(0), createRosterEntry(id, id, heroes[id].moveIds));
+  return addRosterEntry(createRunState(), createRosterEntry(id, id, heroes[id].moveIds));
 }
 
 test('gems: a Gem lands its stat and its pip, for good', () => {

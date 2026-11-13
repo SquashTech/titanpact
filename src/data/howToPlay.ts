@@ -190,7 +190,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     GEAR,
     ['node:equipmentReward'],
     '- An item goes to one hero and *stays* there.\n- Each hero holds *three*.',
-    '- A second of the same kind *merges* into a stronger one.\n- A full hero can *replace* one: the old one is lost.\n- Or *sell* the new one.'
+    '- A second of the same kind *merges* into a stronger one.\n- A full hero can *replace* one: the old one is lost.\n- Or *leave it* for a potion.'
   ),
   page(
     'levels',
@@ -279,7 +279,8 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'The Camp',
     RUN,
     ['node:camp'],
-    'The last stop before every *Guardian*. Pick one of three:\n- *Mend*: your whole roster healed, the downed back on their feet\n- *Gems*: a handful to set in your heroes\n- *Gear*: one item of three',
+    'The last stop before every *Guardian*. Three doors, and you take one.',
+    '- One door always *Mends*: your whole roster healed, the downed back on their feet, and a little more.\n- The other two hold *Gems* you choose, *items* you choose, a *Blessing* or a *Boon*, two at a time.',
     'Whatever you pass up, you face the Guardian without.'
   ),
   page(

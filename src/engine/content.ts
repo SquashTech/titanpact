@@ -409,12 +409,6 @@ export interface PassiveDefinition {
    */
   metamorphicFaces?: number;
   /**
-   * Gilded Mane (docs/wild-innates-and-events.md §2): `statGrants` once for every `perGold` the
-   * holder's run holds, read at fight build (run/passives.ts passiveStatModifiers). A grant read off
-   * the purse rather than authored as a number, so the shop is a decision for this hero's side alone.
-   */
-  goldStatGrants?: { perGold: number; statGrants: Partial<Record<StatKey, number>> };
-  /**
    * A Burden (docs/innate-passives.md §4): this passive is a COST, and the hero born with it comes
    * in BURDEN_SURPLUS over the 550 (run/statBudget.ts). Presentation tints it as a price; the
    * roster test reads it for the one budget exemption.
@@ -443,16 +437,13 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
     passive.cannotSwitchOut !== undefined ||
     passive.sideRefusesStatuses !== undefined ||
     passive.setsOffStatus !== undefined ||
-    passive.metamorphicFaces !== undefined ||
-    passive.goldStatGrants !== undefined;
+    passive.metamorphicFaces !== undefined;
   if (!hasEffect) return false;
   const ok = (amount: number | undefined) => amount === undefined || isValidFlatStatGrant(amount);
   return (
     Object.values(passive.statGrants ?? {}).every(ok) &&
     Object.values(passive.conditionalStatGrants?.statGrants ?? {}).every(ok) &&
-    Object.values(passive.partnerStatGrants ?? {}).every(ok) &&
-    Object.values(passive.goldStatGrants?.statGrants ?? {}).every(ok) &&
-    (passive.goldStatGrants === undefined || passive.goldStatGrants.perGold > 0)
+    Object.values(passive.partnerStatGrants ?? {}).every(ok)
   );
 }
 

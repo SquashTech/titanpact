@@ -204,7 +204,6 @@ export function formatReport(
   out.push(`  full-clear rate            ${pct(agg.wins, R)}   (${agg.wins}/${agg.runs})`);
   out.push(`  encounters won per run     ${num(agg.encountersWonSum / R, 2)}`);
   out.push(`  mean roster level at end   ${num(agg.rosterLevelEndSum / R, 2)}`);
-  out.push(`  gold unspent at end        ${num(agg.goldEndSum / R, 1)}`);
   {
     const k = agg.knockouts;
     const fights = agg.encountersWonSum + (agg.runs - agg.wins);
@@ -597,17 +596,16 @@ export function formatReport(
   out.push(`  merge offered (somebody held the family)  ${num(agg.mergeOffers / R, 2)} /run  (completed runs ${agg.wins > 0 ? num(agg.mergeOffersWon / agg.wins, 2) : '-'})`);
   out.push(`  merge taken by the pilot                  ${num(agg.merges / R, 2)} /run  (completed runs ${agg.wins > 0 ? num(agg.mergesWon / agg.wins, 2) : '-'})`);
   out.push('');
-  out.push('  gold earned per run that entered the act, and the Camp door taken (share of visits):');
-  const earnedKeys = ['fight', 'purse', 'sell'];
-  const doors = ['mend', 'gems', 'gear'];
-  out.push(`  ${pad('act', 6)}${earnedKeys.map((k) => padStart(k, 8)).join('')}${padStart('earned', 9)}   ${doors.map((d) => padStart(d, 8)).join('')}`);
+  out.push('  the Camp door taken, share of visits, and items left for a flask a run that entered the act:');
+  const doors = [...new Set(Object.keys(agg.flow).filter((k) => k.includes(':camp:')).map((k) => k.split(':camp:')[1]))].sort();
+  out.push(`  ${pad('act', 6)}${doors.map((d) => padStart(d, 13)).join('')}${padStart('left', 8)}`);
   for (let act = 1; act <= TOTAL_ACTS; act++) {
     const entered = agg.actEntered[act] || 1;
-    const earned = earnedKeys.map((k) => (agg.goldFlow[`${act}:earned:${k}`] ?? 0) / entered);
-    const taken = doors.map((d) => agg.goldFlow[`${act}:camp:${d}`] ?? 0);
+    const taken = doors.map((d) => agg.flow[`${act}:camp:${d}`] ?? 0);
     const visits = sum(taken);
-    if (sum(earned) === 0 && visits === 0) continue;
-    out.push(`  ${pad(String(act), 6)}${earned.map((v) => padStart(num(v, 1), 8)).join('')}${padStart(num(sum(earned), 1), 9)}   ${taken.map((t) => padStart(visits > 0 ? pct(t, visits) : '-', 8)).join('')}`);
+    const left = (agg.flow[`${act}:left`] ?? 0) / entered;
+    if (visits === 0 && left === 0) continue;
+    out.push(`  ${pad(String(act), 6)}${taken.map((t) => padStart(visits > 0 ? pct(t, visits) : '-', 13)).join('')}${padStart(num(left, 2), 8)}`);
   }
   out.push('');
   const totalFights = agg.roundHistogram.reduce((a, b) => a + (b ?? 0), 0);

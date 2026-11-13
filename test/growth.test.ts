@@ -62,7 +62,7 @@ const ALWAYS = () => 0.999999;
 const NEVER = () => 0;
 
 function soloRun(heroId = 'cinderKnight') {
-  return addRosterEntry(createRunState(0), createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
+  return addRosterEntry(createRunState(), createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
 }
 
 test('growth: the grade table is the authored one, and cost rises with chance', () => {

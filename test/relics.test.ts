@@ -80,7 +80,7 @@ test('relics: the three Banners are offense, defense and staying power, and no s
 
 test('entryStats: the out-of-combat sheet math equals the combatant a fight actually builds', () => {
   const relicIds = ['bannerOfTheWarcry', 'bannerOfTheBulwark', 'bannerOfTheBulwark'];
-  let run = createRunState(0);
+  let run = createRunState();
   run = addRosterEntry(run, createRosterEntry('cinderKnight', 'cinderKnight', heroes.cinderKnight.moveIds));
   // A passive-Class rides the same pipeline as everything else the sheet counts.
   run = grantClass(run, classes, 'cinderKnight', 'warden');

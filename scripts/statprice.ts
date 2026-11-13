@@ -52,7 +52,7 @@ function entryAtLevel(heroId: string, level: number): RosterEntry {
   if (cached) return cached;
 
   const hero = heroes[heroId];
-  let run = addRosterEntry(createRunState(0), createRosterEntry(heroId, heroId, hero.moveIds));
+  let run = addRosterEntry(createRunState(), createRosterEntry(heroId, heroId, hero.moveIds));
   for (let next = 2; next <= level; next++) {
     // Levels are automatic (src/run/growth.ts), and they roll stats rather than being spent.
     run = { ...run, roster: [levelUpEntry(run.roster[0], hero, 1, () => 0.5).entry] };

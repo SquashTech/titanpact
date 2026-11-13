@@ -2,7 +2,6 @@ import { useMemo, type CSSProperties, type ReactNode } from 'react';
 import { useAmbientLocation } from './LocationContext';
 import { LocationAmbience } from './LocationSky';
 import { locationBackdrop } from './locationBackdrops';
-import { ResourceGlyph } from './RunGlyph';
 
 // The shared stage every map-node screen is set on: a full-bleed sky and an unboxed header.
 // Everything is tinted from `--node-rgb`, which THE SCREEN sets once on its own `.node-screen`
@@ -165,22 +164,5 @@ export function NodeHeader({
         </p>
       )}
     </header>
-  );
-}
-
-/**
- * The purse, pinned in the free top corner of a shop node — opposite the roster glyph, which
- * owns the other one. It replaces the `<h2>` + horizontal rule the Guild Hall and the Blacksmith
- * used to open with: a heading with a gold figure at the far end of a rule is a web page's
- * masthead, and both screens already say what they are in their NodeHeader. Pinned rather than
- * in the scroll because this is the number every decision below is measured against, and a
- * readout that scrolls away is not a readout.
- */
-export function NodePurse({ gold }: { gold: number }) {
-  return (
-    <span className="node-purse" aria-label={`${gold} gold`}>
-      <ResourceGlyph kind="gold" />
-      <span className="node-purse-count">{gold}</span>
-    </span>
   );
 }

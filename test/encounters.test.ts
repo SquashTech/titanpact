@@ -20,7 +20,7 @@ import { ELITE_EXTRA_ENEMIES, championGradeFor, encounterScaling, guardianEscort
 import { appendFinalEnemy } from '../src/run/enemyGen';
 
 function runAt(seed: number, act: number): RunState {
-  let run = createRunState(50);
+  let run = createRunState();
   for (const id of ['valor', 'packAlpha', 'crimson', 'tidecaller']) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
   return { ...run, map: generateMap(seed, act), locationIds: generateItinerary(seed), actNumber: act, fightsStarted: 2, encountersWon: 4 };
 }
@@ -126,7 +126,7 @@ test("encounters: a Base champion grows on its act's grade — E to Act 3, C in 
   // The same champion, seed and level on E and on C: the draw walks the row in order, so the
   // stronger row never pays less on a draw.
   const championId = 'manticore';
-  const empty = { run: createRunState(0), squad: { activeIds: [null, null] as [null, null], benchIds: [] } };
+  const empty = { run: createRunState(), squad: { activeIds: [null, null] as [null, null], benchIds: [] } };
   const scaling = encounterScaling('boss', 4);
   const onE = appendFinalEnemy(empty, championId, enemies, 7, scaling).run.roster[0];
   const graded = { ...enemies[championId], growthGrades: Object.fromEntries(Object.keys(enemies[championId].growthGrades!).map((k) => [k, 'C'])) as typeof enemies[string]['growthGrades'] };

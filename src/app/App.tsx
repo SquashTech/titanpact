@@ -27,7 +27,7 @@ import { LaunchScreen } from '../view/run/LaunchScreen';
 import { DraftScreen } from '../view/run/DraftScreen';
 import { MapScreen } from '../view/run/MapScreen';
 import { CampNodeScreen } from '../view/run/CampNodeScreen';
-import { CampGearScreen } from '../view/run/CampGearScreen';
+import { CampGearCounter, CampGemCounter } from '../view/run/CampCounters';
 import { BoonNodeScreen } from '../view/run/BoonNodeScreen';
 import { TutorNodeScreen } from '../view/run/TutorNodeScreen';
 import { MentorNodeScreen } from '../view/run/MentorNodeScreen';
@@ -96,7 +96,7 @@ import {
 import { recruitNodeEntry, recruitTypeOffers, recruitableOfType, rollRecruitHero } from '../run/recruitNode';
 import { MASTERY_CAP, MasteryError, anyMasteryEligible } from '../run/mastery';
 import { GEM_CACHE_COUNT, SCRIBE_GEMS, placeGem, rollGemDrop, rollGems, type Gem } from '../run/gems';
-import { CAMP_GEMS } from '../run/camp';
+import { campBundle, rollCampDoors } from '../run/camp';
 import type { MvpPick } from '../run/mvp';
 import { grantConsumable, rollConsumableDrop, spendConsumables, type ConsumableKind, type ConsumablePurse, type PotionKind } from '../run/consumables';
 import { generateMap, PATRON_ROWS, type MapNodeType, type RewardNodeType } from '../run/map';
@@ -139,15 +139,12 @@ import { openingSquad } from '../run/squad';
 import {
   advanceToNode,
   advanceToNextAct,
-  grantCurrencyReward,
   anyoneCanReceive,
   absorbItem,
   RunProgressError,
-  sellItem,
+  leaveItem,
   recordBrokenSeal,
   grantRelicReward,
-  goldRangeFor,
-  rollGoldRange,
   recordPermanentStatGains,
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
@@ -234,7 +231,7 @@ function addHeroes(run: RunState, heroIds: readonly string[], level?: number): R
  */
 function createStartingRun(heroIds: readonly string[], cycle: number): RunState {
   return {
-    ...blessOpeningPair(addHeroes(createRunState(40, cycle), heroIds)),
+    ...blessOpeningPair(addHeroes(createRunState(cycle), heroIds)),
     map: generateMap(randomSeed()),
     locationIds: [actOneLocationFor(cycle)],
   };
@@ -248,7 +245,7 @@ function createStartingRun(heroIds: readonly string[], cycle: number): RunState 
 function createLocationVisitRun(locationId: string): RunState {
   const heroIds = shuffled(Object.keys(heroes)).slice(0, ROSTER_CAP);
   return {
-    ...addHeroes(createRunState(40), heroIds),
+    ...addHeroes(createRunState(), heroIds),
     map: generateMap(randomSeed()),
     locationIds: [locationId],
   };
@@ -266,7 +263,7 @@ function shuffled<T>(items: readonly T[]): T[] {
 
 /** TEMPORARY DEV/TEST — a full roster with its first hero stood at its Evolution. Remove with its TitleScreen button. */
 function createLevel4TestRun(): RunState {
-  const base = addHeroes(createRunState(999), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
+  const base = addHeroes(createRunState(), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
   const worn = ['sword.common', 'staff.common', 'sword.common.blazing'];
   return {
     ...base,
@@ -294,7 +291,7 @@ function createTitanEyesTestRun(): RunState {
   const four = generateEncounter('fight', seed, heroes, { heroCount: 4, scaling, progression: progressionTable });
   const two = generateEncounter('fight', seed + 1, heroes, { heroCount: 2, scaling, progression: progressionTable, excludeHeroIds: four.run.roster.map((r) => r.heroId) });
   const weights = rarityWeightsFor(SEAL_ACTS, 'elite');
-  let run = createRunState(400);
+  let run = createRunState();
   for (const entry of [...four.run.roster, ...two.run.roster]) {
     let loadout = entry.equipment;
     const families = new Set<string>();
@@ -357,11 +354,6 @@ function whoQueue(screen: Screen): string[] {
 /** Payouts key on the MAP node type: `skirmish` and `battle` both flatten to a `fight` encounter but sit in opposite reward lanes. */
 type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
 
-// The bands live in runProgress.ts (goldRangeFor) so the map's node readout prints the roll it describes.
-function goldRewardFor(nodeType: EncounterMapNodeType, actNumber: number): number {
-  return rollGoldRange(goldRangeFor(nodeType, actNumber));
-}
-
 function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): EquipmentDefinition | null {
   if (Math.random() >= EQUIPMENT_DROP_CHANCE[nodeType]) return null;
   const weights = rarityWeightsFor(actNumber, LOOT_SOURCE[nodeType]);
@@ -401,7 +393,7 @@ const TIPS_A_LESSON_RETIRES: Readonly<Record<string, readonly ScreenTipId[]>> = 
 const LESSON_EXIT = 'Back to the Sky';
 
 export function App() {
-  const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(40));
+  const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState());
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
   /** The place a Story chapter's beat stands in, for its music and its fights' arena. */
   const [storyPlaceId, setStoryPlaceId] = useState<string | null>(null);
@@ -804,7 +796,7 @@ export function App() {
       // Leads are picked in the fight, once the enemy's are on the field (FightScreen's lead pick).
       handleEnterFight(openingSquad(playerRun.roster), nodeId, encounterKind, encounter);
     } else if (node.type === 'camp') {
-      setScreen({ kind: 'camp', nodeId });
+      setScreen({ kind: 'camp', nodeId, doorIds: rollCampDoors(playerRun) });
     } else if (node.type === 'recruitReward') {
       setScreen({ kind: 'recruitNode', nodeId, seed: randomSeed() });
     } else if (node.type === 'manaWellReward') {
@@ -859,7 +851,6 @@ export function App() {
       nodeType,
       squad,
       encounter,
-      goldReward: goldRewardFor(mapNodeType, playerRun.actNumber),
       // Read off the win this fight WILL be: the act's base is a function of encounters won and
       // the kind is the tile's, so the figure is known before the fight rather than rolled after it.
       xpGained: xpForEncounter(playerRun.encountersWon + 1, encounterXpKind(mapNodeType)),
@@ -886,7 +877,6 @@ export function App() {
 
   function handleFightResolved(
     nodeId: string,
-    goldReward: number,
     equipmentReward: EquipmentDefinition | null,
     consumableReward: ConsumableKind | null,
     /** The fight's Gem drop, placed after the item's who-screen. */
@@ -927,7 +917,7 @@ export function App() {
     // used to pay none (nothing left to spend it on) is void (docs/run-loop.md §4).
     const banner = isGuardian;
 
-    let next = grantCurrencyReward(spendConsumables(playerRun, consumablesUsed), goldReward);
+    let next = spendConsumables(playerRun, consumablesUsed);
     next = advanceToNode(next, nodeId);
     // HP carries to the next node; the act's end is what makes the roster whole (run/wounds.ts).
     if (finalState) next = recordPermanentStatGains(recordWounds(next, finalState, 'A', rosterHeroes), finalState, 'A');
@@ -976,9 +966,9 @@ export function App() {
       afterScreen = { kind: 'map' };
     }
 
-    // A drop nobody can take converts to gold on the spot; the victory overlay has already shown it.
+    // A drop nobody can take is left on the spot, for a flask; the victory overlay has already shown it.
     const dropId = equipmentReward && anyoneCanReceive(next, equipmentReward, equipment, rosterHeroes) ? equipmentReward.id : null;
-    if (equipmentReward && !dropId) next = sellItem(next, equipmentReward.id, equipment);
+    if (equipmentReward && !dropId) next = leaveItem(next, equipmentReward.id, equipment);
 
     setPlayerRun(next);
 
@@ -1012,6 +1002,41 @@ export function App() {
     else setScreen({ kind: 'map' });
   }
 
+  /** A Camp door's `step`-th piece, or the map once its pieces are spent. */
+  function campStep(campNodeId: string, bundleId: string, step: number, seed: number): Screen {
+    const bundle = campBundle(bundleId);
+    return bundle && step < bundle.pieces.length ? { kind: 'campDoor', campNodeId, bundleId, step, seed } : { kind: 'map' };
+  }
+
+  /** The piece in hand at a Camp door, each on the screen its reward already has. */
+  function campDoorPiece(screen: Extract<Screen, { kind: 'campDoor' }>) {
+    const piece = campBundle(screen.bundleId)?.pieces[screen.step];
+    const next = campStep(screen.campNodeId, screen.bundleId, screen.step + 1, screen.seed);
+    const pieceSeed = screen.seed + screen.step;
+    if (!piece || piece.kind === 'mend') return null;
+    if (piece.kind === 'gems' || piece.kind === 'gear') {
+      const Counter = piece.kind === 'gems' ? CampGemCounter : CampGearCounter;
+      return (
+        <Counter
+          key={pieceSeed}
+          run={playerRun}
+          take={piece.take}
+          of={piece.of}
+          seed={pieceSeed}
+          taken={screen.taken ?? []}
+          onTaken={(slot, landed) => {
+            setPlayerRun(landed);
+            setScreen((at) => (at.kind === 'campDoor' ? { ...at, taken: [...(at.taken ?? []), slot] } : at));
+          }}
+          onRunChange={setPlayerRun}
+          onContinue={() => setScreen(next)}
+        />
+      );
+    }
+    if (piece.kind === 'blessing') return <BlessingShrineScreen key={pieceSeed} run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => setScreen(next)} />;
+    return <BoonNodeScreen key={pieceSeed} run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => setScreen(next)} seed={pieceSeed} />;
+  }
+
   function handleNodeContinue(nodeId: string) {
     setPlayerRun((run) => advanceToNode(run, nodeId));
     setScreen({ kind: 'map' });
@@ -1019,7 +1044,7 @@ export function App() {
 
   /**
    * Claiming an item advances the node, then asks who carries it — one who-screen per item, in
-   * order, since the Loot Pile event hands over three at once. An item nobody can take is gold.
+   * order, since the Loot Pile event hands over three at once. An item nobody can take is left, for a flask.
    * `base` is the run to advance from when the caller has just changed it (an event's cost).
    */
   function handleClaimEquipment(nodeId: string, itemIds: string | string[], base: RunState = playerRun) {
@@ -1037,7 +1062,7 @@ export function App() {
       const item = equipment[id];
       if (!item) continue;
       if (anyoneCanReceive(settled, item, equipment, rosterHeroes)) asking.push(id);
-      else settled = sellItem(settled, id, equipment);
+      else settled = leaveItem(settled, id, equipment);
     }
     if (settled !== run) setPlayerRun(settled);
     return asking.reduceRight<Screen>((rest, id) => ({ kind: 'itemWho', itemId: id, next: rest }), next);
@@ -1294,7 +1319,6 @@ export function App() {
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
           playerRelicIds={screen.playerRelics}
-          goldReward={0}
           xpGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'sandboxBattle' })}
@@ -1345,7 +1369,6 @@ export function App() {
           playerSquad={screen.player.squad}
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
-          goldReward={0}
           xpGained={0}
           equipmentReward={null}
           aiPilot
@@ -1387,7 +1410,6 @@ export function App() {
           playerSquad={screen.player.squad}
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
-          goldReward={0}
           xpGained={0}
           equipmentReward={null}
           aiPilot={screen.aiPilot}
@@ -1423,7 +1445,6 @@ export function App() {
           playerSquad={screen.player.squad}
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
-          goldReward={0}
           xpGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'trialsDev' })}
@@ -1438,7 +1459,6 @@ export function App() {
           playerSquad={screen.player.squad}
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
-          goldReward={0}
           xpGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'title' })}
@@ -1496,7 +1516,6 @@ export function App() {
           aiRun={screen.encounter.run}
           aiSquad={screen.encounter.squad}
           playerRelicIds={playerRun.relics}
-          goldReward={screen.goldReward}
           xpGained={screen.xpGained}
           levelSeed={screen.levelSeed}
           equipmentReward={screen.equipmentRewardId ? equipment[screen.equipmentRewardId] ?? null : null}
@@ -1507,7 +1526,6 @@ export function App() {
           onResolved={(outcome, finalState, consumablesUsed, mvp) =>
             handleFightResolved(
               screen.nodeId,
-              screen.goldReward,
               screen.equipmentRewardId ? equipment[screen.equipmentRewardId] ?? null : null,
               screen.consumableReward,
               screen.gemReward,
@@ -1542,7 +1560,6 @@ export function App() {
           playerSquad={screen.player.squad}
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
-          goldReward={0}
           xpGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'title' })}
@@ -1554,22 +1571,21 @@ export function App() {
       {screen.kind === 'camp' && (
         <CampNodeScreen
           run={playerRun}
-          settled={screen.settled}
-          onRunChange={settlingRunChange(screen)}
-          onOpen={(door) =>
-            setScreen(
-              door === 'gems'
-                ? { kind: 'scrolls', plan: { source: 'camp', gems: rollGems(CAMP_GEMS, playerRun.actNumber) }, nodeId: screen.nodeId, bought: false, next: { kind: 'map' } }
-                : { kind: 'campGear', nodeId: screen.nodeId, seed: randomSeed() }
-            )
-          }
-          onContinue={() => handleNodeContinue(screen.nodeId)}
+          doorIds={screen.doorIds}
+          chosen={screen.chosen}
+          onMended={(door, next) => {
+            setPlayerRun(next);
+            setScreen((at) => (at.kind === 'camp' ? { ...at, chosen: door } : at));
+          }}
+          onEnter={(door, step) => {
+            // The node is walked as a door is entered, so every piece after can hand back to the map.
+            setPlayerRun((run) => advanceToNode(run, screen.nodeId));
+            setScreen(campStep(screen.nodeId, screen.doorIds[door], step, randomSeed()));
+          }}
         />
       )}
 
-      {screen.kind === 'campGear' && (
-        <CampGearScreen key={screen.seed} run={playerRun} seed={screen.seed} onTake={(itemId) => handleClaimEquipment(screen.nodeId, itemId)} />
-      )}
+      {screen.kind === 'campDoor' && campDoorPiece(screen)}
 
       {screen.kind === 'recruitNode' && (
         <RecruitNodeScreen

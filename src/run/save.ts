@@ -380,7 +380,7 @@ function decodeMap(value: unknown): RunMap {
     if (!isObject(raw)) reject(`map.nodes.${id} is not an object`);
     if (raw.id !== id) reject(`map.nodes.${id} is keyed under a different id`);
     // The Contract node stands where a Recruit now does, and the Guild Hall where the Camp does (both 2026-11-11).
-    const type = raw.type === 'contractReward' ? 'recruitReward' : raw.type === 'shop' ? 'camp' : raw.type;
+    const type = raw.type === 'contractReward' ? 'recruitReward' : raw.type === 'shop' ? 'camp' : raw.type === 'currencyReward' ? 'equipmentReward' : raw.type;
     if (typeof type !== 'string' || !NODE_TYPES.has(type)) reject(`map.nodes.${id} has unknown type "${String(raw.type)}"`);
     if (!isInt(raw.row, 0)) reject(`map.nodes.${id}.row is not a row`);
     if (!isInt(raw.col, 0)) reject(`map.nodes.${id}.col is not a column`);
@@ -471,7 +471,6 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   }
 
 
-  if (!isInt(value.gold, 0)) reject('run.gold is not a count');
   // Absent on a file written before the Recruit node; a hero this build no longer ships just drops off the list.
   if (value.departedHeroIds !== undefined && !isStringArray(value.departedHeroIds)) reject('run.departedHeroIds is not a list of ids');
   const departedHeroIds = isStringArray(value.departedHeroIds) ? value.departedHeroIds.filter((id) => index.heroIds.has(id)) : [];
@@ -508,7 +507,6 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
 
   return {
     roster,
-    gold: value.gold,
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
     ...(departedHeroIds.length > 0 ? { departedHeroIds } : {}),
     consumables,

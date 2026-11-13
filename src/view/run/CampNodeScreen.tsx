@@ -1,14 +1,13 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { Fragment, useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
-import { CAMP_DOORS, CAMP_GEAR_COUNT, CAMP_GEMS, type CampDoor } from '../../run/camp';
+import { campBundle, type CampPiece } from '../../run/camp';
 import { gemPointsForAct } from '../../run/gems';
-import { anyMasteryEligible } from '../../run/mastery';
 import type { RosterEntry, RunState } from '../../run/state';
 import { statScaleFor } from '../../run/statScale';
-import { anyWounded, mendRoster } from '../../run/wounds';
+import { mendRoster } from '../../run/wounds';
 import { NodeMotes } from '../shared/NodeStage';
 import { PlateButton } from '../shared/PlateButton';
 import { entryHp } from '../shared/WoundBar';
@@ -20,51 +19,60 @@ import './campNode.css';
 
 interface Props {
   run: RunState;
-  onRunChange: (next: RunState) => void;
-  /** The Gems or Gear door taken: the caller opens it. */
-  onOpen: (door: Exclude<CampDoor, 'mend'>) => void;
-  onContinue: () => void;
-  /** The Mend already taken (a reload after it): only Continue is left. */
-  settled?: boolean;
+  doorIds: readonly string[];
+  /** The Mend door already taken on this screen (a reload after it): only Continue is left. */
+  chosen?: number;
+  /** The Mend landed: the run healed, and which door it was. */
+  onMended: (door: number, next: RunState) => void;
+  /** Walk through a door from its `step`-th piece (the Mend door's rider is piece 1). */
+  onEnter: (door: number, step: number) => void;
 }
 
-const DOOR_ART: Record<CampDoor, string | undefined> = {
+const PIECE_ART: Record<CampPiece['kind'], string | undefined> = {
   mend: mapNodeIcon('restReward'),
   gems: mapNodeIcon('scrollReward'),
   gear: mapNodeIcon('equipmentReward'),
+  blessing: mapNodeIcon('blessingReward'),
+  boon: mapNodeIcon('passiveReward'),
 };
 
-const DOOR_NAME: Record<CampDoor, string> = { mend: 'Mend', gems: 'Gems', gear: 'Gear' };
-
-
-const COMMIT: Record<CampDoor, string> = { mend: 'Mend', gems: 'Take the Gems', gear: 'See the Gear' };
+function pieceWords(piece: CampPiece, actNumber: number): { name: string; sub: string } {
+  switch (piece.kind) {
+    case 'mend':
+      return { name: 'Mend', sub: 'Everyone whole' };
+    case 'gems':
+      return { name: `${piece.take} Gem${piece.take === 1 ? '' : 's'}`, sub: `of ${piece.of} · +${gemPointsForAct(actNumber)}` };
+    case 'gear':
+      return { name: `${piece.take} Item${piece.take === 1 ? '' : 's'}`, sub: `of ${piece.of}` };
+    case 'blessing':
+      return { name: 'Blessing', sub: 'One KO refused' };
+    case 'boon':
+      return { name: 'Boon', sub: 'A passive' };
+  }
+}
 
 /**
- * The Camp (docs/guild-hall-overhaul.md §3): the last stop before the Guardian, the company round
- * the fire with every bar where the act left it, and three doors of which one is taken. The Mend
- * plays here, on the same figures; the Gems and the Gear open their own screens.
+ * The Camp (docs/guild-hall-overhaul.md §3, §10): the last stop before the Guardian, the company
+ * round the fire with every bar where the act left it, and three doors, each a bundle, one taken.
+ * The Mend plays here, on the same figures; every other piece opens its own screen.
  */
-export function CampNodeScreen({ run, onRunChange, onOpen, onContinue, settled = false }: Props) {
-  const [door, setDoor] = useState<CampDoor | null>(null);
+export function CampNodeScreen({ run, doorIds, chosen, onMended, onEnter }: Props) {
+  const [door, setDoor] = useState<number | null>(chosen ?? null);
   const [healed, setHealed] = useState<Record<string, number> | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
-  const done = settled || healed !== null;
+  const mended = chosen !== undefined || healed !== null;
 
   useEffect(() => {
     playSfx('shrine', { pitch: 0.7, delay: 0.12 });
   }, []);
 
-  const open: Record<CampDoor, boolean> = {
-    mend: anyWounded(run),
-    gems: anyMasteryEligible(run.roster),
-    gear: true,
-  };
-
   function commit() {
-    if (!door || !open[door]) return;
-    if (door !== 'mend') {
+    if (door === null) return;
+    const bundle = campBundle(doorIds[door]);
+    if (!bundle) return;
+    if (bundle.pieces[0]?.kind !== 'mend') {
       playSfx('ui.confirm');
-      onOpen(door);
+      onEnter(door, 0);
       return;
     }
     playSfx('blessing');
@@ -74,14 +82,8 @@ export function CampNodeScreen({ run, onRunChange, onOpen, onContinue, settled =
       gained[entry.rosterId] = maxHp - hp;
     }
     setHealed(gained);
-    onRunChange(mendRoster(run));
+    onMended(door, mendRoster(run));
   }
-
-  const doorWords: Record<CampDoor, string> = {
-    mend: 'Everyone whole',
-    gems: `${CAMP_GEMS} × +${gemPointsForAct(run.actNumber)}`,
-    gear: `1 of ${CAMP_GEAR_COUNT}`,
-  };
 
   const frontCount = Math.min(3, run.roster.length);
   const back = run.roster.slice(0, run.roster.length - frontCount);
@@ -124,36 +126,53 @@ export function CampNodeScreen({ run, onRunChange, onOpen, onContinue, settled =
         ))}
       </div>
 
-      {!done && (
-        <div className="camp-doors" role="radiogroup" aria-label="The Camp">
-          {CAMP_DOORS.map((d) => (
+      <div className="camp-doors" role="radiogroup" aria-label="The Camp">
+        {doorIds.map((id, i) => {
+          const bundle = campBundle(id);
+          if (!bundle) return null;
+          const shut = mended && i !== door;
+          return (
             <button
-              key={d}
+              key={id}
               type="button"
               role="radio"
-              aria-checked={door === d}
-              className={`camp-door is-${d}${door === d ? ' is-chosen' : ''}`}
-              disabled={!open[d]}
+              aria-checked={door === i}
+              className={`camp-door${door === i ? ' is-chosen' : ''}${shut ? ' is-shut' : ''}`}
+              disabled={mended}
               onClick={() => {
                 playSfx('ui.pick');
-                setDoor(d);
+                setDoor(i);
               }}
             >
-              <img src={DOOR_ART[d]} className="camp-door-art" alt="" draggable={false} />
-              <span className="camp-door-name">{DOOR_NAME[d]}</span>
-              <span className="camp-door-words">{open[d] ? doorWords[d] : d === 'mend' ? 'Nobody hurt' : 'All mastered'}</span>
+              {bundle.pieces.map((piece, p) => {
+                const words = pieceWords(piece, run.actNumber);
+                return (
+                  <Fragment key={p}>
+                    {p > 0 && (
+                      <span className="camp-door-plus" aria-hidden="true">
+                        +
+                      </span>
+                    )}
+                    <span className={`camp-door-piece is-${piece.kind}`}>
+                      <img src={PIECE_ART[piece.kind]} className="camp-door-art" alt="" draggable={false} />
+                      <span className="camp-door-name">{words.name}</span>
+                      <span className="camp-door-words">{words.sub}</span>
+                    </span>
+                  </Fragment>
+                );
+              })}
             </button>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
-      {done ? (
-        <button className="resolve-button" onClick={onContinue}>
+      {mended && door !== null ? (
+        <button className="resolve-button" onClick={() => onEnter(door, 1)}>
           Continue
         </button>
       ) : (
-        <PlateButton onClick={commit} disabled={!door}>
-          {door ? COMMIT[door] : 'Choose one'}
+        <PlateButton onClick={commit} disabled={door === null}>
+          {door === null ? 'Choose one' : 'Take it'}
         </PlateButton>
       )}
 
@@ -163,7 +182,6 @@ export function CampNodeScreen({ run, onRunChange, onOpen, onContinue, settled =
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
-          gold={run.gold}
           scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />

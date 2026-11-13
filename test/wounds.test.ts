@@ -26,7 +26,7 @@ import {
 import { CONSUMABLE_KINDS, STARTING_CONSUMABLES, rollConsumableDrop } from '../src/run/consumables';
 
 function seedRoster(ids: string[], gold = 0): RunState {
-  let run = createRunState(gold);
+  let run = createRunState();
   for (const id of ids) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
   return run;
 }

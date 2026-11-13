@@ -228,7 +228,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           )}
         </div>
         <div className="map-purse">
-          <ResourceStat kind="gold" label="Gold" value={run.gold} />
           <ResourceStat kind="hpPotion" label="HP Potions" value={run.consumables.hpPotion} />
           <ResourceStat kind="mpPotion" label="MP Potions" value={run.consumables.mpPotion} />
         </div>

@@ -88,7 +88,6 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
       entry={inspecting.entry}
       equipmentLookup={equipment}
       relicIds={run.relics}
-      gold={run.gold}
       scale={statScaleFor(run)}
       onClose={() => setInspecting(null)}
     />

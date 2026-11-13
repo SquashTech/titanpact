@@ -11,7 +11,6 @@ import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { RelicIcon } from '../shared/EquipmentBox';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
 import { HubGlyph } from '../shared/nodeIcons';
-import { ResourceGlyph } from '../shared/RunGlyph';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { levelOf } from '../../run/growth';
@@ -57,12 +56,6 @@ export function RosterPeek({ run, className }: Props) {
               <button className="log-close-button" onClick={() => setOpen(false)}>
                 ✕
               </button>
-            </div>
-
-            <div className="roster-peek-resources">
-              <span className="roster-peek-resource" title="Gold">
-                <ResourceGlyph kind="gold" /> {run.gold}
-              </span>
             </div>
 
             {ownedRelics.length > 0 && (
@@ -122,7 +115,6 @@ export function RosterPeek({ run, className }: Props) {
           entry={inspecting.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
-          gold={run.gold}
           scale={statScaleFor(run)}
           onClose={() => setInspecting(null)}
         />

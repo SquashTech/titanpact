@@ -1,5 +1,5 @@
 // Consumables (docs/run-loop.md "Consumables"): the run's two potions. A TEAM purse, not a
-// per-hero bag — held beside gold. A potion is drunk in a fight on whichever active hero needs it
+// per-hero bag. A potion is drunk in a fight on whichever active hero needs it
 // (the engine half is engine/combat/consumables.ts). This is what the run holds, pays and drops.
 
 import type { PotionKind } from '../engine/combat/consumables';
@@ -81,4 +81,12 @@ export function spendConsumables(run: RunState, used: Readonly<Partial<Consumabl
 export function rollConsumableDrop(nodeKind: EncounterNodeKind, rng: () => number = Math.random): ConsumableKind | null {
   if (rng() < CONSUMABLE_DROP_CHANCE[nodeKind]) return rng() < 0.5 ? 'hpPotion' : 'mpPotion';
   return null;
+}
+
+/**
+ * What leaving an item pays (docs/guild-hall-overhaul.md §10): a flask of whichever kind the purse
+ * holds fewer of, HP on a tie. Lost at the hold cap, as a drop is.
+ */
+export function leftItemFlask(run: RunState): ConsumableKind {
+  return run.consumables.mpPotion < run.consumables.hpPotion ? 'mpPotion' : 'hpPotion';
 }

@@ -41,7 +41,6 @@ const FLASK_PATH = (
 );
 
 const RESOURCE_PATHS = {
-  gold: NODE_PATHS.currencyReward,
   // What leaks from the Titan, drunk on a won fight: the phial that was the Ichor node's mark.
   xp: XP_PHIAL,
   // A Gem: the Lapidary's node glyph.
@@ -56,7 +55,6 @@ export type ResourceKind = keyof typeof RESOURCE_PATHS;
 
 /** One color per resource, shared everywhere the resource is drawn. */
 export const RESOURCE_COLORS: Record<ResourceKind, string> = {
-  gold: 'var(--accent)',
   // The level-up report's green.
   xp: '#4caf6a',
   // The Gems' rose (mapNodes NODE_COLORS scribeReward).

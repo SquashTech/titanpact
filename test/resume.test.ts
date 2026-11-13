@@ -49,7 +49,7 @@ const index = buildContentIndex({
 });
 
 function sampleRun(): RunState {
-  let run: RunState = { ...createRunState(120), map: generateMap(99, 1), locationIds: [Object.keys(locations)[0]] };
+  let run: RunState = { ...createRunState(), map: generateMap(99, 1), locationIds: [Object.keys(locations)[0]] };
   run = addRosterEntry(run, createRosterEntry('cinderKnight-1', 'cinderKnight', heroes.cinderKnight.moveIds));
   run = addRosterEntry(run, createRosterEntry('rime-1', 'rime', heroes.rime.moveIds));
   return run;
@@ -70,6 +70,25 @@ test('resume: a run saved on a contract claim or the Contract node walks on to w
   assert.deepStrictEqual(old({ kind: 'recruit', offers: [], next: { kind: 'map' } }), { kind: 'map' });
   assert.deepStrictEqual(old({ kind: 'rosterReplace', candidate: { source: 'guildHall' }, next: { kind: 'map' } }), { kind: 'map' });
   assert.deepStrictEqual(old({ kind: 'reward', nodeId, nodeType: 'contractReward', seed: 4 }), { kind: 'recruitNode', nodeId, seed: 4 });
+});
+
+test('resume: a run saved in the Guild Hall or at the first Camp opens on the Camp of bundles', () => {
+  const run = sampleRun();
+  const nodeId = anyNode(run);
+  const old = (screen: unknown) => roundTrip({ screen: screen as RunScreen }, run)?.screen;
+  const hall = old({ kind: 'shop', nodeId, offers: {}, gemsBought: [], itemsBought: [] });
+  assert.ok(hall?.kind === 'camp' && hall.doorIds.length === 3);
+  const first = old({ kind: 'camp', nodeId });
+  assert.ok(first?.kind === 'camp' && first.doorIds.length === 3, 'doors rolled for a Camp saved before them');
+  assert.deepStrictEqual(old({ kind: 'campGear', nodeId, seed: 5 }), { kind: 'campDoor', campNodeId: nodeId, bundleId: 'gear', step: 0, seed: 5 });
+});
+
+test('resume: a Camp door piece taken resumes on the next piece, never past the rest of the door', () => {
+  const run = sampleRun();
+  const nodeId = anyNode(run);
+  const at = resumeTarget({ kind: 'campDoor', campNodeId: nodeId, bundleId: 'itemBlessing', step: 1, seed: 3, settled: true }, run);
+  assert.deepStrictEqual(at.screen, { kind: 'campDoor', campNodeId: nodeId, bundleId: 'itemBlessing', step: 2, seed: 3, taken: undefined, settled: undefined });
+  assert.strictEqual(at.run, run);
 });
 
 test('resume: every resumable kind round trips, nested chains included', () => {
@@ -95,10 +114,10 @@ test('resume: every resumable kind round trips, nested chains included', () => {
     chain,
     { kind: 'actIntro' },
     { kind: 'herald', next: { kind: 'titanBound', next: { kind: 'champions' } } },
-    { kind: 'camp', nodeId },
-    { kind: 'campGear', nodeId, seed: 9 },
+    { kind: 'camp', nodeId, doorIds: ['mendGem', 'gear', 'gemsBoon'], chosen: 0 },
+    { kind: 'campDoor', campNodeId: nodeId, bundleId: 'itemGems', step: 1, seed: 9 },
     { kind: 'recruitNode', nodeId, seed: 12, pickedType: 'Fire' },
-    { kind: 'reward', nodeId, nodeType: 'currencyReward', seed: 11 },
+    { kind: 'reward', nodeId, nodeType: 'equipmentReward', seed: 11 },
     { kind: 'boonNode', nodeId, seed: 1 },
     { kind: 'mentorNode', nodeId, seed: 2 },
     { kind: 'tutorNode', nodeId, seed: 3, settled: true },
@@ -114,7 +133,6 @@ test('resume: every resumable kind round trips, nested chains included', () => {
       nodeType: 'elite',
       squad: openingSquad(run.roster),
       encounter: enemy,
-      goldReward: 30,
       xpGained: 100,
       equipmentRewardId: item,
       consumableReward: 'hpPotion',
@@ -143,7 +161,6 @@ test('resume: the finale party and every act a Guardian brings decode', () => {
       nodeType: 'boss',
       squad: openingSquad(run.roster),
       encounter,
-      goldReward: 0,
       xpGained: 0,
       equipmentRewardId: null,
       consumableReward: null,
@@ -213,7 +230,7 @@ test('resume: a settled grant is gone past — a node walks on, a chain link ope
 
 test('save: v21 carries the screen and the checkpoint behind it; a bad run half falls back to it', () => {
   const checkpointRun = sampleRun();
-  const run = { ...checkpointRun, gold: checkpointRun.gold + 50 };
+  const run = { ...checkpointRun, encountersWon: checkpointRun.encountersWon + 1 };
   const resume: ResumePayload = { screen: { kind: 'boonNode', nodeId: anyNode(run), seed: 4 } };
   const raw = JSON.parse(JSON.stringify(encodeSave(run, 'map', 1, { fallbackRun: checkpointRun, resume })));
   const read = decodeSave(raw, index);
@@ -357,7 +374,6 @@ test('combatSnapshot: a board naming a combatant the run does not hold costs the
     nodeType: 'fight',
     squad,
     encounter: enemy,
-    goldReward: 0,
     xpGained: 0,
     equipmentRewardId: null,
     consumableReward: null,

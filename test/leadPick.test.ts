@@ -13,7 +13,7 @@ import { openingSquad, pickSquad } from '../src/run/squad';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 
 function seedRoster(ids: string[]): RunState {
-  let run = createRunState(0);
+  let run = createRunState();
   for (const id of ids) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
   return run;
 }

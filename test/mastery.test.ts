@@ -45,7 +45,7 @@ import { TYPES } from '../src/data/typechart';
 import { locations } from '../src/data/locations';
 
 function seed(ids: readonly string[], gold = 0): RunState {
-  let run = createRunState(gold);
+  let run = createRunState();
   for (const id of ids) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
   return run;
 }

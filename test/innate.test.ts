@@ -358,7 +358,7 @@ test('a permanent gain: a finishing blow banks +10 Attack for the run, once a fi
   assert.strictEqual(r3.state.combatants.a1.statModifiers.attack, undefined);
 
   // The write-back: the roster keeps it as a bonus grant, beside the Mana Well's.
-  const run = { ...createRunState(0, 0), roster: [createRosterEntry('r1', 'rex', heroes.rex.moveIds), createRosterEntry('r9', 'valor', heroes.valor.moveIds)] };
+  const run = { ...createRunState(0), roster: [createRosterEntry('r1', 'rex', heroes.rex.moveIds), createRosterEntry('r9', 'valor', heroes.valor.moveIds)] };
   const banked = { ...r2.state, combatants: { ...r2.state.combatants, [combatantIdFor('A', 'r1')]: { ...r2.state.combatants.a1, combatantId: combatantIdFor('A', 'r1') } } };
   const next = recordPermanentStatGains(run, banked, 'A');
   assert.strictEqual(next.roster[0].bonusStatGrants.attack, 10);

@@ -19,7 +19,6 @@ import {
   applyStatShift,
   curseTurnsOnBite,
   outcomeForAct,
-  costAffordable,
   eventRecruitEntry,
   grantEventPassive,
   heroOutcomeAllowed,
@@ -148,7 +147,6 @@ function percent(share: number): string {
 function costLine(cost: EventCost | undefined): string | null {
   if (!cost) return null;
   const parts: string[] = [];
-  if (cost.gold) parts.push(`${cost.gold} gold`);
   if (cost.woundAll) parts.push(`${percent(cost.woundAll)} HP from everyone`);
   return parts.length > 0 ? parts.join(' · ') : null;
 }
@@ -431,21 +429,20 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
           <div className="stage-centered">
             <div className="event-options event-reveal-in">
               {options.map((option, index) => {
-                const affordable = costAffordable(run, option.cost);
                 const empty = optionEmpty(option.outcome, rolls[index]);
                 const optionCost = costLine(option.cost);
                 return (
                   <button
                     key={option.label}
                     className="moveoffer-button event-option"
-                    disabled={!affordable || empty}
+                    disabled={empty}
                     onClick={() => setPicked(index)}
                   >
                     <span className="moveoffer-label">{option.label}</span>
                     <span className="moveoffer-sub">{optionSummary(option.outcome, rolls[index])}</span>
                     {optionCost && (
                       <span className="moveoffer-sub event-option-cost">
-                        <Keyed word="Cost">{affordable ? optionCost : `${optionCost} — not enough`}</Keyed>
+                        <Keyed word="Cost">{optionCost}</Keyed>
                       </span>
                     )}
                   </button>
@@ -666,7 +663,6 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onR
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
-          gold={run.gold}
           scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />

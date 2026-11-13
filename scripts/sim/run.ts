@@ -7,7 +7,7 @@ import { heroes as allHeroes } from '../../src/data/heroes';
 import { rosterHeroes } from '../../src/data/content';
 import { isGathering, isLongWinter } from '../../src/run/cycles';
 import { anyDown, anyWounded, mendRoster, recordWounds, standingRoster } from '../../src/run/wounds';
-import { grantConsumable, rollConsumableDrop } from '../../src/run/consumables';
+import { grantConsumable, leftItemFlask, rollConsumableDrop } from '../../src/run/consumables';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
 import { relics, guardianBannersFor } from '../../src/data/relics';
@@ -23,7 +23,7 @@ import { statuses } from '../../src/data/statuses';
 import type { CombatEvent } from '../../src/engine/events';
 import type { CombatState } from '../../src/engine/state';
 import { GEM_CACHE_COUNT, SCRIBE_GEMS, placeGem, rollGemDrop, rollGems, type Gem } from '../../src/run/gems';
-import { CAMP_GEMS, rollCampGear } from '../../src/run/camp';
+import { campBundle, rollCampDoors, rollCampGear, rollCampGemShelf, type CampPiece } from '../../src/run/camp';
 import { anyMasteryEligible } from '../../src/run/mastery';
 
 import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry, ROSTER_CAP, SEAL_ACTS, TOTAL_ACTS, type RunState, type RosterEntry } from '../../src/run/state';
@@ -48,13 +48,9 @@ import {
   itemReceiptFor,
   advanceToNode,
   advanceToNextAct,
-  grantCurrencyReward,
   grantRelicReward,
   reachableNodeIds,
   recordBrokenSeal,
-  goldRangeFor,
-  purseRangeFor,
-  rollGoldRange,
   grantManaWell,
   forgeItem,
   forgeTarget,
@@ -76,12 +72,11 @@ export const SIM_PURCHASES: readonly string[] = SIM_ALL_HEROES
 // SIM_NO_BLESSING=1 opens the run without the opening pair's Blessings, the A/B for docs/blessings-and-statuses.md.
 export const SIM_NO_BLESSING = process.env.SIM_NO_BLESSING === '1';
 const heroes = heroPool(allHeroes, SIM_PURCHASES);
-import { sellValueFor } from '../../src/run/shop';
 import { tutorMovePool } from '../../src/run/tutor';
 import { canTrain, mentorXpFor } from '../../src/run/mentor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
-import { applyEventCost, applyHeroOutcome, applyStatShift, costAffordable, eventRecruitEntry, grantEventPassive, heroOutcomeAllowed, joinEventRecruit, eligibleEvents, outcomeForAct, recruitPool, resolveGamble, rollRecruits, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
+import { applyEventCost, applyHeroOutcome, applyStatShift, eventRecruitEntry, grantEventPassive, heroOutcomeAllowed, joinEventRecruit, eligibleEvents, outcomeForAct, recruitPool, resolveGamble, rollRecruits, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
 import type { EventCost, ResolvableOutcome } from '../../src/data/events';
 import {
   pickWeightedEquipment,
@@ -115,10 +110,6 @@ const DRAFT_ROWS = SIM_ALL_HEROES
 type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
 
 // EQUIPMENT_DROP_CHANCE and LOOT_SOURCE come from run/equipment.ts, so the sim rolls the odds the game ships.
-
-function goldRewardFor(nodeType: EncounterMapNodeType, actNumber: number, rng: Rng): number {
-  return rollGoldRange(goldRangeFor(nodeType, actNumber), rng);
-}
 
 /** NodeRewardScreen's flat XP cache. */
 const UPGRADE_REWARD_XP = 2;
@@ -188,7 +179,6 @@ export interface RunRecord {
   deathAct: number;
   deathNodeType: string | null;
   encountersWon: number;
-  goldEnd: number;
   rosterLevelEnd: number;
   rosterSizeEnd: number;
   /** Heroes standing when the finale was entered (null = never reached it). Nothing is hired after act 4, so this is the side the run kept. */
@@ -213,8 +203,8 @@ export interface RunRecord {
   signatures: Record<string, { reached: number; taken: number }>;
   /** Every rolled move offer (schedule, Mentor, Tutor, signature) by move id: times on the table, times the kit took it. */
   moveOffers: Record<string, { offered: number; taken: number }>;
-  /** The gold ledger, keyed `act:earned:<fight|purse|sell>`, and the Camp's door taken, `act:camp:<mend|gems|gear>`. */
-  goldFlow: Record<string, number>;
+  /** The ledger: items left for a flask, `act:left`, and the Camp's door taken, `act:camp:<door id>`. */
+  flow: Record<string, number>;
   /** Heroes joining at the Recruit node: `recruit` below the cap, `recruitReplacing` at it. */
   recruitsBySource: Record<string, number>;
   /** Items obtained, keyed `act:source` — `drop` (a fight), `node` (Equipment Cache), `event` (a loot pile), `shop`. */
@@ -238,7 +228,7 @@ function tally(record: RunRecord, act: number, kind: ScreenKind, n = 1): void {
 
 function ledger(record: RunRecord, act: number, key: string, amount: number): void {
   const k = `${act}:${key}`;
-  record.goldFlow[k] = (record.goldFlow[k] ?? 0) + amount;
+  record.flow[k] = (record.flow[k] ?? 0) + amount;
 }
 
 function entryOf(run: RunState, rosterId: string): RosterEntry {
@@ -274,8 +264,8 @@ function resolveDrop(run: RunState, itemId: string, record: RunRecord, actNumber
   const target = policy.bestReceiver(run.roster, item);
   if (run.roster.some((entry) => itemReceiptFor(entry, item, rosterHeroes[entry.heroId], equipment).kind === 'merge')) record.mergeOffers += 1;
   if (!target || target.gain <= 0) {
-    ledger(record, actNumber, 'earned:sell', sellValueFor(item));
-    return grantCurrencyReward(run, sellValueFor(item));
+    ledger(record, actNumber, 'left', 1);
+    return grantConsumable(run, leftItemFlask(run));
   }
   if (target.receipt.kind === 'merge') record.merges += 1;
   record.equipped.push(`${actNumber}:${target.receipt.kind === 'merge' ? target.receipt.resultRarity : item.rarity}`);
@@ -317,8 +307,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     deathAct: 0,
     deathNodeType: null,
     encountersWon: 0,
-    goldEnd: 0,
-    goldFlow: {},
+    flow: {},
     rosterLevelEnd: 0,
     rosterSizeEnd: 0,
     finaleRoster: null,
@@ -346,7 +335,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
   record.choices.push({ bucket: 'draft', offered: draftOptions, picked: drafted, encountersWonAtChoice: 0 });
   tally(record, 1, 'draft');
 
-  let run: RunState = createRunState(40, options.cycle);
+  let run: RunState = createRunState(options.cycle);
   for (const heroId of drafted) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
@@ -450,7 +439,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     run = advanceToNode(run, nodeId);
   }
 
-  record.goldEnd = run.gold;
   record.rosterSizeEnd = run.roster.length;
   record.rosterEvolvedEnd =
     run.roster.length > 0 ? run.roster.filter((r) => r.chosenPathIds.length > 0).length / run.roster.length : 0;
@@ -568,7 +556,6 @@ function resolveEncounterNode(
     playerRoster: workingRun.roster,
     playerSquad,
     playerRelicIds: workingRun.relics,
-    playerGold: workingRun.gold,
     aiRoster: encounter.run.roster,
     aiSquad: encounter.squad,
     rng,
@@ -656,9 +643,6 @@ function resolveEncounterNode(
     .map((t) => t.rosterId);
   if (!fight.won) return { run: workingRun, won: false, defeatedRoster: encounter.run.roster, drop: null, encounter, koRosterIds };
 
-  const goldWon = goldRewardFor(kindKey, workingRun.actNumber, rng);
-  ledger(record, workingRun.actNumber, 'earned:fight', goldWon);
-  workingRun = grantCurrencyReward(workingRun, goldWon);
   // HP carries to the next node (src/run/wounds.ts); the act's end is what makes the roster whole.
   workingRun = recordPermanentStatGains(recordWounds(workingRun, fight.final, PLAYER_SIDE, rosterHeroes), fight.final, PLAYER_SIDE);
   record.knockouts.koInWins += koRosterIds.length;
@@ -755,11 +739,6 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return resolveScribe(run, rng, record, options);
     case 'scrollReward':
       return resolveScrollCache(run, rng, record, options);
-    case 'currencyReward': {
-      const purse = rollGoldRange(purseRangeFor(run.actNumber), rng);
-      ledger(record, run.actNumber, 'earned:purse', purse);
-      return grantCurrencyReward(run, purse);
-    }
     case 'recruitReward':
       return resolveRecruit(run, locationId, rng, record);
     case 'restReward':
@@ -818,7 +797,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     case 'event':
       return resolveEvent(run, locationId, rng, record);
     case 'camp':
-      return resolveCamp(run, rng, record, options);
+      return resolveCamp(run, locationId, rng, record, options);
     default:
       return run;
   }
@@ -971,9 +950,8 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
   const eligible = eligibleEvents(runEvents, run.actNumber, locationId).map((e) => e.id);
   if (eligible.length > 1) record.choices.push({ bucket: 'event', offered: eligible, picked: [event.id], encountersWonAtChoice: run.encountersWon });
   if (event.outcome.kind !== 'choice') return resolveEventOutcome(run, outcomeForAct(event.outcome, run.actNumber), event.cost, record);
-  // A choice: the first option the pilot can pay for and use, else Leave.
+  // A choice: the first option the pilot can use, else Leave.
   for (const option of event.outcome.options) {
-    if (!costAffordable(run, option.cost)) continue;
     if (option.outcome.kind === 'recruit' && run.roster.length >= ROSTER_CAP) continue;
     return resolveEventOutcome(run, outcomeForAct(option.outcome, run.actNumber), option.cost, record);
   }
@@ -989,7 +967,6 @@ function simMaxHp(entry: RosterEntry): number {
 }
 
 function resolveEventOutcome(run: RunState, outcome: ResolvableOutcome, cost: EventCost | undefined, record: RunRecord): RunState {
-  if (!costAffordable(run, cost)) return run;
   const paid = () => applyEventCost(run, cost, simMaxHp);
 
   if (outcome.kind === 'learnMove') {
@@ -1048,20 +1025,38 @@ function resolveEventOutcome(run: RunState, outcome: ResolvableOutcome, cost: Ev
 }
 
 /** The Camp: the Mend when the roster is hurt enough, else the Gems while anyone can take one, else the Gear. */
-function resolveCamp(run: RunState, rng: Rng, record: RunRecord, options: RunOptions): RunState {
+function resolveCamp(run: RunState, locationId: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   const act = run.actNumber;
-  if (anyWounded(run) && (anyDown(run) || policy.rosterHpFraction(run.roster) < 0.6)) {
-    if (anyDown(run)) record.knockouts.mendsWhileDown += 1;
-    ledger(record, act, 'camp:mend', 1);
-    return mendRoster(run);
+  const doors = rollCampDoors(run, rng);
+  // The Mend door when the roster is hurt enough for it; otherwise one of the other two at random.
+  const hurt = anyWounded(run) && (anyDown(run) || policy.rosterHpFraction(run.roster) < 0.6);
+  const door = hurt || doors.length === 1 ? doors[0] : pick(rng, doors.slice(1));
+  if (door === doors[0] && anyDown(run)) record.knockouts.mendsWhileDown += 1;
+  ledger(record, act, `camp:${door}`, 1);
+  let next = run;
+  for (const piece of campBundle(door)?.pieces ?? []) next = resolveCampPiece(next, piece, locationId, rng, record, options);
+  return next;
+}
+
+function resolveCampPiece(run: RunState, piece: CampPiece, locationId: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
+  const act = run.actNumber;
+  switch (piece.kind) {
+    case 'mend':
+      return mendRoster(run);
+    case 'gems': {
+      // The stats taken at random off the shelf: the policy places them, as at every Gem screen.
+      const shelf = rollCampGemShelf(act, piece.of, rng);
+      return landGems(run, sample(rng, shelf, piece.take), 'camp', rng, record, options);
+    }
+    case 'gear': {
+      // The pieces worth most to somebody.
+      const gain = (id: string) => policy.bestReceiver(run.roster, equipment[id])?.gain ?? 0;
+      const taken = rollCampGear(act, piece.of, rng).filter((id) => equipment[id]).sort((a, b) => gain(b) - gain(a)).slice(0, piece.take);
+      return taken.reduce((next, id) => resolveDrop(next, id, record, act, 'camp'), run);
+    }
+    case 'blessing':
+      return resolveRewardNode(run, 'blessingReward', locationId, rng, record, options);
+    case 'boon':
+      return resolveRewardNode(run, 'passiveReward', locationId, rng, record, options);
   }
-  if (anyMasteryEligible(run.roster)) {
-    ledger(record, act, 'camp:gems', 1);
-    return landGems(run, rollGems(CAMP_GEMS, act, rng), 'camp', rng, record, options);
-  }
-  ledger(record, act, 'camp:gear', 1);
-  const choices = rollCampGear(act, rng).map((id) => equipment[id]).filter(Boolean);
-  if (choices.length === 0) return run;
-  const best = choices.reduce((a, b) => ((policy.bestReceiver(run.roster, b)?.gain ?? 0) > (policy.bestReceiver(run.roster, a)?.gain ?? 0) ? b : a));
-  return resolveDrop(run, best.id, record, act, 'camp');
 }

@@ -2,12 +2,12 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
 import { equipment } from '../../data/equipment';
-import { absorbItem, sellItem, type ItemReceipt } from '../../run/runProgress';
-import { sellValueFor } from '../../run/shop';
+import { CONSUMABLE_HOLD_CAP, CONSUMABLE_NAMES, leftItemFlask } from '../../run/consumables';
+import { absorbItem, leaveItem, type ItemReceipt } from '../../run/runProgress';
 import type { RosterEntry, RunState } from '../../run/state';
 import { ItemBox, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
-import { SellPress } from '../shared/SellPress';
+import { LeavePress } from '../shared/LeavePress';
 import { useArmedTap } from '../shared/useArmedTap';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { Preview, ReplaceSheet, useItemReceipts, type PreviewState } from './gearShared';
@@ -28,19 +28,19 @@ interface Props {
   afterTake?: (run: RunState, rosterId: string) => RunState;
   /** A patron's piece, or a gift: the title before anything is chosen. */
   title?: string;
-  /** A lesson's piece is given, never sold. */
-  noSell?: boolean;
+  /** A lesson's piece is given, never left. */
+  noLeave?: boolean;
 }
 
 /**
  * Every item that arrives off a fight or a Loot Pile lands here (docs/gear-absorption.md §2): the
  * piece on top, the roster below as a ledger of what each hero holds in the stats it grants.
  * A hero tap seats it — into a free socket, MERGED into the family the hero holds a tier up, or over
- * a piece a full hero picks to lose. Sell is the one decline.
+ * a piece a full hero picks to lose. Leave it is the one decline, and pays a flask.
  */
-export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone, onlyRosterIds, afterTake, title: arrivalTitle, noSell = false }: Props) {
+export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone, onlyRosterIds, afterTake, title: arrivalTitle, noLeave = false }: Props) {
   const item = equipment[itemId];
-  const [outcome, setOutcome] = useState<{ rosterId: string; mergeId?: string; replaced?: boolean } | { gold: number } | null>(null);
+  const [outcome, setOutcome] = useState<{ rosterId: string; mergeId?: string; replaced?: boolean } | { left: string } | null>(null);
   const [burst, setBurst] = useState<MergeEvent | null>(null);
   const [inspecting, setInspecting] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
@@ -52,12 +52,13 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
 
   const done = outcome !== null;
   const receipts = useItemReceipts(run, done ? undefined : item);
-  const sellGold = item ? sellValueFor(item) : 0;
-  const sell = useArmedTap(() => {
+  const flask = leftItemFlask(run);
+  const flaskFull = run.consumables[flask] >= CONSUMABLE_HOLD_CAP;
+  const leave = useArmedTap(() => {
     if (!item || done) return;
     playSfx('ui.confirm');
-    onRunChange(sellItem(run, itemId, equipment));
-    setOutcome({ gold: sellGold });
+    onRunChange(leaveItem(run, itemId, equipment));
+    setOutcome({ left: flaskFull ? 'Left behind' : `Left for an ${CONSUMABLE_NAMES[flask]}` });
   }, true);
 
   if (!item) return null;
@@ -97,7 +98,7 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
   }
 
   // The title is the whole header: no readout, so its height never changes under the roster.
-  const title = !outcome ? (arrivalTitle ?? 'New Gear') : 'gold' in outcome ? `Sold for ${outcome.gold} gold` : mergeResult ? 'Merged' : outcome.replaced ? 'Replaced' : 'Absorbed';
+  const title = !outcome ? (arrivalTitle ?? 'New Gear') : 'left' in outcome ? outcome.left : mergeResult ? 'Merged' : outcome.replaced ? 'Replaced' : 'Absorbed';
 
   return (
     <div className="node-screen item-who-screen" style={{ '--node-rgb': RARITY_RGB_VARS[item.rarity] } as CSSProperties}>
@@ -145,8 +146,8 @@ export function ItemWhoScreen({ run, itemId, upcoming = [], onRunChange, onDone,
         <button className="resolve-button" onClick={onDone}>
           Continue
         </button>
-      ) : noSell ? null : (
-        <SellPress gold={sellGold} purse={run.gold} armed={sell.armed} buttonRef={sell.ref} onClick={sell.onClick} className="item-who-sell" />
+      ) : noLeave ? null : (
+        <LeavePress flask={flask} held={run.consumables[flask]} full={flaskFull} armed={leave.armed} buttonRef={leave.ref} onClick={leave.onClick} className="item-who-sell" />
       )}
 
       {burst && equipment[burst.resultId] && <MergeBurst merge={burst} onDone={() => setBurst(null)} />}

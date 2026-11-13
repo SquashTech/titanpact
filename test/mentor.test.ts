@@ -36,7 +36,7 @@ test('mentor: a committed hero can reach the cap — every Mentor, every Elite a
 });
 
 test('mentor: the grant lands on one hero with its report line, and a hero at the cap is refused', () => {
-  let run = addRosterEntry(createRunState(0), createRosterEntry('cinderKnight', 'cinderKnight', heroes.cinderKnight.moveIds));
+  let run = addRosterEntry(createRunState(), createRosterEntry('cinderKnight', 'cinderKnight', heroes.cinderKnight.moveIds));
   run = addRosterEntry(run, createRosterEntry('rime', 'rime', heroes.rime.moveIds));
   const { run: next, line } = applySeededXp(run, heroes, 'cinderKnight', mentorXpFor(1), 7);
   assert.strictEqual(next.roster[0].xp, run.roster[0].xp + mentorXpFor(1));

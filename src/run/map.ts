@@ -24,7 +24,6 @@ export const MAP_NODE_TYPES = [
   'restReward',
   'passiveReward',
   'blessingReward',
-  'currencyReward',
   'recruitReward',
   'mentorReward',
   'tutorReward',
@@ -112,7 +111,6 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // hero instead of all four. It is the only reward row node that changes how a hero plays
   // rather than how big its numbers are.
   ['passiveReward', 22],
-  ['currencyReward', 20],
   // The Recruit (docs/guild-hall-overhaul.md §2.3): the only way a hero joins but an event, priced
   // against the two rewards beside it. Weighted to show about twice an act; first pass.
   ['recruitReward', RECRUIT_WEIGHT],
@@ -314,5 +312,5 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
   };
 }
 
-/** The two reward nodes that open on the road's chest (NodeRewardScreen). */
-export type RewardNodeType = 'currencyReward' | 'equipmentReward';
+/** The reward node that opens on the road's chest (NodeRewardScreen). */
+export type RewardNodeType = 'equipmentReward';

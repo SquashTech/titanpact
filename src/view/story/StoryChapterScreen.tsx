@@ -89,7 +89,6 @@ export function StoryChapterScreen({ chapter, onFinished, onQuit, onPlace, tips,
         playerSquad={sides!.player.squad}
         aiRun={sides!.ai.run}
         aiSquad={sides!.ai.squad}
-        goldReward={0}
         xpGained={0}
         equipmentReward={null}
         story={beat.fight}

@@ -1,14 +1,10 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rollEquipmentDrops } from '../../data/equipment';
 import type { RunState } from '../../run/state';
 import { rarityWeightsFor } from '../../run/equipment';
-import { grantCurrencyReward, purseRangeFor, rollGoldRange } from '../../run/runProgress';
-import { NodeHeader, NodeMotes, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
-import { seededRandom, withSeededRandom } from '../shared/seededRandom';
-import { ResourceGlyph } from '../shared/RunGlyph';
-import { useCoinCount } from '../shared/useCoinCount';
+import { withSeededRandom } from '../shared/seededRandom';
 import { ItemWhoScreen } from './ItemWhoScreen';
 import { mapNodeIcon } from './mapNodeArt';
 import { RoadScene } from './RoadEncounter';
@@ -40,85 +36,17 @@ interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onContinue: () => void;
-  /** Fixes what the purse or the chest holds, so a resumed run finds the same (docs/save-system.md D2). */
+  /** Fixes what the chest holds, so a resumed run finds the same (docs/save-system.md D2). */
   seed: number;
 }
 
 /**
- * The instant reward nodes and the Equipment Cache (docs/run-loop.md), all met on the road: gold
- * is a pile by the roadside that pays out as it is found, and the Cache is a chest that flashes
- * and swings open on one piece. The Gem nodes are not here: which hero takes a Gem IS
+ * The Equipment Cache (docs/run-loop.md), met on the road: a chest that flashes and swings open
+ * on one piece. The Gem nodes are not here: which hero takes a Gem IS
  * a decision (GemNodeScreen).
  */
-export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, seed }: Props) {
-  if (nodeType === 'currencyReward') return <GoldOnTheRoad run={run} onRunChange={onRunChange} onContinue={onContinue} seed={seed} />;
+export function NodeRewardScreen({ run, onRunChange, onContinue, seed }: Props) {
   return <EquipmentCache run={run} onRunChange={onRunChange} onContinue={onContinue} seed={seed} />;
-}
-
-/** Coins out of the pouch: x drift (px), peak height (px), delay (s). Golden-ratio spread, so no two land together. */
-const GOLD_COINS = Array.from({ length: 12 }, (_, i) => {
-  const t = (i * 0.618034) % 1;
-  return { x: Math.round(-95 + t * 190), rise: Math.round(28 + ((i * 0.382) % 1) * 36), delay: +((i * 0.035) % 0.3).toFixed(3) };
-});
-
-/** When the pouch gives (ms): the coins burst and the count starts. */
-const POUCH_BURST_AT = 650;
-
-/**
- * The purse by the road. Paid on arrival — the tap only walks on — and staged as a payout: the
- * pouch jolts, coins burst out of it, the haul counts up coin by coin, and the purse under it shows
- * what it now holds.
- */
-function GoldOnTheRoad({ run, onRunChange, onContinue, seed }: Pick<Props, 'run' | 'onRunChange' | 'onContinue' | 'seed'>) {
-  const [amount] = useState(() => rollGoldRange(purseRangeFor(run.actNumber), seededRandom(seed)));
-  const [from] = useState(run.gold);
-  const [burst, setBurst] = useState(() => prefersReducedMotion());
-  const counted = useCoinCount(amount, burst);
-  // Ref-guarded rather than deps-guarded: StrictMode mounts the effect twice, and the second pass
-  // must not pay the player again.
-  const granted = useRef(false);
-  useEffect(() => {
-    if (granted.current) return;
-    granted.current = true;
-    onRunChange(grantCurrencyReward(run, amount));
-    // `run` is deliberately absent: this fires once, on arrival, against the state it arrived with.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (burst) return;
-    const timer = window.setTimeout(() => setBurst(true), POUCH_BURST_AT);
-    return () => window.clearTimeout(timer);
-  }, [burst]);
-
-  const name = 'A Spilled Purse';
-  return (
-    <RoadScene className={`is-place is-arrival is-gold${burst ? ' is-burst' : ''}`} label={`${name}: +${amount} gold`} onClick={onContinue}>
-      <img src={mapNodeIcon('currencyReward')} className={`road-encounter-figure is-icon road-gold-pouch${prefersReducedMotion() ? ' is-still' : ''}`} alt="" draggable={false} />
-      {burst && (
-        <span className="road-gold-fountain" aria-hidden="true">
-          {GOLD_COINS.map((c, i) => (
-            <span
-              key={i}
-              className="road-gold-coin"
-              style={{ '--coin-x': `${c.x}px`, '--coin-rise': `${c.rise}px`, animationDelay: `${c.delay}s` } as CSSProperties}
-            />
-          ))}
-        </span>
-      )}
-      <span className="road-gold-delta" aria-hidden="true">
-        +{counted}
-        <span className="road-gold-unit">g</span>
-      </span>
-      <span className="road-gold-purse" aria-hidden="true">
-        <ResourceGlyph kind="gold" /> {from} <span className="road-gold-arrow">→</span> <strong>{from + counted}</strong>
-      </span>
-      <span className="road-encounter-label" aria-hidden="true">
-        {name}
-        <span className="road-encounter-more" />
-      </span>
-    </RoadScene>
-  );
 }
 
 /** Chest on the road, then the one piece it held, on the who-screen. A tap on the road skips straight to it. */

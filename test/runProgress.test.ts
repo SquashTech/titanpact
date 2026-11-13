@@ -6,7 +6,7 @@ import { createRunState, createRosterEntry, addRosterEntry, type RunState } from
 import { generateMap } from '../src/run/map';
 import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, mergeIntoHeld } from '../src/run/equipment';
 import { itemSlotsFor } from '../src/run/progression';
-import { sellValueFor } from '../src/run/shop';
+import { CONSUMABLE_HOLD_CAP } from '../src/run/consumables';
 import {
   absorbItem,
   anyoneCanReceive,
@@ -16,7 +16,6 @@ import {
   moveReceiptFor,
   reachableNodeIds,
   advanceToNode,
-  grantCurrencyReward,
   grantRelicReward,
   grantManaWell,
   MANA_WELL_AMOUNT,
@@ -26,12 +25,12 @@ import {
   grantLeyLine,
   LEY_LINE_FORCE,
   leyLineStatusId,
-  sellItem,
+  leaveItem,
   RunProgressError,
 } from '../src/run/runProgress';
 
 function seedRoster(heroIds: string[]) {
-  let run = createRunState(0);
+  let run = createRunState();
   for (const heroId of heroIds) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
@@ -83,10 +82,6 @@ test('runProgress: advanceToNode rejects an unreachable node, an unknown node, a
 
 // --- Reward grants ---
 
-test('runProgress: grantCurrencyReward adds a flat amount', () => {
-  assert.strictEqual(grantCurrencyReward(seedRoster(['cinderKnight']), 20).gold, 20);
-});
-
 test('runProgress: grantRelicReward appends a relic id, duplicates allowed', () => {
   const run = seedRoster(['cinderKnight']);
   const next = grantRelicReward(grantRelicReward(run, 'ironStandard'), 'ironStandard');
@@ -107,7 +102,6 @@ test('runProgress: absorbItem seats an item in a free socket, and it is on the h
   assert.deepStrictEqual(itemReceiptFor(run.roster[0], equipment['sword.common'], heroes.cinderKnight, equipment), { kind: 'take' });
   const next = absorbItem(run, 'cinderKnight', 'sword.common', equipment, heroes);
   assert.deepStrictEqual(next.roster[0].equipment, ['sword.common']);
-  assert.strictEqual(next.gold, 0, 'nothing is sold on a take');
 });
 
 test('runProgress: moveItem carries a piece to an empty socket, swaps it with another, or merges it into its family', () => {
@@ -147,7 +141,7 @@ test('runProgress: a hero with three full sockets and no family match overwrites
   assert.throws(() => absorbItem(run, 'cinderKnight', 'spear.rare', equipment, heroes, 3), RunProgressError);
   const next = absorbItem(run, 'cinderKnight', 'spear.rare', equipment, heroes, 1);
   assert.deepStrictEqual(next.roster[0].equipment, ['sword.common', 'spear.rare', 'bow.common']);
-  assert.strictEqual(next.gold, run.gold, 'the lost piece pays nothing');
+  assert.deepStrictEqual(next.consumables, run.consumables, 'the lost piece pays nothing');
 });
 
 test('runProgress: a same-family drop MERGES into the holder — one tier above the higher of the two, sockets untouched', () => {
@@ -191,12 +185,15 @@ test('runProgress: a merge is offered on the family whatever the enchant — the
   assert.strictEqual(receipt.kind, 'merge');
 });
 
-test('runProgress: sellItem converts an item to gold at sellValueFor, and touches no socket', () => {
+test('runProgress: leaving an item pays the flask the purse holds fewer of, HP on a tie, lost at the cap', () => {
   const run = gearedRun('cinderKnight', ['sword.common']);
-  const next = sellItem(run, 'spear.rare', equipment);
-  assert.strictEqual(next.gold, sellValueFor(equipment['spear.rare']));
-  assert.deepStrictEqual(next.roster[0].equipment, ['sword.common']);
-  assert.throws(() => sellItem(run, 'nothing', equipment), RunProgressError);
+  const next = leaveItem(run, 'spear.rare', equipment);
+  assert.strictEqual(next.consumables.hpPotion, run.consumables.hpPotion + 1, 'HP on a tie');
+  assert.deepStrictEqual(next.roster[0].equipment, ['sword.common'], 'no socket touched');
+  assert.strictEqual(leaveItem(next, 'spear.rare', equipment).consumables.mpPotion, run.consumables.mpPotion + 1, 'the scarcer flask');
+  const full = { ...run, consumables: { hpPotion: CONSUMABLE_HOLD_CAP, mpPotion: CONSUMABLE_HOLD_CAP } };
+  assert.deepStrictEqual(leaveItem(full, 'spear.rare', equipment).consumables, full.consumables, 'nothing past the cap');
+  assert.throws(() => leaveItem(run, 'nothing', equipment), RunProgressError);
 });
 
 test('runProgress: absorbItem rejects an unknown rosterId and an unknown item', () => {
@@ -237,52 +234,51 @@ test("runProgress: a Ley Line grants one hero LEY_LINE_FORCE of its innate prima
 
 // --- The Forge (docs/equipment.md §5) ---
 
-/** A run in `actNumber` with `gold`, its one hero wearing `worn`. Act matters: the window caps the lift. */
-function shopRun(gold: number, worn: string[], actNumber = 3): RunState {
-  return { ...gearedRun('cinderKnight', worn), gold, actNumber };
+/** A run in `actNumber`, its one hero wearing `worn`. Act matters: the window caps the lift. */
+function shopRun(worn: string[], actNumber = 3): RunState {
+  return { ...gearedRun('cinderKnight', worn), actNumber };
 }
 
 const SOCKET_0 = { rosterId: 'cinderKnight', index: 0 };
 
 test('runProgress: a lift keeps the family and the enchant, and there is none above Mythic or on a Unique', () => {
-  const lift = liftTarget(shopRun(0, ['spear.rare.blazing']), 'spear.rare.blazing', equipment)!;
+  const lift = liftTarget(shopRun(['spear.rare.blazing']), 'spear.rare.blazing', equipment)!;
   assert.strictEqual(lift.targetId, 'spear.epic.blazing');
   assert.strictEqual(lift.targetRarity, 'epic');
-  assert.strictEqual(liftTarget(shopRun(0, []), 'spear.mythic', equipment), null, 'nothing above Mythic');
-  assert.strictEqual(liftTarget(shopRun(0, []), 'worldbreaker', equipment), null, 'a Unique has no ladder');
+  assert.strictEqual(liftTarget(shopRun([]), 'spear.mythic', equipment), null, 'nothing above Mythic');
+  assert.strictEqual(liftTarget(shopRun([]), 'worldbreaker', equipment), null, 'a Unique has no ladder');
 });
 
 test('runProgress: the Forge lifts a tier AND binds the picked element, free', () => {
-  const run = shopRun(0, ['spear.rare']);
+  const run = shopRun(['spear.rare']);
   const next = forgeItem(run, SOCKET_0, 'blazing', equipment);
   assert.deepStrictEqual(next.roster[0].equipment, ['spear.epic.blazing'], 'a tier up and bound, family kept');
-  assert.strictEqual(next.gold, 0, 'nothing spent');
   assert.deepStrictEqual(
-    forgeItem(shopRun(0, ['spear.rare.blazing']), SOCKET_0, 'tidal', equipment).roster[0].equipment,
+    forgeItem(shopRun(['spear.rare.blazing']), SOCKET_0, 'tidal', equipment).roster[0].equipment,
     ['spear.epic.tidal'],
     'a rebinding overwrites'
   );
   assert.deepStrictEqual(
-    forgeItem(shopRun(0, ['spear.rare.blazing']), SOCKET_0, 'blazing', equipment).roster[0].equipment,
+    forgeItem(shopRun(['spear.rare.blazing']), SOCKET_0, 'blazing', equipment).roster[0].equipment,
     ['spear.epic.blazing'],
     'the held element again is still a lift'
   );
 });
 
 test('runProgress: the Forge binds what it cannot lift, and refuses only work that changes nothing', () => {
-  assert.deepStrictEqual(forgeItem(shopRun(0, ['spear.mythic']), SOCKET_0, 'blazing', equipment).roster[0].equipment, ['spear.mythic.blazing'], 'nothing above Mythic — bound only');
-  assert.deepStrictEqual(forgeItem(shopRun(0, ['spear.epic'], 1), SOCKET_0, 'blazing', equipment).roster[0].equipment, ['spear.epic.blazing'], 'the act window caps the lift, not the binding');
-  assert.throws(() => forgeItem(shopRun(0, ['spear.mythic.blazing']), SOCKET_0, 'blazing', equipment), RunProgressError, 'no lift and the same element: nothing to do');
-  assert.throws(() => forgeItem(shopRun(0, []), SOCKET_0, 'blazing', equipment), RunProgressError, 'an empty socket');
-  assert.ok(forgeable(shopRun(0, ['spear.mythic.blazing']), 'spear.mythic.blazing', equipment), 'another element is still work');
+  assert.deepStrictEqual(forgeItem(shopRun(['spear.mythic']), SOCKET_0, 'blazing', equipment).roster[0].equipment, ['spear.mythic.blazing'], 'nothing above Mythic — bound only');
+  assert.deepStrictEqual(forgeItem(shopRun(['spear.epic'], 1), SOCKET_0, 'blazing', equipment).roster[0].equipment, ['spear.epic.blazing'], 'the act window caps the lift, not the binding');
+  assert.throws(() => forgeItem(shopRun(['spear.mythic.blazing']), SOCKET_0, 'blazing', equipment), RunProgressError, 'no lift and the same element: nothing to do');
+  assert.throws(() => forgeItem(shopRun([]), SOCKET_0, 'blazing', equipment), RunProgressError, 'an empty socket');
+  assert.ok(forgeable(shopRun(['spear.mythic.blazing']), 'spear.mythic.blazing', equipment), 'another element is still work');
 });
 
 test("runProgress: the act window caps the lift, not just drops", () => {
-  assert.strictEqual(liftTarget(shopRun(0, ['spear.epic'], 1), 'spear.epic', equipment), null, 'Act 1 reaches Epic and no further');
+  assert.strictEqual(liftTarget(shopRun(['spear.epic'], 1), 'spear.epic', equipment), null, 'Act 1 reaches Epic and no further');
   // Act 3 opens Mythic, so the same item is liftable there.
-  assert.ok(liftTarget(shopRun(0, ['spear.epic'], 3), 'spear.epic', equipment));
+  assert.ok(liftTarget(shopRun(['spear.epic'], 3), 'spear.epic', equipment));
 });
 
 test('runProgress: the Forge binds a Unique even though it cannot lift it', () => {
-  assert.deepStrictEqual(forgeItem(shopRun(0, ['worldbreaker']), SOCKET_0, 'feral', equipment).roster[0].equipment, ['worldbreaker.feral']);
+  assert.deepStrictEqual(forgeItem(shopRun(['worldbreaker']), SOCKET_0, 'feral', equipment).roster[0].equipment, ['worldbreaker.feral']);
 });

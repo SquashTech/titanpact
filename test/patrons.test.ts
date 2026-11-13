@@ -29,7 +29,7 @@ import { advanceToNode } from '../src/run/runProgress';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 
 function mappedRun(seed = 7, actNumber = 1): RunState {
-  let run: RunState = { ...createRunState(0), actNumber, map: generateMap(seed, actNumber) };
+  let run: RunState = { ...createRunState(), actNumber, map: generateMap(seed, actNumber) };
   run = addRosterEntry(run, createRosterEntry('a', 'cinderKnight', heroes.cinderKnight.moveIds));
   return addRosterEntry(run, createRosterEntry('b', 'cinderKnight', heroes.cinderKnight.moveIds));
 }

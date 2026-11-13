@@ -63,7 +63,7 @@ test("motley: the re-base — 170 HP, five identical combat stats, the roster's 
 test("motley's trick: permanent — no replace path takes it, and the replace list never offers it", () => {
   assert.ok(isLockedMove('motleysTrick'));
   assert.deepStrictEqual(replaceableMoveIds(KIT), KIT.filter((id) => id !== 'motleysTrick'));
-  let run = createRunState(0);
+  let run = createRunState();
   run = addRosterEntry(run, createRosterEntry('motley', 'motley', KIT));
   assert.throws(() => grantMove(run, 'motley', 'lull', 'motleysTrick'), ProgressionError);
   assert.doesNotThrow(() => grantMove(run, 'motley', 'lull', 'psiBolt'));

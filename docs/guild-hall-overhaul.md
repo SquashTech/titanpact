@@ -1,8 +1,8 @@
 # guild-hall-overhaul.md — No Guild Hall, no gold, recruits off the map
 
-> **STATUS: DECIDED 2026-11-11 (per user direction); PHASES 1–2 IN (same day).** The shape is
+> **STATUS: DECIDED 2026-11-11 (per user direction); PHASES 1–3 IN (phase 3 2026-11-13).** The shape is
 > decided; every number marked *first pass* is a placeholder for playtest. §7 lists the invariants
-> it reverses; §8 and §9 record what phases 1 and 2 built and measured.
+> it reverses; §8, §9 and §11 record what phases 1–3 built and measured, §10 phase 3's decisions.
 
 ---
 
@@ -259,3 +259,63 @@ Location `hall` backdrops, and Rest's pool weight beside a guaranteed Mend (§3 
 the Mend when the roster is under 60% or anyone is down, the Gems while anyone can take one, else
 the Gear: Mend 39 / 52 / 57 / 53% of visits by act, the Gear only once the roster is mastered. Win
 rates are directional; the call is made by playing.
+
+---
+
+## 10. Phase 3 decided: the Camp's doors are bundles (2026-11-13)
+
+Per user direction, with gold's removal. Taking gold out also took the last thing the player
+CHOSE at the gate, the shelf, so the Camp gains it back without a currency. The reference is Neow's
+blessings in Slay the Spire: each door is a package, priced against the other two.
+
+- **Three doors, each a bundle of rewards the game already has.** One door is always a **Mend**
+  with a small rider (a Gem, 1 of 3; or a Blessing), so a hurt roster can always heal before the
+  Guardian, but healing is the light door. The other two are drawn, distinct, from a table
+  (`data/campBundles.ts`), each about one full reward:
+
+  | Bundle | Pieces |
+  |---|---|
+  | Gems | 3 Gems of 5 stats |
+  | Gear | 2 items of 4 |
+  | Item and Gems | 1 item of 3, 2 Gems of 4 |
+  | Item and Blessing | 1 item of 3, a Blessing |
+  | Gems and Boon | 2 Gems of 4, a Boon |
+
+  The table is data; a bundle is a row. A door plays its pieces' screens one after another.
+- **The Camp's Gems and Gear are CHOSEN on the Guild Hall's counters, unpriced** (same day, per
+  user direction: the counters' best part was choosing a piece and seating it on a hero without the
+  screen changing, every pip and socket in view). The whole roster above, the stock below — a shelf
+  of distinct stats, or the act's pieces — pick, tap a hero, it lands, until the bundle's count is
+  taken (`CampCounters`). The fixed order (`gems.md`) still holds for the Gem
+  Cache and the Lapidary; the Camp is the one place the stat is picked.
+- **A Blessing may be a Camp rider.** Watch whether a Blessing door is taken every time.
+- **Gear supply is paid for elsewhere**: the Skirmish's item drop comes down 0.6 → 0.3. The Item
+  Cache's weight (78) is the second dial if items a completed run still read high.
+- **Leave it pays a potion.** Sell goes with gold; the who-screen's decline is *Leave it*, and it
+  hands over a flask (HP or MP, whichever the purse holds fewer of), lost at the hold cap of 3. A
+  piece nobody can take does the same. This is a **named exception** to "the one faucet is a
+  low-odds drop off a won encounter" (CLAUDE.md, Consumables): an item to leave only arrives from a
+  drop or a door, so the flask stays something that cannot be farmed.
+
+---
+
+## 11. Phase 3, built (2026-11-13)
+
+Gold is gone: `RunState.gold` (old saves drop it on load), the fight bands and `ACT_GOLD_SCALE`, the
+`currencyReward` purse (a saved map reads it as an Item Cache), `run/shop.ts` whole, Sell and its
+press, the event gold cost (the Mercenary Camp now costs 15% of everyone's HP), `goldStatGrants`
+and the purse it read through stat totals, combat builds and the hero sheet. **Leave it** (`leaveItem`)
+is the who-screen's decline and what a piece nobody can take turns into.
+
+The Camp (`CampNodeScreen`) shows the company with every bar and three doors, each a bundle drawn
+as its pieces. The Mend plays on the Camp's own figures; every other piece opens on the screen its
+reward already has — the counters for Gems and Gear, the Shrine for a Blessing, the Boon node. The
+node is walked as a door is entered, so a door's last piece hands back to the map. A door in
+progress is a `campDoor` screen holding its step and the counter's taken slots, and a taken piece
+resumes on the next one.
+
+**Measured (sim, 200 runs, seed 1, faults only):** no crash, stall or stranded run. Items a completed
+run 14.6 → 15.9 against phase 2: the Skirmish's cut pays back most of the Camp's gear. The pilot
+takes the Mend door when the roster is under 60% or anyone is down and a random other door
+otherwise, so the door shares say nothing about which doors a player would take; items left for a
+flask rise from 0.01 an act in Act 1 to 1.3 in Act 4, as the sockets fill.

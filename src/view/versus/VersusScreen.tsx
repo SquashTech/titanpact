@@ -253,7 +253,6 @@ function Match({ channel, seed, pool, onLeave }: { channel: VersusChannel; seed:
           playerSquad={fight.me.squad}
           aiRun={fight.them.run}
           aiSquad={fight.them.squad}
-          goldReward={0}
           xpGained={0}
           equipmentReward={null}
           versus={{ channel, seed, onDesync: setDesync }}

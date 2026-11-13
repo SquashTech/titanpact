@@ -33,7 +33,7 @@ const index = buildContentIndex({
 function sampleRun(): RunState {
   const map = generateMap(1234, 2);
   const walked = map.rows[0][0];
-  let run: RunState = { ...createRunState(120), map, actNumber: 2 };
+  let run: RunState = { ...createRunState(), map, actNumber: 2 };
   run = addRosterEntry(run, createRosterEntry('cinderKnight-1', 'cinderKnight', heroes.cinderKnight.moveIds));
   run = addRosterEntry(run, createRosterEntry('rime-1', 'rime', heroes.rime.moveIds));
   const geared = {
@@ -81,7 +81,7 @@ test('save: the actIntro checkpoint round trips too', () => {
 });
 
 test('save: an empty roster and an unwalked map are legal (a run parked at its act intro)', () => {
-  const run: RunState = { ...createRunState(40), map: generateMap(7, 1) };
+  const run: RunState = { ...createRunState(), map: generateMap(7, 1) };
   const result = roundTrip(run, 'actIntro');
   assert.ok(result.ok, result.ok ? '' : result.reason);
 });
@@ -178,8 +178,6 @@ test('save: a run field this version added is required, so a v1 file cannot slip
 });
 
 test('save: nonsense numbers are refused', () => {
-  assert.ok(rejectionOf((raw) => (raw.run.gold = -5)).includes('gold'));
-  assert.ok(rejectionOf((raw) => (raw.run.gold = 1.5)).includes('gold'));
   assert.ok(rejectionOf((raw) => (raw.run.actNumber = 9)).includes('actNumber'));
   assert.ok(rejectionOf((raw) => (raw.run.roster[0].xp = 0)).includes('xp'));
   assert.ok(rejectionOf((raw) => (raw.run.roster[0].bonusStatGrants.charisma = 10)).includes('charisma'));
@@ -194,13 +192,13 @@ test('save: junk in the slot is refused, not thrown', () => {
 
 test('save: decode rebuilds the run, so a smuggled extra field never reaches it', () => {
   const raw: any = JSON.parse(JSON.stringify(encodeSave(sampleRun(), 'map')));
-  raw.run.gold = 999_999;
+  raw.run.encountersWon = 7;
   raw.run.somethingElse = 'injected';
   raw.run.roster[0].somethingElse = 'injected';
   const result = decodeSave(raw, index);
   assert.ok(result.ok);
   // The legal edit stands; the unknown fields do not survive the rebuild.
-  assert.strictEqual(result.save.run.gold, 999_999);
+  assert.strictEqual(result.save.run.encountersWon, 7);
   assert.ok(!('somethingElse' in result.save.run));
   assert.ok(!('somethingElse' in result.save.run.roster[0]));
 });

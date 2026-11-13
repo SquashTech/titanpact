@@ -31,8 +31,7 @@ export type HeroOutcome =
   | { kind: 'grantPassive'; passiveId: PassiveId };
 
 /**
- * The closed outcome vocabulary. Gold, Gems and Recruit Contracts are never GRANTED —
- * those are map-node types; an event should be a thing the map cannot otherwise do. A hero is
+ * The closed outcome vocabulary. Gems are never GRANTED — they are a map-node type; an event should be a thing the map cannot otherwise do. A hero is
  * (`recruit`): not a contract's finished build but a raw one at par, drawn from a filter, which is
  * how an event recruits by theme (docs/wild-innates-and-events.md §3).
  */
@@ -54,9 +53,8 @@ export type RunEventOutcome =
    */
   | { kind: 'curse'; curseId: string };
 
-/** What an outcome costs on top of itself, paid as it resolves. Gold is a sink here, never a grant. */
+/** What an outcome costs on top of itself, paid as it resolves. */
 export interface EventCost {
-  gold?: number;
   /** Every standing roster hero takes this share of its max HP as Wounds (run/wounds.ts) — never enough to drop it. */
   woundAll?: number;
 }
@@ -185,12 +183,12 @@ export const runEvents: Record<string, RunEventDefinition> = {
     id: 'mercenaryCamp',
     name: 'Mercenary Camp',
     eyebrow: 'Swords for Hire',
-    flavor: 'Three fires, three strangers, and a captain who names a price before you have said a word.',
+    flavor: 'Three fires, three strangers, and a captain who wants to see you bleed before anyone follows you.',
     tone: 'gold',
     weight: 6,
     outcome: {
       kind: 'choice',
-      options: [{ label: 'Pay the captain', outcome: { kind: 'recruit', pool: {}, count: 3 }, cost: { gold: 20 } }],
+      options: [{ label: 'Spar with the captain', outcome: { kind: 'recruit', pool: {}, count: 3 }, cost: { woundAll: 0.15 } }],
     },
   },
 

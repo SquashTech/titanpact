@@ -39,7 +39,7 @@ import './roster.test';
 import './titanspawn.test';
 import './run.test';
 import './recruitment.test';
-import './shop.test';
+import './camp.test';
 import './equipment.test';
 import './equipCompare.test';
 import './itemFit.test';

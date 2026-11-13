@@ -37,7 +37,7 @@ test('statScale: a team grant is added to the ceiling outright, never to the par
 });
 
 test('statScale: the run reads its par off the roster, falling back to the curve', () => {
-  let run = createRunState(1);
+  let run = createRunState();
   assert.strictEqual(rosterPar(run), 1);
   run = addRosterEntry(run, { ...createRosterEntry('a', 'ironWarden', heroes.ironWarden.moveIds), xp: xpForLevel(12) });
   run = addRosterEntry(run, { ...createRosterEntry('b', 'crimson', heroes.crimson.moveIds), xp: xpForLevel(4) });

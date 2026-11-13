@@ -97,7 +97,7 @@ test('consumables: refused for a full, benched or fainted hero, and the refusal 
 // --- The run half ---
 
 test('consumables: a run opens with one of each, the purse caps per kind, and an over-cap grant is lost', () => {
-  const run = createRunState(100);
+  const run = createRunState();
   assert.deepStrictEqual(run.consumables, STARTING_CONSUMABLES);
   const full = grantConsumable(run, 'hpPotion', 10);
   assert.strictEqual(full.consumables.hpPotion, CONSUMABLE_HOLD_CAP);

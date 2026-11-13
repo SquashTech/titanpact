@@ -54,7 +54,7 @@ export const SCREEN_TIPS: Readonly<Record<ScreenTipId, Tip>> = {
     'Items',
     'Choose which hero gets this item.',
     'Each hero holds three. Giving a hero a second item of the same kind merges them into a stronger one.',
-    'A hero holding three can replace one, and the old item is lost. Or sell this one for gold.'
+    'A hero holding three can replace one, and the old item is lost. Or leave this one for a potion.'
   ),
 };
 

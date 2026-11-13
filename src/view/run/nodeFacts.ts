@@ -6,9 +6,8 @@
 import type { MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, rarityWeightsFor } from '../../run/equipment';
-import { goldRangeFor, purseRangeFor } from '../../run/runProgress';
 import { GEM_CACHE_COUNT, GEM_DROP, SCRIBE_GEMS, gemPointsForAct } from '../../run/gems';
-import { CAMP_GEAR_COUNT, CAMP_GEMS } from '../../run/camp';
+import { CAMP_DOOR_COUNT } from '../../run/camp';
 import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../../run/growth';
 import { LEY_LINE_FORCE, MANA_WELL_AMOUNT, MANA_WELL_REGEN } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
@@ -19,7 +18,6 @@ import { RECRUIT_TYPE_COUNT } from '../../run/recruitNode';
 
 /** The mark at the head of a row — resolved to a glyph by the view. */
 export type NodeFactGlyph =
-  | 'gold'
   | 'xp'
   | 'scroll'
   | 'mana'
@@ -66,14 +64,12 @@ function percent(chance: number): string {
 
 /** The lanes every fight is compared on, in one order, so Elite and Skirmish read as two columns of one table. */
 function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] {
-  const gold = goldRangeFor(type, actNumber);
   const drop = EQUIPMENT_DROP_CHANCE[type];
   const xp = Math.round(encounterXpForAct(actNumber) * ENCOUNTER_XP_MULTIPLIER[encounterXpKind(type)]);
   const level = enemyLevelFor(type, actNumber);
   return [
     { glyph: 'enemy', label: 'Enemies', threat: true, value: `Lv ${level}`, note: type === 'boss' ? `Guardian Lv ${championLevel(level)}` : undefined },
     { glyph: 'xp', label: 'XP', value: `${xp}` },
-    { glyph: 'gold', label: 'Gold', value: gold[1] > 0 ? range(gold) : null },
     { glyph: 'item', label: 'Item', value: drop > 0 ? percent(drop) : null, note: drop > 0 && LOOT_SOURCE[type] === 'elite' ? 'rarer' : undefined },
     gemFact(type),
   ];
@@ -128,10 +124,9 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
         about: 'The last stop before the Guardian.',
         facts: [
           { glyph: 'hp', label: 'Mend', value: 'All', who: 'team' },
-          { glyph: 'scroll', label: 'Gems', value: `${CAMP_GEMS}`, note: gemNote(actNumber) },
-          { glyph: 'item', label: 'Gear', value: `1 of ${CAMP_GEAR_COUNT}` },
+          { glyph: 'hidden', label: 'Doors', value: `${CAMP_DOOR_COUNT - 1} more` },
         ],
-        odds: odds('standard'),
+        odds: null,
       };
     case 'equipmentReward':
       return { about: null, facts: [{ glyph: 'item', label: 'Item', value: '1' }], odds: odds('cache') };
@@ -165,8 +160,6 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
       };
     case 'restReward':
       return { about: null, facts: [{ glyph: 'hp', label: 'Heal', value: 'Everyone' }], odds: null };
-    case 'currencyReward':
-      return { about: null, facts: [{ glyph: 'gold', label: 'Gold', value: range(purseRangeFor(actNumber)) }], odds: null };
     case 'recruitReward':
       return { about: null, facts: [{ glyph: 'hero', label: 'Recruit', value: `1 of ${RECRUIT_TYPE_COUNT}`, note: 'types' }], odds: null };
     case 'passiveReward':

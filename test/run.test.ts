@@ -59,7 +59,7 @@ function poolAtStart(entry: import('../src/run/state').RosterEntry) {
 }
 
 function seedRoster(heroIds: string[]) {
-  let run = createRunState(0);
+  let run = createRunState();
   for (const heroId of heroIds) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
@@ -391,7 +391,7 @@ test('progression: an Evolution grant fills an open slot, and the cap refuses th
 });
 
 test('progression: choosing Stonehide at the move cap leaves the loadout untouched — the grant does not silently displace a move', () => {
-  let run = createRunState(0);
+  let run = createRunState();
   run = addRosterEntry(run, createRosterEntry('packAlpha', 'packAlpha', [...heroes.packAlpha.moveIds, 'howl', 'maul']));
   run = atEvolutionRung(run, 'packAlpha');
   assert.strictEqual(run.roster[0].unlockedMoveIds.length, 4);

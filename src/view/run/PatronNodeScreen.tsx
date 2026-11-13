@@ -532,7 +532,6 @@ function WhoLearns({
           entry={previewing.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
-          gold={run.gold}
           scale={statScaleFor(run)}
           onClose={() => setPreviewing(null)}
         />

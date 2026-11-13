@@ -25,7 +25,7 @@ function seeded(seed: number): () => number {
 }
 
 function seedRoster(heroIds: string[], deck: readonly string[] | null = deckHeroIds(defaultDeck(heroes))): RunState {
-  let run: RunState = { ...createRunState(0), deck };
+  let run: RunState = { ...createRunState(), deck };
   for (const heroId of heroIds) run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   return run;
 }

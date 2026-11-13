@@ -73,7 +73,7 @@ function levelForRank(heroId: string, rank: number): number {
 }
 
 function entryAtRank(heroId: string, rank: number, unlocked: readonly string[] = []) {
-  let run = createRunState(0);
+  let run = createRunState();
   run = addRosterEntry(run, { ...createRosterEntry(heroId, heroId, unlocked), xp: xpForLevel(levelForRank(heroId, rank)) });
   return run.roster[0];
 }
@@ -207,7 +207,7 @@ test('schedule: entries are taken in order, one per level-up, and a hero owed se
   const entries = scheduleEntries(WARDEN);
   const last = entries[entries.length - 1].level;
   const arriveAt = last - 1;
-  let run = addRosterEntry(createRunState(0), { ...createRosterEntry('ironWarden', 'ironWarden', hero.moveIds), xp: xpForLevel(arriveAt) });
+  let run = addRosterEntry(createRunState(), { ...createRosterEntry('ironWarden', 'ironWarden', hero.moveIds), xp: xpForLevel(arriveAt) });
   assert.strictEqual(run.roster[0].scheduleTaken, 0);
   const owed = [];
   for (let i = 0; i < entries.length; i++) {
@@ -272,7 +272,7 @@ test('move tiers: every hero walks its whole schedule with a move to show for ea
     const schedule = scheduleFor(hero);
     const entries = scheduleEntries(schedule);
     for (const path of paths) {
-      let run = addRosterEntry(createRunState(0), createRosterEntry(hero.id, hero.id, hero.moveIds));
+      let run = addRosterEntry(createRunState(), createRosterEntry(hero.id, hero.id, hero.moveIds));
       let decline = false;
       for (const step of entries) {
         run = { ...run, roster: [{ ...run.roster[0], xp: xpForLevel(step.level) }] };
@@ -307,7 +307,7 @@ test('move tiers: a loadout filled from the hero\'s own pool still leaves the fi
   // out of this hero's own Early pool. They spend no offer (grantMove) but they are HELD, so
   // levelMovePool filters them all the same — which is the thinnest an Early band ever gets.
   for (const hero of Object.values(heroesById)) {
-    let run = addRosterEntry(createRunState(0), createRosterEntry(hero.id, hero.id, hero.moveIds));
+    let run = addRosterEntry(createRunState(), createRosterEntry(hero.id, hero.id, hero.moveIds));
     for (let slot = 0; slot < MOVE_CAP; slot++) {
       const gift = poolOf(run.roster[0])[slot];
       if (!gift) break;

@@ -101,7 +101,7 @@ export interface RosterEntry {
   wounds: number;
   /**
    * Knocked out and still down (run/wounds.ts, 2026-09-17): a fight that KO'd the hero wrote it,
-   * and until a Rest, the Guild Hall's mend or the act's end clears it the hero is not
+   * and until a Rest, the Camp's Mend or the act's end clears it the hero is not
    * fielded. Its own flag rather than `wounds >= max`, so a max that rises mid-act (a growth
    * roll) cannot quietly stand a downed hero back up.
    */
@@ -133,8 +133,6 @@ export interface BrokenSeal {
 
 export interface RunState {
   roster: RosterEntry[];
-  /** Spent at a Guild Hall. */
-  gold: number;
   /** Owned relic ids — duplicates stack. */
   relics: string[];
   /** Heroes dismissed from the roster this run: the Recruit node never rolls them again (run/recruitNode.ts). */
@@ -174,10 +172,9 @@ export interface RunState {
   patrons?: PatronState;
 }
 
-export function createRunState(gold = 0, cycle = 1): RunState {
+export function createRunState(cycle = 1): RunState {
   return {
     roster: [],
-    gold,
     relics: [],
     consumables: { ...STARTING_CONSUMABLES },
     map: null,
@@ -227,7 +224,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
 
 export class RosterFullError extends Error {}
 
-/** Enforces only the cap; acquisition policy (contract vs. Guild Hall) is the caller's. */
+/** Enforces only the cap; how a hero joins is the caller's. */
 export function addRosterEntry(run: RunState, entry: RosterEntry): RunState {
   if (run.roster.length >= ROSTER_CAP) {
     throw new RosterFullError(`Roster is at the ${ROSTER_CAP}-hero cap — terminate a hero before adding another`);

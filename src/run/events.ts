@@ -220,18 +220,13 @@ export function resolveGamble(chance: number, random: () => number = Math.random
 
 // --- Costs ---
 
-export function costAffordable(run: RunState, cost: EventCost | undefined): boolean {
-  return !cost?.gold || run.gold >= cost.gold;
-}
-
 /**
- * Gold off the purse, Wounds onto every standing hero. A wound never drops a hero: it stops at 1
+ * Wounds onto every standing hero. A wound never drops a hero: it stops at 1
  * HP, so an event cannot KO anyone — `down` is the fights' to set.
  */
 export function applyEventCost(run: RunState, cost: EventCost | undefined, maxHpOf: (entry: RosterEntry) => number): RunState {
   if (!cost) return run;
-  if (!costAffordable(run, cost)) throw new RunEventError(`The event costs ${cost.gold} gold, only ${run.gold} available`);
-  let next: RunState = cost.gold ? { ...run, gold: run.gold - cost.gold } : run;
+  let next: RunState = run;
   const fraction = cost.woundAll ?? 0;
   if (fraction > 0) {
     next = {
@@ -287,7 +282,7 @@ export function rollRecruits(
 /**
  * What an event recruit joins as: RAW at the player's PAR — a Guild hire's terms (its authored
  * kit, every schedule entry owed, the hire's pips) without the hire's act of lag. The lag is what
- * the hire's gold buys back; an event recruit costs a node instead, and is narrowed by theme.
+ * the hire bought back; an event recruit costs a node instead, and is narrowed by theme.
  */
 export function eventRecruitEntry(
   run: RunState,

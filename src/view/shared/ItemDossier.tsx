@@ -3,7 +3,6 @@ import type { CSSProperties } from 'react';
 import type { StatKey } from '../../engine/content';
 import { STAT_ORDER } from '../../engine/content';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { sellValueFor } from '../../run/shop';
 import { passives } from '../../data/passives';
 import { statuses } from '../../data/statuses';
 import { STAT_LABELS } from './StatBars';
@@ -66,12 +65,6 @@ export function ItemDetailCard({ item }: { item: EquipmentDefinition }) {
             )}
           </div>
         </div>
-        {/* What it fetches at a Guild Hall — the one number about an item that is not on its face. */}
-        <span className="item-detail-sell" title="Sells for">
-          <ResourceGlyph kind="gold" />
-          <strong>{sellValueFor(item)}</strong>
-          <span className="move-detail-unit">sell</span>
-        </span>
       </div>
 
       <div className="move-detail-stats">

@@ -45,7 +45,7 @@ import { addRosterEntry, createRosterEntry, createRunState } from '../src/run/st
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
 function seedRoster(heroIds: string[]) {
-  let run = createRunState(0);
+  let run = createRunState();
   for (const heroId of heroIds) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
@@ -70,7 +70,6 @@ test('events: every authored event is coherent content — a resolvable outcome,
   };
   const checkCost = (id: string, cost: EventCost | undefined) => {
     if (!cost) return;
-    if (cost.gold !== undefined && cost.gold <= 0) problems.push(`${id} costs ${cost.gold} gold`);
     if (cost.woundAll !== undefined && !(cost.woundAll > 0 && cost.woundAll < 1)) problems.push(`${id} wounds by ${cost.woundAll}, not a share of max HP`);
   };
   const check = (id: string, outcome: ResolvableOutcome) => {
@@ -95,7 +94,7 @@ test('events: every authored event is coherent content — a resolvable outcome,
     if (outcome.kind === 'recruit') {
       if (outcome.count < 1) problems.push(`${id} recruits from ${outcome.count} candidates`);
       // Against the whole catalog with an empty roster: a filter that admits nobody is a typo.
-      if (recruitCandidates(createRunState(0), outcome.pool, heroes).length === 0) problems.push(`${id}'s recruit filter admits no hero`);
+      if (recruitCandidates(createRunState(), outcome.pool, heroes).length === 0) problems.push(`${id}'s recruit filter admits no hero`);
       for (const heroId of outcome.pool.heroIds ?? []) if (!heroes[heroId]) problems.push(`${id} recruits unknown hero '${heroId}'`);
     }
   };

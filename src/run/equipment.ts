@@ -391,8 +391,9 @@ export function cacheLootTier(actNumber: number): number {
  * every item is absorbed on receipt now, so this table is the run's whole gear supply, and it
  * was measured rather than reasoned. Cutting the opener's drop cost seven points of full-clear,
  * all of it in acts 1–2 — the wall the run already has — while a Guardian that pays nothing one
- * time in twenty was a sour beat buying nothing. The Skirmish's 0.6 is what separates the fork's
- * two fights: the Elite is a step over and always pays.
+ * time in twenty was a sour beat buying nothing. The Skirmish's 0.3 (0.6 until the Camp's Gear
+ * doors, 2026-11-13, docs/guild-hall-overhaul.md §10) is what separates the fork's two fights: the
+ * Elite is a step over and always pays.
  *
  * This table and LOOT_SOURCE lived in BOTH App.tsx and scripts/sim/run.ts until 2026-09-08, hand-
  * synced. They are here because a simulator measuring different drop odds than the game ships
@@ -401,7 +402,7 @@ export function cacheLootTier(actNumber: number): number {
 export const EQUIPMENT_DROP_CHANCE: Record<EncounterNodeKind, number> = {
   fight: 1,
   battle: 1,
-  skirmish: 0.6,
+  skirmish: 0.3,
   elite: 1,
   boss: 1,
   finale: 0,

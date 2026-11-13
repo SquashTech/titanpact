@@ -161,7 +161,7 @@ function GemPlacement({ run, onRunChange, plan, onDone, progress, onProgress, on
           const open = !finished && canTakeMastery(entry) && (!onlyRosterIds || onlyRosterIds.includes(entry.rosterId));
           const evolves = crossesMastery(entry, 1, MASTERY_EVOLUTION);
           const masters = crossesMastery(entry, 1, MASTERY_CAP) && !!hero.masteredPassiveIds?.length;
-          const now = entryStatTotals(hero, entry, run.relics, run.gold)[shown.stat];
+          const now = entryStatTotals(hero, entry, run.relics)[shown.stat];
           const cta = !canTakeMastery(entry) ? 'Mastered' : evolves ? 'Evolves!' : masters ? 'Masters!' : `${entry.mastery}/${MASTERY_CAP}`;
           const flaring = burst?.rosterId === entry.rosterId;
           return (
@@ -216,7 +216,6 @@ function GemPlacement({ run, onRunChange, plan, onDone, progress, onProgress, on
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
-          gold={run.gold}
           scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />

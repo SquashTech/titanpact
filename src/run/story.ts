@@ -76,7 +76,7 @@ function storySide(specs: readonly StoryHeroSpec[], leads: readonly string[], he
   });
   for (const id of leads) if (!roster.some((r) => r.rosterId === id)) throw new Error(`story: lead ${id} is not in the party`);
   return {
-    run: { ...createRunState(0), roster },
+    run: { ...createRunState(), roster },
     squad: { activeIds: [leads[0] ?? null, leads[1] ?? null], benchIds: roster.map((r) => r.rosterId).filter((id) => !leads.includes(id)) },
   };
 }

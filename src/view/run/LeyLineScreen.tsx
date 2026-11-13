@@ -173,7 +173,6 @@ export function LeyLineScreen({ run, onRunChange, onContinue }: Props) {
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
-          gold={run.gold}
           scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />

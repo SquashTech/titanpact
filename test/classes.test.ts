@@ -87,7 +87,7 @@ test('classes: rollClassOffers returns three distinct Classes from the whole cat
 // --- grantClass / chosenClass ---
 
 function seedRoster(heroIds: string[]) {
-  let run = createRunState(0);
+  let run = createRunState();
   for (const heroId of heroIds) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }

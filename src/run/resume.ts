@@ -15,6 +15,7 @@ import type { GauntletResult } from './gauntlet';
 import type { HeroLevelUp } from './growth';
 import type { RewardNodeType } from './map';
 import { GEM_ORDER, rollGems, type Gem, type GemPlan } from './gems';
+import { campBundle, rollCampDoors } from './camp';
 import type { GrowthStatKey, TypeId } from '../engine/content';
 import type { MvpLedger, MvpTally } from './mvp';
 import type { Squad } from './squad';
@@ -64,7 +65,6 @@ export type RunScreen =
       nodeType: EncounterNodeType;
       squad: Squad;
       encounter: Encounter;
-      goldReward: number;
       xpGained: number;
       /** Rolled at fight entry so the victory screen can spotlight it; handleFightResolved reuses it. */
       equipmentRewardId: string | null;
@@ -93,10 +93,14 @@ export type RunScreen =
   | { kind: 'gauntletFight'; player: Encounter; ai: Encounter; locationId?: string | null; aiPilot: boolean }
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
-  /** The Camp's three doors (run/camp.ts); a door taken is its own screen. */
-  | { kind: 'camp'; nodeId: string; settled?: boolean }
-  /** The Camp's Gear door: `seed` fixes the three pieces, so a reload lays out the same ones. */
-  | { kind: 'campGear'; nodeId: string; seed: number; settled?: boolean }
+  /** The Camp's three doors (run/camp.ts), rolled once; `chosen` is the Mend door taken on the screen itself. */
+  | { kind: 'camp'; nodeId: string; doorIds: string[]; chosen?: number }
+  /**
+   * A Camp door's pieces played in turn: `step` is the piece in hand, `seed` fixes what each piece
+   * lays out. `campNodeId`, not `nodeId`, so a settled piece resumes on the next one rather than
+   * walking the node (`resumeTarget`).
+   */
+  | { kind: 'campDoor'; campNodeId: string; bundleId: string; step: number; seed: number; taken?: number[]; settled?: boolean }
   /** `seed` fixes what the chest holds, so a reload opens the same one. */
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType; seed: number; settled?: boolean }
   /** An item has arrived and asks who carries it (docs/gear-absorption.md §2). `next` is where the run goes once it is absorbed or sold. */
@@ -173,7 +177,7 @@ const RESUMABLE: ReadonlySet<RunScreenKind> = new Set<RunScreenKind>([
   'map',
   'fight',
   'camp',
-  'campGear',
+  'campDoor',
   'reward',
   'itemWho',
   'manaWell',
@@ -210,6 +214,8 @@ export function resumeTarget(screen: RunScreen, run: RunState): { screen: RunScr
   let cursor = screen;
   let current = run;
   for (let depth = 0; depth < MAX_CHAIN_DEPTH && 'settled' in cursor && cursor.settled; depth++) {
+    // A Camp door's piece taken: the next piece (a step past the last walks the node on screen).
+    if (cursor.kind === 'campDoor') return { screen: { ...cursor, step: cursor.step + 1, taken: undefined, settled: undefined }, run: current };
     if ('nodeId' in cursor && typeof cursor.nodeId === 'string') {
       return { screen: { kind: 'map' }, run: advanceToNode(current, cursor.nodeId) };
     }
@@ -320,7 +326,7 @@ function decodeEncounter(value: unknown, ctx: Ctx, label: string): Encounter {
   const ids = new Set(roster.map((entry) => entry.rosterId));
   const placed = [...squad.activeIds.filter((id): id is string => id !== null), ...squad.benchIds, ...(squad.reserves ?? []).flat()];
   for (const id of placed) if (!ids.has(id)) reject(`${label}.squad names "${id}", not in its party`);
-  return { run: { ...createRunState(0), roster }, squad };
+  return { run: { ...createRunState(), roster }, squad };
 }
 
 function decodeLevelUps(value: unknown, ctx: Ctx): HeroLevelUp[] {
@@ -364,8 +370,8 @@ function decodePlan(value: unknown, ctx: Ctx): GemPlan {
   reject('scrolls.plan is unknown');
 }
 
-const NODE_SCREENS = ['manaWell', 'blessingShrine', 'forge', 'leyLine', 'rest', 'camp'] as const;
-const SEEDED_NODE_SCREENS = ['boonNode', 'mentorNode', 'tutorNode', 'academyNode', 'campGear'] as const;
+const NODE_SCREENS = ['manaWell', 'blessingShrine', 'forge', 'leyLine', 'rest'] as const;
+const SEEDED_NODE_SCREENS = ['boonNode', 'mentorNode', 'tutorNode', 'academyNode'] as const;
 const PASS_THROUGH = ['pactSeal', 'blessing', 'actIntro', 'map', 'champions'] as const;
 
 function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
@@ -385,7 +391,9 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
   // A run saved on a contract claim or a Tavern hire's swap (deleted 2026-11-11) walks on past it.
   if (raw.kind === 'recruit' || raw.kind === 'rosterReplace') return decodeScreen(raw.next, ctx, depth + 1);
   // A run saved in the Guild Hall (deleted 2026-11-11) opens on the Camp in its place.
-  if (raw.kind === 'shop') return { kind: 'camp', nodeId: nodeId(raw.nodeId, ctx, 'shop.nodeId') };
+  if (raw.kind === 'shop') return { kind: 'camp', nodeId: nodeId(raw.nodeId, ctx, 'shop.nodeId'), doorIds: rollCampDoors(ctx.run) };
+  // A run saved at the Camp's first Gear door (2026-11-11) opens on its bundle's twin.
+  if (raw.kind === 'campGear') return { kind: 'campDoor', campNodeId: nodeId(raw.nodeId, ctx, 'campGear.nodeId'), bundleId: 'gear', step: 0, seed: int(raw.seed, 'campGear.seed') };
   const kind = raw.kind as RunScreenKind;
   if (!isResumable(kind)) reject(`screen "${kind}" is not one a run is saved on`);
   const next = () => decodeScreen(raw.next, ctx, depth + 1);
@@ -435,7 +443,6 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
         nodeType: raw.nodeType,
         squad,
         encounter: decodeEncounter(raw.encounter, ctx, 'fight.encounter'),
-        goldReward: int(raw.goldReward, 'fight.goldReward'),
         xpGained: int(raw.xpGained, 'fight.xpGained'),
         equipmentRewardId: reward,
         consumableReward: drop as ConsumableKind | null,
@@ -444,11 +451,26 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
         levelSeed: int(raw.levelSeed, 'fight.levelSeed'),
       };
     }
+    case 'camp': {
+      // A Camp saved before its doors were bundles rolls them now.
+      const doorIds = Array.isArray(raw.doorIds) ? raw.doorIds : rollCampDoors(ctx.run);
+      if (!doorIds.every((id) => typeof id === 'string' && campBundle(id))) reject('camp.doorIds holds an unknown bundle');
+      if (raw.chosen !== undefined && !(isInt(raw.chosen, 0) && raw.chosen < doorIds.length)) reject('camp.chosen is not a door');
+      return { kind, nodeId: nodeId(raw.nodeId, ctx, 'camp.nodeId'), doorIds: doorIds as string[], ...(raw.chosen !== undefined ? { chosen: raw.chosen as number } : {}) };
+    }
+    case 'campDoor': {
+      const bundle = typeof raw.bundleId === 'string' ? campBundle(raw.bundleId) : undefined;
+      if (!bundle) reject('campDoor.bundleId is unknown');
+      if (!isInt(raw.step, 0) || (raw.step as number) > bundle.pieces.length) reject('campDoor.step is not a piece');
+      const taken = Array.isArray(raw.taken) && raw.taken.every((slot) => isInt(slot, 0)) ? (raw.taken as number[]) : [];
+      return { kind, campNodeId: nodeId(raw.campNodeId, ctx, 'campDoor.campNodeId'), bundleId: bundle.id, step: raw.step as number, seed: int(raw.seed, 'campDoor.seed'), ...(taken.length > 0 ? { taken: [...taken] } : {}), ...settled(raw) };
+    }
     case 'reward':
       // The Contract node's chest (deleted 2026-11-11) is a Recruit now.
       if (raw.nodeType === 'contractReward') return { kind: 'recruitNode', nodeId: nodeId(raw.nodeId, ctx, 'reward.nodeId'), seed: int(raw.seed, 'reward.seed'), ...settled(raw) };
+      // The purse (deleted with gold, 2026-11-13) opens the Item Cache's chest in its place.
       if (raw.nodeType !== 'currencyReward' && raw.nodeType !== 'equipmentReward') reject('reward.nodeType is unknown');
-      return { kind, nodeId: nodeId(raw.nodeId, ctx, 'reward.nodeId'), nodeType: raw.nodeType, seed: int(raw.seed, 'reward.seed'), ...settled(raw) };
+      return { kind, nodeId: nodeId(raw.nodeId, ctx, 'reward.nodeId'), nodeType: 'equipmentReward', seed: int(raw.seed, 'reward.seed'), ...settled(raw) };
     case 'recruitNode': {
       const picked = raw.pickedType;
       if (picked !== undefined && (typeof picked !== 'string' || !ctx.index.typeIds.has(picked as TypeId))) reject('recruitNode.pickedType is unknown');

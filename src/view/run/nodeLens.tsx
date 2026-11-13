@@ -40,7 +40,6 @@ const LENS: Record<MapNodeType, Lens> = {
   tutorReward: 'moves',
   academyReward: 'moves',
   patronSeat: null,
-  currencyReward: null,
   recruitReward: null,
   event: null,
 };

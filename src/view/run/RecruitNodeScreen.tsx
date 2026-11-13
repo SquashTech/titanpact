@@ -188,7 +188,6 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
           entry={previewEntry.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
-          gold={run.gold}
           scale={statScaleFor(run)}
           onClose={() => setPreviewEntry(null)}
         />

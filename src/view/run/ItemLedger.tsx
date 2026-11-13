@@ -41,7 +41,7 @@ const forceColor = (statusId: string) => {
 
 function currentStats(run: RunState, hero: HeroDefinition, entry: RosterEntry): Record<StatKey, number> {
   const counts = entryPassiveCounts(entry, equipment, relicTeamPassiveGrants(run.relics, relics), innatePassiveIdsFor(hero, entry));
-  const grants = entryStatModifiers(entry, equipment, passives, counts, relicTeamStatModifiers(run.relics, relics), run.gold);
+  const grants = entryStatModifiers(entry, equipment, passives, counts, relicTeamStatModifiers(run.relics, relics));
   return Object.fromEntries(STAT_ORDER.map((stat) => [stat, hero.baseStats[stat] + (grants[stat] ?? 0)])) as Record<StatKey, number>;
 }
 

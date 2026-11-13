@@ -134,7 +134,6 @@ export interface Aggregate {
   deathByNodeType: Record<string, number>;
   /** Encounters won, summed over all runs. */
   encountersWonSum: number;
-  goldEndSum: number;
   /** Roster size when the run ended, summed. */
   rosterSizeEndSum: number;
   /** Finales entered / won, keyed by heroes standing on entry. */
@@ -222,8 +221,8 @@ export interface Aggregate {
   pipsBySourceWon: Record<string, number>;
   /** run/mvp.ts tallies summed over runs, plus `runs`, `topShareSum` (the run's most-picked hero's share of its MVPs) and `distinctSum`. */
   mvp: Record<string, number>;
-  /** The gold ledger summed over runs (run.ts RunRecord.goldFlow). */
-  goldFlow: Record<string, number>;
+  /** The ledger summed over runs (run.ts RunRecord.flow). */
+  flow: Record<string, number>;
   /** Heroes who joined the roster after the draft, by route. */
   recruitsBySource: Record<string, number>;
   /** Items obtained, keyed `act:source` (run.ts RunRecord.itemsBySource), all runs and won runs. */
@@ -256,7 +255,6 @@ export function emptyAggregate(): Aggregate {
     deathAct: [0, 0, 0, 0, 0, 0, 0],
     deathByNodeType: {},
     encountersWonSum: 0,
-    goldEndSum: 0,
     rosterSizeEndSum: 0,
     finaleBySize: {},
     rosterLevelEndSum: 0,
@@ -316,7 +314,7 @@ export function emptyAggregate(): Aggregate {
     pipsBySource: {},
     pipsBySourceWon: {},
     mvp: {},
-    goldFlow: {},
+    flow: {},
     recruitsBySource: {},
     itemsBySource: {},
     itemsBySourceWon: {},
@@ -391,7 +389,6 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   into.runs += from.runs;
   into.wins += from.wins;
   into.encountersWonSum += from.encountersWonSum;
-  into.goldEndSum += from.goldEndSum;
   into.rosterSizeEndSum += from.rosterSizeEndSum;
   for (const key of Object.keys(from.finaleBySize)) {
     const n = Number(key);
@@ -454,7 +451,7 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   for (const key of Object.keys(from.mvp)) into.mvp[key] = (into.mvp[key] ?? 0) + from.mvp[key];
   for (const key of Object.keys(from.pipsBySource)) into.pipsBySource[key] = (into.pipsBySource[key] ?? 0) + from.pipsBySource[key];
   for (const key of Object.keys(from.pipsBySourceWon)) into.pipsBySourceWon[key] = (into.pipsBySourceWon[key] ?? 0) + from.pipsBySourceWon[key];
-  for (const key of Object.keys(from.goldFlow)) into.goldFlow[key] = (into.goldFlow[key] ?? 0) + from.goldFlow[key];
+  for (const key of Object.keys(from.flow)) into.flow[key] = (into.flow[key] ?? 0) + from.flow[key];
   for (const key of Object.keys(from.recruitsBySource)) into.recruitsBySource[key] = (into.recruitsBySource[key] ?? 0) + from.recruitsBySource[key];
   for (const key of Object.keys(from.itemsBySource)) into.itemsBySource[key] = (into.itemsBySource[key] ?? 0) + from.itemsBySource[key];
   for (const key of Object.keys(from.itemsBySourceWon)) into.itemsBySourceWon[key] = (into.itemsBySourceWon[key] ?? 0) + from.itemsBySourceWon[key];

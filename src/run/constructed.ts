@@ -229,7 +229,7 @@ export const CONSTRUCTED_POTIONS = { hpPotion: 1, mpPotion: 1 } as const;
  */
 export function constructedSide(content: ConstructedContent, team: Team, leads?: readonly [string, string]): { run: RunState; squad: Squad } {
   const roster = constructedRoster(content, team);
-  const run: RunState = { ...createRunState(0, 0), roster, consumables: { ...CONSTRUCTED_POTIONS } };
+  const run: RunState = { ...createRunState(0), roster, consumables: { ...CONSTRUCTED_POTIONS } };
   if (!leads) return { run, squad: openingSquad(roster) };
   for (const id of leads) if (!roster.some((r) => r.rosterId === id)) throw new ConstructedError(`lead ${id} is not on the team`);
   return { run, squad: { activeIds: [leads[0], leads[1]], benchIds: roster.map((r) => r.rosterId).filter((id) => !leads.includes(id)) } };

@@ -15,7 +15,6 @@ import {
   outcomeForAct,
   scaleDeltas,
   applyHeroOutcome,
-  costAffordable,
   eventRecruitEntry,
   joinEventRecruit,
   recruitCandidates,
@@ -30,7 +29,7 @@ import { addRosterEntry, createRosterEntry, createRunState, ROSTER_CAP, type Run
 import { FINALE_LOCATION_ID } from '../src/data/locations';
 
 function seedRoster(heroIds: string[]): RunState {
-  let run = createRunState(0);
+  let run = createRunState();
   for (const heroId of heroIds) run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   return run;
 }
@@ -59,14 +58,6 @@ test('event vocabulary: a lighter event lands in proportion — 6 against 10 sit
 });
 
 // --- Costs ---
-
-test('event vocabulary: a gold cost comes off the purse, and one the purse cannot cover is refused', () => {
-  const run = { ...seedRoster(['cinderKnight']), gold: 50 };
-  assert.ok(costAffordable(run, { gold: 50 }));
-  assert.ok(!costAffordable(run, { gold: 51 }));
-  assert.strictEqual(applyEventCost(run, { gold: 30 }, () => 100).gold, 20);
-  assert.throws(() => applyEventCost(run, { gold: 60 }, () => 100), RunEventError);
-});
 
 test('event vocabulary: a wound cost takes its share of max HP off every standing hero, never drops one, and skips the downed', () => {
   let run = seedRoster(['cinderKnight', 'tidecaller', 'crag']);

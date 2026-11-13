@@ -36,7 +36,7 @@ function pathsOf(heroId: string): EvolutionPath[] {
 const heroIds = Object.keys(heroes);
 
 function seed(id: string): RunState {
-  return addRosterEntry(createRunState(0), atEvolution(createRosterEntry(id, id, heroes[id].moveIds)));
+  return addRosterEntry(createRunState(), atEvolution(createRosterEntry(id, id, heroes[id].moveIds)));
 }
 
 test('evolution simplification: every hero has one Evolution node of three paths', () => {

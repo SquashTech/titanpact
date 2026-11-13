@@ -31,7 +31,6 @@ import { matchupVerdict } from '../shared/matchupVerdict';
 
 /** Every mark a ledger row can lead with, drawn from the glyph sets the rest of the run already uses. */
 const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
-  gold: <ResourceGlyph kind="gold" tone="inherit" />,
   xp: <ResourceGlyph kind="xp" tone="inherit" />,
   scroll: <ResourceGlyph kind="scroll" tone="inherit" />,
   mana: <StatGlyph stat="manaPool" tone="inherit" />,
@@ -54,7 +53,6 @@ const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
 
 /** Each reward in its own colour — the run's resource colours where it has one — so a card reads as loot, not a table. */
 const FACT_COLORS: Record<NodeFactGlyph, string> = {
-  gold: RESOURCE_COLORS.gold,
   xp: RESOURCE_COLORS.xp,
   scroll: RESOURCE_COLORS.scroll,
   mana: RESOURCE_COLORS.mpPotion,

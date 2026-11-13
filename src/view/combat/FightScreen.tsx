@@ -517,8 +517,6 @@ interface Props {
   /** Raw relic ids, so this screen derives the team broadcasts once and hands the same ids to the hero sheets it opens. Omitted by relic-less callers (Quick Battle). */
   playerRelicIds?: readonly string[];
   /** Displayed only — the caller grants it in onResolved. */
-  goldReward: number;
-  /** Displayed only — the caller grants it in onResolved. */
   /** XP this win pays the WHOLE roster (run/growth.ts). A report, not a screen — nothing is spent. */
   xpGained: number;
   /** Seeds the level roll so the result overlay can show the stat gains the resolve will land. */
@@ -588,7 +586,6 @@ export function FightScreen({
   aiRun,
   aiSquad,
   playerRelicIds = [],
-  goldReward,
   xpGained,
   levelSeed,
   equipmentReward,
@@ -655,7 +652,6 @@ export function FightScreen({
           teamStatModifiers,
           teamPassiveGrants,
           teamStatusGrants,
-          gold: playerRun.gold,
         },
         { side: AI_SIDE, squad: aiSquad, roster: aiRun.roster },
       ],
@@ -2628,8 +2624,6 @@ export function FightScreen({
           fieldedIds={new Set([...playerSquad.activeIds, ...playerSquad.benchIds].filter((id): id is string => id !== null))}
           xpGained={xpGained}
           levelSeed={levelSeed}
-          goldFrom={playerRun.gold}
-          goldReward={goldReward}
           equipmentReward={equipmentReward}
           consumableReward={consumableReward}
           gemReward={gemReward}

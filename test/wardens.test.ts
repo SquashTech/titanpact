@@ -37,7 +37,7 @@ const valorPath = progressionTable.evolutions.valor[0].paths[0].id;
 const classId = Object.keys(classes)[0];
 
 function wonRun(): RunState {
-  let run = createRunState(50);
+  let run = createRunState();
   for (const id of BAND) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
   return {
     ...run,
@@ -48,7 +48,7 @@ function wonRun(): RunState {
 }
 
 function bossAt(seed: number, act: number, cycle: number, wardens: readonly Warden[]) {
-  let run = createRunState(50, cycle);
+  let run = createRunState(cycle);
   for (const id of ['packAlpha', 'crimson']) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
   run = { ...run, map: generateMap(seed, act), locationIds: generateItinerary(seed), actNumber: act, fightsStarted: 2, encountersWon: 4 };
   const ctx: EncounterContext = { run, location: locationForAct(run.locationIds, act), heroes, allCombatants, enemies, progression: progressionTable, wardens };

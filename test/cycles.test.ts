@@ -27,7 +27,7 @@ import { buildContentIndex, decodeSave, encodeSave } from '../src/run/save';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 
 function run(cycle: number): RunState {
-  let next = createRunState(50, cycle);
+  let next = createRunState(cycle);
   for (const id of ['valor', 'packAlpha', 'rime']) next = addRosterEntry(next, createRosterEntry(id, id, heroes[id].moveIds));
   return next;
 }
@@ -143,7 +143,7 @@ test('cycles: the Long Winter loses Wild’s Edge and frays the Banners', () => 
 
 test('cycles: a Long Winter wards the Guardian while its company stands', () => {
   for (const act of [1, 2, 3, 4]) {
-    let run = createRunState(50, 3);
+    let run = createRunState(3);
     for (const id of ['packAlpha', 'crimson']) run = addRosterEntry(run, createRosterEntry(id, id, heroes[id].moveIds));
     run = { ...run, map: generateMap(31, act), locationIds: generateItinerary(31), actNumber: act, fightsStarted: 2, encountersWon: 4 };
     const location = locationForAct(run.locationIds, act);

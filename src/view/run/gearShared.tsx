@@ -26,7 +26,6 @@ export function Preview({ run, preview, onClose }: { run: RunState; preview: Pre
       entry={preview.entry}
       equipmentLookup={equipment}
       relicIds={run.relics}
-      gold={run.gold}
       scale={statScaleFor(run)}
       onClose={onClose}
     />

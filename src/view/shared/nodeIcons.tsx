@@ -124,13 +124,6 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   passiveReward: SECTION_PATHS.passives,
   // The Blessing's four-point star, the mark a Blessed hero wears, said large.
   blessingReward: <path d="M12 1.2 14.6 9.4 22.8 12 14.6 14.6 12 22.8 9.4 14.6 1.2 12 9.4 9.4Z" />,
-  // Money bag.
-  currencyReward: (
-    <>
-      <path d="M8.6 2.6h6.8a1 1 0 0 1 .8 1.6l-1.4 2H9.2l-1.4-2a1 1 0 0 1 .8-1.6Z" />
-      <path d="M9 7.8h6c3.6 1.9 5.8 5.2 5.8 8.6 0 3.2-2.4 5.2-6 5.2h-5.6c-3.6 0-6-2-6-5.2 0-3.4 2.2-6.7 5.8-8.6Z" />
-    </>
-  ),
   // A quill: the old Contract's mark, kept until the Recruit has its own. The diagonal is what survives 14px.
   recruitReward: (
     <>
