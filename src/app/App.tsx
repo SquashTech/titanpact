@@ -959,7 +959,8 @@ export function App() {
         afterScreen = { kind: 'runComplete' };
       }
     } else {
-      afterScreen = { kind: 'map' };
+      // An Elite faced passives, and pays one: the Boon is the chain's last beat.
+      afterScreen = mapNodeType === 'elite' ? { kind: 'eliteBoon', seed: randomSeed(), next: { kind: 'map' } } : { kind: 'map' };
     }
 
     // A drop nobody can take is left on the spot, for a flask; the victory overlay has already shown it.
@@ -1610,6 +1611,10 @@ export function App() {
         <ItemWhoScreen key={`${screen.itemId}:${whoScreensBehind(screen.next)}`} run={playerRun} itemId={screen.itemId} upcoming={whoQueue(screen.next)} onRunChange={settlingRunChange(screen)} onDone={() => setScreen(screen.next)} />
       )}
 
+
+      {screen.kind === 'eliteBoon' && (
+        <BoonNodeScreen key={screen.seed} run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => setScreen(screen.next)} seed={screen.seed} />
+      )}
 
       {screen.kind === 'boonNode' && (
         <BoonNodeScreen run={playerRun} onRunChange={settlingRunChange(screen)} onContinue={() => handleNodeContinue(screen.nodeId)} seed={screen.seed} />

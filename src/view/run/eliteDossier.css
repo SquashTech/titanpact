@@ -1,0 +1,49 @@
+/* The Elite's affixes and opening field on the map's tap card (NodeDossier). */
+
+.elite-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0 2px;
+}
+
+.elite-rule {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.elite-rule-name {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--node-color);
+}
+
+.elite-rule-words {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.elite-rule.is-field {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.elite-rule.is-field .elite-rule-name {
+  color: var(--field-color);
+}
+
+.elite-rule-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.elite-rule-glyph {
+  width: 14px;
+  height: 14px;
+  color: var(--field-color);
+}

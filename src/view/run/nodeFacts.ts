@@ -104,7 +104,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
     case 'elite':
       return {
         about: null,
-        facts: encounterFacts('elite', actNumber),
+        facts: [...encounterFacts('elite', actNumber), { glyph: 'passive', label: 'Boon', value: `1 of ${BOON_OFFER_COUNT}`, who: 'one' }],
         odds: odds('elite'),
       };
     case 'boss':

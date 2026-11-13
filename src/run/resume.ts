@@ -117,6 +117,8 @@ export type RunScreen =
    */
   | { kind: 'scrolls'; plan: GemPlan; nodeId: string | null; bought: boolean; next: RunScreen; progress?: ScrollProgress }
   | { kind: 'boonNode'; nodeId: string; seed: number; settled?: boolean }
+  /** A won Elite's Boon, the last of its chain (docs/guild-hall-overhaul.md §4.3). */
+  | { kind: 'eliteBoon'; seed: number; next: RunScreen; settled?: boolean }
   /** The Mentor (acts 1-3): pick a hero, and one Mid move is rolled for it. */
   | { kind: 'mentorNode'; nodeId: string; seed: number; settled?: boolean }
   /** The Tutor (acts 4-5): pick a hero, and one Late move is rolled for it. */
@@ -187,6 +189,7 @@ const RESUMABLE: ReadonlySet<RunScreenKind> = new Set<RunScreenKind>([
   'rest',
   'scrolls',
   'boonNode',
+  'eliteBoon',
   'mentorNode',
   'tutorNode',
   'academyNode',
@@ -482,6 +485,8 @@ function decodeScreen(value: unknown, ctx: Ctx, depth: number): RunScreen {
         ...settled(raw),
       };
     }
+    case 'eliteBoon':
+      return { kind, seed: int(raw.seed, 'eliteBoon.seed'), next: next(), ...settled(raw) };
     case 'itemWho':
       return { kind, itemId: itemId(raw.itemId, ctx, 'itemWho.itemId'), next: next(), ...settled(raw) };
     case 'scrolls': {

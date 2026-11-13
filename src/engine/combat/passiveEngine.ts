@@ -178,9 +178,9 @@ function resolveAmount(amount: PassiveAmount, context: TriggerContext, targetMax
 }
 
 /** An authored number passes through; a PassiveAmount is read off the triggering event. */
-function resolveMagnitude(magnitude: number | PassiveAmount | undefined, context: TriggerContext): number | undefined {
+function resolveMagnitude(magnitude: number | PassiveAmount | undefined, context: TriggerContext, targetMaxHp = 0): number | undefined {
   if (magnitude === undefined || typeof magnitude === 'number') return magnitude;
-  return resolveAmount(magnitude, context);
+  return resolveAmount(magnitude, context, targetMaxHp);
 }
 
 function resolveEffect(
@@ -348,7 +348,7 @@ function resolveEffectOn(
       // Lights a fire, never refuels one (docs/timed-statuses.md §5): a holder already carrying it is skipped.
       if (effect.onlyIfAbsent && target.statuses[effect.statusId]) return { state, events: [] };
       if (effect.onlyWithStatus && !target.statuses[effect.onlyWithStatus]) return { state, events: [] };
-      let magnitude = resolveMagnitude(effect.magnitude, context);
+      let magnitude = resolveMagnitude(effect.magnitude, context, getMaxHp(heroes[target.heroId], target));
       // An event-read magnitude of nothing (a Rest that restored 0) is no status at all.
       if (typeof effect.magnitude === 'object' && (magnitude ?? 0) <= 0) return { state, events: [] };
       // A capped counter (Broadside's magazine): what would pass the cap is not loaded.

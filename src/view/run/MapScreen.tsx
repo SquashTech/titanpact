@@ -27,7 +27,8 @@ import { getTypeColor } from '../combat/typeColors';
 import { LocationAmbience } from '../shared/LocationSky';
 import { mapSpots } from '../shared/locationBackdrops';
 import { AudioSettings } from '../shared/AudioSettings';
-import { nodeEncounter, scoutedParty } from '../../run/encounters';
+import { eliteDressingFor, nodeEncounter, scoutedParty } from '../../run/encounters';
+import type { EliteDressing } from '../../run/eliteAffixes';
 import { heroes } from '../../data/heroes';
 import { encounterPools } from '../../run/deck';
 import { heroPool } from '../../run/recruitment';
@@ -43,17 +44,20 @@ import partyArt from '../../../art/ui/party.png';
  * each one fields, from the same deterministic draw the tap will start (run/encounters.ts).
  * Only the hero-pool nodes — the mob layer's tier already says what a Monsters tile is.
  */
-function scoutChoices(run: RunState, choiceIds: readonly string[], purchases: readonly string[]): Record<string, (readonly TypeId[])[]> {
+function scoutChoices(run: RunState, choiceIds: readonly string[], purchases: readonly string[]): Record<string, { party: (readonly TypeId[])[]; elite?: EliteDressing }> {
   const map = run.map!;
   const location = locationForAct(run.locationIds, run.actNumber);
-  const scouted: Record<string, (readonly TypeId[])[]> = {};
+  const scouted: Record<string, { party: (readonly TypeId[])[]; elite?: EliteDressing }> = {};
   // The same pools App.tsx hands the fight, or the tile would preview a different party.
   const pools = encounterPools(run, heroes, heroPool(heroes, purchases));
   for (const id of choiceIds) {
     const node = map.nodes[id];
     if (!node || (node.type !== 'skirmish' && node.type !== 'elite')) continue;
     const encounter = nodeEncounter(node, { run, location, heroes: pools.heroes, strangers: pools.strangers, allCombatants, enemies, progression: progressionTable });
-    scouted[id] = scoutedParty(encounter, allCombatants);
+    scouted[id] = {
+      party: scoutedParty(encounter, allCombatants),
+      ...(node.type === 'elite' ? { elite: eliteDressingFor(map, id, run.actNumber, encounter, allCombatants) } : {}),
+    };
   }
   return scouted;
 }
@@ -267,7 +271,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           guardianId={location.guardianFinalEnemyId}
           spots={mapSpots(location.id)}
           onSelectNode={onSelectNode}
-          renderDossier={(node) => <NodeDossier node={node} run={run} party={scouted[node.id]} />}
+          renderDossier={(node) => <NodeDossier node={node} run={run} party={scouted[node.id]?.party} elite={scouted[node.id]?.elite} />}
           patronFor={(node) => {
             const patron = patronOfNode(run, node);
             return patron

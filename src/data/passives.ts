@@ -2654,6 +2654,65 @@ export function isTitansMark(passiveId: string): boolean {
   return passiveId in titansMarkPassives;
 }
 
+// --- The Elite's affixes (docs/guild-hall-overhaul.md §4): enemy-side only, in no pool ---
+export const ELITE_WARD_SHARE = 0.2;
+
+const eliteAffixPassives: Record<string, PassiveDefinition> = {
+  eliteWarded: {
+    id: 'eliteWarded',
+    name: 'Warded',
+    description: 'Gains Shield, a fifth of its max HP.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Shield', magnitude: { kind: 'percentMaxHp', value: ELITE_WARD_SHARE } },
+      oncePerFight: true,
+    },
+  },
+  eliteSwift: {
+    id: 'eliteSwift',
+    name: 'Swift',
+    description: 'Gains SPD ▲.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'speed', stages: 1 },
+      oncePerFight: true,
+    },
+  },
+  eliteVengeful: {
+    id: 'eliteVengeful',
+    name: 'Vengeful',
+    description: 'Gains ATK ▲ INT ▲.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'ally', finishingBlow: true },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'intelligence'], stages: 1 },
+    },
+  },
+};
+
+/** One a field: the Elite's lead sets it as the fight opens, and never again. */
+const eliteFieldPassives: Record<string, PassiveDefinition> = Object.fromEntries(
+  Object.values(fieldEffects)
+    .filter((field) => field.id !== 'witheringGaze')
+    .map((field) => {
+      const id = `eliteOpens_${field.id}`;
+      return [
+        id,
+        {
+          id,
+          name: field.name,
+          description: `Set ${field.name}.`,
+          reactive: { hook: 'SwitchedIn', condition: { relativeTo: 'self' }, effect: { kind: 'setFieldEffect', fieldEffectId: field.id }, oncePerFight: true },
+        } satisfies PassiveDefinition,
+      ];
+    })
+);
+
+/** Field id -> the passive that opens an Elite on it. */
+export const eliteOpeningFieldPassiveFor: Record<string, string> = Object.fromEntries(Object.keys(eliteFieldPassives).map((id) => [id.slice('eliteOpens_'.length), id]));
+
 // --- The Titan's pieces (HeroDefinition.passiveIds, docs/titan-eyes.md §10) ---
 //
 // Innate to the Herald and the Eyes, in no pool: a piece of the Titan is the only thing that ever
@@ -2808,6 +2867,8 @@ export const passives: Record<string, PassiveDefinition> = {
   ...masteredInnatePassives,
   ...titansMarkPassives,
   ...titanPassives,
+  ...eliteAffixPassives,
+  ...eliteFieldPassives,
 };
 
 /**

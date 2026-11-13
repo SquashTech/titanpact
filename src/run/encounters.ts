@@ -22,6 +22,7 @@ import { castEscortWarband, castHeroWarband, forceWarbandMoves, learnableIn } fr
 import { TITANS_WARD_ID } from '../data/passives';
 import { guardianEscortPool, mobEncounter } from './spawn';
 import { appendWarden, buildWarden, wardenAt, type Warden } from './wardens';
+import { dressElite, rollEliteDressing, type EliteDressing } from './eliteAffixes';
 
 export type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss';
 
@@ -208,6 +209,10 @@ export function nodeEncounter(node: MapNode, ctx: EncounterContext): Encounter {
   if (type === 'fight' || type === 'battle') {
     return mobEncounter(type, location, run.actNumber, encounterSeedFor(map, node.id), encounterScaling(type, run.actNumber));
   }
+  if (type === 'elite') {
+    const encounter = heroPoolEncounter(node, type, ctx, encounterSeedFor(map, node.id));
+    return dressElite(encounter, eliteDressingFor(map, node.id, run.actNumber, encounter, ctx.allCombatants), ctx.allCombatants);
+  }
   const partner = forkPartner(map, node);
   if (!partner) return heroPoolEncounter(node, type, ctx, encounterSeedFor(map, node.id));
 
@@ -219,4 +224,9 @@ export function nodeEncounter(node: MapNode, ctx: EncounterContext): Encounter {
     encounter = heroPoolEncounter(node, type, ctx, encounterSeedFor(map, node.id, salt));
   }
   return encounter;
+}
+
+/** An Elite's affixes and opening field, off the map's seed and the types it fields — the tap card's read and the fight's. */
+export function eliteDressingFor(map: RunMap, nodeId: string, actNumber: number, encounter: Encounter, combatants: HeroLookup): EliteDressing {
+  return rollEliteDressing(encounterSeedFor(map, `${nodeId}:affixes`), actNumber, scoutedTypes(encounter, combatants));
 }

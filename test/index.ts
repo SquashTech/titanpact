@@ -40,6 +40,7 @@ import './titanspawn.test';
 import './run.test';
 import './recruitment.test';
 import './camp.test';
+import './eliteAffixes.test';
 import './equipment.test';
 import './equipCompare.test';
 import './itemFit.test';

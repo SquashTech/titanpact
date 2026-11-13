@@ -652,6 +652,7 @@ function resolveEncounterNode(
   const consumableDrop = rollConsumableDrop(kindKey, rng);
   if (consumableDrop) workingRun = grantConsumable(workingRun, consumableDrop);
   workingRun = landGems(workingRun, rollGemDrop(kindKey, workingRun.actNumber, rng), 'drop', rng, record, options);
+  if (mapNodeType === 'elite') workingRun = resolveRewardNode(workingRun, 'passiveReward', locationId, rng, record, options);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop, encounter, koRosterIds };
 }
 

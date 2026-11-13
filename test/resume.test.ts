@@ -119,6 +119,7 @@ test('resume: every resumable kind round trips, nested chains included', () => {
     { kind: 'recruitNode', nodeId, seed: 12, pickedType: 'Fire' },
     { kind: 'reward', nodeId, nodeType: 'equipmentReward', seed: 11 },
     { kind: 'boonNode', nodeId, seed: 1 },
+    { kind: 'eliteBoon', seed: 13, next: map },
     { kind: 'mentorNode', nodeId, seed: 2 },
     { kind: 'tutorNode', nodeId, seed: 3, settled: true },
     { kind: 'academyNode', nodeId, seed: 5 },

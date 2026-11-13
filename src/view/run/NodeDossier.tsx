@@ -28,6 +28,9 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 import { MatchupArrow } from '../shared/MatchupArrows';
 import { matchupVerdict } from '../shared/matchupVerdict';
+import { fieldEffects } from '../../data/fieldEffects';
+import { eliteAffix, type EliteDressing } from '../../run/eliteAffixes';
+import './eliteDossier.css';
 
 /** Every mark a ledger row can lead with, drawn from the glyph sets the rest of the run already uses. */
 const FACT_GLYPHS: Record<NodeFactGlyph, ReactNode> = {
@@ -157,7 +160,34 @@ function PartyMatchups({ party, run }: { party: readonly (readonly TypeId[])[]; 
  * its figure — with what it fields set apart above, and a line only on the few nodes that need one. The lit tile under the card already carries its name and its picture; the
  * roster's side of it is the footer's chips (nodeLens.tsx).
  */
-export function NodeDossier({ node, run, party }: { node: MapNode; run: RunState; party?: readonly (readonly TypeId[])[] }) {
+/** What makes this Elite its own fight: each affix by name and consequence, then the field it opens on. */
+function EliteRules({ dressing }: { dressing: EliteDressing }) {
+  const field = fieldEffects[dressing.fieldEffectId];
+  return (
+    <div className="elite-rules">
+      {dressing.affixIds.map((id) => {
+        const affix = eliteAffix(id);
+        return affix ? (
+          <div key={id} className="elite-rule">
+            <strong className="elite-rule-name">{affix.name}</strong>
+            <span className="elite-rule-words">{affix.words}</span>
+          </div>
+        ) : null;
+      })}
+      {field?.flavorType && (
+        <div className="elite-rule is-field" style={{ '--field-color': getTypeColor(field.flavorType) } as CSSProperties}>
+          <span className="elite-rule-field">
+            <ElementGlyph type={field.flavorType} className="elite-rule-glyph" />
+            <strong className="elite-rule-name">{field.name}</strong>
+          </span>
+          <span className="elite-rule-words">{field.description}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function NodeDossier({ node, run, party, elite }: { node: MapNode; run: RunState; party?: readonly (readonly TypeId[])[]; elite?: EliteDressing }) {
   const patron = patronOfNode(run, node);
   // A move or a passive is shown as the thing itself; every other rung keeps its ledger row.
   const steps = patron ? nextRungSteps(run, patron) : [];
@@ -211,6 +241,8 @@ export function NodeDossier({ node, run, party }: { node: MapNode; run: RunState
       ))}
 
       {party && party.length > 0 && <PartyMatchups party={party} run={run} />}
+
+      {elite && <EliteRules dressing={elite} />}
 
       {shownAsCard.map((step, i) =>
         step.kind === 'move' ? (

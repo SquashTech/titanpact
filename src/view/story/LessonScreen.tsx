@@ -27,7 +27,7 @@ export function LessonScreen({ screen, run, onRunChange, onDone, guided }: Lesso
     };
     return (
       <>
-        <ItemWhoScreen run={run} itemId={screen.itemId} onlyRosterIds={[screen.to]} noSell onRunChange={act} onDone={onDone} />
+        <ItemWhoScreen run={run} itemId={screen.itemId} onlyRosterIds={[screen.to]} noLeave onRunChange={act} onDone={onDone} />
         {guided && <GuideHand selector={acted ? '.item-who-screen .resolve-button' : '.item-ledger-row.is-offered'} />}
       </>
     );

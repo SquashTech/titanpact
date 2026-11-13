@@ -1,8 +1,8 @@
 # guild-hall-overhaul.md — No Guild Hall, no gold, recruits off the map
 
-> **STATUS: DECIDED 2026-11-11 (per user direction); PHASES 1–3 IN (phase 3 2026-11-13).** The shape is
+> **STATUS: DECIDED 2026-11-11 (per user direction); PHASES 1–4 IN (phases 3–4 2026-11-13).** The shape is
 > decided; every number marked *first pass* is a placeholder for playtest. §7 lists the invariants
-> it reverses; §8, §9 and §11 record what phases 1–3 built and measured, §10 phase 3's decisions.
+> it reverses; §8, §9, §11 and §12 record what phases 1–4 built and measured, §10 phase 3's decisions.
 
 ---
 
@@ -319,3 +319,41 @@ run 14.6 → 15.9 against phase 2: the Skirmish's cut pays back most of the Camp
 takes the Mend door when the roster is under 60% or anyone is down and a random other door
 otherwise, so the door shares say nothing about which doors a player would take; items left for a
 flask rise from 0.01 an act in Act 1 to 1.3 in Act 4, as the sockets fill.
+
+---
+
+## 12. Phase 4, built (2026-11-13)
+
+**The affixes** are a table (`src/data/eliteAffixes.ts`), drawn off the map's seed with the Elite's
+party (`run/eliteAffixes.ts`, `eliteDressingFor`), so the tap card and the fight are one draw. One in
+Acts 1–2, two in Acts 3–4, never the same twice. Each is a passive on **every** enemy of the side,
+put on as `bonusPassiveGrants` when the encounter is drawn (the doc's `teamPassiveGrants` reads the
+same, and the enemy side has no relic seam to carry it):
+
+| Affix | What it does | How |
+|---|---|---|
+| **Warded** | each enters behind a Shield of a fifth of its max HP | first entry, once a fight |
+| **Swift** | each enters a stage faster | first entry, once a fight |
+| **Vengeful** | a knockout raises the rest ATK ▲ INT ▲ | a finishing blow on an ally |
+| **Marked** | each wears the Titan's Mark of its own primary type | `titansMarkFor`; Ancient wears none |
+
+Two departures from §4.1, both first pass: **Warded and Swift reach the bench** (each hero's first
+entry, where §4.1 said the leads), so the affix is the whole side's; and **Swift is a Speed stage,
+not +1 priority in round one**, since nothing in the vocabulary lifts a bracket for a round and a
+stage reads at a glance. The one engine change: a passive's status magnitude may be a share of its
+target's max HP (`percentMaxHp`, already in the vocabulary, now read on `applyStatus`).
+
+**The field** is drawn from the fields of the types the Elite fields, any field when none is (never
+the Titan's). It is set by a once-a-fight passive on the Elite's first lead (`eliteOpens_<field>`),
+so it is up before round 1 for its five rounds and never re-set — §4.2's opening field with no
+engine hook, and not the Herald, which re-sets it on every switch-in. A player's Herald on entry
+overrides it, as any field overrides another.
+
+**The Boon** is the post-fight chain's last beat after a won Elite (`eliteBoon` screen, the Boon
+node's screen with a `next`). The sim takes it as it takes the Boon node.
+
+**Measured (sim, 200 runs, faults only):** no crash, stall or stranded run, no fight at the round
+cap. Against the same build with the affixes and field off (the Boon kept), the Elite's win rate by
+act went 92 / 66 / 75 / 80% → 89 / 57 / 52 / 67%, full-clear 26.5 → 16.0%, and the Elite is where
+61% of failed runs end (46% before). The cost is in Acts 3–4, where two affixes stack. Directional:
+the pilot takes the fork without reading the card, which a player does not.

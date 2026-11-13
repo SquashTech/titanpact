@@ -231,7 +231,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'Elite or Skirmish',
     RUN,
     ['node:elite', 'node:skirmish'],
-    'At the fork, an *Elite*, against a Skirmish:\n- is a *level higher*\n- *always* drops an item\n- pays *more XP*',
+    'At the fork, an *Elite*, against a Skirmish:\n- is a *level higher*\n- carries *one or two rules* of its own, and opens on a *field*\n- *always* drops an item\n- pays *more XP*, and a *Boon*',
     'Tap a tile to see the types it fields against your roster.'
   ),
   page(

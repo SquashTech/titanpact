@@ -310,7 +310,7 @@ don't silently override it.
 > before the Act 4 Guardian. Classes are optional. Its "What it reverses" lists the rules above it
 > replaces — the forced Mentor, Tutor and Academy rows among them.
 
-> **The Guild Hall and gold are DECIDED OUT, PHASES 1–3 IN: `docs/guild-hall-overhaul.md`** (2026-11-11,
+> **The Guild Hall and gold are DECIDED OUT, PHASES 1–4 IN: `docs/guild-hall-overhaul.md`** (2026-11-11,
 > per user direction). **Gold is deleted**; the Guild Hall becomes **the Camp**, one door of three
 > before the Guardian (Mend, Gems, Gear); **nothing recruits after a fight** — a **Recruit** node in
 > the reward rows shows three types (one of the Location's), rolls a hero of the one picked from the
@@ -324,7 +324,10 @@ don't silently override it.
 > the priced mend are deleted. **Phase 3 is IN (2026-11-13): gold is gone**, the purse node and Sell
 > with it (*Leave it* pays a flask), the Skirmish drops an item at 0.3, and **the Camp's doors are
 > bundles** (`data/campBundles.ts`): a Mend door with a small rider, two drawn off a table, the Gems and
-> Gear chosen on the Guild Hall's counters, unpriced.
+> Gear chosen on the Guild Hall's counters, unpriced. **Phase 4 is IN (same day): the Elite** wears
+> one affix in Acts 1–2 and two in 3–4 (`data/eliteAffixes.ts`: Warded, Swift, Vengeful, Marked — a
+> Mark on a hero-pool enemy, by its own type), opens on a field of a type it fields (a once-a-fight
+> setter on its first lead, no engine hook), both on the tile's tap card, and pays a Boon pick last.
 
 ---
 

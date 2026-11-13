@@ -201,6 +201,9 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   for (const definition of Object.values(allCombatants)) for (const id of definition.masteredPassiveIds ?? []) granted.add(id);
   // A Cycle's rule (run/encounters.ts): the Long Winter wards every Guardian.
   granted.add(require('../src/data/passives').TITANS_WARD_ID);
+  // The Elite's affixes and opening field (run/eliteAffixes.ts).
+  for (const affix of require('../src/data/eliteAffixes').ELITE_AFFIXES) if (affix.passiveId) granted.add(affix.passiveId);
+  for (const id of Object.values(require('../src/data/passives').eliteOpeningFieldPassiveFor as Record<string, string>)) granted.add(id);
   // A lesson fight's party (data/lessons.ts StoryHeroSpec.passiveIds).
   const { TUTORIAL_FIGHT } = require('../src/data/tutorial');
   for (const spec of [...TUTORIAL_FIGHT.player, ...TUTORIAL_FIGHT.enemy]) for (const id of spec.passiveIds ?? []) granted.add(id);
