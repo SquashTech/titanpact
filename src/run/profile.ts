@@ -11,6 +11,7 @@
 import { cycleOf } from './cycles';
 import { spawnPosition } from '../data/titanspawn';
 import { grantLedgerId } from './recruitment';
+import { TUTORIAL_STAR } from '../data/sky';
 import { TEAM_SIZE, unenchanted, type Team, type TeamSlot } from './constructed';
 import { GEM_ORDER } from './gems';
 import { MASTERY_CAP } from './mastery';
@@ -445,19 +446,15 @@ function stringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : [];
 }
 
-/** A lesson First Light no longer holds, and the lessons that took its place, lit for a file that had lit it. */
-const RETIRED_LESSONS: Readonly<Record<string, readonly string[]>> = {
-  'firstLight.hunt': ['firstLight.move', 'firstLight.mana', 'firstLight.types', 'firstLight.spread'],
-  'firstLight.clearing': ['firstLight.kinds', 'firstLight.burn', 'firstLight.switch'],
-  'firstLight.order': [],
-  'firstLight.road': ['firstLight.gear'],
-  'firstLight.fork': ['firstLight.open'],
-};
-
-/** Lessons added ahead of the open fight after it shipped: a file that won it has them lit, their lightings played. */
-const LESSONS_BEFORE_OPEN = ['firstLight.gems', 'firstLight.contracts'];
-const withLessonsBeforeOpen = (ids: readonly string[], prefix = ''): string[] =>
-  ids.flatMap((id) => (id === `${prefix}firstLight.open` ? [...LESSONS_BEFORE_OPEN.map((lesson) => prefix + lesson), id] : [id]));
+/** First Light's lessons gave way to the tutorial (docs/the-tutorial.md): a file that won its last fight has the tutorial lit; one partway through starts it over. */
+const FIRST_LIGHT_WON = ['firstLight.open', 'firstLight.fork'];
+/** First Light paid 300 where the tutorial pays 100: a file that won it keeps the rest. */
+const FIRST_LIGHT_DUST_KEPT = 200;
+const wonFirstLight = (ids: readonly string[], prefix = ''): boolean => FIRST_LIGHT_WON.some((id) => ids.includes(prefix + id));
+const withoutFirstLight = (ids: readonly string[], prefix = ''): string[] => [
+  ...ids.filter((id) => !id.startsWith(`${prefix}firstLight.`)),
+  ...(wonFirstLight(ids, prefix) ? [prefix + TUTORIAL_STAR] : []),
+];
 
 /**
  * A record is kept if its outcome and act are readable — a line with no outcome says nothing.
@@ -563,7 +560,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Deduplicated: an offer is held once. An id this build no longer sells is kept — it costs
     // nothing against the balance (starShop.ts) and comes back if the offer does.
     // Absent on every file written before the stakes; such a player has earned and paid none.
-    bonusStardust: dustScale === 1 ? count(value.bonusStardust) : count(value.bonusStars) * dustScale,
+    bonusStardust: (dustScale === 1 ? count(value.bonusStardust) : count(value.bonusStars) * dustScale) + (wonFirstLight(stringList(value.litStars)) ? FIRST_LIGHT_DUST_KEPT : 0),
     feesPaid: count(value.feesPaid) * dustScale,
     purchases: [...new Set([...stringList(value.purchases), ...(count(value.version, 1) < 2 ? LEFT_BASE_2026_09_28.map(grantLedgerId) : [])])],
     deck: decodeDeck(value),
@@ -571,7 +568,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     lastPlayedAt: count(value.lastPlayedAt),
     // Absent on every profile written before the tips; such a player sees each one once. A
     // pre-tips `tutorialDone` is dropped — the scripted run it recorded no longer exists.
-    seenTipIds: [...new Set(withLessonsBeforeOpen(stringList(value.seenTipIds), 'sky.lit.'))],
+    seenTipIds: [...new Set(withoutFirstLight(stringList(value.seenTipIds), 'sky.lit.'))],
     // Absent on every profile written before Constructed.
     constructedTeams: decodeTeams(value.constructedTeams),
     trialsCleared: [...new Set(stringList(value.trialsCleared))],
@@ -584,7 +581,7 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Absent on every profile written before Stories.
     storyChaptersDone: [...new Set(stringList(value.storyChaptersDone))],
     // Absent on every file written before the sky.
-    litStars: [...new Set(withLessonsBeforeOpen(stringList(value.litStars).flatMap((id) => RETIRED_LESSONS[id] ?? [id])))],
+    litStars: [...new Set(withoutFirstLight(stringList(value.litStars)))],
     seenThoughtIds: [...new Set(stringList(value.seenThoughtIds))],
   };
 }

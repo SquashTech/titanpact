@@ -1,23 +1,25 @@
-// How to Play — CONTENT (docs/the-sky.md §2c). The book is whole from the start; a First Light
-// lesson opens on its own pages, so the rules are written once. Same voice and tokens as the tips
+// The Rules — CONTENT (docs/the-sky.md §2c). The book is whole from the start, in chapters that follow
+// the tutorial's order (docs/the-tutorial.md). Same voice and tokens as the tips
 // (src/data/tips.ts); a page's pictures are keyed by its id in tipScenes.ts.
 // A page that lists rules lists them: a line opening `- ` is a bullet.
 
 import type { ManualPage } from '../run/manual';
 import { statuses } from './statuses';
 
-const MOVE = 'firstLight.move';
-const MANA = 'firstLight.mana';
-const TYPES = 'firstLight.types';
-const SPREAD = 'firstLight.spread';
-const KINDS = 'firstLight.kinds';
-const BURN = 'firstLight.burn';
-const SWITCH = 'firstLight.switch';
-const GEAR = 'firstLight.gear';
-const GEMS = 'firstLight.gems';
-const RECRUITS = 'firstLight.contracts';
-const OPEN = 'firstLight.open';
-/** A page about a run, taught by no lesson. */
+const MOVE = 'chapter.move';
+const MANA = 'chapter.mana';
+const TYPES = 'chapter.types';
+const SPREAD = 'chapter.spread';
+const KINDS = 'chapter.kinds';
+const BURN = 'chapter.burn';
+const SWITCH = 'chapter.switch';
+const GEAR = 'chapter.gear';
+const GEMS = 'chapter.gems';
+const RECRUITS = 'chapter.recruits';
+const OPEN = 'chapter.open';
+/** The book's chapters, in the tutorial's order; the pages about a run follow them. */
+export const MANUAL_CHAPTERS = [MOVE, MANA, TYPES, SPREAD, KINDS, BURN, SWITCH, GEAR, GEMS, RECRUITS, OPEN] as const;
+/** A page about a run, in no chapter. */
 const RUN = null;
 
 function page(id: string, title: string, lesson: string | null, emblem: readonly string[], ...pages: string[]): ManualPage {
@@ -174,7 +176,6 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
       ['passive:waystone'],
       '- Every hero has a *passive*. It works *by itself*, and its name shows when it fires.\n- *Tap* a hero to read it.\n- It affects each hero at most *once a round*.'
     ),
-    afterFight: true,
   },
   page(
     'map',

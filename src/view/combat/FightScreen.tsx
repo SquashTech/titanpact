@@ -68,7 +68,7 @@ import { overlayHost } from '../shared/overlayHost';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState } from '../../run/buildCombatState';
-import { combatantIdFor } from '../../run/combatantIds';
+import { combatantIdFor, rosterIdOfCombatant } from '../../run/combatantIds';
 import { chooseMvp, emptyMvpTally, tallyMvpEvents, type MvpPick, type MvpRules, type MvpTally } from '../../run/mvp';
 import type { CombatSnapshot } from '../../run/resume';
 import { woundedHp, woundsFrom } from '../../run/wounds';
@@ -79,7 +79,7 @@ import { isGathering } from '../../run/cycles';
 import { pilotActions } from '../../run/pilot';
 import { applyVersusReplacements, otherSide, placeVersusLeads, replacementsOwed, SIDES as VERSUS_SIDES, stateHash, versusActions, VERSUS_CLOCK } from '../../run/versus';
 import { TurnClock, useTurnClock } from '../versus/TurnClock';
-import { cueFor, guidedAction, scriptedEnemyActions, withStoryEnds, type StoryCue, type StoryScript } from '../../run/story';
+import { cueAt, cueFor, guidedAction, guidedReplacement, scriptedEnemyActions, withStoryEnds, type StoryCue, type StoryScript } from '../../run/story';
 import { GuideHand } from '../story/GuideHand';
 import { HeroCallout } from '../story/HeroCallout';
 import type { VersusChannel } from '../versus/versusChannel';
@@ -907,6 +907,13 @@ export function FightScreen({
   /** A guided move's one target: every other card steps back while the move is aimed. */
   const guidedTargetId = guide?.kind === 'move' ? guide.declaredTarget : null;
   const targetGuide = (tid: string): 'lit' | 'dim' | undefined => (selecting && guidedTargetId ? (tid === guidedTargetId ? 'lit' : 'dim') : undefined);
+  // A guided lead pick and forced replacement: their own page first, then the hand on the one hero to send.
+  const replacing = !resolving && winner === null && openReplacementSlots.length > 0;
+  const pickCue = pickingLeads ? cueAt(storyCues, 'leads') : replacing ? cueAt(storyCues, 'replacement') : null;
+  const pickTip = storyTips ? (pickCue?.tips ?? []).find((tip) => !storyTips.seenIds.includes(tip.id)) ?? null : null;
+  const guidedLeadIds = story?.guidedLeads?.map((id) => combatantIdFor(PLAYER_SIDE, id));
+  const guidedReplacementRosterId = story && replacing ? guidedReplacement(story, replacementBench.map(rosterIdOfCombatant)) : null;
+  const guidedReplacementId = guidedReplacementRosterId ? combatantIdFor(PLAYER_SIDE, guidedReplacementRosterId) : null;
 
   /**
    * Rest is a recovery, not a pass: the key stays dark while the hero has nothing to recover, so
@@ -2051,6 +2058,7 @@ export function FightScreen({
             fallen={playerFallen.map(leadPickHero)}
             enemyTypes={enemyActiveAlive.map((id) => effectiveTypes(allCombatants[combat.combatants[id].heroId], combat.combatants[id]))}
             picks={effectiveLeadPicks}
+            guided={guidedLeadIds}
             onToggle={handleToggleLead}
             onInspect={setInspecting}
           />
@@ -2079,7 +2087,8 @@ export function FightScreen({
                         hero={benchHero}
                         combatant={benchCombatant}
                         level={levelFor(benchId)}
-                        targetable
+                        targetable={!guidedReplacementId || benchId === guidedReplacementId}
+                        guide={guidedReplacementId ? (benchId === guidedReplacementId ? 'lit' : 'dim') : undefined}
                         selected={replacementPick === benchId}
                         onSelectTarget={() => setReplacementPick(benchId)}
                         onInspect={() => setInspecting(benchId)}
@@ -2637,6 +2646,20 @@ export function FightScreen({
 
       {fightTip && tips && <TipOverlay key={fightTip.id} tip={fightTip} onDone={() => tips.onSeen(fightTip.id)} />}
       {storyTip && storyTips && <TipOverlay key={storyTip.id} tip={storyTip} onDone={() => storyTips.onSeen(storyTip.id)} />}
+      {pickTip && storyTips && <TipOverlay key={pickTip.id} tip={pickTip} onDone={() => storyTips.onSeen(pickTip.id)} />}
+      {!pickTip && pickCue?.point && (pickingLeads ? guidedLeadIds : guidedReplacementId) && (
+        <GuideHand
+          selector={
+            pickingLeads
+              ? leadsReady
+                ? '.bottom-action-take-field'
+                : '.lead-pick-grid .squad-slot.is-guided'
+              : replacementPick
+                ? '.replacement-confirm-button'
+                : '.bench-row .combatant-card.is-guided'
+          }
+        />
+      )}
       {cueShown && storyCue?.point && guide && (
         <GuideHand
           selector={

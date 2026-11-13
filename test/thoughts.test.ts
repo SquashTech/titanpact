@@ -38,7 +38,7 @@ test('thoughts: a first plays once an account', () => {
 
 test('thoughts: a constellation seen open is revealed once, uncharted ones never, in sky order', () => {
   let profile = createProfile();
-  // A new account: First Light is the one thing open, so it is the first Blip points out.
+  // A new account: the tutorial is the one thing open, so it is the first Blip points out.
   const first = revealedThought(profile, sky, THOUGHTS);
   assert.strictEqual(first?.constellationId, 'firstLight');
   profile = recordThoughtSeen(profile, first!.thought);
@@ -55,14 +55,14 @@ test('thoughts: a constellation seen open is revealed once, uncharted ones never
   assert.deepStrictEqual(order, ['infinite', 'trials', 'gauntlet']);
 });
 
-test('thoughts: the first sky plays the fall, leads to First Light and starts the first lesson', () => {
+test('thoughts: the first sky plays the fall, then starts the tutorial', () => {
   let profile = createProfile();
   const hello = thoughtFor(profile, THOUGHTS, { kind: 'firstSky' })!;
   assert.strictEqual(hello.showsNext, 'firstLight');
   assert.strictEqual(hello.scene, 'fall');
-  assert.strictEqual(hello.plays, 'firstLight.move');
+  assert.strictEqual(hello.plays, 'tutorial');
   const shown = revealedFirst(profile, THOUGHTS, 'firstLight');
-  assert.ok(shown, 'First Light has a first to show');
+  assert.ok(shown, 'the tutorial has a first to show');
   profile = recordThoughtSeen(profile, shown!);
   assert.strictEqual(revealedFirst(profile, THOUGHTS, 'firstLight'), null);
 });

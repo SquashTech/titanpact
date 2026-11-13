@@ -1,4 +1,4 @@
-/* The guided fight (data/lessons.ts): the one live command, the tap guide, and the tip pages the
+/* The guided fight (data/tutorial.ts): the one live command, the tap guide, and the tip pages the
    lessons open (the welcome, the kinds legend, a scene's callouts). */
 
 /* --- Guided input: the one live command glows, the rest step back --- */
@@ -17,16 +17,11 @@
   pointer-events: none;
 }
 
-/* A screen lesson's line (LessonScreen): low, in the lane above the screen's own button, so its title keeps the top. */
-.lesson-line.is-screen {
-  position: absolute;
-  top: auto;
-  bottom: 112px;
-  left: 32px;
-  right: 32px;
-  z-index: 54;
-  transform: none;
-  font-size: 14px;
+/* A guided lead pick: the heroes not leading step back. */
+.squad-slot.is-guide-dim {
+  opacity: 0.35;
+  filter: grayscale(0.85);
+  pointer-events: none;
 }
 
 /* --- The tap guide (GuideHand): a pixel glove bobbing at the next tap --- */

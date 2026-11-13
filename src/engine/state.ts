@@ -139,6 +139,8 @@ export interface CombatState {
   pendingSideStatuses?: Partial<Record<Side, StatusId[]>>;
   /** Ways a scripted fight ends besides a wiped side (docs/stories.md §5). Unset = none. */
   endsWhen?: readonly FightEndTrigger[];
+  /** Every hit lands at the variance's middle and never crits: the tutorial's scripted fight only. */
+  fixedRolls?: true;
 }
 
 /**

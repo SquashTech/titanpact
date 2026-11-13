@@ -39,11 +39,12 @@ const AIM_Y = 0.42;
  * spreading from its fingertip on each press, found by `selector` and re-found as the console
  * changes under it. Above everything, catching nothing.
  */
-export function GuideHand({ selector, raised = false }: { selector: string; /** Over the full-screen scenes too. */ raised?: boolean }) {
+export function GuideHand({ selector, raised = false }: { /** Several: the first that finds something. */ selector: string | readonly string[]; /** Over the full-screen scenes too. */ raised?: boolean }) {
+  const key = typeof selector === 'string' ? selector : selector.join('|');
   const [at, setAt] = useState<{ x: number; y: number } | null>(null);
   useEffect(() => {
     const find = () => {
-      const el = document.querySelector(selector);
+      const el = (typeof selector === 'string' ? [selector] : selector).map((s) => document.querySelector(s)).find((found) => found !== null);
       const rect = el?.getBoundingClientRect();
       if (!rect || rect.width === 0) return setAt(null);
       setAt(canvasPoint(rect.left + rect.width * AIM_X, rect.top + rect.height * AIM_Y));
@@ -52,7 +53,8 @@ export function GuideHand({ selector, raised = false }: { selector: string; /** 
     // The panels slide in and the cards settle a beat after a tap: follow them rather than guess when.
     const timer = window.setInterval(find, 200);
     return () => window.clearInterval(timer);
-  }, [selector]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
   if (!at) return null;
   return createPortal(
     <>

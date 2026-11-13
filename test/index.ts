@@ -79,7 +79,7 @@ import './profile.test';
 import './starShop.test';
 import './sky.test';
 import './thoughts.test';
-import './lessons.test';
+import './tutorial.test';
 import './manual.test';
 import './deck.test';
 import './tips.test';

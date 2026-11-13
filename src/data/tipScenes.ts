@@ -6,7 +6,6 @@
 
 import type { StatKey } from '../engine/content';
 import type { Gem } from '../run/gems';
-import { OPEN_FIGHT_PARTY } from './lessons';
 
 /** A fighter in a scene. */
 export interface TipSceneFighter {
@@ -223,8 +222,11 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
   // Raiju's Storm Lash, its Conduct named in place, against the Clearing's Slabback.
   'howto.status.Conduct': [{ foes: [{ heroId: 'slabback', level: 12 }], hero: { heroId: 'raiju', level: 4 }, moves: ['stormLash'], callouts: ['rider'] }],
   'howto.bag': [{ hero: { heroId: 'cinderKnight' }, bar: true, focus: ['bag'] }],
-  // The open fight's party; its arrows are the live lead pick's, lit behind the page (tipStaging.ts).
-  'howto.leads': [{ roll: [...OPEN_FIGHT_PARTY] }, null],
+  // The tutorial's party; its arrows are the live lead pick's, lit behind the page (tipStaging.ts).
+  'howto.leads': [{ roll: ['cinderKnight', 'raiju', 'cairn', 'dawnwarden'] }, null],
+  // The tutorial's lead pick: a hero of every type, then the live pick's arrows lit behind the page.
+  'tutorial.leads': [{ roll: TYPE_ROLL }, null],
+  'tutorial.burn': [{ status: 'Burn', steps: [{ duration: 3, note: '15%' }, { duration: 2, note: '8%' }, { duration: 1, note: '4%' }] }],
   'howto.field': [{ hero: { heroId: 'cinderKnight' }, field: 'scorchedLand', focus: ['field'] }],
   'howto.ancient': [
     { ...ANCIENT_CAST, moves: [], focus: ['foeTypes'] },

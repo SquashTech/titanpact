@@ -20,7 +20,7 @@ import { PageText } from '../run/TipOverlay';
 import { TIP_SCENES } from '../../data/tipScenes';
 import { overlayHost } from './overlayHost';
 import { useProfile } from './ProfileContext';
-import { MANUAL_PAGES } from '../../data/howToPlay';
+import { MANUAL_CHAPTERS, MANUAL_PAGES } from '../../data/howToPlay';
 import { sky } from '../../data/sky';
 import { isConstellationLit } from '../../run/sky';
 import './manualPages.css';
@@ -331,7 +331,7 @@ export function learnedBookMs(count: number): number {
   return BOOK_OPEN_MS + count * LEAF_MS;
 }
 
-/** The book's contents: First Light's trail, a star a lesson, then the Infinite's mark for what runs file. */
+/** The book's contents: a star a chapter, in a gentle wave, then the Infinite's mark for the pages about a run. */
 const SKY_W = 300;
 const SKY_H = 92;
 const RUN_CHAPTER = 'run';
@@ -357,16 +357,16 @@ function ringsPath(cx: number, cy: number, r: number): string {
 }
 
 /**
- * How to Play (docs/the-sky.md §2c), whole from the start: the contents are the sky the player
- * already knows, a star a lesson's pages, and the Infinite's mark the pages about a run.
+ * The Rules (docs/the-sky.md §2c), whole from the start: a star a chapter, in the tutorial's order,
+ * and the Infinite's mark the pages about a run.
  */
 export function ManualBook() {
   const profile = useProfile();
-  const firstLight = sky.constellations.firstLight;
-  const chapters = [...firstLight.stars.map((star) => star.id), RUN_CHAPTER];
+  const stars = MANUAL_CHAPTERS.map((id, i) => ({ id, x: i / (MANUAL_CHAPTERS.length - 1), y: i % 2 ? 0.7 : 0.3 }));
+  const chapters = [...MANUAL_CHAPTERS, RUN_CHAPTER];
   const pagesOf = (id: string) => MANUAL_PAGES.filter((p) => (id === RUN_CHAPTER ? !p.lesson : p.lesson === id));
-  // Opens on the lessons until they are done, then on the run.
-  const [chapter, setChapter] = useState(() => (isConstellationLit(profile, firstLight) ? RUN_CHAPTER : chapters[0]));
+  // Opens on the first chapter until the tutorial is won, then on the run.
+  const [chapter, setChapter] = useState<string>(() => (isConstellationLit(profile, sky.constellations.firstLight) ? RUN_CHAPTER : chapters[0]));
   const [openId, setOpenId] = useState<string | null>(null);
   const pages = pagesOf(chapter);
 
@@ -376,12 +376,12 @@ export function ManualBook() {
   return (
     <div className="manual-book">
       <svg className="manual-sky" viewBox={`0 0 ${SKY_W} ${SKY_H}`} role="tablist" aria-label="Chapters">
-        {firstLight.lines.map(([a, b]) => {
-          const p = at(firstLight.stars[a].x, firstLight.stars[a].y);
-          const q = at(firstLight.stars[b].x, firstLight.stars[b].y);
-          return <line key={`${a}-${b}`} x1={p.x} y1={p.y} x2={q.x} y2={q.y} className="manual-sky-line is-lit" />;
+        {stars.slice(1).map((star, i) => {
+          const p = at(stars[i].x, stars[i].y);
+          const q = at(star.x, star.y);
+          return <line key={star.id} x1={p.x} y1={p.y} x2={q.x} y2={q.y} className="manual-sky-line is-lit" />;
         })}
-        {firstLight.stars.map((star) => {
+        {stars.map((star) => {
           const p = at(star.x, star.y);
           return (
             <g

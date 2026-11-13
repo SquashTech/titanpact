@@ -399,7 +399,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
                   elementalForceBonus,
                   basePowerMultiplier,
                   rolledBasePower,
-                  fieldTypeMultFloor(move.type, fieldEffectCtx)
+                  fieldTypeMultFloor(move.type, fieldEffectCtx),
+                  working.fixedRolls === true
                 );
             working = { ...working, rngState: rolled.nextRngState };
 

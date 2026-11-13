@@ -5,7 +5,7 @@
 import type { ThoughtDefinition } from '../run/thoughts';
 
 export const THOUGHTS: readonly ThoughtDefinition[] = [
-  { id: 'firstSky', moment: { kind: 'firstSky' }, showsNext: 'firstLight', plays: 'firstLight.move', scene: 'fall' },
+  { id: 'firstSky', moment: { kind: 'firstSky' }, showsNext: 'firstLight', plays: 'tutorial', scene: 'fall' },
 
   { id: 'revealed.firstLight', moment: { kind: 'revealed', constellationId: 'firstLight' } },
   { id: 'revealed.infinite', moment: { kind: 'revealed', constellationId: 'infinite' } },

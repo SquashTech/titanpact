@@ -14,6 +14,7 @@ import {
   resolveStatRatio,
   VARIANCE_MAX,
   VARIANCE_MIN,
+  FIXED_VARIANCE,
   type DamageModifier,
 } from '../../engine/damage/damagePipeline';
 import { allCombatants } from '../../data/content';
@@ -99,13 +100,15 @@ export function forecastDamage(authored: MoveDefinition, combat: CombatState, at
         .damage
     );
 
-  const min = hits * hit(VARIANCE_MIN);
-  const max = hits * hit(VARIANCE_MAX);
+  // A fixed-roll fight (the tutorial) lands every hit at one roll, so it forecasts one number.
+  const [low, high] = combat.fixedRolls ? [FIXED_VARIANCE, FIXED_VARIANCE] : [VARIANCE_MIN, VARIANCE_MAX];
+  const min = hits * hit(low);
+  const max = hits * hit(high);
   // A hit empties the Shield before it touches HP (docs/shield.md).
   const shield = shieldHeld(defender, statuses);
   const hpLossMin = Math.max(0, min - shield);
   const hpLossMax = Math.max(0, max - shield);
-  const koChance = defender.blessed ? 0 : chanceTotalReaches(hit, hits, defender.currentHp + shield);
+  const koChance = defender.blessed ? 0 : chanceTotalReaches(hit, hits, defender.currentHp + shield, low, high);
   return {
     kind: 'damage',
     min,
@@ -126,10 +129,10 @@ const VARIANCE_STEPS = 400;
  * off the formula at evenly spaced variance points, then the hits are convolved, since each rolls
  * its own variance.
  */
-function chanceTotalReaches(hit: (variance: number) => number, hits: number, needed: number): number {
+function chanceTotalReaches(hit: (variance: number) => number, hits: number, needed: number, low: number, high: number): number {
   const one = new Map<number, number>();
   for (let i = 0; i < VARIANCE_STEPS; i++) {
-    const variance = VARIANCE_MIN + ((i + 0.5) / VARIANCE_STEPS) * (VARIANCE_MAX - VARIANCE_MIN);
+    const variance = low + ((i + 0.5) / VARIANCE_STEPS) * (high - low);
     const amount = hit(variance);
     one.set(amount, (one.get(amount) ?? 0) + 1 / VARIANCE_STEPS);
   }

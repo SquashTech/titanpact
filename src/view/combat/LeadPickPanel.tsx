@@ -35,6 +35,8 @@ interface Props {
   picks: readonly string[];
   onToggle: (combatantId: string) => void;
   onInspect: (combatantId: string) => void;
+  /** A guided pick: only these can lead, and the next of them still to pick wears the guide's mark. */
+  guided?: readonly string[];
 }
 
 export const LEAD_COUNT = 2;
@@ -43,6 +45,7 @@ function LeadCell({
   entry,
   pickSlot,
   down,
+  guide,
   onActivate,
   onInspect,
   children,
@@ -51,6 +54,7 @@ function LeadCell({
   /** 1 or 2 — the field slot this hero leads into, left then right — or null when not picked. */
   pickSlot: number | null;
   down: boolean;
+  guide?: 'lit' | 'dim';
   onActivate: () => void;
   onInspect: () => void;
   children: ReactNode;
@@ -60,7 +64,7 @@ function LeadCell({
   const picked = pickSlot !== null;
   return (
     <div
-      className={`squad-slot filled${picked ? ' is-picked' : ''}${down ? ' is-down' : ''}`}
+      className={`squad-slot filled${picked ? ' is-picked' : ''}${down ? ' is-down' : ''}${guide === 'lit' ? ' is-guided' : guide === 'dim' ? ' is-guide-dim' : ''}`}
       style={{ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties}
       role="button"
       tabIndex={0}
@@ -84,8 +88,9 @@ function LeadCell({
   );
 }
 
-export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle, onInspect }: Props) {
+export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle, onInspect, guided }: Props) {
   const required = Math.min(LEAD_COUNT, candidates.length);
+  const nextGuided = guided?.find((id) => !picks.includes(id)) ?? null;
 
   function cell(entry: LeadPickHero, down: boolean) {
     const { combatantId, hero, combatant, level, maxHp } = entry;
@@ -96,7 +101,8 @@ export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle,
         entry={entry}
         pickSlot={picks.includes(combatantId) ? picks.indexOf(combatantId) + 1 : null}
         down={down}
-        onActivate={() => !down && onToggle(combatantId)}
+        guide={!guided ? undefined : combatantId === nextGuided ? 'lit' : guided.includes(combatantId) ? undefined : 'dim'}
+        onActivate={() => !down && (!guided || guided.includes(combatantId)) && onToggle(combatantId)}
         onInspect={() => onInspect(combatantId)}
       >
         <HeroPortrait heroId={hero.id} pathId={combatant.formPathId} className="roster-card-portrait" />

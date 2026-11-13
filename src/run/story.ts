@@ -2,14 +2,14 @@
 // what both sides do, so a lesson plays out the same way every time; and a run's screens played
 // with no fight, the hand on each tap.
 
-import type { HeroDefinition, TypeId } from '../engine/content';
+import type { HeroDefinition } from '../engine/content';
 import type { Action } from '../engine/combat/actions';
 import type { CombatState, FightEndTrigger, Side } from '../engine/state';
 import { combatantIdFor } from './combatantIds';
 import type { Encounter } from './enemyGen';
 import type { Gem } from './gems';
 import { expectedGrowthAt, xpForLevel } from './growth';
-import { createRosterEntry, createRunState, type RosterEntry, type RunState } from './state';
+import { createRosterEntry, createRunState, type RosterEntry } from './state';
 import type { Tip } from './tips';
 
 export const STORY_PLAYER_SIDE: Side = 'A';
@@ -53,10 +53,16 @@ export interface StoryFight {
   endsWhen?: readonly StoryEnd[];
   /** The sides whose heroes fight without their innates, a Titanspawn's Mark among them. */
   quietSides?: readonly Side[];
+  /** Every hit lands at the variance's middle and never crits (docs/the-tutorial.md §2). */
+  fixedRolls?: true;
+  /** With no `playerLeads`, the lead pick takes only these two, the hand on each. */
+  guidedLeads?: readonly string[];
+  /** The bench hero each forced replacement is held to, in the order the knockouts come. */
+  guidedReplacements?: readonly string[];
 }
 
 /** What holds a guided fight to its lesson, wherever its two sides come from. */
-export type StoryScript = Pick<StoryFight, 'seed' | 'enemyScript' | 'guide' | 'endsWhen'>;
+export type StoryScript = Pick<StoryFight, 'seed' | 'enemyScript' | 'guide' | 'endsWhen' | 'fixedRolls' | 'guidedLeads' | 'guidedReplacements'>;
 
 export function storyEntry(spec: StoryHeroSpec, hero: HeroDefinition, quiet = false): RosterEntry {
   return {
@@ -81,9 +87,9 @@ function storySide(specs: readonly StoryHeroSpec[], leads: readonly string[], he
   };
 }
 
-/** A chapter's party as a run. */
-export function storyParty(specs: readonly StoryHeroSpec[], heroes: Record<string, HeroDefinition>): RunState {
-  return storySide(specs, [], heroes, false).run;
+/** Story heroes as one side of a fight built outside a StoryFight, leads placed (none: the lead pick). */
+export function storyEncounter(specs: readonly StoryHeroSpec[], leads: readonly string[], heroes: Record<string, HeroDefinition>): Encounter {
+  return storySide(specs, leads, heroes, false);
 }
 
 /** Both sides of a Story fight, leads placed, as FightScreen's player and AI encounters. */
@@ -101,10 +107,11 @@ export function storyEndTriggers(fight: StoryScript): FightEndTrigger[] {
   );
 }
 
-/** The built board with the fight's scripted ends on it. */
+/** The built board with the fight's scripted ends, and its fixed rolls, on it. */
 export function withStoryEnds(state: CombatState, fight: StoryScript): CombatState {
   const endsWhen = storyEndTriggers(fight);
-  return endsWhen.length > 0 ? { ...state, endsWhen } : state;
+  const ended = endsWhen.length > 0 ? { ...state, endsWhen } : state;
+  return fight.fixedRolls ? { ...ended, fixedRolls: true } : ended;
 }
 
 function toAction(command: StoryCommand, side: Side): Action {
@@ -139,6 +146,8 @@ export function guidedAction(fight: StoryScript, state: CombatState, combatantId
 /** What a lesson teaches at the top of `round`'s command phase: it guides, it tips, and a hero calls the plan. */
 export interface StoryCue {
   round: number;
+  /** Shown at the lead pick or the first forced replacement instead of a round's command phase; `round` is then ignored. */
+  at?: 'leads' | 'replacement';
   /**
    * Controls taught at the top of this round (docs/stories.md §1c), in order, each once an account:
    * plain game words, the thing each names lit on the board or drawn (view/run/tipStaging.ts,
@@ -168,43 +177,19 @@ export type StoryScreen =
   /** The item screen: the piece goes to `to`, into a socket or merged into what it holds. */
   | { kind: 'item'; itemId: string; to: string }
   /** The Gem screen: each Gem in turn, to the hero it names. */
-  | { kind: 'gems'; gems: readonly StoryGem[] }
-  /** The Recruit node: `types` on offer, the hand on `type`, and `offer` the hero who answers it. */
-  | { kind: 'recruit'; types: readonly TypeId[]; type: TypeId; offer: StoryHeroSpec };
-
-export type StoryBeat =
-  /**
-   * A scripted fight, stood on `locationId`'s ground (unset: the plain arena). `line` is a lesson's one
-   * line, on the top bar while it commands.
-   */
-  | { kind: 'fight'; fight: StoryFight; locationId?: string; cues?: readonly StoryCue[]; line?: string }
-  /** A run's screen with no fight, acting on the chapter's party; `line` is the lesson's one line, across its top. */
-  | { kind: 'screen'; screen: StoryScreen; locationId?: string; line: string };
-
-/** A run of beats played in order; a First Light lesson is a chapter of one or a few (data/lessons.ts). */
-export interface StoryChapter {
-  id: string;
-  title: string;
-  beats: readonly StoryBeat[];
-  /** The roster its screen beats act on, carried from one beat to the next. */
-  party?: readonly StoryHeroSpec[];
-}
-
-export interface StoryDefinition {
-  id: string;
-  name: string;
-  chapters: readonly StoryChapter[];
-}
-
-export function chapterById(stories: readonly StoryDefinition[], chapterId: string): { story: StoryDefinition; chapter: StoryChapter } | null {
-  for (const story of stories) {
-    const chapter = story.chapters.find((c) => c.id === chapterId);
-    if (chapter) return { story, chapter };
-  }
-  return null;
-}
+  | { kind: 'gems'; gems: readonly StoryGem[] };
 
 /** The cue for the round the board stands on, if the beat has one. */
 export function cueFor(cues: readonly StoryCue[] | undefined, round: number): StoryCue | null {
-  return cues?.find((cue) => cue.round === round) ?? null;
+  return cues?.find((cue) => !cue.at && cue.round === round) ?? null;
+}
+
+/** The cue for the lead pick or a forced replacement, if the beat has one. */
+export function cueAt(cues: readonly StoryCue[] | undefined, at: 'leads' | 'replacement'): StoryCue | null {
+  return cues?.find((cue) => cue.at === at) ?? null;
+}
+
+/** The bench hero a forced replacement is held to: the first of the script's still on the bench. */
+export function guidedReplacement(fight: StoryScript, benchRosterIds: readonly string[]): string | null {
+  return fight.guidedReplacements?.find((id) => benchRosterIds.includes(id)) ?? null;
 }

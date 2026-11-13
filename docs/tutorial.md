@@ -3,9 +3,9 @@
 > Module of the Titanpact `/docs` suite. Companion to `first-light.md` (the lessons), `the-sky.md`
 > §2c (the manual) and `run-loop.md`.
 >
-> **The tutorial is First Light** (`docs/first-light.md`, since 2026-10-27): eleven one-concept lessons
-> a new account plays before its first run. This file is what is left beside them: the first-time
-> tips and How to Play. Reconciled with the build 2026-11-09.
+> **The tutorial is `docs/the-tutorial.md`** (2026-11-13, replacing First Light): one scripted fight, a
+> short road and an open fight. Winning it retires the three first-time tips below, so they no longer
+> fire for an account that has played it; How to Play is now the Reference's **Rules**.
 >
 > History: the scripted first run of 2026-09-05 was deleted 2026-09-24 (§7); the tips were cut to
 > three 2026-10-13, per user direction, because the number of interruptions was the problem.

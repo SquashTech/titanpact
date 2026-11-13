@@ -1,5 +1,8 @@
 # First Light — the curriculum
 
+> **SUPERSEDED 2026-11-13, per user direction, by `docs/the-tutorial.md`** (built the same day): one
+> scripted fight, a short road and an open fight replace the lessons and the Ascent. Kept as history.
+
 > **STATUS: BUILT (2026-10-27), eleven lessons since 2026-11-09 (§00); reviewed and revised
 > 2026-10-29 (§0).** Replaces the four lessons of `docs/the-sky.md` §2c and §6 (`src/data/lessons.ts`):
 > Valor and Fang, the guided Hunt and Clearing, and the Road and Fork acts are deleted. Kept: First

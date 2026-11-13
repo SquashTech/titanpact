@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { sky } from '../../data/sky';
+import { sky, TUTORIAL_STAR } from '../../data/sky';
 import { THOUGHTS } from '../../data/thoughts';
 import { trials } from '../../data/trials';
 import { cycleOf } from '../../run/cycles';
@@ -11,10 +11,8 @@ import {
   isConstellationLit,
   isDrawInUnshown,
   isStarLit,
-  profileBeforeLightings,
   skyLightingTipId,
   starScenario,
-  unshownLightings,
   type ConstellationDefinition,
   type ConstellationState,
   type SkyStar,
@@ -25,14 +23,12 @@ import { Blip, type BlipHandle } from './Blip';
 import { BlipBeat } from './BlipBeat';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { InfiniteView } from './InfiniteView';
-import { heroArt } from '../shared/heroArt';
 import './skyChart.css';
 
 // The title as the Pact (docs/the-sky.md §2b): the Infinite in the middle, a ring round it with a seat
-// on three of its points, and First Light climbing into the fourth from the bottom of the screen. Each
-// lesson won is played back here: its star lights and the next one wakes. The last folds the trail
-// into a clasp, pays its Stardust into the Observatory and closes the ring. A tapped seat zooms in to
-// its constellation, drawn big with its stars named and its own press.
+// on three of its points, and the tutorial's clasp in the gap at its foot. The tutorial won pays its
+// Stardust into the Observatory and closes the ring. A tapped seat zooms in to its constellation, drawn
+// big with its stars named and its own press.
 
 export const SEAT = { x: 26, y: 28 };
 /** Zoomed in, Blip flies up to the top edge: the seat holds still 116px down (skyChart.css). */
@@ -42,16 +38,16 @@ const PERCH = { x: SEAT.x, y: SEAT.y - 116 };
 const W = 394;
 const H = 560;
 const RING = { x: 197, y: 232, r: 132 };
-/** Half the gap First Light climbs in through, in degrees either side of the ring's foot. */
+/** Half the gap at the ring's foot the tutorial closes, in degrees either side. */
 const GAP_DEG = 15;
 const INNER_R = 64;
 const MEDALLION_R = 33;
 const CLASP_R = 18;
-/** How far the sealed Pact settles down the screen, to sit centred once the trail below it is gone. */
+/** How far the Pact sits down the screen, centred. */
 const SETTLE = 46;
 const ZOOM = 3.4;
 
-/** Where each constellation sits on the Pact, and how big it is drawn there. First Light's is its clasp. */
+/** Where each constellation sits on the Pact, and how big it is drawn there. The tutorial's is its clasp. */
 const SEATS: Record<string, { x: number; y: number; size: number }> = {
   infinite: { x: RING.x, y: RING.y, size: 104 },
   strange: { x: RING.x, y: RING.y - RING.r, size: 46 },
@@ -60,21 +56,6 @@ const SEATS: Record<string, { x: number; y: number; size: number }> = {
   firstLight: { x: RING.x, y: RING.y + RING.r, size: 24 },
 };
 const RING_SEATS = ['strange', 'gauntlet', 'trials'] as const;
-
-/**
- * First Light before it is sealed (docs/first-light.md): a climb the player scrolls, its islands
- * zigzagging up from the foot to the ring's gap, the first at the bottom. The Pact keeps its own box at
- * the top, so the climb's top is the sealed title.
- */
-const CLIMB_STEP = 130;
-const CLIMB_TOP = RING.y + RING.r + 128;
-const CLIMB_FOOT = 120;
-const ISLE_SCALE = 1.45;
-const TRAIL = sky.constellations.firstLight.stars.map((_, i, all) => ({
-  x: (all.length - 1 - i) % 2 ? 116 : 278,
-  y: CLIMB_TOP + (all.length - 1 - i) * CLIMB_STEP,
-}));
-const CLIMB_H = TRAIL[0].y + CLIMB_FOOT;
 
 /** A detail card's own drawing box; the constellation sits in the middle with room round it for names. */
 const VIEW_W = 360;
@@ -95,12 +76,6 @@ function cardPoint(star: SkyStar): { x: number; y: number } {
 function onRing(deg: number, r = RING.r): { x: number; y: number } {
   const a = (deg * Math.PI) / 180;
   return { x: RING.x + r * Math.cos(a), y: RING.y + r * Math.sin(a) };
-}
-
-/** A four-pointed glint, for a lit star. */
-function glint(r: number): string {
-  const w = r * 0.2;
-  return `M0,${-r} L${w},${-w} L${r},0 L${w},${w} L0,${r} L${-w},${w} L${-r},0 L${-w},${-w} Z`;
 }
 
 /** What a constellation's press does, read off the kind of star it holds. */
@@ -125,11 +100,6 @@ const PLAY_LABELS: Record<SkyPlay, string> = {
   gauntlet: 'Enter the Gauntlet',
 };
 
-/** The press while First Light is unfinished: a lesson speaks for itself, so it is never named. */
-function lessonLabel(index: number): string {
-  return index === 0 ? 'Begin' : 'Next Lesson';
-}
-
 const ORDINALS =['First', 'Second', 'Third', 'Fourth', 'Fifth'];
 
 function starName(star: SkyStar): string {
@@ -151,8 +121,6 @@ function starName(star: SkyStar): string {
 
 const cardState = (state: ConstellationState): Exclude<ConstellationState, 'hidden'> => (state === 'hidden' ? 'glimpsed' : state);
 
-const scenarioIdOf =(star: SkyStar) => (star.light.kind === 'scenario' ? star.light.scenarioId : star.id);
-
 const ARRIVE_MS = 900;
 const ZOOM_MS = 650;
 /** Motes a constellation's Stardust flies to the Observatory in. */
@@ -160,17 +128,9 @@ const DUST_MOTES = 18;
 
 /** What a beat is doing to the Pact this instant. */
 interface Fx {
-  charging?: number;
-  /** A star bursting; `n` remounts the burst for each one. */
-  burst?: { i: number; n: number };
-  drawing?: number;
-  waking?: number;
   /** A seat opening as the sky watches. */
   stirring?: string;
-  /** How many of the trail's lines have flared gold. */
-  flare?: number;
   crest?: 'in' | 'out';
-  folding?: boolean;
   closing?: boolean;
   flash?: boolean;
   /** A seat the player should look at next. */
@@ -199,14 +159,14 @@ interface Props {
   openCycle?: number;
   /** Bumped to zoom into the Infinite from outside (the title's Start a New Run). */
   infiniteRequest?: number;
-  /** A new account mid First Light: the Pact shows the lessons and nothing else. */
+  /** A new account before the tutorial: the Pact shows its clasp and nothing else. */
   onlyFirstLight?: boolean;
-  /** Something else has the screen (First Light's tour): Blip's firsts wait. */
+  /** Something else has the screen (the tour after the tutorial): Blip's firsts wait. */
   quiet?: boolean;
-  /** First Light has just been drawn in and folded on the title: the tour that follows is the title's. */
+  /** The tutorial's reward has just been paid and the ring closed: the tour that follows is the title's. */
   onFirstLightDone?: () => void;
   onPlay: (play: SkyPlay, cycle?: number) => void;
-  /** A First Light lesson, by its scenario id. */
+  /** The tutorial, by its star's scenario id. */
   onPlayLesson?: (scenarioId: string) => void;
 }
 
@@ -231,53 +191,20 @@ export function SkyChart({
 }: Props) {
   const firstLight = sky.constellations.firstLight;
 
-  // Lessons won but not yet played back here: the sky is drawn as if they were not won until each one
-  // lights. A beat cut short (another page, a remount) picks up where it stood, since each step is recorded.
-  const [pending, setPending] = useState<readonly string[]>(() => unshownLightings(profile, firstLight).map((i) => scenarioIdOf(firstLight.stars[i])));
-  const pendingRef = useRef(pending);
-  const shown = useMemo(() => profileBeforeLightings(profile, pending), [profile, pending]);
+  const shown = profile;
   const firstLightDone = isConstellationLit(profile, firstLight);
-  /** First Light drawn in and its reward paid by play, its trail not yet folded on the title. */
+  /** The tutorial won and its reward paid by play, the ring not yet closed on the title. */
   const [paysNow] = useState(() => isDrawInUnshown(profile, firstLight));
   const finaleRef = useRef(paysNow);
   const [folded, setFolded] = useState(() => firstLightDone && !paysNow);
-  const foldedRef = useRef(folded);
-  foldedRef.current = folded;
-  const [settled, setSettled] = useState(folded);
   const [fx, setFx] = useState<Fx>({});
-  const [beating, setBeating] = useState(() => pending.length > 0 || paysNow);
+  const [beating, setBeating] = useState(paysNow);
   const quietRef = useRef(quiet);
   quietRef.current = quiet;
   const [zoomed, setZoomed] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const crestDust = useRef<HTMLDivElement>(null);
   const motes = useRef<HTMLElement[]>([]);
-
-  // The climb is drawn at the scale the Pact fits the stage at, so its top is the title as it will be.
-  const stageRef = useRef<HTMLDivElement>(null);
-  const [box, setBox] = useState({ fit: 1, top: 0 });
-  const fit = box.fit;
-  const fitRef = useRef(fit);
-  fitRef.current = fit;
-  useLayoutEffect(() => {
-    const el = stageRef.current;
-    if (!el) return;
-    const measure = () => {
-      const k = Math.min(el.clientWidth / W, el.clientHeight / H) || 1;
-      setBox({ fit: k, top: Math.max(0, (el.clientHeight - H * k) / 2) });
-    };
-    measure();
-    const watch = new ResizeObserver(measure);
-    watch.observe(el);
-    return () => watch.disconnect();
-  }, []);
-  /** Scrolls the climb so island `i` stands a little below the middle; -1 is the Pact at the top. */
-  const scrollToIsle = (i: number, smooth: boolean) => {
-    const el = stageRef.current;
-    if (!el || foldedRef.current) return;
-    const y = i < 0 ? 0 : TRAIL[i].y * fitRef.current - el.clientHeight * 0.55;
-    el.scrollTo({ top: Math.max(0, y), behavior: smooth ? 'smooth' : 'auto' });
-  };
 
   /** Held back from the Observatory until it has flown there. */
   const reward = firstLight.rewards.reduce((sum, r) => sum + r.amount, 0);
@@ -290,7 +217,6 @@ export function SkyChart({
     () => Object.fromEntries(Object.keys(sky.constellations).map((id) => [id, constellationState(shown, sky, id)])) as Record<string, ConstellationState>,
     [shown]
   );
-  const trailLit = firstLight.stars.map((star) => isStarLit(shown, firstLight, star));
 
   const blip = useRef<BlipHandle>(null);
   // A first's scene standing over the sky; the first its showsNext leads to is kept with it.
@@ -338,7 +264,7 @@ export function SkyChart({
     return sayThought(thought, next && later ? () => show(thought!.showsNext!, next, later) : undefined);
   };
 
-  // On arriving: the lessons won are played back first, then one beat — an Infinite run's end, the
+  // On arriving: the tutorial's reward is paid first, then one beat — an Infinite run's end, the
   // first sky, a constellation seen open for the first time.
   useEffect(() => {
     if (!active) return;
@@ -360,98 +286,41 @@ export function SkyChart({
       if (reveal) show(reveal.constellationId, reveal.thought, at);
     };
 
-    /** One star lit, and the next woken with a blank page beside it. */
-    const lightStar = async (i: number) => {
-      const star = firstLight.stars[i];
-      const before = statesOf(pendingRef.current);
-      setFx({ charging: i });
-      playSfx('star.charge');
-      await wait(500);
-      const left = pendingRef.current.filter((id) => id !== scenarioIdOf(star));
-      pendingRef.current = left;
-      setPending(left);
-      onSeeLighting?.(skyLightingTipId(star.id));
-      setFx({ burst: { i, n: Date.now() } });
-      playSfx('star.earn');
-      await wait(450);
-      const next = i + 1 < firstLight.stars.length ? i + 1 : null;
-      if (next !== null) {
-        setFx((f) => ({ ...f, drawing: i }));
-        playSfx('map.path');
-        await wait(400);
-        setFx((f) => ({ ...f, waking: next }));
-        playSfx('star.lock', { gain: 0.55 });
-        playSfx('ui.page', { delay: 0.15, gain: 0.8 });
-        await wait(650);
-      }
-      // A seat that opens on this star wakes where it sits.
-      const after = statesOf(left);
-      const woke = Object.keys(after).find((id) => id !== 'firstLight' && before[id] !== 'open' && after[id] === 'open');
-      if (woke) {
-        setFx((f) => ({ ...f, stirring: woke }));
-        playSfx('star.reveal', { gain: 0.7 });
-        await wait(1500);
-      }
-    };
-
-    /** The trail drawn in, its Stardust paid, and the trail folded into the clasp as the ring closes. */
+    /** The tutorial's Stardust paid and the ring closed over its gap. */
     const drawIn = async () => {
-      scrollToIsle(-1, true);
-      await wait(800);
-      for (let k = 0; k < firstLight.lines.length; k++) {
-        setFx({ flare: k + 1 });
-        playSfx('star.tick', { pitch: 1 + k * 0.18, gain: 0.8 });
-        await wait(190);
-      }
-      playSfx('star.reveal');
-      await wait(500);
-      setFx({ flare: firstLight.lines.length, crest: 'in' });
+      await wait(400);
+      setFx({ crest: 'in' });
       playSfx('star.earn', { pitch: 0.75 });
       await wait(1300);
-      if (paysNow) await flyDust(wait);
+      await flyDust(wait);
       await wait(500);
-      setFx({ flare: firstLight.lines.length, crest: 'out' });
+      setFx({ crest: 'out' });
       await wait(500);
-      setFx({ flare: firstLight.lines.length, folding: true });
+      setFx({ closing: true });
       playSfx('star.charge');
-      await wait(950);
-      setFx({ folding: true, closing: true });
       await wait(520);
       finaleRef.current = false;
       onSeeLighting?.(skyLightingTipId(firstLight.id));
       setFolded(true);
       setFx({ flash: true });
       playSfx('seal.strike');
-      await wait(650);
-      setSettled(true);
-      await wait(1250);
+      await wait(1900);
       setFx({ calling: 'infinite' });
     };
 
     const run = async () => {
-      // A lesson just won plays back sooner than the sky settles for anything else.
-      await wait(pendingRef.current.length > 0 ? ARRIVE_MS / 2 : ARRIVE_MS);
-      if (pendingRef.current.length === 0 && !finaleRef.current) {
+      await wait(ARRIVE_MS);
+      if (!finaleRef.current) {
         arrive();
         return;
       }
       setBeating(true);
       blip.current?.react('win');
       onReturnedSeen?.();
-      while (pendingRef.current.length > 0) {
-        const id = pendingRef.current[0];
-        await lightStar(firstLight.stars.findIndex((s) => scenarioIdOf(s) === id));
-        await wait(150);
-      }
-      if (finaleRef.current) {
-        await drawIn();
-        setBeating(false);
-        await wait(400);
-        onFirstLightDone?.();
-        return;
-      }
+      await drawIn();
       setBeating(false);
-      arrive();
+      await wait(400);
+      onFirstLightDone?.();
     };
     run().catch(() => undefined);
 
@@ -461,32 +330,12 @@ export function SkyChart({
       motes.current.forEach((m) => m.remove());
       motes.current = [];
       setFx({});
-      // Folded but not yet settled: nothing is left to play, so it settles where it stands.
-      if (foldedRef.current) setSettled(true);
     };
     // A visit is one mount while active; the profile changing under it (a first recorded) must not restart it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   useEffect(() => () => motes.current.forEach((m) => m.remove()), []);
-
-  // The climb opens on the lesson it is about to play back or play next, and follows a lighting up it.
-  const opensOn = pending.length > 0 ? firstLight.stars.findIndex((s) => scenarioIdOf(s) === pending[0]) : trailLit.findIndex((l) => !l);
-  useLayoutEffect(() => {
-    scrollToIsle(opensOn < 0 ? -1 : opensOn, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fit]);
-  const following = fx.waking ?? fx.charging;
-  useEffect(() => {
-    if (following !== undefined) scrollToIsle(following, true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [following]);
-
-  /** The sky's states with these scenarios still waiting to be played back. */
-  const statesOf = (waiting: readonly string[]) => {
-    const p = profileBeforeLightings(profile, waiting);
-    return Object.fromEntries(Object.keys(sky.constellations).map((id) => [id, constellationState(p, sky, id)])) as Record<string, ConstellationState>;
-  };
 
   /** The reward's Stardust flown from the crest to the Observatory's badge, which counts it in as each mote lands. */
   const flyDust = (wait: (ms: number) => Promise<void>) => {
@@ -564,24 +413,21 @@ export function SkyChart({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [infiniteRequest]);
 
-  const shift = settled ? SETTLE : 0;
+  const shift = SETTLE;
   const worldStyle: CSSProperties | undefined = zoomed
     ? (() => {
-        const seat = zoomed === 'firstLight' && !folded ? { x: TRAIL[1].x, y: TRAIL[1].y } : SEATS[zoomed];
+        const seat = SEATS[zoomed];
         const k = zoomed === 'infinite' ? ZOOM * 0.75 : ZOOM;
         return { transform: `translate(${W / 2 - k * seat.x}px, ${H * 0.42 - k * (seat.y + shift)}px) scale(${k})` };
       })()
     : undefined;
 
-  // The press under the Pact: the next lesson while First Light is unfinished, then the Infinite.
-  const nextLesson = firstLight.stars.findIndex((_, i) => !trailLit[i]);
-  const infinite = sky.constellations.infinite;
-  const press =
-    !folded && nextLesson >= 0
-      ? { label: lessonLabel(nextLesson), go:() => onPlayLesson?.(firstLight.stars[nextLesson].id) }
-      : folded && !pressHidden && (states.infinite === 'open' || states.infinite === 'lit')
-        ? { label: PLAY_LABELS.infinite, go: () => (openCycle > 1 ? zoomTo('infinite') : onPlay('infinite', 1)) }
-        : null;
+  // The press under the Pact: the tutorial until it is won, then the Infinite.
+  const press = !firstLightDone
+    ? { label: 'Begin', go: () => onPlayLesson?.(TUTORIAL_STAR) }
+    : folded && !pressHidden && (states.infinite === 'open' || states.infinite === 'lit')
+      ? { label: PLAY_LABELS.infinite, go: () => (openCycle > 1 ? zoomTo('infinite') : onPlay('infinite', 1)) }
+      : null;
 
   return (
     <div className={`sky-chart${zoomed ? ' is-zoomed' : ''}${beating ? ' is-beating' : ''}${fx.crest === 'in' ? ' has-crest' : ''}`}>
@@ -593,11 +439,10 @@ export function SkyChart({
         />
       </div>
 
-      <div ref={stageRef} className={`pact-stage${folded ? '' : ' is-climb'}`} onClick={zoomed ? zoomOut : undefined}>
+      <div className="pact-stage" onClick={zoomed ? zoomOut : undefined}>
         <svg
           className="pact"
-          viewBox={`0 0 ${W} ${folded ? H : CLIMB_H}`}
-          style={folded ? undefined : { width: W * fit, height: CLIMB_H * fit, marginTop: box.top }}
+          viewBox={`0 0 ${W} ${H}`}
           preserveAspectRatio="xMidYMid meet"
           aria-hidden="true"
         >
@@ -639,17 +484,7 @@ export function SkyChart({
                 </>
               )}
 
-              {folded ? (
-                <Clasp onTap={() => zoomTo('firstLight')} />
-              ) : (
-                <Trail
-                  lit={trailLit}
-                  fx={fx}
-                  disabled={disabled || beating}
-                  calling={fx.calling === 'firstLight'}
-                  onPlayLesson={(id) => onPlayLesson?.(id)}
-                />
-              )}
+              <Clasp onTap={() => zoomTo('firstLight')} />
             </g>
           </g>
         </svg>
@@ -713,7 +548,7 @@ export function SkyChart({
   );
 }
 
-/** The Pact itself: a double ring with First Light's gap at its foot until the trail folds, the ticks, and the circle round the Infinite. */
+/** The Pact itself: a double ring with a gap at its foot until the tutorial is won, the ticks, and the circle round the Infinite. */
 function Sigil({ folded, closing, flash, states }: { folded: boolean; closing: boolean; flash: boolean; states: Record<string, ConstellationState> }) {
   const arc = (r: number) => {
     const a = onRing(90 + GAP_DEG, r);
@@ -846,7 +681,7 @@ function Infinite({ state, profile, calling, stirring, onTap }: Omit<SeatProps, 
   );
 }
 
-/** First Light once it is sealed: the trail folded into a small clasp at the ring's foot. */
+/** The tutorial's clasp at the ring's foot: tapped, its card plays it again. */
 function Clasp({ onTap }: { onTap: () => void }) {
   return (
     <g className="pact-seat is-clasp is-lit">
@@ -860,123 +695,6 @@ function Clasp({ onTap }: { onTap: () => void }) {
   );
 }
 
-interface TrailProps {
-  lit: boolean[];
-  fx: Fx;
-  disabled: boolean;
-  calling: boolean;
-  onPlayLesson: (scenarioId: string) => void;
-}
-
-/** Who stands on each lesson's island: the heroes it is played with, a promise a name never made. */
-const LESSON_CAST: Readonly<Record<string, readonly string[]>> = {
-  'firstLight.move': ['crag', 'ursa'],
-  'firstLight.mana': ['pixie'],
-  'firstLight.types': ['crimson', 'raiju'],
-  'firstLight.spread': ['cairn'],
-  'firstLight.kinds': ['nightshade', 'runescribe'],
-  'firstLight.burn': ['cinderKnight'],
-  'firstLight.switch': ['cinderKnight', 'forgewright', 'raiju'],
-  'firstLight.gear': ['ursa'],
-  'firstLight.gems': ['ursa', 'pixie'],
-  'firstLight.contracts': ['hollowbark'],
-  'firstLight.open': ['crimson', 'cairn', 'ursa'],
-};
-const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
-/** How far below an island's centre its star sits, on the front of its rim. */
-const ISLE_RIM = 13;
-
-/** A floating island of light, its lesson's heroes standing on it (silhouettes until the lesson is reached). */
-function Isle({ cast, numeral }: { cast: readonly string[]; numeral: string }) {
-  const size = cast.length > 2 ? 30 : 34;
-  const step = cast.length > 2 ? 22 : 26;
-  const left = -((cast.length - 1) * step) / 2 - size / 2;
-  return (
-    <g className="pact-isle">
-      <ellipse className="pact-isle-glow" cx={0} cy={4} rx={50} ry={20} />
-      <ellipse className="pact-isle-under" cx={0} cy={8} rx={40} ry={12} />
-      <ellipse className="pact-isle-top" cx={0} cy={4} rx={40} ry={10} />
-      {cast.map((heroId, k) => {
-        const href = heroArt[heroId];
-        return href ? <image key={heroId} className="pact-isle-hero" href={href} x={left + k * step} y={2 - size} width={size} height={size} /> : null;
-      })}
-      <text className="pact-isle-numeral" x={0} y={27} textAnchor="middle">
-        {numeral}
-      </text>
-    </g>
-  );
-}
-
-/** First Light before it is sealed: four floating islands climbing to the gap, each with its heroes; won ones burn gold, the next glows, the rest wait in shadow. */
-function Trail({ lit, fx, disabled, calling, onPlayLesson }: TrailProps) {
-  const c = sky.constellations.firstLight;
-  const nextIndex = lit.findIndex((l) => !l);
-  const gate = onRing(90);
-  /** The clasp's star each trail star folds into, as an offset from where it stands. */
-  const foldTo = (i: number) => {
-    const p = seatPoint('firstLight', c.stars[i]);
-    return { x: p.x - TRAIL[i].x, y: p.y - TRAIL[i].y };
-  };
-  return (
-    <g className={`pact-trail${fx.folding ? ' is-folding' : ''}${calling ? ' is-calling' : ''}`}>
-      {/* The thread from the last star up into the gap: where the trail is going. */}
-      <line className={`pact-thread${lit.every(Boolean) ? ' is-lit' : ''}`} x1={TRAIL[TRAIL.length - 1].x} y1={TRAIL[TRAIL.length - 1].y - 6} x2={gate.x} y2={gate.y + 4} />
-      {c.lines.map(([a, b], k) => {
-        const p = TRAIL[a];
-        const q = TRAIL[b];
-        const isLit = lit[a] && lit[b];
-        const drawing = fx.drawing === a;
-        const flared = (fx.flare ?? 0) > k;
-        return (
-          <g key={`${a}-${b}`}>
-            <line className="pact-trail-line" x1={p.x} y1={p.y} x2={q.x} y2={q.y} />
-            {(isLit || drawing || (lit[a] && fx.waking === b)) && (
-              <line
-                className={`pact-trail-line is-lit${drawing ? ' is-drawing' : ''}${flared ? ' is-flared' : ''}`}
-                x1={p.x}
-                y1={p.y}
-                x2={q.x}
-                y2={q.y}
-                pathLength={1}
-              />
-            )}
-          </g>
-        );
-      })}
-      {c.stars.map((star, i) => {
-        const p = TRAIL[i];
-        const isLit = lit[i];
-        const isNext = i === nextIndex;
-        const waking = fx.waking === i;
-        const known = isLit || isNext;
-        const playable = !disabled && known;
-        const off = foldTo(i);
-        return (
-          <g
-            key={star.id}
-            className={`pact-trail-star${isLit ? ' is-lit' : ''}${isNext ? ' is-next' : ''}${known ? '' : ' is-unknown'}${fx.charging === i ? ' is-charging' : ''}${waking ? ' is-waking' : ''}`}
-            style={{ '--fold-x': `${off.x}px`, '--fold-y': `${off.y}px`, '--fold-delay': `${(TRAIL.length - 1 - i) * 0.06}s` } as CSSProperties}
-          >
-            <g className="pact-trail-body" transform={`translate(${p.x} ${p.y})`}>
-              <g transform={`scale(${ISLE_SCALE})`}>
-                <Isle cast={LESSON_CAST[scenarioIdOf(star)] ?? []} numeral={NUMERALS[i]} />
-              </g>
-              <g transform={`translate(0 ${ISLE_RIM * ISLE_SCALE})`}>
-                <circle className="pact-trail-halo" r={isLit ? 16 : 12} />
-                {isNext && <circle className="pact-trail-pulse" r={9} />}
-                <circle className="pact-trail-core" r={isLit ? 3.6 : 3} />
-                {isLit && <path className="pact-trail-glint" d={glint(9)} />}
-                {fx.burst?.i === i && <Burst key={fx.burst.n} />}
-              </g>
-            </g>
-            {playable && <circle className="pact-hit" cx={p.x} cy={p.y - 16} r={56} onClick={() => onPlayLesson(scenarioIdOf(star))} />}
-          </g>
-        );
-      })}
-    </g>
-  );
-}
-
 /** A lesson's page beside its star: inked once the lesson is won, blank while it waits. */
 function PageMark({ x, y, inked, fresh = false }: { x: number; y: number; inked: boolean; fresh?: boolean }) {
   return (
@@ -986,33 +704,6 @@ function PageMark({ x, y, inked, fresh = false }: { x: number; y: number; inked:
         <path className="pact-page-fold" d="M2 -7v3h3" />
         {inked && <path className="pact-page-ink" d="M-3 -1.5h6M-3 1.2h5M-3 3.9h6" />}
       </g>
-    </g>
-  );
-}
-
-/** A star bursting alight: two rings out, a crown of rays, and sparks thrown clear. */
-function Burst() {
-  return (
-    <g className="pact-burst">
-      <circle className="pact-burst-ring" r={4} />
-      <circle className="pact-burst-ring is-late" r={4} />
-      {Array.from({ length: 8 }, (_, k) => (
-        <g key={`r${k}`} transform={`rotate(${k * 45})`}>
-          <line className="pact-burst-ray" x1={0} y1={-7} x2={0} y2={-15} />
-        </g>
-      ))}
-      {Array.from({ length: 12 }, (_, k) => {
-        const a = (k / 12) * Math.PI * 2 + 0.3;
-        const d = 20 + ((k * 7) % 16);
-        return (
-          <circle
-            key={`s${k}`}
-            className="pact-burst-spark"
-            r={k % 3 === 0 ? 1.4 : 0.9}
-            style={{ '--dx': `${Math.cos(a) * d}px`, '--dy': `${Math.sin(a) * d}px` } as CSSProperties}
-          />
-        );
-      })}
     </g>
   );
 }
@@ -1105,7 +796,7 @@ function ConstellationCard({ profile, constellation: c, state, disabled, pressHi
           reward > 0 && <span className="sky-band-reward">✦ {reward}</span>
         ) : nextLesson >= 0 ? (
           <PlateButton compact onClick={() => onPlayLesson?.(c.stars[nextLesson].id)} disabled={disabled} data-sfx="ui.commit">
-            {lessonLabel(nextLesson)}
+            {'Begin'}
           </PlateButton>
         ) : uncharted ? (
           <PlateButton compact disabled onClick={() => undefined}>

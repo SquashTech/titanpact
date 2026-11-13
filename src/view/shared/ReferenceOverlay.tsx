@@ -52,7 +52,7 @@ const TAB_ICONS: Record<Tab, ReactNode> = {
 
 /** Each tab: its name over the page, and the short word under its icon in the dock. */
 const TABS: readonly { id: Tab; name: string; short: string }[] = [
-  { id: 'howto', name: 'How to Play', short: 'Rules' },
+  { id: 'howto', name: 'Rules', short: 'Rules' },
   { id: 'types', name: 'Types', short: 'Types' },
   { id: 'statuses', name: 'Statuses', short: 'Status' },
   { id: 'fields', name: 'Fields', short: 'Fields' },

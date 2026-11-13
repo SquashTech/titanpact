@@ -108,11 +108,9 @@ import { InstallOverlay } from '../view/run/InstallOverlay';
 import { currentInstallPlatform } from './installPrompt';
 import { INSTALL_TIP_ID } from '../run/installHint';
 import { LoreScreen } from '../view/run/LoreScreen';
-import { StoryChapterScreen } from '../view/story/StoryChapterScreen';
-import { LESSONS, STORY_BOOKS } from '../data/lessons';
-import { sky } from '../data/sky';
+import { TutorialScreen } from '../view/story/TutorialScreen';
+import { sky, TUTORIAL_STAR } from '../data/sky';
 import { recordScenarioLit } from '../run/sky';
-import { chapterById } from '../run/story';
 import { generateStarterOptions } from '../run/draft';
 import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
 import {
@@ -167,7 +165,7 @@ type Screen = RunScreen;
 /** Screens outside an act get no ambient Location (LocationContext). Listed as the exceptions so new node screens inherit the place by default. */
 const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'title',
-  'storyChapter',
+  'tutorial',
   'lore',
   // The lore cards drop the title's track and leave the cold open in silence; the draft and the
   // pact forged at its end name their own (`starterScreen`), and Act I's music then starts where
@@ -386,11 +384,11 @@ function screenTipIds(screen: Screen): readonly ScreenTipId[] {
   return screen.kind === 'itemWho' ? ['item'] : [];
 }
 
-/** The run tips a lesson's own pages already taught, by lesson. */
-const TIPS_A_LESSON_RETIRES: Readonly<Record<string, readonly ScreenTipId[]>> = { 'firstLight.gear': ['item'], 'firstLight.open': ['bench'] };
+/** Nothing teaches after the tutorial (docs/the-tutorial.md §2): winning it retires every run tip. */
+const TIPS_THE_TUTORIAL_RETIRES: readonly string[] = [FIGHT_BASICS_TIP_ID, 'bench', 'item'];
 
-/** What leaving a First Light lesson is called. */
-const LESSON_EXIT = 'Back to the Sky';
+/** What leaving the tutorial is called. */
+const TUTORIAL_EXIT = 'Back to the Title';
 
 export function App() {
   const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState());
@@ -400,8 +398,6 @@ export function App() {
   /** Classic Mode picked on the Story select: the title starts it as Seal the Pact once did. */
   /** How the last Infinite run ended, until Blip has reacted to it in the sky. Session-only. */
   const [skyReturn, setSkyReturn] = useState<'win' | 'loss' | null>(null);
-  // The control tips shown in the lesson being played, which shows them all again next time.
-  const [lessonTips, setLessonTips] = useState<readonly string[]>([]);
   // Read once: a device does not change platform mid-session, and installing reopens the game.
   const [installPlatform] = useState(currentInstallPlatform);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -1074,41 +1070,14 @@ export function App() {
   }
 
   /** A tip or the lore card dismissed: account-wide, so it is written straight to storage. */
-  /** A lesson won lights its star and hands back to the sky, where Blip cheers it (docs/the-sky.md §3). What it taught retires the run tip that would only say it again. */
-  function handleStoryChapterDone(chapterId: string, nextChapterId?: string) {
-    const retired = [FIGHT_BASICS_TIP_ID, ...(TIPS_A_LESSON_RETIRES[chapterId] ?? [])];
-    setProfile(updateProfile((current) => retired.reduce(recordTipSeen, recordScenarioLit(current, sky, chapterId))));
-    if (nextChapterId) {
-      setLessonTips([]);
-      setScreen({ kind: 'storyChapter', chapterId: nextChapterId });
-      return;
-    }
-    setSkyReturn('win');
+  /** The tutorial won lights its star and hands back to the title, where its Stardust is paid and the tour pulls one Starfall (docs/the-tutorial.md §3). */
+  function handleTutorialDone() {
+    setProfile(updateProfile((current) => TIPS_THE_TUTORIAL_RETIRES.reduce(recordTipSeen, recordScenarioLit(current, sky, TUTORIAL_STAR))));
     setScreen({ kind: 'title' });
-  }
-
-  /** The lesson after this one, or null on the last: its finale plays on the sky. */
-  function nextLessonId(chapterId: string): string | null {
-    const at = LESSONS.chapters.findIndex((c) => c.id === chapterId);
-    return at >= 0 ? LESSONS.chapters[at + 1]?.id ?? null : null;
-  }
-
-  /** A First Light lesson from the sky: its chapter of data/lessons.ts, played by the Story machinery. */
-  function handlePlayLesson(scenarioId: string) {
-    const chapterId = sky.scenarios[scenarioId]?.lesson;
-    if (!chapterId) return;
-    setLessonTips([]);
-    setScreen({ kind: 'storyChapter', chapterId });
   }
 
   function markTipSeen(id: string) {
     setProfile(updateProfile((current) => recordTipSeen(current, id)));
-  }
-
-  /** A lesson teaches every time it is played: its tips count as shown for this play, and on the account too. */
-  function markLessonTipSeen(id: string) {
-    setLessonTips((ids) => [...ids, id]);
-    markTipSeen(id);
   }
 
   /** One of Blip's firsts: account-wide, written straight to storage like a tip. */
@@ -1225,7 +1194,7 @@ export function App() {
   const borrowedLocationId = screen.kind === 'constructedFight' || screen.kind === 'gauntletFight' ? screen.locationId ?? null : null;
   const ambientLocation = borrowedLocationId
     ? locations[borrowedLocationId] ?? null
-    : screen.kind === 'storyChapter'
+    : screen.kind === 'tutorial'
       ? (storyPlaceId ? locations[storyPlaceId] ?? null : null)
       : PLACELESS_SCREENS.has(screen.kind) || playerRun.locationIds.length === 0
       ? null
@@ -1283,7 +1252,7 @@ export function App() {
           skyReturn={skyReturn}
           onSkyReturnSeen={() => setSkyReturn(null)}
           onSeeThought={markThoughtSeen}
-          onPlayLesson={handlePlayLesson}
+          onPlayLesson={() => setScreen({ kind: 'tutorial' })}
           held={!!installPlatform && !profile.seenTipIds.includes(INSTALL_TIP_ID)}
           onResetTips={handleResetTips}
           onGrantDevStars={handleGrantDevStars}
@@ -1421,21 +1390,13 @@ export function App() {
 
       {screen.kind === 'versus' && <VersusScreen owned={Object.keys(heroPool(heroes, profile.purchases))} local={screen.local} onClose={() => setScreen({ kind: 'title' })} />}
 
-      {screen.kind === 'storyChapter' && chapterById(STORY_BOOKS, screen.chapterId) && (
-        <StoryChapterScreen
-          key={screen.chapterId}
-          chapter={chapterById(STORY_BOOKS, screen.chapterId)!.chapter}
-          exitLabel={LESSON_EXIT}
-          onFinished={() => handleStoryChapterDone(screen.chapterId)}
-          onNext={nextLessonId(screen.chapterId) ? () => handleStoryChapterDone(screen.chapterId, nextLessonId(screen.chapterId)!) : undefined}
+      {screen.kind === 'tutorial' && (
+        <TutorialScreen
+          welcome={WELCOME_TIP}
+          exitLabel={TUTORIAL_EXIT}
+          onFinished={handleTutorialDone}
           onQuit={() => setScreen({ kind: 'title' })}
           onPlace={setStoryPlaceId}
-          tips={{ seenIds: lessonTips, onSeen: markLessonTipSeen }}
-          welcome={
-            screen.chapterId === LESSONS.chapters[0].id && !profile.seenTipIds.includes(WELCOME_TIP.id)
-              ? { tip: WELCOME_TIP, onSeen: () => markTipSeen(WELCOME_TIP.id) }
-              : undefined
-          }
         />
       )}
 

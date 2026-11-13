@@ -12,6 +12,8 @@ import { resolveStab, resolveTypeMult, type TypeChart } from './typeMult';
 // Locked: variance 0.85–1.0 (CLAUDE.md)
 export const VARIANCE_MIN = 0.85;
 export const VARIANCE_MAX = 1.0;
+/** The roll a fixed-roll fight lands every hit at: the range's middle, no crit (docs/the-tutorial.md §2). */
+export const FIXED_VARIANCE = (VARIANCE_MIN + VARIANCE_MAX) / 2;
 
 // Crit source is locked to the loadout/equipment layer (docs/combat.md) but not yet
 // built; these are unsourced placeholders. A move's own critChance replaces the chance.
@@ -222,11 +224,13 @@ export function rollDamage(
   basePowerMultiplier: number = 1,
   /** Drawn OUTSIDE this function (state.ts resolveRandomBasePower), so it costs no RNG here. */
   basePowerOverride?: number,
-  typeMultFloor: number = 0
+  typeMultFloor: number = 0,
+  /** The tutorial's one exception to the locked variance: both draws still happen, so the stream stays in step. */
+  fixedRolls: boolean = false
 ): RolledDamage {
   const varianceRoll = nextRange(rngState, VARIANCE_MIN, VARIANCE_MAX);
   const critRoll = nextFloat(varianceRoll.nextState);
-  const isCrit = critRoll.value < critChance;
+  const isCrit = !fixedRolls && critRoll.value < critChance;
 
   const result = calcDamage(
     move,
@@ -234,7 +238,7 @@ export function rollDamage(
     attackerTypes,
     defenderTypes,
     typeChart,
-    varianceRoll.value,
+    fixedRolls ? FIXED_VARIANCE : varianceRoll.value,
     isCrit,
     modifiers,
     LOCKED_MODIFIER_STACKING,

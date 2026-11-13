@@ -26,7 +26,7 @@ import {
   STORY_PLAYER_SIDE,
   type StoryFight,
 } from '../src/run/story';
-import { STORY_BOOKS } from '../src/data/lessons';
+import { TUTORIAL_FIGHT, TUTORIAL_TIPS } from '../src/data/tutorial';
 import { TIP_STAGING } from '../src/view/run/tipStaging';
 import { TIP_SCENES } from '../src/data/tipScenes';
 
@@ -153,47 +153,34 @@ test('story: a fight ends on its trigger, and a wiped side still ends it first',
   assert.strictEqual(fightWinner({ ...wiped, round: 7 }), 'B');
 });
 
-test('story: every catalog fight scripts only moves its actors hold, and leads and targets are in the parties', () => {
-  for (const story of STORY_BOOKS) {
-    for (const chapter of story.chapters) {
-      const fights = chapter.beats.flatMap((beat) => (beat.kind === 'fight' ? [beat.fight] : []));
-      for (const fight of fights) {
-        const sides = storySides(fight, allCombatants);
-        const kit = (side: 'A' | 'B', rosterId: string) =>
-          (side === 'A' ? sides.player : sides.ai).run.roster.find((r) => r.rosterId === rosterId)?.unlockedMoveIds;
-        const check = (side: 'A' | 'B', script: StoryFight['guide']) => {
-          for (const round of script) {
-            for (const command of round) {
-              assert.ok(kit(side, command.actor), `${fight.id}: ${command.actor} is not in the party`);
-              if ('moveId' in command) {
-                assert.ok(kit(side, command.actor)!.includes(command.moveId), `${fight.id}: ${command.actor} does not hold ${command.moveId}`);
-                if (command.target) assert.ok(kit(command.target.side, command.target.rosterId), `${fight.id}: target ${command.target.rosterId} is not in the fight`);
-              }
-              if ('switchTo' in command) assert.ok(kit(side, command.switchTo), `${fight.id}: ${command.switchTo} is not in the party`);
-            }
-          }
-        };
-        check('A', fight.guide);
-        check('B', fight.enemyScript);
+test('story: the tutorial scripts only moves its actors hold, and leads and targets are in the parties', () => {
+  const fight = TUTORIAL_FIGHT;
+  const sides = storySides(fight, allCombatants);
+  const kit = (side: 'A' | 'B', rosterId: string) => (side === 'A' ? sides.player : sides.ai).run.roster.find((r) => r.rosterId === rosterId)?.unlockedMoveIds;
+  const check = (side: 'A' | 'B', script: StoryFight['guide']) => {
+    for (const round of script) {
+      for (const command of round) {
+        assert.ok(kit(side, command.actor), `${command.actor} is not in the party`);
+        if ('moveId' in command) {
+          assert.ok(kit(side, command.actor)!.includes(command.moveId), `${command.actor} does not hold ${command.moveId}`);
+          if (command.target) assert.ok(kit(command.target.side, command.target.rosterId), `target ${command.target.rosterId} is not in the fight`);
+        }
+        if ('switchTo' in command) assert.ok(kit(side, command.switchTo), `${command.switchTo} is not in the party`);
       }
     }
-  }
+  };
+  check('A', fight.guide);
+  check('B', fight.enemyScript);
+  for (const id of [...(fight.guidedLeads ?? []), ...(fight.guidedReplacements ?? [])]) assert.ok(kit('A', id), `${id} is not in the party`);
 });
 
 test('story tips: every control tip is short, unique, and lights something', () => {
   const seen = new Set<string>();
-  for (const story of STORY_BOOKS) {
-    for (const chapter of story.chapters) {
-      for (const beat of chapter.beats) {
-        const cues = beat.kind === 'fight' ? beat.cues ?? [] : [];
-        for (const tip of cues.flatMap((cue) => cue.tips ?? [])) {
-          assert.ok(!seen.has(tip.id), `${tip.id} is used twice`);
-          seen.add(tip.id);
-          assert.ok(tip.pages.length >= 1 && tip.pages.length <= 3, `${tip.id} runs past three pages`);
-          assert.ok(TIP_STAGING[tip.id] || TIP_SCENES[tip.id], `${tip.id} neither lights nor draws anything`);
-        }
-      }
-    }
+  for (const tip of TUTORIAL_TIPS) {
+    assert.ok(!seen.has(tip.id), `${tip.id} is used twice`);
+    seen.add(tip.id);
+    assert.ok(tip.pages.length >= 1 && tip.pages.length <= 3, `${tip.id} runs past three pages`);
+    assert.ok(TIP_STAGING[tip.id] || TIP_SCENES[tip.id], `${tip.id} neither lights nor draws anything`);
   }
 });
 

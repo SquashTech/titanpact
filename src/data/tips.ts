@@ -29,12 +29,12 @@ export const LORE_LINES: readonly string[] = [
   'This is the story of how they sealed the Titan.',
 ];
 
-/** What a run is and why the lessons, once an account, right after the fall and before the first lesson (docs/first-light.md §1). */
+/** What a run is, ahead of the tutorial's first fight (docs/the-tutorial.md §3). */
 export const WELCOME_TIP: Tip = {
-  id: 'firstLight.welcome',
+  id: 'tutorial.welcome',
   title: 'Welcome to',
   look: 'welcome',
-  pages: ['A *run* is the road to the *Titan*, fight after fight. *First Light* teaches you to fight first, one idea a lesson.'],
+  pages: ['A *run* is the road to the *Titan*, fight after fight. This first fight shows you how.'],
 };
 
 function tip(id: string, title: string, ...pages: string[]): Tip {

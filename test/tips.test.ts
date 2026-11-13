@@ -25,17 +25,10 @@ import { typeChart } from '../src/data/typechart';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { statuses } from '../src/data/statuses';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
-import { STORY_BOOKS } from '../src/data/lessons';
+import { TUTORIAL_TIPS } from '../src/data/tutorial';
 
-/** The control tips the lessons teach, in their fights and in their acts' fights. */
-const storyTips: Tip[] = STORY_BOOKS.flatMap((story) =>
-  story.chapters.flatMap((chapter) =>
-    chapter.beats.flatMap((beat) => {
-      const cues = beat.kind === 'fight' ? beat.cues ?? [] : [];
-      return cues.flatMap((cue) => cue.tips ?? []);
-    })
-  )
-);
+/** The tutorial's prompts. */
+const storyTips: Tip[] = [...TUTORIAL_TIPS];
 const allTips: Tip[] = [...Object.values(SCREEN_TIPS), ...FIGHT_TIPS, ...storyTips];
 /** Every block of player-facing rules text: the tips, and How to Play's pages (a lesson's tip IS its page, so each once). */
 const allText: Tip[] = [...new Set<Tip>([...allTips, ...MANUAL_PAGES])];

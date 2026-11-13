@@ -337,7 +337,9 @@ don't silently override it.
   - Magical pair: `offStat = Intelligence`, `defStat = Wisdom`.
   - `STAB = 1.25` when the move's type is one of the user's types.
   - `TypeMult` = product over each defender type (dual types stack **multiplicatively**).
-  - `Variance` = uniform `0.85–1.0`, rolled per hit. **Load-bearing — never remove.**
+  - `Variance` = uniform `0.85–1.0`, rolled per hit. **Load-bearing — never remove.** **One named
+    exception** (2026-11-13, per user direction): the tutorial's scripted fight lands every hit at the
+    middle, 0.925, and never crits (`fixedRolls`, `docs/the-tutorial.md`).
   - `Crit` = a multiplier term (source is an open question; see below).
 - **Two-pipeline separation (non-negotiable):** the *stat pipeline* produces only the
   off/def **ratio**. The *damage pipeline* applies BasePower and every multiplier term.
@@ -998,6 +1000,9 @@ what's still unimplemented:
   the first press plays A Tale of Valor's prologue, which carries the fall; the lore card no longer
   plays ahead of the first draft. The three tips stand. **A Tale of Valor is DELETED 2026-10-24**
   (`docs/the-sky.md`): First Light's lessons teach on its machinery, and nothing plays the fall or the lore card now.
+  **First Light is REPLACED 2026-11-13 by the tutorial** (`docs/the-tutorial.md`, per user direction): one
+  scripted 4v6 fight, a road of Recruit, Rest and an open fight, 100 Stardust and one forced Starfall; the
+  Ascent is deleted, and nothing teaches after it.
 - Field Effects (2026-08-21 sign-off): resolves the former "weather subsystem" open
   question — Field Effects **is** that subsystem, generalized. A single global
   battlefield state (only one active at a time), settable by a move or a passive

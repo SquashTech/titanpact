@@ -1,7 +1,7 @@
-// The sky (docs/the-sky.md §2–§4): five constellations, one a way to play. First Light holds the
-// lessons, the Infinite its five Cycles, the Trials one star a Trial, the Gauntlet its clears, and
+// The sky (docs/the-sky.md §2–§4): five constellations, one a way to play. How to Play holds the
+// tutorial (docs/the-tutorial.md), the Infinite its five Cycles, the Trials one star a Trial, the Gauntlet its clears, and
 // Strange Worlds the twisted runs to come. Each is drawn in a band of its own; shapes are first pass.
-// The lessons are data/lessons.ts's; Strange Worlds is named seats, uncharted until its scenarios are authored (§10).
+// Strange Worlds is named seats, uncharted until its scenarios are authored (§10).
 
 import type { ConstellationDefinition, ScenarioDefinition, SkyContent, SkyStar } from '../run/sky';
 import { TRIAL_LIST } from './trials';
@@ -9,21 +9,11 @@ import { TRIAL_LIST } from './trials';
 const WIN = { kind: 'win' } as const;
 
 const scenario = (id: string, name: string): ScenarioDefinition => ({ id, name, goal: WIN, modifiers: {} });
-/** A First Light lesson plays the chapter of data/lessons.ts that shares its id. */
-const lesson = (id: string, name: string): ScenarioDefinition => ({ ...scenario(id, name), lesson: id });
+/** The tutorial's one star: playing it plays the tutorial again. */
+export const TUTORIAL_STAR = 'tutorial';
 
 const SCENARIOS: readonly ScenarioDefinition[] = [
-  lesson('firstLight.move', 'Move and Target'),
-  lesson('firstLight.mana', 'Mana'),
-  lesson('firstLight.types', 'Types'),
-  lesson('firstLight.spread', 'Spread'),
-  lesson('firstLight.kinds', 'Physical and Magical'),
-  lesson('firstLight.burn', 'Status Effects'),
-  lesson('firstLight.switch', 'Switching'),
-  lesson('firstLight.gear', 'Equipment'),
-  lesson('firstLight.gems', 'Gems'),
-  lesson('firstLight.contracts', 'Recruits'),
-  lesson('firstLight.open', 'The First Fight'),
+  { ...scenario(TUTORIAL_STAR, 'How to Play'), lesson: TUTORIAL_STAR },
   scenario('strange.monotype', 'One Type'),
   scenario('strange.newPlace', 'A New Place'),
   scenario('strange.strangers', 'Strangers'),
@@ -44,25 +34,12 @@ function ring(count: number, i: number): { x: number; y: number } {
 const CONSTELLATIONS: readonly ConstellationDefinition[] = [
   {
     id: 'firstLight',
-    name: 'First Light',
-    // The lessons rise to the open fight, played in that order.
-    stars: [
-      scenarioStar('firstLight.move', 0.1, 0.96),
-      scenarioStar('firstLight.mana', 0.42, 0.87),
-      scenarioStar('firstLight.types', 0.74, 0.78),
-      scenarioStar('firstLight.spread', 0.46, 0.69),
-      scenarioStar('firstLight.kinds', 0.2, 0.6),
-      scenarioStar('firstLight.burn', 0.76, 0.51),
-      scenarioStar('firstLight.switch', 0.5, 0.42),
-      scenarioStar('firstLight.gear', 0.16, 0.33),
-      scenarioStar('firstLight.gems', 0.48, 0.24),
-      scenarioStar('firstLight.contracts', 0.8, 0.15),
-      scenarioStar('firstLight.open', 0.9, 0.06),
-    ],
-    lines: chain(11),
+    name: 'How to Play',
+    stars: [scenarioStar(TUTORIAL_STAR, 0.5, 0.5)],
+    lines: [],
     after: [],
     rail: true,
-    rewards: [{ kind: 'stardust', amount: 300 }],
+    rewards: [{ kind: 'stardust', amount: 100 }],
   },
   {
     id: 'infinite',
@@ -83,8 +60,7 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
     })),
     lines: [],
     rings: true,
-    // The guided fights open it; the open fight stays First Light's to play, never a gate (2026-10-24, per user direction).
-    after: ['firstLight.switch'],
+    after: [TUTORIAL_STAR],
     rewards: [],
   },
   {
