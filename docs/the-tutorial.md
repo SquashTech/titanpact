@@ -18,7 +18,9 @@ to find).
 - **One fight carries the concepts**, larger than 2v2 so there is room for a bench, switching and
   replacements. **Each round has one prompt**, tapped through, shown at the command of the hero it
   is about (`StoryCue.actor`: the spread on Cairn's, the heal on Solace's; 2026-11-14, per user
-  direction). Otherwise the hand points and every other control is locked (`guidedAction`).
+  direction). A prompt about a move draws that move with the parts it names labelled — Mana, type,
+  kind, power, matchup, its Burn (`data/tipScenes.ts`, the callouts; 2026-11-14, per user direction).
+  Otherwise the hand points and every other control is locked (`guidedAction`).
 - **No variance in the scripted fight.** The one exception to the locked Variance term
   (`StoryFight.fixedRolls` → `CombatState.fixedRolls`): every hit lands at the range's middle
   (`FIXED_VARIANCE` = 0.925) and nothing crits, so the numbers are still the formula's and the

@@ -11,12 +11,13 @@ import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEng
 import { isRollScene, isStatusScene, type TipRollScene, type TipPicture, type TipScene as Scene, type TipSceneCallout, type TipSceneFighter, type TipStatusScene } from '../../data/tipScenes';
 import { StatusGlyph, StatusPips, statusColor, statusTint } from '../shared/statusIcons';
 import { createRosterEntry, createRunState, type RunState } from '../../run/state';
-import { xpForLevel } from '../../run/growth';
+import { expectedGrowthAt, xpForLevel } from '../../run/growth';
 import { rosterHeroes } from '../../data/content';
 import { entryHp } from '../shared/WoundBar';
 import { CombatantCard } from '../combat/CombatantCard';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { MoveButtonReplica } from '../shared/MoveTile';
+import { withoutCrit } from '../shared/MoveStrip';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { Coin } from '../shared/Coin';
 import { FieldGlyph } from '../shared/fieldIcons';
@@ -66,16 +67,17 @@ const CALLOUT_PARTS: Readonly<Record<TipSceneCallout, { selector: string; side: 
 function calloutLabel(part: TipSceneCallout, move: MoveDefinition): string {
   if (part === 'mana') return 'Mana';
   if (part === 'type') return 'Type';
-  if (part === 'kind') return 'Kind of move';
-  if (part === 'power') return 'Power';
+  if (part === 'kind') return move.kind === 'heal' ? 'Heal' : move.kind === 'damage' ? (move.category === 'physical' ? 'Physical' : 'Magical') : 'Kind of move';
+  if (part === 'power') return move.kind === 'heal' ? 'Heals' : 'Power';
   if (part === 'rider') {
     const statusId = firstStatusApplication(move)?.statusId;
     return (statusId && statuses[statusId]?.name) || 'Effect';
   }
-  return 'Matchup';
+  return move.target === 'bothEnemies' || move.target === 'allOthers' ? 'Hits both' : 'Matchup';
 }
 
 interface PlacedCallout {
+  key: string;
   part: TipSceneCallout;
   label: string;
   /** The ringed mark, in the scene's own px. */
@@ -110,34 +112,38 @@ function place(found: readonly { part: TipSceneCallout; ring: PlacedCallout['rin
         CALLOUT_PARTS[f.part].meets === 'left'
           ? { x: ring.x - 2, y: ring.y + ring.h / 2 }
           : { x: ring.x + ring.w / 2, y: side === 'above' ? ring.y - 2 : ring.y + ring.h + 2 };
-      out.push({ part: f.part, label: calloutLabel(f.part, move), ring, at: { x: Math.max(LABEL_EDGE, xs[i]), y }, meet });
+      out.push({ part: f.part, label: calloutLabel(f.part, move), ring, at: { x: Math.max(LABEL_EDGE, xs[i]), y }, meet, key: `${move.id}-${f.part}` });
     });
   }
   return out;
 }
 
-/** Measures the first focus row's marks inside `root`, and again as the note settles and on any resize. */
-function useCallouts(root: RefObject<HTMLDivElement | null>, callouts: readonly TipSceneCallout[] | undefined, move: MoveDefinition | null): PlacedCallout[] {
+/** Measures each focus row's marks inside `root`, and again as the note settles and on any resize. */
+function useCallouts(root: RefObject<HTMLDivElement | null>, callouts: readonly TipSceneCallout[] | undefined, called: readonly MoveDefinition[]): PlacedCallout[] {
   const [placed, setPlaced] = useState<PlacedCallout[]>([]);
   const key = callouts?.join('|') ?? '';
   useLayoutEffect(() => {
     const el = root.current;
-    if (!el || !callouts || !move) {
+    if (!el || !callouts || called.length === 0) {
       setPlaced([]);
       return;
     }
     const measure = () => {
-      const row = el.querySelector('.tip-scene-row.is-focus-row .move-button');
-      if (!row) return;
+      const rows = Array.from(el.querySelectorAll('.tip-scene-row.is-focus-row .move-button'));
+      if (rows.length === 0) return;
       const box = el.getBoundingClientRect();
       // The tip sits inside the scaled canvas: client px back to the scene's own.
       const scale = el.offsetWidth / (box.width || 1);
       const local = (r: DOMRect) => ({ x: (r.left - box.left) * scale, y: (r.top - box.top) * scale, w: r.width * scale, h: r.height * scale });
-      const found = callouts.flatMap((part) => {
-        const mark = row.querySelector(CALLOUT_PARTS[part].selector);
-        return mark ? [{ part, ring: local(mark.getBoundingClientRect()) }] : [];
-      });
-      setPlaced(place(found, local(row.getBoundingClientRect()), el.offsetWidth, move));
+      setPlaced(
+        rows.slice(0, called.length).flatMap((row, i) => {
+          const found = callouts.flatMap((part) => {
+            const mark = row.querySelector(CALLOUT_PARTS[part].selector);
+            return mark ? [{ part, ring: local(mark.getBoundingClientRect()) }] : [];
+          });
+          return place(found, local(row.getBoundingClientRect()), el.offsetWidth, called[i]);
+        })
+      );
     };
     measure();
     // The note arrives on an animation and the row's name steps its size down a beat later: measure again once both have settled.
@@ -149,7 +155,7 @@ function useCallouts(root: RefObject<HTMLDivElement | null>, callouts: readonly 
       observer.disconnect();
     };
     // Keyed on the joined callouts and the move: a fresh array with the same contents is no change.
-  }, [key, move?.id]);
+  }, [key, called.map((m) => m.id).join('|')]);
   return placed;
 }
 
@@ -159,15 +165,15 @@ function CalloutLayer({ placed }: { placed: readonly PlacedCallout[] }) {
   return (
     <>
       <svg className="tip-callout-lines" aria-hidden="true">
-        {placed.map(({ part, ring, at, meet }) => (
-          <g key={part}>
+        {placed.map(({ key, ring, at, meet }) => (
+          <g key={key}>
             <rect className="tip-callout-ring" x={ring.x - 2} y={ring.y - 2} width={ring.w + 4} height={ring.h + 4} rx="4" />
             <line className="tip-callout-leader" x1={at.x} y1={at.y + (at.y < meet.y ? LABEL_HALF : -LABEL_HALF)} x2={meet.x} y2={meet.y} />
           </g>
         ))}
       </svg>
-      {placed.map(({ part, label, at }) => (
-        <span key={part} className="tip-callout" style={{ left: at.x, top: at.y }}>
+      {placed.map(({ key, label, at }) => (
+        <span key={key} className="tip-callout" style={{ left: at.x, top: at.y }}>
           {label}
         </span>
       ))}
@@ -240,12 +246,13 @@ function RollScene({ scene }: { scene: TipRollScene }) {
 export function TipScene({ scene }: { scene: Scene }) {
   const root = useRef<HTMLDivElement>(null);
   const hero = build(scene.hero, 'scene-hero', 'A');
-  const calledId = scene.callouts ? (scene.focusMoves?.[0] ?? scene.moves?.[0]) : undefined;
-  const called = hero && calledId && moves[calledId] ? moveForHero(moves[calledId], hero.hero) : null;
+  const calledIds = scene.callouts ? (scene.focusMoves ?? scene.moves ?? []) : [];
+  const called = hero ? calledIds.filter((id) => moves[id]).map((id) => moveForHero(moves[id], hero.hero)) : [];
   const placed = useCallouts(root, scene.callouts, called);
   if (!hero) return null;
   const foes = (scene.foes ?? []).map((f, i) => build(f, `scene-foe-${i}`, 'B')).filter((f): f is Built => f !== null);
-  const caster = { wisdom: hero.hero.baseStats.wisdom, types: hero.hero.types };
+  // Wisdom at the scene's level, so a drawn heal reads what the same hero heals in a fight.
+  const caster = { wisdom: hero.hero.baseStats.wisdom + (expectedGrowthAt(hero.hero, hero.level).wisdom ?? 0), types: hero.hero.types };
   const focusRows = scene.focusMoves;
   const classes = ['tip-scene', ...(scene.focus ?? []).map((f) => `focus-${f}`), ...(scene.callouts ? ['has-callouts'] : []),
   ];
@@ -304,7 +311,7 @@ export function TipScene({ scene }: { scene: Scene }) {
           {scene.moves.map((id) => {
             const authored = moves[id];
             if (!authored) return null;
-            const move = moveForHero(authored, hero.hero);
+            const move = withoutCrit(moveForHero(authored, hero.hero), scene.fixedRolls);
             const seats =
               move.kind === 'damage' && foes.length > 0
                 ? foes.map(({ hero: h, combatant }) => resolveTypeMult(typeChart, move.type, effectiveTypes(h, combatant)))

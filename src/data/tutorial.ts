@@ -71,7 +71,7 @@ export const TUTORIAL_CUES: readonly StoryCue[] = [
   { round: 3, point: true, actor: 'cairn', tips: [prompt('spread', 'Spread', 'Some moves hit both foes at once.')] },
   { round: 4, point: true, tips: [prompt('kinds', 'Physical and Magical', '[physical] *Defense* stops physical hits. [magical] *Wisdom* stops magic. *Mesmerid* has high Wisdom, so magic barely hurts it.')] },
   { round: 5, point: true, tips: [prompt('rest', 'Mana', 'Moves cost *Mana*. Out of it, *Rest* fills it back up.')] },
-  { round: 6, point: true, tips: [prompt('burn', 'Burn', 'A *Burn* hurts at the end of each round, and hurts the biggest foes most.')] },
+  { round: 6, point: true, tips: [prompt('burn', 'Burn', '*Set Alight* sets a *Burn* on its target.', 'A *Burn* hurts at the end of each round, and hurts the biggest foes most.')] },
   { round: 7, point: true, actor: 'solace', tips: [prompt('heal', 'Healing', 'Some moves heal an ally.')] },
   { round: 8, tips: [prompt('yours', 'Your Turn', 'Finish it your way.')] },
 ];

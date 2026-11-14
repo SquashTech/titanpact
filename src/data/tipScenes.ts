@@ -73,7 +73,9 @@ export interface TipScene {
   focus?: readonly TipSceneFocus[];
   /** Restrict a row-level focus to these moves. */
   focusMoves?: readonly string[];
-  /** Parts of the first focus row named in place, each ringed with its label beside it. */
+  /** Draw the moves as a fight with fixed rolls does: no crit chance (the tutorial's). */
+  fixedRolls?: true;
+  /** Parts of each focus row named in place, each ringed with its label beside it (rows stand apart to make room). */
   callouts?: readonly TipSceneCallout[];
   /** The matchup each damage row must show against each foe, row by row — checked by test. */
   expect?: Readonly<Record<string, readonly number[]>>;
@@ -226,7 +228,16 @@ export const TIP_SCENES: Readonly<Record<string, readonly (TipPicture | null)[]>
   'howto.leads': [{ roll: ['cinderKnight', 'raiju', 'cairn', 'dawnwarden'] }, null],
   // The tutorial's lead pick: a hero of every type, then the live pick's arrows lit behind the page.
   'tutorial.leads': [{ roll: TYPE_ROLL }, null],
-  'tutorial.burn': [{ status: 'Burn', steps: [{ duration: 3, note: '15%' }, { duration: 2, note: '8%' }, { duration: 1, note: '4%' }] }],
+  // The tutorial's moves, each drawn as the player meets it with the parts its prompt names labelled.
+  'tutorial.move': [{ foes: [{ heroId: 'sproutling', level: 4 }], fixedRolls: true, hero: { heroId: 'cinderKnight' }, moves: ['singe'], callouts: ['mana', 'type', 'kind', 'power', 'matchup'] }],
+  'tutorial.spread': [{ foes: [{ heroId: 'kindlehide' }, { heroId: 'arcling', level: 10 }], fixedRolls: true, hero: { heroId: 'cairn' }, moves: ['tremor'], callouts: ['kind', 'power', 'matchup'] }],
+  'tutorial.kinds': [{ foes: [{ heroId: 'mesmerid' }], fixedRolls: true, hero: { heroId: 'cinderKnight' }, moves: ['singe', 'tremor'], callouts: ['kind'] }],
+  'tutorial.rest': [{ fixedRolls: true, hero: { heroId: 'cinderKnight', mana: 0.2 }, moves: ['singe', 'setAlight'], callouts: ['mana'] }],
+  'tutorial.burn': [
+    { fixedRolls: true, hero: { heroId: 'cinderKnight' }, moves: ['setAlight'], callouts: ['mana', 'type', 'rider'] },
+    { status: 'Burn', steps: [{ duration: 3, note: '15%' }, { duration: 2, note: '8%' }, { duration: 1, note: '4%' }] },
+  ],
+  'tutorial.heal': [{ fixedRolls: true, hero: { heroId: 'dawnwarden' }, moves: ['mend'], callouts: ['mana', 'type', 'kind', 'power'] }],
   'howto.field': [{ hero: { heroId: 'cinderKnight' }, field: 'scorchedLand', focus: ['field'] }],
   'howto.ancient': [
     { ...ANCIENT_CAST, moves: [], focus: ['foeTypes'] },
