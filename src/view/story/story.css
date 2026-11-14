@@ -6,7 +6,8 @@
   box-shadow: 0 0 0 2px #f3ecda, 0 0 14px rgba(255, 233, 176, 0.55);
 }
 .move-button.is-unguided,
-.bottom-action.is-unguided {
+.bottom-action.is-unguided,
+.switch-pick.is-unguided {
   opacity: 0.35;
   pointer-events: none;
 }

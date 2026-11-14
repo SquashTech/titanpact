@@ -16,8 +16,9 @@ to find).
 ## 2. Decisions (2026-11-13, per user direction)
 
 - **One fight carries the concepts**, larger than 2v2 so there is room for a bench, switching and
-  replacements. **Each round has one prompt**, tapped through. Otherwise the hand points and every
-  other control is locked (`guidedAction`).
+  replacements. **Each round has one prompt**, tapped through, shown at the command of the hero it
+  is about (`StoryCue.actor`: the spread on Cairn's, the heal on Solace's; 2026-11-14, per user
+  direction). Otherwise the hand points and every other control is locked (`guidedAction`).
 - **No variance in the scripted fight.** The one exception to the locked Variance term
   (`StoryFight.fixedRolls` → `CombatState.fixedRolls`): every hit lands at the range's middle
   (`FIXED_VARIANCE` = 0.925) and nothing crits, so the numbers are still the formula's and the
@@ -79,10 +80,10 @@ idea.
 | 1 | *Pick a move, then who it hits. The fastest hero acts first.* | Singe → Sproutling, Thunderclap → Puddling | Raiju first; both fall to 2× hits. |
 | 2 | *Switch in a hero who takes the hit better. Stone shrugs off Storm and Fire.* | Raiju → Cairn; Singe → Kindlehide | Cairn takes both hits at ½. |
 | 3 | *Some moves hit both foes at once.* | Singe → Kindlehide; Tremor | Tremor drops both. |
-| 4 | *Defense stops physical hits. Wisdom stops magic.* | Singe → Mesmerid; Tremor | Singe 71 against Tremor 27 on Mesmerid. |
+| 4 | *Defense stops physical hits. Wisdom stops magic. Mesmerid has high Wisdom, so magic barely hurts it.* (Mesmerid lit) | Singe → Mesmerid; Tremor | Singe 71 against Tremor 27 on Mesmerid. |
 | 5 | *Moves cost Mana. Out of it, Rest fills it back up.* | Cinder Rests; Tremor | Cinder holds 15, every move costs 20. |
 | 6 | *A Burn keeps hurting after the hit.* | Set Alight → Mesmerid; Tremor | Ravager drops Cairn first; the Burn tick finishes Mesmerid. |
-| — | *A hero who falls is out for the fight. Send in another from the bench.* | Solace | The replacement. |
+| — | *A hero who falls is out for the fight. Send in another from the bench.* | Solace | The replacement, on the switch panel (every fight's, since 2026-11-14). |
 | 7 | *Some moves heal an ally.* | Mend → Cinder; Singe → Ravager | Ravager left at 67. |
 | 8 | *Finish it your way.* | nothing | The player finishes Ravager. |
 

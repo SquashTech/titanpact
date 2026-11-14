@@ -477,6 +477,7 @@ export function CombatantCard({
       className={classes.join(' ')}
       style={typeStyle}
       data-types={types.join(' ')}
+      data-hero={hero.id}
       onClick={handleCardClick}
       role={canTarget || onInspect ? 'button' : undefined}
       data-sfx={canTarget ? 'ui.target' : undefined}

@@ -676,8 +676,6 @@ export function FightScreen({
   const [menuOpen, setMenuOpen] = useState(false);
   /** Quit is armed by a first tap and fires on the second; reset whenever the menu opens. */
   const [confirmingQuit, setConfirmingQuit] = useState(false);
-  /** Bench hero tapped but not yet confirmed in the forced-replacement panel. Reset after each confirm (a double KO opens two in sequence). */
-  const [replacementPick, setReplacementPick] = useState<string | null>(null);
   /** A forced replacement resolves outside a round, so it has no beat to carry its send-out; this holds the arrival for one animation. */
   const [summonedIds, setSummonedIds] = useState<readonly string[]>([]);
   /** A run fight opens with the player's slots empty (run/squad.ts openingSquad): the leads are picked once the enemy's are on the field. */
@@ -794,6 +792,11 @@ export function FightScreen({
   }
 
   const playerActiveAlive = aliveActiveIdsOn(combat, PLAYER_SIDE);
+  /** Who last stood in each player slot: a knockout empties the slot, and the replacement names who fell. */
+  const lastInSlot = useRef<(string | null)[]>([null, null]);
+  combat.active[PLAYER_SIDE].forEach((id, slot) => {
+    if (id) lastInSlot.current[slot] = id;
+  });
   const enemyActiveAlive = aliveActiveIdsOn(combat, AI_SIDE);
   const playerBench = replacementCandidates(combat, PLAYER_SIDE);
   const pactRound = pactRoundOf(combat, combat.round);
@@ -897,9 +900,10 @@ export function FightScreen({
     const ctx: FightTipContext = { round: combat.round, nodeType: tips.nodeType };
     return matchFightTip(FIGHT_TIPS, ctx, tips.seenIds);
   })();
-  // A lesson cue's control tips land at the same moment a fight tip would: the top of the round's command phase, one at a time.
+  // A lesson cue's control tips land where a fight tip would, the top of the round's command phase, or at its named hero's command.
   const storyTip =
-    winner === null && storyTips && canAct && actionStep === 0 && Object.keys(pending).length === 0
+    winner === null && storyTips && canAct && (storyCue?.actor !== undefined || (actionStep === 0 && Object.keys(pending).length === 0))
+      && (!storyCue?.actor || (actingId === combatantIdFor(PLAYER_SIDE, storyCue.actor) && !pending[actingId]))
       ? (storyCue?.tips ?? []).find((tip) => !storyTips.seenIds.includes(tip.id)) ?? null
       : null;
   // The guide's hand waits for the round's tips.
@@ -1232,7 +1236,6 @@ export function FightScreen({
     mvpTally.current = tallyMvpEvents(mvpTally.current, [...result.events, ...entry.events], entry.state, PLAYER_SIDE, statuses);
     reportCommandPhase(entry.state);
     appendLog(formatEvents([...result.events, ...entry.events], allCombatants, entry.state.combatants, moves));
-    setReplacementPick(null);
     summon([benchedCombatantId]);
   }
 
@@ -1375,7 +1378,6 @@ export function FightScreen({
 
   function sendReplacements(picks: string[]) {
     setReplacementPicks(picks);
-    setReplacementPick(null);
     if (picks.length >= versusOwed.mine) versus!.channel.send({ kind: 'replace', round: combat.round, ids: picks });
   }
 
@@ -1744,7 +1746,7 @@ export function FightScreen({
       return (
         <div className="combatant-card empty-slot" key={`empty-${side}-${slot}`}>
           <span className="fainted-tag">KO</span>
-          <div className="combatant-name">Choose replacement below</div>
+          <div className="combatant-name">Choose a replacement</div>
         </div>
       );
     }
@@ -2063,52 +2065,6 @@ export function FightScreen({
             onInspect={setInspecting}
           />
         )}
-        {/* Forced replacement: select-then-Confirm, since it cannot be undone once committed. */}
-        {!resolving &&
-          openReplacementSlots.length > 0 &&
-          (() => {
-            const slot = openReplacementSlots[0];
-            return (
-              <div className="action-panel target-panel">
-                <div className="target-panel-header">
-                  <span className="target-panel-title">
-                    Choose a Replacement{openReplacementSlots.length > 1 ? ' (1 of 2)' : ''}:
-                  </span>
-                </div>
-                {/* The finale benches four: at 2x the figures could not share the row, so past two
-                    candidates the cards go to 1x and the row stays one row. */}
-                <div className={`bench-row${replacementBench.length > 2 ? ' is-crowded' : ''}`}>
-                  {replacementBench.map((benchId) => {
-                    const benchCombatant = combat.combatants[benchId];
-                    const benchHero = allCombatants[benchCombatant.heroId];
-                    return (
-                      <CombatantCard
-                        key={benchId}
-                        hero={benchHero}
-                        combatant={benchCombatant}
-                        level={levelFor(benchId)}
-                        targetable={!guidedReplacementId || benchId === guidedReplacementId}
-                        guide={guidedReplacementId ? (benchId === guidedReplacementId ? 'lit' : 'dim') : undefined}
-                        selected={replacementPick === benchId}
-                        onSelectTarget={() => setReplacementPick(benchId)}
-                        onInspect={() => setInspecting(benchId)}
-                        popups={popups[benchId]}
-                        statCtx={statCtx}
-                      />
-                    );
-                  })}
-                </div>
-                <PlateButton
-                  compact
-                  className="replacement-confirm-button"
-                  disabled={!replacementPick}
-                  onClick={() => replacementPick && handleForcedReplacement(slot, replacementPick)}
-                >
-                  Confirm
-                </PlateButton>
-              </div>
-            );
-          })()}
         {friendWait && (
           <div className="action-panel target-panel">
             <div className="target-panel-header">
@@ -2511,6 +2467,30 @@ export function FightScreen({
         </div>
       )}
 
+      {/* A knockout's replacement: the switch panel, with no way to put it off. */}
+      {!resolving &&
+        openReplacementSlots.length > 0 &&
+        (() => {
+          const slot = openReplacementSlots[0];
+          const fallenId = lastInSlot.current[slot];
+          const fallen = fallenId ? combat.combatants[fallenId] : undefined;
+          if (!fallen) return null;
+          return (
+            <SwitchInPanel
+              key={`${slot}-${replacementBench.join()}`}
+              outgoingHero={allCombatants[fallen.heroId]}
+              outgoing={fallen}
+              typeChart={typeChart}
+              moves={moves}
+              enemies={enemyEntries()}
+              options={benchOptions(() => false, () => false).filter((o) => replacementBench.includes(o.combatantId))}
+              onPick={(benchId) => handleForcedReplacement(slot, benchId)}
+              onInspect={(benchId) => setInspecting(benchId)}
+              guidedId={guidedReplacementId ?? undefined}
+            />
+          );
+        })()}
+
       {/* Stage two of a switchesUserOut declaration — the same panel as a plain switch, committing a move instead. Dismissing drops the whole move. */}
       {pivoting &&
         (() => {
@@ -2654,9 +2634,7 @@ export function FightScreen({
               ? leadsReady
                 ? '.bottom-action-take-field'
                 : '.lead-pick-grid .squad-slot.is-guided'
-              : replacementPick
-                ? '.replacement-confirm-button'
-                : '.bench-row .combatant-card.is-guided'
+              : '.switch-pick.is-guided:not(.is-staged), .switch-send.is-guided .plate-cta'
           }
         />
       )}

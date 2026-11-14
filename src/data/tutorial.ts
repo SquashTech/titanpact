@@ -68,11 +68,11 @@ export const TUTORIAL_CUES: readonly StoryCue[] = [
   { round: 0, at: 'replacement', point: true, tips: [TUTORIAL_REPLACEMENT_TIP] },
   { round: 1, point: true, tips: [prompt('move', 'Moves', 'Pick a move, then who it hits. The fastest hero acts first.')] },
   { round: 2, point: true, tips: [prompt('switch', 'Switching', 'Switch in a hero who takes the hit better. Stone shrugs off Storm and Fire.')] },
-  { round: 3, point: true, tips: [prompt('spread', 'Spread', 'Some moves hit both foes at once.')] },
-  { round: 4, point: true, tips: [prompt('kinds', 'Physical and Magical', '[physical] *Defense* stops physical hits. [magical] *Wisdom* stops magic. This foe has high Wisdom.')] },
+  { round: 3, point: true, actor: 'cairn', tips: [prompt('spread', 'Spread', 'Some moves hit both foes at once.')] },
+  { round: 4, point: true, tips: [prompt('kinds', 'Physical and Magical', '[physical] *Defense* stops physical hits. [magical] *Wisdom* stops magic. *Mesmerid* has high Wisdom, so magic barely hurts it.')] },
   { round: 5, point: true, tips: [prompt('rest', 'Mana', 'Moves cost *Mana*. Out of it, *Rest* fills it back up.')] },
   { round: 6, point: true, tips: [prompt('burn', 'Burn', 'A *Burn* keeps hurting after the hit, at the end of each round.')] },
-  { round: 7, point: true, tips: [prompt('heal', 'Healing', 'Some moves heal an ally.')] },
+  { round: 7, point: true, actor: 'solace', tips: [prompt('heal', 'Healing', 'Some moves heal an ally.')] },
   { round: 8, tips: [prompt('yours', 'Your Turn', 'Finish it your way.')] },
 ];
 

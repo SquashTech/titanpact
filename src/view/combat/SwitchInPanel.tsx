@@ -28,6 +28,7 @@ export interface SwitchOption {
 }
 
 interface Props {
+  /** Who leaves the slot: the hero switching out, or the one who fell. */
   outgoingHero: HeroDefinition;
   outgoing: Combatant;
   options: readonly SwitchOption[];
@@ -37,7 +38,8 @@ interface Props {
   moves: Record<string, MoveDefinition>;
   onPick: (benchCombatantId: string) => void;
   onInspect: (benchCombatantId: string) => void;
-  onClose: () => void;
+  /** Absent for a knockout's replacement, which cannot be put off. */
+  onClose?: () => void;
   /** A lesson's guided pick: lit for the guide's hand, and the send button lit once it is staged. */
   guidedId?: string;
 }
@@ -97,7 +99,7 @@ function Gauge({ kind, value, max, shield = 0 }: { kind: 'hp' | 'mana'; value: n
  * The scrim above the sheet closes it.
  */
 export function SwitchInPanel({ outgoingHero, outgoing, options, enemies, typeChart, moves, onPick, onInspect, onClose, guidedId }: Props) {
-  const firstOpen = options.find((o) => o.selected && !o.claimedByOther) ?? options.find((o) => !o.claimedByOther);
+  const firstOpen = options.find((o) => o.combatantId === guidedId) ?? options.find((o) => o.selected && !o.claimedByOther) ?? options.find((o) => !o.claimedByOther);
   const [stagedId, setStagedId] = useState(firstOpen?.combatantId);
   const staged = options.find((o) => o.combatantId === stagedId && !o.claimedByOther) ?? firstOpen;
   if (!staged) return null;
@@ -109,15 +111,17 @@ export function SwitchInPanel({ outgoingHero, outgoing, options, enemies, typeCh
   const ready = hasAffordableMove(combatant.currentMana, staged.moveIds, moves, combatant.moveManaDiscounts);
 
   return (
-    <div className="log-overlay switch-overlay" onClick={onClose}>
+    <div className="log-overlay switch-overlay" onClick={() => onClose?.()}>
       <div className="switch-sheet" onClick={(e) => e.stopPropagation()}>
         <div
           className="switch-stage"
           style={{ '--rgb': getTypeColorRgb(types[0]), '--out-rgb': getTypeColorRgb(outgoingTypes[0]) } as CSSProperties}
         >
-          <button type="button" className="switch-close" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
+          {onClose && (
+            <button type="button" className="switch-close" onClick={onClose} aria-label="Close">
+              ✕
+            </button>
+          )}
 
           <div className="switch-handoff">
             <div className="switch-handoff-bar is-from">
@@ -202,7 +206,7 @@ export function SwitchInPanel({ outgoingHero, outgoing, options, enemies, typeCh
               <button
                 key={option.combatantId}
                 type="button"
-                className={`switch-pick${option.combatantId === staged.combatantId ? ' is-staged' : ''}${option.claimedByOther ? ' is-claimed' : ''}${option.combatantId === guidedId ? ' is-guided' : ''}`}
+                className={`switch-pick${option.combatantId === staged.combatantId ? ' is-staged' : ''}${option.claimedByOther ? ' is-claimed' : ''}${guidedId ? (option.combatantId === guidedId ? ' is-guided' : ' is-unguided') : ''}`}
                 style={{ '--rgb': getTypeColorRgb(optionTypes[0]), animationDelay: `${80 + i * 50}ms` } as CSSProperties}
                 aria-disabled={option.claimedByOther}
                 aria-pressed={option.combatantId === staged.combatantId}
@@ -238,7 +242,7 @@ export function SwitchInPanel({ outgoingHero, outgoing, options, enemies, typeCh
         >
           Send {hero.name} in
         </PlateButton>
-        <p className="switch-note">Comes in without acting this round.</p>
+        {onClose && <p className="switch-note">Comes in without acting this round.</p>}
       </div>
     </div>
   );

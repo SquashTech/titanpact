@@ -148,6 +148,8 @@ export interface StoryCue {
   round: number;
   /** Shown at the lead pick or the first forced replacement instead of a round's command phase; `round` is then ignored. */
   at?: 'leads' | 'replacement';
+  /** The tips wait for this hero's command (a roster id), not the round's first. */
+  actor?: string;
   /**
    * Controls taught at the top of this round (docs/stories.md §1c), in order, each once an account:
    * plain game words, the thing each names lit on the board or drawn (view/run/tipStaging.ts,
