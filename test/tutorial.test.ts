@@ -95,16 +95,20 @@ test('tutorial: round 5 finds Cinder unable to pay for any move, and it Rests', 
   assert.ok(r5.some((e) => e.type === 'Rested' && e.combatantId === id('A', 'cinder')));
 });
 
-test('tutorial: round 6 knocks Cairn out, and the Burn finishes the foe it was set on', () => {
-  assert.deepStrictEqual(fainted(r6), [id('A', 'cairn'), id('B', 'mesmerid')]);
-  const tick = r6.findIndex((e) => e.type === 'StatusTicked' && e.statusId === 'Burn' && e.combatantId === id('B', 'mesmerid'));
-  const fall = r6.findIndex((e) => e.type === 'Fainted' && e.combatantId === id('B', 'mesmerid'));
-  assert.ok(tick >= 0 && fall > tick, 'the Burn tick is what drops it');
+const burnTicks = (events: CombatEvent[], on: string) => events.filter((e) => e.type === 'StatusTicked' && e.statusId === 'Burn' && e.combatantId === on);
+
+test('tutorial: round 6 sets the Burn on the biggest foe, and Ravager knocks Cairn out before its spread', () => {
+  const ravager = id('B', 'ravager');
+  assert.deepStrictEqual(fainted(r6), [id('A', 'cairn')]);
+  assert.strictEqual(burnTicks(r6, ravager).length, 1);
+  assert.ok(!r6.some((e) => e.type === 'DamageDealt' && e.moveId === 'tremor'), 'Cairn falls before it acts');
   assert.deepStrictEqual(played.sent, [id('A', 'solace')]);
 });
 
-test('tutorial: round 7 heals, and the party leaves hurt with one hero down and the last foe standing', () => {
+test('tutorial: round 7 heals, finishes Mesmerid while the Burn ticks on, and leaves the last foe standing', () => {
   assert.ok(r7.some((e) => e.type === 'Healed' && e.targetCombatantId === id('A', 'cinder')));
+  assert.deepStrictEqual(fainted(r7), [id('B', 'mesmerid')]);
+  assert.strictEqual(burnTicks(r7, id('B', 'ravager')).length, 1);
   assert.strictEqual(fightWinner(played.state), null);
   assert.ok(!played.state.combatants[id('B', 'ravager')].fainted);
   const cinder = played.state.combatants[id('A', 'cinder')];

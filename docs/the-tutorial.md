@@ -82,14 +82,15 @@ idea.
 | 3 | *Some moves hit both foes at once.* | Singe → Kindlehide; Tremor | Tremor drops both. |
 | 4 | *Defense stops physical hits. Wisdom stops magic. Mesmerid has high Wisdom, so magic barely hurts it.* (Mesmerid lit) | Singe → Mesmerid; Tremor | Singe 71 against Tremor 27 on Mesmerid. |
 | 5 | *Moves cost Mana. Out of it, Rest fills it back up.* | Cinder Rests; Tremor | Cinder holds 15, every move costs 20. |
-| 6 | *A Burn keeps hurting after the hit.* | Set Alight → Mesmerid; Tremor | Ravager drops Cairn first; the Burn tick finishes Mesmerid. |
+| 6 | *A Burn hurts at the end of each round, and hurts the biggest foes most.* | Set Alight → Ravager; Tremor | Ravager drops Cairn before Tremor; the Burn ticks on Ravager. |
 | — | *A hero who falls is out for the fight. Send in another from the bench.* | Solace | The replacement, on the switch panel (every fight's, since 2026-11-14). |
-| 7 | *Some moves heal an ally.* | Mend → Cinder; Singe → Ravager | Ravager left at 67. |
+| 7 | *Some moves heal an ally.* | Mend → Cinder; Singe → Mesmerid | Mesmerid falls; the Burn ticks again, Ravager left at 81. |
 | 8 | *Finish it your way.* | nothing | The player finishes Ravager. |
 
 **Changed from the draft in building it:** Immolate is out (Cinder's Intelligence is 25, so a tripled
-Immolate read as a small number; the Burn finishing a foe is the beat instead, as First Light's Burn
-lesson had it). Passives get no prompt: Waystone announces itself by name every round from round 2,
+Immolate read as a small number). The Burn went first on Mesmerid to finish it, but Singe or Tremor
+finished it as well, so Set Alight was never the right call; it goes on Ravager, the biggest foe, since
+a Burn takes a share of max HP (2026-11-14, per user direction). Passives get no prompt: Waystone announces itself by name every round from round 2,
 and the open fight's own kits fire theirs. Kindlehide and Mesmerid replaced Emberling and Ingot, so
 the spread lands on two foes the Singe could not drop alone, and the physical/magical gap is 2.6×.
 
