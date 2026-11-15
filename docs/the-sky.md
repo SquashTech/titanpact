@@ -514,6 +514,14 @@ it with a babble (`blip.*` in `sounds.ts`, on the SFX bus) and fade on their own
   first over it, then the ridge goes to black and The Hunt starts. The scene plays on its own; no
   tap skips it. The premise lines and First Light's second line are first pass; the user wrote the
   hello, the hand-off line and First Light's first.
+- **The opening is six line cards** (2026-11-14, per user direction, replacing the comic page and
+  the ridge with Valor and Fang): one line a card over an ambient picture, playing on its own, a tap
+  moving to the next card sooner (`OpeningCards`, lines in `src/data/opening.ts`). The cards are
+  the falling Titan, the impact's ring, the smoke over the ridge cropped above the heroes, four
+  Guardians, the Titan's eyes opening, and the last line on the dark: *Long ago, something wicked
+  fell from the stars. / It could not be killed, only sealed away. / Now the seal is failing. /
+  Four Guardians must be felled to bind it again. / If we fail, the Titan will destroy us all. /
+  We must seal the Pact.* The four drafts compared are in `art/concepts/intro-lines/`.
 - **A lesson shows its tips every time it is played** (2026-10-24): the welcome and every control
   tip came back only once an account, so a lesson replayed from the sky taught nothing. They are
   still recorded on the account.

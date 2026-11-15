@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { overlayHost } from '../shared/overlayHost';
 import { Blip, type BlipHandle } from './Blip';
-import { OpeningFall } from './OpeningFall';
+import { OpeningCards } from './OpeningCards';
 
 // A scene over the sky (docs/the-sky.md §1): the sky dims, Blip flies up out of the way while it
 // plays, holds on its last frame a moment, then flies back to its seat.
@@ -54,7 +54,7 @@ export function BlipBeat({ scene, onDone, from }: Props) {
 
   return createPortal(
     <div ref={stageRef} className={`blip-beat${sceneUp ? ' has-scene' : ''}${leaving ? ' is-leaving' : ''}`}>
-      {sceneUp && scene === 'fall' && <OpeningFall onSettled={sceneSettled} />}
+      {sceneUp && scene === 'fall' && <OpeningCards onSettled={sceneSettled} />}
       {home && <Blip ref={blip} home={home} active />}
     </div>,
     overlayHost()

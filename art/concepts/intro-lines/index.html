@@ -1,0 +1,371 @@
+<title>Opening Lines</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=Pixelify+Sans:wght@400;600&display=swap">
+<style>
+/* Two phone stages side by side, each playing its cards over a pixel night; the lines sit editable under each. */
+:root {
+  --night: #080a18;
+  --panel: #11142a;
+  --edge: #262a4a;
+  --ink: #e8e6f4;
+  --dim: #8c8ab0;
+  --titan: rgb(242, 71, 220);
+  --gilt: #d9b45a;
+  --wood: #6b4a2b;
+  --font-line: 'Spectral', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Pixelify Sans', ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+html, body { background: var(--night); color: var(--ink); }
+body {
+  font-family: var(--font-line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+h1, h2 { font-family: var(--font-ui); font-weight: 600; letter-spacing: 0.04em; margin: 0; text-wrap: balance; }
+h1 { font-size: 1.5rem; text-align: center; }
+h2 { font-size: 1.05rem; color: var(--dim); }
+.bar { display: flex; justify-content: center; gap: 10px; margin: 16px 0 24px; flex-wrap: wrap; }
+button {
+  font-family: var(--font-ui); font-size: 0.95rem; color: var(--ink);
+  background: var(--panel); border: 1px solid var(--edge); border-radius: 4px;
+  padding: 8px 14px; cursor: pointer;
+}
+button:hover { border-color: var(--dim); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--gilt); outline-offset: 2px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 28px; max-width: 1280px; margin: 0 auto; }
+.panel { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel > header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.stage {
+  position: relative; width: 100%; max-width: 320px; aspect-ratio: 9 / 16; margin: 0 auto;
+  background: #000; border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; cursor: pointer;
+}
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.pips { position: absolute; top: 10px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; }
+.pips i { width: 14px; height: 3px; background: rgba(255,255,255,0.18); }
+.pips i.on { background: rgba(255,255,255,0.7); }
+.caption {
+  position: absolute; left: 8%; right: 8%; bottom: 17%;
+  font-size: clamp(1rem, 4.4vw, 1.2rem); line-height: 1.45; text-align: center;
+  text-shadow: 0 1px 8px #000, 0 0 2px #000; text-wrap: balance;
+}
+.seal {
+  position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%);
+  font-family: var(--font-ui); font-size: 0.95rem; color: #fff3d6; white-space: nowrap;
+  background: var(--wood); border: 2px solid var(--gilt); border-radius: 3px; padding: 6px 16px;
+  pointer-events: none; transition: opacity 0.8s; opacity: 0;
+}
+.lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.lines li { display: grid; grid-template-columns: 1.4em 7.2em 1fr 1.8em; gap: 6px; align-items: center; }
+.lines li.cur .n { color: var(--gilt); }
+.n { font-family: var(--font-ui); color: var(--dim); text-align: right; font-variant-numeric: tabular-nums; }
+.lines input, .lines select {
+  min-width: 0; font: inherit; font-size: 0.92rem; color: var(--ink);
+  background: var(--panel); border: 1px solid var(--edge); border-radius: 3px; padding: 5px 7px;
+}
+.lines select { font-family: var(--font-ui); font-size: 0.85rem; }
+.x { padding: 4px 0; color: var(--dim); }
+.rowbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+.rowbtns button { font-size: 0.85rem; padding: 6px 10px; }
+@media (max-width: 420px) {
+  .lines li { grid-template-columns: 1.2em 1fr 1.8em; }
+  .lines li select { grid-column: 2; }
+  .lines li input { grid-column: 2; }
+  .lines li .x { grid-row: 1; grid-column: 3; }
+}
+</style>
+
+<h1>Opening Lines</h1>
+<div class="bar">
+  <button id="playBoth" type="button">Play both from the start</button>
+</div>
+
+<div class="grid">
+  <section class="panel" data-key="draft">
+    <header><h2>Your draft</h2></header>
+    <div class="stage" role="button" tabindex="0" aria-label="Next card"><canvas width="180" height="320"></canvas><div class="pips"></div><div class="caption"></div><div class="seal">Seal the Pact</div></div>
+    <ol class="lines"></ol>
+    <div class="rowbtns"><button type="button" class="add">Add a card</button><button type="button" class="reset">Restore the original</button></div>
+  </section>
+  <section class="panel" data-key="lore">
+    <header><h2>Matches the lore</h2></header>
+    <div class="stage" role="button" tabindex="0" aria-label="Next card"><canvas width="180" height="320"></canvas><div class="pips"></div><div class="caption"></div><div class="seal">Seal the Pact</div></div>
+    <ol class="lines"></ol>
+    <div class="rowbtns"><button type="button" class="add">Add a card</button><button type="button" class="reset">Restore the original</button></div>
+  </section>
+  <section class="panel" data-key="pact">
+    <header><h2>Seal the Pact</h2></header>
+    <div class="stage" role="button" tabindex="0" aria-label="Next card"><canvas width="180" height="320"></canvas><div class="pips"></div><div class="caption"></div><div class="seal">Seal the Pact</div></div>
+    <ol class="lines"></ol>
+    <div class="rowbtns"><button type="button" class="add">Add a card</button><button type="button" class="reset">Restore the original</button></div>
+  </section>
+  <section class="panel" data-key="pactTight">
+    <header><h2>Seal the Pact, tightened</h2></header>
+    <div class="stage" role="button" tabindex="0" aria-label="Next card"><canvas width="180" height="320"></canvas><div class="pips"></div><div class="caption"></div><div class="seal">Seal the Pact</div></div>
+    <ol class="lines"></ol>
+    <div class="rowbtns"><button type="button" class="add">Add a card</button><button type="button" class="reset">Restore the original</button></div>
+  </section>
+</div>
+
+<script>
+const ORIGINAL = {
+  draft: [
+    ['fall', 'Long ago, something evil fell from the stars.'],
+    ['spread', 'Its calamity spread to the corners of the land.'],
+    ['forgotten', 'Wicked guardians arose, defending the seals that gave the Titan its power.'],
+    ['heroes', 'Many will try to break the seal, ending the Titan’s reign upon the land.'],
+    ['title', 'This is the story of the band of heroes that succeeded.'],
+  ],
+  lore: [
+    ['fall', 'Long ago, a Titan fell from the stars.'],
+    ['bound', 'It could not be killed. Only bound.'],
+    ['wardens', 'Wardens held the seal, and the Titan slept.'],
+    ['forgotten', 'But they forgot what they were guarding.'],
+    ['open', 'Now the seal stands open.'],
+    ['title', 'Lock it again.'],
+  ],
+  pact: [
+    ['fall', 'Long ago, something wicked fell from the stars.'],
+    ['bound', 'It could not be killed, only sealed with powerful magic.'],
+    ['forgotten', 'Four Guardians must be felled to cast the spell.'],
+    ['spread', 'The Titan will destroy us all if we fail.'],
+    ['title', 'We must seal the Pact.'],
+  ],
+  pactTight: [
+    ['fall', 'Long ago, something wicked fell from the stars.'],
+    ['bound', 'It could not be killed, only sealed away.'],
+    ['open', 'Now the seal is failing.'],
+    ['forgotten', 'Four Guardians must be felled to bind it again.'],
+    ['spread', 'If we fail, the Titan will destroy us all.'],
+    ['title', 'We must seal the Pact.'],
+  ],
+};
+const SCENES = { fall: 'Falling star', spread: 'Spreading', bound: 'Bound', wardens: 'Wardens', forgotten: 'Forgotten', open: 'Open seal', heroes: 'Heroes', title: 'Title' };
+
+const W = 180, H = 320, MAG = '242,71,220';
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function rng(s) { return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+const R = rng(11);
+const STARS = Array.from({ length: 95 }, () => ({ x: R() * W | 0, y: R() * H * 0.72 | 0, b: R(), p: R() * 6 }));
+const MOTES = Array.from({ length: 40 }, () => ({ x: R(), s: 0.3 + R() * 0.7, p: R() }));
+
+function sky(c, t, top, bot) {
+  const g = c.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, top || '#06081a'); g.addColorStop(1, bot || '#1b1438');
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
+  for (const s of STARS) {
+    const a = 0.3 + 0.7 * s.b * (reduce ? 0.7 : Math.abs(Math.sin(t * 0.7 + s.p)));
+    c.fillStyle = `rgba(225,228,255,${a.toFixed(2)})`; c.fillRect(s.x, s.y, 1, 1);
+  }
+}
+function hills(c, y, col, amp, seed) {
+  c.fillStyle = col; c.beginPath(); c.moveTo(0, H);
+  for (let x = 0; x <= W; x += 2) c.lineTo(x, Math.round(y + Math.sin(x * 0.045 + seed) * amp + Math.sin(x * 0.12 + seed * 2) * amp * 0.4));
+  c.lineTo(W, H); c.closePath(); c.fill();
+}
+function glow(c, x, y, r, rgb, a) {
+  const g = c.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`);
+  c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
+}
+function ring(c, cx, cy, r, gap, col, cracks) {
+  c.lineCap = 'butt';
+  for (let i = 0; i < 4; i++) {
+    const mid = -Math.PI / 4 + i * Math.PI / 2;
+    const ox = Math.cos(mid) * gap, oy = Math.sin(mid) * gap;
+    c.strokeStyle = '#1a1a26'; c.lineWidth = 8;
+    c.beginPath(); c.arc(cx + ox, cy + oy, r, mid - 0.68, mid + 0.68); c.stroke();
+    c.strokeStyle = col; c.lineWidth = 5;
+    c.beginPath(); c.arc(cx + ox, cy + oy, r, mid - 0.66, mid + 0.66); c.stroke();
+    if (cracks) {
+      c.strokeStyle = `rgba(${MAG},0.8)`; c.lineWidth = 1;
+      const a = mid + 0.2;
+      c.beginPath(); c.moveTo(cx + ox + Math.cos(a) * (r - 2), cy + oy + Math.sin(a) * (r - 2)); c.lineTo(cx + ox + Math.cos(a + 0.08) * (r + 2), cy + oy + Math.sin(a + 0.08) * (r + 2)); c.stroke();
+    }
+  }
+}
+function figure(c, x, y, body, eye, blink) {
+  x = Math.round(x); y = Math.round(y);
+  c.fillStyle = body;
+  c.fillRect(x - 3, y - 12, 7, 12);
+  c.fillRect(x - 4, y - 4, 9, 4);
+  c.fillRect(x - 2, y - 17, 5, 5);
+  if (eye && blink) { c.fillStyle = `rgb(${MAG})`; c.fillRect(x, y - 15, 1, 1); c.fillStyle = `rgba(${MAG},0.35)`; c.fillRect(x - 1, y - 16, 3, 3); c.fillStyle = `rgb(${MAG})`; c.fillRect(x, y - 15, 1, 1); }
+}
+function chains(c, cx, cy, r) {
+  c.fillStyle = '#4a4a5e';
+  const ends = [[0, 70], [W, 70], [0, 270], [W, 270]];
+  for (const [ex, ey] of ends) {
+    const a = Math.atan2(ey - cy, ex - cx);
+    const sx = cx + Math.cos(a) * (r + 3), sy = cy + Math.sin(a) * (r + 3);
+    const len = Math.hypot(ex - sx, ey - sy);
+    for (let d = 0; d < len; d += 4) c.fillRect(Math.round(sx + (ex - sx) * d / len), Math.round(sy + (ey - sy) * d / len), 2, 2);
+  }
+}
+const CX = 90, CY = 165, RR = 38;
+const WARD = [[CX, CY - RR - 14], [CX + RR + 16, CY + 6], [CX, CY + RR + 22], [CX - RR - 16, CY + 6]];
+
+const DRAW = {
+  fall(c, t, k) {
+    sky(c, t);
+    const p = Math.min(1, k * 1.25);
+    const hx = 160 - p * 95, hy = -10 + p * 238;
+    for (let i = 18; i >= 0; i--) {
+      const q = Math.max(0, p - i * 0.025);
+      c.fillStyle = `rgba(${MAG},${(1 - i / 19) * 0.9})`;
+      c.fillRect(Math.round(160 - q * 95), Math.round(-10 + q * 238), i < 3 ? 2 : 1, i < 3 ? 2 : 1);
+    }
+    glow(c, hx, hy, 10, MAG, 0.6);
+    if (p >= 1) glow(c, hx, 232, 30 + (k - 0.8) * 120, MAG, 0.45);
+    hills(c, 240, '#0d0b1a', 6, 1);
+  },
+  spread(c, t, k) {
+    sky(c, t, '#07071a', '#2a1230');
+    hills(c, 205, '#15112a', 9, 2.4);
+    const w = 20 + k * 170;
+    const g = c.createLinearGradient(0, 215, 0, 260);
+    g.addColorStop(0, `rgba(${MAG},0)`); g.addColorStop(0.5, `rgba(${MAG},0.35)`); g.addColorStop(1, `rgba(${MAG},0)`);
+    c.fillStyle = g; c.fillRect(CX - w / 2, 215, w, 45);
+    hills(c, 238, '#0b0916', 5, 0.7);
+    c.fillStyle = `rgba(${MAG},0.75)`;
+    for (let i = 0; i < 9; i++) {
+      const dir = i % 2 ? 1 : -1, reach = Math.min(1, k * 1.3) * (30 + i * 7);
+      for (let d = 0; d < reach; d += 3) c.fillRect(Math.round(CX + dir * d), Math.round(250 + Math.sin(d * 0.2 + i) * 3 + i), 1, 1);
+    }
+  },
+  bound(c, t, k) {
+    sky(c, t, '#050613', '#10101f');
+    chains(c, CX, CY, RR);
+    ring(c, CX, CY, RR, 0, '#8a8aa0');
+    const a = 0.25 + 0.15 * Math.sin(t * 1.4);
+    c.fillStyle = `rgba(${MAG},${a.toFixed(2)})`; c.fillRect(CX - 6, CY, 13, 1);
+  },
+  wardens(c, t, k) {
+    sky(c, t, '#050613', '#141226');
+    glow(c, CX, CY, 80, '217,180,90', 0.12);
+    chains(c, CX, CY, RR);
+    ring(c, CX, CY, RR, 0, '#a7a18a');
+    c.fillStyle = `rgba(${MAG},0.2)`; c.fillRect(CX - 6, CY, 13, 1);
+    for (const [x, y] of WARD) { glow(c, x, y - 8, 14, '217,180,90', 0.3); figure(c, x, y, '#d9c79a'); }
+  },
+  forgotten(c, t, k) {
+    sky(c, t, '#050613', '#16101f');
+    ring(c, CX, CY, RR, 2, '#6e6c78', true);
+    c.fillStyle = `rgba(${MAG},0.4)`; c.fillRect(CX - 7, CY - 1, 15, 2);
+    WARD.forEach(([x, y], i) => {
+      figure(c, x, y, '#2d3a2e', true, reduce || Math.sin(t * 2 + i * 1.7) > -0.85);
+      c.fillStyle = '#3f6b3a';
+      const n = Math.floor(4 + k * 10);
+      const r2 = rng(30 + i);
+      for (let v = 0; v < n; v++) c.fillRect(Math.round(x - 4 + r2() * 9), Math.round(y - r2() * 14 * Math.min(1, k * 1.4 + 0.2)), 1, 1);
+    });
+  },
+  open(c, t, k) {
+    sky(c, t, '#06051a', '#1c0f2c');
+    const g = c.createLinearGradient(0, 0, 0, CY);
+    g.addColorStop(0, `rgba(${MAG},0)`); g.addColorStop(1, `rgba(${MAG},${(0.25 + k * 0.4).toFixed(2)})`);
+    c.fillStyle = g; c.fillRect(CX - 6 - k * 10, 0, 12 + k * 20, CY);
+    glow(c, CX, CY, 30 + k * 30, MAG, 0.5);
+    ring(c, CX, CY, RR, 3 + k * 20, '#6e6c78', true);
+    for (const m of MOTES) {
+      const y = H - ((t * 18 * m.s + m.p * H) % H);
+      const x = CX + (m.x - 0.5) * (20 + k * 60) + Math.sin(y * 0.05 + m.p * 6) * 3;
+      c.fillStyle = `rgba(${MAG},${(0.3 + m.s * 0.6).toFixed(2)})`; c.fillRect(Math.round(x), Math.round(y), 1, 1);
+    }
+  },
+  heroes(c, t, k) {
+    sky(c, t, '#0a0b22', '#3a2340');
+    glow(c, 150, 214, 46, MAG, 0.35);
+    hills(c, 212, '#1d1630', 8, 3.1);
+    hills(c, 236, '#0c0a16', 4, 5.2);
+    for (let i = 0; i < 4; i++) {
+      const x = 22 + k * 40 + i * 11, bob = reduce ? 0 : (Math.sin(t * 6 + i * 1.3) > 0 ? 1 : 0);
+      figure(c, x, 236 - bob - Math.round(Math.sin(x * 0.045 + 5.2) * 4 + Math.sin(x * 0.12 + 10.4) * 1.6), '#08070e');
+    }
+  },
+  title(c, t, k) {
+    sky(c, t, '#04050f', '#0e0d1f');
+    const close = Math.min(1, k * 1.4);
+    ring(c, CX, CY - 20, RR, 20 * (1 - close), close >= 1 ? '#c9b37a' : '#7a7888');
+    if (close >= 1) glow(c, CX, CY - 20, 60, '217,180,90', 0.22);
+    const a = (1 - close) * 0.6;
+    c.fillStyle = `rgba(${MAG},${a.toFixed(2)})`; c.fillRect(CX - 7, CY - 21, 15, 2);
+  },
+};
+
+const KEY = 'opening-lines-v1';
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+function persist() { try { const o = {}; for (const k in panels) o[k] = panels[k].cards; localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
+
+const panels = {};
+for (const el of document.querySelectorAll('.panel')) {
+  const key = el.dataset.key;
+  const p = panels[key] = {
+    key, el,
+    cards: (saved[key] && saved[key].length ? saved[key] : ORIGINAL[key]).map(r => r.slice()),
+    stage: el.querySelector('.stage'),
+    canvas: el.querySelector('canvas'),
+    cap: el.querySelector('.caption'),
+    seal: el.querySelector('.seal'),
+    pips: el.querySelector('.pips'),
+    list: el.querySelector('.lines'),
+    i: 0, start: performance.now(), done: false,
+  };
+  p.ctx = p.canvas.getContext('2d');
+  p.stage.addEventListener('click', () => step(p));
+  p.stage.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); step(p); } });
+  el.querySelector('.add').addEventListener('click', () => { p.cards.push(['heroes', '']); persist(); renderList(p); renderPips(p); });
+  el.querySelector('.reset').addEventListener('click', () => { p.cards = ORIGINAL[key].map(r => r.slice()); persist(); renderList(p); restart(p); });
+  renderList(p); renderPips(p);
+}
+
+function renderPips(p) {
+  p.pips.innerHTML = p.cards.map((_, j) => `<i class="${j <= p.i ? 'on' : ''}"></i>`).join('');
+  [...p.list.children].forEach((li, j) => li.classList.toggle('cur', j === p.i));
+}
+function renderList(p) {
+  p.list.innerHTML = '';
+  p.cards.forEach((card, j) => {
+    const li = document.createElement('li');
+    const opts = Object.entries(SCENES).map(([v, l]) => `<option value="${v}"${v === card[0] ? ' selected' : ''}>${l}</option>`).join('');
+    li.innerHTML = `<span class="n">${j + 1}</span><select id="${p.key}-scene-${j}" aria-label="Scene for card ${j + 1}">${opts}</select><input id="${p.key}-line-${j}" aria-label="Line for card ${j + 1}"><button type="button" class="x" aria-label="Remove card ${j + 1}">×</button>`;
+    const inp = li.querySelector('input'); inp.value = card[1];
+    inp.addEventListener('input', () => { card[1] = inp.value; persist(); if (p.i === j) p.cap.textContent = card[1]; });
+    inp.addEventListener('focus', () => { goto(p, j); });
+    li.querySelector('select').addEventListener('change', e => { card[0] = e.target.value; persist(); goto(p, j); });
+    li.querySelector('.x').addEventListener('click', () => {
+      if (p.cards.length <= 1) return;
+      p.cards.splice(j, 1); persist(); renderList(p); restart(p);
+    });
+    p.list.appendChild(li);
+  });
+  renderPips(p);
+}
+
+function dur(card) { return 2600 + card[1].length * 55; }
+function goto(p, j) { p.i = j; p.start = performance.now(); p.done = false; p.cap.textContent = p.cards[j][1]; renderPips(p); }
+function restart(p) { goto(p, 0); }
+function step(p) { if (p.i < p.cards.length - 1) goto(p, p.i + 1); else restart(p); }
+document.getElementById('playBoth').addEventListener('click', () => { for (const p of Object.values(panels)) restart(p); });
+for (const p of Object.values(panels)) p.cap.textContent = p.cards[0][1];
+
+function frame(now) {
+  const t = now / 1000;
+  for (const p of Object.values(panels)) {
+    const card = p.cards[p.i], d = dur(card), last = p.i === p.cards.length - 1;
+    let e = now - p.start;
+    if (e > d && !last) { goto(p, p.i + 1); e = 0; }
+    const k = Math.min(1, e / d);
+    const fin = Math.min(1, e / 900);
+    const fout = last ? 1 : Math.min(1, (d - e) / 700);
+    p.cap.style.opacity = reduce ? 1 : Math.max(0, Math.min(fin, fout));
+    p.seal.style.opacity = card[0] === 'title' && k > 0.55 ? 1 : 0;
+    (DRAW[card[0]] || DRAW.fall)(p.ctx, t, k);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>

@@ -39,6 +39,10 @@ An unbound Titan is not malicious. That is the point of the fiction and the reas
 game is not about a villain: a Titan ends humanity the way a season does. There is nobody
 to reason with, only something to be bound to.
 
+**The opening calls it "something wicked"** (2026-11-14, per user direction, `docs/the-sky.md` §1):
+a player's first word for it, not the lore's. The Guardians in it are what must be felled, never
+called wicked.
+
 ## 2. The Ancient half is the seal
 
 This is the load-bearing idea, and it is a **reading of the type chart**, not an invention.
