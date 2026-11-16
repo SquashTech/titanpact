@@ -42,7 +42,7 @@ import { BagPouch } from './BagPouch';
 import { describeOrder, orderMarksFor, type OrderMark, type OrderSource } from './orderMarks';
 import { OrderTrack, type OrderTrackEntry } from './OrderTrack';
 import { EnemyPips } from './EnemyPips';
-import { aimedAt, readEnemyIntent } from './enemyIntent';
+import { sensedDanger } from './dangerSense';
 import { Coin } from '../shared/Coin';
 import { ConsoleGlyph } from './consoleGlyphs';
 import { previewOrder } from '../../engine/combat/priority';
@@ -712,7 +712,6 @@ export function FightScreen({
   const [playbackOrder, setPlaybackOrder] = useState<{ order: RoundOrderEntry[]; reversedSpeed: boolean; begun: string[]; ended: boolean } | null>(null);
   /** Only a React key: consecutive beats can carry identical text, and the headline must remount to replay its arrival. */
   const [beatSeq, setBeatSeq] = useState(0);
-  const [intentOn] = useState(readEnemyIntent);
   /** Per figure, every popup the beat on screen plays there, in order (CombatantCard staggers them). */
   const [popups, setPopups] = useState<Record<string, Popup[]>>({});
   /** Per figure, the element last declared against it. Not cleared per beat: the effect times itself out, so a quick tap never cuts it short. */
@@ -1317,9 +1316,12 @@ export function FightScreen({
       : enemyActiveAlive.map((id) => pickAiAction(combat, id, { ...aiContext, random: derivedRandom(combat, id, 'ai') }));
   }
 
-  const showIntent = intentOn && !versus && !resolving && !winner && !pickingLeads;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const aimed = useMemo(() => (showIntent ? aimedAt(combat, planAiActions(), moves, PLAYER_SIDE) : {}), [showIntent, combat]);
+  const sensing = !versus && !resolving && !winner && !pickingLeads;
+  const sensed = useMemo(
+    () => (sensing ? sensedDanger(combat, planAiActions(), moves, allCombatants, PLAYER_SIDE, effectivenessAgainst) : new Set<string>()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sensing, combat]
+  );
 
   function effectivenessAgainst(move: MoveDefinition, defenderId: string): number {
     const defender = combat.combatants[defenderId];
@@ -1709,7 +1711,7 @@ export function FightScreen({
           summoning={(resolving && !!beat?.summonCombatantIds?.includes(id)) || summonedIds.includes(id)}
           fx={figureFx[id]}
           warded={wardOn(combat, id, passives)}
-          aimedBy={aimed[id]?.map((aimer) => combat.combatants[aimer])}
+          sensesDanger={sensed.has(id)}
         />
       );
     }
@@ -2599,6 +2601,7 @@ export function FightScreen({
               equipmentLookup={equipment}
               statCtx={statCtx}
               scale={statScaleFor(playerRun)}
+              hideMoves={combatant.side !== PLAYER_SIDE}
               onClose={() => setInspecting(null)}
             />
           );

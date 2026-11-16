@@ -173,8 +173,8 @@ interface Props {
   warded?: PassiveId | null;
   /** What the move being targeted would do to THIS hero (forecast.ts) — drawn on its HP bar and beside the effectiveness chip. */
   forecast?: MoveForecast | null;
-  /** The enemies whose move this round would land on THIS hero (enemyIntent.ts), worn over the figure's head. */
-  aimedBy?: readonly Combatant[];
+  /** A super effective hit is aimed at THIS hero this round (dangerSense.ts): it shudders over a red rim. */
+  sensesDanger?: boolean;
   /** A Story's guided round: the one target to tap glows, the others step back (docs/stories.md §5). */
   guide?: 'lit' | 'dim';
 }
@@ -358,7 +358,7 @@ export function CombatantCard({
   summoning,
   warded,
   forecast,
-  aimedBy,
+  sensesDanger,
   guide,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
@@ -446,6 +446,8 @@ export function CombatantCard({
   if (pose === 'closed') classes.push('is-closed-eye');
   if (targetable && !combatant.fainted) classes.push('targetable');
   if (guide) classes.push(guide === 'lit' ? 'is-guided' : 'is-unguided');
+  const sensing = Boolean(sensesDanger && !combatant.fainted);
+  if (sensing) classes.push('senses-danger');
   if (selected) classes.push('selected');
   if (acting) classes.push('acting');
   if (effBadge) classes.push(effBadge.className);
@@ -498,6 +500,7 @@ export function CombatantCard({
       {!compact && typeChips}
       <div className="combatant-stage">
         <span className="combatant-platform" aria-hidden="true" />
+        {sensing && <span className="danger-rim" role="img" aria-label="Senses danger" />}
         <HeroPortrait
           heroId={hero.id}
           pathId={combatant.formPathId}
@@ -505,15 +508,6 @@ export function CombatantCard({
           className={['combatant-portrait', bossClass, titanspawn[hero.id]?.tier === 'late' && 'is-late-spawn'].filter(Boolean).join(' ')}
           pose={pose}
         />
-        {aimedBy && aimedBy.length > 0 && !combatant.fainted && (
-          <span className="aim-mark" aria-label={`Targeted by ${aimedBy.length > 1 ? 'both enemies' : 'an enemy'}`}>
-            {aimedBy.map((c) => (
-              <span key={c.combatantId} className="aim-mark-foe">
-                <HeroPortrait heroId={c.heroId} pathId={c.formPathId} className="aim-mark-portrait" />
-              </span>
-            ))}
-          </span>
-        )}
         {fx && <TypeFx key={fx.key} type={fx.type} kind={fx.kind} count={fx.count} />}
         {shown.filter((p) => p.className === 'popup-blessed').map((p) => <BlessingBreak key={p.key} />)}
       </div>

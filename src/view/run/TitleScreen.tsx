@@ -25,7 +25,6 @@ import { PactButton } from './PactButton';
 import { SEAT, SkyChart, type SkyPlay } from './SkyChart';
 import { BlipGuide } from './BlipGuide';
 import type { ThoughtDefinition } from '../../run/thoughts';
-import { readEnemyIntent, writeEnemyIntent } from '../combat/enemyIntent';
 
 /** First Light's tour (docs/the-sky.md §2e), each step remembered once an account. */
 const TOUR_STARFALL = 'tour.firstLight.starfall';
@@ -167,7 +166,6 @@ export function TitleScreen({
   const [showOptions, setShowOptions] = useState(false);
   const [showLocations, setShowLocations] = useState(false);
   const [showDev, setShowDev] = useState(false);
-  const [intentOn, setIntentOn] = useState(readEnemyIntent);
   const [launching, setLaunching] = useState(false);
   const [confirmingNewRun, setConfirmingNewRun] = useState(false);
   /** The Cycle the Infinite's Enter chose, held while a parked run's deletion is confirmed. */
@@ -367,15 +365,6 @@ export function TitleScreen({
             </button>
             <button className="title-dev-item" onClick={() => runDev(onStartLevel4TestRun)}>
               🧪 Test: Lv4 Squad
-            </button>
-            <button
-              className="title-dev-item"
-              onClick={() => {
-                writeEnemyIntent(!intentOn);
-                setIntentOn(!intentOn);
-              }}
-            >
-              🧪 Enemy intent: {intentOn ? 'on' : 'off'}
             </button>
             <button className="title-dev-item" onClick={() => runDev(onStartStatusTestFight)}>
               🧪 Test: Status FX

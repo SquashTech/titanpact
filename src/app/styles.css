@@ -2914,63 +2914,6 @@ textarea,
   box-shadow: none;
 }
 
-/* Enemy intent, the draft (enemyIntent.ts): over a hero's head, the face of each enemy whose move
-   this round lands on it, ringed in the enemy's red. Who, never what. */
-.aim-mark {
-  position: absolute;
-  /* Up on the horizon between the two rows, so it reads as coming from across the field and never covers a head. */
-  top: -22px;
-  left: 50%;
-  z-index: 3;
-  display: flex;
-  gap: 3px;
-  transform: translateX(-50%);
-  pointer-events: none;
-  animation: aim-mark-in 0.28s var(--ease-out) both;
-}
-
-.aim-mark-foe {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 40%, rgba(150, 70, 72, 0.95), rgba(64, 20, 24, 0.95));
-  box-shadow: inset 0 0 0 1.5px var(--enemy), 0 0 8px -2px color-mix(in srgb, var(--enemy) 80%, transparent), 0 2px 3px rgba(0, 0, 0, 0.7);
-}
-
-/* The notch under each face, pointing down at the hero it is aimed at. */
-.aim-mark-foe::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  width: 6px;
-  height: 6px;
-  transform: translateX(-50%) rotate(45deg);
-  background: var(--enemy);
-  z-index: -1;
-}
-
-.aim-mark-portrait {
-  width: 26px;
-  height: 26px;
-  image-rendering: pixelated;
-}
-
-@keyframes aim-mark-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -6px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
 /* Bag: the console's fourth key. Opens a panel, like Switch, so it takes Switch's shape and
    a warm rim of its own — neither ally blue nor Rest's cold one — and carries what it holds
    as a count on the rim. Dark with nothing left to drink. */
@@ -3544,6 +3487,82 @@ textarea,
   }
   50% {
     opacity: 1;
+  }
+}
+
+/* Danger sense (dangerSense.ts, docs/danger-sense.md): a super effective hit is aimed at this hero
+   this round. Its own element so it never fights the Blessing's or the acting turn's platform. */
+.team-row .danger-rim {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: var(--platform-w);
+  height: var(--platform-h);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(217, 83, 79, 0.9), 0 0 12px 3px rgba(217, 83, 79, 0.55);
+  pointer-events: none;
+  animation: danger-rim-pulse 1.6s ease-in-out 0.25s infinite both;
+}
+
+/* `translate` rides beside the idle breath's `transform`, so the breath restated here keeps breathing. */
+.team-row .combatant-card.senses-danger:not(.fainted) .combatant-portrait {
+  animation:
+    hero-idle-breath calc(var(--idle-period) * var(--idle-rate, 1)) ease-in-out infinite,
+    danger-shudder 0.45s steps(1, end) 0.25s 1,
+    danger-shudder-loop 3.2s steps(1, end) 1.2s infinite;
+  animation-delay: calc(var(--idle-period) * var(--idle-rate, 1) * var(--idle-phase, 0) * -1), 0.25s, 1.2s;
+}
+
+@keyframes danger-rim-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes danger-shudder {
+  0%,
+  72%,
+  100% {
+    translate: 0 0;
+  }
+  12%,
+  36% {
+    translate: -2px 0;
+  }
+  24% {
+    translate: 2px 0;
+  }
+  48% {
+    translate: 1px 0;
+  }
+  60% {
+    translate: -1px 0;
+  }
+}
+
+@keyframes danger-shudder-loop {
+  0%,
+  12%,
+  100% {
+    translate: 0 0;
+  }
+  2%,
+  6% {
+    translate: -2px 0;
+  }
+  4% {
+    translate: 2px 0;
+  }
+  8% {
+    translate: 1px 0;
+  }
+  10% {
+    translate: -1px 0;
   }
 }
 

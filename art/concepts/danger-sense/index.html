@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Danger Sense</title>
+<style>
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1d1c1a;--mute:#6b675f;--line:#e2ddd2;--hp-high:#4caf6a;--hp-mid:#d9a441;--hp-low:#d9534f;--mana:#4a90d9;--danger:255,84,56}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}}
+:root[data-theme="dark"]{--bg:#17161a;--panel:#211f25;--ink:#ece8df;--mute:#a19c92;--line:#35323a}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1360px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}
+h2{font-size:15px;margin:0 0 2px}
+.sub{color:var(--mute);margin:0 0 10px;max-width:860px}
+.bar-top{display:flex;gap:10px;align-items:center;margin:0 0 14px}
+button.replay{font:600 13px system-ui,sans-serif;padding:7px 14px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+section p{margin:0 0 10px;color:var(--mute);font-size:13px}
+
+.wrap{width:100%;aspect-ratio:394/440;overflow:hidden;border-radius:10px;position:relative}
+.field{position:absolute;left:0;top:0;width:394px;height:440px;transform-origin:0 0;background:url('../../locations/battle/moltenFoundry.png') center 70%/394px auto no-repeat,#10131c;image-rendering:pixelated;overflow:hidden}
+.field::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,9,14,.55),rgba(8,9,14,.12) 30%,rgba(8,9,14,.1) 70%,rgba(8,9,14,.6));pointer-events:none}
+.row{position:absolute;left:0;right:0;display:flex;z-index:2}
+.row.enemy{top:20px;height:180px}
+.row.ally{top:210px;height:150px}
+.col{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.figure{position:relative;display:flex;justify-content:center;align-items:flex-end;height:104px}
+.fig{width:96px;height:96px;position:relative;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,.7));margin-bottom:6px}
+.fig.big{width:128px;height:128px;margin:0 -16px 6px}
+.plat{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:var(--pw,104px);height:22px;border-radius:50%;background:radial-gradient(ellipse,rgba(var(--t),.5),rgba(var(--t),.14) 52%,transparent 72%)}
+
+.nb{position:relative;width:146px;height:19px;margin-top:4px}
+.hpbar{position:absolute;left:0;right:0;top:0;height:15px;border-radius:2px;background:rgba(10,11,16,.85);box-shadow:inset 0 1px 3px rgba(0,0,0,.8),0 0 0 1px rgba(0,0,0,.55);overflow:hidden}
+.hpbar .fill{position:absolute;left:0;top:0;bottom:0;background-image:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.05) 52%,rgba(0,0,0,.18))}
+.fill.high{background-color:var(--hp-high)}.fill.mid{background-color:var(--hp-mid)}.fill.low{background-color:var(--hp-low)}
+.mpt{position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:2px;background:rgba(10,11,16,.85);overflow:hidden}
+.mpt i{position:absolute;left:0;top:0;bottom:0;background:var(--mana)}
+.lbl{position:absolute;left:0;right:0;top:0;height:15px;z-index:2;display:flex;align-items:center;gap:4px;padding:0 6px;font:700 11px/1 sans-serif;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000;white-space:nowrap}
+.lv{font-size:8px;opacity:.8}
+.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.hp{font-weight:800;font-variant-numeric:tabular-nums}
+
+.moves{position:absolute;left:10px;right:10px;bottom:12px;z-index:3;display:flex;gap:6px}
+.mv{flex:1;display:flex;align-items:center;justify-content:center;padding:9px;border-radius:6px;background:rgba(16,18,26,.92);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);font:700 12px sans-serif;color:#efe9da}
+
+/* ── The treatments. Only .sensed (Sylva) carries them; Riptide is aimed at too, but not super effectively. ── */
+
+/* 1 · Shudder: a short tremble as the command phase opens, then again every few seconds. */
+@keyframes shudder{0%,100%{transform:translateX(0)}12%{transform:translateX(-2px)}24%{transform:translateX(2px)}36%{transform:translateX(-2px)}48%{transform:translateX(1px)}60%{transform:translateX(-1px)}72%{transform:translateX(0)}}
+@keyframes shudder-loop{0%,14%{transform:translateX(0)}2%{transform:translateX(-2px)}4%{transform:translateX(2px)}6%{transform:translateX(-2px)}8%{transform:translateX(1px)}10%{transform:translateX(-1px)}}
+.v-shudder .sensed .fig{animation:shudder .45s steps(1,end) .25s 1,shudder-loop 3.2s steps(1,end) 1.2s infinite}
+
+/* 2 · Shudder + rim: the same tremble, and the hero's platform burns red for as long as the danger stands. */
+.v-rim .sensed .fig{animation:shudder .45s steps(1,end) .25s 1,shudder-loop 3.2s steps(1,end) 1.2s infinite}
+@keyframes rim-pulse{0%,100%{opacity:.55}50%{opacity:1}}
+.v-rim .sensed .plat::after{content:'';position:absolute;inset:-2px -6px;border-radius:50%;box-shadow:0 0 0 2px rgba(var(--danger),.9),0 0 12px 3px rgba(var(--danger),.55);animation:rim-pulse 1.6s ease-in-out .25s infinite both}
+
+/* 3 · Flinch glyph: three short strokes flicking off the hero's head, the comic-book "sense". */
+.v-glyph .sensed .figure::before{content:'';position:absolute;z-index:3;left:50%;top:-8px;width:34px;height:20px;transform:translateX(-50%);
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 20'%3E%3Cg stroke='%23ff5438' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M7 13 3 7'/%3E%3Cpath d='M17 11V2'/%3E%3Cpath d='M27 13l4-6'/%3E%3C/g%3E%3Cg stroke='%23000' stroke-opacity='.55' stroke-width='1' fill='none'%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.9));animation:flick 1.6s ease-in-out .25s infinite both}
+@keyframes flick{0%{opacity:0;transform:translate(-50%,4px) scale(.7)}12%{opacity:1;transform:translate(-50%,0) scale(1.05)}20%,70%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-2px) scale(1)}}
+
+/* 4 · Cold outline: the sprite's edge flickers red, like goosebumps, with no movement at all. */
+@keyframes chill{0%,100%{filter:drop-shadow(0 3px 5px rgba(0,0,0,.7)) drop-shadow(0 0 0 rgba(var(--danger),0))}50%{filter:drop-shadow(0 3px 5px rgba(0,0,0,.7)) drop-shadow(0 0 1px rgba(var(--danger),1)) drop-shadow(0 0 5px rgba(var(--danger),.8))}}
+.v-chill .sensed .fig{animation:chill 1.4s ease-in-out .25s infinite both}
+</style>
+</head>
+<body>
+<main>
+<h1>Danger sense</h1>
+<p class="sub">The same Foundry fight four ways, at the start of the command phase. Pyroclast's move this round is aimed at Sylva and hits Sylva super effectively, so Sylva senses it. Kindlehide is aimed at Riptide, but Fire into Water is resisted, so Riptide shows nothing. No option says which enemy or which move.</p>
+<div class="bar-top"><button class="replay" id="replay" type="button">Replay the command phase</button></div>
+<div class="grid" id="grid"></div>
+</main>
+<script>
+const ART = '../../heroes/';
+const V = [
+  ['v-shudder', '1 · Shudder', 'Sylva trembles for a moment as the command phase opens, then again every few seconds while you decide. Pokémon’s Anticipation, nothing else on screen. Easy to miss if you look away.'],
+  ['v-rim', '2 · Shudder + rim', 'The same tremble, and its platform burns red for as long as the danger stands. The rim is what stays readable once the shudder has passed; the shudder is what catches the eye.'],
+  ['v-glyph', '3 · Flinch strokes', 'Three short red strokes flick off its head, the comic-book “sense” mark, on a slow loop. The sprite doesn’t move. Clearest at a glance, and the most like a UI element.'],
+  ['v-chill', '4 · Cold outline', 'Its sprite’s edge flickers red on a slow pulse, with no movement and nothing added above it. The quietest; it reads as the hero, not as an icon.'],
+];
+const FIG = {
+  pyro: { n: 'Pyroclast', lv: 16, src: 'titanspawn/pyroclast.png', big: true, t: '226,104,60', hp: [240, 240], mp: [70, 90] },
+  kindle: { n: 'Kindlehide', lv: 14, src: 'titanspawn/kindlehide.png', t: '226,104,60', hp: [96, 150], mp: [60, 60] },
+  sylva: { n: 'Sylva', lv: 16, src: 'starters/sylva.png', t: '92,170,80', hp: [150, 205], mp: [45, 60], sensed: true },
+  rip: { n: 'Riptide', lv: 16, src: 'starters/riptide.png', t: '74,144,217', hp: [120, 210], mp: [20, 65] },
+};
+const tier = (f) => (f > 0.5 ? 'high' : f > 0.2 ? 'mid' : 'low');
+function plate(f) {
+  const hf = f.hp[0] / f.hp[1], mf = f.mp[0] / f.mp[1];
+  return `<div class="nb"><div class="hpbar"><div class="fill ${tier(hf)}" style="width:${hf * 100}%"></div></div>
+    <div class="lbl"><span class="lv">Lv ${f.lv}</span><span class="nm">${f.n}</span><span class="hp">${f.hp[0]}</span></div>
+    <div class="mpt"><i style="width:${mf * 100}%"></i></div></div>`;
+}
+function col(id) {
+  const f = FIG[id];
+  return `<div class="col${f.sensed ? ' sensed' : ''}"><div class="figure"><span class="plat" style="--t:${f.t};--pw:${f.big ? 128 : 104}px"></span><img class="fig${f.big ? ' big' : ''}" src="${ART + f.src}" alt=""></div>${plate(f)}</div>`;
+}
+function render() {
+  const g = document.getElementById('grid');
+  g.innerHTML = '';
+  for (const [cls, title, note] of V) {
+    const s = document.createElement('section');
+    s.innerHTML = `<h2>${title}</h2><p>${note}</p><div class="wrap"><div class="field ${cls}">
+      <div class="row enemy">${col('pyro')}${col('kindle')}</div>
+      <div class="row ally">${col('sylva')}${col('rip')}</div>
+      <div class="moves"><div class="mv">Fight</div><div class="mv">Switch</div></div>
+    </div></div>`;
+    g.appendChild(s);
+  }
+  fit();
+}
+const fit = () => document.querySelectorAll('.wrap').forEach((w) => { w.firstElementChild.style.transform = `scale(${w.clientWidth / 394})`; });
+addEventListener('resize', fit);
+document.getElementById('replay').addEventListener('click', render);
+render();
+</script>
+</body>
+</html>

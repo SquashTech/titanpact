@@ -54,6 +54,8 @@ interface Props {
   scale?: StatScale;
   /** Field Effect plus the board a conditional passive reads (state.ts StatContext). */
   statCtx: StatContext;
+  /** An enemy's kit is never shown: it is read off the fight as it plays (docs/danger-sense.md). */
+  hideMoves?: boolean;
   onClose: () => void;
 }
 
@@ -83,7 +85,7 @@ function fmtStatus(statusId: string, magnitude: number | undefined, duration: nu
  * dimmed the way the console dims it — because the question asked here is "what can it cast next
  * round", not "what does it know".
  */
-export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, statCtx, scale, onClose }: Props) {
+export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, statCtx, scale, hideMoves, onClose }: Props) {
   // In-fight changes only: what the loadout grants is levels and gear, which a run teaches, and the room is the passives'.
   // A move's stages (docs/stat-stages.md) and the flat changes passives make, as points against what the hero brought.
   const brought = (stat: StatKey) => hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0);
@@ -129,7 +131,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
 
   const tabs: TabSpec<TabId>[] = [
     { id: 'stats', label: 'Overview', glyph: 'stats' },
-    { id: 'moves', label: 'Moves', glyph: 'moves', count: moveIds.length },
+    ...(hideMoves ? [] : [{ id: 'moves' as const, label: 'Moves', glyph: 'moves' as const, count: moveIds.length }]),
     { id: 'gear', label: 'Gear', glyph: 'equipment', count: heldItems.length },
   ];
   const { pageRef, select, pageClass, swipeHandlers } = useTabSwipe(

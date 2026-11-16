@@ -135,6 +135,14 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'The arrows under a move show how hard it hits each foe:\n- [super] *double*\n- [resist] *half*\n- two arrows: *four times*, or a *quarter*',
     "- The icon before a move's name is its type.\n- A move of the hero's own type hits *25%* harder."
   ),
+  page(
+    'sense',
+    'Sensing Danger',
+    TYPES,
+    ['arrow:super'],
+    '- A hero that *shudders* over a *red ring* senses a *super effective* hit coming at it this round.\n- No shudder: nothing super effective is aimed at it.',
+    '- *Switch* it out, *protect* it, or knock the attacker out *before* it moves.'
+  ),
 
   page(
     'bench',
