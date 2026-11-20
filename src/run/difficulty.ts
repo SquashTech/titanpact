@@ -133,17 +133,18 @@ export const NO_SCALING: ActScaling = { level: 1, mastery: 0 };
  */
 export const ACT_ONE_ELITE_HERO_COUNT = 3;
 
-/** The Elite fields this many more bodies than the Skirmish beside it, Act 1's roster cap included (2026-10-26, per user direction). */
+/** The Elite fields this many more bodies than the Skirmish beside it, the roster cap included, from Act 2 (docs/run-loop.md "Two reward rows"). */
 export const ELITE_EXTRA_ENEMIES = 1;
+export const ELITE_EXTRA_ENEMIES_FROM_ACT = 2;
+
+export function eliteExtraEnemiesFor(actNumber: number): number {
+  return clampAct(actNumber) >= ELITE_EXTRA_ENEMIES_FROM_ACT ? ELITE_EXTRA_ENEMIES : 0;
+}
 
 /**
- * Act 1 never fields more bodies than the player has (2026-09-10, Growth Overhaul phase 6).
- *
- * The player's roster RAMPS across Act 1 — two drafted starters, a third off the Skirmish's
- * Recruit Contract, a fourth later — while the encounter size never did. The rule caps at the
- * roster: it reproduces the Elite's hand-tuned 3 exactly and cannot go stale if the draft size or
- * the contract schedule moves. Acts 2+ are untouched — the roster is full by then, and being
- * outnumbered is the Elite's job from there on.
+ * No fight fields more bodies than the player has (Act 1 since 2026-09-10; every act since
+ * 2026-11-20, per user direction): only Recruit nodes grow the roster, so it is rarely full by Act 2.
+ * The cap only ever shrinks a fight.
  */
 export function encounterHeroCountOverride(
   mapNodeType: string,
@@ -151,7 +152,8 @@ export function encounterHeroCountOverride(
   rosterSize: number,
   standardCount: number
 ): number | undefined {
-  if (clampAct(actNumber) !== 1) return undefined;
+  void mapNodeType;
+  void actNumber;
   return rosterSize > 0 && rosterSize < standardCount ? rosterSize : undefined;
 }
 

@@ -233,7 +233,7 @@ test('difficulty: scaling stays deterministic per seed', () => {
   assert.deepStrictEqual(a.run.roster, b.run.roster);
 });
 
-test('difficulty: Act 1 never fields more bodies than the player holds', () => {
+test('difficulty: no act fields more bodies than the player holds', () => {
   // The player's roster ramps 2 -> 3 -> 4 across Act 1 while the encounter size never did. That
   // was patched for the Elite alone with a hand-tuned 3; the rule replaces the constant, and
   // reproduces it exactly at the roster size that node is actually met with.
@@ -248,9 +248,9 @@ test('difficulty: Act 1 never fields more bodies than the player holds', () => {
     assert.strictEqual(encounterHeroCountOverride(nodeType, 1, 6, 4), undefined, `${nodeType} above the standard count`);
   }
 
-  // Acts 2+ are untouched: the roster is full by then, and being outnumbered is the Elite's job.
   for (const act of [2, 3, 4, 5, 6]) {
-    assert.strictEqual(encounterHeroCountOverride('elite', act, 2, 4), undefined, `act ${act} must not be resized`);
+    assert.strictEqual(encounterHeroCountOverride('elite', act, 3, 4), 3, `act ${act}: capped at the roster`);
+    assert.strictEqual(encounterHeroCountOverride('elite', act, 5, 4), undefined, `act ${act}: a bigger roster takes the standard count`);
   }
 
   // An empty roster is a fixture, not a fight — it must not produce a zero-body encounter.

@@ -16,7 +16,7 @@ import { encounterSeedFor, nodeEncounter, scoutedTypes, type EncounterContext } 
 import { isRecruitable } from '../src/run/recruitment';
 import { wokenChampion, wokenChampionMark, wokenEscortCount } from '../src/run/cycles';
 import { guardianEscortPool } from '../src/run/spawn';
-import { ELITE_EXTRA_ENEMIES, championGradeFor, encounterScaling, guardianEscortCount } from '../src/run/difficulty';
+import { eliteExtraEnemiesFor, championGradeFor, encounterScaling, guardianEscortCount } from '../src/run/difficulty';
 import { appendFinalEnemy } from '../src/run/enemyGen';
 
 function runAt(seed: number, act: number): RunState {
@@ -63,7 +63,7 @@ test('encounters: the fork is Elite-or-Skirmish, both recruitable, and the two n
   }
 });
 
-test('encounters: the Elite fields one more enemy than the Skirmish beside it, Act 1 included', () => {
+test('encounters: the Elite fields one more enemy than the Skirmish beside it from Act 2, the same count in Act 1', () => {
   for (const act of [1, 2, 3, 4]) {
     const run = runAt(7, act);
     const ctx = contextFor(run);
@@ -71,7 +71,7 @@ test('encounters: the Elite fields one more enemy than the Skirmish beside it, A
     const [skirmish] = nodesOfType(run, 'skirmish');
     const eliteSize = nodeEncounter(elite, ctx).run.roster.length;
     const skirmishSize = nodeEncounter(skirmish, ctx).run.roster.length;
-    assert.strictEqual(eliteSize, skirmishSize + ELITE_EXTRA_ENEMIES, `act ${act}: Elite ${eliteSize}, Skirmish ${skirmishSize}`);
+    assert.strictEqual(eliteSize, skirmishSize + eliteExtraEnemiesFor(act), `act ${act}: Elite ${eliteSize}, Skirmish ${skirmishSize}`);
   }
 });
 

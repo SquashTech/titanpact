@@ -14,7 +14,7 @@ import type { MapNode, MapNodeType, RunMap } from './map';
 import type { RunState } from './state';
 import type { ProgressionTable } from './progression';
 import { rosterEntryTypes } from './progression';
-import { championGradeFor, encounterScaling, encounterHeroCountOverride, ELITE_EXTRA_ENEMIES, enemyLoadoutFor, guardianEscortCount } from './difficulty';
+import { championGradeFor, encounterScaling, encounterHeroCountOverride, eliteExtraEnemiesFor, enemyLoadoutFor, guardianEscortCount } from './difficulty';
 import { appendFinalEnemy, generateEncounter, type Encounter, type EncounterNodeType } from './enemyGen';
 import { locationBias } from './locations';
 import { guardiansWake, isGathering, isLongWinter, wardensHold, wokenChampion, wokenChampionMark, wokenEscortCount } from './cycles';
@@ -82,10 +82,10 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   // From Cycle II the Guardians wake (run/cycles.ts): the escorts climb with the act, the champion wears its Mark.
   const woken = type === 'boss' && guardiansWake(run);
   const standardCount = encounterKind === 'boss' ? (woken ? wokenEscortCount(run.actNumber) : guardianEscortCount(run.actNumber)) : 4;
-  // Act 1 caps the enemy count at the roster.
+  // The enemy count is capped at the roster.
   const heroCountOverride =
     type === 'fight' || isSecondFight ? 2 : encounterHeroCountOverride(type, run.actNumber, run.roster.length, standardCount);
-  const heroCount = (heroCountOverride ?? standardCount) + (type === 'elite' ? ELITE_EXTRA_ENEMIES : 0);
+  const heroCount = (heroCountOverride ?? standardCount) + (type === 'elite' ? eliteExtraEnemiesFor(run.actNumber) : 0);
   // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
   const bias = pool === heroes ? locationBias(location, heroes, heroCount) : undefined;
   // A Gathering's hero fight is cast around a warband from the deck (run/warbands.ts); the rest is drawn as ever.

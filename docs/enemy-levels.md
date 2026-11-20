@@ -112,6 +112,15 @@ players took the Elite every time). `ELITE_EXTRA_ENEMIES` = 1, on top of Act 1's
 against the Skirmish's four from Act 2, the roster plus one in Act 1. It pays 3 Gems to the
 Skirmish's 2 (`docs/gems.md` §4).
 
+**Revised 2026-11-20, per user direction, to pay back the cut reward row** (`docs/run-loop.md`
+"Two reward rows"): **no fight fields more bodies than the player has, in every act**
+(`encounterHeroCountOverride`; it was Act 1 only, on the premise that the roster is full by Act 2,
+which stopped holding when the Recruit node became the only way in), and **the Elite's extra
+body starts in Act 2** (`ELITE_EXTRA_ENEMIES_FROM_ACT`): in Act 1 it fields the Skirmish's count.
+Measured on 3,000 runs against the two-row layout: Act 1 59 → 70%, Act 2 31 → 46%, Act 1's Elite
+50 → 75%. What to watch: whether Act 1's Elite is taken every time again, and whether a small
+roster becomes a strategy now that it always means a small enemy party.
+
 **From Act 2 an Elite's enemies carry one more item** (2026-10-26, per user direction: the extra
 body measured −8 points of Elite wins in Act 1 and only −1 to −2.5 after). `ELITE_EXTRA_GEAR` = 1
 from `ELITE_EXTRA_GEAR_FROM_ACT` = 2, on the Elite's own curve a tier ahead, capped at the three
