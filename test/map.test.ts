@@ -49,8 +49,7 @@ const REWARD_TYPES = new Set([
   'event',
 ]);
 
-// One shape for every act since 2026-09-14: three fights and both patron seats; no Lapidary since 2026-10-26.
-test('map: the per-act shape — Fight, pick-3 reward, patron seat, pick-3 reward, (Elite or Skirmish), patron seat, pick-3 reward, funnel, Guardian', () => {
+test('map: the per-act shape — Fight, pick-3 reward, patron seat, (Elite or Skirmish), pick-3 reward, patron seat, funnel, Guardian', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     for (const actNumber of [1, 2, 3, 4]) {
       const map = generateMap(seed, actNumber);
@@ -58,30 +57,27 @@ test('map: the per-act shape — Fight, pick-3 reward, patron seat, pick-3 rewar
       const rowTypes = (r: number) => rows[r].map((id) => map.nodes[id].type);
       const where = `act ${actNumber} seed ${seed}`;
 
-      assert.strictEqual(rows.length, 9, `${where}: every act is the 9-row shape`);
+      assert.strictEqual(rows.length, 8, `${where}: every act is the 8-row shape`);
       assert.deepStrictEqual(rowTypes(0), ['fight']);
       assert.ok(rowTypes(1).every((t) => REWARD_TYPES.has(t)), `${where} row 1 has a non-reward type: ${rowTypes(1)}`);
       assert.strictEqual(rows[1].length, 3);
       assert.deepStrictEqual(rowTypes(2), ['patronSeat', 'patronSeat'], `${where}: the first patron seat`);
-      assert.ok(rowTypes(3).every((t) => REWARD_TYPES.has(t)), `${where} row 3 has a non-reward type: ${rowTypes(3)}`);
-      assert.strictEqual(rows[3].length, 3);
-      assert.strictEqual(rows[4].length, 2);
-      assert.deepStrictEqual(rowTypes(4).slice().sort(), ['elite', 'skirmish'], `${where}: the fork is the act's one Skirmish`);
-      // The second patron seat (docs/patrons.md), right after the fork, where the Academy sat.
+      assert.strictEqual(rows[3].length, 2);
+      assert.deepStrictEqual(rowTypes(3).slice().sort(), ['elite', 'skirmish'], `${where}: the fork is the act's one Skirmish`);
+      assert.ok(rowTypes(4).every((t) => REWARD_TYPES.has(t)), `${where} row 4 has a non-reward type: ${rowTypes(4)}`);
+      assert.strictEqual(rows[4].length, 3);
       assert.deepStrictEqual(rowTypes(5), ['patronSeat', 'patronSeat'], `${where}: the second patron seat`);
-      assert.ok(rowTypes(6).every((t) => REWARD_TYPES.has(t)), `${where} row 6 has a non-reward type: ${rowTypes(6)}`);
-      assert.strictEqual(rows[6].length, 3, 'the third reward row sits between the second seat and the funnel');
-      assert.deepStrictEqual(rowTypes(7), ['camp'], `${where}: the funnel is one forced Camp (docs/guild-hall-overhaul.md §3)`);
-      assert.deepStrictEqual(rowTypes(8), ['boss']);
+      assert.deepStrictEqual(rowTypes(6), ['camp'], `${where}: the funnel is one forced Camp (docs/guild-hall-overhaul.md §3)`);
+      assert.deepStrictEqual(rowTypes(7), ['boss']);
       // No un-forked Skirmish anywhere: the fork is the only one.
       const skirmishes = Object.values(map.nodes).filter((n) => n.type === 'skirmish');
       assert.strictEqual(skirmishes.length, 1, `${where}: ${skirmishes.length} Skirmish nodes`);
-      assert.strictEqual(skirmishes[0].row, 4);
+      assert.strictEqual(skirmishes[0].row, 3);
       assert.ok(!Object.values(map.nodes).some((n) => n.type === 'scribeReward'), `${where}: a Lapidary node`);
       const seats = Object.values(map.nodes).filter((n) => n.type === 'patronSeat');
       assert.strictEqual(seats.length, 4, `${where}: ${seats.length} patron tiles`);
       assert.ok(!Object.values(map.nodes).some((n) => n.type === 'academyReward'), `${where}: an Academy node`);
-      for (const id of rows[4]) assert.deepStrictEqual(map.nodes[id].nextIds, rows[5], `${where}: both fork options lead to both patrons`);
+      for (const id of rows[3]) assert.deepStrictEqual(map.nodes[id].nextIds, rows[4], `${where}: both fork options lead to the whole reward row`);
     }
   }
 });
@@ -102,14 +98,13 @@ test('map: the funnel is one Guild Hall in every act, and a Guild Hall is never 
   }
 });
 
-test('map: the opener and both patron tiles connect to all 3 of the reward row after them (Act 4)', () => {
+test('map: the opener and both fork options connect to all 3 of the reward row after them (Act 4)', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed, 4);
     assert.strictEqual(map.rows[1].length, 3, 'row 1 must be the pick-3 this test is about');
-    assert.strictEqual(map.rows[3].length, 3, 'row 3 must be the pick-3 this test is about');
+    assert.strictEqual(map.rows[4].length, 3, 'row 4 must be the pick-3 this test is about');
     assert.deepStrictEqual([...map.nodes[map.rows[0][0]].nextIds].sort(), [...map.rows[1]].sort());
-    for (const id of map.rows[2]) assert.deepStrictEqual([...map.nodes[id].nextIds].sort(), [...map.rows[3]].sort());
-    for (const id of map.rows[5]) assert.deepStrictEqual([...map.nodes[id].nextIds].sort(), [...map.rows[6]].sort());
+    for (const id of map.rows[3]) assert.deepStrictEqual([...map.nodes[id].nextIds].sort(), [...map.rows[4]].sort());
   }
 });
 
@@ -143,7 +138,7 @@ test('map: the Mentor is a reward-row tile in acts 1-3 and the Tutor in act 4, n
     for (const actNumber of [1, 2, 3, 4]) {
       for (const node of Object.values(generateMap(seed, actNumber).nodes)) {
         if (node.type !== 'mentorReward' && node.type !== 'tutorReward') continue;
-        assert.ok([1, 3, 6].includes(node.row), `act ${actNumber} seed ${seed}: ${node.type} off a reward row`);
+        assert.ok([1, 4].includes(node.row), `act ${actNumber} seed ${seed}: ${node.type} off a reward row`);
         assert.strictEqual(node.type, actNumber <= 3 ? 'mentorReward' : 'tutorReward', `act ${actNumber} seed ${seed}`);
         seen[node.type === 'mentorReward' ? 'mentor' : 'tutor'] += 1;
       }
@@ -162,14 +157,11 @@ test('map: every node past row 0 has at least one incoming edge (no orphans)', (
   }
 });
 
-// Every path arrives at the fork holding both options (2026-09-08). The reward row above used to
-// steer left->Elite / right->Battle; with only one row on screen at a time that priced a choice
-// against a row the player can no longer see, so it was removed.
-test('map: the reward row above Elite-or-Skirmish keeps both options open', () => {
+test('map: the patron seat above Elite-or-Skirmish keeps both options open', () => {
   for (const act of [1, 2, 3, 4]) {
     for (const seed of [1, 7, 42, 99, 2024]) {
       const map = generateMap(seed, act);
-      const eliteRow = 4;
+      const eliteRow = 3;
       const feeding = map.rows[eliteRow - 1];
       const [eliteId, skirmishId] = map.rows[eliteRow];
       assert.strictEqual(map.nodes[eliteId].type, 'elite');
@@ -186,13 +178,12 @@ test('map: the reward row above Elite-or-Skirmish keeps both options open', () =
   }
 });
 
-// The lead-on markers on a choice card are derived from where its options actually go
-// (MapRoute's leadOnsDiffer), so an unsteered row is also what takes them off it.
-test('map: the reward row above the fork has nothing left to signpost', () => {
+// The lead-on markers on a choice card are derived from where its options actually go (MapRoute's leadOnsDiffer).
+test('map: the row above the fork has nothing left to signpost', () => {
   for (const act of [1, 2, 3, 4]) {
     for (const seed of [1, 7, 42, 99, 2024]) {
       const map = generateMap(seed, act);
-      const feeding = map.rows[3];
+      const feeding = map.rows[2];
       const signatures = new Set(feeding.map((id) => [...map.nodes[id].nextIds].sort().join('+')));
       assert.strictEqual(signatures.size, 1, `act ${act} seed ${seed}: options still lead somewhere different`);
     }

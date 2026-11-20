@@ -57,17 +57,17 @@ export interface RunMap {
   bossNodeId: string;
 }
 
-// row 0 fight, 1/3/6 pick-1-of-3 rewards, 2 and 5 patron seats, 4 elite-or-skirmish, 7 the
-// funnel, 8 boss. The Lapidary's forced row came out 2026-10-26 (per user direction, to test the
-// feel); `scribeReward` stays a node type so an older save's map still resolves.
-const ROW_WIDTHS = [1, 3, 2, 3, 2, 2, 3, 1, 1] as const;
+// row 0 fight, 1/4 pick-1-of-3 rewards, 2 and 5 patron seats, 3 elite-or-skirmish, 6 the funnel,
+// 7 boss (docs/run-loop.md "Two reward rows"). `scribeReward` stays a node type so an older save's
+// map still resolves.
+const ROW_WIDTHS = [1, 3, 2, 2, 3, 2, 1, 1] as const;
 
-/** The first patron seat, between the act's first two reward rows — the Mentor's row until 2026-10-15. */
+/** The first patron seat, right before the fork. */
 const SPLICED_ROW = 2;
 
-const ELITE_ROW = 4;
+const ELITE_ROW = 3;
 
-/** The second patron seat, right after the fork — the Academy's row until 2026-10-15. */
+/** The second patron seat, right before the Camp. */
 const ACADEMY_ROW = 5;
 
 const LAST_MENTOR_ACT = 3;
@@ -82,7 +82,8 @@ export const PATRON_ROWS: readonly number[] = [SPLICED_ROW, ACADEMY_ROW];
 const MENTOR_WEIGHT = 25;
 const TUTOR_WEIGHT = 25;
 
-export const RECRUIT_WEIGHT = 40;
+/** Sized so two reward rows show a Recruit about as often as three rows did at 40: ~1.07 an act. */
+export const RECRUIT_WEIGHT = 75;
 
 /** Act 1's first reward row always holds a Recruit: a two-hero draft does not wait on the dice for its third. */
 const GUARANTEED_RECRUIT = { act: 1, row: 1 } as const;
@@ -112,7 +113,7 @@ export const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // rather than how big its numbers are.
   ['passiveReward', 22],
   // The Recruit (docs/guild-hall-overhaul.md §2.3): the only way a hero joins but an event, priced
-  // against the two rewards beside it. Weighted to show about twice an act; first pass.
+  // against the two rewards beside it.
   ['recruitReward', RECRUIT_WEIGHT],
   // 16 → 30 when the slate grew from six to twenty-six, two thirds Location-gated (docs/wild-innates-and-events.md
   // §3.4): about five events offered a run where there were three. Still an inference, not a measured figure.
@@ -260,7 +261,8 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     // be read. It does not survive the map becoming a scene: with only the row in front of you
     // visible, a reward two steps back quietly closing an encounter is a rule the player is asked
     // to hold in their head rather than see. The choice is now simply always there.
-    if ((row + 1 === funnelRow || row + 1 === eliteRow || PATRON_ROWS.includes(row + 1) || PATRON_ROWS.includes(row)) && to.length > 1) {
+    // Both fork options lead to the whole reward row after it, so the fight taken never narrows the reward.
+    if ((row + 1 === funnelRow || row + 1 === eliteRow || row === eliteRow || PATRON_ROWS.includes(row + 1) || PATRON_ROWS.includes(row)) && to.length > 1) {
       for (const fromId of from) nodes[fromId].nextIds = [...to];
       continue;
     }

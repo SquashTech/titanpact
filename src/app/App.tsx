@@ -1111,11 +1111,11 @@ export function App() {
     telemetryRunStarted(run.cycle, chosenIds);
   }
 
-  /** TEMPORARY DEV/TEST — the Academy sits behind the act's fork. */
+  /** TEMPORARY DEV/TEST — the Academy sits behind the act's second reward row. */
   function handleStartAcademyTestRun() {
     fallback.current = null;
     const base = createLevel4TestRun();
-    // Stood on the fork, so the Academy right after it is the next step.
+    // Stood on the reward row, so the Academy right after it is the next step.
     const run = { ...base, currentNodeId: base.map!.rows[4][0] };
     setPlayerRun(run);
     setScreen({ kind: 'academyNode', nodeId: run.map!.rows[5][0], seed: randomSeed() });

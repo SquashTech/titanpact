@@ -25,25 +25,24 @@ them (§3 "Multi-act sequencing"). The shape is forced and identical in every se
 can skip from the opener to the funnel on reward-node luck:
 
 - **Row 0: a single forced `fight`** — the act always opens on an easy, unambiguous fight.
-- **Row 1: pick 1 of 3 — reward types only**, weighted from `REWARD_WEIGHTS`. No fight, shop or
-  Mentor mixed in: every reward row is a genuine reward choice, never a chance to draw or dodge a
-  fight. A row never repeats a type.
-- **Row 2: the spliced seat** — a single forced node: the **Mentor** in acts 1–3, the **Tutor** in
-  act 4 (below).
-- **Row 3: pick 1 of 3 — reward types only.**
-- **Row 4: the Scribe** — a forced row: pick two heroes, two Mastery pips each ("Mastery Scrolls"
-  below), ahead of the fork so the Evolution it buys is in hand for the Elite and the Guardian.
-- **Row 5: pick 1 of 2 — `elite` or `skirmish`.** The Elite is the act's difficulty spike (a level
-  over the Skirmish, loot one tier ahead, **XP ×1.5** above par); the Skirmish is the plain,
-  recruitable alternative. Both tiles preview the typing they field.
-- **Row 6: pick 1 of 3 — reward types only.** The third reward row (2026-09-08): with two seats
-  across a nine-type pool the rarest cards were drawn about once a run.
-- **Row 7: the funnel — one forced Guild Hall** (`shop`), the act's one guaranteed spend.
-- **Row 8: the `boss`** — the act's Guardian.
+- **Row 1: pick 1 of 3 — reward types only**, weighted from `REWARD_WEIGHTS` (the Mentor or Tutor
+  among them). A row never repeats a type; Act 1's always holds a Recruit.
+- **Row 2: the first patron seat** — pick 1 of 2 (`docs/patrons.md`).
+- **Row 3: pick 1 of 2 — `elite` or `skirmish`.** Both tiles preview the typing they field.
+- **Row 4: pick 1 of 3 — reward types only.** Both fork options lead to all three.
+- **Row 5: the second patron seat.**
+- **Row 6: the funnel — one forced Camp.**
+- **Row 7: the `boss`** — the act's Guardian.
 
-So every act is **Fight → pick 1 of 3 → Mentor / Tutor → pick 1 of 3 → Scribe → (Elite or
-Skirmish) → pick 1 of 3 → Guild Hall → Guardian** — three fights, none skippable. A single-node row
-is one no path can bypass.
+So every act is **Fight → pick 1 of 3 → Patron → (Elite or Skirmish) → pick 1 of 3 → Patron →
+Camp → Guardian** — three fights, none skippable. A single-node row is one no path can bypass.
+
+**Two reward rows (2026-11-20, per user direction).** The reward row between the first patron and
+the fork came out, and the second patron seat moved after the remaining reward row, so the picks
+an act hands out are tested by a fight sooner: two free picks before the fork instead of three. It
+cuts reward seats from nine an act to six, everything the rows supply by a third, except the
+Recruit: `RECRUIT_WEIGHT` 40 → 75 holds it at about 1.07 shown an act. The figures below this
+paragraph that count three rows predate it.
 
 **Three fights an act (2026-09-14, per user direction).** The un-forked Skirmish row came out: the
 run measured ~92 minutes for a player who taps every beat against a 45-minute target
