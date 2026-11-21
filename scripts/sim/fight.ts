@@ -11,7 +11,7 @@ import { fieldEffects } from '../../src/data/fieldEffects';
 import { equipment } from '../../src/data/equipment';
 import { relics } from '../../src/data/relics';
 import type { CombatState, Side } from '../../src/engine/state';
-import { getMaxHp, getEffectiveStat, sideDefeated } from '../../src/engine/state';
+import { getMaxHp, getMaxMana, getEffectiveStat, sideDefeated } from '../../src/engine/state';
 import type { CombatEvent } from '../../src/engine/events';
 import type { StatKey } from '../../src/engine/content';
 import { STAT_CEILING_MULTIPLE } from '../../src/engine/state';
@@ -462,7 +462,12 @@ export interface FightInput {
   aiPilot?: PilotKind;
   /** A Gathering's enemy plays its warband's engine (run/ai.ts AiContext.playsEngines). Default off. */
   aiPlaysEngines?: boolean;
+  /** Experiment (SIM_MANA_CARRY): each player hero's opening mana as a share of its pool, by hero id. Absent = full. */
+  playerStartMana?: Readonly<Record<string, number>>;
 }
+
+/** Experiment: every combatant's round-end MP Regen, both sides, scaled by this. */
+const REGEN_SCALE = Number(process.env.SIM_REGEN_SCALE ?? 1);
 
 /** The original player side: run/ai.ts plus the reactive mana cycle. */
 function chartPilotActions(state: CombatState, playerCtx: AiContext, playerActive: readonly string[], switching: boolean): Action[] {
@@ -507,6 +512,13 @@ export function simulateFight(input: FightInput): FightOutcome {
       rests: 0,
       died: false,
     };
+  }
+
+  if (input.playerStartMana) {
+    for (const c of Object.values(start.combatants)) {
+      const frac = c.side === PLAYER_SIDE ? input.playerStartMana[c.heroId] : undefined;
+      if (frac !== undefined) start.combatants[c.combatantId] = { ...c, currentMana: Math.round(getMaxMana(allCombatants[c.heroId], c) * frac) };
+    }
   }
 
   const field = { sets: {} as Record<string, number>, enemySets: {} as Record<string, number>, rounds: {} as Record<string, number> };
@@ -570,6 +582,15 @@ export function simulateFight(input: FightInput): FightOutcome {
 
     const result = resolveRound(state, actions, config);
     state = result.state;
+    if (REGEN_SCALE !== 1) {
+      const combatants = { ...state.combatants };
+      for (const e of result.events) {
+        if (e.type !== 'ManaRegenTicked' || !combatants[e.combatantId]) continue;
+        const cut = Math.round(e.manaRegen * (1 - REGEN_SCALE));
+        combatants[e.combatantId] = { ...combatants[e.combatantId], currentMana: Math.max(0, combatants[e.combatantId].currentMana - cut) };
+      }
+      state = { ...state, combatants };
+    }
     rounds += 1;
     const roundEvents = [...result.events];
     if (roundEvents.some((e) => e.type === 'PactTicked')) pactTicked = true;
