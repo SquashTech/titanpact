@@ -21,7 +21,7 @@ import { allCombatants } from '../../src/data/content';
 import { chooseMvp, mvpLedgersFromEvents } from '../../src/run/mvp';
 import { statuses } from '../../src/data/statuses';
 import type { CombatEvent } from '../../src/engine/events';
-import type { CombatState } from '../../src/engine/state';
+import { effectiveManaCost, getMaxMana, type CombatState } from '../../src/engine/state';
 import { GEM_CACHE_COUNT, SCRIBE_GEMS, placeGem, rollGemDrop, rollGems, type Gem } from '../../src/run/gems';
 import { campBundle, rollCampDoors, rollCampGear, rollCampGemShelf, type CampPiece } from '../../src/run/camp';
 import { anyMasteryEligible } from '../../src/run/mastery';
@@ -135,6 +135,8 @@ export interface FightRecord {
   beats: number;
   pactTicked: boolean;
   playerHpFrac: number;
+  /** Each standing player hero's mana at the fight's end: a share of the pool, and whether its cheapest held move is out of reach. */
+  playerMana: { frac: number; dry: boolean; active: boolean }[];
   playerTurns: number;
   playerRests: number;
   playerSwitches: number;
@@ -596,6 +598,7 @@ function resolveEncounterNode(
     beats: fight.beats,
     pactTicked: fight.pactTicked,
     playerHpFrac: fight.playerHpFrac,
+    playerMana: manaAtEnd(fight.final, workingRun),
     playerTurns: fight.playerTurns,
     playerRests: fight.playerRests,
     playerSwitches: fight.playerSwitches,
@@ -659,6 +662,20 @@ function resolveEncounterNode(
 const MVP_ON = process.env.SIM_MVP === '1';
 
 /** The fight's MVP (run/mvp.ts) takes bonus XP: never a capped hero, never the same hero twice running. */
+function manaAtEnd(final: CombatState, run: RunState): { frac: number; dry: boolean; active: boolean }[] {
+  const out: { frac: number; dry: boolean; active: boolean }[] = [];
+  for (const c of Object.values(final.combatants)) {
+    if (c.side !== PLAYER_SIDE || c.currentHp <= 0) continue;
+    const hero = allCombatants[c.heroId];
+    const max = getMaxMana(hero, c);
+    const kit = run.roster.find((r) => r.heroId === c.heroId)?.unlockedMoveIds ?? [];
+    const costs = kit.map((id) => moves[id]).filter(Boolean).map((m) => effectiveManaCost(m));
+    const cheapest = costs.length > 0 ? Math.min(...costs) : 0;
+    out.push({ frac: max > 0 ? Math.min(1, c.currentMana / max) : 1, dry: c.currentMana < cheapest, active: final.active[PLAYER_SIDE].includes(c.combatantId) });
+  }
+  return out;
+}
+
 function awardMvp(run: RunState, events: readonly CombatEvent[], final: CombatState, mapNodeType: MapNodeType, record: RunRecord): RunState {
   const onRoster = new Set(run.roster.map((e) => e.rosterId));
   const ledgers = mvpLedgersFromEvents(events, final, PLAYER_SIDE, statuses).filter((l) => onRoster.has(l.rosterId));

@@ -91,6 +91,16 @@ export interface FightKindAgg {
   /** Fielded stat totals, summed — divide by n for the mean. */
   playerStatsSum: number;
   enemyStatsSum: number;
+  /** Standing player heroes at the end of a won fight, and their mana as a share of the pool (capped at 1), summed. */
+  manaHeroes: number;
+  manaFracSum: number;
+  /** Of those, below half the pool, and unable to pay for their cheapest held move. */
+  manaUnderHalf: number;
+  manaDry: number;
+  /** The same for the heroes on the field when it ended. */
+  manaActive: number;
+  manaActiveFracSum: number;
+  manaActiveDry: number;
 }
 
 /** A per-run minute histogram, one per pace profile (time.ts PACE_PROFILES order); index = whole minutes. */
@@ -365,7 +375,7 @@ export function emptyEnemy(): EnemyAgg {
 }
 
 export function emptyFightKind(): FightKindAgg {
-  return { n: 0, wins: 0, roundsSum: 0, playerHpFracSum: 0, pactFights: 0, stalemates: 0, playerStatsSum: 0, enemyStatsSum: 0 };
+  return { n: 0, wins: 0, roundsSum: 0, playerHpFracSum: 0, pactFights: 0, stalemates: 0, playerStatsSum: 0, enemyStatsSum: 0, manaHeroes: 0, manaFracSum: 0, manaUnderHalf: 0, manaDry: 0, manaActive: 0, manaActiveFracSum: 0, manaActiveDry: 0 };
 }
 
 /** Every leaf on these records is a number, so merging is a field-wise add — asserted once here rather than typed per shape. */

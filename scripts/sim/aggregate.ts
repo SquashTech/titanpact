@@ -140,6 +140,19 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     if (fight.stalemate) kind.stalemates += 1;
     kind.playerStatsSum += fight.playerSquadStats;
     kind.enemyStatsSum += fight.enemySquadStats;
+    if (fight.won) {
+      for (const m of fight.playerMana) {
+        kind.manaHeroes += 1;
+        kind.manaFracSum += m.frac;
+        if (m.frac < 0.5) kind.manaUnderHalf += 1;
+        if (m.dry) kind.manaDry += 1;
+        if (m.active) {
+          kind.manaActive += 1;
+          kind.manaActiveFracSum += m.frac;
+          if (m.dry) kind.manaActiveDry += 1;
+        }
+      }
+    }
 
     if (fight.mapNodeType === 'boss' || fight.mapNodeType === 'finale') {
       const guardianKey = fight.mapNodeType === 'finale' ? 'FINALE' : `${fight.locationId}@act${fight.act}`;

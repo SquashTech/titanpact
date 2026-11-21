@@ -307,6 +307,17 @@ export function formatReport(
     );
   }
 
+  out.push('');
+  out.push('  mana at the end of a won fight, standing player heroes (dry = cannot pay for its cheapest held move):');
+  out.push(`  ${pad('act:node', 16)}${padStart('heroes', 8)}${padStart('mean%', 8)}${padStart('<half', 8)}${padStart('dry', 8)}${padStart('field%', 9)}${padStart('fieldDry', 10)}`);
+  for (const key of kindKeys) {
+    const k = agg.fightKinds[key];
+    if (k.manaHeroes < 5) continue;
+    out.push(
+      `  ${pad(key, 16)}${padStart(String(k.manaHeroes), 8)}${padStart(num((100 * k.manaFracSum) / k.manaHeroes, 1), 8)}${padStart(pct(k.manaUnderHalf, k.manaHeroes), 8)}${padStart(pct(k.manaDry, k.manaHeroes), 8)}${padStart(k.manaActive > 0 ? num((100 * k.manaActiveFracSum) / k.manaActive, 1) : '-', 9)}${padStart(pct(k.manaActiveDry, k.manaActive), 10)}`
+    );
+  }
+
   // --- Guardians ---
   out.push(heading('3. GUARDIANS AND THE FINALE'));
   out.push(`  ${pad('fight', 30)}${padStart('n', 8)}${padStart('win%', 8)}${padStart('rounds', 8)}${padStart('endHP%', 8)}${padStart('pact%', 8)}`);
