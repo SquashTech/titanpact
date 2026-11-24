@@ -73,12 +73,10 @@ interface ScreenProps {
   heroId: string;
   /** The balance the Stardust was spent from, before the draw. */
   balanceBefore: number;
-  /** The hero took an empty seat in its deck row on arrival. */
-  joinsDeck: boolean;
   onClose: () => void;
 }
 
-export function StarfallScreen({ heroId, balanceBefore, joinsDeck, onClose }: ScreenProps) {
+export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) {
   const hero = heroes[heroId];
   const type = hero?.types[0];
   const [phase, setPhase] = useState<Phase>('gather');
@@ -290,7 +288,7 @@ export function StarfallScreen({ heroId, balanceBefore, joinsDeck, onClose }: Sc
             </span>
           ))}
         </div>
-        <div className="summon-oath">{joinsDeck ? 'joins your deck!' : 'joins your Collection!'}</div>
+        <div className="summon-oath">joins your Collection!</div>
         <button type="button" className="summon-cheer" data-sfx="ui.commit" disabled={!settled} onClick={onClose}>
           Awesome!
         </button>

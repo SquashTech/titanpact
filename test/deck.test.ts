@@ -1,5 +1,5 @@
-// The Deck (docs/collection.md): edits stay legal against what is owned, and a run saved with a deck
-// keeps it. A new run reads the Library — every hero (docs/worlds.md §2.1).
+// The Library (docs/worlds.md §2.1): a new run reads every hero, the draft draws one a type row, and
+// a run saved with a deck snapshot (docs/collection.md) keeps reading it, strangers and all.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -10,81 +10,20 @@ import { progressionTable } from '../src/data/progression';
 import { TYPES } from '../src/data/typechart';
 import { createProfile, decodeProfile } from '../src/run/profile';
 import { generateStarterOptions, STARTER_OPTION_COUNT } from '../src/run/draft';
-import { heroPool, isRecruitable, starfallLedgerId } from '../src/run/recruitment';
+import { isRecruitable } from '../src/run/recruitment';
 import { generateMap } from '../src/run/map';
 import { generateItinerary, locationForAct } from '../src/run/locations';
 import { addRosterEntry, createRosterEntry, createRunState, type RunState } from '../src/run/state';
 import { nodeEncounter } from '../src/run/encounters';
 import { generateEncounter } from '../src/run/enemyGen';
-import {
-  DECK_ROW_SIZE,
-  DeckError,
-  defaultDeck,
-  deckHeroIds,
-  draftableTypes,
-  encounterPools,
-  libraryRows,
-  lookupOf,
-  normalizeDeck,
-  profileDeck,
-  reserveOfType,
-  swapIntoDeck,
-} from '../src/run/deck';
+import { draftableTypes, encounterPools, libraryRows, lookupOf } from '../src/run/deck';
 
-const TALL_GRASS = 'bundle.tallGrass';
-/** The old base roster, owned by Starfall now that nothing is owned free: two a type. */
-const BASE = Object.values(heroes).filter((h) => !h.unlock).map((h) => starfallLedgerId(h.id));
-const baseDeck = () => normalizeDeck({}, heroes, BASE);
-/** Four Fire heroes owned, so a row has a reserve to trade. */
-const FOUR_FIRE = [...BASE, TALL_GRASS, starfallLedgerId('brimstone')];
-
-test('deck: a fresh account decks nothing; owning the old base fills two a type', () => {
-  assert.ok(Object.values(defaultDeck(heroes)).every((row) => row.length === 0), 'nothing is owned free');
-  const deck = baseDeck();
-  assert.strictEqual(Object.keys(deck).length, 14);
+test('deck: the Library is every hero, a row a draftable type', () => {
+  const rows = libraryRows(heroes);
   assert.deepStrictEqual(draftableTypes(heroes).sort(), TYPES.filter((t) => t !== 'Ancient').sort());
-  for (const [type, row] of Object.entries(deck)) {
-    assert.strictEqual(row.length, DECK_ROW_SIZE - 1, `${type} holds ${row.length}`);
-    for (const id of row) assert.strictEqual(heroes[id].types[0], type);
-  }
-  assert.deepStrictEqual(deckHeroIds(deck).sort(), Object.keys(heroPool(heroes, BASE)).sort());
-});
-
-test('deck: a stored deck is made legal — unknown, unowned, mistyped and repeated ids dropped, short rows topped up', () => {
-  const deck = normalizeDeck({ Fire: ['crimson', 'crimson', 'noSuchHero', 'rime', 'drake', 'ashwing'], Iron: 'junk' }, heroes, BASE);
-  assert.strictEqual(deck.Fire[0], 'crimson', 'a legal pick is kept');
-  assert.strictEqual(deck.Fire.length, DECK_ROW_SIZE - 1);
-  assert.ok(!deck.Fire.includes('ashwing'), 'an unowned Starfall hero is not decked');
-  assert.ok(!deck.Fire.includes('drake'), 'an unowned bundle hero is not decked');
-  assert.ok(!deck.Fire.includes('rime'), 'a Frost hero cannot sit in the Fire row');
-  assert.deepStrictEqual(deck.Iron, baseDeck().Iron);
-  assert.deepStrictEqual(normalizeDeck(null, heroes, BASE), baseDeck());
-});
-
-test('deck: a third hero of a type joins its row on its own', () => {
-  const fell = [...BASE, starfallLedgerId('ashwing')];
-  assert.deepStrictEqual(normalizeDeck(baseDeck(), heroes, fell).Fire, [...baseDeck().Fire, 'ashwing']);
-  assert.deepStrictEqual(reserveOfType(normalizeDeck(baseDeck(), heroes, fell), heroes, fell, 'Fire'), []);
-});
-
-test('deck: an owned hero is traded into its own row only', () => {
-  assert.deepStrictEqual(reserveOfType(baseDeck(), heroes, BASE, 'Fire'), [], 'two a type has no reserve');
-  const owned = normalizeDeck({}, heroes, FOUR_FIRE);
-  assert.deepStrictEqual(reserveOfType(owned, heroes, FOUR_FIRE, 'Fire'), ['drake']);
-  const traded = swapIntoDeck(owned, heroes, FOUR_FIRE, 'drake', owned.Fire[2]);
-  assert.ok(traded.Fire.includes('drake'));
-  assert.throws(() => swapIntoDeck(owned, heroes, FOUR_FIRE, 'drake', owned.Iron[1]), DeckError, 'wrong row');
-  assert.throws(() => swapIntoDeck(owned, heroes, BASE, 'drake', owned.Fire[2]), DeckError, 'not owned');
-});
-
-test('deck: the profile round-trips it, and a file without one opens on the default', () => {
-  const owned = normalizeDeck({}, heroes, FOUR_FIRE);
-  const edited = { ...createProfile(), purchases: FOUR_FIRE, deck: { ...swapIntoDeck(owned, heroes, FOUR_FIRE, 'drake', owned.Fire[0]) } as Record<string, string[]> };
-  const read = decodeProfile(JSON.parse(JSON.stringify(edited)));
-  assert.deepStrictEqual(profileDeck(read, heroes), profileDeck(edited, heroes));
-  assert.deepStrictEqual(decodeProfile({}).deck, {});
-  const packed = decodeProfile({ equippedPackId: 'secondString' });
-  assert.deepStrictEqual(profileDeck(packed, heroes), normalizeDeck({}, heroes, packed.purchases), 'a pack from before decks is dropped');
+  assert.strictEqual(rows.length, draftableTypes(heroes).length);
+  for (const row of rows) assert.strictEqual(new Set(row.map((id) => heroes[id].types[0])).size, 1, 'a row is one type');
+  assert.deepStrictEqual(rows.flat().sort(), Object.keys(heroes).sort(), 'the Library is every hero');
 });
 
 test('deck: the draft draws one hero a Library row, four rows shown, and every hero can be drawn', () => {
@@ -98,7 +37,11 @@ test('deck: the draft draws one hero a Library row, four rows shown, and every h
     for (const id of options) seen.add(id);
   }
   assert.deepStrictEqual([...seen].sort(), rows.flat().sort(), 'no hero is kept out of the draft');
-  assert.deepStrictEqual(rows.flat().sort(), Object.keys(heroes).sort(), 'the Library is every hero');
+});
+
+test('deck: a profile keeps no deck, and an old file holding one decodes without it', () => {
+  assert.ok(!('deck' in createProfile()));
+  assert.ok(!('deck' in decodeProfile({ deck: { Fire: ['crimson'] } })));
 });
 
 function deckRun(seed: number, act: number, deck: readonly string[] | null): RunState {
@@ -107,10 +50,8 @@ function deckRun(seed: number, act: number, deck: readonly string[] | null): Run
   return { ...run, map: generateMap(seed, act), locationIds: generateItinerary(seed), actNumber: act, fightsStarted: 2, encountersWon: 4, deck };
 }
 
-test('deck: a hero fight draws deck and strangers together, never a roster hero, and the preview agrees', () => {
-  // A thin deck, so strangers have somewhere to come from.
-  const deck = baseDeck();
-  const thin = Object.values(deck).map((row) => row[0]);
+test('deck: a run saved with a deck draws deck and strangers together, never a roster hero, and the preview agrees', () => {
+  const thin = libraryRows(heroes).map((row) => row[0]);
   let strangersSeen = 0;
   for (let seed = 1; seed <= 30; seed++) {
     const run = deckRun(seed, 2 + (seed % 4), thin);
@@ -130,13 +71,12 @@ test('deck: a hero fight draws deck and strangers together, never a roster hero,
 
 test('deck: a run with no deck reads its fallback whole and fields no strangers', () => {
   const run = deckRun(7, 3, null);
-  const owned = heroPool(heroes, BASE);
-  const pools = encounterPools(run, heroes, owned);
-  assert.strictEqual(pools.heroes, owned);
+  const pools = encounterPools(run, heroes, heroes);
+  assert.strictEqual(pools.heroes, heroes);
   assert.strictEqual(pools.strangers, undefined);
   // And a draw handed an empty stranger table is the plain draw, seed for seed.
-  const plain = generateEncounter('fight', 99, owned, { heroCount: 4 });
-  const withNone = generateEncounter('fight', 99, owned, { heroCount: 4, strangers: {} });
+  const plain = generateEncounter('fight', 99, heroes, { heroCount: 4 });
+  const withNone = generateEncounter('fight', 99, heroes, { heroCount: 4, strangers: {} });
   assert.deepStrictEqual(withNone.run.roster, plain.run.roster);
   assert.deepStrictEqual(lookupOf(heroes, ['valor', 'nobody']), { valor: heroes.valor });
 });

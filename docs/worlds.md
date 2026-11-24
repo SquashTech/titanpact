@@ -51,9 +51,11 @@ Decided 2026-11-24, per user direction:
 - **Cycle V's full-deck gate is gone.**
 
 **BUILT** in `src/run/recruitment.ts` (`ownsHero`: nothing owned free), `src/run/starShop.ts`,
-`src/run/profile.ts`, `src/run/gauntlet.ts`, `src/run/collection.ts`, `src/run/sky.ts`. **Not yet:**
-the Collection screen still edits a deck nothing reads, and the Trials and Versus do not wait on a
-Collection size.
+`src/run/profile.ts`, `src/run/gauntlet.ts`, `src/run/collection.ts`, `src/run/sky.ts`.
+
+**The deck is retired** (same day, per user direction): the Collection screen lists every hero a
+type at a time, owned first, with Info and a bundle's Buy; Equip, Swap, the Deck view and
+`Profile.deck` are gone. **Not yet:** the Trials and Versus do not wait on a Collection size.
 
 ### 2.3 The Worlds: a permanent mode
 A sequence of Worlds, each a run of stages ending in a boss (1-1, 1-2, 1-3, 1-4, then the 1-5 boss),
@@ -187,9 +189,7 @@ lives on across the Editions.
    Gems *ever placed* (the pip is permanent, the stat is portable — recommended) or Gems *socketed now*.
 7. **Does the Library pay Ink?** If yes, every run grows the account and the modes feed each
    other. If no, they stay cleanly apart, and a player who only plays runs never sees heroes grow.
-8. **What happens to the deck's screen?** The run no longer reads the deck, and new players meet every
-   hero (settled, §2.1). Left: the Collection screen's deck editor, which now edits nothing — retire
-   it, or grow it into the Worlds' team screen.
+8. **The deck** — settled: retired (§2.2).
 9. **The Sky's names.** §3.7 translates it into the book; Blip is decided. Pages summon and Ink grows
    (decided); left: what each mode pays (§4.7 — the natural split is the Library paying Pages and the
    Worlds paying Ink), Ink buys seat levels too (decided 2026-11-24, per user direction: one purse for all growth, so
@@ -272,7 +272,7 @@ the style anchor on every later edit.
 1. **Finish the frame** (§2.7, §3.7, §4.9): the Storybook, the working title and Blip are chosen;
    the Sky's names are left.
 2. **The Library opens to every hero, and the Collection starts at zero** (§2.1, §2.2). **BUILT
-   2026-11-24**; the Collection screen's deck editor is what is left of it (§4.8).
+   2026-11-24**, the deck retired with it.
 3. **The Worlds, first slice**: one World, six seats, Essence, the team screen grown from the Trials'
    teambuilder. Settle §4.1–§4.7 inside it, with level 99 measured rather than argued.
 4. **The look**: the style lock, then the interface sweep and pixel kit, then heroes, then backdrops.

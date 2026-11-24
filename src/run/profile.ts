@@ -91,12 +91,6 @@ export interface Profile {
   feesPaid: number;
   /** Observatory (star shop) offer ids bought (run/starShop.ts), each at most once. Stars are never un-earned; this is what draws the balance down. */
   purchases: string[];
-  /**
-   * The deck as stored (run/deck.ts): type → hero ids, three a row. Kept loose and made legal on
-   * read by `profileDeck`, so a hero leaving the catalog or a bundle not held can never strand it.
-   * Empty is the default deck.
-   */
-  deck: Record<string, string[]>;
   /** 0 until the first run is sealed. */
   firstPlayedAt: number;
   lastPlayedAt: number;
@@ -195,7 +189,6 @@ export function createProfile(): Profile {
     bonusStardust: 0,
     feesPaid: 0,
     purchases: [],
-    deck: {},
     firstPlayedAt: 0,
     lastPlayedAt: 0,
     seenTipIds: [],
@@ -375,14 +368,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** Non-empty strings only, in order; anything else in the list is skipped. */
-/** A file written before decks (or with none) decodes empty, which `profileDeck` reads as the default deck. */
-function decodeDeck(value: Record<string, unknown>): Record<string, string[]> {
-  if (!isRecord(value.deck)) return {};
-  const deck: Record<string, string[]> = {};
-  for (const [type, row] of Object.entries(value.deck)) deck[type] = [...new Set(stringList(row))];
-  return deck;
-}
-
 /** A slot keeps its hero id and whatever else reads; a team keeps its readable slots. */
 function decodeTeamSlot(raw: unknown): TeamSlot | null {
   if (!isRecord(raw) || typeof raw.heroId !== 'string' || raw.heroId.length === 0) return null;
@@ -570,7 +555,6 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
       count(value.version, 1) < 4
         ? [...new Set(withoutOwnedHeroes(stringList(value.purchases)))]
         : [...new Set(stringList(value.purchases))],
-    deck: decodeDeck(value),
     firstPlayedAt: count(value.firstPlayedAt),
     lastPlayedAt: count(value.lastPlayedAt),
     // Absent on every profile written before the tips; such a player sees each one once. A

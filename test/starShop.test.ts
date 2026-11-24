@@ -7,7 +7,6 @@ import { locations } from '../src/data/locations';
 import { locationPool, unvisitedLocationIds } from '../src/run/locations';
 import { heroes } from '../src/data/heroes';
 import { heroPool, isRecruitable, starfallLedgerId } from '../src/run/recruitment';
-import { deckHeroIds, profileDeck } from '../src/run/deck';
 import { STARFALL_PRICE, STARFALL_TEN, STARFALL_UNLOCK, buyOffer, bundleOwnedHeroIds, canBuy, canCallStarfall, canCallStarfallTen, isPurchased, offerHeld, offerPrice, starfall, starfallPool, starfallTen, stardustBalance, stardustSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
 
 const pack: StarShopGrant = { kind: 'heroBundle', heroIds: ['nobody'] };
@@ -215,9 +214,8 @@ test('star shop: a Starfall draws any hero not owned bar a bundle hero, costs it
   assert.ok(!canCallStarfall(profile, starShopCatalog));
   assert.throws(() => starfall(profile, starShopCatalog, 0.5), StarShopError);
   assert.throws(() => starfall(createProfile(), starShopCatalog, 0.5), StarShopError, 'no stars');
-  // A drawn hero joins its deck row on its own.
   const drawn = starfall({ ...createProfile(), bonusStardust: STARFALL_PRICE }, starShopCatalog, 0);
-  assert.ok(deckHeroIds(profileDeck(drawn.profile, heroes)).includes(drawn.heroId));
+  assert.ok(heroPool(heroes, drawn.profile.purchases)[drawn.heroId], 'a drawn hero joins the Collection');
 });
 
 test('star shop: ten Starfalls cost exactly ten singles and never draw a hero twice', () => {

@@ -40,7 +40,7 @@ import { actOneLocationFor, locationForAct, locationPool, seatNextLocation } fro
 import { locations } from '../../src/data/locations';
 import { encounterScaling, enemyLoadoutFor } from '../../src/run/difficulty';
 import { MAX_XP, MVP_XP_SHARE, encounterXpKind, grantEncounterLevels, grantXp, levelOf, MAX_LEVEL, xpForEncounter } from '../../src/run/growth';
-import { deckRows, normalizeDeck } from '../../src/run/deck';
+import { libraryRows } from '../../src/run/deck';
 import { generateFinaleEncounter, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
@@ -58,20 +58,13 @@ import {
   recordPermanentStatGains,
 } from '../../src/run/runProgress';
 import { MOVE_CAP, recordMoveOffer, grantOfferedMove, grantMove } from '../../src/run/progression';
-import { heroPool, freshRosterId } from '../../src/run/recruitment';
+import { freshRosterId } from '../../src/run/recruitment';
 import { recruitNodeEntry, recruitTypeOffers, rollRecruitHero } from '../../src/run/recruitNode';
 
-// The run's pool (run/recruitment.ts heroPool): the base game, plus whatever SIM_PURCHASES names —
-// a comma-separated list of Constellation offer ids, so a batch can hold a bundle.
-// SIM_ALL_HEROES=1 owns the whole catalog and drafts from every hero of a type (six a row, not the
-// deck's three), so a batch measures all 84 on equal draft odds.
-export const SIM_ALL_HEROES = process.env.SIM_ALL_HEROES === '1';
-export const SIM_PURCHASES: readonly string[] = SIM_ALL_HEROES
-  ? Object.keys(allHeroes).map((id) => `summon.${id}`)
-  : (process.env.SIM_PURCHASES ?? '').split(',').filter(Boolean);
+// The run's pool is the Library: every hero, as the game reads it (docs/worlds.md §2.1).
 // SIM_NO_BLESSING=1 opens the run without the opening pair's Blessings, the A/B for docs/blessings-and-statuses.md.
 export const SIM_NO_BLESSING = process.env.SIM_NO_BLESSING === '1';
-const heroes = heroPool(allHeroes, SIM_PURCHASES);
+const heroes = allHeroes;
 import { tutorMovePool } from '../../src/run/tutor';
 import { canTrain, mentorXpFor } from '../../src/run/mentor';
 import { grantClass, rollClassOffers } from '../../src/run/classes';
@@ -101,10 +94,8 @@ import { emptyTimeCounts, type ScreenKind, type TimeCounts } from './time';
 import { emptyKnockoutCounts, type KnockoutCounts } from './types';
 
 const EQUIPMENT_POOL = Object.values(equipment);
-// The draft's rows: the base roster's default deck, one hero drawn from each (run/draft.ts).
-const DRAFT_ROWS = SIM_ALL_HEROES
-  ? deckRows(normalizeDeck({}, heroes, SIM_PURCHASES)).map((row) => Object.keys(heroes).filter((id) => heroes[id].types[0] === heroes[row[0]].types[0]))
-  : deckRows(normalizeDeck({}, heroes, SIM_PURCHASES));
+// The draft's rows: the Library's, one hero drawn from each (run/draft.ts).
+const DRAFT_ROWS = libraryRows(heroes);
 
 /** App.tsx `EncounterMapNodeType` — the reward lane keys off the MAP node, not the flattened encounter kind. */
 type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';

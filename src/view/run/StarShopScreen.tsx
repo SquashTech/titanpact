@@ -13,7 +13,6 @@ import { BundlePeekOverlay } from './BundlePeekOverlay';
 import { CurseStarsSection, HeroStarsPage, SpawnStarsPage } from './StarPages';
 import { STARFALL_NAME, StarfallScreen } from './Starfall';
 import { StarfallTenScreen } from './StarfallTen';
-import { deckHeroIds, profileDeck } from '../../run/deck';
 import { SKY_HERO_COUNT, StarSky } from './StarSky';
 import { HubPageHead, HubSubtabs, type SubtabSpec } from './hubChrome';
 
@@ -253,7 +252,6 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
         <StarfallScreen
           heroId={fallen.heroIds[0]}
           balanceBefore={fallen.balanceBefore}
-          joinsDeck={deckHeroIds(profileDeck(profile, heroes)).includes(fallen.heroIds[0])}
           onClose={() => closeFallen(fallen.heroIds)}
         />
       )}

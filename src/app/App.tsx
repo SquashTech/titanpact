@@ -112,7 +112,7 @@ import { TutorialScreen } from '../view/story/TutorialScreen';
 import { sky, TUTORIAL_STAR } from '../data/sky';
 import { recordScenarioLit } from '../run/sky';
 import { generateStarterOptions } from '../run/draft';
-import { encounterPools, libraryRows, type Deck } from '../run/deck';
+import { encounterPools, libraryRows } from '../run/deck';
 import {
   generateEncounter,
   generateFinaleEncounter,
@@ -693,10 +693,6 @@ export function App() {
     setProfile(updateProfile((current) => ({ ...current, constructedTeams: teams })));
   }
 
-  function handleChangeDeck(deck: Deck) {
-    setProfile(updateProfile((current) => ({ ...current, deck: { ...deck } as Record<string, string[]> })));
-  }
-
   /** Abandon: the parked run is discarded, not just left behind. */
   function handleAbandonRun() {
     clearSave();
@@ -1232,7 +1228,6 @@ export function App() {
           onEraseAllData={handleEraseAllData}
           onBuyOffer={handleBuyOffer}
           onStarfall={handleStarfall}
-          onChangeDeck={handleChangeDeck}
           parkedRun={saveSlot.save ? saveSummary(saveSlot.save) : null}
           staleSaveReason={saveSlot.staleReason}
           saveNotice={

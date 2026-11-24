@@ -1,6 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { CollectionScreen } from './CollectionScreen';
-import type { Deck } from '../../run/deck';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RecordsScreen } from './RecordsScreen';
@@ -55,8 +54,6 @@ interface Props {
   onBuyOffer: (offer: StarShopOffer) => void;
   /** A Starfall of one or ten (run/starShop.ts), written to the profile; returns the heroes drawn. */
   onStarfall: (count: 1 | 10) => string[];
-  /** Writes the edited deck to the profile (run/deck.ts) and re-reads it. */
-  onChangeDeck: (deck: Deck) => void;
   /** The parked run a Continue would resume, or null when there is none. */
   parkedRun: SaveSummary | null;
   /** Set when a stored run was refused on load — shown once so a vanished Continue is explained, not just missing. */
@@ -112,7 +109,6 @@ export function TitleScreen({
   onEraseAllData,
   onBuyOffer,
   onStarfall,
-  onChangeDeck,
   parkedRun,
   staleSaveReason,
   saveNotice = null,
@@ -387,7 +383,6 @@ export function TitleScreen({
         <div className="hub-slot" style={{ '--slide': slide } as CSSProperties}>
           <CollectionScreen
             profile={profile}
-            onChangeDeck={onChangeDeck}
             onBuy={onBuyOffer}
             freshHeroIds={freshHeroIds}
             onAcknowledge={(heroId) => setFreshHeroIds((ids) => ids.filter((id) => id !== heroId))}
