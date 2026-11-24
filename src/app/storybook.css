@@ -721,3 +721,86 @@ button * { text-shadow: none !important; }
 .coll-card.is-locked { background: linear-gradient(180deg, #f3e6c6, #ecdcb6) !important; }
 .coll-card-price,
 .coll-card-price.is-constellation { color: #b5650f !important; text-shadow: none !important; }
+
+/* Bubbly cards (chosen 2026-11-24 from art/concepts/whimsy/): very round, a puffy highlight, and a
+   chunky lip in the card's own colour. Each card names its tint in --bub. */
+.pick-card,
+.coll-card { --bub: rgb(var(--type-rgb, 255, 154, 61)); }
+.switch-pick { --bub: rgb(var(--rgb, 255, 154, 61)); }
+.verb-card { --bub: var(--rite-color, #ff9a3d); }
+.evo-form-card { --bub: var(--path-lead, #ff9a3d); }
+.gem-hand { --bub: var(--gem-color, #ff9a3d); }
+.counter-good { --bub: var(--rarity-color, var(--gem-color, #f0a040)); }
+.camp-door,
+.smithy-bench,
+.options-item,
+.camp-door-piece { --bub: #f0a040; }
+
+:is(.pick-card, .coll-card, .switch-pick, .verb-card, .evo-form-card, .camp-door, .smithy-bench, .gem-hand, .counter-good) {
+  border: 3px solid color-mix(in srgb, var(--bub) 70%, #2b2340) !important;
+  border-image: none !important;
+  border-radius: 22px !important;
+  background: linear-gradient(180deg, #ffffff 0%, color-mix(in srgb, var(--bub) 14%, #fffaf0) 100%) !important;
+  box-shadow:
+    inset 0 4px 0 #ffffff,
+    inset 0 -6px 0 color-mix(in srgb, var(--bub) 22%, #fffaf0),
+    0 5px 0 color-mix(in srgb, var(--bub) 60%, #2b2340) !important;
+  overflow: hidden;
+}
+:is(.pick-card.is-selected, .verb-card.is-picked, .switch-pick.is-staged, .camp-door.is-chosen) {
+  border-color: #ff8a3d !important;
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 4px 0 #ffffff,
+    inset 0 -6px 0 color-mix(in srgb, var(--bub) 22%, #fffaf0),
+    0 0 0 3px rgba(255, 138, 61, 0.35),
+    0 8px 0 #d36a1a !important;
+}
+.coll-card.is-locked,
+.pick-card.is-locked { filter: saturate(0.55); }
+
+/* The Roster's card is drawn by its ::before: the same bubble, no slanted top. */
+.roster-sheet-card { --bub: rgb(var(--hero-rgb, 255, 154, 61)); }
+.roster-sheet-card::before {
+  clip-path: none !important;
+  border: 3px solid color-mix(in srgb, var(--bub) 70%, #2b2340);
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ffffff 0%, color-mix(in srgb, var(--bub) 14%, #fffaf0) 100%) !important;
+  box-shadow:
+    inset 0 4px 0 #ffffff,
+    inset 0 -6px 0 color-mix(in srgb, var(--bub) 22%, #fffaf0),
+    0 5px 0 color-mix(in srgb, var(--bub) 60%, #2b2340);
+  filter: none !important;
+}
+
+/* Gear sockets: little bubbly squares; a filled one takes its rarity's colour. */
+.item-box {
+  border: 2.5px solid #e7b35a !important;
+  border-image: none !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, #ffffff, #fff1d2) padding-box !important;
+  box-shadow: inset 0 2px 0 #ffffff, 0 3px 0 #c98a2a !important;
+}
+.item-box.empty::before { display: none !important; }
+.item-box.filled {
+  border-color: color-mix(in srgb, var(--rarity-color, #e7b35a) 75%, #2b2340) !important;
+  background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--rarity-color, #e7b35a) 18%, #fffaf0)) padding-box !important;
+  box-shadow: inset 0 2px 0 #ffffff, 0 3px 0 color-mix(in srgb, var(--rarity-color, #e7b35a) 60%, #2b2340) !important;
+}
+
+/* The Roster and ledger mounts drew diamonds: stand them upright as rounded squares. */
+:is(.item-ledger-name, .roster-sheet-mount) .item-box { box-shadow: none !important; border: 0 !important; background: none !important; }
+:is(.item-ledger-name, .roster-sheet-mount) .item-box .item-piece-facet,
+:is(.item-ledger-name, .roster-sheet-mount) .item-box.empty::before {
+  display: block !important;
+  rotate: 0deg !important;
+  border-radius: 10px !important;
+}
+:is(.item-ledger-name, .roster-sheet-mount) .item-box.empty::before {
+  background: linear-gradient(180deg, #ffffff, #fff1d2) !important;
+  box-shadow: 0 0 0 2.5px #e7b35a, 0 3px 0 2px #c98a2a !important;
+}
+:is(.item-ledger-name, .roster-sheet-mount) .item-box .item-piece-facet {
+  background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--rarity-color, #e7b35a) 30%, #fffaf0)) !important;
+  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--rarity-color, #e7b35a) 75%, #2b2340), 0 3px 0 2px color-mix(in srgb, var(--rarity-color, #e7b35a) 60%, #2b2340) !important;
+}

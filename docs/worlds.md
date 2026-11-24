@@ -81,6 +81,9 @@ Chosen 2026-11-24 from `art/concepts/vibrant/` over "jewel night":
 
 - **Interface:** a cream console, ink text, rounded buttons with a soft drop edge, the bottom
   buttons as cream coins with coloured rims. The stone-and-gold pixel kit goes.
+- **Cards are bubbly** (2026-11-24, per user direction, from `art/concepts/whimsy/`, over stickers,
+  inked pages and stamps): very round, a puffy highlight and a chunky lip in the card's own colour
+  (type, hero, rarity, rite); gear sockets are small bubbly squares. Plain rectangles read surgical.
 - **Arenas:** sunny and undimmed (the mock's Wild's Edge: Pixen 196x228, seed 8, low detail).
   Text over a bright arena needs a white face with an ink rim, or it disappears into the grass.
 - **Heroes:** redrawn cartoony with bigger heads, rounder shapes, two-tone cel shading and bright
