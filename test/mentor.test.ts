@@ -26,11 +26,12 @@ test('mentor: XP, not levels — the grant grows by act and a hero behind par cl
   assert.ok(behind > ahead, 'the cube lifts the hero further down it further');
 });
 
-test('mentor: a committed hero can reach the cap — every Mentor, every Elite and an MVP an act from Act 2', () => {
+test('mentor: a committed hero can reach the cap — every Mentor, every Elite and two MVPs an act from Act 2', () => {
   const beforeFinale = xpAfterEncounters(TOTAL_ENCOUNTERS - 1);
   const mentors = MENTOR_XP_BY_ACT.reduce((sum, xp) => sum + xp, 0);
   const elites = [1, 2, 3, 4].reduce((sum, act) => sum + Math.round(encounterXpForAct(act) * 0.5), 0);
-  const mvps = [2, 3, 4].reduce((sum, act) => sum + Math.round(encounterXpForAct(act) * MVP_XP_SHARE), 0);
+  // Five fights an act, and never twice running: two of them is a hero carrying its act.
+  const mvps = [2, 3, 4].reduce((sum, act) => sum + 2 * Math.round(encounterXpForAct(act) * MVP_XP_SHARE), 0);
   assert.ok(levelForXp(beforeFinale + mentors) < MAX_LEVEL, 'the Mentor alone does not reach it');
   assert.strictEqual(levelForXp(beforeFinale + mentors + elites + mvps), MAX_LEVEL);
 });

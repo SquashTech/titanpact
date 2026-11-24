@@ -13,7 +13,7 @@ import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { rosterHeroes } from '../../data/content';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { formIdFor } from '../../run/progression';
-import { WoundBar, entryHp } from '../shared/WoundBar';
+import { ManaBar, WoundBar, entryHp, entryMana } from '../shared/WoundBar';
 import { MapRoute } from './MapRoute';
 import { BannerShelf } from './BannerShelf';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
@@ -308,6 +308,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
                   <HeroPortrait heroId={hero.id} pathId={formIdFor(entry)} className="map-party-portrait" />
                   {lens?.badge && <span className="map-party-badge">{lens.badge}</span>}
                   {lens?.bar ?? <WoundBar hp={hp} maxHp={maxHp} />}
+                  {!lens?.bar && !entry.down && <ManaBar {...entryMana(hero, entry, run.relics)} />}
                 </span>
               );
             })}

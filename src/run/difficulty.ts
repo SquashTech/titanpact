@@ -15,13 +15,13 @@ import type { EnemyLoadout } from './enemyGen';
  */
 export type EncounterNodeKind = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
 
-/** Encounters the player has won on reaching a node of this kind inside its act: the opener, the fork, the Guardian. */
+/** Encounters won on reaching a node of this kind inside its act; a `battle` is the first hallway after the opener unless its row says otherwise (map.ts encountersBeforeRow). */
 export const ENCOUNTERS_BEFORE_NODE: Record<EncounterNodeKind, number> = {
   fight: 0,
-  skirmish: 1,
   battle: 1,
-  elite: 1,
-  boss: 2,
+  skirmish: 2,
+  elite: 2,
+  boss: 4,
   finale: 0,
 };
 
@@ -35,7 +35,7 @@ export const ENCOUNTERS_BEFORE_NODE: Record<EncounterNodeKind, number> = {
 export const ENEMY_LEVEL_OFFSET: Record<EncounterNodeKind, number> = {
   fight: -3,
   skirmish: 0,
-  battle: -2,
+  battle: -3,
   elite: 1,
   boss: -3,
   // The Herald's, and the Eyes' behind it (CHAMPION_GRADES — the number is in the line, docs/titan-eyes.md §4).
@@ -95,14 +95,14 @@ function clampLevel(level: number): number {
 }
 
 /** The player's par entering a node of this kind in this act. */
-export function parLevelAtNode(kind: EncounterNodeKind, actNumber: number): number {
+export function parLevelAtNode(kind: EncounterNodeKind, actNumber: number, encountersBefore = ENCOUNTERS_BEFORE_NODE[kind]): number {
   const act = clampAct(actNumber);
-  return levelAfterEncounters((act - 1) * ENCOUNTERS_PER_ACT + ENCOUNTERS_BEFORE_NODE[kind]);
+  return levelAfterEncounters((act - 1) * ENCOUNTERS_PER_ACT + encountersBefore);
 }
 
 /** The level every enemy on a node of this kind arrives at: par, the kind's offset, the act's. */
-export function enemyLevelFor(kind: EncounterNodeKind, actNumber: number): number {
-  return clampLevel(parLevelAtNode(kind, actNumber) + ENEMY_LEVEL_OFFSET[kind] + actLevelAdjust(actNumber));
+export function enemyLevelFor(kind: EncounterNodeKind, actNumber: number, encountersBefore?: number): number {
+  return clampLevel(parLevelAtNode(kind, actNumber, encountersBefore) + ENEMY_LEVEL_OFFSET[kind] + actLevelAdjust(actNumber));
 }
 
 /** The Guardian's held-back champion, over its escorts. */
@@ -117,9 +117,9 @@ export interface ActScaling {
 }
 
 /** What a node of this kind fields in this act. */
-export function encounterScaling(kind: EncounterNodeKind, actNumber: number): ActScaling {
+export function encounterScaling(kind: EncounterNodeKind, actNumber: number, encountersBefore?: number): ActScaling {
   const act = clampAct(actNumber);
-  return { level: enemyLevelFor(kind, act), mastery: masteryForAct(act) };
+  return { level: enemyLevelFor(kind, act, encountersBefore), mastery: masteryForAct(act) };
 }
 
 /** Authored content as written, level 1, no pips — the default for Quick Battle, Sandbox and tests. */
@@ -160,7 +160,7 @@ export function encounterHeroCountOverride(
 // --- The mob layer's tier by act (docs/titanspawn-overhaul.md §4) ---
 
 /**
- * "The act's tier": what the Guardian's escorts are, and what leads the opener from Act 2. The
+ * "The act's tier": what the Guardian's escorts are, and what a hallway fight fields. The
  * silhouette is the difficulty gauge — an Early is fodder, a Late is not — so this is the one
  * table that says which acts field which body. Acts past the table hold at its last entry.
  */
@@ -172,42 +172,16 @@ export function spawnTierFor(actNumber: number): SpawnTier {
 }
 
 /**
- * The opener's leader from Act 2 — "a Mid among Earlies" (§10, decided 2026-09-13): the act's
- * tier, floored at Mid so a leader is never just another Early.
+ * A hallway fight (the opener and every `battle`): two of the act's tier, bare, and nothing on
+ * the bench, so the fight is one exchange — two or three rounds that still cost a hit or two
+ * (2026-11-24, per user direction, docs/run-loop.md "Five fights an act"; it was a leader over
+ * three geared escorts from Act 2, five to six rounds).
  */
-export function spawnLeaderTierFor(actNumber: number): SpawnTier {
-  const tier = spawnTierFor(actNumber);
-  return tier === 'early' ? 'mid' : tier;
+export const HALLWAY_SIZE = 2;
+
+export function hallwayTiersFor(actNumber: number): readonly SpawnTier[] {
+  return Array.from({ length: HALLWAY_SIZE }, () => spawnTierFor(actNumber));
 }
-
-/**
- * The opener's escorts by act, in field order (2026-09-17, per user direction — it was three
- * Earlies in every act, and an Early is a knockout for any hero, so the opener cost the act
- * nothing: 86–97% HP left, one fight in three that could never set up a short-handed fork).
- * Earlies are phased out escort by escort — 2 / 2 / 1 / 0 / 0 — so the silhouette, which is the
- * difficulty gauge, says the act got harder. Act 1 stays two bare Earlies, the on-ramp.
- * Index = act; acts past the table hold at its last entry.
- */
-export const OPENER_ESCORT_TIERS_BY_ACT: readonly (readonly SpawnTier[])[] = [
-  [],
-  ['early', 'early'],
-  ['mid', 'early', 'early'],
-  ['mid', 'mid', 'early'],
-  ['mid', 'mid', 'mid'],
-  ['late', 'mid', 'mid'],
-];
-
-export function openerEscortTiersFor(actNumber: number): readonly SpawnTier[] {
-  const act = clampAct(actNumber);
-  return OPENER_ESCORT_TIERS_BY_ACT[Math.min(act, OPENER_ESCORT_TIERS_BY_ACT.length - 1)];
-}
-
-/**
- * The act from which the opener's Earlies carry an item each (§10, decided 2026-09-13): the
- * Earlies stay Earlies all run and equipment is what scales them, rolled on the same rarity
- * curve a drop is. Act 1's opener is bare so the first fight is the auto-win it is meant to be.
- */
-export const OPENER_GEAR_FROM_ACT = 2;
 
 /**
  * Items every hero-pool enemy, Guardian escort and champion carries, by act (index 0 unused; acts

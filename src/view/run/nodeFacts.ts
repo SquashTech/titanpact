@@ -3,7 +3,7 @@
 // with, so the readout cannot say 25% where the roll says 60. Above it, one line of lore and no
 // more (2026-10-13, per user direction): the rules live in How to Play, not on the sheet.
 
-import type { MapNodeType } from '../../run/map';
+import { encountersBeforeRow, type MapNodeType } from '../../run/map';
 import type { EquipmentRarity } from '../../run/equipment';
 import { EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, rarityWeightsFor } from '../../run/equipment';
 import { GEM_CACHE_COUNT, GEM_DROP, SCRIBE_GEMS, gemPointsForAct } from '../../run/gems';
@@ -12,7 +12,7 @@ import { ENCOUNTER_XP_MULTIPLIER, encounterXpForAct, encounterXpKind } from '../
 import { LEY_LINE_FORCE, MANA_WELL_AMOUNT, MANA_WELL_REGEN } from '../../run/runProgress';
 import { BOON_OFFER_COUNT } from '../../run/boons';
 import { mentorXpFor } from '../../run/mentor';
-import { championLevel, enemyLevelFor, openerEscortTiersFor, type EncounterNodeKind } from '../../run/difficulty';
+import { HALLWAY_SIZE, championLevel, enemyLevelFor, type EncounterNodeKind } from '../../run/difficulty';
 import { SEAL_ACTS } from '../../run/state';
 import { RECRUIT_TYPE_COUNT } from '../../run/recruitNode';
 
@@ -63,10 +63,10 @@ function percent(chance: number): string {
 }
 
 /** The lanes every fight is compared on, in one order, so Elite and Skirmish read as two columns of one table. */
-function encounterFacts(type: EncounterNodeKind, actNumber: number): NodeFact[] {
+function encounterFacts(type: EncounterNodeKind, actNumber: number, row?: number): NodeFact[] {
   const drop = EQUIPMENT_DROP_CHANCE[type];
   const xp = Math.round(encounterXpForAct(actNumber) * ENCOUNTER_XP_MULTIPLIER[encounterXpKind(type)]);
-  const level = enemyLevelFor(type, actNumber);
+  const level = enemyLevelFor(type, actNumber, row === undefined ? undefined : encountersBeforeRow(row));
   return [
     { glyph: 'enemy', label: 'Enemies', threat: true, value: `Lv ${level}`, note: type === 'boss' ? `Guardian Lv ${championLevel(level)}` : undefined },
     { glyph: 'xp', label: 'XP', value: `${xp}` },
@@ -82,23 +82,22 @@ function gemFact(type: EncounterNodeKind): NodeFact {
   return { glyph: 'scroll', label: 'Gems', value: chance >= 1 ? `${count}` : percent(chance) };
 }
 
-/** A Titanspawn tile: its level, and how many. */
-function spawnFacts(type: 'fight' | 'battle', actNumber: number, shapeAct: number): NodeFact[] {
-  const count = openerEscortTiersFor(shapeAct).length + (shapeAct <= 1 ? 0 : 1);
-  return encounterFacts(type, actNumber).map((fact) => (fact.label === 'Enemies' ? { ...fact, note: `× ${count}` } : fact));
+/** A hallway tile: its level, and how many. */
+function spawnFacts(type: 'fight' | 'battle', actNumber: number, row?: number): NodeFact[] {
+  return encounterFacts(type, actNumber, row).map((fact) => (fact.label === 'Enemies' ? { ...fact, note: `× ${HALLWAY_SIZE}` } : fact));
 }
 
 const gemNote = (actNumber: number) => `+${gemPointsForAct(actNumber)} to a stat each`;
 
-export function nodeDossier(type: MapNodeType, actNumber: number): NodeDossier {
+export function nodeDossier(type: MapNodeType, actNumber: number, row?: number): NodeDossier {
   const odds = (kind: EncounterNodeKind | 'standard' | 'cache') =>
     rarityWeightsFor(actNumber, kind === 'standard' || kind === 'cache' ? kind : LOOT_SOURCE[kind]);
 
   switch (type) {
     case 'fight':
-      return { about: null, facts: spawnFacts('fight', actNumber, actNumber), odds: odds('fight') };
+      return { about: null, facts: spawnFacts('fight', actNumber, row), odds: odds('fight') };
     case 'battle':
-      return { about: null, facts: spawnFacts('battle', actNumber, Math.max(2, actNumber)), odds: odds('battle') };
+      return { about: null, facts: spawnFacts('battle', actNumber, row), odds: odds('battle') };
     case 'skirmish':
       return { about: null, facts: encounterFacts('skirmish', actNumber), odds: odds('skirmish') };
     case 'elite':

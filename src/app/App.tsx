@@ -1111,14 +1111,14 @@ export function App() {
     telemetryRunStarted(run.cycle, chosenIds);
   }
 
-  /** TEMPORARY DEV/TEST — the Academy sits behind the act's second reward row. */
+  /** TEMPORARY DEV/TEST — the Academy sits behind the act's last hallway fight. */
   function handleStartAcademyTestRun() {
     fallback.current = null;
     const base = createLevel4TestRun();
-    // Stood on the reward row, so the Academy right after it is the next step.
-    const run = { ...base, currentNodeId: base.map!.rows[4][0] };
+    // Stood on the hallway fight, so the Academy right after it is the next step.
+    const run = { ...base, currentNodeId: base.map!.rows[6][0] };
     setPlayerRun(run);
-    setScreen({ kind: 'academyNode', nodeId: run.map!.rows[5][0], seed: randomSeed() });
+    setScreen({ kind: 'academyNode', nodeId: run.map!.rows[7][0], seed: randomSeed() });
   }
 
   /** TEMPORARY DEV/TEST — see createTitanEyesTestRun. */

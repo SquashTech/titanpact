@@ -5,7 +5,7 @@
 import type { HeroLookup, CombatState, Side, Combatant, StatModifiers } from '../engine/state';
 import { createCombatant, getMaxHp, getMaxMana } from '../engine/state';
 import { combatantIdFor, koRosterIdsOf, rosterIdOfCombatant } from './combatantIds';
-import { woundedHp } from './wounds';
+import { standingMana, woundedHp } from './wounds';
 
 export { koRosterIdsOf, rosterIdOfCombatant };
 import { createRng } from '../engine/rng/seededRng';
@@ -36,7 +36,7 @@ export interface SquadPlacement {
   teamStatusGrants?: Record<StatusId, number>;
 }
 
-// Mana starts full (docs/mana.md); HP starts where the act's wounds left it (run/wounds.ts).
+// HP and Mana start where the act left them (run/wounds.ts).
 // Both computed AFTER grants, so a +HP item raises the fight's starting resources.
 function placeEntry(
   entry: RosterEntry,
@@ -77,7 +77,7 @@ function placeEntry(
     ...quiverStamp(entry, hero),
     ...(holdsMixedKit(entry, hero) ? { mixedKit: true as const } : {}),
   };
-  return { ...withMods, currentHp: woundedHp(getMaxHp(hero, withMods), entry.wounds), currentMana: getMaxMana(hero, withMods) };
+  return { ...withMods, currentHp: woundedHp(getMaxHp(hero, withMods), entry.wounds), currentMana: standingMana(getMaxMana(hero, withMods), entry) };
 }
 
 /** A kit holding both a physical and a magical attack (Either Hand). */

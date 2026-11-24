@@ -322,6 +322,9 @@ export function decodeRosterEntry(value: unknown, index: SaveContentIndex, label
   // Absent on a file written before wounds persisted; whole is the honest default.
   const wounds = value.wounds ?? 0;
   if (!isInt(wounds, 0)) reject(`${label}.wounds is not an HP count`);
+  // Absent on a file written before Mana carried; a full pool is the honest default.
+  const manaSpent = value.manaSpent ?? 0;
+  if (!isInt(manaSpent, 0)) reject(`${label}.manaSpent is not a Mana count`);
   // Absent on a file written before knockouts persisted; standing is the honest default.
   const down = value.down === true;
   // Absent on a file written before Blessings; unblessed is the honest default.
@@ -365,6 +368,7 @@ export function decodeRosterEntry(value: unknown, index: SaveContentIndex, label
     classId: classId as string | null,
     classPassiveId,
     wounds,
+    manaSpent,
     down,
     blessed,
   };

@@ -462,8 +462,6 @@ export interface FightInput {
   aiPilot?: PilotKind;
   /** A Gathering's enemy plays its warband's engine (run/ai.ts AiContext.playsEngines). Default off. */
   aiPlaysEngines?: boolean;
-  /** Experiment (SIM_MANA_CARRY): each player hero's opening mana as a share of its pool, by hero id. Absent = full. */
-  playerStartMana?: Readonly<Record<string, number>>;
 }
 
 /** Experiment: every combatant's round-end MP Regen, both sides, scaled by this. */
@@ -512,13 +510,6 @@ export function simulateFight(input: FightInput): FightOutcome {
       rests: 0,
       died: false,
     };
-  }
-
-  if (input.playerStartMana) {
-    for (const c of Object.values(start.combatants)) {
-      const frac = c.side === PLAYER_SIDE ? input.playerStartMana[c.heroId] : undefined;
-      if (frac !== undefined) start.combatants[c.combatantId] = { ...c, currentMana: Math.round(getMaxMana(allCombatants[c.heroId], c) * frac) };
-    }
   }
 
   const field = { sets: {} as Record<string, number>, enemySets: {} as Record<string, number>, rounds: {} as Record<string, number> };

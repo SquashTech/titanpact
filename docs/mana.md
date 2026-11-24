@@ -44,7 +44,9 @@ Treat this as a hard constraint when tuning mana-node values in `/data`.
   every round boundary (same cadence as bench HP regen, `combat.md`) for both active
   and benched combatants — mana regen is one more reason switching is productive,
   same as HP.
-- **Starting state: full.** Every hero starts a fight with a full mana pool.
+- **Starting state: full.** Every hero starts a fight with a full mana pool. **Reversed
+  2026-11-24** (per user direction): a hero starts a fight with the Mana it ended its last one
+  with — "Carried between fights" below.
 - **Implemented** in `engine/combat/manaRegen.ts`, called from `resolveRound.ts` at the round
   boundary, emitting `ManaRegenTicked` per combatant whose mana changed. It walks every
   non-fainted combatant, active and benched.
@@ -180,6 +182,25 @@ A grant emits its own **`ManaGranted`** event rather than a bare `ManaChanged`
 `ManaChanged` is deliberately omitted from the Battle Log as bookkeeping, so a grant
 without its own event would be both invisible in the log and unattributable in the
 beat stream.
+
+## Carried between fights (2026-11-24, per user direction)
+
+Mana persists across an act's nodes the way HP does (`docs/run-loop.md` "Wounds"): a fight writes
+each fielded hero's spent Mana onto `RosterEntry.manaSpent` beside its wounds (`recordWounds`),
+the next fight opens it that far down (`standingMana`), and the same three mends refill it — the
+Rest seat, the Camp's Mend and the act's end (`mendRoster`). The Guardian does not refill it: the
+Camp's Mend is that choice. Stored as what is MISSING, so a pool that grows mid-act grows the
+current with it. Overflow is never carried; it ends at the node as it always did.
+
+Why: the act became five fights, most of them short (`docs/run-loop.md` "Five fights an act"), and
+a short fight barely dents a full pool. Carried, it adds up, and it makes the lead pick a resource
+call — open on the hero who can still cast, keep the drained caster on the bench where it regens.
+Regen and Rest are untouched: Rest still fills the whole pool for a turn, so a hero is never
+stranded, only slowed. The lead pick, the map's party chips and the Rest show a Mana bar under the
+HP bar.
+
+Measured before it was built (3,000 runs, chart pilot, the three-fight act): fielded heroes ended a
+won fight 57–72% full, 2–16% dry. What a five-fight act does to that is in `docs/run-loop.md`.
 
 ---
 

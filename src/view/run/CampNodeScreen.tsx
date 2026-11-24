@@ -117,6 +117,7 @@ export function CampNodeScreen({ run, doorIds, chosen, onMended, onEnter }: Prop
                   entry={entry}
                   hp={hp}
                   maxHp={maxHp}
+                  relicIds={run.relics}
                   healed={healed?.[entry.rosterId] || null}
                   onPreview={() => setPreviewEntry({ hero, entry })}
                 />

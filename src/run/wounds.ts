@@ -1,7 +1,8 @@
 // Wounds (docs/run-loop.md "Wounds", 2026-09-15, per user direction): HP persists across the
 // nodes of an act. A fight leaves each fielded hero's missing HP on its roster entry, the next
-// fight places it that much down, and only the act's end restores the roster whole. Mana is not
-// carried — a fight still opens on a full pool (docs/mana.md). Stored as the HP MISSING rather
+// fight places it that much down, and only the act's end restores the roster whole. Mana carries
+// the same way since 2026-11-24 (per user direction, docs/mana.md "Carried between fights"): what a
+// fight spent stays spent until a mend, so short fights still wear the act down. Stored as the HP MISSING rather
 // than the HP held so that a max that moves mid-act (a growth roll, a Banner) moves the current by
 // the same amount on its own.
 //
@@ -11,7 +12,7 @@
 // where a KO'd hero was a brick with no way back; the faucets above are the way back.
 
 import type { HeroLookup } from '../engine/state';
-import { getMaxHp, type CombatState, type Side } from '../engine/state';
+import { getMaxHp, getMaxMana, type CombatState, type Side } from '../engine/state';
 import { rosterIdOfCombatant } from './combatantIds';
 import type { RosterEntry, RunState } from './state';
 
@@ -36,9 +37,14 @@ export function isDown(entry: RosterEntry): boolean {
   return entry.down;
 }
 
-/** Hurt or down — anything a mend would change. */
+/** Where a roster hero's Mana stands going into its next fight. */
+export function standingMana(maxMana: number, entry: RosterEntry): number {
+  return Math.max(0, maxMana - entry.manaSpent);
+}
+
+/** Hurt, down or short of Mana — anything a mend would change. */
 export function isWounded(entry: RosterEntry): boolean {
-  return entry.down || entry.wounds > 0;
+  return entry.down || entry.wounds > 0 || entry.manaSpent > 0;
 }
 
 export function anyWounded(run: RunState): boolean {
@@ -62,13 +68,16 @@ export function standingRoster(roster: readonly RosterEntry[]): RosterEntry[] {
  * keep what they had.
  */
 export function recordWounds(run: RunState, state: CombatState, side: Side, heroes: HeroLookup): RunState {
-  const after = new Map<string, Pick<RosterEntry, 'wounds' | 'down' | 'blessed'>>();
+  const after = new Map<string, Pick<RosterEntry, 'wounds' | 'manaSpent' | 'down' | 'blessed'>>();
   for (const combatant of Object.values(state.combatants)) {
     if (combatant.side !== side) continue;
-    const baselineMax = getMaxHp(heroes[combatant.heroId], { ...combatant, statModifiers: {} });
+    const baseline = { ...combatant, statModifiers: {} };
+    const baselineMax = getMaxHp(heroes[combatant.heroId], baseline);
+    const maxMana = getMaxMana(heroes[combatant.heroId], baseline);
     const down = combatant.fainted || combatant.currentHp <= 0;
     after.set(rosterIdOfCombatant(combatant.combatantId), {
       wounds: down ? baselineMax : woundsFrom(baselineMax, combatant.currentHp),
+      manaSpent: Math.max(0, maxMana - combatant.currentMana),
       down,
       blessed: combatant.blessed === true,
     });
@@ -84,5 +93,5 @@ export function recordWounds(run: RunState, state: CombatState, side: Side, hero
 
 /** The whole roster made whole, the downed stood up — the act's end, the Rest seat, the Camp's Mend. */
 export function mendRoster(run: RunState): RunState {
-  return { ...run, roster: run.roster.map((entry) => (isWounded(entry) ? { ...entry, wounds: 0, down: false } : entry)) };
+  return { ...run, roster: run.roster.map((entry) => (isWounded(entry) ? { ...entry, wounds: 0, manaSpent: 0, down: false } : entry)) };
 }

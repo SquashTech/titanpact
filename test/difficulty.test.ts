@@ -174,7 +174,7 @@ test('difficulty: a spawn levels off its line\'s grades, and has no progression 
   }
 
   // The run's opener is level 1: the authored Early line, untouched.
-  const { run: opener } = mobEncounter('fight', locations.wildsEdge, 1, 7, encounterScaling('fight', 1));
+  const { run: opener } = mobEncounter(locations.wildsEdge, 1, 7, encounterScaling('fight', 1));
   for (const entry of opener.roster) {
     assert.strictEqual(levelOf(entry), 1);
     assert.deepStrictEqual(entry.growthStatGrants, {});

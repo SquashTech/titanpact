@@ -1240,7 +1240,7 @@ export function FightScreen({
 
   function leadPickHero(combatantId: string): LeadPickHero {
     const combatant = combat.combatants[combatantId];
-    return { combatantId, hero: allCombatants[combatant.heroId], combatant, level: levelFor(combatantId), maxHp: maxHpOf(combatantId) };
+    return { combatantId, hero: allCombatants[combatant.heroId], combatant, level: levelFor(combatantId), maxHp: maxHpOf(combatantId), maxMana: maxManaOf(combatantId) };
   }
 
   function summon(ids: readonly string[]) {

@@ -386,7 +386,8 @@ export function cacheLootTier(actNumber: number): number {
 }
 
 /**
- * Chance a won encounter pays an item, by map node type. The opener always drops, the Skirmish
+ * Chance a won encounter pays an item, by map node type. The opener always drops, a later hallway
+ * fight never does (2026-11-24, per user direction: five fights an act would double the supply), the Skirmish
  * rolls, and the Elite and the Guardian always drop (2026-09-15, docs/gear-absorption.md §5):
  * every item is absorbed on receipt now, so this table is the run's whole gear supply, and it
  * was measured rather than reasoned. Cutting the opener's drop cost seven points of full-clear,
@@ -401,7 +402,7 @@ export function cacheLootTier(actNumber: number): number {
  */
 export const EQUIPMENT_DROP_CHANCE: Record<EncounterNodeKind, number> = {
   fight: 1,
-  battle: 1,
+  battle: 0,
   skirmish: 0.3,
   elite: 1,
   boss: 1,

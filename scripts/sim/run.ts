@@ -300,13 +300,7 @@ export function simulateRun(options: RunOptions): RunRecord {
   return withRandom(rng, () => runInner(options, rng));
 }
 
-/** Experiment (SIM_MANA_CARRY): mana carries between an act's fights, refilled by Rest, a mend and the act's end; SIM_MANA_BOSS_REFILL fills it at the Guardian too. */
-const MANA_CARRY = process.env.SIM_MANA_CARRY === '1';
-const MANA_BOSS_REFILL = process.env.SIM_MANA_BOSS_REFILL === '1';
-let carriedMana: Record<string, number> = {};
-
 function runInner(options: RunOptions, rng: Rng): RunRecord {
-  carriedMana = {};
   const record: RunRecord = {
     seed: options.seed,
     won: false,
@@ -426,7 +420,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
         tally(record, run.actNumber, 'pactSeal');
         if (run.actNumber < TOTAL_ACTS) {
           run = advanceToNextAct(run, randomSeed(rng));
-          carriedMana = {};
           run = seatNextLocation(run, randomSeed(rng), locationPool(run.cycle));
           tally(record, run.actNumber, 'actIntro');
         }
@@ -571,15 +564,7 @@ function resolveEncounterNode(
     playerSwitching: options.playerSwitching,
     pilot: options.pilot,
     aiPlaysEngines: isGathering(workingRun),
-    playerStartMana: MANA_CARRY && !(MANA_BOSS_REFILL && mapNodeType === 'boss') ? carriedMana : undefined,
   });
-  if (MANA_CARRY) {
-    for (const c of Object.values(fight.final.combatants)) {
-      if (c.side !== PLAYER_SIDE) continue;
-      const max = getMaxMana(allCombatants[c.heroId], c);
-      carriedMana[c.heroId] = max > 0 ? Math.min(1, c.currentMana / max) : 1;
-    }
-  }
 
   const playerHeroes: FightRecord['playerHeroes'] = {};
   const enemyHeroes: FightRecord['enemyHeroes'] = {};
@@ -776,7 +761,6 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return resolveRecruit(run, locationId, rng, record);
     case 'restReward':
       if (anyDown(run)) record.knockouts.restsWhileDown += 1;
-      carriedMana = {};
       return mendRoster(run);
     case 'manaWellReward': {
       // The hero the pool is worth most to (policy.statBoostTarget) — the one screen that asks who.
@@ -1076,7 +1060,6 @@ function resolveCampPiece(run: RunState, piece: CampPiece, locationId: string, r
   const act = run.actNumber;
   switch (piece.kind) {
     case 'mend':
-      carriedMana = {};
       return mendRoster(run);
     case 'gems': {
       // The stats taken at random off the shelf: the policy places them, as at every Gem screen.

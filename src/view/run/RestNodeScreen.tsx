@@ -11,7 +11,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { formIdFor } from '../../run/progression';
 import { useLongPress } from '../shared/MoveTile';
 import { NodeMotes, NODE_TINT_VITAL } from '../shared/NodeStage';
-import { WoundBar, entryHp } from '../shared/WoundBar';
+import { ManaBar, WoundBar, entryHp, entryMana } from '../shared/WoundBar';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import heartArt from '../../../art/map-nodes/icons/restReward.png';
 import { PlateButton } from '../shared/PlateButton';
@@ -28,6 +28,7 @@ export function CampFigure({
   entry,
   hp,
   maxHp,
+  relicIds,
   healed,
   onPreview,
 }: {
@@ -35,6 +36,7 @@ export function CampFigure({
   entry: RosterEntry;
   hp: number;
   maxHp: number;
+  relicIds: readonly string[];
   /** What the rest just gave back, floated up once over the figure. */
   healed: number | null;
   onPreview: () => void;
@@ -58,6 +60,7 @@ export function CampFigure({
       ) : null}
       <span className="camp-name">{hero.name}</span>
       {entry.down ? <span className="camp-down">Down</span> : <WoundBar hp={hp} maxHp={maxHp} figure className="camp-hp" />}
+      {!entry.down && <ManaBar {...entryMana(hero, entry, relicIds)} figure className="camp-hp" />}
     </div>
   );
 }
@@ -128,6 +131,7 @@ export function RestNodeScreen({ run, onRunChange, onContinue }: Props) {
                   entry={entry}
                   hp={hp}
                   maxHp={maxHp}
+                  relicIds={run.relics}
                   healed={healed?.[entry.rosterId] || null}
                   onPreview={() => setPreviewEntry({ hero, entry })}
                 />

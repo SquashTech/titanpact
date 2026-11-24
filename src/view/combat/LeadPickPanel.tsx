@@ -14,7 +14,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
 import { BlessingMark } from '../shared/BlessingMark';
 import { MatchupRow } from '../shared/MatchupArrows';
-import { WoundBar } from '../shared/WoundBar';
+import { ManaBar, WoundBar } from '../shared/WoundBar';
 import { useLongPress } from '../shared/MoveTile';
 
 export interface LeadPickHero {
@@ -23,6 +23,7 @@ export interface LeadPickHero {
   combatant: Combatant;
   level: number;
   maxHp: number;
+  maxMana: number;
 }
 
 interface Props {
@@ -93,7 +94,7 @@ export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle,
   const nextGuided = guided?.find((id) => !picks.includes(id)) ?? null;
 
   function cell(entry: LeadPickHero, down: boolean) {
-    const { combatantId, hero, combatant, level, maxHp } = entry;
+    const { combatantId, hero, combatant, level, maxHp, maxMana } = entry;
     const types = effectiveTypes(hero, combatant);
     return (
       <LeadCell
@@ -120,6 +121,7 @@ export function LeadPickPanel({ candidates, fallen, enemyTypes, picks, onToggle,
         </div>
         {down ? <div className="squad-slot-down-label">Down</div> : <MatchupRow heroTypes={types} enemyTypes={enemyTypes} />}
         <WoundBar hp={combatant.currentHp} maxHp={maxHp} figure />
+        <ManaBar mana={Math.min(combatant.currentMana, maxMana)} maxMana={maxMana} figure />
       </LeadCell>
     );
   }

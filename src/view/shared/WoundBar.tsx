@@ -1,6 +1,7 @@
+import type { CSSProperties } from 'react';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
-import { standingHp } from '../../run/wounds';
+import { standingHp, standingMana } from '../../run/wounds';
 import { entryStatTotals } from './entryStatTotals';
 import { hpTier } from './StatBars';
 
@@ -8,6 +9,31 @@ import { hpTier } from './StatBars';
 export function entryHp(hero: HeroDefinition, entry: RosterEntry, relicIds: readonly string[]): { hp: number; maxHp: number } {
   const maxHp = entryStatTotals(hero, entry, relicIds).hp;
   return { hp: standingHp(maxHp, entry), maxHp };
+}
+
+/** Where a roster hero's Mana stands going into its next fight (run/wounds.ts). */
+export function entryMana(hero: HeroDefinition, entry: RosterEntry, relicIds: readonly string[]): { mana: number; maxMana: number } {
+  const maxMana = entryStatTotals(hero, entry, relicIds).manaPool;
+  return { mana: standingMana(maxMana, entry), maxMana };
+}
+
+const MANA_FILL = { '--wound-rgb': 'var(--mana)' } as CSSProperties;
+
+/** The out-of-combat Mana bar, drawn under a WoundBar: Mana carries between an act's fights. */
+export function ManaBar({ mana, maxMana, figure = false, className }: { mana: number; maxMana: number; figure?: boolean; className?: string }) {
+  const fraction = maxMana > 0 ? Math.max(0, Math.min(1, mana / maxMana)) : 0;
+  return (
+    <span className={`wound-bar is-mana${className ? ` ${className}` : ''}`} style={MANA_FILL} role="img" aria-label={`${mana} of ${maxMana} Mana`}>
+      <span className="wound-bar-track">
+        <span className="wound-bar-fill" style={{ width: `${Math.round(fraction * 100)}%` }} />
+      </span>
+      {figure && (
+        <span className="wound-bar-figure">
+          {mana}/{maxMana}
+        </span>
+      )}
+    </span>
+  );
 }
 
 interface WoundBarProps {

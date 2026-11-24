@@ -43,7 +43,7 @@ import {
   replaceableMoveIds,
 } from '../src/run/progression';
 import { heroes as heroesById } from '../src/data/heroes';
-import { LEVEL_AFTER_ENCOUNTER, MAX_LEVEL, levelOf, levelUpEntry, xpForLevel } from '../src/run/growth';
+import { ENCOUNTERS_PER_ACT, LEVEL_AFTER_ENCOUNTER, MAX_LEVEL, levelOf, levelUpEntry, xpForLevel } from '../src/run/growth';
 import { MASTERY_EVOLUTION } from '../src/run/mastery';
 import type { MoveTier, TypeId } from '../src/engine/content';
 
@@ -426,8 +426,8 @@ test('schedule: offers are staggered across the roster — no fight at par fires
   for (const hero of heroList) {
     const fights = hero.schedule!.offerLevels.map(fightOf);
     assert.ok(fights.every((f) => f > 0), `${hero.id}: an offer level no fight at par reaches`);
-    assert.ok(fights[0] <= 3, `${hero.id}: its first offer waits past Act 1`);
-    for (let i = 1; i < fights.length; i++) assert.ok(fights[i] - fights[i - 1] <= 4, `${hero.id}: five fights without an offer`);
+    assert.ok(fights[0] <= ENCOUNTERS_PER_ACT, `${hero.id}: its first offer waits past Act 1`);
+    for (let i = 1; i < fights.length; i++) assert.ok(fights[i] - fights[i - 1] < 2 * ENCOUNTERS_PER_ACT, `${hero.id}: two acts without an offer`);
     for (const f of new Set(fights)) perFight[f]++;
   }
   for (let f = 1; f < par.length; f++) {

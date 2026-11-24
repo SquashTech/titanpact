@@ -34,21 +34,23 @@ function mappedRun(seed = 7, actNumber = 1): RunState {
   return addRosterEntry(run, createRosterEntry('b', 'cinderKnight', heroes.cinderKnight.moveIds));
 }
 
-test('patrons: the seats are rows 2 and 5 of acts 1-4, numbered 0-7 down the run', () => {
-  assert.deepStrictEqual(PATRON_ROWS, [2, 5]);
-  assert.strictEqual(seatIndexFor(1, 2, PATRON_ROWS), 0);
-  assert.strictEqual(seatIndexFor(1, 5, PATRON_ROWS), 1);
-  assert.strictEqual(seatIndexFor(4, 5, PATRON_ROWS), SEAT_COUNT - 1);
-  assert.strictEqual(seatIndexFor(1, 3, PATRON_ROWS), null);
-  assert.strictEqual(seatIndexFor(5, 2, PATRON_ROWS), null, 'the finale has no seat');
+test('patrons: the seats are rows 3 and 7 of acts 1-4, numbered 0-7 down the run', () => {
+  assert.deepStrictEqual(PATRON_ROWS, [3, 7]);
+  assert.strictEqual(seatIndexFor(1, 3, PATRON_ROWS), 0);
+  assert.strictEqual(seatIndexFor(1, 7, PATRON_ROWS), 1);
+  assert.strictEqual(seatIndexFor(4, 7, PATRON_ROWS), SEAT_COUNT - 1);
+  assert.strictEqual(seatIndexFor(1, 4, PATRON_ROWS), null);
+  assert.strictEqual(seatIndexFor(5, 3, PATRON_ROWS), null, 'the finale has no seat');
 });
 
 test('patrons: a seat offers two different patrons, drawn the moment it comes into reach and kept', () => {
   let run = mappedRun();
   const rows = run.map!.rows;
   run = advanceToNode(run, rows[0][0]);
-  assert.strictEqual(patronAtSeat(run, 0, 0), null, 'row 2 is not in reach from the opener');
+  assert.strictEqual(patronAtSeat(run, 0, 0), null, 'row 3 is not in reach from the opener');
   run = advanceToNode(run, rows[1][0]);
+  assert.strictEqual(patronAtSeat(run, 0, 0), null, 'nor from the reward row');
+  run = advanceToNode(run, rows[2][0]);
   const offers = [patronAtSeat(run, 0, 0), patronAtSeat(run, 0, 1)];
   assert.ok(offers.every((id) => id && patrons[id]), `${offers}`);
   assert.notStrictEqual(offers[0], offers[1]);

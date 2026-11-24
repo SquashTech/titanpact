@@ -24,18 +24,53 @@ compressed.
 them (§3 "Multi-act sequencing"). The shape is forced and identical in every seal act, so no path
 can skip from the opener to the funnel on reward-node luck:
 
-- **Row 0: a single forced `fight`** — the act always opens on an easy, unambiguous fight.
+- **Row 0: a single forced `fight`** — the act's first hallway fight, and the one that drops an item.
 - **Row 1: pick 1 of 3 — reward types only**, weighted from `REWARD_WEIGHTS` (the Mentor or Tutor
   among them). A row never repeats a type; Act 1's always holds a Recruit.
-- **Row 2: the first patron seat** — pick 1 of 2 (`docs/patrons.md`).
-- **Row 3: pick 1 of 2 — `elite` or `skirmish`.** Both tiles preview the typing they field.
-- **Row 4: pick 1 of 3 — reward types only.** Both fork options lead to all three.
-- **Row 5: the second patron seat.**
-- **Row 6: the funnel — one forced Camp.**
-- **Row 7: the `boss`** — the act's Guardian.
+- **Row 2: a forced `battle`** — a hallway fight that pays XP and a Gem roll, never an item.
+- **Row 3: the first patron seat** — pick 1 of 2 (`docs/patrons.md`).
+- **Row 4: pick 1 of 2 — `elite` or `skirmish`.** Both tiles preview the typing they field.
+- **Row 5: pick 1 of 3 — reward types only.** Both fork options lead to all three.
+- **Row 6: a forced `battle`.**
+- **Row 7: the second patron seat.**
+- **Row 8: the funnel — one forced Camp.**
+- **Row 9: the `boss`** — the act's Guardian.
 
-So every act is **Fight → pick 1 of 3 → Patron → (Elite or Skirmish) → pick 1 of 3 → Patron →
-Camp → Guardian** — three fights, none skippable. A single-node row is one no path can bypass.
+So every act is **Fight → pick 1 of 3 → Fight → Patron → (Elite or Skirmish) → pick 1 of 3 →
+Fight → Patron → Camp → Guardian** — five fights, none skippable. A single-node row is one no path
+can bypass.
+
+**Five fights an act (2026-11-24, per user direction).** Mostly short fights, then a long one at the
+Guardian: the reference is a Pokémon trainer on the route, two to four rounds that cost the team a
+hit or two, where the act's management happens between them. Three changes make it:
+
+- **The hallway shape** (`hallwayTiersFor`, `HALLWAY_SIZE` = 2): the opener and both `battle`
+  rows field two bare spawn of the act's tier and nothing on the bench. Length comes from bodies on
+  the bench — each one is another entry and another round or two — and the hurt from tier and
+  level. Measured one fight at a time (Acts 2/3/4): 3.7/2.5/2.9 rounds with 69/84/77% of the
+  roster's HP left, against the old opener's leader over three geared escorts at 5.9/4.9/4.6 rounds
+  and 53/64/68%. Two of the tier below was a walkover (1.6–2.0 rounds, 90–98%); three of the act's
+  tier brought the length straight back.
+- **Mana carries like a Wound** (`RosterEntry.manaSpent`, `docs/mana.md` "Carried between
+  fights"): the short fights are what make the act a resource to manage, and a fight that empties a
+  caster leaves it short for the next one — which is a reason to open on someone else.
+- **XP re-split over five fights** (`ENCOUNTER_XP_BY_ACT` 100 / 360 / 770 / 1200,
+  `ENCOUNTERS_PER_ACT` = 5): par still ends the acts at 8 / 14 / 19 / 24 and now steps one level a
+  fight. A hallway's enemies sit at par entering their own row (`encountersBeforeRow`), three
+  under (`ENEMY_LEVEL_OFFSET`).
+
+Measured as built (3,000 runs, chart pilot, against the three-fight act the same day): act clears
+61.1 / 34.0 / 51.4 / 40.6% and the finale 20.0%, against 69.7 / 45.7 / 52.8 / 48.6 / 13.5;
+full-clear 0.9% against 1.1%. A completed run is 57.5 min for the Reader against 51.5 (Auto 40.4
+against 36.1). Hallways run 2.2–3.7 rounds and 97–99% won when fresh, but the `battle` rows lose
+12% of Act 2 and 8% of Act 4 — the third hallway comes straight after the fork, and an Elite win
+leaves the roster at ~10% HP. Fights entered short-handed went 6.2 → 12.0%. Carried Mana barely
+bites in this pilot: heroes end hallways 66–89% full, the Elite and Guardian 58–78%.
+
+What to watch: four hallways in a row compound; the enemy level offset is the dial for how much
+each one bites without changing its length. Act 2 is the act that hurts most (Mid spawn against
+low levels). The item supply is unchanged (only the opener drops); the Gem and potion rolls now
+come three times an act, not once.
 
 **Two reward rows (2026-11-20, per user direction).** The reward row between the first patron and
 the fork came out, and the second patron seat moved after the remaining reward row, so the picks

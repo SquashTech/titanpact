@@ -146,8 +146,8 @@ export function gradeBudgetOf(grades: GrowthGrades): number {
 
 // --- The XP curve ---
 
-/** Acts 1-5 each run three: the forced fight, the Elite-or-Skirmish, the Guardian (2026-09-14; the un-forked Skirmish came out to shorten the run). */
-export const ENCOUNTERS_PER_ACT = 3;
+/** Every act runs five: three hallway fights, the Elite-or-Skirmish, the Guardian (2026-11-24, per user direction; three from 2026-09-14). */
+export const ENCOUNTERS_PER_ACT = 5;
 
 /**
  * The cumulative XP to BE a level — Pokémon's Medium Fast, `L³`, 27,000 to the cap
@@ -200,14 +200,14 @@ export function xpToNextLevel(xp: number): number {
  * faster and that the next fight is worth more than the last. Par is DERIVED
  * (`levelAfterEncounters`) and no longer authored.
  *
- * Sized so par still reaches the decided act-end levels — 8 / 14 / 19 / 24 / 28 / 30 — which
- * `enemyLevelFor`, the Guild Hall's lag and the difficulty re-fit all read. Re-sized ×1.25 on
- * 2026-09-14 when the act went from four fights to three (two standard and the Guardian's double,
- * so an act pays four fights' worth where it paid five): the act-end levels are unchanged and
- * inside an act par walks 5/6/8, 10/11/14, 15/17/19, 20/21/24, 25/26/28. Index is the act,
+ * Sized so par still reaches the decided act-end levels — 8 / 14 / 19 / 24 — which
+ * `enemyLevelFor` and the difficulty re-fit read. Re-sized on 2026-11-24 for five fights an act
+ * (four standard and the Guardian's double, six fights' worth): each act's figure is picked so par
+ * steps ONE level a fight — 4/5/6/7/8, 9/10/11/12/14, 15/16/17/18/19, 20/21/22/23/24 — because two
+ * levels in one fight put most of the roster's move offers on one report. Index is the act,
  * 0-based; the last entry is the finale's one fight. First-pass playtest figures.
  */
-export const ENCOUNTER_XP_BY_ACT: readonly number[] = [150, 560, 1060, 1750, 5000];
+export const ENCOUNTER_XP_BY_ACT: readonly number[] = [100, 360, 770, 1200, 5000];
 
 /**
  * What a fight's KIND pays over the act's base — the one place a node type prices its XP. The

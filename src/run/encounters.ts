@@ -10,7 +10,7 @@ import type { HeroLookup } from '../engine/state';
 import type { HeroDefinition, TypeId } from '../engine/content';
 import { createRng, nextFloat } from '../engine/rng/seededRng';
 import type { LocationDefinition } from '../data/locations';
-import type { MapNode, MapNodeType, RunMap } from './map';
+import { encountersBeforeRow, type MapNode, type MapNodeType, type RunMap } from './map';
 import type { RunState } from './state';
 import type { ProgressionTable } from './progression';
 import { rosterEntryTypes } from './progression';
@@ -70,8 +70,8 @@ export function encounterKindOf(type: EncounterMapNodeType): EncounterNodeType {
 function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: EncounterContext, seed: number): Encounter {
   const { run, location, heroes, strangers, enemies, progression } = ctx;
   const encounterKind = encounterKindOf(type);
-  // The run's 2nd plain encounter is a deliberately lighter 2v2.
-  const isSecondFight = encounterKind === 'fight' && run.fightsStarted === 1;
+  // Act 1's Skirmish is a deliberately lighter 2v2.
+  const actOneSkirmish = encounterKind === 'fight' && run.actNumber <= 1;
   const scaling = encounterScaling(type, run.actNumber);
   const loadout = enemyLoadoutFor(type, run.actNumber);
   // A Guardian's escorts are the act's tier of the Location's spawn.
@@ -84,7 +84,7 @@ function heroPoolEncounter(node: MapNode, type: EncounterMapNodeType, ctx: Encou
   const standardCount = encounterKind === 'boss' ? (woken ? wokenEscortCount(run.actNumber) : guardianEscortCount(run.actNumber)) : 4;
   // The enemy count is capped at the roster.
   const heroCountOverride =
-    type === 'fight' || isSecondFight ? 2 : encounterHeroCountOverride(type, run.actNumber, run.roster.length, standardCount);
+    type === 'fight' || actOneSkirmish ? 2 : encounterHeroCountOverride(type, run.actNumber, run.roster.length, standardCount);
   const heroCount = (heroCountOverride ?? standardCount) + (type === 'elite' ? eliteExtraEnemiesFor(run.actNumber) : 0);
   // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
   const bias = pool === heroes ? locationBias(location, heroes, heroCount) : undefined;
@@ -207,7 +207,7 @@ export function nodeEncounter(node: MapNode, ctx: EncounterContext): Encounter {
   const map = ctx.run.map!;
   const { location, run } = ctx;
   if (type === 'fight' || type === 'battle') {
-    return mobEncounter(type, location, run.actNumber, encounterSeedFor(map, node.id), encounterScaling(type, run.actNumber));
+    return mobEncounter(location, run.actNumber, encounterSeedFor(map, node.id), encounterScaling(type, run.actNumber, encountersBeforeRow(node.row)));
   }
   if (type === 'elite') {
     const encounter = heroPoolEncounter(node, type, ctx, encounterSeedFor(map, node.id));

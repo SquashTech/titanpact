@@ -100,6 +100,11 @@ export interface RosterEntry {
    */
   wounds: number;
   /**
+   * Mana spent going into the next node (run/wounds.ts, 2026-11-24, per user direction): carried like
+   * a wound, cleared by the same three mends. Overflow is never carried.
+   */
+  manaSpent: number;
+  /**
    * Knocked out and still down (run/wounds.ts, 2026-09-17): a fight that KO'd the hero wrote it,
    * and until a Rest, the Camp's Mend or the act's end clears it the hero is not
    * fielded. Its own flag rather than `wounds >= max`, so a max that rises mid-act (a growth
@@ -217,6 +222,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     classId: null,
     classPassiveId: null,
     wounds: 0,
+    manaSpent: 0,
     down: false,
     blessed: false,
   };

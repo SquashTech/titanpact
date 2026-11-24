@@ -194,7 +194,7 @@ export function NodeDossier({ node, run, party, elite }: { node: MapNode; run: R
   const shownAsCard = steps.filter((step) => step.kind === 'move' || step.kind === 'passive');
   const dossier = patron
     ? { about: null, facts: steps.filter((step) => !shownAsCard.includes(step)).map((step) => stepFact(step, run.actNumber)), odds: null }
-    : nodeDossier(node.type, run.actNumber);
+    : nodeDossier(node.type, run.actNumber, node.row);
   const color = patron ? patronColor(patron.id) : NODE_COLORS[node.type];
   const shown = dossier.facts.filter((fact) => fact.value !== null);
   const threats = shown.filter((fact) => fact.threat);

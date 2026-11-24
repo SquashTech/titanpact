@@ -862,7 +862,7 @@ what's still unimplemented:
 - Per-run reset vs meta-progression: **light meta-progression** — run state fully
   resets, permanent unlocks persist (`docs/progression.md`).
 - Mana resource model/regen/starting state: **per-hero pool, regen every round for
-  active + bench, full starting pool** (`docs/mana.md`).
+  active + bench, full starting pool** (`docs/mana.md`; the pool CARRIES between an act's fights since 2026-11-24).
 - Five "50/50" heroes: general shape decided — **mono base, second type via an
   Evolution type-graft path** (`docs/progression.md` "Type-graft paths"), not
   inherent duals. Of the prototype's five, only Solace is in the roster (mono-Light); the
@@ -876,7 +876,7 @@ what's still unimplemented:
   seeded off the map so the preview IS the fight, and the two guaranteed to differ in a type —
   `src/run/encounters.ts`; it was Elite or Battle) → **the Academy** (2026-10-09) → pick 1 of 3
   reward → the funnel → an end-of-act **Guardian** boss fight, no path ever skipping a
-  fight, and no path ever losing a choice (`docs/run-loop.md`). **Three fights an act since
+  fight, and no path ever losing a choice (`docs/run-loop.md`). **FIVE fights an act since 2026-11-24** (per user direction, `docs/run-loop.md` "Five fights an act"): three short hallway fights (two bare spawn of the act's tier), the fork and the Guardian, `ENCOUNTER_XP_BY_ACT` 100 / 360 / 770 / 1200 so par steps a level a fight. **Three fights an act since
   2026-09-14** (per user direction): the un-forked Skirmish row between the opener and the
   fork came out to shorten the run without cutting a Location — it was the fight the sim
   measured as costing time and nothing else — the reward rows stayed at three, the act's XP
@@ -976,7 +976,7 @@ what's still unimplemented:
   Evolution move — it used to stop at four Early moves. With the gear and Act 4 term beside it,
   measured: full-clear 90.8 → 88.7% skilled / 49.3 → 45.3% chart, Acts 3–4 fights ending 5–9
   points of HP lower; the finale untouched. **HP persists across an act's
-  nodes — Wounds — and mana does not** (2026-09-15, per user direction, FOR PLAYTEST;
+  nodes — Wounds — and so does mana since 2026-11-24** (`RosterEntry.manaSpent`, per user direction, `docs/mana.md` "Carried between fights") (2026-09-15, per user direction, FOR PLAYTEST;
   `src/run/wounds.ts`, `docs/run-loop.md` "Wounds"). A fight writes the fielded heroes'
   missing HP onto `RosterEntry.wounds`, and **a knockout PERSISTS** (2026-09-17, per user
   direction — the counterweight to every fight fielding the whole roster): a KO'd hero is
@@ -989,7 +989,7 @@ what's still unimplemented:
   reversal, where raw persistence bricked a KO'd hero for the run with no way back; the
   faucets are now the way back, and a KO is meant to cost the rest of the act. `down` is a flag,
   not `wounds >= max`, so a growth roll cannot stand a hero up. Potions stay in-fight only.
-  Mana still opens full every fight; the enemy curve is untouched until it has been played. Relics are **stat-only**, by
+  Mana carries and refills at the same three mends; the enemy curve is untouched until it has been played. Relics are **stat-only**, by
   design rather than by deferral (see the relic-catalog invariant above).
 - The first run on an account (2026-09-24, per user direction, replacing the scripted
   Valor-narrated Act 1 of 2026-09-05, deleted whole): **an ordinary run, nothing staged** —

@@ -63,7 +63,7 @@ test('encounters: the fork is Elite-or-Skirmish, both recruitable, and the two n
   }
 });
 
-test('encounters: the Elite fields one more enemy than the Skirmish beside it from Act 2, the same count in Act 1', () => {
+test('encounters: the Elite fields one more enemy than the Skirmish beside it from Act 2; in Act 1 the Skirmish is a 2v2', () => {
   for (const act of [1, 2, 3, 4]) {
     const run = runAt(7, act);
     const ctx = contextFor(run);
@@ -71,7 +71,8 @@ test('encounters: the Elite fields one more enemy than the Skirmish beside it fr
     const [skirmish] = nodesOfType(run, 'skirmish');
     const eliteSize = nodeEncounter(elite, ctx).run.roster.length;
     const skirmishSize = nodeEncounter(skirmish, ctx).run.roster.length;
-    assert.strictEqual(eliteSize, skirmishSize + eliteExtraEnemiesFor(act), `act ${act}: Elite ${eliteSize}, Skirmish ${skirmishSize}`);
+    if (act === 1) assert.strictEqual(skirmishSize, 2, 'the first hero-pool fight of a run stays light');
+    else assert.strictEqual(eliteSize, skirmishSize + eliteExtraEnemiesFor(act), `act ${act}: Elite ${eliteSize}, Skirmish ${skirmishSize}`);
   }
 });
 
