@@ -1,13 +1,13 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { LEFT_BASE_2026_09_28, PROFILE_VERSION, STARDUST_PER_STAR, createProfile, decodeProfile, recordRunEnded, recordRunStarted } from '../src/run/profile';
+import { PROFILE_VERSION, STARDUST_PER_STAR, createProfile, decodeProfile, recordRunEnded, recordRunStarted } from '../src/run/profile';
 import { MAX_BUILT_CYCLE, cycleOf } from '../src/run/cycles';
 import { STAR_SHOP_OFFERS, starShopCatalog } from '../src/data/starShop';
 import { locations } from '../src/data/locations';
 import { locationPool, unvisitedLocationIds } from '../src/run/locations';
 import { heroes } from '../src/data/heroes';
 import { heroPool, isRecruitable, starfallLedgerId } from '../src/run/recruitment';
-import { deckHeroIds, draftableTypes, profileDeck, shortTypes } from '../src/run/deck';
+import { deckHeroIds, profileDeck } from '../src/run/deck';
 import { STARFALL_PRICE, STARFALL_TEN, STARFALL_UNLOCK, buyOffer, bundleOwnedHeroIds, canBuy, canCallStarfall, canCallStarfallTen, isPurchased, offerHeld, offerPrice, starfall, starfallPool, starfallTen, stardustBalance, stardustSpent, StarShopError, type StarShopCatalog, type StarShopGrant } from '../src/run/starShop';
 
 const pack: StarShopGrant = { kind: 'heroBundle', heroIds: ['nobody'] };
@@ -67,17 +67,15 @@ test('star shop: purchases survive a round trip and decode deduplicated', () => 
   assert.deepStrictEqual(decodeProfile({ version: PROFILE_VERSION }).purchases, []);
 });
 
-test('star shop: a profile from before the 2026-09-28 base swap keeps the heroes that left the base, free', () => {
-  const old = decodeProfile({ version: 1, purchases: [] });
-  // Riptide and Nightshade came back to the base on 2026-10-16.
-  const stillOut = LEFT_BASE_2026_09_28.filter((id) => heroes[id].unlock);
-  for (const id of stillOut) {
-    assert.ok(heroes[id].unlock, `${id} is no longer base`);
-    assert.ok(heroPool(heroes, old.purchases)[id], `${id} is still owned`);
-  }
-  assert.strictEqual(stardustSpent(old, starShopCatalog), 0);
+test('star shop: every account restarts its Collection at zero, refunded', () => {
+  const old = decodeProfile({ version: 3, bonusStardust: 1000, purchases: [starfallLedgerId('ursa'), 'bundle.tallGrass', 'grant.tempest', 'hero.valor', 'aThingNoLongerSold'] });
+  assert.deepStrictEqual(old.purchases, ['aThingNoLongerSold'], 'only the hero entries come off');
+  assert.strictEqual(Object.keys(heroPool(heroes, old.purchases)).length, 0, 'nothing is owned');
+  assert.strictEqual(stardustSpent(old, starShopCatalog), 0, 'what they cost is back');
   const fresh = decodeProfile(JSON.parse(JSON.stringify(createProfile())));
-  for (const id of stillOut) assert.ok(!heroPool(heroes, fresh.purchases)[id], `a new account does not own ${id}`);
+  assert.strictEqual(Object.keys(heroPool(heroes, fresh.purchases)).length, 0, 'a new account owns nothing, the old base roster included');
+  const kept = decodeProfile(JSON.parse(JSON.stringify({ ...old, purchases: [starfallLedgerId('ursa')] })));
+  assert.ok(heroPool(heroes, kept.purchases).ursa, 'a pull made after the reset is kept');
 });
 
 test('star shop: the shipped catalog is consistent with itself', () => {
@@ -199,15 +197,15 @@ test('star shop: a single hero bought before singles were withdrawn is still own
   assert.strictEqual(stardustBalance(legacy, starShopCatalog), 250);
 });
 
-test('star shop: a Starfall draws only its own heroes not owned, costs its price, and stops when there are none', () => {
-  let profile = { ...createProfile(), bonusStardust: 10000 };
-  const outside = Object.values(heroes).filter((h) => h.unlock === STARFALL_UNLOCK).length;
+test('star shop: a Starfall draws any hero not owned bar a bundle hero, costs its price, and stops when there are none', () => {
+  let profile = { ...createProfile(), bonusStardust: 100000 };
+  const outside = Object.values(heroes).filter((h) => !h.unlock || h.unlock === STARFALL_UNLOCK).length;
   const seen = new Set<string>();
   for (let i = 0; i < outside; i++) {
     const before = stardustBalance(profile, starShopCatalog);
     const result = starfall(profile, starShopCatalog, (i * 0.37) % 1);
     assert.ok(!seen.has(result.heroId), `${result.heroId} drawn twice`);
-    assert.strictEqual(heroes[result.heroId].unlock, STARFALL_UNLOCK, `${result.heroId} is a bundle hero`);
+    assert.ok(!heroes[result.heroId].unlock || heroes[result.heroId].unlock === STARFALL_UNLOCK, `${result.heroId} is a bundle hero`);
     seen.add(result.heroId);
     assert.ok(result.heroId in heroPool(heroes, result.profile.purchases));
     assert.strictEqual(stardustBalance(result.profile, starShopCatalog), before - STARFALL_PRICE);
@@ -217,7 +215,7 @@ test('star shop: a Starfall draws only its own heroes not owned, costs its price
   assert.ok(!canCallStarfall(profile, starShopCatalog));
   assert.throws(() => starfall(profile, starShopCatalog, 0.5), StarShopError);
   assert.throws(() => starfall(createProfile(), starShopCatalog, 0.5), StarShopError, 'no stars');
-  // A third hero of a type joins the deck on its own.
+  // A drawn hero joins its deck row on its own.
   const drawn = starfall({ ...createProfile(), bonusStardust: STARFALL_PRICE }, starShopCatalog, 0);
   assert.ok(deckHeroIds(profileDeck(drawn.profile, heroes)).includes(drawn.heroId));
 });
@@ -248,25 +246,21 @@ test('star shop: a profile from before Stardust converts its balance exactly, fi
     purchases: [starfallLedgerId('drake')],
     runHistory: [{ outcome: 'win', actReached: 6, roster: [], clearBonus: 6 }],
   });
-  // Stars: 2 earned + 7 bonus − 1 fee − 2 for the Starfall = 6.
-  assert.strictEqual(stardustBalance(star, starShopCatalog), 6 * STARDUST_PER_STAR);
+  // Stars: 2 earned + 7 bonus − 1 fee = 8; the Starfall came off the ledger in the reset, refunded.
+  assert.strictEqual(stardustBalance(star, starShopCatalog), 8 * STARDUST_PER_STAR);
   assert.strictEqual(star.bonusStardust, 7 * STARDUST_PER_STAR);
   assert.strictEqual(star.runHistory[0].clearBonus, 6 * STARDUST_PER_STAR);
   const again = decodeProfile(JSON.parse(JSON.stringify(star)));
   assert.strictEqual(stardustBalance(again, starShopCatalog), stardustBalance(star, starShopCatalog), 'a converted file is not converted twice');
 });
 
-test('star shop: a Starfall fills every type to a deck row before it draws a fourth of any', () => {
-  let profile = { ...createProfile(), bonusStardust: 10000 };
-  const types = draftableTypes(heroes);
-  for (let i = 0; i < types.length; i++) {
-    const result = starfall(profile, starShopCatalog, (i * 0.61) % 1);
-    profile = result.profile;
-  }
-  assert.deepStrictEqual(shortTypes(heroes, profile.purchases), [], 'fourteen falls, one a type');
-  // With every row full, the pool is the whole of what is left.
-  assert.strictEqual(starfallPool(profile).length, Object.values(heroes).filter((h) => h.unlock === STARFALL_UNLOCK).length - types.length);
-  // A bundle fills its types, and the Starfall skips them while others are short.
-  const bundled = { ...createProfile(), purchases: ['bundle.tallGrass'] };
-  for (const id of starfallPool(bundled)) assert.ok(!['Fire', 'Water', 'Nature'].includes(heroes[id].types[0]), `${id} is of a full type`);
+test('star shop: a Starfall draws any hero not owned, the old base roster included, never a bundle hero', () => {
+  const profile = createProfile();
+  const pool = starfallPool(profile);
+  const bundled = Object.values(heroes).filter((h) => h.unlock && h.unlock !== STARFALL_UNLOCK).map((h) => h.id);
+  assert.strictEqual(pool.length, Object.keys(heroes).length - bundled.length);
+  assert.ok(pool.includes('valor'), 'a hero the base roster used to own free');
+  for (const id of bundled) assert.ok(!pool.includes(id), `${id} comes only in its bundle`);
+  const drawn = starfall({ ...profile, bonusStardust: 10000 }, starShopCatalog, 0);
+  assert.ok(!starfallPool(drawn.profile).includes(drawn.heroId), 'never drawn twice');
 });

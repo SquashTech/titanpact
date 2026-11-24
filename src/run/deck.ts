@@ -1,7 +1,6 @@
-// The Deck (docs/collection.md §2): the player, not the definition, decides which owned heroes
-// a run can meet. A row a draftable type, three equal slots a row: the draft draws one hero from
-// each row (run/draft.ts), and all of it is the run's pool. Pure data in, data out: the profile
-// holds the deck, a run holds a snapshot of it.
+// The Deck (docs/collection.md §2) and the Library's rows. Since docs/worlds.md §2.1 a new run reads
+// every hero (`libraryRows`, a null `RunState.deck`); a run saved with a deck snapshot keeps it.
+// The profile's deck is still edited on the Collection screen but no longer read by a run.
 
 import type { HeroDefinition, TypeId } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
@@ -31,13 +30,13 @@ function ownedOfType(owned: Catalog, type: TypeId): string[] {
   return [...ofType.filter((h) => !h.unlock), ...ofType.filter((h) => h.unlock)].map((h) => h.id);
 }
 
-/** The types the account owns fewer than a deck row of — what the Starfall fills first. */
-export function shortTypes(catalog: Catalog, purchases: readonly string[]): TypeId[] {
-  const owned = heroPool(catalog, purchases);
-  return draftableTypes(catalog).filter((type) => ownedOfType(owned, type).length < DECK_ROW_SIZE);
+/** Every hero by draftable type, in catalog order — the Library's rows, one drawn from each for the draft. */
+export function libraryRows(catalog: Catalog): string[][] {
+  const all = Object.values(catalog);
+  return draftableTypes(catalog).map((type) => all.filter((hero) => primaryOf(hero) === type).map((hero) => hero.id));
 }
 
-/** The deck a fresh account holds: the base roster, two a type. */
+/** The deck a fresh account holds: whatever it owns, up to three a type. */
 export function defaultDeck(catalog: Catalog): Deck {
   return normalizeDeck({}, catalog, []);
 }

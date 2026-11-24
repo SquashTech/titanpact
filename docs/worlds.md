@@ -1,6 +1,7 @@
 # worlds.md — The account, the Worlds, and a new look
 
-> **STATUS: DIRECTION PARTLY DECIDED, NOTHING BUILT (2026-11-24).** A rethink of what the account
+> **STATUS: DIRECTION PARTLY DECIDED; PHASE 2 BUILT (2026-11-24) — the Library reads every hero and
+> the Collection starts at zero.** A rethink of what the account
 > grows into, a permanent mode for it to grow in, and the frame and look around both. §2 holds what is
 > decided per user direction; §3 is PROPOSED; §4 is OPEN and is not to be silently resolved; §5 lists
 > what this reverses if built. Until a phase in §8 lands, every rule in CLAUDE.md stands.
@@ -30,11 +31,29 @@ first; AFK Arena's campaign and Resonating Crystal, Epic Seven and Dragon Quest 
 
 ### 2.1 The Library fields every hero
 The roguelike draws its draft, its Recruit nodes, its events and its enemy parties from the whole
-catalog, owned or not. The deck no longer feeds a run.
+catalog, owned or not. The deck no longer feeds a run. **Every hero is in every draft from the first
+run**, Motley and the Burden heroes included (2026-11-24, per user direction; §4.8 is settled).
+**BUILT:** the draft reads `libraryRows` (`src/run/deck.ts`) and a new run's `deck` is null, so its
+pools are the whole catalog; a run saved with a deck snapshot keeps it.
 
 ### 2.2 The Collection starts at zero
 A new account owns no hero. The Starfall is the only way to own one, and owned heroes are what the
 Constructed modes use: the Worlds (§2.3), the Trials and the Gauntlet. The Library does not read it.
+Decided 2026-11-24, per user direction:
+
+- **Every account restarts at zero**, the oldest included: profile version 4 takes every hero entry
+  off the ledger (Starfalls, bundles, grants, legacy singles), which refunds what they cost.
+- **No starter grant**: a new account owns only the tutorial's one forced Starfall (§3.6 is settled).
+- **The Starfall draws any hero not owned**, the old base roster included, never a bundle's; the
+  fill-every-type-to-three rule is gone.
+- **The Gauntlet opens at 15 owned** (`GAUNTLET_MIN_OWNED`), on top of the Cycle I clear; its sky seat
+  is only glimpsed until then (`ConstellationDefinition.minOwned`).
+- **Cycle V's full-deck gate is gone.**
+
+**BUILT** in `src/run/recruitment.ts` (`ownsHero`: nothing owned free), `src/run/starShop.ts`,
+`src/run/profile.ts`, `src/run/gauntlet.ts`, `src/run/collection.ts`, `src/run/sky.ts`. **Not yet:**
+the Collection screen still edits a deck nothing reads, and the Trials and Versus do not wait on a
+Collection size.
 
 ### 2.3 The Worlds: a permanent mode
 A sequence of Worlds, each a run of stages ending in a boss (1-1, 1-2, 1-3, 1-4, then the 1-5 boss),
@@ -146,10 +165,7 @@ survive, its October art does not. Mocked in `art/concepts/spread/`.
 Blip's one arc — the Titan beginning to see it — passes to the Blot, creeping toward the page Blip
 lives on across the Editions.
 
-### 3.6 A starter grant
-At zero owned, the Worlds and the Gauntlet cannot run: the Gauntlet rolls fifteen owned heroes, and
-the tutorial's forced Starfall gives one. A grant of four to six heroes, or the modes locked until
-enough are owned, is needed either way.
+### 3.6 A starter grant (SETTLED by §2.2: none; the modes wait on the Collection instead)
 
 ---
 
@@ -171,10 +187,9 @@ enough are owned, is needed either way.
    Gems *ever placed* (the pip is permanent, the stat is portable — recommended) or Gems *socketed now*.
 7. **Does the Library pay Ink?** If yes, every run grows the account and the modes feed each
    other. If no, they stay cleanly apart, and a player who only plays runs never sees heroes grow.
-8. **What happens to the deck?** The base 28 were chosen as the easiest to read; with every hero in
-   the Library, a new player meets Motley, the Burden heroes and Widow in the first draft. Accept
-   it, keep a light filter (a complexity tier that opens after the first win), or keep the deck as an
-   optional pool editor.
+8. **What happens to the deck's screen?** The run no longer reads the deck, and new players meet every
+   hero (settled, §2.1). Left: the Collection screen's deck editor, which now edits nothing — retire
+   it, or grow it into the Worlds' team screen.
 9. **The Sky's names.** §3.7 translates it into the book; Blip is decided. Pages summon and Ink grows
    (decided); left: what each mode pays (§4.7 — the natural split is the Library paying Pages and the
    Worlds paying Ink), Ink buys seat levels too (decided 2026-11-24, per user direction: one purse for all growth, so
@@ -256,8 +271,8 @@ the style anchor on every later edit.
 
 1. **Finish the frame** (§2.7, §3.7, §4.9): the Storybook, the working title and Blip are chosen;
    the Sky's names are left.
-2. **The Library opens to every hero, and the Collection starts at zero** (§2.1, §2.2, §3.6, §4.8).
-   Small in code, and it fixes the pulled-hero problem on its own.
+2. **The Library opens to every hero, and the Collection starts at zero** (§2.1, §2.2). **BUILT
+   2026-11-24**; the Collection screen's deck editor is what is left of it (§4.8).
 3. **The Worlds, first slice**: one World, six seats, Essence, the team screen grown from the Trials'
    teambuilder. Settle §4.1–§4.7 inside it, with level 99 measured rather than argued.
 4. **The look**: the style lock, then the interface sweep and pixel kit, then heroes, then backdrops.

@@ -8,6 +8,7 @@ import { resolveTypeMult, type TypeChart } from '../engine/damage/typeMult';
 import { constructedMovePool, constructedPath, slotManaPool, slotTypes, TEAM_SIZE, type ConstructedContent, type TeamSlot } from './constructed';
 import type { Profile } from './profile';
 import { MOVE_CAP, signatureIdFor } from './progression';
+import { ownedHeroCount } from './collection';
 
 /** Heroes an offer shows; one is taken. */
 export const OFFER_SIZE = 3;
@@ -24,6 +25,8 @@ export const PILOT_FROM_WINS = 3;
 /** In Stardust. */
 export const GAUNTLET_CLEAR_BONUS = 250;
 export const GAUNTLET_ENTRY_PRICE = 150;
+/** Owned heroes the Gauntlet waits on: what its offers deal from (docs/worlds.md §2.2). */
+export const GAUNTLET_MIN_OWNED = 15;
 
 const TIER_WEIGHT = { early: 1, mid: 2, late: 3 } as const;
 /** A damage move swinging off the stat the hero does not lead with. */
@@ -62,9 +65,9 @@ export class GauntletError extends Error {}
 
 // --- Gate and entry ---
 
-/** Opens on the first Cycle I clear, as the Trials do. */
-export function isGauntletOpen(profile: Pick<Profile, 'cyclesCleared'>): boolean {
-  return profile.cyclesCleared > 0;
+/** Opens on the first Cycle I clear, as the Trials do, once the account owns GAUNTLET_MIN_OWNED heroes. */
+export function isGauntletOpen(profile: Pick<Profile, 'cyclesCleared' | 'purchases'>): boolean {
+  return profile.cyclesCleared > 0 && ownedHeroCount(profile.purchases) >= GAUNTLET_MIN_OWNED;
 }
 
 /** The local calendar day, the free entry's clock. */
@@ -83,7 +86,7 @@ export function canEnterGauntlet(profile: Profile, balance: number, today: strin
 
 /** Spends today's free entry if it is there, else GAUNTLET_ENTRY_PRICE Stardust, and rolls the first offer. */
 export function enterGauntlet(profile: Profile, content: GauntletContent, ownedHeroIds: readonly string[], seed: number, today: string, balance: number): Profile {
-  if (!isGauntletOpen(profile)) throw new GauntletError('the Gauntlet opens on the first Cycle I clear');
+  if (!isGauntletOpen(profile)) throw new GauntletError(`the Gauntlet opens on the first Cycle I clear with ${GAUNTLET_MIN_OWNED} heroes owned`);
   if (profile.gauntlet) throw new GauntletError('a Gauntlet is already open');
   const free = freeEntryAvailable(profile, today);
   if (!free && balance < GAUNTLET_ENTRY_PRICE) throw new GauntletError(`an entry costs ${GAUNTLET_ENTRY_PRICE}, balance is ${balance}`);

@@ -1,5 +1,8 @@
 import * as assert from 'assert';
 import { test } from './harness';
+import { GAUNTLET_MIN_OWNED } from '../src/run/gauntlet';
+import { starfallLedgerId } from '../src/run/recruitment';
+import { heroes } from '../src/data/heroes';
 import { createProfile, decodeProfile, recordRunEnded, type RunEnd } from '../src/run/profile';
 import { sky } from '../src/data/sky';
 import { findStar } from '../src/run/sky';
@@ -52,7 +55,11 @@ test('thoughts: a constellation seen open is revealed once, uncharted ones never
     order.push(next.constellationId);
     profile = recordThoughtSeen(profile, next.thought);
   }
-  assert.deepStrictEqual(order, ['infinite', 'trials', 'gauntlet']);
+  assert.deepStrictEqual(order, ['infinite', 'trials'], 'the Gauntlet waits on owned heroes too');
+
+  // Owning enough opens the Gauntlet, and it is pointed out next.
+  profile = { ...profile, purchases: Object.keys(heroes).slice(0, GAUNTLET_MIN_OWNED).map(starfallLedgerId) };
+  assert.strictEqual(revealedThought(profile, sky, THOUGHTS)?.constellationId, 'gauntlet');
 });
 
 test('thoughts: the first sky plays the fall, then starts the tutorial', () => {

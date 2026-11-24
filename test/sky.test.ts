@@ -4,7 +4,9 @@ import { createProfile, decodeProfile, recordRunEnded, recordTipSeen, recordTria
 import { sky, TUTORIAL_STAR } from '../src/data/sky';
 import { TRIAL_LIST } from '../src/data/trials';
 import { constellationState, findStar, isConstellationLit, isDrawInUnshown, isStarLit, recordScenarioLit, skyLightingTipId, skyStardust, SkyError, starScenario, type ConstellationState } from '../src/run/sky';
-import { isGauntletOpen } from '../src/run/gauntlet';
+import { GAUNTLET_MIN_OWNED, isGauntletOpen } from '../src/run/gauntlet';
+import { starfallLedgerId } from '../src/run/recruitment';
+import { heroes } from '../src/data/heroes';
 import { isConstructedOpen } from '../src/run/constructed';
 import { stardustEarned } from '../src/run/starShop';
 
@@ -76,7 +78,8 @@ test('sky: an existing account lights exactly what it has already done, and its 
     [true, true, false, false, false]
   );
   assert.strictEqual(s.trials, 'open');
-  assert.strictEqual(s.gauntlet, 'open');
+  assert.strictEqual(s.gauntlet, 'glimpsed', 'it waits on owned heroes as well as a Cycle I clear');
+  assert.strictEqual(states({ ...profile, purchases: Object.keys(heroes).slice(0, GAUNTLET_MIN_OWNED).map(starfallLedgerId) }).gauntlet, 'open');
   assert.strictEqual(s.strange, 'open', 'open, though uncharted');
   assert.ok(!isConstellationLit(profile, sky.constellations.gauntlet));
   // The tutorial it never played pays nothing: the sky arriving moves no balance.
@@ -87,7 +90,8 @@ test('sky: an existing account lights exactly what it has already done, and its 
 test('sky: a mode opens in the sky exactly when it opens today', () => {
   const lost = recordRunEnded(createProfile(), end(1, 'loss'), 1);
   const won = recordRunEnded(createProfile(), end(1, 'win'), 1);
-  for (const profile of [createProfile(), lost, won]) {
+  const owning = { ...won, purchases: Object.keys(heroes).slice(0, GAUNTLET_MIN_OWNED).map(starfallLedgerId) };
+  for (const profile of [createProfile(), lost, won, owning]) {
     const s = states(profile);
     assert.strictEqual(playable(s.trials), isConstructedOpen(profile), 'the Trials');
     assert.strictEqual(playable(s.gauntlet), isGauntletOpen(profile), 'the Gauntlet');

@@ -112,7 +112,7 @@ import { TutorialScreen } from '../view/story/TutorialScreen';
 import { sky, TUTORIAL_STAR } from '../data/sky';
 import { recordScenarioLit } from '../run/sky';
 import { generateStarterOptions } from '../run/draft';
-import { deckHeroIds, deckRows, encounterPools, profileDeck, type Deck } from '../run/deck';
+import { encounterPools, libraryRows, type Deck } from '../run/deck';
 import {
   generateEncounter,
   generateFinaleEncounter,
@@ -432,12 +432,8 @@ export function App() {
   // playtime flushes on a timer, and putting that in React state would re-render the tree for a
   // number nothing shows.
   const [profile, setProfile] = useState<Profile>(() => readProfile());
-  // The heroes a run draws from: its deck (run/deck.ts), fixed when the pact was sealed — the
-  // fork's contracts, the Guild Hall and the enemy party all read this one table — and the
-  // strangers a recruitable party may field past it. A run saved before decks reads every owned
-  // hero (run/recruitment.ts heroPool) and fields no strangers.
-  const ownedPool = useMemo(() => heroPool(heroes, profile.purchases), [profile.purchases]);
-  const runPools = useMemo(() => encounterPools(playerRun, heroes, ownedPool), [playerRun.deck, ownedPool]);
+  // The heroes a run draws from: every hero (docs/worlds.md §2.1), or the deck an older run was sealed with.
+  const runPools = useMemo(() => encounterPools(playerRun, heroes, heroes), [playerRun.deck]);
   const gauntletOpponentTeam = useMemo(() => (profile.gauntlet && profile.gauntlet.team.length === TEAM_SIZE ? gauntletOpponent(gauntletContent, profile.gauntlet).team : null), [profile.gauntlet]);
   const recruitPool = runPools.heroes;
   // The cold launch's loading screen (LaunchScreen): `launched` mounts the title under it for its
@@ -1088,8 +1084,8 @@ export function App() {
 
   /** The Cycle rides `playerRun` across the draft; the run itself is only built on confirm. */
   function handleStartNewRun(cycle: number) {
-    // One hero drawn from each deck row, then four of those shown (run/draft.ts).
-    const optionIds = generateStarterOptions(randomSeed(), deckRows(profileDeck(profile, heroes)));
+    // One hero drawn from each of the Library's type rows, then four of those shown (run/draft.ts).
+    const optionIds = generateStarterOptions(randomSeed(), libraryRows(heroes));
     setPlayerRun((run) => ({ ...run, cycle }));
     const draft: Screen = { kind: 'draft', optionIds };
     // A later Cycle's lore card ahead of its first draft; Cycle I's fall is the Story prologue's (docs/stories.md §4).
@@ -1098,8 +1094,8 @@ export function App() {
   }
 
   function handleDraftConfirm(chosenIds: string[]) {
-    // The deck is snapshotted onto the run, so an edit between sessions never moves a run's pools.
-    const run = { ...createStartingRun(chosenIds, playerRun.cycle), deck: deckHeroIds(profileDeck(profile, heroes)) };
+    // No deck: the Library reads every hero (docs/worlds.md §2.1).
+    const run = { ...createStartingRun(chosenIds, playerRun.cycle), deck: null };
     setPlayerRun(run);
     // The Blessing played on the draft's own sky (PactForging); the seal, every ring open, frames the run next.
     setScreen({ kind: 'pactSeal' });

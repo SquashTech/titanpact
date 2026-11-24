@@ -18,7 +18,6 @@ import { GRADE_BUDGET, GROWTH_STATS, gradeBudgetOf, gradeExpectedPoints, gradesF
 import { BURDEN_SURPLUS, HERO_STAT_TOTAL, heroStatTotal, heroStatTotalFor } from '../src/run/statBudget';
 import { itemSlotsFor } from '../src/run/progression';
 import { createRosterEntry } from '../src/run/state';
-import { heroPool } from '../src/run/recruitment';
 import { TYPES } from '../src/data/typechart';
 
 /** HP + Mana + the five battle stats at face value. MP Regen is a flat 10 outside the total. */
@@ -232,9 +231,9 @@ test('roster: every hero starts on the same one item slot, whatever its Speed', 
 });
 
 test('roster: the BASE roster is two a type for the fourteen draftable types, and a bundle hero is outside it', () => {
-  // The count CLAUDE.md pins is the base game's (docs/constellation.md §9): heroPool with nothing
-  // bought. A hero with `unlock` sits beside it, never in it.
-  const base = Object.values(heroPool(heroes));
+  // The heroes with no `unlock`: what defines the draftable types (run/deck.ts). Nothing is owned
+  // free since docs/worlds.md §2.2; the old base is still the roster's spine.
+  const base = Object.values(heroes).filter((hero) => !hero.unlock);
   assert.strictEqual(base.length, 28);
   for (const type of TYPES) {
     if (type === 'Ancient') continue;

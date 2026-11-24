@@ -13,7 +13,7 @@ import { locations } from '../src/data/locations';
 import { CHAMPION_IDS } from '../src/data/enemies';
 import { TYPES } from '../src/data/typechart';
 import { progressionTable } from '../src/data/progression';
-import { CYCLES, FULL_DECK_CYCLE, MAX_BUILT_CYCLE, cycleOf, openCycle } from '../src/run/cycles';
+import { CYCLES, MAX_BUILT_CYCLE, cycleOf, openCycle } from '../src/run/cycles';
 import { starfallLedgerId } from '../src/run/recruitment';
 import { actOneLocationFor, generateItinerary, locationForAct, locationPool } from '../src/run/locations';
 import { bannerArtId, guardianBannersFor } from '../src/data/relics';
@@ -55,9 +55,7 @@ test('cycles: a Cycle opens on a clear of the one before, and a clear records th
   const wonOnTwo = recordRunEnded(firstCleared, end(2, 'win'), 3);
   assert.strictEqual(wonOnTwo.cyclesCleared, 2);
   assert.strictEqual(openCycle(wonOnTwo), 3, 'a Cycle II clear opens Cycle III');
-  assert.strictEqual(openCycle({ cyclesCleared: 99, purchases: [] }), Math.min(MAX_BUILT_CYCLE, FULL_DECK_CYCLE - 1), 'never past the Cycles that are built, nor into the last on a short collection');
-  const everyone = Object.values(heroes).map((hero) => starfallLedgerId(hero.id));
-  assert.strictEqual(openCycle({ cyclesCleared: 99, purchases: everyone }), MAX_BUILT_CYCLE);
+  assert.strictEqual(openCycle({ cyclesCleared: 99 }), MAX_BUILT_CYCLE, 'never past the Cycles that are built, whatever is owned');
   assert.strictEqual(wonOnTwo.runHistory[0].cycle, 2, 'the history line knows the Cycle');
 });
 

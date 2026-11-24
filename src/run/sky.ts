@@ -5,6 +5,7 @@
 // (`Profile.litStars`).
 
 import type { Profile } from './profile';
+import { ownedHeroCount } from './collection';
 
 /** What lights one star. Every kind but `scenario` reads a record the profile already keeps. */
 export type SkyStarLight =
@@ -41,6 +42,8 @@ export interface ConstellationDefinition {
    * arriving moves no existing balance.
    */
   rail?: boolean;
+  /** Owned heroes it waits on besides its stars: short of them it is only glimpsed. */
+  minOwned?: number;
   /** Its scenarios are not authored yet: what waits on its stars opens as if they were lit, and it lights and pays nothing itself. */
   uncharted?: boolean;
   rewards: readonly SkyReward[];
@@ -121,6 +124,12 @@ export function constellationState(profile: Profile, sky: SkyContent, id: string
   const constellation = sky.constellations[id];
   if (!constellation) return 'hidden';
   if (isConstellationLit(profile, constellation)) return 'lit';
+  const open = openByStars(profile, sky, constellation);
+  if (open === 'open' && constellation.minOwned && ownedHeroCount(profile.purchases) < constellation.minOwned) return 'glimpsed';
+  return open;
+}
+
+function openByStars(profile: Profile, sky: SkyContent, constellation: ConstellationDefinition): ConstellationState {
   if (constellation.after.length === 0) return 'open';
   const waits = constellation.after.map((starId) => findStar(sky, starId)).filter((w): w is NonNullable<typeof w> => !!w);
   if (waits.some(({ constellation: c, star }) => c.uncharted || isStarLit(profile, c, star))) return 'open';

@@ -5,6 +5,7 @@
 
 import type { ConstellationDefinition, ScenarioDefinition, SkyContent, SkyStar } from '../run/sky';
 import { TRIAL_LIST } from './trials';
+import { GAUNTLET_MIN_OWNED } from '../run/gauntlet';
 
 const WIN = { kind: 'win' } as const;
 
@@ -89,6 +90,7 @@ const CONSTELLATIONS: readonly ConstellationDefinition[] = [
       [0, 4],
     ],
     after: ['cycles.1'],
+    minOwned: GAUNTLET_MIN_OWNED,
     rewards: [],
   },
   {

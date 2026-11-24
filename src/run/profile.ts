@@ -10,7 +10,6 @@
 
 import { cycleOf } from './cycles';
 import { spawnPosition } from '../data/titanspawn';
-import { grantLedgerId } from './recruitment';
 import { TUTORIAL_STAR } from '../data/sky';
 import { TEAM_SIZE, unenchanted, type Team, type TeamSlot } from './constructed';
 import { GEM_ORDER } from './gems';
@@ -19,13 +18,18 @@ import type { GrowthStatKey } from '../engine/content';
 import type { Warden } from './wardens';
 import type { GauntletRun } from './gauntlet';
 
-export const PROFILE_VERSION = 3;
+export const PROFILE_VERSION = 4;
+
+/** Ledger entries that own a hero: a Starfall, a legacy single, a grant, a bundle. */
+const HERO_LEDGER_PREFIXES = ['summon.', 'hero.', 'grant.', 'bundle.'];
 
 /**
- * Heroes that left the base roster on 2026-09-28 (docs/types-and-heroes.md): a profile written
- * before then owned them free, so it is granted them (`grantLedgerId`) rather than losing them.
+ * Every account's Collection restarts at zero with version 4 (docs/worlds.md §2.2, per user
+ * direction): the hero entries come off the ledger, which refunds what they cost.
  */
-export const LEFT_BASE_2026_09_28 = ['brimstone', 'tidecaller', 'glacialWarden', 'tempest', 'nightshade', 'zenith', 'mindweaver', 'steamColossus'];
+function withoutOwnedHeroes(purchases: readonly string[]): string[] {
+  return purchases.filter((id) => !HERO_LEDGER_PREFIXES.some((prefix) => id.startsWith(prefix)));
+}
 
 export interface Profile {
   version: number;
@@ -562,7 +566,10 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>, 
     // Absent on every file written before the stakes; such a player has earned and paid none.
     bonusStardust: (dustScale === 1 ? count(value.bonusStardust) : count(value.bonusStars) * dustScale) + (wonFirstLight(stringList(value.litStars)) ? FIRST_LIGHT_DUST_KEPT : 0),
     feesPaid: count(value.feesPaid) * dustScale,
-    purchases: [...new Set([...stringList(value.purchases), ...(count(value.version, 1) < 2 ? LEFT_BASE_2026_09_28.map(grantLedgerId) : [])])],
+    purchases:
+      count(value.version, 1) < 4
+        ? [...new Set(withoutOwnedHeroes(stringList(value.purchases)))]
+        : [...new Set(stringList(value.purchases))],
     deck: decodeDeck(value),
     firstPlayedAt: count(value.firstPlayedAt),
     lastPlayedAt: count(value.lastPlayedAt),

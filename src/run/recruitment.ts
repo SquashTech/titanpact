@@ -1,5 +1,5 @@
 // Who an account owns, and the ids a recruit takes. A hero joins a run at the Recruit node
-// (run/recruitNode.ts) or through an event (run/events.ts).
+// (run/recruitNode.ts) or through an event (run/events.ts); a run reads every hero, owned or not.
 
 import type { RunState } from './state';
 
@@ -24,18 +24,14 @@ const legacySingleId = (heroId: string): string => `hero.${heroId}`;
 export const grantLedgerId = (heroId: string): string => `grant.${heroId}`;
 
 /**
- * Whether an account holds a hero: the base roster always; one outside it (`HeroDefinition.unlock`)
- * by its bundle or a Starfall — both entries in `Profile.purchases`.
+ * Whether an account holds a hero (docs/worlds.md §2.2): only by a ledger entry in
+ * `Profile.purchases` — a Starfall, its bundle, or a grant. Nothing is owned free.
  */
 export function ownsHero(heroId: string, hero: { unlock?: string }, purchases: readonly string[]): boolean {
-  return !hero.unlock || purchases.includes(hero.unlock) || purchases.includes(starfallLedgerId(heroId)) || purchases.includes(legacySingleId(heroId)) || purchases.includes(grantLedgerId(heroId));
+  return (!!hero.unlock && purchases.includes(hero.unlock)) || purchases.includes(starfallLedgerId(heroId)) || purchases.includes(legacySingleId(heroId)) || purchases.includes(grantLedgerId(heroId));
 }
 
-/**
- * Every hero an account owns — the Collection, which the deck is built from (run/deck.ts). Read
- * once where the pool is read, the way `locationPool` is (run/locations.ts); the sim and the
- * tests pass nothing and get the base game.
- */
+/** Every hero an account owns — the Collection, which only the Constructed modes read. */
 export function heroPool<T extends { unlock?: string }>(all: Record<string, T>, purchases: readonly string[] = []): Record<string, T> {
   return Object.fromEntries(Object.entries(all).filter(([id, hero]) => ownsHero(id, hero, purchases)));
 }

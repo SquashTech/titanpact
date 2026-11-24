@@ -9,7 +9,7 @@ import { MOVE_CAP, scheduleEntriesBelow } from '../src/run/progression';
 import { MASTERY_EVOLUTION, recruitMastery } from '../src/run/mastery';
 import { levelAfterEncounters, levelOf } from '../src/run/growth';
 import { createRunState, createRosterEntry, addRosterEntry, replaceRosterEntry, terminateRosterEntry, type RunState } from '../src/run/state';
-import { deckRowOf, defaultDeck, deckHeroIds } from '../src/run/deck';
+import { deckRowOf, libraryRows } from '../src/run/deck';
 import { GATHERING_FROM_CYCLE } from '../src/run/cycles';
 import { generateMap, REWARD_WEIGHTS, MAP_NODE_TYPES } from '../src/run/map';
 import { RECRUIT_TYPE_COUNT, recruitNodeEntry, recruitTypeOffers, recruitableOfType, rollRecruitHero } from '../src/run/recruitNode';
@@ -24,7 +24,7 @@ function seeded(seed: number): () => number {
   };
 }
 
-function seedRoster(heroIds: string[], deck: readonly string[] | null = deckHeroIds(defaultDeck(heroes))): RunState {
+function seedRoster(heroIds: string[], deck: readonly string[] | null = null): RunState {
   let run: RunState = { ...createRunState(), deck };
   for (const heroId of heroIds) run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   return run;
@@ -57,10 +57,10 @@ test('recruit: a Gathering offers one more type', () => {
   assert.strictEqual(recruitTypeOffers(run, heroes, [], seeded(3)).length, RECRUIT_TYPE_COUNT + 1);
 });
 
-test('recruit: the roll is a deck hero of the picked type, never one on the roster or one that left it', () => {
-  const deck = deckHeroIds(defaultDeck(heroes));
+test('recruit: the roll is a Library hero of the picked type, never one on the roster or one that left it', () => {
+  const deck = libraryRows(heroes).flat();
   const fire = deck.filter((id) => deckRowOf(heroes[id]) === 'Fire');
-  assert.ok(fire.length >= 2, 'the default deck holds two Fire heroes');
+  assert.ok(fire.length >= 2, 'the Library holds Fire heroes');
   let run = seedRoster([fire[0]]);
   for (let seed = 1; seed <= 20; seed++) {
     const heroId = rollRecruitHero(run, heroes, 'Fire', seeded(seed));
@@ -76,9 +76,10 @@ test('recruit: the roll is a deck hero of the picked type, never one on the rost
   if (left.length === 0) assert.ok(!recruitTypeOffers(run, heroes, ['Fire'], seeded(1)).includes('Fire'), 'a type with nobody left is never offered');
 });
 
-test('recruit: a run saved before decks rolls from the catalog whole', () => {
-  const run = seedRoster([], null);
-  assert.ok(recruitableOfType(run, heroes, 'Fire').length >= deckHeroIds(defaultDeck(heroes)).filter((id) => deckRowOf(heroes[id]) === 'Fire').length);
+test('recruit: a run with no deck rolls from every hero; one saved with a deck keeps it', () => {
+  const fire = Object.values(heroes).filter((hero) => deckRowOf(hero) === 'Fire').map((hero) => hero.id);
+  assert.deepStrictEqual(recruitableOfType(seedRoster([], null), heroes, 'Fire'), fire);
+  assert.deepStrictEqual(recruitableOfType(seedRoster([], [fire[0]]), heroes, 'Fire'), [fire[0]]);
 });
 
 // --- The arrival: raw, at par, scaled by act ---

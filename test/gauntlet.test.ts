@@ -11,6 +11,7 @@ import { constructedHeroIds, constructedSide, overPoolMoveIds, slotManaPool, slo
 import { signatureIdFor } from '../src/run/progression';
 import { createRng } from '../src/engine/rng/seededRng';
 import { stardustSpent } from '../src/run/starShop';
+import { grantLedgerId } from '../src/run/recruitment';
 import {
   OFFER_SIZE,
   TEAM_TYPE_LIMIT,
@@ -20,6 +21,7 @@ import {
   WINS_TO_CLEAR,
   GauntletError,
   canEnterGauntlet,
+  GAUNTLET_MIN_OWNED,
   draftPick,
   endGauntlet,
   enterGauntlet,
@@ -40,8 +42,9 @@ const owned = Object.values(heroes)
   .map((h) => h.id);
 const TODAY = '2026-10-07';
 
+/** A Cycle I clear and the old base roster owned (granted, so it costs nothing), past GAUNTLET_MIN_OWNED. */
 function opened(): Profile {
-  return { ...createProfile(), cyclesCleared: 1, runsCompleted: 1 };
+  return { ...createProfile(), cyclesCleared: 1, runsCompleted: 1, purchases: owned.map(grantLedgerId) };
 }
 
 /** Six picks, the first of every offer. */
@@ -166,6 +169,9 @@ test('gauntlet: each win, the opponent answers your typing harder', () => {
 
 test('gauntlet: shut until the first Cycle I clear', () => {
   assert.strictEqual(canEnterGauntlet(createProfile(), 99, TODAY), false);
+  const short = { ...opened(), purchases: owned.slice(0, GAUNTLET_MIN_OWNED - 1).map(grantLedgerId) };
+  assert.strictEqual(canEnterGauntlet(short, 99, TODAY), false, 'a Cycle I clear is not enough short of the owned heroes');
+  assert.strictEqual(canEnterGauntlet({ ...short, purchases: owned.slice(0, GAUNTLET_MIN_OWNED).map(grantLedgerId) }, 99, TODAY), true);
   assert.throws(() => enterGauntlet(createProfile(), content, owned, 1, TODAY, 99), GauntletError);
 });
 

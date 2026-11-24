@@ -329,7 +329,10 @@ don't silently override it.
 > Mark on a hero-pool enemy, by its own type), opens on a field of a type it fields (a once-a-fight
 > setter on its first lead, no engine hook), both on the tile's tap card, and pays a Boon pick last.
 
-> **A rethink is PARTLY DECIDED, NOTHING BUILT: `docs/worlds.md`** (2026-11-24, per user direction).
+> **A rethink is PARTLY DECIDED, PHASE 2 BUILT: `docs/worlds.md`** (2026-11-24, per user direction).
+> **Built:** nothing is owned free (`ownsHero`), every account's Collection reset to zero (profile v4,
+> refunded), a new run's pools are every hero (`libraryRows`, a null `RunState.deck`), the Starfall
+> draws any unowned hero bar a bundle's, the Gauntlet waits on 15 owned, Cycle V's deck gate is gone.
 > The Infinite fields every hero; the Collection starts at zero and feeds only the Constructed modes;
 > a permanent **Worlds** mode levels six seats with a new currency; the look goes **storybook day**
 > (spooky-cute for dark heroes); the Titan gives way to **the Storybook** (decided); working title
