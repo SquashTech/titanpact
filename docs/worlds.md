@@ -16,7 +16,7 @@ it is ever recruited. The reward sits behind a second lottery.
 
 The fix splits the two jobs:
 
-- **The Infinite is where you meet heroes.** Every hero is in it. A run works as a free demo: you
+- **The Library is where you meet heroes.** Every hero is in it. A run works as a free demo: you
   play Ursa, love her, and want her.
 - **The Collection is what you own and raise.** A pulled hero is usable the moment it lands, in a
   mode where owning it is the point.
@@ -28,17 +28,21 @@ first; AFK Arena's campaign and Resonating Crystal, Epic Seven and Dragon Quest 
 
 ## 2. Decided (per user direction, 2026-11-21 to 2026-11-24)
 
-### 2.1 The Infinite fields every hero
+### 2.1 The Library fields every hero
 The roguelike draws its draft, its Recruit nodes, its events and its enemy parties from the whole
 catalog, owned or not. The deck no longer feeds a run.
 
 ### 2.2 The Collection starts at zero
 A new account owns no hero. The Starfall is the only way to own one, and owned heroes are what the
-Constructed modes use: the Worlds (§2.3), the Trials and the Gauntlet. The Infinite does not read it.
+Constructed modes use: the Worlds (§2.3), the Trials and the Gauntlet. The Library does not read it.
 
 ### 2.3 The Worlds: a permanent mode
 A sequence of Worlds, each a run of stages ending in a boss (1-1, 1-2, 1-3, 1-4, then the 1-5 boss),
 clearing one opening the next. It uses only owned heroes, and its progress is permanent.
+
+**Player-facing names** (2026-11-24, per user direction): the mode is **Your Story**, and a World is a
+**Chapter** — Chapter 1, stages 1-1 to 1-5, a Blot at the end. This doc keeps "the Worlds" as its
+working term for the mode.
 
 ### 2.4 Six levelled seats
 **XP levels a seat, not a hero.** The team has six seats, and any owned hero placed in a seat is at
@@ -47,8 +51,8 @@ rethink is for. Six seats rather than one team level, per user direction, becaus
 the long-term goal the mode is built around.
 
 ### 2.5 A permanent currency
-A new currency, separate from Stardust (placeholder name: **Essence**), buys levels, Gems and item
-caches in the Worlds. **Everything it buys is owned for good.** XP spent is permanent; Gems and gear
+A new currency, separate from the summoning one, buys levels, Gems and item caches in the Worlds. It
+is **Ink**, and the summoning currency is **Pages** (2026-11-24, per user direction, §3.7). **Everything it buys is owned for good.** XP spent is permanent; Gems and gear
 can be moved between heroes as the player rebuilds a team.
 
 ### 2.6 The look: storybook day
@@ -69,7 +73,7 @@ user direction, chosen over Little planets and Crystals from `art/concepts/frame
 Paper Mario, Kingdom Hearts' Hundred Acre Wood.
 
 - **The world is a book whose pages have been blotted out.** Each World is a chapter to restore.
-- **The Infinite is the library's stacks**, where every hero from every story wanders.
+- **The roguelike is the Library** (renamed from the Infinite, 2026-11-24, per user direction): its stacks hold every hero from every story.
 - **A pull writes a hero into your book.** It is yours from then on.
 - **Enemies are ink**: an element smudged and running. **The ink stains the element, never replaces
   it** — it runs *through* the flame, not over it — because the mock's ink and void Emberlings both
@@ -109,9 +113,9 @@ and widens who can answer. The Collection grows type by type because of what the
 is the account story §1 says is missing. The cost is narrow early pulls, which may suit a new player
 learning a smaller pool.
 
-### 3.3 The Infinite needs no fiction
-Slay the Spire's ascent has none worth naming, and "the arcade mode with everyone in it" is enough.
-If one is wanted: a run is a vision the Crystals show, with every hero in it and none of them yours yet.
+### 3.3 The Library's fiction
+The name carries it (§2.7): a run is borrowed from the stacks, with every hero in it and none of them
+yours yet. Nothing more is needed; Slay the Spire's ascent has less. Code ids still say `classic`.
 
 ### 3.4 Seat levels catch up on the cube
 On `XP(L) = L³` the curve does catch-up on its own: levels 1→20 cost 8,000 XP, while 20→25 cost
@@ -119,9 +123,28 @@ about 7,600. Priced straight off the curve, raising a low seat to the team's flo
 as pushing the top seat a few levels. That is the carry-or-floor choice the six seats exist to create.
 
 ### 3.5 Fold the Trials into the Worlds
-The game would otherwise have the Infinite, the Trials, the Gauntlet, the Worlds and the Sky. The
+The game would otherwise have the Library, the Trials, the Gauntlet, the Worlds and the Sky. The
 Trials' teambuilder becomes the Worlds' team screen, and its fourteen fights become World bosses
 (§3.1) or challenge stages.
+
+### 3.7 The Sky becomes the book
+Everything celestial in `docs/the-sky.md` translates into the book; its code and structure mostly
+survive, its October art does not. Mocked in `art/concepts/spread/`.
+
+| Today | Under the Storybook | Status |
+|---|---|---|
+| Blip, a light | **Blip, a bookworm in round reading glasses, peeking out of a red book** (`art/concepts/spread/blip-glasses.png`). Its voice, thoughts and poke carry over; it now needs a sprite and poses | **Decided** 2026-11-24, per user direction |
+| The galaxy title, the Pact ring and its seats | **An open book on a desk**: the Library on the top page, **Your Story** (the Worlds, renamed 2026-11-24, per user direction) on the bottom, the Gauntlet and the Trials as ribbon bookmarks | Proposed (mocked) |
+| Stardust | **Pages**: a pull fills a blank page with a hero. The Collection is literally your book's pages | **Decided** 2026-11-24, per user direction |
+| The Starfall | **Writing a hero**: a quill sketches a figure on a blank page, then colour floods in | Proposed |
+| The Observatory | **The Scriptorium** | Proposed |
+| Essence (§2.5) | **Ink**: what buys seat levels and draws a hero's equipment and Gems — one purse for all growth. Washing a Blot out of a page is what yields it, so the enemy and the purse tell one story. Enemies are **Blots**, never "ink monsters" | **Decided** 2026-11-24, per user direction (Gilt rejected) |
+| Cycles I–V | **Editions**: the Second Edition retells the story, changed and harder | Proposed |
+| Strange Worlds | **Tall Tales** | Proposed |
+| Stars as records | **Gold-star stickers**, unchanged in name | Proposed |
+
+Blip's one arc — the Titan beginning to see it — passes to the Blot, creeping toward the page Blip
+lives on across the Editions.
 
 ### 3.6 A starter grant
 At zero owned, the Worlds and the Gauntlet cannot run: the Gauntlet rolls fifteen owned heroes, and
@@ -146,15 +169,17 @@ enough are owned, is needed either way.
 5. **Evolution paths.** Permanent, or respec for Essence?
 6. **Gems are also Mastery pips.** If a Gem can come off, can an Evolution be undone? Mastery counts
    Gems *ever placed* (the pip is permanent, the stat is portable — recommended) or Gems *socketed now*.
-7. **Does the Infinite pay Essence?** If yes, every run grows the account and the modes feed each
+7. **Does the Library pay Ink?** If yes, every run grows the account and the modes feed each
    other. If no, they stay cleanly apart, and a player who only plays runs never sees heroes grow.
 8. **What happens to the deck?** The base 28 were chosen as the easiest to read; with every hero in
-   the Infinite, a new player meets Motley, the Burden heroes and Widow in the first draft. Accept
+   the Library, a new player meets Motley, the Burden heroes and Widow in the first draft. Accept
    it, keep a light filter (a complexity tier that opens after the first win), or keep the deck as an
    optional pool editor.
-9. **The Sky and Stardust.** Built 2026-10-23 around stars and Blip. Reframe them (a Starfall becomes
-   a Crystal's call, Stardust becomes shards) or keep the stars as the title's art with the Crystals
-   only in the Worlds. Mixing both metaphors is the outcome to avoid.
+9. **The Sky's names.** §3.7 translates it into the book; Blip is decided. Pages summon and Ink grows
+   (decided); left: what each mode pays (§4.7 — the natural split is the Library paying Pages and the
+   Worlds paying Ink), Ink buys seat levels too (decided 2026-11-24, per user direction: one purse for all growth, so
+   raising a seat and gearing a hero compete); Editions, or let the Cycles retire into
+   plain difficulty; the two-page title against the single press it replaces.
 10. **The enemy tell.** The magenta eye was a strong, cheap read for "enemy". A bright game needs a
     new one, perhaps the element gone feral.
 11. **Grim names.** Blood Moon, Torment, Revenant, Werewolf Bite, the Endbringer, the Burden. A tone
@@ -172,13 +197,13 @@ enough are owned, is needed either way.
 
 | Rule in CLAUDE.md | Becomes |
 |---|---|
-| The deck feeds the run's pools (`docs/collection.md`); the draft draws one hero a deck row | The Infinite draws from every hero (§2.1) |
+| The deck feeds the run's pools (`docs/collection.md`); the draft draws one hero a deck row | The Library draws from every hero (§2.1) |
 | The base 28 owned free as the default deck; the Starfall fills every type to three first | The Collection starts at zero (§2.2) |
-| Cycle V asks for three of every type owned | Nothing in the Infinite reads ownership |
+| Cycle V asks for three of every type owned | Nothing in the Library reads ownership |
 | Bundles (From the Tall Grass) as a way into the run's pools | Bundles, if kept, are Collection-only |
 | Constructed (the Trials) as a separate mode | Folded into the Worlds (§3.5, proposed) |
-| `MAX_LEVEL` = 30, levels roster-wide | Unchanged in the Infinite; the Worlds level six seats, possibly to 99 (§4.2) |
-| Gear absorbed, never comes off | Unchanged in the Infinite; movable in the Worlds (§2.5) |
+| `MAX_LEVEL` = 30, levels roster-wide | Unchanged in the Library; the Worlds level six seats, possibly to 99 (§4.2) |
+| Gear absorbed, never comes off | Unchanged in the Library; movable in the Worlds (§2.5) |
 | "A bare number never gets a screen" | Excepted in the Worlds, where Essence buys Gems |
 | The Titan, the Herald, the Eyes, the Touched Guardians, `TITAN_EYE` magenta, the Cycles' sealed-Titan premise, the Wardens | Replaced by the frame §3.1 settles on |
 | The dark palette and the stone-and-gold kit (`docs/visual-language.md`) | Storybook day (§2.6) |
@@ -220,7 +245,7 @@ the style anchor on every later edit.
   to test against. The frame decides the art (redraw the Titanspawn or replace them), so it comes first.
 - **The Worlds' management screens are the expensive kind** — screens the player has to remember to
   open. That is the genre's draw, so accept it, but keep each to one screen.
-- **The Infinite loses its meta hook.** A pull no longer pays off in a run, so the Infinite earns its
+- **The Library loses its meta hook.** A pull no longer pays off in a run, so the Library earns its
   place through Stardust and, if §4.7 says yes, Essence.
 - **Cuteness against menace.** Spooky-cute answers it for heroes; enemies and bosses still need to
   read as threats in a bright world (§4.10).
@@ -229,9 +254,9 @@ the style anchor on every later edit.
 
 ## 8. Phases (PROPOSED)
 
-1. **Finish the frame** (§2.7, §4.9): the Storybook and the working title are chosen; what the Sky
-   becomes is left.
-2. **The Infinite opens to every hero, and the Collection starts at zero** (§2.1, §2.2, §3.6, §4.8).
+1. **Finish the frame** (§2.7, §3.7, §4.9): the Storybook, the working title and Blip are chosen;
+   the Sky's names are left.
+2. **The Library opens to every hero, and the Collection starts at zero** (§2.1, §2.2, §3.6, §4.8).
    Small in code, and it fixes the pulled-hero problem on its own.
 3. **The Worlds, first slice**: one World, six seats, Essence, the team screen grown from the Trials'
    teambuilder. Settle §4.1–§4.7 inside it, with level 99 measured rather than argued.
