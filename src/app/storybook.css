@@ -1,0 +1,180 @@
+/* Storybook day (docs/worlds.md): cream paper, ink text, rounded flat buttons. Loaded after styles.css. */
+
+:root {
+  --bg: #fbf3df;
+  --panel: #fffaf0;
+  --panel-alt: #fff4dc;
+  --border: #e3cfa4;
+  --border-strong: #c9a96b;
+  --border-sunken: #ead9b4;
+  --text: #2b2340;
+  --text-dim: #7b6f8c;
+  --well: #f3e6c6;
+  --accent: #ff8a3d;
+  --mana: #3d8bff;
+  --ally: #3d8bff;
+  --enemy: #ff5a5f;
+  --hp-high: #3fcf6a;
+  --console-face: #fff6e2;
+  --ink: #2b2340;
+  --elev-1: 0 1px 2px rgba(120, 90, 40, 0.18), 0 2px 8px rgba(120, 90, 40, 0.12);
+  --elev-2: 0 2px 4px rgba(120, 90, 40, 0.2), 0 8px 20px rgba(120, 90, 40, 0.15);
+  --surface-raised: linear-gradient(165deg, #fffdf6, #fff3d8 72%);
+  --surface-sunken: linear-gradient(180deg, #f4e7c8, #efdfba);
+}
+
+body,
+.app-shell {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* A fight with no Location (quick battles, the sandbox): a plain sunny meadow. */
+.battlefield {
+  background:
+    linear-gradient(180deg, #9fd8ff 0%, #c9ecff 26%, #8fd36a 27%, #7cc95a 60%, #6dbb4e 100%);
+}
+.battlefield-floor { display: none; }
+
+/* The arena: undimmed, a soft ground shadow only. */
+.battlefield-location .location-backdrop { filter: none !important; }
+.battlefield-location.has-backdrop::after {
+  background: linear-gradient(180deg, transparent 80%, rgba(30, 40, 20, 0.18) 100%);
+}
+
+/* Names over the bright arena: white with an ink rim. */
+.battlefield .combatant-name {
+  color: #fff !important;
+  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink);
+}
+.battlefield .combatant-name * { color: inherit !important; }
+
+/* The combat console. */
+.action-area { background: linear-gradient(180deg, #fff4da, #fbecc8) !important; }
+.action-area::before {
+  background: linear-gradient(180deg, #ffd27a, #f6b54a) !important;
+  box-shadow: 0 3px 0 #d88f2a, 0 6px 12px rgba(120, 80, 20, 0.18) !important;
+  border-radius: 0 0 14px 14px;
+}
+.bottom-bar {
+  background: #f7e4b9 !important;
+  border-top: 3px solid #f0d49b;
+}
+.move-list .move-button {
+  border-image: none !important;
+  border: 3px solid #e7c98c !important;
+  border-radius: 14px;
+  background: #fffdf5 !important;
+  color: var(--text) !important;
+  box-shadow: 0 3px 0 #e2c07e;
+  overflow: hidden;
+}
+.move-list .move-button.selected { border-color: var(--accent) !important; box-shadow: 0 3px 0 #e36d1f; }
+.move-list .move-button * { color: inherit; }
+.move-stub {
+  background: #ffeccb !important;
+  border-left: 2px dashed #e7c98c !important;
+  border-radius: 0 11px 11px 0;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+.move-stub * { color: var(--ink) !important; text-shadow: none !important; }
+.bottom-action { color: #7b5a2a !important; }
+.bottom-action * { text-shadow: none !important; }
+.bottom-action-glyph {
+  background: radial-gradient(circle at 50% 35%, #ffffff, #fff1d2 70%) !important;
+  border: 3px solid #f3b95a !important;
+  box-shadow: 0 3px 0 #d88f2a !important;
+  color: #c76a12 !important;
+}
+.bottom-action-glyph * { color: inherit !important; filter: none !important; }
+.bottom-action-primary .bottom-action-glyph { border-color: #6aa8ff !important; box-shadow: 0 3px 0 #3d74d6 !important; }
+
+/* The night-sky faces become warm storybook ones wherever they are used. */
+:root {
+  --night-face: #ff9a3d;
+  --night-face-lit: #ffab57;
+  --night-lip: #d36a1a;
+  --starlight: #ffffff;
+  --starlight-glow: transparent;
+  --starfield: linear-gradient(transparent, transparent);
+  --star-glints: none;
+}
+
+/* The commit plate: a round, flat, chunky button in the colour of what is being chosen. */
+.plate-socket { filter: none; }
+.plate-socket::before,
+.plate-socket::after,
+.plate-wing-tip,
+.plate-cta::before { display: none; }
+.plate-frame {
+  inset: -3px;
+  clip-path: none;
+  border-radius: 19px;
+  background: color-mix(in oklab, var(--plate-color) 62%, #4a2a08);
+}
+.plate-cta {
+  clip-path: none;
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--plate-color) 82%, #ffffff);
+  color: #fff;
+  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.45), inset 0 -6px 0 color-mix(in oklab, var(--plate-color) 72%, #4a2a08);
+}
+.plate-cta:not(:disabled):hover { background: color-mix(in oklab, var(--plate-color) 70%, #ffffff); }
+.plate-cta:not(:disabled):active {
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 0 color-mix(in oklab, var(--plate-color) 72%, #4a2a08);
+}
+.plate-label::before,
+.plate-label::after { background: #fff; filter: drop-shadow(0 1px 0 var(--ink)); }
+.plate-socket.is-disabled { --plate-color: #cbbf9f; }
+.plate-socket.is-disabled .plate-cta { color: #fffaf0; text-shadow: 0 1px 0 #9c8f70; }
+.plate-socket.is-disabled .plate-label::before,
+.plate-socket.is-disabled .plate-label::after { background: #fffaf0; filter: none; }
+
+/* The title's pact buttons, on the same round plate. */
+.title-cta-socket { filter: none; }
+.title-cta-socket::before,
+.title-cta-socket::after,
+.title-cta-wing-tip,
+.title-cta::before { display: none; }
+.title-cta-frame {
+  inset: -3px;
+  clip-path: none;
+  border-radius: 21px;
+  background: color-mix(in oklab, rgb(var(--plate-rgb)) 62%, #3a2208);
+}
+.title-cta {
+  clip-path: none;
+  border-radius: 18px;
+  background: color-mix(in oklab, rgb(var(--plate-rgb)) 82%, #ffffff);
+  color: #fff;
+  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.45), inset 0 -6px 0 color-mix(in oklab, rgb(var(--plate-rgb)) 72%, #3a2208);
+}
+.title-cta:not(:disabled):hover { background: color-mix(in oklab, rgb(var(--plate-rgb)) 70%, #ffffff); }
+
+/* The map: the place in full daylight, its words in white with an ink rim. */
+.map-screen { background: var(--bg); }
+.map-atmosphere .location-backdrop { filter: none; }
+.map-atmosphere.has-backdrop::after {
+  background: linear-gradient(180deg, rgba(255, 248, 230, 0.35) 0%, transparent 16%, transparent 86%, rgba(43, 35, 64, 0.18) 100%);
+}
+.map-omen,
+.map-omen *,
+.map-choice-label,
+.map-choice-hint,
+.map-origin,
+.map-origin * {
+  color: #fff !important;
+  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink) !important;
+}
+.map-choice-hint { color: #ffe08a !important; }
+.map-header-button {
+  background: #fffaf0;
+  border: 2px solid #e3cfa4;
+  border-radius: 10px;
+  color: var(--ink);
+  box-shadow: 0 2px 0 #d8bd87;
+}
+.map-header-button > svg { color: var(--ink); }

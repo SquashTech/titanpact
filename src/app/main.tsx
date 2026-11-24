@@ -7,6 +7,7 @@ import { initSfx } from '../audio/sfx';
 import { installUiSfx } from '../audio/uiSfx';
 import { installSnugText } from './snugText';
 import './styles.css';
+import './storybook.css';
 
 // Audio is presentation; both are inert until the first user gesture unlocks the AudioContext.
 initSfx();

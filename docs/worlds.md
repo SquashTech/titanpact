@@ -276,5 +276,10 @@ the style anchor on every later edit.
 3. **The Worlds, first slice**: one World, six seats, Essence, the team screen grown from the Trials'
    teambuilder. Settle §4.1–§4.7 inside it, with level 99 measured rather than argued.
 4. **The look**: the style lock, then the interface sweep and pixel kit, then heroes, then backdrops.
-   Enemies last, once the frame says what they are.
+   Enemies last, once the frame says what they are. **STARTED 2026-11-24:** all 84 heroes and 253
+   Evolutions redrawn with attack and hurt frames; the battle, map and arrival backdrops repainted
+   sunny (spooky-cute for Necropolis, Blighted Shrine and the Threshold); the pixel kit recoloured
+   to paper and tan in place; the theme lives in `src/app/storybook.css`, loaded after styles.css.
+   Left: the title and the Sky, the Titan's map stone and the Guardians, the Titanspawn, and the
+   remaining dark panels screen by screen.
 5. **The rest of the Worlds**, one a Crystal.
