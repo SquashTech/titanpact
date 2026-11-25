@@ -9,15 +9,17 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { HubGlyph } from '../shared/nodeIcons';
 import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
+import { HeroSketch } from './Starfall';
+import './starfall.css';
 import './starfallTen.css';
 
-// Ten Starfalls as one scene (docs/the-sky.md §5): the Pages drains, ten lights fall into a grid
-// in their heroes' colours, and each hero rises out of its light. No wheel: ten spins would be the
-// single draw watched ten times, which is what this exists to spare.
+// Ten Starfalls as one scene (docs/the-sky.md §5): the Pages drain, ten blank pages are sketched in
+// turn, and the colour floods each. No wheel: ten spins would be the single draw watched ten
+// times, which is what this exists to spare.
 
 /** Beat boundaries in ms from the tap. */
-const BEATS = { drain: 200, firstFall: 900, fallGap: 240, fallMs: 520, riseMs: 950 } as const;
-const settledAt = BEATS.firstFall + (STARFALL_TEN - 1) * BEATS.fallGap + BEATS.fallMs + BEATS.riseMs;
+const BEATS = { drain: 200, firstSketch: 900, sketchGap: 240, sketchMs: 520, floodMs: 950 } as const;
+const settledAt = BEATS.firstSketch + (STARFALL_TEN - 1) * BEATS.sketchGap + BEATS.sketchMs + BEATS.floodMs;
 
 interface Props {
   heroIds: readonly string[];
@@ -27,7 +29,8 @@ interface Props {
 
 export function StarfallTenScreen({ heroIds, balanceBefore, onClose }: Props) {
   const [drained, setDrained] = useState(false);
-  const [landed, setLanded] = useState(0);
+  const [sketched, setSketched] = useState(0);
+  const [flooded, setFlooded] = useState(0);
   const [settled, setSettled] = useState(false);
   const timers = useRef<number[]>([]);
 
@@ -35,7 +38,8 @@ export function StarfallTenScreen({ heroIds, balanceBefore, onClose }: Props) {
     timers.current.forEach(window.clearTimeout);
     timers.current = [];
     setDrained(true);
-    setLanded(heroIds.length);
+    setSketched(heroIds.length);
+    setFlooded(heroIds.length);
     setSettled(true);
   }
 
@@ -50,10 +54,13 @@ export function StarfallTenScreen({ heroIds, balanceBefore, onClose }: Props) {
       playSfx('star.charge');
     });
     heroIds.forEach((_, i) => {
-      const start = BEATS.firstFall + i * BEATS.fallGap;
-      at(start, () => playSfx('star.fall', { pitch: 1 + i * 0.04, gain: 0.6 }));
-      at(start + BEATS.fallMs, () => {
-        setLanded(i + 1);
+      const start = BEATS.firstSketch + i * BEATS.sketchGap;
+      at(start, () => {
+        setSketched(i + 1);
+        playSfx('star.fall', { pitch: 1 + i * 0.04, gain: 0.6 });
+      });
+      at(start + BEATS.sketchMs, () => {
+        setFlooded(i + 1);
         playSfx('star.land', { pitch: 0.9 + i * 0.06, gain: 0.55 });
       });
     });
@@ -70,23 +77,23 @@ export function StarfallTenScreen({ heroIds, balanceBefore, onClose }: Props) {
   // Portalled into overlayHost(), never body (overlayHost.ts).
   return createPortal(
     <div
-      className={`summon-ten${settled ? ' is-settled' : ''}`}
+      className={`quill quill-ten${settled ? ' is-settled' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         if (!settled) skip();
       }}
     >
-      <span className="summon-ten-nebula" aria-hidden="true" />
-      <div className="summon-ten-balance" aria-label={`${balanceBefore - spent} Pages`}>
+      <span className="quill-sun" aria-hidden="true" />
+      <div className="quill-balance" aria-label={`${balanceBefore - spent} Pages`}>
         <HubGlyph name="stardust" />
-        <span key={spent} className="summon-ten-count">
+        <span key={spent} className="quill-balance-count">
           {balanceBefore - spent}
         </span>
       </div>
 
-      <div className="summon-ten-ribbon">{settled ? 'Ten new heroes!' : ' '}</div>
+      <div className="quill-ten-ribbon">{settled ? 'Ten new heroes!' : ' '}</div>
 
-      <div className="summon-ten-grid">
+      <div className="quill-ten-grid">
         {heroIds.map((heroId, i) => {
           const hero = heroes[heroId];
           if (!hero) return null;
@@ -94,28 +101,30 @@ export function StarfallTenScreen({ heroIds, balanceBefore, onClose }: Props) {
           return (
             <div
               key={heroId}
-              className={`summon-ten-cell${i < landed ? ' is-landed' : ''}`}
+              className={`quill-ten-cell${i < sketched ? ' is-sketched' : ''}${i < flooded ? ' is-flooded' : ''}`}
               style={{ '--type-rgb': getTypeColorRgb(type), '--type-color': getTypeColor(type), '--i': i } as CSSProperties}
             >
-              <span className="summon-ten-light" aria-hidden="true" />
-              <span className="summon-ten-flash" aria-hidden="true" />
-              <HeroPortrait heroId={heroId} className="summon-ten-figure" />
-              <span className="summon-ten-name">
-                <ElementGlyph type={type} />
-                {hero.name}
-              </span>
+              <div className="quill-ten-page">
+                <span className="quill-ten-wash" aria-hidden="true" />
+                <HeroSketch heroId={heroId} className="quill-sketch quill-ten-sketch" />
+                <HeroPortrait heroId={heroId} className="quill-ten-colour" />
+                <span className="quill-ten-stamp" aria-hidden="true">
+                  <ElementGlyph type={type} />
+                </span>
+              </div>
+              <span className="quill-ten-name">{hero.name}</span>
             </div>
           );
         })}
       </div>
 
-      <div className="summon-ten-foot">
+      <div className="quill-ten-foot">
         {settled ? (
-          <button type="button" className="summon-cheer summon-ten-cheer" data-sfx="ui.commit" onClick={onClose}>
+          <button type="button" className="quill-cheer quill-ten-cheer" data-sfx="ui.commit" onClick={onClose}>
             Awesome!
           </button>
         ) : (
-          <span className="summon-ten-skip">Tap to skip</span>
+          <span className="quill-ten-skip">Tap to skip</span>
         )}
       </div>
     </div>,

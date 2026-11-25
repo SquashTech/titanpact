@@ -1,5 +1,7 @@
-// The mana-cost gem every move button leads with: a cut gem of dark glass, three flat facets lit
-// from the top-left. Inline SVG rather than clip-path so the rim/halo strokes are real geometry.
+import { useId } from 'react';
+
+// The mana-cost gem every move button leads with: a glossy bubble of mana with an ink rim and one
+// highlight (docs/worlds.md §2.6, the Bubbly look). Inline SVG so the rim is real geometry.
 
 interface ManaCostProps {
   cost: number;
@@ -9,16 +11,19 @@ interface ManaCostProps {
 }
 
 export function ManaCost({ cost, size = 'md', className }: ManaCostProps) {
+  const fill = `mana-bubble-${useId().replace(/:/g, '')}`;
   return (
     <span className={`mana-gem mana-gem-${size}${cost >= 100 ? ' is-wide' : ''}${className ? ` ${className}` : ''}`} title={`${cost} Mana`}>
       <svg className="mana-gem-cut" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        {/* Halo: near-black outer stroke, load-bearing where the gem overlaps a portrait. */}
-        <path className="mana-gem-halo" d="M12 1.3 22.3 7v10L12 22.7 1.7 17V7Z" />
-        <path className="mana-gem-crown" d="M1.7 7 12 1.3 22.3 7 12 12Z" />
-        <path className="mana-gem-left" d="M1.7 7 12 12v10.7L1.7 17Z" />
-        <path className="mana-gem-right" d="M22.3 7 12 12v10.7L22.3 17Z" />
-        <path className="mana-gem-rim" d="M12 1.3 22.3 7v10L12 22.7 1.7 17V7Z" />
-        <path className="mana-gem-spark" d="M4.4 7.7 10.3 4.4" />
+        <defs>
+          <radialGradient id={fill} cx="0.38" cy="0.32" r="0.75">
+            <stop className="mana-gem-light" offset="0" />
+            <stop className="mana-gem-mid" offset="0.55" />
+            <stop className="mana-gem-deep" offset="1" />
+          </radialGradient>
+        </defs>
+        <circle className="mana-gem-body" cx="12" cy="12" r="10.4" fill={`url(#${fill})`} />
+        <ellipse className="mana-gem-spark" cx="8.6" cy="7.4" rx="3.3" ry="2" transform="rotate(-30 8.6 7.4)" />
       </svg>
       <span className="mana-gem-value">{cost}</span>
     </span>

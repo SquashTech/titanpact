@@ -414,7 +414,7 @@ export function TitleScreen({
         />
       )}
       {tour && TOUR_TARGETS[tour] && <GuideHand key={tour} selector={TOUR_TARGETS[tour]!} />}
-      {tour === 'falling' && <GuideHand selector=".summon.is-settled .summon-cheer" raised />}
+      {tour === 'falling' && <GuideHand selector=".quill.is-settled .quill-cheer" raised />}
 
       {/* Starting over with a run parked deletes it, so it asks — a sheet, not a
           re-labelled button, because a button that changes what it says under

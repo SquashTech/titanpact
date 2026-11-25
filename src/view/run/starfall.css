@@ -1,0 +1,750 @@
+/* The Starfall as writing a hero (Starfall.tsx). Open → spin → lock → stamp → sketch → splash →
+   flood → reveal; the root carries is-<now> and was-<every beat reached>. */
+
+.quill {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  background: radial-gradient(120% 60% at 50% 0%, #fff4cf 0%, #fbeccb 45%, #f1dcaf 100%);
+  color: #2b2340;
+  font-family: Fredoka, system-ui, sans-serif;
+  text-align: center;
+  animation: quill-in 0.35s ease-out both;
+}
+
+@keyframes quill-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.quill-sun {
+  position: absolute;
+  left: 50%;
+  top: -180px;
+  width: 520px;
+  height: 520px;
+  margin-left: -260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 106, 0.55), rgba(255, 214, 106, 0) 65%);
+  pointer-events: none;
+}
+
+/* The purse, top right: the Pages leave it. */
+.quill-balance {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px 4px 8px;
+  border: 2px solid #e3cfa4;
+  border-radius: 999px;
+  background: #fffaf0;
+  box-shadow: 0 3px 0 #d8bd87;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.quill-balance svg {
+  width: 17px;
+  height: 17px;
+}
+
+.quill-balance-count {
+  animation: quill-count 0.45s ease-out both;
+}
+
+@keyframes quill-count {
+  from {
+    color: #e08a10;
+    transform: scale(1.3);
+  }
+}
+
+.quill-token {
+  position: absolute;
+  z-index: 5;
+  left: calc(100% - 46px);
+  top: 20px;
+  width: 22px;
+  height: 22px;
+  color: #e08a10;
+  opacity: 0;
+  filter: drop-shadow(0 2px 0 #2b2340);
+}
+
+.quill-token svg {
+  width: 100%;
+  height: 100%;
+}
+
+.quill-token.is-launched {
+  animation: quill-token 0.8s cubic-bezier(0.5, 0, 0.5, 1) forwards;
+}
+
+@keyframes quill-token {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  45% {
+    transform: translate(calc(-30vw + var(--i) * 40px), 60px) scale(1.5) rotate(160deg);
+  }
+  100% {
+    opacity: 0;
+    left: calc(50% - 11px);
+    top: calc(12% + 150px);
+    transform: scale(0.4) rotate(360deg);
+  }
+}
+
+/* The page, and everything drawn on it. */
+.quill-stage {
+  position: absolute;
+  left: 50%;
+  top: 11%;
+  width: 270px;
+  height: 320px;
+  margin-left: -135px;
+}
+
+.quill-page {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 3px solid #2b2340;
+  border-radius: 20px;
+  background: #fffdf6;
+  box-shadow: inset 0 4px 0 #fff, inset 0 -7px 0 #f1e4c4, 0 6px 0 #2b2340, 0 14px 22px rgba(120, 80, 30, 0.22);
+  animation: quill-page-in 0.6s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+@keyframes quill-page-in {
+  from {
+    opacity: 0;
+    transform: perspective(700px) rotateY(-70deg) scale(0.8);
+  }
+}
+
+.quill.was-reveal .quill-page {
+  animation: quill-page-pop 0.55s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+@keyframes quill-page-pop {
+  40% {
+    transform: scale(1.07) rotate(-1.5deg);
+  }
+}
+
+/* Faint ruled lines: a page waiting to be written on. */
+.quill-page-lines {
+  position: absolute;
+  inset: 26px 20px;
+  background: repeating-linear-gradient(180deg, transparent 0 27px, rgba(160, 190, 230, 0.35) 27px 29px);
+  transition: opacity 0.6s ease-out;
+}
+
+.quill.was-flood .quill-page-lines {
+  opacity: 0.25;
+}
+
+.quill-wash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 56%, rgba(var(--type-rgb), 0.38), rgba(var(--type-rgb), 0.14) 60%, rgba(var(--type-rgb), 0.08));
+  clip-path: circle(0% at 50% 56%);
+  transition: clip-path 0.9s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.quill.was-flood .quill-wash {
+  clip-path: circle(85% at 50% 56%);
+}
+
+.quill-sketch,
+.quill-colour {
+  position: absolute;
+  left: 9%;
+  top: 17%;
+  width: 82%;
+  aspect-ratio: 1;
+}
+
+.quill-sketch img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.quill-sketch-ink {
+  filter: brightness(0) drop-shadow(3px 0 0 #2b2340) drop-shadow(-3px 0 0 #2b2340) drop-shadow(0 3px 0 #2b2340) drop-shadow(0 -3px 0 #2b2340);
+}
+
+.quill-sketch-paper {
+  filter: brightness(0) invert(1);
+}
+
+.quill-sketch {
+  clip-path: inset(0 0 100% 0);
+}
+
+.quill.is-sketch .quill-sketch {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1.2s linear;
+}
+
+.quill.was-splash .quill-sketch {
+  clip-path: inset(0 0 0 0);
+}
+
+.quill-colour {
+  object-fit: contain;
+  image-rendering: pixelated;
+  clip-path: circle(0% at 50% 47%);
+  transition: clip-path 0.85s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.quill.was-flood .quill-colour {
+  clip-path: circle(75% at 50% 47%);
+}
+
+/* The drop of colour the quill lets fall. */
+.quill-splat {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 90px;
+  height: 90px;
+  margin: -45px 0 0 -45px;
+  fill: var(--type-color);
+  stroke: #2b2340;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  transform: scale(0);
+  opacity: 0;
+}
+
+.quill.is-splash .quill-splat {
+  opacity: 1;
+  transform: scale(1) rotate(12deg);
+  transition: transform 0.18s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.quill.was-flood .quill-splat {
+  animation: quill-splat-out 0.7s ease-out forwards;
+}
+
+@keyframes quill-splat-out {
+  from {
+    opacity: 1;
+    transform: scale(1) rotate(12deg);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3.2) rotate(30deg);
+  }
+}
+
+/* The type, stamped in the page's corner once the wheel lands. */
+.quill-stamp {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 3px solid #2b2340;
+  border-radius: 50%;
+  background: var(--type-color);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.45), 0 3px 0 #2b2340;
+  color: #fff;
+  transform: scale(0);
+}
+
+.quill-stamp svg {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 1.5px 0 #2b2340);
+}
+
+.quill.was-stamp .quill-stamp {
+  transform: scale(1) rotate(-8deg);
+  transition: transform 0.45s cubic-bezier(0.2, 1.8, 0.4, 1) 0.4s;
+}
+
+.quill.is-settled .quill-stamp {
+  transition: none;
+}
+
+/* The type wheel, on a paper dial over the page. */
+.quill-dial {
+  position: absolute;
+  left: -10px;
+  top: 10px;
+  width: 290px;
+  height: 290px;
+  border: 3px solid #2b2340;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffdf6 55%, #f6e9c8);
+  box-shadow: 0 6px 0 #2b2340;
+  opacity: 0;
+  transform: scale(0.4);
+  pointer-events: none;
+  transition: opacity 0.4s ease-out, transform 0.6s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.quill.was-spin .quill-dial {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.quill.was-stamp .quill-dial {
+  opacity: 0;
+  transform: translate(118px, -128px) scale(0.13);
+  transition: opacity 0.45s ease-in 0.15s, transform 0.55s cubic-bezier(0.6, 0, 0.8, 0.4);
+}
+
+.quill-wheel {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 260px;
+  height: 260px;
+}
+
+.quill-wheel .type-wheel-dial {
+  transform: rotate(var(--spin));
+}
+
+.quill-wheel .type-wheel-node {
+  transform: rotate(calc(-1 * var(--spin)));
+}
+
+.quill-wheel .type-wheel-chords.is-tint {
+  transition: opacity 0.6s ease-out;
+}
+
+.quill.was-lock .quill-wheel .type-wheel-chords.is-tint {
+  opacity: 0.9;
+}
+
+.quill-pointer {
+  position: absolute;
+  left: 50%;
+  top: -16px;
+  width: 0;
+  height: 0;
+  margin-left: -11px;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-top: 18px solid #2b2340;
+}
+
+.quill-pointer::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: -15px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 10px solid #ffc93a;
+}
+
+.quill.was-lock .quill-pointer::after {
+  border-top-color: var(--type-color);
+}
+
+/* The quill: in from the right, a zigzag down the page as the sketch appears, a dab, then away. */
+.quill-pen-track {
+  position: absolute;
+  z-index: 3;
+  left: 130%;
+  top: -10%;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.quill-pen {
+  position: absolute;
+  left: -5px;
+  top: -52px;
+  width: 54px;
+  height: 54px;
+  overflow: visible;
+  filter: drop-shadow(0 4px 0 rgba(43, 35, 64, 0.25));
+}
+
+.quill.was-stamp .quill-pen-track {
+  left: 30%;
+  top: 16%;
+  opacity: 1;
+  transition: left 0.5s cubic-bezier(0.2, 1, 0.4, 1) 0.6s, top 0.5s cubic-bezier(0.2, 1, 0.4, 1) 0.6s, opacity 0.2s 0.6s;
+}
+
+.quill.is-sketch .quill-pen-track {
+  animation: quill-zig 1.2s linear forwards;
+}
+
+@keyframes quill-zig {
+  0% { left: 30%; top: 16%; }
+  12% { left: 72%; top: 23%; }
+  25% { left: 26%; top: 33%; }
+  37% { left: 74%; top: 43%; }
+  50% { left: 28%; top: 53%; }
+  62% { left: 72%; top: 62%; }
+  75% { left: 30%; top: 71%; }
+  87% { left: 68%; top: 79%; }
+  100% { left: 50%; top: 82%; }
+}
+
+.quill.is-splash .quill-pen-track {
+  left: 50%;
+  top: 54%;
+  transition: left 0.12s ease-in, top 0.12s ease-in;
+}
+
+.quill.was-flood .quill-pen-track {
+  animation: quill-away 0.6s cubic-bezier(0.5, 0, 0.8, 0.5) forwards;
+}
+
+@keyframes quill-away {
+  from {
+    left: 50%;
+    top: 54%;
+    opacity: 1;
+  }
+  to {
+    left: 140%;
+    top: -30%;
+    opacity: 0;
+  }
+}
+
+.quill.is-settled .quill-pen-track {
+  animation: none;
+  opacity: 0;
+}
+
+/* Behind the page at the reveal: a sunburst in the type's colour. */
+.quill-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 560px;
+  height: 560px;
+  margin: -280px 0 0 -280px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(var(--type-rgb), 0.28) 0deg 9deg, transparent 9deg 22.5deg);
+  -webkit-mask: radial-gradient(circle, #000 25%, transparent 68%);
+  mask: radial-gradient(circle, #000 25%, transparent 68%);
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.quill.was-reveal .quill-rays {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.5s ease-out, transform 0.7s cubic-bezier(0.2, 1.3, 0.4, 1);
+  animation: quill-rays-turn 40s linear infinite;
+}
+
+@keyframes quill-rays-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+
+.quill-confetti {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+}
+
+.quill-confetti > span {
+  position: absolute;
+  opacity: 0;
+  border: 1.5px solid #2b2340;
+}
+
+.quill-confetti .is-strip {
+  width: 6px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.quill-confetti .is-chip {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.quill-confetti .is-star {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.quill-confetti .is-tint-0 {
+  background: var(--type-color);
+}
+
+.quill-confetti .is-tint-1 {
+  background: #ffc93a;
+}
+
+.quill-confetti .is-tint-2 {
+  background: #fff;
+}
+
+.quill-confetti .is-star.is-tint-2 {
+  background: #ff8fb4;
+}
+
+.quill.was-reveal .quill-confetti > span {
+  animation: quill-confetti 1.9s cubic-bezier(0.2, 0.7, 0.4, 1) var(--d) forwards;
+}
+
+@keyframes quill-confetti {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0);
+  }
+  35% {
+    transform: translate(var(--x), var(--peak)) rotate(calc(var(--spin) * 0.4));
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--x) * 1.2), var(--drop)) rotate(var(--spin));
+  }
+}
+
+.quill.is-settled .quill-confetti > span {
+  animation-play-state: running;
+}
+
+/* Dust drifting in the sunlight once the hero stands. */
+.quill-motes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.quill-motes > span {
+  position: absolute;
+  top: -10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffd66a;
+  opacity: 0;
+}
+
+.quill.is-settled .quill-motes > span {
+  animation: quill-mote var(--dur) linear var(--d) infinite;
+}
+
+@keyframes quill-mote {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  15% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(30px, 100vh);
+  }
+}
+
+.quill-omen {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(11% + 344px);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: -1.5px 0 #2b2340, 1.5px 0 #2b2340, 0 -1.5px #2b2340, 0 1.5px #2b2340, -1px -1px #2b2340, 1px -1px #2b2340, -1px 1px #2b2340, 1px 1px #2b2340, 0 3px 0 #2b2340;
+  animation: quill-omen 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+@keyframes quill-omen {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+/* The plate: who joined. */
+.quill-plate {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: calc(11% + 340px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.quill.was-reveal .quill-plate {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.quill-ribbon {
+  padding: 3px 18px 4px;
+  border: 3px solid #2b2340;
+  border-radius: 999px;
+  background: #ff6f8f;
+  box-shadow: 0 3px 0 #2b2340;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow: 0 1.5px 0 #2b2340;
+  transform: scale(0);
+}
+
+.quill.was-reveal .quill-ribbon {
+  transform: rotate(-3deg);
+  transition: transform 0.45s cubic-bezier(0.2, 1.8, 0.4, 1) 0.1s;
+}
+
+.quill-name {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+
+.quill-name span {
+  display: inline-block;
+  text-shadow: -2px 0 #2b2340, 2px 0 #2b2340, 0 -2px #2b2340, 0 2px #2b2340, -1.5px -1.5px #2b2340, 1.5px -1.5px #2b2340, -1.5px 1.5px #2b2340, 1.5px 1.5px #2b2340, 0 4px 0 #2b2340;
+  opacity: 0;
+  transform: translateY(16px) scale(0.5);
+}
+
+.quill.was-reveal .quill-name span {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.2s ease-out, transform 0.4s cubic-bezier(0.2, 1.8, 0.4, 1);
+  transition-delay: calc(0.18s + var(--l) * 0.04s);
+}
+
+.quill-types {
+  display: flex;
+  gap: 6px;
+}
+
+.quill-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 11px 3px 7px;
+  border: 2.5px solid #2b2340;
+  border-radius: 999px;
+  background: rgb(var(--chip-rgb));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 3px 0 #2b2340;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: -1px 0 #2b2340, 1px 0 #2b2340, 0 -1px #2b2340, 0 1px #2b2340, 0 2px 0 #2b2340;
+}
+
+.quill-type svg {
+  width: 14px;
+  height: 14px;
+  filter: drop-shadow(0 1.5px 0 #2b2340);
+}
+
+.quill-oath {
+  font-size: 15px;
+  font-weight: 600;
+  color: #675b78;
+}
+
+.quill-types,
+.quill-oath,
+.quill-cheer {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.quill.was-reveal .quill-types,
+.quill.was-reveal .quill-oath {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.3s ease-out 0.5s, transform 0.3s ease-out 0.5s;
+}
+
+.quill.is-settled .quill-cheer {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.3s ease-out, transform 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+/* The one button: a round gold plate with an ink lip. */
+.quill-cheer {
+  min-width: 220px;
+  min-height: 52px;
+  margin-top: 6px;
+  padding: 0 28px;
+  border: 3px solid #2b2340;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffd66a, #ffb230);
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.55), inset 0 -5px 0 #e08a10, 0 4px 0 #2b2340;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fff;
+  text-shadow: -1.5px 0 #2b2340, 1.5px 0 #2b2340, 0 -1.5px #2b2340, 0 1.5px #2b2340, -1px -1px #2b2340, 1px -1px #2b2340, -1px 1px #2b2340, 1px 1px #2b2340, 0 3px 0 #2b2340 !important;
+  cursor: pointer;
+}
+
+.quill-cheer:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.55), inset 0 -5px 0 #e08a10, 0 1px 0 #2b2340;
+}
+
+.quill-skip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a7a60;
+}
+
+/* A skip lands the finished page at once. */
+.quill.is-settled .quill-page,
+.quill.is-settled .quill-sketch,
+.quill.is-settled .quill-wash,
+.quill.is-settled .quill-colour {
+  transition: none;
+}
+
+.quill.is-settled .quill-splat {
+  display: none;
+}

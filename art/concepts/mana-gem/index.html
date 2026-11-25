@@ -1,0 +1,60 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Mana gem</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2b2340}
+body{margin:0;background:#fbf3df;font-family:Fredoka,system-ui,sans-serif;color:var(--ink);padding:16px}
+h1{font-size:20px;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.col{background:#fffaf0;border:3px solid #e3cfa4;border-radius:22px;padding:12px;box-shadow:0 4px 0 #d8bd87}
+.col h2{margin:0 0 2px;font-size:17px}.col p{margin:0 0 10px;font-size:12px;color:#675b78}
+.move{display:flex;align-items:center;gap:8px;height:44px;padding:0 10px;margin-bottom:8px;border-radius:16px;background:#fff;border:3px solid var(--t);box-shadow:0 3px 0 var(--ink);font-weight:700;font-size:15px}
+.move .n{flex:1}.move .p{font-size:12px;color:#675b78}
+.move.dim{opacity:.55}
+.row{display:flex;gap:10px;align-items:center;margin-top:6px;font-size:12px;color:#675b78}
+.plate{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:12px;background:#58a8f0;box-shadow:0 3px 0 var(--ink)}
+.gem{position:relative;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex:none}
+.gem.sm{width:17px;height:17px}
+.gem svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.gem b{position:relative;font-size:12.5px;font-weight:700;color:#fff;line-height:1;
+ text-shadow:-1.2px 0 var(--ink),1.2px 0 var(--ink),0 -1.2px var(--ink),0 1.2px var(--ink),-1px -1px var(--ink),1px -1px var(--ink),-1px 1px var(--ink),1px 1px var(--ink),0 2px 0 var(--ink)}
+.gem.sm b{font-size:9px;text-shadow:-1px 0 var(--ink),1px 0 var(--ink),0 -1px var(--ink),0 1px var(--ink),0 1.5px 0 var(--ink)}
+.gem.wide b{transform:scale(.82)}
+.dead svg{filter:grayscale(.9) brightness(1.1)}
+</style></head><body>
+<h1>Mana gem: pick one</h1>
+<div class="grid" id="grid"></div>
+<script>
+const shapes={
+ now:(id)=>`<path d="M12 1.3 22.3 7v10L12 22.7 1.7 17V7Z" fill="none" stroke="#0a0d13" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M1.7 7 12 1.3 22.3 7 12 12Z" fill="#2a6ea3"/><path d="M1.7 7 12 12v10.7L1.7 17Z" fill="#163a5c"/><path d="M22.3 7 12 12v10.7L22.3 17Z" fill="#0c223a"/>
+  <path d="M12 1.3 22.3 7v10L12 22.7 1.7 17V7Z" fill="none" stroke="#7ccdf7" stroke-width="1.1" stroke-linejoin="round"/>`,
+ candy:(id)=>`<path d="M12 1.5 21.5 6.8 21.5 17.2 12 22.5 2.5 17.2 2.5 6.8Z" fill="#3d9bf0" stroke="#2b2340" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M12 4.2 19 8.1 12 11.8 5 8.1Z" fill="#8fd0ff"/><path d="M5 8.1 12 11.8v8L5 15.9Z" fill="#4ab0ff"/><path d="M19 8.1 12 11.8v8l7-3.9Z" fill="#2a7fd6"/>
+  <path d="M6.4 8.3 9.6 6.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`,
+ bubble:(id)=>`<defs><radialGradient id="b${id}" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#9fe0ff"/><stop offset=".55" stop-color="#3f9df2"/><stop offset="1" stop-color="#2463c4"/></radialGradient></defs>
+  <circle cx="12" cy="12" r="10.4" fill="url(#b${id})" stroke="#2b2340" stroke-width="2.2"/>
+  <ellipse cx="8.6" cy="7.4" rx="3.3" ry="2" fill="#fff" opacity=".85" transform="rotate(-30 8.6 7.4)"/>`,
+ drop:(id)=>`<defs><linearGradient id="d${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cd2ff"/><stop offset="1" stop-color="#2f7fe0"/></linearGradient></defs>
+  <path d="M12 1.4C12 1.4 3.2 10.6 3.2 15.2a8.8 8.8 0 0 0 17.6 0C20.8 10.6 12 1.4 12 1.4Z" fill="url(#d${id})" stroke="#2b2340" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M7.2 13.4c.2-1.6 1.2-3.2 2.3-4.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".9"/>`,
+ crystal:(id)=>`<path d="M12 1.2 19.5 8.5 12 22.8 4.5 8.5Z" fill="#4aa8ff" stroke="#2b2340" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M4.5 8.5h15L12 1.2Z" fill="#a8e2ff"/><path d="M12 8.5 12 22.8 19.5 8.5Z" fill="#2f86e6"/>
+  <path d="M7.5 7.3 10.6 4.2" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>`
+};
+const opts=[
+ ['now','Now','The dark-glass hexagon from the night look.'],
+ ['candy','A · Candy gem','Same hexagon, bright candy facets, ink outline, white rim on the numeral.'],
+ ['bubble','B · Mana bubble','A round glossy bead, one big highlight. Matches the Bubbly cards.'],
+ ['drop','C · Droplet','A mana drop: reads as a liquid you spend.'],
+ ['crystal','D · Crystal shard','A tall cut crystal, kite-shaped, bright with an ink edge.'],
+];
+let n=0;
+const gem=(k,v,sm,dead)=>`<span class="gem${sm?' sm':''}${v>=100?' wide':''}${dead?' dead':''}"><svg viewBox="0 0 24 24">${shapes[k](n++)}</svg><b>${v}</b></span>`;
+document.getElementById('grid').innerHTML=opts.map(([k,t,p])=>`<div class="col"><h2>${t}</h2><p>${p}</p>
+ <div class="move" style="--t:#ef6a3a">${gem(k,25)}<span class="n">Flare Up</span><span class="p">60</span></div>
+ <div class="move" style="--t:#3a9a5a">${gem(k,110)}<span class="n">Verdant Lash</span><span class="p">85</span></div>
+ <div class="move dim" style="--t:#8a5ad0">${gem(k,60,false,true)}<span class="n">Distort</span><span class="p">Can't afford</span></div>
+ <div class="row"><span class="plate">${gem(k,45,true)}<span style="color:#fff;font-weight:700;font-size:12px">MP</span></span> small, on a plate · ${gem(k,8,true)} on paper</div>
+</div>`).join('');
+</script></body></html>

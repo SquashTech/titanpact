@@ -10,29 +10,20 @@ import { HubGlyph } from '../shared/nodeIcons';
 import { TypeWheel, WHEEL_STEP_DEG, wheelRestDeg } from '../shared/TypeWheel';
 import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
+import './starfall.css';
 
-// The Starfall (docs/collection.md §4): a blind draw of a hero the account does not own, played as
-// a summoning. The spent Pages rises into the sky; the type wheel spins up around it and slows,
-// ticking, until it locks on the hero's type — the first thing the player learns; the gathered
-// light swells in that colour, leaves the sky, and comes back down as a falling star; it strikes
-// the ground and the hero rises out of the light as a silhouette before colouring in.
+// The Starfall as writing a hero (docs/worlds.md §3.7, per user direction 2026-11-25): the Pages
+// fly into a blank page; the type wheel spins and locks on the hero's type, the first thing the
+// player learns, and stamps it on the page; a quill sketches the hero in ink, a drop of the type's
+// colour lands, and the colour floods the sketch.
 
 /** The draw's name, in one place: the Observatory, the scene, the Collection's note. */
 export const STARFALL_NAME = 'Starfall';
 
-/** A fixed night: the same sky every draw. */
-function skyStars(count: number): { x: number; y: number; r: number; delay: number }[] {
-  let seed = 7;
-  const next = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  return Array.from({ length: count }, () => ({ x: next() * 100, y: next() * 100, r: 0.35 + next() * 1.1, delay: next() * 4 }));
-}
-const SKY = skyStars(90);
-const STREAKS = Array.from({ length: 28 }, (_, i) => ({ angle: (i * 137.51) % 360, delay: (i * 0.071) % 0.6, len: 30 + ((i * 53) % 40) }));
-const EMBERS = 22;
-/** Motes of Pages that rise at the start, each carrying its share of the price. */
+/** Motes of Pages that fly in at the start, each carrying its share of the price. */
 const TOKENS = 2;
 
-/** The burst at the reveal: up out of the light, then fluttering down. Fixed, so every draw throws the same. */
+/** The burst at the reveal: up off the page, then fluttering down. Fixed, so every draw throws the same. */
 const CONFETTI = Array.from({ length: 60 }, (_, i) => ({
   x: ((i * 97) % 360) - 180,
   peak: 120 + ((i * 53) % 150),
@@ -42,8 +33,8 @@ const CONFETTI = Array.from({ length: 60 }, (_, i) => ({
   tint: i % 3,
   shape: i % 4 === 0 ? 'star' : i % 2 ? 'strip' : 'chip',
 }));
-/** Glints drifting down the sky once the hero stands. */
-const GLINTS = Array.from({ length: 14 }, (_, i) => ({ x: (i * 37) % 100, delay: (i * 0.53) % 6, dur: 5 + ((i * 13) % 4) }));
+/** Dust in the sunlight once the hero stands. */
+const MOTES = Array.from({ length: 14 }, (_, i) => ({ x: (i * 37) % 100, delay: (i * 0.53) % 6, dur: 5 + ((i * 13) % 4) }));
 
 /** Beat boundaries in ms from the tap. */
 const BEATS = {
@@ -52,26 +43,47 @@ const BEATS = {
   spin: 1050,
   spinMs: 2600,
   charge: 3900,
-  kindle: 4150,
-  launch: 4950,
-  fall: 5350,
-  land: 5950,
-  rise: 6100,
+  stamp: 4150,
+  sketch: 4700,
+  splash: 5950,
+  flood: 6100,
   reveal: 6950,
   settled: 7700,
 } as const;
 /** Whole turns the wheel makes before it lands. */
 const SPIN_TURNS = 4;
 
-type Phase = 'gather' | 'spin' | 'lock' | 'kindle' | 'launch' | 'fall' | 'land' | 'rise' | 'reveal';
-const ORDER: readonly Phase[] = ['gather', 'spin', 'lock', 'kindle', 'launch', 'fall', 'land', 'rise', 'reveal'];
+type Phase = 'open' | 'spin' | 'lock' | 'stamp' | 'sketch' | 'splash' | 'flood' | 'reveal';
+const ORDER: readonly Phase[] = ['open', 'spin', 'lock', 'stamp', 'sketch', 'splash', 'flood', 'reveal'];
 
 /** Ease-out quart: fast off the mark, a long ticking crawl into the lock. */
 const ease = (t: number) => 1 - Math.pow(1 - t, 4);
 
+/** A goose quill, nib at the bottom left. */
+export function Quill({ className }: { className: string }) {
+  return (
+    <svg className={className} viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+      <path d="M8.5 33.5C10 20 21 6.5 37 2.5 35.5 15 25 28 8.5 33.5Z" fill="#fff" stroke="#2b2340" strokeWidth="2.2" strokeLinejoin="round" />
+      <path d="M9 33 31 9.5" stroke="#2b2340" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M17 20.5 13.5 19M21 16 18 13.5M25.5 13 23.5 9.5M21.5 25 24.5 26.5" stroke="#c9b48a" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M3.5 38.5 8 33l2.6 2.4Z" fill="#2b2340" stroke="#2b2340" strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** The hero as a pencil sketch: an ink outline around a paper silhouette. */
+export function HeroSketch({ heroId, className }: { heroId: string; className: string }) {
+  return (
+    <span className={className}>
+      <HeroPortrait heroId={heroId} className="quill-sketch-ink" />
+      <HeroPortrait heroId={heroId} className="quill-sketch-paper" />
+    </span>
+  );
+}
+
 interface ScreenProps {
   heroId: string;
-  /** The balance the Pages was spent from, before the draw. */
+  /** The balance the Pages were spent from, before the draw. */
   balanceBefore: number;
   onClose: () => void;
 }
@@ -79,7 +91,7 @@ interface ScreenProps {
 export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) {
   const hero = heroes[heroId];
   const type = hero?.types[0];
-  const [phase, setPhase] = useState<Phase>('gather');
+  const [phase, setPhase] = useState<Phase>('open');
   const [launched, setLaunched] = useState(0);
   const [settled, setSettled] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
@@ -138,18 +150,17 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
       frame.current = requestAnimationFrame(tick);
     });
     at(BEATS.charge, () => playSfx('star.charge'));
-    at(BEATS.kindle, () => setPhase('kindle'));
-    at(BEATS.launch, () => setPhase('launch'));
-    at(BEATS.fall, () => {
-      setPhase('fall');
+    at(BEATS.stamp, () => setPhase('stamp'));
+    at(BEATS.sketch, () => {
+      setPhase('sketch');
       playSfx('star.fall');
     });
-    at(BEATS.land, () => {
-      setPhase('land');
+    at(BEATS.splash, () => {
+      setPhase('splash');
       playSfx('star.land');
       if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate([30, 40, 60]);
     });
-    at(BEATS.rise, () => setPhase('rise'));
+    at(BEATS.flood, () => setPhase('flood'));
     at(BEATS.reveal, () => {
       setPhase('reveal');
       playSfx('star.reveal');
@@ -165,11 +176,15 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
   if (!hero || !type) return null;
   const past = (p: Phase) => ORDER.indexOf(phase) >= ORDER.indexOf(p);
   const locked = past('lock');
+  const balance = balanceBefore - launched * (STARFALL_PRICE / TOKENS);
+  const pastClasses = ORDER.filter((p) => past(p))
+    .map((p) => ` was-${p}`)
+    .join('');
 
   // Portalled into overlayHost(), never body (overlayHost.ts).
   return createPortal(
     <div
-      className={`summon is-${phase}${locked ? ' is-locked' : ''}${past('land') ? ' is-landed' : ''}${settled ? ' is-settled' : ''}`}
+      className={`quill is-${phase}${pastClasses}${settled ? ' is-settled' : ''}`}
       style={{ '--type-rgb': getTypeColorRgb(type), '--type-color': getTypeColor(type) } as CSSProperties}
       // A portal still bubbles through React to whatever hosts it; nothing behind should hear this tap.
       onClick={(e) => {
@@ -177,77 +192,48 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
         if (!settled) skipToReveal();
       }}
     >
-      <div className="summon-stage">
-        <div className="summon-sky" aria-hidden="true">
-          <span className="summon-nebula" />
-          {SKY.map((star, i) => (
-            <span key={i} className="summon-sky-star" style={{ left: `${star.x}%`, top: `${star.y}%`, '--r': star.r, animationDelay: `${star.delay}s` } as CSSProperties} />
-          ))}
-          <span className="summon-flood" />
-        </div>
+      <span className="quill-sun" aria-hidden="true" />
 
-        {/* The sky rushing past while the wheel spins. */}
-        <div className="summon-warp" aria-hidden="true">
-          {STREAKS.map((s, i) => (
-            <span key={i} style={{ '--a': `${s.angle}deg`, '--d': `${s.delay}s`, '--len': `${s.len}%` } as CSSProperties} />
-          ))}
-        </div>
+      <div className="quill-balance" aria-label={`${balance} Pages`}>
+        <HubGlyph name="stardust" />
+        <span key={launched} className="quill-balance-count">
+          {balance}
+        </span>
+      </div>
 
-        <div className="summon-balance" aria-label={`${balanceBefore - launched * (STARFALL_PRICE / TOKENS)} Pages`}>
+      {Array.from({ length: TOKENS }, (_, i) => (
+        <span key={i} className={`quill-token${i < launched ? ' is-launched' : ''}`} style={{ '--i': i } as CSSProperties} aria-hidden="true">
           <HubGlyph name="stardust" />
-          <span key={launched} className="summon-balance-count">
-            {balanceBefore - launched * (STARFALL_PRICE / TOKENS)}
+        </span>
+      ))}
+
+      <div className="quill-stage">
+        <span className="quill-rays" aria-hidden="true" />
+        <div className="quill-page">
+          <span className="quill-page-lines" aria-hidden="true" />
+          <span className="quill-wash" aria-hidden="true" />
+          <HeroSketch heroId={hero.id} className="quill-sketch" />
+          <HeroPortrait heroId={hero.id} className="quill-colour" />
+          <svg className="quill-splat" viewBox="0 0 100 100" aria-hidden="true">
+            <path d="M50 14c6 0 7 12 13 13s14-9 18-4-5 13-2 18 15 4 15 11-13 6-15 11 8 14 2 18-14-6-19-3-5 15-12 15-7-13-13-14-15 8-19 3 5-13 2-18-14-5-14-11 13-7 15-12-8-13-2-17 14 6 19 3 6-17 12-17Z" />
+          </svg>
+          <span className="quill-stamp" aria-hidden="true">
+            <ElementGlyph type={type} />
           </span>
         </div>
 
-        {Array.from({ length: TOKENS }, (_, i) => (
-          <span key={i} className={`summon-token${i < launched ? ' is-launched' : ''}`} style={{ '--i': i } as CSSProperties} aria-hidden="true">
-            <HubGlyph name="stardust" />
-          </span>
-        ))}
-
-        <div className="summon-altar" aria-hidden="true">
-          <div ref={wheelRef} className="summon-wheel" style={{ '--spin': '0deg', '--wheel-tint': getTypeColor(type) } as CSSProperties}>
-            <TypeWheel size={300} ring focus={locked ? [type] : undefined} topType={type} />
+        <div className="quill-dial" aria-hidden="true">
+          <div ref={wheelRef} className="quill-wheel" style={{ '--spin': '0deg', '--wheel-tint': getTypeColor(type) } as CSSProperties}>
+            <TypeWheel size={260} ring focus={locked ? [type] : undefined} topType={type} />
           </div>
-          <span className="summon-pointer" />
-          <span className="summon-lock-ring" />
-          <span className="summon-lock-ring is-second" />
-          <span className="summon-orb">
-            <span className="summon-orb-glow" />
-            <span className="summon-orb-core" />
-            {locked && (
-              <span className="summon-orb-sigil">
-                <ElementGlyph type={type} />
-              </span>
-            )}
-          </span>
+          <span className="quill-pointer" />
         </div>
 
-        <span className="summon-meteor" aria-hidden="true">
-          <span className="summon-meteor-tail" />
-          <span className="summon-meteor-head" />
+        <span className="quill-pen-track" aria-hidden="true">
+          <Quill className="quill-pen" />
         </span>
 
-        <div className="summon-ground" aria-hidden="true">
-          <span className="summon-crater" />
-        </div>
-        <span className="summon-flash" aria-hidden="true" />
-        <span className="summon-shock" aria-hidden="true" />
-        <span className="summon-shock is-second" aria-hidden="true" />
-        <span className="summon-pillar" aria-hidden="true" />
-        <span className="summon-embers" aria-hidden="true">
-          {Array.from({ length: EMBERS }, (_, i) => (
-            <span key={i} style={{ '--e': i, '--x': `${((i * 61) % 100) - 50}px`, '--h': `${90 + ((i * 37) % 120)}px` } as CSSProperties} />
-          ))}
-        </span>
-        <span className="summon-rays" aria-hidden="true" />
-
-        <div className="summon-hero">
-          <HeroPortrait heroId={hero.id} className="summon-hero-figure" />
-        </div>
-
-        <span className="summon-confetti" aria-hidden="true">
+        <span className="quill-confetti" aria-hidden="true">
           {CONFETTI.map((c, i) => (
             <span
               key={i}
@@ -256,45 +242,44 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
             />
           ))}
         </span>
-        <span className="summon-glints" aria-hidden="true">
-          {GLINTS.map((g, i) => (
-            <span key={i} style={{ left: `${g.x}%`, '--d': `${g.delay}s`, '--dur': `${g.dur}s` } as CSSProperties} />
-          ))}
-        </span>
       </div>
 
-      {locked && !past('reveal') && (
-        <div className="summon-omen" aria-hidden="true">
-          <span className="summon-omen-line">{`${/^[AEIOU]/.test(type) ? 'An' : 'A'} ${type} hero answers`}</span>
+      <span className="quill-motes" aria-hidden="true">
+        {MOTES.map((g, i) => (
+          <span key={i} style={{ left: `${g.x}%`, '--d': `${g.delay}s`, '--dur': `${g.dur}s` } as CSSProperties} />
+        ))}
+      </span>
+
+      {locked && !past('flood') && (
+        <div className="quill-omen" aria-hidden="true">
+          {`${/^[AEIOU]/.test(type) ? 'An' : 'A'} ${type} hero answers`}
         </div>
       )}
 
-      <div className="summon-plate">
-        <div className="summon-ribbon">
-          <span>New hero!</span>
-        </div>
-        <h2 className="summon-name" aria-label={hero.name}>
+      <div className="quill-plate">
+        <div className="quill-ribbon">New hero!</div>
+        <h2 className="quill-name" aria-label={hero.name}>
           {Array.from(hero.name).map((ch, i) => (
             <span key={i} style={{ '--l': i } as CSSProperties} aria-hidden="true">
-              {ch === ' ' ? ' ' : ch}
+              {ch === ' ' ? ' ' : ch}
             </span>
           ))}
         </h2>
-        <div className="summon-types">
+        <div className="quill-types">
           {hero.types.map((t) => (
-            <span key={t} className="summon-type" style={{ '--chip-rgb': getTypeColorRgb(t) } as CSSProperties}>
+            <span key={t} className="quill-type" style={{ '--chip-rgb': getTypeColorRgb(t) } as CSSProperties}>
               <ElementGlyph type={t} />
               {t}
             </span>
           ))}
         </div>
-        <div className="summon-oath">joins your Collection!</div>
-        <button type="button" className="summon-cheer" data-sfx="ui.commit" disabled={!settled} onClick={onClose}>
+        <div className="quill-oath">joins your Collection!</div>
+        <button type="button" className="quill-cheer" data-sfx="ui.commit" disabled={!settled} onClick={onClose}>
           Awesome!
         </button>
       </div>
 
-      {!settled && <span className="summon-skip">Tap to skip</span>}
+      {!settled && <span className="quill-skip">Tap to skip</span>}
     </div>,
     overlayHost()
   );

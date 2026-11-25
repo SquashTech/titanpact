@@ -84,6 +84,9 @@ Chosen 2026-11-24 from `art/concepts/vibrant/` over "jewel night":
 - **Cards are bubbly** (2026-11-24, per user direction, from `art/concepts/whimsy/`, over stickers,
   inked pages and stamps): very round, a puffy highlight and a chunky lip in the card's own colour
   (type, hero, rarity, rite); gear sockets are small bubbly squares. Plain rectangles read surgical.
+  **The mana gem is a bubble** (2026-11-25, per user direction, from `art/concepts/mana-gem/`, over a
+  candy hexagon, a droplet and a crystal shard): a glossy blue bead with one highlight and an ink
+  rim, gold when the pool overflows.
 - **Arenas:** sunny and undimmed (the mock's Wild's Edge: Pixen 196x228, seed 8, low detail).
   Text over a bright arena needs a white face with an ink rim, or it disappears into the grass.
 - **Heroes:** redrawn cartoony with bigger heads, rounder shapes, two-tone cel shading and bright
@@ -161,8 +164,8 @@ survive, its October art does not. Mocked in `art/concepts/spread/`.
 | Blip, a light | **Blip, a bookworm in round reading glasses, peeking out of a red book** (`art/concepts/spread/blip-glasses.png`). Its voice, thoughts and poke carry over; it now needs a sprite and poses | **Decided** 2026-11-24, per user direction |
 | The galaxy title, the Pact ring and its seats | **An open book on a desk**: the Library on the top page, **Your Story** (the Worlds, renamed 2026-11-24, per user direction) on the bottom, the Gauntlet and the Trials as ribbon bookmarks | **Decided and BUILT** 2026-11-24, per user direction (`BookTitle.tsx`): Your Story reads Coming soon until the Worlds exist; Blip draws as the bookworm |
 | Stardust | **Pages**: a pull fills a blank page with a hero. The Collection is literally your book's pages | **Decided** 2026-11-24, per user direction; player-facing text says Pages (code ids still say stardust) |
-| The Starfall | **Writing a hero**: a quill sketches a figure on a blank page, then colour floods in | Proposed |
-| The Observatory | **The Scriptorium** | Proposed |
+| The Starfall | **Writing a hero**: a quill sketches a figure on a blank page, then colour floods in | **Decided and BUILT** 2026-11-25, per user direction (`Starfall.tsx`): the Pages fly into a blank page, the type wheel still spins and stamps the type in its corner, the quill sketches, a drop of the type's colour floods it; a ten-draw sketches ten small pages. The name Starfall stays for now |
+| The Observatory | **The Scriptorium** | **Not taken** 2026-11-25, per user direction: the Observatory keeps its name and its heroes-as-stars chart, drawn by day as a star chart inked on paper, an owned hero a sticker in its type's colour |
 | Essence (§2.5) | **Ink**: what buys seat levels and draws a hero's equipment and Gems — one purse for all growth. Washing a Blot out of a page is what yields it, so the enemy and the purse tell one story. Enemies are **Blots**, never "ink monsters" | **Decided** 2026-11-24, per user direction (Gilt rejected) |
 | Cycles I–V | **Editions**: the Second Edition retells the story, changed and harder | Proposed |
 | Strange Worlds | **Tall Tales** | Proposed |

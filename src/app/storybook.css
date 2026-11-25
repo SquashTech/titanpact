@@ -861,3 +861,99 @@ button * { text-shadow: none !important; }
 .plate-socket.is-disabled .plate-cta { text-shadow: none !important; }
 .kw-word { filter: brightness(0.62) saturate(1.4); }
 .verb-card.is-dimmed { opacity: 0.85 !important; filter: saturate(0.6); }
+
+/* The mana gem as a bubble (ManaCost.tsx), per user direction 2026-11-25. */
+.mana-gem-cut { filter: drop-shadow(0 1.5px 0 var(--ink)) !important; }
+.mana-gem-body { stroke: var(--ink); stroke-width: 1.7; }
+.mana-gem-value { text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 1.5px 0 var(--ink) !important; }
+.mana-gem-light { stop-color: #9fe0ff; }
+.mana-gem-mid { stop-color: #3f9df2; }
+.mana-gem-deep { stop-color: #2463c4; }
+.mana-gem-spark { fill: #fff; opacity: 0.85; }
+.mana-gem-sm .mana-gem-body { stroke-width: 2.2; }
+.mana-gem-sm .mana-gem-value { text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 1.5px 0 var(--ink) !important; }
+.move-button.is-unaffordable .mana-gem-cut { filter: grayscale(0.9) brightness(1.1) drop-shadow(0 1.5px 0 var(--ink)) !important; }
+/* Mana over the pool: a gold bubble. */
+.plate-mp-gem.is-overcharged .mana-gem-light { stop-color: #fff1b0; }
+.plate-mp-gem.is-overcharged .mana-gem-mid { stop-color: #ffc93a; }
+.plate-mp-gem.is-overcharged .mana-gem-deep { stop-color: #e08a10; }
+
+/* The Observatory by day (per user direction 2026-11-25): the sky as a star chart inked on paper,
+   an owned hero a sticker in its type's colour, an unowned one a pencil dot. */
+.sky-page .sky-backdrop { display: none; }
+.sky-page .hub-subtabs { background: #ead9b4 !important; }
+.sky-page .hub-subtab:not(.is-active) { color: #7b5a2a !important; }
+.star-sky-chart > circle:first-of-type { fill: #fff6dc; stroke: #e3cfa4; stroke-width: 2; }
+.star-sky-ring { stroke: #d9b97a !important; stroke-width: 1.2 !important; }
+.star-sky-ring.is-ticks { stroke: #d9b97a !important; stroke-width: 4 !important; }
+.star-sky-ring.is-inner { stroke: #d9b97a !important; }
+.star-sky-link { stroke: #cdb68a !important; stroke-width: 1 !important; }
+.star-sky-link.is-lit { stroke: var(--type-color) !important; stroke-opacity: 1 !important; stroke-width: 2 !important; filter: none !important; }
+.star-sky-core { fill: #b89c6a !important; }
+.star-sky-halo { fill: #fff !important; opacity: 1 !important; stroke: var(--ink); stroke-width: 1.4; }
+.star-sky-star.is-lit .star-sky-core { fill: var(--type-color) !important; filter: none !important; animation: none !important; transform: scale(1.7); }
+.star-sky-flare { stroke: var(--type-color) !important; stroke-width: 2 !important; }
+.star-sky-sigil circle { fill: #fffaf0 !important; stroke: var(--type-color) !important; stroke-opacity: calc(0.35 + var(--fill) * 0.65) !important; stroke-width: 2 !important; }
+.star-sky-sigil svg { opacity: calc(0.45 + var(--fill) * 0.55) !important; }
+.star-sky-cluster.is-whole .star-sky-sigil circle { stroke: #e0a020 !important; stroke-width: 2.6 !important; filter: none !important; }
+
+/* The Lodestar: a gold sticker star. */
+.lodestar-rays { background: repeating-conic-gradient(from 0deg, rgba(255, 178, 48, 0.55) 0deg 4deg, transparent 4deg 22.5deg) !important; }
+.lodestar-halo { background: radial-gradient(circle, rgba(255, 214, 120, 0.7), rgba(255, 178, 48, 0.2) 50%, transparent 70%) !important; }
+.lodestar-core { color: #ffc93a !important; filter: grayscale(0.7) brightness(0.95) drop-shadow(1.5px 0 0 var(--ink)) drop-shadow(-1.5px 0 0 var(--ink)) drop-shadow(0 1.5px 0 var(--ink)) drop-shadow(0 -1.5px 0 var(--ink)) !important; }
+.lodestar.is-ready .lodestar-core { filter: drop-shadow(1.5px 0 0 var(--ink)) drop-shadow(-1.5px 0 0 var(--ink)) drop-shadow(0 1.5px 0 var(--ink)) drop-shadow(0 -1.5px 0 var(--ink)) drop-shadow(0 3px 0 var(--ink)) !important; }
+
+.sky-tally { color: #675b78 !important; }
+.sky-tally-count { color: #94490a !important; text-shadow: none !important; }
+.sky-hint { color: #675b78 !important; }
+
+/* The call: a round gold plate with an ink lip. */
+.sky-call {
+  border: 3px solid var(--ink) !important;
+  background: linear-gradient(180deg, #ffd66a, #ffb230) !important;
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.55), inset 0 -5px 0 #e08a10, 0 4px 0 var(--ink) !important;
+  animation: none !important;
+  color: #fff !important;
+}
+.sky-call-sheen { background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.45) 45%, transparent 60%) !important; }
+.sky-call-label { font-family: Fredoka, system-ui, sans-serif; text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink) !important; }
+.sky-call-price { background: var(--ink) !important; color: #ffd66a !important; }
+.sky-call.is-ten { background: linear-gradient(180deg, #8fd0ff, #3f9df2) !important; box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.5), inset 0 -5px 0 #2463c4, 0 4px 0 var(--ink) !important; }
+.sky-call:disabled { background: #e8dcc0 !important; border-color: #c9b48a !important; box-shadow: 0 4px 0 #c9b48a !important; color: #8a7a60 !important; }
+.sky-call:disabled .sky-call-label { color: #8a7a60; text-shadow: none !important; }
+.sky-call:disabled .sky-call-price { background: #c9b48a !important; color: #fffaf0 !important; }
+
+.sky-pool-toggle { background: #fffaf0 !important; border: 2px solid #e3cfa4 !important; box-shadow: 0 3px 0 #d8bd87; color: #7b5a2a !important; }
+.sky-pool-face { --bub: rgb(var(--type-rgb)); border: 3px solid color-mix(in srgb, var(--bub) 70%, #2b2340) !important; border-radius: 18px !important; background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--bub) 14%, #fffaf0)) !important; box-shadow: 0 4px 0 color-mix(in srgb, var(--bub) 60%, #2b2340) !important; color: var(--ink) !important; }
+.sky-pool-portrait { filter: brightness(0) opacity(0.55) !important; }
+
+/* The Observatory's Market and ledgers on paper. */
+.hub-section-head { color: #7b5a2a !important; }
+.star-shop-offer,
+.star-shop-empty {
+  --bub: #f0a040;
+  border: 3px solid color-mix(in srgb, var(--bub) 70%, #2b2340) !important;
+  border-image: none !important;
+  border-radius: 20px !important;
+  background: linear-gradient(180deg, #ffffff 0%, color-mix(in srgb, var(--bub) 14%, #fffaf0) 100%) !important;
+  box-shadow: inset 0 4px 0 #ffffff, 0 5px 0 color-mix(in srgb, var(--bub) 60%, #2b2340) !important;
+  color: var(--ink) !important;
+}
+.star-shop-empty { --bub: #c9b48a; border-style: dashed !important; box-shadow: none !important; background: #fffaf0 !important; }
+.star-shop-empty-title,
+.star-shop-offer-name { color: var(--ink) !important; }
+.star-shop-empty-note,
+.star-shop-bundle-owned,
+.star-shop-offer-was,
+.star-shop-balance-ledger,
+.star-shop-note { color: #675b78 !important; }
+.star-shop-offer-cost { background: var(--ink) !important; border-color: var(--ink) !important; color: #ffd66a !important; }
+.star-shop-offer-cost.is-held { background: #e8dcc0 !important; border-color: #c9b48a !important; color: #7b5a2a !important; }
+.star-shop-bundle-face.is-owned::after { color: #2f8a3e !important; }
+.star-shop-offer-cost .star-shop-offer-was { color: #c9bcd8 !important; }
+
+/* The type wheel on paper: each node a bubble rimmed in its colour. */
+.type-wheel-node circle:not(.type-wheel-hit) { fill: #fffaf0; stroke: currentColor; stroke-opacity: 1; stroke-width: 2; }
+.type-wheel-node.is-lit circle:not(.type-wheel-hit) { fill: currentColor; stroke: #2b2340; filter: none; }
+.type-wheel-node.is-lit svg { color: #fff; }
+.type-wheel-ring { stroke: #d9b97a; stroke-width: 1.5; }
