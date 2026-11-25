@@ -106,7 +106,8 @@ Paper Mario, Kingdom Hearts' Hundred Acre Wood.
   `art/concepts/names/`). The brand is the one word *Twofold* — a pair, and a folded page — with
   HEROES set small beneath it, the way Fire Emblem Heroes stacks. Plain "Twofold" is taken on Steam
   (a 2023 visual novel, and Twofold Tower, a puzzle game); "Twofold Heroes" turned up nothing in a
-  first search. Not yet checked against trademarks or Google Play.
+  first search. Not yet checked against trademarks or Google Play. **On the title and the browser tab
+  since 2026-11-24, per user direction**; the install manifest still says Titanpact.
 
 §3.1–§3.2 below were written for Crystals; their structure carries over to chapters.
 
@@ -158,8 +159,8 @@ survive, its October art does not. Mocked in `art/concepts/spread/`.
 | Today | Under the Storybook | Status |
 |---|---|---|
 | Blip, a light | **Blip, a bookworm in round reading glasses, peeking out of a red book** (`art/concepts/spread/blip-glasses.png`). Its voice, thoughts and poke carry over; it now needs a sprite and poses | **Decided** 2026-11-24, per user direction |
-| The galaxy title, the Pact ring and its seats | **An open book on a desk**: the Library on the top page, **Your Story** (the Worlds, renamed 2026-11-24, per user direction) on the bottom, the Gauntlet and the Trials as ribbon bookmarks | Proposed (mocked) |
-| Stardust | **Pages**: a pull fills a blank page with a hero. The Collection is literally your book's pages | **Decided** 2026-11-24, per user direction |
+| The galaxy title, the Pact ring and its seats | **An open book on a desk**: the Library on the top page, **Your Story** (the Worlds, renamed 2026-11-24, per user direction) on the bottom, the Gauntlet and the Trials as ribbon bookmarks | **Decided and BUILT** 2026-11-24, per user direction (`BookTitle.tsx`): Your Story reads Coming soon until the Worlds exist; Blip draws as the bookworm |
+| Stardust | **Pages**: a pull fills a blank page with a hero. The Collection is literally your book's pages | **Decided** 2026-11-24, per user direction; player-facing text says Pages (code ids still say stardust) |
 | The Starfall | **Writing a hero**: a quill sketches a figure on a blank page, then colour floods in | Proposed |
 | The Observatory | **The Scriptorium** | Proposed |
 | Essence (§2.5) | **Ink**: what buys seat levels and draws a hero's equipment and Gems — one purse for all growth. Washing a Blot out of a page is what yields it, so the enemy and the purse tell one story. Enemies are **Blots**, never "ink monsters" | **Decided** 2026-11-24, per user direction (Gilt rejected) |

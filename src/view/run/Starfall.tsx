@@ -12,7 +12,7 @@ import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 
 // The Starfall (docs/collection.md §4): a blind draw of a hero the account does not own, played as
-// a summoning. The spent Stardust rises into the sky; the type wheel spins up around it and slows,
+// a summoning. The spent Pages rises into the sky; the type wheel spins up around it and slows,
 // ticking, until it locks on the hero's type — the first thing the player learns; the gathered
 // light swells in that colour, leaves the sky, and comes back down as a falling star; it strikes
 // the ground and the hero rises out of the light as a silhouette before colouring in.
@@ -29,7 +29,7 @@ function skyStars(count: number): { x: number; y: number; r: number; delay: numb
 const SKY = skyStars(90);
 const STREAKS = Array.from({ length: 28 }, (_, i) => ({ angle: (i * 137.51) % 360, delay: (i * 0.071) % 0.6, len: 30 + ((i * 53) % 40) }));
 const EMBERS = 22;
-/** Motes of Stardust that rise at the start, each carrying its share of the price. */
+/** Motes of Pages that rise at the start, each carrying its share of the price. */
 const TOKENS = 2;
 
 /** The burst at the reveal: up out of the light, then fluttering down. Fixed, so every draw throws the same. */
@@ -71,7 +71,7 @@ const ease = (t: number) => 1 - Math.pow(1 - t, 4);
 
 interface ScreenProps {
   heroId: string;
-  /** The balance the Stardust was spent from, before the draw. */
+  /** The balance the Pages was spent from, before the draw. */
   balanceBefore: number;
   onClose: () => void;
 }
@@ -193,7 +193,7 @@ export function StarfallScreen({ heroId, balanceBefore, onClose }: ScreenProps) 
           ))}
         </div>
 
-        <div className="summon-balance" aria-label={`${balanceBefore - launched * (STARFALL_PRICE / TOKENS)} Stardust`}>
+        <div className="summon-balance" aria-label={`${balanceBefore - launched * (STARFALL_PRICE / TOKENS)} Pages`}>
           <HubGlyph name="stardust" />
           <span key={launched} className="summon-balance-count">
             {balanceBefore - launched * (STARFALL_PRICE / TOKENS)}

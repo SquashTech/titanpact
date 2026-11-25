@@ -1,6 +1,12 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { playSfx } from '../../audio/sfx';
 import './blip.css';
+import blipArt from '../../../art/npc/blip.png';
+
+const sprite = new Image();
+sprite.src = blipArt;
+/** The bookworm's drawn size, in the stage's pixels: its 48px art at 1:1. */
+const SPRITE = 48;
 
 // Blip (docs/the-sky.md §1): the little face, a soft glow with two eyes that look where it is going.
 // It springs toward its home, bobs while it waits and squishes when poked; it never speaks. Drawn on a canvas each frame; nothing here is a control except the poke, which opens nothing.
@@ -229,48 +235,13 @@ export const Blip = forwardRef<BlipHandle, Props>(function Blip({ home, active }
     g.rotate(-heading + b.spin);
     g.scale(1 + b.squish, 1 - b.squish);
 
-    const fill = g.createRadialGradient(-3, -4, 1, 0, 0, RADIUS + 0.5);
-    fill.addColorStop(0, '#fffdf3');
-    fill.addColorStop(0.7, '#ffe7a8');
-    fill.addColorStop(1, '#ffcf6e');
-    g.fillStyle = fill;
-    g.beginPath();
-    g.arc(0, 0, RADIUS, 0, TAU);
-    g.fill();
-
-    const ex = b.look[0] * 3;
-    const ey = b.look[1] * 2;
-    g.fillStyle = g.strokeStyle = '#2a2140';
-    g.lineWidth = 1.6;
-    g.lineCap = 'round';
-    const blinking = (t + b.seed) % 3.7 < 0.12;
-    for (const side of [-1, 1]) {
-      const x = side * 4.2 + ex;
-      if (b.mood === 'happy') {
-        g.beginPath();
-        g.arc(x, ey, 2.2, Math.PI * 1.1, Math.PI * 1.9);
-        g.stroke();
-        g.fillStyle = 'rgba(255,140,140,.45)';
-        g.beginPath();
-        g.arc(side * 7.5, 3.5, 1.8, 0, TAU);
-        g.fill();
-        g.fillStyle = '#2a2140';
-      } else if (b.mood === 'dizzy') {
-        g.lineWidth = 1.1;
-        g.beginPath();
-        g.arc(x, ey - 0.5, 2.2, t * 8 * side, t * 8 * side + Math.PI * 1.6);
-        g.stroke();
-        g.lineWidth = 1.6;
-      } else if (b.mood === 'surprised') {
-        g.beginPath();
-        g.arc(x, ey - 1, 2.3, 0, TAU);
-        g.fill();
-      } else {
-        const sad = b.mood === 'sad';
-        g.beginPath();
-        g.ellipse(x, (sad ? 1.5 : -1) + ey, sad ? 1.3 : 1.7, blinking ? 0.25 : sad ? 2 : 2.8, 0, 0, TAU);
-        g.fill();
-      }
+    // The bookworm in its book, faced the way it flies; a sad Blip sinks dimmer.
+    if (sprite.complete && sprite.naturalWidth) {
+      g.imageSmoothingEnabled = false;
+      if (b.look[0] < -0.2) g.scale(-1, 1);
+      g.globalAlpha = b.mood === 'sad' ? 0.75 : 1;
+      g.drawImage(sprite, -SPRITE / 2, -SPRITE / 2 - 4, SPRITE, SPRITE);
+      g.globalAlpha = 1;
     }
     g.restore();
   }

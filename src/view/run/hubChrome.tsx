@@ -9,7 +9,7 @@ export function HubPageHead({ title, balance, children }: { title: string; balan
       <span className="hub-head-title">{title}</span>
       {children}
       {balance !== undefined && (
-        <span className="hub-head-balance" aria-label={`${balance} Stardust`}>
+        <span className="hub-head-balance" aria-label={`${balance} Pages`}>
           <HubGlyph name="stardust" />
           {balance}
         </span>

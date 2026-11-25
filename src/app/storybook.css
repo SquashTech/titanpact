@@ -45,7 +45,7 @@ body,
 /* Names over the bright arena: white with an ink rim. */
 .battlefield .combatant-name {
   color: #fff !important;
-  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink);
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink) !important;
 }
 .battlefield .combatant-name * { color: inherit !important; }
 
@@ -85,7 +85,7 @@ body,
   background: radial-gradient(circle at 50% 35%, #ffffff, #fff1d2 70%) !important;
   border: 3px solid #f3b95a !important;
   box-shadow: 0 3px 0 #d88f2a !important;
-  color: #c76a12 !important;
+  color: #a5520a !important;
 }
 .bottom-action-glyph * { color: inherit !important; filter: none !important; }
 .bottom-action-primary .bottom-action-glyph { border-color: #6aa8ff !important; box-shadow: 0 3px 0 #3d74d6 !important; }
@@ -116,21 +116,21 @@ body,
 .plate-cta {
   clip-path: none;
   border-radius: 16px;
-  background: color-mix(in oklab, var(--plate-color) 82%, #ffffff);
+  background: color-mix(in oklab, var(--plate-color) 94%, #ffffff);
   color: #fff;
-  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink);
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink);
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.45), inset 0 -6px 0 color-mix(in oklab, var(--plate-color) 72%, #4a2a08);
 }
-.plate-cta:not(:disabled):hover { background: color-mix(in oklab, var(--plate-color) 70%, #ffffff); }
+.plate-cta:not(:disabled):hover { background: color-mix(in oklab, var(--plate-color) 84%, #ffffff); }
 .plate-cta:not(:disabled):active {
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 0 color-mix(in oklab, var(--plate-color) 72%, #4a2a08);
 }
 .plate-label::before,
 .plate-label::after { background: #fff; filter: drop-shadow(0 1px 0 var(--ink)); }
 .plate-socket.is-disabled { --plate-color: #cbbf9f; }
-.plate-socket.is-disabled .plate-cta { color: #fffaf0; text-shadow: 0 1px 0 #9c8f70; }
+.plate-socket.is-disabled .plate-cta { color: #8a7d5e; text-shadow: none; }
 .plate-socket.is-disabled .plate-label::before,
-.plate-socket.is-disabled .plate-label::after { background: #fffaf0; filter: none; }
+.plate-socket.is-disabled .plate-label::after { background: #8a7d5e; filter: none; }
 
 /* The title's pact buttons, on the same round plate. */
 .title-cta-socket { filter: none; }
@@ -147,9 +147,9 @@ body,
 .title-cta {
   clip-path: none;
   border-radius: 18px;
-  background: color-mix(in oklab, rgb(var(--plate-rgb)) 82%, #ffffff);
+  background: color-mix(in oklab, rgb(var(--plate-rgb)) 94%, #ffffff);
   color: #fff;
-  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink);
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink);
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.45), inset 0 -6px 0 color-mix(in oklab, rgb(var(--plate-rgb)) 72%, #3a2208);
 }
 .title-cta:not(:disabled):hover { background: color-mix(in oklab, rgb(var(--plate-rgb)) 70%, #ffffff); }
@@ -167,7 +167,7 @@ body,
 .map-origin,
 .map-origin * {
   color: #fff !important;
-  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink) !important;
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink) !important;
 }
 .map-choice-hint { color: #ffe08a !important; }
 .map-header-button {
@@ -194,7 +194,7 @@ body,
 .field-menu {
   background: radial-gradient(circle at 50% 35%, #ffffff, #fff1d2 74%) !important;
   border-color: #e3cfa4 !important;
-  color: #c76a12 !important;
+  color: #a5520a !important;
 }
 .console-socket { background: #fff6e2 !important; }
 
@@ -242,7 +242,7 @@ body,
 .roster-sheet-header span,
 .roster-sheet-level,
 .mastery-mark.is-reached,
-.roster-close-button { color: #b5650f !important; text-shadow: none !important; }
+.roster-close-button { color: #94490a !important; text-shadow: none !important; }
 .map-stat {
   background: #fffaf0 !important;
   border-color: #e3cfa4 !important;
@@ -268,22 +268,22 @@ body,
   color: var(--ink) !important;
   text-shadow: none !important;
 }
-.target-panel-title { color: #b5650f !important; text-shadow: none !important; }
+.target-panel-title { color: #94490a !important; text-shadow: none !important; }
 .bottom-action-take-field {
   background: #ff9a3d !important;
   border: 3px solid #c75f12 !important;
   border-radius: 16px !important;
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.45), inset 0 -5px 0 #d36a1a, 0 3px 0 #a84e0e !important;
   color: #fff !important;
-  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink) !important;
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink) !important;
 }
 .bottom-action-take-field:disabled,
 .bottom-action-take-field.is-disabled {
   background: #e7dcc0 !important;
   border-color: #cbbf9f !important;
   box-shadow: inset 0 -4px 0 #d6c9a6 !important;
-  color: #fffaf0 !important;
-  text-shadow: 0 1px 0 #9c8f70 !important;
+  color: #8a7d5e !important;
+  text-shadow: none !important;
 }
 
 /* The fight result: a paper veil over the field, ink and amber words, a gold title with an ink rim. */
@@ -299,7 +299,7 @@ body,
 }
 .fight-result-lv-num,
 .fight-result-xp-gain { color: var(--ink) !important; text-shadow: none !important; }
-.fight-result-caption { color: #b5650f !important; text-shadow: none !important; }
+.fight-result-caption { color: #94490a !important; text-shadow: none !important; }
 .fight-result-gains-button {
   background: #fffaf0 !important;
   border: 2px solid #e3cfa4 !important;
@@ -374,10 +374,10 @@ body,
 .evo-show-arrow {
   background: #fffaf0 !important;
   border-color: #f3b95a !important;
-  color: #c76a12 !important;
+  color: #a5520a !important;
   box-shadow: 0 3px 0 #d88f2a !important;
 }
-.evo-gift-kind { color: #b5650f !important; }
+.evo-gift-kind { color: #94490a !important; }
 .matchup-side.matchup-good,
 .matchup-mult.matchup-good,
 .evo-show-swap-stat,
@@ -385,7 +385,7 @@ body,
 .evolve-button {
   background: linear-gradient(150deg, color-mix(in srgb, var(--path-lead) 70%, #ffffff), var(--path-lead) 60%) !important;
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.45), inset 0 -6px 0 color-mix(in srgb, var(--path-lead) 70%, #4a2a08) !important;
-  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink);
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink);
 }
 .evo-gift-name { color: color-mix(in srgb, var(--gift-color, #8a46a8) 70%, #2b2340) !important; text-shadow: none !important; }
 .evo-show-name {
@@ -418,7 +418,7 @@ body,
 .level-up-title,
 .moveoffer-eyebrow {
   color: #fff !important;
-  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink) !important;
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink) !important;
 }
 
 /* Gear diamonds: an empty one is a cream socket with a tan rim. */
@@ -441,29 +441,29 @@ body,
 }
 .sell-press-verb { color: #7b5a2a !important; text-shadow: none !important; }
 .sell-press-gold,
-.sell-press-arrow { color: #b5650f !important; }
+.sell-press-arrow { color: #94490a !important; }
 
 /* The resolve plate (Continue, Done, Close): the round flat button, in its --cta-rgb. */
 .resolve-button {
-  background: color-mix(in oklab, rgb(var(--cta-rgb, 255, 154, 61)) 82%, #ffffff) !important;
+  background: color-mix(in oklab, rgb(var(--cta-rgb, 255, 154, 61)) 94%, #ffffff) !important;
   border: 3px solid color-mix(in oklab, rgb(var(--cta-rgb, 255, 154, 61)) 62%, #3a2208) !important;
   border-image: none !important;
   border-radius: 16px !important;
   color: #fff !important;
-  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink) !important;
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink) !important;
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.45), inset 0 -6px 0 color-mix(in oklab, rgb(var(--cta-rgb, 255, 154, 61)) 72%, #3a2208) !important;
 }
 .resolve-button:disabled {
   filter: none !important;
   background: #ece2c8 !important;
   border-color: #cbbf9f !important;
-  color: #fffaf0 !important;
-  text-shadow: 0 1px 0 #9c8f70 !important;
+  color: #8a7d5e !important;
+  text-shadow: none !important;
   box-shadow: inset 0 -4px 0 #d6c9a6 !important;
 }
 .resolve-button.roster-close-button,
 .resolve-button.sheet-close-button { --cta-rgb: 201, 169, 107; }
-.roster-close-button { color: #fff !important; text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink) !important; }
+.roster-close-button { color: #fff !important; text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink) !important; }
 .secondary-button {
   background: #fffaf0 !important;
   border: 2px solid #e3cfa4 !important;
@@ -477,7 +477,7 @@ body,
 .map-placard-name *,
 .map-tile-label {
   color: #fff !important;
-  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink) !important;
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink) !important;
 }
 .node-dossier-reward-value { color: color-mix(in srgb, var(--reward-color) 55%, #2b2340) !important; text-shadow: none !important; }
 .node-dossier-reward-label { color: color-mix(in srgb, var(--reward-color) 75%, #2b2340) !important; }
@@ -516,12 +516,12 @@ body,
 .moveoffer-confirm .moveoffer-label,
 .moveoffer-confirm .moveoffer-icon {
   color: #fff !important;
-  text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink), 0 2px 0 var(--ink) !important;
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink) !important;
 }
 .moveoffer-confirm:disabled { background: #ece2c8 !important; border-color: #cbbf9f !important; box-shadow: inset 0 -4px 0 #d6c9a6 !important; }
 .moveoffer-confirm:disabled .moveoffer-label,
 .moveoffer-confirm:disabled .moveoffer-sub,
-.moveoffer-confirm:disabled .moveoffer-icon { color: #fffaf0 !important; text-shadow: 0 1px 0 #9c8f70 !important; }
+.moveoffer-confirm:disabled .moveoffer-icon { color: #8a7d5e !important; text-shadow: none !important; }
 .moveoffer-sub { color: var(--text-dim) !important; text-shadow: none !important; }
 
 /* Dialogs on the gilt sheet (Options and its kin): paper with a gold rim. */
@@ -543,7 +543,7 @@ body,
   color: var(--ink) !important;
   box-shadow: 0 2px 0 #d8bd87 !important;
 }
-.options-item-glyph { color: #c76a12 !important; }
+.options-item-glyph { color: #a5520a !important; }
 .options-item.options-item-danger { background: #fff0ea !important; border-color: #f0b8a8 !important; color: #c0392b !important; }
 
 /* Map medallions behind node art: a pale disc, the node's glow kept. */
@@ -561,11 +561,11 @@ button * { text-shadow: none !important; }
 .ref-dock { background: linear-gradient(180deg, #fffaf0 0%, #fbf0d6 100%) !important; color: var(--ink); }
 .ref-dock-foot { background: #f7e4b9 !important; border-top: 3px solid #f0d49b !important; }
 .ref-dock-title { color: var(--ink) !important; text-shadow: none !important; }
-.ref-dock-tab-label { color: #b5650f !important; }
+.ref-dock-tab-label { color: #94490a !important; }
 .manual-emblem { background: radial-gradient(circle at 50% 38%, #fffdf6 0%, #fff1d2 75%) !important; }
 .manual-entry,
 .manual-entry-row { background: #fffaf0 !important; border-color: #e3cfa4 !important; }
-.manual-sky-core { fill: #ffb230 !important; stroke: #b5650f; stroke-width: 0.6px; filter: none !important; }
+.manual-sky-core { fill: #ffb230 !important; stroke: #94490a; stroke-width: 0.6px; filter: none !important; }
 .manual-sky line,
 .manual-sky path { stroke: #d9a25a !important; }
 .ref-dock-foot { box-shadow: 0 -2px 0 #f0d49b, 0 -8px 16px rgba(120, 90, 40, 0.12) !important; }
@@ -596,7 +596,7 @@ button * { text-shadow: none !important; }
 }
 .camp-door-name { color: var(--ink) !important; text-shadow: none !important; }
 .camp-door-plus,
-.rite-eyebrow { color: #c76a12 !important; text-shadow: none !important; }
+.rite-eyebrow { color: #a5520a !important; text-shadow: none !important; }
 
 /* Every node's ground: warm paper with the node's own glow overhead. */
 .academy-ground { --sb-glow: 150, 175, 60; }
@@ -632,7 +632,7 @@ button * { text-shadow: none !important; }
 .smithy-bench-name,
 .smithy-socket-name { color: var(--ink) !important; text-shadow: none !important; }
 .keeper-tag,
-.keeper-terms { color: #b5650f !important; text-shadow: none !important; }
+.keeper-terms { color: #94490a !important; text-shadow: none !important; }
 .verb-card-verb-name { color: color-mix(in srgb, var(--rite-color, #c76a12) 65%, #2b2340) !important; text-shadow: none !important; }
 .item-tile strong,
 .item-tile span,
@@ -653,7 +653,7 @@ button * { text-shadow: none !important; }
   border: 3px solid #f0d49b !important;
   box-shadow: 0 4px 0 #d8bd87, 0 10px 24px rgba(120, 90, 40, 0.2) !important;
 }
-.road-encounter-name { color: #b5650f !important; text-shadow: none !important; }
+.road-encounter-name { color: #94490a !important; text-shadow: none !important; }
 .road-encounter-line { color: var(--ink) !important; text-shadow: none !important; }
 .detail-modifier-chip { filter: brightness(0.7) saturate(1.3); text-shadow: none !important; }
 
@@ -691,7 +691,7 @@ button * { text-shadow: none !important; }
   text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), 0 3px 0 var(--ink) !important;
 }
 .draft-eyebrow,
-.draft-socket-mark { color: #c76a12 !important; text-shadow: none !important; }
+.draft-socket-mark { color: #a5520a !important; text-shadow: none !important; }
 .draft-name { color: var(--ink) !important; text-shadow: none !important; }
 .draft-innate {
   background: radial-gradient(130% 100% at 6% -16%, rgba(255, 200, 60, 0.25), transparent 60%), #fffaf0 !important;
@@ -720,7 +720,7 @@ button * { text-shadow: none !important; }
 .coll-card { background: #fffaf0 !important; color: var(--ink); }
 .coll-card.is-locked { background: linear-gradient(180deg, #f3e6c6, #ecdcb6) !important; }
 .coll-card-price,
-.coll-card-price.is-constellation { color: #b5650f !important; text-shadow: none !important; }
+.coll-card-price.is-constellation { color: #94490a !important; text-shadow: none !important; }
 
 /* Bubbly cards (chosen 2026-11-24 from art/concepts/whimsy/): very round, a puffy highlight, and a
    chunky lip in the card's own colour. Each card names its tint in --bub. */
@@ -804,3 +804,60 @@ button * { text-shadow: none !important; }
   background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--rarity-color, #e7b35a) 30%, #fffaf0)) !important;
   box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--rarity-color, #e7b35a) 75%, #2b2340), 0 3px 0 2px color-mix(in srgb, var(--rarity-color, #e7b35a) 60%, #2b2340) !important;
 }
+
+/* The title's tab bar: a warm wooden shelf; Play a big orange coin; labels in amber ink. */
+.hub-nav {
+  background: linear-gradient(180deg, #f7e4b9, #efd39a) !important;
+  border-top: 3px solid #e3b86a !important;
+  box-shadow: 0 -4px 12px rgba(120, 80, 30, 0.15) !important;
+}
+.hub-nav-tab,
+.hub-nav-label { color: #8a5a1e !important; text-shadow: none !important; }
+.hub-nav-tab.is-active,
+.hub-nav-tab.is-active .hub-nav-label { color: #c25a0c !important; }
+.hub-nav-play-face {
+  background: radial-gradient(circle at 50% 30%, #ffe3a0, #ff9a3d 70%) !important;
+  border-color: #c75f12 !important;
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.5), 0 4px 0 #a84e0e !important;
+}
+.hub-nav-badge {
+  background: #fffaf0 !important;
+  border: 2px solid #e3b86a !important;
+  color: var(--ink) !important;
+}
+
+/* The title's corner buttons: cream coins. */
+.title-icon-button,
+.title-records-button {
+  background: #fffaf0 !important;
+  border: 2px solid #e3cfa4 !important;
+  border-radius: 12px !important;
+  color: var(--ink) !important;
+  box-shadow: 0 3px 0 #d8bd87 !important;
+}
+.title-dev-button { background: #fffaf0 !important; color: #7b5a2a !important; border-color: #c9a96b !important; }
+
+
+/* Readability (Clash Royale as the bar): every label on a coloured plate is heavy. */
+:is(.plate-cta, .title-cta, .resolve-button, .moveoffer-confirm, .bottom-action-take-field, .evolve-button, .book-ribbon) { font-weight: 900 !important; }
+
+/* Numbers and names over colour in a fight carry the ink rim. */
+.battlefield .combatant-name * { text-shadow: inherit !important; }
+.plate-hp,
+.mana-gem-value,
+.opening-slab-name,
+.combatant-level,
+.hero-name-text,
+.console-commander-text,
+.bottom-action-bag-count { color: #fff !important; text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink) !important; }
+.battlefield-vs { color: rgba(43, 35, 64, 0.5) !important; text-shadow: none !important; }
+.combat-banner-hint { color: #94490a !important; text-shadow: none !important; }
+.roster-sheet-level small,
+.mastery-mark { color: #675b78 !important; text-shadow: none !important; }
+.mastery-mark.is-reached { color: #94490a !important; }
+:is(.plate-cta, .title-cta, .evolve-button) {
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), -1px -1px var(--ink), 1px -1px var(--ink), -1px 1px var(--ink), 1px 1px var(--ink), 0 3px 0 var(--ink) !important;
+}
+.plate-socket.is-disabled .plate-cta { text-shadow: none !important; }
+.kw-word { filter: brightness(0.62) saturate(1.4); }
+.verb-card.is-dimmed { opacity: 0.85 !important; filter: saturate(0.6); }

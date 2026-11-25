@@ -366,7 +366,7 @@ function EntryView({ freeEntry, balance, entered, clears, onEnter, onVersus, onC
       <Header title="The Gauntlet" />
       <div className="screen-scroll gx-entry">
         <p className="gx-entry-copy">
-          {`Draft six, one at a time, each from three of your heroes rolled into random forms. Win ${WINS_TO_CLEAR} fights before you lose ${LOSSES_TO_END}, and every path on your team is starred, plus ${GAUNTLET_CLEAR_BONUS} Stardust.`}
+          {`Draft six, one at a time, each from three of your heroes rolled into random forms. Win ${WINS_TO_CLEAR} fights before you lose ${LOSSES_TO_END}, and every path on your team is starred, plus ${GAUNTLET_CLEAR_BONUS} Pages.`}
         </p>
         {entered > 0 && (
           <div className="gx-entry-record">

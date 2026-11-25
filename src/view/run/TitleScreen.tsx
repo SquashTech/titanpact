@@ -10,8 +10,6 @@ import { canCallStarfall, stardustBalance, type StarShopOffer } from '../../run/
 import { isConstellationLit, isDrawnInByPlay, skyLightingTipId } from '../../run/sky';
 import { sky } from '../../data/sky';
 import { GuideHand } from '../story/GuideHand';
-import { GalaxySky } from './GalaxySky';
-import { TitleLogo } from './TitleLogo';
 import { HubGlyph } from '../shared/nodeIcons';
 import { FIRST_CYCLE } from '../../run/cycles';
 import { pendingWeave } from '../../run/chronicle';
@@ -20,8 +18,7 @@ import { OfflineStatus } from '../shared/OfflineStatus';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
 import recordsArt from '../../../art/ui/records.png';
-import { PactButton } from './PactButton';
-import { SEAT, SkyChart, type SkyPlay } from './SkyChart';
+import { BookTitle, SEAT, type SkyPlay } from './BookTitle';
 import { BlipGuide } from './BlipGuide';
 import type { ThoughtDefinition } from '../../run/thoughts';
 
@@ -78,7 +75,7 @@ interface Props {
   held?: boolean;
   /** Forgets every first-time tip seen, and the lore card, so each shows again (docs/tutorial.md). */
   onResetTips: () => void;
-  /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +2,500 Stardust to test the Observatory and the stakes. */
+  /** TEMPORARY DEV/TEST — App.tsx handleGrantDevStars: +2,500 Pages to test the Observatory and the stakes. */
   onGrantDevStars: () => void;
   onQuickBattle: () => void;
   onOpenSandbox: () => void;
@@ -169,8 +166,6 @@ export function TitleScreen({
   /** Bumped to send the sky into the Infinite, where a Cycle is chosen. */
   const [infiniteRequest, setInfiniteRequest] = useState(0);
   const [staleNoteDismissed, setStaleNoteDismissed] = useState(false);
-  /** Stardust the sky is still flying to the Observatory, kept off its badge until it lands. */
-  const [heldDust, setHeldDust] = useState(0);
   /** A sky seat zoomed into: it takes the whole screen, the hub's bar and corners stepping away. */
   const [skyZoomed, setSkyZoomed] = useState(false);
 
@@ -197,7 +192,7 @@ export function TitleScreen({
     else handleStart(FIRST_CYCLE);
   }
 
-  /** A constellation's press (SkyChart.tsx): the Infinite starts a run on the Cycle chosen in it; the modes open their own screens. */
+  /** A press on the book (BookTitle.tsx): the Infinite starts a run on the Cycle chosen in it; the modes open their own screens. */
   function handleSkyPlay(play: SkyPlay, cycle: number = FIRST_CYCLE) {
     if (play === 'infinite') handleStart(cycle);
     else if (play === 'trials') onOpenConstructed();
@@ -233,7 +228,7 @@ export function TitleScreen({
   const balance = stardustBalance(profile, starShopCatalog);
   const staleNote = !staleNoteDismissed ? (staleSaveReason ? 'A run saved by an earlier version of the game could not be loaded, and has been cleared.' : saveNotice) : null;
   /** The press row stands under the sky only when it holds something: a parked run, or a note about the save. */
-  const pressRow = !!parkedRun || !!staleNote;
+  const pressRow = !!staleNote;
 
   return (
     <div
@@ -242,21 +237,15 @@ export function TitleScreen({
       {/* The Play page is the title itself; its layers stay mounted under the other pages so coming
           back is instant, and display: contents keeps them in the screen's own flex and stacking. */}
       <div className="title-play">
-      <GalaxySky active={tab === 'play' && !launching} />
-
-      <span className="title-grain" aria-hidden="true" />
-      <span className="title-vignette" aria-hidden="true" />
-
-      <SkyChart
+      <BookTitle
         profile={profile}
         disabled={launching || tour !== null}
         active={tab === 'play' && !launching && !held}
-        pressHidden={!!parkedRun}
+        parked={parkedRun ? { onContinue: () => launch(onContinueRun), onNewRun: handleNewRun } : null}
         returned={skyReturn}
         onReturnedSeen={onSkyReturnSeen}
         onSeeThought={onSeeThought}
         onSeeLighting={onSeeTip}
-        onHoldStardust={setHeldDust}
         onZoomChange={setSkyZoomed}
         onlyFirstLight={inFirstLight}
         quiet={tour !== null}
@@ -266,10 +255,6 @@ export function TitleScreen({
         onPlay={handleSkyPlay}
         onPlayLesson={(scenarioId) => onPlayLesson && launch(() => onPlayLesson(scenarioId))}
       />
-
-      <div className="title-logo is-top">
-        <TitleLogo />
-      </div>
 
       {/* Mounted only while launching, so mounting starts them. The flash
           takes pointer events on purpose — it shields against a second press. */}
@@ -284,14 +269,6 @@ export function TitleScreen({
           run in progress is the likelier intent. */}
       {pressRow && (
         <div className="title-buttons">
-          {parkedRun && (
-            <>
-              <PactButton label="Continue Run" disabled={launching} onClick={() => launch(onContinueRun)} />
-              <button className="title-newrun-button" onClick={handleNewRun} disabled={launching}>
-                Start a New Run
-              </button>
-            </>
-          )}
           {/* The reason itself is developer-shaped ("roster[0].unlockedMoveIds references..."), so it
               goes to the console (App.tsx) and the player gets the one fact they can act on. */}
           {staleNote && (
@@ -354,7 +331,7 @@ export function TitleScreen({
               Visit Location
             </button>
             <button className="title-dev-item" onClick={() => runDev(onGrantDevStars)}>
-              ✦ +2,500 Stardust
+              ✦ +2,500 Pages
             </button>
             <button className="title-dev-item" onClick={() => runDev(onResetTips)}>
               Reset Tips
@@ -415,7 +392,7 @@ export function TitleScreen({
       <HubNav
         tab={tab}
         onSelect={selectTab}
-        balance={balance - heldDust}
+        balance={balance}
         collectionFresh={!collectionSeen}
         disabled={launching || tour !== null}
         only={tour === 'toObservatory' ? 'constellation' : tour === 'fallen' ? 'play' : undefined}

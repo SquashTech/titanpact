@@ -11,7 +11,7 @@ import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import './starfallTen.css';
 
-// Ten Starfalls as one scene (docs/the-sky.md §5): the Stardust drains, ten lights fall into a grid
+// Ten Starfalls as one scene (docs/the-sky.md §5): the Pages drains, ten lights fall into a grid
 // in their heroes' colours, and each hero rises out of its light. No wheel: ten spins would be the
 // single draw watched ten times, which is what this exists to spare.
 
@@ -77,7 +77,7 @@ export function StarfallTenScreen({ heroIds, balanceBefore, onClose }: Props) {
       }}
     >
       <span className="summon-ten-nebula" aria-hidden="true" />
-      <div className="summon-ten-balance" aria-label={`${balanceBefore - spent} Stardust`}>
+      <div className="summon-ten-balance" aria-label={`${balanceBefore - spent} Pages`}>
         <HubGlyph name="stardust" />
         <span key={spent} className="summon-ten-count">
           {balanceBefore - spent}

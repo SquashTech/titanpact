@@ -16,14 +16,14 @@ import { StarfallTenScreen } from './StarfallTen';
 import { SKY_HERO_COUNT, StarSky } from './StarSky';
 import { HubPageHead, HubSubtabs, type SubtabSpec } from './hubChrome';
 
-/** The shop's name, in one place: the hub tab, this page's head. The Observatory — every star earned, charted, and the sky Stardust calls heroes down from. */
+/** The shop's name, in one place: the hub tab, this page's head. The Observatory — every star earned, charted, and the sky Pages calls heroes down from. */
 export const STAR_SHOP_NAME = 'The Observatory';
 
 type SectionId = 'sky' | 'shop' | 'stars' | 'spawn';
 
 interface Props {
   profile: Profile;
-  /** Spends Stardust on the offer and hands back the profile to render. */
+  /** Spends Pages on the offer and hands back the profile to render. */
   onBuy: (offer: StarShopOffer) => void;
   /** A Starfall of one or ten (run/starShop.ts), written to the profile; returns the heroes drawn. */
   onStarfall: (count: 1 | 10) => string[];
@@ -46,7 +46,7 @@ export interface OfferPurchase {
 }
 
 /**
- * The Observatory, a hub page (run/starShop.ts): where Stardust is spent and stars are charted. Its first
+ * The Observatory, a hub page (run/starShop.ts): where Pages is spent and stars are charted. Its first
  * section is the sky itself — every hero a star, the owned ones lit — with the Lodestar at its
  * centre, which calls the Starfall. The Market holds the bundles and the Locations; Stars and
  * Spawn chart where stars were earned. Nothing on a Market row spends anything: rows open the
@@ -119,7 +119,7 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
                 className={`lodestar${canCall ? ' is-ready' : ''}`}
                 data-sfx={canCall ? 'ui.commit' : 'ui.denied'}
                 onClick={() => call(1)}
-                aria-label={canCall ? `Call to the stars for ${STARFALL_PRICE} Stardust` : 'Not enough Stardust to call one'}
+                aria-label={canCall ? `Call to the stars for ${STARFALL_PRICE} Pages` : 'Not enough Pages to call one'}
               >
                 <span className="lodestar-rays" aria-hidden="true" />
                 <span className="lodestar-halo" aria-hidden="true" />
@@ -158,7 +158,7 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
               {pool.length === 0
                 ? 'Every hero is yours.'
                 : balance < STARFALL_PRICE
-                  ? `${STARFALL_PRICE - balance} more Stardust to call one down. Clear a run to earn it.`
+                  ? `${STARFALL_PRICE - balance} more Pages to call one down. Clear a run to earn it.`
                   : 'A hero you don’t own falls into your Collection.'}
             </p>
 
@@ -230,7 +230,7 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
             </div>
             <HeroStarsPage profile={profile} />
             <p className="records-note star-shop-note">
-              {`One star is earned by winning a run with an evolved hero, once per evolution. Each pays ${STARDUST_PER_STAR} Stardust.`}
+              {`One star is earned by winning a run with an evolved hero, once per evolution. Each pays ${STARDUST_PER_STAR} Pages.`}
             </p>
             <CurseStarsSection profile={profile} />
           </>
@@ -283,7 +283,7 @@ export function PurchaseButton({ purchase }: { purchase: OfferPurchase }) {
       data-sfx={held || !affordable ? 'none' : 'ui.commit'}
       disabled={held || !affordable}
       onClick={onBuy}
-      aria-label={held ? `${offer.name}: owned` : affordable ? `Purchase ${offer.name} for ${price} Stardust` : `${offer.name} costs ${price} Stardust — not enough`}
+      aria-label={held ? `${offer.name}: owned` : affordable ? `Purchase ${offer.name} for ${price} Pages` : `${offer.name} costs ${price} Pages — not enough`}
     >
       {held ? 'Owned' : `Purchase · ✦ ${price}`}
     </button>

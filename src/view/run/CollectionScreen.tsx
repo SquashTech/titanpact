@@ -168,7 +168,7 @@ export function CollectionScreen({ profile, onBuy, freshHeroIds, onAcknowledge }
                 data-sfx={canBuy(profile, starShopCatalog, offer) ? 'ui.commit' : 'none'}
                 disabled={!canBuy(profile, starShopCatalog, offer)}
                 onClick={() => onBuy(offer)}
-                aria-label={canBuy(profile, starShopCatalog, offer) ? `Buy ${offer.name} for ${price} Stardust` : `${offer.name} costs ${price} Stardust — not enough`}
+                aria-label={canBuy(profile, starShopCatalog, offer) ? `Buy ${offer.name} for ${price} Pages` : `${offer.name} costs ${price} Pages — not enough`}
               >
                 Buy ✦ {price}
               </button>

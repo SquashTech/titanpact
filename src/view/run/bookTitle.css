@@ -1,0 +1,317 @@
+/* The title as an open book on a desk (BookTitle.tsx). The desk is a 196x344 painting drawn at 2x;
+   every piece sits on it by percentage so the spread scales with the canvas. */
+
+.book-title {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  z-index: 1;
+  background: #6b3f22;
+  overflow: hidden;
+}
+
+.book-spread {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  /* As wide as the screen, unless the screen is too short: then as tall as it can be over the tab bar. */
+  width: min(100cqw, 520px, calc((100cqh - 84px) * 196 / 344));
+  aspect-ratio: 196 / 344;
+  transform: translateX(-50%);
+  container-type: inline-size;
+  font-family: Fredoka, system-ui, sans-serif;
+}
+
+.book-desk {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+/* The two pages: the top from 20.6% to 48%, the bottom from 54% to 82.5%. */
+.book-leaf {
+  position: absolute;
+  left: 10.2%;
+  width: 79.6%;
+  display: flex;
+  align-items: center;
+  gap: 4%;
+  color: #2b2340;
+}
+
+.book-leaf.is-top {
+  top: 20.6%;
+  height: 27.6%;
+}
+
+.book-leaf.is-bottom {
+  top: 54%;
+  height: 28.5%;
+}
+
+.book-leaf-art {
+  flex: none;
+  width: 46%;
+  aspect-ratio: 96 / 112;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 0 rgba(120, 80, 30, 0.25));
+}
+
+.book-leaf-words {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.book-leaf-name {
+  font-size: 6.2cqw;
+  font-weight: 700;
+  line-height: 1.05;
+  color: #2b2340;
+}
+
+.book-leaf-note {
+  font-size: 3.6cqw;
+  font-weight: 600;
+  color: #8a6a3a;
+}
+
+.book-leaf .book-leaf-press.plate-socket {
+  width: auto !important;
+  margin: 2px 0 0;
+}
+
+.book-leaf .book-leaf-press .plate-cta {
+  min-height: 9cqw !important;
+  padding: 1.6cqw 3.4cqw !important;
+  font-size: 3.7cqw !important;
+  letter-spacing: 0.04em !important;
+  white-space: nowrap;
+}
+
+.book-leaf-press .plate-label::before,
+.book-leaf-press .plate-label::after {
+  display: none;
+}
+
+.book-leaf-link {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 3.4cqw;
+  font-weight: 700;
+  color: #8a5a1e;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.book-leaf.is-soon .book-leaf-art {
+  filter: grayscale(0.35) opacity(0.8) drop-shadow(0 3px 0 rgba(120, 80, 30, 0.2));
+}
+
+/* A page the sky wants looked at next. */
+.book-leaf.is-calling .book-leaf-art {
+  animation: book-call 1.4s ease-in-out infinite;
+}
+
+@keyframes book-call {
+  50% {
+    transform: translateY(-4px) scale(1.04);
+  }
+}
+
+/* The Gauntlet and the Trials hang off the book's foot as ribbon bookmarks. */
+.book-ribbons {
+  position: absolute;
+  top: 84%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 10%;
+}
+
+.book-ribbon {
+  position: relative;
+  width: 20%;
+  height: 22cqw;
+  padding-top: 7.5cqw;
+  border: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+  font: inherit;
+  font-size: 3.6cqw;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: -1.5px 0 #2b2340, 1.5px 0 #2b2340, 0 -1.5px #2b2340, 0 1.5px #2b2340, -1px -1px #2b2340, 1px -1px #2b2340, -1px 1px #2b2340, 1px 1px #2b2340, 0 3px 0 #2b2340 !important;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.book-ribbon.is-red {
+  background: linear-gradient(90deg, #c8363d, #e2545a 50%, #c8363d);
+}
+
+.book-ribbon.is-blue {
+  background: linear-gradient(90deg, #2f6fd0, #4f8ff0 50%, #2f6fd0);
+}
+
+.book-ribbon:not(:disabled):hover {
+  transform: translateY(4px);
+}
+
+.book-ribbon.is-locked {
+  filter: grayscale(0.85) brightness(0.95);
+  cursor: default;
+}
+
+.book-ribbon.is-calling {
+  animation: book-ribbon-call 1.2s ease-in-out infinite;
+}
+
+@keyframes book-ribbon-call {
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+/* Blip's seat, in the gutter between the pages on the right. BlipGuide flies home to it. */
+.book-seat {
+  position: absolute;
+  z-index: 3;
+  left: 70%;
+  top: 44%;
+  width: 52px;
+  height: 56px;
+}
+
+.book-seat.is-empty {
+  visibility: hidden;
+}
+
+/* The Cycle sheet over the book. */
+.book-cycles {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: 64px;
+  background: rgba(251, 243, 223, 0.94);
+  animation: book-cycles-in 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes book-cycles-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.book-cycles-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.book-cycles .sky-detail-back {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 220px;
+  height: 46px;
+  margin: 4px auto calc(18px + env(safe-area-inset-bottom, 0px));
+  border: 2px solid #e3cfa4;
+  border-radius: 14px;
+  background: #fffaf0;
+  box-shadow: 0 3px 0 #d8bd87;
+  color: #7b5a2a;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.book-cycles .sky-detail-back-arrow {
+  font-size: 22px;
+  line-height: 1;
+  margin-top: -3px;
+}
+
+/* The wordmark (TitleLogo.tsx). */
+.book-logo,
+.book-logo * {
+  -webkit-text-fill-color: currentColor;
+}
+
+.book-logo-seat {
+  position: absolute;
+  top: 1.6%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 2;
+}
+
+.book-logo {
+  filter: none !important;
+  flex-direction: column !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: Fredoka, system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 4px 0 #2b2340, -2.5px 0 #2b2340, 2.5px 0 #2b2340, 0 -2.5px #2b2340, -2px 2px #2b2340, 2px 2px #2b2340, -2px -2px #2b2340, 2px -2px #2b2340, 0 7px 10px rgba(0, 0, 0, 0.3);
+}
+
+.book-logo-big {
+  font-size: 11.5cqw;
+  letter-spacing: 0.5px;
+}
+
+.book-logo-small {
+  margin-top: 1.2cqw;
+  font-size: 3.8cqw;
+  letter-spacing: 1.6cqw;
+  color: #ffd27a;
+}
+
+/* The Cycle sheet: the Library's own page painting where the black hole was, ink on paper. */
+.book-cycles .infinite-view {
+  background: url('../../../art/title/book/library.png') center 52% / auto 44% no-repeat;
+  image-rendering: pixelated;
+}
+.book-cycles .infinite-hole { visibility: hidden; }
+.book-cycles .infinite-numeral {
+  font-family: Fredoka, system-ui, sans-serif;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: -2px 0 #2b2340, 2px 0 #2b2340, 0 -2px #2b2340, 0 2px #2b2340, 0 4px 0 #2b2340;
+}
+.book-cycles .infinite-name { color: #7b5a2a; }
+.book-cycles .infinite-step {
+  background: #fffaf0;
+  box-shadow: 0 0 0 2px #e3cfa4, 0 3px 0 #d8bd87;
+  color: #a5520a;
+}
+.book-cycles .infinite-pip { background: #e3cfa4; }
+.book-cycles .infinite-pip.is-cleared { background: #ffb230; box-shadow: none; }
+.book-cycles .infinite-pip.is-chosen { outline-color: #2b2340; }
+
+/* While the sheet is up, the tab bar and the corner buttons step away. */
+.title-screen.is-sky-zoomed :is(.hub-nav, .title-icon-row, .title-records-button, .title-dev) {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}

@@ -615,7 +615,7 @@ export function App() {
     return drawn;
   }
 
-  /** TEMPORARY DEV/TEST — 2,500 Stardust on the bonus ledger, so the Observatory can be tried without clearing runs. */
+  /** TEMPORARY DEV/TEST — 2,500 Pages on the bonus ledger, so the Observatory can be tried without clearing runs. */
   function handleGrantDevStars() {
     setProfile(updateProfile((current) => ({ ...current, bonusStardust: current.bonusStardust + 2500 })));
   }
@@ -628,7 +628,7 @@ export function App() {
     if (outcome === 'win') {
       const first = !profile.trialsCleared.includes(trialId);
       if (first && !unlockAll) setProfile(updateProfile((current) => recordTrialCleared(current, trialId)));
-      notice = first && !unlockAll ? `${name} beaten — +${TRIAL_CLEAR_STARDUST} Stardust` : `${name} beaten again`;
+      notice = first && !unlockAll ? `${name} beaten — +${TRIAL_CLEAR_STARDUST} Pages` : `${name} beaten again`;
     }
     setScreen({ kind: 'constructed', startTeam: teamIndex, unlockAll, notice });
   }
@@ -1063,7 +1063,7 @@ export function App() {
   }
 
   /** A tip or the lore card dismissed: account-wide, so it is written straight to storage. */
-  /** The tutorial won lights its star and hands back to the title, where its Stardust is paid and the tour pulls one Starfall (docs/the-tutorial.md §3). */
+  /** The tutorial won lights its star and hands back to the title, where its Pages is paid and the tour pulls one Starfall (docs/the-tutorial.md §3). */
   function handleTutorialDone() {
     setProfile(updateProfile((current) => TIPS_THE_TUTORIAL_RETIRES.reduce(recordTipSeen, recordScenarioLit(current, sky, TUTORIAL_STAR))));
     setScreen({ kind: 'title' });
