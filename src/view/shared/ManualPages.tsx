@@ -94,7 +94,7 @@ function EmblemMark({ mark }: { mark: string }) {
   );
   switch (kind) {
     case 'node': {
-      const art = mapNodeArt(value as MapNodeType) ?? mapNodeIcon(value as MapNodeType) ?? landmarkStillArt(value as MapNodeType);
+      const art = mapNodeIcon(value as MapNodeType) ?? mapNodeArt(value as MapNodeType) ?? landmarkStillArt(value as MapNodeType);
       return art ? <img className="manual-mark manual-mark-art" src={art} alt="" draggable={false} /> : null;
     }
     case 'status':

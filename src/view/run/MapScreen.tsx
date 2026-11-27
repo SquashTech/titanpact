@@ -34,7 +34,7 @@ import { enemies } from '../../data/enemies';
 import { FIRST_CYCLE, cycleOf } from '../../run/cycles';
 import { allCombatants } from '../../data/content';
 import type { TypeId } from '../../engine/content';
-import partyArt from '../../../art/ui/party.png';
+import partyArt from '../../../art/ui/party.svg';
 
 /**
  * What the Skirmish and Elite tiles in front of the player preview: the typing of the squad
