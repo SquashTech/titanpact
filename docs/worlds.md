@@ -178,6 +178,32 @@ survive, its October art does not. Mocked in `art/concepts/spread/`.
 Blip's one arc — the Titan beginning to see it — passes to the Blot, creeping toward the page Blip
 lives on across the Editions.
 
+### 3.8 The Inkmaster (an idea, 2026-11-27, raised by the user)
+**Someone has trapped the land's heroes inside his book, and they must beat him to escape.** The
+working name is the Inkmaster; Ink Lord and Ink Emperor were also floated. He gives §2.7's blotted
+pages an author: the Blots are his ink, and the run is a reading of his book.
+
+What it explains that the game already does:
+- **Runs repeat** because the book is read again; an escape attempt is a reading.
+- **A pull writes a hero into your book**: you take heroes back from his pages, one page at a time.
+- **The Blot creeping toward Blip's page** (§3.7) is his hand reaching for the last free reader.
+- **Editions** (Cycles I–V) are his rewrites, each harder, the way the Titan adapted each Cycle.
+
+Questions it raises, for the designer:
+- **The name sets the tone.** *Inkmaster* reads playful (a showman, a ringmaster); *Ink Lord* and
+  *Ink Emperor* read as a real threat. Spooky-cute (§2.6) leans toward the first.
+- **Ink is the player's currency** (§3.7: Ink buys seat levels, washed out of a Blot). If the
+  villain *is* ink, the purse is his blood. That could be the point (you spend his power against
+  him) or a muddle to rename around.
+- **What happens to the Titan's pieces.** The Herald, the Eyes and the four seals either become his
+  chapters (a herald who reads his prologue, eyes in the margins) or retire with the Titan.
+- **What escaping means across Editions.** The Titan died for good at Cycle V. Does the Fifth
+  Edition close his book, or turn him into a reader of yours?
+- **Who is trapped.** "The heroes of the land" puts the whole Library in his book. Is the player's
+  own book (the Collection) a separate book written against his, or pages torn out of it?
+
+Status: **an idea, not decided.** It sits beside §2.7 and decides nothing in it.
+
 ### 3.6 A starter grant (SETTLED by §2.2: none; the modes wait on the Collection instead)
 
 ---
