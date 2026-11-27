@@ -49,7 +49,7 @@
   pointer-events: none;
 }
 
-.road-seg path {
+.road-seg {
   fill: none;
   stroke-linecap: round;
 }
@@ -66,31 +66,31 @@
   stroke-width: 4;
   stroke-dasharray: 2 14;
 }
-.road-seg.is-walked .road-seg-face {
+.road-seg-face.is-walked {
   stroke: #f2dca4;
 }
 .road-seg.is-skipped {
   opacity: 0.45;
 }
-.road-seg.is-skipped .road-seg-rim {
+.road-seg-rim.is-skipped {
   stroke: var(--road-ground-dark);
 }
-.road-seg.is-skipped .road-seg-face {
+.road-seg-face.is-skipped {
   stroke: var(--road-ground-light);
 }
-.road-seg.is-skipped .road-seg-dash {
+.road-seg-dash.is-skipped {
   display: none;
 }
-.road-seg.is-live .road-seg-face {
+.road-seg-face.is-live {
   stroke: #fff6d8;
 }
-.road-seg.is-live .road-seg-dash {
+.road-seg-dash.is-live {
   stroke: #f0a63a;
   stroke-width: 6;
   stroke-dasharray: 3 16;
   animation: road-march 0.9s linear infinite;
 }
-.road-seg.is-ahead .road-seg-face {
+.road-seg-face.is-ahead {
   stroke: #eedfb6;
 }
 @keyframes road-march {
@@ -143,14 +143,30 @@
 }
 .road-stop.is-next {
   cursor: pointer;
-  animation: road-bob 1.6s ease-in-out infinite;
 }
-.road-at:nth-child(odd) .road-stop.is-next {
-  animation-delay: 0.3s;
+/* Where you can go: a ring breathing out of the disc; the stop itself stays still. */
+.road-stop.is-next .road-disc::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, var(--node-color) 70%, #fff);
+  opacity: 0;
+  pointer-events: none;
+  animation: road-ring 2.4s ease-out infinite;
 }
-@keyframes road-bob {
-  50% {
-    transform: translateY(-5px);
+.road-scroll.is-reading .road-stop.is-next .road-disc::after {
+  animation: none;
+}
+@keyframes road-ring {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.92);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.22);
   }
 }
 .road-disc {
@@ -373,9 +389,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .road-stop.is-next,
+  .road-stop.is-next .road-disc::after,
   .road-token-at,
-  .road-seg.is-live .road-seg-dash,
+  .road-seg-dash.is-live,
   .map-tower-door {
     animation: none;
   }

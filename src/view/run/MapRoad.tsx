@@ -319,7 +319,7 @@ export function MapRoad({
   const groundStyle = { '--road-ground': shade(ground, 0), '--road-ground-dark': shade(ground, -0.3), '--road-ground-mid': shade(ground, -0.18), '--road-ground-light': shade(ground, 0.18) } as CSSProperties;
 
   return (
-    <div className="road-scroll" ref={scroller} style={groundStyle}>
+    <div className={`road-scroll${previewId ? ' is-reading' : ''}`} ref={scroller} style={groundStyle}>
       <div className="road-world" style={{ height: H }}>
         {painting && <img className="road-painting" src={painting} alt="" draggable={false} style={{ height: PAINT_H, top: TOP_Y - PAINT_H + 150 }} />}
         <svg className="road-ground" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
@@ -339,13 +339,10 @@ export function MapRoad({
           ))}
         </svg>
         <svg className="road-paths" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-          {segments.map((s, i) => (
-            <g key={i} className={`road-seg is-${s.state}`}>
-              <path d={s.d} className="road-seg-rim" />
-              <path d={s.d} className="road-seg-face" />
-              <path d={s.d} className="road-seg-dash" />
-            </g>
-          ))}
+          {/* Every rim, then every face, then every dash: roads that meet merge into one surface. */}
+          {(['rim', 'face', 'dash'] as const).map((layer) =>
+            segments.map((s, i) => <path key={`${layer}${i}`} d={s.d} className={`road-seg road-seg-${layer} is-${s.state}`} />)
+          )}
         </svg>
         {currentRow + 1 < rowCount - 1 && (
           <div className="road-mist" style={{ top: TOP_Y + 70, height: Math.max(0, rowY(currentRow + 1) - ROW_GAP / 2 - TOP_Y - 70) }} />
