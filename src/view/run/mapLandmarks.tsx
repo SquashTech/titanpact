@@ -2,17 +2,17 @@ import type { CSSProperties } from 'react';
 import type { MapNodeType } from '../../run/map';
 import { allCombatants } from '../../data/content';
 import { getTypeColor } from '../combat/typeColors';
-import mentorArt from '../../../art/map-nodes/landmarks/mentor.png';
-import tutorArt from '../../../art/map-nodes/landmarks/tutor.png';
-import lapidaryArt from '../../../art/map-nodes/landmarks/lapidary.png';
-import academyArt from '../../../art/map-nodes/landmarks/academy.png';
-import campArt from '../../../art/map-nodes/landmarks/camp.png';
-import towerArt from '../../../art/map-nodes/landmarks/guardianTower.png';
-import titanStoneArt from '../../../art/map-nodes/landmarks/titanStone.png';
-import titanGateArt from '../../../art/map-nodes/landmarks/titanGate.png';
-import titanGateFrameArt from '../../../art/map-nodes/landmarks/titanGateFrame.png';
-import titanGateLeafLeftArt from '../../../art/map-nodes/landmarks/titanGateLeafL.png';
-import titanGateLeafRightArt from '../../../art/map-nodes/landmarks/titanGateLeafR.png';
+import mentorArt from '../../../art/map-nodes/landmarks/mentor.svg';
+import tutorArt from '../../../art/map-nodes/landmarks/tutor.svg';
+import lapidaryArt from '../../../art/map-nodes/landmarks/lapidary.svg';
+import academyArt from '../../../art/map-nodes/landmarks/academy.svg';
+import campArt from '../../../art/map-nodes/landmarks/camp.svg';
+import towerArt from '../../../art/map-nodes/landmarks/guardianTower.svg';
+import titanStoneArt from '../../../art/map-nodes/landmarks/titanStone.svg';
+import titanGateArt from '../../../art/map-nodes/landmarks/titanGate.svg';
+import titanGateFrameArt from '../../../art/map-nodes/landmarks/titanGateFrame.svg';
+import titanGateLeafLeftArt from '../../../art/map-nodes/landmarks/titanGateLeafL.svg';
+import titanGateLeafRightArt from '../../../art/map-nodes/landmarks/titanGateLeafR.svg';
 
 // The act's beats, drawn as themselves rather than as a stone medallion: the opening fight is a
 // signpost boulder on the road, the Mentor, the Tutor and the Scribe are met at the

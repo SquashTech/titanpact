@@ -235,9 +235,8 @@
   height: 76px;
 }
 .road-stop.is-tower .road-landmark {
-  width: 176px;
-  height: 176px;
-  margin-bottom: -24px;
+  width: 132px;
+  height: 132px;
 }
 .is-titanGate .road-landmark {
   width: 128px;
@@ -295,7 +294,7 @@
   font-weight: 700;
 }
 .road-stop.is-tower .road-label {
-  top: calc(100% - 8px);
+  top: calc(100% - 4px);
 }
 .road-hint {
   top: auto;

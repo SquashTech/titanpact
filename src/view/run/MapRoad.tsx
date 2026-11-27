@@ -14,7 +14,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { allCombatants } from '../../data/content';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { handOffFlood } from '../shared/EntranceFlood';
-import campArt from '../../../art/map-nodes/landmarks/camp.png';
+import campArt from '../../../art/map-nodes/landmarks/camp.svg';
 import './mapRoad.css';
 
 /** What a patron seat shows. */

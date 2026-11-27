@@ -14,7 +14,7 @@ import { entryHp } from '../shared/WoundBar';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { mapNodeIcon } from './mapNodeArt';
 import { CampFigure } from './RestNodeScreen';
-import campArt from '../../../art/map-nodes/landmarks/camp.png';
+import campArt from '../../../art/map-nodes/landmarks/camp.svg';
 import './campNode.css';
 
 interface Props {

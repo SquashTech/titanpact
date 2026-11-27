@@ -1,6 +1,6 @@
 import { type CSSProperties, type ReactNode, useState } from 'react';
 import { playSfx } from '../../audio/sfx';
-import academyArt from '../../../art/map-nodes/landmarks/academy.png';
+import academyArt from '../../../art/map-nodes/landmarks/academy.svg';
 import { seededRandom } from '../shared/seededRandom';
 import { classes } from '../../data/classes';
 import { equipment } from '../../data/equipment';
