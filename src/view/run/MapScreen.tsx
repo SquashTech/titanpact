@@ -192,6 +192,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
         actNumber={run.actNumber}
         guardianId={location.guardianFinalEnemyId}
         painting={locationBackdrop(location.id, 'map')}
+        locationId={location.id}
         leadHeroId={run.roster[0]?.heroId}
         onSelectNode={onSelectNode}
         renderDossier={(node) => <NodeDossier node={node} run={run} party={scouted[node.id]?.party} elite={scouted[node.id]?.elite} />}

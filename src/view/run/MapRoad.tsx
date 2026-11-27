@@ -14,6 +14,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { allCombatants } from '../../data/content';
 import { canvasPoint, overlayHost } from '../shared/overlayHost';
 import { handOffFlood } from '../shared/EntranceFlood';
+import { buildScenery, ROAD_ZONES } from './roadScenery';
 import campArt from '../../../art/map-nodes/landmarks/camp.svg';
 import './mapRoad.css';
 
@@ -139,6 +140,7 @@ export function MapRoad({
   actNumber,
   guardianId,
   painting,
+  locationId,
   leadHeroId,
   onSelectNode,
   renderDossier,
@@ -154,6 +156,8 @@ export function MapRoad({
   guardianId: string | null;
   /** The Location's map painting, standing at the top of the road as its horizon. */
   painting?: string;
+  /** The Location, whose places line the road (roadScenery ROAD_ZONES). */
+  locationId?: string;
   /** Whose face the party's token wears. */
   leadHeroId?: string;
   onSelectNode: (nodeId: string) => void;
@@ -222,10 +226,15 @@ export function MapRoad({
       const y = TOP_Y + 120 + rnd() * (H - TOP_Y - 140);
       if (keepOff.every((p) => Math.hypot(p.x - x, p.y - y) > 60) && lanesAt.every((ly) => Math.abs(ly - y) > 70)) trees.push({ x, y, r: 13 + rnd() * 9, tone: rnd() });
     }
+    const zones = locationId ? ROAD_ZONES[locationId] : undefined;
+    if (zones) {
+      const drawn = buildScenery(zones, { W, H, topY: TOP_Y, rowGap: ROW_GAP, rowY, rows, camp, roadPoints: keepOff.filter((p) => !("id" in p) || !p.id), rnd });
+      return { trees: [], flecks: [], ...drawn };
+    }
     const flecks = Array.from({ length: rowCount * 7 }, () => ({ x: rnd() * W, y: TOP_Y + 80 + rnd() * (H - TOP_Y - 90), k: rnd() }));
-    return { trees: trees.sort((a, b) => a.y - b.y), flecks };
+    return { trees: trees.sort((a, b) => a.y - b.y), flecks, under: '', props: '' };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map.seed, actNumber, rows]);
+  }, [map.seed, actNumber, rows, locationId]);
 
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [opening, setOpening] = useState<{ id: string; kind: LandmarkKind; color: string; x: number; y: number } | null>(null);
@@ -323,7 +332,7 @@ export function MapRoad({
       <div className="road-world" style={{ height: H }}>
         {painting && <img className="road-painting" src={painting} alt="" draggable={false} style={{ height: PAINT_H, top: TOP_Y - PAINT_H + 150 }} />}
         <svg className="road-ground" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-          {Array.from({ length: rowCount }, (_, i) => (
+          {!scenery.under && Array.from({ length: rowCount }, (_, i) => (
             <ellipse key={i} cx={i % 2 ? 60 : 330} cy={TOP_Y + 240 + i * 190} rx={170} ry={70} style={{ fill: 'var(--road-ground-light)' }} opacity={0.35} />
           ))}
           {scenery.flecks.map((f, i) => (
@@ -337,12 +346,14 @@ export function MapRoad({
               <circle cx={t.x - t.r * 0.3} cy={t.y - t.r * 0.35} r={t.r * 0.35} style={{ fill: 'var(--road-ground)' }} />
             </g>
           ))}
+          {scenery.under && <g dangerouslySetInnerHTML={{ __html: scenery.under }} />}
         </svg>
         <svg className="road-paths" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
           {/* Every rim, then every face, then every dash: roads that meet merge into one surface. */}
           {(['rim', 'face', 'dash'] as const).map((layer) =>
             segments.map((s, i) => <path key={`${layer}${i}`} d={s.d} className={`road-seg road-seg-${layer} is-${s.state}`} />)
           )}
+          {scenery.props && <g dangerouslySetInnerHTML={{ __html: scenery.props }} />}
         </svg>
         {currentRow + 1 < rowCount - 1 && (
           <div className="road-mist" style={{ top: TOP_Y + 70, height: Math.max(0, rowY(currentRow + 1) - ROW_GAP / 2 - TOP_Y - 70) }} />

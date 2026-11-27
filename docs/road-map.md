@@ -54,9 +54,18 @@
   signpost boulder, the Academy, the Tower, the finale gate in its three swinging layers, and the
   Mentor, Tutor and Scribe as places without their person (a roadside fire and staff, a practice
   post, a writing desk). The old 32px PNGs stay in `art/map-nodes/icons/` for the comparison
-  page only. **The patrons stay pixel art** (same day, per user direction): a flat chibi set was
-  drawn and put in, and taken back out the same day because it lost their cool factor; it is kept
-  in `art/concepts/patrons-flat/flat/`. Heroes stay pixel art too.
+  page only. **The patrons are cartoony pixel art** (same day, per user direction, B over a pixel
+  sticker rim in `art/concepts/patrons-flat/`): redrawn in the heroes' style off Ronin, brighter
+  with a bold outline, adult proportions and a cool stance, standing and posed. A flat chibi set was
+  tried first and lost their cool; the old pixel set and the flat one are kept in that folder.
+- **Zones** (same day, per user direction, B over a plain prop kit in `art/concepts/road-scenery/`):
+  a Location climbs through its own places, camp to Guardian, each band drawn from one kit of flat
+  props kept clear of the road (`src/view/run/roadScenery.ts`, `ROAD_ZONES`). Wild's Edge is farm,
+  river with a bridge, pine wood, meadow with a pond in a fork, the tower's rocky hill. **Only Wild's
+  Edge has zones**; every other Location still draws plain trees until its places are chosen.
+- **Hero examples in the patrons' look** (same day, per user direction, examples only): Valor, Crag,
+  Ursa and Kong redrawn taller and cooler, in a real fight at `art/concepts/hero-redraw/` (`?redraw=1`
+  swaps them in). Nothing in the game uses them.
 - **The Tower was redrawn** (same day, per user direction, the first flat one read badly): a round
   tower under a red cone roof on a rocky mound, no vine (A · Round in `art/concepts/patrons-flat/`,
   beside B · Keep, a square keep between two blue-roofed turrets).
