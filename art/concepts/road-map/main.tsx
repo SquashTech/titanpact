@@ -334,11 +334,11 @@ const PHONES: { id: string; name: string; note: string; body: () => ReactNode }[
 
 const GUARDIANS: { id: string; name: string; note: string; art?: string }[] = [
   { id: 'gate', name: 'Today · the gate', note: 'The sealed stone gate.' },
-  { id: 'lair', name: 'Lair', note: 'A cave in a hill, one magenta eye looking out, bones at the mouth.', art: lairArt },
-  { id: 'ring', name: 'Ring', note: 'Standing stones round an arena floor, its seal cracked and glowing.', art: ringArt },
-  { id: 'tower', name: 'Tower', note: 'A crooked keep with a torn banner, split by one magenta crack.', art: towerArt },
-  { id: 'egg', name: 'Egg', note: 'A chained stone egg cracking open; what sleeps in it is the fight.', art: eggArt },
-  { id: 'throne', name: 'Throne', note: 'An empty clawed throne on a dais; its owner is not home.', art: throneArt },
+  { id: 'lair', name: 'Lair', note: 'A cave in a hill, claw marks by the mouth, bones and a lost shield.', art: lairArt },
+  { id: 'ring', name: 'Ring', note: 'Standing stones round an arena floor, a gold seal at its heart.', art: ringArt },
+  { id: 'tower', name: 'Tower', note: 'A stout keep with a red pennant and a barred door.', art: towerArt },
+  { id: 'egg', name: 'Egg', note: 'A chained stone egg cracking with gold light; what sleeps in it is the fight.', art: eggArt },
+  { id: 'throne', name: 'Throne', note: 'An empty clawed throne on a dais; its owner is out.', art: throneArt },
 ];
 
 function Phone({ children, short }: { children: ReactNode; short?: boolean }) {
@@ -399,10 +399,10 @@ function Page() {
             <b>The painting.</b> The Location backdrops are side-on landscapes, not ground seen from above. Lanes keeps the painting as the horizon the Guardian stands on and lay a top-down meadow below it; a real build would need ground art per Location.
           </li>
           <li>
-            <b>The Guardian is never on the map</b> (2026-09-28). Every option is a place, not the creature; the Egg and the Lair come closest, hinting at it without drawing it. Today’s gate also carries the Guardian’s element as a seal on its door, which none of these do yet: the crack, the eye or the seal could take the type colour where it is magenta now, which is the Titan’s.
+            <b>The Guardian is never on the map</b> (2026-09-28). Every option is a place, not the creature; the Egg and the Lair come closest, hinting at it without drawing it. Today’s gate also carries the Guardian’s element as a seal on its door, which none of these do yet: the seal, the egg’s light or the pennant could take the type colour where they are gold or red now. No magenta anywhere: the Titan’s eye is retired (2026-11-27, per user direction).
           </li>
           <li>
-            <b>The gate opens.</b> Tapping today’s gate plays a door-opening beat (three layers, 1250ms). A new landmark needs its own beat: the eye opening, the egg splitting, the seal flaring.
+            <b>The gate opens.</b> Tapping today’s gate plays a door-opening beat (three layers, 1250ms). A new landmark needs its own beat: the egg splitting, the pennant rising, the seal flaring.
           </li>
         </ul>
       </section>
