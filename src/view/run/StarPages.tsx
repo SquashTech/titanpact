@@ -175,7 +175,7 @@ function SpawnStarRow({ line, profile }: { line: TitanspawnLine; profile: Profil
     <div
       className={`compendium-row compendium-spawn-row${known ? '' : ' is-unknown'}`}
       style={{ '--type-rgb': getTypeColorRgb(line.type) } as CSSProperties}
-      aria-label={known ? line.names.late : `An unknown ${line.type} Titanspawn`}
+      aria-label={known ? line.names.late : `An unknown ${line.type} Doodle`}
     >
       <span className="compendium-row-head">
         <span className="compendium-row-figure">

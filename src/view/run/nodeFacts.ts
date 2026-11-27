@@ -115,7 +115,7 @@ export function nodeDossier(type: MapNodeType, actNumber: number, row?: number):
     case 'finale':
       return {
         about: 'The Titan’s Herald, and what watches from behind it.',
-        facts: [{ glyph: 'enemy', label: 'The Herald', value: `Lv ${enemyLevelFor('finale', actNumber)}`, note: `${SEAL_ACTS} Titanspawn with it` }],
+        facts: [{ glyph: 'enemy', label: 'The Herald', value: `Lv ${enemyLevelFor('finale', actNumber)}`, note: `${SEAL_ACTS} Doodles with it` }],
         odds: null,
       };
     case 'camp':

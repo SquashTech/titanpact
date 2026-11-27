@@ -106,9 +106,12 @@ Paper Mario, Kingdom Hearts' Hundred Acre Wood.
 - **The world is a book whose pages have been blotted out.** Each World is a chapter to restore.
 - **The roguelike is the Library** (renamed from the Infinite, 2026-11-24, per user direction): its stacks hold every hero from every story.
 - **A pull writes a hero into your book.** It is yours from then on.
-- **Enemies are ink**: an element smudged and running. **The ink stains the element, never replaces
-  it** — it runs *through* the flame, not over it — because the mock's ink and void Emberlings both
-  went black and lost the type colour a doubles player reads first. The crystal Emberling kept it.
+- **The mob line is the Doodles** (2026-11-27, per user direction, replacing "Titanspawn" in
+  player-facing copy; code ids still say `titanspawn`): margin doodles come to life, one line a type,
+  drawn clean as their element in the heroes' chibi style with ordinary cartoon eyes. **No ink on
+  them** (2026-11-27, per user direction): ink drips and ink running through the body were mocked
+  (`art/concepts/spawn-redraw/ink/`) and rejected as looking bad, so "Enemies are ink" and the Blots
+  are reversed. Open: Ink, the currency, was "washed out of a Blot" and needs a new source story.
 - **Working title: Twofold Heroes** (2026-11-24, per user direction, picked from six logos in
   `art/concepts/names/`). The brand is the one word *Twofold* — a pair, and a folded page — with
   HEROES set small beneath it, the way Fire Emblem Heroes stacks. Plain "Twofold" is taken on Steam
@@ -131,8 +134,8 @@ lights them back one World at a time.** Read *chapter* for *Crystal*; the fit wi
   last: the thing older than the Crystals, or the thing that broke them.
 - **The Trials already field one authored team a type** (`docs/constructed.md`): each becomes its
   World's boss team.
-- **The Titanspawn are one mob line a type, drawn as the element itself.** Without the magenta eye
-  they are the element run wild while its Crystal is dark: the stages of their World.
+- **The Doodles (the Titanspawn) are one mob line a type, drawn as the element itself.** Without
+  the magenta eye they are the element run wild while its Crystal is dark: the stages of their World.
 - **Each type's Guardian becomes its Crystal's warden**, the World's boss beside or within the
   Trial team.
 
@@ -170,7 +173,7 @@ survive, its October art does not. Mocked in `art/concepts/spread/`.
 | Stardust | **Pages**: a pull fills a blank page with a hero. The Collection is literally your book's pages | **Decided** 2026-11-24, per user direction; player-facing text says Pages (code ids still say stardust) |
 | The Starfall | **Writing a hero**: a quill sketches a figure on a blank page, then colour floods in | **Decided and BUILT** 2026-11-25, per user direction (`Starfall.tsx`): the Pages fly into a blank page, the type wheel still spins and stamps the type in its corner, the quill sketches, a drop of the type's colour floods it; a ten-draw sketches ten small pages. The name Starfall stays for now |
 | The Observatory | **The Scriptorium** | **Not taken** 2026-11-25, per user direction: the Observatory keeps its name and its heroes-as-stars chart, drawn by day as a star chart inked on paper, an owned hero a sticker in its type's colour |
-| Essence (§2.5) | **Ink**: what buys seat levels and draws a hero's equipment and Gems — one purse for all growth. Washing a Blot out of a page is what yields it, so the enemy and the purse tell one story. Enemies are **Blots**, never "ink monsters" | **Decided** 2026-11-24, per user direction (Gilt rejected) |
+| Essence (§2.5) | **Ink**: what buys seat levels and draws a hero's equipment and Gems — one purse for all growth. Washing a Blot out of a page is what yields it, so the enemy and the purse tell one story. Enemies are **Blots**, never "ink monsters" | **Decided** 2026-11-24, per user direction (Gilt rejected). **The Blots half is reversed 2026-11-27**: the mob line is the Doodles, with no ink (§2.7); Ink's source story is open |
 | Cycles I–V | **Editions**: the Second Edition retells the story, changed and harder | Proposed |
 | Strange Worlds | **Tall Tales** | Proposed |
 | Stars as records | **Gold-star stickers**, unchanged in name | Proposed |

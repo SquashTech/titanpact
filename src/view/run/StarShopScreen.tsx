@@ -81,7 +81,7 @@ export function StarShopScreen({ profile, onBuy, onStarfall, onHeroFallen, fresh
     { id: 'sky', label: STARFALL_NAME },
     { id: 'shop', label: 'Market' },
     { id: 'stars', label: 'Stars' },
-    { id: 'spawn', label: 'Spawn' },
+    { id: 'spawn', label: 'Doodles' },
   ];
 
   function call(count: 1 | 10) {

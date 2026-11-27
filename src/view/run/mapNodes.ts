@@ -7,9 +7,9 @@ import type { MapNodeType } from '../../run/map';
 // Name carries recruitability (Titanspawn vs Skirmish); NODE_COLORS carries
 // difficulty. The two channels are deliberately not redundant.
 export const NODE_NAMES: Record<MapNodeType, string> = {
-  fight: 'Titanspawn',
+  fight: 'Doodles',
   skirmish: 'Skirmish',
-  battle: 'Titanspawn',
+  battle: 'Doodles',
   elite: 'Skirmish',
   boss: 'Guardian',
   camp: 'Camp',

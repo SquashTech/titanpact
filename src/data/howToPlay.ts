@@ -307,7 +307,7 @@ export const MANUAL_PAGES: readonly ManualPage[] = [
     'The Next Act',
     RUN,
     ['glyph:road'],
-    '- Each act takes you somewhere new, never the same place twice.\n- Each place is home to different types of Titanspawn and heroes.'
+    '- Each act takes you somewhere new, never the same place twice.\n- Each place is home to different types of Doodles and heroes.'
   ),
   page(
     'lockIn',
