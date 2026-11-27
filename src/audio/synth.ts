@@ -64,7 +64,7 @@ let noiseBuffer: AudioBuffer | null = null;
 
 // Safety valve: a held auto-advance can queue beats faster than they decay.
 let liveVoices = 0;
-const MAX_LIVE_VOICES = 24;
+const MAX_LIVE_VOICES = 64;
 
 function ensureContext(): AudioContext | null {
   if (ctx) return ctx;

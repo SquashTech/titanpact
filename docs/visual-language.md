@@ -3515,3 +3515,17 @@ four ways of putting a straight bar back were drawn with the same hits landing o
   per user direction): half the width, and it cannot be mistaken for a status's name.
 
 The target picker and the bench keep their bars; only the field changed.
+
+## The toybox (2026-11-27)
+
+Per user direction, picked off the side-by-side page at `art/concepts/sfx/` (A · Toybox over B ·
+Bubblegum, pops and glockenspiel): every effect in `sounds.ts` is replayed on a toybox to sit with
+the storybook-day look. The instruments are builders in `src/audio/instruments.ts` — a marimba bar,
+a xylophone bar, a wood block, a felt mallet on a drum, a slide whistle, a swish, a page turn, a
+shaker — so a row of the table still reads as data. Nothing rings like metal and nothing growls:
+a hit is a felt drum and a wooden clack, a crit two marimba bars bouncing up, a heal a marimba roll,
+a knockout a slide whistle falling, the dark beats (`titan.*`, `entrance.dread`, `map.threat`) low
+marimba in a minor key, spooky rather than menacing. Every id kept its job, its timing against its
+animation and its re-pitching by caller; each sound's gain was set so its offline peak matches the
+sound it replaced, so the mix keeps its order. Blip's babble is untouched, being a voice. The live
+voice cap went 24 → 64, since a struck chord is more oscillators than the old single tones.

@@ -1,13 +1,9 @@
 // The sound table — pure data over the voice vocabulary in synth.ts; adding a sound is adding a row.
-// Timing lives in the view layer (beatSfx.ts), never here.
-// UI sounds stay quiet and short: they fire hundreds of times a run and anything with presence fatigues.
-// Quiet is not weightless. A press reads as firm because it has a BODY — a low-mid layer dropping in pitch
-// under the transient — not because it is loud or long. Tones with no body read as limp however loud they get.
-// Material is RESONANCE: a noise burst through a narrow band (Q 4-8) at a modal frequency is stone, bronze or a coin;
-// the same burst at Q 1 is static. Metal is inharmonic partials, detuned so they beat; leather and paper never ring.
-// Impacts are noise-led: the filtered noise burst is the weight; the oscillator under it only supplies pitch, which is what lets beatSfx.ts re-pitch one hit for chip vs heavy.
+// Timing lives in the view layer (beatSfx.ts), never here. The instruments are a toybox (instruments.ts): wood, felt, paper,
+// marimba and xylophone bars, a slide whistle. UI sounds stay short and quiet: they fire hundreds of times a run.
 
 import type { SoundSpec } from './synth';
+import { bar, felt, marimba, paper, shaker, slide, swish, woodBlock, xylo } from './instruments';
 
 export type SfxId =
   // UI
@@ -118,305 +114,163 @@ export type SfxId =
   | 'entrance.dread';
 
 export const sounds: Record<SfxId, SoundSpec> = {
-  /**
-   * The default for every tappable surface: a fingertip on slate. Two narrow bands of noise at the tablet's modes are
-   * the whole material — the same burst at Q 1 is a click off a speaker, at Q 7 it is a stone being touched. A knuckle
-   * of low end under it, gone in 80ms.
-   */
-  'ui.tap': {
-    gain: 0.46,
-    jitter: 0.045,
-    voices: [
-      { wave: 'noise', gain: 1.6, attack: 0.001, decay: 0.03, filter: { type: 'bandpass', freq: 1450, q: 7 } },
-      { wave: 'noise', gain: 1.1, attack: 0.001, decay: 0.048, filter: { type: 'bandpass', freq: 620, q: 5 } },
-      // Wide grit at the very front so the modes read as struck, not as a tone.
-      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.012, filter: { type: 'highpass', freq: 2600 } },
-      { wave: 'triangle', freq: 150, freqEnd: 86, gain: 0.3, attack: 0.001, decay: 0.058 },
-    ],
-  },
+  /** Every tappable surface: a small wood block. */
+  'ui.tap': { gain: 0.29, jitter: 0.04, voices: woodBlock(1180, 0, 0.42) },
 
-  /**
-   * Committing (Resolve the round, claim, buy): the CTA is drawn as a chamfered bronze plate, so this is that plate
-   * struck. Bronze is INHARMONIC — the partials sit at 1 : 2.63 : 4.4, nowhere near a chord, and each pair is detuned
-   * so it beats — which is what separates a bell from a beep. The body still lifts a fourth under it so it reads as yes.
-   */
+  /** Committing: a block knocked, then two marimba bars answering up a fourth. */
   'ui.confirm': {
-    gain: 0.5,
+    gain: 0.76,
     jitter: 0.02,
-    voices: [
-      { wave: 'noise', gain: 1.2, attack: 0.001, decay: 0.026, filter: { type: 'bandpass', freq: 2400, q: 6 } },
-      { wave: 'noise', gain: 0.16, attack: 0.001, decay: 0.012, filter: { type: 'highpass', freq: 3200 } },
-      { wave: 'triangle', freq: 130, freqEnd: 92, gain: 0.36, attack: 0.002, decay: 0.15 },
-      { wave: 'triangle', freq: 392, freqEnd: 523, gain: 0.3, attack: 0.004, decay: 0.14 },
-      // The plate's modes.
-      { wave: 'sine', freq: 1046, detune: 9, gain: 0.22, attack: 0.003, decay: 0.2, delay: 0.004 },
-      { wave: 'sine', freq: 2750, detune: 14, gain: 0.09, attack: 0.003, decay: 0.16, delay: 0.004 },
-      { wave: 'sine', freq: 4600, detune: 18, gain: 0.04, attack: 0.003, decay: 0.12, delay: 0.004 },
-    ],
+    voices: [...woodBlock(1320, 0, 0.36), ...marimba(523, 0.02, 0.26, 0.16), ...bar(698, 0.07, 0.26, 0.24)],
   },
 
-  /**
-   * Cancel — the sheet folding closed. The opposite MATERIAL to confirm rather than the opposite contour: leather over
-   * a soft edge, nothing rings, and the one tone in it is felted under a lowpass so it thuds instead of sounding.
-   */
+  /** Cancel: a felt knock and a low block, falling — nothing rings. */
   'ui.back': {
-    gain: 0.44,
+    gain: 0.39,
     jitter: 0.02,
-    voices: [
-      { wave: 'noise', gain: 0.4, attack: 0.004, decay: 0.07, filter: { type: 'lowpass', freq: 1500, freqEnd: 260, q: 1.2 } },
-      { wave: 'noise', gain: 0.9, attack: 0.001, decay: 0.02, filter: { type: 'bandpass', freq: 520, q: 4 } },
-      { wave: 'triangle', freq: 440, freqEnd: 300, gain: 0.3, attack: 0.004, decay: 0.09, filter: { type: 'lowpass', freq: 1100, q: 0.8 } },
-      { wave: 'triangle', freq: 132, freqEnd: 84, gain: 0.3, attack: 0.002, decay: 0.1 },
-    ],
+    voices: [...felt(240, 0, 0.36, 0.08), ...woodBlock(640, 0.03, 0.3)],
   },
 
-  /** Highlighting without committing — a slider notch, a row lighting up. The one UI sound that stays small: it can fire on every frame of a drag. */
-  'ui.select': {
-    gain: 0.72,
-    jitter: 0.05,
-    voices: [
-      { wave: 'square', freq: 880, gain: 0.16, attack: 0.001, decay: 0.03, filter: { type: 'lowpass', freq: 2600, q: 0.7 } },
-      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.014, filter: { type: 'bandpass', freq: 3200, q: 2 } },
-      // Just enough floor to stop it reading as a beep off the top of the mix.
-      { wave: 'triangle', freq: 196, freqEnd: 156, gain: 0.16, attack: 0.001, decay: 0.034 },
-    ],
-  },
+  /** Highlighting without committing; can fire every frame of a drag, so the smallest knock in the box. */
+  'ui.select': { gain: 0.7, jitter: 0.05, voices: woodBlock(2100, 0, 0.26) },
 
-  /**
-   * A move taken off the combat grid (and off a hero's move list). The press that opens targeting, so it is a
-   * LATCH, not a beep — catch, body, and a faint plate ring, in that order.
-   */
+  /** A move taken off the combat grid: a block and one bar, the press that opens targeting. */
   'ui.move': {
-    gain: 0.38,
+    gain: 0.44,
     jitter: 0.03,
-    voices: [
-      { wave: 'noise', gain: 0.36, attack: 0.001, decay: 0.034, filter: { type: 'bandpass', freq: 2100, q: 1.1 } },
-      { wave: 'triangle', freq: 262, freqEnd: 175, gain: 0.4, attack: 0.001, hold: 0.008, decay: 0.1 },
-      { wave: 'triangle', freq: 118, freqEnd: 78, gain: 0.34, attack: 0.002, decay: 0.09 },
-      // Reads as a struck plate rather than a closed box. Quiet enough not to become the sound.
-      { wave: 'sine', freq: 1046, detune: 12, gain: 0.07, attack: 0.004, decay: 0.17, delay: 0.02 },
-    ],
+    voices: [...woodBlock(980, 0, 0.36), ...bar(784, 0.015, 0.2, 0.16)],
   },
 
-  /**
-   * A target locked in combat — the heaviest press in the table below `ui.commit`. Two stages: the reticle catching,
-   * then the lock seating 45ms behind it over a dropping sub. The rising fifth on top is what keeps it an ACQUISITION
-   * rather than a hit; without it the pair of impacts reads as damage landing on the wrong beat.
-   */
+  /** A target locked: two clicks of a wooden latch, then a fifth rising so it reads as caught, not hit. */
   'ui.target': {
-    gain: 0.42,
+    gain: 0.58,
     jitter: 0.02,
-    voices: [
-      { wave: 'noise', gain: 0.4, attack: 0.001, decay: 0.045, filter: { type: 'bandpass', freq: 3000, q: 1.4 } },
-      { wave: 'sine', freq: 150, freqEnd: 62, gain: 0.5, attack: 0.002, hold: 0.02, decay: 0.22 },
-      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.09, delay: 0.045, filter: { type: 'lowpass', freq: 1500, freqEnd: 300, q: 1.2 } },
-      { wave: 'triangle', freq: 294, freqEnd: 392, detune: 8, gain: 0.2, attack: 0.006, hold: 0.03, decay: 0.26, delay: 0.05 },
-      { wave: 'sine', freq: 1568, detune: 20, gain: 0.07, attack: 0.004, decay: 0.3, delay: 0.06 },
-    ],
+    voices: [...woodBlock(1500, 0, 0.3), ...woodBlock(1100, 0.045, 0.34), ...marimba(392, 0.05, 0.22, 0.14), ...bar(587, 0.1, 0.24, 0.24)],
   },
 
-  /** Refusal — low and buzzing, deliberately not loud, but struck: the control moved and then declined, which is not the same as nothing happening. */
+  /** Refusal: a hollow low bonk-bonk, falling. */
   'ui.denied': {
-    gain: 0.32,
-    voices: [
-      { wave: 'noise', gain: 0.22, attack: 0.001, decay: 0.028, filter: { type: 'lowpass', freq: 1200, q: 1 } },
-      { wave: 'square', freq: 165, freqEnd: 128, gain: 0.32, attack: 0.003, hold: 0.03, decay: 0.09, filter: { type: 'lowpass', freq: 900, q: 1 } },
-      { wave: 'triangle', freq: 82, gain: 0.26, attack: 0.004, decay: 0.13 },
-    ],
+    gain: 0.45,
+    voices: [...woodBlock(420, 0, 0.36), ...woodBlock(330, 0.09, 0.34)],
   },
 
-  /** Screen-to-screen whoosh, not a note. */
-  'ui.page': {
-    gain: 0.6,
-    jitter: 0.05,
-    voices: [{ wave: 'noise', gain: 0.5, attack: 0.05, decay: 0.2, filter: { type: 'bandpass', freq: 380, freqEnd: 2100, q: 0.9 } }],
-  },
+  /** Screen to screen: a soft swish, not a note. */
+  'ui.page': { gain: 0.45, jitter: 0.05, voices: swish(500, 2400, 0, 0.5, 0.2, 0.05) },
 
-  /** The big commitment (draft seal, Mentor class, Evolution). Breaks the quiet-UI rule on purpose — fires ~a dozen times a run. ui.confirm's rise as a C-major arpeggio over a bass fifth. */
+  /** The big commitment (draft sealed, Class taken, Evolution chosen): a marimba run up C major over a felt bass. */
   'ui.commit': {
-    gain: 0.42,
+    gain: 0.64,
     jitter: 0.01,
     voices: [
-      // Bass fifth under the rise — without it the arpeggio sounds thin and chimey.
-      { wave: 'triangle', freq: 196, freqEnd: 262, detune: 8, gain: 0.34, attack: 0.006, hold: 0.06, decay: 0.5 },
-      { wave: 'sine', freq: 523, gain: 0.3, attack: 0.004, decay: 0.22 },
-      { wave: 'sine', freq: 784, gain: 0.26, attack: 0.004, decay: 0.24, delay: 0.075 },
-      { wave: 'sine', freq: 1046, gain: 0.22, attack: 0.004, decay: 0.5, delay: 0.15 },
-      // Detuned octave shimmer, held past the gesture.
-      { wave: 'triangle', freq: 1568, detune: 14, gain: 0.1, attack: 0.02, decay: 0.55, delay: 0.16 },
-      // Slow-attacked air swelling into the landing.
-      { wave: 'noise', gain: 0.16, attack: 0.09, decay: 0.34, filter: { type: 'bandpass', freq: 700, freqEnd: 3600, q: 0.9 } },
+      ...felt(131, 0, 0.4, 0.3),
+      ...marimba(523, 0, 0.26, 0.16),
+      ...marimba(659, 0.07, 0.26, 0.16),
+      ...marimba(784, 0.14, 0.26, 0.16),
+      ...marimba(1047, 0.21, 0.3, 0.5),
+      ...bar(523, 0.21, 0.16, 0.5),
+      ...shaker(0.17, 0.08, 0.2, 0.03),
     ],
   },
 
-  /**
-   * "Start a Run" only — the loudest, longest UI sound. A gate opening: slam, sub drop, then a struck bronze fifth.
-   * The 90ms gap before the bell is deliberate — slam and ring blur into one mid-sized noise otherwise.
-   * Timed against TitleScreen's LAUNCH_ANIM_MS (slam = shockwave, bell = white-out).
-   */
+  /** "Start a Run": the loudest UI sound — a drum, then a marimba fanfare landing on an open fifth. Timed to LAUNCH_ANIM_MS. */
   'ui.launch': {
-    gain: 0.5,
+    gain: 0.85,
     jitter: 0.006,
     voices: [
-      { wave: 'noise', gain: 0.5, attack: 0.001, decay: 0.26, filter: { type: 'lowpass', freq: 2600, freqEnd: 180, q: 1.2 } },
-      { wave: 'sine', freq: 132, freqEnd: 42, gain: 0.6, attack: 0.002, hold: 0.03, decay: 0.42 },
-      { wave: 'triangle', freq: 88, freqEnd: 58, detune: 12, gain: 0.34, attack: 0.004, hold: 0.05, decay: 0.6 },
-      // A fifth, not a triad: two notes ring as a bell, three as music.
-      { wave: 'triangle', freq: 294, detune: 10, gain: 0.24, attack: 0.004, hold: 0.04, decay: 0.9, delay: 0.09 },
-      { wave: 'sine', freq: 441, gain: 0.2, attack: 0.006, decay: 0.85, delay: 0.1 },
-      { wave: 'sine', freq: 882, detune: 16, gain: 0.09, attack: 0.01, decay: 0.8, delay: 0.11 },
-      { wave: 'noise', gain: 0.2, attack: 0.16, decay: 0.55, filter: { type: 'bandpass', freq: 400, freqEnd: 4200, q: 0.8 } },
+      ...felt(110, 0, 0.6, 0.4),
+      ...woodBlock(880, 0, 0.3),
+      ...marimba(392, 0.09, 0.26, 0.14),
+      ...marimba(523, 0.15, 0.26, 0.14),
+      ...marimba(784, 0.21, 0.3, 0.8),
+      ...bar(1175, 0.21, 0.18, 0.8),
+      ...bar(196, 0.21, 0.3, 0.8),
+      ...shaker(0.12, 0.1, 0.4, 0.1),
     ],
   },
 
-  /** A tab switched (TabStrip, the Observatory, the reference sheet): a page turned. Paper is a hush, not a strike, and the only transient is the leaf seating at the end. */
-  'ui.tab': {
-    gain: 0.62,
-    jitter: 0.04,
-    voices: [
-      { wave: 'noise', gain: 0.3, attack: 0.014, decay: 0.09, filter: { type: 'bandpass', freq: 4200, freqEnd: 1300, q: 0.7 } },
-      { wave: 'noise', gain: 1.2, attack: 0.001, decay: 0.022, delay: 0.07, filter: { type: 'bandpass', freq: 1700, q: 6 } },
-      { wave: 'triangle', freq: 140, freqEnd: 96, gain: 0.2, attack: 0.002, decay: 0.05, delay: 0.07 },
-    ],
-  },
+  /** A tab switched: a page turned. */
+  'ui.tab': { gain: 0.57, jitter: 0.04, voices: paper(0, 0.3) },
 
-  /**
-   * A card chosen (a hero on a who-screen, a Banner, a drop): a stone tile set into its place on the ground. Two modes
-   * lower and wider than `ui.tap`'s — a slab, not a tablet — a grit tail as it settles, and more floor than any other
-   * press below `ui.commit`. Wholly noise-led: a tone here would make it a note, and a pick is a weight put down.
-   */
+  /** A card chosen: a wooden tile set down, lower and fuller than the tap. */
   'ui.pick': {
-    gain: 0.44,
+    gain: 0.33,
     jitter: 0.03,
-    voices: [
-      { wave: 'noise', gain: 1.5, attack: 0.001, decay: 0.05, filter: { type: 'bandpass', freq: 880, q: 6 } },
-      { wave: 'noise', gain: 1.0, attack: 0.001, decay: 0.03, filter: { type: 'bandpass', freq: 2300, q: 5 } },
-      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.06, filter: { type: 'lowpass', freq: 1600, freqEnd: 300, q: 1 } },
-      { wave: 'sine', freq: 108, freqEnd: 66, gain: 0.46, attack: 0.002, hold: 0.012, decay: 0.17 },
-      // The settle.
-      { wave: 'noise', gain: 0.2, attack: 0.012, decay: 0.09, delay: 0.035, filter: { type: 'lowpass', freq: 1100, freqEnd: 350, q: 1.1 } },
-    ],
+    voices: [...woodBlock(760, 0, 0.4), ...felt(180, 0, 0.34, 0.1)],
   },
 
-  /**
-   * Gold changing hands (a Guild Hall shelf buy, an item sold): two coins, then the purse. `gold.coin`'s metal twice at
-   * different pitches 55ms apart, landing on a leather thump — metal first, leather last, so it reads as coins going
-   * INTO something and not as the count-up.
-   */
+  /** Something changing hands: two toy coins plinked, then the wooden box they drop into. */
   'ui.trade': {
-    gain: 0.5,
+    gain: 0.33,
     jitter: 0.02,
-    voices: [
-      { wave: 'noise', gain: 1.4, attack: 0.001, decay: 0.04, filter: { type: 'bandpass', freq: 5200, q: 8 } },
-      { wave: 'triangle', freq: 1760, gain: 0.14, attack: 0.001, hold: 0.006, decay: 0.08 },
-      { wave: 'sine', freq: 2640, detune: 12, gain: 0.08, attack: 0.002, decay: 0.12, delay: 0.004 },
-      { wave: 'noise', gain: 1.4, attack: 0.001, decay: 0.04, delay: 0.055, filter: { type: 'bandpass', freq: 6100, q: 8 } },
-      { wave: 'triangle', freq: 2093, gain: 0.12, attack: 0.001, hold: 0.006, decay: 0.08, delay: 0.055 },
-      { wave: 'sine', freq: 3140, detune: 12, gain: 0.07, attack: 0.002, decay: 0.12, delay: 0.06 },
-      // The purse.
-      { wave: 'noise', gain: 0.36, attack: 0.003, decay: 0.1, delay: 0.1, filter: { type: 'lowpass', freq: 900, freqEnd: 220, q: 1 } },
-      { wave: 'sine', freq: 150, freqEnd: 92, gain: 0.4, attack: 0.003, decay: 0.17, delay: 0.1 },
-    ],
+    voices: [...xylo(1568, 0, 0.18, 0.12), ...xylo(2093, 0.055, 0.16, 0.14), ...woodBlock(520, 0.1, 0.34), ...felt(160, 0.1, 0.26, 0.12)],
   },
 
-  /**
-   * The fight won (view/combat/FightResultOverlay.tsx): a struck drum under a rising triad in G, landing a fifth above where
-   * `levelUp` lands so the two fanfares, which play a screen apart, are not the same tune twice. Once a fight, so it may have
-   * a body; no jitter, same reasoning as levelUp.
-   */
+  /** The fight won: a drum, then a marimba run up G landing a fifth above where `levelUp` lands. */
   victory: {
-    gain: 0.46,
+    gain: 0.55,
     jitter: 0.003,
     voices: [
-      // The drum.
-      { wave: 'noise', gain: 0.3, attack: 0.002, decay: 0.22, filter: { type: 'lowpass', freq: 1600, freqEnd: 180, q: 1 } },
-      { wave: 'sine', freq: 98, freqEnd: 65, gain: 0.4, attack: 0.004, hold: 0.04, decay: 0.42 },
-      // The triad, then the octave.
-      { wave: 'triangle', freq: 392, gain: 0.24, attack: 0.004, hold: 0.03, decay: 0.14, delay: 0.06 },
-      { wave: 'triangle', freq: 494, gain: 0.24, attack: 0.004, hold: 0.03, decay: 0.14, delay: 0.16 },
-      { wave: 'triangle', freq: 587, gain: 0.26, attack: 0.004, hold: 0.03, decay: 0.16, delay: 0.26 },
-      { wave: 'triangle', freq: 784, detune: 9, gain: 0.32, attack: 0.005, hold: 0.12, decay: 0.7, delay: 0.38 },
-      { wave: 'sine', freq: 1568, gain: 0.12, attack: 0.005, decay: 0.8, delay: 0.39 },
-      { wave: 'sine', freq: 196, gain: 0.32, attack: 0.008, hold: 0.1, decay: 0.8, delay: 0.37 },
-      // Shimmer under the held note.
-      { wave: 'noise', gain: 0.1, attack: 0.16, decay: 0.5, delay: 0.3, filter: { type: 'bandpass', freq: 2200, freqEnd: 6000, q: 1.2 } },
+      ...felt(98, 0, 0.5, 0.36),
+      ...marimba(392, 0.06, 0.26, 0.16),
+      ...marimba(494, 0.15, 0.26, 0.16),
+      ...marimba(587, 0.24, 0.28, 0.16),
+      ...marimba(784, 0.34, 0.32, 0.8),
+      ...bar(1175, 0.34, 0.16, 0.8),
+      ...bar(196, 0.34, 0.3, 0.8),
+      ...shaker(0.3, 0.1, 0.4, 0.06),
     ],
   },
 
-  /** The fight lost: the same drum, and one low note falling a minor third with nothing rising over it. */
+  /** The fight lost: a soft drum and a low marimba sinking a minor third, a slide whistle sighing down after. */
   defeat: {
-    gain: 0.42,
+    gain: 0.64,
     jitter: 0.003,
     voices: [
-      { wave: 'noise', gain: 0.3, attack: 0.004, decay: 0.4, filter: { type: 'lowpass', freq: 900, freqEnd: 120, q: 1 } },
-      { wave: 'sine', freq: 73, freqEnd: 49, gain: 0.44, attack: 0.01, hold: 0.1, decay: 0.9 },
-      { wave: 'triangle', freq: 220, freqEnd: 185, detune: 12, gain: 0.22, attack: 0.05, hold: 0.2, decay: 1.1, delay: 0.08 },
-      { wave: 'sine', freq: 330, freqEnd: 277, gain: 0.1, attack: 0.08, decay: 1.0, delay: 0.12 },
+      ...felt(82, 0, 0.44, 0.4),
+      ...marimba(220, 0.06, 0.3, 0.4),
+      ...marimba(185, 0.32, 0.3, 0.7),
+      ...slide(440, 220, 0.5, 0.12, 0.7, 0.06),
     ],
   },
 
-  /**
-   * Level gained: four-note fanfare in D. Fired once as the level-up report lands, over the top of the per-row pips; kept under 1s.
-   * `jitter` near-zero on purpose: it transposes the whole tune, and a fanfare in a different key each time reads as sloppy.
-   */
+  /** Level gained: a marimba run in D up to a held chord, under 1s. Near-zero jitter: a fanfare in a new key each time reads as sloppy. */
   levelUp: {
-    gain: 0.4,
+    gain: 0.48,
     jitter: 0.004,
     voices: [
-      { wave: 'triangle', freq: 587, gain: 0.26, attack: 0.003, hold: 0.02, decay: 0.1 },
-      { wave: 'triangle', freq: 740, gain: 0.26, attack: 0.003, hold: 0.02, decay: 0.1, delay: 0.085 },
-      { wave: 'triangle', freq: 880, gain: 0.26, attack: 0.003, hold: 0.02, decay: 0.1, delay: 0.17 },
-      { wave: 'triangle', freq: 1175, detune: 10, gain: 0.3, attack: 0.004, hold: 0.07, decay: 0.55, delay: 0.255 },
-      // Bell two octaves over the landing note.
-      { wave: 'sine', freq: 2349, gain: 0.1, attack: 0.004, decay: 0.6, delay: 0.26 },
-      // Root held back to the last note so the first three stay light.
-      { wave: 'sine', freq: 293, gain: 0.34, attack: 0.006, decay: 0.6, delay: 0.25 },
-      { wave: 'noise', gain: 0.1, attack: 0.12, decay: 0.3, filter: { type: 'bandpass', freq: 1800, freqEnd: 5200, q: 1.4 } },
+      ...marimba(587, 0, 0.28, 0.16),
+      ...marimba(740, 0.08, 0.28, 0.16),
+      ...marimba(880, 0.16, 0.28, 0.16),
+      ...marimba(1175, 0.24, 0.32, 0.6),
+      ...bar(880, 0.24, 0.18, 0.6),
+      ...bar(294, 0.24, 0.3, 0.6),
     ],
   },
 
-  /** A hero bound in the draft: half a ui.commit (two notes, short tail — the pact seal must outsize it) plus a highpassed "clasp" crack just past the attack. */
+  /** A hero bound in the draft: a wooden clasp snapping shut, two bars answering. */
   'pact.bind': {
-    gain: 0.42,
+    gain: 0.63,
     jitter: 0.008,
-    voices: [
-      { wave: 'triangle', freq: 330, freqEnd: 494, detune: 8, gain: 0.32, attack: 0.005, hold: 0.03, decay: 0.34 },
-      { wave: 'sine', freq: 988, gain: 0.16, attack: 0.006, decay: 0.42, delay: 0.05 },
-      // The clasp.
-      { wave: 'noise', gain: 0.26, attack: 0.001, decay: 0.05, delay: 0.03, filter: { type: 'highpass', freq: 2400 } },
-      { wave: 'sine', freq: 165, gain: 0.28, attack: 0.004, decay: 0.3 },
-    ],
+    voices: [...woodBlock(980, 0, 0.4), ...woodBlock(1320, 0.05, 0.3), ...marimba(659, 0.08, 0.26, 0.3), ...bar(988, 0.14, 0.26, 0.42)],
   },
 
-  /** Equipment seating (Manage Roster): purely mechanical — buckle crack, a second crack at 60ms (the latch seating), metal ring-off. */
+  /** Gear going onto a hero: a buckle in two clicks and one bar. */
   equip: {
-    gain: 0.46,
+    gain: 0.39,
     jitter: 0.05,
-    voices: [
-      { wave: 'noise', gain: 0.4, attack: 0.001, decay: 0.055, filter: { type: 'bandpass', freq: 2700, q: 1.6 } },
-      { wave: 'noise', gain: 0.22, attack: 0.001, decay: 0.04, delay: 0.06, filter: { type: 'highpass', freq: 3400 } },
-      { wave: 'triangle', freq: 196, freqEnd: 147, gain: 0.34, attack: 0.002, decay: 0.19 },
-      { wave: 'sine', freq: 1568, detune: 22, gain: 0.08, attack: 0.003, decay: 0.34, delay: 0.02 },
-    ],
+    voices: [...woodBlock(1700, 0, 0.3), ...woodBlock(1250, 0.06, 0.34), ...bar(784, 0.07, 0.18, 0.24)],
   },
 
-  /** Recruit Contract signing: parchment, stamp at 70ms, then one held tone. The order is the gesture. */
+  /** A Recruit Contract signed: paper, a wooden stamp, then one held bar. */
   'contract.sign': {
-    gain: 0.44,
+    gain: 0.38,
     jitter: 0.02,
-    voices: [
-      { wave: 'noise', gain: 0.16, attack: 0.02, decay: 0.13, filter: { type: 'bandpass', freq: 3400, freqEnd: 1800, q: 0.9 } },
-      // Stamp: lowpassed so it reads as pressed, not struck.
-      { wave: 'noise', gain: 0.36, attack: 0.002, decay: 0.16, delay: 0.07, filter: { type: 'lowpass', freq: 1400, freqEnd: 240, q: 1 } },
-      { wave: 'sine', freq: 146, freqEnd: 73, gain: 0.44, attack: 0.003, hold: 0.02, decay: 0.3, delay: 0.07 },
-      { wave: 'triangle', freq: 392, detune: 9, gain: 0.24, attack: 0.008, hold: 0.04, decay: 0.55, delay: 0.16 },
-      { wave: 'sine', freq: 1176, gain: 0.08, attack: 0.01, decay: 0.5, delay: 0.18 },
-    ],
+    voices: [...paper(0, 0.18), ...felt(150, 0.07, 0.42, 0.18), ...woodBlock(600, 0.07, 0.3), ...marimba(392, 0.16, 0.24, 0.5), ...bar(1175, 0.18, 0.08, 0.4)],
   },
 
-  /** The hero's name written across a Recruit Contract: five strokes of nib on parchment and the lift off the flourish. Paper never rings — no tone in it. */
+  /** A name written across a contract: five strokes of nib and the lift off the flourish. Paper never rings. */
   'quill.scratch': {
-    gain: 0.34,
+    gain: 0.3,
     jitter: 0.04,
     voices: [
       { wave: 'noise', gain: 0.3, attack: 0.01, hold: 0.06, decay: 0.05, filter: { type: 'bandpass', freq: 3800, freqEnd: 5200, q: 3 } },
@@ -424,594 +278,359 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'noise', gain: 0.3, attack: 0.01, hold: 0.08, decay: 0.06, delay: 0.3, filter: { type: 'bandpass', freq: 3400, freqEnd: 5600, q: 3 } },
       { wave: 'noise', gain: 0.22, attack: 0.008, hold: 0.04, decay: 0.05, delay: 0.48, filter: { type: 'bandpass', freq: 5000, freqEnd: 3600, q: 3 } },
       { wave: 'noise', gain: 0.28, attack: 0.01, hold: 0.12, decay: 0.08, delay: 0.6, filter: { type: 'bandpass', freq: 3600, freqEnd: 6000, q: 2.5 } },
-      { wave: 'noise', gain: 0.12, attack: 0.004, decay: 0.03, delay: 0.82, filter: { type: 'highpass', freq: 4000 } },
+      ...xylo(2637, 0.82, 0.06, 0.1),
     ],
   },
 
-  /** The wax seal pressed onto the contract: weight first, lowpassed so it is pressed not struck, then the wax giving under it. */
+  /** The seal pressed on: a rubber stamp's soft thunk and a little wooden rock as it lifts. */
   'wax.stamp': {
-    gain: 0.52,
+    gain: 0.5,
     jitter: 0.02,
-    voices: [
-      { wave: 'noise', gain: 0.5, attack: 0.002, decay: 0.22, filter: { type: 'lowpass', freq: 900, freqEnd: 160, q: 1.2 } },
-      { wave: 'sine', freq: 110, freqEnd: 46, gain: 0.5, attack: 0.002, hold: 0.02, decay: 0.32 },
-      { wave: 'noise', gain: 0.14, attack: 0.01, decay: 0.09, delay: 0.03, filter: { type: 'bandpass', freq: 700, freqEnd: 380, q: 4 } },
-      { wave: 'triangle', freq: 262, detune: 8, gain: 0.12, attack: 0.006, decay: 0.4, delay: 0.04 },
-    ],
+    voices: [...felt(130, 0, 0.5, 0.2), ...woodBlock(540, 0.01, 0.26), ...woodBlock(720, 0.09, 0.14)],
   },
 
-  /** An Evolution charging through its morph: three seconds of air and a beating pair climbing three octaves, timed to break on the white-out. */
+  /** An Evolution charging: a slide whistle climbing three octaves over a swelling shaker, a marimba roll speeding up under it. */
   'evolve.charge': {
-    gain: 0.4,
+    gain: 0.85,
     jitter: 0,
     voices: [
-      { wave: 'noise', gain: 0.24, attack: 2.9, decay: 0.4, filter: { type: 'bandpass', freq: 300, freqEnd: 6000, q: 1.6 } },
-      { wave: 'sine', freq: 131, freqEnd: 1047, detune: 14, gain: 0.2, attack: 2.7, hold: 0.2, decay: 0.4 },
-      { wave: 'triangle', freq: 196, freqEnd: 1568, detune: 20, gain: 0.08, attack: 2.8, decay: 0.4 },
-      { wave: 'sine', freq: 65, gain: 0.22, attack: 1.4, hold: 1.4, decay: 0.5 },
+      ...slide(131, 1047, 0, 0.16, 0.4, 2.7),
+      ...shaker(0, 0.16, 0.4, 2.8),
+      ...bar(262, 0.4, 0.12, 0.2),
+      ...bar(330, 1.0, 0.13, 0.2),
+      ...bar(392, 1.5, 0.14, 0.2),
+      ...bar(523, 1.9, 0.15, 0.2),
+      ...bar(659, 2.2, 0.16, 0.2),
+      ...bar(784, 2.45, 0.17, 0.2),
+      ...bar(1047, 2.65, 0.18, 0.2),
+      ...bar(1319, 2.8, 0.19, 0.2),
     ],
   },
 
-  /** The new form revealed: a four-note run up to a held major chord — the one chiptune voice in the table, square under triangle, because this moment is a homage. */
+  /** The new form revealed: a xylophone run up to a held marimba chord with a drum under it. */
   'evolve.fanfare': {
-    gain: 0.42,
+    gain: 0.38,
     jitter: 0,
     voices: [
-      { wave: 'triangle', freq: 392, gain: 0.2, attack: 0.004, hold: 0.06, decay: 0.12 },
-      { wave: 'square', freq: 523, gain: 0.06, attack: 0.004, hold: 0.06, decay: 0.1, delay: 0.11, filter: { type: 'lowpass', freq: 2400 } },
-      { wave: 'triangle', freq: 523, gain: 0.2, attack: 0.004, hold: 0.06, decay: 0.12, delay: 0.11 },
-      { wave: 'triangle', freq: 659, gain: 0.2, attack: 0.004, hold: 0.06, decay: 0.12, delay: 0.22 },
-      { wave: 'square', freq: 784, gain: 0.06, attack: 0.004, hold: 0.06, decay: 0.1, delay: 0.33, filter: { type: 'lowpass', freq: 2400 } },
-      { wave: 'triangle', freq: 784, gain: 0.2, attack: 0.004, hold: 0.06, decay: 0.12, delay: 0.33 },
-      // The landing chord, held.
-      { wave: 'triangle', freq: 1047, detune: 8, gain: 0.26, attack: 0.006, hold: 0.25, decay: 1.3, delay: 0.48 },
-      { wave: 'square', freq: 1047, gain: 0.05, attack: 0.006, hold: 0.25, decay: 0.9, delay: 0.48, filter: { type: 'lowpass', freq: 3000 } },
-      { wave: 'triangle', freq: 659, gain: 0.15, attack: 0.01, hold: 0.25, decay: 1.2, delay: 0.48 },
-      { wave: 'triangle', freq: 784, gain: 0.13, attack: 0.01, hold: 0.25, decay: 1.2, delay: 0.48 },
-      { wave: 'sine', freq: 131, gain: 0.32, attack: 0.01, hold: 0.2, decay: 1.2, delay: 0.48 },
-      { wave: 'sine', freq: 2093, detune: 12, gain: 0.07, attack: 0.01, decay: 1.4, delay: 0.5 },
-      { wave: 'noise', gain: 0.08, attack: 0.2, decay: 1.0, delay: 0.48, filter: { type: 'highpass', freq: 5200 } },
+      ...xylo(784, 0, 0.2, 0.14),
+      ...xylo(1047, 0.11, 0.2, 0.14),
+      ...xylo(1319, 0.22, 0.2, 0.14),
+      ...xylo(1568, 0.33, 0.22, 0.14),
+      ...felt(131, 0.48, 0.44, 0.4),
+      ...marimba(1047, 0.48, 0.3, 1.2),
+      ...bar(659, 0.48, 0.2, 1.1),
+      ...bar(784, 0.48, 0.18, 1.1),
+      ...bar(262, 0.48, 0.28, 1.1),
+      ...xylo(2093, 0.56, 0.1, 0.5),
+      ...shaker(0.44, 0.1, 0.6, 0.06),
     ],
   },
 
-  /**
-   * Blessing shrine on screen OPEN (StatBoostScreen). Fires on a mount, not a press, so nothing here has a transient (no attack under 0.15s) —
-   * it must not read as feedback on the tap that got the player here. Per-shrine `pitch` from STAT_BOOST_CONFIG, not three sounds.
-   */
+  /** Arriving at a blessing shrine. Fires on a mount, not a press, so a soft roll that starts quiet; pitched per shrine. */
   shrine: {
-    gain: 0.34,
+    gain: 0.66,
     jitter: 0.004,
     voices: [
-      { wave: 'triangle', freq: 131, freqEnd: 196, detune: 10, gain: 0.34, attack: 0.3, hold: 0.1, decay: 0.9 },
-      { wave: 'sine', freq: 65, gain: 0.28, attack: 0.35, decay: 1.1 },
-      // The bowl: partials a fifth apart, upper ones detuned so they beat.
-      { wave: 'sine', freq: 523, gain: 0.2, attack: 0.16, decay: 1.3, delay: 0.22 },
-      { wave: 'sine', freq: 784, detune: 12, gain: 0.13, attack: 0.18, decay: 1.2, delay: 0.26 },
-      { wave: 'sine', freq: 1568, detune: 18, gain: 0.05, attack: 0.2, decay: 1.0, delay: 0.3 },
-      { wave: 'noise', gain: 0.12, attack: 0.4, decay: 0.9, filter: { type: 'bandpass', freq: 500, freqEnd: 3000, q: 0.7 } },
+      ...bar(262, 0.16, 0.12, 0.5, 0.04),
+      ...bar(392, 0.28, 0.16, 0.5, 0.03),
+      ...bar(523, 0.4, 0.22, 0.7, 0.02),
+      ...bar(784, 0.52, 0.2, 0.9, 0.02),
+      ...bar(131, 0.16, 0.24, 1.1, 0.2),
     ],
   },
 
-  /**
-   * A Mastery Scroll unfurling onto a hero. Paper, then the thing written on it: a short filtered
-   * noise sweep for the unroll, and a rising two-note figure under it for what was learned. The
-   * caller pitches it up on the spend that ranks the hero, so the third one lands higher.
-   */
+  /** A scroll unrolled onto a hero: the paper, then two bars a fifth apart. Re-pitched up on the spend that ranks. */
   'scroll.spend': {
-    gain: 0.34,
-    jitter: 0.005,
-    voices: [
-      // The unroll — bandpassed noise sweeping up, no pitch of its own.
-      { wave: 'noise', gain: 0.16, attack: 0.006, decay: 0.28, filter: { type: 'bandpass', freq: 900, freqEnd: 4200, q: 1.1 } },
-      // What it taught. Fifth apart, the second arriving late enough to read as a consequence.
-      { wave: 'triangle', freq: 523, gain: 0.2, attack: 0.008, hold: 0.03, decay: 0.3 },
-      { wave: 'sine', freq: 784, gain: 0.16, attack: 0.01, decay: 0.36, delay: 0.1 },
-      { wave: 'sine', freq: 1568, detune: 10, gain: 0.05, attack: 0.012, decay: 0.3, delay: 0.12 },
-    ],
-  },
-
-  /**
-   * A Gem set into a hero: the stone's click into the socket, then a glassy bell — high partials a
-   * twelfth apart, slightly detuned so they shimmer. The caller pitches it by stat and up on a milestone.
-   */
-  'gem.set': {
-    gain: 0.36,
-    jitter: 0.008,
-    voices: [
-      { wave: 'noise', gain: 0.22, attack: 0.001, decay: 0.04, filter: { type: 'bandpass', freq: 3200, q: 4 } },
-      { wave: 'triangle', freq: 1047, gain: 0.18, attack: 0.002, decay: 0.45 },
-      { wave: 'sine', freq: 1568, detune: 7, gain: 0.14, attack: 0.004, decay: 0.6, delay: 0.04 },
-      { wave: 'sine', freq: 3136, detune: -9, gain: 0.07, attack: 0.004, decay: 0.7, delay: 0.06 },
-      { wave: 'sine', freq: 4699, detune: 12, gain: 0.03, attack: 0.006, decay: 0.8, delay: 0.09 },
-    ],
-  },
-
-  /**
-   * One piece of loot popping up on the victory screen: a round pop, then three tiny bells
-   * climbing a major triad a few ms apart so they glitter rather than chord, with a breath of air
-   * over the top. The caller raises `pitch` piece by piece so a pile climbs.
-   */
-  'loot.twinkle': {
     gain: 0.32,
+    jitter: 0.005,
+    voices: [...swish(900, 4200, 0, 0.16, 0.26, 0.006), ...marimba(523, 0, 0.2, 0.26), ...bar(784, 0.1, 0.18, 0.34)],
+  },
+
+  /** A Gem set into a hero: a click into the socket, then two xylophone bars. Re-pitched by stat. */
+  'gem.set': {
+    gain: 0.45,
+    jitter: 0.008,
+    voices: [...woodBlock(2400, 0, 0.18), ...xylo(1047, 0.01, 0.2, 0.3), ...xylo(1568, 0.05, 0.16, 0.4)],
+  },
+
+  /** One piece of loot popping up: a pop, then three xylophone bars climbing. The caller raises pitch piece by piece. */
+  'loot.twinkle': {
+    gain: 0.23,
     jitter: 0.01,
     voices: [
-      { wave: 'sine', freq: 520, freqEnd: 1040, gain: 0.2, attack: 0.002, decay: 0.07 },
-      { wave: 'sine', freq: 2093, detune: 6, gain: 0.12, attack: 0.002, decay: 0.3, delay: 0.03 },
-      { wave: 'sine', freq: 2637, detune: -8, gain: 0.1, attack: 0.002, decay: 0.34, delay: 0.07 },
-      { wave: 'sine', freq: 3136, detune: 10, gain: 0.09, attack: 0.002, decay: 0.42, delay: 0.11 },
-      { wave: 'triangle', freq: 4186, gain: 0.04, attack: 0.003, decay: 0.5, delay: 0.14 },
-      { wave: 'noise', gain: 0.05, attack: 0.02, decay: 0.3, delay: 0.03, filter: { type: 'highpass', freq: 6500 } },
+      { wave: 'sine', freq: 520, freqEnd: 1240, gain: 0.2, attack: 0.001, decay: 0.05 },
+      ...xylo(2093, 0.03, 0.12, 0.2),
+      ...xylo(2637, 0.07, 0.1, 0.24),
+      ...xylo(3136, 0.11, 0.09, 0.3),
     ],
   },
 
-  /** The blessing landing: `shrine`'s bowl struck with an attack, same per-shrine pitch. Not `heal` — a flat sine triad reads as medical, not given. */
+  /** A shrine's grant landing: a marimba chord rolled up, same per-shrine pitch. */
   blessing: {
-    gain: 0.42,
-    jitter: 0.006,
-    voices: [
-      { wave: 'triangle', freq: 196, detune: 8, gain: 0.3, attack: 0.01, hold: 0.05, decay: 0.6 },
-      { wave: 'sine', freq: 392, gain: 0.26, attack: 0.012, decay: 0.55 },
-      { wave: 'sine', freq: 587, gain: 0.22, attack: 0.014, decay: 0.6, delay: 0.07 },
-      { wave: 'sine', freq: 784, gain: 0.18, attack: 0.014, decay: 0.7, delay: 0.14 },
-      { wave: 'sine', freq: 1568, detune: 14, gain: 0.09, attack: 0.02, decay: 0.9, delay: 0.15 },
-      { wave: 'noise', gain: 0.1, attack: 0.1, decay: 0.5, filter: { type: 'bandpass', freq: 1400, freqEnd: 4600, q: 1.2 } },
-    ],
-  },
-
-  /**
-   * Class conferred (AcademyNodeScreen). A chord struck whole — sus4, not major — with a late bell.
-   * Timed to styles.css rite-reveal-flash (rite-flare, 1.1s).
-   */
-  'class.learn': {
-    gain: 0.44,
-    jitter: 0.004,
-    voices: [
-      { wave: 'triangle', freq: 147, detune: 10, gain: 0.32, attack: 0.008, hold: 0.05, decay: 0.7 },
-      { wave: 'triangle', freq: 294, gain: 0.24, attack: 0.008, hold: 0.04, decay: 0.65 },
-      { wave: 'sine', freq: 392, gain: 0.22, attack: 0.01, decay: 0.7 },
-      { wave: 'sine', freq: 588, detune: 8, gain: 0.16, attack: 0.012, decay: 0.75 },
-      { wave: 'sine', freq: 1176, gain: 0.1, attack: 0.006, decay: 1.0, delay: 0.12 },
-      { wave: 'noise', gain: 0.14, attack: 0.02, decay: 0.36, filter: { type: 'bandpass', freq: 1200, freqEnd: 3800, q: 1.1 } },
-    ],
-  },
-
-  /** Cache lid (CacheReveal.tsx, on the lid-swing frame): latch, lid, then light. Lower and drier than `equip` — wood letting go, not metal seating. */
-  'cache.open': {
-    gain: 0.44,
-    jitter: 0.02,
-    voices: [
-      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.05, filter: { type: 'bandpass', freq: 1500, q: 1.4 } },
-      { wave: 'triangle', freq: 165, freqEnd: 110, gain: 0.3, attack: 0.003, decay: 0.22, delay: 0.01 },
-      // The only slow attack — light spilling, not a second strike.
-      { wave: 'noise', gain: 0.16, attack: 0.09, decay: 0.5, delay: 0.05, filter: { type: 'bandpass', freq: 900, freqEnd: 6000, q: 0.8 } },
-      { wave: 'triangle', freq: 262, gain: 0.22, attack: 0.01, decay: 0.55, delay: 0.13 },
-      { wave: 'sine', freq: 1047, gain: 0.16, attack: 0.008, decay: 0.6, delay: 0.13 },
-      { wave: 'sine', freq: 1319, detune: 9, gain: 0.13, attack: 0.01, decay: 0.7, delay: 0.19 },
-    ],
-  },
-
-  /**
-   * The Smithy's hammer on hot metal (SmithyBeat): a hard, narrow clank — a Q-8 noise burst at the
-   * anvil's own mode and three inharmonic partials, detuned so they beat — with a thump under it for
-   * the weight of the swing. The beat plays it three times with a rising `pitch`.
-   */
-  'anvil.strike': {
-    gain: 0.5,
-    jitter: 0.015,
-    voices: [
-      { wave: 'noise', gain: 0.4, attack: 0.001, decay: 0.07, filter: { type: 'bandpass', freq: 2900, q: 7 } },
-      { wave: 'noise', gain: 0.22, attack: 0.001, decay: 0.16, filter: { type: 'lowpass', freq: 900, freqEnd: 160, q: 1.1 } },
-      { wave: 'sine', freq: 95, freqEnd: 58, gain: 0.34, attack: 0.002, decay: 0.2 },
-      { wave: 'sine', freq: 1244, gain: 0.16, attack: 0.001, decay: 0.24, delay: 0.004 },
-      { wave: 'sine', freq: 2093, detune: 14, gain: 0.12, attack: 0.001, decay: 0.18, delay: 0.004 },
-      { wave: 'sine', freq: 3322, detune: -9, gain: 0.07, attack: 0.001, decay: 0.12, delay: 0.004 },
-    ],
-  },
-
-  /** The last strike's ring: the piece taking its new tier. `anvil.strike`'s partials left to sing, and a bright shimmer opening over them. */
-  'anvil.ring': {
-    gain: 0.46,
-    jitter: 0.01,
-    voices: [
-      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.08, filter: { type: 'bandpass', freq: 3200, q: 6 } },
-      { wave: 'sine', freq: 1244, gain: 0.22, attack: 0.002, decay: 1.1 },
-      { wave: 'sine', freq: 2093, detune: 11, gain: 0.16, attack: 0.002, decay: 0.9, delay: 0.01 },
-      { wave: 'sine', freq: 2637, detune: -7, gain: 0.1, attack: 0.004, decay: 1.3, delay: 0.02 },
-      { wave: 'noise', gain: 0.12, attack: 0.12, decay: 0.7, delay: 0.08, filter: { type: 'bandpass', freq: 1200, freqEnd: 7000, q: 0.9 } },
-      { wave: 'sine', freq: 3136, gain: 0.08, attack: 0.05, decay: 1.2, delay: 0.16 },
-    ],
-  },
-
-  /** Hot metal into the trough (SmithyBeat): a hard spit, then steam hissing off and thinning out as it cools. */
-  'forge.quench': {
-    gain: 0.5,
-    jitter: 0.03,
-    voices: [
-      { wave: 'noise', gain: 0.34, attack: 0.002, decay: 0.09, filter: { type: 'bandpass', freq: 1100, q: 2.2 } },
-      { wave: 'noise', gain: 0.3, attack: 0.03, hold: 0.25, decay: 0.9, filter: { type: 'highpass', freq: 3800, freqEnd: 6500, q: 0.7 } },
-      { wave: 'noise', gain: 0.16, attack: 0.05, decay: 1.1, delay: 0.05, filter: { type: 'bandpass', freq: 7000, freqEnd: 2600, q: 1.4 } },
-      { wave: 'sine', freq: 120, freqEnd: 70, gain: 0.18, attack: 0.002, decay: 0.16 },
-    ],
-  },
-
-  /** The forge breathing up as the piece heats (SmithyBeat): a low, rising roar of fire under a crackle. */
-  'forge.roar': {
-    gain: 0.36,
-    jitter: 0.02,
-    voices: [
-      { wave: 'noise', gain: 0.3, attack: 0.35, hold: 0.25, decay: 0.5, filter: { type: 'lowpass', freq: 300, freqEnd: 1400, q: 1.5 } },
-      { wave: 'noise', gain: 0.12, attack: 0.2, hold: 0.3, decay: 0.4, filter: { type: 'bandpass', freq: 2400, q: 3 } },
-      { wave: 'sine', freq: 55, freqEnd: 82, gain: 0.16, attack: 0.3, hold: 0.2, decay: 0.5 },
-    ],
-  },
-
-  /** The Enchanter's circle drawing in (SmithyBeat): a filtered saw rising an octave and a half under three chimes climbing the same way. The element's own `cast.*` is what lands on the piece after it. */
-  'enchant.bind': {
-    gain: 0.4,
-    jitter: 0.02,
-    voices: [
-      { wave: 'sawtooth', freq: 196, freqEnd: 587, gain: 0.14, attack: 0.05, hold: 0.5, decay: 0.4, filter: { type: 'lowpass', freq: 700, freqEnd: 3200, q: 2.4 } },
-      { wave: 'noise', gain: 0.1, attack: 0.2, decay: 0.7, filter: { type: 'bandpass', freq: 1800, freqEnd: 6500, q: 1.2 } },
-      { wave: 'sine', freq: 784, gain: 0.12, attack: 0.01, decay: 0.4, delay: 0.3 },
-      { wave: 'sine', freq: 1175, detune: 8, gain: 0.12, attack: 0.01, decay: 0.45, delay: 0.55 },
-      { wave: 'sine', freq: 1568, detune: -6, gain: 0.12, attack: 0.01, decay: 0.6, delay: 0.8 },
-    ],
-  },
-
-  /**
-   * One coin onto the pile (NodeRewardScreen's count-up), ~70ms apart with the caller raising `pitch`.
-   * Metal, so it is noise-led and bright where `xp.orb` is a tone; heavy jitter because a dozen
-   * identical strikes in under a second read as a machine, not as coins.
-   */
-  'gold.coin': {
-    gain: 0.24,
-    jitter: 0.05,
-    voices: [
-      { wave: 'noise', gain: 0.16, attack: 0.001, decay: 0.04, filter: { type: 'bandpass', freq: 5200, q: 2.2 } },
-      { wave: 'triangle', freq: 1760, gain: 0.16, attack: 0.001, hold: 0.008, decay: 0.09 },
-      { wave: 'sine', freq: 2640, detune: 12, gain: 0.09, attack: 0.002, decay: 0.13, delay: 0.004 },
-    ],
-  },
-
-  /** The pile settling once the count-up lands: the same metal, dropped an octave and given a body. */
-  'gold.purse': {
-    gain: 0.4,
-    jitter: 0.01,
-    voices: [
-      { wave: 'noise', gain: 0.22, attack: 0.004, decay: 0.16, filter: { type: 'bandpass', freq: 2600, freqEnd: 900, q: 1.2 } },
-      { wave: 'triangle', freq: 196, freqEnd: 147, gain: 0.34, attack: 0.003, decay: 0.3 },
-      { wave: 'triangle', freq: 880, gain: 0.2, attack: 0.002, hold: 0.02, decay: 0.35 },
-      { wave: 'sine', freq: 1320, detune: 9, gain: 0.12, attack: 0.004, decay: 0.5, delay: 0.03 },
-    ],
-  },
-
-  /** One hero's row landing on the level-up report (LevelUpScreen), with the caller raising `pitch` up the roster. UI-sized: six can fire in 1.4s and tails would stack into a chord. */
-  'xp.orb': {
-    gain: 0.3,
-    jitter: 0.006,
-    voices: [
-      { wave: 'triangle', freq: 784, gain: 0.24, attack: 0.002, hold: 0.015, decay: 0.13 },
-      { wave: 'sine', freq: 1568, gain: 0.1, attack: 0.003, decay: 0.2, delay: 0.005 },
-      { wave: 'noise', gain: 0.05, attack: 0.004, decay: 0.07, filter: { type: 'highpass', freq: 4000 } },
-    ],
-  },
-
-  /** Event node on mount (EventNodeScreen): same no-transient rule as `shrine`, but a suspended fourth left unresolved. Per-tone `pitch` from TONE_PITCH. */
-  discovery: {
-    gain: 0.34,
-    jitter: 0.006,
-    voices: [
-      { wave: 'triangle', freq: 175, freqEnd: 233, detune: 9, gain: 0.3, attack: 0.32, hold: 0.12, decay: 0.9 },
-      { wave: 'sine', freq: 87, gain: 0.24, attack: 0.38, decay: 1.0 },
-      { wave: 'sine', freq: 466, detune: 14, gain: 0.15, attack: 0.24, decay: 1.1, delay: 0.24 },
-      { wave: 'sine', freq: 932, detune: 20, gain: 0.06, attack: 0.28, decay: 0.9, delay: 0.34 },
-      { wave: 'noise', gain: 0.1, attack: 0.45, decay: 0.85, filter: { type: 'bandpass', freq: 420, freqEnd: 2400, q: 0.7 } },
-    ],
-  },
-
-  /** A warden's socket struck through (PactSealScreen). Two impacts inside 60ms — the cut, then the stone taking it — over a rising fifth, so it reads as a lock giving rather than a hit landing. */
-  'seal.strike': {
-    gain: 0.5,
-    jitter: 0.01,
-    voices: [
-      { wave: 'noise', gain: 0.34, attack: 0.001, decay: 0.09, filter: { type: 'bandpass', freq: 3200, freqEnd: 900, q: 1.1 } },
-      { wave: 'noise', gain: 0.4, attack: 0.001, decay: 0.28, delay: 0.055, filter: { type: 'lowpass', freq: 1400, freqEnd: 180, q: 1.2 } },
-      { wave: 'sine', freq: 140, freqEnd: 52, gain: 0.42, attack: 0.002, decay: 0.36, delay: 0.055 },
-      { wave: 'triangle', freq: 330, freqEnd: 494, detune: 7, gain: 0.22, attack: 0.01, hold: 0.04, decay: 0.5, delay: 0.09 },
-      { wave: 'sine', freq: 988, gain: 0.12, attack: 0.008, decay: 0.6, delay: 0.16 },
-    ],
-  },
-
-  /**
-   * A spent star leaving the balance for the sky (StarfallScreen), once a star, re-pitched up for the
-   * second. Glass, not metal: two high sines a fifth apart with a band of air lifting under them,
-   * so the sound climbs the way the token does.
-   */
-  'star.rise': {
-    gain: 0.3,
-    jitter: 0.01,
-    voices: [
-      { wave: 'sine', freq: 1319, freqEnd: 1760, gain: 0.2, attack: 0.01, decay: 0.55 },
-      { wave: 'sine', freq: 1976, freqEnd: 2637, detune: 9, gain: 0.1, attack: 0.02, decay: 0.5, delay: 0.04 },
-      { wave: 'noise', gain: 0.1, attack: 0.08, decay: 0.4, filter: { type: 'bandpass', freq: 2200, freqEnd: 6200, q: 1.3 } },
-    ],
-  },
-
-  /** The star letting go of the sky: a long falling band of air with a tone sliding under it — the one sound here that travels downward. */
-  'star.fall': {
-    gain: 0.4,
-    jitter: 0.01,
-    voices: [
-      { wave: 'noise', gain: 0.32, attack: 0.12, decay: 0.55, filter: { type: 'bandpass', freq: 5200, freqEnd: 600, q: 1.1 } },
-      { wave: 'sine', freq: 1568, freqEnd: 392, gain: 0.16, attack: 0.05, hold: 0.1, decay: 0.5 },
-      { wave: 'triangle', freq: 784, freqEnd: 196, detune: 10, gain: 0.1, attack: 0.08, decay: 0.55 },
-    ],
-  },
-
-  /**
-   * The star reaching the ground and a hero standing up out of it. Impact first — lowpassed noise
-   * and a dropping sub, the weight — then a bell a beat later that is the arrival rather than the
-   * crash, so the tail rings up where `seal.shatter`'s falls away.
-   */
-  'star.land': {
-    gain: 0.54,
-    jitter: 0.006,
-    voices: [
-      { wave: 'noise', gain: 0.42, attack: 0.002, decay: 0.5, filter: { type: 'lowpass', freq: 2200, freqEnd: 160, q: 0.9 } },
-      { wave: 'sine', freq: 98, freqEnd: 41, gain: 0.5, attack: 0.003, decay: 0.7 },
-      { wave: 'triangle', freq: 392, freqEnd: 587, detune: 8, gain: 0.22, attack: 0.02, hold: 0.06, decay: 0.9, delay: 0.16 },
-      { wave: 'sine', freq: 1175, gain: 0.12, attack: 0.01, decay: 1.2, delay: 0.2 },
-      { wave: 'sine', freq: 2349, gain: 0.06, attack: 0.01, decay: 1.0, delay: 0.24 },
-    ],
-  },
-
-  /** The summoning wheel passing a sigil (StarfallScreen): one glass tick, re-pitched as the wheel slows. */
-  'star.tick': {
-    gain: 0.22,
-    jitter: 0.02,
-    voices: [
-      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.03, filter: { type: 'bandpass', freq: 4200, q: 6 } },
-      { wave: 'sine', freq: 2093, gain: 0.12, attack: 0.002, decay: 0.08 },
-    ],
-  },
-
-  /** The wheel stopping on the hero's type: a struck bell over a low bloom, so the answer lands before the star does. */
-  'star.lock': {
-    gain: 0.48,
-    jitter: 0.004,
-    voices: [
-      { wave: 'noise', gain: 0.22, attack: 0.001, decay: 0.12, filter: { type: 'bandpass', freq: 2600, freqEnd: 1200, q: 5 } },
-      { wave: 'sine', freq: 131, freqEnd: 98, gain: 0.34, attack: 0.004, decay: 0.9 },
-      { wave: 'triangle', freq: 523, detune: 6, gain: 0.2, attack: 0.004, decay: 1.4 },
-      { wave: 'sine', freq: 1568, detune: 11, gain: 0.1, attack: 0.004, decay: 1.6, delay: 0.02 },
-      { wave: 'sine', freq: 2093, gain: 0.06, attack: 0.01, decay: 1.2, delay: 0.05 },
-    ],
-  },
-
-  /** The answering star swelling before it lets go: a long rising band of air with a fifth climbing under it. */
-  'star.charge': {
-    gain: 0.36,
-    jitter: 0,
-    voices: [
-      { wave: 'noise', gain: 0.24, attack: 0.8, decay: 0.2, filter: { type: 'bandpass', freq: 500, freqEnd: 5200, q: 1.4 } },
-      { wave: 'sine', freq: 196, freqEnd: 784, gain: 0.18, attack: 0.7, hold: 0.1, decay: 0.2 },
-      { wave: 'triangle', freq: 294, freqEnd: 1175, detune: 12, gain: 0.08, attack: 0.75, decay: 0.2 },
-    ],
-  },
-
-  /** The hero coloured in: a rising major arpeggio that rings on, the Starfall's one fanfare. */
-  'star.reveal': {
-    gain: 0.42,
-    jitter: 0,
-    voices: [
-      { wave: 'triangle', freq: 392, gain: 0.2, attack: 0.01, decay: 1.4 },
-      { wave: 'triangle', freq: 494, gain: 0.18, attack: 0.01, decay: 1.4, delay: 0.09 },
-      { wave: 'triangle', freq: 587, gain: 0.18, attack: 0.01, decay: 1.5, delay: 0.18 },
-      { wave: 'sine', freq: 784, detune: 8, gain: 0.16, attack: 0.01, decay: 1.9, delay: 0.27 },
-      { wave: 'sine', freq: 1568, detune: 14, gain: 0.07, attack: 0.02, decay: 1.8, delay: 0.3 },
-      { wave: 'noise', gain: 0.08, attack: 0.3, decay: 1.2, delay: 0.2, filter: { type: 'highpass', freq: 5200 } },
-    ],
-  },
-
-  /** A champion's star lighting over it (ChampionScreen): a struck glass bell, a sparkle climbing off it, and a low bloom under both. */
-  'star.earn': {
-    gain: 0.46,
-    jitter: 0.004,
-    voices: [
-      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.08, filter: { type: 'bandpass', freq: 5200, q: 4 } },
-      { wave: 'sine', freq: 196, freqEnd: 147, gain: 0.24, attack: 0.004, decay: 0.8 },
-      { wave: 'triangle', freq: 784, detune: 5, gain: 0.2, attack: 0.003, decay: 1.3 },
-      { wave: 'sine', freq: 1175, gain: 0.14, attack: 0.003, decay: 1.4, delay: 0.06 },
-      { wave: 'sine', freq: 1568, gain: 0.12, attack: 0.003, decay: 1.2, delay: 0.12 },
-      { wave: 'sine', freq: 2349, detune: 12, gain: 0.08, attack: 0.003, decay: 1.0, delay: 0.18 },
-      { wave: 'noise', gain: 0.07, attack: 0.15, decay: 0.9, delay: 0.1, filter: { type: 'highpass', freq: 6000 } },
-    ],
-  },
-
-  /** The fifth socket closing — the ring itself letting go. `seal.strike`'s weight with the tail opened out, and the only sound in the table that ends lower than it starts. */
-  'seal.shatter': {
     gain: 0.56,
-    jitter: 0.008,
-    voices: [
-      { wave: 'noise', gain: 0.46, attack: 0.002, decay: 0.7, filter: { type: 'lowpass', freq: 2600, freqEnd: 140, q: 0.9 } },
-      { wave: 'sine', freq: 110, freqEnd: 41, gain: 0.5, attack: 0.003, decay: 0.9 },
-      { wave: 'triangle', freq: 220, freqEnd: 147, detune: 12, gain: 0.26, attack: 0.02, hold: 0.08, decay: 0.85, delay: 0.06 },
-      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.14, delay: 0.19, filter: { type: 'highpass', freq: 3400 } },
-      { wave: 'sine', freq: 659, detune: 16, gain: 0.1, attack: 0.03, decay: 1.1, delay: 0.24 },
-    ],
+    jitter: 0.006,
+    voices: [...marimba(392, 0, 0.26, 0.5), ...bar(587, 0.07, 0.22, 0.55), ...bar(784, 0.14, 0.2, 0.7), ...bar(196, 0, 0.26, 0.6), ...xylo(1568, 0.16, 0.08, 0.5)],
   },
 
-  /**
-   * The run's cold open (LoreScreen), under the black. Deliberately NOT loud — `entrance.dread` keeps the "biggest sound
-   * in the table" licence and this takes a different axis instead: the LOWEST. A 29Hz fundamental most phones cannot reproduce
-   * at all, with a 58Hz octave over it doing the actual work on a small speaker, so the beat degrades to a hum rather than to
-   * nothing. Every attack is slow: nothing here is an impact.
-   */
-  'titan.stir': {
-    gain: 0.4,
-    jitter: 0,
-    voices: [
-      { wave: 'sine', freq: 29, freqEnd: 24, gain: 0.6, attack: 0.9, hold: 1.4, decay: 2.2 },
-      { wave: 'sine', freq: 58, freqEnd: 48, gain: 0.3, attack: 1.1, hold: 1.2, decay: 2.0 },
-      // The rumble. Noise closing to sub over four seconds is the room, not the thing in it.
-      { wave: 'noise', gain: 0.34, attack: 0.75, decay: 3.0, filter: { type: 'lowpass', freq: 240, freqEnd: 55, q: 0.8 } },
-      // Enters late and beats against itself — the one voice that is the Titan rather than the ground.
-      { wave: 'sawtooth', freq: 41, freqEnd: 39, detune: 22, gain: 0.22, attack: 1.2, hold: 0.9, decay: 1.6, delay: 1.0, filter: { type: 'lowpass', freq: 180, freqEnd: 420, q: 3.2 } },
-    ],
+  /** A Class conferred: a sus4 chord struck whole, a late xylophone bar. Timed to rite-reveal-flash. */
+  'class.learn': {
+    gain: 0.54,
+    jitter: 0.004,
+    voices: [...felt(147, 0, 0.36, 0.3), ...marimba(294, 0, 0.26, 0.7), ...bar(392, 0, 0.22, 0.7), ...bar(588, 0, 0.18, 0.75), ...xylo(1176, 0.12, 0.12, 0.6)],
   },
 
-  /** The eyes reaching open. A dry grind off the top of `titan.stir`'s bed, and the only fast attack in the beat. */
-  'titan.gaze': {
+  /** A cache lid: a wooden latch, the lid knocking open, then a chord spilling out. */
+  'cache.open': {
+    gain: 0.47,
+    jitter: 0.02,
+    voices: [...woodBlock(1400, 0, 0.3), ...woodBlock(460, 0.04, 0.36), ...marimba(523, 0.13, 0.22, 0.5), ...bar(659, 0.17, 0.2, 0.55), ...bar(784, 0.21, 0.2, 0.7)],
+  },
+
+  /** A toy hammer on a wooden peg. The beat plays it three times with a rising pitch. */
+  'anvil.strike': {
+    gain: 0.39,
+    jitter: 0.015,
+    voices: [...woodBlock(900, 0, 0.44), ...felt(160, 0, 0.36, 0.12)],
+  },
+
+  /** The last strike's ring: two xylophone bars left to sing. */
+  'anvil.ring': {
     gain: 0.44,
-    jitter: 0,
-    voices: [
-      { wave: 'noise', gain: 0.3, attack: 0.006, decay: 0.42, filter: { type: 'bandpass', freq: 1600, freqEnd: 320, q: 0.9 } },
-      { wave: 'sine', freq: 78, freqEnd: 34, gain: 0.44, attack: 0.008, decay: 0.8 },
-      { wave: 'triangle', freq: 117, freqEnd: 98, detune: 14, gain: 0.16, attack: 0.05, hold: 0.2, decay: 0.9, delay: 0.04, filter: { type: 'lowpass', freq: 520, q: 2.2 } },
-    ],
+    jitter: 0.01,
+    voices: [...woodBlock(1100, 0, 0.3), ...xylo(1244, 0, 0.22, 0.8), ...xylo(1865, 0.02, 0.16, 0.9), ...xylo(2489, 0.12, 0.1, 0.9)],
   },
 
-  /**
-   * The route drawing forward out of the node just finished (MapRoute). One rising sweep under the
-   * whole fan of paths rather than a tick per path: what is happening is a single gesture, and the
-   * three sounds that follow it are the ones carrying information.
-   */
-  'map.path': {
-    gain: 0.3,
+  /** Hot metal into the trough: a bloop, then a short soft hiss. */
+  'forge.quench': {
+    gain: 0.82,
     jitter: 0.03,
     voices: [
-      // The line itself: a band of noise climbing, so the sound has the same direction the stroke does.
-      { wave: 'noise', gain: 0.26, attack: 0.06, decay: 0.42, filter: { type: 'bandpass', freq: 420, freqEnd: 2400, q: 1.1 } },
-      { wave: 'triangle', freq: 147, freqEnd: 294, gain: 0.2, attack: 0.05, decay: 0.4 },
-      // Enough floor that it reads as ground being crossed rather than as a hiss off the top of the mix.
-      { wave: 'sine', freq: 74, freqEnd: 96, gain: 0.22, attack: 0.03, hold: 0.1, decay: 0.34 },
+      { wave: 'sine', freq: 300, freqEnd: 760, gain: 0.3, attack: 0.002, decay: 0.08 },
+      { wave: 'noise', gain: 0.2, attack: 0.03, hold: 0.12, decay: 0.4, filter: { type: 'highpass', freq: 4200, freqEnd: 7000, q: 0.7 } },
     ],
   },
 
-  /**
-   * Setting off down one of them. The one sound on the map screen that is a COMMIT rather than a
-   * report, so it is the only one that rises the whole way: the medallion pressed into the ground
-   * — a stone knock, then a bronze ring off the medallion itself — under a perfect fifth climbing
-   * in two octaves at once. Every other UI press in the table closes; this one is spent open.
-   */
-  'map.select': {
-    gain: 0.37,
-    jitter: 0.015,
+  /** The forge breathing up: a soft whoosh rising. */
+  'forge.roar': {
+    gain: 0.88,
+    jitter: 0.02,
+    voices: [...swish(300, 1600, 0, 0.3, 0.5, 0.35), ...shaker(0.2, 0.06, 0.4, 0.2)],
+  },
+
+  /** An enchantment drawing in: a slide whistle rising under three xylophone bars climbing with it. */
+  'enchant.bind': {
+    gain: 0.68,
+    jitter: 0.02,
+    voices: [...slide(392, 1175, 0, 0.12, 0.4, 0.5), ...xylo(784, 0.3, 0.14, 0.3), ...xylo(1175, 0.55, 0.14, 0.34), ...xylo(1568, 0.8, 0.14, 0.45)],
+  },
+
+  /** One coin onto a pile, ~70ms apart with a rising pitch: a xylophone plink. Heavy jitter so a run of them reads as coins, not a machine. */
+  'gold.coin': { gain: 0.4, jitter: 0.05, voices: xylo(1760, 0, 0.18, 0.09) },
+
+  /** The pile settling: a wooden box thunk and one bar. */
+  'gold.purse': {
+    gain: 0.34,
+    jitter: 0.01,
+    voices: [...woodBlock(520, 0, 0.36), ...felt(150, 0, 0.3, 0.14), ...bar(880, 0.02, 0.2, 0.36)],
+  },
+
+  /** One hero's row landing on the level-up report, re-pitched up the roster. Short: six can fire in 1.4s. */
+  'xp.orb': { gain: 0.35, jitter: 0.006, voices: marimba(784, 0, 0.26, 0.14) },
+
+  /** An event on mount: a soft roll on a suspended fourth, left unresolved. Pitched per tone. */
+  discovery: {
+    gain: 0.43,
+    jitter: 0.006,
     voices: [
-      { wave: 'noise', gain: 1.5, attack: 0.001, decay: 0.045, filter: { type: 'bandpass', freq: 820, q: 6 } },
-      { wave: 'noise', gain: 0.28, attack: 0.001, decay: 0.05, filter: { type: 'lowpass', freq: 1800, freqEnd: 300, q: 1 } },
-      { wave: 'sine', freq: 96, freqEnd: 58, gain: 0.44, attack: 0.002, hold: 0.015, decay: 0.2 },
-      { wave: 'triangle', freq: 110, freqEnd: 165, gain: 0.3, attack: 0.002, hold: 0.02, decay: 0.2 },
-      { wave: 'triangle', freq: 392, freqEnd: 587, detune: 7, gain: 0.34, attack: 0.003, decay: 0.18 },
-      { wave: 'sine', freq: 784, freqEnd: 1175, gain: 0.14, attack: 0.006, decay: 0.26, delay: 0.02 },
-      // The medallion: bronze partials, inharmonic like `ui.confirm`'s, the ring the choice is spent on.
-      { wave: 'sine', freq: 1568, detune: 12, gain: 0.09, attack: 0.004, decay: 0.42, delay: 0.03 },
-      { wave: 'sine', freq: 4120, detune: 18, gain: 0.04, attack: 0.004, decay: 0.3, delay: 0.03 },
+      ...bar(233, 0.16, 0.12, 0.5, 0.04),
+      ...bar(349, 0.3, 0.16, 0.6, 0.03),
+      ...bar(466, 0.44, 0.2, 0.9, 0.02),
+      ...bar(117, 0.16, 0.22, 1.0, 0.2),
     ],
   },
 
-  /**
-   * The Guardian's gate giving way (MapRoute), timed to its opening: the warden's seal cracking,
-   * the doors grinding inward over a rising sub, and the boom of them meeting the walls as the
-   * light floods out.
-   */
-  'map.gate': {
+  /** A warden's socket struck through: a wooden crack, a drum, and a fifth rising, so a lock gives rather than a hit lands. */
+  'seal.strike': {
+    gain: 0.56,
+    jitter: 0.01,
+    voices: [...woodBlock(1300, 0, 0.36), ...felt(140, 0.055, 0.44, 0.24), ...marimba(330, 0.09, 0.24, 0.3), ...bar(494, 0.15, 0.22, 0.5)],
+  },
+
+  /** A spent star lifting: two xylophone bars a fifth apart, sliding up the way the token climbs. Re-pitched per star. */
+  'star.rise': {
+    gain: 0.34,
+    jitter: 0.01,
+    voices: [...xylo(1319, 0, 0.18, 0.3), ...xylo(1976, 0.06, 0.14, 0.36), ...slide(1319, 2637, 0, 0.06, 0.4, 0.06)],
+  },
+
+  /** The star letting go of the sky: a slide whistle falling through a swish — the one sound here that travels down. */
+  'star.fall': {
+    gain: 0.6,
+    jitter: 0.01,
+    voices: [...slide(1568, 392, 0, 0.18, 0.55, 0.04), ...swish(5200, 600, 0, 0.2, 0.55, 0.1)],
+  },
+
+  /** The star landing and a hero standing up out of it: a drum, then a bar ringing up a beat later. */
+  'star.land': {
+    gain: 0.3,
+    jitter: 0.006,
+    voices: [...felt(110, 0, 0.56, 0.5), ...woodBlock(640, 0, 0.3), ...marimba(392, 0.16, 0.24, 0.5), ...bar(587, 0.22, 0.24, 0.8), ...xylo(1175, 0.24, 0.1, 0.7)],
+  },
+
+  /** The summoning wheel passing a sigil: one tiny tick, re-pitched as it slows. */
+  'star.tick': { gain: 0.15, jitter: 0.02, voices: woodBlock(2600, 0, 0.18) },
+
+  /** The wheel stopping on the hero's type: a block and a bar chord, so the answer lands before the star. */
+  'star.lock': {
     gain: 0.5,
+    jitter: 0.004,
+    voices: [...woodBlock(1000, 0, 0.34), ...felt(131, 0, 0.3, 0.3), ...marimba(523, 0, 0.24, 1.0), ...bar(784, 0.02, 0.18, 1.1), ...xylo(1568, 0.05, 0.1, 0.9)],
+  },
+
+  /** The answering star swelling: a slide whistle climbing two octaves over a shaker swelling. */
+  'star.charge': {
+    gain: 0.5,
+    jitter: 0,
+    voices: [...slide(196, 784, 0, 0.18, 0.2, 0.75), ...shaker(0, 0.14, 0.2, 0.8)],
+  },
+
+  /** The hero coloured in: the Starfall's one fanfare, a marimba arpeggio left ringing. */
+  'star.reveal': {
+    gain: 0.51,
+    jitter: 0,
+    voices: [
+      ...marimba(392, 0, 0.22, 1.0),
+      ...marimba(494, 0.09, 0.2, 1.0),
+      ...marimba(587, 0.18, 0.2, 1.1),
+      ...marimba(784, 0.27, 0.22, 1.4),
+      ...xylo(1568, 0.3, 0.1, 1.0),
+    ],
+  },
+
+  /** A champion's star lighting: a xylophone arpeggio climbing off a soft drum. */
+  'star.earn': {
+    gain: 0.57,
+    jitter: 0.004,
+    voices: [...felt(196, 0, 0.3, 0.4), ...xylo(784, 0, 0.2, 0.8), ...xylo(1175, 0.06, 0.16, 0.8), ...xylo(1568, 0.12, 0.14, 0.9), ...xylo(2349, 0.18, 0.1, 0.9)],
+  },
+
+  /** The fifth socket — the ring letting go: a drum and a clatter of blocks, a marimba falling away. Ends lower than it starts. */
+  'seal.shatter': {
+    gain: 0.49,
     jitter: 0.008,
     voices: [
-      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.12, filter: { type: 'highpass', freq: 2800 } },
-      { wave: 'triangle', freq: 330, freqEnd: 247, detune: 9, gain: 0.16, attack: 0.004, decay: 0.3 },
-      { wave: 'noise', gain: 0.34, attack: 0.18, hold: 0.25, decay: 0.3, delay: 0.2, filter: { type: 'bandpass', freq: 260, freqEnd: 900, q: 2.2 } },
-      { wave: 'sawtooth', freq: 46, freqEnd: 62, gain: 0.16, attack: 0.2, hold: 0.2, decay: 0.3, delay: 0.22, filter: { type: 'lowpass', freq: 200, q: 2 } },
-      { wave: 'noise', gain: 0.44, attack: 0.002, decay: 0.6, delay: 0.72, filter: { type: 'lowpass', freq: 1600, freqEnd: 120, q: 1 } },
-      { wave: 'sine', freq: 88, freqEnd: 36, gain: 0.55, attack: 0.003, decay: 0.8, delay: 0.72 },
+      ...felt(110, 0, 0.56, 0.5),
+      ...woodBlock(1400, 0, 0.3),
+      ...woodBlock(1050, 0.07, 0.26),
+      ...woodBlock(1250, 0.13, 0.22),
+      ...woodBlock(880, 0.19, 0.2),
+      ...marimba(330, 0.06, 0.24, 0.3),
+      ...bar(220, 0.24, 0.24, 0.8),
     ],
   },
 
-  /**
-   * A path reaching something worth having — a reward, or (pitched down) a landmark. A struck bell:
-   * consonant, open, and gone in a third of a second, because up to three land in under a second.
-   */
-  'map.boon': {
-    gain: 0.34,
+  /** The run's cold open, under the black: a slow low marimba roll in a minor key. Not loud — the lowest thing in the box. */
+  'titan.stir': {
+    gain: 0.88,
+    jitter: 0,
+    voices: [
+      ...bar(110, 0.2, 0.2, 0.8, 0.06),
+      ...bar(131, 0.7, 0.22, 0.8, 0.06),
+      ...bar(165, 1.2, 0.24, 0.9, 0.06),
+      ...bar(156, 1.8, 0.26, 1.6, 0.06),
+      ...felt(55, 0, 0.36, 1.6),
+      ...felt(55, 1.8, 0.3, 1.4),
+    ],
+  },
+
+  /** The eyes reaching open: a low wooden knock and a slide whistle sinking. */
+  'titan.gaze': {
+    gain: 0.32,
+    jitter: 0,
+    voices: [...woodBlock(300, 0, 0.42), ...felt(78, 0, 0.4, 0.5), ...slide(330, 165, 0.04, 0.16, 0.7, 0.05)],
+  },
+
+  /** The route drawing forward: one swish climbing with a soft slide whistle under it. */
+  'map.path': {
+    gain: 0.8,
+    jitter: 0.03,
+    voices: [...swish(420, 2400, 0, 0.24, 0.42, 0.06), ...slide(294, 587, 0, 0.14, 0.38, 0.05)],
+  },
+
+  /** Setting off down a path: the game piece knocked down, then a marimba fifth climbing — the map's one commit. */
+  'map.select': {
+    gain: 0.53,
     jitter: 0.015,
+    voices: [...woodBlock(700, 0, 0.44), ...felt(130, 0, 0.36, 0.14), ...marimba(392, 0.02, 0.28, 0.16), ...bar(587, 0.08, 0.28, 0.3), ...xylo(1175, 0.1, 0.1, 0.3)],
+  },
+
+  /** The Guardian's gate opening: a latch, the doors creaking in, and a drum as they meet the walls. */
+  'map.gate': {
+    gain: 0.4,
+    jitter: 0.008,
     voices: [
-      { wave: 'noise', gain: 0.18, attack: 0.001, decay: 0.02, filter: { type: 'bandpass', freq: 3400, q: 1.6 } },
-      { wave: 'triangle', freq: 196, freqEnd: 165, gain: 0.24, attack: 0.002, decay: 0.14 },
-      { wave: 'sine', freq: 784, gain: 0.3, attack: 0.004, decay: 0.34 },
-      // The fifth above, a beat late and quieter — the interval is what makes it read as good news.
-      { wave: 'sine', freq: 1175, detune: 8, gain: 0.16, attack: 0.006, decay: 0.4, delay: 0.035 },
+      ...woodBlock(1300, 0, 0.34),
+      { wave: 'noise', gain: 0.3, attack: 0.18, hold: 0.25, decay: 0.3, delay: 0.2, filter: { type: 'bandpass', freq: 500, freqEnd: 1100, q: 6 } },
+      ...slide(196, 247, 0.22, 0.12, 0.4, 0.2),
+      ...felt(98, 0.72, 0.56, 0.6),
+      ...marimba(196, 0.72, 0.26, 0.7),
+      ...bar(294, 0.78, 0.22, 0.7),
     ],
   },
 
-  /**
-   * A path reaching something that fights back. Same length as the chime and the exact inverse of it:
-   * noise-led, falling, and a minor second under the body so the pair grinds instead of ringing. The
-   * Guardian is this one at 0.66 pitch (MapRoute), which is the whole reason it is authored low and
-   * left room to drop.
-   */
+  /** A path reaching something worth having (pitched down for a landmark): a game piece set down and a bar ringing a fifth. */
+  'map.boon': {
+    gain: 0.35,
+    jitter: 0.015,
+    voices: [...woodBlock(620, 0, 0.4), ...marimba(784, 0.03, 0.28, 0.3), ...bar(1175, 0.08, 0.2, 0.36)],
+  },
+
+  /** A path reaching something that fights back: low blocks falling a semitone. The Guardian is this at 0.66 pitch, so it is authored with room to drop. */
   'map.threat': {
-    gain: 0.42,
+    gain: 0.35,
     jitter: 0.02,
-    voices: [
-      { wave: 'noise', gain: 0.36, attack: 0.002, decay: 0.3, filter: { type: 'lowpass', freq: 1100, freqEnd: 200, q: 1.1 } },
-      { wave: 'sine', freq: 128, freqEnd: 58, gain: 0.44, attack: 0.003, decay: 0.42 },
-      { wave: 'sawtooth', freq: 172, freqEnd: 152, detune: 16, gain: 0.14, attack: 0.02, hold: 0.06, decay: 0.34, delay: 0.02, filter: { type: 'lowpass', freq: 640, q: 2.4 } },
-    ],
+    voices: [...felt(130, 0, 0.44, 0.3), ...woodBlock(400, 0, 0.32), ...marimba(220, 0.02, 0.26, 0.2), ...bar(208, 0.14, 0.26, 0.36)],
   },
 
-  /**
-   * The Huntress arriving on the map (patronView ENTRANCES): the bow's release, the arrow's hiss as it
-   * falls, the thunk of it biting earth, then the cloak's rush as she swoops in and her boots landing.
-   */
+  /** The Huntress arriving: the bow's twang, the arrow's swish, the thunk of it landing, the swoop, and her boots. */
   'patron.huntress': {
-    gain: 0.5,
+    gain: 0.3,
     jitter: 0.02,
     voices: [
-      { wave: 'triangle', freq: 233, freqEnd: 208, gain: 0.16, attack: 0.002, decay: 0.22 },
-      { wave: 'sine', freq: 699, gain: 0.05, attack: 0.002, decay: 0.09 },
-      { wave: 'noise', gain: 0.24, attack: 0.02, decay: 0.15, filter: { type: 'bandpass', freq: 5200, freqEnd: 1800, q: 2.2 } },
-      { wave: 'noise', gain: 0.36, attack: 0.001, decay: 0.09, delay: 0.298, filter: { type: 'lowpass', freq: 760, freqEnd: 150, q: 1.1 } },
-      { wave: 'sine', freq: 150, freqEnd: 72, gain: 0.3, attack: 0.002, decay: 0.12, delay: 0.298 },
-      { wave: 'noise', gain: 0.2, attack: 0.09, decay: 0.24, delay: 0.42, filter: { type: 'bandpass', freq: 800, freqEnd: 3200, q: 1.1 } },
-      { wave: 'noise', gain: 0.22, attack: 0.002, decay: 0.1, delay: 0.98, filter: { type: 'lowpass', freq: 420, q: 1 } },
-      { wave: 'sine', freq: 96, freqEnd: 62, gain: 0.18, attack: 0.002, decay: 0.1, delay: 0.98 },
+      { wave: 'triangle', freq: 233, freqEnd: 208, gain: 0.2, attack: 0.002, decay: 0.2 },
+      ...swish(5200, 1800, 0.02, 0.2, 0.15, 0.02),
+      ...woodBlock(700, 0.298, 0.38),
+      ...swish(800, 3200, 0.42, 0.18, 0.24, 0.09),
+      ...felt(110, 0.98, 0.34, 0.1),
     ],
   },
 
-  /**
-   * The Forgemistress arriving on the map: heat rising out of the ground, one hammer blow on the
-   * anvil's mode, the sparks it throws crackling out, and the ring left in the air.
-   */
+  /** The Forgemistress arriving: heat rising, one toy hammer blow, sparks plinking out. */
   'patron.forgemistress': {
     gain: 0.5,
     jitter: 0.015,
     voices: [
-      { wave: 'noise', gain: 0.12, attack: 0.2, decay: 0.06, filter: { type: 'bandpass', freq: 380, freqEnd: 1500, q: 1 } },
-      { wave: 'noise', gain: 0.42, attack: 0.001, decay: 0.07, delay: 0.42, filter: { type: 'bandpass', freq: 2900, q: 7 } },
-      { wave: 'noise', gain: 0.24, attack: 0.001, decay: 0.18, delay: 0.42, filter: { type: 'lowpass', freq: 900, freqEnd: 150, q: 1.1 } },
-      { wave: 'sine', freq: 90, freqEnd: 52, gain: 0.38, attack: 0.002, decay: 0.24, delay: 0.42 },
-      { wave: 'sine', freq: 1244, gain: 0.16, attack: 0.001, decay: 0.7, delay: 0.427 },
-      { wave: 'sine', freq: 2093, detune: 14, gain: 0.11, attack: 0.001, decay: 0.5, delay: 0.427 },
-      { wave: 'sine', freq: 3322, detune: -9, gain: 0.06, attack: 0.001, decay: 0.3, delay: 0.427 },
-      { wave: 'noise', gain: 0.12, attack: 0.001, decay: 0.03, delay: 0.507, filter: { type: 'bandpass', freq: 6200, q: 3 } },
-      { wave: 'noise', gain: 0.1, attack: 0.001, decay: 0.03, delay: 0.595, filter: { type: 'bandpass', freq: 7400, q: 3 } },
-      { wave: 'noise', gain: 0.09, attack: 0.001, decay: 0.03, delay: 0.717, filter: { type: 'bandpass', freq: 5600, q: 3 } },
-      { wave: 'noise', gain: 0.07, attack: 0.001, decay: 0.03, delay: 0.875, filter: { type: 'bandpass', freq: 6800, q: 3 } },
+      ...swish(380, 1500, 0, 0.12, 0.06, 0.2),
+      ...woodBlock(900, 0.42, 0.44),
+      ...felt(120, 0.42, 0.38, 0.14),
+      ...xylo(1244, 0.427, 0.16, 0.5),
+      ...xylo(2489, 0.507, 0.08, 0.1),
+      ...xylo(2960, 0.595, 0.07, 0.1),
+      ...xylo(2217, 0.717, 0.06, 0.1),
+      ...xylo(2793, 0.875, 0.05, 0.1),
     ],
   },
 
-  /** The Swordsman arriving: the rush of his fall, the blade's zing as it flashes, his boots striking, the steel left ringing. */
+  /** The Swordsman arriving: the rush of his fall, a toy blade's shing, his boots. */
   'patron.swordsman': {
-    gain: 0.5,
+    gain: 0.52,
     jitter: 0.02,
     voices: [
-      { wave: 'noise', gain: 0.22, attack: 0.06, decay: 0.2, filter: { type: 'bandpass', freq: 2600, freqEnd: 600, q: 1.4 } },
-      { wave: 'noise', gain: 0.2, attack: 0.002, decay: 0.1, delay: 0.438, filter: { type: 'bandpass', freq: 7200, freqEnd: 3000, q: 4 } },
-      { wave: 'noise', gain: 0.34, attack: 0.001, decay: 0.12, delay: 0.507, filter: { type: 'lowpass', freq: 900, freqEnd: 160, q: 1.1 } },
-      { wave: 'sine', freq: 112, freqEnd: 58, gain: 0.32, attack: 0.002, decay: 0.16, delay: 0.507 },
-      { wave: 'sine', freq: 1760, detune: 12, gain: 0.11, attack: 0.001, decay: 0.6, delay: 0.455 },
-      { wave: 'sine', freq: 2637, detune: -8, gain: 0.07, attack: 0.001, decay: 0.45, delay: 0.455 },
+      ...swish(2600, 600, 0, 0.2, 0.2, 0.06),
+      ...swish(7200, 3000, 0.438, 0.16, 0.1, 0.002),
+      ...xylo(1760, 0.455, 0.14, 0.5),
+      ...xylo(2637, 0.455, 0.08, 0.4),
+      ...felt(120, 0.507, 0.4, 0.12),
     ],
   },
 
@@ -1059,496 +678,394 @@ export const sounds: Record<SfxId, SoundSpec> = {
     ],
   },
 
-  /** The Archmage arriving: a filtered saw rising as the circle draws, three chimes climbing with it, and the blink that puts him there. */
+  /** The Archmage arriving: a slide whistle rising as the circle draws, three bars climbing with it, and the pop that puts him there. */
   'patron.archmage': {
-    gain: 0.44,
+    gain: 0.37,
     jitter: 0.02,
     voices: [
-      { wave: 'sawtooth', freq: 220, freqEnd: 880, gain: 0.12, attack: 0.25, decay: 0.12, filter: { type: 'lowpass', freq: 600, freqEnd: 3400, q: 2.2 } },
-      { wave: 'sine', freq: 1047, gain: 0.1, attack: 0.01, decay: 0.3, delay: 0.14 },
-      { wave: 'sine', freq: 1319, detune: 8, gain: 0.1, attack: 0.01, decay: 0.3, delay: 0.315 },
-      { wave: 'sine', freq: 1568, gain: 0.1, attack: 0.01, decay: 0.35, delay: 0.49 },
-      { wave: 'sine', freq: 1760, freqEnd: 440, gain: 0.16, attack: 0.002, decay: 0.14, delay: 0.595 },
-      { wave: 'noise', gain: 0.16, attack: 0.001, decay: 0.06, delay: 0.595, filter: { type: 'bandpass', freq: 5200, q: 2 } },
+      ...slide(220, 880, 0, 0.1, 0.12, 0.25),
+      ...xylo(1047, 0.14, 0.12, 0.26),
+      ...xylo(1319, 0.315, 0.12, 0.26),
+      ...xylo(1568, 0.49, 0.12, 0.3),
+      { wave: 'sine', freq: 440, freqEnd: 1320, gain: 0.22, attack: 0.001, decay: 0.06, delay: 0.595 },
     ],
   },
 
-  /** The Priest arriving: a held chord opening as the light comes down, and one bell struck as he stands in it. */
+  /** The Priest arriving: a soft chord swelling as the light comes down, one bar struck as he stands in it. */
   'patron.priest': {
-    gain: 0.44,
+    gain: 0.71,
     jitter: 0.01,
     voices: [
-      { wave: 'triangle', freq: 392, gain: 0.06, attack: 0.25, decay: 0.6 },
-      { wave: 'triangle', freq: 494, gain: 0.05, attack: 0.25, decay: 0.6 },
-      { wave: 'triangle', freq: 587, gain: 0.05, attack: 0.25, decay: 0.6 },
-      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.04, delay: 0.385, filter: { type: 'bandpass', freq: 3000, q: 5 } },
-      { wave: 'sine', freq: 523, gain: 0.2, attack: 0.002, decay: 1.2, delay: 0.385 },
-      { wave: 'sine', freq: 1046, detune: 6, gain: 0.12, attack: 0.002, decay: 0.9, delay: 0.385 },
-      { wave: 'sine', freq: 1414, gain: 0.08, attack: 0.002, decay: 0.6, delay: 0.385 },
-      { wave: 'sine', freq: 2093, detune: -5, gain: 0.05, attack: 0.002, decay: 0.4, delay: 0.385 },
+      ...bar(392, 0, 0.07, 0.6, 0.25),
+      ...bar(494, 0, 0.06, 0.6, 0.25),
+      ...bar(587, 0, 0.06, 0.6, 0.25),
+      ...marimba(523, 0.385, 0.24, 1.0),
+      ...xylo(1047, 0.385, 0.1, 0.8),
     ],
   },
 
-  /** The Hexwright arriving: a low drone rising out of the ground with the smoke, and two whispers moving through it. */
+  /** The Hexwright arriving: a low wobble rising out of the ground with the smoke, two whispers through it, one plink. */
   'patron.hexwright': {
-    gain: 0.46,
+    gain: 0.37,
     jitter: 0.02,
     voices: [
-      { wave: 'sine', freq: 73, freqEnd: 82, gain: 0.26, attack: 0.18, hold: 0.35, decay: 0.4 },
-      { wave: 'sawtooth', freq: 110, detune: 18, gain: 0.07, attack: 0.18, hold: 0.263, decay: 0.35, filter: { type: 'lowpass', freq: 420, q: 2 } },
+      { wave: 'sine', freq: 147, freqEnd: 165, detune: 30, gain: 0.22, attack: 0.18, hold: 0.35, decay: 0.4 },
       { wave: 'noise', gain: 0.12, attack: 0.12, decay: 0.24, delay: 0.07, filter: { type: 'bandpass', freq: 2600, freqEnd: 1200, q: 6 } },
       { wave: 'noise', gain: 0.1, attack: 0.1, decay: 0.24, delay: 0.49, filter: { type: 'bandpass', freq: 3300, freqEnd: 1800, q: 6 } },
-      { wave: 'sine', freq: 988, gain: 0.05, attack: 0.01, decay: 0.22, delay: 0.77 },
+      ...xylo(988, 0.77, 0.1, 0.3),
     ],
   },
 
-  /** The Headmaster arriving: pages fluttering in around him, then a book slammed shut. */
+  /** The Headmaster arriving: pages fluttering in, then a book clapped shut. */
   'patron.headmaster': {
-    gain: 0.48,
+    gain: 0.28,
     jitter: 0.02,
     voices: [
-      { wave: 'noise', gain: 0.12, attack: 0.005, decay: 0.05, filter: { type: 'bandpass', freq: 3400, q: 1.6 } },
-      { wave: 'noise', gain: 0.11, attack: 0.005, decay: 0.05, delay: 0.123, filter: { type: 'bandpass', freq: 3900, q: 1.6 } },
-      { wave: 'noise', gain: 0.12, attack: 0.005, decay: 0.05, delay: 0.245, filter: { type: 'bandpass', freq: 3100, q: 1.6 } },
-      { wave: 'noise', gain: 0.11, attack: 0.005, decay: 0.05, delay: 0.367, filter: { type: 'bandpass', freq: 3700, q: 1.6 } },
-      { wave: 'noise', gain: 0.1, attack: 0.005, decay: 0.05, delay: 0.507, filter: { type: 'bandpass', freq: 3300, q: 1.6 } },
-      { wave: 'noise', gain: 0.46, attack: 0.001, decay: 0.12, delay: 0.735, filter: { type: 'lowpass', freq: 1300, freqEnd: 200, q: 1 } },
-      { wave: 'sine', freq: 124, freqEnd: 60, gain: 0.3, attack: 0.002, decay: 0.15, delay: 0.735 },
+      ...paper(0, 0.12),
+      ...paper(0.123, 0.11),
+      ...paper(0.245, 0.12),
+      ...paper(0.367, 0.11),
+      ...paper(0.507, 0.1),
+      ...felt(140, 0.735, 0.4, 0.12),
+      ...woodBlock(560, 0.735, 0.3),
     ],
   },
 
-  /** A patron's Trust rising on the meeting's last screen: a warm bloom under three chimes climbing a fifth, a shimmer opening over them. TrustRise lifts the pitch a step each rung. */
+  /** A patron's Trust rising: three bars climbing a fifth over a soft bass. TrustRise lifts the pitch a step each rung. */
   'trust.rise': {
-    gain: 0.46,
+    gain: 0.54,
     jitter: 0.01,
-    voices: [
-      { wave: 'sine', freq: 196, gain: 0.18, attack: 0.02, decay: 0.6 },
-      { wave: 'triangle', freq: 392, gain: 0.08, attack: 0.04, decay: 0.7 },
-      { wave: 'sine', freq: 659, gain: 0.16, attack: 0.004, decay: 0.6 },
-      { wave: 'sine', freq: 988, detune: 6, gain: 0.14, attack: 0.004, decay: 0.7, delay: 0.09 },
-      { wave: 'sine', freq: 1319, gain: 0.13, attack: 0.004, decay: 0.9, delay: 0.18 },
-      { wave: 'noise', gain: 0.08, attack: 0.12, decay: 0.6, delay: 0.1, filter: { type: 'bandpass', freq: 2200, freqEnd: 8000, q: 1 } },
-    ],
+    voices: [...bar(196, 0, 0.18, 0.6, 0.02), ...marimba(659, 0, 0.2, 0.5), ...marimba(988, 0.09, 0.18, 0.6), ...marimba(1319, 0.18, 0.18, 0.8)],
   },
 
-  /** The fifth Trust pip igniting (PatronNodeScreen CapstoneOath): a swell that breaks into a boom and a held major chord. */
+  /** The fifth Trust pip igniting: a shaker swell breaking into a drum and a held major chord. */
   'trust.capstone': {
-    gain: 0.6,
+    gain: 0.58,
     jitter: 0,
     voices: [
-      { wave: 'noise', gain: 0.1, attack: 0.9, decay: 0.08, filter: { type: 'bandpass', freq: 600, freqEnd: 5000, q: 0.8 } },
-      { wave: 'sine', freq: 98, freqEnd: 196, gain: 0.12, attack: 0.9, decay: 0.05 },
-      { wave: 'sine', freq: 82, freqEnd: 41, gain: 0.5, attack: 0.004, decay: 0.9, delay: 0.92 },
-      { wave: 'noise', gain: 0.32, attack: 0.002, decay: 0.5, delay: 0.92, filter: { type: 'lowpass', freq: 1800, freqEnd: 240, q: 0.9 } },
-      { wave: 'triangle', freq: 262, gain: 0.12, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.92 },
-      { wave: 'triangle', freq: 330, gain: 0.1, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.95 },
-      { wave: 'triangle', freq: 392, gain: 0.1, attack: 0.01, hold: 0.5, decay: 1.4, delay: 0.98 },
-      { wave: 'sine', freq: 1047, detune: 6, gain: 0.1, attack: 0.004, decay: 1.6, delay: 1.02 },
-      { wave: 'sine', freq: 1568, gain: 0.07, attack: 0.004, decay: 1.8, delay: 1.1 },
-      { wave: 'noise', gain: 0.08, attack: 0.2, decay: 1.4, delay: 1.0, filter: { type: 'bandpass', freq: 6000, freqEnd: 9000, q: 1 } },
+      ...shaker(0, 0.12, 0.08, 0.9),
+      ...slide(196, 392, 0, 0.1, 0.06, 0.9),
+      ...felt(98, 0.92, 0.5, 0.6),
+      ...marimba(262, 0.92, 0.2, 1.2),
+      ...bar(330, 0.95, 0.18, 1.2),
+      ...bar(392, 0.98, 0.18, 1.2),
+      ...xylo(1047, 1.02, 0.12, 1.0),
+      ...xylo(1568, 1.1, 0.08, 1.0),
     ],
   },
 
-  /** "X uses Y": a wind-up, not an event — the impact follows immediately and two full sounds back to back is mush. */
+  /** "X uses Y": a wind-up, not an event — a quick swish and a tick. The impact follows at once. */
   cast: {
-    gain: 0.42,
-    jitter: 0.04,
-    voices: [
-      { wave: 'noise', gain: 0.34, attack: 0.05, decay: 0.1, filter: { type: 'bandpass', freq: 900, freqEnd: 2000, q: 1.6 } },
-      { wave: 'triangle', freq: 330, freqEnd: 420, gain: 0.16, attack: 0.03, decay: 0.1 },
-    ],
-  },
-
-  /* ── The element itself ──────────────────────────────────────────────────
-     One cast per type, layered by beatSfx under the beat on which the move's
-     payload LANDS — under the hit, the heal, the stat chime — while the type's
-     effect plays over the figure (view/combat/TypeFx.tsx). Each is the element
-     MANIFESTING — a whoosh, a splash, a crack — and never the blow, which is
-     the hit.* it sits under and must stay audible through it. So every one of
-     these sits under 0.5s and leaves the low end alone for the impact, except
-     the three that are themselves a weight landing (Stone, Ancient, Storm's
-     thunder), which take it and hand it back fast. */
-
-  /** A gust catching, then the crackle riding on it. Three short ticks, not one hiss: fire pops. */
-  'cast.Fire': {
-    gain: 0.4,
-    jitter: 0.05,
-    voices: [
-      { wave: 'noise', gain: 0.4, attack: 0.04, decay: 0.34, filter: { type: 'bandpass', freq: 380, freqEnd: 1900, q: 1.3 } },
-      { wave: 'sine', freq: 96, freqEnd: 62, gain: 0.2, attack: 0.03, decay: 0.3 },
-      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.03, delay: 0.09, filter: { type: 'highpass', freq: 3200 } },
-      { wave: 'noise', gain: 0.12, attack: 0.001, decay: 0.025, delay: 0.17, filter: { type: 'highpass', freq: 2800 } },
-      { wave: 'noise', gain: 0.13, attack: 0.001, decay: 0.035, delay: 0.26, filter: { type: 'highpass', freq: 3600 } },
-    ],
-  },
-
-  /** A splash: the lowpass closing over the noise is the water settling; the bloops are the drops. */
-  'cast.Water': {
-    gain: 0.62,
-    jitter: 0.05,
-    voices: [
-      { wave: 'noise', gain: 0.42, attack: 0.012, decay: 0.36, filter: { type: 'lowpass', freq: 3400, freqEnd: 420, q: 0.9 } },
-      { wave: 'sine', freq: 330, freqEnd: 130, gain: 0.26, attack: 0.004, decay: 0.14 },
-      { wave: 'sine', freq: 240, freqEnd: 520, gain: 0.16, attack: 0.004, decay: 0.11, delay: 0.14 },
-      { wave: 'sine', freq: 300, freqEnd: 640, gain: 0.12, attack: 0.004, decay: 0.09, delay: 0.24 },
-    ],
-  },
-
-  /** Ice forming: three high bells stacking, a brittle tick, and a thin hiss of cold rising over them. */
-  'cast.Frost': {
-    gain: 0.5,
-    jitter: 0.03,
-    voices: [
-      { wave: 'sine', freq: 1760, gain: 0.22, attack: 0.004, decay: 0.32 },
-      { wave: 'sine', freq: 2637, gain: 0.16, attack: 0.004, decay: 0.3, delay: 0.05 },
-      { wave: 'sine', freq: 3520, gain: 0.12, attack: 0.004, decay: 0.36, delay: 0.1 },
-      { wave: 'noise', gain: 0.24, attack: 0.001, decay: 0.05, filter: { type: 'highpass', freq: 5200 } },
-      { wave: 'noise', gain: 0.14, attack: 0.06, decay: 0.32, filter: { type: 'bandpass', freq: 5500, freqEnd: 9000, q: 1.2 } },
-    ],
-  },
-
-  /** Lightning: the crack is instant and bright, the thunder arrives 40ms behind it and rolls off low. */
-  'cast.Storm': {
-    gain: 0.5,
-    jitter: 0.04,
-    voices: [
-      { wave: 'noise', gain: 0.46, attack: 0.001, decay: 0.08, filter: { type: 'highpass', freq: 2400 } },
-      { wave: 'square', freq: 1900, freqEnd: 180, gain: 0.16, attack: 0.001, decay: 0.06, filter: { type: 'lowpass', freq: 5000, freqEnd: 900, q: 1.5 } },
-      { wave: 'noise', gain: 0.4, attack: 0.012, decay: 0.5, delay: 0.04, filter: { type: 'lowpass', freq: 900, freqEnd: 110, q: 1 } },
-      { wave: 'sine', freq: 72, freqEnd: 38, gain: 0.34, attack: 0.01, decay: 0.42, delay: 0.04 },
-    ],
-  },
-
-  /** Rockfall: one heavy thud, two smaller ones tumbling after it, gravel in between. */
-  'cast.Stone': {
-    gain: 0.5,
-    jitter: 0.05,
-    voices: [
-      { wave: 'noise', gain: 0.48, attack: 0.004, decay: 0.28, filter: { type: 'lowpass', freq: 640, freqEnd: 140, q: 1.1 } },
-      { wave: 'sine', freq: 112, freqEnd: 44, gain: 0.44, attack: 0.002, decay: 0.26 },
-      { wave: 'noise', gain: 0.16, attack: 0.02, decay: 0.3, delay: 0.04, filter: { type: 'bandpass', freq: 1300, freqEnd: 700, q: 1.8 } },
-      { wave: 'noise', gain: 0.3, attack: 0.003, decay: 0.18, delay: 0.15, filter: { type: 'lowpass', freq: 520, freqEnd: 140, q: 1.1 } },
-      { wave: 'sine', freq: 96, freqEnd: 46, gain: 0.24, attack: 0.002, decay: 0.16, delay: 0.15 },
-      { wave: 'noise', gain: 0.2, attack: 0.003, decay: 0.14, delay: 0.27, filter: { type: 'lowpass', freq: 480, freqEnd: 150, q: 1.1 } },
-    ],
-  },
-
-  /** Leaves in a gust: a wide, soft rustle with a small wooden note under it and a brighter one lifting off. */
-  'cast.Nature': {
-    gain: 0.64,
-    jitter: 0.04,
-    voices: [
-      { wave: 'noise', gain: 0.36, attack: 0.06, decay: 0.3, filter: { type: 'bandpass', freq: 1300, freqEnd: 2800, q: 0.7 } },
-      { wave: 'noise', gain: 0.18, attack: 0.001, decay: 0.04, delay: 0.12, filter: { type: 'bandpass', freq: 2400, q: 2 } },
-      { wave: 'triangle', freq: 330, gain: 0.12, attack: 0.03, decay: 0.34 },
-      { wave: 'triangle', freq: 660, freqEnd: 880, gain: 0.12, attack: 0.05, decay: 0.3, delay: 0.08 },
-    ],
-  },
-
-  /** Radiance: rising sines an octave apart, a shimmer of detuned air over them, no low end at all. */
-  'cast.Light': {
-    gain: 0.56,
-    jitter: 0.02,
-    voices: [
-      { wave: 'sine', freq: 880, freqEnd: 1760, gain: 0.22, attack: 0.08, decay: 0.4 },
-      { wave: 'sine', freq: 1320, freqEnd: 2640, gain: 0.14, attack: 0.1, decay: 0.38, delay: 0.05 },
-      { wave: 'sine', freq: 2200, detune: 12, gain: 0.1, attack: 0.1, decay: 0.5, delay: 0.1 },
-      { wave: 'noise', gain: 0.09, attack: 0.1, decay: 0.36, filter: { type: 'highpass', freq: 6000 } },
-    ],
-  },
-
-  /** A dark swell: detuned saws under a closing lowpass, a breath, and a whisper falling through it. */
-  'cast.Shadow': {
-    gain: 0.46,
-    jitter: 0.04,
-    voices: [
-      { wave: 'sawtooth', freq: 92, freqEnd: 58, detune: 30, gain: 0.3, attack: 0.08, decay: 0.5, filter: { type: 'lowpass', freq: 420, freqEnd: 150, q: 1.6 } },
-      { wave: 'noise', gain: 0.24, attack: 0.1, decay: 0.48, filter: { type: 'bandpass', freq: 320, freqEnd: 120, q: 1.2 } },
-      { wave: 'triangle', freq: 520, freqEnd: 170, gain: 0.1, attack: 0.14, decay: 0.32, filter: { type: 'lowpass', freq: 1400, freqEnd: 400, q: 1 } },
-    ],
-  },
-
-  /** Sorcery: a detuned saw opening up, two bells landing behind it, glitter on top. */
-  'cast.Arcane': {
-    gain: 0.6,
-    jitter: 0.03,
-    voices: [
-      { wave: 'sawtooth', freq: 520, freqEnd: 1040, detune: 30, gain: 0.18, attack: 0.02, decay: 0.3, filter: { type: 'lowpass', freq: 2400, freqEnd: 5200, q: 1.8 } },
-      { wave: 'sine', freq: 1568, gain: 0.14, attack: 0.004, decay: 0.26, delay: 0.06 },
-      { wave: 'sine', freq: 2093, gain: 0.12, attack: 0.004, decay: 0.3, delay: 0.12 },
-      { wave: 'noise', gain: 0.1, attack: 0.03, decay: 0.26, filter: { type: 'bandpass', freq: 4000, freqEnd: 8000, q: 1.4 } },
-    ],
-  },
-
-  /** A psychic warble: wide-detuned pairs beating against each other, one bending down through the other. */
-  'cast.Mind': {
-    gain: 0.32,
-    jitter: 0.03,
-    voices: [
-      { wave: 'sine', freq: 392, detune: 44, gain: 0.24, attack: 0.05, hold: 0.1, decay: 0.34 },
-      { wave: 'sine', freq: 784, freqEnd: 540, detune: 22, gain: 0.14, attack: 0.02, decay: 0.4 },
-      { wave: 'triangle', freq: 196, detune: 12, gain: 0.14, attack: 0.05, decay: 0.34, filter: { type: 'lowpass', freq: 900, q: 1 } },
-    ],
-  },
-
-  /** Ethereal: slow-attacked sines a fifth apart and a breath of filtered air, nothing struck anywhere. */
-  'cast.Spirit': {
-    gain: 0.5,
-    jitter: 0.02,
-    voices: [
-      { wave: 'sine', freq: 660, gain: 0.2, attack: 0.12, decay: 0.5 },
-      { wave: 'sine', freq: 990, gain: 0.12, attack: 0.16, decay: 0.5, delay: 0.04 },
-      { wave: 'sine', freq: 330, freqEnd: 352, gain: 0.1, attack: 0.1, decay: 0.46 },
-      { wave: 'noise', gain: 0.12, attack: 0.15, decay: 0.5, filter: { type: 'bandpass', freq: 1800, freqEnd: 3600, q: 0.6 } },
-    ],
-  },
-
-  /** A blade: the swipe first, then the ring — an inharmonic pair so it reads as steel, not as a bell. */
-  'cast.Iron': {
-    gain: 0.44,
-    jitter: 0.04,
-    voices: [
-      { wave: 'noise', gain: 0.22, attack: 0.03, decay: 0.12, filter: { type: 'bandpass', freq: 700, freqEnd: 3600, q: 1 } },
-      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.09, delay: 0.06, filter: { type: 'highpass', freq: 3000 } },
-      { wave: 'square', freq: 1400, freqEnd: 900, gain: 0.16, attack: 0.001, decay: 0.14, delay: 0.06, filter: { type: 'highpass', freq: 800 } },
-      { wave: 'triangle', freq: 2350, detune: 30, gain: 0.12, attack: 0.001, decay: 0.22, delay: 0.06 },
-    ],
-  },
-
-  /** Machinery: a servo whirring up, then the click and clack of something locking on. */
-  'cast.Mech': {
     gain: 0.52,
-    jitter: 0.03,
-    voices: [
-      { wave: 'sawtooth', freq: 240, freqEnd: 720, gain: 0.14, attack: 0.03, hold: 0.05, decay: 0.15, filter: { type: 'lowpass', freq: 1200, freqEnd: 2400, q: 2 } },
-      { wave: 'square', freq: 120, gain: 0.2, attack: 0.001, decay: 0.03, delay: 0.2 },
-      { wave: 'noise', gain: 0.26, attack: 0.001, decay: 0.03, delay: 0.2, filter: { type: 'highpass', freq: 4000 } },
-      { wave: 'square', freq: 90, freqEnd: 80, gain: 0.16, attack: 0.001, decay: 0.1, delay: 0.24, filter: { type: 'lowpass', freq: 600, q: 1 } },
-    ],
+    jitter: 0.04,
+    voices: [...swish(900, 2200, 0, 0.3, 0.1, 0.04), ...woodBlock(1800, 0.08, 0.12)],
   },
 
-  /** A snarl: detuned saws growling under a breath of noise, a chest note beneath both. */
-  'cast.Beast': {
-    gain: 0.42,
+  /* The element itself, layered under the beat its payload lands on. Under 0.5s, and the low end left to the hit
+     except where the element is itself a weight (Stone, Ancient, Storm's thunder). */
+
+  /** Fire: a whoosh, and pops crackling on it. */
+  'cast.Fire': {
+    gain: 0.95,
     jitter: 0.05,
     voices: [
-      { wave: 'sawtooth', freq: 95, freqEnd: 70, detune: 40, gain: 0.3, attack: 0.02, hold: 0.1, decay: 0.3, filter: { type: 'lowpass', freq: 640, freqEnd: 280, q: 1.4 } },
-      { wave: 'noise', gain: 0.3, attack: 0.02, decay: 0.28, filter: { type: 'bandpass', freq: 900, freqEnd: 400, q: 1.5 } },
-      { wave: 'sine', freq: 60, freqEnd: 45, gain: 0.28, attack: 0.01, decay: 0.3 },
+      ...swish(380, 1900, 0, 0.4, 0.3, 0.04),
+      { wave: 'sine', freq: 600, freqEnd: 1400, gain: 0.16, attack: 0.001, decay: 0.03, delay: 0.09 },
+      { wave: 'sine', freq: 700, freqEnd: 1600, gain: 0.14, attack: 0.001, decay: 0.03, delay: 0.17 },
+      { wave: 'sine', freq: 520, freqEnd: 1300, gain: 0.15, attack: 0.001, decay: 0.03, delay: 0.26 },
     ],
   },
 
-  /** A gong: a strike, then the longest tail in the combat table — the one cast allowed to outlast its beat. */
-  'cast.Ancient': {
-    gain: 0.46,
-    jitter: 0.015,
+  /** Water: a splash settling, two bubbles blooping up. */
+  'cast.Water': {
+    gain: 0.93,
+    jitter: 0.05,
     voices: [
-      { wave: 'noise', gain: 0.3, attack: 0.004, decay: 0.28, filter: { type: 'lowpass', freq: 420, freqEnd: 100, q: 1 } },
-      { wave: 'sine', freq: 98, gain: 0.34, attack: 0.01, hold: 0.1, decay: 0.9 },
-      { wave: 'sine', freq: 147, detune: 8, gain: 0.2, attack: 0.02, decay: 0.8 },
-      { wave: 'triangle', freq: 220, detune: 14, gain: 0.12, attack: 0.02, decay: 0.7, filter: { type: 'lowpass', freq: 800, q: 1 } },
+      { wave: 'noise', gain: 0.3, attack: 0.012, decay: 0.28, filter: { type: 'lowpass', freq: 3000, freqEnd: 420, q: 0.9 } },
+      { wave: 'sine', freq: 260, freqEnd: 700, gain: 0.26, attack: 0.002, decay: 0.07 },
+      { wave: 'sine', freq: 320, freqEnd: 900, gain: 0.2, attack: 0.002, decay: 0.06, delay: 0.13 },
+      { wave: 'sine', freq: 380, freqEnd: 1000, gain: 0.16, attack: 0.002, decay: 0.05, delay: 0.22 },
     ],
   },
 
-  /** Physical hit: noise through a closing lowpass is the thud, the sine is the weight. beatSfx.ts re-pitches by damage. */
-  'hit.physical': {
+  /** Frost: three high xylophone bars tinkling down, a brittle tick on top. */
+  'cast.Frost': {
+    gain: 0.85,
+    jitter: 0.03,
+    voices: [...woodBlock(4200, 0, 0.1), ...xylo(3136, 0, 0.14, 0.2), ...xylo(2637, 0.05, 0.14, 0.22), ...xylo(2093, 0.1, 0.14, 0.3), ...shaker(0, 0.08, 0.3, 0.06)],
+  },
+
+  /** Storm: a cartoon zap, then a drum roll of toy thunder behind it. */
+  'cast.Storm': {
+    gain: 0.96,
+    jitter: 0.04,
+    voices: [
+      { wave: 'square', freq: 1800, freqEnd: 300, gain: 0.12, attack: 0.001, decay: 0.08, filter: { type: 'lowpass', freq: 4000, q: 1 } },
+      ...shaker(0, 0.2, 0.06, 0.002),
+      ...felt(90, 0.04, 0.4, 0.2),
+      ...felt(80, 0.12, 0.32, 0.2),
+      ...felt(70, 0.2, 0.26, 0.26),
+    ],
+  },
+
+  /** Stone: wooden blocks tumbling, one heavy and two smaller after it. */
+  'cast.Stone': {
+    gain: 0.34,
+    jitter: 0.05,
+    voices: [...felt(110, 0, 0.44, 0.2), ...woodBlock(360, 0, 0.36), ...woodBlock(460, 0.15, 0.26), ...woodBlock(540, 0.27, 0.2)],
+  },
+
+  /** Nature: leaves rustling, and two soft bars lifting off. */
+  'cast.Nature': {
+    gain: 0.7,
+    jitter: 0.04,
+    voices: [...shaker(0, 0.12, 0.3, 0.06), ...swish(1300, 2800, 0, 0.24, 0.3, 0.06), ...marimba(659, 0.04, 0.16, 0.24), ...marimba(988, 0.12, 0.14, 0.28)],
+  },
+
+  /** Light: a quick xylophone run up, no low end at all. */
+  'cast.Light': {
+    gain: 0.97,
+    jitter: 0.02,
+    voices: [...xylo(1047, 0, 0.14, 0.18), ...xylo(1319, 0.04, 0.14, 0.18), ...xylo(1568, 0.08, 0.14, 0.2), ...xylo(2093, 0.12, 0.16, 0.36)],
+  },
+
+  /** Shadow: a hush, and a slide whistle sinking through it — spooky, not menacing. */
+  'cast.Shadow': {
+    gain: 0.74,
+    jitter: 0.04,
+    voices: [...swish(900, 300, 0, 0.24, 0.4, 0.08), ...slide(523, 196, 0.02, 0.18, 0.44, 0.06), ...bar(147, 0, 0.16, 0.4, 0.04)],
+  },
+
+  /** Arcane: a little boing, then sparkling xylophone bars. */
+  'cast.Arcane': {
+    gain: 0.49,
+    jitter: 0.03,
+    voices: [
+      { wave: 'sine', freq: 330, freqEnd: 990, detune: 40, gain: 0.16, attack: 0.002, decay: 0.12 },
+      ...xylo(1568, 0.06, 0.12, 0.2),
+      ...xylo(2093, 0.11, 0.12, 0.24),
+      ...xylo(2637, 0.16, 0.1, 0.3),
+    ],
+  },
+
+  /** Mind: a wobbling wah-wah, two pairs beating against each other. */
+  'cast.Mind': {
+    gain: 0.31,
+    jitter: 0.03,
+    voices: [
+      { wave: 'sine', freq: 523, detune: 60, gain: 0.24, attack: 0.03, hold: 0.1, decay: 0.3 },
+      { wave: 'sine', freq: 784, freqEnd: 587, detune: 40, gain: 0.14, attack: 0.02, decay: 0.36 },
+      ...bar(262, 0, 0.14, 0.3, 0.02),
+    ],
+  },
+
+  /** Spirit: soft bars a fifth apart, slow to speak, nothing struck. */
+  'cast.Spirit': {
+    gain: 0.59,
+    jitter: 0.02,
+    voices: [...bar(659, 0, 0.2, 0.5, 0.1), ...bar(988, 0.06, 0.14, 0.5, 0.12), ...shaker(0, 0.06, 0.4, 0.15)],
+  },
+
+  /** Iron: a toy blade's swipe and a bright clean shing. */
+  'cast.Iron': {
+    gain: 0.71,
+    jitter: 0.04,
+    voices: [...swish(700, 3600, 0, 0.22, 0.12, 0.03), ...woodBlock(2200, 0.06, 0.2), ...xylo(2349, 0.06, 0.16, 0.3), ...xylo(3520, 0.06, 0.08, 0.24)],
+  },
+
+  /** Mech: a wind-up ratchet clicking, then a clack as it locks. */
+  'cast.Mech': {
+    gain: 0.49,
+    jitter: 0.03,
+    voices: [
+      ...woodBlock(1900, 0, 0.16),
+      ...woodBlock(2000, 0.04, 0.16),
+      ...woodBlock(2100, 0.08, 0.17),
+      ...woodBlock(2200, 0.12, 0.18),
+      ...woodBlock(2300, 0.16, 0.18),
+      ...woodBlock(800, 0.21, 0.4),
+    ],
+  },
+
+  /** Beast: a little cartoon growl and a hop. */
+  'cast.Beast': {
+    gain: 0.52,
+    jitter: 0.05,
+    voices: [
+      { wave: 'triangle', freq: 150, freqEnd: 110, detune: 50, gain: 0.3, attack: 0.02, hold: 0.08, decay: 0.2, filter: { type: 'lowpass', freq: 900, q: 1.2 } },
+      ...swish(1200, 500, 0, 0.2, 0.2, 0.02),
+      ...woodBlock(500, 0.22, 0.28),
+    ],
+  },
+
+  /** Ancient: a low marimba bar under a temple block, the one cast allowed to outlast its beat. */
+  'cast.Ancient': {
     gain: 0.5,
+    jitter: 0.015,
+    voices: [...woodBlock(330, 0, 0.36), ...felt(98, 0, 0.4, 0.5), ...marimba(98, 0.01, 0.36, 1.0), ...bar(147, 0.02, 0.2, 0.9)],
+  },
+
+  /** Physical hit: a felt mallet on a drum, then a wooden clack. beatSfx re-pitches it by damage. */
+  'hit.physical': {
+    gain: 0.66,
     jitter: 0.07,
     voices: [
-      { wave: 'noise', gain: 0.6, attack: 0.001, decay: 0.15, filter: { type: 'lowpass', freq: 1900, freqEnd: 260, q: 1.1 } },
-      { wave: 'sine', freq: 170, freqEnd: 58, gain: 0.55, attack: 0.001, decay: 0.17 },
-      { wave: 'noise', gain: 0.2, attack: 0.001, decay: 0.035, filter: { type: 'highpass', freq: 2600 } },
+      { wave: 'sine', freq: 210, freqEnd: 95, gain: 0.6, attack: 0.001, decay: 0.14 },
+      { wave: 'noise', gain: 0.5, attack: 0.001, decay: 0.06, filter: { type: 'lowpass', freq: 1400, freqEnd: 300, q: 1 } },
+      ...woodBlock(760, 0.004, 0.32),
     ],
   },
 
-  /** Magical hit: brighter, longer-tailed, detuned — the detune is what separates "magic" from "a hit with more treble". */
+  /** Magical hit: the drum with a springy marimba plonk bending up through it in place of the clack. */
   'hit.magical': {
-    gain: 0.44,
+    gain: 0.73,
     jitter: 0.06,
     voices: [
-      { wave: 'sawtooth', freq: 620, freqEnd: 190, detune: 26, gain: 0.32, attack: 0.002, decay: 0.3, filter: { type: 'lowpass', freq: 3200, freqEnd: 620, q: 2.2 } },
-      { wave: 'sine', freq: 210, freqEnd: 84, gain: 0.34, attack: 0.002, decay: 0.2 },
-      { wave: 'noise', gain: 0.16, attack: 0.004, decay: 0.22, filter: { type: 'bandpass', freq: 2600, freqEnd: 900, q: 1.4 } },
+      { wave: 'sine', freq: 240, freqEnd: 110, gain: 0.5, attack: 0.001, decay: 0.14 },
+      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.05, filter: { type: 'lowpass', freq: 1800, freqEnd: 400, q: 1 } },
+      { wave: 'sine', freq: 520, freqEnd: 780, gain: 0.3, attack: 0.002, decay: 0.16, delay: 0.01 },
+      { wave: 'sine', freq: 2080, freqEnd: 3120, gain: 0.06, attack: 0.001, decay: 0.04, delay: 0.01 },
     ],
   },
 
-  /** Layered ON TOP of the base hit, not replacing it. The 35ms-delayed crack is what makes it register as an event rather than a louder thud. */
+  /** Layered on top of the base hit: a slapstick crack and two marimba bars bouncing up. */
   'hit.crit': {
-    gain: 0.5,
-    jitter: 0.04,
+    gain: 0.93,
+    jitter: 0.03,
     voices: [
-      { wave: 'square', freq: 1250, freqEnd: 380, gain: 0.2, attack: 0.001, decay: 0.09, filter: { type: 'lowpass', freq: 4200, freqEnd: 1200, q: 1 } },
-      { wave: 'noise', gain: 0.42, attack: 0.001, decay: 0.1, delay: 0.035, filter: { type: 'highpass', freq: 1500 } },
-      { wave: 'sine', freq: 96, freqEnd: 44, gain: 0.5, attack: 0.002, decay: 0.28, delay: 0.02 },
+      { wave: 'noise', gain: 0.7, attack: 0.001, decay: 0.04, delay: 0.03, filter: { type: 'bandpass', freq: 2200, q: 4 } },
+      ...marimba(784, 0.05, 0.28, 0.18),
+      ...marimba(1175, 0.11, 0.3, 0.3),
     ],
   },
 
-  /** Layered under a blow that shakes the arena (beatSfx): a sub drop, and the boards rattling as it settles. */
+  /** Under a blow that shakes the arena: a big bass drum and the toy box rattling as it settles. */
   'hit.quake': {
-    gain: 0.5,
+    gain: 0.47,
     jitter: 0.03,
-    voices: [
-      { wave: 'sine', freq: 70, freqEnd: 32, gain: 0.6, attack: 0.003, hold: 0.05, decay: 0.55 },
-      { wave: 'noise', gain: 0.45, attack: 0.002, decay: 0.4, filter: { type: 'lowpass', freq: 600, freqEnd: 90, q: 1 } },
-      { wave: 'noise', gain: 0.14, attack: 0.03, decay: 0.32, delay: 0.06, filter: { type: 'bandpass', freq: 1800, freqEnd: 700, q: 3 } },
-    ],
+    voices: [...felt(70, 0, 0.66, 0.55), ...shaker(0.03, 0.14, 0.3, 0.02), ...woodBlock(420, 0.08, 0.14), ...woodBlock(480, 0.16, 0.1)],
   },
 
-  /** A hit landing on plate (docs/shield.md §5): a short metallic ring where flesh would thud. Layered under the hit. */
+  /** A hit landing on a Shield: a hollow coconut tok where the drum would thud. */
   'shield.absorb': {
-    gain: 0.42,
+    gain: 0.31,
     jitter: 0.03,
-    voices: [
-      { wave: 'triangle', freq: 880, freqEnd: 640, gain: 0.3, attack: 0.001, decay: 0.16 },
-      { wave: 'sine', freq: 1760, freqEnd: 1420, gain: 0.16, attack: 0.001, decay: 0.24, delay: 0.01 },
-      { wave: 'noise', gain: 0.18, attack: 0.001, decay: 0.045, filter: { type: 'bandpass', freq: 3200, q: 2 } },
-    ],
+    voices: [...woodBlock(880, 0, 0.36), ...bar(659, 0.005, 0.16, 0.14)],
   },
 
-  /** The pool going: the ring above, shattered — bright noise and a falling square, with a low thump under it. */
+  /** The Shield going: a wooden crack and the pieces clattering away. */
   'shield.break': {
-    gain: 0.5,
+    gain: 0.8,
     jitter: 0.03,
     voices: [
-      { wave: 'noise', gain: 0.4, attack: 0.001, decay: 0.2, filter: { type: 'highpass', freq: 2600 } },
-      { wave: 'square', freq: 1900, freqEnd: 900, gain: 0.14, attack: 0.001, decay: 0.12 },
-      { wave: 'sine', freq: 2600, freqEnd: 2100, gain: 0.12, attack: 0.001, decay: 0.32, delay: 0.03 },
-      { wave: 'triangle', freq: 240, freqEnd: 120, gain: 0.3, attack: 0.002, decay: 0.2, delay: 0.01 },
+      { wave: 'noise', gain: 0.6, attack: 0.001, decay: 0.05, filter: { type: 'bandpass', freq: 2000, q: 4 } },
+      ...felt(200, 0, 0.3, 0.14),
+      ...woodBlock(1500, 0.05, 0.22),
+      ...woodBlock(1100, 0.1, 0.2),
+      ...woodBlock(1300, 0.16, 0.16),
     ],
   },
 
-  /** A rising major triad, soft-attacked. */
+  /** Healed: a marimba roll up a major triad. */
   heal: {
     gain: 0.38,
     jitter: 0.01,
-    voices: [
-      { wave: 'sine', freq: 523, gain: 0.34, attack: 0.02, decay: 0.42 },
-      { wave: 'sine', freq: 659, gain: 0.3, attack: 0.02, decay: 0.4, delay: 0.06 },
-      { wave: 'sine', freq: 784, gain: 0.26, attack: 0.02, decay: 0.46, delay: 0.12 },
-    ],
+    voices: [...marimba(523, 0, 0.3), ...marimba(659, 0.07, 0.28), ...marimba(784, 0.14, 0.28), ...marimba(1047, 0.21, 0.26, 0.5)],
   },
 
-  /** Stat up: ui.confirm's contour an octave down, with body. */
+  /** Stat up: two bars hopping up a fifth. */
   buff: {
-    gain: 0.32,
+    gain: 0.59,
     jitter: 0.02,
-    voices: [
-      { wave: 'triangle', freq: 300, freqEnd: 500, detune: 10, gain: 0.36, attack: 0.01, decay: 0.26 },
-      { wave: 'sine', freq: 600, freqEnd: 1000, gain: 0.12, attack: 0.01, decay: 0.2, delay: 0.03 },
-    ],
+    voices: [...marimba(392, 0, 0.3, 0.14), ...marimba(587, 0.06, 0.3, 0.24)],
   },
 
-  /** Stat down: buff mirrored, wider detune so it sags. */
+  /** Stat down: two bars sagging down, a little slide between them. */
   debuff: {
-    gain: 0.32,
+    gain: 0.59,
     jitter: 0.02,
-    voices: [
-      { wave: 'triangle', freq: 420, freqEnd: 240, detune: 24, gain: 0.36, attack: 0.008, decay: 0.28, filter: { type: 'lowpass', freq: 1800, freqEnd: 700, q: 1 } },
-    ],
+    voices: [...marimba(494, 0, 0.3, 0.14), ...slide(494, 330, 0.03, 0.1, 0.1, 0.01), ...marimba(330, 0.08, 0.3, 0.24)],
   },
 
-  /** A condition landing: a short sizzle with a dark note under it. */
+  /** A condition landing, and DoT ticks: a low cartoon bwomp and a rattle. */
   status: {
-    gain: 0.55,
+    gain: 0.27,
     jitter: 0.06,
     voices: [
-      { wave: 'noise', gain: 0.34, attack: 0.006, decay: 0.24, filter: { type: 'bandpass', freq: 1500, freqEnd: 700, q: 3.5 } },
-      { wave: 'triangle', freq: 260, freqEnd: 190, gain: 0.24, attack: 0.006, decay: 0.2 },
+      { wave: 'sine', freq: 260, freqEnd: 150, detune: 40, gain: 0.26, attack: 0.006, decay: 0.18 },
+      ...shaker(0, 0.12, 0.16, 0.01),
     ],
   },
 
-  /** Conduct going off — a fast electric discharge. */
+  /** Conduct going off: a pop and a quick flurry of blocks. */
   detonate: {
-    gain: 0.44,
+    gain: 0.64,
     jitter: 0.05,
     voices: [
-      { wave: 'sawtooth', freq: 940, freqEnd: 120, gain: 0.3, attack: 0.001, decay: 0.18, filter: { type: 'lowpass', freq: 5000, freqEnd: 800, q: 3 } },
-      { wave: 'noise', gain: 0.4, attack: 0.001, decay: 0.11, filter: { type: 'highpass', freq: 1800 } },
-      { wave: 'sine', freq: 130, freqEnd: 50, gain: 0.42, attack: 0.002, decay: 0.24 },
+      { wave: 'sine', freq: 300, freqEnd: 1200, gain: 0.3, attack: 0.001, decay: 0.05 },
+      { wave: 'noise', gain: 0.5, attack: 0.001, decay: 0.06, filter: { type: 'bandpass', freq: 1800, q: 3 } },
+      ...felt(130, 0, 0.42, 0.2),
+      ...woodBlock(1600, 0.05, 0.18),
+      ...woodBlock(1900, 0.09, 0.16),
     ],
   },
 
-  /** Knockout: a long falling sweep with the lowpass closing alongside it — going away, not just down. */
+  /** Knockout: a slide whistle falling all the way down and a soft bump at the bottom. */
   faint: {
-    gain: 0.42,
+    gain: 0.94,
     jitter: 0.02,
-    voices: [
-      { wave: 'triangle', freq: 320, freqEnd: 62, detune: 16, gain: 0.42, attack: 0.006, decay: 0.6, filter: { type: 'lowpass', freq: 1600, freqEnd: 210, q: 1.2 } },
-      { wave: 'noise', gain: 0.22, attack: 0.01, decay: 0.5, filter: { type: 'lowpass', freq: 900, freqEnd: 180, q: 0.8 } },
-    ],
+    voices: [...slide(880, 196, 0, 0.3, 0.5, 0.01), ...felt(110, 0.48, 0.4, 0.2)],
   },
 
-  /** Mana returning: a small high bell, out of the way. */
+  /** Mana returning: two small high bars, out of the way. */
   mana: {
-    gain: 0.26,
+    gain: 0.44,
     jitter: 0.02,
-    voices: [
-      { wave: 'sine', freq: 880, gain: 0.24, attack: 0.004, decay: 0.44 },
-      { wave: 'sine', freq: 1320, detune: 8, gain: 0.14, attack: 0.004, decay: 0.34, delay: 0.02 },
-    ],
+    voices: [...marimba(880, 0, 0.22, 0.3), ...bar(1320, 0.03, 0.14, 0.3)],
   },
 
-  /** A hero arriving: upward rush with a blip on the landing. */
+  /** A hero arriving: a swish up, then a pop as they land. */
   switchIn: {
-    gain: 0.62,
+    gain: 0.44,
     jitter: 0.04,
-    voices: [
-      { wave: 'noise', gain: 0.4, attack: 0.03, decay: 0.17, filter: { type: 'bandpass', freq: 420, freqEnd: 2400, q: 1.1 } },
-      { wave: 'triangle', freq: 440, freqEnd: 660, gain: 0.24, attack: 0.006, decay: 0.13, delay: 0.11 },
-    ],
+    voices: [...swish(420, 2400, 0, 0.36, 0.15, 0.03), { wave: 'sine', freq: 330, freqEnd: 880, gain: 0.24, attack: 0.001, decay: 0.06, delay: 0.11 }, ...woodBlock(1100, 0.11, 0.16)],
   },
 
-  /** A Field Effect taking the battlefield: the one combat sound allowed to be big and slow — it fires a handful of times a fight. */
+  /** A Field Effect taking the battlefield: the one combat sound allowed to be big and slow — a marimba roll climbing the arena. */
   field: {
-    gain: 0.4,
+    gain: 0.35,
     jitter: 0.01,
     voices: [
-      { wave: 'sawtooth', freq: 110, freqEnd: 232, detune: 22, gain: 0.3, attack: 0.12, decay: 0.8, filter: { type: 'lowpass', freq: 300, freqEnd: 2600, q: 2.4 } },
-      { wave: 'noise', gain: 0.24, attack: 0.18, decay: 0.62, filter: { type: 'bandpass', freq: 600, freqEnd: 3000, q: 0.8 } },
-      { wave: 'sine', freq: 660, freqEnd: 990, gain: 0.12, attack: 0.2, decay: 0.5, delay: 0.16 },
+      ...shaker(0, 0.12, 0.6, 0.18),
+      ...bar(262, 0, 0.18, 0.2),
+      ...bar(330, 0.08, 0.18, 0.2),
+      ...bar(392, 0.16, 0.2, 0.2),
+      ...bar(523, 0.24, 0.2, 0.2),
+      ...marimba(659, 0.32, 0.22, 0.6),
+      ...bar(196, 0.32, 0.2, 0.6),
     ],
   },
 
-  /**
-   * The beat a fight opens on (view/combat/openingBeats.ts): a struck low drum, then a swell that rises where `entrance.dread`'s sweeps fall.
-   * Once per battle, so it may have presence — but it is deliberately capped under dread. The engagement is the frame; a named enemy
-   * arriving inside it is the event, and the frame must never outsize the event.
-   */
+  /** The beat a fight opens on: a drum and a marimba call rising. Capped under `entrance.dread` — the frame never outsizes the event. */
   'battle.join': {
-    gain: 0.44,
-    // No jitter: a scripted moment, same reasoning as entrance.dread.
+    gain: 0.4,
     jitter: 0,
-    voices: [
-      { wave: 'noise', gain: 0.42, attack: 0.002, decay: 0.3, filter: { type: 'lowpass', freq: 1400, freqEnd: 160, q: 1 } },
-      { wave: 'sine', freq: 82, freqEnd: 55, gain: 0.5, attack: 0.004, hold: 0.06, decay: 0.5 },
-      { wave: 'triangle', freq: 164, freqEnd: 146, detune: 14, gain: 0.2, attack: 0.01, hold: 0.08, decay: 0.55 },
-      { wave: 'noise', gain: 0.16, attack: 0.2, decay: 0.34, delay: 0.05, filter: { type: 'bandpass', freq: 500, freqEnd: 3000, q: 0.9 } },
-    ],
+    voices: [...felt(98, 0, 0.56, 0.4), ...woodBlock(600, 0, 0.3), ...marimba(294, 0.12, 0.24, 0.2), ...marimba(440, 0.24, 0.26, 0.5)],
   },
 
-  /**
-   * Named-enemy entrance (view/shared/entrances.ts). The biggest sound in the table, licensed only because it fires at most ONCE a run
-   * (the Manticore at Wild's Edge) — if a second thing ever plays it, it is too big. Every sweep falls where `field`'s rise: an arrival, not a state.
-   */
+  /** A named enemy's entrance, at most once a run: the biggest sound in the box, a low "dun-dun-duuun" on bass marimba over drums. */
   'entrance.dread': {
-    gain: 0.52,
-    // No jitter: a scripted moment, and a randomised pitch would read as a mis-fired hit.
+    gain: 0.46,
     jitter: 0,
     voices: [
-      { wave: 'noise', gain: 0.38, attack: 0.004, decay: 0.5, filter: { type: 'lowpass', freq: 800, freqEnd: 140, q: 0.9 } },
-      { wave: 'sine', freq: 62, freqEnd: 36, gain: 0.5, attack: 0.02, hold: 0.35, decay: 1.1 },
-      {
-        wave: 'sawtooth',
-        freq: 96,
-        freqEnd: 87,
-        detune: 18,
-        gain: 0.28,
-        attack: 0.22,
-        hold: 0.5,
-        decay: 1.0,
-        delay: 0.16,
-        filter: { type: 'lowpass', freq: 300, freqEnd: 760, q: 2.6 },
-      },
+      ...felt(73, 0, 0.5, 0.3),
+      ...marimba(147, 0, 0.32, 0.22),
+      ...felt(73, 0.26, 0.5, 0.3),
+      ...marimba(147, 0.26, 0.32, 0.22),
+      ...felt(62, 0.52, 0.6, 0.9),
+      ...marimba(131, 0.52, 0.34, 1.1),
+      ...bar(156, 0.52, 0.22, 1.1),
+      ...slide(330, 196, 0.6, 0.08, 0.8, 0.1),
     ],
   },
 };
