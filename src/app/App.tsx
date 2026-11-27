@@ -124,15 +124,14 @@ import { CHAMPION_LEVEL_BONUS, encounterScaling, enemyLevelFor, enemyLoadoutFor 
 import { ENCOUNTERS_PER_ACT, MAX_LEVEL, MAX_XP, applySeededEncounterLevels, encounterXpKind, levelOf, xpForEncounter, xpForLevel, type HeroLevelUp } from '../run/growth';
 import { actOneLocationFor, arenaLocationIds, generateItinerary, locationDue, locationForAct, locationForType, locationPool, seatNextLocation } from '../run/locations';
 import { encounterKindOf, encounterSeedFor, nodeEncounter } from '../run/encounters';
-import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
+import { locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
 import { ProfileProvider } from '../view/shared/ProfileContext';
 import { starShopCatalog } from '../data/starShop';
 import { buyOffer, stardustBalance, starfall, starfallTen, type StarShopOffer } from '../run/starShop';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
-import { hasMusic, prefetchTrack, setTrack, type MusicId } from '../audio/music';
+import { hasMusic, setTrack, type MusicId } from '../audio/music';
 import { playSfx } from '../audio/sfx';
-import { hasTrack } from '../audio/tracks';
 import { openingSquad } from '../run/squad';
 import {
   advanceToNode,
@@ -1160,7 +1159,6 @@ export function App() {
       const seated = seatNextLocation(run, randomSeed(), locationPool(run.cycle));
       const placeIds = seated.locationIds.slice(run.locationIds.length);
       void preloadImages(locationArtUrls(placeIds));
-      for (const id of placeIds) if (hasTrack(id)) prefetchTrack(id);
       setPlayerRun(seated);
     }
     setScreen({ kind: 'actIntro' });
@@ -1196,8 +1194,7 @@ export function App() {
       : locationForAct(playerRun.locationIds, actBreak ? playerRun.actNumber - 1 : playerRun.actNumber);
 
   // The act's location IS the track off a fight; computed above the screen switch so it survives every other screen.
-  // A location with no authored track fades to silence rather than carrying the previous act's music.
-  // The title is the exception — it is placeless, so it names its own track (audio/tracks.ts) — and
+  // The title is the exception — it is placeless, so it names its own song (audio/chipSongs.ts) — and
   // the Trials' and the Gauntlet's menus carry it on, since they are reached from it.
   const titleTrack = screen.kind === 'title' || screen.kind === 'constructed' || screen.kind === 'gauntlet' || screen.kind === 'versus';
   // The draft, the pact forged at its end (the resumed `blessing` screen) and the seal that opens the run carry the starter track.
@@ -1211,18 +1208,6 @@ export function App() {
   useEffect(() => {
     setTrack(trackId);
   }, [trackId]);
-
-  // From the title the next thing needed is Act 1's track, always the same place; a later act's
-  // is warmed where its place is drawn (`enterAct`).
-  const onTitle = screen.kind === 'title';
-  useEffect(() => {
-    if (onTitle && hasTrack(ACT_ONE_LOCATION_ID)) prefetchTrack(ACT_ONE_LOCATION_ID);
-  }, [onTitle]);
-  // The draft follows the title (behind at most the lore cards), so its track is warmed there.
-  const warmStarter = screen.kind === 'title' || screen.kind === 'lore';
-  useEffect(() => {
-    if (warmStarter) prefetchTrack('starterScreen');
-  }, [warmStarter]);
 
   return (
     <LocationProvider location={ambientLocation}>

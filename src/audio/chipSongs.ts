@@ -1,4 +1,4 @@
-// The chiptune soundtrack, one song a place plus the fight themes. Pure data for chiptune.ts.
+// The soundtrack, one chiptune song a place plus the fight themes. Pure data for chiptune.ts.
 // One token a 16th-note step: a note or chord-tone digit starts, '-' holds, '.' rests. Bass tokens off
 // the bar's chord: R root, r root an octave up, 3 third, 5 fifth, L the fifth an octave down.
 
@@ -300,7 +300,6 @@ const songTable = {
   },
 
   theThreshold: threshold,
-  threshold,
 
   /** Every ordinary fight. */
   battle: {
@@ -428,6 +427,4 @@ export type SongId = keyof typeof songTable;
 
 export const chipSongs: Record<SongId, ChipSong> = songTable;
 
-/** Fight themes play under either soundtrack: the original has no fight music of its own. */
 export const FIGHT_SONGS = ['battle', 'boss', 'finale'] as const satisfies readonly SongId[];
-export type FightSongId = (typeof FIGHT_SONGS)[number];

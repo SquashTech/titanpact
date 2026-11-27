@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { getAudioPrefs, playSfx, setMusicLevel, setMuted, setSfxLevel, setSoundtrackPref } from '../../audio/sfx';
+import { getAudioPrefs, playSfx, setMusicLevel, setMuted, setSfxLevel } from '../../audio/sfx';
 import { HubGlyph } from './nodeIcons';
 
 // Volume and mute, as a drop-in block for a menu's .options-list.
@@ -11,7 +11,6 @@ export function AudioSettings() {
   const [muted, setMutedState] = useState(() => getAudioPrefs().muted);
   const [sfx, setSfx] = useState(() => getAudioPrefs().sfx);
   const [music, setMusic] = useState(() => getAudioPrefs().music);
-  const [soundtrack, setSoundtrackState] = useState(() => getAudioPrefs().soundtrack);
   const lastPreview = useRef(0);
 
   function handleMute() {
@@ -29,12 +28,6 @@ export function AudioSettings() {
     if (now - lastPreview.current < PREVIEW_THROTTLE_MS) return;
     lastPreview.current = now;
     playSfx('ui.select');
-  }
-
-  function handleSoundtrack() {
-    const next = soundtrack === 'original' ? 'chiptune' : 'original';
-    setSoundtrackPref(next);
-    setSoundtrackState(next);
   }
 
   function handleMusic(value: number) {
@@ -82,14 +75,6 @@ export function AudioSettings() {
           <span className="audio-fader-value">{Math.round(music * 100)}%</span>
         </label>
       </div>
-
-      <button className="options-item" onClick={handleSoundtrack}>
-        <span className="options-item-glyph" aria-hidden="true">
-          <HubGlyph name="sound" />
-        </span>
-        Soundtrack
-        <span className="options-item-state">{soundtrack === 'original' ? 'Original' : 'Chiptune'}</span>
-      </button>
     </div>
   );
 }

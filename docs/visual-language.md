@@ -3532,18 +3532,13 @@ voice cap went 24 → 64, since a struck chord is more oscillators than the old 
 
 ## The chiptune soundtrack and fight music (2026-11-27)
 
-Per user direction: a second soundtrack, **Chiptune**, sits beside the original FLAC tracks, chosen
-on the Options menu's Soundtrack row (saved with the volume settings; Original is the default).
-It is played live, not shipped as audio: `src/audio/chiptune.ts` steps four channels — a square
-lead, a thin pulse arpeggio, a triangle bass, noise drums — through note tables in
-`chipSongs.ts`, one 8-bar loop for every Location, the title and the draft (`chipScore.ts` parses
-them; `test/chipSongs` pins every bar at sixteen steps and every place to a song). Picked over a
-toybox-instrument version on `art/concepts/music/`, which also plays the whole set beside the
-original tracks.
+Per user direction, the game's music is **chiptune only**. The original FLAC tracks were
+deleted the same day: their style does not fit the storybook look, so there is no Soundtrack
+setting. The music is played live, not shipped as audio: `src/audio/chiptune.ts` steps four
+channels — a square lead, a thin pulse arpeggio, a triangle bass, noise drums — through note
+tables in `chipSongs.ts`, one 8-bar loop for every Location, the title and the draft
+(`chipScore.ts` parses them; `test/chipSongs` pins every bar at sixteen steps and every place to
+a song). Picked over a toybox-instrument version; `art/concepts/music/` plays the whole set.
 
-**Fights now have their own music**, reversing "music belongs to a place, not a screen" for
-fights only: an ordinary fight plays `battle`, a Guardian `boss`, the Herald and the Eyes
-`finale`. The original soundtrack has no fight music, so the fight themes are chiptune under
-either setting — the one place the two soundtracks meet. Kept that way on purpose (2026-11-27, per
-user direction), rather than falling back to the area’s original track in a fight. The Threshold, Dreaming Spires and Thunder Aerie have chiptune songs but still no
-original track, so they stay silent under Original.
+**Fights have their own music**, reversing "music belongs to a place, not a screen" for fights
+only: an ordinary fight plays `battle`, a Guardian `boss`, the Herald and the Eyes `finale`.
