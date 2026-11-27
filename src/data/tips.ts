@@ -86,19 +86,19 @@ export const FIGHT_TIPS: readonly FightTip[] = [
  */
 export const INSTALL_CARD: Readonly<Record<InstallPlatform, { title: string; lead: string; steps: readonly string[]; note?: string }>> = {
   ios: {
-    title: 'Install Titanpact',
-    lead: 'Titanpact plays best installed as a full screen app.',
-    steps: ['Tap [share] Share in the browser bar.', 'Scroll down and tap Add to Home Screen.', 'Open Titanpact from the new icon.'],
+    title: 'Install Twofold Heroes',
+    lead: 'Twofold Heroes plays best installed as a full screen app.',
+    steps: ['Tap [share] Share in the browser bar.', 'Scroll down and tap Add to Home Screen.', 'Open Twofold Heroes from the new icon.'],
     note: "Progress in the browser doesn't carry over to the Home Screen app, so add it before you play.",
   },
   android: {
-    title: 'Install Titanpact',
-    lead: 'Titanpact plays best installed as a full screen app.',
-    steps: ['Tap [menu] at the top right of the browser.', 'Tap Install app or Add to Home screen.', 'Open Titanpact from the new icon.'],
+    title: 'Install Twofold Heroes',
+    lead: 'Twofold Heroes plays best installed as a full screen app.',
+    steps: ['Tap [menu] at the top right of the browser.', 'Tap Install app or Add to Home screen.', 'Open Twofold Heroes from the new icon.'],
   },
   inApp: {
     title: 'Open in Your Browser',
-    lead: "This page is open inside another app, which can't save Titanpact to your home screen.",
+    lead: "This page is open inside another app, which can't save Twofold Heroes to your home screen.",
     steps: ['Tap [menu] or [share] in this app.', 'Choose Open in browser (Safari or Chrome).'],
   },
 };
