@@ -159,6 +159,7 @@ export function TitleScreen({
   const [showOptions, setShowOptions] = useState(false);
   const [showLocations, setShowLocations] = useState(false);
   const [showDev, setShowDev] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [confirmingNewRun, setConfirmingNewRun] = useState(false);
   /** The Cycle the Infinite's Enter chose, held while a parked run's deletion is confirmed. */
@@ -213,9 +214,14 @@ export function TitleScreen({
     if (tour === 'fallen' && next === 'play') setTour('home');
   }
 
+  function closeMenu() {
+    setShowMenu(false);
+    setShowDev(false);
+  }
+
   /** Every Dev row leaves the title, so none of them needs the menu left standing. */
   function runDev(action: () => void) {
-    setShowDev(false);
+    closeMenu();
     action();
   }
 
@@ -279,81 +285,112 @@ export function TitleScreen({
         </div>
       )}
 
-      {/* Records, Reference and Options are corner glyphs: a ledger, a lookup and a dial, not places. */}
+      {/* One corner button, so the wordmark stands alone at the top. A fresh Records entry rims it. */}
       <button
-        className={`title-records-button${pendingWeave(profile) ? ' is-fresh' : ''}`}
-        onClick={() => {
-          onRefreshProfile();
-          setShowRecords(true);
-        }}
-        aria-label="Records"
-        title="Records"
+        className={`title-menu-button${pendingWeave(profile) ? ' is-fresh' : ''}`}
+        onClick={() => setShowMenu(true)}
+        aria-label="Menu"
+        title="Menu"
       >
-        <img src={recordsArt} alt="" draggable={false} />
+        <HubGlyph name="menu" />
       </button>
-      <div className="title-icon-row">
-        <button className="title-icon-button" onClick={() => setShowReference(true)} aria-label="Reference" title="Reference">
-          <HubGlyph name="reference" />
-        </button>
-        <button className="title-icon-button" onClick={() => setShowOptions(true)} aria-label="Options" title="Options">
-          <HubGlyph name="menu" />
-        </button>
-      </div>
 
-      {/* ⚠️ TEMPORARY DEV/TEST — the whole corner. Quick/Sandbox Battle and Visit
-          Location are authoring tools; the two 🧪 rows are throwaway fixtures. */}
-      <div className={`title-dev${showDev ? ' is-open' : ''}`}>
-        <button className="title-dev-button" onClick={() => setShowDev((open) => !open)} aria-expanded={showDev}>
-          Dev
-        </button>
-
-        {showDev && (
-          <div className="title-dev-menu" role="menu">
-            <button className="title-dev-item" onClick={() => runDev(onQuickBattle)}>
-              Quick Battle
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(onOpenSandbox)}>
-              Sandbox Battle
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(onOpenTrials)}>
-              Trials
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(() => onOpenConstructed(true))}>
-              🧪 Constructed: every hero
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(() => onOpenVersus(true))}>
-              Versus (two tabs)
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(() => onOpenVersus(false))}>
-              Versus (online)
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(() => setShowLocations(true))}>
-              Visit Location
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(onGrantDevStars)}>
-              ✦ +2,500 Pages
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(onResetTips)}>
-              Reset Tips
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(onStartLevel4TestRun)}>
-              🧪 Test: Lv4 Squad
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(onStartStatusTestFight)}>
-              🧪 Test: Status FX
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(onStartAcademyTestRun)}>
-              🧪 Test: Academy
-            </button>
-            <button className="title-dev-item" onClick={() => runDev(onStartTitanEyesTestRun)}>
-              👁️ Test: Titan's Eyes
-            </button>
+      {showMenu && (
+        <div className="log-overlay" onClick={() => closeMenu()}>
+          <div className="log-panel options-panel is-gilt-sheet title-menu-sheet" onClick={(e) => e.stopPropagation()}>
+            <h3 className="gilt-dialog-title">Menu</h3>
+            <div className="options-list">
+              <button
+                className={`options-item${pendingWeave(profile) ? ' is-fresh' : ''}`}
+                onClick={() => {
+                  closeMenu();
+                  onRefreshProfile();
+                  setShowRecords(true);
+                }}
+              >
+                <span className="options-item-glyph" aria-hidden="true">
+                  <img src={recordsArt} alt="" draggable={false} />
+                </span>
+                Records
+              </button>
+              <button
+                className="options-item"
+                onClick={() => {
+                  closeMenu();
+                  setShowReference(true);
+                }}
+              >
+                <span className="options-item-glyph" aria-hidden="true">
+                  <HubGlyph name="reference" />
+                </span>
+                Reference
+              </button>
+              <button
+                className="options-item"
+                onClick={() => {
+                  closeMenu();
+                  setShowOptions(true);
+                }}
+              >
+                <span className="options-item-glyph" aria-hidden="true">
+                  <HubGlyph name="menu" />
+                </span>
+                Options
+              </button>
+              {/* ⚠️ TEMPORARY DEV/TEST: authoring tools and throwaway fixtures. */}
+              <button className="options-item title-menu-dev" onClick={() => setShowDev((open) => !open)} aria-expanded={showDev}>
+                <span className="options-item-glyph" aria-hidden="true">
+                  {showDev ? '▾' : '▸'}
+                </span>
+                Dev
+              </button>
+              {showDev && (
+                <div className="title-menu-dev-list" role="menu">
+                  <button className="title-dev-item" onClick={() => runDev(onQuickBattle)}>
+                    Quick Battle
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(onOpenSandbox)}>
+                    Sandbox Battle
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(onOpenTrials)}>
+                    Trials
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(() => onOpenConstructed(true))}>
+                    🧪 Constructed: every hero
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(() => onOpenVersus(true))}>
+                    Versus (two tabs)
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(() => onOpenVersus(false))}>
+                    Versus (online)
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(() => setShowLocations(true))}>
+                    Visit Location
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(onGrantDevStars)}>
+                    ✦ +2,500 Pages
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(onResetTips)}>
+                    Reset Tips
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(onStartLevel4TestRun)}>
+                    🧪 Test: Lv4 Squad
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(onStartStatusTestFight)}>
+                    🧪 Test: Status FX
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(onStartAcademyTestRun)}>
+                    🧪 Test: Academy
+                  </button>
+                  <button className="title-dev-item" onClick={() => runDev(onStartTitanEyesTestRun)}>
+                    👁️ Test: Titan's Eyes
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-
-      {/* Plain <div>, so the delegated sfx listener leaves a dismissing tap silent. */}
-      {showDev && <div className="title-dev-backdrop" onClick={() => setShowDev(false)} />}
+        </div>
+      )}
       </div>
 
       {tab === 'collection' && (

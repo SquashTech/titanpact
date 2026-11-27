@@ -29,12 +29,12 @@ export const LORE_LINES: readonly string[] = [
   'This is the story of how they sealed the Titan.',
 ];
 
-/** What a run is, ahead of the tutorial's first fight (docs/the-tutorial.md §3). */
+/** What a run is, ahead of the tutorial's first fight. The one tip allowed "our": it answers the opening's heroes. */
 export const WELCOME_TIP: Tip = {
   id: 'tutorial.welcome',
   title: 'Welcome to',
   look: 'welcome',
-  pages: ['A *run* is the road to the *Titan*, fight after fight. This first fight shows you how.'],
+  pages: ["Our heroes are trapped inside the Inkmaster's book. Fight your way to the end to free them."],
 };
 
 function tip(id: string, title: string, ...pages: string[]): Tip {

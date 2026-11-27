@@ -11,6 +11,7 @@ import { pageSpotlight, TIP_STAGING } from './tipStaging';
 import { TipPictureView } from './TipScene';
 import { TIP_SCENES } from '../../data/tipScenes';
 import { TitleLogo } from './TitleLogo';
+import inkmaster from '../../../art/title/opening/inkmaster.png';
 import '../story/story.css';
 
 /**
@@ -320,10 +321,11 @@ export function TipOverlay({ tip, onDone }: Props) {
             <span className="tip-welcome-kicker">{tip.title}</span>
             <TitleLogo />
           </h1>
+          <img className="tip-welcome-figure" src={inkmaster} alt="" draggable={false} />
           <p className="tip-welcome-line">
             <TipText text={tip.pages[index]} />
           </p>
-          <span className="tip-welcome-advance">{last ? 'Tap to begin' : 'Tap to continue'}</span>
+          <span className="tip-welcome-advance">{last ? 'Begin' : 'Next'}</span>
         </div>
       ) : (
         <div className="tip-box">

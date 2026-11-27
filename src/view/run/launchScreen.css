@@ -1,0 +1,107 @@
+/* The cold launch (LaunchScreen.tsx): the title's book, its cover shut, on the same desk the title
+   draws. The cover sits over the painted spread and swings open off its left edge. */
+
+.launch-book-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  background: #fbf3df;
+  transition: opacity 0.7s ease-in 0.15s;
+}
+
+.launch-book-screen.is-reveal {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The title's own frame: the shell's 12px padding and the screen's rounded corners. */
+.launch-book-frame {
+  position: absolute;
+  inset: 12px;
+  container-type: size;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #6b3f22;
+  perspective: 900px;
+}
+
+/* Sized and placed exactly as `.book-spread` (bookTitle.css), so the cover opens onto the title's own book. */
+.launch-book {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(106cqw, 520px, calc((100cqh - var(--hub-nav-h, 64px)) * 196 / 344));
+  aspect-ratio: 196 / 344;
+  transform: translateX(-50%);
+  container-type: inline-size;
+  background: url('../../../art/title/book/desk.png') center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+
+/* One board for the whole spread: x 6–94.5%, y 16.6–85% of the desk painting. */
+.launch-book-cover {
+  position: absolute;
+  left: 6%;
+  right: 5.5%;
+  top: 16.6%;
+  bottom: 15%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5cqw;
+  background: #b3412f;
+  border: 3px solid #2b2340;
+  border-radius: 6px 14px 14px 6px;
+  box-shadow: inset 4cqw 0 0 #8c2f22, inset 0 0 0 2.2cqw #b3412f, inset 0 0 0 2.8cqw #e9b55a, 0 6px 0 #2b2340;
+  transform-origin: 0 50%;
+  transition: transform 0.7s cubic-bezier(0.55, 0, 0.75, 0.4);
+}
+
+.launch-book-screen.is-reveal .launch-book-cover {
+  transform: rotateY(-100deg);
+}
+
+.launch-book-cover .book-logo-big {
+  font-size: 15cqw;
+}
+
+.launch-book-cover .book-logo-small {
+  margin-top: 1.6cqw;
+  font-size: 5cqw;
+  letter-spacing: 2.2cqw;
+}
+
+.launch-book-rule {
+  width: 22cqw;
+  height: 3px;
+  border-radius: 2px;
+  background: #ffd27a;
+}
+
+.launch-book-loading {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 40px;
+  text-align: center;
+  font: 600 15px/1 Fredoka, system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-shadow: 0 2px 0 #2b2340;
+  animation: launch-book-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes launch-book-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launch-book-cover,
+  .launch-book-loading {
+    animation: none;
+    transition: none;
+  }
+}

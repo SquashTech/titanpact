@@ -65,24 +65,26 @@
   100% { opacity: 0; transform: scale(2.6); }
 }
 
-/* --- The welcome (a tip's `welcome` look): the wordmark large over the dimmed fight, no card --- */
+/* --- The welcome (a tip's `welcome` look): a paper page of its own ahead of the first fight --- */
 .tip-overlay.is-welcome {
+  z-index: 200;
   align-items: center;
-  background: radial-gradient(ellipse at 50% 45%, rgba(20, 16, 10, 0.72), rgba(4, 4, 7, 0.9) 70%);
+  /* Over storybook.css's blanket tip scrim: the welcome is a page, not a dim. */
+  background: #fbf3df !important;
 }
 .tip-welcome {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
-  max-width: 340px;
+  gap: 16px;
+  max-width: 320px;
   text-align: center;
 }
 .tip-welcome-title {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin: 0;
   animation: tip-welcome-drop 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -90,26 +92,40 @@
   font: 800 13px/1 system-ui, sans-serif;
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: #e7d6ae;
+  color: #8a6a3a;
 }
-.tip-welcome-title .title-wordmark {
-  width: 300px;
-  height: auto;
-  filter: drop-shadow(0 0 18px rgba(224, 166, 60, 0.45));
+.tip-welcome-title .book-logo-big {
+  font-size: 64px;
+}
+.tip-welcome-title .book-logo-small {
+  margin-top: 6px;
+  font-size: 21px;
+  letter-spacing: 8px;
+}
+.tip-welcome-figure {
+  width: 128px;
+  height: 128px;
+  image-rendering: pixelated;
+  animation: tip-welcome-fade 0.6s ease-out 0.35s both;
 }
 .tip-welcome-line {
   margin: 0;
-  font: 16px/1.45 Georgia, serif;
-  color: #edeff4;
+  font: 18px/1.45 Georgia, serif;
+  color: #2b2340;
+  text-wrap: balance;
   animation: tip-welcome-fade 0.6s ease-out 0.55s both;
 }
 .tip-welcome-advance {
-  margin-top: 10px;
-  font: 700 10px/1 system-ui, sans-serif;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(232, 226, 212, 0.5);
-  animation: tip-welcome-fade 0.6s ease-out 1.2s both;
+  margin-top: 6px;
+  padding: 9px 38px;
+  font: 700 19px/1 Fredoka, system-ui, sans-serif;
+  color: #fff;
+  background: #e08a2a;
+  border: 3px solid #2b2340;
+  border-radius: 14px;
+  box-shadow: 0 4px 0 #2b2340;
+  text-shadow: 0 2px 0 #2b2340;
+  animation: tip-welcome-fade 0.6s ease-out 1s both;
 }
 @keyframes tip-welcome-drop {
   from { opacity: 0; transform: translateY(-14px) scale(1.12); }
@@ -187,7 +203,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .guide-hand, .guide-hand-ring, .tip-welcome-title, .tip-welcome-line, .tip-welcome-advance, .tip-callout-ring { animation: none; }
+  .guide-hand, .guide-hand-ring, .tip-welcome-title, .tip-welcome-figure, .tip-welcome-line, .tip-welcome-advance, .tip-callout-ring { animation: none; }
 }
 
 /* Tip text, every tip: larger, and its keyword (a `*word*`) set in the note's ink-red, heavier. */

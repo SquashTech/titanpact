@@ -211,6 +211,24 @@ Questions it raises, for the designer:
 
 Status: **an idea, not decided.** It sits beside §2.7 and decides nothing in it.
 
+**The opening tells it (2026-11-27, per user direction, picked from `art/concepts/opening-ink/`).**
+The Titan is gone from the story, so the first thing a new account sees is the Inkmaster:
+- **The comic** (`data/opening.ts`) is six storybook pages in the heroes' own voice: *We were heroes
+  once, out in the wide world. / Then came the Inkmaster, who collects heroes. / One stroke of his
+  quill, and we were trapped on his pages. / He set a guard at the end of every chapter. / His story
+  ends on the last page. / Reach the last page, and we walk out of the story.* The ending is vague on
+  purpose: the finale is still the Herald and the Eyes, so it promises the last page, not a fight
+  with him. Six PixelLab paintings (`art/title/opening/`) with the roster's own sprites stood in them.
+- **The welcome** is its own paper page before the first fight, not a dim over it: *Our heroes are
+  trapped inside the Inkmaster's book. Fight your way to the end to free them.* It is the one tip
+  allowed "our", answering the comic.
+- **He is drawn as the showman** (option A of `art/concepts/spawn-redraw/inkmaster/`) on the comic
+  and the welcome. Whether he is a boss, and in what shape, is still open.
+- **The loading screen** is the title's book shut on the desk, the wordmark on its cover, which
+  swings open onto the title. **The title** has one ≡ corner button (Records, Reference, Options,
+  Dev), so the wordmark stands alone, and the desk runs down to the tab bar. The tab bar is left as
+  it is, since its buttons may change.
+
 **How he is portrayed is decided** (2026-11-27, per user direction, picked from
 `art/concepts/spawn-redraw/inkmaster/`): **his two Hands replace the Titan's Eyes**, and his face is
 the beat. The finale's second phase fights his Left Hand (black velvet glove, a dripping quill) and

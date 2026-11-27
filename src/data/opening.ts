@@ -1,7 +1,7 @@
-// The opening's six cards (docs/the-sky.md §1): a line each over an ambient picture, played once
-// on the first sky ahead of the tutorial.
+// The opening's six cards (docs/worlds.md §3.8): a line each over a storybook picture, played once
+// on a fresh account ahead of the tutorial. Told by the trapped heroes.
 
-export type OpeningPicture = 'fall' | 'sealed' | 'failing' | 'guardians' | 'eyes' | 'pact';
+export type OpeningPicture = 'world' | 'collector' | 'trapped' | 'guard' | 'lastPage' | 'free';
 
 export interface OpeningCard {
   line: string;
@@ -9,10 +9,10 @@ export interface OpeningCard {
 }
 
 export const OPENING_CARDS: readonly OpeningCard[] = [
-  { picture: 'fall', line: 'Long ago, something wicked fell from the stars.' },
-  { picture: 'sealed', line: 'It could not be killed, only sealed away.' },
-  { picture: 'failing', line: 'Now the seal is failing.' },
-  { picture: 'guardians', line: 'Four Guardians must be felled to bind it again.' },
-  { picture: 'eyes', line: 'If we fail, the Titan will destroy us all.' },
-  { picture: 'pact', line: 'We must seal the Pact.' },
+  { picture: 'world', line: 'We were heroes once, out in the wide world.' },
+  { picture: 'collector', line: 'Then came the Inkmaster, who collects heroes.' },
+  { picture: 'trapped', line: 'One stroke of his quill, and we were trapped on his pages.' },
+  { picture: 'guard', line: 'He set a guard at the end of every chapter.' },
+  { picture: 'lastPage', line: 'His story ends on the last page.' },
+  { picture: 'free', line: 'Reach the last page, and we walk out of the story.' },
 ];
