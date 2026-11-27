@@ -37,6 +37,8 @@ interface Props {
   onFinished: () => void;
   onQuit: () => void;
   onPlace: (locationId: string | null) => void;
+  /** Whether a fight is on screen, so the music can follow it. */
+  onFighting: (fighting: boolean) => void;
   exitLabel: string;
 }
 
@@ -44,7 +46,7 @@ interface Props {
  * The tutorial (docs/the-tutorial.md): one scripted fight, its spoils, a road of three stops, and an
  * open fight. Each prompt is tapped through once a play; the hand points at every guided tap.
  */
-export function TutorialScreen({ welcome, onFinished, onQuit, onPlace, exitLabel }: Props) {
+export function TutorialScreen({ welcome, onFinished, onQuit, onPlace, onFighting, exitLabel }: Props) {
   const [stage, setStage] = useState<Stage>('fight');
   const [attempt, setAttempt] = useState(0);
   const [seenIds, setSeenIds] = useState<readonly string[]>([]);
@@ -55,6 +57,8 @@ export function TutorialScreen({ welcome, onFinished, onQuit, onPlace, exitLabel
   const foes = useMemo(() => storyEncounter(TUTORIAL_OPEN_FOES, TUTORIAL_OPEN_FOE_LEADS, allCombatants), []);
 
   useEffect(() => onPlace(TUTORIAL_PLACE), [onPlace]);
+  const fighting = stage === 'fight' || stage === 'fight2';
+  useEffect(() => onFighting(fighting), [onFighting, fighting]);
 
   /** A page shown once a play, ahead of its screen. */
   const page = (tip: Tip) => (!seenIds.includes(tip.id) ? <TipOverlay key={tip.id} tip={tip} onDone={() => seen(tip.id)} /> : null);

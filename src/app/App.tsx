@@ -396,6 +396,7 @@ export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
   /** The place a Story chapter's beat stands in, for its music and its fights' arena. */
   const [storyPlaceId, setStoryPlaceId] = useState<string | null>(null);
+  const [tutorialFighting, setTutorialFighting] = useState(false);
   /** Classic Mode picked on the Story select: the title starts it as Seal the Pact once did. */
   /** How the last Infinite run ended, until Blip has reacted to it in the sky. Session-only. */
   const [skyReturn, setSkyReturn] = useState<'win' | 'loss' | null>(null);
@@ -1201,7 +1202,7 @@ export function App() {
   const starterTrack = screen.kind === 'draft' || screen.kind === 'blessing' || (screen.kind === 'pactSeal' && playerRun.brokenSeals.length === 0);
   // A fight plays a fight theme rather than the place's track.
   const fightNodeType = screen.kind === 'fight' ? playerRun.map?.nodes[screen.nodeId]?.type : undefined;
-  const fightTrack: MusicId | null = FIGHT_SCREENS.has(screen.kind)
+  const fightTrack: MusicId | null = FIGHT_SCREENS.has(screen.kind) || (screen.kind === 'tutorial' && tutorialFighting)
     ? fightNodeType === 'finale' ? 'finale' : fightNodeType === 'boss' ? 'boss' : 'battle'
     : null;
   const trackId: MusicId | null = fightTrack ?? (titleTrack ? 'titleScreen' : starterTrack ? 'starterScreen' : hasMusic(ambientLocation?.id) ? ambientLocation.id : null);
@@ -1381,6 +1382,7 @@ export function App() {
           onFinished={handleTutorialDone}
           onQuit={() => setScreen({ kind: 'title' })}
           onPlace={setStoryPlaceId}
+          onFighting={setTutorialFighting}
         />
       )}
 

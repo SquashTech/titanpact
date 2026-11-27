@@ -3542,3 +3542,4 @@ a song). Picked over a toybox-instrument version; `art/concepts/music/` plays th
 
 **Fights have their own music**, reversing "music belongs to a place, not a screen" for fights
 only: an ordinary fight plays `battle`, a Guardian `boss`, the Herald and the Eyes `finale`.
+The tutorial’s two fights play `battle` too; its road plays Wild’s Edge.
