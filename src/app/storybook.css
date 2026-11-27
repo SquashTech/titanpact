@@ -988,7 +988,6 @@ button * { text-shadow: none !important; }
   border-radius: 14px !important;
 }
 .recruit-oath-innate-name { color: color-mix(in srgb, var(--passive-color) 70%, #2b2340) !important; }
-.recruit-wheel-face-art { filter: saturate(0.6) opacity(0.6) !important; }
 
 /* The matchup lines under a move's power, inked for paper. */
 .move-seat::after { background: rgba(43, 35, 64, 0.55) !important; }

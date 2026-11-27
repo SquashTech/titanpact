@@ -1,230 +1,236 @@
-/* The Recruit node (RecruitNodeScreen, RecruitWheel): the oath's ring split into the types on offer. */
+/* The Recruit node (RecruitNodeScreen, RecruitDeal): a notice on its tack, one face-down card a type. */
 
-.recruit-wheel {
+.recruit-poster-head {
   position: relative;
   z-index: 1;
   flex: none;
-  width: 100%;
-  height: 340px;
-  margin-top: 4px;
-}
-
-.recruit-wheel-hub {
-  position: absolute;
-  left: 50%;
-  top: 170px;
-  width: 0;
-  height: 0;
-}
-
-.recruit-wheel-ring {
-  position: absolute;
-  left: -126px;
-  top: -126px;
-  width: 252px;
-  height: 252px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 230, 180, 0.35);
-  box-shadow: 0 0 30px rgba(155, 201, 255, 0.15);
-  pointer-events: none;
-}
-
-.recruit-wheel-ring::after {
-  content: '';
-  position: absolute;
-  inset: 60px;
-  border-radius: 50%;
-  border: 1px dashed rgba(255, 230, 180, 0.3);
-}
-
-.recruit-wheel-turn {
-  position: absolute;
-  left: 0;
-  top: 0;
-  rotate: var(--wheel-rot);
-  transition: rotate 0.9s cubic-bezier(0.3, 0.8, 0.3, 1);
-}
-
-.recruit-wheel-disc {
-  position: absolute;
-  left: -120px;
-  top: -120px;
-  width: 240px;
-  height: 240px;
-  border-radius: 50%;
-  -webkit-mask: radial-gradient(circle, transparent 62px, #000 63px);
-  mask: radial-gradient(circle, transparent 62px, #000 63px);
-  transition: opacity 0.5s;
-}
-
-.recruit-wheel-seg {
-  transition: opacity 0.5s;
-}
-
-.recruit-wheel-type,
-.recruit-wheel-face {
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform: rotate(var(--at)) translateY(calc(-1 * var(--radius))) rotate(calc(-1 * var(--at)));
-}
-
-/* Turned back against the wheel, so a face never tips over as it rotates. */
-.recruit-wheel-upright {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  rotate: calc(-1 * var(--wheel-rot));
-  transition: rotate 0.9s cubic-bezier(0.3, 0.8, 0.3, 1);
-}
-
-.recruit-wheel-type {
-  width: 84px;
-  height: 84px;
-  margin: -42px 0 0 -42px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: none;
-  color: #fff;
-  font: inherit;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-}
-
-.recruit-wheel-type:disabled {
-  cursor: default;
-}
-
-.recruit-wheel.is-idle .recruit-wheel-type:disabled {
-  opacity: 0.3;
-}
-
-.recruit-wheel-type:not(:disabled):active .recruit-wheel-upright {
-  scale: 0.92;
-}
-
-.recruit-wheel-glyph {
-  width: 30px;
-  height: 30px;
-  filter: drop-shadow(0 0 6px rgb(var(--type-rgb)));
-}
-
-.recruit-wheel-name {
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.recruit-wheel-face {
-  width: 36px;
-  height: 36px;
-  margin: -18px 0 0 -18px;
-  cursor: pointer;
-  transition:
-    transform 0.6s cubic-bezier(0.5, 0, 0.3, 1),
-    opacity 0.2s 0.45s;
-}
-
-.recruit-wheel-face-art {
-  width: 36px;
-  height: 36px;
-  image-rendering: pixelated;
-  filter: brightness(0.55) saturate(0.4);
-}
-
-.recruit-wheel-beam {
-  position: absolute;
-  left: 50%;
-  top: -160px;
-  width: 90px;
-  height: 420px;
-  margin-left: -45px;
-  opacity: 0;
-  background: linear-gradient(180deg, rgba(255, 250, 230, 0.9), rgba(var(--oath-rgb), 0.4) 70%, transparent);
-  filter: blur(7px);
-  transition: opacity 0.6s;
-  pointer-events: none;
-}
-
-.recruit-wheel-orbit {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
-.recruit-wheel-orbiter {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 56px;
-  height: 56px;
-  margin: -28px 0 0 -28px;
-  transition:
-    opacity 0.4s,
-    width 0.6s,
-    height 0.6s,
-    margin 0.6s;
-}
-
-.recruit-wheel-orbiter-art {
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
-  transition: filter 0.6s;
-}
-
-.recruit-wheel:not(.is-idle) .recruit-wheel-seg:not(.is-chosen) {
-  opacity: 0.12;
-}
-
-.recruit-wheel.is-drawing .is-chosen .recruit-wheel-face,
-.recruit-wheel.is-spinning .is-chosen .recruit-wheel-face,
-.recruit-wheel.is-landed .is-chosen .recruit-wheel-face {
-  transform: rotate(var(--at)) translateY(0) rotate(calc(-1 * var(--at)));
-  opacity: 0;
-}
-
-.recruit-wheel.is-drawing .is-chosen .recruit-wheel-type,
-.recruit-wheel.is-spinning .is-chosen .recruit-wheel-type,
-.recruit-wheel.is-landed .is-chosen .recruit-wheel-type {
-  opacity: 0;
+  justify-content: center;
+  margin-top: 30px;
   transition: opacity 0.3s;
 }
 
-.recruit-wheel.is-spinning .recruit-wheel-disc,
-.recruit-wheel.is-landed .recruit-wheel-disc {
-  opacity: 0.25;
+.recruit-poster {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 230px;
+  max-width: calc(100% - 48px);
+  min-height: 84px;
+  padding: 12px 20px 8px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #fffaf0, #f6e6c2);
+  border: 3px solid #2b2340;
+  border-radius: 8px 10px 6px 12px;
+  box-shadow: 0 5px 0 rgba(43, 35, 64, 0.25);
+  transform-origin: 50% 4px;
+  rotate: -1.5deg;
+  animation: recruit-poster-swing 1.1s 0.1s cubic-bezier(0.3, 0, 0.3, 1) both;
 }
 
-.recruit-wheel.is-landed .recruit-wheel-beam {
-  opacity: 0.6;
+.recruit-poster-tack {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff9b8a, #d9534f);
+  border: 2.5px solid #2b2340;
 }
 
-.recruit-wheel.is-landed .recruit-wheel-orbiter {
+.recruit-poster-text {
+  margin: 0;
+  font: 700 28px/1.1 Fredoka, system-ui, sans-serif !important;
+  color: #2b2340;
+  text-align: center;
+}
+
+@keyframes recruit-poster-swing {
+  0% { transform: translateY(-150px) rotate(-14deg); }
+  35% { transform: translateY(0) rotate(10deg); }
+  55% { transform: rotate(-6deg); }
+  75% { transform: rotate(3deg); }
+  100% { transform: none; }
+}
+
+.recruit-deal {
+  --w: min(104px, calc((340px - (var(--count) - 1) * 12px) / var(--count)));
+  --pitch: calc(var(--w) + 12px);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.recruit-deal-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 0 70px;
+}
+
+.recruit-card {
+  position: relative;
+  flex: none;
+  width: var(--w);
+  height: calc(var(--w) * 1.55);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  perspective: 600px;
+  cursor: pointer;
+  transform: rotate(calc(var(--from-mid) * 4deg));
   transition:
-    opacity 0.4s,
-    width 0.6s,
-    height 0.6s,
-    margin 0.6s,
-    transform 0.6s;
+    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.35s;
 }
 
-.recruit-wheel.is-landed .recruit-wheel-orbiter:not(.is-winner) {
+.recruit-deal.is-dealing .recruit-card {
+  animation: recruit-card-deal 0.5s cubic-bezier(0.25, 1.3, 0.5, 1) both;
+  animation-delay: calc(0.6s + var(--i) * 0.15s);
+}
+
+@keyframes recruit-card-deal {
+  from { transform: translateY(560px) rotate(calc(var(--from-mid) * 14deg)); }
+  to { transform: rotate(calc(var(--from-mid) * 4deg)); }
+}
+
+.recruit-card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.recruit-deal.is-dealing .recruit-card-inner {
+  animation: recruit-card-flip 0.4s ease-in-out both;
+  animation-delay: calc(1.3s + var(--i) * 0.15s);
+}
+
+@keyframes recruit-card-flip {
+  from { transform: rotateY(180deg); }
+  to { transform: rotateY(0deg); }
+}
+
+.recruit-card-back,
+.recruit-card-face {
+  position: absolute;
+  inset: 0;
+  border: 3px solid #2b2340;
+  border-radius: 16px;
+  backface-visibility: hidden;
+  box-shadow: 0 5px 0 #2b2340;
+}
+
+.recruit-card-back {
+  transform: rotateY(180deg);
+  background:
+    radial-gradient(circle, #fffaf0 0 18px, transparent 19px),
+    repeating-linear-gradient(45deg, #6b5aa8 0 8px, #5c4b98 8px 16px);
+}
+
+.recruit-card-back::after {
+  content: '?';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 700 26px Fredoka, system-ui, sans-serif;
+  color: #5c4b98;
+}
+
+.recruit-card-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--t)) 55%, #fff), rgb(var(--t)));
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #2b2340;
+}
+
+.recruit-card-disc {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fffaf0;
+  border: 3px solid #2b2340;
+  color: rgb(var(--t));
+}
+
+.recruit-card-glyph {
+  width: 32px;
+  height: 32px;
+}
+
+.recruit-card-name {
+  font: 700 16px Fredoka, system-ui, sans-serif;
+  color: #fff;
+  text-shadow: -1.5px 0 #2b2340, 1.5px 0 #2b2340, 0 -1.5px #2b2340, 0 1.5px #2b2340, 0 3px 0 #2b2340;
+}
+
+.recruit-card:disabled {
+  cursor: default;
+}
+
+.recruit-deal.is-idle .recruit-card:disabled {
+  opacity: 0.35;
+}
+
+.recruit-deal.is-idle .recruit-card:not(:disabled):active {
+  transform: rotate(calc(var(--from-mid) * 4deg)) scale(0.95);
+}
+
+.recruit-deal.is-picked .recruit-card:not(.is-chosen) {
+  transform: translateY(420px);
   opacity: 0;
 }
 
-.recruit-wheel.is-landed .recruit-wheel-orbiter.is-winner {
-  width: 150px;
-  height: 150px;
-  margin: -75px 0 0 -75px;
+.recruit-deal.is-picked .recruit-card.is-chosen {
+  transform: translateX(calc(-1 * var(--from-mid) * var(--pitch))) translateY(40px) scale(1.5);
 }
 
-.recruit-wheel.is-landed .is-winner .recruit-wheel-orbiter-art {
-  filter: drop-shadow(0 0 14px rgb(var(--oath-rgb)));
+.recruit-deal.is-picked .recruit-card.is-chosen .recruit-card-face {
+  animation:
+    recruit-card-shake 0.3s 0.45s 2,
+    recruit-card-glow 0.6s 0.45s both;
+}
+
+@keyframes recruit-card-shake {
+  0%, 100% { rotate: 0deg; }
+  20% { rotate: -4deg; }
+  40% { rotate: 4deg; }
+  60% { rotate: -6deg; }
+  80% { rotate: 6deg; }
+}
+
+@keyframes recruit-card-glow {
+  to { box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #2b2340, 0 0 40px 12px rgba(var(--t), 0.8); }
+}
+
+.recruit-deal-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: radial-gradient(circle at 50% 45%, #fff 0, rgba(255, 255, 255, 0.9) 40%, rgba(255, 250, 240, 0) 75%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.recruit-deal.is-picked .recruit-deal-flash {
+  animation: recruit-deal-flash 0.5s 1s both;
+}
+
+@keyframes recruit-deal-flash {
+  from { opacity: 0; }
+  60%, to { opacity: 1; }
 }
 
 .recruit-node-screen .recruit-leave {
@@ -234,15 +240,14 @@
   height: auto;
   min-height: 48px;
   width: min(100% - 32px, 220px);
-  margin: 0 auto;
+  margin: 0 auto 40px;
   transition: opacity 0.3s;
 }
 
-.recruit-node-screen:has(.recruit-wheel:not(.is-idle)) .recruit-leave,
-.recruit-node-screen:has(.recruit-wheel:not(.is-idle)) .rite-head {
+.recruit-node-screen:has(.recruit-deal:not(.is-idle)) .recruit-leave,
+.recruit-node-screen:has(.recruit-deal.is-picked) .recruit-poster-head {
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.4s;
 }
 
 /* ---- The oath (RecruitOath): a sigil, a beam, the hero out of silhouette, then its kit ---- */

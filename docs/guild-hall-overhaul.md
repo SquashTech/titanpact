@@ -216,7 +216,11 @@ Decided in the build, each the existing precedent, **open for review**:
   sigil ring split into the types on offer, the heroes who could answer circling it, dimmed. The
   picked arc turns to the top, its heroes are drawn in and spin, and the spin slows on the one
   already rolled (`RecruitWheel`); the oath follows, listing the innate and any Evolution path
-  passives beside the kit.
+  passives beside the kit. **Replaced 2026-11-27, per user direction** (from three openings in
+  `art/concepts/recruit-open/`): the pick is **dealt** — one face-down card a type, dealt up and
+  flipped under a **Heroes Wanted** notice swung in on its tack; the picked card shakes and bursts
+  white into the oath (`RecruitDeal`). **Who could answer is no longer shown**: the hero stays
+  hidden until the oath. At a full roster the notice reads *Make Room for* the hero.
 - **The Gathering (Cycle IV)** lost its player-side help with the Tavern: one more hire a visit. It
   is carried over as **one more type at every Recruit** (`GATHERING_EXTRA_RECRUIT_TYPES`).
 - **First Light's Contracts lesson** is now *Recruits* on the new screen: three types, the hand on

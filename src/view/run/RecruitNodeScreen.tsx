@@ -10,12 +10,11 @@ import { statScaleFor } from '../../run/statScale';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeMotes } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { mapNodeIcon } from './mapNodeArt';
 import { EvolutionScreen } from './EvolutionScreen';
 import { useMasteryFlow } from './masteryFlow';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
 import { RecruitOath } from './RecruitOath';
-import { RecruitWheel } from './RecruitWheel';
+import { RecruitDeal, RecruitPoster } from './RecruitDeal';
 import { RosterPeek } from './RosterPeek';
 import './recruitNode.css';
 
@@ -45,8 +44,8 @@ interface Props {
 const RECRUIT_RGB = '155, 201, 255';
 
 /**
- * The Recruit node (docs/guild-hall-overhaul.md §2): three types, each showing who could answer it,
- * dimmed. A tap sends word; one of them joins at the player's par, and at a full roster someone
+ * The Recruit node (docs/guild-hall-overhaul.md §2): three types dealt face down, who answers hidden.
+ * A tap sends word; one hero of that type joins at the player's par, and at a full roster someone
  * leaves first.
  */
 export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, onRunChange, onGrantEquipment, onContinue, onlyType }: Props) {
@@ -117,16 +116,7 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
     if (run.roster.length < ROSTER_CAP) join(entry);
   }
 
-  const head = (
-    <header className="rite-head">
-      <span className="rite-place">
-        <span className="rite-pool" aria-hidden="true" />
-        <img src={mapNodeIcon('recruitReward')} className="rite-place-art is-icon" alt="" draggable={false} />
-      </span>
-      <span className="rite-eyebrow">{arriving ? 'The roster is full' : 'Word Goes Out'}</span>
-      <h2 className="rite-name">{arriving ? rosterHeroes[arriving.heroId].name : 'Recruit'}</h2>
-    </header>
-  );
+  const head = <RecruitPoster text={arriving ? `Make Room for ${rosterHeroes[arriving.heroId].name}` : 'Heroes Wanted'} />;
 
   return (
     <div className="node-screen rite-screen recruit-node-screen" style={{ '--rite-color': `rgb(${RECRUIT_RGB})` } as CSSProperties}>
@@ -137,7 +127,7 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
 
       {!arriving && (
         <>
-          <RecruitWheel offers={offers} onlyType={onlyType} winnerOf={(type) => entryFor(type)?.heroId ?? null} onPick={onPick} onLanded={land} />
+          <RecruitDeal offers={offers} onlyType={onlyType} canAnswer={(type) => entryFor(type) !== null} onPick={onPick} onLanded={land} />
           {!onlyType && (
             <button className="moveoffer-button moveoffer-decline recruit-leave" onClick={onContinue}>
               <span className="moveoffer-label">Leave</span>
