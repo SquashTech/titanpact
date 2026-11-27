@@ -94,6 +94,7 @@ import './gauntlet.test';
 import './versus.test';
 import './patrons.test';
 import './story.test';
+import './chipSongs.test';
 import { run } from './harness';
 
 run();

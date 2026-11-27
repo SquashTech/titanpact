@@ -1,12 +1,19 @@
 // The music layer: one looping track at a time on the music bus (synth.ts).
 //
-// Music outlives screens — a track belongs to a place, not a view — so the player lives at
+// Music outlives screens — a track belongs to a place, not a view, a fight aside — so the player lives at
 // module scope and `setTrack` is idempotent on the id. Looping uses an AudioBufferSourceNode
 // (`loop = true`), not <audio loop>: the element gaps at the seam on several browsers. The
 // cost is that the whole file is decoded into memory (see tracks.ts).
+// A music id resolves through the Soundtrack setting: the original's FLAC, or a chiptune song
+// (chipSongs.ts). The fight themes are chiptune under either, since the original has none.
 
 import { getMusicBus, unlockAudio } from './synth';
 import { tracks, type TrackId } from './tracks';
+import { chipSongs, FIGHT_SONGS, type SongId } from './chipSongs';
+import { startSong, type ChipPlayer } from './chiptune';
+
+export type MusicId = TrackId | SongId;
+export type Soundtrack = 'original' | 'chiptune';
 
 /** Seconds. Long enough that a track arrives rather than starts. */
 const FADE_IN = 2.5;
@@ -21,16 +28,17 @@ const MAX_DECODED = 2;
 /** Seconds a `setMusicRate` change takes to arrive — a hard jump reads as a bug. */
 const RATE_RAMP = 1.6;
 
-interface Playing {
-  id: TrackId;
-  source: AudioBufferSourceNode;
-  gain: GainNode;
-}
+type Resolved = { kind: 'file'; id: TrackId } | { kind: 'chip'; id: SongId };
+
+type Playing =
+  | { key: string; kind: 'file'; source: AudioBufferSourceNode; gain: GainNode }
+  | { key: string; kind: 'chip'; player: ChipPlayer };
 
 let current: Playing | null = null;
 // What SHOULD be playing; diverges from `current` while decoding. Every async continuation
 // re-checks it before committing.
-let desired: TrackId | null = null;
+let desired: MusicId | null = null;
+let soundtrack: Soundtrack = 'original';
 const buffers = new Map<TrackId, AudioBuffer>();
 const loading = new Map<TrackId, Promise<AudioBuffer | null>>();
 // Ids prefetchTrack has pulled down, and the controllers for the transfers still running.
@@ -116,7 +124,23 @@ export function prefetchTrack(id: TrackId | null): void {
   })();
 }
 
+function keyOf(r: Resolved): string {
+  return `${r.kind}:${r.id}`;
+}
+
+function resolve(id: MusicId | null): Resolved | null {
+  if (id === null) return null;
+  const isFight = (FIGHT_SONGS as readonly string[]).includes(id);
+  if ((soundtrack === 'chiptune' || isFight) && id in chipSongs) return { kind: 'chip', id: id as SongId };
+  if (id in tracks) return { kind: 'file', id: id as TrackId };
+  return null;
+}
+
 function fadeOutAndStop(playing: Playing, context: AudioContext): void {
+  if (playing.kind === 'chip') {
+    playing.player.stop(FADE_OUT);
+    return;
+  }
   const now = context.currentTime;
   const g = playing.gain.gain;
   // cancelAndHold isn't in Safari: cancel, re-assert the live value, then ramp from there.
@@ -150,7 +174,12 @@ function startTrack(context: AudioContext, bus: GainNode, id: TrackId, buffer: A
   gain.gain.exponentialRampToValueAtTime(level, now + FADE_IN);
   source.start(now);
 
-  current = { id, source, gain };
+  current = { key: keyOf({ kind: 'file', id }), kind: 'file', source, gain };
+}
+
+function startChip(context: AudioContext, bus: GainNode, id: SongId): void {
+  const song = chipSongs[id];
+  current = { key: keyOf({ kind: 'chip', id }), kind: 'chip', player: startSong(context, bus, song, song.fadeIn ?? FADE_IN, rate) };
 }
 
 // A fresh AudioContext stays suspended until a gesture; starting a source before that would
@@ -159,7 +188,8 @@ function hookUnlock(context: AudioContext): void {
   if (unlockHooked) return;
   unlockHooked = true;
   context.addEventListener('statechange', () => {
-    if (context.state === 'running' && desired && desired !== current?.id) {
+    const want = resolve(desired);
+    if (context.state === 'running' && want && keyOf(want) !== current?.key) {
       void applyDesired();
     }
   });
@@ -171,7 +201,7 @@ async function applyDesired(): Promise<void> {
   const { context, bus: node } = bus;
   hookUnlock(context);
 
-  const target = desired;
+  const target = resolve(desired);
 
   if (target === null) {
     if (current) {
@@ -181,7 +211,8 @@ async function applyDesired(): Promise<void> {
     return;
   }
 
-  if (current?.id === target) return;
+  const key = keyOf(target);
+  if (current?.key === key) return;
   if (context.state !== 'running') {
     unlockAudio();
     // Pull the bytes down now — the gesture that unlocks the context is often many seconds out,
@@ -189,26 +220,44 @@ async function applyDesired(): Promise<void> {
     // decodeAudioData issued against a not-yet-running context hanging, and the hung promise sat
     // in `loading` where the post-tap load found it and waited on it forever: the title music
     // never started on a phone. Decoding after the tap costs a beat inside FADE_IN and nothing else.
-    prefetchTrack(target);
+    if (target.kind === 'file') prefetchTrack(target.id);
     return;
   }
 
-  const buffer = await loadBuffer(context, target);
-  // The player may have crossed several screens while the file decoded.
-  if (!buffer || desired !== target) return;
-  if (current?.id === target) return;
+  if (target.kind === 'chip') {
+    if (current) fadeOutAndStop(current, context);
+    startChip(context, node, target.id);
+    return;
+  }
+
+  const buffer = await loadBuffer(context, target.id);
+  // The player may have crossed several screens, or the soundtrack changed, while the file decoded.
+  const now = resolve(desired);
+  if (!buffer || !now || keyOf(now) !== key) return;
+  if (current?.key === key) return;
 
   if (current) {
     fadeOutAndStop(current, context);
     current = null;
   }
-  startTrack(context, node, target, buffer);
+  startTrack(context, node, target.id, buffer);
 }
 
 /** Says what should be playing. Safe to call every render; `null` fades out. */
-export function setTrack(id: TrackId | null): void {
+export function setTrack(id: MusicId | null): void {
   if (desired === id) return;
   desired = id;
+  void applyDesired();
+}
+
+/** Whether an id has music under either soundtrack. */
+export function hasMusic(id: string | null | undefined): id is MusicId {
+  return !!id && (id in tracks || id in chipSongs);
+}
+
+export function setSoundtrack(next: Soundtrack): void {
+  if (soundtrack === next) return;
+  soundtrack = next;
   void applyDesired();
 }
 
@@ -220,6 +269,10 @@ export function setTrack(id: TrackId | null): void {
 export function setMusicRate(next: number, rampSeconds = RATE_RAMP): void {
   if (rate === next) return;
   rate = next;
+  if (current?.kind === 'chip') {
+    current.player.setRate(next);
+    return;
+  }
   const bus = getMusicBus();
   if (!current || !bus) return;
   const now = bus.context.currentTime;

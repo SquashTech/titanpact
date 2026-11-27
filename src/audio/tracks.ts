@@ -1,5 +1,5 @@
 // The music table, keyed by LOCATION id (data/locations.ts): music belongs to a place, not a
-// screen. App.tsx hands the current location to `setTrack`.
+// screen, except a fight, which plays a fight theme (chipSongs.ts). App.tsx hands the current location to `setTrack`.
 //
 // Two keys break that rule on purpose — `titleScreen` and `starterScreen`. The title (and the Trials and Gauntlet menus off it) stands outside every place
 // (it is in App.tsx's PLACELESS_SCREENS), so there is no location id to key it from. The draft and the pact forged after it

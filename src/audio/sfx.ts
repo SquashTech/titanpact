@@ -3,6 +3,7 @@
 
 import { sounds, type SfxId } from './sounds';
 import { playSpec, setMasterVolume, setMusicVolume, setSfxVolume, unlockAudio, type PlayOptions } from './synth';
+import { setSoundtrack, type Soundtrack } from './music';
 
 const STORAGE_KEY = 'titanpact.audio';
 
@@ -12,9 +13,10 @@ interface AudioPrefs {
   sfx: number;
   /** 0–1, the music bus. */
   music: number;
+  soundtrack: Soundtrack;
 }
 
-const DEFAULT_PREFS: AudioPrefs = { muted: false, sfx: 0.7, music: 0.5 };
+const DEFAULT_PREFS: AudioPrefs = { muted: false, sfx: 0.7, music: 0.5, soundtrack: 'original' };
 
 let prefs: AudioPrefs = { ...DEFAULT_PREFS };
 let started = false;
@@ -33,6 +35,7 @@ function loadPrefs(): AudioPrefs {
       muted: typeof parsed.muted === 'boolean' ? parsed.muted : DEFAULT_PREFS.muted,
       sfx: typeof parsed.sfx === 'number' ? parsed.sfx : DEFAULT_PREFS.sfx,
       music: typeof parsed.music === 'number' ? parsed.music : DEFAULT_PREFS.music,
+      soundtrack: parsed.soundtrack === 'chiptune' ? 'chiptune' : 'original',
     };
   } catch {
     // Private-mode Safari throws on localStorage access.
@@ -52,6 +55,7 @@ function applyPrefs(): void {
   setMasterVolume(prefs.muted ? 0 : 1);
   setSfxVolume(prefs.sfx);
   setMusicVolume(prefs.music);
+  setSoundtrack(prefs.soundtrack);
 }
 
 /** Installs the audio system; call once at startup. Arms the gesture-unlock listeners. */
@@ -59,6 +63,7 @@ export function initSfx(): void {
   if (started) return;
   started = true;
   prefs = loadPrefs();
+  setSoundtrack(prefs.soundtrack);
 
   const unlock = () => {
     unlockAudio();
@@ -107,6 +112,12 @@ export function setSfxLevel(v: number): void {
 export function setMusicLevel(v: number): void {
   prefs.music = Math.max(0, Math.min(1, v));
   applyPrefs();
+  savePrefs();
+}
+
+export function setSoundtrackPref(next: Soundtrack): void {
+  prefs.soundtrack = next;
+  setSoundtrack(next);
   savePrefs();
 }
 

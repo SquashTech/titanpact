@@ -130,7 +130,7 @@ import { ProfileProvider } from '../view/shared/ProfileContext';
 import { starShopCatalog } from '../data/starShop';
 import { buyOffer, stardustBalance, starfall, starfallTen, type StarShopOffer } from '../run/starShop';
 import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
-import { prefetchTrack, setTrack } from '../audio/music';
+import { hasMusic, prefetchTrack, setTrack, type MusicId } from '../audio/music';
 import { playSfx } from '../audio/sfx';
 import { hasTrack } from '../audio/tracks';
 import { openingSquad } from '../run/squad';
@@ -163,6 +163,8 @@ import { flushTelemetry, telemetryFight, telemetryRunEnded, telemetryRunStarted 
 type Screen = RunScreen;
 
 /** Screens outside an act get no ambient Location (LocationContext). Listed as the exceptions so new node screens inherit the place by default. */
+const FIGHT_SCREENS: ReadonlySet<Screen['kind']> = new Set(['fight', 'sandboxFight', 'statusTestFight', 'constructedFight', 'gauntletFight', 'trialsFight']);
+
 const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'title',
   'tutorial',
@@ -1193,14 +1195,19 @@ export function App() {
       ? null
       : locationForAct(playerRun.locationIds, actBreak ? playerRun.actNumber - 1 : playerRun.actNumber);
 
-  // The act's location IS the track; computed above the screen switch so music survives map <-> fight.
+  // The act's location IS the track off a fight; computed above the screen switch so it survives every other screen.
   // A location with no authored track fades to silence rather than carrying the previous act's music.
   // The title is the exception — it is placeless, so it names its own track (audio/tracks.ts) — and
   // the Trials' and the Gauntlet's menus carry it on, since they are reached from it.
   const titleTrack = screen.kind === 'title' || screen.kind === 'constructed' || screen.kind === 'gauntlet' || screen.kind === 'versus';
   // The draft, the pact forged at its end (the resumed `blessing` screen) and the seal that opens the run carry the starter track.
   const starterTrack = screen.kind === 'draft' || screen.kind === 'blessing' || (screen.kind === 'pactSeal' && playerRun.brokenSeals.length === 0);
-  const trackId = titleTrack ? 'titleScreen' : starterTrack ? 'starterScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
+  // A fight plays a fight theme rather than the place's track.
+  const fightNodeType = screen.kind === 'fight' ? playerRun.map?.nodes[screen.nodeId]?.type : undefined;
+  const fightTrack: MusicId | null = FIGHT_SCREENS.has(screen.kind)
+    ? fightNodeType === 'finale' ? 'finale' : fightNodeType === 'boss' ? 'boss' : 'battle'
+    : null;
+  const trackId: MusicId | null = fightTrack ?? (titleTrack ? 'titleScreen' : starterTrack ? 'starterScreen' : hasMusic(ambientLocation?.id) ? ambientLocation.id : null);
   useEffect(() => {
     setTrack(trackId);
   }, [trackId]);
