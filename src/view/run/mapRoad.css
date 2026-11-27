@@ -380,3 +380,147 @@
     animation: none;
   }
 }
+
+/* The map's top bar and Roster in the storybook look: cream pieces with an ink rim standing on the
+   scene, the same chunky flat language as the road's stops. */
+.map-screen.is-road .map-header {
+  gap: 6px;
+  padding-top: 2px;
+}
+.map-screen.is-road .map-header::before {
+  display: none;
+}
+.map-screen.is-road .map-header-button {
+  width: 38px;
+  height: 38px;
+  padding: 8px;
+  opacity: 1;
+  border: 3px solid var(--ink) !important;
+  border-radius: 12px !important;
+  background: #fffaf0 !important;
+  color: var(--ink) !important;
+  box-shadow: 0 3px 0 var(--ink) !important;
+  filter: none;
+}
+.map-screen.is-road .map-header-button:hover {
+  background: #fff1c8 !important;
+  filter: none;
+}
+.map-screen.is-road .map-header-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--ink) !important;
+}
+.map-screen.is-road .map-act {
+  align-items: baseline;
+  gap: 4px;
+  padding: 4px 12px 5px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: #fffaf0;
+  box-shadow: 0 3px 0 var(--ink);
+}
+.map-screen.is-road .map-act-label {
+  color: var(--ink);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.map-screen.is-road .map-act-count {
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1;
+}
+.map-screen.is-road .map-act-total {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.map-screen.is-road .map-purse {
+  gap: 6px;
+}
+.map-screen.is-road .map-stat {
+  gap: 3px;
+  min-height: 0;
+  padding: 3px 10px 3px 6px;
+  border: 3px solid var(--ink) !important;
+  border-image: none !important;
+  border-radius: 999px;
+  background: #fffaf0 !important;
+  box-shadow: 0 3px 0 var(--ink);
+  color: var(--ink) !important;
+}
+.map-screen.is-road .map-stat-value {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.map-screen.is-road .map-footer-button,
+.map-screen.is-road .map-footer-button:hover,
+.map-screen.is-road .map-footer-button.has-unopened,
+.map-screen.is-road .map-footer-button.has-unopened:hover {
+  gap: 8px;
+  padding: 6px 8px 6px 6px;
+  border: 3.5px solid var(--ink);
+  border-image: none;
+  border-radius: 22px;
+  background: #fffaf0 !important;
+  color: var(--ink);
+  box-shadow: 0 5px 0 var(--ally), 0 5px 0 3.5px var(--ink);
+  filter: none;
+}
+.map-screen.is-road .map-footer-button:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--ally), 0 2px 0 3.5px var(--ink);
+}
+.map-screen.is-road .map-footer-button.has-unopened {
+  box-shadow: 0 5px 0 var(--accent), 0 5px 0 3.5px var(--ink), 0 0 0 6px rgba(255, 138, 61, 0.35);
+}
+.map-screen.is-road .map-footer-button::before,
+.map-screen.is-road .map-footer-button::after {
+  display: none;
+}
+.map-screen.is-road .map-footer-cap {
+  align-self: stretch;
+  justify-content: center;
+  gap: 3px;
+  min-width: 56px;
+  padding: 4px 6px;
+  border-radius: 15px;
+  background: var(--ally);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.4), inset 0 -4px 0 color-mix(in oklab, var(--ally) 72%, #12204a);
+}
+.map-screen.is-road .map-footer-emblem {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 2px 0 rgba(43, 35, 64, 0.45));
+}
+.map-screen.is-road .map-footer-label {
+  padding: 0;
+  border: 0;
+  border-image: none;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), 0 2px 0 var(--ink);
+}
+.map-screen.is-road .map-party-chip::before {
+  display: none;
+}
+.map-screen.is-road .map-party-portrait {
+  filter: none;
+}
+.map-screen.is-road .map-party-chip.is-down .map-party-portrait {
+  filter: grayscale(1) opacity(0.55);
+}
+.map-screen.is-road .map-party-chip .wound-bar-track {
+  height: 7px;
+  border-radius: 4px;
+  background: #efe2c2;
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+.map-screen.is-road .map-footer {
+  margin-bottom: 8px;
+}
+.map-preview-hit {
+  border-radius: 50%;
+}

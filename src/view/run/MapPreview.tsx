@@ -45,6 +45,18 @@ function measureRowTop(tiles: readonly PreviewTile[], boxes: Record<string, Box>
   return top;
 }
 
+/** The header's and footer's own pieces, each lit by its own shape. */
+const LIT_PIECES = '.map-header-button, .map-act, .map-stat, .map-footer-button';
+
+function measureAll(selector: string): Box[] {
+  return Array.from(document.querySelectorAll(selector)).map((el) => {
+    const rect = el.getBoundingClientRect();
+    const a = canvasPoint(rect.left, rect.top);
+    const b = canvasPoint(rect.right, rect.bottom);
+    return { left: a.x, top: a.y, width: b.x - a.x, height: b.y - a.y + 4 };
+  });
+}
+
 /** An element of the screen around the route, in canvas px; null when it is not drawn. */
 function measureSelector(selector: string): Box | null {
   const el = document.querySelector(selector);
@@ -83,6 +95,7 @@ export function MapPreview({
 }) {
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
   const [frame, setFrame] = useState<{ header: Box | null; footer: Box | null }>({ header: null, footer: null });
+  const [pieces, setPieces] = useState<Box[]>([]);
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardSeat, setCardSeat] = useState<{ top: number; maxHeight?: number } | null>(null);
   const maskId = useId();
@@ -93,6 +106,7 @@ export function MapPreview({
       const header = measureSelector('.map-header');
       setBoxes(measured);
       setFrame({ header, footer: measureSelector('.map-footer') });
+      setPieces(measureAll(LIT_PIECES));
       // The card sits just above the row, and the row never moves: a card too tall for the room
       // under the header scrolls inside itself.
       const card = cardRef.current;
@@ -111,7 +125,6 @@ export function MapPreview({
   }, [tileKey, previewId]);
 
   const rowFoot = Math.max(0, ...Object.values(boxes).map((b) => b.top + b.height));
-  const lit = [frame.header, frame.footer].filter((b): b is Box => b !== null);
 
   return (
     <div className="map-preview" onClick={onBack} style={{ '--node-color': color } as CSSProperties}>
@@ -119,11 +132,11 @@ export function MapPreview({
         <defs>
           <mask id={maskId}>
             <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            {lit.map((b, i) => (
-              <rect key={i} x={b.left} y={b.top} width={b.width} height={b.height} fill="black" />
+            {pieces.map((b, i) => (
+              <rect key={i} x={b.left} y={b.top} width={b.width} height={b.height} rx={Math.min(22, b.height / 2)} fill="black" />
             ))}
             {Object.entries(boxes).map(([id, b]) => (
-              <rect key={id} x={b.left} y={b.top} width={b.width} height={b.height} rx="12" fill={id === previewId ? 'black' : '#666'} />
+              <rect key={id} x={b.left} y={b.top} width={b.width} height={b.height} rx={Math.min(b.width, b.height) / 2} fill={id === previewId ? 'black' : '#666'} />
             ))}
           </mask>
         </defs>

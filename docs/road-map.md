@@ -42,5 +42,8 @@
   each seat's disc ringing in and its patron landing, 910ms apart, with its sound.
 - **Lost from the old scene:** the per-tile arrival chimes and the lead-on marks (dead since
   every row fully connects). On arriving at a stop the road scrolls up from the last one instead.
-- **Dead CSS** for the old scene (`.map-route`, `.map-choice`, `.map-rail`, the gate's rules) is
-  still in `src/app/styles.css`, as is `mapSpots` in `locationBackdrops.ts`.
+- **The old scene's CSS is deleted** (2026-11-27): 1,368 lines of `styles.css`, 26 of
+  `storybook.css`. `mapSpots` in `locationBackdrops.ts` is still there, unread.
+- **The top bar and the Roster** wear the storybook look (2026-11-27, per user direction): cream
+  chips and buttons with an ink rim standing on the scene, the stone lintel gone, the Roster a
+  cream card on a blue base with a blue Roster tab. The preview lights each piece by its own shape.
