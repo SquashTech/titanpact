@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Road Scenery</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" />
+    <style>
+      html, body { margin: 0; overflow: auto; height: auto; }
+      body { background: #2b2340; color: #fffaf0; font-family: 'Fredoka', sans-serif; }
+      .page { padding: 16px; }
+      h1 { margin: 0 0 12px; font-size: 22px; }
+      .phones { display: flex; gap: 18px; align-items: start; flex-wrap: wrap; }
+      .phone { width: 394px; }
+      .phone h2 { margin: 0 0 4px; font-size: 17px; }
+      .phone p { margin: 0 0 8px; font-size: 13px; min-height: 52px; opacity: 0.85; }
+      .frame { position: relative; width: 394px; height: 1400px; overflow: hidden; border-radius: 18px; border: 3px solid #fffaf0; }
+      .frame img.paint { position: absolute; left: 0; top: 0; width: 394px; height: 420px; object-fit: cover; image-rendering: pixelated; }
+      .frame svg { position: absolute; inset: 0; }
+      .stop { position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: #fffaf0; box-shadow: 0 4px 0 #b9ae94, 0 4px 0 3.5px #2b2340; border: 3.5px solid #2b2340; box-sizing: border-box; display: grid; place-items: center; }
+      .stop img { width: 40px; height: 40px; }
+      .tower { position: absolute; width: 132px; height: 132px; margin: -100px 0 0 -66px; }
+      .camp { position: absolute; width: 96px; height: 96px; margin: -64px 0 0 -48px; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>Wild's Edge: the road to the Guardian</h1>
+      <div class="phones" id="phones"></div>
+    </div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

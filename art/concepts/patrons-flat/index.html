@@ -3,35 +3,45 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Flat Patrons</title>
+    <title>Patron Looks</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" />
     <style>
       html, body { overflow: auto; height: auto; margin: 0; }
       body { background: #9bd86a; color: #2b2340; font-family: 'Fredoka', sans-serif; }
       .pf { padding: 16px; }
       h1 { margin: 0 0 10px; font-size: 24px; }
-      section { margin-bottom: 18px; padding: 12px 14px; border-radius: 18px; background: rgba(255, 250, 240, 0.35); }
-      h2 { margin: 0 0 8px; font-size: 18px; }
-      .strip { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
-      .cell { display: grid; justify-items: center; gap: 4px; font-size: 12px; font-weight: 600; }
-      .cell img { width: 96px; height: 96px; }
+      section { margin-bottom: 16px; padding: 12px 14px; border-radius: 18px; background: rgba(255, 250, 240, 0.35); }
+      h2 { margin: 0 0 2px; font-size: 18px; }
+      section p { margin: 0 0 10px; font-size: 13px; max-width: 620px; }
+      .strip { display: flex; flex-wrap: wrap; gap: 18px; align-items: end; }
+      .cell { display: grid; justify-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+      .big { width: 144px; height: 144px; }
       .px { image-rendering: pixelated; }
+      .sticker { filter: drop-shadow(2px 0 0 #fffaf0) drop-shadow(-2px 0 0 #fffaf0) drop-shadow(0 2px 0 #fffaf0) drop-shadow(0 -2px 0 #fffaf0) drop-shadow(2px 0 0 #2b2340) drop-shadow(-2px 0 0 #2b2340) drop-shadow(0 2px 0 #2b2340) drop-shadow(0 -2px 0 #2b2340); }
+      .disc { width: 76px; height: 76px; border-radius: 50%; background: #fffaf0; border: 3.5px solid #2b2340; box-shadow: 0 4px 0 #c7ccd6; display: grid; place-items: center; overflow: visible; }
+      .disc img { width: 60px; height: 60px; margin-top: -10px; }
+      .disc .sticker { width: 54px; height: 54px; }
       .tower img { width: 176px; height: 176px; }
+      .hero { opacity: 0.85; }
     </style>
   </head>
   <body>
     <div class="pf" id="root"></div>
     <script type="module">
-      const ids = ['swordsman', 'archmage', 'headmaster', 'huntress', 'priest', 'hexwright', 'forgemistress'];
-      const cell = (src, label, cls = '') => `<div class="cell"><img class="${cls}" src="${src}">${label}</div>`;
-      const row = (title, items) => `<section><h2>${title}</h2><div class="strip">${items.join('')}</div></section>`;
+      const ids = ['swordsman', 'hexwright', 'forgemistress'];
+      const OPTIONS = [
+        { name: 'Now · Pixel', note: 'The patrons as they are: darker, grimmer pixel art than the heroes.', src: (i) => `../../npc/patron-${i}.png`, cls: 'px' },
+        { name: 'A · Pixel sticker', note: 'The same sprites, cut out with a cream rim and an ink line, so they sit on the storybook UI like the buttons do. No redraw.', src: (i) => `../../npc/patron-${i}.png`, cls: 'px sticker' },
+        { name: 'B · Cartoony pixel', note: 'Redrawn in the heroes’ own current style (Ronin as the reference): brighter, bolder outline, still adult proportions and a cool stance. Three samples of seven.', src: (i) => `./cartoony/patron-${i}.png`, cls: 'px' },
+        { name: 'Flat (taken out)', note: 'The vector chibi set, for reference.', src: (i) => `./flat/patron-${i}.svg`, cls: '' },
+      ];
+      const big = (src, cls, label) => `<div class="cell"><img class="big ${cls}" src="${src}">${label}</div>`;
+      const disc = (src, cls) => `<div class="cell"><span class="disc"><img class="${cls}" src="${src}"></span>on the road</div>`;
+      const hero = `<div class="cell hero"><img class="big px" src="../../heroes/unlocks/ronin.png">a hero (Ronin)</div>`;
       document.getElementById('root').innerHTML =
-        '<h1>Patrons and the Tower</h1>' +
-        row('Tower', [cell('./tower-old.svg', 'Now'), cell('./tower-round.svg', 'A · Round'), cell('./tower-keep.svg', 'B · Keep')].map((c) => c.replace('class="cell"', 'class="cell tower"'))) +
-        row('Pixel', ids.map((i) => cell(`../../npc/patron-${i}.png`, i, 'px'))) +
-        row('Flat', ids.map((i) => cell(`./flat/patron-${i}.svg`, i))) +
-        row('Pixel poses', ids.map((i) => cell(`../../npc/poses/${i}.png`, i, 'px'))) +
-        row('Flat poses', ids.map((i) => cell(`./flat/poses/${i}.svg`, i)));
+        '<h1>Patron looks</h1>' +
+        OPTIONS.map((o) => `<section><h2>${o.name}</h2><p>${o.note}</p><div class="strip">${ids.map((i) => big(o.src(i), o.cls, i)).join('')}${disc(o.src(ids[0]), o.cls)}${hero}</div></section>`).join('') +
+        `<section class="tower"><h2>Tower</h2><div class="strip"><div class="cell"><img src="./tower-old.svg">First flat</div><div class="cell"><img src="./tower-round.svg">A · Round (in the game)</div><div class="cell"><img src="./tower-keep.svg">B · Keep</div></div></section>`;
     </script>
   </body>
 </html>
