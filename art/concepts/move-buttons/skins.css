@@ -1,0 +1,104 @@
+body { margin: 0; background: #f3e6c8; color: #2b2340; overflow: auto !important; }
+.mb-page { padding: 20px 16px 60px; font-family: Fredoka, system-ui, sans-serif; }
+.mb-title { margin: 0 0 16px; font-size: 26px; }
+.mb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 22px; align-items: start; }
+.mb-col h2 { margin: 0 0 4px; font-size: 18px; }
+.mb-col p { margin: 0 0 10px; font-size: 13px; color: #675b78; min-height: 34px; }
+.mb-console { background: #f7e4b9; border-radius: 16px; padding: 10px 8px; display: flex; flex-direction: column; gap: 6px; }
+.mb-console .move-list { display: flex; flex-direction: column; gap: 6px; }
+.mb-console .move-button { width: 100%; min-height: 50px; position: relative; }
+.mb-console * { animation: none !important; }
+
+/* --- Shared by A–D: every icon wears its own colour again. --- */
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button :is(.move-row-top, .move-strip, .move-clause) { color: inherit; }
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .move-rider-chevrons.is-up { color: #23a397; }
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .move-rider-chevrons.is-down { color: #d9534f; }
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .target-figures.is-foe { color: #e8554a; }
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .target-figures.is-ally { color: #3d93e8; }
+:is(.skin-a, .skin-b, .skin-d) .move-list .move-button .target-figures.is-self { color: #7a4fc9; }
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .charge-pip.is-lit { color: #f0a92a; }
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .move-stub * { color: inherit !important; }
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .move-stub .move-seat-arrow.eff-super svg { color: #2fae5a !important; }
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .move-stub .move-stub-value { color: #2b2340 !important; }
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .move-stub .move-stub-glyph {
+  color: var(--stub-color) !important;
+  filter: drop-shadow(0 1.5px 0 rgba(43, 35, 64, 0.55));
+}
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .move-stub .target-figures.is-foe svg { color: #e8554a !important; }
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .move-stub .target-figures.is-ally svg { color: #3d93e8 !important; }
+:is(.skin-a, .skin-b, .skin-c, .skin-d) .move-list .move-button .move-stub .move-seat-arrow.eff-resist svg { color: #d9534f !important; }
+
+/* The type in a coloured disc (A, B). */
+:is(.skin-a, .skin-b) .move-list .move-button .move-type-code {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgb(var(--move-type-rgb));
+  color: #fff;
+  box-shadow: 0 0 0 2px #2b2340, inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+:is(.skin-a, .skin-b) .move-list .move-button .move-type-code svg { width: 13px; height: 13px; filter: drop-shadow(0 1px 0 rgba(43, 35, 64, 0.55)); }
+
+/* --- B: tinted by type. --- */
+.skin-b .move-list .move-button {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--move-type-rgb)) 16%, #fffaf0), color-mix(in srgb, rgb(var(--move-type-rgb)) 30%, #fbf0d6)) !important;
+  border-color: color-mix(in srgb, rgb(var(--move-type-rgb)) 70%, #2b2340) !important;
+  box-shadow: 0 3px 0 color-mix(in srgb, rgb(var(--move-type-rgb)) 55%, #2b2340) !important;
+}
+.skin-b .move-list .move-button .move-stub {
+  background: color-mix(in srgb, rgb(var(--move-type-rgb)) 40%, #fff3d8) !important;
+  border-left-color: color-mix(in srgb, rgb(var(--move-type-rgb)) 70%, #2b2340) !important;
+}
+
+/* --- C: night card. --- */
+.skin-c .move-list .move-button {
+  background: linear-gradient(180deg, #4d407a, #382c5c) !important;
+  border-color: #2b2340 !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 3px 0 #1c1530 !important;
+}
+.skin-c .move-list .move-button .move-name {
+  color: #fff !important;
+  text-shadow: -1.5px 0 #2b2340, 1.5px 0 #2b2340, 0 -1.5px #2b2340, 0 1.5px #2b2340, 0 2.5px 0 #2b2340 !important;
+}
+.skin-c .move-list .move-button .move-type-code { color: rgb(var(--move-type-rgb)); }
+.skin-c .move-list .move-button .move-type-code svg { width: 17px; height: 17px; filter: drop-shadow(0 1.5px 0 #1c1530); }
+.skin-c .move-list .move-button .target-figures.is-self { color: #f4f6fa; }
+.skin-c .move-list .move-button .move-clause { color: #e9e2f5; }
+.skin-c .move-list .move-button .move-stub {
+  background: #5d4f8f !important;
+  border-left: 2px dashed #2b2340 !important;
+}
+.skin-c .move-list .move-button .move-stub .move-stub-value {
+  color: #fff !important;
+  text-shadow: -1.5px 0 #2b2340, 1.5px 0 #2b2340, 0 -1.5px #2b2340, 0 1.5px #2b2340, 0 2.5px 0 #2b2340 !important;
+}
+.skin-c .move-list .move-button .move-stub .target-figures.is-self svg { color: #f4f6fa !important; }
+
+/* --- D: type candy. --- */
+.skin-d .move-list .move-button {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--move-type-rgb)) 72%, #fff), rgb(var(--move-type-rgb))) !important;
+  border-color: #2b2340 !important;
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.4), 0 3px 0 #2b2340 !important;
+}
+.skin-d .move-list .move-button .move-name {
+  color: #fff !important;
+  text-shadow: -1.5px 0 #2b2340, 1.5px 0 #2b2340, 0 -1.5px #2b2340, 0 1.5px #2b2340, 0 2.5px 0 #2b2340 !important;
+}
+.skin-d .move-list .move-button .move-type-code { color: #fff; }
+.skin-d .move-list .move-button .move-type-code svg {
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(1px 0 0 #2b2340) drop-shadow(-1px 0 0 #2b2340) drop-shadow(0 1px 0 #2b2340) drop-shadow(0 -1px 0 #2b2340);
+}
+.skin-d .move-list .move-button .move-strip:not(:empty) {
+  padding: 1px 6px;
+  border: 2px solid #2b2340;
+  border-radius: 999px;
+  background: #fffaf0;
+}
+.skin-d .move-list .move-button .move-stub {
+  background: #fffaf0 !important;
+  border-left: 2.5px solid #2b2340 !important;
+}

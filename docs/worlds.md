@@ -87,6 +87,10 @@ Chosen 2026-11-24 from `art/concepts/vibrant/` over "jewel night":
   **The mana gem is a bubble** (2026-11-25, per user direction, from `art/concepts/mana-gem/`, over a
   candy hexagon, a droplet and a crystal shard): a glossy blue bead with one highlight and an ink
   rim, gold when the pool overflows.
+  **A move button is paper washed in its type** (2026-11-27, per user direction, from
+  `art/concepts/move-buttons/`, over cream, a night card and a full type-colour face): rim and lip a
+  shade deeper, the type in a coloured disc, and every icon (reach, chevrons, the stub's kind) in its
+  own colour. Forcing ink onto the icons sucked the life out of them.
 - **Arenas:** sunny and undimmed (the mock's Wild's Edge: Pixen 196x228, seed 8, low detail).
   Text over a bright arena needs a white face with an ink rim, or it disappears into the grass.
 - **Heroes:** redrawn cartoony with bigger heads, rounder shapes, two-tone cel shading and bright

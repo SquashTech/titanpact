@@ -60,25 +60,6 @@ body,
   background: #f7e4b9 !important;
   border-top: 3px solid #f0d49b;
 }
-.move-list .move-button {
-  border-image: none !important;
-  border: 3px solid #e7c98c !important;
-  border-radius: 14px;
-  background: #fffdf5 !important;
-  color: var(--text) !important;
-  box-shadow: 0 3px 0 #e2c07e;
-  overflow: hidden;
-}
-.move-list .move-button.selected { border-color: var(--accent) !important; box-shadow: 0 3px 0 #e36d1f; }
-.move-list .move-button * { color: inherit; }
-.move-stub {
-  background: #ffeccb !important;
-  border-left: 2px dashed #e7c98c !important;
-  border-radius: 0 11px 11px 0;
-  color: var(--ink) !important;
-  box-shadow: none !important;
-}
-.move-stub * { color: var(--ink) !important; text-shadow: none !important; }
 .bottom-action { color: #7b5a2a !important; }
 .bottom-action * { text-shadow: none !important; }
 .bottom-action-glyph {
@@ -393,17 +374,51 @@ body,
   text-shadow: -1.5px 0 var(--ink), 1.5px 0 var(--ink), 0 -1.5px var(--ink), 0 1.5px var(--ink), 0 3px 0 var(--ink) !important;
 }
 
-/* Every move button, not only the console's, on the cream face. */
+/* Every move button is paper washed in its type; every icon keeps its own colour. */
 .move-button {
+  --mb-type: rgb(var(--move-type-rgb, 231, 201, 140));
   border-image: none !important;
-  border: 3px solid #e7c98c !important;
-  border-radius: 14px;
-  background: #fffdf5 !important;
+  border: 3px solid color-mix(in srgb, var(--mb-type) 70%, #2b2340) !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mb-type) 16%, #fffaf0), color-mix(in srgb, var(--mb-type) 30%, #fbf0d6)) !important;
   color: var(--text) !important;
-  box-shadow: 0 3px 0 #e2c07e;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--mb-type) 55%, #2b2340) !important;
   overflow: hidden;
 }
+.move-button.selected { border-color: var(--accent) !important; box-shadow: 0 3px 0 #e36d1f !important; }
 .move-button * { color: inherit; }
+.move-button .move-type-code {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--mb-type);
+  color: #fff !important;
+  box-shadow: 0 0 0 2px #2b2340, inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+.move-button .move-type-code svg { width: 13px; height: 13px; filter: drop-shadow(0 1px 0 rgba(43, 35, 64, 0.55)); }
+.move-button .move-rider-chevrons.is-up { color: #23a397; }
+.move-button .move-rider-chevrons.is-down { color: #d9534f; }
+.move-button .target-figures.is-foe { color: #e8554a; }
+.move-button .target-figures.is-ally { color: #3d93e8; }
+.move-button .target-figures.is-self { color: #7a4fc9; }
+.move-button .charge-pip.is-lit { color: #f0a92a; }
+.move-stub {
+  background: color-mix(in srgb, var(--mb-type, #e7c98c) 40%, #fff3d8) !important;
+  border-left: 2px dashed color-mix(in srgb, var(--mb-type, #e7c98c) 70%, #2b2340) !important;
+  border-radius: 0 11px 11px 0 !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+.move-stub * { color: inherit !important; text-shadow: none !important; }
+.move-stub .move-stub-value { color: var(--ink) !important; }
+.move-stub .move-stub-glyph { color: var(--stub-color) !important; filter: drop-shadow(0 1.5px 0 rgba(43, 35, 64, 0.55)); }
+.move-stub .target-figures.is-foe svg { color: #e8554a !important; }
+.move-stub .target-figures.is-ally svg { color: #3d93e8 !important; }
+.move-stub .target-figures.is-self svg { color: #7a4fc9 !important; }
+.move-stub .move-seat-arrow.eff-resist svg { color: #d9534f !important; }
+.move-stub .move-seat-arrow.eff-super svg { color: #2fae5a !important; }
 
 /* The evolution rite keeps its night, but its caption is a paper card. */
 .evo-rite-box { background: #fffaf0 !important; }
