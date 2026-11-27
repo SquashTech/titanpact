@@ -998,3 +998,40 @@ button * { text-shadow: none !important; }
 .move-stub.has-seats .move-seat::after, .move-stub.has-seats .move-seats.is-spread::after { height: 3px !important; }
 .move-stub.has-seats .move-seat-arrow svg { width: 12px !important; height: 12px !important; filter: drop-shadow(0 1px 0 rgba(43, 35, 64, 0.6)); }
 .move-stub.has-seats .move-seat-arrow.is-double svg { width: 9px !important; }
+
+/* The hero sheet by day: paper lit in the hero's colour, an ink rim, the portrait on a soft glow. */
+.detail-panel.is-hero-sheet.is-gilt-sheet {
+  border: 3px solid var(--ink) !important;
+  border-radius: 20px !important;
+  background:
+    radial-gradient(120% 50% at 16% -6%, color-mix(in srgb, var(--hero-color, var(--accent)) 28%, transparent), transparent 62%),
+    linear-gradient(180deg, #fffaf0, #fbf0d6) !important;
+  box-shadow: 0 5px 0 var(--ink), 0 18px 36px rgba(60, 40, 20, 0.3) !important;
+}
+.detail-panel.is-hero-sheet.is-gilt-sheet::after { display: none; }
+.is-gilt-sheet :is(.sheet-banner-portrait, .detail-portrait-plate) {
+  background: radial-gradient(circle at 50% 62%, color-mix(in srgb, var(--hero-color, var(--accent)) 38%, #fffaf0), color-mix(in srgb, var(--hero-color, var(--accent)) 14%, #f3e6c6) 80%) !important;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--hero-color, var(--accent)) 45%, var(--ink)) !important;
+}
+.is-banner-sheet .sheet-head-row {
+  background: rgba(201, 169, 107, 0.16) !important;
+  border-color: var(--border) !important;
+}
+.is-hero-sheet.is-gilt-sheet .detail-header.is-hero::after { background: linear-gradient(90deg, var(--border-strong), transparent) !important; }
+.is-hero-sheet.is-gilt-sheet .tab-strip {
+  background: var(--well) !important;
+  box-shadow: inset 0 0 0 2px var(--border) !important;
+}
+.is-gilt-sheet .tab-strip-marker {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hero-color, var(--accent)) 22%, #fffaf0), color-mix(in srgb, var(--hero-color, var(--accent)) 38%, #fbf0d6)) !important;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--hero-color, var(--accent)) 60%, var(--ink)), 0 2px 0 color-mix(in srgb, var(--hero-color, var(--accent)) 50%, var(--ink)) !important;
+}
+.is-gilt-sheet .tab-button { color: var(--text-dim) !important; }
+.is-hero-sheet.is-gilt-sheet .tab-button.is-active { color: var(--ink) !important; }
+.is-gilt-sheet :is(.item-readout, .passive-readout) {
+  border-image: none !important;
+  border: 2px solid var(--border-strong) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 2px 0 var(--border-strong) !important;
+}
+.is-gilt-sheet .item-readout { border-color: color-mix(in srgb, var(--rarity-color, var(--border-strong)) 65%, var(--ink)) !important; box-shadow: 0 2px 0 color-mix(in srgb, var(--rarity-color, var(--border-strong)) 50%, var(--ink)) !important; }
