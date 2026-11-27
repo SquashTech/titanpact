@@ -328,7 +328,7 @@ function NowMap() {
 
 const PHONES: { id: string; name: string; note: string; body: () => ReactNode }[] = [
   { id: 'now', name: 'Now', note: 'One row of choices over the Location painting.', body: () => <NowMap /> },
-  { id: 'a', name: 'A · Lanes', note: 'The act as one scrolling road. A choice is the road splitting into lanes that join again at the next stop; mist hides what the lanes past the next one hold.', body: () => <RoadMap variant="lanes" /> },
+  { id: 'a', name: 'A · Lanes', note: 'The act as one scrolling road. A choice is the road splitting into lanes that join again at the next stop; mist hides what the lanes past the next one hold.', body: () => <RoadMap variant="lanes" guardian={towerArt} /> },
   { id: 'b', name: 'B · Signposts', note: 'One road, no lanes. A choice is a signpost on it, and the one you are at raises today’s tiles on a paper tray.', body: () => <RoadMap variant="signpost" /> },
 ];
 
@@ -336,7 +336,7 @@ const GUARDIANS: { id: string; name: string; note: string; art?: string }[] = [
   { id: 'gate', name: 'Today · the gate', note: 'The sealed stone gate.' },
   { id: 'lair', name: 'Lair', note: 'A cave in a hill, claw marks by the mouth, bones and a lost shield.', art: lairArt },
   { id: 'ring', name: 'Ring', note: 'Standing stones round an arena floor, a gold seal at its heart.', art: ringArt },
-  { id: 'tower', name: 'Tower', note: 'A stout keep with a red pennant and a barred door.', art: towerArt },
+  { id: 'tower', name: 'Tower · picked', note: 'A stout keep with a red pennant and a barred door.', art: towerArt },
   { id: 'egg', name: 'Egg', note: 'A chained stone egg cracking with gold light; what sleeps in it is the fight.', art: eggArt },
   { id: 'throne', name: 'Throne', note: 'An empty clawed throne on a dais; its owner is out.', art: throneArt },
 ];
