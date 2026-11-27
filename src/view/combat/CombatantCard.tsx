@@ -329,10 +329,9 @@ function StatModBadge({ stat, mod, stages, tier, held }: { stat: StatKey; mod: n
       title={`${reading}${held ? (mod > 0 ? " — can't go any higher" : " — can't go any lower") : ''}`}
     >
       <StatGlyph stat={stat} tone="inherit" className="stat-mod-glyph" />
-      <span className="stat-mod-arrow" aria-hidden="true">{mod > 0 ? '▲' : '▼'}</span>
-      <span className="stat-mod-pips" aria-hidden="true">
-        {Array.from({ length: tier }, (_, i) => (
-          <span key={i} className="stat-mod-pip" />
+      <span className="stat-mod-chevrons" aria-hidden="true">
+        {Array.from({ length: Math.max(1, tier) }, (_, i) => (
+          <span key={i} className="stat-mod-chevron">{mod > 0 ? '▲' : '▼'}</span>
         ))}
       </span>
     </span>

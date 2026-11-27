@@ -1041,3 +1041,32 @@ button * { text-shadow: none !important; }
 /* Type chips stand at the hero's feet, clear of the trees and fence behind the far row. */
 .team-row .combatant-card .combatant-types { top: calc(var(--figure-stage-h) - 4px); translate: 0 -100%; }
 .team-row.enemy .combatant-card .combatant-types { top: calc(100% - var(--figure-under) - 4px); }
+
+/* Stat stages and status chips are candy pills: filled gold up or slate down (a status in its own colour), white marks rimmed in ink, a chevron a step. */
+.stat-mod-badge,
+.team-row .status-badge {
+  gap: 3px !important;
+  min-height: 24px;
+  padding: 2px 8px 2px 6px !important;
+  border: 2.5px solid var(--ink) !important;
+  border-radius: 999px !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 2px 0 var(--ink) !important;
+  text-shadow: none;
+}
+.stat-mod-badge { color: #fff !important; font-size: 11px !important; }
+.stat-mod-badge.stat-buff { background: linear-gradient(180deg, #ffc24d, #f09a1a) !important; }
+.stat-mod-badge.stat-debuff { background: linear-gradient(180deg, #7fb0f0, #3f78c4) !important; }
+.stat-mod-badge.stat-held { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--ink), 0 2px 0 var(--ink) !important; }
+.team-row .status-badge { background: currentColor !important; padding: 2px 6px !important; }
+.team-row .status-badge :is(svg, .status-badge-count) { color: #fff; }
+.team-row .status-badge .status-pips { color: #fff !important; }
+.team-row .status-badge-ward { color: #fff !important; background: rgb(var(--titan-rgb)) !important; }
+:is(.stat-mod-badge, .team-row .status-badge) :is(.stat-mod-glyph, svg) {
+  width: 15px !important;
+  height: 15px !important;
+  filter: drop-shadow(1px 0 0 var(--ink)) drop-shadow(-1px 0 0 var(--ink)) drop-shadow(0 1px 0 var(--ink)) drop-shadow(0 -1px 0 var(--ink));
+}
+.team-row :is(.status-badge-count, .status-badge-ward),
+.stat-mod-chevrons { text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink); }
+.stat-mod-chevrons { display: inline-flex; letter-spacing: -1px; }
+.stat-mod-chevron { font-size: 10px; line-height: 1; }
