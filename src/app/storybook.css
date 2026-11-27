@@ -1012,3 +1012,13 @@ button * { text-shadow: none !important; }
 }
 .recruit-oath-innate-name { color: color-mix(in srgb, var(--passive-color) 70%, #2b2340) !important; }
 .recruit-wheel-face-art { filter: saturate(0.6) opacity(0.6) !important; }
+
+/* The matchup lines under a move's power, inked for paper. */
+.move-seat::after { background: rgba(43, 35, 64, 0.55) !important; }
+.move-seat.is-empty::after { background: rgba(43, 35, 64, 0.15) !important; }
+.move-seats.is-spread::after { background: rgba(43, 35, 64, 0.7) !important; }
+.move-seats.is-random .move-seat::after { background: repeating-linear-gradient(90deg, rgba(43, 35, 64, 0.6) 0 3px, transparent 3px 5px) !important; }
+.move-seat-arrow.eff-neutral::after { background: rgba(43, 35, 64, 0.5) !important; }
+.move-stub.has-seats .move-seat::after, .move-stub.has-seats .move-seats.is-spread::after { height: 3px !important; }
+.move-stub.has-seats .move-seat-arrow svg { width: 12px !important; height: 12px !important; filter: drop-shadow(0 1px 0 rgba(43, 35, 64, 0.6)); }
+.move-stub.has-seats .move-seat-arrow.is-double svg { width: 9px !important; }
