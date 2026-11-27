@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flat Patrons</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" />
+    <style>
+      html, body { overflow: auto; height: auto; margin: 0; }
+      body { background: #9bd86a; color: #2b2340; font-family: 'Fredoka', sans-serif; }
+      .pf { padding: 16px; }
+      h1 { margin: 0 0 10px; font-size: 24px; }
+      section { margin-bottom: 18px; padding: 12px 14px; border-radius: 18px; background: rgba(255, 250, 240, 0.35); }
+      h2 { margin: 0 0 8px; font-size: 18px; }
+      .strip { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
+      .cell { display: grid; justify-items: center; gap: 4px; font-size: 12px; font-weight: 600; }
+      .cell img { width: 96px; height: 96px; }
+      .px { image-rendering: pixelated; }
+      .tower img { width: 176px; height: 176px; }
+    </style>
+  </head>
+  <body>
+    <div class="pf" id="root"></div>
+    <script type="module">
+      const ids = ['swordsman', 'archmage', 'headmaster', 'huntress', 'priest', 'hexwright', 'forgemistress'];
+      const cell = (src, label, cls = '') => `<div class="cell"><img class="${cls}" src="${src}">${label}</div>`;
+      const row = (title, items) => `<section><h2>${title}</h2><div class="strip">${items.join('')}</div></section>`;
+      document.getElementById('root').innerHTML =
+        '<h1>Patrons and the Tower</h1>' +
+        row('Tower', [cell('./tower-old.svg', 'Now'), cell('./tower-round.svg', 'A · Round'), cell('./tower-keep.svg', 'B · Keep')].map((c) => c.replace('class="cell"', 'class="cell tower"'))) +
+        row('Pixel', ids.map((i) => cell(`./pixel/patron-${i}.png`, i, 'px'))) +
+        row('Flat', ids.map((i) => cell(`../../npc/patron-${i}.svg`, i))) +
+        row('Pixel poses', ids.map((i) => cell(`./pixel/poses/${i}.png`, i, 'px'))) +
+        row('Flat poses', ids.map((i) => cell(`../../npc/poses/${i}.svg`, i)));
+    </script>
+  </body>
+</html>

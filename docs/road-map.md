@@ -53,8 +53,13 @@
   the landmarks** (same day): `art/map-nodes/landmarks/*.svg` — the camp, the first fight's
   signpost boulder, the Academy, the Tower, the finale gate in its three swinging layers, and the
   Mentor, Tutor and Scribe as places without their person (a roadside fire and staff, a practice
-  post, a writing desk), since people stay pixel art. The old 32px PNGs stay in
-  `art/map-nodes/icons/` for the comparison page only.
+  post, a writing desk). The old 32px PNGs stay in `art/map-nodes/icons/` for the comparison
+  page only. **The seven patrons are flat too** (same day, per user direction): chibi figures,
+  standing (`art/npc/patron-<id>.svg`) and in their entrance pose (`art/npc/poses/<id>.svg`); the
+  pixel originals are kept in `art/concepts/patrons-flat/pixel/`. Heroes stay pixel art.
+- **The Tower was redrawn** (same day, per user direction, the first flat one read badly): a round
+  tower under a red cone roof on a rocky mound (A · Round in `art/concepts/patrons-flat/`, beside
+  B · Keep, a square keep between two blue-roofed turrets).
 - **The top bar and the Roster** wear the storybook look (2026-11-27, per user direction): cream
   chips and buttons with an ink rim standing on the scene, the stone lintel gone, the Roster a
   cream card on a blue base with a blue Roster tab. The preview lights each piece by its own shape.

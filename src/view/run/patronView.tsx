@@ -46,10 +46,10 @@ export function patronColor(patronId: string): string {
   return PATRON_COLORS[patronId] ?? 'var(--buff)';
 }
 
-/** Each patron's figure (art/npc/patron-<id>.png), 48px. */
+/** Each patron's figure (art/npc/patron-<id>.svg), 48px. */
 const PATRON_ART: Record<string, string> = Object.fromEntries(
-  Object.entries(import.meta.glob<string>('../../../art/npc/patron-*.png', { eager: true, query: '?url', import: 'default' })).map(([path, url]) => [
-    path.slice(path.lastIndexOf('/patron-') + '/patron-'.length, -'.png'.length),
+  Object.entries(import.meta.glob<string>('../../../art/npc/patron-*.svg', { eager: true, query: '?url', import: 'default' })).map(([path, url]) => [
+    path.slice(path.lastIndexOf('/patron-') + '/patron-'.length, -'.svg'.length),
     url,
   ])
 );
@@ -86,10 +86,10 @@ const ENTRANCES: Record<string, PatronEntranceSpec> = {
 };
 
 /** The patron's own arrival sound, or none. */
-/** Each patron's entrance pose (art/npc/poses/<id>.png), 48px: flown through the entrance's motion, the standing figure taking over on landing. */
+/** Each patron's entrance pose (art/npc/poses/<id>.svg), 48px: flown through the entrance's motion, the standing figure taking over on landing. */
 const PATRON_POSES: Record<string, string> = Object.fromEntries(
-  Object.entries(import.meta.glob<string>('../../../art/npc/poses/*.png', { eager: true, query: '?url', import: 'default' })).map(([path, url]) => [
-    path.slice(path.lastIndexOf('/') + 1, -'.png'.length),
+  Object.entries(import.meta.glob<string>('../../../art/npc/poses/*.svg', { eager: true, query: '?url', import: 'default' })).map(([path, url]) => [
+    path.slice(path.lastIndexOf('/') + 1, -'.svg'.length),
     url,
   ])
 );
