@@ -145,3 +145,8 @@ body.rm-solo { background: #000; overflow: hidden; }
 }
 .rm-card-name { font-weight: 700; font-size: 17px; }
 .rm-card-go { padding: 6px 18px; border-radius: 14px; background: #6cd16a; color: #fff; font-weight: 700; border: 3px solid #2b2340; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.15); text-shadow: 0 2px 0 #2b2340; }
+
+.rm-sub { margin-top: 36px !important; }
+.frame.rm-frame.is-short { height: 420px; }
+.rm-frame.is-short .rm-footer { display: none; }
+.type-boss.is-alt .rm-landmark { width: 176px; height: 176px; margin-bottom: -24px; }

@@ -14,6 +14,11 @@ import { HeroPortrait } from '../../../src/view/shared/HeroPortrait';
 import paintingArt from '../../../art/locations/map/wildsEdge.png';
 import huntressArt from '../../../art/npc/patron-huntress.png';
 import archmageArt from '../../../art/npc/patron-archmage.png';
+import lairArt from './guardian/lair.png';
+import ringArt from './guardian/ring.png';
+import towerArt from './guardian/tower.png';
+import eggArt from './guardian/egg.png';
+import throneArt from './guardian/throne.png';
 
 // One real Act 1 map, walked to the Skirmish: the next pick is the three-wide reward row.
 const SEED = 7;
@@ -121,19 +126,20 @@ function segmentsFor(rows: Stop[][]): { d: string; state: SegState }[] {
 
 const PATRON_ART = [huntressArt, archmageArt];
 
-function faceArt(type: MapNodeType, col = 0): { src?: string; big: boolean } {
+function faceArt(type: MapNodeType, col = 0, guardian?: string): { src?: string; big: boolean } {
+  if (type === 'boss' && guardian) return { src: guardian, big: true };
   if (type === 'patronSeat') return { src: PATRON_ART[col % 2], big: false };
   const still = landmarkStillArt(type);
   if (still) return { src: still, big: true };
   return { src: mapNodeIcon(type) ?? mapNodeArt(type), big: false };
 }
 
-function Medallion({ type, col, state, label, onTap, lit }: { type: MapNodeType; col: number; state: NodeState; label?: boolean; onTap?: () => void; lit?: boolean }) {
-  const art = faceArt(type, col);
+function Medallion({ type, col, state, label, onTap, lit, guardian }: { type: MapNodeType; col: number; state: NodeState; label?: boolean; onTap?: () => void; lit?: boolean; guardian?: string }) {
+  const art = faceArt(type, col, guardian);
   const hidden = state === 'ahead' && NODE_TIERS[type] === 'reward';
   const style = { '--node-color': NODE_COLORS[type] } as CSSProperties;
   return (
-    <button className={`rm-node is-${state} ${art.big ? 'is-big' : ''} ${lit ? 'is-lit' : ''} type-${type}`} style={style} onClick={onTap}>
+    <button className={`rm-node is-${state} ${art.big ? 'is-big' : ''} ${lit ? 'is-lit' : ''} ${guardian ? 'is-alt' : ''} type-${type}`} style={style} onClick={onTap}>
       {art.big ? (
         <img className="rm-landmark" src={art.src} alt="" draggable={false} />
       ) : (
@@ -223,14 +229,14 @@ function Ground({ rows, variant }: { rows: Stop[][]; variant: Variant }) {
 
 // ---- the road mock ----------------------------------------------------------------------------
 
-function RoadMap({ variant }: { variant: Variant }) {
+function RoadMap({ variant, guardian, top }: { variant: Variant; guardian?: string; top?: boolean }) {
   const rows = stopsFor(variant);
   const segs = segmentsFor(rows);
   const [lit, setLit] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = scroller.current;
-    if (el) el.scrollTop = rowY(HERE_ROW) - el.clientHeight * 0.8;
+    if (el) el.scrollTop = top ? BOSS_Y - 250 : rowY(HERE_ROW) - el.clientHeight * 0.8;
   }, []);
   const here = rows[HERE_ROW].find((s) => s.state === 'here') ?? rows[HERE_ROW][0];
   const fogBottom = rowY(HERE_ROW + 1) - ROW_GAP / 2;
@@ -282,7 +288,7 @@ function RoadMap({ variant }: { variant: Variant }) {
               </div>
             ) : (
               <div key={s.id} className={`rm-at is-${s.state}`} style={{ left: s.x, top: s.y }}>
-                <Medallion type={s.type} col={MAP.nodes[s.id].col} state={s.state} label={s.state === 'next' || s.type === 'boss'} lit={lit === s.id} onTap={s.state === 'next' ? () => setLit(lit === s.id ? null : s.id) : undefined} />
+                <Medallion type={s.type} col={MAP.nodes[s.id].col} state={s.state} label={s.state === 'next' || s.type === 'boss'} guardian={guardian} lit={lit === s.id} onTap={s.state === 'next' ? () => setLit(lit === s.id ? null : s.id) : undefined} />
               </div>
             )
           )}
@@ -326,9 +332,18 @@ const PHONES: { id: string; name: string; note: string; body: () => ReactNode }[
   { id: 'b', name: 'B · Signposts', note: 'One road, no lanes. A choice is a signpost on it, and the one you are at raises today’s tiles on a paper tray.', body: () => <RoadMap variant="signpost" /> },
 ];
 
-function Phone({ children }: { children: ReactNode }) {
+const GUARDIANS: { id: string; name: string; note: string; art?: string }[] = [
+  { id: 'gate', name: 'Today · the gate', note: 'The sealed stone gate.' },
+  { id: 'lair', name: 'Lair', note: 'A cave in a hill, one magenta eye looking out, bones at the mouth.', art: lairArt },
+  { id: 'ring', name: 'Ring', note: 'Standing stones round an arena floor, its seal cracked and glowing.', art: ringArt },
+  { id: 'tower', name: 'Tower', note: 'A crooked keep with a torn banner, split by one magenta crack.', art: towerArt },
+  { id: 'egg', name: 'Egg', note: 'A chained stone egg cracking open; what sleeps in it is the fight.', art: eggArt },
+  { id: 'throne', name: 'Throne', note: 'An empty clawed throne on a dais; its owner is not home.', art: throneArt },
+];
+
+function Phone({ children, short }: { children: ReactNode; short?: boolean }) {
   return (
-    <div className="frame rm-frame">
+    <div className={`frame rm-frame ${short ? 'is-short' : ''}`}>
       <div className="app-shell rm-shell">{children}</div>
     </div>
   );
@@ -339,11 +354,11 @@ function Page() {
   useEffect(() => {
     document.body.classList.toggle('rm-solo', !!solo);
   }, [solo]);
-  const shown = solo ? PHONES.filter((p) => p.id === solo) : PHONES;
+  const shown = solo ? PHONES.filter((p) => p.id === solo) : PHONES.filter((p) => p.id !== 'b');
   if (solo) return <Phone>{shown[0]?.body()}</Phone>;
   return (
     <div className="rm-page">
-      <h1>Road map</h1>
+      <h1>Road map · Lanes</h1>
       <div className="rm-grid">
         {shown.map((p) => (
           <section key={p.id} className="rm-col">
@@ -353,23 +368,41 @@ function Page() {
           </section>
         ))}
       </div>
+      <h1 className="rm-sub">The Guardian stop</h1>
+      <div className="rm-grid">
+        {GUARDIANS.map((g) => (
+          <section key={g.id} className="rm-col">
+            <h2>{g.name}</h2>
+            <p>{g.note}</p>
+            <Phone short>
+              <RoadMap variant="lanes" guardian={g.art} top />
+            </Phone>
+          </section>
+        ))}
+      </div>
       <section className="rm-notes">
         <h2>Tensions</h2>
         <ul>
           <li>
-            <b>One row at a time.</b> Today the map is a scene of the row in front of you. A road shows the whole act, so it has to decide what the far rows give away. Both mocks show what the rail already shows (every fight, the Elite, the Camp, the Guardian) and hide what a reward row holds under mist until it is next.
+            <b>One row at a time.</b> Today the map is a scene of the row in front of you. A road shows the whole act, so it has to decide what the far rows give away. Lanes shows what the rail already shows (every fight, the Elite, the Camp, the Guardian) and hide what a reward row holds under mist until it is next.
           </li>
           <li>
-            <b>The fork is an illusion of geography.</b> Every row is fully connected to the next since 2026-09-08, so no lane closes anything. Lanes (A) draw that honestly, the road always rejoins, but a road that splits invites the player to read it as a route that matters. Signposts (B) say the truth more plainly, at the cost of the road looking like one line.
+            <b>The fork is an illusion of geography.</b> Every row is fully connected to the next since 2026-09-08, so no lane closes anything. Lanes draws that honestly, the road always rejoins, but a road that splits invites the player to read it as a route that matters. (Signposts, picked against 2026-11-27, said it more plainly.)
           </li>
           <li>
-            <b>Tap to preview.</b> A keeps the first tap lighting a stop and a card with Go; B keeps it inside the tray, which is today’s tile row moved onto the road.
+            <b>Tap to preview.</b> The first tap lights a stop and raises a card with Go; the second goes.
           </li>
           <li>
-            <b>Portrait 394×780.</b> Three lanes fit at about 124px apart with 62px stops; a three-wide row leaves no room for the road to wind, so A straightens at every choice. One act is about 2,200px tall, three screens of scrolling, and scrolling is a gesture the map has never asked for.
+            <b>Portrait 394×780.</b> Three lanes fit at about 124px apart with 62px stops; a three-wide row leaves no room for the road to wind, so the road straightens at every choice. One act is about 2,200px tall, three screens of scrolling, and scrolling is a gesture the map has never asked for.
           </li>
           <li>
-            <b>The painting.</b> The Location backdrops are side-on landscapes, not ground seen from above. Both mocks keep the painting as the horizon the Guardian stands on and lay a top-down meadow below it; a real build would need ground art per Location.
+            <b>The painting.</b> The Location backdrops are side-on landscapes, not ground seen from above. Lanes keeps the painting as the horizon the Guardian stands on and lay a top-down meadow below it; a real build would need ground art per Location.
+          </li>
+          <li>
+            <b>The Guardian is never on the map</b> (2026-09-28). Every option is a place, not the creature; the Egg and the Lair come closest, hinting at it without drawing it. Today’s gate also carries the Guardian’s element as a seal on its door, which none of these do yet: the crack, the eye or the seal could take the type colour where it is magenta now, which is the Titan’s.
+          </li>
+          <li>
+            <b>The gate opens.</b> Tapping today’s gate plays a door-opening beat (three layers, 1250ms). A new landmark needs its own beat: the eye opening, the egg splitting, the seal flaring.
           </li>
         </ul>
       </section>
