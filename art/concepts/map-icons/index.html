@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Map Icons</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" />
+    <style>
+      html, body { overflow: auto; height: auto; }
+      body { background: #9bd86a; color: #2b2340; font-family: 'Fredoka', sans-serif; }
+      .mi-page { padding: 16px; }
+      .mi-page h1 { margin: 0 0 10px; font-size: 24px; color: #fff; text-shadow: -1.5px 0 #2b2340, 1.5px 0 #2b2340, 0 -1.5px #2b2340, 0 1.5px #2b2340, 0 3px 0 #2b2340; }
+      .mi-row { margin-bottom: 18px; padding: 12px 14px 18px; border-radius: 18px; background: rgba(255, 250, 240, 0.35); }
+      .mi-row h2 { margin: 0 0 2px; font-size: 18px; }
+      .mi-row p { margin: 0 0 12px; font-size: 13px; max-width: 560px; }
+      .mi-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 22px 18px; }
+      .mi-stop { padding-bottom: 22px; }
+      .mi-stop .road-disc img { image-rendering: pixelated; }
+      .mi-stop.is-pixel .road-disc img { width: 48px; height: 48px; }
+      .mi-stop.is-done { opacity: 0.95; }
+      .mi-flat { display: block; width: 40px; height: 40px; }
+      .road-stop.is-next .mi-flat { width: 48px; height: 48px; }
+      .mi-roster .map-footer-button { display: inline-flex; padding: 6px; }
+      .mi-roster.map-screen { display: inline-flex; margin: 0; padding: 0; background: none; overflow: visible; flex: none; }
+      .mi-emblem { width: 30px; height: 30px; display: block; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>
