@@ -15,6 +15,18 @@ changing what the player sees. They go with the Titan, not before it. The one de
 |---|---|
 | `src/view/shared/titanEye.ts` deleted (`TITAN_EYE`, `EYE_GRADIENT`, `makeEye`) | Imported by nothing since the Titanspawn became pixel sprites (9285a5a4) |
 | `scripts/generate-icons.mjs` comments no longer point at it | The script carries its own colour stops |
+| All 30 Guardian frames erased by hand, no generations spent (per user direction, 2026-11-27) | See "The Guardians" below |
+
+### The Guardians
+
+Each crack is filled from the pixels around it. An eye that sat where no eye belongs is filled the
+same way: the Elder Bough's trunk eye (its dark ring stays as a knot), the Manticore's flank crack,
+the Sphinx's forehead jewel, the Wendigo's skull. An eye in the creature's own eye socket is
+recoloured to a natural eye instead, so nothing ends up blank-faced: Kraken, Roc and Manticore
+amber, Dragon and Seraph gold, Skeleton King Spirit cyan, and Yugzulach's hood glow and attack
+wisps a cold Shadow silver. The Skeleton King's violet robe and the Sphinx's Mind wave are their own
+colours and stay. The before/after sheet and the script (one hue window and a set of eye boxes per
+Guardian) are in `art/concepts/guardians-no-eye/`.
 
 ## Code and CSS still in use (each one is visible)
 
@@ -47,7 +59,7 @@ Counted by pixels near the magenta (`r>150, b>120`, low green) and checked by ey
 
 | Files | What's on them | Action |
 |---|---|---|
-| `art/heroes/guardians/` — 10 Guardians × 3 frames (dragon, elderBough, kraken, manticore, roc, seraph, skeletonKing, sphinx, wendigo, yugzulach) | The "Touched" slit eye and crack. A few frames have it hidden (dragondamaged, skeletonKingdamaged) | **Redraw**: 30 files. Each is a mortal creature in its type's colours; drop the eye and crack and keep the rest. Also used by `OpeningCards.tsx` (4 of them) |
+| `art/heroes/guardians/` — 10 Guardians × 3 frames (dragon, elderBough, kraken, manticore, roc, seraph, skeletonKing, sphinx, wendigo, yugzulach) | The "Touched" slit eye and crack. A few frames have it hidden (dragondamaged, skeletonKingdamaged) | **Done**, hand-erased (above) |
 | `art/heroes/titan/herald.png`, `heraldattack.png` (`heralddamaged.png` has none) | The magenta seam down the faceless head | Retire with the Titan, or redraw if the Herald becomes a Storybook chapter (`worlds.md` §3, open) |
 | `art/heroes/titan/eye*.png`, `righteye*.png` — 8 files | The Eyes themselves | Retire with the Titan. Redrawing them makes no sense |
 | `art/map-nodes/landmarks/titanStone.png` | A standing stone with a **red** slit eye (older red Titan palette, not magenta) | Redraw or replace. Still drawn on the map (`mapLandmarks.tsx:17`) |
@@ -88,9 +100,7 @@ boss-hp, stories, world-map) show the eye. They're history; leave them.
 2. **The Fight glyph and the app icon.** Both are slit-pupil eyes. The eye was "what the
    Titanspawn are", and that reading is gone. Replace them with a new mark, or keep the eye shape
    and lose the slit?
-3. **Guardian redraws: 30 files.** By the PixelLab recipe (pro_flash, the current sprite as style
-   reference) it's about 30 generations if each frame is a fresh pass, more with retries.
-   Erasing the eye pixels by hand with the free `pixelart_workbench` costs nothing and keeps the
-   art exactly. That may be enough for a 3-4 pixel eye. No generations have been spent.
+3. **Guardian redraws: decided 2026-11-27, per user direction: erased by hand, no generations.**
+   Done. Still open: whether a face eye should be recoloured (as now) or erased too.
 4. **The Titan's own pieces** (Herald, Eyes, Threshold, Titan gate, titanStone, the finale's CSS)
    wait on `worlds.md` §3: do they retire, or become Storybook chapters?
