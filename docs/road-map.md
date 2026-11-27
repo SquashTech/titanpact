@@ -4,7 +4,9 @@
 > `visual-language.md`. This doc owns **how an act's map is drawn**: a road with stops on it,
 > in place of today's one row of tiles over the Location painting.
 >
-> **DECIDED 2026-11-27, per user direction, NOT BUILT.** Mocks: `art/concepts/road-map/index.html`.
+> **DECIDED AND BUILT 2026-11-27, per user direction.** `src/view/run/MapRoad.tsx` (+ `mapRoad.css`)
+> replaced the one-row scene (`MapRoute`, deleted) and the progress rail; the tap preview moved to
+> `MapPreview.tsx` unchanged. Mocks: `art/concepts/road-map/index.html`.
 
 ---
 
@@ -30,10 +32,14 @@
   matters, and nothing on the road says otherwise.
 - **Scrolling.** An act is about 2,500px, roughly three screens at 394×780. The map has never
   asked the player to scroll, and the screen has to open scrolled to the current stop.
-- **Ground art.** The Location paintings are side-on. The mock keeps the painting as the horizon
-  and draws a flat meadow under it, so each Location needs its own top-down ground.
-- **The Tower's beat.** Tapping today's gate plays a door-opening beat before the fight
-  (three layers, `OPENING` in `MapRoute`). The Tower needs its own, such as the door swinging
-  open or the pennant rising.
-- **The Guardian's type.** Today's gate burns the Guardian's element as a seal on its door; the
-  Tower shows none yet. The pennant could take the type colour.
+- **Ground art.** The Location paintings are side-on. The road keeps the painting as the horizon
+  and draws plain ground under it in the colour read off the painting (`useGroundColor`), with
+  trees in shades of it. Each Location could still have its own top-down ground drawn.
+- **The Tower's beat.** Built as a first pass: the tower shakes, its door flares in the Guardian's
+  element, and that colour floods the screen into the fight (1250ms, the old gate's timing).
+- **The Guardian's type** lights the tower's door (`map-tower-door`); the pennant stays red.
+- **Lost from the old scene:** the patrons' entrance animations (tied to the old reveal's CSS),
+  the per-tile arrival chimes, and the lead-on marks (dead since every row fully connects). On
+  arriving at a stop the road now scrolls up from the last one instead.
+- **Dead CSS** for the old scene (`.map-route`, `.map-choice`, `.map-rail`, the gate's rules) is
+  still in `src/app/styles.css`, as is `mapSpots` in `locationBackdrops.ts`.

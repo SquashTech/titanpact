@@ -23,7 +23,7 @@ import throneArt from './guardian/throne.png';
 // One real Act 1 map, walked to the Skirmish: the next pick is the three-wide reward row.
 const SEED = 7;
 const PARTY = ['valor', 'crag', 'kitsu', 'tidecaller'];
-const PICKS = [0, 1, 0, 0, 1];
+const PICKS = new URLSearchParams(location.search).get('picks')?.split(',').filter(Boolean).map(Number) ?? [0, 1, 0, 0, 1];
 const HERE_ROW = PICKS.length - 1;
 
 function buildRun(): RunState {
@@ -33,11 +33,11 @@ function buildRun(): RunState {
     ...createRunState(),
     roster: PARTY.map((id) => createRosterEntry(id, id, heroes[id].moveIds)),
     map,
-    currentNodeId: visited[visited.length - 1],
+    currentNodeId: visited[visited.length - 1] ?? null,
     visitedNodeIds: visited,
     fightsStarted: 3,
     encountersWon: 3,
-    locationIds: ['wildsEdge'],
+    locationIds: [new URLSearchParams(location.search).get('place') ?? 'wildsEdge'],
   };
 }
 

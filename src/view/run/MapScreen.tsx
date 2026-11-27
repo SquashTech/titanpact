@@ -5,7 +5,7 @@ import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
 import { equipment } from '../../data/equipment';
-import type { MapNodeType, RunMap } from '../../run/map';
+import type { MapNodeType } from '../../run/map';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
@@ -14,9 +14,8 @@ import { rosterHeroes } from '../../data/content';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { formIdFor } from '../../run/progression';
 import { ManaBar, WoundBar, entryHp, entryMana } from '../shared/WoundBar';
-import { MapRoute } from './MapRoute';
+import { MapRoad } from './MapRoad';
 import { BannerShelf } from './BannerShelf';
-import { NODE_COLORS, NODE_NAMES, NODE_TIERS, type NodeTier } from './mapNodes';
 import { NodeDossier } from './NodeDossier';
 import { nodeLensMark } from './nodeLens';
 import { progressionTable } from '../../data/progression';
@@ -25,7 +24,7 @@ import { locationDomains, type LocationDefinition } from '../../data/locations';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 import { LocationAmbience } from '../shared/LocationSky';
-import { mapSpots } from '../shared/locationBackdrops';
+import { locationBackdrop } from '../shared/locationBackdrops';
 import { AudioSettings } from '../shared/AudioSettings';
 import { eliteDressingFor, nodeEncounter, scoutedParty } from '../../run/encounters';
 import type { EliteDressing } from '../../run/eliteAffixes';
@@ -82,65 +81,6 @@ function ResourceStat({ kind, label, value }: { kind: ResourceKind; label: strin
   );
 }
 
-/** Worst case first: a row you may take an Elite on is a row to plan for an Elite on. */
-const RAIL_TIER_RANK: Record<NodeTier, number> = { ancient: 0, encounter: 1, landmark: 2, reward: 3 };
-
-/** The one node kind a row is worth being warned about, out of the two or three it offers. */
-function railTypeFor(map: RunMap, row: number): MapNodeType {
-  return map.rows[row]
-    .map((id) => map.nodes[id].type)
-    .reduce((best, type) => (RAIL_TIER_RANK[NODE_TIERS[type]] < RAIL_TIER_RANK[NODE_TIERS[best]] ? type : best));
-}
-
-/**
- * The act ahead, one mark per row. It replaces the thing the whole-map view gave away for free and
- * the only thing worth keeping from it — an act's SHAPE.
- *
- * It counted rows and nothing else until 2026-09-08 (per user direction), which answered "how far"
- * and left "how hard" to be discovered a row at a time. Every row is now marked by what it makes
- * you do: a bare dot for a row that only pays out, and the node's own glyph for one that does not —
- * every forced fight in the act, its kind and its difficulty, readable before the act starts. That
- * is the whole planning surface a scene-map can afford, and it costs no room the pips did not
- * already have.
- *
- * A row offering more than one thing is marked by the HARDEST of them, so the rail never
- * under-promises: the Elite-or-Battle row wears the Elite.
- */
-function ProgressRail({ map, currentRow }: { map: RunMap; currentRow: number }) {
-  // Rows still to walk before the last one, set against the last mark: how long the act is, in one figure.
-  const lastRow = map.rows.length - 1;
-  const stops = lastRow - currentRow - 1;
-  return (
-    <div className="map-rail" aria-label={stops > 0 ? `${stops} ${stops === 1 ? 'stop' : 'stops'} to the Guardian` : 'The Guardian is next'}>
-      {map.rows.map((_, row) => {
-        const type = railTypeFor(map, row);
-        const tier = NODE_TIERS[type];
-        const state = row < currentRow ? 'is-done' : row === currentRow ? 'is-here' : '';
-        if (tier === 'reward') {
-          return <span key={row} className={`map-rail-pip ${state}`} aria-hidden="true" />;
-        }
-        const mark = (
-          <span
-            key={row}
-            className={`map-rail-mark tier-${tier} ${state}`}
-            style={{ '--node-color': NODE_COLORS[type] } as CSSProperties}
-            title={NODE_NAMES[type]}
-          >
-            <NodeGlyph type={type} className="map-rail-glyph" />
-          </span>
-        );
-        if (row !== lastRow || stops <= 0) return mark;
-        return [
-          mark,
-          <span key="count" className="map-rail-count" style={{ '--node-color': NODE_COLORS[type] } as CSSProperties} aria-hidden="true">
-            {stops}
-          </span>,
-        ];
-      })}
-    </div>
-  );
-}
-
 // docs/locations.md §4 — the well carries the act's Location at a fraction of
 // the arrival screen's strength.
 const MAP_MOTE_DENSITY = 0.5;
@@ -183,11 +123,9 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
   const choiceIds = reachableNodeIds(run);
   const scouted = scoutChoices(run, choiceIds);
   const [reading, setReading] = useState<MapNodeType | null>(null);
-  const currentRow = run.currentNodeId != null ? map.nodes[run.currentNodeId]?.row ?? 0 : -1;
-  const originNode = run.currentNodeId != null ? map.nodes[run.currentNodeId] ?? null : null;
 
   return (
-    <div className="map-screen" data-location={location.id} style={{ '--node-rgb': location.tintRgb } as CSSProperties}>
+    <div className="map-screen is-road" data-location={location.id} style={{ '--node-rgb': location.tintRgb } as CSSProperties}>
       {/* The act's weather and ground, at SCREEN level rather than inside the well (2026-09-10).
           It used to be the well's first child, so the place stopped at a frame two-thirds of the
           way up the phone and the header sat outside the weather — which is what made the map read
@@ -246,37 +184,27 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
         </button>
       </div>
 
-      {/* The well is a scene now, not a diagram (2026-09-08, per user direction): the act's
-          Location, the rail saying how far is left, and the two or three places the player may
-          go from here. The whole-act graph — grid, measured edge overlay, scroll anchoring — is
-          gone; `RunMap` and every rule that reads it are untouched, this was only ever the view. */}
+      <MapRoad
+        map={map}
+        currentNodeId={run.currentNodeId}
+        visitedNodeIds={run.visitedNodeIds}
+        choiceIds={choiceIds}
+        actNumber={run.actNumber}
+        guardianId={location.guardianFinalEnemyId}
+        painting={locationBackdrop(location.id, 'map')}
+        leadHeroId={run.roster[0]?.heroId}
+        onSelectNode={onSelectNode}
+        renderDossier={(node) => <NodeDossier node={node} run={run} party={scouted[node.id]?.party} elite={scouted[node.id]?.elite} />}
+        patronFor={(node) => {
+          const patron = patronOfNode(run, node);
+          return patron ? { id: patron.id, title: patron.title, name: patron.name, color: patronColor(patron.id), trust: trustOf(run, patron.id) } : null;
+        }}
+        onPreviewChange={(node) => setReading(node?.type ?? null)}
+      />
+
       <div className="map-well">
-        {/* Stays in the well, unlike the weather: the well's bottom edge IS the top of the footer
-            button, so anchoring here is what keeps the place's name clear of it however many
-            lines the name takes. */}
         <MapPlacard location={location} />
         <BannerShelf run={run} />
-
-        <ProgressRail map={map} currentRow={currentRow} />
-
-        <MapRoute
-          map={map}
-          originNode={originNode}
-          omen={location.omen}
-          choiceIds={choiceIds}
-          actNumber={run.actNumber}
-          guardianId={location.guardianFinalEnemyId}
-          spots={mapSpots(location.id)}
-          onSelectNode={onSelectNode}
-          renderDossier={(node) => <NodeDossier node={node} run={run} party={scouted[node.id]?.party} elite={scouted[node.id]?.elite} />}
-          patronFor={(node) => {
-            const patron = patronOfNode(run, node);
-            return patron
-              ? { id: patron.id, title: patron.title, name: patron.name, color: patronColor(patron.id), trust: trustOf(run, patron.id) }
-              : null;
-          }}
-          onPreviewChange={(node) => setReading(node?.type ?? null)}
-        />
       </div>
 
       {/* One button, because there is one thing down here worth opening: the run's own sheet —

@@ -2,18 +2,13 @@ import type { CSSProperties } from 'react';
 import type { MapNodeType } from '../../run/map';
 import { allCombatants } from '../../data/content';
 import { getTypeColor } from '../combat/typeColors';
-import { SealArt } from '../shared/SealArt';
-import { SEAL_ACTS } from '../../run/state';
 import { SceneLights, type SceneLight } from '../shared/SceneLights';
 import mentorArt from '../../../art/map-nodes/landmarks/mentor.png';
 import tutorArt from '../../../art/map-nodes/landmarks/tutor.png';
 import lapidaryArt from '../../../art/map-nodes/landmarks/lapidary.png';
 import academyArt from '../../../art/map-nodes/landmarks/academy.png';
 import campArt from '../../../art/map-nodes/landmarks/camp.png';
-import gateArt from '../../../art/map-nodes/landmarks/guardianGate.png';
-import gateFrameArt from '../../../art/map-nodes/landmarks/guardianGateFrame.png';
-import gateLeafLeftArt from '../../../art/map-nodes/landmarks/guardianGateLeafL.png';
-import gateLeafRightArt from '../../../art/map-nodes/landmarks/guardianGateLeafR.png';
+import towerArt from '../../../art/map-nodes/landmarks/guardianTower.png';
 import titanStoneArt from '../../../art/map-nodes/landmarks/titanStone.png';
 import titanGateArt from '../../../art/map-nodes/landmarks/titanGate.png';
 import titanGateFrameArt from '../../../art/map-nodes/landmarks/titanGateFrame.png';
@@ -23,13 +18,13 @@ import titanGateLeafRightArt from '../../../art/map-nodes/landmarks/titanGateLea
 // The act's beats, drawn as themselves rather than as a stone medallion: the opening fight is a
 // standing stone the Titan's eye has cracked open on the road, the Mentor, the Tutor and the Scribe are met at the
 // roadside (a fire, a practice post, a writing desk), the Camp is pitched by the road, the Academy a building you walk into,
-// the act's Guardian waits behind a sealed gate standing in the Pact Seal, and the finale is a
+// the act's Guardian keeps a tower at the top of the road, and the finale is a
 // greater gate sealed with the Titan's own eye.
 
 /** The Titan's own red: the light behind the finale gate's doors and in the opening stone's eye. */
 export const TITAN_LIGHT = '#f247dc';
 
-export type LandmarkKind = 'stone' | 'npc' | 'building' | 'gate' | 'titanGate';
+export type LandmarkKind = 'stone' | 'npc' | 'building' | 'tower' | 'titanGate';
 
 const KIND: Partial<Record<MapNodeType, LandmarkKind>> = {
   fight: 'stone',
@@ -38,7 +33,7 @@ const KIND: Partial<Record<MapNodeType, LandmarkKind>> = {
   scribeReward: 'npc',
   academyReward: 'building',
   camp: 'building',
-  boss: 'gate',
+  boss: 'tower',
   finale: 'titanGate',
 };
 
@@ -76,7 +71,6 @@ interface GateDoor {
   b: number;
 }
 
-const GUARDIAN_DOOR: GateDoor = { frame: gateFrameArt, left: gateLeafLeftArt, right: gateLeafRightArt, l: 25 / 96, r: 71 / 96, t: 16 / 96, b: 90 / 96 };
 const TITAN_DOOR: GateDoor = { frame: titanGateFrameArt, left: titanGateLeafLeftArt, right: titanGateLeafRightArt, l: 38 / 128, r: 83 / 128, t: 25 / 128, b: 107 / 128 };
 
 function GateArt({ door, light }: { door: GateDoor; light: string }) {
@@ -99,7 +93,7 @@ export function landmarkKind(type: MapNodeType): LandmarkKind | undefined {
 const LANDMARK_STILL: Partial<Record<LandmarkKind, string>> = {
   stone: titanStoneArt,
   building: campArt,
-  gate: gateArt,
+  tower: towerArt,
   titanGate: titanGateArt,
 };
 
@@ -116,14 +110,11 @@ export function MapLandmarkFace({
   kind,
   type,
   guardianId,
-  actNumber,
   quiet = false,
 }: {
   kind: LandmarkKind;
   type: MapNodeType;
   guardianId: string | null;
-  /** The act on the map: the gate's warden is this act's seal. */
-  actNumber: number;
   /** Behind the player (the route's origin): no invitation to tap. */
   quiet?: boolean;
 }) {
@@ -144,27 +135,14 @@ export function MapLandmarkFace({
       return <img src={NPC_ART[type]} className="map-landmark-art" alt="" draggable={false} />;
     case 'building':
       return <img src={BUILDING_ART[type] ?? campArt} className="map-landmark-art" alt="" draggable={false} />;
-    case 'gate': {
-      // The gate stands in the seal it guards: the rings already locked lit, this act's burning in
-      // its Guardian's element — what is behind the door is felt, never shown.
-      if (quiet) return <img src={gateArt} className="map-landmark-art" alt="" draggable={false} />;
+    case 'tower': {
+      // The Guardian's keep, its door lit in the Guardian's element.
       const type = guardianId ? allCombatants[guardianId]?.types[0] : undefined;
-      const warden = Math.min(actNumber, SEAL_ACTS) - 1;
-      const light = type ? getTypeColor(type) : '#e0a63c';
-      const style = { '--warden-color': light, '--warden': warden } as CSSProperties;
+      const style = { '--warden-color': type ? getTypeColor(type) : '#e0a63c' } as CSSProperties;
       return (
         <>
-          <span className="map-gate-pact" style={style} aria-hidden="true">
-            <span className="map-gate-pact-light" />
-            <SealArt lit={warden} current={warden} />
-          </span>
-          <GateArt door={GUARDIAN_DOOR} light={light} />
-          <span className="map-gate-seam" style={style} aria-hidden="true" />
-          {/* This act's warden, turned to the crown of the arch and burning. */}
-          <span className="map-gate-warden" style={style} aria-hidden="true">
-            <span className="map-gate-warden-glow" />
-            <span className="map-gate-warden-gem" />
-          </span>
+          <img src={towerArt} className="map-landmark-art" alt="" draggable={false} />
+          {!quiet && <span className="map-tower-door" style={style} aria-hidden="true" />}
         </>
       );
     }
