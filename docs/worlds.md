@@ -112,6 +112,10 @@ Paper Mario, Kingdom Hearts' Hundred Acre Wood.
   them** (2026-11-27, per user direction): ink drips and ink running through the body were mocked
   (`art/concepts/spawn-redraw/ink/`) and rejected as looking bad, so "Enemies are ink" and the Blots
   are reversed. Open: Ink, the currency, was "washed out of a Blot" and needs a new source story.
+- **The Guardians are stern, not cute** (2026-11-27, per user direction, replacing the Touched pixel
+  art): the heroes' clean storybook style with no smiles, closed mouths and heavy brows, so a boss
+  reads apart from the recruitable heroes. A cute pass and a fierce one were mocked
+  (`art/concepts/spawn-redraw/guardians/tone/`); the cute one read goofy. No magenta eye or crack.
 - **Working title: Twofold Heroes** (2026-11-24, per user direction, picked from six logos in
   `art/concepts/names/`). The brand is the one word *Twofold* — a pair, and a folded page — with
   HEROES set small beneath it, the way Fire Emblem Heroes stacks. Plain "Twofold" is taken on Steam
