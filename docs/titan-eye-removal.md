@@ -101,6 +101,6 @@ boss-hp, stories, world-map) show the eye. They're history; leave them.
    Titanspawn are", and that reading is gone. Replace them with a new mark, or keep the eye shape
    and lose the slit?
 3. **Guardian redraws: decided 2026-11-27, per user direction: erased by hand, no generations.**
-   Done. Still open: whether a face eye should be recoloured (as now) or erased too.
+   Done. A face eye stays recoloured, not erased (2026-11-27, per user direction).
 4. **The Titan's own pieces** (Herald, Eyes, Threshold, Titan gate, titanStone, the finale's CSS)
    wait on `worlds.md` §3: do they retire, or become Storybook chapters?
