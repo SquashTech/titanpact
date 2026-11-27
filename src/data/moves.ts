@@ -4204,13 +4204,13 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'self',
   },
-  // --- The Titan's Eyes (docs/titan-eyes.md §5; enemies.ts). In no pool. ---
+  // --- The Inkmaster's Hands (docs/worlds.md §3.8; docs/titan-eyes.md §5; enemies.ts). In no pool. ---
   // The telegraph. Priority so the mark is on the board before the player's actions resolve,
   // and visible for the whole of the next command phase.
   gaze: {
     id: 'gaze',
     tier: 'early',
-    name: 'Gaze',
+    name: 'Underline',
     type: 'Ancient',
     category: 'magical',
     kind: 'buff',
@@ -4225,7 +4225,7 @@ export const moves: Record<string, MoveDefinition> = {
   regard: {
     id: 'regard',
     tier: 'late',
-    name: 'Regard',
+    name: 'Strike Through',
     type: 'Ancient',
     category: 'magical',
     kind: 'damage',
@@ -4237,11 +4237,11 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
   },
 
-  // The Right Eye's turn spent holding: a Shield on both Eyes off its Defense (docs/shield.md).
+  // The Right Hand's turn spent holding: a Shield on both Hands off its Defense (docs/shield.md).
   lidded: {
     id: 'lidded',
     tier: 'mid',
-    name: 'Lidded',
+    name: 'Blotter',
     type: 'Ancient',
     category: 'magical',
     kind: 'buff',

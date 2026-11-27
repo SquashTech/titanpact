@@ -174,8 +174,8 @@ test("beats: an Eye laying bare the player's raised stats is one beat, a drop on
     field,
     'A'
   );
-  const bare = beats.find((b) => b.bannerLead?.startsWith('Laid Bare'));
-  assert.ok(bare, `no Laid Bare beat in ${JSON.stringify(beats.map((b) => b.bannerLead))}`);
+  const bare = beats.find((b) => b.bannerLead?.startsWith('Red Pen'));
+  assert.ok(bare, `no Red Pen beat in ${JSON.stringify(beats.map((b) => b.bannerLead))}`);
   assert.strictEqual(bare.bannerFocus, 'Every buff undone');
   assert.deepStrictEqual(bare.popups.map((p) => [p.combatantId, p.className]), [['a1', 'popup-debuff'], ['a2', 'popup-debuff']]);
 });

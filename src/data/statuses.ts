@@ -315,15 +315,15 @@ export const statuses: Record<string, StatusDefinition> = {
   // Regard one mark in a round, which is the trap the phase-2 Stare sets. Switching breaks it.
   Beheld: {
     id: 'Beheld',
-    name: 'Beheld',
-    adjective: 'Beheld',
+    name: 'Underlined',
+    adjective: 'Underlined',
     shape: 'duration',
     ticksAtEndOfRound: true,
     decay: 'none',
     stacking: 'none',
     clearsOnSwitch: true,
     pipeline: 'none',
-    description: "The Titan's eye is on this hero: a Regard is coming. Switching out breaks its gaze; a Shield takes the hit first.",
+    description: "The Inkmaster has underlined this hero: a Strike Through is coming. Switching out rubs the line away; a Shield takes the hit first.",
   },
   Provoke: {
     id: 'Provoke',

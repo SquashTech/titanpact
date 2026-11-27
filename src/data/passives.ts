@@ -2744,8 +2744,8 @@ const titanPassives: Record<string, PassiveDefinition> = {
   },
   [WITHERING_GAZE_FALLS_ID]: {
     id: WITHERING_GAZE_FALLS_ID,
-    name: 'The Gaze Falls',
-    description: 'Set Withering Gaze.',
+    name: 'The Ink Spills',
+    description: 'Set Spilled Ink.',
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
@@ -2755,7 +2755,7 @@ const titanPassives: Record<string, PassiveDefinition> = {
 
   [LAID_BARE_ID]: {
     id: LAID_BARE_ID,
-    name: 'Laid Bare',
+    name: 'Red Pen',
     description: "Every raised stat on the other side, field and bench, falls back to normal.",
     reactive: {
       hook: 'SwitchedIn',
@@ -2766,8 +2766,8 @@ const titanPassives: Record<string, PassiveDefinition> = {
 
   [WITHERING_GAZE_RETURNS_ID]: {
     id: WITHERING_GAZE_RETURNS_ID,
-    name: 'The Gaze Returns',
-    description: 'Set Withering Gaze again.',
+    name: 'The Ink Spills Again',
+    description: 'Set Spilled Ink again.',
     reactive: {
       hook: 'RoundEnded',
       condition: { relativeTo: 'self', everyNRounds: WITHERING_GAZE_CADENCE },

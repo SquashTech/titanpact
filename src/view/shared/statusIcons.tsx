@@ -56,12 +56,18 @@ export const STATUS_PATHS: Record<string, ReactNode> = {
       </g>
     </>
   ),
-  // The Titan's eye, the lens the map's fight tiles wear (nodeIcons.tsx): the mark its Regard needs.
+  // The Inkmaster's underline, a wavy pen stroke: the mark a Strike Through needs.
   Beheld: (
-    <path
-      fillRule="evenodd"
-      d="M1.4 12C4.2 6.4 7.9 3.6 12 3.6s7.8 2.8 10.6 8.4C19.8 17.6 16.1 20.4 12 20.4S4.2 17.6 1.4 12Zm10.6-5.2c-1.7 0-2.6 2.1-2.6 5.2s.9 5.2 2.6 5.2 2.6-2.1 2.6-5.2-.9-5.2-2.6-5.2Z"
-    />
+    <>
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        d="M2.6 15.4c2.4-3 4.4-3 6.4 0s4 3 6.4 0 4-3 6-0.4"
+      />
+      <circle cx="20.6" cy="6.4" r="2.2" />
+    </>
   ),
   // Swirl, 1¼ turns — more closes into a disc at badge size.
   Daze: (
@@ -219,7 +225,7 @@ const STATUS_COLOR: Record<string, string> = {
   Crescendo: '#b98cf0',
   Poised: '#b6d35a',
   Cannonball: '#8f8a80',
-  Beheld: '#f247dc',
+  Beheld: '#8a63d8',
 };
 
 export function statusColor(statusId: string): string {

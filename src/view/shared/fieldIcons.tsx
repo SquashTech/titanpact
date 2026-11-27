@@ -70,11 +70,8 @@ const FIELD_PATHS: Record<string, ReactNode> = {
   ),
   witheringGaze: (
     <>
-      <path
-        fillRule="evenodd"
-        d="M12 4.2c4.6 0 8.2 2.8 10.4 6.4C20.2 14.2 16.6 17 12 17S3.8 14.2 1.6 10.6C3.8 7 7.4 4.2 12 4.2Zm0 2.6a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"
-      />
-      <circle cx="12" cy="10.6" r="1.7" />
+      <path d="M12 2.4c3 4.2 5.2 7.2 5.2 10a5.2 5.2 0 0 1-10.4 0c0-2.8 2.2-5.8 5.2-10Z" />
+      <ellipse cx="12" cy="20.2" rx="8.6" ry="2.2" />
     </>
   ),
 };

@@ -1,24 +1,24 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { rosterHeroes } from '../../data/content';
-import { FINALE_LOCATION_ID, locations } from '../../data/locations';
+import { locations } from '../../data/locations';
 import { SEAL_ACTS, type RunState } from '../../run/state';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { SealArt } from '../shared/SealArt';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { NODE_TINT_GOLD } from '../shared/NodeStage';
-import { locationBackdrop } from '../shared/locationBackdrops';
-import { PAINTED_EYES } from './TitanRiseScreen';
 import { PlateButton } from '../shared/PlateButton';
+import inkmasterPageArt from '../../../art/inkmaster/inkmasterPage.png';
+import './inkmaster.css';
 
 interface Props {
   run: RunState;
   onContinue: () => void;
 }
 
-/** The Eyes, put out and wide with it: the whole frame shaking under something that will not stop (ms). */
+/** The Hands beaten, the Inkmaster bursts out of his page at last, furious (ms). */
 const THROES_MS = 1900;
-/** The lids close and the head goes down out of the frame; the jolt at the bottom is it landing (ms). */
+/** He is pulled back down into the page and the book shuts on him (ms). */
 const FALL_MS = 1500;
 /** Black, and the seal turning in out of it (ms). */
 const SEAL_MS = 1400;
@@ -49,13 +49,10 @@ function ringAngle(index: number): number {
 }
 
 /**
- * The Eyes have closed (docs/titan-eyes.md §2): the last beat of the fight, played at the scale
- * of the sky. The head that rose as the Herald fell (TitanRiseScreen) goes back down the way it
- * came, and the seal turns in over the black. Every ring the run locked comes back in act order —
- * its Guardian struck into its socket in its Location's light, its sigil re-lit — and the roster's
- * names are written round the rim before the whole thing locks: the run's record, all of it at
- * once. A tap goes straight to the end. Binding is mutual (docs/lore.md §1): the Titan is on the
- * ground because it was made to look away, and this is the leash going back on.
+ * The Hands are beaten (docs/worlds.md §3.8): the first time the Inkmaster shows his face. He bursts
+ * out of his page, is pulled back down into it, and the book shuts. Then the seal turns in over the
+ * black: every ring the run locked comes back in act order, its Guardian struck into its socket, and
+ * the roster's names are written round the rim before it locks. A tap goes straight to the end.
  */
 export function TitanBoundScreen({ run, onContinue }: Props) {
   const [phase, setPhase] = useState<BoundPhase>('throes');
@@ -64,7 +61,6 @@ export function TitanBoundScreen({ run, onContinue }: Props) {
   done.current = onContinue;
   const timers = useRef<number[]>([]);
   const seals = [...run.brokenSeals].sort((a, b) => a.actNumber - b.actNumber);
-  const painting = locationBackdrop(FINALE_LOCATION_ID);
   const names = run.roster.map((entry) => rosterHeroes[entry.heroId]?.name ?? entry.heroId).join('  ·  ');
 
   const skip = () => {
@@ -80,14 +76,14 @@ export function TitanBoundScreen({ run, onContinue }: Props) {
       setLit(SEAL_ACTS);
       return;
     }
-    playSfx('titan.gaze');
+    playSfx('seal.shatter');
     playSfx('titan.stir');
     timers.current = [
       window.setTimeout(() => {
         setPhase('fall');
         playSfx('titan.stir');
-        // The landing, timed to the drop's end (styles.css titan-bound-drop).
-        window.setTimeout(() => playSfx('seal.shatter'), 1100);
+        // The book slamming shut, timed to the sink's end (inkmaster.css ink-shut).
+        window.setTimeout(() => playSfx('seal.strike'), 900);
       }, FALL_AT),
       window.setTimeout(() => setPhase('seal'), SEAL_AT),
       window.setTimeout(() => setPhase('wardens'), WARDENS_AT),
@@ -115,37 +111,11 @@ export function TitanBoundScreen({ run, onContinue }: Props) {
   const inscribed = phase === 'names' || phase === 'lock' || phase === 'bound';
 
   return (
-    <div className={`titan-bound is-${phase}`} onClick={skip}>
+    <div className={`titan-bound ink-bound is-${phase}`} onClick={skip}>
       {collapsing && (
-        <div className="titan-bound-shake">
-          <span className="titan-bound-ember" aria-hidden="true" />
-          <div className="titan-dust" aria-hidden="true">
-            {Array.from({ length: 22 }, (_, i) => {
-              const across = (i * 61.8) % 100;
-              const down = (i * 38.2) % 100;
-              return (
-                <span
-                  key={i}
-                  className="titan-mote"
-                  style={{
-                    left: `${across}%`,
-                    top: `${30 + down * 0.6}%`,
-                    animationDelay: `${(down * 0.02) % 1.4}s`,
-                    animationDuration: `${1.4 + across * 0.012}s`,
-                  }}
-                />
-              );
-            })}
-          </div>
-
-          {/* The Titan as TitanRiseScreen left it, eyes blown wide, going out and going down. */}
-          <div className="titan-rise-painting titan-bound-painting" aria-hidden="true">
-            {painting && <img src={painting} alt="" draggable={false} />}
-            {PAINTED_EYES.map((eye, i) => (
-              <span key={i} className="titan-rise-gaze" style={{ left: `${eye.x * 100}%`, top: `${eye.y * 100}%` }} />
-            ))}
-          </div>
-          <span className="titan-bound-flash" aria-hidden="true" />
+        <div className="ink-bound-face" aria-hidden="true">
+          <img className="ink-bound-figure" src={inkmasterPageArt} alt="" draggable={false} />
+          <span className="ink-bound-shut" />
         </div>
       )}
 
@@ -185,8 +155,8 @@ export function TitanBoundScreen({ run, onContinue }: Props) {
 
           <div className="titan-bound-caption">
             <div className="titan-bound-eyebrow">The seal holds</div>
-            <h2 className="titan-bound-title">The Titan is bound</h2>
-            <p className="titan-bound-line">Bound to those who put it down. It wakes again in a year.</p>
+            <h2 className="titan-bound-title">The book is shut</h2>
+            <p className="titan-bound-line">The Inkmaster is closed in his own pages. He writes again in a year.</p>
             <PlateButton
               className="titan-bound-continue"
               onClick={(event) => {

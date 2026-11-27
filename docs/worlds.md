@@ -219,8 +219,13 @@ stand. When the last Hand falls, the showman (top hat, quill for a baton) leans 
 the moment the Titan used to rise over the fight. He never shows his face before. The Endbringer is
 redrawn as a stern hooded herald and stays phase 1. Built so far: the Hands' art at the Eyes' paths
 (`art/heroes/titan/eye*.png`, `righteye*.png`) and their names; ids still say `leftEye`/`rightEye`.
-Not built: the Eyes' kit names (Gaze, Regard, Beheld, Withering Gaze, Lidded, Laid Bare), the face
-beat in place of the Titan's rise, the Threshold arena (the Titan's hide), the closed-eye opening cards.
+The kit is renamed for writing (ids unchanged): Gaze is **Underline**, which leaves a hero
+**Underlined**; Regard is **Strike Through**; Lidded is **Blotter**; Laid Bare is **Red Pen**; the
+Withering Gaze field is **Spilled Ink**. As the Herald falls, his book opens and the two Hands rise
+out of the ink, with his face still hidden (`TitanRiseScreen`). When the Hands are beaten, he bursts
+out of his page at last, is pulled back down into it, and the book shuts before the seal turns
+(`TitanBoundScreen`). Not built: the closed-eye opening cards, and the code ids and file names still
+saying Titan and Eye.
 Reference: Smash Bros.' Master Hand and Crazy Hand. The Doodles can be the margin scribbles of his
 book, and Ink the currency his ink spent against him (both proposed, not decided).
 

@@ -72,8 +72,8 @@ export const fieldEffects: Record<string, FieldEffectDefinition> = {
   // first-pass dial; the exemption is what makes it the Titan's rather than everyone's.
   witheringGaze: {
     id: 'witheringGaze',
-    name: 'Withering Gaze',
-    description: `Everyone on the field but the Titan’s own pieces loses ${Math.round(WITHERING_GAZE_FRACTION * 100)}% of their max HP at the end of each round.`,
+    name: 'Spilled Ink',
+    description: `Everyone on the field but the Inkmaster’s own Hands loses ${Math.round(WITHERING_GAZE_FRACTION * 100)}% of their max HP at the end of each round.`,
     flavorType: 'Ancient',
     drainsPercentMaxHp: { fraction: WITHERING_GAZE_FRACTION, exemptTypes: ['Ancient'] },
   },

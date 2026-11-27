@@ -1,0 +1,192 @@
+/* The Inkmaster's two beats in the finale (docs/worlds.md §3.8): his Hands rising out of his book
+   as the Herald falls (TitanRiseScreen), and his face breaking through the page when they are
+   beaten (TitanBoundScreen). Both stand on the Titan screens' own frame, caption and blackout. */
+
+.ink-rise,
+.ink-bound-face {
+  background: radial-gradient(ellipse 80% 60% at 50% 58%, #2c1f45 0%, #140d22 60%, #07040d 100%);
+}
+
+.ink-rise .titan-rise-eyebrow,
+.ink-bound .titan-bound-eyebrow {
+  color: #e9c46a;
+}
+
+.ink-rise .titan-rise-title,
+.ink-bound .titan-bound-title {
+  text-shadow: 0 3px 0 #000, 0 0 22px rgba(138, 99, 216, 0.6);
+}
+
+/* --- The Hands rise (TitanRiseScreen) --- */
+.ink-rise-stage {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ink-rise:not(.is-fall) .ink-rise-stage {
+  animation: ink-stage-in 1s ease-out both;
+}
+
+.ink-book {
+  position: absolute;
+  left: 50%;
+  top: 68%;
+  width: 300px;
+  height: 300px;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+}
+
+.ink-rise-hand {
+  position: absolute;
+  top: 30%;
+  width: 200px;
+  height: 200px;
+  opacity: 0;
+}
+
+.ink-rise-hand.is-left {
+  left: calc(50% - 196px);
+}
+
+.ink-rise-hand.is-right {
+  left: calc(50% - 4px);
+}
+
+.ink-rise-hand-figure {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+}
+
+.ink-rise.is-rise .ink-rise-hand.is-left,
+.ink-rise.is-settle .ink-rise-hand,
+.ink-rise.is-fade .ink-rise-hand {
+  animation: ink-hand-rise 1.4s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.ink-rise.is-rise .ink-rise-hand.is-right {
+  animation: ink-hand-rise 1.4s cubic-bezier(0.2, 0.8, 0.3, 1) 0.5s both;
+}
+
+.ink-rise.is-settle .ink-rise-hand,
+.ink-rise.is-fade .ink-rise-hand {
+  animation-duration: 0s;
+}
+
+@keyframes ink-stage-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ink-hand-rise {
+  from {
+    opacity: 0;
+    transform: translateY(90px) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* --- His face, at last (TitanBoundScreen) --- */
+.ink-bound-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.ink-bound-figure {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 320px;
+  height: 320px;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+}
+
+.ink-bound.is-throes .ink-bound-figure {
+  animation:
+    ink-face-burst 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) both,
+    ink-face-shake 0.16s linear 0.7s infinite;
+}
+
+.ink-bound.is-fall .ink-bound-figure {
+  animation: ink-face-sink 1.4s cubic-bezier(0.6, 0, 0.8, 0.4) both;
+}
+
+.ink-bound-shut {
+  position: absolute;
+  inset: 0;
+  background: #07040d;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ink-bound.is-fall .ink-bound-shut {
+  animation: ink-shut 1.4s ease-in both;
+}
+
+@keyframes ink-face-burst {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 80px)) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes ink-face-shake {
+  0%,
+  100% {
+    transform: translate(-50%, -50%);
+  }
+  25% {
+    transform: translate(calc(-50% - 3px), -50%);
+  }
+  75% {
+    transform: translate(calc(-50% + 3px), -50%);
+  }
+}
+
+@keyframes ink-face-sink {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, calc(-50% + 30px)) scale(0.9, 0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 40px)) scale(0.6, 0.1);
+  }
+}
+
+@keyframes ink-shut {
+  0%,
+  55% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}

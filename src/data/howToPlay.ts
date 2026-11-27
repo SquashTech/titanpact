@@ -57,7 +57,7 @@ const STATUS_WORDS: Readonly<Record<string, readonly string[]>> = {
   Provoke: ['- *Single-target* moves aimed at either hero on its side hit this hero instead.\n- *Spread* moves are not pulled in.\n- It lasts until the round ends.'],
   Haunt: ['- A *Spirit* or *Mind* attack on this hero also strikes its partner.\n- When this hero falls, the Haunt passes to its partner.\n- Switching clears it.'],
   IceShell: ["- Whoever's hit *breaks* this hero's Shield is *Frozen*.\n- It is spent when it fires."],
-  Beheld: ["- The Titan's eye is on this hero: a *Regard* is coming.\n- Switching out breaks its gaze. A Shield takes the hit first."],
+  Beheld: ["- The Inkmaster has underlined this hero: a *Strike Through* is coming.\n- Switching out rubs the line away. A Shield takes the hit first."],
   Poised: ["- The hero's *next attack* goes ahead of moves it would otherwise follow.\n- Then it's spent.\n- It waits until used, but switching clears it."],
   DrawnBlade: ["- The hero's *next Slice* goes ahead of moves it would otherwise follow.\n- Then it's spent.\n- Switching clears it."],
   Ambush: ["- The hero's *next attack* hits harder: the badge's number is added to its power, whatever its type.\n- Then it's spent.\n- It waits until used, but switching clears it."],
