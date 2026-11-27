@@ -38,6 +38,9 @@ body,
 
 /* The arena: undimmed, a soft ground shadow only. */
 .battlefield-location .location-backdrop { filter: none !important; }
+/* The painted horizon rides a little higher and the enemies step onto the grass, so they stand in front of it. */
+.battlefield-location.has-backdrop .location-backdrop { scale: 1.12; transform-origin: 50% 100%; }
+.battlefield.has-painted-arena .team-row.enemy { top: 18px; }
 .battlefield-location.has-backdrop::after {
   background: linear-gradient(180deg, transparent 80%, rgba(30, 40, 20, 0.18) 100%);
 }
