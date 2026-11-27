@@ -211,6 +211,19 @@ Questions it raises, for the designer:
 
 Status: **an idea, not decided.** It sits beside §2.7 and decides nothing in it.
 
+**How he is portrayed is decided** (2026-11-27, per user direction, picked from
+`art/concepts/spawn-redraw/inkmaster/`): **his two Hands replace the Titan's Eyes**, and his face is
+the beat. The finale's second phase fights his Left Hand (black velvet glove, a dripping quill) and
+Right Hand (an open glove pooling ink), one for one in the Eyes' slots, so the engine and the phase
+stand. When the last Hand falls, the showman (top hat, quill for a baton) leans out of the page in
+the moment the Titan used to rise over the fight. He never shows his face before. The Endbringer is
+redrawn as a stern hooded herald and stays phase 1. Built so far: the Hands' art at the Eyes' paths
+(`art/heroes/titan/eye*.png`, `righteye*.png`) and their names; ids still say `leftEye`/`rightEye`.
+Not built: the Eyes' kit names (Gaze, Regard, Beheld, Withering Gaze, Lidded, Laid Bare), the face
+beat in place of the Titan's rise, the Threshold arena (the Titan's hide), the closed-eye opening cards.
+Reference: Smash Bros.' Master Hand and Crazy Hand. The Doodles can be the margin scribbles of his
+book, and Ink the currency his ink spent against him (both proposed, not decided).
+
 ### 3.6 A starter grant (SETTLED by §2.2: none; the modes wait on the Collection instead)
 
 ---

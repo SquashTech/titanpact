@@ -248,7 +248,7 @@ const TITAN_EYE_PASSIVES: readonly string[] = [LAID_BARE_ID, WITHERING_GAZE_FALL
 export const titanEyes: Record<string, HeroDefinition> = {
   leftEye: {
     id: 'leftEye',
-    name: 'Left Eye',
+    name: 'Left Hand',
     types: ['Ancient'],
     baseStats: { hp: 810, attack: 40, defense: 105, intelligence: 135, wisdom: 105, speed: 92, manaPool: 220, mpRegen: 28 },
     moveIds: ['gaze', 'regard', 'archonBlast', 'erode'],
@@ -257,7 +257,7 @@ export const titanEyes: Record<string, HeroDefinition> = {
   },
   rightEye: {
     id: 'rightEye',
-    name: 'Right Eye',
+    name: 'Right Hand',
     types: ['Ancient'],
     baseStats: { hp: 945, attack: 40, defense: 125, intelligence: 105, wisdom: 125, speed: 82, manaPool: 220, mpRegen: 28 },
     moveIds: ['gaze', 'regard', 'forgottenCurse', 'lidded'],
