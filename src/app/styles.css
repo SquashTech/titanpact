@@ -9426,120 +9426,14 @@ textarea,
    which — so a reward blooms open and an encounter SLAMS: faster, harder-edged, and with a kick on
    the sigil itself. Paired with `map.boon` / `map.threat` (MapRoute's ARRIVAL_SFX), which split the
    same way for the same reason. */
-.map-route.is-revealing .map-choice {
-  animation: map-choice-land var(--land-dur) var(--ease-out) var(--land-delay) both;
-}
-
-.map-route.is-revealing .map-medallion {
-  animation: map-medallion-land var(--land-dur) cubic-bezier(0.2, 1.5, 0.4, 1) var(--land-delay) both;
-}
-
-@keyframes map-choice-land {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes map-medallion-land {
-  from {
-    transform: scale(0.3);
-  }
-  to {
-    transform: none;
-  }
-}
 
 /* The ring. Sized off the medallion so every tier throws one in proportion, and inert outside the
    reveal — this is an event, not decoration. */
-.map-choice-burst {
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  border: 2px solid var(--node-color);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.map-route.is-revealing .map-choice-burst {
-  animation: map-burst-bloom 620ms var(--ease-out) var(--land-delay) both;
-}
-
-@keyframes map-burst-bloom {
-  0% {
-    opacity: 0;
-    transform: scale(0.55);
-  }
-  18% {
-    opacity: 0.85;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.75);
-  }
-}
 
 /* An encounter: out fast and gone, with the disc taking the hit. */
-.map-route.is-revealing .map-choice.tier-encounter .map-choice-burst,
-.map-route.is-revealing .map-choice.tier-ancient .map-choice-burst {
-  border-width: 3px;
-  animation: map-burst-slam 460ms cubic-bezier(0.1, 0.9, 0.2, 1) var(--land-delay) both;
-}
-
-@keyframes map-burst-slam {
-  0% {
-    opacity: 0;
-    transform: scale(1.5);
-  }
-  22% {
-    opacity: 1;
-    transform: scale(0.92);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.28);
-  }
-}
-
-.map-route.is-revealing .map-choice.tier-encounter .map-medallion,
-.map-route.is-revealing .map-choice.tier-ancient .map-medallion {
-  animation: map-medallion-slam var(--land-dur) cubic-bezier(0.15, 1.2, 0.3, 1) var(--land-delay) both;
-}
 
 /* Overshoots the other way — in from too big rather than up from too small — so it reads as
    something landing on the map instead of something growing out of it. */
-@keyframes map-medallion-slam {
-  0% {
-    transform: scale(1.5);
-    filter: brightness(2.4);
-  }
-  46% {
-    transform: scale(0.94);
-    filter: brightness(1.15);
-  }
-  70% {
-    transform: translateX(2px) scale(1.02);
-  }
-  84% {
-    transform: translateX(-2px);
-  }
-  100% {
-    transform: none;
-    filter: none;
-  }
-}
-
-.map-popup-glyph {
-  width: 17px;
-  height: 17px;
-  color: var(--node-color);
-  vertical-align: -3px;
-  margin-right: 2px;
-}
 
 .log-close-button {
   background: none;
@@ -15443,16 +15337,6 @@ button.star-shop-bundle-face {
   background: color-mix(in srgb, var(--hp-low) 26%, transparent);
 }
 
-@keyframes enemy-scout-concealed-breathe {
-  0%,
-  100% {
-    filter: brightness(0) invert(1) opacity(0.26) drop-shadow(0 0 2px rgba(217, 83, 79, 0.55));
-  }
-  50% {
-    filter: brightness(0) invert(1) opacity(0.4) drop-shadow(0 0 5px rgba(217, 83, 79, 0.9));
-  }
-}
-
 .roster-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -18623,21 +18507,6 @@ button.star-shop-bundle-face {
 
 /* Over a painting the medallions need a floor of their own, or the scene shows
    through the glyph. Same tint, opaque ground; the path gets a dark edge. */
-.map-atmosphere.has-backdrop ~ * .map-medallion {
-  background:
-    radial-gradient(circle at 50% 62%, color-mix(in srgb, var(--node-color) 26%, transparent), transparent 68%),
-    radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.05), transparent 60%),
-    rgba(8, 9, 14, 0.94);
-  box-shadow: inset 0 0 22px -6px var(--node-color), 0 0 20px -8px var(--node-color), 0 4px 14px rgba(0, 0, 0, 0.6);
-}
-
-.map-atmosphere.has-backdrop ~ * .map-origin-mark {
-  background: rgba(6, 7, 11, 0.9);
-}
-
-.map-atmosphere.has-backdrop ~ * .map-paths {
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.9));
-}
 
 .map-atmosphere.has-backdrop ~ * .map-placard {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 6px rgba(0, 0, 0, 0.8));
@@ -18653,111 +18522,6 @@ button.star-shop-bundle-face {
 
    What replaced it: a rail across the top saying how far is left, and the two or three cards
    underneath saying where you may go. */
-
-/* How far to the Guardian, and what stands between. Sits above the choices rather than under them:
-   it is context for the decision, and the decision is what the thumb reaches for.
-
-   Every row is marked by the hardest thing it offers (MapScreen's `railTypeFor`). A row that only
-   pays out is a bare dot; a row that makes you do something wears that thing's own glyph, so the
-   act's forced fights, their kind and their difficulty are all readable before it starts
-   (2026-09-08, per user direction). */
-.map-rail {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 16px 4px;
-}
-
-.map-rail-pip {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14);
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5);
-  transition: background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
-}
-
-/* Behind you, on both mark kinds: the strip is an itinerary now, not a progress bar, so what is
-   SPENT fades and what is ahead keeps its colour. A done pip used to light up instead, which put
-   the brightest thing on the rail behind the player. */
-.map-rail-pip.is-done {
-  background: rgba(255, 255, 255, 0.07);
-  box-shadow: none;
-}
-
-/* The one the player is standing on: bigger, lit, and ringed so it is findable without counting. */
-.map-rail-pip.is-here {
-  width: 11px;
-  height: 11px;
-  background: var(--text);
-  box-shadow: 0 0 0 3px rgba(var(--node-rgb), 0.3), 0 0 10px rgba(255, 255, 255, 0.45);
-}
-
-/* A row that is not just a payout. Drawn in the node's own colour, which is what makes the strip
-   scannable at a glance: the claws and helms are the rows that cost something. */
-.map-rail-mark {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--node-color);
-  transition: opacity var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out);
-}
-
-.map-rail-glyph {
-  width: 100%;
-  height: 100%;
-}
-
-/* A shop is worth planning gold for, but it is not a threat — held back so the fights stay the
-   thing the eye finds first. */
-.map-rail-mark.tier-landmark {
-  width: 13px;
-  height: 13px;
-  opacity: 0.42;
-}
-
-.map-rail-mark.tier-encounter {
-  width: 16px;
-  height: 16px;
-  opacity: 0.78;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--node-color) 60%, transparent));
-}
-
-/* The last mark is the Guardian, drawn biggest: "how many more" and "what is at the end" are the
-   same question, and there is only one answer to the second. */
-.map-rail-mark.tier-ancient {
-  width: 24px;
-  height: 24px;
-  margin-left: 3px;
-  opacity: 0.62;
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--node-color) 55%, transparent));
-}
-
-/* Walked past. Colour is what says "ahead", so spending it is what says "behind". */
-.map-rail-mark.is-done {
-  opacity: 0.26;
-  filter: grayscale(1);
-}
-
-.map-rail-mark.is-here {
-  opacity: 1;
-  filter: drop-shadow(0 0 8px var(--node-color)) drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
-}
-
-/* Stops left before the Guardian, set right against its mark. */
-.map-rail-count {
-  margin-left: -5px;
-  align-self: flex-end;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  color: color-mix(in srgb, var(--node-color) 70%, white);
-  text-shadow: 0 0 6px color-mix(in srgb, var(--node-color) 70%, transparent), 0 1px 0 rgba(0, 0, 0, 0.9);
-}
 
 /* --- The preview: a tile's first tap (MapRoute MapPreview) ------------------- */
 .map-preview {
@@ -19037,541 +18801,16 @@ button.star-shop-bundle-face {
   background: radial-gradient(circle, color-mix(in srgb, var(--reward-color) 32%, transparent), transparent 70%);
 }
 
-/* --- The route, and walking it (2026-09-08, per user direction) -------------
-   Losing the whole-act graph cost the map the one thing a graph gives away for free: the sense of
-   MOVING along it. This is what gives that back, and it gives it back as an event rather than as a
-   diagram — the node just finished sits greyed at the foot of the well, and the paths out of it are
-   DRAWN, each destination arriving when its own path gets there (MapRoute).
-
-   The structure is permanent; only the drawing is animated. `.is-revealing` is on for a beat under
-   a second after each arrival and then comes off, so every base rule below is also the final frame.
-   Nothing here runs on the act's first row — there is nothing behind you to leave yet. */
-.map-route {
-  /* Paired with MapRoute’s PATH_DRAW_MS / LAND_MS. The stagger between paths is JS-side only —
-     it is a per-path delay, and the SFX have to land on the same beat the sigil does. */
-  --path-draw: 420ms;
-  --land-dur: 340ms;
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Under the medallions and over the well's weather. `overflow: visible` because a stroke's glow
-   reaches past the box it is measured in. */
-.map-paths {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* The path itself, in the colour of what it reaches — so the fan says what it is a fan OF before a
-   single sigil has landed. Held well under the medallion's own light: this is the ground between
-   two decisions, not a third one. */
-.map-path-line {
-  fill: none;
-  stroke: var(--node-color);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 0;
-  opacity: 0.32;
-  filter: drop-shadow(0 0 4px var(--node-color));
-}
-
 /* The head of the stroke: a short bright dash travelling the path and leaving nothing behind, so
    the line reads as being drawn by something rather than as a line growing. Invisible unless the
    reveal is running — there is no spark on a path already walked. */
-.map-path-spark {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.95);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-dasharray: 0.045 1;
-  stroke-dashoffset: 0;
-  opacity: 0;
-}
-
-.map-route.is-revealing .map-path-line {
-  animation: map-path-draw var(--path-draw) var(--ease-out) var(--path-delay) both;
-}
-
-.map-route.is-revealing .map-path-spark {
-  animation: map-path-spark var(--path-draw) var(--ease-out) var(--path-delay) both;
-}
-
-@keyframes map-path-draw {
-  from {
-    stroke-dashoffset: 1;
-    opacity: 0.5;
-  }
-  to {
-    stroke-dashoffset: 0;
-    opacity: 0.32;
-  }
-}
-
-@keyframes map-path-spark {
-  0% {
-    stroke-dashoffset: 1;
-    opacity: 0;
-  }
-  12% {
-    opacity: 0.9;
-  }
-  100% {
-    stroke-dashoffset: 0;
-    opacity: 0.9;
-  }
-}
-
-/* Where the paths come from: the node just resolved, unlit and colourless. The only thing on the
-   screen that is not a decision, so it is the only thing drawn without its own colour — grey is
-   what says "spent", and a smaller disc is what says "behind you". */
-.map-origin {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0 20px;
-}
-
-.map-origin-mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 50%;
-  background: rgba(4, 5, 8, 0.5);
-  color: rgba(255, 255, 255, 0.34);
-  box-shadow: inset 0 0 14px -6px rgba(255, 255, 255, 0.35);
-}
-
-.map-origin-glyph {
-  width: 24px;
-  height: 24px;
-}
-
-/* Who is already here, on the act's first row (LocationDefinition.omen).
-
-   Written ON the place rather than under it (2026-09-08, second pass, per user direction). It was
-   a caption first — small, italic, tucked at the foot of the well — which read as UI chrome sitting
-   over a scene. It is now the size of something the location is saying: tracked out, unhurried, in
-   the location's own light, over a haze of that light that breathes on its own. The only text on
-   this screen that is neither a control nor a readout, and the only one that gets to be big.
-
-   Sentence case, not caps: these are sentences, and a title card would be the arrival screen's job
-   twice.
-
-   ABOVE the sigil (third pass, same day, per user direction), which is the direction the act runs
-   in — the place speaks, and the fight is what answers it. That also puts the line in open sky by
-   construction: at the foot of the well it had the horizon silhouette under half of it and lit
-   ground under the other half, and read as neither. Positioned, so the haze below has a stacking
-   context of its own to sit inside. */
-.map-omen-band {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 26px 0 6px;
-}
-
-.map-omen {
-  position: relative;
-  margin: 0;
-  max-width: 78%;
-  text-align: center;
-  text-wrap: balance;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.5;
-  letter-spacing: 0.055em;
-  color: rgba(var(--node-rgb), 0.88);
-  /* Two shadows doing different jobs: the wide one is the light the words are made of, the tight
-     dark one is what keeps them legible when that light lands on a bright patch of horizon. */
-  text-shadow: 0 0 22px rgba(var(--node-rgb), 0.55), 0 0 6px rgba(0, 0, 0, 0.9), 0 2px 5px rgba(0, 0, 0, 0.95);
-  animation: map-omen-in 1400ms var(--ease-out) 320ms both;
-}
-
-/* The air it is written on. Behind the text but inside .map-origin's own stacking context, so it
-   can never sink below the well's weather. */
-.map-omen::before {
-  content: '';
-  position: absolute;
-  inset: -30px -44px;
-  z-index: -1;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(var(--node-rgb), 0.15), transparent 68%);
-  animation: map-omen-haze 7s ease-in-out 1.4s infinite;
-}
 
 /* Condensing out of the air rather than sliding in: the blur is what stops it reading as a toast. */
-@keyframes map-omen-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-    filter: blur(5px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: blur(0);
-  }
-}
-
-@keyframes map-omen-haze {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(0.96);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .map-omen,
-  .map-omen::before {
-    animation: none;
-  }
-}
-
-/* Nothing is tappable while the route is still arriving — a medallion at 30% scale is not a target
-   anyone means to hit. The catcher over the top lands the whole thing at once instead, because a
-   flourish seen forty times an act must always be skippable. */
-.map-route.is-revealing .map-choices {
-  pointer-events: none;
-}
-
-.map-reveal-skip {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-}
-
-/* The ways out of this place. Sigils, not rows (2026-09-08, per user direction): the well is the
-   act's Location and a choice is something you look at, so a medallion carries the glyph, the
-   colour and the size and nothing else. Holding one names it and says what it pays — the only
-   words the screen has, and only when asked for. Laid across the width so two or three read as a
-   fork in the road rather than as a list. */
-.map-choices {
-  position: relative;
-  z-index: 1;
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  padding: 8px 14px 12px;
-}
-
-.map-choice {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-}
-
-/* On a painting each tile stands on its own spot of open ground (MapRoute places it, mapSpots) and
-   casts a shadow there, so it is a thing in the place rather than over it. Higher up is further back. */
-.map-route.is-grounded .map-choice {
-  position: absolute;
-  scale: var(--depth, 1);
-  transform-origin: 50% 100%;
-}
-
-.map-route.is-grounded .map-choice::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  bottom: -9px;
-  width: 92px;
-  height: 20px;
-  translate: -50% 0;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.35) 60%, transparent);
-  pointer-events: none;
-}
-
-/* Every tile's plain name under it; the long press still reads the whole node out. */
-.map-choice-label {
-  color: #e9dcc0;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.7);
-}
 
 /* The run's first node says what it is for; every later tile is read by then. */
-.map-choice-hint {
-  color: #e8c46a;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-  animation: map-choice-hint-pulse 1.8s ease-in-out infinite;
-}
-
-@keyframes map-choice-hint-pulse {
-  0%,
-  100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* What lies beyond this one, on the two rows where the options differ. ABOVE the sigil, because
-   the act has always run bottom-up toward the Guardian: further along the path is further up the
-   screen. Unlit and small — a hint of what is coming, not a second thing to choose. */
-.map-choice-ahead {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  min-height: 15px;
-}
-
-.map-choice-ahead-mark {
-  display: flex;
-  color: var(--node-color);
-  opacity: 0.62;
-  filter: drop-shadow(0 0 4px var(--node-color));
-}
-
-.map-choice-ahead-mark .node-glyph {
-  width: 16px;
-  height: 16px;
-}
-
-/* A destination with a map icon wears it at 1x, unlit like the glyphs beside it. */
-.map-choice-ahead-mark:has(.map-choice-ahead-icon) {
-  opacity: 0.85;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
-}
-
-.map-choice-ahead-icon {
-  width: 32px;
-  height: 32px;
-  image-rendering: pixelated;
-}
-
-/* The sigil. A dark disc cut into the ground with its own light coming up out of it — the ring
-   and the glyph are the only lit things, so the well's weather reads THROUGH the choice rather
-   than behind a plate. */
-.map-medallion {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 88px;
-  height: 88px;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--node-color) 55%, transparent);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 62%, color-mix(in srgb, var(--node-color) 26%, transparent), transparent 68%),
-    radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.05), transparent 60%),
-    rgba(6, 8, 12, 0.55);
-  color: var(--node-color);
-  cursor: pointer;
-  box-shadow: inset 0 0 22px -6px var(--node-color), 0 0 20px -8px var(--node-color);
-  transition: transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out),
-    border-color var(--dur-mid) var(--ease-out);
-}
 
 /* The breath. Slow and shallow — this is a place waiting to be walked into, not a button asking
    to be pressed, and anything faster turns the screen into an arcade cabinet. */
-.map-medallion-glow {
-  position: absolute;
-  inset: -14px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle, color-mix(in srgb, var(--node-color) 30%, transparent), transparent 66%);
-  animation: map-medallion-breathe 3.6s ease-in-out infinite;
-}
-
-@keyframes map-medallion-breathe {
-  0%,
-  100% {
-    opacity: 0.4;
-    transform: scale(0.94);
-  }
-  50% {
-    opacity: 0.78;
-    transform: scale(1.06);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .map-medallion-glow {
-    animation: none;
-    opacity: 0.55;
-  }
-}
-
-.map-medallion-glyph {
-  position: relative;
-  width: 38px;
-  height: 38px;
-  filter: drop-shadow(0 0 8px var(--node-color));
-}
-
-.map-medallion:hover {
-  transform: translateY(-3px);
-  border-color: var(--node-color);
-  box-shadow: inset 0 0 26px -4px var(--node-color), 0 0 30px -6px var(--node-color);
-}
-
-.map-medallion:active {
-  transform: translateY(-1px) scale(0.97);
-}
-
-/* Weight by tier — a Guardian is not a Boon, and with no words left the size is what says so. */
-.map-choice.tier-reward .map-medallion {
-  width: 84px;
-  height: 84px;
-}
-
-.map-choice.tier-reward .map-medallion-glyph {
-  width: 36px;
-  height: 36px;
-}
-
-.map-choice.tier-landmark .map-medallion {
-  width: 96px;
-  height: 96px;
-}
-
-.map-choice.tier-landmark .map-medallion-glyph {
-  width: 42px;
-  height: 42px;
-}
-
-/* Alone on its row and the last thing in the act, so it takes the room the other tiers share. */
-.map-choice.tier-ancient .map-medallion {
-  width: 150px;
-  height: 150px;
-  border-width: 2px;
-}
-
-.map-choice.tier-ancient .map-medallion-glyph {
-  width: 68px;
-  height: 68px;
-}
-
-.map-choice.tier-ancient .map-medallion-glow {
-  inset: -24px;
-}
-
-/* A row of one gets the same treatment: an act's forced single nodes are a place you walk to,
-   not a screen that failed to offer a choice. The reward tier is in this list for the spliced
-   seat — Mentor, Scribe, the Forge and Tutor in acts 4–5 — which used to keep its 84px in-row
-   size on a row of its own and read as a shrunken tile between two full-size fights. */
-.map-choices:has(.map-choice:only-child) .map-choice.tier-encounter .map-medallion,
-.map-choices:has(.map-choice:only-child) .map-choice.tier-landmark .map-medallion,
-.map-choices:has(.map-choice:only-child) .map-choice.tier-reward .map-medallion {
-  width: 120px;
-  height: 120px;
-}
-
-.map-choices:has(.map-choice:only-child) .map-choice.tier-encounter .map-medallion-glyph,
-.map-choices:has(.map-choice:only-child) .map-choice.tier-landmark .map-medallion-glyph,
-.map-choices:has(.map-choice:only-child) .map-choice.tier-reward .map-medallion-glyph {
-  width: 54px;
-  height: 54px;
-}
-
-.map-popup-glyph {
-  width: 16px;
-  height: 16px;
-  vertical-align: -0.2em;
-  color: var(--node-color);
-}
-
-/* The pixel medallion (mapNodeArt.ts): a 48x48 stone frame with the emblem baked in, drawn at a
-   clean 2x — 3x for the Guardian and a row of one. The CSS disc, ring and inner light give way to
-   the art; the breathing glow behind it stays, since its colour is what carries difficulty. */
-.map-medallion.has-art {
-  border: none;
-  background: none;
-  box-shadow: none;
-}
-
-.map-medallion.has-art,
-.map-choice.tier-reward .map-medallion.has-art,
-.map-choice.tier-landmark .map-medallion.has-art {
-  width: 96px;
-  height: 96px;
-}
-
-.map-choice.tier-ancient .map-medallion.has-art,
-.map-choices:has(.map-choice:only-child) .map-choice .map-medallion.has-art {
-  width: 144px;
-  height: 144px;
-}
-
-.map-medallion.has-art:hover {
-  border: none;
-  box-shadow: none;
-}
-
-.map-medallion-art {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
-  pointer-events: none;
-}
-
-/* The act's beats drawn as themselves (mapLandmarks.tsx), with no stone and no disc. Sizes are
-   !important because the tier and row-of-one rules above are more specific and set the medallion
-   box; a landmark's box is its own art's, at a clean multiple. */
-.map-medallion.is-landmark,
-.map-medallion.is-landmark:hover,
-.map-atmosphere.has-backdrop ~ * .map-medallion.is-landmark {
-  border: none;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-
-/* The opening fight: a standing stone the Titan's eye has cracked open on the road, 64px at 2x,
-   the eye burning and embers lifting off its foot (mapLandmarks STONE_LIGHTS). */
-.map-medallion.is-stone {
-  width: 128px !important;
-  height: 128px !important;
-}
-
-.map-medallion.is-stone .map-medallion-glow {
-  border-radius: 50%;
-  inset: 10px;
-}
-
-.map-stone-lights {
-  z-index: 1;
-}
 
 /* The invitation: a ring on the ground round the stone's foot breathing outward, only after the
    player has hesitated (3s), then every 2.4s with a second ring half a beat behind. A thing that
@@ -19610,66 +18849,7 @@ button.star-shop-bundle-face {
   }
 }
 
-/* A landmark behind you (MapRoute origin): itself, small and unlit, where the medallions sit
-   greyed. The NPC at its native 1x, the hall at a clean half, the eye as a narrow lens. */
-.map-origin-mark.is-landmark,
-.map-atmosphere.has-backdrop ~ * .map-origin-mark.is-landmark {
-  position: relative;
-  border: none;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  filter: grayscale(0.7) brightness(0.6);
-}
-
-.map-origin-mark.is-building {
-  width: 48px;
-  height: 48px;
-}
-
-.map-origin-mark.is-npc {
-  width: 64px;
-  height: 64px;
-}
-
-.map-origin-mark.is-stone {
-  width: 64px;
-  height: 64px;
-}
-
-.map-origin-mark.is-landmark .map-landmark-art {
-  filter: none;
-}
-
-/* The act's starting camp (MapRoute): the Rest vignette at 1x, where the first road begins. */
-.map-origin-mark.is-start,
-.map-atmosphere.has-backdrop ~ * .map-origin-mark.is-start {
-  width: 96px;
-  height: 48px;
-  border: none;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-
-.map-origin-camp {
-  width: 96px;
-  height: 48px;
-  image-rendering: pixelated;
-  filter: brightness(0.85) drop-shadow(0 0 8px rgba(255, 150, 60, 0.35));
-}
-
-/* The Mentor, the Tutor and the Scribe met at the roadside: 64px scenes at 2x. */
-.map-medallion.is-npc {
-  width: 128px !important;
-  height: 128px !important;
-}
-
 /* The Guild Hall: a 96px building at 2x, doors open. */
-.map-medallion.is-building {
-  width: 192px !important;
-  height: 192px !important;
-}
 
 .map-landmark-art {
   position: absolute;
@@ -19679,169 +18859,6 @@ button.star-shop-bundle-face {
   image-rendering: pixelated;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 12px color-mix(in srgb, var(--node-color) 45%, transparent));
   pointer-events: none;
-}
-
-/* A pick-1-of-3 reward (MapRoute `tile`): one stone button for all of them, the kit's gold-inlaid
-   frame round a dark face, the node's glyph lit in its colour and its name under it. Uniform on
-   purpose — the glyph and the word say which reward, the shape only says "a reward, tap it". */
-.map-route .map-choice .map-medallion.is-tile {
-  flex-direction: column;
-  gap: 2px;
-  width: 104px;
-  height: 108px;
-  border: 12px solid transparent;
-  border-radius: 0;
-  border-image: url('../../art/ui/frame-stone.png') 10 / 12px round;
-  image-rendering: pixelated;
-  background:
-    radial-gradient(ellipse at 50% 38%, color-mix(in srgb, var(--node-color) 34%, transparent), transparent 72%),
-    linear-gradient(#1a1c24, #0e0f15);
-  background-clip: padding-box;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.55);
-}
-
-.map-route .map-choice .map-medallion.is-tile:hover {
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6), 0 0 18px -6px var(--node-color);
-}
-
-.map-medallion.is-tile .map-medallion-glow {
-  inset: -6px;
-  border-radius: 10px;
-  opacity: 0.5;
-  animation: none;
-}
-
-/* The 32px icon at a clean 2x. */
-.map-tile-icon {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  flex: none;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6));
-  pointer-events: none;
-}
-
-.map-tile-label {
-  position: relative;
-  color: #f0e4c8;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
-}
-
-/* Grounded, a reward is the object itself standing in the place: no frame, its icon on a ring
-   in the node's colour laid flat on the ground, its name under the ring. */
-.map-route.is-grounded .map-choice .map-medallion.is-tile,
-.map-route.is-grounded .map-choice .map-medallion.is-tile:hover {
-  justify-content: flex-end;
-  gap: 6px;
-  width: 100px;
-  height: 104px;
-  border: 0;
-  border-image: none;
-  background: none;
-  box-shadow: none;
-}
-
-.map-route.is-grounded .map-medallion.is-tile::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 12px;
-  width: 88px;
-  height: 26px;
-  translate: -50% 0;
-  border: 2px solid var(--node-color);
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.82) 35%, rgba(0, 0, 0, 0.45) 75%, transparent);
-  box-shadow: 0 0 14px -2px var(--node-color);
-}
-
-.map-route.is-grounded .map-medallion.is-tile .map-medallion-glow {
-  inset: auto;
-  left: 50%;
-  top: 0;
-  width: 78px;
-  height: 78px;
-  translate: -50% 0;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--node-color) 45%, transparent), transparent);
-  box-shadow: none;
-  opacity: 0.6;
-}
-
-.map-route.is-grounded .map-medallion.is-tile .map-tile-icon {
-  margin-bottom: 4px;
-}
-
-.map-route.is-grounded .map-choice:has(.map-medallion.is-tile)::after {
-  display: none;
-}
-
-/* Grounded, a patron is the person standing in the place: no disc, the figure on a ring in its
-   colour, Trust under the ring. */
-.map-route.is-grounded .map-choice.is-patron .map-medallion,
-.map-route.is-grounded .map-choice.is-patron .map-medallion:hover {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  width: 110px;
-  height: 112px;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  overflow: visible;
-}
-
-.map-route.is-grounded .map-choice.is-patron .map-medallion::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 6px;
-  width: 92px;
-  height: 26px;
-  translate: -50% 0;
-  border: 2px solid var(--node-color);
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.82) 35%, rgba(0, 0, 0, 0.45) 75%, transparent);
-  box-shadow: 0 0 14px -2px var(--node-color);
-}
-
-.map-route.is-grounded .map-choice.is-patron .map-medallion-glow {
-  inset: auto;
-  left: 50%;
-  bottom: 14px;
-  width: 92px;
-  height: 92px;
-  translate: -50% 0;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--node-color) 40%, transparent), transparent);
-  box-shadow: none;
-  opacity: 0.55;
-  animation: none;
-}
-
-.map-route.is-grounded .map-choice.is-patron .map-medallion-patron.patron-art {
-  position: relative;
-  z-index: 1;
-  width: 96px;
-  height: 96px;
-  margin-bottom: 12px;
-  transform-origin: 50% 100%;
-}
-
-.map-route.is-grounded .map-choice.is-patron .map-medallion-trust {
-  bottom: -12px;
-}
-
-.map-route.is-grounded .map-choice.is-patron::after {
-  display: none;
 }
 
 /* Patron entrances (patronView ENTRANCES): played when a patron's seat is reached on the road (MapRoad), keyed off
@@ -20761,26 +19778,6 @@ button.star-shop-bundle-face {
   }
 }
 
-/* Behind you: the same tile, small and unlit. */
-.map-origin-mark.is-tile,
-.map-atmosphere.has-backdrop ~ * .map-origin-mark.is-tile {
-  width: 48px;
-  height: 48px;
-  border: 8px solid transparent;
-  border-radius: 0;
-  border-image: url('../../art/ui/frame-stone.png') 10 fill / 8px round;
-  image-rendering: pixelated;
-  background: none;
-  box-shadow: none;
-  filter: grayscale(0.7) brightness(0.65);
-}
-
-.map-origin-icon {
-  width: 32px;
-  height: 32px;
-  image-rendering: pixelated;
-}
-
 /* The same icon on the node's own screen, at a clean 3x: an object, so it hums but never breathes. */
 .keeper-art.is-icon {
   animation: none;
@@ -20797,22 +19794,6 @@ button.star-shop-bundle-face {
   width: 32px;
   height: 32px;
   image-rendering: pixelated;
-}
-
-/* Behind you: the same medallion, small and unlit. */
-.map-origin-mark.has-art {
-  width: 48px;
-  height: 48px;
-  border: none;
-  background: none;
-  box-shadow: none;
-}
-
-.map-origin-art {
-  width: 48px;
-  height: 48px;
-  image-rendering: pixelated;
-  filter: grayscale(0.7) brightness(0.6);
 }
 
 /* Hub signpost: Relics/Roster/Reference, relocated out of the header
@@ -20871,22 +19852,9 @@ button.star-shop-bundle-face {
   transform: translateY(0);
 }
 
-.map-footer-icon {
-  line-height: 1;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* The signpost's glyphs (nodeIcons.tsx HUB_PATHS), in the button's own accent
    rather than its text color — same trade as .map-node-glyph, and it is what
    makes the row read as three destinations instead of three gray pills. */
-.map-footer-icon .node-glyph {
-  width: 24px;
-  height: 24px;
-  color: var(--btn-color);
-}
 
 .map-footer-button:hover .node-glyph {
   filter: drop-shadow(0 0 5px var(--btn-color));
@@ -20961,25 +19929,6 @@ button.star-shop-bundle-face {
 
 /* The count, cut in the plate's ink with the alert colour as its figure, so the two never fight
    for one hue. */
-.map-footer-badge {
-  position: absolute;
-  top: -6px;
-  right: -4px;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: var(--alert-ink, var(--accent));
-  color: var(--btn-color, var(--surface));
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.45);
-}
 
 @media (prefers-reduced-motion: reduce) {
   .map-footer-button.has-unopened::after {
@@ -30065,15 +29014,6 @@ button.evo-gift-card {
   opacity: 1;
 }
 
-@keyframes titan-rise-open {
-  from {
-    transform: scaleY(0.04);
-  }
-  to {
-    transform: scaleY(1);
-  }
-}
-
 /* What the beat says, once it has stopped. Top of the frame, clear of the brow. */
 .titan-rise-caption {
   position: absolute;
@@ -30290,15 +29230,6 @@ button.evo-gift-card {
 }
 
 /* Nothing under it touches the ground; it hangs, and drifts as a hung thing does. */
-@keyframes herald-hover {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
 
 .herald-caption {
   position: absolute;
@@ -35681,13 +34612,6 @@ button.evo-gift-card {
   }
 }
 
-.map-medallion-trust {
-  position: absolute;
-  left: 50%;
-  bottom: -14px;
-  transform: translateX(-50%);
-}
-
 .patron-figure {
   display: grid;
   place-items: center;
@@ -35718,12 +34642,6 @@ button.evo-gift-card {
 .patron-capstone-card .patron-figure .patron-art {
   width: 72px;
   height: 72px;
-}
-
-.map-medallion-patron.patron-art {
-  width: 72%;
-  height: 72%;
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
 }
 
 /* The map's preview of a patron (NodeDossier is-patron): a person before a ledger — the figure in
@@ -42774,152 +41692,10 @@ img.smithy-service-art {
   box-shadow: none;
 }
 
-/* -- The Guardian's gate. The act's Guardian is not shown on the map: its node is a sealed stone
-   gate (96px at 2x) standing in the Pact Seal it guards — the title's seal, turning behind the arch,
-   the wardens already broken struck out and this act's burning in the Guardian's element. The same
-   light leaks through the seam where the doors meet, like something pressing from the other side. -- */
-.map-medallion.is-gate {
-  width: 192px !important;
-  height: 192px !important;
-}
-
-.map-medallion.is-gate .map-medallion-glow {
-  inset: -20px;
-}
-
-.map-medallion.is-gate .map-landmark-art {
-  z-index: 1;
-}
-
-/* The seal behind the arch at the title's own size, so the wardens ride outside the stone. The box is
-   a stacking context so the seal's own z-index: -1 stays behind the door and not behind the map.
-   The rings are drawn up from the title's: they stand against a lit sky here, not the dark. */
-.map-gate-pact {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.map-gate-pact .title-seal {
-  top: 50%;
-}
-
-.map-gate-pact .title-seal .type-wheel {
-  opacity: 0.45;
-}
-
-.map-gate-pact .title-seal-ring.is-outer {
-  background: repeating-conic-gradient(from 12.857deg, rgba(240, 190, 90, 0.7) 0deg 1.1deg, transparent 1.1deg 25.714deg);
-  box-shadow: inset 0 0 0 1px rgba(240, 190, 90, 0.4);
-}
-
-.map-gate-pact .title-seal-ring.is-mid {
-  border: 1px dashed rgba(240, 190, 90, 0.45);
-}
-
-.map-gate-pact .title-seal-ring.is-inner {
-  border: 2px solid color-mix(in srgb, var(--warden-color) 55%, rgba(240, 190, 90, 0.6));
-  box-shadow: 0 0 12px color-mix(in srgb, var(--warden-color) 40%, transparent), inset 0 0 26px color-mix(in srgb, var(--warden-color) 25%, transparent);
-}
-
-.map-gate-pact .title-seal-sigil {
-  background: rgba(40, 44, 54, 0.9);
-  box-shadow: none;
-}
-
-.map-gate-pact .title-seal-sigil.is-lit {
-  background: rgba(250, 210, 120, 0.95);
-  box-shadow: 0 0 10px rgba(240, 180, 70, 0.8);
-}
-
 /* The warden's light behind the door, breathing. */
-.map-gate-pact-light {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 280px;
-  height: 280px;
-  translate: -50% -50%;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--warden-color) 60%, transparent), color-mix(in srgb, var(--warden-color) 22%, transparent) 42%, transparent 68%);
-  animation: map-gate-breathe 3.2s ease-in-out infinite;
-}
-
-@keyframes map-gate-breathe {
-  0%,
-  100% {
-    opacity: 0.6;
-    scale: 0.94;
-  }
-  50% {
-    opacity: 1;
-    scale: 1.04;
-  }
-}
-
-/* The rings hold still, turned so this act's stands at the crown: the locked ones to its left,
-   lit, and the ones to come to its right. Its own sigil gives way to the burning gem over the arch. */
-.map-gate-pact .title-seal-sigils {
-  animation: none;
-  transform: rotate(calc(var(--warden) * -72deg));
-}
-
-.map-gate-pact .title-seal-sigil {
-  top: -6px;
-  left: -6px;
-  width: 12px;
-  height: 12px;
-}
-
-.map-gate-pact .title-seal-sigil.is-current {
-  visibility: hidden;
-}
 
 /* The warden: a gem at the crown of the arch (the seal's mid ring, 112px up from its centre),
    burning in the Guardian's element, the light pulsing out of it. */
-.map-gate-warden {
-  position: absolute;
-  left: 50%;
-  top: calc(50% - 112px);
-  z-index: 3;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-.map-gate-warden-glow {
-  position: absolute;
-  left: -30px;
-  top: -30px;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--warden-color) 80%, #fff) 0, color-mix(in srgb, var(--warden-color) 45%, transparent) 30%, transparent 70%);
-  animation: map-gate-warden 1.8s ease-in-out infinite;
-}
-
-.map-gate-warden-gem {
-  position: absolute;
-  left: -11px;
-  top: -14px;
-  width: 22px;
-  height: 28px;
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-  background: linear-gradient(160deg, #fff 0 18%, color-mix(in srgb, var(--warden-color) 55%, #fff) 30%, var(--warden-color) 62%, color-mix(in srgb, var(--warden-color) 60%, #000));
-}
-
-@keyframes map-gate-warden {
-  0%,
-  100% {
-    opacity: 0.7;
-    scale: 0.9;
-  }
-  50% {
-    opacity: 1;
-    scale: 1.15;
-  }
-}
 
 /* The light through the seam where the two doors meet: the art's crack is columns 46-47 of 96, and
    the boss at the doors' middle (rows 40-59) breaks it in two, so the light does too. */
@@ -43000,113 +41776,6 @@ img.smithy-service-art {
 /* Opened (MapRoute OPENING.gate = 1250ms): the gate shudders and the warden's gem bursts, the
    doors swing in on their hinges — stepped, as a sprite's frames would — and the light inside
    floods out over the screen (.map-opening-flood). */
-.map-medallion.is-opening {
-  pointer-events: none;
-}
-
-.map-medallion.is-opening .map-gate-art {
-  animation: map-gate-rumble 0.42s steps(1, end);
-}
-
-@keyframes map-gate-rumble {
-  0% {
-    translate: 2px 0;
-  }
-  15% {
-    translate: -2px 1px;
-  }
-  30% {
-    translate: 2px -1px;
-  }
-  45% {
-    translate: -1px 0;
-  }
-  60% {
-    translate: 1px 1px;
-  }
-  75% {
-    translate: -1px 0;
-  }
-  100% {
-    translate: 0 0;
-  }
-}
-
-.map-medallion.is-opening .map-gate-warden {
-  animation: map-gate-warden-burst 0.4s var(--ease-out) forwards;
-}
-
-@keyframes map-gate-warden-burst {
-  0% {
-    scale: 1;
-    opacity: 1;
-    filter: brightness(1);
-  }
-  40% {
-    scale: 1.7;
-    opacity: 1;
-    filter: brightness(2);
-  }
-  100% {
-    scale: 2.4;
-    opacity: 0;
-    filter: brightness(2.5);
-  }
-}
-
-.map-medallion.is-opening .map-gate-seam {
-  animation: map-gate-seam-burst 0.45s ease-out forwards;
-}
-
-@keyframes map-gate-seam-burst {
-  0% {
-    opacity: 1;
-    filter: brightness(1.8);
-  }
-  100% {
-    opacity: 0;
-    filter: brightness(3);
-  }
-}
-
-.map-medallion.is-opening .map-gate-pact {
-  animation: map-gate-pact-out 0.5s ease-in forwards;
-}
-
-@keyframes map-gate-pact-out {
-  to {
-    opacity: 0;
-    scale: 1.15;
-  }
-}
-
-.map-medallion.is-opening .map-gate-inner {
-  animation: map-gate-inner-light 0.7s ease-out 0.3s forwards;
-}
-
-@keyframes map-gate-inner-light {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.map-medallion.is-opening .map-gate-leaf {
-  animation: map-gate-leaf-swing 0.5s steps(5, end) 0.34s forwards;
-}
-
-@keyframes map-gate-leaf-swing {
-  0% {
-    scale: 1 1;
-    filter: brightness(1);
-  }
-  100% {
-    scale: 0.14 1;
-    filter: brightness(0.35);
-  }
-}
 
 .map-opening-flood {
   position: fixed;
@@ -43137,21 +41806,6 @@ img.smithy-service-art {
 
 /* The opening stone woken (OPENING.stone = 700ms): it shudders and its eye flares, then the red
    floods out of the eye. */
-.map-medallion.is-stone.is-opening > .map-landmark-art {
-  animation: map-gate-rumble 0.36s steps(1, end);
-}
-
-.map-medallion.is-stone.is-opening .map-stone-lights .scene-light.is-glow {
-  animation: map-stone-wake 0.45s ease-out forwards;
-}
-
-@keyframes map-stone-wake {
-  to {
-    opacity: 1;
-    transform: scale(2.4);
-    filter: brightness(1.8);
-  }
-}
 
 @keyframes map-opening-flood {
   to {
@@ -43160,28 +41814,11 @@ img.smithy-service-art {
 }
 
 /* Behind the player (the route's origin): the gate small and unlit, its seal gone dark. */
-.map-origin-mark.is-gate {
-  width: 48px;
-  height: 48px;
-}
 
 @media (prefers-reduced-motion: reduce) {
-  .map-gate-pact-light,
-  .map-gate-warden-glow,
   .map-gate-seam {
     animation: none;
   }
-}
-
-/* The finale: a greater gate (128px at 2x), gold-banded pillars, the Titan's red pressing through its
-   seam. Nothing is set on its face: the door says it. */
-.map-medallion.is-titanGate {
-  width: 256px !important;
-  height: 256px !important;
-}
-
-.map-medallion.is-titanGate .map-medallion-glow {
-  inset: -24px;
 }
 
 /* The greater door's crack is column 61 of 128, broken by the boss at rows 57-77. */
@@ -43200,11 +41837,6 @@ img.smithy-service-art {
 .map-gate-seam.is-titan::after {
   top: calc(77 / 128 * 100%);
   bottom: calc(20 / 128 * 100%);
-}
-
-.map-origin-mark.is-titanGate {
-  width: 64px;
-  height: 64px;
 }
 
 /* -- The console is the Sky's night (2026-11-09, per user direction, art/concepts/console-ground B).

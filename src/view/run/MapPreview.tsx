@@ -34,7 +34,7 @@ function measureTiles(tiles: readonly PreviewTile[]): Record<string, Box> {
 function measureRowTop(tiles: readonly PreviewTile[], boxes: Record<string, Box>): number {
   let top = Math.min(...Object.values(boxes).map((b) => b.top));
   for (const { el } of tiles) {
-    const choice = el.closest('.map-choice');
+    const choice = el.closest('.road-stop');
     if (!choice) continue;
     for (const part of Array.from(choice.children)) {
       if (!part.childElementCount && !part.textContent?.trim()) continue;

@@ -46,7 +46,7 @@ export const TIP_STAGING: Readonly<Record<string, TipStaging>> = {
   'tutorial.replace': { pages: [['.switch-bench']] },
   'tutorial.item': { pages: [['.item-ledger-piece', '.item-ledger-rows']] },
   'tutorial.gems': { pages: [['.gem-hand', '.gem-card-stat']] },
-  'tutorial.map': { pages: [['.map-medallion']] },
+  'tutorial.map': { pages: [['.road-stop.is-next']] },
   'howto.status.Conduct': { pages: [null, ['.order-track']] },
   'howto.statuses': { pages: [['.status-badge']] },
   'howto.status.Daze': {},

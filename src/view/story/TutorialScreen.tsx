@@ -120,7 +120,7 @@ export function TutorialScreen({ welcome, onFinished, onQuit, onPlace, exitLabel
             setStage(type === 'restReward' ? 'restReward' : type === 'recruitReward' ? 'recruitReward' : 'fight2');
           }}
         />
-        {page(TUTORIAL_MAP_TIP) ?? <GuideHand selector={['.map-preview-go', '.map-medallion']} />}
+        {page(TUTORIAL_MAP_TIP) ?? <GuideHand selector={['.map-preview-go', '.road-stop.is-next']} />}
       </>
     );
   }
