@@ -7,7 +7,7 @@ import { NODE_COLORS, NODE_LABELS, NODE_NAMES, NODE_TIERS } from './mapNodes';
 import { nodeFactsLine } from './nodeFacts';
 import { mapNodeArt, mapNodeIcon } from './mapNodeArt';
 import { landmarkKind, MapLandmarkFace, TITAN_LIGHT, type LandmarkKind } from './mapLandmarks';
-import { PatronFigure, TrustPips } from './patronView';
+import { PatronEntrance, PatronFigure, TrustPips, patronEntranceSfx, patronPose } from './patronView';
 import { MapPreview } from './MapPreview';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { getTypeColor } from '../combat/typeColors';
@@ -59,6 +59,14 @@ interface Stop {
 
 /** The node the last road was drawn at, so arriving somewhere new walks the view up from it. */
 let lastShownAt: { key: string; scrollTop: number } | null = null;
+
+/** The stop whose patrons last made their entrance, so a trip to the Roster sheet does not replay it. */
+let enteredAt: string | null = null;
+
+// A patron's entrance runs this long (patronView ENTRANCES); two on one row start this far apart, after the road has scrolled.
+const ENTRANCE_MS = 1580;
+const PATRON_STAGGER_MS = 910;
+const ENTRANCE_START_MS = 450;
 
 function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
@@ -230,6 +238,28 @@ export function MapRoad({
   const timers = useRef<number[]>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
+  // Patrons reached on this stop make their entrance once, one after the other, each with its sound.
+  const patronIds = choiceIds.filter((id) => patronFor?.(map.nodes[id]));
+  const [entering, setEntering] = useState(false);
+  useEffect(() => {
+    const key = `${map.seed}:${actNumber}:${currentNodeId ?? 'camp'}`;
+    if (!patronIds.length || enteredAt === key) return;
+    enteredAt = key;
+    if (prefersReducedMotion()) return;
+    setEntering(true);
+    const own: number[] = [];
+    patronIds.forEach((id, i) => {
+      const sfx = patronEntranceSfx(patronFor!(map.nodes[id])!.id);
+      if (sfx) own.push(window.setTimeout(() => playSfx(sfx), ENTRANCE_START_MS + i * PATRON_STAGGER_MS));
+    });
+    own.push(window.setTimeout(() => setEntering(false), ENTRANCE_START_MS + (patronIds.length - 1) * PATRON_STAGGER_MS + ENTRANCE_MS));
+    return () => {
+      own.forEach(clearTimeout);
+      if (enteredAt === key) enteredAt = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [choiceKey]);
+
   // Opened on where you stand; arriving somewhere new walks the view up from the last stop.
   const scroller = useRef<HTMLDivElement>(null);
   const here = currentNodeId ? rows.flat().find((s) => s.id === currentNodeId) ?? camp : camp;
@@ -332,6 +362,7 @@ export function MapRoad({
               actNumber={actNumber}
               patron={s.state === 'next' ? patronFor?.(map.nodes[s.id]) : null}
               previewed={previewId === s.id}
+              entering={entering ? ENTRANCE_START_MS + Math.max(0, patronIds.indexOf(s.id)) * PATRON_STAGGER_MS : undefined}
               opening={opening?.id === s.id}
               onTap={() => tap(s.id)}
               hint={actNumber === 1 && !currentNodeId && choiceIds.length === 1 ? 'Tap to begin' : undefined}
@@ -388,6 +419,7 @@ function RoadStop({
   actNumber,
   patron,
   previewed,
+  entering,
   opening,
   hint,
   onTap,
@@ -398,6 +430,8 @@ function RoadStop({
   actNumber: number;
   patron?: PatronTile | null;
   previewed: boolean;
+  /** Making its patron's entrance, starting this many ms in. */
+  entering?: number;
   opening: boolean;
   hint?: string;
   onTap: () => void;
@@ -409,17 +443,18 @@ function RoadStop({
   const live = state === 'next';
   const icon = mapNodeIcon(type) ?? mapNodeArt(type);
   const label = patron ? `${patron.name}, ${patron.title}` : nodeFactsLine(NODE_NAMES[type], type, actNumber);
-  const style = { '--node-color': patron?.color ?? NODE_COLORS[type] } as CSSProperties;
+  const style = { '--node-color': patron?.color ?? NODE_COLORS[type], '--land-delay': `${entering ?? 0}ms` } as CSSProperties;
   return (
     <button
       type="button"
-      className={`road-stop is-${state} type-${type}${landmark ? ` is-landmark is-${landmark}` : ''}${patron ? ' is-patron' : ''}${previewed ? ' is-previewed' : ''}${opening ? ' is-opening' : ''}`}
+      className={`road-stop is-${state} type-${type}${landmark ? ` is-landmark is-${landmark}` : ''}${patron ? ' is-patron' : ''}${previewed ? ' is-previewed' : ''}${patron && entering !== undefined ? ' is-entering' : ''}${patron && patronPose(patron.id) ? ' has-pose' : ''}${opening ? ' is-opening' : ''}`}
       style={style}
       ref={measureRef}
       aria-label={live ? label : NODE_NAMES[type]}
       aria-disabled={!live}
       tabIndex={live ? 0 : -1}
       data-sfx="none"
+      data-patron={patron?.id}
       onClick={onTap}
     >
       {landmark && !hidden ? (
@@ -432,6 +467,7 @@ function RoadStop({
             <span className="road-unknown">?</span>
           ) : patron ? (
             <>
+              <PatronEntrance patronId={patron.id} />
               <PatronFigure patronId={patron.id} className="road-patron" />
               <TrustPips trust={patron.trust} className="road-trust" />
             </>

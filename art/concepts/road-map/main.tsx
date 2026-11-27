@@ -7,6 +7,7 @@ import { MapScreen } from '../../../src/view/run/MapScreen';
 import { createRosterEntry, createRunState, type RunState } from '../../../src/run/state';
 import { generateMap, type MapNodeType } from '../../../src/run/map';
 import { heroes } from '../../../src/data/heroes';
+import { withReachableSeatOffers } from '../../../src/run/runProgress';
 import { mapNodeArt, mapNodeIcon } from '../../../src/view/run/mapNodeArt';
 import { landmarkStillArt } from '../../../src/view/run/mapLandmarks';
 import { NODE_COLORS, NODE_LABELS, NODE_NAMES, NODE_TIERS } from '../../../src/view/run/mapNodes';
@@ -29,7 +30,7 @@ const HERE_ROW = PICKS.length - 1;
 function buildRun(): RunState {
   const map = generateMap(SEED, 1);
   const visited = PICKS.map((col, row) => map.rows[row][col]);
-  return {
+  return withReachableSeatOffers({
     ...createRunState(),
     roster: PARTY.map((id) => createRosterEntry(id, id, heroes[id].moveIds)),
     map,
@@ -38,7 +39,7 @@ function buildRun(): RunState {
     fightsStarted: 3,
     encountersWon: 3,
     locationIds: [new URLSearchParams(location.search).get('place') ?? 'wildsEdge'],
-  };
+  });
 }
 
 const RUN = buildRun();

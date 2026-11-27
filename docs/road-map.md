@@ -38,8 +38,9 @@
 - **The Tower's beat.** Built as a first pass: the tower shakes, its door flares in the Guardian's
   element, and that colour floods the screen into the fight (1250ms, the old gate's timing).
 - **The Guardian's type** lights the tower's door (`map-tower-door`); the pennant stays red.
-- **Lost from the old scene:** the patrons' entrance animations (tied to the old reveal's CSS),
-  the per-tile arrival chimes, and the lead-on marks (dead since every row fully connects). On
-  arriving at a stop the road now scrolls up from the last one instead.
+- **Patron entrances** play on the road (2026-11-27, per user direction): once per stop reached,
+  each seat's disc ringing in and its patron landing, 910ms apart, with its sound.
+- **Lost from the old scene:** the per-tile arrival chimes and the lead-on marks (dead since
+  every row fully connects). On arriving at a stop the road scrolls up from the last one instead.
 - **Dead CSS** for the old scene (`.map-route`, `.map-choice`, `.map-rail`, the gate's rules) is
   still in `src/app/styles.css`, as is `mapSpots` in `locationBackdrops.ts`.
