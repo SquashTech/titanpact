@@ -2,7 +2,6 @@ import type { CSSProperties } from 'react';
 import type { MapNodeType } from '../../run/map';
 import { allCombatants } from '../../data/content';
 import { getTypeColor } from '../combat/typeColors';
-import { SceneLights, type SceneLight } from '../shared/SceneLights';
 import mentorArt from '../../../art/map-nodes/landmarks/mentor.png';
 import tutorArt from '../../../art/map-nodes/landmarks/tutor.png';
 import lapidaryArt from '../../../art/map-nodes/landmarks/lapidary.png';
@@ -16,12 +15,12 @@ import titanGateLeafLeftArt from '../../../art/map-nodes/landmarks/titanGateLeaf
 import titanGateLeafRightArt from '../../../art/map-nodes/landmarks/titanGateLeafR.png';
 
 // The act's beats, drawn as themselves rather than as a stone medallion: the opening fight is a
-// standing stone the Titan's eye has cracked open on the road, the Mentor, the Tutor and the Scribe are met at the
+// signpost boulder on the road, the Mentor, the Tutor and the Scribe are met at the
 // roadside (a fire, a practice post, a writing desk), the Camp is pitched by the road, the Academy a building you walk into,
 // the act's Guardian keeps a tower at the top of the road, and the finale is a
 // greater gate sealed with the Titan's own eye.
 
-/** The Titan's own red: the light behind the finale gate's doors and in the opening stone's eye. */
+/** The Titan's own red: the light behind the finale gate's doors. */
 export const TITAN_LIGHT = '#f247dc';
 
 export type LandmarkKind = 'stone' | 'npc' | 'building' | 'tower' | 'titanGate';
@@ -47,14 +46,6 @@ const NPC_ART: Partial<Record<MapNodeType, string>> = {
 const BUILDING_ART: Partial<Record<MapNodeType, string>> = {
   academyReward: academyArt,
 };
-
-// The stone's eye (rows 12-26 of 64) burning, and embers lifting off the cracks at its foot.
-const STONE_LIGHTS: readonly SceneLight[] = [
-  { kind: 'glow', x: 53, y: 30, size: 34, rgb: '255, 90, 50' },
-  { kind: 'ember', x: 36, y: 74 },
-  { kind: 'ember', x: 58, y: 70 },
-  { kind: 'ember', x: 70, y: 78 },
-];
 
 /**
  * A gate's art in three layers that stack back to its single sprite: the arch round a dark doorway,
@@ -128,7 +119,6 @@ export function MapLandmarkFace({
           <span className="map-stone-ripple" aria-hidden="true" />
           <span className="map-stone-ripple is-second" aria-hidden="true" />
           <img src={titanStoneArt} className="map-landmark-art" alt="" draggable={false} />
-          <SceneLights lights={STONE_LIGHTS} className="map-stone-lights" />
         </>
       );
     case 'npc':
