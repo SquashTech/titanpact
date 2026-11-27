@@ -3544,6 +3544,6 @@ original tracks.
 **Fights now have their own music**, reversing "music belongs to a place, not a screen" for
 fights only: an ordinary fight plays `battle`, a Guardian `boss`, the Herald and the Eyes
 `finale`. The original soundtrack has no fight music, so the fight themes are chiptune under
-either setting — the one place the two soundtracks meet, and the first thing to change if they
-clash in play. The Threshold, Dreaming Spires and Thunder Aerie have chiptune songs but still no
+either setting — the one place the two soundtracks meet. Kept that way on purpose (2026-11-27, per
+user direction), rather than falling back to the area’s original track in a fight. The Threshold, Dreaming Spires and Thunder Aerie have chiptune songs but still no
 original track, so they stay silent under Original.
