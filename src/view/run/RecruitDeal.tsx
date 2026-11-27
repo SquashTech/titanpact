@@ -3,6 +3,7 @@ import { playSfx } from '../../audio/sfx';
 import type { TypeId } from '../../engine/content';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
+import { HeroPortrait } from '../shared/HeroPortrait';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import type { RecruitOffer } from './RecruitNodeScreen';
 
@@ -91,12 +92,17 @@ export function RecruitDeal({ offers, onlyType, canAnswer, onPick, onLanded }: P
   );
 }
 
-/** The Recruit's head: a notice swung in on its tack. */
-export function RecruitPoster({ text }: { text: string }) {
+/** The Recruit's head: a notice swung in on its tack, with the hero answering a full roster pinned to it. */
+export function RecruitPoster({ text, portrait }: { text: string; portrait?: { heroId: string; pathId?: string; onRead: () => void } }) {
   return (
-    <header className="recruit-poster-head">
+    <header className={`recruit-poster-head${portrait ? ' has-portrait' : ''}`}>
       <span className="recruit-poster">
         <span className="recruit-poster-tack" aria-hidden="true" />
+        {portrait && (
+          <button type="button" className="recruit-poster-portrait" aria-label="Read" onClick={portrait.onRead}>
+            <HeroPortrait heroId={portrait.heroId} pathId={portrait.pathId} className="recruit-poster-art" />
+          </button>
+        )}
         <h2 className="recruit-poster-text">{text}</h2>
       </span>
     </header>

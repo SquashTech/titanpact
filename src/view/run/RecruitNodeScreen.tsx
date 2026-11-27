@@ -5,6 +5,7 @@ import { equipment } from '../../data/equipment';
 import type { HeroDefinition, TypeId } from '../../engine/content';
 import { joinEventRecruit } from '../../run/events';
 import { levelOf } from '../../run/growth';
+import { formIdFor } from '../../run/progression';
 import { ROSTER_CAP, type RosterEntry, type RunState } from '../../run/state';
 import { statScaleFor } from '../../run/statScale';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
@@ -116,7 +117,14 @@ export function RecruitNodeScreen({ run, offers, entryFor, pickedType, onPick, o
     if (run.roster.length < ROSTER_CAP) join(entry);
   }
 
-  const head = <RecruitPoster text={arriving ? `Make Room for ${rosterHeroes[arriving.heroId].name}` : 'Heroes Wanted'} />;
+  const head = arriving ? (
+    <RecruitPoster
+      text={`Make Room for ${rosterHeroes[arriving.heroId].name}`}
+      portrait={{ heroId: arriving.heroId, pathId: formIdFor(arriving) ?? undefined, onRead: () => setPreviewEntry({ hero: rosterHeroes[arriving.heroId], entry: arriving }) }}
+    />
+  ) : (
+    <RecruitPoster text="Heroes Wanted" />
+  );
 
   return (
     <div className="node-screen rite-screen recruit-node-screen" style={{ '--rite-color': `rgb(${RECRUIT_RGB})` } as CSSProperties}>
