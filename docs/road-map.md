@@ -65,7 +65,8 @@
   Edge has zones**; every other Location still draws plain trees until its places are chosen.
 - **Hero examples in the patrons' look** (same day, per user direction, examples only): Valor, Crag,
   Ursa and Kong redrawn taller and cooler, in a real fight at `art/concepts/hero-redraw/` (`?redraw=1`
-  swaps them in). Nothing in the game uses them.
+  swaps them in). Nothing in the game uses them. **The heroes stay as they are** (same day, per
+  user direction): no redraw.
 - **The Tower was redrawn** (same day, per user direction, the first flat one read badly): a round
   tower under a red cone roof on a rocky mound, no vine (A · Round in `art/concepts/patrons-flat/`,
   beside B · Keep, a square keep between two blue-roofed turrets).
