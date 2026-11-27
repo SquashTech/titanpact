@@ -1,9 +1,6 @@
-// Renders the PWA app icons from code so the mark stays in sync with the game: the Titan's
-// eye (2026-09-16, per user direction — it was the T monogram), the lens the title screen,
-// TitanWakeScreen and every generated figure carry, lit pale gold at the centre and burning
-// out through the run's mythic red (titanEye.ts EYE_GRADIENT), with a slit pupil and a
-// red halo on the --bg dark. Pure Node: shapes are evaluated in normalized 0..1 space,
-// supersampled, and encoded as 8-bit RGBA PNG by hand.
+// Renders the PWA app icons from code: an eye lens lit pale gold at the centre and burning out
+// through the mythic red, with a slit pupil and a red halo on the --bg dark. Pure Node: shapes
+// are evaluated in normalized 0..1 space, supersampled, and encoded as 8-bit RGBA PNG by hand.
 //
 //   node scripts/generate-icons.mjs
 import { deflateSync } from 'node:zlib';
@@ -16,7 +13,7 @@ const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'i
 const BG = [0x0f, 0x11, 0x17]; // --bg
 const GLOW = [0xe0, 0x39, 0x3f]; // --tier-mythic, the halo
 const PUPIL = [0x07, 0x05, 0x0a];
-// EYE_GRADIENT (titanEye.ts), centre to rim.
+// Centre to rim.
 const EYE_STOPS = [
   [0.0, [0xf6, 0xdc, 0x96]],
   [0.42, [0xe9, 0xa2, 0x4e]],
