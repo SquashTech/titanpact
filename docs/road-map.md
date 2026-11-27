@@ -48,7 +48,8 @@
   `art/concepts/map-icons/`): SVG in `art/map-nodes/flat/` with the buttons' ink rim, read by
   `mapNodeIcon` everywhere an icon is worn (the road, the node screens, How to Play); the Roster's
   emblem is `art/ui/party.svg`, three figures. Roads merge where they meet, and a stop you can
-  take holds still under a breathing ring (it used to bob). The old 32px PNGs stay in
+  take holds still under a breathing ring (it used to bob). **Every named event's icon is flat too**
+  (2026-11-27, per user direction): `art/events/<eventId>.svg`, the 32px PNGs deleted. The old 32px PNGs stay in
   `art/map-nodes/icons/` for the comparison page only.
 - **The top bar and the Roster** wear the storybook look (2026-11-27, per user direction): cream
   chips and buttons with an ink rim standing on the scene, the stone lintel gone, the Roster a

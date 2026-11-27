@@ -20,10 +20,10 @@ export function mapNodeIcon(type: MapNodeType): string | undefined {
   return ICONS[type];
 }
 
-// What an event is once it has a name: one 32px icon each (art/events, by event id), met on the road
+// What an event is once it has a name: one flat icon each (art/events, by event id), met on the road
 // and worn on its screen. The map tile's question mark is the fallback.
 const EVENT_ICONS = byName(
-  import.meta.glob<string>('../../../art/events/*.png', { eager: true, query: '?url', import: 'default' })
+  import.meta.glob<string>('../../../art/events/*.svg', { eager: true, query: '?url', import: 'default' })
 );
 
 export function eventIcon(eventId: string): string {

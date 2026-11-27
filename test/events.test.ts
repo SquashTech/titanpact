@@ -404,6 +404,6 @@ test('deepRoots: a hit grants the struck hero Renew, which heals a tenth of max 
 
 test('events: every event has its own road icon in art/events', () => {
   const dir = path.resolve(__dirname, '../../art/events');
-  const missing = Object.keys(runEvents).filter((id) => !fs.existsSync(path.join(dir, `${id}.png`)));
+  const missing = Object.keys(runEvents).filter((id) => !fs.existsSync(path.join(dir, `${id}.svg`)));
   assert.deepStrictEqual(missing, [], `events with no icon in art/events: ${missing.join(', ')}`);
 });
