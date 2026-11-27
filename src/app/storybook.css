@@ -1037,3 +1037,7 @@ button * { text-shadow: none !important; }
   box-shadow: 0 2px 0 var(--border-strong) !important;
 }
 .is-gilt-sheet .item-readout { border-color: color-mix(in srgb, var(--rarity-color, var(--border-strong)) 65%, var(--ink)) !important; box-shadow: 0 2px 0 color-mix(in srgb, var(--rarity-color, var(--border-strong)) 50%, var(--ink)) !important; }
+
+/* Type chips stand at the hero's feet, clear of the trees and fence behind the far row. */
+.team-row .combatant-card .combatant-types { top: calc(var(--figure-stage-h) - 4px); translate: 0 -100%; }
+.team-row.enemy .combatant-card .combatant-types { top: calc(100% - var(--figure-under) - 4px); }

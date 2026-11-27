@@ -1,0 +1,99 @@
+body { margin: 0; background: #efe2c2; color: #2b2340; overflow: auto !important; }
+.ss-page { padding: 20px 16px 60px; font-family: Fredoka, system-ui, sans-serif; }
+.ss-title { margin: 0 0 16px; font-size: 26px; }
+.ss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 22px; align-items: start; }
+.ss-col h2 { margin: 0 0 4px; font-size: 18px; }
+.ss-col p { margin: 0 0 10px; font-size: 13px; color: #675b78; min-height: 50px; }
+.ss-field { height: auto !important; min-height: 0 !important; position: static !important; display: flex !important; flex-direction: column; gap: 18px; padding: 18px 14px; border-radius: 16px; background: linear-gradient(180deg, #8fd36a, #6dbb4e); box-shadow: inset 0 0 0 3px #2b2340; }
+.ss-hero { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ss-plate { width: 170px; height: 22px; border-radius: 8px; background: linear-gradient(180deg, #5ee07f, #2fae5a); box-shadow: 0 0 0 2.5px #2b2340, 0 3px 0 #2b2340; }
+.ss-hero .status-badge-row { display: flex; justify-content: center; }
+.ss-hero .status-badge-fit { display: flex; gap: 4px; align-items: center; }
+.ss-hero .status-badge { display: inline-flex; align-items: center; gap: 2px; min-height: 24px; padding: 2px 7px; border: 1px solid; border-radius: 999px; font-size: 11px; }
+.ss-hero .status-badge svg { width: 14px; height: 14px; }
+
+/* Mock-only parts, hidden unless a skin uses them. */
+.ss-disc { display: contents; }
+.ss-chevrons { display: none; }
+
+/* ---- Shared by A–C: chevrons replace the bars, one a step. ---- */
+:is(.skin-a, .skin-b, .skin-c) .stat-mod-arrow,
+:is(.skin-a, .skin-b, .skin-c) .stat-mod-pips { display: none; }
+:is(.skin-a, .skin-b, .skin-c) .ss-chevrons { display: inline-flex; letter-spacing: -1px; }
+:is(.skin-a, .skin-b, .skin-c) .ss-chevron { font-size: 10px; line-height: 1; }
+:is(.skin-a, .skin-b, .skin-c) .stat-mod-badge { text-shadow: none; }
+
+/* ---- A · Paper pill ---- */
+.skin-a .stat-mod-badge,
+.skin-a .status-badge {
+  gap: 3px !important;
+  min-height: 24px;
+  padding: 2px 8px 2px 5px !important;
+  border: 2.5px solid #2b2340 !important;
+  border-radius: 999px !important;
+  background: #fffaf0 !important;
+  box-shadow: 0 2px 0 #2b2340;
+}
+.skin-a .status-badge { padding: 2px 6px !important; }
+.skin-a .stat-mod-glyph { width: 15px !important; height: 15px !important; color: var(--stat-color); }
+.skin-a .stat-buff { color: #e8920f !important; }
+.skin-a .stat-debuff { color: #3f78c4 !important; }
+.skin-a .stat-held { box-shadow: 0 0 0 2px #fffaf0, 0 0 0 4px currentColor, 0 2px 0 #2b2340; }
+
+/* ---- B · Candy ---- */
+.skin-b .stat-mod-badge,
+.skin-b .status-badge {
+  gap: 3px !important;
+  min-height: 24px;
+  padding: 2px 8px 2px 6px !important;
+  border: 2.5px solid #2b2340 !important;
+  border-radius: 999px !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 2px 0 #2b2340;
+}
+.skin-b .stat-mod-badge { color: #fff !important; }
+.skin-b .stat-buff { background: linear-gradient(180deg, #ffc24d, #f09a1a) !important; }
+.skin-b .stat-debuff { background: linear-gradient(180deg, #7fb0f0, #3f78c4) !important; }
+.skin-b .status-badge { background: currentColor !important; padding: 2px 6px !important; }
+.skin-b .status-badge svg { color: #fff; }
+.skin-b :is(.stat-mod-glyph, .status-badge svg) { width: 15px !important; height: 15px !important; filter: drop-shadow(1px 0 0 #2b2340) drop-shadow(-1px 0 0 #2b2340) drop-shadow(0 1px 0 #2b2340) drop-shadow(0 -1px 0 #2b2340); }
+.skin-b .ss-chevrons { text-shadow: -1px 0 #2b2340, 1px 0 #2b2340, 0 -1px #2b2340, 0 1px #2b2340; }
+.skin-b .stat-held { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2b2340, 0 2px 0 #2b2340; }
+
+/* ---- C · Stat bubble ---- */
+.skin-c .stat-mod-badge {
+  position: relative;
+  isolation: isolate;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  gap: 0 !important;
+}
+.skin-c .ss-disc,
+.skin-c .status-badge {
+  display: grid !important;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  border: 2.5px solid #2b2340 !important;
+  background: var(--stat-color) !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 2px 0 #2b2340;
+  box-sizing: border-box;
+}
+.skin-c .status-badge { background: currentColor !important; }
+.skin-c :is(.stat-mod-glyph, .status-badge svg) { width: 14px !important; height: 14px !important; color: #fff; filter: drop-shadow(0 1px 0 rgba(43, 35, 64, 0.6)); }
+.skin-c .ss-chevrons {
+  position: relative;
+  z-index: -1;
+  margin-left: -6px;
+  padding: 2px 5px 2px 8px;
+  border: 2px solid #2b2340;
+  border-radius: 0 8px 8px 0;
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(43, 35, 64, 0.6);
+}
+.skin-c .stat-buff .ss-chevrons { background: #f09a1a; }
+.skin-c .stat-debuff .ss-chevrons { background: #3f78c4; }
+.skin-c .stat-held .ss-disc { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2b2340; }
