@@ -28,10 +28,10 @@
       document.getElementById('root').innerHTML =
         '<h1>Patrons and the Tower</h1>' +
         row('Tower', [cell('./tower-old.svg', 'Now'), cell('./tower-round.svg', 'A · Round'), cell('./tower-keep.svg', 'B · Keep')].map((c) => c.replace('class="cell"', 'class="cell tower"'))) +
-        row('Pixel', ids.map((i) => cell(`./pixel/patron-${i}.png`, i, 'px'))) +
-        row('Flat', ids.map((i) => cell(`../../npc/patron-${i}.svg`, i))) +
-        row('Pixel poses', ids.map((i) => cell(`./pixel/poses/${i}.png`, i, 'px'))) +
-        row('Flat poses', ids.map((i) => cell(`../../npc/poses/${i}.svg`, i)));
+        row('Pixel', ids.map((i) => cell(`../../npc/patron-${i}.png`, i, 'px'))) +
+        row('Flat', ids.map((i) => cell(`./flat/patron-${i}.svg`, i))) +
+        row('Pixel poses', ids.map((i) => cell(`../../npc/poses/${i}.png`, i, 'px'))) +
+        row('Flat poses', ids.map((i) => cell(`./flat/poses/${i}.svg`, i)));
     </script>
   </body>
 </html>
