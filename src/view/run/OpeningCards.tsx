@@ -47,6 +47,22 @@ const FIGURES: Partial<Record<OpeningPicture, readonly string[]>> = {
 
 const SOUND: Partial<Record<OpeningPicture, SfxId>> = { trapped: 'quill.scratch', lastPage: 'ui.page' };
 
+/** One storybook picture and whoever stands in it; the Cycle lore cards turn the same pages. */
+export function OpeningPictureFrame({ picture }: { picture: OpeningPicture }) {
+  return (
+    <div className="opening-card-picture" aria-hidden="true">
+      <img className="opening-painting" src={PAINTING[picture]} alt="" draggable={false} />
+      {FIGURES[picture] && (
+        <div className="opening-figures">
+          {FIGURES[picture]!.map((src, n) => (
+            <img key={src} src={src} alt="" draggable={false} style={{ ['--i' as string]: n }} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const cardMs = (i: number) => BASE_MS + OPENING_CARDS[i].line.length * PER_CHAR_MS;
 
 export function OpeningCards({ onSettled }: { onSettled: () => void }) {
@@ -81,16 +97,7 @@ export function OpeningCards({ onSettled }: { onSettled: () => void }) {
           style={{ ['--card-ms' as string]: `${cardMs(i) + 1200}ms` }}
           aria-hidden={i !== at}
         >
-          <div className="opening-card-picture" aria-hidden="true">
-            <img className="opening-painting" src={PAINTING[card.picture]} alt="" draggable={false} />
-            {FIGURES[card.picture] && (
-              <div className="opening-figures">
-                {FIGURES[card.picture]!.map((src, n) => (
-                  <img key={src} src={src} alt="" draggable={false} style={{ ['--i' as string]: n }} />
-                ))}
-              </div>
-            )}
-          </div>
+          <OpeningPictureFrame picture={card.picture} />
           <p className="opening-card-line">{card.line}</p>
         </div>
       ))}

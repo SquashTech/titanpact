@@ -175,6 +175,12 @@ spreads. Fallen heroes are gone for good.* (the user’s line). **Each Cycle pas
 lore card** (`CycleDefinition.lore`), four lines a tap, shown once an account ahead of that Cycle’s
 first draft (`cycleLoreTipId`) — Cycle II’s: *A year has passed, and the Titan wakes. / The heroes
 who sealed it stayed to guard the seals. / Now the Titan holds them. / We must seal the pact again.*
+**Redrawn 2026-11-27, per user direction:** the Titan's eyes are gone from the cards. Each line now
+sits under a storybook picture, turned like the opening's pages (`LoreScreen` reuses
+`OpeningPictureFrame`), and the lines are rewritten for the Inkmaster. Cycle II's are now *A year has
+passed, and the Inkmaster takes up his quill again. / The heroes who shut his book last time are on his
+pages now. / He has set them to guard the ends of his chapters. / Reach the last page again, and bring
+them out with us.*
 
 ## 8. Decided (2026-10-06, per user direction)
 

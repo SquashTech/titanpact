@@ -7,6 +7,7 @@
 // (run/warbands.ts) and trains the Guild. Cycle V is not built; the picker greys it.
 
 import type { HeroDefinition } from '../engine/content';
+import type { OpeningCard } from '../data/opening';
 import { titansMarkFor } from '../data/passives';
 import type { TitanpactType } from '../data/typechart';
 import type { Profile } from './profile';
@@ -41,8 +42,8 @@ export interface CycleDefinition {
   line: string;
   /** Stardust a clear pays on top of what its new stars pay, every clear. */
   clearBonus: number;
-  /** A lore card, a line a tap, ahead of the first draft of this Cycle on an account (docs/cycles.md §7). */
-  lore?: readonly string[];
+  /** Lore cards, a picture and a line a tap, ahead of the first draft of this Cycle on an account (docs/cycles.md §7). */
+  lore?: readonly OpeningCard[];
 }
 
 export const CYCLES: readonly CycleDefinition[] = [
@@ -53,7 +54,12 @@ export const CYCLES: readonly CycleDefinition[] = [
     name: 'The Remembered',
     line: 'The Titan’s darkness spreads. Its Guardians wake.',
     clearBonus: 300,
-    lore: ['A year has passed, and the Titan wakes.', 'The heroes who sealed it stayed to guard the seals.', 'Now the Titan holds them.', 'We must seal the pact again.'],
+    lore: [
+      { picture: 'collector', line: 'A year has passed, and the Inkmaster takes up his quill again.' },
+      { picture: 'trapped', line: 'The heroes who shut his book last time are on his pages now.' },
+      { picture: 'guard', line: 'He has set them to guard the ends of his chapters.' },
+      { picture: 'free', line: 'Reach the last page again, and bring them out with us.' },
+    ],
   },
   {
     cycle: 3,
@@ -61,7 +67,12 @@ export const CYCLES: readonly CycleDefinition[] = [
     name: 'The Long Winter',
     line: 'Winter has come. The Guardians hide behind their own, and the banners fray.',
     clearBonus: 1500,
-    lore: ['Another year, and the winter never ended.', 'Wild’s Edge is lost under the snow.', 'The Guardians have learned to hide behind their own.', 'We must seal the pact again.'],
+    lore: [
+      { picture: 'collector', line: 'Another year, and he has written a winter that never ends.' },
+      { picture: 'trapped', line: 'Wild’s Edge is lost under the snow.' },
+      { picture: 'guard', line: 'His Guardians have learned to hide behind their own.' },
+      { picture: 'free', line: 'Reach the last page again.' },
+    ],
   },
   {
     cycle: 4,
@@ -69,7 +80,12 @@ export const CYCLES: readonly CycleDefinition[] = [
     name: 'The Gathering',
     line: 'The Titan knows your shape. Its servants fight as one.',
     clearBonus: 2000,
-    lore: ['A fourth year, and the Titan has been watching.', 'Its servants no longer gather at random.', 'Neither do we. The Guild has grown.', 'We must seal the pact again.'],
+    lore: [
+      { picture: 'collector', line: 'A fourth year, and the Inkmaster has been reading over our shoulders.' },
+      { picture: 'guard', line: 'His Doodles no longer gather at random.' },
+      { picture: 'world', line: 'Neither do we. The Guild has grown.' },
+      { picture: 'free', line: 'Reach the last page again.' },
+    ],
   },
   { cycle: 5, numeral: 'V', name: 'The Last Cycle', line: '', clearBonus: 0 },
 ];

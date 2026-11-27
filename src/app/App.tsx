@@ -1087,8 +1087,9 @@ export function App() {
     setPlayerRun((run) => ({ ...run, cycle }));
     const draft: Screen = { kind: 'draft', optionIds };
     // A later Cycle's lore card ahead of its first draft; Cycle I's fall is the Story prologue's (docs/stories.md §4).
-    const lore = cycle === FIRST_CYCLE ? null : { lines: cycleOf(cycle).lore ?? [], tipId: cycleLoreTipId(cycle) };
-    setScreen(!lore || lore.lines.length === 0 || profile.seenTipIds.includes(lore.tipId) ? draft : { kind: 'lore', next: draft, ...lore });
+    const def = cycleOf(cycle);
+    const lore = cycle === FIRST_CYCLE ? null : { title: `Cycle ${def.numeral} · ${def.name}`, cards: def.lore ?? [], tipId: cycleLoreTipId(cycle) };
+    setScreen(!lore || lore.cards.length === 0 || profile.seenTipIds.includes(lore.tipId) ? draft : { kind: 'lore', next: draft, ...lore });
   }
 
   function handleDraftConfirm(chosenIds: string[]) {
@@ -1414,7 +1415,8 @@ export function App() {
 
       {screen.kind === 'lore' && (
         <LoreScreen
-          lines={screen.lines}
+          title={screen.title}
+          cards={screen.cards}
           onDone={() => {
             markTipSeen(screen.tipId);
             setScreen(screen.next);

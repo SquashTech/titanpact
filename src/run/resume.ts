@@ -5,6 +5,7 @@
 // grant reaches the run. A resume onto a settled screen goes past it (`resumeTarget`), since the
 // screen's own record of having granted died with the page and it would offer the grant again.
 
+import type { OpeningCard } from '../data/opening';
 import { patrons } from '../data/patrons';
 import { CAPSTONE_TRUST } from './patrons';
 import type { CombatState, Side } from '../engine/state';
@@ -46,8 +47,8 @@ export type RunScreen =
   | { kind: 'title' }
   /** The tutorial playing (docs/the-tutorial.md); never saved, it starts over from the top. */
   | { kind: 'tutorial' }
-  /** The lore card, ahead of the first draft on an account (docs/tutorial.md). */
-  | { kind: 'lore'; next: RunScreen; lines: readonly string[]; tipId: string }
+  /** A later Cycle's lore cards, ahead of its first draft on an account (docs/cycles.md §7). */
+  | { kind: 'lore'; next: RunScreen; title: string; cards: readonly OpeningCard[]; tipId: string }
   | { kind: 'draft'; optionIds: string[] }
   /** The seal: four rings, one per Guardian — the run's opening frame, and every act's close (docs/run-loop.md §4). */
   | { kind: 'pactSeal' }
