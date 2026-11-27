@@ -241,8 +241,11 @@ The kit is renamed for writing (ids unchanged): Gaze is **Underline**, which lea
 **Underlined**; Regard is **Strike Through**; Lidded is **Blotter**; Laid Bare is **Red Pen**; the
 Withering Gaze field is **Spilled Ink**. As the Herald falls, his book opens and the two Hands rise
 out of the ink, with his face still hidden (`TitanRiseScreen`). When the Hands are beaten, he bursts
-out of his page at last, is pulled back down into it, and the book shuts before the seal turns
-(`TitanBoundScreen`). Not built: the closed-eye opening cards, and the code ids and file names still
+out of his page at last, is pulled back down into it, and the book shuts (`TitanBoundScreen`). Then
+its last page replaces the Titan's seal (2026-11-27, per user direction, picked from
+`art/concepts/spawn-redraw/ending/`): **The End**, the run's heroes standing on the page, and its
+chapters as a table of contents, each with the Guardian beaten there. No line about escaping or
+about him writing again. Not built: the closed-eye opening cards, and the code ids and file names still
 saying Titan and Eye.
 Reference: Smash Bros.' Master Hand and Crazy Hand. The Doodles can be the margin scribbles of his
 book, and Ink the currency his ink spent against him (both proposed, not decided).
