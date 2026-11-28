@@ -1070,3 +1070,12 @@ button * { text-shadow: none !important; }
 .stat-mod-chevrons { text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink); }
 .stat-mod-chevrons { display: inline-flex; letter-spacing: -1px; }
 .stat-mod-chevron { font-size: 10px; line-height: 1; }
+
+/* A patron's service reads in ink on the page; the title keeps its colour, deepened to hold on cream. */
+.patron-service-words > span { opacity: 1; color: var(--text-dim); }
+.patron-offer-verbs > span { color: var(--ink) !important; }
+.patron-service-words > strong { color: color-mix(in srgb, var(--service-color) 78%, var(--ink)); }
+
+/* A stat the hero does not swing with stays readable, only quieter. */
+.item-ledger-cell { color: color-mix(in srgb, var(--ink) 60%, transparent); }
+.item-ledger-cell.is-used { color: var(--ink); }
